@@ -14,6 +14,9 @@ not silently accepted or cut. Owner acceptance has not been received.
 Work 1–8 remain unimplemented; T1 and M0 are not closed.
 
 ## evidence
+Exact source/setup commit: e74bda8aa4a38fab8559ed8ebfab73e0f6135f7f.
+First commit diff: 48 files / 1901 insertions, including lock and raw evidence.
+Receipt and measured local elapsed: docs/setup/LOCAL-RECEIPT.md.
 1. CALL done_when 1: local repo, managed Python 3.13.7, installed stamp 36/PROBA,
    concise root/module contracts, packaging and every checklist disposition:
    docs/setup/SETUP.md, validation.config, docs/setup/evidence/repository-facts.txt.
@@ -62,7 +65,7 @@ One setup-only root, one bounded read-only evaluator smoke. No API purchase,
 paid runner, external service or publishing charge was initiated.
 Initial local gate run failed once on output decoding; corrected run passed.
 Token cost is not available as a task-specific measured amount.
-Elapsed wall time is recorded in the completion receipt; it is not an appetite
+Elapsed wall time since repo creation is recorded in docs/setup/LOCAL-RECEIPT.md; it is not an appetite
 threshold or a new delivery deadline.
 
 ## manual-acceptance
