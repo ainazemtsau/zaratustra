@@ -1,12 +1,14 @@
-"""Probe package installation outside the checkout; create no product workspace."""
+"""Install the pinned wheel and exercise its CLI in disposable folders outside checkout."""
 
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import shutil
 import subprocess
 import tempfile
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,7 +18,19 @@ def main() -> None:
     uv = shutil.which("uv")
     if uv is None:
         raise SystemExit("STOP: required tool uv unavailable")
-    wheel = ROOT / "dist/zaratustra-0.0.0-py3-none-any.whl"
+    for name in ("STOP", "STEER.md"):
+        if (ROOT / name).exists():
+            raise SystemExit(f"STOP: read {name} before running the installation probe")
+    metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    package_version = metadata["project"]["version"]
+    wheel = ROOT / f"dist/zaratustra-{package_version}-py3-none-any.whl"
+    print(
+        "source_commit="
+        + subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, encoding="utf-8"
+        ).strip(),
+        flush=True,
+    )
     print("wheel_sha256=" + hashlib.sha256(wheel.read_bytes()).hexdigest(), flush=True)
     with tempfile.TemporaryDirectory(prefix="zaratustra-install-") as directory:
         base = Path(directory).resolve()
@@ -87,6 +101,51 @@ print(json.dumps({
             [str(python), "-I", "-c", code, str(environment), str(ROOT)],
             cwd=working,
             check=True,
+        )
+        zara = environment / ("Scripts/zara.exe" if os.name == "nt" else "bin/zara")
+        child_env = dict(os.environ)
+        child_env.pop("PYTHONPATH", None)
+        child_env["PYTHONIOENCODING"] = "utf-8"
+
+        def invoke(*arguments: str) -> str:
+            command = [str(zara), *arguments]
+            print("$ " + " ".join(command), flush=True)
+            result = subprocess.run(
+                command,
+                cwd=working,
+                env=child_env,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                check=True,
+            )
+            print(result.stdout, end="", flush=True)
+            if result.stderr:
+                print(result.stderr, end="", flush=True)
+            return result.stdout
+
+        assert invoke("--version").strip() == f"zara {package_version}"
+        first = json.loads(invoke("init"))
+        database = Path(first["database"])
+        assert database == working / ".zara/state.sqlite3"
+        before = database.read_bytes()
+        # These are different OS processes using the installed executable.
+        assert json.loads(invoke("status")) == first
+        assert json.loads(invoke("init")) == first
+        assert json.loads(invoke("status", str(working))) == first
+        assert database.read_bytes() == before
+        assert first["schema_version"] == 1
+        assert {path.name for path in working.iterdir()} == {
+            ".zara",
+            "processes",
+            "artifacts",
+            "projections",
+            "inbox",
+        }
+        print("database_sha256_before_after=" + hashlib.sha256(before).hexdigest(), flush=True)
+        print(
+            "PASS: installed CLI; migration v1; same persisted metadata and DB bytes across runs",
+            flush=True,
         )
 
 

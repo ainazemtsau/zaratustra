@@ -1,37 +1,59 @@
 # Zaratustra
 
-Local development scaffold for the accepted M0 plan. Product commands arrive
-through Works 1–8; this version cannot initialize or mutate a workspace.
+Work 1 foundation, version **0.1.0**: `zara init` creates a local workspace;
+`zara status` reads its persisted identity, creation time and SQLite schema version.
+The installed engine and the workspace are separate directories.
 
 Requires uv and managed Python 3.13.7. From this repository:
 
-| Step | Windows PowerShell / other shells |
+| Step | Command |
 |---|---|
 | Prepare | `uv sync --locked` |
-| Check and build | `uv run --locked python -m tools.check` |
-| Focus a file | `uv run --locked python -m tools.check --files src/zaratustra/core/__init__.py` |
-| Verify report and full check | `uv run --locked python -m tools.check --deliver` |
+| Full check and build | `uv run --locked python -m tools.check` |
+| Check delivery report too | `uv run --locked python -m tools.check --deliver` |
+| Isolated installation and restart proof | `uv run --locked python -m tools.probe_install` |
 | Enable local commit guard | `git config core.hooksPath .githooks` |
 
-The full check runs ruff formatting/lint, mypy, the complete dependency graph,
-pytest and wheel/sdist build. A file selection still checks the complete graph;
-it cannot replace full delivery evidence. Check logs: docs/setup/evidence/.
+The full check runs formatting/lint, types, module boundaries, tests and wheel/sdist
+build. The installation probe installs the wheel with locked runtime dependencies
+in a disposable environment outside checkout, runs the real `zara` executable in
+separate processes, then cleans up its own temporary folders.
 
-Development uses an editable package through uv. Packaging builds
-`dist/zaratustra-0.0.0-py3-none-any.whl` with uv_build 0.8.22.
-Setup tests its import in a separate temporary environment, outside the source tree.
-This is an installation-mechanics probe, not the Work 1 product installation.
+For your first run, follow [installation and trial instructions](docs/work1/INSTALL.md).
+Run the installed commands in a newly created empty folder, or name that folder:
 
-The product repository contains code; the user chooses a separate data workspace
-when Work 1 is actually installed and exercised. No data folder is selected here.
-No remote repository, CI account, publication, external notifier or cost is configured.
-By the owner's 2026-09-07 decision, CI/CD, GitHub Actions and push notifications
-are excluded until separately requested; their absence is not a setup blocker.
-A public GitHub repository remains future work. See docs/setup/OWNER-DECISION-20260907.md.
-Windows was observed; macOS/Linux runtime support has not been verified.
+```text
+zara --version
+zara init
+zara status
+zara init
+```
 
-Read docs/setup/SETUP.md for applicability and limitations, docs/setup/OPEN-AGENDA.md
-before the next Work, and RESULT.md for the engineering handback to Solmax.
-OpenSpec is initialized as native repo documents under openspec/; no Node CLI is required.
+The three workspace commands print the same persisted metadata. Repeating `init`
+on a valid workspace reads it without rewriting the DB. Nonempty unrelated folders,
+unknown schema versions and incomplete workspaces are refused without repair.
+`status` never creates a workspace. No parent-folder discovery is performed.
+
+Workspace layout follows the accepted plan:
+
+```text
+chosen-folder/
+  .zara/state.sqlite3
+  processes/
+  artifacts/
+  projections/
+  inbox/
+```
+
+Only bootstrap metadata and explicit migration v1 exist. Process, Work, Artifact,
+Event, revisions, Handoff, permissions and context behavior require Works 2–8.
+This release does not complete T1 or M0. No personal workspace has been selected.
+
+Read [foundation decisions and W19–W27](docs/work1/FOUNDATION.md) before later work,
+and [Product RESULT](RESULT.md) for exact commits and runtime evidence.
+Setup evidence remains under docs/setup/ as history. Windows is the observed
+platform; Linux/macOS and an independent participant's installation remain unverified.
+CI/CD, GitHub Actions and notifications are excluded until a separate owner request:
+[owner receipt](docs/setup/OWNER-DECISION-20260907.md). Public hosting is future work.
 
 END_OF_FILE: README.md

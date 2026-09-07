@@ -1,1 +1,1 @@
-"""Zaratustra package. Product operations are not implemented in this setup."""
+"""Zaratustra: installed engine, separate local workspace."""

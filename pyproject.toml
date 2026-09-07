@@ -1,10 +1,13 @@
 [project]
 name = "zaratustra"
-version = "0.0.0"
-description = "Zaratustra development scaffold; M0 implementation pending"
+version = "0.1.0"
+description = "Zaratustra local workspace foundation"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = ["pydantic>=2,<3"]
+
+[project.scripts]
+zara = "zaratustra.cli:main"
 
 [build-system]
 requires = ["uv_build==0.8.22"]
