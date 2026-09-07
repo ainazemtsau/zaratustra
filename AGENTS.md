@@ -28,6 +28,9 @@ Read the current CALL before doing product work; setup admits no successor.
 9. Read `STOP` / `STEER.md` before mutation and commands. STOP means halt; read and resolve STEER with the owner's intent, without auto-deleting either.
 10. Setup verification includes one bounded read-only evaluator smoke agent; otherwise delegate only when the CALL or owner explicitly asks. Inherited model defaults; no provider identity gate.
 
+## Owner scope — 2026-09-07
+CI/CD, GitHub Actions and push notifications are excluded requirements until the owner separately asks. Do not configure them or block setup/delivery on their absence, even if a generic checklist requires them. Public GitHub hosting remains future work; local checks stay required. Authority: docs/setup/OWNER-DECISION-20260907.md, owner-ack:solmax-zaratustra-local-setup-no-automation-20260907.
+
 ## Constitution
 - Keep accepted WHAT, ordered Works 1–8 and the M0 stop before M1.
 - CLI calls Core through public module surfaces; Core never imports CLI.

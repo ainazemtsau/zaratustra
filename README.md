@@ -25,6 +25,9 @@ This is an installation-mechanics probe, not the Work 1 product installation.
 The product repository contains code; the user chooses a separate data workspace
 when Work 1 is actually installed and exercised. No data folder is selected here.
 No remote repository, CI account, publication, external notifier or cost is configured.
+By the owner's 2026-09-07 decision, CI/CD, GitHub Actions and push notifications
+are excluded until separately requested; their absence is not a setup blocker.
+A public GitHub repository remains future work. See docs/setup/OWNER-DECISION-20260907.md.
 Windows was observed; macOS/Linux runtime support has not been verified.
 
 Read docs/setup/SETUP.md for applicability and limitations, docs/setup/OPEN-AGENDA.md

@@ -1,6 +1,6 @@
 # Zaratustra setup applicability — 2026-09-07
 
-Outcome: LOCAL SETUP READY; external checklist items unresolved.
+Outcome: LOCAL SETUP COMPLETE under the owner's accepted scope; external checklist blocker resolved by explicit cuts.
 Product: C:/projects/zaratustra. CALL: docs/setup/CALL.md.
 Installed surface: contract v36 / PROBA only. OPORA is not enabled.
 This report does not close the Direction CALL, T1, M0, or any Work 1–8.
@@ -14,7 +14,9 @@ PROBA explicitly exempts pair/freeze, independent test-author/refutation, stage
 receipts/manifests, replacement lineage, ADR, mutation, negative controls,
 property audit and review artifacts. Those gates are not claimed enabled.
 The small stack/packaging record is optional documentation, not an ADR gate.
-Completion still requires the owner's words. A green local command is not that verdict.
+Owner scope acceptance is now recorded in OWNER-DECISION-20260907.md.
+It removes CI/CD, Actions and push requirements until a separate owner request;
+local runtime evidence remains distinct from an owner-performed product test.
 
 ## Checklist disposition
 
@@ -24,7 +26,7 @@ PASS below means the named local setup fact was observed; it does not mean produ
 | # | Checklist item | Disposition and evidence |
 |---|---|---|
 | 1 | Compiled carrier/RED pair contract | N/A PROBA, CONTOUR §Two modes; no frozen carrier/tests. OPORA STOP in AGENTS. |
-| 2 | One command locally and in CI | LOCAL PASS: evidence/check-final.txt. CI NOT RUN: no remote repo/provider/rights selected; owner disposition pending. |
+| 2 | One command locally and in CI | LOCAL PASS: evidence/check-final.txt. CI NOT RUN / OWNER-APPROVED CUT until separately requested; OWNER-DECISION-20260907.md. |
 | 3 | Dependency boundary seeded violation | PASS: real import-linter, 2 kept clean / 2 broken on reverse import; evidence/boundary-negative.txt. |
 | 4 | Root ≤150 lines; module docs | PASS: AGENTS.md and each package/Core/CLI AGENTS.md; evidence/repository-facts.txt. |
 | 5 | Run contract | PASS, mode-translated: 10 numbered lines in root AGENTS; heavy clauses N/A per PROBA. |
@@ -51,7 +53,7 @@ PASS below means the named local setup fact was observed; it does not mean produ
 | 26 | Stack profile feedback | Existing Python profile used; exact proposed delta in python-profile-proposal.patch. Workflow sources untouched; proposal unaccepted. |
 | 27 | Scratch seed cannot commit normally | PASS: ignored seed; forced-stage seed rejected by actual Python Git hook. Tests include both. Hook enabled locally through core.hooksPath. |
 | 28 | Test hygiene seeded misses | PASS: outside tests, missing source, skipped/xfail/aliased skip, assertion-free, non-portable literal, clean control. |
-| 29 | Notification hook test push | NOT INSTALLED / NOT RUN. No selected push channel or external messaging authorization. Pending owner disposition; not a PROBA exemption. |
+| 29 | Notification hook test push | NOT INSTALLED / NOT RUN / OWNER-APPROVED CUT until separately requested; OWNER-DECISION-20260907.md. This is explicit owner scope, not a PROBA exemption. |
 | 30 | Read-only evaluator smoke | PASS in bounded sense: same-session prompt-injected evaluator answered by read-only actions; evidence/evaluator-smoke.txt. Auto-discovery/enforced isolation not claimed. |
 
 ## Other setup steps and limits
@@ -63,7 +65,7 @@ PASS below means the named local setup fact was observed; it does not mean produ
 - Step 3: native commands, nearest-module docs, concise PROBA run contract,
   constitution, rubric, validation.config and friction installed.
 - Step 4: uv lock and managed Python; report/hygiene/native gates enabled.
-  CI and push are unresolved external checklist items, not silently cut.
+  CI/CD, Actions and push are explicitly cut by the owner until separately requested; they are not blockers.
   Python Git hook blocks tracked scratch under normal commits; bypassing hooks
   remains technically possible and prohibited by the repo contract.
   STOP/STEER convention is local and not an OS-wide interrupt.
@@ -89,14 +91,14 @@ The temporary environment is cleaned after proof. No persistent user workspace
 is chosen. Raw output: evidence/install-probe.txt.
 This proves the scaffold can be packaged, not Work 1 installation/init.
 
-## Unresolved external decision
+## Owner-resolved external scope
 
-Recommend accepting this as local setup and deferring CI and external push until
-a separate authorized service choice. Neither is marked PASS.
-PROJECT_SETUP Done-when #2 requires local+CI, #29 requires a test push.
-The CALL forbids new external rights/publication/accounts/cost without owner words;
-profiles/python.md also makes CI deployment an owner decision.
-If the owner requires those items now, the exact provider/channel and permission
-must be named before configuration or a test message. No external operation was attempted.
+Owner-ack:solmax-zaratustra-local-setup-no-automation-20260907 removes CI/CD,
+GitHub Actions and push notifications, including setup/test pushes, from the
+required scope until the owner separately requests them. Exact words and context:
+OWNER-DECISION-20260907.md. Do not reopen their absence as a blocker.
+This overrides PROJECT_SETUP #2's CI portion and #29 for this product.
+Public GitHub hosting remains intended future work; no remote is configured here.
+The local setup is accepted within that scope; no external run is claimed.
 
 END_OF_FILE: docs/setup/SETUP.md
