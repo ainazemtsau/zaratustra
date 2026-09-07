@@ -1,0 +1,25 @@
+commit bbeae5c17d53e7f24dca22bbd9403cd39c19d094
+Author:     Anton <antoninozemcev@gmail.com>
+AuthorDate: Mon Sep 7 17:03:31 2026 +0300
+Commit:     Anton <antoninozemcev@gmail.com>
+CommitDate: Mon Sep 7 17:03:31 2026 +0300
+
+    Implement installed workspace init and explicit SQLite migration v1
+
+ AGENTS.md                               |  10 +--
+ README.md                               |  74 ++++++++++++-------
+ docs/work1/FOUNDATION.md                |  90 +++++++++++++++++++++++
+ docs/work1/INSTALL.md                   |  78 ++++++++++++++++++++
+ pyproject.toml                          |   7 +-
+ src/zaratustra/AGENTS.md                |   2 +-
+ src/zaratustra/__init__.py              |   2 +-
+ src/zaratustra/cli/AGENTS.md            |   6 +-
+ src/zaratustra/cli/__init__.py          |  31 +++++++-
+ src/zaratustra/core/AGENTS.md           |  10 ++-
+ src/zaratustra/core/__init__.py         |   6 +-
+ src/zaratustra/core/migrations.py       |  43 +++++++++++
+ src/zaratustra/core/workspace.py        | 123 ++++++++++++++++++++++++++++++++
+ tests/zaratustra/core/test_workspace.py |  96 +++++++++++++++++++++++++
+ tools/probe_install.py                  |  63 +++++++++++++++-
+ uv.lock                                 |   2 +-
+ 16 files changed, 599 insertions(+), 44 deletions(-)

@@ -1,0 +1,502 @@
+diff --git a/pyproject.toml b/pyproject.toml
+index 24bc580..21fbe95 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,11 +1,14 @@
+ [project]
+ name = "zaratustra"
+-version = "0.0.0"
+-description = "Zaratustra development scaffold; M0 implementation pending"
++version = "0.1.0"
++description = "Zaratustra local workspace foundation"
+ readme = "README.md"
+ requires-python = ">=3.13,<3.14"
+ dependencies = ["pydantic>=2,<3"]
+ 
++[project.scripts]
++zara = "zaratustra.cli:main"
++
+ [build-system]
+ requires = ["uv_build==0.8.22"]
+ build-backend = "uv_build"
+diff --git a/src/zaratustra/AGENTS.md b/src/zaratustra/AGENTS.md
+index 2193449..5b3977c 100644
+--- a/src/zaratustra/AGENTS.md
++++ b/src/zaratustra/AGENTS.md
+@@ -1,5 +1,5 @@
+ # Package boundary
+-Public package contains only Core and CLI scaffolding at setup.
++Public package contains Core and CLI for Work 1 workspace initialization and reads.
+ Use submodule public __init__.py surfaces. New modules need graph contracts.
+ Data/workspaces are not package resources. Do not add product state to source.
+ END_OF_FILE: src/zaratustra/AGENTS.md
+diff --git a/src/zaratustra/__init__.py b/src/zaratustra/__init__.py
+index 064a595..691009d 100644
+--- a/src/zaratustra/__init__.py
++++ b/src/zaratustra/__init__.py
+@@ -1 +1 @@
+-"""Zaratustra package. Product operations are not implemented in this setup."""
++"""Zaratustra: installed engine, separate local workspace."""
+diff --git a/src/zaratustra/cli/AGENTS.md b/src/zaratustra/cli/AGENTS.md
+index 62b633e..0d3bc41 100644
+--- a/src/zaratustra/cli/AGENTS.md
++++ b/src/zaratustra/cli/AGENTS.md
+@@ -1,4 +1,6 @@
+ # CLI
+-Public API is __init__.py; currently empty. Future CLI delegates domain logic to Core.
+-No zara executable or workspace initialization is implemented in setup.
++Public API is main in __init__.py, installed as zara. argparse handles presentation;
++init/status call only the public Core API. No SQL or authority logic belongs here.
++Explicit path defaults to cwd; do not discover or select another workspace implicitly.
++JSON reports persisted bootstrap facts. Failures go to stderr with nonzero exit.
+ END_OF_FILE: src/zaratustra/cli/AGENTS.md
+diff --git a/src/zaratustra/cli/__init__.py b/src/zaratustra/cli/__init__.py
+index 793b971..5158afb 100644
+--- a/src/zaratustra/cli/__init__.py
++++ b/src/zaratustra/cli/__init__.py
+@@ -1 +1,30 @@
+-"""CLI boundary. Commands arrive through subsequent Work admissions."""
++"""Installed zara command. All workspace logic belongs to Core."""
++
++from __future__ import annotations
++
++import argparse
++import sys
++from importlib.metadata import version
++from pathlib import Path
++
++from zaratustra.core import WorkspaceError, init_workspace, read_workspace
++
++
++def main(argv: list[str] | None = None) -> int:
++    parser = argparse.ArgumentParser(prog="zara", description="Zaratustra workspace foundation")
++    parser.add_argument("--version", action="version", version=f"zara {version('zaratustra')}")
++    commands = parser.add_subparsers(dest="command", required=True)
++    for name, description in (
++        ("init", "Initialize an empty directory or read its existing workspace."),
++        ("status", "Read persisted workspace metadata without changing it."),
++    ):
++        command = commands.add_parser(name, help=description, description=description)
++        command.add_argument("path", nargs="?", default=".", type=Path)
++    args = parser.parse_args(argv)
++    try:
++        info = init_workspace(args.path) if args.command == "init" else read_workspace(args.path)
++    except WorkspaceError as error:
++        print(f"zara: {error}", file=sys.stderr)
++        return 1
++    print(info.model_dump_json(indent=2))
++    return 0
+diff --git a/src/zaratustra/core/AGENTS.md b/src/zaratustra/core/AGENTS.md
+index 2d86842..cc64882 100644
+--- a/src/zaratustra/core/AGENTS.md
++++ b/src/zaratustra/core/AGENTS.md
+@@ -1,5 +1,9 @@
+ # Core
+-Public API is __init__.py; currently empty. Core cannot import zaratustra.cli.
+-sqlite3 and boundary models arrive only with their relevant Work admission.
+-No DB, migration or authority policy has been chosen by this scaffold.
++Public API is __init__.py: init_workspace, read_workspace, WorkspaceInfo, WorkspaceError.
++Core cannot import zaratustra.cli. workspace.py owns path/layout and reads;
++migrations.py owns explicit schema v1. Both remain inside the Core graph boundary.
++Bootstrap persists workspace identity/time and migration metadata only.
++No Process/Work/Artifact/Event, revisions, grants or general mutation API yet.
++Existing workspace reads are read-only; never silently migrate/repair unknown state.
++Keep v1 bytes stable after release; later schemas require explicit migrations.
+ END_OF_FILE: src/zaratustra/core/AGENTS.md
+diff --git a/src/zaratustra/core/__init__.py b/src/zaratustra/core/__init__.py
+index 531e72a..ac4f92e 100644
+--- a/src/zaratustra/core/__init__.py
++++ b/src/zaratustra/core/__init__.py
+@@ -1 +1,5 @@
+-"""Core boundary. No persistence or domain operations exist yet."""
++"""Public Core surface for the admitted workspace foundation."""
++
++from .workspace import WorkspaceError, WorkspaceInfo, init_workspace, read_workspace
++
++__all__ = ["WorkspaceError", "WorkspaceInfo", "init_workspace", "read_workspace"]
+diff --git a/src/zaratustra/core/migrations.py b/src/zaratustra/core/migrations.py
+new file mode 100644
+index 0000000..beb7908
+--- /dev/null
++++ b/src/zaratustra/core/migrations.py
+@@ -0,0 +1,43 @@
++"""Explicit sequential SQLite migrations. Version 1 contains bootstrap metadata only."""
++
++from __future__ import annotations
++
++import hashlib
++import sqlite3
++
++SCHEMA_VERSION = 1
++APPLICATION_ID = 0x5A415241  # ZARA
++V1_NAME = "0001_workspace"
++V1_STATEMENTS = (
++    """CREATE TABLE schema_migrations (
++        version INTEGER PRIMARY KEY,
++        name TEXT NOT NULL,
++        sha256 TEXT NOT NULL,
++        applied_at TEXT NOT NULL
++    ) STRICT""",
++    """CREATE TABLE workspace (
++        singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
++        workspace_id TEXT NOT NULL UNIQUE,
++        created_at TEXT NOT NULL
++    ) STRICT""",
++)
++V1_SHA256 = hashlib.sha256(chr(10).join(V1_STATEMENTS).encode("utf-8")).hexdigest()
++
++
++def migrate_v1(connection: sqlite3.Connection, workspace_id: str, created_at: str) -> None:
++    """Create the first schema and metadata in one explicit transaction on a new DB."""
++    connection.execute("BEGIN IMMEDIATE")
++    try:
++        for statement in V1_STATEMENTS:
++            connection.execute(statement)
++        connection.execute("INSERT INTO workspace VALUES (1, ?, ?)", (workspace_id, created_at))
++        connection.execute(
++            "INSERT INTO schema_migrations VALUES (?, ?, ?, ?)",
++            (SCHEMA_VERSION, V1_NAME, V1_SHA256, created_at),
++        )
++        connection.execute(f"PRAGMA application_id = {APPLICATION_ID}")
++        connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
++        connection.execute("COMMIT")
++    except BaseException:
++        connection.execute("ROLLBACK")
++        raise
+diff --git a/src/zaratustra/core/workspace.py b/src/zaratustra/core/workspace.py
+new file mode 100644
+index 0000000..cab8b4f
+--- /dev/null
++++ b/src/zaratustra/core/workspace.py
+@@ -0,0 +1,123 @@
++"""Bootstrap and read workspace metadata; no domain records or authority grants."""
++
++from __future__ import annotations
++
++import sqlite3
++from contextlib import closing
++from datetime import UTC, datetime
++from pathlib import Path
++from typing import Literal
++from uuid import UUID, uuid4
++
++from pydantic import AwareDatetime, BaseModel, ConfigDict, ValidationError
++
++from .migrations import APPLICATION_ID, SCHEMA_VERSION, V1_NAME, V1_SHA256, migrate_v1
++
++WORKSPACE_DIRECTORIES = ("processes", "artifacts", "projections", "inbox")
++
++
++class WorkspaceError(Exception):
++    """The selected directory cannot be initialized or read safely."""
++
++
++class WorkspaceInfo(BaseModel):
++    """Persisted bootstrap facts returned by Core, not a Work revision or permission."""
++
++    model_config = ConfigDict(frozen=True, extra="forbid")
++    workspace: Path
++    database: Path
++    workspace_id: UUID
++    created_at: AwareDatetime
++    schema_version: Literal[1]
++
++
++def _root(path: Path) -> Path:
++    root = path.expanduser().resolve()
++    if not root.is_dir():
++        raise WorkspaceError("Choose an existing empty directory for the workspace.")
++    return root
++
++
++def _plain_path(path: Path) -> None:
++    if path.is_symlink() or path.is_junction():
++        raise WorkspaceError(f"Workspace entries must not be links: {path}")
++
++
++def _read_workspace(root: Path) -> WorkspaceInfo:
++    state = root / ".zara"
++    database = state / "state.sqlite3"
++    for path in (state, database, *(root / name for name in WORKSPACE_DIRECTORIES)):
++        _plain_path(path)
++    if not state.is_dir() or not database.is_file():
++        raise WorkspaceError(
++            "No initialized workspace at this path; run zara init in an empty folder."
++        )
++    if any(not (root / name).is_dir() for name in WORKSPACE_DIRECTORIES):
++        raise WorkspaceError("Workspace layout is incomplete; existing files were left unchanged.")
++    with closing(
++        sqlite3.connect(database.as_uri() + "?mode=ro", uri=True, autocommit=True, timeout=5.0)
++    ) as connection:
++        connection.execute("PRAGMA query_only = ON")
++        connection.execute("BEGIN")
++        application = connection.execute("PRAGMA application_id").fetchone()[0]
++        version = connection.execute("PRAGMA user_version").fetchone()[0]
++        if application != APPLICATION_ID or version != SCHEMA_VERSION:
++            raise WorkspaceError(f"Unsupported workspace database/schema version: {version}.")
++        migrations = connection.execute(
++            "SELECT version, name, sha256, applied_at FROM schema_migrations ORDER BY version"
++        ).fetchall()
++        records = connection.execute(
++            "SELECT singleton, workspace_id, created_at FROM workspace"
++        ).fetchall()
++        if len(records) != 1 or records[0][0] != 1:
++            raise WorkspaceError("Invalid workspace metadata; existing files were left unchanged.")
++        _, workspace_id, created_at = records[0]
++        if migrations != [(SCHEMA_VERSION, V1_NAME, V1_SHA256, created_at)]:
++            raise WorkspaceError("Migration history does not match this installed version.")
++        return WorkspaceInfo(
++            workspace=root,
++            database=database,
++            workspace_id=workspace_id,
++            created_at=created_at,
++            schema_version=version,
++        )
++
++
++def read_workspace(path: Path) -> WorkspaceInfo:
++    """Read a selected workspace without creating a DB or applying migrations."""
++    try:
++        return _read_workspace(_root(path))
++    except (OSError, sqlite3.Error, ValidationError) as error:
++        raise WorkspaceError(f"Cannot read workspace: {error}") from error
++
++
++def init_workspace(path: Path) -> WorkspaceInfo:
++    """Initialize an empty selected folder; an existing workspace is read without writes.
++
++    Bootstrap is an explicit local invocation before Work exists. It creates no
++    Process, Work, actor, owner receipt or permissions for later mutations.
++    """
++    try:
++        root = _root(path)
++        entries = list(root.iterdir())
++        if entries:
++            if (root / ".zara").exists() or (root / ".zara").is_symlink():
++                return _read_workspace(root)
++            raise WorkspaceError("Directory is not empty; choose an empty workspace folder.")
++        state = root / ".zara"
++        state.mkdir()  # Exclusive reservation: a competing init cannot own this directory.
++        database = state / "state.sqlite3"
++        with database.open("xb"):
++            pass
++        # Explicit autocommit mode, with BEGIN/COMMIT owned by the migration.
++        with closing(sqlite3.connect(database, autocommit=True, timeout=5.0)) as connection:
++            connection.execute("PRAGMA journal_mode = DELETE")
++            connection.execute("PRAGMA synchronous = FULL")
++            migrate_v1(connection, str(uuid4()), datetime.now(UTC).isoformat())
++        for name in WORKSPACE_DIRECTORIES:
++            (root / name).mkdir()
++        return _read_workspace(root)
++    except (OSError, sqlite3.Error, ValidationError) as error:
++        # Never delete/rewrite user data to force success. A partially initialized
++        # folder remains visible and is rejected on the next run if incomplete.
++        raise WorkspaceError(f"Cannot initialize workspace; files retained: {error}") from error
+diff --git a/tests/zaratustra/core/test_workspace.py b/tests/zaratustra/core/test_workspace.py
+new file mode 100644
+index 0000000..e548734
+--- /dev/null
++++ b/tests/zaratustra/core/test_workspace.py
+@@ -0,0 +1,96 @@
++"""Invisible persistence, refusal and transaction behavior of the bootstrap."""
++
++from __future__ import annotations
++
++import sqlite3
++from contextlib import closing
++from pathlib import Path
++from uuid import uuid4
++
++import pytest
++
++from zaratustra.core import WorkspaceError, init_workspace, read_workspace
++from zaratustra.core.migrations import V1_NAME, V1_SHA256, migrate_v1
++
++
++def test_reopen_preserves_metadata_and_database_bytes(tmp_path: Path) -> None:
++    first = init_workspace(tmp_path)
++    before = first.database.read_bytes()
++    assert read_workspace(tmp_path) == first
++    assert init_workspace(tmp_path) == first
++    assert first.database.read_bytes() == before
++    with closing(sqlite3.connect(first.database)) as connection:
++        assert connection.execute("PRAGMA user_version").fetchone() == (1,)
++        assert connection.execute(
++            "SELECT version, name, sha256, applied_at FROM schema_migrations"
++        ).fetchall() == [(1, V1_NAME, V1_SHA256, first.created_at.isoformat())]
++        assert connection.execute("SELECT workspace_id, created_at FROM workspace").fetchall() == [
++            (str(first.workspace_id), first.created_at.isoformat())
++        ]
++        assert connection.execute("PRAGMA integrity_check").fetchall() == [("ok",)]
++
++
++def test_nonempty_directory_is_not_modified(tmp_path: Path) -> None:
++    sentinel = tmp_path / "keep.txt"
++    sentinel.write_bytes(b"original unrelated bytes")
++    with pytest.raises(WorkspaceError, match="not empty"):
++        init_workspace(tmp_path)
++    assert sentinel.read_bytes() == b"original unrelated bytes"
++    assert list(tmp_path.iterdir()) == [sentinel]
++
++
++def test_status_does_not_initialize_and_init_does_not_choose_missing_folder(tmp_path: Path) -> None:
++    with pytest.raises(WorkspaceError, match="No initialized workspace"):
++        read_workspace(tmp_path)
++    with pytest.raises(WorkspaceError, match="existing empty directory"):
++        init_workspace(tmp_path / "missing")
++    assert list(tmp_path.iterdir()) == []
++
++
++@pytest.mark.parametrize("command", [read_workspace, init_workspace])
++def test_newer_schema_is_refused_without_rewriting(tmp_path: Path, command: object) -> None:
++    info = init_workspace(tmp_path)
++    # Deliberately invalid isolated fixture, never a repair of acceptance data.
++    with closing(sqlite3.connect(info.database)) as connection:
++        connection.execute("PRAGMA user_version = 2")
++    before = info.database.read_bytes()
++    assert callable(command)
++    with pytest.raises(WorkspaceError, match="Unsupported"):
++        command(tmp_path)
++    assert info.database.read_bytes() == before
++
++
++def test_corrupt_or_partial_workspace_is_not_overwritten(tmp_path: Path) -> None:
++    state = tmp_path / ".zara"
++    state.mkdir()
++    database = state / "state.sqlite3"
++    database.write_bytes(b"not a database")
++    for name in ("processes", "artifacts", "projections", "inbox"):
++        (tmp_path / name).mkdir()
++    with pytest.raises(WorkspaceError, match="Cannot initialize"):
++        init_workspace(tmp_path)
++    assert database.read_bytes() == b"not a database"
++    (tmp_path / "inbox").rmdir()
++    with pytest.raises(WorkspaceError, match="incomplete"):
++        init_workspace(tmp_path)
++    assert database.read_bytes() == b"not a database"
++
++
++def test_migration_rolls_back_ddl_metadata_and_version_on_failure() -> None:
++    with closing(sqlite3.connect(":memory:", isolation_level=None)) as connection:
++
++        def deny_metadata(action: int, arg1: str | None, *_: object) -> int:
++            return (
++                sqlite3.SQLITE_DENY
++                if action == sqlite3.SQLITE_INSERT and arg1 == "schema_migrations"
++                else sqlite3.SQLITE_OK
++            )
++
++        connection.set_authorizer(deny_metadata)
++        with pytest.raises(sqlite3.DatabaseError):
++            migrate_v1(connection, str(uuid4()), "2026-09-07T00:00:00+00:00")
++        connection.set_authorizer(None)
++        assert connection.execute("SELECT name FROM sqlite_master").fetchall() == []
++        assert connection.execute("PRAGMA user_version").fetchone() == (0,)
++        assert connection.execute("PRAGMA application_id").fetchone() == (0,)
++        assert not connection.in_transaction
+diff --git a/tools/probe_install.py b/tools/probe_install.py
+index 0829fae..5919286 100644
+--- a/tools/probe_install.py
++++ b/tools/probe_install.py
+@@ -1,12 +1,14 @@
+-"""Probe package installation outside the checkout; create no product workspace."""
++"""Install the pinned wheel and exercise its CLI in disposable folders outside checkout."""
+ 
+ from __future__ import annotations
+ 
+ import hashlib
++import json
+ import os
+ import shutil
+ import subprocess
+ import tempfile
++import tomllib
+ from pathlib import Path
+ 
+ ROOT = Path(__file__).resolve().parents[1]
+@@ -16,7 +18,19 @@ def main() -> None:
+     uv = shutil.which("uv")
+     if uv is None:
+         raise SystemExit("STOP: required tool uv unavailable")
+-    wheel = ROOT / "dist/zaratustra-0.0.0-py3-none-any.whl"
++    for name in ("STOP", "STEER.md"):
++        if (ROOT / name).exists():
++            raise SystemExit(f"STOP: read {name} before running the installation probe")
++    metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
++    package_version = metadata["project"]["version"]
++    wheel = ROOT / f"dist/zaratustra-{package_version}-py3-none-any.whl"
++    print(
++        "source_commit="
++        + subprocess.check_output(
++            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, encoding="utf-8"
++        ).strip(),
++        flush=True,
++    )
+     print("wheel_sha256=" + hashlib.sha256(wheel.read_bytes()).hexdigest(), flush=True)
+     with tempfile.TemporaryDirectory(prefix="zaratustra-install-") as directory:
+         base = Path(directory).resolve()
+@@ -88,6 +102,51 @@ print(json.dumps({
+             cwd=working,
+             check=True,
+         )
++        zara = environment / ("Scripts/zara.exe" if os.name == "nt" else "bin/zara")
++        child_env = dict(os.environ)
++        child_env.pop("PYTHONPATH", None)
++        child_env["PYTHONIOENCODING"] = "utf-8"
++
++        def invoke(*arguments: str) -> str:
++            command = [str(zara), *arguments]
++            print("$ " + " ".join(command), flush=True)
++            result = subprocess.run(
++                command,
++                cwd=working,
++                env=child_env,
++                capture_output=True,
++                text=True,
++                encoding="utf-8",
++                check=True,
++            )
++            print(result.stdout, end="", flush=True)
++            if result.stderr:
++                print(result.stderr, end="", flush=True)
++            return result.stdout
++
++        assert invoke("--version").strip() == f"zara {package_version}"
++        first = json.loads(invoke("init"))
++        database = Path(first["database"])
++        assert database == working / ".zara/state.sqlite3"
++        before = database.read_bytes()
++        # These are different OS processes using the installed executable.
++        assert json.loads(invoke("status")) == first
++        assert json.loads(invoke("init")) == first
++        assert json.loads(invoke("status", str(working))) == first
++        assert database.read_bytes() == before
++        assert first["schema_version"] == 1
++        assert {path.name for path in working.iterdir()} == {
++            ".zara",
++            "processes",
++            "artifacts",
++            "projections",
++            "inbox",
++        }
++        print("database_sha256_before_after=" + hashlib.sha256(before).hexdigest(), flush=True)
++        print(
++            "PASS: installed CLI; migration v1; same persisted metadata and DB bytes across runs",
++            flush=True,
++        )
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/uv.lock b/uv.lock
+index 6a84960..2447137 100644
+--- a/uv.lock
++++ b/uv.lock
+@@ -350,7 +350,7 @@ wheels = [
+ 
+ [[package]]
+ name = "zaratustra"
+-version = "0.0.0"
++version = "0.1.0"
+ source = { editable = "." }
+ dependencies = [
+     { name = "pydantic" },
