@@ -1,0 +1,69 @@
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 3 files, 0 dependencies.
+---------------------------------
+
+CLI may depend on Core, Core cannot depend on CLI KEPT
+Core has no surface dependency KEPT
+
+Contracts: 2 kept, 0 broken.
+ 
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 4 files, 1 dependencies.
+---------------------------------
+
+CLI may depend on Core, Core cannot depend on CLI BROKEN
+Core has no surface dependency BROKEN
+
+Contracts: 0 kept, 2 broken.
+
+
+----------------
+Broken contracts
+----------------
+
+CLI may depend on Core, Core cannot depend on CLI
+-------------------------------------------------
+
+zaratustra.core is not allowed to import zaratustra.cli:
+
+- zaratustra.core.boundary_seed -> zaratustra.cli (l.1)
+
+
+Core has no surface dependency
+------------------------------
+
+zaratustra.core is not allowed to import zaratustra.cli:
+
+-   zaratustra.core.boundary_seed -> zaratustra.cli (l.1)
+
+
+
+.
+1 passed, 11 deselected in 0.56s

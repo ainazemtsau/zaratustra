@@ -1,0 +1,9 @@
+repo=C:\projects\zaratustra
+branch=main
+root_agents_lines=52
+root_run_contract_lines=10
+module_docs=src/zaratustra/AGENTS.md, src/zaratustra/cli/AGENTS.md, src/zaratustra/core/AGENTS.md
+hooksPath=.githooks
+remote=
+STOP=False
+STEER=False

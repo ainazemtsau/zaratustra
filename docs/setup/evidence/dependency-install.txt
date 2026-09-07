@@ -1,0 +1,40 @@
+warning: The `bounds` option is in preview and may change in any future release. Pass `--preview-features add-bounds` to disable this warning.
+Using CPython 3.13.7
+Creating virtual environment at: .venv
+Resolved 24 packages in 2.09s
+   Building zaratustra @ file:///C:/projects/zaratustra
+      Built zaratustra @ file:///C:/projects/zaratustra
+Downloading ruff (10.1MiB)
+Downloading ast-serialize (1.1MiB)
+Downloading pydantic-core (1.9MiB)
+Downloading grimp (1.9MiB)
+ Downloading ast-serialize
+ Downloading pydantic-core
+ Downloading grimp
+ Downloading ruff
+Prepared 8 packages in 3.49s
+Installed 24 packages in 1.16s
+ + annotated-types==0.8.0
+ + ast-serialize==0.10.0
+ + click==8.5.0
+ + colorama==0.4.6
+ + grimp==3.17
+ + import-linter==2.15
+ + iniconfig==2.3.0
+ + librt==0.15.0
+ + markdown-it-py==4.2.0
+ + mdurl==0.1.2
+ + mypy==2.3.1
+ + mypy-extensions==1.1.0
+ + packaging==26.3
+ + pathspec==1.1.1
+ + pluggy==1.6.0
+ + pydantic==2.13.5
+ + pydantic-core==2.46.5
+ + pygments==2.21.0
+ + pytest==9.1.1
+ + rich==15.0.0
+ + ruff==0.16.6
+ + typing-extensions==4.16.0
+ + typing-inspection==0.4.4
+ + zaratustra==0.0.0 (from file:///C:/projects/zaratustra)

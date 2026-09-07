@@ -1,0 +1,14 @@
+Runtime smoke agent: /root/setup_evaluator_smoke
+Mode: default role with exact repo evaluator read-only instructions supplied in prompt.
+Scope: AGENTS.md, validation.config, evaluator.toml, pyproject.toml, Core/CLI init,
+tools/check.py and STOP/STEER presence. Actions: reads only.
+Returned:
+- v36, default PROBA, supported_modes only PROBA.
+- Core/CLI docstrings only; no CLI entry point in metadata. Setup is consistent
+  with no workspace init, migrations or product Works implemented.
+- Explicit OPORA STOP in AGENTS; checker fails configured non-PROBA or non-v36.
+  The checker does not parse CALL mode; the CALL restriction also relies on AGENTS.
+- STOP and STEER absent. No material inconsistency in inspected files.
+Limits: same-session smoke, not a full-tree absence proof, not a proof of custom
+role auto-discovery or runtime sandbox enforcement, not product acceptance and
+not binding fresh Direction G5. No separate fresh review claimed.

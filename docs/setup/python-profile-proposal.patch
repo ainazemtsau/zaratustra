@@ -1,0 +1,19 @@
+Proposed only; executor did not edit Direction OS.
+--- os/engineering/profiles/python.md
++++ os/engineering/profiles/python.md
+@@ Module conventions
+-- [tool.uv] package = false, with the check runner injecting PYTHONPATH=<root>/src.
+-  Avoids a build backend and the wheel-packages array that silently drops a module.
++- For a repository whose CALL requires installation, use one installable
++  src/<package>/ root with a pinned native build backend; run checks against
++  its uv-synced installation. Keep package=false/PYTHONPATH only for a
++  deliberately non-distributed script repository.
+@@ Test layout
+-- pythonpath = ["src"] makes that work without installing the project.
++- Installable projects verify the built wheel from a separate environment
++  outside the checkout without PYTHONPATH; import smoke is not user acceptance.
++- tests/tools may mirror development-only tools/ outside the shipped package.
+@@ Known landmines
++- Windows subprocess text capture must set encoding="utf-8" and require UTF-8
++  from the child, rather than decoding tool output with the Windows locale.
+Evidence: docs/setup/evidence/check-initial.txt and install-probe.txt.

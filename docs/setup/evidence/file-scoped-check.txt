@@ -1,0 +1,38 @@
+$ C:\projects\zaratustra\.venv\Scripts\python.exe -m ruff format --check src/zaratustra/core/__init__.py
+1 file already formatted
+$ C:\projects\zaratustra\.venv\Scripts\python.exe -m ruff check src/zaratustra/core/__init__.py
+All checks passed!
+$ C:\projects\zaratustra\.venv\Scripts\python.exe -m mypy src/zaratustra/core/__init__.py
+Success: no issues found in 1 source file
+$ C:\projects\zaratustra\.venv\Scripts\lint-imports.EXE --no-cache
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 3 files, 0 dependencies.
+---------------------------------
+
+CLI may depend on Core, Core cannot depend on CLI KEPT
+Core has no surface dependency KEPT
+
+Contracts: 2 kept, 0 broken.
+$ C:\projects\zaratustra\.venv\Scripts\python.exe -m pytest tests -q
+.............                                                            [100%]
+13 passed in 1.92s
+$ C:\Users\Anton\.local\bin\uv.EXE build --no-sources
+Building source distribution (uv build backend)...
+Building wheel from source distribution (uv build backend)...
+Successfully built dist\zaratustra-0.0.0.tar.gz
+Successfully built dist\zaratustra-0.0.0-py3-none-any.whl
+PASS: native build, hygiene, types, boundaries, tests

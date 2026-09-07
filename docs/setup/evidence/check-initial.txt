@@ -1,0 +1,124 @@
+$ C:\projects\zaratustra\.venv\Scripts\python.exe -m ruff format --check src tools tests
+6 files already formatted
+$ C:\projects\zaratustra\.venv\Scripts\python.exe -m ruff check src tools tests
+All checks passed!
+$ C:\projects\zaratustra\.venv\Scripts\python.exe -m mypy src tools tests
+Success: no issues found in 6 source files
+$ C:\projects\zaratustra\.venv\Scripts\lint-imports.EXE --no-cache
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 3 files, 0 dependencies.
+---------------------------------
+
+CLI may depend on Core, Core cannot depend on CLI KEPT
+Core has no surface dependency KEPT
+
+Contracts: 2 kept, 0 broken.
+$ C:\projects\zaratustra\.venv\Scripts\python.exe -m pytest tests -q
+..........F.                                                             [100%]
+================================== FAILURES ===================================
+____________ test_real_boundary_clean_and_reverse_import_rejected _____________
+
+tmp_path = WindowsPath('C:/Users/Anton/AppData/Local/Temp/pytest-of-Anton/pytest-791/test_real_boundary_clean_and_r0')
+
+    def test_real_boundary_clean_and_reverse_import_rejected(tmp_path: Path) -> None:
+        """Run the installed linter on an isolated copy; do not alter the product tree."""
+        shutil.copytree(ROOT / "src", tmp_path / "src")
+        shutil.copy(ROOT / "pyproject.toml", tmp_path / "pyproject.toml")
+        command = shutil.which("lint-imports")
+        assert command is not None, "required tool lint-imports unavailable"
+        environment = dict(os.environ, PYTHONPATH=str(tmp_path / "src"))
+        clean = subprocess.run(
+            [command, "--no-cache"], cwd=tmp_path, env=environment, capture_output=True, text=True
+        )
+        assert clean.returncode == 0, clean.stdout + clean.stderr
+        (tmp_path / "src/zaratustra/core/boundary_seed.py").write_text(
+            "import zaratustra.cli\n", encoding="utf-8"
+        )
+        broken = subprocess.run(
+            [command, "--no-cache"], cwd=tmp_path, env=environment, capture_output=True, text=True
+        )
+        assert broken.returncode != 0
+>       assert "BROKEN" in broken.stdout, broken.stdout + broken.stderr
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: argument of type 'NoneType' is not iterable
+
+tests\tools\test_check.py:114: TypeError
+============================== warnings summary ===============================
+tests/tools/test_check.py::test_real_boundary_clean_and_reverse_import_rejected
+  C:\projects\zaratustra\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-5 (_readerthread)
+  
+  Traceback (most recent call last):
+    File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\threading.py", line 1043, in _bootstrap_inner
+      self.run()
+      ~~~~~~~~^^
+    File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\threading.py", line 994, in run
+      self._target(*self._args, **self._kwargs)
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py", line 1615, in _readerthread
+      buffer.append(fh.read())
+                    ~~~~~~~^^
+    File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\encodings\cp1252.py", line 23, in decode
+      return codecs.charmap_decode(input,self.errors,decoding_table)[0]
+             ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  UnicodeDecodeError: 'charmap' codec can't decode byte 0x90 in position 7: character maps to <undefined>
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+tests/tools/test_check.py::test_real_boundary_clean_and_reverse_import_rejected
+  C:\projects\zaratustra\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-3 (_readerthread)
+  
+  Traceback (most recent call last):
+    File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\threading.py", line 1043, in _bootstrap_inner
+      self.run()
+      ~~~~~~~~^^
+    File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\threading.py", line 994, in run
+      self._target(*self._args, **self._kwargs)
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py", line 1615, in _readerthread
+      buffer.append(fh.read())
+                    ~~~~~~~^^
+    File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\encodings\cp1252.py", line 23, in decode
+      return codecs.charmap_decode(input,self.errors,decoding_table)[0]
+             ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  UnicodeDecodeError: 'charmap' codec can't decode byte 0x90 in position 7: character maps to <undefined>
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/tools/test_check.py::test_real_boundary_clean_and_reverse_import_rejected
+1 failed, 11 passed, 2 warnings in 1.97s
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\projects\zaratustra\tools\check.py", line 145, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "C:\projects\zaratustra\tools\check.py", line 131, in main
+    run([sys.executable, "-m", "pytest", *(test_files or ["tests"]), "-q"])
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\zaratustra\tools\check.py", line 19, in run
+    subprocess.run(command, cwd=root, check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['C:\\projects\\zaratustra\\.venv\\Scripts\\python.exe', '-m', 'pytest', 'tests', '-q']' returned non-zero exit status 1.

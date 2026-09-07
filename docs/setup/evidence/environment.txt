@@ -1,0 +1,6 @@
+Resolved 24 packages in 0.93ms
+Audited 24 packages in 2ms
+3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\python.exe
+sqlite 3.50.4
+{'pydantic': '2.13.5', 'ruff': '0.16.6', 'mypy': '2.3.1', 'pytest': '9.1.1', 'import-linter': '2.15'}
