@@ -1,0 +1,83 @@
+[
+  {
+    "label": "terminal-original",
+    "outcome": "expected refusal",
+    "detail": "permission_denied: Work is not ready or has no current permission"
+  },
+  {
+    "label": "terminal-new-id",
+    "outcome": "expected refusal",
+    "detail": "permission_denied: Work is not ready or has no current permission"
+  },
+  {
+    "label": "stale",
+    "outcome": "expected refusal",
+    "detail": "conflict: Expected revision is not the current state revision"
+  },
+  {
+    "label": "collision",
+    "outcome": "expected refusal",
+    "detail": "collision: Operation id already belongs to another intent"
+  },
+  {
+    "label": "no-authority",
+    "outcome": "expected refusal",
+    "detail": "permission_denied: Separate trusted local authorization required"
+  },
+  {
+    "label": "lost-response",
+    "detail": "simulated lost response after commit"
+  },
+  {
+    "label": "projection-failure",
+    "receipt": {
+      "operation_id": "9179d4f8-d868-49c0-8ec8-3df7078bffc8",
+      "event_id": "4938c371-3c44-4acc-9832-4e45cf6f629e",
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "previous_revision": 11,
+      "new_revision": 12,
+      "fingerprint": "9fab4b4d1fa4c678171d9f136e94006fd81bf3e557d8ab2af6ad380776cc0612",
+      "recorded_at": "2026-09-08T16:47:56.232765Z",
+      "product_version": "0.7.0",
+      "affected_projections": [
+        "overview.md"
+      ]
+    }
+  },
+  {
+    "label": "missing",
+    "outcome": "expected refusal",
+    "detail": "content_unavailable: Registered content is not a regular file"
+  },
+  {
+    "label": "corrupt",
+    "outcome": "expected refusal",
+    "detail": "content_changed: Registered content size changed"
+  },
+  {
+    "label": "late-loss",
+    "outcome": "expected refusal",
+    "detail": "content_unavailable: Registered content is not a regular file"
+  },
+  {
+    "label": "budget",
+    "outcome": "expected refusal",
+    "detail": "budget_exceeded: Mandatory output requires 20873 bytes; allowed 20872; no output"
+  },
+  {
+    "label": "foreign-process",
+    "outcome": "expected refusal",
+    "detail": "scope: Process is outside this Work"
+  },
+  {
+    "label": "foreign-ref",
+    "outcome": "expected refusal",
+    "detail": "scope: Referenced Artifact is outside this Work and its exact grant"
+  },
+  {
+    "label": "revoked-next",
+    "outcome": "expected refusal",
+    "detail": "permission_denied: Work is terminal, not ready or lacks current rights"
+  }
+]

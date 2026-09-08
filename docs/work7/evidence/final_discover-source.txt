@@ -1,0 +1,12 @@
+from pathlib import Path
+import subprocess,sys,json
+from zaratustra.core import ReceiptQuery,prepare_authorization
+base=Path(sys.argv[1]);q=ReceiptQuery.model_validate_json((base/'receipt-query.json').read_bytes())
+(base/'console-final-discover-prompt.json').write_text(prepare_authorization(base/'workspace',q).model_dump_json(indent=2),encoding='utf-8')
+args=[str(base/'venv/Scripts/zara.exe'),'result','read',str(base/'workspace'),q.model_dump_json()]
+r=subprocess.run(args,cwd=base/'unrelated-cwd',stdout=subprocess.PIPE,stderr=None)
+(base/'console-final-discover.stdout').write_bytes(r.stdout)
+(base/'console-final-discover.json').write_text(json.dumps(dict(command=args,exit=r.returncode),indent=2),encoding='utf-8')
+assert r.returncode==0
+assert r.stdout== (base/'locale-after.stdout').read_bytes()
+print('PASS: final installed actual console Result read equals ASCII-pipe JSON')

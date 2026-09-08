@@ -1,0 +1,13 @@
+{
+  "label": "projection",
+  "command": [
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\zara.exe",
+    "projections",
+    "status",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\workspace"
+  ],
+  "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\unrelated-cwd",
+  "exit": 0,
+  "stdout_sha256": "682379ada88dc4a640f279dbdcc752b9c06f40e332b7e5061b702a80e46c0ff5",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

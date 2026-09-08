@@ -1,0 +1,14 @@
+{
+  "command": [
+    "uv",
+    "run",
+    "--locked",
+    "python",
+    "-m",
+    "tools.check"
+  ],
+  "cwd": "C:\\projects\\zaratustra\\_scratch\\work7-result",
+  "exit": 1,
+  "seconds": 0.9885384000008344,
+  "utc": "2026-09-08T16:43:26.096679+00:00"
+}

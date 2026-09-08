@@ -1,0 +1,12 @@
+{
+  "label": "old-default-migrate",
+  "command": [
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\zara.exe",
+    "migrate",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\workspace"
+  ],
+  "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\unrelated-cwd",
+  "exit": 1,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "3099641d6e18b15f774f94af41f617a100417404d4f0fa624d5a3bf102d66fec"
+}

@@ -1,0 +1,78 @@
+[
+  {
+    "path": "zaratustra/__init__.py",
+    "sha256": "3746eb54a1ec89225dbad473e995bae88ea9a18f610995e445bdac608cb687de"
+  },
+  {
+    "path": "zaratustra/cli/__init__.py",
+    "sha256": "8fd253aee594f3a5e36b2f43490bb33fdc8409d143bdb0a7de24c9ec15f02176"
+  },
+  {
+    "path": "zaratustra/core/__init__.py",
+    "sha256": "ccfa875b5f8a0a914bc2944ebeba1ccf59564ce434d543a419cc8948639ab1ff"
+  },
+  {
+    "path": "zaratustra/core/artifacts.py",
+    "sha256": "46e5079ff1245d1f45a88559c0c61cf248c617d964c3c55838d135d0889f67b4"
+  },
+  {
+    "path": "zaratustra/core/context.py",
+    "sha256": "7465ede96f060da8a81aad9c6991fda7f4329221ec0b1498278782ba7a5a0ac4"
+  },
+  {
+    "path": "zaratustra/core/handoffs.py",
+    "sha256": "bc17ac0a62c37f2192a60a99406ab93234ddca0b7990890474504fad7318f01f"
+  },
+  {
+    "path": "zaratustra/core/migration_v2.py",
+    "sha256": "bfbb7c16ac43239e9775058d48a9716a867865fa58ddda2af318bcb7ac599a6f"
+  },
+  {
+    "path": "zaratustra/core/migration_v3.py",
+    "sha256": "78e1798b59e97ca33bf0db2758fb9505fcbfeaa1fb7cf73999e227564eb4e479"
+  },
+  {
+    "path": "zaratustra/core/migration_v4.py",
+    "sha256": "4832ca48d25cbc68efa94cb8d100c68f9b43b61eda203e2f01408c712b1ba1e1"
+  },
+  {
+    "path": "zaratustra/core/migration_v5.py",
+    "sha256": "840bd878273e8d9d40c624b12161f3e480c2e9604255e57eb895d301c819c51e"
+  },
+  {
+    "path": "zaratustra/core/migration_v6.py",
+    "sha256": "05c9251c53a7b651a942f957e7caccaedb7a2c3f4a5923dcb3ebd5714c6fb69c"
+  },
+  {
+    "path": "zaratustra/core/migrations.py",
+    "sha256": "e02eabf89c1e5692587cd945f686b45bffc54971f79339d13923c9a2c13f66b4"
+  },
+  {
+    "path": "zaratustra/core/mutations.py",
+    "sha256": "501c009a71f473126570195d61bc24fd0deaabc4cd1dd1a684a0dbca0f3fd1bc"
+  },
+  {
+    "path": "zaratustra/core/projections.py",
+    "sha256": "8b77413868b84706fadeee061112320e468cdc595687a15138b0dea632051227"
+  },
+  {
+    "path": "zaratustra/core/protocol.py",
+    "sha256": "470b26d536c7515af50741126a66e0c24baaa0201a66f3196635b7aa8bff27b9"
+  },
+  {
+    "path": "zaratustra/core/records.py",
+    "sha256": "c9f307437154453c0ca0c472f033501c24e8b87e56322fa426a4a70712661e3d"
+  },
+  {
+    "path": "zaratustra/core/results.py",
+    "sha256": "777e63802cd8c761f734bc0e8a82e13f44ff16943ac5444606efb490060bea09"
+  },
+  {
+    "path": "zaratustra/core/workspace.py",
+    "sha256": "9ff5d57659482c75ad42242b61df79a5bdf48e829ba8748f62a75ed354608736"
+  },
+  {
+    "path": "zaratustra/local/__init__.py",
+    "sha256": "89ddc2e43d350dfbebea9b116d095eeed8756a55a3e4a0b761a33aad4afe37df"
+  }
+]

@@ -1,0 +1,42 @@
+from pathlib import Path
+import hashlib,json,shutil,subprocess,sys,zipfile
+from tools.retain_trial import retain_trial
+root=Path(__file__).resolve().parents[1];base=Path(sys.argv[1]);evidence=root/'docs/work7/evidence'
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def git(*args):return subprocess.check_output(['git',*args],cwd=root).decode().strip()
+wheel=base/'zaratustra-0.7.0-py3-none-any.whl'
+assert wheel.read_bytes()==(root/'dist'/wheel.name).read_bytes()
+installed=base/'venv/Lib/site-packages'
+identity=[]
+with zipfile.ZipFile(wheel) as bundle:
+    for name in bundle.namelist():
+        if name.startswith('zaratustra/') and name.endswith('.py'):
+            assert (installed/name).read_bytes()==bundle.read(name)==(root/'src'/name).read_bytes()
+            identity.append(dict(path=name,sha256=sha(installed/name)))
+(base/'installed-source-final.json').write_text(json.dumps(identity,indent=2),encoding='utf-8')
+result=json.loads((base/'result.json').read_text(encoding='utf-8'))
+context=json.loads((base/'context-library.json').read_bytes())
+value=dict(candidate=git('rev-parse','HEAD'),branch=git('branch','--show-current'),
+    base='2fa3111666139eef3ae699319444809fce563ead',plan='69829a9',implementation='90f35f6',
+    cli_repair='5866a48',wheel_sha256=sha(wheel),installed_files_equal=len(identity),
+    trial=str(base),database_sha256=sha(base/'workspace/.zara/state.sqlite3'),
+    request_sha256=sha(base/'request.json'),result_sha256=sha(base/'result.json'),
+    context_sha256=sha(base/'context-library.json'),context_bytes=len((base/'context-library.json').read_bytes()),
+    source_count=len(context['context']['sources']),manifest=context['manifest'],
+    operation_id=result['receipt']['operation_id'],event_id=result['receipt']['event_id'],
+    previous_revision=result['receipt']['previous_revision'],new_revision=result['receipt']['new_revision'],
+    next_work_id=result['event']['next_work']['id'],
+    old_schema_context_exact=True,original_runtime_manifest='manifest.json (before CLI-only repair)',
+    final_runtime_identity='installed-source-final.json',scope='executor evidence; no owner runtime acceptance or fresh G5')
+(base/'final-build.json').write_text(json.dumps(value,indent=2),encoding='utf-8')
+for p in sorted(base.iterdir()):
+    if p.is_file() and p.suffix!='.whl':
+        name=p.name if p.suffix!='.py' else p.stem+'-script.txt'
+        shutil.copyfile(p,evidence/name)
+for name in ('installed_extra.py','locale_check.py','final_discover.py'):
+    shutil.copyfile(root/'_scratch'/name,evidence/(Path(name).stem+'-source.txt'))
+backup=retain_trial(base,evidence/'retained-trial.zip')
+(evidence/'retained-trial-manifest.json').write_text(json.dumps(backup,indent=2),encoding='utf-8')
+(evidence/'implementation.patch').write_bytes(subprocess.check_output(['git','diff','--binary',value['base'],'HEAD'],cwd=root))
+shutil.copyfile(Path(__file__),evidence/'retain-evidence-script.txt')
+print(json.dumps(dict(candidate=value['candidate'],context_bytes=value['context_bytes'],context_sha256=value['context_sha256'],wheel=value['wheel_sha256'],database=value['database_sha256'],backup_sha256=backup['archive_sha256'],files=len(backup['files']),directories=len(backup['directories'])),indent=2))

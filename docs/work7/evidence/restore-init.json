@@ -1,0 +1,12 @@
+{
+  "label": "init",
+  "command": [
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\zara.exe",
+    "init",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\workspace"
+  ],
+  "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\unrelated-cwd",
+  "exit": 0,
+  "stdout_sha256": "6a24c57c5f03023809df8463b354ba951ea3043e84a0c5b195203b7a3ce9e0bf",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

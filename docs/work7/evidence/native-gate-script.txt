@@ -1,0 +1,14 @@
+from pathlib import Path
+import json, subprocess, sys, time, datetime
+root=Path(__file__).resolve().parents[1]
+label=sys.argv[1]
+args=['uv','run','--locked','python','-m','tools.check',*sys.argv[2:]]
+started=time.monotonic()
+r=subprocess.run(args,cwd=root,capture_output=True)
+evidence=root/'docs/work7/evidence'
+(evidence/f'{label}.stdout').write_bytes(r.stdout)
+(evidence/f'{label}.stderr').write_bytes(r.stderr)
+(evidence/f'{label}.json').write_text(json.dumps(dict(command=args,cwd=str(root),exit=r.returncode,seconds=time.monotonic()-started,utc=datetime.datetime.now(datetime.UTC).isoformat()),indent=2),encoding='utf-8')
+print(r.stdout.decode('utf-8',errors='replace'))
+print(r.stderr.decode('utf-8',errors='replace'))
+sys.exit(r.returncode)

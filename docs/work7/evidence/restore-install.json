@@ -1,0 +1,18 @@
+{
+  "label": "install",
+  "command": [
+    "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+    "pip",
+    "install",
+    "--offline",
+    "--python",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\python.exe",
+    "-r",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\runtime-requirements.txt",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\zaratustra-0.7.0-py3-none-any.whl"
+  ],
+  "cwd": "C:\\projects\\zaratustra\\_scratch\\work7-result",
+  "exit": 0,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "87534681ea49e3b6fe4e9771571ec98bcf557d10db22b6a1147db3ab85be89c0"
+}

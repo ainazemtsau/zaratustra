@@ -1,0 +1,7 @@
+{
+  "before": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+  "after": "e20e86db43e7d19aa0bd885a8ffefc34b56a8a92704abafe45bc27a1aabf289d",
+  "old_schema": 5,
+  "new_schema": 6,
+  "revision": 11
+}

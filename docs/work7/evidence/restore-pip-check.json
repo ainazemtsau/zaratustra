@@ -1,0 +1,14 @@
+{
+  "label": "pip-check",
+  "command": [
+    "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+    "pip",
+    "check",
+    "--python",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\python.exe"
+  ],
+  "cwd": "C:\\projects\\zaratustra\\_scratch\\work7-result",
+  "exit": 0,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "586f20343192a27f3d2abd7c33d5963b2d0ff1f47e388300b398a4dbb6de27db"
+}

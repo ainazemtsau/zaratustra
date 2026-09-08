@@ -1,0 +1,11 @@
+{
+  "label": "version",
+  "command": [
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\zara.exe",
+    "--version"
+  ],
+  "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\unrelated-cwd",
+  "exit": 0,
+  "stdout_sha256": "926782cfae9fd44755ea6e492d278250edcb8997b51c82261dd2adc4b29b2d75",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

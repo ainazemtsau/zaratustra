@@ -1,0 +1,108 @@
+from pathlib import Path
+import hashlib, json, re, shutil, subprocess, zipfile
+
+root=Path(__file__).resolve().parents[1]
+docs=root/'docs/work7'; ev=docs/'evidence'
+def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()
+def git(*args): return subprocess.check_output(['git',*args],cwd=root)
+gate=json.loads((ev/'native-deliver.json').read_text(encoding='utf-8'))
+assert gate['exit']==0
+assert '140 passed in 29.52s' in (ev/'native-deliver.stdout').read_text(encoding='utf-8')
+build=json.loads((ev/'final-build.json').read_text(encoding='utf-8'))
+assert git('rev-parse','HEAD').decode().strip()==build['candidate']
+assert sha(root/'dist/zaratustra-0.7.0-py3-none-any.whl')==build['wheel_sha256']
+assert git('diff',build['base'],build['candidate'])==(ev/'implementation.patch').read_bytes()
+manifest=json.loads((ev/'retained-trial-manifest.json').read_text(encoding='utf-8'))
+assert sha(ev/'retained-trial.zip')==manifest['archive_sha256']
+with zipfile.ZipFile(ev/'retained-trial.zip') as archive:
+    for name,digest in manifest['files'].items():
+        assert hashlib.sha256(archive.read(name)).hexdigest()==digest,name
+    assert all(archive.getinfo(name).is_dir() for name in manifest['directories'])
+old_paths=['validation.config',*[f'docs/work{i}' for i in range(1,7)],*[f'src/zaratustra/core/migration_v{i}.py' for i in range(1,6)]]
+assert not git('diff',build['base'],'--name-only','--',*old_paths).strip()
+assert git('diff',build['base'],'--name-only','--','tests').decode().strip()=='tests/zaratustra/core/test_results.py'
+assert not git('diff',build['candidate'],'--name-only','--','src','tests','tools','pyproject.toml','uv.lock').strip()
+report=(root/'RESULT.md').read_text(encoding='utf-8')
+old='Final full --deliver outcome and exact count: docs/work7/DELIVERY.md and\nnative-deliver.json/stdout/stderr.'
+new='Final full --deliver PASS: 140 tests in 29.52s, build, hygiene, ruff, mypy,\ntwo import boundaries and report structure. Raw: native-deliver.json/stdout/stderr;\nexact command and duration: docs/work7/DELIVERY.md.'
+assert old in report
+(root/'RESULT.md').write_text(report.replace(old,new),encoding='utf-8',newline='\n')
+delivery=f'''# Work 7 delivery verification
+
+Final source candidate: {build['candidate']}.
+Accepted base: {build['base']}. Branch: codex/work7-result.
+Evidence/docs delivery commit follows this candidate; the final HOME message
+provides its exact id. No source, tests, tools or dependency changes follow the
+source candidate.
+
+Command: uv run --locked python -m tools.check --deliver.
+Actual cwd: C:/projects/zaratustra/_scratch/work7-result.
+Exit: 0; completed UTC: {gate['utc']}; total seconds: {gate['seconds']:.3f}.
+140 tests passed in 29.52s. Ruff formatting/lint, mypy (41 files), both import
+boundaries, hygiene, wheel/sdist build and report structure all passed.
+Raw evidence: evidence/native-deliver.json, .stdout and .stderr.
+Native report gate checks structure, never truth or owner acceptance.
+
+Rebuilt wheel SHA-256 equals the independently installed/restored wheel:
+{build['wheel_sha256']}.
+Source diff is byte-identical to evidence/implementation.patch. Released migration
+files1–5, validation.config, docs/work1–6 and prior tests are unchanged. Only the
+new test_results.py appears in the test diff. Retained ZIP was reread: all 149
+file hashes and 136 directory entries match its manifest.
+
+Installed execution, actual console permissions, rollback/replay/lost-response,
+byte repair, final Unicode-output repair and full restore evidence are described
+in RESULT.md and INSTALL.md. Initial failed runs are preserved separately.
+No broad test rerun is needed for the following evidence-only documentation edits.
+
+Owner confirmed the fictional fixture only. Actual clean-chat understanding,
+owner runtime acceptance and fresh physical G5 are absent. HOME: solmax.
+This report does not close T6/CALL/M0 or authorize Work8.
+
+END_OF_FILE: docs/work7/DELIVERY.md
+'''
+(docs/'DELIVERY.md').write_text(delivery,encoding='utf-8',newline='\n')
+home='''# Work 7 Product handback — HOME solmax
+
+Full Product RESULT: ../../RESULT.md at the final evidence commit returned in chat.
+Source candidate: 5866a48c5f9d0f492ad55723120366ffe8f08921.
+Checkout: C:/projects/zaratustra/_scratch/work7-result; branch codex/work7-result.
+Base: 2fa3111666139eef3ae699319444809fce563ead.
+PLAN.md and OWNER-FIXTURE.md precede dependent implementation. CALL.md is retained.
+
+Atomic Result/source completion/receipt/next Work and recoverable scoped next
+context are implemented. Native --deliver: 140 tests and all required native
+checks PASS (DELIVERY.md). Independent installed wheel, actual console, failure
+checks and full restore are retained under evidence/. The restored exact next
+package is 20873 bytes, eight sources; all trial 149 files and 136 directories
+survived extraction and reads. INSTALL.md gives runnable commands and observations.
+
+The first runtime phase is source90f35f6; the final source adds only the tested
+Windows Result-discovery encoding repair. final-build.json and installed-source-
+final.json name the final installed identity. Earlier native/diagnostic failures
+are retained and are not PASS evidence. OUTPUT-REPAIR.md explicitly routes the
+legacy records/history output class sibling HOME:work7-locale-output-audit.
+
+No fresh physical G5 has occurred in this Product session. Direction must check
+all three CALL claims against this exact candidate before T6 close; prior Work6
+G5 does not verify Result semantics. No owner runtime acceptance or actual clean
+chat/five-fact demonstration is claimed. Work8 has not started. Product returns
+next: solmax; no Direction state or successor CALL was written.
+
+END_OF_FILE: docs/work7/HOME.md
+'''
+(docs/'HOME.md').write_text(home,encoding='utf-8',newline='\n')
+for p in [root/'RESULT.md',*(docs.glob('*.md'))]:
+    text=p.read_text(encoding='utf-8')
+    assert 'END_OF_FILE:' in text,p
+    assert not any(line.endswith(' ') for line in text.splitlines()),p
+shutil.copyfile(Path(__file__),ev/'delivery-custody-script.txt')
+out=dict(source_candidate=build['candidate'],native_exit=0,tests=140,
+    rebuilt_wheel_sha256=build['wheel_sha256'],base_diff_bytes_equal=True,
+    retained_zip_sha256=manifest['archive_sha256'],archive_file_hashes_equal=len(manifest['files']),
+    archive_directories_present=len(manifest['directories']),old_paths_unchanged=old_paths,
+    old_tests_unchanged=True,source_since_candidate_unchanged=True,
+    scope='artifact custody and report consistency, not behavior acceptance',
+    evidence_files={p.name:sha(p) for p in sorted(ev.iterdir()) if p.is_file() and p.name!='delivery-custody.json'})
+(ev/'delivery-custody.json').write_text(json.dumps(out,indent=2),encoding='utf-8')
+print(json.dumps({k:v for k,v in out.items() if k!='evidence_files'},indent=2))

@@ -1,0 +1,10 @@
+Using Python 3.13.7 environment at: C:\Users\Anton\AppData\Local\Temp\zaratustra-work7-restore-0dy2qb3o\venv
+Resolved 6 packages in 10ms
+Prepared 1 package in 14ms
+Installed 6 packages in 48ms
+ + annotated-types==0.8.0
+ + pydantic==2.13.5
+ + pydantic-core==2.46.5
+ + typing-extensions==4.16.0
+ + typing-inspection==0.4.4
+ + zaratustra==0.7.0 (from file:///C:/Users/Anton/AppData/Local/Temp/zaratustra-work7-restore-0dy2qb3o/zaratustra-0.7.0-py3-none-any.whl)

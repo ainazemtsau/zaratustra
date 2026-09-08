@@ -1,0 +1,109 @@
+{
+  "workspace_path": "C:/Users/Anton/AppData/Local/Temp/zaratustra-work7-m8i5i307/workspace",
+  "current": {
+    "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+    "state_revision": 12,
+    "records": [
+      {
+        "id": "7f72c737-0ed3-420d-bc82-dfe69996cdb2",
+        "revision": 1,
+        "created_at": "2026-09-08T16:46:57.117288Z",
+        "kind": "artifact",
+        "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+        "work_id": "09154bbb-34e0-4917-ad85-74cbaee0824d",
+        "title": "\u041a\u0440\u0430\u0442\u043a\u043e\u0435 \u0441\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u0435",
+        "status": "declared",
+        "active_version": null
+      },
+      {
+        "id": "ae7eca56-fd16-41ad-b262-2981468b922e",
+        "revision": 3,
+        "created_at": "2026-09-08T04:03:30.216247Z",
+        "kind": "artifact",
+        "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+        "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+        "title": "Observation draft",
+        "status": "registered",
+        "active_version": "75a8c7b3-3f17-4a50-a777-c70f3515bfd8"
+      },
+      {
+        "id": "b0257ea3-6179-4ac2-95a2-de033bf98078",
+        "revision": 1,
+        "created_at": "2026-09-08T04:03:30.216247Z",
+        "kind": "event",
+        "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+        "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+        "action": "initial_records_created",
+        "actor": "local-invocation",
+        "basis": "explicit-workspace-bootstrap",
+        "product_version": "0.2.0",
+        "state_revision": 1,
+        "affected_ids": [
+          "bae978a9-a181-4368-be55-b1837fd47747",
+          "56785bef-c147-4236-b12a-cad24845567a",
+          "ae7eca56-fd16-41ad-b262-2981468b922e"
+        ]
+      },
+      {
+        "id": "bae978a9-a181-4368-be55-b1837fd47747",
+        "revision": 1,
+        "created_at": "2026-09-08T04:03:30.216247Z",
+        "kind": "process",
+        "title": "Fictional observatory"
+      },
+      {
+        "id": "09154bbb-34e0-4917-ad85-74cbaee0824d",
+        "revision": 12,
+        "created_at": "2026-09-08T16:46:57.117288Z",
+        "kind": "work",
+        "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+        "goal": "\u0421\u0440\u0430\u0432\u043d\u0438\u0442\u044c \u0434\u0432\u0430 \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u044b\u0445 \u043e\u043f\u0438\u0441\u0430\u043d\u0438\u044f \u0432\u044b\u043c\u044b\u0448\u043b\u0435\u043d\u043d\u043e\u0439 \u043b\u0443\u043d\u044b",
+        "expected_result": "\u041a\u0440\u0430\u0442\u043a\u043e\u0435 \u0441\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u0435",
+        "acceptance": [
+          "\u0423\u043a\u0430\u0437\u0430\u0442\u044c, \u0447\u0442\u043e \u0441\u0435\u0440\u0435\u0431\u0440\u044f\u043d\u044b\u0439 \u043a\u0440\u0430\u0439 \u0432\u0438\u0434\u0435\u043d \u043d\u0430 \u0437\u0430\u043a\u0430\u0442\u0435, \u0438 \u0441\u043e\u0441\u043b\u0430\u0442\u044c\u0441\u044f \u043d\u0430 \u043e\u0431\u0435 \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u044b\u0435 \u0432\u0435\u0440\u0441\u0438\u0438"
+        ],
+        "boundaries": [
+          "\u0422\u043e\u043b\u044c\u043a\u043e Fictional observatory, \u0431\u0435\u0437 \u0432\u043d\u0435\u0448\u043d\u0438\u0445 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0439"
+        ],
+        "budget": "One short local session",
+        "status": "ready",
+        "authority_scope": "work_metadata",
+        "context_handles": [],
+        "dependencies": [],
+        "executor_requirements": []
+      },
+      {
+        "id": "56785bef-c147-4236-b12a-cad24845567a",
+        "revision": 12,
+        "created_at": "2026-09-08T04:03:30.216247Z",
+        "kind": "work",
+        "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+        "goal": "Describe an imaginary moon",
+        "expected_result": "A short fictional observation",
+        "acceptance": [
+          "The observation is saved"
+        ],
+        "boundaries": [
+          "Fictional data only"
+        ],
+        "budget": "One short local session",
+        "status": "done",
+        "authority_scope": "work_metadata_and_artifact",
+        "context_handles": [],
+        "dependencies": [],
+        "executor_requirements": [
+          "reasoning",
+          "coding"
+        ],
+        "completion_id": "9179d4f8-d868-49c0-8ec8-3df7078bffc8"
+      }
+    ]
+  },
+  "request": {
+    "version": 1,
+    "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+    "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+    "operation_id": "9179d4f8-d868-49c0-8ec8-3df7078bffc8"
+  },
+  "request_sha256": "d23aaddcc13b9468eee6a4c16d4d8f3aa63855dadb3382e4c9d9162a93bf58a6"
+}

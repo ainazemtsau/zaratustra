@@ -1,0 +1,14 @@
+{
+  "label": "expand",
+  "command": [
+    "pwsh",
+    "-NoProfile",
+    "-NonInteractive",
+    "-Command",
+    "Expand-Archive -LiteralPath 'C:\\projects\\zaratustra\\_scratch\\work7-result\\docs\\work7\\evidence\\retained-trial.zip' -DestinationPath 'C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o'"
+  ],
+  "cwd": "C:\\projects\\zaratustra\\_scratch\\work7-result",
+  "exit": 0,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

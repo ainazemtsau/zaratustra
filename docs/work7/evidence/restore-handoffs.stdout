@@ -1,0 +1,120 @@
+[
+  {
+    "handoff": {
+      "kind": "handoff",
+      "version": 1,
+      "handoff_id": "d0032728-4bb3-41b7-b8ee-b3996c872dc8",
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "process": "bae978a9-a181-4368-be55-b1837fd47747",
+      "related_work": "56785bef-c147-4236-b12a-cad24845567a",
+      "intent": "accepted_result",
+      "source_revision": 9,
+      "result": {
+        "artifact_id": "ae7eca56-fd16-41ad-b262-2981468b922e",
+        "version_id": "75a8c7b3-3f17-4a50-a777-c70f3515bfd8",
+        "sha256": "6fd73651c03ddf966703c5b96f6b7a7da79a6d3482b82342f191dd4ea9299b45"
+      },
+      "basis": [
+        {
+          "artifact_id": "ae7eca56-fd16-41ad-b262-2981468b922e",
+          "version_id": "258ea271-3f06-4c29-9caa-09cf2613d2d4",
+          "sha256": "de22a67833d4525f95d460d75890f8a046a08d51e19bd086e380df104afd1214"
+        }
+      ],
+      "provenance": "Fictional observation accepted because the silver rim is visible.",
+      "owner_instruction": "  Fictional quoted decision: retain this observation.  ",
+      "constraints": [
+        "Only the fictional observatory"
+      ],
+      "open_questions": [
+        "Continuation belongs to a later admitted Work"
+      ],
+      "created_by": "executor-fictional-file"
+    },
+    "delivery": {
+      "source_ref": "C:/Users/Anton/AppData/Local/Temp/zaratustra-work5-96nw94ii/handoff-file.json",
+      "input_sha256": "64ea7acfd4bdc41d93599b3450f9f75b33034fde71cbec726995b55b1f2a58e3"
+    },
+    "confirmation": {
+      "channel": "local-console",
+      "actor": "local-console-operator",
+      "source_ref": "console-confirmation:46ba43ff-ae00-440f-b185-6f0f4571a54b",
+      "confirmed_at": "2026-09-08T09:21:38.764716Z",
+      "workspace_path": "C:/Users/Anton/AppData/Local/Temp/zaratustra-work5-96nw94ii/workspace",
+      "request_sha256": "2634d4af15e277153c25562d19e745031153c37c9a5f29721e85162e1e80daeb"
+    },
+    "receipt": {
+      "operation_id": "d0032728-4bb3-41b7-b8ee-b3996c872dc8",
+      "event_id": "72885554-1023-4b45-9b1a-332273dd45ba",
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "previous_revision": 9,
+      "new_revision": 10,
+      "fingerprint": "7a7ae19c94a485eed09e71d3ab23b9b8e660fb665a752bc0681be7cf67372aea",
+      "recorded_at": "2026-09-08T09:21:38.773140Z",
+      "product_version": "0.5.0",
+      "affected_projections": [
+        "overview.md"
+      ]
+    }
+  },
+  {
+    "handoff": {
+      "kind": "handoff",
+      "version": 1,
+      "handoff_id": "9530e3d4-0ccb-4a93-845f-bfcd724dd771",
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "process": "bae978a9-a181-4368-be55-b1837fd47747",
+      "related_work": "56785bef-c147-4236-b12a-cad24845567a",
+      "intent": "accepted_result",
+      "source_revision": 10,
+      "result": {
+        "artifact_id": "ae7eca56-fd16-41ad-b262-2981468b922e",
+        "version_id": "75a8c7b3-3f17-4a50-a777-c70f3515bfd8",
+        "sha256": "6fd73651c03ddf966703c5b96f6b7a7da79a6d3482b82342f191dd4ea9299b45"
+      },
+      "basis": [
+        {
+          "artifact_id": "ae7eca56-fd16-41ad-b262-2981468b922e",
+          "version_id": "258ea271-3f06-4c29-9caa-09cf2613d2d4",
+          "sha256": "de22a67833d4525f95d460d75890f8a046a08d51e19bd086e380df104afd1214"
+        }
+      ],
+      "provenance": "Fictional observation accepted because the silver rim is visible.",
+      "owner_instruction": "  Fictional quoted decision: retain this observation.  ",
+      "constraints": [
+        "Only the fictional observatory"
+      ],
+      "open_questions": [
+        "Continuation belongs to a later admitted Work"
+      ],
+      "created_by": "executor-fictional-stdin"
+    },
+    "delivery": {
+      "source_ref": "stdin",
+      "input_sha256": "376a8514fc9ad46687f163dc9b1c96622e40476bde137b5c9ef460d59451eb00"
+    },
+    "confirmation": {
+      "channel": "local-console",
+      "actor": "local-console-operator",
+      "source_ref": "console-confirmation:6de229a3-ab83-4aa4-bb2f-ad47e7de0ded",
+      "confirmed_at": "2026-09-08T09:21:50.596000Z",
+      "workspace_path": "C:/Users/Anton/AppData/Local/Temp/zaratustra-work5-96nw94ii/workspace",
+      "request_sha256": "d3dd497a5e58dbf7481e4e47c92cf3ea2443688bfbeb67d9ba9a76448daf28a7"
+    },
+    "receipt": {
+      "operation_id": "9530e3d4-0ccb-4a93-845f-bfcd724dd771",
+      "event_id": "22ece12d-198b-4730-88c0-1c7f8c18ac8f",
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "previous_revision": 10,
+      "new_revision": 11,
+      "fingerprint": "8baf57ef5f0a2ee23e630a168cadd11ad600416486f6d0becab2070fd7a73e50",
+      "recorded_at": "2026-09-08T09:21:50.602174Z",
+      "product_version": "0.5.0",
+      "affected_projections": [
+        "overview.md"
+      ]
+    }
+  }
+]

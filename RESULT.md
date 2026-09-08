@@ -1,144 +1,184 @@
-# Product RESULT — Work 6, HOME solmax
+# Product RESULT — Work 7, HOME solmax
 
-call: c-solmax-zaratustra-m0-context-20260908-work6
+call: c-solmax-zaratustra-m0-result-20260908-work7
 mode: PROBA; engineering_contract: 36
-product: C:/projects/zaratustra/_scratch/work6-context
-branch: codex/work6-context
-base: 589861c4657f19763b0af4ab965bd84646eecb70
-plan_commit: cafe07b2617c2dc8ccda5d71842ad5432236b2d1
-implementation_commit: e5576df5550d54de47c1d29d666d60c0194412f3
-version: 0.6.0; schema: 5; default explicit migration target: 4 (unchanged)
+product: C:/projects/zaratustra/_scratch/work7-result
+branch: codex/work7-result
+base: 2fa3111666139eef3ae699319444809fce563ead
+plan_commit: 69829a9458253d0ae7ba6912f276612c0b22c799
+implementation_commit: 90f35f6251a5dc1511e9ac94e5f5dee11628bfa0
+final_source_candidate: 5866a48c5f9d0f492ad55723120366ffe8f08921
+version: 0.7.0; schema: 6; default explicit migration target: 4 (unchanged)
 
 ## outcome
 
-REPORT: Work 6 engineering implementation and executor evidence delivered HOME.
-Public open_work and zara work open return current bounded exact context plus an
-actual-output manifest under exact trusted authorization. Full revalidation catches
-changes during assembly; stale, terminal/revoked, scope, bytes and budget failures
-return no package. Opening performs no domain mutation or projection write.
+REPORT: Work 7 implementation and executor evidence returned HOME.
+submit_result commits a completed source Work, immutable Result, mutation event,
+receipt and exactly one ready next Work in one transaction. read_result recovers
+the accepted link by original operation id after restart or lost response.
+open_work delivers the next Work's exact current context with historical grounds.
+This is Product engineering evidence; T6/CALL/M0 remain Direction responsibilities.
 
-| CALL done_when | Actual engineering evidence / boundary |
+| CALL done_when | Actual evidence and limit |
 |---|---|
-| 1. Current Work and effective bases/revisions; obsolete/terminal does not reopen | Ready/current rights and exact expected revision checked twice. Installed positive revision 11; stale revision 10 conflicts; revoked/terminal and decision/requirements/rights changes during compilation refuse. Cancelled is today's terminal state; Work 7 completion state is not implemented, unsupported done fails schema validation. |
-| 2. Manifest names actual bounded scoped sources; foreign content excluded | Exact CLI stdout: 12320 bytes / 65536, 7 sources, complete acceptance/bases and exact content/provenance. Library/CLI/restored bytes match. Foreign Process/exact Artifact refs refuse; inert foreign file link transfers no sentinel content. No second full Process. |
-| 3. Freshness/dependencies/scope/budget without silent loss | Native full-byte boundary, late missing/corrupt bytes, publication-reference closure, BUSY and assembly interleavings pass. Installed selected runtime checks run outside checkout; overflow gives empty stdout. Manifest is not proof of clean-chat understanding. |
+| 1. Result, mutation, receipt and next Work are saved and recoverable | Installed console submit commits revision 11 -> 12. Source completion_id equals operation_id; immutable Result/event/receipt name the next Work. New process and restored installed runtime recover the same Result and next id. Raw result.json, console-submit.stdout, final-build.json, restore-verification.json. |
+| 2. PLAN W19/W20 defines the effect and prevents duplicate/lost continuation | PLAN committed before implementation. Native and installed checks cover terminal replay/new id, stale/collision/current authority, rollback/exact retry, post-commit lost response, projection failure, byte loss/repair and restart. Unknown outcome uses discovery, never a new id or reopening. |
+| 3. Next package preserves decision, basis, effective revision, result and next step | Exact 20873-byte CLI package contains incoming Result/source images, both accepted decisions and their historical revisions, two exact versioned grounds, and the explicitly confirmed next goal/criteria/scope. CLI/library/restore bytes match. Understanding these five facts in an actual separate clean chat remains T7/Work8. |
 
 ## evidence
 
-Contract and individual W19–W27 dispositions: docs/work6/PLAN.md, committed before
-implementation. Walkthrough, expected observations and evidence to save:
-docs/work6/INSTALL.md. Complete base-to-implementation diff:
-docs/work6/evidence/implementation.patch. Actual refs, source locators/hashes and
-preservation: docs/work6/evidence/preservation.json. Final evidence/docs commit id
-is returned in the HOME message; no self-referential commit hash is invented.
+Authority was checked against issuing Direction main
+3b9db6e2460dcf271e95b3937f4d123dbd9e2c04, authenticated remote main at start.
+PLAN records the required architecture/contract/Work6 close inputs; CALL.md retains
+the complete issued task. Work6 binding G5 is prior evidence for unchanged claims,
+not a verification of this new Result behavior. No Direction state was written.
 
-Native full tools.check: 119 tests PASS, wheel/sdist build, ruff format/lint, mypy,
-hygiene and 2 import boundaries PASS. Final --deliver raw:
-docs/work6/evidence/native-deliver.json, native-deliver.stdout, native-deliver.stderr.
-20 context tests use new accepted-v2 main-workspace copies; all previous 99 checks
-remain in the complete run, including W19/W20 mutation/artifact/restore semantics.
+Contract: docs/work7/PLAN.md. Exact fixture permission: OWNER-FIXTURE.md in that
+directory. Runnable installation, reproduction and expected observations:
+docs/work7/INSTALL.md. All raw paths below are in docs/work7/evidence/.
+Base-to-source diff: implementation.patch. Final evidence/docs commit is returned
+in the HOME message; no self-referential commit id is invented in this file.
 
-Installed raw in docs/work6/evidence: install.json, installed-run.json, runtime.json,
-installed-source.json, hidden-checks.json (14 cases), exercise-receipt.json,
-console-checks.json, console-*-prompt.json, terminal-session.json, console-*.stdout.
-17 installed Python files equal wheel/source. Python 3.13.7, SQLite 3.50.4,
-Pydantic 2.13.5; isolated -I/unrelated-cwd, source absent from sys.path.
-Four actual console confirmations were entered by the executor on the authorized
-fictional copy. Hidden library checks explicitly simulate prior-permission local-chat.
-Neither is owner runtime acceptance or binding G5.
+Native full tools.check before the narrow CLI repair passed 139 tests plus build,
+hygiene, ruff, mypy and two import boundaries (native-fourth.*). The encoding
+repair added a child-process regression; focused Result tests then passed 21
+cases. Final full --deliver PASS: 140 tests in 29.52s, build, hygiene, ruff, mypy,
+two import boundaries and report structure. Raw: native-deliver.json/stdout/stderr;
+exact command and duration: docs/work7/DELIVERY.md. Earlier failed native runs are retained as
+diagnostics; they are not PASS evidence and no old test was rewritten.
 
-Trial: C:/Users/Anton/AppData/Local/Temp/zaratustra-work6-_0caf231.
-Runtime: its venv; selected data: its workspace. Main remains schema 5/revision 11;
-DB SHA-256 9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24.
-Faults use separate negative-copies; these are not working/restore bases.
+Installed Python 3.13.7 / SQLite 3.50.4 / Pydantic 2.13.5. Final wheel and 19
+installed Python files equal the source candidate; -I runs use unrelated-cwd
+without source checkout on sys.path. See installed-source-final.json. Initial
+manifest.json, installed-source.json and first six console runs refer to
+implementation 90f35f6, before the output-only repair. final-build.json,
+locale-after.*, console-final-discover.*, installed-extra.json and restored
+runtime identify final source 5866a48. The repaired wheel was installed into the
+same explicitly selected new trial without changing its main DB.
+
+Seven actual executor console confirmations were performed: submit/discover/next,
+expected terminal replay/stale/budget refusal, then final repaired discovery.
+Prompt and terminal-session raw are retained. Additional Core fault injections
+explicitly simulate prior-permission local-chat authority; they are not actual
+owner runtime acceptance. Fault workspaces remain labeled negative-copies.
+
+| Installed evidence | Observation |
+|---|---|
+| console-checks.json and console-*.stdout | Main submit/discovery/next succeed; terminal replay, stale and budget return exit 1 with empty stdout. |
+| hidden-checks.json, exercise-receipt.json | 14 groups: terminal original/new id, stale, collision, missing authority, lost response, projection failure, missing/corrupt/late-lost bytes, exact budget boundary, foreign Process/ref and revoked consumer. |
+| installed-extra.json, installed_extra-source.txt | Five additional groups: SQLite write-denial rollback preserves DB then exact same-id retry; missing/corrupt exact repairs preserve Result/link and quarantine; registered but ungranted historical version refuses; a separate OS process discovers committed lost-response Result and same next context. |
+| locale-before.*, locale-after.*, console-final-discover.* | Actual new result-read command fails under ASCII stdout before repair, succeeds after repair with all decoded Russian values retained. Final actual console output equals locale-after.stdout. |
+| restore-verification.json and restore-* raw | PowerShell Expand-Archive creates a new selected copy; offline installed final wheel reproduces Result and exact context. 149 files match and 136 directories exist after reads. |
+| preservation-before.json, preservation-after.json | Accepted Work5/6 refs, tracked bytes, retained trial files/directories and selected Direction authority bytes remain unchanged. |
+
+The first additional restart diagnostic recovered data but failed printing its
+summary under cp1252; lost-reply-restart.json preserves that failure. Its corrected
+driver writes explicit UTF-8 and lost-reply-restart-final.json records success.
+OUTPUT-REPAIR.md gives the discovered class, repair, regression and sibling sweep.
+Legacy owner-local records/history text output under restrictive encodings remains
+an explicit HOME:work7-locale-output-audit follow-up, outside this Result delta.
+
+Trial: C:/Users/Anton/AppData/Local/Temp/zaratustra-work7-m8i5i307.
+Runtime: venv; selected data: workspace. Main DB schema6/revision12.
+Actual restored trial: C:/Users/Anton/AppData/Local/Temp/zaratustra-work7-restore-0dy2qb3o.
+Negative copies are diagnostics, never a main or restore base.
+
+| Identity | Exact value |
+|---|---|
+| workspace | 4846e59f-b3f8-4ed1-9bb3-fea22f713b88 |
+| Process | bae978a9-a181-4368-be55-b1837fd47747 |
+| source Work, now done | 56785bef-c147-4236-b12a-cad24845567a |
+| Result operation / completion id | 9179d4f8-d868-49c0-8ec8-3df7078bffc8 |
+| mutation event | a23d88b5-132a-434c-b6de-c339c48130f1 |
+| next Work, ready | 09154bbb-34e0-4917-ad85-74cbaee0824d |
+| next Artifact, declared | 7f72c737-0ed3-420d-bc82-dfe69996cdb2 |
 
 | Exact artifact | SHA-256 / measurement |
 |---|---|
-| zaratustra-0.6.0-py3-none-any.whl, retained in ZIP | 876f623afe6a96f937e3584ea54470e5510002ef67f2b55480b99f1f6b41c816 |
-| console-open.stdout = context-library.json = restore-context.stdout | 438bf8af803b20763c9e904097c7f5f250e2b06f34928720535d7e903604df85; 12320 exact bytes including LF |
-| retained-trial.zip | 1657d3a559ba1275ea010b5d83ff0cb818ba26fa74ab195cc86f8218ac57d539; 75 files, 72 directories |
-| accepted Work 5 retained-trial-v2.zip, unchanged | fdb39d39441f9e739e2d6ec17391ad7500a8d86284a79b186df073088487bb51 |
+| final wheel zaratustra-0.7.0-py3-none-any.whl, retained in ZIP | dada5424fdf899c7d78d62b97f7acbd9edece35bc2c322e65e877b3bb6db8b84 |
+| main workspace/.zara/state.sqlite3 | 8ade9179887bcd3fe5a6f022e2f63d66b8fd51ce62dffc6ddd9c25aecb10979c |
+| exact request.json | ad2a030fd6bc1c5c730adc3034b4379e617327f65c4d9a5e026ee612e988a5a9 |
+| result.json | 5339e129f6855b10d0f530257b22df08b1df3b89f3eff7c6fcaac0e72db4df11 |
+| console-next.stdout = context-library.json = restore-context.stdout | f9549bbbfd83eed752dae510c2f91db06217ff130673558c0643af5744fe1894; 20873 bytes including LF |
+| retained-trial.zip | 90acb543e44959949ea90a94a004528598fcc75b70bb58a6f2f6f21079bcdd2f; 149 files, 136 directories |
+| accepted Work6 retained-trial.zip, unchanged | 1657d3a559ba1275ea010b5d83ff0cb818ba26fa74ab195cc86f8218ac57d539; 75 files, 72 directories |
+| accepted Work5 retained-trial-v2.zip, unchanged | fdb39d39441f9e739e2d6ec17391ad7500a8d86284a79b186df073088487bb51 |
 
-Actual manifest: docs/work6/evidence/context-manifest.json; full wire includes
-matching envelope. State/Work/authority revision 11, Process revision 1, Artifact
-revision 3, acceptances revisions 10/11 and two immutable content versions.
-All 7 source locators/revisions/value hashes/sizes and raw content hashes/sizes
-are listed. Full budget includes manifest and LF. Installed maximum 5000 reports
-required 12318 and empty stdout; native maximum 12320 passes / 12319 refuses.
-No implicit budget expansion, pruning or interpretation of text links as read grants.
+ContextQuery exact bytes: query.json; discovery query: receipt-query.json.
+Manifest: context-manifest.json and final-build.json. Full budget is 20873/65536
+UTF-8 bytes including envelope, source values, manifest and LF; eight sources:
+Process, current Work, declared Artifact, incoming Result, two acceptances and two
+versioned content objects. Handoff source revisions9/10 remain historical;
+acceptance revisions10/11 and submitted source revision11 differ from current
+global/Work/authority revision12. Process revision1 and new Artifact revision1
+remain explicit. No human effort budget conversion, truncation or silent increase.
+The old schema5 context reproduced exactly (12320 bytes, SHA-256
+438bf8af803b20763c9e904097c7f5f250e2b06f34928720535d7e903604df85)
+before explicit migration6 on the new copy.
 
-Restored trial: C:/Users/Anton/AppData/Local/Temp/zaratustra-work6-restore-x6gm4klu.
-Separate runtime: C:/Users/Anton/AppData/Local/Temp/zaratustra-work6-restore-runtime-2sclf4if.
-ZIP CRC, all file hashes and directory inventory match; new offline install,
-CLI version/status/handoffs/history/init/projection and exact open pass.
-All 75 files/72 directories unchanged after reads. Raw: restore-*.json/stdout/stderr,
-restore-verification.json and evidence-script.txt. Original locators remain in
-provenance/manifests. No manual DB or layout repair.
+Freshness is only at full final revalidation, not a lease for later work. Incoming
+historical grants are finite exact versions, not arbitrary ancestor access or
+acceptance of the next goal. Current consumer revocation refuses open/discovery
+as applicable. DB/projection/receipt presence never proves current content bytes.
 
-### W19–W27 returned individually
+### W19–W27 decisions, residual answerers and rewrite exposure
 
-| ID | Decision here / remaining answerer and moment | rewrites |
+| ID | Decision / answerer and moment | rewrites |
 |---|---|---|
-| W19 | Product PLAN before Work 6 reads: read-only open; old acceptance/replay/stale/collision unchanged. Product PLAN before Work 7: Result/next effect unit. | importer/receipts/linkage/failures/migrations; cheap reversal unproved |
-| W20 | Product PLAN before content reads: exact bytes twice, no repair, retain restore v2. Product PLAN before Work 7: continuation/recovery. | durable refs/recovery/evidence/migrations |
-| W21 | Product PLAN before reads: exact trusted query/current rights and nontransitive authority above; accepted Work 3 owner words reused. Product PLAN before Work 7: Result consumer. | adapters/permissions/consumer boundaries; decision is not runtime PASS |
-| W22 | Product PLAN before Work 6: complete revalidation, global invalidation, membership, namespaces, mandatory closure, byte overflow and actual manifest above. Later dependent PLAN owns extensions. | snapshot/context/tests/possible migrations; no freshness/scope/budget cut |
-| W23 | Product PLAN before Work 6: exact output bytes/hash plus manual delivery protocol. Product PLAN/owner at Work 8: actual clean session/five facts. | delivery/demo/repeat Work 8; unprovable cleanliness is blocker |
-| W24 | Product PLAN before implementation: query/wire v1, 0.6.0/schema5, no migration, fixed-point bytes, existing BUSY/layout. Later PLAN per admitted Work. | mechanics/tests/migrations; semantic change returns W19–W22 |
-| W25 | Product PLAN before fixtures: new copies of one fictional graph and minimal foreign sentinel above. Product PLAN/owner before Work 8 actual demo. | fixtures/tests/demo; no second full or real Process |
-| W26 | Product PLAN before start: actual isolated checkout/ref above and separate local installed trial. Owner before permanent location/hosting/independent external install-upgrade. | package/layout/docs; no new external rights |
-| W27 | Product PLAN before public consumer: only versioned M0 ContextQuery/open_work/ContextPackage seam. Future consumer PLAN at its own admission. E1–E12 remain in Direction CONTRACTS; E4/E5/E7/E12 get no invented direct M0 APIs. | public Core/data/consumer migrations; M1+ not prerequisite; cheap replacement unproved |
+| W19 | Product PLAN before submit: one atomic Result/completion/next effect, terminal refusal, original-id discovery. Exact fictional content owner-confirmed; real owner content goes HOME before use. | Journal, importer, receipts, links, failure tests; cheap reversal unproved. |
+| W20 | Product PLAN before writes: prior published bytes, complete reference validation, transaction, post-commit discovery, exact repair/restore. | Durable refs, recovery, evidence, migration. |
+| W21 | Product PLAN before consumer: exact request/path/content/next-rights confirmation and current scope. Owner before any real new rights/content. | Permissions, adapters, consumer boundaries; trust decision is not runtime PASS. |
+| W22 | Product PLAN before next context: per-Work journal, conservative global invalidation, all acceptances and finite inherited closure; two-pass full bytes and full wire budget. | Snapshot/context contracts, tests, migration; no freshness/scope/budget cut. |
+| W23 | Product PLAN before package: exact input/output retained. Product PLAN/owner at T7 decide actual separate clean-chat delivery and five-fact demonstration. | Delivery/demo and possible Work8 repeat; clean-chat evidence still absent. |
+| W24 | Product PLAN before implementation: request v4, explicit schema6, local SQLite transaction/BUSY, old serializers and migration defaults preserved. | Local mechanics/tests/migration; semantic change returns W19–W22. |
+| W25 | Product PLAN before fixtures: only new copies of one fictional accepted graph, failure/replay/recovery/authority/scope/budget. Owner's exact fixture words retained; T7 demo later. | Fixtures/tests/demo, no second full Process. |
+| W26 | Product PLAN before start: isolated accepted-base checkout and installed trial, prior evidence preserved. Owner before permanent location/hosting/independent external upgrade. | Package/layout/docs; no new external rights. |
+| W27 | Product PLAN before public consumer: only Result/next/context M0 seams. Future consumer PLAN at separate admission answers E1–E12; E4/E5/E7/E12 have no invented direct M0 API. | Public Core/data/future migrations; cheap replacement unproved; M1+ not prerequisite. |
 
 ## assumptions
 
-Existing exact W21 owner words and both no-automation acknowledgments remain.
-HOW conforms under owner-ack:solmax-plan-conforming-20260907; no new owner words.
-Query budget is an additional exact context byte limit; human Work budget is
-preserved without conversion/extension. All accepted Handoffs are mandatory;
-no semantic supersession policy is inferred. Global revision invalidates every
-managed mutation; complete snapshot/journal/descriptors and included bytes are
-rechecked under the writer lock. Membership is fixed and validated in today's
-single graph; no new membership API. Freshness is at final validation, not a
-perpetual lease. Later mutation still needs expected_revision; later opening
-rechecks current state and bytes. Historical receipt never proves late availability.
+The owner's “тогда подтверждаю” confirms only the exact fictional NextWork fixture
+in OWNER-FIXTURE.md. Its goal, comparison criterion, Fictional observatory boundary,
+One short local session budget and metadata-only rights are in request.json.
+No real task content, publication right or new identity is inferred. Existing W21
+local-console/prior-permission trust applies; hostile same-OS-user defense and
+power-loss/disk-loss guarantees are not added to the accepted local SQLite model.
 
 ## cuts
 
-No Work 6 acceptance or W19–W27 cut. Work 7 submit_result/next Work and Work 8
-actual clean-chat five facts/owner demo unstarted. No M1+, automatic transport/MCP,
-retrieval/router/memory/frontend/autonomy, second full/real Process, external
-install-upgrade/full migration, permanent workspace, remote/publication/spending,
-CI/CD/Actions/notifications. No live Direction OS, archive or old-repo edits.
-No additional power-loss/disk-loss/hostile same-user guarantee.
+No CALL done_when was dropped. Actual clean-chat understanding and owner demo are
+explicit T7/Work8 work, not silently substituted by this manifest. No automatic
+executor/Work8, M1+, MCP/transport, memory/retrieval/router/frontend/autonomy,
+external install/upgrade, Product remote/publication, CI/CD/Actions/notifications,
+expenses or live Direction/archive writes. Released migrations1–5 and prior
+Works' acceptance artifacts/tests were not rewritten. New schema6 is opt-in on
+new selected copies only; init1 and default migrate4 remain.
 
 ## cost
 
-One executor leg and one required read-only setup smoke child; no other delegation,
-reviewer or binding G5 session. No new dependency/service/paid API/external right.
-First complete native run: 119 tests in 39.99 seconds. Final --deliver repeats the
-full gate after probe/evidence additions; raw duration is retained. Four executor
-console confirmations, no owner interaction requested during build.
-Total effort was not instrumented; no unsupported numeric cost/efficiency claim.
-Focused feedback corrected one test typing issue and probe closure lint. No
-behavioral test failure was hidden or acceptance reduced to obtain PASS.
+One local engineering session, three source/plan commits followed by evidence/docs
+delivery; new isolated checkout, installed trial and restore, no external spend.
+Native full check initially failed, then passed on the third retry; raw native
+first/second/third/fourth outputs remain. The later narrow Windows-output repair
+has its own actual RED/GREEN reproduction and final full delivery gate. No frozen
+pair, separate test-author or subagent review is claimed. Account token/currency
+cost was not measured; no new owner deadline or budget was promised.
 
 ## manual-acceptance
 
-Not obtained. Executor engineering checks are separate from PROBA completion in
-the owner's words. Binding fresh physical G5 must refute this exact version against
-all three Work 6 done_when. Work 5 G5 applies only to unchanged prior claims/inputs.
-Setup smoke was in-session setup verification, not feature review or G5.
-T5/CALL/M0 remain open in Direction; no light-close or successor CALL asserted.
+Owner fixture permission exists; owner runtime acceptance does not. Seven console
+confirmations above were executor actions on the authorized fictional copy.
+Binding fresh physical G5 of this exact candidate has NOT been performed here.
+This Product RESULT cannot close T6, its open CALL or M0. Five-fact actual clean
+chat and demonstration to the owner have NOT happened and Work8 has NOT started.
 
 ## next
 
-solmax
-
-HOME receives this full Product RESULT and exact commit/evidence for fresh binding
-Work 6 G5 and subsequent Direction decision. Work 7–8 do not begin here.
-W19–W27 remain individually assigned in docs/work6/PLAN.md: resolved choice,
-remaining answerer, decision point and rewrites. Result/next, continuation/recovery,
-future consumer boundaries and actual clean-session proof remain with their
-separately admitted Works.
+next: solmax
+HOME receives this complete Product RESULT, source candidate and retained raw
+evidence. Direction arranges the required fresh physical G5 against all three
+claims and decides T6 close/any later Work8 admission. No Direction successor is
+issued by this Product session. Concrete additional follow-up, not a CALL:
+HOME:work7-locale-output-audit in docs/work7/OUTPUT-REPAIR.md.
 
 END_OF_FILE: RESULT.md

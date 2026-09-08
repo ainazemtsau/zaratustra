@@ -1,0 +1,65 @@
+[
+  {
+    "label": "installed-db-rollback",
+    "detail": "Cannot access workspace: not authorized",
+    "before": "e20e86db43e7d19aa0bd885a8ffefc34b56a8a92704abafe45bc27a1aabf289d",
+    "rollback_equal": true,
+    "exact_retry_revision": 12
+  },
+  {
+    "label": "installed-missing-exact-repair",
+    "receipt": {
+      "operation_id": "9803b520-23b5-46a3-ae56-079277fedb78",
+      "event_id": "c03c3415-f0db-4345-990e-f5fb29a23321",
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "previous_revision": 12,
+      "new_revision": 13,
+      "fingerprint": "e073b5ddb014079efc19c3d5f5d8bedc087f9dc7477a66b45f8ea4717691c729",
+      "recorded_at": "2026-09-08T16:53:42.040093Z",
+      "product_version": "0.7.0",
+      "affected_projections": [
+        "overview.md"
+      ]
+    },
+    "retained_quarantine": [
+      "artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/quarantine-b3f151fd-49b7-45c6-ab84-170fb6375a92.blob"
+    ]
+  },
+  {
+    "label": "installed-corrupt-exact-repair",
+    "receipt": {
+      "operation_id": "34adff9a-9a45-4e2a-a04d-5975071f11ef",
+      "event_id": "26a24a84-ca01-4841-bc55-22bafe17b563",
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "previous_revision": 12,
+      "new_revision": 13,
+      "fingerprint": "e073b5ddb014079efc19c3d5f5d8bedc087f9dc7477a66b45f8ea4717691c729",
+      "recorded_at": "2026-09-08T16:53:42.131985Z",
+      "product_version": "0.7.0",
+      "affected_projections": [
+        "overview.md"
+      ]
+    },
+    "retained_quarantine": [
+      "artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/quarantine-2d877e75-75f6-4f32-b283-e1854b86e6b3.blob",
+      "artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/quarantine-b3f151fd-49b7-45c6-ab84-170fb6375a92.blob"
+    ]
+  },
+  {
+    "label": "known-registered-ungranted-version",
+    "ref": {
+      "artifact_id": "ae7eca56-fd16-41ad-b262-2981468b922e",
+      "version_id": "b1e86f3a-095b-44f0-ad18-b19d84830607",
+      "sha256": "6fd73651c03ddf966703c5b96f6b7a7da79a6d3482b82342f191dd4ea9299b45"
+    },
+    "detail": "scope: Referenced Artifact is outside this Work and its exact grant",
+    "wire_sha256": "a6e0c4cb35e3beca772edc732b11a2951b9ca7f9e9802c9d8497d07885b57346"
+  },
+  {
+    "label": "lost-reply-separate-process",
+    "context_sha256": "b6d9427db22a11b61c0e489d39463dd4d38c28d55fb18627af95662dbd68e378",
+    "next_work_id": "09154bbb-34e0-4917-ad85-74cbaee0824d"
+  }
+]

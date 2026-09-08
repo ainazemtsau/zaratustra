@@ -1,0 +1,15 @@
+{
+  "label": "result-read",
+  "command": [
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\python.exe",
+    "-I",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\restart_read.py",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\workspace",
+    "C:\\projects\\zaratustra\\_scratch\\work7-result\\docs\\work7\\evidence\\restore-context.stdout",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o"
+  ],
+  "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\unrelated-cwd",
+  "exit": 0,
+  "stdout_sha256": "a29be55ec7f5d11aa144db949470acec9ca4a7ae8542e871fe5a8eab22249790",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

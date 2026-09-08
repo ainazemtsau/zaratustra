@@ -1,0 +1,162 @@
+{
+  "restored": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o",
+  "archive_sha256": "90acb543e44959949ea90a94a004528598fcc75b70bb58a6f2f6f21079bcdd2f",
+  "files_equal": 149,
+  "directories_present": 136,
+  "installed_source_wheel_files_equal": 19,
+  "context_sha256": "f9549bbbfd83eed752dae510c2f91db06217ff130673558c0643af5744fe1894",
+  "context_bytes": 20873,
+  "db_sha256": "8ade9179887bcd3fe5a6f022e2f63d66b8fd51ce62dffc6ddd9c25aecb10979c",
+  "commands": [
+    {
+      "label": "expand",
+      "command": [
+        "pwsh",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "Expand-Archive -LiteralPath 'C:\\projects\\zaratustra\\_scratch\\work7-result\\docs\\work7\\evidence\\retained-trial.zip' -DestinationPath 'C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o'"
+      ],
+      "cwd": "C:\\projects\\zaratustra\\_scratch\\work7-result",
+      "exit": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "venv",
+      "command": [
+        "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+        "venv",
+        "--python",
+        "C:\\projects\\zaratustra\\_scratch\\work7-result\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv"
+      ],
+      "cwd": "C:\\projects\\zaratustra\\_scratch\\work7-result",
+      "exit": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "caec9f9985f00b39d18b0cf1cbfdf0673541ec331c21f5c56ab170ca148d5730"
+    },
+    {
+      "label": "install",
+      "command": [
+        "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+        "pip",
+        "install",
+        "--offline",
+        "--python",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\python.exe",
+        "-r",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\runtime-requirements.txt",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\zaratustra-0.7.0-py3-none-any.whl"
+      ],
+      "cwd": "C:\\projects\\zaratustra\\_scratch\\work7-result",
+      "exit": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "87534681ea49e3b6fe4e9771571ec98bcf557d10db22b6a1147db3ab85be89c0"
+    },
+    {
+      "label": "pip-check",
+      "command": [
+        "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+        "pip",
+        "check",
+        "--python",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\python.exe"
+      ],
+      "cwd": "C:\\projects\\zaratustra\\_scratch\\work7-result",
+      "exit": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "586f20343192a27f3d2abd7c33d5963b2d0ff1f47e388300b398a4dbb6de27db"
+    },
+    {
+      "label": "version",
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\zara.exe",
+        "--version"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\unrelated-cwd",
+      "exit": 0,
+      "stdout_sha256": "926782cfae9fd44755ea6e492d278250edcb8997b51c82261dd2adc4b29b2d75",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "status",
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\zara.exe",
+        "status",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\workspace"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\unrelated-cwd",
+      "exit": 0,
+      "stdout_sha256": "6a24c57c5f03023809df8463b354ba951ea3043e84a0c5b195203b7a3ce9e0bf",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "init",
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\zara.exe",
+        "init",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\workspace"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\unrelated-cwd",
+      "exit": 0,
+      "stdout_sha256": "6a24c57c5f03023809df8463b354ba951ea3043e84a0c5b195203b7a3ce9e0bf",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "projection",
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\zara.exe",
+        "projections",
+        "status",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\workspace"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\unrelated-cwd",
+      "exit": 0,
+      "stdout_sha256": "682379ada88dc4a640f279dbdcc752b9c06f40e332b7e5061b702a80e46c0ff5",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "handoffs",
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\zara.exe",
+        "handoff",
+        "list",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\workspace"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\unrelated-cwd",
+      "exit": 0,
+      "stdout_sha256": "ec84a4c54205572076e0a438ca4a39dcc3f77e2ede836784cce33b9aa747efff",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "old-default-migrate",
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\zara.exe",
+        "migrate",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\workspace"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\unrelated-cwd",
+      "exit": 1,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "3099641d6e18b15f774f94af41f617a100417404d4f0fa624d5a3bf102d66fec"
+    },
+    {
+      "label": "result-read",
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\venv\\Scripts\\python.exe",
+        "-I",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\restart_read.py",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\workspace",
+        "C:\\projects\\zaratustra\\_scratch\\work7-result\\docs\\work7\\evidence\\restore-context.stdout",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-restore-0dy2qb3o\\unrelated-cwd",
+      "exit": 0,
+      "stdout_sha256": "a29be55ec7f5d11aa144db949470acec9ca4a7ae8542e871fe5a8eab22249790",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "reads_preserved_all_retained_bytes": true,
+  "permission": "local-chat simulated prior permission; no owner runtime acceptance"
+}

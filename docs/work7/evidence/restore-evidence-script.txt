@@ -1,0 +1,45 @@
+from pathlib import Path
+import hashlib,json,shutil,subprocess,sys,tempfile,zipfile
+root=Path(__file__).resolve().parents[1];ev=root/'docs/work7/evidence'
+manifest=json.loads((ev/'retained-trial-manifest.json').read_text(encoding='utf-8'))
+archive=ev/'retained-trial.zip'
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+assert sha(archive)==manifest['archive_sha256']
+restored=Path(tempfile.mkdtemp(prefix='zaratustra-work7-restore-')).resolve()
+runs=[]
+def run(label,args,cwd,expected=0):
+    r=subprocess.run(args,cwd=cwd,capture_output=True)
+    (ev/f'restore-{label}.stdout').write_bytes(r.stdout);(ev/f'restore-{label}.stderr').write_bytes(r.stderr)
+    row=dict(label=label,command=args,cwd=str(cwd),exit=r.returncode,stdout_sha256=sha(ev/f'restore-{label}.stdout'),stderr_sha256=sha(ev/f'restore-{label}.stderr'))
+    (ev/f'restore-{label}.json').write_text(json.dumps(row,indent=2),encoding='utf-8')
+    runs.append(row)
+    assert r.returncode==expected,(label,r.stderr.decode('utf-8',errors='replace'))
+    return r
+ps="Expand-Archive -LiteralPath '"+str(archive).replace("'","''")+"' -DestinationPath '"+str(restored).replace("'","''")+"'"
+run('expand',['pwsh','-NoProfile','-NonInteractive','-Command',ps],root)
+def inventory():
+    assert all(sha(restored/n)==h for n,h in manifest['files'].items())
+    assert all((restored/n).is_dir() for n in manifest['directories'])
+inventory()
+uv=shutil.which('uv');assert uv
+python=restored/'venv/Scripts/python.exe';zara=restored/'venv/Scripts/zara.exe'
+run('venv',[uv,'venv','--python',sys.executable,str(restored/'venv')],root)
+run('install',[uv,'pip','install','--offline','--python',str(python),'-r',str(restored/'runtime-requirements.txt'),str(restored/'zaratustra-0.7.0-py3-none-any.whl')],root)
+run('pip-check',[uv,'pip','check','--python',str(python)],root)
+for label,args in [('version',['--version']),('status',['status',str(restored/'workspace')]),('init',['init',str(restored/'workspace')]),('projection',['projections','status',str(restored/'workspace')]),('handoffs',['handoff','list',str(restored/'workspace')])]:
+    run(label,[str(zara),*args],restored/'unrelated-cwd')
+run('old-default-migrate',[str(zara),'migrate',str(restored/'workspace')],restored/'unrelated-cwd',1)
+out=ev/'restore-context.stdout'
+r=run('result-read',[str(python),'-I',str(restored/'restart_read.py'),str(restored/'workspace'),str(out),str(restored)],restored/'unrelated-cwd')
+assert out.read_bytes()==(ev/'context-library.json').read_bytes()
+assert json.loads(r.stdout)==json.loads((ev/'result.json').read_text(encoding='utf-8'))
+with zipfile.ZipFile(restored/'zaratustra-0.7.0-py3-none-any.whl') as bundle:
+    installed=restored/'venv/Lib/site-packages';count=0
+    for name in bundle.namelist():
+        if name.startswith('zaratustra/') and name.endswith('.py'):
+            assert (installed/name).read_bytes()==bundle.read(name)==(root/'src'/name).read_bytes();count+=1
+inventory()
+report=dict(restored=str(restored),archive_sha256=manifest['archive_sha256'],files_equal=len(manifest['files']),directories_present=len(manifest['directories']),installed_source_wheel_files_equal=count,context_sha256=sha(out),context_bytes=out.stat().st_size,db_sha256=sha(restored/'workspace/.zara/state.sqlite3'),commands=runs,reads_preserved_all_retained_bytes=True,permission='local-chat simulated prior permission; no owner runtime acceptance')
+(ev/'restore-verification.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
+shutil.copyfile(Path(__file__),ev/'restore-evidence-script.txt')
+print(json.dumps({k:v for k,v in report.items() if k!='commands'},indent=2))

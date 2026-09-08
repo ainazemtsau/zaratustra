@@ -1,0 +1,11 @@
+from pathlib import Path
+import sys
+from zaratustra.core import *
+p=Path(sys.argv[1]); out=Path(sys.argv[2]); base=Path(sys.argv[3])
+query=ReceiptQuery.model_validate_json((base/'receipt-query.json').read_bytes())
+q=ContextQuery.model_validate_json((base/'query.json').read_bytes())
+def auth(value): return authorize_local(prepare_authorization(p,value),channel="local-chat",actor="executor-fictional-adapter",source_ref="Work7:simulated-prior-permission")
+result=read_result(p,query,auth(query))
+assert result.next_work_id==q.work_id
+out.write_bytes(open_work(p,q,auth(q)).output)
+sys.stdout.buffer.write(result.model_dump_json().encode("utf-8"))

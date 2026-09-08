@@ -1,0 +1,15 @@
+{
+  "command": [
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\venv\\Scripts\\python.exe",
+    "-I",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\exercise.py",
+    "--prepare",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307",
+    "--source",
+    "C:\\projects\\zaratustra\\_scratch\\work7-result"
+  ],
+  "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\unrelated-cwd",
+  "exit": 0,
+  "stdout": "Prepared installed fictional trial: C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\n",
+  "stderr": ""
+}

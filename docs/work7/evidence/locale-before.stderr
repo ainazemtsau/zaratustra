@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "<string>", line 7, in <module>
+    raise SystemExit(cli.main(["result","read",sys.argv[1],sys.argv[2]]))
+                     ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-work7-m8i5i307\venv\Lib\site-packages\zaratustra\cli\__init__.py", line 258, in main
+    print(output)
+    ~~~~~^^^^^^^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode characters in position 1709-1716: character maps to <undefined>

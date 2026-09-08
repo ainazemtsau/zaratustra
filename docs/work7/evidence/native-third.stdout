@@ -1,0 +1,8 @@
+$ C:\projects\zaratustra\_scratch\work7-result\.venv\Scripts\python.exe -m ruff format --check src tools tests
+45 files already formatted
+$ C:\projects\zaratustra\_scratch\work7-result\.venv\Scripts\python.exe -m ruff check src tools tests
+All checks passed!
+$ C:\projects\zaratustra\_scratch\work7-result\.venv\Scripts\python.exe -m mypy src tools tests
+tools\probe_result.py:335: error: Name "mutations.ProjectionStatus" is not defined  [name-defined]
+tools\probe_result.py:351: error: Name "mutations.ProjectionStatus" is not defined  [name-defined]
+Found 2 errors in 1 file (checked 41 source files)

@@ -1,0 +1,45 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+
+root = Path(__file__).resolve().parents[1]
+evidence = root / 'docs/work7/evidence'
+evidence.mkdir(parents=True, exist_ok=True)
+def sha(p):
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+def git(p, *args):
+    return subprocess.check_output(['git', *args], cwd=p).decode().strip()
+if not (evidence / 'preservation-before.json').exists():
+    result = {}
+    for number, dirname, head, trialname, manifest in [
+        (5, 'work5-handoff', '589861c4657f19763b0af4ab965bd84646eecb70', 'zaratustra-work5-96nw94ii', 'retained-trial-v2-manifest.json'),
+        (6, 'work6-context', '2fa3111666139eef3ae699319444809fce563ead', 'zaratustra-work6-_0caf231', 'retained-trial-manifest.json')]:
+        old = root.parent / dirname
+        trial = Path.home() / 'AppData/Local/Temp' / trialname
+        expected = json.loads((old / f'docs/work{number}/evidence' / manifest).read_text())
+        assert git(old, 'rev-parse', 'HEAD') == head
+        files = {n: sha(old / n) for n in git(old, 'ls-files').splitlines()}
+        actual = {n: sha(trial / n) for n in expected['files']}
+        assert actual == expected['files']
+        assert all((trial / n).is_dir() for n in expected['directories'])
+        result[str(number)] = dict(checkout=str(old), head=head, files=files, trial=str(trial), trial_files=actual, directories=expected['directories'])
+    direction = Path('C:/my_global_workflow/207a/solmax')
+    call = 'live/solmax/work/calls/c-solmax-zaratustra-m0-result-20260908-work7.md'
+    shutil.copyfile(direction / call, root / 'docs/work7/CALL.md')
+    names = [call, 'live/solmax/work/zaratustra-architecture-plan-2026-09-05.md', 'live/solmax/work/zaratustra-m0-work6-close-2026-09-08.md', 'live/solmax/history/2026-09-08-s-solmax-zaratustra-work6-close-20260908-a1.md']
+    result['direction'] = dict(checkout=str(direction), head=git(direction,'rev-parse','HEAD'), files={n: sha(direction / n) for n in names})
+    (evidence / 'preservation-before.json').write_text(json.dumps(result,indent=2),encoding='utf-8')
+else:
+    result = json.loads((evidence / 'preservation-before.json').read_text())
+    for k in ('5','6'):
+        row=result[k]
+        assert git(Path(row['checkout']),'rev-parse','HEAD') == row['head']
+        assert all(sha(Path(row['checkout']) / n) == h for n,h in row['files'].items())
+        assert all(sha(Path(row['trial']) / n) == h for n,h in row['trial_files'].items())
+        assert all((Path(row['trial']) / n).is_dir() for n in row['directories'])
+    row=result['direction']
+    assert all(sha(Path(row['checkout']) / n) == h for n,h in row['files'].items())
+    (evidence / 'preservation-after.json').write_text(json.dumps(dict(equal=True, before_sha256=sha(evidence/'preservation-before.json'), checked=result),indent=2),encoding='utf-8')
+print('Preservation verified')

@@ -1,0 +1,7 @@
+$ C:\projects\zaratustra\_scratch\work7-result\.venv\Scripts\python.exe -m ruff format --check src tools tests
+44 files already formatted
+$ C:\projects\zaratustra\_scratch\work7-result\.venv\Scripts\python.exe -m ruff check src tools tests
+All checks passed!
+$ C:\projects\zaratustra\_scratch\work7-result\.venv\Scripts\python.exe -m mypy src tools tests
+tests\zaratustra\core\test_results.py:265: error: Returning Any from function declared to return "Connection"  [no-any-return]
+Found 1 error in 1 file (checked 40 source files)

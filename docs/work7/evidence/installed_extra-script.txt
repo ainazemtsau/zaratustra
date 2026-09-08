@@ -1,0 +1,103 @@
+from pathlib import Path
+import json, hashlib, shutil, sqlite3, subprocess, sys
+from uuid import uuid4
+from zaratustra.core import *
+base=Path(sys.argv[1]); source=Path(sys.argv[2]); path=base/'workspace'
+def save(name,value):
+    (base/name).write_text(json.dumps(value,ensure_ascii=True,indent=2),encoding='utf-8')
+def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()
+def auth(p,q):
+    return authorize_local(prepare_authorization(p,q),channel='local-chat',actor='executor-fictional-adapter',source_ref='Work7:simulated-prior-permission')
+request=MutationRequest.model_validate_json((base/'request.json').read_bytes())
+query=ReceiptQuery.model_validate_json((base/'receipt-query.json').read_bytes())
+q=ContextQuery.model_validate_json((base/'query.json').read_bytes())
+rows=[]
+diag=base/"negative-copies/extra-final";diag.mkdir()
+target=diag/'db-rollback';shutil.copytree(base/'negative-copies/pre-submit',target)
+before=sha(read_workspace(target).database); caller=auth(target,request); connect=sqlite3.connect
+def fault(*args,**kwargs):
+    connection=connect(*args,**kwargs)
+    def deny(action,table,*_):
+        return sqlite3.SQLITE_DENY if action==sqlite3.SQLITE_INSERT and table=='work_results' else sqlite3.SQLITE_OK
+    connection.set_authorizer(deny);return connection
+sqlite3.connect=fault
+try:
+    try: submit_result(target,request,caller)
+    except WorkspaceError as error: rows.append(dict(label='installed-db-rollback',detail=str(error)))
+    else: raise AssertionError('rollback failed')
+finally: sqlite3.connect=connect
+assert sha(read_workspace(target).database)==before
+try: read_result(target,query,auth(target,query))
+except MutationError as error: assert error.code=='not_found'
+else: raise AssertionError('partial result')
+assert submit_result(target,request,auth(target,request)).new_revision==12
+rows[-1].update(before=before,rollback_equal=True,exact_retry_revision=12)
+
+for label in ('missing','corrupt'):
+    target=diag/label;shutil.copytree(path,target)
+    ref=request.submission.result
+    damaged=target/'artifacts'/str(ref.artifact_id)/f'{ref.version_id}.blob'
+    if label=='missing':damaged.unlink()
+    else:damaged.write_bytes(b'new diagnostic corrupt bytes')
+    result=read_result(target,query,auth(target,query));ref=result.event.result_references[0]
+    original=(path/'artifacts'/str(ref.artifact_id)/f'{ref.version_id}.blob').read_bytes()
+    artifact=next(r for r in read_records(target).records if isinstance(r,Artifact) and r.id==ref.artifact_id)
+    repair=MutationRequest(version=2,operation_id=uuid4(),workspace_id=q.workspace_id,work_id=request.work_id,
+        expected_revision=read_records(target).state_revision,operation='restore_artifact',provenance='Exact fictional late-loss repair',
+        artifact_id=artifact.id,artifact_revision=artifact.revision,restore_version=ref.version_id,
+        content_sha256=ref.sha256,content_size=len(original))
+    receipt=apply_mutation(target,repair,auth(target,repair),content=original)
+    assert read_result(target,query,auth(target,query))==result
+    assert next(r for r in read_records(target).records if isinstance(r,Work) and r.id==request.work_id).status=='done'
+    fresh=q.model_copy(update={'expected_revision':receipt.new_revision})
+    assert open_work(target,fresh,auth(target,fresh)).output
+    try:open_work(target,q,auth(target,q))
+    except MutationError as error: assert error.code=='conflict'
+    else:raise AssertionError('old revision after repair')
+    rows.append(dict(label=f'installed-{label}-exact-repair',receipt=receipt.model_dump(mode='json'),retained_quarantine=inspect_artifacts(target).unregistered_files))
+
+target=diag/'exact-grant';shutil.copytree(base/'negative-copies/pre-submit',target)
+ref=request.submission.result
+content=(path/'artifacts'/str(ref.artifact_id)/f'{ref.version_id}.blob').read_bytes()
+ungranted=None
+for i in range(2):
+    state=read_records(target);artifact=next(r for r in state.records if isinstance(r,Artifact))
+    publication=MutationRequest(version=2,operation_id=uuid4(),workspace_id=q.workspace_id,work_id=request.work_id,
+        expected_revision=state.state_revision,operation='publish_artifact',provenance='Same accepted fictional bytes; scope diagnostic',
+        artifact_id=artifact.id,artifact_revision=artifact.revision,content_sha256=hashlib.sha256(content).hexdigest(),content_size=len(content))
+    apply_mutation(target,publication,auth(target,publication),content=content)
+    if i==0: ungranted=ArtifactReference(artifact_id=artifact.id,version_id=publication.operation_id,sha256=publication.content_sha256)
+state=read_records(target);v=request.model_dump();v['expected_revision']=state.state_revision;v['submission']['source_revision']=state.state_revision
+changed=MutationRequest.model_validate(v);receipt=submit_result(target,changed,auth(target,changed))
+fresh=q.model_copy(update={'expected_revision':receipt.new_revision})
+wire=open_work(target,fresh,auth(target,fresh)).output
+blocked=ContextQuery.model_validate(fresh.model_dump()|{'references':(ungranted,)})
+try:open_work(target,blocked,auth(target,blocked))
+except MutationError as error: assert error.code=='scope';rows.append(dict(label='known-registered-ungranted-version',ref=ungranted.model_dump(mode='json'),detail=str(error),wire_sha256=hashlib.sha256(wire).hexdigest()))
+else:raise AssertionError('ungranted bytes escaped')
+
+# A new OS process discovers the previously unknown committed outcome on its own copy.
+restart=base/'restart_read.py'
+restart.write_text('''from pathlib import Path
+import sys
+from zaratustra.core import *
+p=Path(sys.argv[1]); out=Path(sys.argv[2]); base=Path(sys.argv[3])
+query=ReceiptQuery.model_validate_json((base/'receipt-query.json').read_bytes())
+q=ContextQuery.model_validate_json((base/'query.json').read_bytes())
+def auth(value): return authorize_local(prepare_authorization(p,value),channel="local-chat",actor="executor-fictional-adapter",source_ref="Work7:simulated-prior-permission")
+result=read_result(p,query,auth(query))
+assert result.next_work_id==q.work_id
+out.write_bytes(open_work(p,q,auth(q)).output)
+sys.stdout.buffer.write(result.model_dump_json().encode("utf-8"))
+''',encoding='utf-8')
+target=base/'negative-copies/postcommit';out=base/'lost-reply-restart-context.stdout'
+expected=open_work(target,q,auth(target,q)).output
+r=subprocess.run([sys.executable,'-I',str(restart),str(target),str(out),str(base)],cwd=base/'unrelated-cwd',capture_output=True)
+save('lost-reply-restart-final.json',dict(command=r.args,exit=r.returncode,stdout=r.stdout.decode('utf-8'),stderr=r.stderr.decode('utf-8')))
+assert r.returncode==0 and out.read_bytes()==expected
+rows.append(dict(label='lost-reply-separate-process',context_sha256=sha(out),next_work_id=str(q.work_id)))
+
+assert sha(read_workspace(path).database)==json.loads((base/'exercise-receipt.json').read_text())['database_sha256']
+save('installed-extra.json',rows)
+shutil.copyfile(Path(__file__),base/'installed_extra.py')
+print(json.dumps(dict(extra_checks=len(rows),main_preserved=True)))

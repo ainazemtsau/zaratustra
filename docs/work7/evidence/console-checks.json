@@ -1,0 +1,119 @@
+[
+  {
+    "label": "submit",
+    "command": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\venv\\Scripts\\zara.exe",
+      "result",
+      "submit",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\workspace",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\request.json"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\unrelated-cwd",
+    "exit": 0,
+    "stdout_sha256": "9aba57ac49b25fa47017f589dba33f8e2ecd487a467d3a89dbf9f4b959e1b886",
+    "stdout_bytes": 503,
+    "stderr": "retained terminal transcript"
+  },
+  {
+    "label": "discover",
+    "command": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\venv\\Scripts\\zara.exe",
+      "result",
+      "read",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\workspace",
+      "{\"version\":1,\"workspace_id\":\"4846e59f-b3f8-4ed1-9bb3-fea22f713b88\",\"work_id\":\"56785bef-c147-4236-b12a-cad24845567a\",\"operation_id\":\"9179d4f8-d868-49c0-8ec8-3df7078bffc8\"}"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\unrelated-cwd",
+    "exit": 0,
+    "stdout_sha256": "c3c43eba0659be43273a4c4b0ebddd3ccc78a2b1f64bf19529e08071dbdf473e",
+    "stdout_bytes": 7500,
+    "stderr": "retained terminal transcript"
+  },
+  {
+    "label": "next",
+    "command": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\venv\\Scripts\\zara.exe",
+      "work",
+      "open",
+      "09154bbb-34e0-4917-ad85-74cbaee0824d",
+      "--workspace",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\workspace",
+      "--workspace-id",
+      "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "--process",
+      "bae978a9-a181-4368-be55-b1837fd47747",
+      "--expected-revision",
+      "12",
+      "--max-bytes",
+      "65536"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\unrelated-cwd",
+    "exit": 0,
+    "stdout_sha256": "f9549bbbfd83eed752dae510c2f91db06217ff130673558c0643af5744fe1894",
+    "stdout_bytes": 20873,
+    "stderr": "retained terminal transcript"
+  },
+  {
+    "label": "replay",
+    "command": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\venv\\Scripts\\zara.exe",
+      "result",
+      "submit",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\workspace",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\request.json"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\unrelated-cwd",
+    "exit": 1,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_bytes": 0,
+    "stderr": "retained terminal transcript"
+  },
+  {
+    "label": "stale",
+    "command": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\venv\\Scripts\\zara.exe",
+      "work",
+      "open",
+      "09154bbb-34e0-4917-ad85-74cbaee0824d",
+      "--workspace",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\workspace",
+      "--workspace-id",
+      "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "--process",
+      "bae978a9-a181-4368-be55-b1837fd47747",
+      "--expected-revision",
+      "11",
+      "--max-bytes",
+      "65536"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\unrelated-cwd",
+    "exit": 1,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_bytes": 0,
+    "stderr": "retained terminal transcript"
+  },
+  {
+    "label": "budget",
+    "command": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\venv\\Scripts\\zara.exe",
+      "work",
+      "open",
+      "09154bbb-34e0-4917-ad85-74cbaee0824d",
+      "--workspace",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\workspace",
+      "--workspace-id",
+      "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "--process",
+      "bae978a9-a181-4368-be55-b1837fd47747",
+      "--expected-revision",
+      "12",
+      "--max-bytes",
+      "5000"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\unrelated-cwd",
+    "exit": 1,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_bytes": 0,
+    "stderr": "retained terminal transcript"
+  }
+]

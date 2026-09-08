@@ -1,0 +1,35 @@
+$ C:\projects\zaratustra\_scratch\work7-result\.venv\Scripts\python.exe -m ruff format --check src tools tests
+45 files already formatted
+$ C:\projects\zaratustra\_scratch\work7-result\.venv\Scripts\python.exe -m ruff check src tools tests
+All checks passed!
+$ C:\projects\zaratustra\_scratch\work7-result\.venv\Scripts\python.exe -m mypy src tools tests
+Success: no issues found in 41 source files
+$ C:\projects\zaratustra\_scratch\work7-result\.venv\Scripts\lint-imports.EXE --no-cache
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 19 files, 47 dependencies.
+-----------------------------------
+
+CLI may depend on Core, Core cannot depend on CLI KEPT
+Core has no surface dependency KEPT
+
+Contracts: 2 kept, 0 broken.
+$ C:\projects\zaratustra\_scratch\work7-result\.venv\Scripts\python.exe -m pytest tests -q
+........................................................................ [ 51%]
+...................................................................      [100%]
+139 passed in 29.76s
+$ C:\Users\Anton\.local\bin\uv.EXE build --no-sources
+PASS: native build, hygiene, types, boundaries, tests

@@ -1,0 +1,13 @@
+{
+  "command": [
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\venv\\Scripts\\python.exe",
+    "-I",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\restart_read.py",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\negative-copies\\postcommit",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\lost-reply-restart-context.stdout",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307"
+  ],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "Traceback (most recent call last):\r\n  File \"C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work7-m8i5i307\\restart_read.py\", line 11, in <module>\r\n    print(result.model_dump_json())\r\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\Users\\Anton\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\Lib\\encodings\\cp1252.py\", line 19, in encode\r\n    return codecs.charmap_encode(input,self.errors,encoding_table)[0]\r\n           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nUnicodeEncodeError: 'charmap' codec can't encode characters in position 1274-1281: character maps to <undefined>\r\n"
+}
