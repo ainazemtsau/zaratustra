@@ -1,0 +1,32 @@
+[
+  {
+    "sample": "accepted-work1",
+    "original": "C:/Users/Anton/AppData/Local/Temp/solmax-work1-accept-20260907-a1/retained-trial",
+    "copied_workspace": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work3-inputs-d25d8ace-8a7f-455a-95c0-d3188b7e72e5\\accepted-work1",
+    "installed_command": "C:\\Users\\Anton\\AppData\\Local\\Temp\\solmax-work1-accept-20260907-a1\\retained-trial\\venv\\Scripts\\zara.exe",
+    "version": "0.1.0",
+    "database_sha256_before_after": "ec4fd2c045922578fa1344a5c126c94b0b929215efd57e93b773baf3785ca207",
+    "wheel_sha256_before_after": "4f71d1b2aff54d8680d22e01cb58483681a69969c3c3501667e2bb5aabb9482c",
+    "copy_database_sha256_after_read": "ec4fd2c045922578fa1344a5c126c94b0b929215efd57e93b773baf3785ca207"
+  },
+  {
+    "sample": "executor-work2",
+    "original": "C:/Users/Anton/AppData/Local/Temp/zaratustra-work2-8cv9m8jt",
+    "copied_workspace": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work3-inputs-d25d8ace-8a7f-455a-95c0-d3188b7e72e5\\executor-work2",
+    "installed_command": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work2-8cv9m8jt\\venv\\Scripts\\zara.exe",
+    "version": "0.2.0",
+    "database_sha256_before_after": "cd8169923aa0836bf6964537f2ea59543a44fffec3d4c4d7c2104ab221759de0",
+    "wheel_sha256_before_after": "a50f0f2d195b33a5eac08d9dd8a2479b9863cd029af703341781fb0c63d5d53c",
+    "copy_database_sha256_after_read": "cd8169923aa0836bf6964537f2ea59543a44fffec3d4c4d7c2104ab221759de0"
+  },
+  {
+    "sample": "binding-work2",
+    "original": "C:/Users/Anton/AppData/Local/Temp/zaratustra-work2-ltyq1qsb",
+    "copied_workspace": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work3-inputs-d25d8ace-8a7f-455a-95c0-d3188b7e72e5\\binding-work2",
+    "installed_command": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work2-ltyq1qsb\\venv\\Scripts\\zara.exe",
+    "version": "0.2.0",
+    "database_sha256_before_after": "e6e4d430e575e17feca718b1063e6640af09103263848030bbb6d81a72905fe1",
+    "wheel_sha256_before_after": "a50f0f2d195b33a5eac08d9dd8a2479b9863cd029af703341781fb0c63d5d53c",
+    "copy_database_sha256_after_read": "e6e4d430e575e17feca718b1063e6640af09103263848030bbb6d81a72905fe1"
+  }
+]

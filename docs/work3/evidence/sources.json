@@ -1,0 +1,142 @@
+[
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\work\\calls\\c-solmax-zaratustra-m0-mutation-20260908-work3.md",
+    "bytes": 13201,
+    "sha256": "9b36992bf7d1ba996b651bb6bb5dda4623222df00d9619e48722fbfbe9948852"
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\work\\zaratustra-m0-work2-acceptance-2026-09-08.md",
+    "bytes": 13572,
+    "sha256": "dd3208683c09e174ee9b2ee7f443c83ca090b66ad590fccc765de87dee896289"
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\work\\evidence\\zaratustra-m0-work2-20260908\\retained-trials.md",
+    "bytes": 9555,
+    "sha256": "33be04a881da8d0f6376b3b37597380985d72ab6de5f0ba98f14a9da859d89fa"
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\NOW.md",
+    "bytes": 74,
+    "sha256": "571a8f9532d02048fabff949fbf171d4a34d85870a088edf448f3e7e52947f6e"
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\CHARTER.md",
+    "bytes": 22334,
+    "sha256": "6fb467b8ef2e510c846edf7a453b4739a8f042b8fe37f08972b562cb260bd9f6"
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\cards\\t-zara-m0-mutation.md",
+    "bytes": 3615,
+    "sha256": "ecde1e89743dd02c7cbd0b4fb0a987bc605124d869ff75f96f614d91aec997a2"
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\cards\\closed\\t-zara-m0-foundation.md",
+    "bytes": 6074,
+    "sha256": "e9c33f91b9a165f9531d19c7ff88dd27e2febb4947853f25c5e06f01b0c270e4"
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\cards\\bet-g-zara-m0-continuity.md",
+    "bytes": 15473,
+    "sha256": "3ccb416ed18d8dbad4d01bd4c8bb03a53ae113a91dcd3f2e08e1214d002da134"
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\work\\zaratustra-architecture-plan-2026-09-05.md",
+    "bytes": 45851,
+    "sha256": "4f90d19fc742ab616301b6b4121880f76c75faaeb1f606c8190a84853d8b3e0e"
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\work\\converge-g-zara-m0-continuity-verification-input-20260907.md",
+    "bytes": 46904,
+    "sha256": "e428e19a9342dd12541462dfff953de969a64609257cd2c8c79f6145bae3cdfe"
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\work\\converge-g-zara-m0-continuity-arch.md",
+    "bytes": 30561,
+    "sha256": "f042e5acf921bc3b2a19eb93900f48e995226f5e34e076204d70e81188ef99cc"
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\knowledge\\zaratustra-plan-conforming-approval-2026-09-07.md",
+    "bytes": 3511,
+    "sha256": "f7b1c90d3981681e48d8d856e9d00901756e4cb259a6449f109fb54d1b872578"
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\knowledge\\zaratustra-local-no-automation-2026-09-07.md",
+    "bytes": 2081,
+    "sha256": "cf3c1ef09bcfb27625bcd1ae2db672d3c22852be09922f6f8780fff2264f6c1f"
+  },
+  {
+    "path": "C:\\projects\\zaratustra\\AGENTS.md",
+    "bytes": 5302,
+    "sha256": "4c32851cfaa10c8987c0512ebc4c4d0e846017e81c915ed77135bcc1c55497c7"
+  },
+  {
+    "path": "C:\\projects\\zaratustra\\validation.config",
+    "bytes": 1717,
+    "sha256": "450f08e6af97ccd104bd84499c8fd28a213e55e8a8515b1151ce01e43e5da9db"
+  },
+  {
+    "path": "C:\\projects\\zaratustra\\RESULT.md",
+    "bytes": 14308,
+    "sha256": "a9072ba1585a2d961e4366fefe4c9c3c1e4bcefd6a09a119be6f30fb8691e74f"
+  },
+  {
+    "path": "C:\\projects\\zaratustra\\docs\\work2\\RECORDS.md",
+    "bytes": 10357,
+    "sha256": "a73707f3da240cabc966436e477a5a52a4968b98e982229b7b70325ce88166ff"
+  },
+  {
+    "path": "C:\\projects\\zaratustra\\docs\\work2\\INSTALL.md",
+    "bytes": 4942,
+    "sha256": "931d6d9b9551289b0f077b1be9ad2efab389a436ae6bfe52a96316c6ec79316c"
+  },
+  {
+    "path": "C:\\projects\\zaratustra\\docs\\work1\\FOUNDATION.md",
+    "bytes": 7768,
+    "sha256": "c80a58f9619704d57a906f5c28ec9135d7281dfdd35ae5ff69a3cd4394545f3a"
+  },
+  {
+    "path": "C:\\projects\\zaratustra\\docs\\setup\\OWNER-DECISION-20260907.md",
+    "bytes": 2370,
+    "sha256": "9005f23cb8248200c7fe190e3e8944689d9eaaa7b851fbf89823ed5befefd7e1"
+  },
+  {
+    "path": "C:\\projects\\zaratustra\\docs\\work2\\evidence\\check.txt",
+    "bytes": 1828,
+    "sha256": "8c8dd72cabfcf0970d4144f413905a6753682ab90e23991a5157023c51179c0d"
+  },
+  {
+    "path": "C:\\projects\\zaratustra\\docs\\work2\\evidence\\deliver.txt",
+    "bytes": 1846,
+    "sha256": "8964e749c38012734d4d60fee01ec9d73cc84d3719c7dd21bf43ddf51f8b5e10"
+  },
+  {
+    "path": "C:\\projects\\zaratustra\\docs\\work2\\evidence\\implementation.patch",
+    "bytes": 64021,
+    "sha256": "5d40183b427d0db266a07a49038a3a139c489c352c32af1b3c02e3614a56635a"
+  },
+  {
+    "path": "C:\\projects\\zaratustra\\docs\\work2\\evidence\\implementation.txt",
+    "bytes": 1371,
+    "sha256": "83e4a32fb9639dc0d8ebbe7348e6197978fbc7481111f83c206d03355d84ad5a"
+  },
+  {
+    "path": "C:\\projects\\zaratustra\\docs\\work2\\evidence\\install-bootstrap.txt",
+    "bytes": 4982,
+    "sha256": "c58ce56bcc037fba1e1ed93fd4561e0ad70e6a816a3938e2856858bc5efe98c1"
+  },
+  {
+    "path": "C:\\projects\\zaratustra\\docs\\work2\\evidence\\install-records.txt",
+    "bytes": 22134,
+    "sha256": "5d94b8d672095142d65bdc00be6f07255c81c2417ca53f2c16058b2263f09aa5"
+  },
+  {
+    "path": "C:\\projects\\zaratustra\\docs\\work2\\evidence\\retained-trial.json",
+    "bytes": 3174,
+    "sha256": "3702de7919ca6a101563711744ec16c14fe1121275a499e81497174f416c0dd6"
+  },
+  {
+    "path": "C:\\projects\\zaratustra\\docs\\work2\\evidence\\sync.txt",
+    "bytes": 57,
+    "sha256": "b03dee33fd3d8d52dd3b1ea2b9b8886fb2fa1f131e7e8998dedf2f3af32e746a"
+  }
+]

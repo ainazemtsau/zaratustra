@@ -1,0 +1,9 @@
+Product actual state at input capture
+fe064773dccb2d1f818f1004962043df2ef1edd9
+codex/work2-core-records
+status:
+?? docs/work3/
+remote:
+Direction actual HEAD:
+Rebuilt accepted wheel:
+a50f0f2d195b33a5eac08d9dd8a2479b9863cd029af703341781fb0c63d5d53c

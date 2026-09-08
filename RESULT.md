@@ -1,191 +1,199 @@
-# Product RESULT — Zaratustra Work 2
+# Product RESULT — Zaratustra Work 3
 
-call: c-solmax-zaratustra-m0-bootstrap-20260907-work2
+call: c-solmax-zaratustra-m0-mutation-20260908-work3
 engineering_contract: 36
 mode: PROBA
 repo: C:/projects/zaratustra
 direction: solmax
 node: g-zara-m0-continuity
-task: t-zara-m0-foundation
+task: t-zara-m0-mutation
 
 ## outcome
 
-WORK2_IMPLEMENTED_AND_LOCALLY_VERIFIED / REPORT HOME.
-Version 0.2.0 saves initial Process, draft Work, declared Artifact and Event with
-revisions in a separate workspace and reads the same records in later installed
-processes. Explicit migration v2 preserves the accepted v1 bootstrap metadata.
+ESCALATE / W21 OWNER TRUST-CHANNEL CHOICE / WORK 3 NOT IMPLEMENTED.
 
-This is the minimal Work 2 record layer: one initial quartet; each record revision=1,
-state_revision advances 0→1. Work has no authority and cannot execute. Artifact has
-no active file. There is no update/replay/Handoff/content-publication protocol.
-The full W19–W27 decision/disposition record is docs/work2/RECORDS.md.
+The complete CALL and its named sources were read. PLAN preserves literal §5 and
+identifies one unresolved owner-owned trust boundary before dependent changes.
+Accepted version remains 0.2.0. No Work 3 source, migration, grants, mutation API or
+test-only success path was introduced. A partial deny-all API would not fulfill the
+CALL and is not presented as delivery.
 
-Executor's local checks passed. Owner runtime acceptance and binding fresh-session
-Direction G5 have not occurred in this session. Product evidence does not close the
-Direction CALL, T1 or M0. Work 3–8 remain unimplemented and require new admission.
+The owner was asked whether separate local interactive confirmation can be trusted
+for the exact displayed safe internal operation. At report preparation no answer
+has arrived. Silence, the implementation request, CLI flags and generated receipt
+text are not treated as runtime authorization.
+
+The concrete proposal in docs/work3/PLAN.md shows workspace, Work, revision,
+operation and SHA-256, then accepts a separate confirmation, not approval in payload
+or piped input. Its trust boundary is access to that console; it does not authenticate
+a human against other processes under the same OS user. Core would still check
+current Work/rights, revocation and revision. Accepting that boundary is the missing
+owner decision. The precise operation allowlist remains conditional on that answer.
+
+Reason for returning: the CALL prohibits self-asserted authority and requires an
+unresolved owner-owned choice to return HOME. Architecture evidence W21 explicitly
+leaves the trusted surface unselected. Work 2 bootstrap creates draft Work with
+authority_scope=none and grants no future rights. The development CALL authorizes
+implementation and fictional trials; it is not a product credential for arbitrary
+future callers. Sources: docs/work3/PLAN.md and exact copied docs/work3/CALL.md.
+
+This is an executor-identified contract blocker, not an automatic approval rejection,
+unavailable required tool, product integrity defect or global skill requirement.
+No Work 3 implementation commit exists. T2/Work 3 and M0 remain open. Setup, Work 1,
+Work 2 and T1 retain accepted binding G5 disposition. This report supplies no fresh
+binding G5, owner runtime PASS or next Direction CALL.
 
 ## evidence
 
-product_basis: bc6f053ee62db9a5b711594e73933f1a9cdbf6cf
-accepted_work1_implementation: bbeae5c17d53e7f24dca22bbd9403cd39c19d094
-implementation_commit: ce8ae68cf555f05864c9dd6b82cfbfd9babe61b1
-branch: codex/work2-core-records
-version: 0.2.0
-Implementation diff: 17 files, 1057 insertions, 60 deletions.
-Exact diff: git diff bc6f053ee62db9a5b711594e73933f1a9cdbf6cf ce8ae68cf555f05864c9dd6b82cfbfd9babe61b1
-Raw commit/stat: docs/work2/evidence/implementation.txt.
-Full implementation patch: docs/work2/evidence/implementation.patch.
-The following report commit contains only RESULT.md and docs/work2/evidence;
-it does not change the measured source, package metadata, instructions or tests.
-The previous full Product RESULT remains at the accepted product_basis commit.
+direction_commit: 5f6c8fac9910eff5a6a1b64f45f7e7e5c1570d09
+product_basis_report: fe064773dccb2d1f818f1004962043df2ef1edd9
+accepted_implementation_commit: ce8ae68cf555f05864c9dd6b82cfbfd9babe61b1
+work3_implementation_commit: none — blocked before dependent implementation
+version: 0.2.0 — unchanged accepted version, not a Work 3 release
+input_branch: codex/work2-core-records
+report_branch: codex/work3-mutation-plan
+remote: none
+report_content_commit: recorded in the subsequent commit-locator update
 
-wheel: dist/zaratustra-0.2.0-py3-none-any.whl
-wheel_sha256: a50f0f2d195b33a5eac08d9dd8a2479b9863cd029af703341781fb0c63d5d53c
-Observed installed runtime: Python 3.13.7, SQLite 3.50.4, Pydantic 2.13.5, Windows.
-Dependencies retained their locked versions; uv.lock changed only product version.
+Only RESULT.md and docs/work3/ belong to this leg. Source, tests, tools, package
+metadata, uv.lock, released migrations, AGENTS.md, REVIEW.md, validation.config and
+accepted docs/work1/docs/work2/docs/setup remain unchanged. Previous full RESULT
+is retained at product_basis_report. Exact final report commit ids are supplied in
+the HOME message. Documentation commits are not relabeled as implementation.
 
-| CALL done_when | Measured result and evidence |
+| CALL done_when | Actual disposition |
 |---|---|
-| 1. Minimal Process/Work/Artifact/Event and revisions survive between installed launches; evidence binds version/data. | PASS in executor's local run. Core records.py validates/stores the four typed records and their links. Installed 0.2.0 records create and records read run as separate OS processes from an unrelated cwd; complete JSON is equal, including UUIDs, revisions, Work fields and Event product_version. The SQLite SHA-256 remains equal after rereads, repeat-create refusal, init, repeat-migrate and old-version refusal. Full raw install-records.txt and retained-trial.json contain exact observed values. |
-| 2. Work 1 installation/init preserved; explicit migration preserves accepted bootstrap; native checks and hidden-state tests pass. | PASS in executor's local run. Unchanged released migrations.py creates schema 1; migrate explicitly adds schema 2 in one transaction. The trial upgrades only a copy of the accepted workspace. workspace_id/created_at and v1 history are preserved; original 0.1.0 wheel/DB hashes unchanged and original executable still reads its original workspace. A second fresh init→migrate→create→read also passes. Full native build/hygiene/types/2 boundaries/30 tests pass; original installed bootstrap probe passes for 0.2.0. |
-| 3. Full Product RESULT, commits/diff/artifacts/raw installed evidence, all report fields and W19–W27; no later closure/automation. | This report, RECORDS.md, INSTALL.md, implementation patch and complete raw outputs carry the named evidence, decisions and limits. Native deliver validates report structure plus standard checks, not acceptance truth. All nine dispositions remain explicit below and in RECORDS.md. Work 3–8/T1/M0 and CI/CD/Actions/notifications retain their boundaries. |
+| 1. One Mutation API, literal §5, current Work/authority and traceable operation/revision/change/event/receipt | BLOCKED / NOT MET. W21 lacks a selected trusted runtime source. PLAN is not runtime evidence. Installed baseline confirms draft Work/none authority and initial Event only. |
+| 2. Failure tests prove one repeated effect, stale conflict and denial; PLAN defines replay | NOT MET. Replay decision is documented, but no Work 3 tests or operation ran. The 30 baseline tests do not establish mutation idempotency, stale conflict or general authority. |
+| 3. DB mutation/event/receipt consistency, reconstructable audit, exact installed version/evidence and native checks | NOT MET for Work 3. Native checks and installed reads pass for 0.2.0; no mutation/event/receipt transaction exists there. New failures/commit/lost-reply checks remain blocked. File publication remains Work 4. |
 
-Commands run on the committed implementation:
+Actual checks:
 
-| Command | Outcome | Raw output |
+| Command/action | Outcome | Raw evidence |
 |---|---|---|
-| uv sync --locked | exit 0 | docs/work2/evidence/sync.txt |
-| uv run --locked python -m tools.check | exit 0; 30 tests, types/format/lint, 2 boundaries kept, wheel/sdist | docs/work2/evidence/check.txt |
-| uv run --locked python -m tools.probe_install | exit 0; installed 0.2.0 init/status/re-init, equal schema-1 DB bytes | docs/work2/evidence/install-bootstrap.txt |
-| uv run --locked python -m tools.probe_records --accepted-trial C:/Users/Anton/AppData/Local/Temp/solmax-work1-accept-20260907-a1/retained-trial | exit 0; copied-baseline and new-empty-workspace scenarios, retained installation | docs/work2/evidence/install-records.txt |
-| uv run --locked python -m tools.check --deliver | exit 0; 30 tests, native checks/build and report structure PASS | docs/work2/evidence/deliver.txt |
+| Product Git status/branch/HEAD/remotes; read-only Direction HEAD | Exact supplied bases; no remote; only new docs initially untracked | docs/work3/evidence/repo-state.txt and repo-state-followup.txt |
+| uv sync --locked in ordinary sandbox | Managed uv cache access failed; no dependency change | docs/work3/evidence/baseline-sync.txt |
+| uv sync --locked with approved managed-runtime access | exit 0; 24 locked packages audited | docs/work3/evidence/baseline-sync-retry.txt |
+| uv run --locked python -m tools.check | exit 0; 30 tests, format/lint/types, 2 boundaries, wheel/sdist | docs/work3/evidence/baseline-check.txt |
+| preserve-and-read.ps1 from unrelated temporary cwd | exit 0; new copies read by accepted installed executables; originals unchanged | docs/work3/evidence/retained-inputs.txt and retained-inputs.json; script alongside |
+| uv run --locked python -m tools.check --deliver | exit 0; 30 tests, native checks/build and report structure PASS; baseline behavior only | docs/work3/evidence/deliver.txt |
 
-Exact retained upgraded-copy observations:
+Existing managed Python 3.13.7 and locked dependencies were reused without upgrades.
+The rebuilt wheel dist/zaratustra-0.2.0-py3-none-any.whl equals the accepted SHA-256:
+a50f0f2d195b33a5eac08d9dd8a2479b9863cd029af703341781fb0c63d5d53c.
+Installed versions were observed as 0.1.0 / 0.2.0 / 0.2.0 in separate processes.
+No new independent installation or installed Work 3 trial is claimed.
 
-- workspace_id: 4846e59f-b3f8-4ed1-9bb3-fea22f713b88
-- original created_at retained: 2026-09-07T15:17:39.027145Z
-- schema: 1→2; state_revision: 0→1; all object revisions: 1
-- Process: 79d30aa9-4ccd-4940-ac7c-cb3d7ce5e323, Fictional observatory
-- Work: 945545ed-3c7d-46d0-80df-6314c08916a3, Describe an imaginary moon
-- Artifact: 54f63a72-759c-470c-9ba5-c08d47a25066, Observation draft; active_version=null
-- Event: 8d160b2c-69e4-48d1-984c-e55dec06bfa7; initial_records_created; product_version=0.2.0
-- record created_at: 2026-09-08T03:37:06.194216Z
-- DB hash after create and after repeat reads/refusals: cd8169923aa0836bf6964537f2ea59543a44fffec3d4c4d7c2104ab221759de0
+| Preserved original sample | DB SHA-256 before/after | Wheel SHA-256 before/after |
+|---|---|---|
+| accepted-work1, solmax-work1-accept-20260907-a1/retained-trial | ec4fd2c045922578fa1344a5c126c94b0b929215efd57e93b773baf3785ca207 | 4f71d1b2aff54d8680d22e01cb58483681a69969c3c3501667e2bb5aabb9482c |
+| executor-work2, zaratustra-work2-8cv9m8jt | cd8169923aa0836bf6964537f2ea59543a44fffec3d4c4d7c2104ab221759de0 | a50f0f2d195b33a5eac08d9dd8a2479b9863cd029af703341781fb0c63d5d53c |
+| binding-work2, zaratustra-work2-ltyq1qsb | e6e4d430e575e17feca718b1063e6640af09103263848030bbb6d81a72905fe1 | a50f0f2d195b33a5eac08d9dd8a2479b9863cd029af703341781fb0c63d5d53c |
 
-The accepted original remains at
-C:/Users/Anton/AppData/Local/Temp/solmax-work1-accept-20260907-a1/retained-trial/.
-Its original DB hash remains ec4fd2c045922578fa1344a5c126c94b0b929215efd57e93b773baf3785ca207;
-its original 0.1.0 wheel hash remains 4f71d1b2aff54d8680d22e01cb58483681a69969c3c3501667e2bb5aabb9482c.
-The original executable reports 0.1.0 and reads that original schema-1 workspace.
-It refuses the migrated copy without changing it. The original was never migrated.
+Full original/executable locators are in retained-inputs.json. New copies remain at
+C:/Users/Anton/AppData/Local/Temp/zaratustra-work3-inputs-d25d8ace-8a7f-455a-95c0-d3188b7e72e5/.
+Their DB hashes after reads equal originals. No originals/copies were migrated or
+manually edited. The existing Direction backup archive was not opened or changed.
 
-30 tests comprise 20 prior bootstrap/development checks and 10 new record/migration
-cases. The newer-schema refusal fixture changed from version 2 to 3 because 2 is now
-supported; its refusal assertion remains. Tests cover complete persisted fields and
-links, no silent migration, no self-grant fields, repeat preservation, corrupt-record
-refusal and transaction rollback at migration insertion and final Event insertion.
-Invalid DB fixtures are isolated fault cases, never manual repairs of a passing trial.
-No custom source scanner is used as product behavior evidence.
+Both v2 snapshots have state_revision=1, every record revision=1, Work draft/none,
+Artifact active_version=null. Exact ids/fields are in retained-inputs.txt. These
+initial-record facts are not mutation permission-denial or one-effect evidence.
 
-One initial full development run failed only on two test-helper mypy annotations;
-they were corrected before implementation commit. The next full run, committed run
-and both installed probes passed. No gate exhausted the three-attempt retry budget.
-review: n/a — PROBA v36; no mandatory product review artifact or independent test author.
-close_evidence: executor's in-session checks only; binding fresh-session G5 not performed.
+sources.json binds the complete named source set, previous RESULT and every Work 2
+evidence file by path/length/SHA-256. Hashing establishes identity/preservation only.
+No source scan replaces product behavior evidence. Code reading identifies absent
+adapter/API; installed reads corroborate initial state, not a future implementation.
+
+The first cross-repository git -C read hit sandbox dubious ownership; the exact read
+succeeded with per-command safe.directory for the named read-only Direction repo.
+No global Git configuration changed. No gate exhausted three retries. Required
+tools work with approved managed-runtime access. No approval rejection remains.
 
 ## assumptions
 
-The exact Work 2 choices conform to plan §§3–7,26–29,41 at SHA-256
-4f90d19fc742ab616301b6b4121880f76c75faaeb1f606c8190a84853d8b3e0e.
-The comparison and sources are in docs/work2/RECORDS.md. Applied existing delegation:
-owner-ack:solmax-plan-conforming-20260907 — «В принципе все вот эти моменты авто
-подтверждать, если не идет какое-то рассогласование плана». These recorded words
-permit plan-conforming decisions; they do not establish owner runtime success.
+Existing owner-ack:solmax-plan-conforming-20260907 permits conforming technical
+choices; it does not select the unestablished trusted channel. PLAN does not
+silently move duplicate lookup ahead of current authority and expected revision.
+Original replay may conflict; revoked authority may refuse earlier; terminal Work
+is never reopened; changed intent at duplicate stage is a collision. Separate
+authorized receipt-read is proposed for lost reply; its rights depend on W21.
 
-Initial local creation is a bounded bootstrap before an executable Work exists,
-not an imported mutation or a grant. CLI delegates to the one Core domain write
-entry; it accepts no actor/approved/authority/id/revision fields. The saved local
-invocation provenance does not claim the human personally performed that invocation.
-Current reads use local filesystem access, not future Work-scoped context authority.
+The proposed increment is DB-only. Unsupported file references cannot be pretended
+valid. An empty affected-projection set does not prove rebuild; Work 4 must implement
+publication/rebuild before admitting dependent operations. No §5 duty is removed.
 
-Artifact is an initial declaration with no bytes/hash/active reference. Work is draft
-and authority_scope=none, with empty context/dependencies. Budget is saved text, not
-enforced execution. Object/global revisions describe initial state only; updates,
-revision advancement/history and mutation receipts remain Work 3 dependencies.
-No duplicate-first choice or permission bypass has been selected.
-
-A single SQL snapshot validates all four initial records. Fault rollback is shown,
-but process-kill/power-loss, hostile same-user races, full recovery, file publication
-and projection rebuild are not proved. No downgrade is implemented. Work 1's partial
-filesystem-init retention behavior remains. Windows is observed; other OSs untested.
-
-W19–W27 disposition; full sources, timing and reversal costs in RECORDS.md:
-
-| ID | Work 2 disposition / remaining PLAN obligation |
+| ID | Disposition / remaining answerer and rewrites |
 |---|---|
-| W19 | Initial revisions and create-once guard selected. Replay/collision/terminal/receipt-read and Result-next effect remain PLAN before Work 3/5/7. Literal §5 stays authoritative. rewrites: importer, receipts, linkage, tests/migrations; cheap reversal unproved. |
-| W20 | Explicit DB migration and initial-record transaction measured; Artifact has no active content. Publication/commit visibility/orphans/recovery/rebuild remain PLAN before dependent Work 3/4/7. rewrites: references, recovery/evidence/migrations. |
-| W21 | First Work is a draft with no rights; explicit local bootstrap, no self-authorizing input. Trusted caller/receipt binding, current/revoked rights, scope and receipt disclosure remain PLAN before Work 3/5/6/7. rewrites: trust adapter and mutation/read permission checks. |
-| W22 | Consistent whole initial graph snapshot and initial global/object revisions selected. Dependent revisions for decisions/rights/membership, context scope/budget/manifest remain PLAN before dependencies in Work 3/4/6. rewrites: snapshot/context contracts and checks; no freshness cut. |
-| W23 | No separate-clean-chat claim. PLAN protocol before Work 6/8 and exact delivered input/real response in Work 8. rewrites: delivery/demo; inaccessible clean surface is a blocker. |
-| W24 | v2 schema, immutable typed values, UUID/time, initial revisions, CLI, transaction/BUSY and retained trial resolved locally. Later operation/recovery formats remain PLAN. rewrites: mechanics/tests; semantics return W19–W22. |
-| W25 | Minimal fictional observatory fixture and invalid foreign-id fixture; no full second Process. Actual foreign-context exclusion remains PLAN before Work 5/6/8. rewrites: fixtures/checks/demo. |
-| W26 | Actual repo/basis/branch/no-remote verified; version 0.2.0 installed separately, 0.1.0 preserved. Permanent folder, public hosting and external independent install/upgrade remain future decisions. rewrites: package/layout/docs; reassess after outside dependency. |
-| W27 | Only initial Core data/read seams implemented. E1/E2/E3/E6/E8/E9/E10/E11 future contracts remain PLAN per consumer; E4/E5/E7/E12 receive no invented direct M0 API. No incoming M1 prerequisite. rewrites: public data/consumer migrations; cheap replacement unproved. |
+| W19 | Literal-order replay proposal recorded, unimplemented. PLAN resumes duplicate/stale/terminal/collision/current authority/receipt-read after W21; Result/next unit before Works 5/7. rewrites: importer, receipts, linkage, failure tests/migrations; cheap reversal unproved. |
+| W20 | Initial DB transaction retained; proposed mutation/event/receipt and lost reply unimplemented. PLAN before Work 3 completion and Work 4/7: commit/failure, publication, orphan/recovery/rebuild/late availability. rewrites: durable references, recovery/evidence/migrations. |
+| W21 | BLOCKER: proposed console trust boundary has no owner decision. Draft/none/no-grant preserved. PLAN needs actual caller/receipt binding, current/revoked rights and receipt-read before mutation, then Works 5/6/7. rewrites: adapter/import/permissions; resize for different channel. |
+| W22 | Initial snapshot retained; proposed global revision includes all admitted rights/status/state changes. PLAN before Work 4/6: dependency revisions, scope/freshness/budget/delivered manifest. rewrites: snapshot/context/tests; none cut. |
+| W23 | No clean-chat proof. PLAN protocol before Work 6/8, actual separate input/response by five facts in Work 8. rewrites: delivery/demo; unprovable cleanliness blocks. |
+| W24 | Accepted v2 unchanged; identity/fingerprint/explicit v3 proposed only. PLAN finalizes after W21 and before recovery/cleanup dependencies. rewrites: mechanics/tests/migrations; semantics return W19–W22. |
+| W25 | Three preserved fictional copies, no second full Process or actual foreign-context proof. PLAN fixture before Work 5/6/8. rewrites: fixtures/tests/demo. |
+| W26 | Actual bases/no-remote/version/sample hashes verified. Permanent workspace/hosting/external independent install-upgrade stay future. rewrites: package/layout/docs, reassess with outside consumers. |
+| W27 | No new public seam frozen while W21 unresolved. E1/E2/E3/E6/E8/E9/E10/E11 preserved for admitted consumers; E4/E5/E7/E12 get no invented direct M0 API; no incoming M1+ prerequisite. rewrites: Core/data and consumer migrations; cheap replacement unproved. |
 
 ## cuts
 
-Only the admitted minimal Work 2 records/revisions increment inside T1. No required
-Work 2 done_when was dropped. Work 3 mutation/expected_revision/operation_id/receipt,
-Work 4 versioned file publication/projections, Work 5–8, M1+, MCP, real Process,
-permanent personal workspace, independent install/upgrade and full move remain out.
-No arbitrary SQL/Markdown edit was used to create or repair acceptance data.
+No Work 3 done_when is removed or relabeled PASS. Implementation awaits the named
+blocker. This is ESCALATE, not a smaller delivered mutation scope.
+Work 4–8/full demo, M1+, MCP, real Process, permanent personal workspace, external
+independent install/upgrade and full migration remain outside admission.
 
-CI/CD, GitHub Actions, notifications, setup and test pushes remain cut by
+CI/CD, Actions, notifications, setup/test pushes and publication remain excluded by
 owner-ack:solmax-zaratustra-work1-no-automation-20260907 and
-owner-ack:solmax-zaratustra-local-setup-no-automation-20260907;
-product receipt: docs/setup/OWNER-DECISION-20260907.md.
-No remote/account/publication, new expense or external rights. No Direction OS
-writes, old-repository changes or archive reads. The product issues no Direction CALL.
+owner-ack:solmax-zaratustra-local-setup-no-automation-20260907.
+No Direction OS/old-repository writes, secret/archive reads, remote/account changes,
+new expenses or external/irreversible effects. No manual DB/state Markdown repair,
+bootstrap grant, next Direction CALL or automatic Work 4 admission.
 
 ## cost
 
-One single-agent Work 2 leg; approximately 35–45 minutes including source/contract
-reading, implementation, checks and report (estimate, not a timed billing record).
-This fits the half-focus-day calibration. Existing managed uv/Python and pinned
-packages were reused; no new dependencies or paid services. Exact token/subscription
-cost unavailable. Local sandbox escalations for Git writes, uv/cache/install execution
-and copying the generated temporary receipt were approved; no tool remains blocked.
+One executor, no subagents: this is Work 3, not setup verification; the CALL does not
+request delegation. Approximately 25–35 minutes for source reading, PLAN, baseline
+checks/copies and report, estimated rather than billed. No implementation time
+claimed. A half-focus-day implementation estimate is conditional on resolving W21
+with a small local adapter; a different channel needs reassessment. No new deadline
+or budget. Exact token/subscription cost unavailable; existing tools reused.
+
+One uv cache failure was resolved by approved sandbox escalation; native checks
+passed. Read-only Direction Git used a per-command safe.directory exception.
+These access issues are resolved and are not the returned blocker.
+The first report replacement patch was rejected before writing because it used
+two operations on the same file; a single-file write prepared the report instead.
+An extra Git whitespace check flagged trailing spaces in import-linter's native
+banner in two raw logs. Raw output was preserved; the whitespace check excluding
+raw text evidence passed. The repository's required native gates passed unchanged.
 
 ## manual-acceptance
 
-Owner-performed runtime acceptance: pending. The installed executor trial remains at
-C:/Users/Anton/AppData/Local/Temp/zaratustra-work2-8cv9m8jt/ with wheel, environment,
-requirements, migrated-copy workspace, fresh-workspace and receipt.json.
-It is a disposable fictional trial, not the owner's permanent workspace.
+Owner Work 3 runtime acceptance: not performed; no installed Work 3 exists.
+Binding fresh physical G5 for Work 3: not performed. Work 8 demonstration remains
+future. Previous G5 receipts are used only as accepted baseline inputs.
 
-For a second-terminal read of the exact measured state:
+The concrete owner question remains:
 
-```powershell
-& 'C:/Users/Anton/AppData/Local/Temp/zaratustra-work2-8cv9m8jt/venv/Scripts/zara.exe' --version
-& 'C:/Users/Anton/AppData/Local/Temp/zaratustra-work2-8cv9m8jt/venv/Scripts/zara.exe' records read 'C:/Users/Anton/AppData/Local/Temp/zaratustra-work2-8cv9m8jt/workspace'
-```
+> Принимаете для M0 отдельное интерактивное подтверждение точной внутренней
+> операции в локальной консоли как доверенный канал, с границей доступа к этой
+> консоли и без защиты от другого процесса того же OS-пользователя?
 
-Expect version 0.2.0 and the exact four ids/fields/revisions listed above and fully
-saved in docs/work2/evidence/retained-trial.json. Independent recreation commands
-are in docs/work2/INSTALL.md. No manual DB repair is part of that procedure.
-The report offers a concrete owner trial but does not label it passed by the owner.
-This is not the Work 8 full M0 demonstration or an independent participant's proof.
+Full proposal, denied shortcuts and restart conditions: docs/work3/PLAN.md.
+The answer concerns authority semantics and cannot establish owner runtime PASS.
+Rejection requires a different specified trusted receipt source and adapter sizing.
+
+Read-only baseline reproduction uses exact installed_command/copied_workspace
+locators in docs/work3/evidence/retained-inputs.json. The saved
+docs/work3/evidence/preserve-and-read.ps1 creates new copies on each run and verifies
+original hashes. It is a baseline probe, not Work 3 execution instructions.
 
 ## next
 
 next: solmax
-HOME: return this complete Product RESULT and its committed evidence for Work 2
-acceptance, applicability of previous setup/Work 1 receipts to the same claims/inputs,
-and the required close evidence for all T1 before any Work 3 admission.
-The existing T1 close route remains binding fresh-session G5, or light only if each
-line is actually eligible and re-derived under work rules. This authoring session
-supplies no binding G5 and does not decide Direction closure. Work 3–8, T1 and M0
-remain open. Only Direction consumes its CALL or issues a successor.
+HOME: resolve concrete W21 using this full RESULT, PLAN and raw evidence.
+Do not close the Work 3 CALL/T2 or M0, infer owner runtime PASS, issue Work 4,
+or remove W19–W27. After an explicit W21 decision, finalize bounded PLAN/size,
+implement on new copies with explicit migrations, and verify all three original
+done_when. Product does not issue a next Direction CALL or change Direction OS.
 
 END_OF_FILE: RESULT.md

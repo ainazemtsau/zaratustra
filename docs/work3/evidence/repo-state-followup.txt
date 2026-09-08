@@ -1,0 +1,4 @@
+The initial git -C Direction read was refused by sandbox dubious ownership. No configuration changed.
+Verified with git -c safe.directory=C:/my_global_workflow_worktrees/solmax -C C:/my_global_workflow_worktrees/solmax rev-parse HEAD:
+5f6c8fac9910eff5a6a1b64f45f7e7e5c1570d09
+Product accepted source/test/tool/metadata diff:
