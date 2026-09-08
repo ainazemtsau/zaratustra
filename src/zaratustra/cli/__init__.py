@@ -140,7 +140,9 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 query = ReceiptQuery.model_validate_json(args.query_json)
                 caller = confirm_on_console(prepare_authorization(args.path, query))
-                output = read_result(args.path, query, caller).model_dump_json(indent=2)
+                output = json.dumps(
+                    read_result(args.path, query, caller).model_dump(mode="json"), indent=2
+                )
         elif args.command == "work":
             context_query = ContextQuery(
                 workspace_id=args.workspace_id,

@@ -5,8 +5,11 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import os
 import shutil
 import sqlite3
+import subprocess
+import sys
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -466,3 +469,27 @@ def test_competing_submissions_commit_one_continuation(workspace: Path) -> None:
     assert read_records(workspace).state_revision == first.expected_revision + 1
     assert len([r for r in read_records(workspace).records if isinstance(r, Work)]) == 2
     assert len([e for e in read_history(workspace).events if e.next_work is not None]) == 1
+
+
+def test_result_cli_discovery_survives_ascii_pipe_encoding(workspace: Path) -> None:
+    request = request_for(workspace)
+    submit_result(workspace, request, confirm(workspace, request))
+    query = receipt_query(request)
+    expected = read_result(workspace, query, confirm(workspace, query))
+    script = """import sys
+from zaratustra import cli
+from zaratustra.core import authorize_local
+def confirmed(prompt):
+    return authorize_local(prompt, channel='local-chat', actor='fictional-test-adapter',
+                           source_ref='Work7:simulated-prior-permission')
+cli.confirm_on_console = confirmed
+raise SystemExit(cli.main(['result', 'read', sys.argv[1], sys.argv[2]]))
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", script, str(workspace), query.model_dump_json()],
+        capture_output=True,
+        check=False,
+        env=os.environ | {"PYTHONIOENCODING": "ascii"},
+    )
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout.decode("ascii")) == expected.model_dump(mode="json")
