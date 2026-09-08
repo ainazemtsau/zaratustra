@@ -1,0 +1,97 @@
+"""Run with the repository Python; reads installed CLI, writes only new extraction/evidence."""
+import base64
+import hashlib
+import json
+import subprocess
+import sys
+import tempfile
+import zipfile
+from pathlib import Path
+
+evidence = Path(__file__).resolve().parent
+root = evidence.parents[2]
+assert not (root / 'STOP').exists() and not (root / 'STEER.md').exists()
+manifest = json.loads((evidence / 'retained-trial-v2-manifest.json').read_text(encoding='utf-8'))
+trial = Path(manifest['trial'])
+archive = root / manifest['archive']
+digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
+
+def inventory(folder):
+    files, directories = {}, []
+    for parent, dirs, names in folder.walk():
+        dirs[:] = sorted(name for name in dirs if name not in {'venv', '__pycache__'})
+        directories.extend((parent / name).relative_to(folder).as_posix() + '/' for name in dirs)
+        files.update({(parent / name).relative_to(folder).as_posix(): digest(parent / name) for name in names})
+    return dict(files=files, directories=sorted(directories))
+
+assert digest(archive) == manifest['archive_sha256']
+original_before = inventory(trial)
+assert original_before == {key: manifest[key] for key in ('files', 'directories')}
+preserved = json.loads((evidence / 'preserved-after.json').read_text(encoding='utf-8'))
+assert all(digest(Path(name)) == sha for name, sha in preserved.items())
+source_paths = json.loads((evidence / 'sources.json').read_text(encoding='utf-8'))
+sources_before = {name: digest(Path(name)) for name in source_paths}
+g5 = Path(sys.argv[1])
+g5_before = {name: digest(g5 / name) for name in ('G5-REPORT.md', 'g5-work5-evidence.zip')}
+new = Path(tempfile.mkdtemp(prefix='work5-f1-restored-'))
+with zipfile.ZipFile(archive) as packed:
+    assert packed.testzip() is None
+    packed.extractall(new)
+before = inventory(new)
+assert before == original_before
+
+wheel = new / 'zaratustra-0.5.0-py3-none-any.whl'
+installed = trial / 'venv/Lib/site-packages'
+with zipfile.ZipFile(wheel) as packed:
+    installed_source = {}
+    for name in packed.namelist():
+        if name.startswith('zaratustra/') and name.endswith('.py'):
+            sha = hashlib.sha256(packed.read(name)).hexdigest()
+            assert digest(installed / name) == digest(root / 'src' / name) == sha
+            installed_source[name] = sha
+assert len(installed_source) == 16
+outside = Path(tempfile.mkdtemp(prefix='work5-f1-cli-cwd-'))
+cli = trial / 'venv/Scripts/zara.exe'
+commands = []
+
+def run(label, args, expected=0):
+    command = [str(cli), *map(str, args)]
+    result = subprocess.run(command, cwd=outside, text=True, encoding='utf-8', capture_output=True)
+    commands.append(dict(label=label, command=command, cwd=str(outside), returncode=result.returncode,
+                         stdout=result.stdout, stderr=result.stderr))
+    assert result.returncode == expected, commands[-1]
+    return json.loads(result.stdout) if expected == 0 else None
+
+for selected in ('workspace', 'fault-workspace'):
+    workspace = new / selected
+    status = run(selected + ':status', ['status', workspace])
+    assert status['schema_version'] == 5
+    accepted = run(selected + ':handoff-list', ['handoff', 'list', workspace])
+    assert len(accepted) == (2 if selected == 'workspace' else 3)
+    history = run(selected + ':history', ['history', workspace])
+    run(selected + ':init', ['init', workspace])
+    reference = accepted[0]['handoff']['result']
+    args = ['artifacts', 'read', workspace, reference['artifact_id'], '--version-id', reference['version_id']]
+    if selected == 'workspace':
+        content = run(selected + ':result', args)
+        assert hashlib.sha256(base64.b64decode(content['content_base64'])).hexdigest() == reference['sha256']
+        basis = accepted[0]['handoff']['basis'][0]
+        content = run(selected + ':basis', ['artifacts', 'read', workspace, basis['artifact_id'], '--version-id', basis['version_id']])
+        assert hashlib.sha256(base64.b64decode(content['content_base64'])).hexdigest() == basis['sha256']
+    else:
+        run(selected + ':missing-result', args, expected=1)
+        assert 'content_unavailable' in commands[-1]['stderr']
+
+after = inventory(new)
+assert after == before
+assert inventory(trial) == original_before
+assert all(digest(Path(name)) == sha for name, sha in preserved.items())
+assert all(digest(Path(name)) == sha for name, sha in sources_before.items())
+assert all(digest(g5 / name) == sha for name, sha in g5_before.items())
+record = dict(verdict='local F1 repair PASS; independent review still required', archive_sha256=digest(archive),
+              extracted=str(new), original=str(trial), before=before, after=after, commands=commands,
+              installed_source=installed_source, wheel_sha256=digest(wheel), original_unchanged=True,
+              prior_162_unchanged=preserved, direction_sources_unchanged=sources_before, g5_unchanged=g5_before)
+(evidence / 'g5-f1-restored.json').write_text(json.dumps(record, indent=2) + chr(10), encoding='utf-8')
+print(json.dumps(dict(verdict=record['verdict'], extracted=str(new), files=len(before['files']),
+                      directories=len(before['directories']), cli_checks=len(commands)), indent=2))

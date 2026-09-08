@@ -1,6 +1,7 @@
 # Work 5 — HOME solmax
 
-Product 0.5.0 is ready for binding fresh physical G5 of the three Work 5 criteria.
+Product 0.5.0 received binding fresh G5 FAIL/F1 for retained backup layout.
+The importer/runtime passed. F1 is repaired locally; independent artifact recheck is pending.
 File/stdin accepted_result import, literal stale/duplicate behavior and actual
 console/current-authority checks have local engineering evidence. Owner runtime
 PASS, T4/CALL/M0 close and Work 6 start are not claimed or performed.
@@ -15,20 +16,24 @@ Accepted base: 0b5ad766545d2cb32c4ef1edfc1cf06fb0e6e35f
 Implementation: e1b831bfbb1bebb6faad27e41c0960da6c28fc99
 Exact exercised harness: 3bd46cfdcb71ec4df403034f146e66492239500d
 Report/evidence: e5f6c2b5621608069d8dfa66f1185b02f3060778.
-The following locator-only commit pins that report; runtime/evidence are unchanged.
+Original reviewed locator: 55912da264dab923eddc8f5545b78b0e91b3a369.
+Current F1 repair commit contains this HOME and F1-REPAIR.md; runtime and old evidence are unchanged.
 No Product remote or publication. Primary checkout retains its old branch.
 
 Final trial: C:/Users/Anton/AppData/Local/Temp/zaratustra-work5-96nw94ii
 Installed command: trial/venv/Scripts/zara.exe; selected data: trial/workspace.
 Wheel SHA-256: cc11753b83bbfddf670c255c46a8dc414d8c5216e78e77e8f686977243461894
 Main DB SHA-256: 9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24
-Backup: evidence/retained-trial.zip, all 26 decompressed file hashes verified.
-Backup SHA-256: b6eb95efa32e834b5f5e0ff3d16f60d5e7899e7a4b2a1ca81e640fe7e0a9892c
+Current backup: evidence/retained-trial-v2.zip, 26 files and 15 directories verified.
+Backup SHA-256: fdb39d39441f9e739e2d6ec17391ad7500a8d86284a79b186df073088487bb51
+Old retained-trial.zip/manifest are preserved F1 diagnostics, superseded for restore.
+Actual restored CLI: evidence/g5-f1-restored.json; 11 checks passed, bytes/layout unchanged.
+F1 invariant/sibling sweep and review handback: docs/work5/F1-REPAIR.md.
 
 Schema 5 is explicit (--to 5); old default stays 4. The copy retains the sole
 accepted fictional Process, unchanged Work meaning/rights and two old Artifact
 versions, plus two imported acceptances at revision 11. Refreshed repeat returns
-the first receipt, no third effect. Native: 98 tests/types/hygiene/2 boundaries/
+the first receipt, no third effect. F1 final native: 99 tests/types/hygiene/2 boundaries/
 build PASS. Installed: all 16 .py match wheel/source; exact stdin hash matches saved
 acceptance. 162 earlier files and 14 Direction sources are unchanged. Four console
 approvals are executor fictional input only.
@@ -37,8 +42,10 @@ Full RESULT distinguishes actual installed/public CLI runs, native hidden tests,
 simulated local-chat fault checks and unproved power/disk/same-user boundaries.
 Late availability requires verified content reads; fault-workspace deliberately
 has a missing Artifact file and must not be used as a working base.
-Both no-automation owner acknowledgments remain. No messages were sent to another
-task; this durable HOME handback is the return artifact for the caller.
+Both no-automation owner acknowledgments remain. The owner requested a separate
+fresh G5 task. Its original report is at
+C:/Users/Anton/Documents/Codex/2026-09-08/zaratustra-work5-fresh-g5/outputs/G5-REPORT.md.
+Return the fixed artifact to that independent reviewer; retain the original FAIL evidence.
 
 next: solmax
 

@@ -1,0 +1,63 @@
+{
+  "archive": "C:\\projects\\zaratustra\\_scratch\\work5-handoff\\docs\\work5\\evidence\\retained-trial.zip",
+  "sha256": "b6eb95efa32e834b5f5e0ff3d16f60d5e7899e7a4b2a1ca81e640fe7e0a9892c",
+  "extracted": "C:\\Users\\Anton\\AppData\\Local\\Temp\\work5-f1-before-qfltvarm",
+  "entries": [
+    "acceptances.json",
+    "cli.json",
+    "exercise.py",
+    "fault-workspace/.zara/state.sqlite3",
+    "fault-workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/258ea271-3f06-4c29-9caa-09cf2613d2d4.blob",
+    "fault-workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/quarantine-b3f151fd-49b7-45c6-ab84-170fb6375a92.blob",
+    "fault-workspace/projections/overview.md",
+    "file-prompt.json",
+    "handoff-fault.json",
+    "handoff-file.json",
+    "handoff-stdin.json",
+    "hidden-checks.json",
+    "installed-source.json",
+    "manifest.json",
+    "pre-import.json",
+    "receipt.json",
+    "runtime-requirements.txt",
+    "runtime.json",
+    "stdin-prompt.json",
+    "terminal-session.json",
+    "workspace/.zara/state.sqlite3",
+    "workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/258ea271-3f06-4c29-9caa-09cf2613d2d4.blob",
+    "workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/75a8c7b3-3f17-4a50-a777-c70f3515bfd8.blob",
+    "workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/quarantine-b3f151fd-49b7-45c6-ab84-170fb6375a92.blob",
+    "workspace/projections/overview.md",
+    "zaratustra-0.5.0-py3-none-any.whl"
+  ],
+  "source_required_directories": {
+    "workspace/processes": true,
+    "workspace/inbox": true,
+    "fault-workspace/processes": true,
+    "fault-workspace/inbox": true
+  },
+  "returncode": 1,
+  "stdout": "",
+  "stderr": "zara: Workspace layout is incomplete; existing files were left unchanged.\n",
+  "work4_sibling": {
+    "path": "C:\\projects\\zaratustra\\_scratch\\work5-handoff\\docs\\work4\\evidence\\retained-trial.zip",
+    "sha256": "1cc89ce63d6b6ff7e73699257db7dfbf80a6025076edad056cbfa3fc0f856f82",
+    "directories": [
+      "workspace/",
+      "workspace/.zara/",
+      "workspace/artifacts/",
+      "workspace/inbox/",
+      "workspace/processes/",
+      "workspace/projections/",
+      "workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/",
+      "fault-workspace/",
+      "fault-workspace/.zara/",
+      "fault-workspace/artifacts/",
+      "fault-workspace/inbox/",
+      "fault-workspace/processes/",
+      "fault-workspace/projections/",
+      "fault-workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/"
+    ],
+    "missing": []
+  }
+}

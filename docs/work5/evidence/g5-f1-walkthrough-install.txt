@@ -1,0 +1,13 @@
+Using CPython 3.13.7
+Creating virtual environment at: C:\Users\Anton\AppData\Local\Temp\zaratustra-work5-restore-4e50da1b-3830-46ba-8f79-3a23400605ce-venv
+Activate with: C:\Users\Anton\AppData\Local\Temp\zaratustra-work5-restore-4e50da1b-3830-46ba-8f79-3a23400605ce-venv\Scripts\activate
+Using Python 3.13.7 environment at: C:\Users\Anton\AppData\Local\Temp\zaratustra-work5-restore-4e50da1b-3830-46ba-8f79-3a23400605ce-venv
+Resolved 6 packages in 63ms
+Prepared 1 package in 25ms
+Installed 6 packages in 115ms
+ + annotated-types==0.8.0
+ + pydantic==2.13.5
+ + pydantic-core==2.46.5
+ + typing-extensions==4.16.0
+ + typing-inspection==0.4.4
+ + zaratustra==0.5.0 (from file:///C:/Users/Anton/AppData/Local/Temp/zaratustra-work5-restore-4e50da1b-3830-46ba-8f79-3a23400605ce/zaratustra-0.5.0-py3-none-any.whl)

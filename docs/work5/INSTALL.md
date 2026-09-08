@@ -46,8 +46,53 @@ Get-Content -LiteralPath (Join-Path $workspace 'projections/overview.md')
 
 Сохраните stdout этих read-команд и свои наблюдения, если проходите лично.
 Подготовленные exact file/stdin inputs: handoff-file.json и handoff-stdin.json
-в trial и в evidence/retained-trial.zip. Точные stdout/stderr/exit: cli.json;
+в trial и в evidence/retained-trial-v2.zip. Точные stdout/stderr/exit: cli.json;
 консольные previews и введённые подтверждения: evidence/terminal-session.json.
+
+## Восстановить сохранённый sample
+
+Используйте `retained-trial-v2.zip` и `retained-trial-v2-manifest.json`.
+Прежний `retained-trial.zip` сохранён для F1: в нём отсутствуют обязательные пустые
+каталоги. Его прежняя restore-инструкция опровергнута свежей G5.
+
+В PowerShell из этой рабочей копии Product:
+
+```powershell
+$backup = Get-Content docs/work5/evidence/retained-trial-v2-manifest.json -Raw | ConvertFrom-Json
+$zip = (Resolve-Path $backup.archive).Path
+if ((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $backup.archive_sha256) { throw 'Backup hash mismatch' }
+$restored = Join-Path ([IO.Path]::GetTempPath()) ('zaratustra-work5-restore-' + [guid]::NewGuid())
+Expand-Archive -LiteralPath $zip -DestinationPath $restored
+$environment = $restored + '-venv'
+uv venv --python 3.13 $environment
+$python = Join-Path $environment 'Scripts/python.exe'
+uv pip install --offline --python $python --requirement (Join-Path $restored 'runtime-requirements.txt') (Join-Path $restored 'zaratustra-0.5.0-py3-none-any.whl')
+$zara = Join-Path $environment 'Scripts/zara.exe'
+$workspace = Join-Path $restored 'workspace'
+& $zara status $workspace
+& $zara handoff list $workspace
+& $zara history $workspace
+& $zara init $workspace
+```
+
+Offline install использует тот же локальный uv cache, что исходный trial; это
+локальное восстановление, не независимая внешняя установка. Ожидаются schema 5,
+две acceptance и сохранённая history; повторный init ничего не меняет. Result и
+basis читаются командами выше. Manifest перечисляет 26 файлов и 15 каталогов,
+включая пустые `processes/` и `inbox/` обеих workspace. Не добавляйте каталоги
+вручную и не используйте fault-workspace как рабочую базу: в ней намеренно отсутствует
+result content. Исторические абсолютные пути в receipts/inputs сохраняют provenance;
+для чтения выбирается новый `$workspace`.
+
+Повторяемая упаковка остановленного исходного fictional trial:
+
+```powershell
+uv run --locked python -m tools.retain_trial $backup.trial (Join-Path ([IO.Path]::GetTempPath()) ('work5-' + [guid]::NewGuid() + '.zip'))
+```
+
+Команда создаёт только новый архив, выводит manifest с hashes и всеми каталогами,
+исключает `venv`/`__pycache__`. Проверенное восстановление: evidence/g5-f1-restored.json;
+воспроизводящий скрипт: evidence/g5-f1-restore-script.txt. Исходные bytes не изменены.
 
 ## Повторить на новой копии принятого Work 4
 
