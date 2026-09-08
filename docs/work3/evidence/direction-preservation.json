@@ -1,0 +1,67 @@
+[
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\work\\calls\\c-solmax-zaratustra-m0-mutation-20260908-work3.md",
+    "sha256": "9b36992bf7d1ba996b651bb6bb5dda4623222df00d9619e48722fbfbe9948852",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\work\\zaratustra-m0-work2-acceptance-2026-09-08.md",
+    "sha256": "dd3208683c09e174ee9b2ee7f443c83ca090b66ad590fccc765de87dee896289",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\work\\evidence\\zaratustra-m0-work2-20260908\\retained-trials.md",
+    "sha256": "33be04a881da8d0f6376b3b37597380985d72ab6de5f0ba98f14a9da859d89fa",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\NOW.md",
+    "sha256": "571a8f9532d02048fabff949fbf171d4a34d85870a088edf448f3e7e52947f6e",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\CHARTER.md",
+    "sha256": "6fb467b8ef2e510c846edf7a453b4739a8f042b8fe37f08972b562cb260bd9f6",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\cards\\t-zara-m0-mutation.md",
+    "sha256": "ecde1e89743dd02c7cbd0b4fb0a987bc605124d869ff75f96f614d91aec997a2",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\cards\\closed\\t-zara-m0-foundation.md",
+    "sha256": "e9c33f91b9a165f9531d19c7ff88dd27e2febb4947853f25c5e06f01b0c270e4",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\cards\\bet-g-zara-m0-continuity.md",
+    "sha256": "3ccb416ed18d8dbad4d01bd4c8bb03a53ae113a91dcd3f2e08e1214d002da134",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\work\\zaratustra-architecture-plan-2026-09-05.md",
+    "sha256": "4f90d19fc742ab616301b6b4121880f76c75faaeb1f606c8190a84853d8b3e0e",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\work\\converge-g-zara-m0-continuity-verification-input-20260907.md",
+    "sha256": "e428e19a9342dd12541462dfff953de969a64609257cd2c8c79f6145bae3cdfe",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\work\\converge-g-zara-m0-continuity-arch.md",
+    "sha256": "f042e5acf921bc3b2a19eb93900f48e995226f5e34e076204d70e81188ef99cc",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\knowledge\\zaratustra-plan-conforming-approval-2026-09-07.md",
+    "sha256": "f7b1c90d3981681e48d8d856e9d00901756e4cb259a6449f109fb54d1b872578",
+    "unchanged": true
+  },
+  {
+    "path": "C:\\my_global_workflow_worktrees\\solmax\\live\\solmax\\knowledge\\zaratustra-local-no-automation-2026-09-07.md",
+    "sha256": "cf3c1ef09bcfb27625bcd1ae2db672d3c22852be09922f6f8780fff2264f6c1f",
+    "unchanged": true
+  }
+]

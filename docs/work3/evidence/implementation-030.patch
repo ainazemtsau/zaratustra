@@ -1,0 +1,2108 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index a4f04d4..72afa49 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -12,11 +12,14 @@
+ Python 3.13 / uv / sqlite3 / Pydantic v2 / pytest / ruff / SHA-256.
+ Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
+ metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
+-initial draft records and consistent `zara records read`; Works 3–8 remain unimplemented.
++initial draft records and consistent `zara records read`. Work 3 adds schema 3,
++one mutation API, exact local confirmation, atomic audit/receipts and current rights.
++Works 4–8 remain unimplemented.
+ `src/zaratustra/core` owns workspace logic; `src/zaratustra/cli` delegates to it.
+ Installed product code and user-chosen data workspace are separate.
+ Read the current CALL before doing product work; a completed Work admits no successor.
+-Current mechanics and W19–W27 disposition: docs/work2/RECORDS.md.
++Current mechanics and W19–W27 disposition: docs/work3/PLAN.md.
++W21 owner trust decision: docs/work3/OWNER-DECISION-20260908.md.
+ Outside-checkout runtime proof: `uv run --locked python -m tools.probe_install`.
+ Work 2 installed/migration proof: `uv run --locked python -m tools.probe_records --accepted-trial <path>`.
+ 
+diff --git a/README.md b/README.md
+index 4ff3577..7ec5ffc 100644
+--- a/README.md
++++ b/README.md
+@@ -1,7 +1,7 @@
+ # Zaratustra
+ 
+-Version **0.2.0**, Work 2: `zara init` creates a local workspace;
+-`zara migrate` explicitly adds schema 2; `zara records create` stores initial
++Version **0.3.0**, Work 3: `zara init` creates a local workspace;
++`zara migrate` explicitly adds schema 3; `zara records create` stores initial
+ Process, draft Work, declared Artifact and Event records with revisions.
+ `zara status` and `zara records read` read persisted facts in later invocations.
+ The installed engine and the workspace are separate directories.
+@@ -21,7 +21,7 @@ build. The installation probe installs the wheel with locked runtime dependencie
+ in a disposable environment outside checkout, runs the real `zara` executable in
+ separate processes, then cleans up its own temporary folders.
+ 
+-For your first run, follow [installation and trial instructions](docs/work2/INSTALL.md).
++For your first run, follow [installation and trial instructions](docs/work3/INSTALL.md).
+ Run the installed commands in a newly created empty folder, or name that folder:
+ 
+ ```text
+@@ -49,11 +49,14 @@ chosen-folder/
+ 
+ `init` still creates schema 1; `migrate` explicitly upgrades it without changing
+ workspace identity/time. Initial records can be created once in an empty record store.
+-Work is a draft without permissions; Artifact has no published file or active version.
+-Updates, operation-id/replay, Handoff, permissions, context and artifact files require Works 3–8.
+-This release does not complete T1 or M0. No personal workspace has been selected.
++Work starts as a draft without permissions; Artifact has no published file or active version.
++`zara mutate` confirms an exact internal operation in the local console, then Core
++checks current Work/rights, revision, duplicate identity and references, and commits
++the change/event/receipt together. `zara receipt` checks current read rights;
++`zara history` is the owner's local audit view. Handoff, files/projections, context,
++Result and next Work remain Works 4–8. M0 is not closed; no personal workspace is selected.
+ 
+-Read [record decisions and W19–W27](docs/work2/RECORDS.md) before later work,
++Read [mutation decisions and W19–W27](docs/work3/PLAN.md) before later work,
+ and [Product RESULT](RESULT.md) for exact commits and runtime evidence.
+ Setup evidence remains under docs/setup/ as history. Windows is the observed
+ platform; Linux/macOS and an independent participant's installation remain unverified.
+diff --git a/docs/work3/INSTALL.md b/docs/work3/INSTALL.md
+new file mode 100644
+index 0000000..6b4e937
+--- /dev/null
++++ b/docs/work3/INSTALL.md
+@@ -0,0 +1,95 @@
++# Work 3 — install and inspect version 0.3.0
++
++Use the implementation commit and exact wheel/retained trial named in RESULT.md.
++Existing uv, managed Python 3.13.7 and locked dependencies are sufficient. No
++account/login, network service, new dependency or remote publication is required.
++The engine installation and selected data workspace remain separate.
++
++## Reproduce native and installed checks
++
++From the product checkout:
++
++```powershell
++uv sync --locked
++uv run --locked python -m tools.check
++uv run --locked python -m tools.probe_install
++uv run --locked python -m tools.probe_records --accepted-trial 'C:/Users/Anton/AppData/Local/Temp/solmax-work1-accept-20260907-a1/retained-trial'
++uv run --locked python -m tools.probe_mutations --accepted-trial 'C:/Users/Anton/AppData/Local/Temp/zaratustra-work2-ltyq1qsb'
++```
++
++The final probe needs a real local terminal. For each displayed fictional request,
++inspect workspace, current Work, operation, revision and digest, then type the exact
++displayed approval text. Wrong confirmation or piped input is refused. The probe
++prints and retains its separate environment, copied workspace, wheel, transcript
++and receipt.json. It never migrates or edits the accepted original. Before using a
++different accepted-trial locator, verify it against the retained-trials source.
++
++The script deliberately repeats a committed request with its original revision,
++tries stale input and repeats after revocation. Those invocations are expected to
++refuse without another effect. They require confirmations to exercise the console
++adapter. A trusted local-chat application with actual prior owner permission can
++use the in-process Core authorization seam without a second identity confirmation.
++No current CLI flag asserts that a file/model response is such permission.
++
++The Work 2 probe now explicitly selects migration target 2, retaining its original
++initial-record scenario. It runs the current wheel, not the preserved old wheel.
++The Work 3 probe separately proves v2 -> v3 on a copy. init still creates schema 1;
++the default explicit migrate targets 3. No read/init implicitly upgrades anything.
++
++## Mutation request and owner-local reads
++
++The installed CLI accepts a version 1 JSON value as a command argument. This is a
++Core operation request, not a Handoff schema or file/stdin importer. Obtain exact
++workspace_id, work_id and state_revision using records read. Generate a new UUID
++once for a new intent; keep it when retrying an unknown outcome.
++
++```text
++zara records read <workspace>
++zara mutate <workspace> <request-json>
++zara receipt <workspace> <query-json>
++zara history <workspace>
++```
++
++Mutation JSON fields: version=1, operation_id (UUID), workspace_id, work_id,
++expected_revision (current global integer revision), operation, requirements
++(array, only for set_work_requirements), artifact_references (must be empty in
++Work 3), provenance (short explanation, not authority). Other fields are rejected.
++Receipt query contains version, workspace_id, work_id, operation_id only.
++
++Operations: authorize_work explicitly grants work_metadata and makes a draft ready;
++set_work_requirements changes executor requirements of ready authorized Work;
++cancel_work makes it terminal; revoke_work removes rights, including receipt-read.
++All require exact authorization from the accepted channel. Bootstrap and migrations
++never grant. Goal, criteria, boundaries, budget, membership and files are not editable
++through this allowlist. Terminal Work cannot restart; its rights can still be revoked.
++
++Original retry usually returns conflict because revision validation precedes
++duplicate lookup. A newly confirmed retry at the current revision with the same
++id/intent returns the stored receipt. Changed intent at that stage returns collision.
++Revoked or ineligible Work refuses earlier. Receipt-read requires current rights;
++terminal status alone does not prevent authorized historical reading.
++
++records read and history are local owner inspection surfaces, governed by access
++to this single-user workspace. They are not Work-scoped context APIs and do not
++promise isolation against the local owner or another process of the same OS user.
++The separate receipt API enforces the narrower current Work permissions.
++
++## Evidence and recovery boundary
++
++Native failure tests inject DB refusals during state/event/receipt/commit and
++migration, simulate lost CLI reply after commit, concurrent requests and revoked
++rights after preview. Installed console trial tests actual adapter/CLI persistence.
++They are executor checks, not owner runtime acceptance or binding fresh G5.
++
++SQLite handles rollback for the tested DB failures; never manually repair DB/state
++Markdown or issue a fresh operation id to work around an unknown outcome. Read the
++saved receipt/history instead. Failed trials remain available. There is no downgrade,
++general DB repair, power-loss/disk-loss guarantee or artifact recovery tool. Copy an
++unchanged retained sample into a new folder for a new trial; keep originals intact.
++
++Work 3 has no content references or file projections to publish/rebuild. Work 4 must
++add those duties before dependent operations. Handoff, context, Result/next Work,
++clean-chat behavior and the full owner demonstration remain Works 5–8.
++No CI/CD, Actions, notifications, publication or successor Direction CALL is implied.
++
++END_OF_FILE: docs/work3/INSTALL.md
+diff --git a/docs/work3/OWNER-DECISION-20260908.md b/docs/work3/OWNER-DECISION-20260908.md
+new file mode 100644
+index 0000000..2bfa84f
+--- /dev/null
++++ b/docs/work3/OWNER-DECISION-20260908.md
+@@ -0,0 +1,32 @@
++# W21 — owner decision, 2026-09-08
++
++Source: owner's direct message in the continuing Work 3 product session.
++This decision resolves the trust-boundary question returned at
++6c9da9eb8213de9f5612179adc829b5192c400a7 / 085e402e17d9d68e579622941c4fb9ada53e531a.
++
++## Exact owner words
++
++«Да, для M0 принимаю предложенную границу доверия: отдельное интерактивное подтверждение точной операции в локальной консоли допустимо. Защита от других процессов того же пользователя ОС и доказательство личности человека не требуются.
++
++Программа локальная, для одного человека, без аккаунтов и входа. За безопасность компьютера отвечает пользователь.
++
++При этом текст файла или ответ модели не считается моим разрешением. Сохраняются проверка границ поручения, актуальных прав и revision. Если моё разрешение уже получено через предусмотренный планом доверенный локальный чат, повторное подтверждение только ради проверки личности не нужно.
++
++Это ответ по W21, а не приёмка Work 3. Сохранить W19–W27. T2/M0 не закрывать, owner runtime PASS не заявлять, Work 4–8 не начинать.»
++
++## Application
++
++Use a local console adapter that displays the exact operation and selected current
++Work, then creates a separate in-process authorization bound to that request/path.
++No account/login or same-OS-user isolation is required. The trusted library caller
++seam also accepts authorization already obtained by a trusted local chat adapter,
++without a second identity confirmation. There is no serialized CLI bypass flag or
++payload-to-authority conversion. A future chat/Handoff adapter must actually obtain
++the owner's permission; a model's assertion cannot substitute for it.
++
++Core still checks current Work status, operation allowlist, rights and revision.
++The development request authorizes executor testing on fictional copies; automated
++console input in that trial is labeled executor evidence, never owner runtime PASS.
++This decision resolves the boundary only. Work 3 done_when still require evidence.
++
++END_OF_FILE: docs/work3/OWNER-DECISION-20260908.md
+diff --git a/docs/work3/PLAN.md b/docs/work3/PLAN.md
+index e28ca6a..cc71045 100644
+--- a/docs/work3/PLAN.md
++++ b/docs/work3/PLAN.md
+@@ -4,7 +4,47 @@ call: c-solmax-zaratustra-m0-mutation-20260908-work3
+ mode: PROBA; engineering_contract: 36
+ product_basis: fe064773dccb2d1f818f1004962043df2ef1edd9
+ direction_basis: 5f6c8fac9910eff5a6a1b64f45f7e7e5c1570d09
+-status: W21 owner choice pending; dependent implementation not authorized by this PLAN
++status: W21 boundary accepted by owner; bounded implementation authorized
++
++## Final Work 3 decision after owner response
++
++The owner resolved W21 in docs/work3/OWNER-DECISION-20260908.md. The historical
++question below is retained as reasoning history; it is no longer a blocker.
++Sizing remains one focused half-day for this DB-only slice with no new dependencies.
++Version 0.3.0, explicit schema 3; released v1/v2 migrations remain unchanged.
++
++The exact allowlist is authorize_work (draft -> ready, work_metadata scope),
++revoke_work (remove scope, including historical receipt-read),
++set_work_requirements (replace executor requirements only within ready Work's
++work_metadata scope), and cancel_work (terminal cancellation, no Result/next).
++Every operation needs exact local confirmation or already-authorized trusted local
++chat caller context. Administrative authorize/revoke require that separate owner
++channel; bootstrap/migration cannot grant. Cancelled Work cannot be authorized or
++executed again. Revoking its remaining receipt-read scope is still permitted.
++Goal, acceptance, boundaries, budget, Process membership and artifact content cannot
++be changed by these operations. This mechanically bounds current Work authority.
++
++Receipt-read requires exact confirmed query plus current work_metadata scope;
++terminal status alone allows history, revocation denies it. Full records/history
++read remains an owner-local filesystem read, never a Work-context endpoint.
++There are no secrets or account identities; the trusted adapter is part of the local
++application trust boundary. In-process Python code is not treated as a hostile user.
++
++All mutations change the sole initial Work: its revision and global state revision
++advance together. Immutable journal entries retain exact request, confirmation,
++before/after Work, actor/channel/basis, product version, event id and receipt.
++Original initial Event remains unchanged. Journal validation reconstructs the Work
++from the first before-image through every change to the current saved Work.
++Operation fingerprint excludes expected_revision (stored separately), operation_id
++(the lookup key), and confirmation (a delivery occurrence); it includes the complete
++intent/work/workspace/provenance/reference fields. Exact authorization digest includes
++the entire request, including id/revision, and the resolved workspace path.
++
++Unsupported nonempty artifact references are refused at §5 stage 5. Affected file
++projections are an explicit empty tuple: no projection implementation is claimed.
++The trusted local-chat seam accepts only an in-process caller context provided by
++trusted application code, never a JSON/CLI assertion. No Handoff transport/import,
++context compiler, content publication, submit_result or successor Work is introduced.
+ 
+ ## Source comparison
+ 
+@@ -31,8 +71,7 @@ channel requires a new size assessment before dependent implementation.
+ 
+ The smallest useful DB-only operation proposed is an explicitly authorized change
+ of the existing Work's execution state/limited internal scope, together with a
+-bounded metadata update under that current scope. The concrete operation allowlist
+-must be finalized with W21. No arbitrary patch, content body, file reference,
++bounded metadata update under that current scope. The exact operation allowlist is finalized above after W21. No arbitrary patch, content body, file reference,
+ Result, successor Work, Handoff importer or context operation is admitted here.
+ Initial creation remains create-once, draft and without grants. Migration cannot
+ activate a Work or issue permissions.
+@@ -76,44 +115,38 @@ projection dependency set honestly. Work 4 must add publication and affected
+ projection rebuilding to the same protocol before admitting dependent operations.
+ File atomicity, orphan recovery, rebuild and late availability remain open.
+ 
+-## W21 — concrete blocker and proposed channel
+-
+-Current accepted Work is draft, authority_scope=none. Local bootstrap grants
+-nothing. The available installed CLI has no trusted caller/receipt adapter.
+-The current development CALL authorizes implementation and fictional trials; it is
+-not a product credential for arbitrary future callers or Work contents.
+-
+-Rejected shortcuts: migration-created permissions; treating CLI/Python execution
+-as owner approval; trusting approved, actor, exact_text, free flags, a hand-written
+-receipt, or a test-only trusted context as proof of an installed trusted channel.
+-No successful mutation trial may depend on hand editing DB/state Markdown.
+-
+-Concrete owner question, submitted in this product session before dependent work:
+-
+-> Для W21 предлагаю отдельное интерактивное подтверждение в локальной консоли:
+-> CLI показывает workspace, Work, revision, точную операцию и SHA-256; оператор
+-> подтверждает именно их, без флага approved и без подтверждения из payload.
+-> Это разрешает только показанное безопасное внутреннее изменение; текущие права
+-> и отзыв проверяет Core. Граница доверия — доступ к этой консоли: от другого
+-> процесса того же OS-пользователя она не защищает и личность человека
+-> криптографически не доказывает. Принимаете эту границу для M0?
+-
+-Why owner input is required: CALL boundaries prohibit self-asserted authority and
+-require returning an unresolved owner-owned choice. Architecture evidence W21
+-expressly leaves the available trusted surface and threat boundary undecided.
+-This is the executor's identified missing choice, not an automatic approval
+-rejection or a global skill requirement. Silence is not authorization.
+-
+-If accepted, the adapter would keep confirmation separate from untrusted operation
+-data, bind it to the complete canonical intent and current snapshot, reject pipes
+-as confirmation, and pass a nonserializable caller context to Core. Core would
+-recheck Work, authority and revision after confirmation. Provenance would identify
+-the actual channel, not claim cryptographic human identity. Tests using a simulated
+-operator would be labeled executor checks, never owner runtime acceptance.
+-
+-If rejected, the owner must identify an acceptable trusted receipt source; the
+-executor must assess the corresponding adapter and size before implementation.
+-No mandatory PKI, service, MCP or external right is silently introduced.
++## W21 — accepted local trust and current authority
++
++The owner selected the proposed local console boundary in
++OWNER-DECISION-20260908.md. No accounts/login, cryptographic human identity or
++hostile same-OS-user process isolation are required. The earlier blocker report is
++historical, preserved at 6c9da9e/085e402; it no longer stops this Work.
++
++local.confirm_on_console displays an escaped exact request and current Work,
++requires stdin/stderr terminal handles and exact approval, then calls the trusted
++Core authorize_local seam. No flag, file or model output issues authorization.
++The resulting in-process LocalAuthorization binds canonical request (including
++operation id and expected revision) and resolved workspace path. Core checks that
++binding, current Work/rights, then revision inside the write transaction.
++
++Trusted local-chat application code may call authorize_local after actual owner
++permission and invoke apply_mutation directly, without another console identity
++check. This is a trusted adapter seam, not a shipped Handoff/chat importer or a
++way for JSON to assert trust. Source_ref and actor describe channel provenance;
++these strings alone cannot grant anything. Python application code is within the
++accepted local trust boundary, not isolated as a hostile caller.
++
++Initial Work remains draft/none after bootstrap and migration. authorize_work and
++revoke_work are narrow administrative mutations backed by exact owner-channel
++confirmation; they are not Work self-grants or another updater. Execution metadata
++requires current ready/work_metadata; terminal Work never restarts. Revocation
++also removes scoped receipt-read. Owner-local records/history inspection retains
++its existing filesystem boundary and is not presented as a scoped Work-context API.
++
++Every successful mutation stores its actual confirmation with exact request and
++before/after images. A stored mutation receipt never grants future authority.
++Automated testing simulates owner-channel input on authorized fictional copies;
++it is executor evidence, never a human-identity assertion or owner runtime PASS.
+ 
+ ## W22–W27 carried forward
+ 
+diff --git a/pyproject.toml b/pyproject.toml
+index 50f6477..bc3b1ea 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,7 +1,7 @@
+ [project]
+ name = "zaratustra"
+-version = "0.2.0"
+-description = "Zaratustra local workspace and initial Core records"
++version = "0.3.0"
++description = "Zaratustra local workspace and transactional mutation protocol"
+ readme = "README.md"
+ requires-python = ">=3.13,<3.14"
+ dependencies = ["pydantic>=2,<3"]
+@@ -37,13 +37,13 @@ root_package = "zaratustra"
+ [[tool.importlinter.contracts]]
+ name = "CLI may depend on Core, Core cannot depend on CLI"
+ type = "layers"
+-layers = ["zaratustra.cli", "zaratustra.core"]
++layers = ["zaratustra.cli", "zaratustra.local", "zaratustra.core"]
+ 
+ [[tool.importlinter.contracts]]
+ name = "Core has no surface dependency"
+ type = "forbidden"
+ source_modules = ["zaratustra.core"]
+-forbidden_modules = ["zaratustra.cli"]
++forbidden_modules = ["zaratustra.cli", "zaratustra.local"]
+ 
+ [dependency-groups]
+ dev = [
+diff --git a/src/zaratustra/AGENTS.md b/src/zaratustra/AGENTS.md
+index 86f0a59..80a772d 100644
+--- a/src/zaratustra/AGENTS.md
++++ b/src/zaratustra/AGENTS.md
+@@ -1,5 +1,5 @@
+ # Package boundary
+-Public package contains Core and CLI for workspace initialization and initial records.
++Public package contains Core, trusted local adapter and CLI for records and mutations.
+ Use submodule public __init__.py surfaces. New modules need graph contracts.
+ Data/workspaces are not package resources. Do not add product state to source.
+ END_OF_FILE: src/zaratustra/AGENTS.md
+diff --git a/src/zaratustra/cli/AGENTS.md b/src/zaratustra/cli/AGENTS.md
+index 52f791d..aab2844 100644
+--- a/src/zaratustra/cli/AGENTS.md
++++ b/src/zaratustra/cli/AGENTS.md
+@@ -1,8 +1,11 @@
+ # CLI
+ Public API is main in __init__.py, installed as zara. argparse handles presentation;
+-init/status/migrate/records call only the public Core API. No SQL or authority logic here.
++init/status/migrate/records/mutate/receipt/history call public Core. Console delivery
++uses public zaratustra.local, permissions remain in Core. No SQL/authority rules here.
+ Explicit path defaults to cwd; do not discover or select another workspace implicitly.
+ JSON reports persisted facts, never permission or runtime approval inferred from CLI input.
+ records create accepts initial draft fields only; no Handoff/actor/approved/import interface.
++mutate/receipt accept a JSON value, then separate exact terminal confirmation. No
++approval flag or piped confirmation; no Handoff file/stdin importer in Work 3.
+ Failures go to stderr with nonzero exit.
+ END_OF_FILE: src/zaratustra/cli/AGENTS.md
+diff --git a/src/zaratustra/cli/__init__.py b/src/zaratustra/cli/__init__.py
+index 8e331af..130e518 100644
+--- a/src/zaratustra/cli/__init__.py
++++ b/src/zaratustra/cli/__init__.py
+@@ -11,13 +11,20 @@ from pydantic import ValidationError
+ 
+ from zaratustra.core import (
+     InitialRecords,
++    MutationRequest,
++    ReceiptQuery,
+     WorkspaceError,
++    apply_mutation,
+     create_initial_records,
+     init_workspace,
+     migrate_workspace,
++    prepare_authorization,
++    read_history,
++    read_receipt,
+     read_records,
+     read_workspace,
+ )
++from zaratustra.local import confirm_on_console
+ 
+ 
+ def main(argv: list[str] | None = None) -> int:
+@@ -27,10 +34,17 @@ def main(argv: list[str] | None = None) -> int:
+     for name, description in (
+         ("init", "Initialize an empty directory or read its existing workspace."),
+         ("status", "Read persisted workspace metadata without changing it."),
+-        ("migrate", "Explicitly migrate an initialized workspace to schema 2."),
++        ("migrate", "Explicitly migrate an initialized workspace to schema 3."),
++        ("history", "Read the owner-local mutation audit; not Work context."),
+     ):
+         command = commands.add_parser(name, help=description, description=description)
+         command.add_argument("path", nargs="?", default=".", type=Path)
++        if name == "migrate":
++            command.add_argument("--to", type=int, choices=(2, 3), default=3)
++    for name in ("mutate", "receipt"):
++        command = commands.add_parser(name, help="Confirm an exact internal operation/query.")
++        command.add_argument("path", type=Path)
++        command.add_argument("request_json", help="Version 1 JSON value; no file/stdin importer.")
+     records = commands.add_parser("records", help="Create initial drafts or read stored records.")
+     record_commands = records.add_subparsers(dest="records_command", required=True)
+     read = record_commands.add_parser(
+@@ -47,7 +61,19 @@ def main(argv: list[str] | None = None) -> int:
+     create.add_argument("--boundary", action="append", required=True)
+     args = parser.parse_args(argv)
+     try:
+-        if args.command == "records":
++        if args.command == "mutate":
++            request = MutationRequest.model_validate_json(args.request_json)
++            caller = confirm_on_console(prepare_authorization(args.path, request))
++            output = apply_mutation(args.path, request, caller).model_dump_json(indent=2)
++        elif args.command == "receipt":
++            query = ReceiptQuery.model_validate_json(args.request_json)
++            caller = confirm_on_console(prepare_authorization(args.path, query))
++            output = read_receipt(args.path, query, caller).model_dump_json(indent=2)
++        elif args.command == "migrate":
++            output = migrate_workspace(args.path, target_version=args.to).model_dump_json(indent=2)
++        elif args.command == "history":
++            output = read_history(args.path).model_dump_json(indent=2)
++        elif args.command == "records":
+             snapshot = (
+                 read_records(args.path)
+                 if args.records_command == "read"
+@@ -69,7 +95,6 @@ def main(argv: list[str] | None = None) -> int:
+             operation = {
+                 "init": init_workspace,
+                 "status": read_workspace,
+-                "migrate": migrate_workspace,
+             }[args.command]
+             output = operation(args.path).model_dump_json(indent=2)
+     except (WorkspaceError, ValidationError) as error:
+diff --git a/src/zaratustra/core/AGENTS.md b/src/zaratustra/core/AGENTS.md
+index 94fc4e2..6aa0a83 100644
+--- a/src/zaratustra/core/AGENTS.md
++++ b/src/zaratustra/core/AGENTS.md
+@@ -1,10 +1,17 @@
+ # Core
+-Public API is __init__.py: workspace init/read/migrate, initial-record creation/read,
+-their immutable boundary models and WorkspaceError. Core never imports CLI.
++Public API is __init__.py: workspace/records, mutation and authorized receipt APIs,
++owner-local history, immutable models and errors. Core never imports CLI/local adapter.
+ workspace.py owns checked transactions/layout/metadata; migrations.py retains released
+-v1 bytes; migration_v2.py adds explicit schema 2. records.py owns the sole domain write
+-entry create_initial_records and coherent snapshot validation within this Core boundary.
++v1/v2 bytes; migration_v3.py adds explicit schema 3 without data changes or grants.
++records.py owns create-once bootstrap and record models; protocol.py owns operation
++and journal values; mutations.py owns the ONE post-bootstrap domain mutation path.
+ Initial creation is one local bootstrap into an empty record store; it grants no rights.
+-Work is draft; Artifact has no active file; updates/replay/receipts need Work 3 admission.
++LocalAuthorization comes only from trusted application code after actual owner
++permission. It is not parsed from payload/CLI flags. W21 admits console access as
++trust boundary, without accounts or hostile same-user isolation. Already-authorized
++local-chat callers need no repeated identity check. Validate exact binding, current
++Work/authority, revision, duplicate, artifacts in that order before mutation/event/
++receipt commit. Only the documented narrow DB operations are admitted; no files,
++context, Result or successor Work. Initial Event and released migrations stay fixed.
+ Read/init never migrate or repair existing state. Keep migration bytes stable after release.
+ END_OF_FILE: src/zaratustra/core/AGENTS.md
+diff --git a/src/zaratustra/core/__init__.py b/src/zaratustra/core/__init__.py
+index 49e06eb..9bbda67 100644
+--- a/src/zaratustra/core/__init__.py
++++ b/src/zaratustra/core/__init__.py
+@@ -1,5 +1,17 @@
+ """Public Core surface for the admitted workspace foundation."""
+ 
++from .mutations import (
++    AuthorizationPrompt,
++    LocalAuthorization,
++    MutationError,
++    apply_mutation,
++    authorize_local,
++    prepare_authorization,
++    read_history,
++    read_receipt,
++    read_records,
++)
++from .protocol import MutationEvent, MutationHistory, MutationReceipt, MutationRequest, ReceiptQuery
+ from .records import (
+     Artifact,
+     Event,
+@@ -8,7 +20,6 @@ from .records import (
+     RecordsSnapshot,
+     Work,
+     create_initial_records,
+-    read_records,
+ )
+ from .workspace import (
+     WorkspaceError,
+@@ -19,6 +30,19 @@ from .workspace import (
+ )
+ 
+ __all__ = [
++    "AuthorizationPrompt",
++    "LocalAuthorization",
++    "MutationError",
++    "MutationEvent",
++    "MutationHistory",
++    "MutationReceipt",
++    "MutationRequest",
++    "ReceiptQuery",
++    "apply_mutation",
++    "authorize_local",
++    "prepare_authorization",
++    "read_history",
++    "read_receipt",
+     "Artifact",
+     "Event",
+     "InitialRecords",
+diff --git a/src/zaratustra/core/migration_v3.py b/src/zaratustra/core/migration_v3.py
+new file mode 100644
+index 0000000..4f1e21e
+--- /dev/null
++++ b/src/zaratustra/core/migration_v3.py
+@@ -0,0 +1,32 @@
++"""Explicit DB-only mutation journal; no data changes or authority grants."""
++
++import hashlib
++import sqlite3
++
++V3_NAME = "0003_mutation_protocol"
++V3_STATEMENTS = (
++    """CREATE TABLE mutation_events (
++        id TEXT PRIMARY KEY,
++        state_revision INTEGER NOT NULL UNIQUE CHECK (state_revision >= 2),
++        body TEXT NOT NULL CHECK (json_valid(body))
++    ) STRICT""",
++    """CREATE TABLE mutation_receipts (
++        operation_id TEXT PRIMARY KEY,
++        event_id TEXT NOT NULL UNIQUE REFERENCES mutation_events(id),
++        fingerprint TEXT NOT NULL,
++        body TEXT NOT NULL CHECK (json_valid(body))
++    ) STRICT""",
++)
++V3_SHA256 = hashlib.sha256(chr(10).join(V3_STATEMENTS).encode("utf-8")).hexdigest()
++
++
++def migrate_v3(connection: sqlite3.Connection, applied_at: str) -> None:
++    if not connection.in_transaction:
++        raise ValueError("Migration v3 requires a transaction")
++    for statement in V3_STATEMENTS:
++        connection.execute(statement)
++    connection.execute(
++        "INSERT INTO schema_migrations VALUES (?, ?, ?, ?)",
++        (3, V3_NAME, V3_SHA256, applied_at),
++    )
++    connection.execute("PRAGMA user_version = 3")
+diff --git a/src/zaratustra/core/mutations.py b/src/zaratustra/core/mutations.py
+new file mode 100644
+index 0000000..adb8c04
+--- /dev/null
++++ b/src/zaratustra/core/mutations.py
+@@ -0,0 +1,281 @@
++"""The one post-bootstrap domain mutation path, in literal plan §5 order."""
++
++from __future__ import annotations
++
++import sqlite3
++from dataclasses import dataclass
++from datetime import UTC, datetime
++from importlib.metadata import version
++from pathlib import Path
++from typing import Literal
++from uuid import uuid4
++
++from .protocol import (
++    Confirmation,
++    MutationEvent,
++    MutationHistory,
++    MutationReceipt,
++    MutationRequest,
++    ReceiptQuery,
++    authorization_digest,
++    event_receipt,
++    evolve_work,
++    fingerprint,
++)
++from .records import RecordModel, RecordsSnapshot, Text, Work, _read_records
++from .workspace import WorkspaceError, workspace_connection
++
++
++class MutationError(WorkspaceError):
++    def __init__(self, code: str, detail: str) -> None:
++        self.code = code
++        super().__init__(f"{code}: {detail}")
++
++
++class AuthorizationPrompt(RecordModel):
++    workspace_path: Text
++    current: RecordsSnapshot
++    request: MutationRequest | ReceiptQuery
++    request_sha256: Text
++
++
++@dataclass(frozen=True)
++class LocalAuthorization:
++    """Trusted adapter value, never parsed from JSON/CLI/model output.
++
++    The local application's Python code is trusted. This is not a sandbox against
++    arbitrary Python or other processes of the same OS user (owner W21 decision).
++    """
++
++    confirmation: Confirmation
++
++
++def _work(snapshot: RecordsSnapshot) -> Work:
++    for record in snapshot.records:
++        if isinstance(record, Work):
++            return record
++    raise MutationError("invalid_work", "Create initial draft records first")
++
++
++def prepare_authorization(
++    path: Path, request: MutationRequest | ReceiptQuery
++) -> AuthorizationPrompt:
++    """Owner-local preview only; no permission issued and no mutation performed."""
++    request = type(request).model_validate(request.model_dump())
++    with workspace_connection(path) as (connection, info):
++        if info.schema_version != 3:
++            raise MutationError("schema", "Mutation protocol requires explicit migration to 3")
++        snapshot = _read_records(connection, info.workspace_id)
++        if request.workspace_id != info.workspace_id or request.work_id != _work(snapshot).id:
++            raise MutationError("invalid_work", "Request does not name this workspace and Work")
++        resolved = info.workspace.as_posix()
++        return AuthorizationPrompt(
++            workspace_path=resolved,
++            current=snapshot,
++            request=request,
++            request_sha256=authorization_digest(resolved, request),
++        )
++
++
++def authorize_local(
++    prompt: AuthorizationPrompt,
++    *,
++    channel: Literal["local-console", "local-chat"],
++    actor: str,
++    source_ref: str,
++) -> LocalAuthorization:
++    """Trusted adapter seam: call ONLY after actual owner permission was received.
++
++    The console adapter supplies this after exact interactive confirmation. A
++    trusted local-chat adapter with actual prior permission may call directly;
++    no second identity check is required. Untrusted input is not such an adapter.
++    No CLI flag, file reader or model-response importer invokes this function.
++    """
++    prompt = AuthorizationPrompt.model_validate(prompt.model_dump())
++    digest = authorization_digest(prompt.workspace_path, prompt.request)
++    if prompt.request_sha256 != digest:
++        raise MutationError("permission_denied", "Changed authorization preview")
++    return LocalAuthorization(
++        Confirmation(
++            channel=channel,
++            actor=actor,
++            source_ref=source_ref,
++            confirmed_at=datetime.now(UTC),
++            workspace_path=prompt.workspace_path,
++            request_sha256=digest,
++        )
++    )
++
++
++def _caller(
++    path: Path,
++    request: MutationRequest | ReceiptQuery,
++    caller: LocalAuthorization | None,
++    snapshot: RecordsSnapshot,
++) -> Confirmation:
++    if type(caller) is not LocalAuthorization:
++        raise MutationError("permission_denied", "Separate trusted local authorization required")
++    confirmation = Confirmation.model_validate(caller.confirmation.model_dump())
++    if (
++        request.workspace_id != snapshot.workspace_id
++        or request.work_id != _work(snapshot).id
++        or confirmation.workspace_path != path.as_posix()
++        or confirmation.request_sha256 != authorization_digest(path.as_posix(), request)
++    ):
++        raise MutationError("permission_denied", "Authorization is not for this exact request")
++    return confirmation
++
++
++def _history(connection: sqlite3.Connection, snapshot: RecordsSnapshot) -> MutationHistory:
++    events = []
++    for identity, revision, body in connection.execute(
++        "SELECT id, state_revision, body FROM mutation_events ORDER BY state_revision"
++    ):
++        event = MutationEvent.model_validate_json(body)
++        if (str(event.id), event.state_revision) != (identity, revision):
++            raise WorkspaceError("Mutation event metadata mismatch")
++        events.append(event)
++    receipts = {}
++    for operation_id, event_id, intent, body in connection.execute(
++        "SELECT operation_id, event_id, fingerprint, body FROM mutation_receipts"
++    ):
++        receipt = MutationReceipt.model_validate_json(body)
++        if (str(receipt.operation_id), str(receipt.event_id), receipt.fingerprint) != (
++            operation_id,
++            event_id,
++            intent,
++        ):
++            raise WorkspaceError("Mutation receipt metadata mismatch")
++        receipts[receipt.event_id] = receipt
++    if len(events) != max(0, snapshot.state_revision - 1) or len(receipts) != len(events):
++        raise WorkspaceError("Incomplete mutation/event/receipt history")
++    previous: Work | None = None
++    ordered_receipts = []
++    for revision, event in enumerate(events, start=2):
++        if event.state_revision != revision or event.request.workspace_id != snapshot.workspace_id:
++            raise WorkspaceError("Mutation history workspace/revision mismatch")
++        if previous is None:
++            if event.before.revision != 1 or event.before.status != "draft":
++                raise WorkspaceError("Mutation history must start from initial draft")
++        elif event.before != previous:
++            raise WorkspaceError("Broken mutation before/after chain")
++        retained = receipts.get(event.id)
++        if retained is None or retained != event_receipt(event):
++            raise WorkspaceError("Receipt does not describe the committed event")
++        ordered_receipts.append(retained)
++        previous = event.after
++    if previous is not None and previous != _work(snapshot):
++        raise WorkspaceError("Mutation history does not reconstruct current Work")
++    return MutationHistory(
++        workspace_id=snapshot.workspace_id,
++        state_revision=snapshot.state_revision,
++        events=tuple(events),
++        receipts=tuple(ordered_receipts),
++    )
++
++
++def read_records(path: Path) -> RecordsSnapshot:
++    """Owner-local consistent record read, including v3 journal integrity checks."""
++    with workspace_connection(path) as (connection, info):
++        if info.schema_version < 2:
++            raise WorkspaceError("Records require schema 2 or later; run zara migrate explicitly.")
++        snapshot = _read_records(connection, info.workspace_id)
++        if info.schema_version == 3:
++            _history(connection, snapshot)
++        elif snapshot.state_revision not in (0, 1):
++            raise WorkspaceError("Schema 2 only supports initial records")
++        return snapshot
++
++
++def read_history(path: Path) -> MutationHistory:
++    """Owner-local audit. Not a Work-scoped context/receipt-disclosure endpoint."""
++    with workspace_connection(path) as (connection, info):
++        if info.schema_version != 3:
++            raise MutationError("schema", "History requires explicit migration to 3")
++        return _history(connection, _read_records(connection, info.workspace_id))
++
++
++def read_receipt(
++    path: Path, query: ReceiptQuery, caller: LocalAuthorization | None = None
++) -> MutationReceipt:
++    query = ReceiptQuery.model_validate(query.model_dump())
++    with workspace_connection(path) as (connection, info):
++        if info.schema_version != 3:
++            raise MutationError("schema", "Receipt requires explicit migration to 3")
++        snapshot = _read_records(connection, info.workspace_id)
++        _caller(info.workspace, query, caller, snapshot)
++        if _work(snapshot).authority_scope != "work_metadata":
++            raise MutationError("permission_denied", "Current Work has no receipt-read permission")
++        history = _history(connection, snapshot)
++        for receipt in history.receipts:
++            if receipt.operation_id == query.operation_id and receipt.work_id == query.work_id:
++                return receipt
++        raise MutationError("not_found", "No committed operation in this Work")
++
++
++def apply_mutation(
++    path: Path, request: MutationRequest, caller: LocalAuthorization | None = None
++) -> MutationReceipt:
++    # 1. Input schema. Revalidate even a model constructed by trusted Python code.
++    request = MutationRequest.model_validate(request.model_dump())
++    with workspace_connection(path, write=True) as (connection, info):
++        if info.schema_version != 3:
++            raise MutationError("schema", "Mutation requires explicit migration to 3")
++        # 2. Current Work + authority, in the same write transaction as the effect.
++        snapshot = _read_records(connection, info.workspace_id)
++        confirmation = _caller(info.workspace, request, caller, snapshot)
++        before = _work(snapshot)
++        try:
++            after = evolve_work(before, request)
++        except ValueError as error:
++            raise MutationError("permission_denied", str(error)) from error
++        # 3. Expected global revision. Never look up a duplicate before this check.
++        if request.expected_revision != snapshot.state_revision:
++            raise MutationError("conflict", "Expected revision is not the current state revision")
++        # 4. Duplicate identity + intent, with authorized disclosure only.
++        history = _history(connection, snapshot)
++        intent = fingerprint(request)
++        for stored in history.receipts:
++            if stored.operation_id == request.operation_id:
++                if stored.fingerprint != intent:
++                    raise MutationError(
++                        "collision", "Operation id already belongs to another intent"
++                    )
++                return stored
++        # 5. No content publication exists yet: reject every unsupported reference.
++        if request.artifact_references:
++            raise MutationError("unsupported_artifacts", "Content references require Work 4")
++        # 6. Narrow DB change; goal/acceptance/bounds/budget/membership stay immutable.
++        connection.execute(
++            "UPDATE core_records SET revision = ?, body = ? WHERE id = ?",
++            (after.revision, after.model_dump_json(), str(after.id)),
++        )
++        connection.execute(
++            "UPDATE core_state SET revision = ? WHERE singleton = 1", (after.revision,)
++        )
++        # 7. Event and receipt commit with the mutation, including exact provenance.
++        event = MutationEvent(
++            id=uuid4(),
++            state_revision=after.revision,
++            recorded_at=datetime.now(UTC),
++            product_version=version("zaratustra"),
++            request=request,
++            confirmation=confirmation,
++            fingerprint=intent,
++            before=before,
++            after=after,
++        )
++        connection.execute(
++            "INSERT INTO mutation_events VALUES (?, ?, ?)",
++            (str(event.id), event.state_revision, event.model_dump_json()),
++        )
++        receipt = event_receipt(event)
++        connection.execute(
++            "INSERT INTO mutation_receipts VALUES (?, ?, ?, ?)",
++            (str(request.operation_id), str(event.id), intent, receipt.model_dump_json()),
++        )
++        _history(connection, _read_records(connection, info.workspace_id))
++    # 8. Context manager has committed before any response escapes.
++    # 9. The admitted DB-only operations have no implemented affected projections.
++    # The persisted empty set is explicit; Work 4 must add actual rebuild behavior.
++    return receipt
+diff --git a/src/zaratustra/core/protocol.py b/src/zaratustra/core/protocol.py
+new file mode 100644
+index 0000000..38dcddc
+--- /dev/null
++++ b/src/zaratustra/core/protocol.py
+@@ -0,0 +1,157 @@
++"""Versioned DB-only operation values and deterministic intent/receipt semantics."""
++
++from __future__ import annotations
++
++import hashlib
++import json
++from typing import Annotated, Literal, Self
++from uuid import UUID
++
++from pydantic import AwareDatetime, Field, model_validator
++
++from .records import RecordModel, Text, Work
++
++Revision = Annotated[int, Field(strict=True, ge=1)]
++Digest = Annotated[str, Field(strict=True, pattern="^[0-9a-f]{64}$")]
++Operation = Literal["authorize_work", "revoke_work", "set_work_requirements", "cancel_work"]
++
++
++class MutationRequest(RecordModel):
++    version: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
++    operation_id: UUID
++    workspace_id: UUID
++    work_id: UUID
++    expected_revision: Revision
++    operation: Operation
++    requirements: tuple[Text, ...] = ()
++    artifact_references: tuple[UUID, ...] = ()
++    provenance: Annotated[Text, Field(max_length=4096)]
++
++    @model_validator(mode="after")
++    def operation_payload(self) -> Self:
++        if self.operation != "set_work_requirements" and self.requirements:
++            raise ValueError("Only set_work_requirements accepts requirements")
++        return self
++
++
++class ReceiptQuery(RecordModel):
++    version: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
++    workspace_id: UUID
++    work_id: UUID
++    operation_id: UUID
++
++
++def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
++    return json.dumps(
++        value.model_dump(mode="json", exclude=exclude),
++        sort_keys=True,
++        separators=(",", ":"),
++        ensure_ascii=True,
++        allow_nan=False,
++    )
++
++
++def fingerprint(request: MutationRequest) -> str:
++    return hashlib.sha256(
++        canonical(request, exclude={"operation_id", "expected_revision"}).encode("utf-8")
++    ).hexdigest()
++
++
++def authorization_digest(path: str, request: MutationRequest | ReceiptQuery) -> str:
++    envelope = json.dumps(
++        [path, type(request).__name__, canonical(request)], ensure_ascii=True, separators=(",", ":")
++    )
++    return hashlib.sha256(envelope.encode("utf-8")).hexdigest()
++
++
++class Confirmation(RecordModel):
++    channel: Literal["local-console", "local-chat"]
++    actor: Text
++    source_ref: Text
++    confirmed_at: AwareDatetime
++    workspace_path: Text
++    request_sha256: Digest
++
++
++def evolve_work(work: Work, request: MutationRequest) -> Work:
++    """Narrow state transition, also used to validate retained journal before/after images."""
++    if request.work_id != work.id:
++        raise ValueError("Wrong Work")
++    change: dict[str, object] = {"revision": work.revision + 1}
++    if request.operation == "revoke_work":
++        change["authority_scope"] = "none"
++    elif request.operation == "authorize_work":
++        if work.status == "cancelled":
++            raise ValueError("Terminal Work cannot be authorized")
++        change.update(status="ready", authority_scope="work_metadata")
++    else:
++        if work.status != "ready" or work.authority_scope != "work_metadata":
++            raise ValueError("Work is not ready or has no current permission")
++        if request.operation == "set_work_requirements":
++            change["executor_requirements"] = request.requirements
++        else:
++            change["status"] = "cancelled"
++    return Work.model_validate({**work.model_dump(), **change})
++
++
++class MutationEvent(RecordModel):
++    id: UUID
++    state_revision: Revision
++    recorded_at: AwareDatetime
++    product_version: Text
++    request: MutationRequest
++    confirmation: Confirmation
++    fingerprint: Digest
++    before: Work
++    after: Work
++    affected_projections: tuple[()] = ()
++
++    @model_validator(mode="after")
++    def consistent(self) -> Self:
++        if self.fingerprint != fingerprint(self.request):
++            raise ValueError("Event intent fingerprint mismatch")
++        if self.confirmation.request_sha256 != authorization_digest(
++            self.confirmation.workspace_path, self.request
++        ):
++            raise ValueError("Event authorization binding mismatch")
++        if self.request.expected_revision != self.before.revision:
++            raise ValueError("Event expected revision mismatch")
++        if self.state_revision != self.after.revision:
++            raise ValueError("Event state revision mismatch")
++        if self.request.artifact_references or evolve_work(self.before, self.request) != self.after:
++            raise ValueError("Event does not describe an admitted change")
++        return self
++
++
++class MutationReceipt(RecordModel):
++    operation_id: UUID
++    event_id: UUID
++    workspace_id: UUID
++    work_id: UUID
++    previous_revision: Revision
++    new_revision: Revision
++    fingerprint: Digest
++    recorded_at: AwareDatetime
++    product_version: Text
++    affected_projections: tuple[()] = ()
++
++
++def event_receipt(event: MutationEvent) -> MutationReceipt:
++    return MutationReceipt(
++        operation_id=event.request.operation_id,
++        event_id=event.id,
++        workspace_id=event.request.workspace_id,
++        work_id=event.request.work_id,
++        previous_revision=event.request.expected_revision,
++        new_revision=event.state_revision,
++        fingerprint=event.fingerprint,
++        recorded_at=event.recorded_at,
++        product_version=event.product_version,
++    )
++
++
++class MutationHistory(RecordModel):
++    workspace_id: UUID
++    state_revision: Annotated[int, Field(strict=True, ge=0)]
++    events: tuple[MutationEvent, ...]
++    receipts: tuple[MutationReceipt, ...]
+diff --git a/src/zaratustra/core/records.py b/src/zaratustra/core/records.py
+index b60a331..a218b64 100644
+--- a/src/zaratustra/core/records.py
++++ b/src/zaratustra/core/records.py
+@@ -1,4 +1,4 @@
+-"""Initial domain records and a consistent read model; no execution or update protocol."""
++"""Domain records, coherent snapshot values and the bounded create-once bootstrap."""
+ 
+ from __future__ import annotations
+ 
+@@ -61,12 +61,18 @@ class Work(Record):
+     acceptance: Annotated[tuple[Text, ...], Field(min_length=1)]
+     boundaries: Annotated[tuple[Text, ...], Field(min_length=1)]
+     budget: Text
+-    status: Literal["draft"] = "draft"
+-    authority_scope: Literal["none"] = "none"
++    status: Literal["draft", "ready", "cancelled"] = "draft"
++    authority_scope: Literal["none", "work_metadata"] = "none"
+     context_handles: tuple[()] = ()
+     dependencies: tuple[()] = ()
+     executor_requirements: tuple[Text, ...] = ()
+ 
++    @model_validator(mode="after")
++    def draft_has_no_authority(self) -> Self:
++        if self.status == "draft" and self.authority_scope != "none":
++            raise ValueError("Draft Work cannot have authority")
++        return self
++
+ 
+ class Artifact(Record):
+     kind: Literal["artifact"] = "artifact"
+@@ -127,9 +133,13 @@ class RecordsSnapshot(RecordModel):
+             raise ValueError("Record refers to another Work")
+         if event.affected_ids != (process.id, work.id, artifact.id):
+             raise ValueError("Event does not describe these records")
+-        if self.state_revision != 1 or event.state_revision != self.state_revision:
+-            raise ValueError("Unsupported initial state revision")
+-        if any(record.revision != 1 for record in self.records):
++        if self.state_revision < 1 or event.state_revision != 1:
++            raise ValueError("Invalid state/initial event revision")
++        if work.revision != self.state_revision:
++            raise ValueError("Work revision must match this single-Work state")
++        if work.revision == 1 and (work.status != "draft" or work.authority_scope != "none"):
++            raise ValueError("Initial Work must remain a draft without rights")
++        if any(record.revision != 1 for record in (process, artifact, event)):
+             raise ValueError("Unsupported record revision")
+         return self
+ 
+@@ -151,27 +161,24 @@ def _read_records(connection: sqlite3.Connection, workspace_id: UUID) -> Records
+     )
+ 
+ 
+-def read_records(path: Path) -> RecordsSnapshot:
+-    """Read persisted records through a single read-only SQLite transaction."""
+-    with workspace_connection(path) as (connection, info):
+-        if info.schema_version != 2:
+-            raise WorkspaceError("Records require schema 2; run zara migrate explicitly.")
+-        return _read_records(connection, info.workspace_id)
+-
+-
+ def create_initial_records(path: Path, initial: InitialRecords) -> RecordsSnapshot:
+-    """The sole domain write entry: create initial drafts only in an empty record store.
++    """Create initial drafts only in an empty record store, never update a Work.
+ 
+     This direct local bootstrap grants no authority and never executes a Work.
+-    Work 3 must supply the general mutation protocol before updates are admitted.
++    Every later domain change goes through mutations.apply_mutation.
+     """
+     initial = InitialRecords.model_validate(initial.model_dump())
+     with workspace_connection(path, write=True) as (connection, info):
+-        if info.schema_version != 2:
+-            raise WorkspaceError("Records require schema 2; run zara migrate explicitly.")
++        if info.schema_version < 2:
++            raise WorkspaceError("Records require schema 2 or later; run zara migrate explicitly.")
+         before = _read_records(connection, info.workspace_id)
+         if before.records:
+             raise WorkspaceError("Initial records already exist; no changes made.")
++        if info.schema_version == 3 and (
++            connection.execute("SELECT COUNT(*) FROM mutation_events").fetchone()[0]
++            or connection.execute("SELECT COUNT(*) FROM mutation_receipts").fetchone()[0]
++        ):
++            raise WorkspaceError("Initial creation cannot replace existing mutation history")
+         now = datetime.now(UTC)
+         process = Process(id=uuid4(), revision=1, created_at=now, title=initial.process_title)
+         work = Work(
+diff --git a/src/zaratustra/core/workspace.py b/src/zaratustra/core/workspace.py
+index 57be916..9bd7916 100644
+--- a/src/zaratustra/core/workspace.py
++++ b/src/zaratustra/core/workspace.py
+@@ -13,6 +13,7 @@ from uuid import UUID, uuid4
+ from pydantic import AwareDatetime, BaseModel, ConfigDict, ValidationError
+ 
+ from .migration_v2 import V2_NAME, V2_SHA256, migrate_v2
++from .migration_v3 import V3_NAME, V3_SHA256, migrate_v3
+ from .migrations import APPLICATION_ID, V1_NAME, V1_SHA256, migrate_v1
+ 
+ WORKSPACE_DIRECTORIES = ("processes", "artifacts", "projections", "inbox")
+@@ -30,7 +31,7 @@ class WorkspaceInfo(BaseModel):
+     database: Path
+     workspace_id: UUID
+     created_at: AwareDatetime
+-    schema_version: Literal[1, 2]
++    schema_version: Literal[1, 2, 3]
+ 
+ 
+ def _root(path: Path) -> Path:
+@@ -62,7 +63,7 @@ def _database_path(root: Path) -> Path:
+ def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> WorkspaceInfo:
+     application = connection.execute("PRAGMA application_id").fetchone()[0]
+     version = connection.execute("PRAGMA user_version").fetchone()[0]
+-    if application != APPLICATION_ID or version not in (1, 2):
++    if application != APPLICATION_ID or version not in (1, 2, 3):
+         raise WorkspaceError(f"Unsupported workspace database/schema version: {version}.")
+     migrations = connection.execute(
+         "SELECT version, name, sha256, applied_at FROM schema_migrations ORDER BY version"
+@@ -75,7 +76,7 @@ def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> Wor
+     _, workspace_id, created_at = records[0]
+     if len(migrations) != version or migrations[0] != (1, V1_NAME, V1_SHA256, created_at):
+         raise WorkspaceError("Migration history does not match this installed version.")
+-    if version == 2:
++    if version >= 2:
+         if migrations[1][:3] != (2, V2_NAME, V2_SHA256):
+             raise WorkspaceError("Migration history does not match this installed version.")
+         applied = datetime.fromisoformat(migrations[1][3])
+@@ -83,6 +84,15 @@ def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> Wor
+             raise WorkspaceError("Migration timestamp must have a timezone.")
+         connection.execute("SELECT singleton, revision FROM core_state").fetchall()
+         connection.execute("SELECT id, kind, revision, body FROM core_records LIMIT 0")
++    if version >= 3:
++        if migrations[2][:3] != (3, V3_NAME, V3_SHA256):
++            raise WorkspaceError("Migration history does not match this installed version.")
++        if datetime.fromisoformat(migrations[2][3]).tzinfo is None:
++            raise WorkspaceError("Migration timestamp must have a timezone.")
++        connection.execute("SELECT id, state_revision, body FROM mutation_events LIMIT 0")
++        connection.execute(
++            "SELECT operation_id, event_id, fingerprint, body FROM mutation_receipts LIMIT 0"
++        )
+     return WorkspaceInfo(
+         workspace=root,
+         database=database,
+@@ -106,6 +116,7 @@ def workspace_connection(
+                 database.as_uri() + f"?mode={mode}", uri=True, autocommit=True, timeout=5.0
+             )
+         ) as connection:
++            connection.execute("PRAGMA foreign_keys = ON")
+             if write:
+                 connection.execute("PRAGMA synchronous = FULL")
+             else:
+@@ -127,11 +138,23 @@ def _read_workspace(root: Path) -> WorkspaceInfo:
+         return info
+ 
+ 
+-def migrate_workspace(path: Path) -> WorkspaceInfo:
+-    """Explicit v1-to-v2 upgrade. Repeating on v2 validates and leaves data unchanged."""
++def migrate_workspace(path: Path, *, target_version: Literal[2, 3] = 3) -> WorkspaceInfo:
++    """Explicit sequential upgrade; never grant rights, silently downgrade or repair."""
++    if type(target_version) is not int or target_version not in (2, 3):
++        raise WorkspaceError("Unsupported migration target")
+     with workspace_connection(path, write=True) as (connection, info):
++        if info.schema_version > target_version:
++            raise WorkspaceError("Schema downgrade is not supported")
+         if info.schema_version == 1:
+             migrate_v2(connection, datetime.now(UTC).isoformat())
++        if info.schema_version < 3 and target_version == 3:
++            # Local import avoids a module initialization cycle with record models.
++            from .records import _read_records
++
++            legacy = _read_records(connection, info.workspace_id)
++            if legacy.state_revision not in (0, 1):
++                raise WorkspaceError("Schema 2 only supports initial records")
++            migrate_v3(connection, datetime.now(UTC).isoformat())
+         return _metadata(connection, info.workspace, info.database)
+ 
+ 
+diff --git a/src/zaratustra/local/AGENTS.md b/src/zaratustra/local/AGENTS.md
+new file mode 100644
+index 0000000..1137e52
+--- /dev/null
++++ b/src/zaratustra/local/AGENTS.md
+@@ -0,0 +1,9 @@
++# Trusted local adapter
++Public __init__.py handles the explicitly accepted local console confirmation.
++Core owns permissions and every mutation. No SQL here. Display canonical escaped
++JSON, accept explicit terminal confirmation only, and bind the result to the exact
++preview. No free approval flags, file/model assertions or piped approvals.
++Trusted local-chat applications may use the Core in-process authorization seam
++after actual owner permission; no duplicate identity confirmation is required.
++This is a single-owner local application, not hostile same-user process isolation.
++END_OF_FILE: src/zaratustra/local/AGENTS.md
+diff --git a/src/zaratustra/local/__init__.py b/src/zaratustra/local/__init__.py
+new file mode 100644
+index 0000000..4b63aa1
+--- /dev/null
++++ b/src/zaratustra/local/__init__.py
+@@ -0,0 +1,34 @@
++"""Explicit console confirmation under the owner's accepted local trust boundary."""
++
++import sys
++from uuid import uuid4
++
++from zaratustra.core import (
++    AuthorizationPrompt,
++    LocalAuthorization,
++    MutationError,
++    authorize_local,
++)
++
++
++def confirm_on_console(prompt: AuthorizationPrompt) -> LocalAuthorization:
++    if not sys.stdin.isatty() or not sys.stderr.isatty():
++        raise MutationError("permission_denied", "Interactive local console confirmation required")
++    # Escaped JSON prevents operation strings from injecting terminal controls.
++    import json
++
++    print(json.dumps(prompt.model_dump(mode="json"), ensure_ascii=True, indent=2), file=sys.stderr)
++    print("Authorize only this displayed internal operation/query.", file=sys.stderr)
++    print(f"Type approve {prompt.request_sha256}", file=sys.stderr, flush=True)
++    answer = sys.stdin.readline().strip()
++    if answer != f"approve {prompt.request_sha256}":
++        raise MutationError("permission_denied", "Operation was not confirmed")
++    return authorize_local(
++        prompt,
++        channel="local-console",
++        actor="local-console-operator",
++        source_ref=f"console-confirmation:{uuid4()}",
++    )
++
++
++__all__ = ["confirm_on_console"]
+diff --git a/tests/zaratustra/core/test_mutations.py b/tests/zaratustra/core/test_mutations.py
+new file mode 100644
+index 0000000..961137a
+--- /dev/null
++++ b/tests/zaratustra/core/test_mutations.py
+@@ -0,0 +1,363 @@
++"""Hidden-state checks for literal ordering, authority, audit and DB consistency."""
++
++from __future__ import annotations
++
++import shutil
++import sqlite3
++from concurrent.futures import ThreadPoolExecutor
++from contextlib import closing
++from pathlib import Path
++from threading import Barrier
++from typing import Any
++from uuid import uuid4
++
++import pytest
++from pydantic import ValidationError
++
++from zaratustra.core import (
++    InitialRecords,
++    LocalAuthorization,
++    MutationError,
++    MutationRequest,
++    ReceiptQuery,
++    Work,
++    WorkspaceError,
++    apply_mutation,
++    authorize_local,
++    create_initial_records,
++    init_workspace,
++    migrate_workspace,
++    prepare_authorization,
++    read_history,
++    read_receipt,
++    read_records,
++    read_workspace,
++)
++from zaratustra.core.migration_v3 import V3_NAME, V3_SHA256
++
++
++@pytest.fixture
++def workspace(tmp_path: Path) -> Path:
++    init_workspace(tmp_path)
++    migrate_workspace(tmp_path, target_version=2)
++    create_initial_records(
++        tmp_path,
++        InitialRecords(
++            process_title="Fictional observatory",
++            goal="Describe an imaginary moon",
++            expected_result="One fictional note",
++            acceptance=("Preserve the observation",),
++            boundaries=("Fictional internal changes only",),
++            budget="One local trial",
++            artifact_title="Observation draft",
++        ),
++    )
++    return tmp_path
++
++
++def request_for(
++    path: Path, operation: str = "authorize_work", **changes: object
++) -> MutationRequest:
++    snapshot = read_records(path)
++    work = next(record for record in snapshot.records if isinstance(record, Work))
++    return MutationRequest.model_validate(
++        dict(
++            operation_id=uuid4(),
++            workspace_id=snapshot.workspace_id,
++            work_id=work.id,
++            expected_revision=snapshot.state_revision,
++            operation=operation,
++            provenance="Fictional failure fixture; simulated prior owner permission",
++        )
++        | changes
++    )
++
++
++def confirm(path: Path, request: MutationRequest | ReceiptQuery) -> LocalAuthorization:
++    # Trusted adapter simulation only; the installed probe separately exercises console delivery.
++    return authorize_local(
++        prepare_authorization(path, request),
++        channel="local-chat",
++        actor="fictional-trusted-adapter",
++        source_ref="fixture:explicit-simulated-owner-instruction",
++    )
++
++
++def execute(path: Path, request: MutationRequest) -> None:
++    apply_mutation(path, request, confirm(path, request))
++
++
++def ready(path: Path) -> None:
++    migrate_workspace(path)
++    execute(path, request_for(path))
++
++
++def test_explicit_v3_migration_preserves_v2_and_grants_nothing(workspace: Path) -> None:
++    original = read_workspace(workspace)
++    snapshot = read_records(workspace)
++    before = original.database.read_bytes()
++    with pytest.raises(MutationError, match="migration"):
++        apply_mutation(workspace, request_for(workspace))
++    assert original.database.read_bytes() == before
++    upgraded = migrate_workspace(workspace)
++    assert upgraded.schema_version == 3
++    assert (upgraded.workspace_id, upgraded.created_at) == (
++        original.workspace_id,
++        original.created_at,
++    )
++    assert read_records(workspace) == snapshot
++    assert read_history(workspace).events == ()
++    with closing(sqlite3.connect(original.database)) as connection:
++        assert connection.execute(
++            "SELECT version, name, sha256 FROM schema_migrations WHERE version = 3"
++        ).fetchone() == (3, V3_NAME, V3_SHA256)
++    migrated = original.database.read_bytes()
++    assert migrate_workspace(workspace) == upgraded
++    with pytest.raises(WorkspaceError, match="downgrade"):
++        migrate_workspace(workspace, target_version=2)
++    assert original.database.read_bytes() == migrated
++
++
++def test_one_effect_replay_collision_and_saved_audit(workspace: Path) -> None:
++    ready(workspace)
++    request = request_for(workspace, "set_work_requirements", requirements=("reasoning",))
++    caller = confirm(workspace, request)
++    receipt = apply_mutation(workspace, request, caller)
++    info = read_workspace(workspace)
++    before = info.database.read_bytes()
++    with pytest.raises(MutationError, match="conflict"):
++        apply_mutation(workspace, request, caller)
++    refreshed = request.model_copy(update={"expected_revision": receipt.new_revision})
++    assert apply_mutation(workspace, refreshed, confirm(workspace, refreshed)) == receipt
++    collision = refreshed.model_copy(update={"requirements": ("different",)})
++    with pytest.raises(MutationError, match="collision"):
++        apply_mutation(workspace, collision, confirm(workspace, collision))
++    history = read_history(workspace)
++    event = history.events[-1]
++    assert len(history.events) == 2 and len(history.receipts) == 2
++    assert event.request == request
++    assert event.confirmation == caller.confirmation
++    assert event.confirmation.actor == "fictional-trusted-adapter"
++    assert event.before.executor_requirements == ()
++    assert event.after.executor_requirements == ("reasoning",)
++    assert event.before.revision == receipt.previous_revision == 2
++    assert event.after.revision == receipt.new_revision == 3
++    assert event.id == receipt.event_id
++    assert event.affected_projections == receipt.affected_projections == ()
++    assert info.database.read_bytes() == before
++
++
++def test_current_rights_terminal_state_and_receipt_disclosure(workspace: Path) -> None:
++    ready(workspace)
++    request = request_for(workspace, "set_work_requirements", requirements=("coding",))
++    execute(workspace, request)
++    query = ReceiptQuery(
++        workspace_id=request.workspace_id,
++        work_id=request.work_id,
++        operation_id=request.operation_id,
++    )
++    query_caller = confirm(workspace, query)
++    assert read_receipt(workspace, query, query_caller).new_revision == 3
++    cancel = request_for(workspace, "cancel_work")
++    execute(workspace, cancel)
++    assert read_receipt(workspace, query, query_caller).new_revision == 3
++    for operation in ("authorize_work", "cancel_work", "set_work_requirements"):
++        terminal = request_for(workspace, operation)
++        with pytest.raises(MutationError, match="permission_denied"):
++            execute(workspace, terminal)
++    execute(workspace, request_for(workspace, "revoke_work"))
++    after = read_workspace(workspace).database.read_bytes()
++    with pytest.raises(MutationError, match="permission_denied"):
++        read_receipt(workspace, query, query_caller)
++    with pytest.raises(MutationError, match="permission_denied"):
++        apply_mutation(workspace, request, confirm(workspace, request))
++    assert read_workspace(workspace).database.read_bytes() == after
++
++
++def test_ungranted_work_and_exact_authorization_binding(workspace: Path) -> None:
++    migrate_workspace(workspace)
++    request = request_for(workspace, "set_work_requirements", requirements=("reasoning",))
++    before = read_workspace(workspace).database.read_bytes()
++    with pytest.raises(MutationError, match="permission_denied"):
++        apply_mutation(workspace, request, confirm(workspace, request))
++    grant = request_for(workspace)
++    with pytest.raises(MutationError, match="permission_denied"):
++        apply_mutation(workspace, grant)
++    caller = confirm(workspace, grant)
++    copied = workspace.parent / (workspace.name + "-copy")
++    shutil.copytree(workspace, copied)
++    with pytest.raises(MutationError, match="permission_denied"):
++        apply_mutation(copied, grant, caller)
++    assert read_workspace(copied).database.read_bytes() == before
++    for field, value in (
++        ("provenance", "Altered after confirmation"),
++        ("work_id", uuid4()),
++        ("workspace_id", uuid4()),
++        ("operation_id", uuid4()),
++        ("expected_revision", 99),
++    ):
++        with pytest.raises(MutationError, match="permission_denied"):
++            apply_mutation(workspace, grant.model_copy(update={field: value}), caller)
++    assert read_workspace(workspace).database.read_bytes() == before
++
++
++def test_schema_authority_revision_duplicate_artifact_order(
++    workspace: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    ready(workspace)
++    request = request_for(workspace)
++    stale = request.model_copy(update={"expected_revision": 1, "artifact_references": (uuid4(),)})
++    stale_caller = confirm(workspace, stale)
++    connect = sqlite3.connect
++
++    def guarded_connect(*args: Any, **kwargs: Any) -> sqlite3.Connection:
++        connection: sqlite3.Connection = connect(*args, **kwargs)
++
++        def deny_journal(action: int, table: str | None, *_: object) -> int:
++            return (
++                sqlite3.SQLITE_DENY
++                if action == sqlite3.SQLITE_READ and table == "mutation_receipts"
++                else sqlite3.SQLITE_OK
++            )
++
++        # Metadata's LIMIT 0 read names receipt columns, so use a trace callback
++        # to install the denial after metadata and the initial record snapshot.
++        def trace(sql: str) -> None:
++            if sql.startswith("SELECT id, kind, revision, body FROM core_records ORDER"):
++                connection.set_authorizer(deny_journal)
++
++        connection.set_trace_callback(trace)
++        return connection
++
++    with monkeypatch.context() as patch:
++        patch.setattr(sqlite3, "connect", guarded_connect)
++        with pytest.raises(ValidationError):
++            apply_mutation(workspace, request.model_copy(update={"expected_revision": True}))
++        with pytest.raises(MutationError, match="permission_denied"):
++            apply_mutation(workspace, stale)
++        with pytest.raises(MutationError, match="conflict"):
++            apply_mutation(workspace, stale, stale_caller)
++    unsupported = request.model_copy(update={"artifact_references": (uuid4(),)})
++    with pytest.raises(MutationError, match="unsupported_artifacts"):
++        execute(workspace, unsupported)
++    execute(workspace, request)
++    collision = unsupported.model_copy(update={"expected_revision": 3})
++    with pytest.raises(MutationError, match="collision"):
++        execute(workspace, collision)
++    assert len(read_history(workspace).events) == 2
++
++
++@pytest.mark.parametrize(
++    "field", ["approved", "actor", "authority_scope", "exact_text", "goal", "budget"]
++)
++def test_payload_cannot_expand_scope_or_attest_authority(workspace: Path, field: str) -> None:
++    with pytest.raises(ValidationError):
++        MutationRequest.model_validate({**request_for(workspace).model_dump(), field: "owner"})
++
++
++@pytest.mark.parametrize("stage", ["state", "event", "receipt", "commit"])
++def test_db_failure_rolls_back_change_event_and_receipt(
++    workspace: Path, monkeypatch: pytest.MonkeyPatch, stage: str
++) -> None:
++    ready(workspace)
++    request = request_for(workspace, "set_work_requirements", requirements=("reasoning",))
++    caller = confirm(workspace, request)
++    database = read_workspace(workspace).database
++    before = database.read_bytes()
++    connect = sqlite3.connect
++
++    def failing_connect(*args: Any, **kwargs: Any) -> sqlite3.Connection:
++        connection: sqlite3.Connection = connect(*args, **kwargs)
++
++        def fail(action: int, target: str | None, *_: object) -> int:
++            blocked = {
++                "state": (sqlite3.SQLITE_UPDATE, "core_state"),
++                "event": (sqlite3.SQLITE_INSERT, "mutation_events"),
++                "receipt": (sqlite3.SQLITE_INSERT, "mutation_receipts"),
++                "commit": (sqlite3.SQLITE_TRANSACTION, "COMMIT"),
++            }[stage]
++            return sqlite3.SQLITE_DENY if (action, target) == blocked else sqlite3.SQLITE_OK
++
++        connection.set_authorizer(fail)
++        return connection
++
++    with monkeypatch.context() as patch:
++        patch.setattr(sqlite3, "connect", failing_connect)
++        with pytest.raises(WorkspaceError):
++            apply_mutation(workspace, request, caller)
++    assert database.read_bytes() == before
++    assert read_records(workspace).state_revision == 2
++    assert len(read_history(workspace).events) == len(read_history(workspace).receipts) == 1
++    assert apply_mutation(workspace, request, caller).new_revision == 3
++
++
++def test_v3_migration_failure_retains_v2(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> None:
++    before = read_workspace(workspace).database.read_bytes()
++    connect = sqlite3.connect
++
++    def failing_connect(*args: Any, **kwargs: Any) -> sqlite3.Connection:
++        connection: sqlite3.Connection = connect(*args, **kwargs)
++        connection.set_authorizer(
++            lambda action, table, *_: (
++                sqlite3.SQLITE_DENY
++                if action == sqlite3.SQLITE_INSERT and table == "schema_migrations"
++                else sqlite3.SQLITE_OK
++            )
++        )
++        return connection
++
++    with monkeypatch.context() as patch:
++        patch.setattr(sqlite3, "connect", failing_connect)
++        with pytest.raises(WorkspaceError):
++            migrate_workspace(workspace)
++    assert read_workspace(workspace).schema_version == 2
++    assert read_workspace(workspace).database.read_bytes() == before
++    assert migrate_workspace(workspace).schema_version == 3
++
++
++@pytest.mark.parametrize("same_id", [False, True])
++def test_concurrent_requests_have_one_effect(workspace: Path, same_id: bool) -> None:
++    migrate_workspace(workspace)
++    first = request_for(workspace)
++    second = first if same_id else request_for(workspace)
++    callers = [confirm(workspace, request) for request in (first, second)]
++    barrier = Barrier(2)
++
++    def run(index: int) -> str:
++        barrier.wait()
++        try:
++            apply_mutation(workspace, (first, second)[index], callers[index])
++            return "committed"
++        except MutationError as error:
++            return error.code
++
++    with ThreadPoolExecutor(max_workers=2) as pool:
++        outcomes = list(pool.map(run, range(2)))
++    assert sorted(outcomes) == ["committed", "conflict"]
++    assert read_records(workspace).state_revision == 2
++    assert len(read_history(workspace).events) == len(read_history(workspace).receipts) == 1
++
++
++def test_authority_revoked_between_preview_and_mutation(workspace: Path) -> None:
++    ready(workspace)
++    request = request_for(workspace, "set_work_requirements", requirements=("reasoning",))
++    caller = confirm(workspace, request)
++    execute(workspace, request_for(workspace, "revoke_work"))
++    before = read_workspace(workspace).database.read_bytes()
++    with pytest.raises(MutationError, match="permission_denied"):
++        apply_mutation(workspace, request, caller)
++    assert read_workspace(workspace).database.read_bytes() == before
++
++
++def test_audit_inconsistency_is_refused_without_repair(workspace: Path) -> None:
++    ready(workspace)
++    database = read_workspace(workspace).database
++    # Deliberately damaged negative fixture, not a successful trial or DB repair.
++    with closing(sqlite3.connect(database, autocommit=True)) as connection:
++        connection.execute("DELETE FROM mutation_receipts")
++    before = database.read_bytes()
++    with pytest.raises(WorkspaceError, match="Incomplete"):
++        read_records(workspace)
++    with pytest.raises(WorkspaceError, match="Incomplete"):
++        read_history(workspace)
++    assert database.read_bytes() == before
+diff --git a/tests/zaratustra/core/test_records.py b/tests/zaratustra/core/test_records.py
+index 25bab52..f3d84dc 100644
+--- a/tests/zaratustra/core/test_records.py
++++ b/tests/zaratustra/core/test_records.py
+@@ -5,6 +5,7 @@ from __future__ import annotations
+ import json
+ import sqlite3
+ from contextlib import closing
++from importlib.metadata import version
+ from pathlib import Path
+ from typing import Any
+ from uuid import uuid4
+@@ -46,7 +47,7 @@ def test_explicit_migration_preserves_bootstrap_and_repeat_bytes(tmp_path: Path)
+     with pytest.raises(WorkspaceError, match="migrate explicitly"):
+         read_records(tmp_path)
+     assert original.database.read_bytes() == before
+-    upgraded = migrate_workspace(tmp_path)
++    upgraded = migrate_workspace(tmp_path, target_version=2)
+     assert upgraded.workspace_id == original.workspace_id
+     assert upgraded.created_at == original.created_at
+     assert upgraded.schema_version == 2
+@@ -55,7 +56,7 @@ def test_explicit_migration_preserves_bootstrap_and_repeat_bytes(tmp_path: Path)
+             "SELECT version, name, sha256 FROM schema_migrations WHERE version = 2"
+         ).fetchone() == (2, V2_NAME, V2_SHA256)
+     migrated_bytes = original.database.read_bytes()
+-    assert migrate_workspace(tmp_path) == upgraded
++    assert migrate_workspace(tmp_path, target_version=2) == upgraded
+     assert init_workspace(tmp_path) == upgraded
+     assert read_records(tmp_path).records == ()
+     assert read_records(tmp_path).state_revision == 0
+@@ -66,7 +67,7 @@ def test_records_restart_preserves_all_fields_revisions_and_links(
+     tmp_path: Path, draft: InitialRecords
+ ) -> None:
+     info = init_workspace(tmp_path)
+-    migrate_workspace(tmp_path)
++    migrate_workspace(tmp_path, target_version=2)
+     created = create_initial_records(tmp_path, draft)
+     before = info.database.read_bytes()
+     reopened = read_records(tmp_path)
+@@ -82,7 +83,7 @@ def test_records_restart_preserves_all_fields_revisions_and_links(
+     assert work.authority_scope == "none" and work.status == "draft"
+     assert artifact.active_version is None and artifact.work_id == work.id
+     assert event.affected_ids == (work.process_id, work.id, artifact.id)
+-    assert event.product_version == "0.2.0"
++    assert event.product_version == version("zaratustra")
+     with pytest.raises(WorkspaceError, match="already exist"):
+         create_initial_records(tmp_path, draft)
+     assert info.database.read_bytes() == before
+@@ -131,17 +132,17 @@ def test_migration_failure_leaves_original_database(
+     with monkeypatch.context() as patch:
+         patch.setattr(sqlite3, "connect", failing_connect)
+         with pytest.raises(WorkspaceError):
+-            migrate_workspace(tmp_path)
++            migrate_workspace(tmp_path, target_version=2)
+     assert read_workspace(tmp_path) == info
+     assert info.database.read_bytes() == before
+-    assert migrate_workspace(tmp_path).schema_version == 2
++    assert migrate_workspace(tmp_path, target_version=2).schema_version == 2
+ 
+ 
+ def test_event_insert_failure_rolls_back_records_and_revision(
+     tmp_path: Path, draft: InitialRecords, monkeypatch: pytest.MonkeyPatch
+ ) -> None:
+     info = init_workspace(tmp_path)
+-    migrate_workspace(tmp_path)
++    migrate_workspace(tmp_path, target_version=2)
+     before = info.database.read_bytes()
+     connect = sqlite3.connect
+ 
+@@ -168,7 +169,7 @@ def test_invalid_stored_records_are_refused_without_repair(
+     tmp_path: Path, draft: InitialRecords, damage: str
+ ) -> None:
+     info = init_workspace(tmp_path)
+-    migrate_workspace(tmp_path)
++    migrate_workspace(tmp_path, target_version=2)
+     create_initial_records(tmp_path, draft)
+     # Deliberately corrupt disposable fixtures; never repair the passing runtime trial.
+     with closing(sqlite3.connect(info.database, autocommit=True)) as connection:
+diff --git a/tests/zaratustra/core/test_workspace.py b/tests/zaratustra/core/test_workspace.py
+index 34867cd..f5713fd 100644
+--- a/tests/zaratustra/core/test_workspace.py
++++ b/tests/zaratustra/core/test_workspace.py
+@@ -52,7 +52,7 @@ def test_newer_schema_is_refused_without_rewriting(tmp_path: Path, command: obje
+     info = init_workspace(tmp_path)
+     # Deliberately invalid isolated fixture, never a repair of acceptance data.
+     with closing(sqlite3.connect(info.database)) as connection:
+-        connection.execute("PRAGMA user_version = 3")
++        connection.execute("PRAGMA user_version = 4")
+     before = info.database.read_bytes()
+     assert callable(command)
+     with pytest.raises(WorkspaceError, match="Unsupported"):
+diff --git a/tests/zaratustra/local/test_confirmation.py b/tests/zaratustra/local/test_confirmation.py
+new file mode 100644
+index 0000000..0455af9
+--- /dev/null
++++ b/tests/zaratustra/local/test_confirmation.py
+@@ -0,0 +1,98 @@
++"""Authority delivery and lost reply checks, without asserting presentation wording."""
++
++from __future__ import annotations
++
++import io
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from zaratustra.cli import main
++from zaratustra.core import (
++    InitialRecords,
++    MutationError,
++    MutationRequest,
++    ReceiptQuery,
++    Work,
++    apply_mutation,
++    create_initial_records,
++    init_workspace,
++    migrate_workspace,
++    prepare_authorization,
++    read_history,
++    read_receipt,
++    read_records,
++)
++from zaratustra.local import confirm_on_console
++
++
++class Terminal(io.StringIO):
++    def isatty(self) -> bool:
++        return True
++
++
++def test_console_confirmation_pipe_denial_and_lost_reply(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    info = init_workspace(tmp_path)
++    migrate_workspace(tmp_path)
++    snapshot = create_initial_records(
++        tmp_path,
++        InitialRecords(
++            process_title="Fictional observatory",
++            goal="Inspect a fictional moon",
++            expected_result="A note",
++            acceptance=("Saved",),
++            boundaries=("Fictional only",),
++            budget="Local trial",
++            artifact_title="Draft",
++        ),
++    )
++    from uuid import uuid4
++
++    work = next(record for record in snapshot.records if isinstance(record, Work))
++    request = MutationRequest(
++        operation_id=uuid4(),
++        workspace_id=info.workspace_id,
++        work_id=work.id,
++        operation="authorize_work",
++        expected_revision=1,
++        provenance="Fictional console trial",
++    )
++    prompt = prepare_authorization(tmp_path, request)
++    before = info.database.read_bytes()
++    monkeypatch.setattr("sys.stdin", io.StringIO("approve " + prompt.request_sha256))
++    monkeypatch.setattr("sys.stderr", Terminal())
++    with pytest.raises(MutationError, match="permission_denied"):
++        confirm_on_console(prompt)
++    monkeypatch.setattr("sys.stdin", Terminal("no"))
++    with pytest.raises(MutationError, match="permission_denied"):
++        confirm_on_console(prompt)
++    assert info.database.read_bytes() == before
++    monkeypatch.setattr("sys.stdin", Terminal("approve " + prompt.request_sha256))
++    caller = confirm_on_console(prompt)
++    assert caller.confirmation.channel == "local-console"
++    # A real CLI output failure after Core commits must not undo/repeat the effect.
++    monkeypatch.setattr("zaratustra.cli.confirm_on_console", lambda _: caller)
++
++    def lost_reply(*args: Any, **kwargs: Any) -> None:
++        raise BrokenPipeError("simulated disconnected reply")
++
++    with monkeypatch.context() as patch:
++        patch.setattr("builtins.print", lost_reply)
++        with pytest.raises(BrokenPipeError):
++            main(["mutate", str(tmp_path), request.model_dump_json()])
++    committed = info.database.read_bytes()
++    with pytest.raises(MutationError, match="conflict"):
++        apply_mutation(tmp_path, request, caller)
++    assert read_records(tmp_path).state_revision == 2
++    assert len(read_history(tmp_path).events) == 1
++    query = ReceiptQuery(
++        workspace_id=info.workspace_id, work_id=work.id, operation_id=request.operation_id
++    )
++    read_prompt = prepare_authorization(tmp_path, query)
++    monkeypatch.setattr("sys.stdin", Terminal("approve " + read_prompt.request_sha256))
++    receipt = read_receipt(tmp_path, query, confirm_on_console(read_prompt))
++    assert receipt.operation_id == request.operation_id and receipt.new_revision == 2
++    assert info.database.read_bytes() == committed
+diff --git a/tools/probe_mutations.py b/tools/probe_mutations.py
+new file mode 100644
+index 0000000..cb4f00c
+--- /dev/null
++++ b/tools/probe_mutations.py
+@@ -0,0 +1,227 @@
++"""Retained installed Work 3 trial. Run in a terminal; confirm each displayed request.
++
++This executor/owner preparation probe does not infer owner runtime acceptance.
++It preserves the accepted v2 original and never writes DB state except via Core.
++"""
++
++from __future__ import annotations
++
++import argparse
++import hashlib
++import json
++import os
++import shutil
++import subprocess
++import tempfile
++import tomllib
++from pathlib import Path
++from typing import Any
++from uuid import uuid4
++
++ROOT = Path(__file__).resolve().parents[1]
++
++
++def digest(path: Path) -> str:
++    return hashlib.sha256(path.read_bytes()).hexdigest()
++
++
++def main() -> None:
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--accepted-trial", type=Path, required=True)
++    args = parser.parse_args()
++    for name in ("STOP", "STEER.md"):
++        if (ROOT / name).exists():
++            raise SystemExit(f"STOP: read {name}")
++    uv = shutil.which("uv")
++    if uv is None:
++        raise SystemExit("STOP: required tool uv unavailable")
++    accepted = args.accepted_trial.resolve()
++    old_database = accepted / "workspace/.zara/state.sqlite3"
++    old_wheel = accepted / "zaratustra-0.2.0-py3-none-any.whl"
++    original_hashes = {str(path): digest(path) for path in (old_database, old_wheel)}
++    package_version = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))[
++        "project"
++    ]["version"]
++    base = Path(tempfile.mkdtemp(prefix="zaratustra-work3-")).resolve()
++    if base.is_relative_to(ROOT) or base.is_relative_to(accepted):
++        raise RuntimeError("Installed trial must be separate from product and accepted inputs")
++    working = base / "unrelated-cwd"
++    working.mkdir()
++    workspace = base / "workspace"
++    shutil.copytree(accepted / "workspace", workspace)
++    wheel = base / f"zaratustra-{package_version}-py3-none-any.whl"
++    shutil.copyfile(ROOT / "dist" / wheel.name, wheel)
++    environment = base / "venv"
++    python = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
++    zara = environment / ("Scripts/zara.exe" if os.name == "nt" else "bin/zara")
++    old_zara = accepted / "venv" / ("Scripts/zara.exe" if os.name == "nt" else "bin/zara")
++    requirements = base / "runtime-requirements.txt"
++    transcript = base / "transcript.txt"
++    child_env = dict(os.environ)
++    child_env.pop("PYTHONPATH", None)
++    child_env["PYTHONIOENCODING"] = "utf-8"
++
++    def log(message: str) -> None:
++        print(message, flush=True)
++        with transcript.open("a", encoding="utf-8", newline="") as stream:
++            stream.write(message + chr(10))
++
++    def run(
++        command: list[str], *, expected: int = 0, console: bool = False, cwd: Path = working
++    ) -> str:
++        log("$ " + subprocess.list2cmdline(command))
++        # Console stdin/stderr remain real terminal handles. No test approval bypass.
++        result = subprocess.run(
++            command,
++            cwd=cwd,
++            env=child_env,
++            stdin=None if console else subprocess.DEVNULL,
++            stdout=subprocess.PIPE,
++            stderr=None if console else subprocess.PIPE,
++            text=True,
++            encoding="utf-8",
++        )
++        log(result.stdout)
++        if result.stderr:
++            log(result.stderr)
++        log(f"exit={result.returncode}")
++        if result.returncode != expected:
++            raise RuntimeError(f"Expected exit {expected}; got {result.returncode}")
++        return result.stdout
++
++    log(f"retained_trial={base}")
++    commit = run(["git", "rev-parse", "HEAD"], cwd=ROOT).strip()
++    log(f"source_commit={commit}")
++    log(f"wheel_sha256={digest(wheel)}")
++    run(
++        [
++            uv,
++            "export",
++            "--locked",
++            "--no-dev",
++            "--no-emit-project",
++            "--no-hashes",
++            "--output-file",
++            str(requirements),
++        ],
++        cwd=ROOT,
++    )
++    run([uv, "venv", "--python", "3.13.7", "--python-preference", "only-managed", str(environment)])
++    run([uv, "pip", "install", "--python", str(python), "-r", str(requirements), str(wheel)])
++    run([uv, "pip", "check", "--python", str(python)])
++    isolated = """
++import importlib.metadata, json, sqlite3, sys
++from pathlib import Path
++import pydantic, zaratustra
++package = Path(zaratustra.__file__).resolve()
++assert package.is_relative_to(Path(sys.argv[1]).resolve())
++assert not package.is_relative_to(Path(sys.argv[2]).resolve())
++assert not any(Path(p).resolve().is_relative_to(Path(sys.argv[2]).resolve()) for p in sys.path if p)
++print(json.dumps(dict(version=importlib.metadata.version('zaratustra'), python=sys.version,
++    sqlite=sqlite3.sqlite_version, pydantic=pydantic.__version__, package=str(package)), indent=2))
++"""
++    runtime = json.loads(run([str(python), "-I", "-c", isolated, str(environment), str(ROOT)]))
++    assert runtime["version"] == package_version
++    original = json.loads(run([str(old_zara), "records", "read", str(workspace)]))
++    before = json.loads(run([str(zara), "records", "read", str(workspace)]))
++    assert before == original
++    upgraded = json.loads(run([str(zara), "migrate", str(workspace)]))
++    assert upgraded["schema_version"] == 3
++    assert json.loads(run([str(zara), "records", "read", str(workspace)])) == before
++    database = workspace / ".zara/state.sqlite3"
++    migrated_hash = digest(database)
++    run([str(old_zara), "records", "read", str(workspace)], expected=1)
++    assert json.loads(run([str(zara), "migrate", str(workspace)])) == upgraded
++    assert digest(database) == migrated_hash
++    work = next(record for record in before["records"] if record["kind"] == "work")
++
++    def request(operation: str, revision: int, **extra: object) -> dict[str, Any]:
++        return (
++            dict(
++                version=1,
++                operation_id=str(uuid4()),
++                workspace_id=before["workspace_id"],
++                work_id=work["id"],
++                operation=operation,
++                expected_revision=revision,
++                requirements=[],
++                artifact_references=[],
++                provenance="Fictional Work 3 executor trial under the development CALL",
++            )
++            | extra
++        )
++
++    def mutation(value: dict[str, Any], *, expected: int = 0) -> dict[str, Any] | None:
++        output = run(
++            [str(zara), "mutate", str(workspace), json.dumps(value)],
++            expected=expected,
++            console=True,
++        )
++        decoded: dict[str, Any] | None = json.loads(output) if expected == 0 else None
++        return decoded
++
++    grant = request("authorize_work", 1)
++    run([str(zara), "mutate", str(workspace), json.dumps(grant)], expected=1)
++    run([str(zara), "mutate", str(workspace), json.dumps(grant | {"approved": True})], expected=1)
++    assert digest(database) == migrated_hash
++    granted = mutation(grant)
++    assert granted is not None and granted["new_revision"] == 2
++    grant_hash = digest(database)
++    mutation(grant, expected=1)
++    assert digest(database) == grant_hash
++    change = request("set_work_requirements", 2, requirements=["reasoning", "coding"])
++    changed = mutation(change)
++    assert changed is not None and changed["new_revision"] == 3
++    query = {name: change[name] for name in ("version", "workspace_id", "work_id", "operation_id")}
++    current_hash = digest(database)
++    observed = json.loads(
++        run([str(zara), "receipt", str(workspace), json.dumps(query)], console=True)
++    )
++    assert observed == changed
++    mutation(request("set_work_requirements", 2, requirements=["stale"]), expected=1)
++    assert digest(database) == current_hash
++    revoked = mutation(request("revoke_work", 3))
++    assert revoked is not None and revoked["new_revision"] == 4
++    revoked_hash = digest(database)
++    mutation(change, expected=1)
++    run([str(zara), "receipt", str(workspace), json.dumps(query)], expected=1, console=True)
++    assert digest(database) == revoked_hash
++    history = json.loads(run([str(zara), "history", str(workspace)]))
++    snapshot = json.loads(run([str(zara), "records", "read", str(workspace)]))
++    assert history["state_revision"] == snapshot["state_revision"] == 4
++    assert len(history["events"]) == len(history["receipts"]) == 3
++    assert [event["request"]["operation"] for event in history["events"]] == [
++        "authorize_work",
++        "set_work_requirements",
++        "revoke_work",
++    ]
++    assert history["events"][1]["request"] == change
++    assert history["events"][1]["confirmation"]["channel"] == "local-console"
++    assert history["receipts"][1] == changed
++    assert {str(path): digest(path) for path in (old_database, old_wheel)} == original_hashes
++    assert list((workspace / "artifacts").iterdir()) == []
++    assert list((workspace / "projections").iterdir()) == []
++    receipt = dict(
++        source_commit=commit,
++        version=package_version,
++        wheel_sha256=digest(wheel),
++        retained_trial=str(base),
++        installed_command=str(zara),
++        workspace=str(workspace),
++        runtime=runtime,
++        accepted_inputs_unchanged=original_hashes,
++        database_sha256=digest(database),
++        snapshot=snapshot,
++        history=history,
++        acceptance="executor checks only; no owner runtime PASS or binding G5",
++    )
++    (base / "receipt.json").write_text(json.dumps(receipt, indent=2), encoding="utf-8")
++    log(json.dumps(receipt, indent=2))
++    log(
++        "PASS: installed console mutation, replay/stale refusal, current authority, "
++        "audit/receipt and preserved accepted input"
++    )
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/tools/probe_records.py b/tools/probe_records.py
+index ef3a1f5..dd1d230 100644
+--- a/tools/probe_records.py
++++ b/tools/probe_records.py
+@@ -120,7 +120,7 @@ print(json.dumps(dict(package=str(package), version=importlib.metadata.version('
+     assert digest(copied / ".zara/state.sqlite3") == old_hashes[str(old_database)]
+     run([str(zara), "records", "read", str(copied)], expected=1)
+     assert digest(copied / ".zara/state.sqlite3") == old_hashes[str(old_database)]
+-    upgraded = json.loads(run([str(zara), "migrate", str(copied)]))
++    upgraded = json.loads(run([str(zara), "migrate", str(copied), "--to", "2"]))
+     assert upgraded["schema_version"] == 2
+     assert upgraded["workspace_id"] == before["workspace_id"]
+     assert upgraded["created_at"] == before["created_at"]
+@@ -166,7 +166,7 @@ print(json.dumps(dict(package=str(package), version=importlib.metadata.version('
+     )
+     run([str(zara), *create_arguments], expected=1)
+     assert json.loads(run([str(zara), "init", str(copied)])) == upgraded
+-    assert json.loads(run([str(zara), "migrate", str(copied)])) == upgraded
++    assert json.loads(run([str(zara), "migrate", str(copied), "--to", "2"])) == upgraded
+     run([str(old_zara), "status", str(copied)], expected=1)
+     assert digest(copied / ".zara/state.sqlite3") == database_hash
+     assert json.loads(run([str(old_zara), "status", str(old_workspace)])) == original
+@@ -178,7 +178,7 @@ print(json.dumps(dict(package=str(package), version=importlib.metadata.version('
+     fresh.mkdir()
+     initialized = json.loads(run([str(zara), "init", str(fresh)]))
+     assert initialized["schema_version"] == 1
+-    run([str(zara), "migrate", str(fresh)])
++    run([str(zara), "migrate", str(fresh), "--to", "2"])
+     fresh_arguments = [str(fresh) if arg == str(copied) else arg for arg in create_arguments]
+     fresh_created = json.loads(run([str(zara), *fresh_arguments]))
+     assert json.loads(run([str(zara), "records", "read", str(fresh)])) == fresh_created
+diff --git a/uv.lock b/uv.lock
+index 70c7a61..90b55c0 100644
+--- a/uv.lock
++++ b/uv.lock
+@@ -350,7 +350,7 @@ wheels = [
+ 
+ [[package]]
+ name = "zaratustra"
+-version = "0.2.0"
++version = "0.3.0"
+ source = { editable = "." }
+ dependencies = [
+     { name = "pydantic" },

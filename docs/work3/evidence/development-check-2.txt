@@ -1,0 +1,41 @@
+$ C:\projects\zaratustra\.venv\Scripts\python.exe -m ruff format --check src tools tests
+25 files already formatted
+$ C:\projects\zaratustra\.venv\Scripts\python.exe -m ruff check src tools tests
+E501 Line too long (102 > 100)
+   --> tools\probe_mutations.py:149:101
+    |
+147 |                 requirements=[],
+148 |                 artifact_references=[],
+149 |                 provenance="Fictional Work 3 installed executor trial authorized by development CALL",
+    |                                                                                                     ^^
+150 |             )
+151 |             | extra
+    |
+
+E501 Line too long (127 > 100)
+   --> tools\probe_mutations.py:221:101
+    |
+219 |     log(json.dumps(receipt, indent=2))
+220 |     log(
+221 |         "PASS: installed console mutation, replay/stale refusal, current authority, audit/receipt and preserved accepted input"
+    |                                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+222 |     )
+    |
+
+Found 2 errors.
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\projects\zaratustra\tools\check.py", line 148, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "C:\projects\zaratustra\tools\check.py", line 126, in main
+    run([sys.executable, "-m", "ruff", "check", *files])
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\zaratustra\tools\check.py", line 19, in run
+    subprocess.run(command, cwd=root, check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['C:\\projects\\zaratustra\\.venv\\Scripts\\python.exe', '-m', 'ruff', 'check', 'src', 'tools', 'tests']' returned non-zero exit status 1.

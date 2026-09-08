@@ -1,0 +1,34 @@
+commit c4c795815169e3a38352b09d94cdeba15134f2b1
+Author:     Anton <antoninozemcev@gmail.com>
+AuthorDate: Tue Sep 8 08:38:56 2026 +0300
+Commit:     Anton <antoninozemcev@gmail.com>
+CommitDate: Tue Sep 8 08:38:56 2026 +0300
+
+    Implement Work 3 mutation protocol and accepted local authority boundary
+
+ AGENTS.md                                   |   7 +-
+ README.md                                   |  17 +-
+ docs/work3/INSTALL.md                       |  95 ++++++++
+ docs/work3/OWNER-DECISION-20260908.md       |  32 +++
+ docs/work3/PLAN.md                          | 115 +++++----
+ pyproject.toml                              |   8 +-
+ src/zaratustra/AGENTS.md                    |   2 +-
+ src/zaratustra/cli/AGENTS.md                |   5 +-
+ src/zaratustra/cli/__init__.py              |  31 ++-
+ src/zaratustra/core/AGENTS.md               |  17 +-
+ src/zaratustra/core/__init__.py             |  26 +-
+ src/zaratustra/core/migration_v3.py         |  32 +++
+ src/zaratustra/core/mutations.py            | 281 +++++++++++++++++++++
+ src/zaratustra/core/protocol.py             | 157 ++++++++++++
+ src/zaratustra/core/records.py              |  43 ++--
+ src/zaratustra/core/workspace.py            |  33 ++-
+ src/zaratustra/local/AGENTS.md              |   9 +
+ src/zaratustra/local/__init__.py            |  34 +++
+ tests/zaratustra/core/test_mutations.py     | 363 ++++++++++++++++++++++++++++
+ tests/zaratustra/core/test_records.py       |  17 +-
+ tests/zaratustra/core/test_workspace.py     |   2 +-
+ tests/zaratustra/local/test_confirmation.py |  98 ++++++++
+ tools/probe_mutations.py                    | 227 +++++++++++++++++
+ tools/probe_records.py                      |   6 +-
+ uv.lock                                     |   2 +-
+ 25 files changed, 1558 insertions(+), 101 deletions(-)

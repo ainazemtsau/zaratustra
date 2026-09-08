@@ -1,0 +1,23 @@
+[
+  {
+    "original": "C:/Users/Anton/AppData/Local/Temp/solmax-work1-accept-20260907-a1/retained-trial",
+    "version": "0.1.0",
+    "database_sha256": "ec4fd2c045922578fa1344a5c126c94b0b929215efd57e93b773baf3785ca207",
+    "wheel_sha256": "4f71d1b2aff54d8680d22e01cb58483681a69969c3c3501667e2bb5aabb9482c",
+    "matches_accepted": true
+  },
+  {
+    "original": "C:/Users/Anton/AppData/Local/Temp/zaratustra-work2-8cv9m8jt",
+    "version": "0.2.0",
+    "database_sha256": "cd8169923aa0836bf6964537f2ea59543a44fffec3d4c4d7c2104ab221759de0",
+    "wheel_sha256": "a50f0f2d195b33a5eac08d9dd8a2479b9863cd029af703341781fb0c63d5d53c",
+    "matches_accepted": true
+  },
+  {
+    "original": "C:/Users/Anton/AppData/Local/Temp/zaratustra-work2-ltyq1qsb",
+    "version": "0.2.0",
+    "database_sha256": "e6e4d430e575e17feca718b1063e6640af09103263848030bbb6d81a72905fe1",
+    "wheel_sha256": "a50f0f2d195b33a5eac08d9dd8a2479b9863cd029af703341781fb0c63d5d53c",
+    "matches_accepted": true
+  }
+]
