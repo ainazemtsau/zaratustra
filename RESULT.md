@@ -43,7 +43,7 @@ accepted_work2_implementation: ce8ae68cf555f05864c9dd6b82cfbfd9babe61b1
 previous_w21_report_content: 6c9da9eb8213de9f5612179adc829b5192c400a7
 previous_w21_report_locator: 085e402e17d9d68e579622941c4fb9ada53e531a
 implementation_commit: c4c795815169e3a38352b09d94cdeba15134f2b1
-report_content_commit: recorded by the subsequent commit-locator update
+report_content_commit: 5dce7fd665439968e46ee0725004be3bb5563eb7
 branch: codex/work3-mutation-plan
 version: 0.3.0
 remote: none
@@ -56,6 +56,9 @@ The preceding W21 report commits contain no product source changes relative to
 accepted Work 2. The following delivery commits contain only RESULT/HOME and raw
 evidence/commit locators; measured source, tests, package/build inputs and the
 implementation PLAN/owner instructions remain at implementation_commit.
+The report_content_commit contains the full report and evidence. Its exact hash is
+added by a subsequent documentation-only locator commit, whose hash is available
+from git rev-parse HEAD; a commit cannot contain its own final hash.
 
 wheel: dist/zaratustra-0.3.0-py3-none-any.whl
 wheel_sha256: 860804660548cd20bbd976f96bf5d27fe21855a56406b5bc7c7dcbe0ab08c1f2

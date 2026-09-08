@@ -9,7 +9,8 @@ Direction basis: 5f6c8fac9910eff5a6a1b64f45f7e7e5c1570d09
 Accepted Product basis/report: fe064773dccb2d1f818f1004962043df2ef1edd9
 Accepted Work 2 implementation: ce8ae68cf555f05864c9dd6b82cfbfd9babe61b1
 Work 3 implementation commit: c4c795815169e3a38352b09d94cdeba15134f2b1
-Full report/evidence content commit: recorded by the subsequent commit-locator update
+Full report/evidence content commit: 5dce7fd665439968e46ee0725004be3bb5563eb7
+The following documentation-only locator commit is available as git rev-parse HEAD.
 Version: 0.3.0
 Branch: codex/work3-mutation-plan
 
