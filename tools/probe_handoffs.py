@@ -97,6 +97,14 @@ def exercise(base: Path, source: Path) -> None:
         expected: int = 0,
     ) -> str:
         full = [str(zara), *args]
+        if label == "stdin-without-console" and os.name == "nt":
+            # Windows launchers can allocate a console for a detached child. Detach
+            # in the final installed interpreter, immediately before the real CLI.
+            code = (
+                "import ctypes; import sys; from zaratustra.cli import main; "
+                "ctypes.windll.kernel32.FreeConsole(); sys.exit(main())"
+            )
+            full = [sys.executable, "-I", "-c", code, *args]
         print("$ " + subprocess.list2cmdline(full), flush=True)
         env = dict(os.environ)
         env.pop("PYTHONPATH", None)
@@ -110,7 +118,8 @@ def exercise(base: Path, source: Path) -> None:
             stdout=subprocess.PIPE,
             stderr=None if console else subprocess.PIPE,
             encoding="utf-8",
-            creationflags=(0x00000008 if os.name == "nt" and not console else 0),
+            creationflags=(0x08000000 if os.name == "nt" and not console else 0),
+            timeout=None if console else 30,
         )
         record = dict(
             label=label,
