@@ -53,13 +53,18 @@ version: 0.2.0 — unchanged accepted version, not a Work 3 release
 input_branch: codex/work2-core-records
 report_branch: codex/work3-mutation-plan
 remote: none
-report_content_commit: recorded in the subsequent commit-locator update
+report_content_commit: 6c9da9eb8213de9f5612179adc829b5192c400a7
+report_locator_update: this subsequent documentation-only commit records that exact id
 
 Only RESULT.md and docs/work3/ belong to this leg. Source, tests, tools, package
 metadata, uv.lock, released migrations, AGENTS.md, REVIEW.md, validation.config and
 accepted docs/work1/docs/work2/docs/setup remain unchanged. Previous full RESULT
 is retained at product_basis_report. Exact final report commit ids are supplied in
 the HOME message. Documentation commits are not relabeled as implementation.
+Full report/PLAN/evidence content was committed at report_content_commit. The
+following locator update adds its hash and HOME message; no measured product
+source, tests, build inputs or raw check outputs change. A commit cannot contain
+its own hash; the final locator commit is identified in the session's HOME message.
 
 | CALL done_when | Actual disposition |
 |---|---|
