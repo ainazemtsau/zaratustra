@@ -26,8 +26,9 @@ Implementation: e1b831bfbb1bebb6faad27e41c0960da6c28fc99.
 Harness-only commits: fac7e55aa70033d441ab827aea6ca72b7d00562b and
 3bd46cfdcb71ec4df403034f146e66492239500d. Runtime bytes remain e1b831b.
 Diff/history: docs/work5/evidence/implementation.patch and implementation.txt.
-Full report/evidence are committed after those refs; final handback pins the branch
-tip. No remote/publication. Prior RESULT remains at accepted Git base and in the
+Full report/evidence commit: e5f6c2b5621608069d8dfa66f1185b02f3060778.
+The following locator-only commit pins that report here and in HOME; runtime and
+evidence bytes are unchanged. No remote/publication. Prior RESULT remains at accepted Git base and in the
 prior durable Work 4 evidence.
 
 New Handoff 1 / request 3 / explicit DB migration 5; existing default migrate target

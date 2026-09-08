@@ -14,7 +14,8 @@ Branch: codex/work5-handoff
 Accepted base: 0b5ad766545d2cb32c4ef1edfc1cf06fb0e6e35f
 Implementation: e1b831bfbb1bebb6faad27e41c0960da6c28fc99
 Exact exercised harness: 3bd46cfdcb71ec4df403034f146e66492239500d
-Report/evidence: subsequent committed branch tip; final handback pins its hash.
+Report/evidence: e5f6c2b5621608069d8dfa66f1185b02f3060778.
+The following locator-only commit pins that report; runtime/evidence are unchanged.
 No Product remote or publication. Primary checkout retains its old branch.
 
 Final trial: C:/Users/Anton/AppData/Local/Temp/zaratustra-work5-96nw94ii
