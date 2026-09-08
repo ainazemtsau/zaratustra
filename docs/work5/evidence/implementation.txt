@@ -1,0 +1,64 @@
+commit 3bd46cfdcb71ec4df403034f146e66492239500d
+Author:     Anton <antoninozemcev@gmail.com>
+AuthorDate: Tue Sep 8 12:21:07 2026 +0300
+Commit:     Anton <antoninozemcev@gmail.com>
+CommitDate: Tue Sep 8 12:21:07 2026 +0300
+
+    Preserve exact stdin bytes in installed Handoff evidence
+
+ tools/probe_handoffs.py | 19 +++++++++++--------
+ 1 file changed, 11 insertions(+), 8 deletions(-)
+
+commit fac7e55aa70033d441ab827aea6ca72b7d00562b
+Author:     Anton <antoninozemcev@gmail.com>
+AuthorDate: Tue Sep 8 12:17:45 2026 +0300
+Commit:     Anton <antoninozemcev@gmail.com>
+CommitDate: Tue Sep 8 12:17:45 2026 +0300
+
+    Detach the final installed interpreter for no-console Handoff evidence
+
+ tools/probe_handoffs.py | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+commit e1b831bfbb1bebb6faad27e41c0960da6c28fc99
+Author:     Anton <antoninozemcev@gmail.com>
+AuthorDate: Tue Sep 8 12:14:18 2026 +0300
+Commit:     Anton <antoninozemcev@gmail.com>
+CommitDate: Tue Sep 8 12:14:18 2026 +0300
+
+    Implement accepted-result Handoff import through the shared Mutation API
+
+ AGENTS.md                                       |   6 +-
+ README.md                                       |  14 +-
+ docs/work5/INSTALL.md                           | 125 +++++++
+ pyproject.toml                                  |   2 +-
+ src/zaratustra/cli/AGENTS.md                    |   9 +-
+ src/zaratustra/cli/__init__.py                  |  43 ++-
+ src/zaratustra/core/AGENTS.md                   |  10 +-
+ src/zaratustra/core/__init__.py                 |  10 +
+ src/zaratustra/core/handoffs.py                 |  65 ++++
+ src/zaratustra/core/migration_v5.py             |  26 ++
+ src/zaratustra/core/mutations.py                |  60 ++++
+ src/zaratustra/core/protocol.py                 |  67 +++-
+ src/zaratustra/core/workspace.py                |  25 +-
+ src/zaratustra/local/AGENTS.md                  |   2 +
+ src/zaratustra/local/__init__.py                |  35 +-
+ tests/__init__.py                               |   1 +
+ tests/zaratustra/core/test_handoffs.py          | 403 ++++++++++++++++++++++
+ tests/zaratustra/core/test_workspace.py         |   2 +-
+ tests/zaratustra/local/test_handoff_delivery.py |  86 +++++
+ tools/probe_handoffs.py                         | 431 ++++++++++++++++++++++++
+ uv.lock                                         |   2 +-
+ 21 files changed, 1392 insertions(+), 32 deletions(-)
+
+commit a4aa06ed8aeac1f316a584b7addfcdced89fff53
+Author:     Anton <antoninozemcev@gmail.com>
+AuthorDate: Tue Sep 8 11:55:10 2026 +0300
+Commit:     Anton <antoninozemcev@gmail.com>
+CommitDate: Tue Sep 8 11:55:10 2026 +0300
+
+    Plan Work 5 accepted-result Handoff and exact console delivery
+
+ docs/work5/CALL.md | 125 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ docs/work5/PLAN.md | 127 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 252 insertions(+)

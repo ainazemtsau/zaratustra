@@ -1,0 +1,84 @@
+{
+  "runtime": {
+    "version": "0.5.0",
+    "package": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work5-96nw94ii\\venv\\Lib\\site-packages\\zaratustra",
+    "python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]",
+    "sqlite": "3.50.4",
+    "pydantic": "2.13.5",
+    "sys_path": [
+      "C:\\Users\\Anton\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\python313.zip",
+      "C:\\Users\\Anton\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\DLLs",
+      "C:\\Users\\Anton\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\Lib",
+      "C:\\Users\\Anton\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work5-96nw94ii\\venv",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work5-96nw94ii\\venv\\Lib\\site-packages"
+    ]
+  },
+  "file_receipt": {
+    "operation_id": "d0032728-4bb3-41b7-b8ee-b3996c872dc8",
+    "event_id": "72885554-1023-4b45-9b1a-332273dd45ba",
+    "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+    "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+    "previous_revision": 9,
+    "new_revision": 10,
+    "fingerprint": "7a7ae19c94a485eed09e71d3ab23b9b8e660fb665a752bc0681be7cf67372aea",
+    "recorded_at": "2026-09-08T09:21:38.773140Z",
+    "product_version": "0.5.0",
+    "affected_projections": [
+      "overview.md"
+    ]
+  },
+  "stdin_receipt": {
+    "operation_id": "9530e3d4-0ccb-4a93-845f-bfcd724dd771",
+    "event_id": "22ece12d-198b-4730-88c0-1c7f8c18ac8f",
+    "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+    "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+    "previous_revision": 10,
+    "new_revision": 11,
+    "fingerprint": "8baf57ef5f0a2ee23e630a168cadd11ad600416486f6d0becab2070fd7a73e50",
+    "recorded_at": "2026-09-08T09:21:50.602174Z",
+    "product_version": "0.5.0",
+    "affected_projections": [
+      "overview.md"
+    ]
+  },
+  "database_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+  "fault_database_sha256": "a834da057d2344b4a5ac6d1c4b15bb2c174fc25a4e99a21daf9bd3fc82a83e29",
+  "hidden_checks": [
+    {
+      "case": "untrusted-import",
+      "error": "permission_denied: Separate trusted local authorization required"
+    },
+    {
+      "case": "rollback-accepted_handoffs",
+      "error": "Cannot access workspace: not authorized"
+    },
+    {
+      "case": "rollback-COMMIT",
+      "error": "Cannot access workspace: not authorized"
+    },
+    {
+      "case": "committed-rebuild-failure",
+      "error": "rebuild_required: Mutation committed; Cannot access workspace: installed injected projection failure",
+      "receipt": {
+        "operation_id": "057dbe20-b4ad-418c-94f9-97884470efb8",
+        "event_id": "d72fee3d-e7bb-4763-9945-e8718f66cf7b",
+        "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+        "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+        "previous_revision": 11,
+        "new_revision": 12,
+        "fingerprint": "d1f8246036178994e44ef84e7f536a6ac81651985839e3311a187272cda7ab24",
+        "recorded_at": "2026-09-08T09:22:09.939358Z",
+        "product_version": "0.5.0",
+        "affected_projections": [
+          "overview.md"
+        ]
+      }
+    },
+    {
+      "case": "late-unavailable-after-receipt",
+      "error": "content_unavailable: Registered content is not a regular file"
+    }
+  ],
+  "acceptance": "Executor evidence only; no owner runtime PASS, fresh G5 or T4/M0 close"
+}

@@ -1,0 +1,28 @@
+{
+  "source_commit": "3bd46cfdcb71ec4df403034f146e66492239500d",
+  "trial": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work5-96nw94ii",
+  "wheel": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work5-96nw94ii\\zaratustra-0.5.0-py3-none-any.whl",
+  "wheel_sha256": "cc11753b83bbfddf670c255c46a8dc414d8c5216e78e77e8f686977243461894",
+  "accepted_inputs_unchanged": {
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\exercise.py": "3ca230670ebfc282c8c9a99edfc1cbbad0c483f3d0abbe68bcadade2091eeb37",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\manifest.json": "767294b9311e81959a07586bada9774855fe218ae752a9f0a55b004f51406c31",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\observation-1.txt": "de22a67833d4525f95d460d75890f8a046a08d51e19bd086e380df104afd1214",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\observation-2.txt": "6fd73651c03ddf966703c5b96f6b7a7da79a6d3482b82342f191dd4ea9299b45",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\receipt.json": "d3c4746a897e0840673fea6b8f86462a6d7eecae6cf473cca76fba430d25bf0b",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\runtime-requirements.txt": "d76167da0792d0e6275d87318a3c04e49aefd852a5f3271e48ee9d1487d8d593",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\transcript.txt": "f6c8569869c5004e704386aeec295fef58208bc5c5b8214e046aba738220da80",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\zaratustra-0.4.0-py3-none-any.whl": "a1fb2df9ed33d5c5fb8e33cc484fd9425e7cd9e17701c535696af8025f07585f",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\workspace\\.zara\\state.sqlite3": "bec53e48c79ccfc7e83a72a1439feacf759b48cad9a621d10cd1fa508def77a0",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\workspace\\projections\\overview.md": "e05588084174f583d7da6878269063b1927154316bbc7a96348cf47b57adbe93",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\workspace\\artifacts\\ae7eca56-fd16-41ad-b262-2981468b922e\\258ea271-3f06-4c29-9caa-09cf2613d2d4.blob": "de22a67833d4525f95d460d75890f8a046a08d51e19bd086e380df104afd1214",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\workspace\\artifacts\\ae7eca56-fd16-41ad-b262-2981468b922e\\75a8c7b3-3f17-4a50-a777-c70f3515bfd8.blob": "6fd73651c03ddf966703c5b96f6b7a7da79a6d3482b82342f191dd4ea9299b45",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\workspace\\artifacts\\ae7eca56-fd16-41ad-b262-2981468b922e\\quarantine-b3f151fd-49b7-45c6-ab84-170fb6375a92.blob": "b4be968770c7ce4fa5559291f0c38473f3eab7175591153f5c9c1fc5fc8ab4be",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\fault-workspace\\.zara\\state.sqlite3": "625b9543287db44a047ea0ab0359fce8b649b2afe9cf112228b74268635699d0",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\fault-workspace\\projections\\overview.md": "804249e19f1ebfbefc07115e84191882d09a248241943f6c2c45c998dcaf8851",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\fault-workspace\\artifacts\\ae7eca56-fd16-41ad-b262-2981468b922e\\258ea271-3f06-4c29-9caa-09cf2613d2d4.blob": "de22a67833d4525f95d460d75890f8a046a08d51e19bd086e380df104afd1214",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\fault-workspace\\artifacts\\ae7eca56-fd16-41ad-b262-2981468b922e\\35f62fde-6519-478f-8dd9-2ec0c47b5c53.blob": "1863cbc57e98c5f570d2d8cf9c757b5e03527b61f5d74bfb3b3f3eeece55535c",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\fault-workspace\\artifacts\\ae7eca56-fd16-41ad-b262-2981468b922e\\75a8c7b3-3f17-4a50-a777-c70f3515bfd8.blob": "6fd73651c03ddf966703c5b96f6b7a7da79a6d3482b82342f191dd4ea9299b45",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\fault-workspace\\artifacts\\ae7eca56-fd16-41ad-b262-2981468b922e\\quarantine-b3f151fd-49b7-45c6-ab84-170fb6375a92.blob": "b4be968770c7ce4fa5559291f0c38473f3eab7175591153f5c9c1fc5fc8ab4be"
+  },
+  "exercise_exit": 0
+}

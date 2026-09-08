@@ -1,0 +1,1741 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 4d618db..d038342 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -16,11 +16,13 @@ initial draft records and consistent `zara records read`. Work 3 adds schema 3,
+ one mutation API, exact local confirmation, atomic audit/receipts and current rights.
+ Work 4 adds explicit schema 4, exact scoped versioned artifact publication/repair,
+ verified content reads and deterministic owner-local projection rebuild.
+-Works 5–8 remain unimplemented.
++Work 5 adds explicit schema 5 and exact accepted-result Handoff import from file/stdin,
++with separate trusted console confirmation and durable acceptance/provenance reads.
++Works 6–8 remain unimplemented.
+ `src/zaratustra/core` owns workspace logic; `src/zaratustra/cli` delegates to it.
+ Installed product code and user-chosen data workspace are separate.
+ Read the current CALL before doing product work; a completed Work admits no successor.
+-Current mechanics and W19–W27 disposition: docs/work4/PLAN.md.
++Current mechanics and W19–W27 disposition: docs/work5/PLAN.md.
+ W21 owner trust decision: docs/work3/OWNER-DECISION-20260908.md.
+ Outside-checkout runtime proof: `uv run --locked python -m tools.probe_install`.
+ Work 2 installed/migration proof: `uv run --locked python -m tools.probe_records --accepted-trial <path>`.
+diff --git a/README.md b/README.md
+index c750add..c33bbe5 100644
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,6 @@
+ # Zaratustra
+ 
+-Version **0.4.0**, Work 4: `zara init` creates a local workspace;
++Version **0.5.0**, Work 5: `zara init` creates a local workspace;
+ `zara migrate` explicitly adds schema 4; `zara records create` stores initial
+ Process, draft Work, declared Artifact and Event records with revisions.
+ `zara status` and `zara records read` read persisted facts in later invocations.
+@@ -21,7 +21,7 @@ build. The installation probe installs the wheel with locked runtime dependencie
+ in a disposable environment outside checkout, runs the real `zara` executable in
+ separate processes, then cleans up its own temporary folders.
+ 
+-For the current run, follow [installation and walkthrough](docs/work4/INSTALL.md).
++For the current run, follow [installation and walkthrough](docs/work5/INSTALL.md).
+ Run the installed commands in a newly created empty folder, or name that folder:
+ 
+ ```text
+@@ -59,10 +59,16 @@ registration and active version. `artifacts read` verifies bytes on every read;
+ `restore_artifact` repairs exact registered content through the same Mutation API.
+ `projections status` and `projections rebuild` inspect/recreate the deterministic
+ overview from DB without another state change. These are owner-local inspection
+-surfaces. Handoff, context, Result and next Work remain Works 5–8.
++surfaces. `zara migrate <workspace> --to 5` explicitly enables Handoff storage.
++`zara handoff import <workspace> <file>` (or `-` for UTF-8 stdin) obtains separate
++exact console confirmation and records accepted_result with provenance through
++the same Mutation API. `zara handoff list <workspace>` reads saved acceptances;
++`zara handoff schema` prints the portable JSON schema. A receipt records the prior
++effect, not late availability of referenced bytes. Context, submit_result and
++next Work remain Works 6–8.
+ M0 is not closed; no personal workspace is selected.
+ 
+-Read [lifecycle decisions and W19–W27](docs/work4/PLAN.md) before later work,
++Read [lifecycle decisions and W19–W27](docs/work5/PLAN.md) before later work,
+ and [Product RESULT](RESULT.md) for exact commits and runtime evidence.
+ Setup evidence remains under docs/setup/ as history. Windows is the observed
+ platform; Linux/macOS and an independent participant's installation remain unverified.
+diff --git a/pyproject.toml b/pyproject.toml
+index c7b408e..2d0b5ce 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,6 +1,6 @@
+ [project]
+ name = "zaratustra"
+-version = "0.4.0"
++version = "0.5.0"
+ description = "Zaratustra local workspace and transactional mutation protocol"
+ readme = "README.md"
+ requires-python = ">=3.13,<3.14"
+diff --git a/src/zaratustra/cli/AGENTS.md b/src/zaratustra/cli/AGENTS.md
+index 35bbef1..2d0e317 100644
+--- a/src/zaratustra/cli/AGENTS.md
++++ b/src/zaratustra/cli/AGENTS.md
+@@ -1,14 +1,17 @@
+ # CLI
+ Public API is main in __init__.py, installed as zara. argparse handles presentation;
+-init/status/migrate/records/mutate/receipt/history/artifacts/projections call public Core. Console delivery
++init/status/migrate/records/mutate/receipt/history/artifacts/projections/handoff call public Core. Console delivery
+ uses public zaratustra.local, permissions remain in Core. No SQL/authority rules here.
+ Explicit path defaults to cwd; do not discover or select another workspace implicitly.
+ JSON reports persisted facts, never permission or runtime approval inferred from CLI input.
+-records create accepts initial draft fields only; no Handoff/actor/approved/import interface.
++records create accepts initial draft fields only; handoff import uses the Core parser
++and the same apply_mutation. File or bounded UTF-8 stdin is data, never permission.
+ mutate/receipt accept a JSON value, then separate exact terminal confirmation. No
+ approval flag or piped confirmation. --content-file supplies only bytes for an exact
+ confirmed digest/size; it is not a Handoff importer. artifacts read emits verified
+ base64 bytes with metadata. A post-commit rebuild failure emits the stored receipt
+-and rebuild_required with exit 2. Other refusals use exit 1. No Work 5 importer.
++and rebuild_required with exit 2. Other refusals use exit 1. stdin import gets
++exact approval from a separate controlling console after EOF. No auto-retry/rebase.
++handoff list is owner-local saved acceptance audit, not Work 6 context delivery.
+ Failures go to stderr with nonzero exit.
+ END_OF_FILE: src/zaratustra/cli/AGENTS.md
+diff --git a/src/zaratustra/cli/__init__.py b/src/zaratustra/cli/__init__.py
+index 1a30ea7..98bedc2 100644
+--- a/src/zaratustra/cli/__init__.py
++++ b/src/zaratustra/cli/__init__.py
+@@ -13,6 +13,8 @@ from uuid import UUID
+ from pydantic import ValidationError
+ 
+ from zaratustra.core import (
++    MAX_HANDOFF_BYTES,
++    Handoff,
+     InitialRecords,
+     MutationRequest,
+     ProjectionRebuildError,
+@@ -20,11 +22,13 @@ from zaratustra.core import (
+     WorkspaceError,
+     apply_mutation,
+     create_initial_records,
++    handoff_request,
+     init_workspace,
+     inspect_artifacts,
+     migrate_workspace,
+     prepare_authorization,
+     read_artifact,
++    read_handoffs,
+     read_history,
+     read_projection_status,
+     read_receipt,
+@@ -42,13 +46,13 @@ def main(argv: list[str] | None = None) -> int:
+     for name, description in (
+         ("init", "Initialize an empty directory or read its existing workspace."),
+         ("status", "Read persisted workspace metadata without changing it."),
+-        ("migrate", "Explicitly migrate an initialized workspace to schema 4."),
++        ("migrate", "Explicit migration; use --to 5 for Handoff storage (default 4)."),
+         ("history", "Read the owner-local mutation audit; not Work context."),
+     ):
+         command = commands.add_parser(name, help=description, description=description)
+         command.add_argument("path", nargs="?", default=".", type=Path)
+         if name == "migrate":
+-            command.add_argument("--to", type=int, choices=(2, 3, 4), default=4)
++            command.add_argument("--to", type=int, choices=(2, 3, 4, 5), default=4)
+     for name in ("mutate", "receipt"):
+         command = commands.add_parser(name, help="Confirm an exact internal operation/query.")
+         command.add_argument("path", type=Path)
+@@ -72,6 +76,15 @@ def main(argv: list[str] | None = None) -> int:
+     for name in ("status", "rebuild"):
+         command = projection_commands.add_parser(name)
+         command.add_argument("path", type=Path)
++    handoff = commands.add_parser("handoff", help="Import or inspect saved accepted results.")
++    handoff_commands = handoff.add_subparsers(dest="handoff_command", required=True)
++    handoff_commands.add_parser("schema", help="Print the portable Handoff JSON schema.")
++    handoff_list = handoff_commands.add_parser("list", help="Owner-local saved acceptance audit.")
++    handoff_list.add_argument("path", type=Path)
++    handoff_import = handoff_commands.add_parser("import", help="Confirm a file/stdin Handoff.")
++    handoff_import.add_argument("path", type=Path)
++    handoff_import.add_argument("source", help="UTF-8 JSON file, or '-' for stdin until EOF.")
++    handoff_import.add_argument("--expected-revision", type=int, help="Explicit replay revision.")
+     records = commands.add_parser("records", help="Create initial drafts or read stored records.")
+     record_commands = records.add_subparsers(dest="records_command", required=True)
+     read = record_commands.add_parser(
+@@ -88,7 +101,31 @@ def main(argv: list[str] | None = None) -> int:
+     create.add_argument("--boundary", action="append", required=True)
+     args = parser.parse_args(argv)
+     try:
+-        if args.command == "mutate":
++        if args.command == "handoff":
++            if args.handoff_command == "schema":
++                output = json.dumps(Handoff.model_json_schema(), indent=2)
++            elif args.handoff_command == "list":
++                output = json.dumps(
++                    [item.model_dump(mode="json") for item in read_handoffs(args.path)], indent=2
++                )
++            else:
++                from_stdin = args.source == "-"
++                if from_stdin:
++                    content = sys.stdin.buffer.read(MAX_HANDOFF_BYTES + 1)
++                    source_ref = "stdin"
++                else:
++                    source = Path(args.source).expanduser().resolve()
++                    with source.open("rb") as stream:
++                        content = stream.read(MAX_HANDOFF_BYTES + 1)
++                    source_ref = source.as_posix()
++                request = handoff_request(
++                    content, source_ref=source_ref, expected_revision=args.expected_revision
++                )
++                caller = confirm_on_console(
++                    prepare_authorization(args.path, request), separate_terminal=from_stdin
++                )
++                output = apply_mutation(args.path, request, caller).model_dump_json(indent=2)
++        elif args.command == "mutate":
+             request = MutationRequest.model_validate_json(args.request_json)
+             caller = confirm_on_console(prepare_authorization(args.path, request))
+             content = args.content_file.read_bytes() if args.content_file is not None else None
+diff --git a/src/zaratustra/core/AGENTS.md b/src/zaratustra/core/AGENTS.md
+index 3445fe2..d49a02a 100644
+--- a/src/zaratustra/core/AGENTS.md
++++ b/src/zaratustra/core/AGENTS.md
+@@ -2,7 +2,7 @@
+ Public API is __init__.py: workspace/records, mutation and authorized receipt APIs,
+ owner-local history, immutable models and errors. Core never imports CLI/local adapter.
+ workspace.py owns checked transactions/layout/metadata; migrations.py retains released
+-v1/v2/v3 migration bytes stay fixed; migration_v4.py adds version metadata only.
++v1/v2/v3/v4 migration bytes stay fixed; migration_v5.py adds accepted Handoff storage.
+ records.py owns create-once bootstrap and record models; protocol.py owns operation
+ and journal values; mutations.py owns the ONE post-bootstrap domain mutation path.
+ Initial creation is one local bootstrap into an empty record store; it grants no rights.
+@@ -18,6 +18,12 @@ files precede DB registration/active switch. Retain/report orphans; no automatic
+ projections.py renders DB-only overview bytes; mutations.py serializes rebuild after
+ commit and returns the committed receipt on rebuild failure. Rebuild changes no DB state.
+ Read verifies registered content every time; metadata history remains inspectable
+-after file loss. No context, Result or successor Work. Initial Event stays fixed.
++after file loss. handoffs.py parses bounded portable accepted_result data, grants no
++authority and delegates mutations. accept_handoff preserves exact result/basis refs,
++owner text and provenance, with acceptance/event/receipt in one transaction. Current
++ready Work metadata scope is required. Source revision stays immutable on replay;
++only explicit transport expected_revision refresh can return a prior receipt.
++read_handoffs is owner-local inspection, not Work-scoped context. No context,
++submit_result or successor Work. Initial Event stays fixed.
+ Read/init never migrate or repair existing state. Keep migration bytes stable after release.
+ END_OF_FILE: src/zaratustra/core/AGENTS.md
+diff --git a/src/zaratustra/core/__init__.py b/src/zaratustra/core/__init__.py
+index cd399cd..84f034d 100644
+--- a/src/zaratustra/core/__init__.py
++++ b/src/zaratustra/core/__init__.py
+@@ -1,6 +1,7 @@
+ """Public Core surface for the admitted workspace foundation."""
+ 
+ from .artifacts import ArtifactContent, ArtifactError, ArtifactInspection
++from .handoffs import MAX_HANDOFF_BYTES, AcceptedHandoff, handoff_request
+ from .mutations import (
+     AuthorizationPrompt,
+     LocalAuthorization,
+@@ -11,6 +12,7 @@ from .mutations import (
+     inspect_artifacts,
+     prepare_authorization,
+     read_artifact,
++    read_handoffs,
+     read_history,
+     read_projection_status,
+     read_receipt,
+@@ -21,6 +23,8 @@ from .projections import ProjectionStatus
+ from .protocol import (
+     ArtifactReference,
+     ArtifactVersion,
++    Handoff,
++    HandoffDelivery,
+     MutationEvent,
+     MutationHistory,
+     MutationReceipt,
+@@ -45,6 +49,12 @@ from .workspace import (
+ )
+ 
+ __all__ = [
++    "AcceptedHandoff",
++    "Handoff",
++    "HandoffDelivery",
++    "MAX_HANDOFF_BYTES",
++    "handoff_request",
++    "read_handoffs",
+     "ArtifactContent",
+     "ArtifactError",
+     "ArtifactInspection",
+diff --git a/src/zaratustra/core/handoffs.py b/src/zaratustra/core/handoffs.py
+new file mode 100644
+index 0000000..04f3694
+--- /dev/null
++++ b/src/zaratustra/core/handoffs.py
+@@ -0,0 +1,65 @@
++"""Bounded portable values and read results; all mutations remain in mutations.py."""
++
++from __future__ import annotations
++
++import hashlib
++import json
++from typing import Any
++
++from .protocol import (
++    Confirmation,
++    Handoff,
++    HandoffDelivery,
++    MutationReceipt,
++    MutationRequest,
++)
++from .records import RecordModel
++from .workspace import WorkspaceError
++
++MAX_HANDOFF_BYTES = 65536
++
++
++def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
++    result: dict[str, Any] = {}
++    for key, value in pairs:
++        if key in result:
++            raise ValueError(f"Duplicate JSON key: {key}")
++        result[key] = value
++    return result
++
++
++def handoff_request(
++    content: bytes, *, source_ref: str, expected_revision: int | None = None
++) -> MutationRequest:
++    """Parse data without obtaining permission, reading state or changing intent."""
++    if len(content) > MAX_HANDOFF_BYTES:
++        raise WorkspaceError("Handoff exceeds the 64 KiB input limit")
++    try:
++        handoff = Handoff.model_validate(
++            json.loads(content.decode("utf-8-sig"), object_pairs_hook=_unique_object)
++        )
++    except (ValueError, RecursionError) as error:
++        raise WorkspaceError(f"Invalid Handoff: {error}") from error
++    return MutationRequest(
++        version=3,
++        operation_id=handoff.handoff_id,
++        workspace_id=handoff.workspace_id,
++        work_id=handoff.related_work,
++        expected_revision=(
++            handoff.source_revision if expected_revision is None else expected_revision
++        ),
++        operation="accept_handoff",
++        provenance=handoff.provenance,
++        references=(handoff.result, *handoff.basis),
++        handoff=handoff,
++        delivery=HandoffDelivery(
++            source_ref=source_ref, input_sha256=hashlib.sha256(content).hexdigest()
++        ),
++    )
++
++
++class AcceptedHandoff(RecordModel):
++    handoff: Handoff
++    delivery: HandoffDelivery
++    confirmation: Confirmation
++    receipt: MutationReceipt
+diff --git a/src/zaratustra/core/migration_v5.py b/src/zaratustra/core/migration_v5.py
+new file mode 100644
+index 0000000..ecd7649
+--- /dev/null
++++ b/src/zaratustra/core/migration_v5.py
+@@ -0,0 +1,26 @@
++"""Explicit accepted-result storage; no authority grants or rewriting old migrations."""
++
++import hashlib
++import sqlite3
++
++V5_NAME = "0005_accepted_handoffs"
++V5_STATEMENTS = (
++    """CREATE TABLE accepted_handoffs (
++        id TEXT PRIMARY KEY,
++        event_id TEXT NOT NULL UNIQUE REFERENCES mutation_events(id),
++        body TEXT NOT NULL CHECK (json_valid(body))
++    ) STRICT""",
++)
++V5_SHA256 = hashlib.sha256(chr(10).join(V5_STATEMENTS).encode("utf-8")).hexdigest()
++
++
++def migrate_v5(connection: sqlite3.Connection, applied_at: str) -> None:
++    if not connection.in_transaction:
++        raise ValueError("Migration v5 requires a transaction")
++    for statement in V5_STATEMENTS:
++        connection.execute(statement)
++    connection.execute(
++        "INSERT INTO schema_migrations VALUES (?, ?, ?, ?)",
++        (5, V5_NAME, V5_SHA256, applied_at),
++    )
++    connection.execute("PRAGMA user_version = 5")
+diff --git a/src/zaratustra/core/mutations.py b/src/zaratustra/core/mutations.py
+index 1a6a5ab..90eba8a 100644
+--- a/src/zaratustra/core/mutations.py
++++ b/src/zaratustra/core/mutations.py
+@@ -21,6 +21,7 @@ from .artifacts import (
+     validate_bytes,
+     verified_content,
+ )
++from .handoffs import AcceptedHandoff
+ from .projections import (
+     ProjectionStatus,
+     projection_status,
+@@ -245,6 +246,30 @@ def _history(
+         snapshot.records and current_artifact(snapshot).active_version is not None
+     ):
+         raise WorkspaceError("Artifact lifecycle requires schema 4")
++    imported = {
++        str(event.request.operation_id): (
++            str(event.id),
++            AcceptedHandoff(
++                handoff=event.request.handoff,
++                delivery=event.request.delivery,
++                confirmation=event.confirmation,
++                receipt=event_receipt(event),
++            ),
++        )
++        for event in events
++        if event.request.handoff is not None and event.request.delivery is not None
++    }
++    if connection.execute("PRAGMA user_version").fetchone()[0] >= 5:
++        saved = {
++            identity: (event_id, AcceptedHandoff.model_validate_json(body))
++            for identity, event_id, body in connection.execute(
++                "SELECT id, event_id, body FROM accepted_handoffs"
++            )
++        }
++        if saved != imported:
++            raise WorkspaceError("Accepted Handoff records do not match the committed history")
++    elif imported:
++        raise WorkspaceError("Handoff import requires schema 5")
+     return MutationHistory(
+         workspace_id=snapshot.workspace_id,
+         state_revision=snapshot.state_revision,
+@@ -296,6 +321,26 @@ def read_receipt(
+         raise MutationError("not_found", "No committed operation in this Work")
+ 
+ 
++def read_handoffs(path: Path) -> tuple[AcceptedHandoff, ...]:
++    """Owner-local saved acceptance inspection, not a scoped Work context package."""
++    with workspace_connection(path) as (connection, info):
++        if info.schema_version < 5:
++            raise MutationError("schema", "Handoff storage requires explicit migration to 5")
++        history = _history(
++            connection, _read_records(connection, info.workspace_id), artifacts_enabled=True
++        )
++        return tuple(
++            AcceptedHandoff(
++                handoff=event.request.handoff,
++                delivery=event.request.delivery,
++                confirmation=event.confirmation,
++                receipt=event_receipt(event),
++            )
++            for event in history.events
++            if event.request.handoff is not None and event.request.delivery is not None
++        )
++
++
+ def _mutate(
+     connection: sqlite3.Connection,
+     info: WorkspaceInfo,
+@@ -305,6 +350,8 @@ def _mutate(
+ ) -> MutationReceipt:
+     if info.schema_version < 3 or (request.version == 2 and info.schema_version < 4):
+         raise MutationError("schema", "Mutation requires explicit migration to 3/4")
++    if request.version == 3 and info.schema_version < 5:
++        raise MutationError("schema", "Handoff import requires explicit migration to 5")
+     # 2. Current Work + authority, in the same write transaction as the effect.
+     snapshot = _read_records(connection, info.workspace_id)
+     confirmation = _caller(info.workspace, request, caller, snapshot)
+@@ -329,6 +376,8 @@ def _mutate(
+                 raise MutationError("collision", "Operation id already belongs to another intent")
+             return stored
+     # 5. Exact scoped references and bytes, before any DB/domain effect.
++    if request.handoff is not None and request.handoff.source_revision != snapshot.state_revision:
++        raise MutationError("conflict", "Handoff source revision is not current")
+     if request.artifact_references:
+         raise MutationError("unsupported_artifacts", "Use version 2 exact version/hash references")
+     versions = read_versions(connection) if enabled else ()
+@@ -411,6 +460,17 @@ def _mutate(
+         "INSERT INTO mutation_receipts VALUES (?, ?, ?, ?)",
+         (str(request.operation_id), str(event.id), intent, receipt.model_dump_json()),
+     )
++    if request.handoff is not None and request.delivery is not None:
++        accepted = AcceptedHandoff(
++            handoff=request.handoff,
++            delivery=request.delivery,
++            confirmation=confirmation,
++            receipt=receipt,
++        )
++        connection.execute(
++            "INSERT INTO accepted_handoffs VALUES (?, ?, ?)",
++            (str(request.operation_id), str(event.id), accepted.model_dump_json()),
++        )
+     _history(connection, _read_records(connection, info.workspace_id), artifacts_enabled=enabled)
+     return receipt
+ 
+diff --git a/src/zaratustra/core/protocol.py b/src/zaratustra/core/protocol.py
+index f0e2991..9b564bb 100644
+--- a/src/zaratustra/core/protocol.py
++++ b/src/zaratustra/core/protocol.py
+@@ -27,6 +27,7 @@ Operation = Literal[
+     "authorize_artifact",
+     "publish_artifact",
+     "restore_artifact",
++    "accept_handoff",
+ ]
+ ARTIFACT_OPERATIONS = ("authorize_artifact", "publish_artifact", "restore_artifact")
+ V2_FIELDS = {
+@@ -37,6 +38,7 @@ V2_FIELDS = {
+     "restore_version",
+     "references",
+ }
++V3_FIELDS = {"handoff", "delivery"}
+ 
+ 
+ class ArtifactReference(RecordModel):
+@@ -61,8 +63,36 @@ class ArtifactVersion(RecordModel):
+         return f"artifacts/{self.artifact_id}/{self.id}.blob"
+ 
+ 
++HandoffText = Annotated[str, Field(strict=True, min_length=1, max_length=4096)]
++
++
++class Handoff(RecordModel):
++    """Portable accepted-result data. Every field is untrusted, including owner text."""
++
++    kind: Literal["handoff"]
++    version: Annotated[int, Field(strict=True, ge=1, le=1)]
++    handoff_id: UUID
++    workspace_id: UUID
++    process: UUID
++    related_work: UUID
++    intent: Literal["accepted_result"]
++    source_revision: Revision
++    result: ArtifactReference
++    basis: Annotated[tuple[ArtifactReference, ...], Field(max_length=32)] = ()
++    provenance: HandoffText
++    owner_instruction: HandoffText | None = None
++    constraints: Annotated[tuple[HandoffText, ...], Field(max_length=32)] = ()
++    open_questions: Annotated[tuple[HandoffText, ...], Field(max_length=32)] = ()
++    created_by: Annotated[str, Field(strict=True, min_length=1, max_length=256)]
++
++
++class HandoffDelivery(RecordModel):
++    source_ref: HandoffText
++    input_sha256: Digest
++
++
+ class MutationRequest(RecordModel):
+-    version: Annotated[int, Field(strict=True, ge=1, le=2)] = 1
++    version: Annotated[int, Field(strict=True, ge=1, le=3)] = 1
+     operation_id: UUID
+     workspace_id: UUID
+     work_id: UUID
+@@ -77,10 +107,15 @@ class MutationRequest(RecordModel):
+     content_size: Annotated[int, Field(strict=True, ge=0)] | None = None
+     restore_version: UUID | None = None
+     references: tuple[ArtifactReference, ...] = ()
++    handoff: Handoff | None = None
++    delivery: HandoffDelivery | None = None
+ 
+     @model_serializer(mode="wrap")
+     def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+         value: dict[str, Any] = handler(self)
++        if self.version < 3 and all(getattr(self, name) is None for name in V3_FIELDS):
++            for name in V3_FIELDS:
++                value.pop(name, None)
+         if self.version == 1 and all(getattr(self, name) in (None, ()) for name in V2_FIELDS):
+             # Preserve old request JSON and all stored authorization/fingerprint hashes.
+             for name in V2_FIELDS:
+@@ -89,6 +124,20 @@ class MutationRequest(RecordModel):
+ 
+     @model_validator(mode="after")
+     def operation_payload(self) -> Self:
++        if self.operation == "accept_handoff":
++            handoff = self.handoff
++            if self.version != 3 or handoff is None or self.delivery is None:
++                raise ValueError("Handoff import requires request 3, Handoff and delivery")
++            if (
++                (self.operation_id, self.workspace_id, self.work_id)
++                != (handoff.handoff_id, handoff.workspace_id, handoff.related_work)
++                or self.references != (handoff.result, *handoff.basis)
++                or self.provenance != handoff.provenance.strip()
++                or self.artifact_references
++            ):
++                raise ValueError("Mutation must preserve the complete Handoff meaning")
++        elif self.handoff is not None or self.delivery is not None or self.version == 3:
++            raise ValueError("Only accept_handoff uses request 3/Handoff/delivery")
+         if self.operation != "set_work_requirements" and self.requirements:
+             raise ValueError("Only set_work_requirements accepts requirements")
+         if self.version == 1 and (
+@@ -123,6 +172,8 @@ def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
+     excluded = set(exclude or ())
+     if isinstance(value, MutationRequest) and value.version == 1:
+         excluded |= V2_FIELDS
++    if isinstance(value, MutationRequest) and value.version < 3:
++        excluded |= V3_FIELDS
+     return json.dumps(
+         value.model_dump(mode="json", exclude=excluded),
+         sort_keys=True,
+@@ -133,9 +184,10 @@ def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
+ 
+ 
+ def fingerprint(request: MutationRequest) -> str:
+-    return hashlib.sha256(
+-        canonical(request, exclude={"operation_id", "expected_revision"}).encode("utf-8")
+-    ).hexdigest()
++    excluded = {"operation_id", "expected_revision"}
++    if request.operation == "accept_handoff":
++        excluded.add("delivery")
++    return hashlib.sha256(canonical(request, exclude=excluded).encode("utf-8")).hexdigest()
+ 
+ 
+ def authorization_digest(path: str, request: MutationRequest | ReceiptQuery) -> str:
+@@ -177,6 +229,9 @@ def evolve_work(work: Work, request: MutationRequest) -> Work:
+             change["status"] = "cancelled"
+         elif request.operation == "authorize_artifact":
+             change["authority_scope"] = "work_metadata_and_artifact"
++        elif request.operation == "accept_handoff":
++            if request.handoff is None or request.handoff.process != work.process_id:
++                raise ValueError("Handoff is outside this Work's Process")
+         elif work.authority_scope != "work_metadata_and_artifact":
+             raise ValueError("Work has no current Artifact permission")
+     return Work.model_validate({**work.model_dump(), **change})
+@@ -228,6 +283,10 @@ class MutationEvent(RecordModel):
+             raise ValueError("Event state revision mismatch")
+         if self.request.artifact_references or evolve_work(self.before, self.request) != self.after:
+             raise ValueError("Event does not describe an admitted change")
++        if self.request.handoff is not None and (
++            self.request.handoff.source_revision != self.request.expected_revision
++        ):
++            raise ValueError("Accepted Handoff must have a current source revision")
+         if self.request.operation == "publish_artifact":
+             descriptor = self.artifact_version
+             if descriptor is None or self.artifact_before is None:
+diff --git a/src/zaratustra/core/workspace.py b/src/zaratustra/core/workspace.py
+index 6f2bd86..6d4ed83 100644
+--- a/src/zaratustra/core/workspace.py
++++ b/src/zaratustra/core/workspace.py
+@@ -15,6 +15,7 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, ValidationError
+ from .migration_v2 import V2_NAME, V2_SHA256, migrate_v2
+ from .migration_v3 import V3_NAME, V3_SHA256, migrate_v3
+ from .migration_v4 import V4_NAME, V4_SHA256, migrate_v4
++from .migration_v5 import V5_NAME, V5_SHA256, migrate_v5
+ from .migrations import APPLICATION_ID, V1_NAME, V1_SHA256, migrate_v1
+ 
+ WORKSPACE_DIRECTORIES = ("processes", "artifacts", "projections", "inbox")
+@@ -32,7 +33,7 @@ class WorkspaceInfo(BaseModel):
+     database: Path
+     workspace_id: UUID
+     created_at: AwareDatetime
+-    schema_version: Literal[1, 2, 3, 4]
++    schema_version: Literal[1, 2, 3, 4, 5]
+ 
+ 
+ def _root(path: Path) -> Path:
+@@ -64,7 +65,7 @@ def _database_path(root: Path) -> Path:
+ def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> WorkspaceInfo:
+     application = connection.execute("PRAGMA application_id").fetchone()[0]
+     version = connection.execute("PRAGMA user_version").fetchone()[0]
+-    if application != APPLICATION_ID or version not in (1, 2, 3, 4):
++    if application != APPLICATION_ID or version not in (1, 2, 3, 4, 5):
+         raise WorkspaceError(f"Unsupported workspace database/schema version: {version}.")
+     for name in ("artifacts", "projections"):
+         entry = root / name
+@@ -106,6 +107,12 @@ def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> Wor
+         if datetime.fromisoformat(migrations[3][3]).tzinfo is None:
+             raise WorkspaceError("Migration timestamp must have a timezone.")
+         connection.execute("SELECT id, artifact_id, body FROM artifact_versions LIMIT 0")
++    if version >= 5:
++        if migrations[4][:3] != (5, V5_NAME, V5_SHA256):
++            raise WorkspaceError("Migration history does not match this installed version.")
++        if datetime.fromisoformat(migrations[4][3]).tzinfo is None:
++            raise WorkspaceError("Migration timestamp must have a timezone.")
++        connection.execute("SELECT id, event_id, body FROM accepted_handoffs LIMIT 0")
+     return WorkspaceInfo(
+         workspace=root,
+         database=database,
+@@ -151,9 +158,9 @@ def _read_workspace(root: Path) -> WorkspaceInfo:
+         return info
+ 
+ 
+-def migrate_workspace(path: Path, *, target_version: Literal[2, 3, 4] = 4) -> WorkspaceInfo:
++def migrate_workspace(path: Path, *, target_version: Literal[2, 3, 4, 5] = 4) -> WorkspaceInfo:
+     """Explicit sequential upgrade; never grant rights, silently downgrade or repair."""
+-    if type(target_version) is not int or target_version not in (2, 3, 4):
++    if type(target_version) is not int or target_version not in (2, 3, 4, 5):
+         raise WorkspaceError("Unsupported migration target")
+     with workspace_connection(path, write=True) as (connection, info):
+         if info.schema_version > target_version:
+@@ -168,12 +175,20 @@ def migrate_workspace(path: Path, *, target_version: Literal[2, 3, 4] = 4) -> Wo
+             if legacy.state_revision not in (0, 1):
+                 raise WorkspaceError("Schema 2 only supports initial records")
+             migrate_v3(connection, datetime.now(UTC).isoformat())
+-        if info.schema_version < 4 and target_version == 4:
++        if info.schema_version < 4 and target_version >= 4:
+             from .mutations import _history
+             from .records import _read_records
+ 
+             _history(connection, _read_records(connection, info.workspace_id))
+             migrate_v4(connection, datetime.now(UTC).isoformat())
++        if info.schema_version < 5 and target_version == 5:
++            from .mutations import _history
++            from .records import _read_records
++
++            _history(
++                connection, _read_records(connection, info.workspace_id), artifacts_enabled=True
++            )
++            migrate_v5(connection, datetime.now(UTC).isoformat())
+         return _metadata(connection, info.workspace, info.database)
+ 
+ 
+diff --git a/src/zaratustra/local/AGENTS.md b/src/zaratustra/local/AGENTS.md
+index 1137e52..ee89613 100644
+--- a/src/zaratustra/local/AGENTS.md
++++ b/src/zaratustra/local/AGENTS.md
+@@ -3,6 +3,8 @@ Public __init__.py handles the explicitly accepted local console confirmation.
+ Core owns permissions and every mutation. No SQL here. Display canonical escaped
+ JSON, accept explicit terminal confirmation only, and bind the result to the exact
+ preview. No free approval flags, file/model assertions or piped approvals.
++stdin Handoff uses a separate controlling console; unavailable console refuses.
++The confirmation never reads an approval from the Handoff data stream.
+ Trusted local-chat applications may use the Core in-process authorization seam
+ after actual owner permission; no duplicate identity confirmation is required.
+ This is a single-owner local application, not hostile same-user process isolation.
+diff --git a/src/zaratustra/local/__init__.py b/src/zaratustra/local/__init__.py
+index 4b63aa1..9ca6585 100644
+--- a/src/zaratustra/local/__init__.py
++++ b/src/zaratustra/local/__init__.py
+@@ -1,6 +1,8 @@
+ """Explicit console confirmation under the owner's accepted local trust boundary."""
+ 
++import os
+ import sys
++from typing import TextIO
+ from uuid import uuid4
+ 
+ from zaratustra.core import (
+@@ -11,16 +13,20 @@ from zaratustra.core import (
+ )
+ 
+ 
+-def confirm_on_console(prompt: AuthorizationPrompt) -> LocalAuthorization:
+-    if not sys.stdin.isatty() or not sys.stderr.isatty():
++def _confirm(
++    prompt: AuthorizationPrompt, input_stream: TextIO, output_stream: TextIO
++) -> LocalAuthorization:
++    if not input_stream.isatty() or not output_stream.isatty():
+         raise MutationError("permission_denied", "Interactive local console confirmation required")
+     # Escaped JSON prevents operation strings from injecting terminal controls.
+     import json
+ 
+-    print(json.dumps(prompt.model_dump(mode="json"), ensure_ascii=True, indent=2), file=sys.stderr)
+-    print("Authorize only this displayed internal operation/query.", file=sys.stderr)
+-    print(f"Type approve {prompt.request_sha256}", file=sys.stderr, flush=True)
+-    answer = sys.stdin.readline().strip()
++    print(
++        json.dumps(prompt.model_dump(mode="json"), ensure_ascii=True, indent=2), file=output_stream
++    )
++    print("Authorize only this displayed internal operation/query.", file=output_stream)
++    print(f"Type approve {prompt.request_sha256}", file=output_stream, flush=True)
++    answer = input_stream.readline().strip()
+     if answer != f"approve {prompt.request_sha256}":
+         raise MutationError("permission_denied", "Operation was not confirmed")
+     return authorize_local(
+@@ -31,4 +37,21 @@ def confirm_on_console(prompt: AuthorizationPrompt) -> LocalAuthorization:
+     )
+ 
+ 
++def confirm_on_console(
++    prompt: AuthorizationPrompt, *, separate_terminal: bool = False
++) -> LocalAuthorization:
++    if not separate_terminal:
++        return _confirm(prompt, sys.stdin, sys.stderr)
++    # The pipe is data only. Obtain confirmation from the controlling console.
++    input_name, output_name = ("CONIN$", "CONOUT$") if os.name == "nt" else ("/dev/tty", "/dev/tty")
++    try:
++        with (
++            open(input_name, encoding="utf-8") as terminal_input,
++            open(output_name, "w", encoding="utf-8") as terminal_output,
++        ):
++            return _confirm(prompt, terminal_input, terminal_output)
++    except OSError as error:
++        raise MutationError("permission_denied", "Controlling local console unavailable") from error
++
++
+ __all__ = ["confirm_on_console"]
+diff --git a/tests/__init__.py b/tests/__init__.py
+new file mode 100644
+index 0000000..af49f17
+--- /dev/null
++++ b/tests/__init__.py
+@@ -0,0 +1 @@
++"""Explicit test package keeps shared fixtures unambiguous for pytest and mypy."""
+diff --git a/tests/zaratustra/core/test_handoffs.py b/tests/zaratustra/core/test_handoffs.py
+new file mode 100644
+index 0000000..376c784
+--- /dev/null
++++ b/tests/zaratustra/core/test_handoffs.py
+@@ -0,0 +1,403 @@
++"""Hidden acceptance integrity, replay ordering and import authority invariants."""
++
++from __future__ import annotations
++
++import hashlib
++import json
++import shutil
++import sqlite3
++from concurrent.futures import ThreadPoolExecutor
++from pathlib import Path
++from threading import Barrier
++from typing import Any
++from uuid import uuid4
++
++import pytest
++from pydantic import ValidationError
++
++from zaratustra.core import (
++    Artifact,
++    ArtifactError,
++    Handoff,
++    InitialRecords,
++    MutationError,
++    MutationRequest,
++    ProjectionRebuildError,
++    Work,
++    WorkspaceError,
++    apply_mutation,
++    authorize_local,
++    create_initial_records,
++    handoff_request,
++    init_workspace,
++    migrate_workspace,
++    prepare_authorization,
++    read_artifact,
++    read_handoffs,
++    read_history,
++    read_projection_status,
++    read_records,
++    read_workspace,
++    rebuild_projections,
++)
++
++
++def confirm(path: Path, request: MutationRequest) -> Any:
++    return authorize_local(
++        prepare_authorization(path, request),
++        channel="local-chat",
++        actor="fictional-fixture-adapter",
++        source_ref="executor-test:simulated-prior-permission",
++    )
++
++
++def execute(path: Path, request: MutationRequest, content: bytes | None = None) -> Any:
++    return apply_mutation(path, request, confirm(path, request), content=content)
++
++
++def operation(path: Path, name: str, **payload: object) -> MutationRequest:
++    snapshot = read_records(path)
++    work = next(row for row in snapshot.records if isinstance(row, Work))
++    artifact = next(row for row in snapshot.records if isinstance(row, Artifact))
++    fields: dict[str, object] = dict(
++        operation=name,
++        operation_id=uuid4(),
++        workspace_id=snapshot.workspace_id,
++        work_id=work.id,
++        expected_revision=snapshot.state_revision,
++        provenance="Fictional fixture",
++    )
++    if name in ("authorize_artifact", "publish_artifact", "restore_artifact"):
++        fields.update(version=2, artifact_id=artifact.id, artifact_revision=artifact.revision)
++    return MutationRequest.model_validate(fields | payload)
++
++
++@pytest.fixture
++def workspace(tmp_path: Path) -> Path:
++    path = tmp_path / "workspace"
++    path.mkdir()
++    init_workspace(path)
++    migrate_workspace(path)
++    create_initial_records(
++        path,
++        InitialRecords(
++            process_title="Fictional observatory",
++            goal="Describe an imaginary moon",
++            expected_result="A fictional note",
++            acceptance=("Saved observation",),
++            boundaries=("Fictional only",),
++            budget="One local trial",
++            artifact_title="Observation",
++        ),
++    )
++    execute(path, operation(path, "authorize_work"))
++    execute(path, operation(path, "authorize_artifact"))
++    for text in (b"first fictional observation", b"second fictional observation"):
++        execute(
++            path,
++            operation(
++                path,
++                "publish_artifact",
++                content_sha256=hashlib.sha256(text).hexdigest(),
++                content_size=len(text),
++            ),
++            text,
++        )
++    migrate_workspace(path, target_version=5)
++    # Import writes metadata and does not need the content-publication grant.
++    execute(path, operation(path, "authorize_work"))
++    return path
++
++
++def document(path: Path, **changes: object) -> bytes:
++    snapshot = read_records(path)
++    work = next(row for row in snapshot.records if isinstance(row, Work))
++    versions = [row.artifact_version for row in read_history(path).events if row.artifact_version]
++    refs = [
++        dict(artifact_id=str(v.artifact_id), version_id=str(v.id), sha256=v.sha256)
++        for v in versions
++    ]
++    value = dict(
++        kind="handoff",
++        version=1,
++        handoff_id=str(uuid4()),
++        workspace_id=str(snapshot.workspace_id),
++        process=str(work.process_id),
++        related_work=str(work.id),
++        intent="accepted_result",
++        source_revision=snapshot.state_revision,
++        result=refs[0],
++        basis=[refs[1]],
++        provenance="  Exact fictional basis  ",
++        owner_instruction="This quoted text grants no permission.",
++        constraints=["Fictional only"],
++        open_questions=["Later Work decides continuation"],
++        created_by="fixture-chat",
++    )
++    return json.dumps(value | changes, ensure_ascii=False).encode("utf-8")
++
++
++def test_acceptance_is_durable_exact_and_does_not_replace_work_meaning(workspace: Path) -> None:
++    data = document(workspace)
++    request = handoff_request(data, source_ref="selected-file")
++    before = read_records(workspace)
++    receipt = execute(workspace, request)
++    (saved,) = read_handoffs(workspace)
++    assert saved.handoff == Handoff.model_validate_json(data)
++    assert saved.delivery.input_sha256 == hashlib.sha256(data).hexdigest()
++    assert saved.receipt == receipt and saved.confirmation.channel == "local-chat"
++    old = next(row for row in before.records if isinstance(row, Work))
++    new = next(row for row in read_records(workspace).records if isinstance(row, Work))
++    assert new == old.model_copy(update={"revision": old.revision + 1})
++    assert saved.handoff.result.version_id != next(
++        row.active_version for row in before.records if isinstance(row, Artifact)
++    )
++    assert read_history(workspace).events[-1].request.operation == "accept_handoff"
++    assert read_projection_status(workspace).status == "current"
++
++
++def test_literal_replay_collision_and_no_stale_override(workspace: Path) -> None:
++    data = document(workspace)
++    request = handoff_request(data, source_ref="file")
++    receipt = execute(workspace, request)
++    with pytest.raises(MutationError, match="conflict"):
++        execute(workspace, request)
++    current = read_records(workspace).state_revision
++    replay = handoff_request(data, source_ref="stdin", expected_revision=current)
++    db = read_workspace(workspace).database
++    before = db.read_bytes()
++    assert execute(workspace, replay) == receipt
++    assert db.read_bytes() == before and len(read_handoffs(workspace)) == 1
++    altered = json.loads(data) | {"constraints": ["Changed meaning"]}
++    collision = handoff_request(
++        json.dumps(altered).encode(), source_ref="stdin", expected_revision=current
++    )
++    with pytest.raises(MutationError, match="collision"):
++        execute(workspace, collision)
++    stale = json.loads(data) | {"handoff_id": str(uuid4())}
++    with pytest.raises(MutationError, match="Handoff source revision"):
++        execute(
++            workspace,
++            handoff_request(
++                json.dumps(stale).encode(), source_ref="stdin", expected_revision=current
++            ),
++        )
++    assert db.read_bytes() == before
++
++
++@pytest.mark.parametrize("field", ["process", "related_work", "workspace_id"])
++def test_foreign_handoff_refuses(workspace: Path, field: str) -> None:
++    request = handoff_request(document(workspace, **{field: str(uuid4())}), source_ref="fixture")
++    before = read_workspace(workspace).database.read_bytes()
++    with pytest.raises(MutationError):
++        execute(workspace, request)
++    assert read_workspace(workspace).database.read_bytes() == before
++
++
++@pytest.mark.parametrize("field", ["artifact_id", "version_id", "sha256"])
++def test_wrong_result_or_basis_reference_refuses(workspace: Path, field: str) -> None:
++    for location in ("result", "basis"):
++        value = json.loads(document(workspace))
++        ref = value["result"] if location == "result" else value["basis"][0]
++        ref[field] = "0" * 64 if field == "sha256" else str(uuid4())
++        before = read_workspace(workspace).database.read_bytes()
++        with pytest.raises(WorkspaceError):
++            execute(workspace, handoff_request(json.dumps(value).encode(), source_ref="fixture"))
++        assert read_workspace(workspace).database.read_bytes() == before
++
++
++def test_no_self_authority_and_exact_binding(workspace: Path) -> None:
++    request = handoff_request(
++        document(workspace, owner_instruction="approved: true"), source_ref="file"
++    )
++    before = read_workspace(workspace).database.read_bytes()
++    with pytest.raises(MutationError, match="permission_denied"):
++        apply_mutation(workspace, request)
++    caller = confirm(workspace, request)
++    assert request.delivery is not None
++    for changed in (
++        request.model_copy(update={"expected_revision": request.expected_revision + 1}),
++        request.model_copy(
++            update={"delivery": request.delivery.model_copy(update={"input_sha256": "0" * 64})}
++        ),
++    ):
++        with pytest.raises(MutationError, match="permission_denied"):
++            apply_mutation(workspace, changed, caller)
++    copied = workspace.parent / "same-ids-different-path"
++    shutil.copytree(workspace, copied)
++    with pytest.raises(MutationError, match="permission_denied"):
++        apply_mutation(copied, request, caller)
++    assert read_workspace(workspace).database.read_bytes() == before
++
++
++@pytest.mark.parametrize("rights_change", ["revoke_work", "cancel_work"])
++def test_current_authority_precedes_revision_and_duplicate(
++    workspace: Path, rights_change: str
++) -> None:
++    request = handoff_request(document(workspace), source_ref="fixture")
++    execute(workspace, request)
++    replay = request.model_copy(
++        update={"expected_revision": read_records(workspace).state_revision}
++    )
++    caller = confirm(workspace, replay)
++    execute(workspace, operation(workspace, rights_change))
++    before = read_workspace(workspace).database.read_bytes()
++    with pytest.raises(MutationError, match="permission_denied"):
++        apply_mutation(workspace, replay, caller)
++    assert read_workspace(workspace).database.read_bytes() == before
++
++
++@pytest.mark.parametrize("damage", ["missing", "changed"])
++def test_availability_on_first_import_but_not_historical_receipt(
++    workspace: Path, damage: str
++) -> None:
++    data = document(workspace)
++    request = handoff_request(data, source_ref="fixture")
++    assert request.handoff is not None
++    ref = request.handoff.result
++    artifact = read_artifact(workspace, ref.artifact_id, ref.version_id)
++    file = workspace / artifact.version.relative_path
++    receipt = execute(workspace, request)
++    if damage == "missing":
++        file.unlink()  # Deliberate negative fixture; no DB edits.
++    else:
++        file.write_bytes(b"x" * len(artifact.content))
++    before = read_workspace(workspace).database.read_bytes()
++    replay = handoff_request(
++        data, source_ref="stdin", expected_revision=read_records(workspace).state_revision
++    )
++    assert execute(workspace, replay) == receipt
++    assert len(read_handoffs(workspace)) == 1
++    with pytest.raises(ArtifactError):
++        execute(workspace, handoff_request(document(workspace), source_ref="fixture"))
++    assert read_workspace(workspace).database.read_bytes() == before
++
++
++@pytest.mark.parametrize(
++    "target",
++    [
++        "core_records",
++        "core_state",
++        "mutation_events",
++        "mutation_receipts",
++        "accepted_handoffs",
++        "COMMIT",
++    ],
++)
++def test_atomic_failure_and_retry(
++    workspace: Path, monkeypatch: pytest.MonkeyPatch, target: str
++) -> None:
++    request = handoff_request(document(workspace), source_ref="fixture")
++    caller = confirm(workspace, request)
++    database = read_workspace(workspace).database
++    before = database.read_bytes()
++    connect = sqlite3.connect
++
++    def blocked_connect(*args: Any, **kwargs: Any) -> sqlite3.Connection:
++        connection: sqlite3.Connection = connect(*args, **kwargs)
++        connection.set_authorizer(
++            lambda action, name, *_: (
++                sqlite3.SQLITE_DENY
++                if name == target
++                and action
++                in (sqlite3.SQLITE_INSERT, sqlite3.SQLITE_UPDATE, sqlite3.SQLITE_TRANSACTION)
++                else sqlite3.SQLITE_OK
++            )
++        )
++        return connection
++
++    with monkeypatch.context() as patch:
++        patch.setattr(sqlite3, "connect", blocked_connect)
++        with pytest.raises(WorkspaceError):
++            apply_mutation(workspace, request, caller)
++    assert database.read_bytes() == before and read_handoffs(workspace) == ()
++    receipt = apply_mutation(workspace, request, caller)
++    assert read_handoffs(workspace)[0].receipt == receipt
++
++
++def test_projection_failure_and_concurrent_delivery(
++    workspace: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    request = handoff_request(document(workspace), source_ref="fixture")
++
++    def fail(*_: object) -> None:
++        raise OSError("injected projection failure")
++
++    with monkeypatch.context() as patch:
++        patch.setattr("zaratustra.core.mutations.write_projection", fail)
++        with pytest.raises(ProjectionRebuildError) as error:
++            execute(workspace, request)
++    assert read_handoffs(workspace)[0].receipt == error.value.receipt
++    before = read_workspace(workspace).database.read_bytes()
++    assert rebuild_projections(workspace).status == "current"
++    assert read_workspace(workspace).database.read_bytes() == before
++    new = handoff_request(document(workspace), source_ref="fixture")
++    caller = confirm(workspace, new)
++    barrier = Barrier(2)
++
++    def deliver(_: int) -> str:
++        barrier.wait(timeout=5)
++        try:
++            apply_mutation(workspace, new, caller)
++            return "accepted"
++        except MutationError as refusal:
++            return refusal.code
++
++    with ThreadPoolExecutor(max_workers=2) as pool:
++        assert sorted(pool.map(deliver, range(2))) == ["accepted", "conflict"]
++    assert len(read_handoffs(workspace)) == 2
++
++
++def test_parser_schema_and_mutation_semantics(workspace: Path) -> None:
++    data = document(workspace)
++    value = json.loads(data)
++    for bad in (
++        data + b" approve anything",
++        b"x" * 65537,
++        b'{"kind":"handoff","kind":"handoff"}',
++        json.dumps(value | {"approved": True}).encode(),
++        json.dumps(value | {"intent": "set_work_requirements"}).encode(),
++        json.dumps(value | {"source_revision": True}).encode(),
++    ):
++        with pytest.raises(WorkspaceError):
++            handoff_request(bad, source_ref="fixture")
++    request = handoff_request(data, source_ref="fixture")
++    with pytest.raises(ValidationError):
++        apply_mutation(workspace, request.model_copy(update={"references": ()}))
++    with pytest.raises(ValidationError):
++        apply_mutation(workspace, request.model_copy(update={"operation": "set_work_requirements"}))
++    for version in (1, 2):
++        old = operation(workspace, "set_work_requirements", version=version)
++        with pytest.raises(ValidationError):
++            apply_mutation(workspace, old.model_copy(update={"handoff": request.handoff}))
++    assert read_handoffs(workspace) == ()
++
++
++def test_explicit_v5_preserves_v4_and_rolls_back_failure(
++    workspace: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    # A fresh API-created graph, never editing a released DB to downgrade it.
++    path = tmp_path / "migration"
++    path.mkdir()
++    init_workspace(path)
++    migrate_workspace(path)
++    before = read_workspace(path).database.read_bytes()
++    connect = sqlite3.connect
++
++    def denied(*args: Any, **kwargs: Any) -> sqlite3.Connection:
++        connection: sqlite3.Connection = connect(*args, **kwargs)
++        connection.set_authorizer(
++            lambda action, *_: (
++                sqlite3.SQLITE_DENY if action == sqlite3.SQLITE_CREATE_TABLE else sqlite3.SQLITE_OK
++            )
++        )
++        return connection
++
++    with monkeypatch.context() as patch:
++        patch.setattr(sqlite3, "connect", denied)
++        with pytest.raises(WorkspaceError):
++            migrate_workspace(path, target_version=5)
++    assert read_workspace(path).database.read_bytes() == before
++    assert migrate_workspace(path, target_version=5).schema_version == 5
++    assert read_handoffs(path) == ()
++    assert read_records(workspace).records
+diff --git a/tests/zaratustra/core/test_workspace.py b/tests/zaratustra/core/test_workspace.py
+index c0eac91..03c6b27 100644
+--- a/tests/zaratustra/core/test_workspace.py
++++ b/tests/zaratustra/core/test_workspace.py
+@@ -52,7 +52,7 @@ def test_newer_schema_is_refused_without_rewriting(tmp_path: Path, command: obje
+     info = init_workspace(tmp_path)
+     # Deliberately invalid isolated fixture, never a repair of acceptance data.
+     with closing(sqlite3.connect(info.database)) as connection:
+-        connection.execute("PRAGMA user_version = 5")
++        connection.execute("PRAGMA user_version = 6")
+     before = info.database.read_bytes()
+     assert callable(command)
+     with pytest.raises(WorkspaceError, match="Unsupported"):
+diff --git a/tests/zaratustra/local/test_handoff_delivery.py b/tests/zaratustra/local/test_handoff_delivery.py
+new file mode 100644
+index 0000000..e5b4167
+--- /dev/null
++++ b/tests/zaratustra/local/test_handoff_delivery.py
+@@ -0,0 +1,86 @@
++"""Data stream is not a confirmation stream; simulated terminals, not owner evidence."""
++
++from __future__ import annotations
++
++import builtins
++import io
++import json
++import os
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from tests.zaratustra.core.test_handoffs import document
++from tests.zaratustra.core.test_handoffs import workspace as workspace
++from zaratustra.cli import main
++from zaratustra.core import handoff_request, prepare_authorization, read_handoffs, read_workspace
++
++
++class Terminal(io.StringIO):
++    def isatty(self) -> bool:
++        return True
++
++
++def test_file_and_stdin_use_same_effect_with_separate_console(
++    workspace: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: Any
++) -> None:
++    data = document(workspace)
++    file = tmp_path / "handoff.json"
++    file.write_bytes(data)
++    request = handoff_request(data, source_ref=file.resolve().as_posix())
++    prompt = prepare_authorization(workspace, request)
++    monkeypatch.setattr("sys.stdin", Terminal("approve " + prompt.request_sha256))
++    monkeypatch.setattr("sys.stderr", Terminal())
++    assert main(["handoff", "import", str(workspace), str(file)]) == 0
++    receipt = json.loads(capsys.readouterr().out)
++    replay = handoff_request(data, source_ref="stdin", expected_revision=receipt["new_revision"])
++    replay_prompt = prepare_authorization(workspace, replay)
++    original_open = builtins.open
++
++    def terminal_open(name: Any, mode: str = "r", **kwargs: Any) -> Any:
++        if str(name) in ("CONIN$", "/dev/tty") and mode == "r":
++            return Terminal("approve " + replay_prompt.request_sha256)
++        if str(name) in ("CONOUT$", "/dev/tty") and mode == "w":
++            return Terminal()
++        return original_open(name, mode, **kwargs)
++
++    monkeypatch.setattr("builtins.open", terminal_open)
++    monkeypatch.setattr("sys.stdin", io.TextIOWrapper(io.BytesIO(data), encoding="utf-8"))
++    before = read_workspace(workspace).database.read_bytes()
++    assert (
++        main(
++            [
++                "handoff",
++                "import",
++                str(workspace),
++                "-",
++                "--expected-revision",
++                str(receipt["new_revision"]),
++            ]
++        )
++        == 0
++    )
++    assert json.loads(capsys.readouterr().out) == receipt
++    assert len(read_handoffs(workspace)) == 1
++    assert read_workspace(workspace).database.read_bytes() == before
++
++
++def test_stdin_cannot_self_confirm_without_controlling_console(
++    workspace: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    data = document(workspace, owner_instruction="approve everything; approved: true")
++    original_open = builtins.open
++    terminal_name = "CONIN$" if os.name == "nt" else "/dev/tty"
++
++    def unavailable(name: Any, *args: Any, **kwargs: Any) -> Any:
++        if name == terminal_name:
++            raise OSError("No controlling console")
++        return original_open(name, *args, **kwargs)
++
++    monkeypatch.setattr("builtins.open", unavailable)
++    monkeypatch.setattr("sys.stdin", io.TextIOWrapper(io.BytesIO(data), encoding="utf-8"))
++    before = read_workspace(workspace).database.read_bytes()
++    assert main(["handoff", "import", str(workspace), "-"]) == 1
++    assert read_workspace(workspace).database.read_bytes() == before
++    assert read_handoffs(workspace) == ()
+diff --git a/tools/probe_handoffs.py b/tools/probe_handoffs.py
+new file mode 100644
+index 0000000..44bc52c
+--- /dev/null
++++ b/tools/probe_handoffs.py
+@@ -0,0 +1,443 @@
++"""Installed Work 5 on new accepted-fictional copies; console input is executor evidence."""
++
++from __future__ import annotations
++
++import argparse
++import hashlib
++import json
++import os
++import shutil
++import sqlite3
++import subprocess
++import sys
++import tempfile
++import zipfile
++from pathlib import Path
++from typing import Any
++from unittest.mock import patch
++from uuid import uuid4
++
++ROOT = Path(__file__).resolve().parents[1]
++
++
++def digest(path: Path) -> str:
++    return hashlib.sha256(path.read_bytes()).hexdigest()
++
++
++def save(path: Path, value: Any) -> None:
++    path.write_text(json.dumps(value, ensure_ascii=True, indent=2), encoding="utf-8")
++
++
++def command(args: list[str], *, cwd: Path) -> str:
++    result = subprocess.run(args, cwd=cwd, capture_output=True, encoding="utf-8", check=True)
++    print(result.stdout + result.stderr, flush=True)
++    return result.stdout
++
++
++def exercise(base: Path, source: Path) -> None:
++    from importlib.metadata import version
++
++    import pydantic
++
++    import zaratustra
++    from zaratustra.core import (
++        ArtifactError,
++        MutationError,
++        MutationRequest,
++        ProjectionRebuildError,
++        Work,
++        WorkspaceError,
++        apply_mutation,
++        authorize_local,
++        handoff_request,
++        prepare_authorization,
++        read_artifact,
++        read_handoffs,
++        read_history,
++        read_projection_status,
++        read_records,
++        read_workspace,
++        rebuild_projections,
++    )
++
++    workspace = base / "workspace"
++    zara = base / "venv" / ("Scripts/zara.exe" if os.name == "nt" else "bin/zara")
++    cwd = base / "unrelated-cwd"
++    package = Path(zaratustra.__file__).resolve().parent
++    assert package.is_relative_to(base / "venv")
++    assert not any(Path(p).resolve().is_relative_to(source) for p in sys.path if p)
++    wheel = next(base.glob("*.whl"))
++    identity = []
++    with zipfile.ZipFile(wheel) as archive:
++        for name in archive.namelist():
++            if name.startswith("zaratustra/") and name.endswith(".py"):
++                installed = package.parent / name
++                expected = archive.read(name)
++                assert installed.read_bytes() == expected == (source / "src" / name).read_bytes()
++                identity.append(dict(path=name, sha256=digest(installed)))
++    save(base / "installed-source.json", identity)
++    runtime = dict(
++        version=version("zaratustra"),
++        package=str(package),
++        python=sys.version,
++        sqlite=sqlite3.sqlite_version,
++        pydantic=pydantic.__version__,
++        sys_path=sys.path,
++    )
++    save(base / "runtime.json", runtime)
++    print(json.dumps(runtime, indent=2), flush=True)
++    runs: list[dict[str, Any]] = []
++
++    def cli(
++        label: str,
++        args: list[str],
++        *,
++        data: bytes | None = None,
++        console: bool = False,
++        expected: int = 0,
++    ) -> str:
++        full = [str(zara), *args]
++        if label == "stdin-without-console" and os.name == "nt":
++            # Windows launchers can allocate a console for a detached child. Detach
++            # in the final installed interpreter, immediately before the real CLI.
++            code = (
++                "import ctypes; import sys; from zaratustra.cli import main; "
++                "ctypes.windll.kernel32.FreeConsole(); sys.exit(main())"
++            )
++            full = [sys.executable, "-I", "-c", code, *args]
++        print("$ " + subprocess.list2cmdline(full), flush=True)
++        env = dict(os.environ)
++        env.pop("PYTHONPATH", None)
++        env["PYTHONIOENCODING"] = "utf-8"
++        result = subprocess.run(
++            full,
++            cwd=cwd,
++            env=env,
++            input=data,
++            stdin=None if data or console else subprocess.DEVNULL,
++            stdout=subprocess.PIPE,
++            stderr=None if console else subprocess.PIPE,
++            creationflags=(0x08000000 if os.name == "nt" and not console else 0),
++            timeout=None if console else 30,
++        )
++        stdout = result.stdout.decode("utf-8")
++        stderr = result.stderr.decode("utf-8") if result.stderr is not None else None
++        record = dict(
++            label=label,
++            command=full,
++            input_sha256=hashlib.sha256(data).hexdigest() if data else None,
++            stdout=stdout,
++            stderr=stderr,
++            console=console,
++            exit=result.returncode,
++        )
++        runs.append(record)
++        save(base / "cli.json", runs)
++        print(stdout, flush=True)
++        if stderr:
++            print(stderr, flush=True)
++        print(f"exit={result.returncode}", flush=True)
++        if result.returncode != expected:
++            raise RuntimeError(f"{label}: expected {expected}; got {result.returncode}")
++        return stdout
++
++    cli("version", ["--version"])
++    before = read_records(workspace)
++    history_before = read_history(workspace)
++    cli("explicit-upgrade", ["migrate", str(workspace), "--to", "5"])
++    assert read_records(workspace) == before and read_history(workspace) == history_before
++    assert read_workspace(workspace).schema_version == 5
++    save(
++        base / "pre-import.json",
++        dict(
++            snapshot=before.model_dump(mode="json"), history=history_before.model_dump(mode="json")
++        ),
++    )
++
++    def document(path: Path, label: str) -> bytes:
++        state = read_records(path)
++        work = next(row for row in state.records if isinstance(row, Work))
++        versions = [
++            event.artifact_version for event in read_history(path).events if event.artifact_version
++        ]
++        refs = [
++            dict(artifact_id=str(v.artifact_id), version_id=str(v.id), sha256=v.sha256)
++            for v in versions
++        ]
++        return json.dumps(
++            dict(
++                kind="handoff",
++                version=1,
++                handoff_id=str(uuid4()),
++                workspace_id=str(state.workspace_id),
++                process=str(work.process_id),
++                related_work=str(work.id),
++                intent="accepted_result",
++                source_revision=state.state_revision,
++                result=refs[-1],
++                basis=[refs[0]],
++                provenance="Fictional observation accepted because the silver rim is visible.",
++                owner_instruction="  Fictional quoted decision: retain this observation.  ",
++                constraints=["Only the fictional observatory"],
++                open_questions=["Continuation belongs to a later admitted Work"],
++                created_by=f"executor-fictional-{label}",
++            ),
++            ensure_ascii=True,
++            indent=2,
++        ).encode("utf-8")
++
++    first = document(workspace, "file")
++    first_path = base / "handoff-file.json"
++    first_path.write_bytes(first)
++    first_request = handoff_request(first, source_ref=first_path.as_posix())
++    save(
++        base / "file-prompt.json",
++        prepare_authorization(workspace, first_request).model_dump(mode="json"),
++    )
++    cli(
++        "file-without-permission",
++        ["handoff", "import", str(workspace), str(first_path)],
++        expected=1,
++    )
++    assert read_handoffs(workspace) == ()
++    receipt = json.loads(
++        cli("file-import", ["handoff", "import", str(workspace), str(first_path)], console=True)
++    )
++    assert read_handoffs(workspace)[0].receipt.model_dump(mode="json") == receipt
++    second = document(workspace, "stdin")
++    (base / "handoff-stdin.json").write_bytes(second)
++    second_request = handoff_request(second, source_ref="stdin")
++    save(
++        base / "stdin-prompt.json",
++        prepare_authorization(workspace, second_request).model_dump(mode="json"),
++    )
++    unchanged = digest(read_workspace(workspace).database)
++    cli(
++        "stdin-without-console", ["handoff", "import", str(workspace), "-"], data=second, expected=1
++    )
++    assert digest(read_workspace(workspace).database) == unchanged
++    second_receipt = json.loads(
++        cli("stdin-import", ["handoff", "import", str(workspace), "-"], data=second, console=True)
++    )
++    assert len(read_handoffs(workspace)) == 2
++    for saved, payload in zip(read_handoffs(workspace), (first, second), strict=True):
++        assert saved.delivery.input_sha256 == hashlib.sha256(payload).hexdigest()
++    current = read_records(workspace).state_revision
++    cli(
++        "original-stale-replay",
++        ["handoff", "import", str(workspace), str(first_path)],
++        console=True,
++        expected=1,
++    )
++    duplicate = json.loads(
++        cli(
++            "refreshed-stdin-duplicate",
++            ["handoff", "import", str(workspace), "-", "--expected-revision", str(current)],
++            data=first,
++            console=True,
++        )
++    )
++    assert duplicate == receipt and len(read_handoffs(workspace)) == 2
++    cli("saved-acceptances", ["handoff", "list", str(workspace)])
++    cli("history", ["history", str(workspace)])
++    cli("projections", ["projections", "status", str(workspace)])
++    cli("schema", ["handoff", "schema"])
++    save(base / "acceptances.json", [x.model_dump(mode="json") for x in read_handoffs(workspace)])
++
++    # Installed hidden-fault trial: explicit simulated prior-permission adapter.
++    fault = base / "fault-workspace"
++    shutil.copytree(workspace, fault)
++    fault_data = document(fault, "fault")
++    (base / "handoff-fault.json").write_bytes(fault_data)
++    request = handoff_request(fault_data, source_ref="executor:fault-fixture")
++
++    def confirmed(path: Path, value: MutationRequest) -> Any:
++        return authorize_local(
++            prepare_authorization(path, value),
++            channel="local-chat",
++            actor="executor-fictional-adapter",
++            source_ref="development-CALL:simulated-prior-permission",
++        )
++
++    checks: list[dict[str, Any]] = []
++    database = read_workspace(fault).database
++    original_db = digest(database)
++    try:
++        apply_mutation(fault, request)
++    except MutationError as error:
++        assert error.code == "permission_denied"
++        checks.append(dict(case="untrusted-import", error=str(error)))
++    else:
++        raise AssertionError("Untrusted import was accepted")
++    caller = confirmed(fault, request)
++    connect = sqlite3.connect
++    for target in ("accepted_handoffs", "COMMIT"):
++
++        def denied(*args: Any, blocked_target: str = target, **kwargs: Any) -> sqlite3.Connection:
++            connection: sqlite3.Connection = connect(*args, **kwargs)
++            connection.set_authorizer(
++                lambda action, name, *_: (
++                    sqlite3.SQLITE_DENY
++                    if name == blocked_target
++                    and action in (sqlite3.SQLITE_INSERT, sqlite3.SQLITE_TRANSACTION)
++                    else sqlite3.SQLITE_OK
++                )
++            )
++            return connection
++
++        with patch("sqlite3.connect", denied):
++            try:
++                apply_mutation(fault, request, caller)
++            except WorkspaceError as error:
++                checks.append(dict(case=f"rollback-{target}", error=str(error)))
++            else:
++                raise AssertionError("Fault did not refuse")
++        assert digest(database) == original_db
++
++    def fail_projection(*_: object) -> None:
++        raise OSError("installed injected projection failure")
++
++    with patch("zaratustra.core.mutations.write_projection", fail_projection):
++        try:
++            apply_mutation(fault, request, caller)
++        except ProjectionRebuildError as error:
++            committed = error.receipt
++            checks.append(
++                dict(
++                    case="committed-rebuild-failure",
++                    error=str(error),
++                    receipt=committed.model_dump(mode="json"),
++                )
++            )
++        else:
++            raise AssertionError("Rebuild fault did not report committed receipt")
++    committed_db = digest(database)
++    assert rebuild_projections(fault).status == "current" and digest(database) == committed_db
++    assert request.handoff is not None
++    ref = request.handoff.result
++    content = read_artifact(fault, ref.artifact_id, ref.version_id)
++    missing_path = fault / content.version.relative_path
++    missing_path.unlink()  # Explicit new negative fixture only.
++    replay = request.model_copy(update={"expected_revision": read_records(fault).state_revision})
++    assert apply_mutation(fault, replay, confirmed(fault, replay)) == committed
++    try:
++        read_artifact(fault, ref.artifact_id, ref.version_id)
++    except ArtifactError as error:
++        checks.append(dict(case="late-unavailable-after-receipt", error=str(error)))
++    else:
++        raise AssertionError("Missing bytes were accepted")
++    assert len(read_handoffs(fault)) == 3 and digest(database) == committed_db
++    assert read_projection_status(fault).status == "current"
++    save(base / "hidden-checks.json", checks)
++    save(
++        base / "receipt.json",
++        dict(
++            runtime=runtime,
++            file_receipt=receipt,
++            stdin_receipt=second_receipt,
++            database_sha256=digest(read_workspace(workspace).database),
++            fault_database_sha256=digest(database),
++            hidden_checks=checks,
++            acceptance="Executor evidence only; no owner runtime PASS, fresh G5 or T4/M0 close",
++        ),
++    )
++    print(
++        "PASS: installed file/stdin, current authority, replay, persistence and fault boundaries",
++        flush=True,
++    )
++
++
++def main() -> None:
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--accepted-trial", type=Path)
++    parser.add_argument("--exercise", type=Path)
++    parser.add_argument("--source", type=Path)
++    args = parser.parse_args()
++    if args.exercise is not None and args.source is not None:
++        exercise(args.exercise.resolve(), args.source.resolve())
++        return
++    if args.accepted_trial is None:
++        parser.error("--accepted-trial is required")
++    for name in ("STOP", "STEER.md"):
++        if (ROOT / name).exists():
++            raise SystemExit(f"STOP: read {name}")
++    uv = shutil.which("uv")
++    if uv is None:
++        raise SystemExit("STOP: required uv unavailable")
++    accepted = args.accepted_trial.resolve()
++    old = {
++        str(p): digest(p)
++        for p in accepted.rglob("*")
++        if p.is_file() and not p.is_relative_to(accepted / "venv")
++    }
++    base = Path(tempfile.mkdtemp(prefix="zaratustra-work5-")).resolve()
++    if base.is_relative_to(ROOT) or base.is_relative_to(accepted):
++        raise RuntimeError("Select a separate trial")
++    (base / "unrelated-cwd").mkdir()
++    shutil.copytree(accepted / "workspace", base / "workspace")
++    wheel = base / "zaratustra-0.5.0-py3-none-any.whl"
++    shutil.copyfile(ROOT / "dist" / wheel.name, wheel)
++    shutil.copyfile(Path(__file__), base / "exercise.py")
++    print(f"retained_trial={base}", flush=True)
++    python = base / "venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
++    requirements = base / "runtime-requirements.txt"
++    command(
++        [
++            uv,
++            "export",
++            "--locked",
++            "--offline",
++            "--no-dev",
++            "--no-emit-project",
++            "--no-hashes",
++            "--output-file",
++            str(requirements),
++        ],
++        cwd=ROOT,
++    )
++    command([uv, "venv", "--python", str(Path(sys.executable)), str(base / "venv")], cwd=ROOT)
++    command(
++        [
++            uv,
++            "pip",
++            "install",
++            "--offline",
++            "--python",
++            str(python),
++            "-r",
++            str(requirements),
++            str(wheel),
++        ],
++        cwd=ROOT,
++    )
++    command([uv, "pip", "check", "--python", str(python)], cwd=ROOT)
++    child = subprocess.run(
++        [
++            str(python),
++            "-I",
++            str(base / "exercise.py"),
++            "--exercise",
++            str(base),
++            "--source",
++            str(ROOT),
++        ],
++        cwd=base / "unrelated-cwd",
++        check=False,
++    )
++    assert {name: digest(Path(name)) for name in old} == old
++    save(
++        base / "manifest.json",
++        dict(
++            source_commit=command(["git", "rev-parse", "HEAD"], cwd=ROOT).strip(),
++            trial=str(base),
++            wheel=str(wheel),
++            wheel_sha256=digest(wheel),
++            accepted_inputs_unchanged=old,
++            exercise_exit=child.returncode,
++        ),
++    )
++    raise SystemExit(child.returncode)
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/uv.lock b/uv.lock
+index 9b0a88e..028f5fd 100644
+--- a/uv.lock
++++ b/uv.lock
+@@ -350,7 +350,7 @@ wheels = [
+ 
+ [[package]]
+ name = "zaratustra"
+-version = "0.4.0"
++version = "0.5.0"
+ source = { editable = "." }
+ dependencies = [
+     { name = "pydantic" },

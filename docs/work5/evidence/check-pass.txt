@@ -1,0 +1,93 @@
+$ C:\projects\zaratustra\_scratch\work5-handoff\.venv\Scripts\python.exe -m ruff format --check src tools tests
+36 files already formatted
+$ C:\projects\zaratustra\_scratch\work5-handoff\.venv\Scripts\python.exe -m ruff check src tools tests
+All checks passed!
+$ C:\projects\zaratustra\_scratch\work5-handoff\.venv\Scripts\python.exe -m mypy src tools tests
+Success: no issues found in 32 source files
+$ C:\projects\zaratustra\_scratch\work5-handoff\.venv\Scripts\lint-imports.EXE --no-cache
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 16 files, 34 dependencies.
+-----------------------------------
+
+CLI may depend on Core, Core cannot depend on CLI KEPT
+Core has no surface dependency KEPT
+
+Contracts: 2 kept, 0 broken.
+$ C:\projects\zaratustra\_scratch\work5-handoff\.venv\Scripts\python.exe -m pytest tests -q
+........................................................................ [ 73%]
+...................FF.....                                               [100%]
+================================== FAILURES ===================================
+_______ test_newer_schema_is_refused_without_rewriting[read_workspace] ________
+
+tmp_path = WindowsPath('C:/Users/Anton/AppData/Local/Temp/pytest-of-Anton/pytest-818/test_newer_schema_is_refused_w0')
+command = <function read_workspace at 0x00000152B2613C40>
+
+    @pytest.mark.parametrize("command", [read_workspace, init_workspace])
+    def test_newer_schema_is_refused_without_rewriting(tmp_path: Path, command: object) -> None:
+        info = init_workspace(tmp_path)
+        # Deliberately invalid isolated fixture, never a repair of acceptance data.
+        with closing(sqlite3.connect(info.database)) as connection:
+            connection.execute("PRAGMA user_version = 5")
+        before = info.database.read_bytes()
+        assert callable(command)
+>       with pytest.raises(WorkspaceError, match="Unsupported"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'Unsupported'
+E         Actual message: 'Migration history does not match this installed version.'
+
+tests\zaratustra\core\test_workspace.py:58: AssertionError
+_______ test_newer_schema_is_refused_without_rewriting[init_workspace] ________
+
+tmp_path = WindowsPath('C:/Users/Anton/AppData/Local/Temp/pytest-of-Anton/pytest-818/test_newer_schema_is_refused_w1')
+command = <function init_workspace at 0x00000152B2613CE0>
+
+    @pytest.mark.parametrize("command", [read_workspace, init_workspace])
+    def test_newer_schema_is_refused_without_rewriting(tmp_path: Path, command: object) -> None:
+        info = init_workspace(tmp_path)
+        # Deliberately invalid isolated fixture, never a repair of acceptance data.
+        with closing(sqlite3.connect(info.database)) as connection:
+            connection.execute("PRAGMA user_version = 5")
+        before = info.database.read_bytes()
+        assert callable(command)
+>       with pytest.raises(WorkspaceError, match="Unsupported"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'Unsupported'
+E         Actual message: 'Cannot initialize workspace; files retained: Migration history does not match this installed version.'
+
+tests\zaratustra\core\test_workspace.py:58: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/zaratustra/core/test_workspace.py::test_newer_schema_is_refused_without_rewriting[read_workspace]
+FAILED tests/zaratustra/core/test_workspace.py::test_newer_schema_is_refused_without_rewriting[init_workspace]
+2 failed, 96 passed in 24.98s
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\projects\zaratustra\_scratch\work5-handoff\tools\check.py", line 148, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "C:\projects\zaratustra\_scratch\work5-handoff\tools\check.py", line 134, in main
+    run([sys.executable, "-m", "pytest", *(test_files or ["tests"]), "-q"])
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\zaratustra\_scratch\work5-handoff\tools\check.py", line 19, in run
+    subprocess.run(command, cwd=root, check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['C:\\projects\\zaratustra\\_scratch\\work5-handoff\\.venv\\Scripts\\python.exe', '-m', 'pytest', 'tests', '-q']' returned non-zero exit status 1.

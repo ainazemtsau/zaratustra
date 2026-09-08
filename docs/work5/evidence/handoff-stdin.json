@@ -1,0 +1,31 @@
+{
+  "kind": "handoff",
+  "version": 1,
+  "handoff_id": "9530e3d4-0ccb-4a93-845f-bfcd724dd771",
+  "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+  "process": "bae978a9-a181-4368-be55-b1837fd47747",
+  "related_work": "56785bef-c147-4236-b12a-cad24845567a",
+  "intent": "accepted_result",
+  "source_revision": 10,
+  "result": {
+    "artifact_id": "ae7eca56-fd16-41ad-b262-2981468b922e",
+    "version_id": "75a8c7b3-3f17-4a50-a777-c70f3515bfd8",
+    "sha256": "6fd73651c03ddf966703c5b96f6b7a7da79a6d3482b82342f191dd4ea9299b45"
+  },
+  "basis": [
+    {
+      "artifact_id": "ae7eca56-fd16-41ad-b262-2981468b922e",
+      "version_id": "258ea271-3f06-4c29-9caa-09cf2613d2d4",
+      "sha256": "de22a67833d4525f95d460d75890f8a046a08d51e19bd086e380df104afd1214"
+    }
+  ],
+  "provenance": "Fictional observation accepted because the silver rim is visible.",
+  "owner_instruction": "  Fictional quoted decision: retain this observation.  ",
+  "constraints": [
+    "Only the fictional observatory"
+  ],
+  "open_questions": [
+    "Continuation belongs to a later admitted Work"
+  ],
+  "created_by": "executor-fictional-stdin"
+}

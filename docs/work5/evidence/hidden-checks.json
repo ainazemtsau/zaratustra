@@ -1,0 +1,36 @@
+[
+  {
+    "case": "untrusted-import",
+    "error": "permission_denied: Separate trusted local authorization required"
+  },
+  {
+    "case": "rollback-accepted_handoffs",
+    "error": "Cannot access workspace: not authorized"
+  },
+  {
+    "case": "rollback-COMMIT",
+    "error": "Cannot access workspace: not authorized"
+  },
+  {
+    "case": "committed-rebuild-failure",
+    "error": "rebuild_required: Mutation committed; Cannot access workspace: installed injected projection failure",
+    "receipt": {
+      "operation_id": "057dbe20-b4ad-418c-94f9-97884470efb8",
+      "event_id": "d72fee3d-e7bb-4763-9945-e8718f66cf7b",
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "previous_revision": 11,
+      "new_revision": 12,
+      "fingerprint": "d1f8246036178994e44ef84e7f536a6ac81651985839e3311a187272cda7ab24",
+      "recorded_at": "2026-09-08T09:22:09.939358Z",
+      "product_version": "0.5.0",
+      "affected_projections": [
+        "overview.md"
+      ]
+    }
+  },
+  {
+    "case": "late-unavailable-after-receipt",
+    "error": "content_unavailable: Registered content is not a regular file"
+  }
+]
