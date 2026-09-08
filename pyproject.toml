@@ -1,7 +1,7 @@
 [project]
 name = "zaratustra"
-version = "0.1.0"
-description = "Zaratustra local workspace foundation"
+version = "0.2.0"
+description = "Zaratustra local workspace and initial Core records"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = ["pydantic>=2,<3"]

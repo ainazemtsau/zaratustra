@@ -11,12 +11,14 @@
 ## What exists
 Python 3.13 / uv / sqlite3 / Pydantic v2 / pytest / ruff / SHA-256.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
-metadata and explicit migration v1. Works 2–8 remain unimplemented.
+metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
+initial draft records and consistent `zara records read`; Works 3–8 remain unimplemented.
 `src/zaratustra/core` owns workspace logic; `src/zaratustra/cli` delegates to it.
 Installed product code and user-chosen data workspace are separate.
-Read the current CALL before doing product work; Work 1 admits no successor.
-Work 1 mechanics and W19–W27 disposition: docs/work1/FOUNDATION.md.
+Read the current CALL before doing product work; a completed Work admits no successor.
+Current mechanics and W19–W27 disposition: docs/work2/RECORDS.md.
 Outside-checkout runtime proof: `uv run --locked python -m tools.probe_install`.
+Work 2 installed/migration proof: `uv run --locked python -m tools.probe_records --accepted-trial <path>`.
 
 ## Run contract (v36)
 1. Execution authority is the current CALL + this AGENTS.md + repo spec + validation.config; global skills/tools are support and never add requirements.

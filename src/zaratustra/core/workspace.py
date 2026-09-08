@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import sqlite3
-from contextlib import closing
+from collections.abc import Iterator
+from contextlib import closing, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
@@ -11,7 +12,8 @@ from uuid import UUID, uuid4
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, ValidationError
 
-from .migrations import APPLICATION_ID, SCHEMA_VERSION, V1_NAME, V1_SHA256, migrate_v1
+from .migration_v2 import V2_NAME, V2_SHA256, migrate_v2
+from .migrations import APPLICATION_ID, V1_NAME, V1_SHA256, migrate_v1
 
 WORKSPACE_DIRECTORIES = ("processes", "artifacts", "projections", "inbox")
 
@@ -28,7 +30,7 @@ class WorkspaceInfo(BaseModel):
     database: Path
     workspace_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1]
+    schema_version: Literal[1, 2]
 
 
 def _root(path: Path) -> Path:
@@ -43,7 +45,7 @@ def _plain_path(path: Path) -> None:
         raise WorkspaceError(f"Workspace entries must not be links: {path}")
 
 
-def _read_workspace(root: Path) -> WorkspaceInfo:
+def _database_path(root: Path) -> Path:
     state = root / ".zara"
     database = state / "state.sqlite3"
     for path in (state, database, *(root / name for name in WORKSPACE_DIRECTORIES)):
@@ -54,33 +56,83 @@ def _read_workspace(root: Path) -> WorkspaceInfo:
         )
     if any(not (root / name).is_dir() for name in WORKSPACE_DIRECTORIES):
         raise WorkspaceError("Workspace layout is incomplete; existing files were left unchanged.")
-    with closing(
-        sqlite3.connect(database.as_uri() + "?mode=ro", uri=True, autocommit=True, timeout=5.0)
-    ) as connection:
-        connection.execute("PRAGMA query_only = ON")
-        connection.execute("BEGIN")
-        application = connection.execute("PRAGMA application_id").fetchone()[0]
-        version = connection.execute("PRAGMA user_version").fetchone()[0]
-        if application != APPLICATION_ID or version != SCHEMA_VERSION:
-            raise WorkspaceError(f"Unsupported workspace database/schema version: {version}.")
-        migrations = connection.execute(
-            "SELECT version, name, sha256, applied_at FROM schema_migrations ORDER BY version"
-        ).fetchall()
-        records = connection.execute(
-            "SELECT singleton, workspace_id, created_at FROM workspace"
-        ).fetchall()
-        if len(records) != 1 or records[0][0] != 1:
-            raise WorkspaceError("Invalid workspace metadata; existing files were left unchanged.")
-        _, workspace_id, created_at = records[0]
-        if migrations != [(SCHEMA_VERSION, V1_NAME, V1_SHA256, created_at)]:
+    return database
+
+
+def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> WorkspaceInfo:
+    application = connection.execute("PRAGMA application_id").fetchone()[0]
+    version = connection.execute("PRAGMA user_version").fetchone()[0]
+    if application != APPLICATION_ID or version not in (1, 2):
+        raise WorkspaceError(f"Unsupported workspace database/schema version: {version}.")
+    migrations = connection.execute(
+        "SELECT version, name, sha256, applied_at FROM schema_migrations ORDER BY version"
+    ).fetchall()
+    records = connection.execute(
+        "SELECT singleton, workspace_id, created_at FROM workspace"
+    ).fetchall()
+    if len(records) != 1 or records[0][0] != 1:
+        raise WorkspaceError("Invalid workspace metadata; existing files were left unchanged.")
+    _, workspace_id, created_at = records[0]
+    if len(migrations) != version or migrations[0] != (1, V1_NAME, V1_SHA256, created_at):
+        raise WorkspaceError("Migration history does not match this installed version.")
+    if version == 2:
+        if migrations[1][:3] != (2, V2_NAME, V2_SHA256):
             raise WorkspaceError("Migration history does not match this installed version.")
-        return WorkspaceInfo(
-            workspace=root,
-            database=database,
-            workspace_id=workspace_id,
-            created_at=created_at,
-            schema_version=version,
-        )
+        applied = datetime.fromisoformat(migrations[1][3])
+        if applied.tzinfo is None:
+            raise WorkspaceError("Migration timestamp must have a timezone.")
+        connection.execute("SELECT singleton, revision FROM core_state").fetchall()
+        connection.execute("SELECT id, kind, revision, body FROM core_records LIMIT 0")
+    return WorkspaceInfo(
+        workspace=root,
+        database=database,
+        workspace_id=workspace_id,
+        created_at=created_at,
+        schema_version=version,
+    )
+
+
+@contextmanager
+def workspace_connection(
+    path: Path, *, write: bool = False
+) -> Iterator[tuple[sqlite3.Connection, WorkspaceInfo]]:
+    """Validate metadata in the same transaction as the operation; never create a DB."""
+    try:
+        root = _root(path)
+        database = _database_path(root)
+        mode = "rw" if write else "ro"
+        with closing(
+            sqlite3.connect(
+                database.as_uri() + f"?mode={mode}", uri=True, autocommit=True, timeout=5.0
+            )
+        ) as connection:
+            if write:
+                connection.execute("PRAGMA synchronous = FULL")
+            else:
+                connection.execute("PRAGMA query_only = ON")
+            connection.execute("BEGIN IMMEDIATE" if write else "BEGIN")
+            try:
+                yield connection, _metadata(connection, root, database)
+                connection.execute("COMMIT")
+            except BaseException:
+                if connection.in_transaction:
+                    connection.execute("ROLLBACK")
+                raise
+    except (OSError, sqlite3.Error, ValueError) as error:
+        raise WorkspaceError(f"Cannot access workspace: {error}") from error
+
+
+def _read_workspace(root: Path) -> WorkspaceInfo:
+    with workspace_connection(root) as (_, info):
+        return info
+
+
+def migrate_workspace(path: Path) -> WorkspaceInfo:
+    """Explicit v1-to-v2 upgrade. Repeating on v2 validates and leaves data unchanged."""
+    with workspace_connection(path, write=True) as (connection, info):
+        if info.schema_version == 1:
+            migrate_v2(connection, datetime.now(UTC).isoformat())
+        return _metadata(connection, info.workspace, info.database)
 
 
 def read_workspace(path: Path) -> WorkspaceInfo:
@@ -117,7 +169,7 @@ def init_workspace(path: Path) -> WorkspaceInfo:
         for name in WORKSPACE_DIRECTORIES:
             (root / name).mkdir()
         return _read_workspace(root)
-    except (OSError, sqlite3.Error, ValidationError) as error:
+    except (OSError, sqlite3.Error, ValidationError, WorkspaceError) as error:
         # Never delete/rewrite user data to force success. A partially initialized
         # folder remains visible and is rejected on the next run if incomplete.
         raise WorkspaceError(f"Cannot initialize workspace; files retained: {error}") from error

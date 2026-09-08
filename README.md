@@ -1,7 +1,9 @@
 # Zaratustra
 
-Work 1 foundation, version **0.1.0**: `zara init` creates a local workspace;
-`zara status` reads its persisted identity, creation time and SQLite schema version.
+Version **0.2.0**, Work 2: `zara init` creates a local workspace;
+`zara migrate` explicitly adds schema 2; `zara records create` stores initial
+Process, draft Work, declared Artifact and Event records with revisions.
+`zara status` and `zara records read` read persisted facts in later invocations.
 The installed engine and the workspace are separate directories.
 
 Requires uv and managed Python 3.13.7. From this repository:
@@ -19,7 +21,7 @@ build. The installation probe installs the wheel with locked runtime dependencie
 in a disposable environment outside checkout, runs the real `zara` executable in
 separate processes, then cleans up its own temporary folders.
 
-For your first run, follow [installation and trial instructions](docs/work1/INSTALL.md).
+For your first run, follow [installation and trial instructions](docs/work2/INSTALL.md).
 Run the installed commands in a newly created empty folder, or name that folder:
 
 ```text
@@ -45,11 +47,13 @@ chosen-folder/
   inbox/
 ```
 
-Only bootstrap metadata and explicit migration v1 exist. Process, Work, Artifact,
-Event, revisions, Handoff, permissions and context behavior require Works 2–8.
+`init` still creates schema 1; `migrate` explicitly upgrades it without changing
+workspace identity/time. Initial records can be created once in an empty record store.
+Work is a draft without permissions; Artifact has no published file or active version.
+Updates, operation-id/replay, Handoff, permissions, context and artifact files require Works 3–8.
 This release does not complete T1 or M0. No personal workspace has been selected.
 
-Read [foundation decisions and W19–W27](docs/work1/FOUNDATION.md) before later work,
+Read [record decisions and W19–W27](docs/work2/RECORDS.md) before later work,
 and [Product RESULT](RESULT.md) for exact commits and runtime evidence.
 Setup evidence remains under docs/setup/ as history. Windows is the observed
 platform; Linux/macOS and an independent participant's installation remain unverified.
