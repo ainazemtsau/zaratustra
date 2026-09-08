@@ -11,13 +11,20 @@ from pydantic import ValidationError
 
 from zaratustra.core import (
     InitialRecords,
+    MutationRequest,
+    ReceiptQuery,
     WorkspaceError,
+    apply_mutation,
     create_initial_records,
     init_workspace,
     migrate_workspace,
+    prepare_authorization,
+    read_history,
+    read_receipt,
     read_records,
     read_workspace,
 )
+from zaratustra.local import confirm_on_console
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -27,10 +34,17 @@ def main(argv: list[str] | None = None) -> int:
     for name, description in (
         ("init", "Initialize an empty directory or read its existing workspace."),
         ("status", "Read persisted workspace metadata without changing it."),
-        ("migrate", "Explicitly migrate an initialized workspace to schema 2."),
+        ("migrate", "Explicitly migrate an initialized workspace to schema 3."),
+        ("history", "Read the owner-local mutation audit; not Work context."),
     ):
         command = commands.add_parser(name, help=description, description=description)
         command.add_argument("path", nargs="?", default=".", type=Path)
+        if name == "migrate":
+            command.add_argument("--to", type=int, choices=(2, 3), default=3)
+    for name in ("mutate", "receipt"):
+        command = commands.add_parser(name, help="Confirm an exact internal operation/query.")
+        command.add_argument("path", type=Path)
+        command.add_argument("request_json", help="Version 1 JSON value; no file/stdin importer.")
     records = commands.add_parser("records", help="Create initial drafts or read stored records.")
     record_commands = records.add_subparsers(dest="records_command", required=True)
     read = record_commands.add_parser(
@@ -47,7 +61,19 @@ def main(argv: list[str] | None = None) -> int:
     create.add_argument("--boundary", action="append", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == "records":
+        if args.command == "mutate":
+            request = MutationRequest.model_validate_json(args.request_json)
+            caller = confirm_on_console(prepare_authorization(args.path, request))
+            output = apply_mutation(args.path, request, caller).model_dump_json(indent=2)
+        elif args.command == "receipt":
+            query = ReceiptQuery.model_validate_json(args.request_json)
+            caller = confirm_on_console(prepare_authorization(args.path, query))
+            output = read_receipt(args.path, query, caller).model_dump_json(indent=2)
+        elif args.command == "migrate":
+            output = migrate_workspace(args.path, target_version=args.to).model_dump_json(indent=2)
+        elif args.command == "history":
+            output = read_history(args.path).model_dump_json(indent=2)
+        elif args.command == "records":
             snapshot = (
                 read_records(args.path)
                 if args.records_command == "read"
@@ -69,7 +95,6 @@ def main(argv: list[str] | None = None) -> int:
             operation = {
                 "init": init_workspace,
                 "status": read_workspace,
-                "migrate": migrate_workspace,
             }[args.command]
             output = operation(args.path).model_dump_json(indent=2)
     except (WorkspaceError, ValidationError) as error:

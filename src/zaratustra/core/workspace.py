@@ -13,6 +13,7 @@ from uuid import UUID, uuid4
 from pydantic import AwareDatetime, BaseModel, ConfigDict, ValidationError
 
 from .migration_v2 import V2_NAME, V2_SHA256, migrate_v2
+from .migration_v3 import V3_NAME, V3_SHA256, migrate_v3
 from .migrations import APPLICATION_ID, V1_NAME, V1_SHA256, migrate_v1
 
 WORKSPACE_DIRECTORIES = ("processes", "artifacts", "projections", "inbox")
@@ -30,7 +31,7 @@ class WorkspaceInfo(BaseModel):
     database: Path
     workspace_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2]
+    schema_version: Literal[1, 2, 3]
 
 
 def _root(path: Path) -> Path:
@@ -62,7 +63,7 @@ def _database_path(root: Path) -> Path:
 def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> WorkspaceInfo:
     application = connection.execute("PRAGMA application_id").fetchone()[0]
     version = connection.execute("PRAGMA user_version").fetchone()[0]
-    if application != APPLICATION_ID or version not in (1, 2):
+    if application != APPLICATION_ID or version not in (1, 2, 3):
         raise WorkspaceError(f"Unsupported workspace database/schema version: {version}.")
     migrations = connection.execute(
         "SELECT version, name, sha256, applied_at FROM schema_migrations ORDER BY version"
@@ -75,7 +76,7 @@ def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> Wor
     _, workspace_id, created_at = records[0]
     if len(migrations) != version or migrations[0] != (1, V1_NAME, V1_SHA256, created_at):
         raise WorkspaceError("Migration history does not match this installed version.")
-    if version == 2:
+    if version >= 2:
         if migrations[1][:3] != (2, V2_NAME, V2_SHA256):
             raise WorkspaceError("Migration history does not match this installed version.")
         applied = datetime.fromisoformat(migrations[1][3])
@@ -83,6 +84,15 @@ def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> Wor
             raise WorkspaceError("Migration timestamp must have a timezone.")
         connection.execute("SELECT singleton, revision FROM core_state").fetchall()
         connection.execute("SELECT id, kind, revision, body FROM core_records LIMIT 0")
+    if version >= 3:
+        if migrations[2][:3] != (3, V3_NAME, V3_SHA256):
+            raise WorkspaceError("Migration history does not match this installed version.")
+        if datetime.fromisoformat(migrations[2][3]).tzinfo is None:
+            raise WorkspaceError("Migration timestamp must have a timezone.")
+        connection.execute("SELECT id, state_revision, body FROM mutation_events LIMIT 0")
+        connection.execute(
+            "SELECT operation_id, event_id, fingerprint, body FROM mutation_receipts LIMIT 0"
+        )
     return WorkspaceInfo(
         workspace=root,
         database=database,
@@ -106,6 +116,7 @@ def workspace_connection(
                 database.as_uri() + f"?mode={mode}", uri=True, autocommit=True, timeout=5.0
             )
         ) as connection:
+            connection.execute("PRAGMA foreign_keys = ON")
             if write:
                 connection.execute("PRAGMA synchronous = FULL")
             else:
@@ -127,11 +138,23 @@ def _read_workspace(root: Path) -> WorkspaceInfo:
         return info
 
 
-def migrate_workspace(path: Path) -> WorkspaceInfo:
-    """Explicit v1-to-v2 upgrade. Repeating on v2 validates and leaves data unchanged."""
+def migrate_workspace(path: Path, *, target_version: Literal[2, 3] = 3) -> WorkspaceInfo:
+    """Explicit sequential upgrade; never grant rights, silently downgrade or repair."""
+    if type(target_version) is not int or target_version not in (2, 3):
+        raise WorkspaceError("Unsupported migration target")
     with workspace_connection(path, write=True) as (connection, info):
+        if info.schema_version > target_version:
+            raise WorkspaceError("Schema downgrade is not supported")
         if info.schema_version == 1:
             migrate_v2(connection, datetime.now(UTC).isoformat())
+        if info.schema_version < 3 and target_version == 3:
+            # Local import avoids a module initialization cycle with record models.
+            from .records import _read_records
+
+            legacy = _read_records(connection, info.workspace_id)
+            if legacy.state_revision not in (0, 1):
+                raise WorkspaceError("Schema 2 only supports initial records")
+            migrate_v3(connection, datetime.now(UTC).isoformat())
         return _metadata(connection, info.workspace, info.database)
 
 

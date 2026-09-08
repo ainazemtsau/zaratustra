@@ -4,7 +4,47 @@ call: c-solmax-zaratustra-m0-mutation-20260908-work3
 mode: PROBA; engineering_contract: 36
 product_basis: fe064773dccb2d1f818f1004962043df2ef1edd9
 direction_basis: 5f6c8fac9910eff5a6a1b64f45f7e7e5c1570d09
-status: W21 owner choice pending; dependent implementation not authorized by this PLAN
+status: W21 boundary accepted by owner; bounded implementation authorized
+
+## Final Work 3 decision after owner response
+
+The owner resolved W21 in docs/work3/OWNER-DECISION-20260908.md. The historical
+question below is retained as reasoning history; it is no longer a blocker.
+Sizing remains one focused half-day for this DB-only slice with no new dependencies.
+Version 0.3.0, explicit schema 3; released v1/v2 migrations remain unchanged.
+
+The exact allowlist is authorize_work (draft -> ready, work_metadata scope),
+revoke_work (remove scope, including historical receipt-read),
+set_work_requirements (replace executor requirements only within ready Work's
+work_metadata scope), and cancel_work (terminal cancellation, no Result/next).
+Every operation needs exact local confirmation or already-authorized trusted local
+chat caller context. Administrative authorize/revoke require that separate owner
+channel; bootstrap/migration cannot grant. Cancelled Work cannot be authorized or
+executed again. Revoking its remaining receipt-read scope is still permitted.
+Goal, acceptance, boundaries, budget, Process membership and artifact content cannot
+be changed by these operations. This mechanically bounds current Work authority.
+
+Receipt-read requires exact confirmed query plus current work_metadata scope;
+terminal status alone allows history, revocation denies it. Full records/history
+read remains an owner-local filesystem read, never a Work-context endpoint.
+There are no secrets or account identities; the trusted adapter is part of the local
+application trust boundary. In-process Python code is not treated as a hostile user.
+
+All mutations change the sole initial Work: its revision and global state revision
+advance together. Immutable journal entries retain exact request, confirmation,
+before/after Work, actor/channel/basis, product version, event id and receipt.
+Original initial Event remains unchanged. Journal validation reconstructs the Work
+from the first before-image through every change to the current saved Work.
+Operation fingerprint excludes expected_revision (stored separately), operation_id
+(the lookup key), and confirmation (a delivery occurrence); it includes the complete
+intent/work/workspace/provenance/reference fields. Exact authorization digest includes
+the entire request, including id/revision, and the resolved workspace path.
+
+Unsupported nonempty artifact references are refused at §5 stage 5. Affected file
+projections are an explicit empty tuple: no projection implementation is claimed.
+The trusted local-chat seam accepts only an in-process caller context provided by
+trusted application code, never a JSON/CLI assertion. No Handoff transport/import,
+context compiler, content publication, submit_result or successor Work is introduced.
 
 ## Source comparison
 
@@ -31,8 +71,7 @@ channel requires a new size assessment before dependent implementation.
 
 The smallest useful DB-only operation proposed is an explicitly authorized change
 of the existing Work's execution state/limited internal scope, together with a
-bounded metadata update under that current scope. The concrete operation allowlist
-must be finalized with W21. No arbitrary patch, content body, file reference,
+bounded metadata update under that current scope. The exact operation allowlist is finalized above after W21. No arbitrary patch, content body, file reference,
 Result, successor Work, Handoff importer or context operation is admitted here.
 Initial creation remains create-once, draft and without grants. Migration cannot
 activate a Work or issue permissions.
@@ -76,44 +115,38 @@ projection dependency set honestly. Work 4 must add publication and affected
 projection rebuilding to the same protocol before admitting dependent operations.
 File atomicity, orphan recovery, rebuild and late availability remain open.
 
-## W21 — concrete blocker and proposed channel
+## W21 — accepted local trust and current authority
 
-Current accepted Work is draft, authority_scope=none. Local bootstrap grants
-nothing. The available installed CLI has no trusted caller/receipt adapter.
-The current development CALL authorizes implementation and fictional trials; it is
-not a product credential for arbitrary future callers or Work contents.
+The owner selected the proposed local console boundary in
+OWNER-DECISION-20260908.md. No accounts/login, cryptographic human identity or
+hostile same-OS-user process isolation are required. The earlier blocker report is
+historical, preserved at 6c9da9e/085e402; it no longer stops this Work.
 
-Rejected shortcuts: migration-created permissions; treating CLI/Python execution
-as owner approval; trusting approved, actor, exact_text, free flags, a hand-written
-receipt, or a test-only trusted context as proof of an installed trusted channel.
-No successful mutation trial may depend on hand editing DB/state Markdown.
+local.confirm_on_console displays an escaped exact request and current Work,
+requires stdin/stderr terminal handles and exact approval, then calls the trusted
+Core authorize_local seam. No flag, file or model output issues authorization.
+The resulting in-process LocalAuthorization binds canonical request (including
+operation id and expected revision) and resolved workspace path. Core checks that
+binding, current Work/rights, then revision inside the write transaction.
 
-Concrete owner question, submitted in this product session before dependent work:
+Trusted local-chat application code may call authorize_local after actual owner
+permission and invoke apply_mutation directly, without another console identity
+check. This is a trusted adapter seam, not a shipped Handoff/chat importer or a
+way for JSON to assert trust. Source_ref and actor describe channel provenance;
+these strings alone cannot grant anything. Python application code is within the
+accepted local trust boundary, not isolated as a hostile caller.
 
-> Для W21 предлагаю отдельное интерактивное подтверждение в локальной консоли:
-> CLI показывает workspace, Work, revision, точную операцию и SHA-256; оператор
-> подтверждает именно их, без флага approved и без подтверждения из payload.
-> Это разрешает только показанное безопасное внутреннее изменение; текущие права
-> и отзыв проверяет Core. Граница доверия — доступ к этой консоли: от другого
-> процесса того же OS-пользователя она не защищает и личность человека
-> криптографически не доказывает. Принимаете эту границу для M0?
+Initial Work remains draft/none after bootstrap and migration. authorize_work and
+revoke_work are narrow administrative mutations backed by exact owner-channel
+confirmation; they are not Work self-grants or another updater. Execution metadata
+requires current ready/work_metadata; terminal Work never restarts. Revocation
+also removes scoped receipt-read. Owner-local records/history inspection retains
+its existing filesystem boundary and is not presented as a scoped Work-context API.
 
-Why owner input is required: CALL boundaries prohibit self-asserted authority and
-require returning an unresolved owner-owned choice. Architecture evidence W21
-expressly leaves the available trusted surface and threat boundary undecided.
-This is the executor's identified missing choice, not an automatic approval
-rejection or a global skill requirement. Silence is not authorization.
-
-If accepted, the adapter would keep confirmation separate from untrusted operation
-data, bind it to the complete canonical intent and current snapshot, reject pipes
-as confirmation, and pass a nonserializable caller context to Core. Core would
-recheck Work, authority and revision after confirmation. Provenance would identify
-the actual channel, not claim cryptographic human identity. Tests using a simulated
-operator would be labeled executor checks, never owner runtime acceptance.
-
-If rejected, the owner must identify an acceptable trusted receipt source; the
-executor must assess the corresponding adapter and size before implementation.
-No mandatory PKI, service, MCP or external right is silently introduced.
+Every successful mutation stores its actual confirmation with exact request and
+before/after images. A stored mutation receipt never grants future authority.
+Automated testing simulates owner-channel input on authorized fictional copies;
+it is executor evidence, never a human-identity assertion or owner runtime PASS.
 
 ## W22–W27 carried forward
 

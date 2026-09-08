@@ -1,7 +1,7 @@
 # Zaratustra
 
-Version **0.2.0**, Work 2: `zara init` creates a local workspace;
-`zara migrate` explicitly adds schema 2; `zara records create` stores initial
+Version **0.3.0**, Work 3: `zara init` creates a local workspace;
+`zara migrate` explicitly adds schema 3; `zara records create` stores initial
 Process, draft Work, declared Artifact and Event records with revisions.
 `zara status` and `zara records read` read persisted facts in later invocations.
 The installed engine and the workspace are separate directories.
@@ -21,7 +21,7 @@ build. The installation probe installs the wheel with locked runtime dependencie
 in a disposable environment outside checkout, runs the real `zara` executable in
 separate processes, then cleans up its own temporary folders.
 
-For your first run, follow [installation and trial instructions](docs/work2/INSTALL.md).
+For your first run, follow [installation and trial instructions](docs/work3/INSTALL.md).
 Run the installed commands in a newly created empty folder, or name that folder:
 
 ```text
@@ -49,11 +49,14 @@ chosen-folder/
 
 `init` still creates schema 1; `migrate` explicitly upgrades it without changing
 workspace identity/time. Initial records can be created once in an empty record store.
-Work is a draft without permissions; Artifact has no published file or active version.
-Updates, operation-id/replay, Handoff, permissions, context and artifact files require Works 3–8.
-This release does not complete T1 or M0. No personal workspace has been selected.
+Work starts as a draft without permissions; Artifact has no published file or active version.
+`zara mutate` confirms an exact internal operation in the local console, then Core
+checks current Work/rights, revision, duplicate identity and references, and commits
+the change/event/receipt together. `zara receipt` checks current read rights;
+`zara history` is the owner's local audit view. Handoff, files/projections, context,
+Result and next Work remain Works 4–8. M0 is not closed; no personal workspace is selected.
 
-Read [record decisions and W19–W27](docs/work2/RECORDS.md) before later work,
+Read [mutation decisions and W19–W27](docs/work3/PLAN.md) before later work,
 and [Product RESULT](RESULT.md) for exact commits and runtime evidence.
 Setup evidence remains under docs/setup/ as history. Windows is the observed
 platform; Linux/macOS and an independent participant's installation remain unverified.

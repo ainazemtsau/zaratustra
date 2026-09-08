@@ -1,7 +1,7 @@
 [project]
 name = "zaratustra"
-version = "0.2.0"
-description = "Zaratustra local workspace and initial Core records"
+version = "0.3.0"
+description = "Zaratustra local workspace and transactional mutation protocol"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = ["pydantic>=2,<3"]
@@ -37,13 +37,13 @@ root_package = "zaratustra"
 [[tool.importlinter.contracts]]
 name = "CLI may depend on Core, Core cannot depend on CLI"
 type = "layers"
-layers = ["zaratustra.cli", "zaratustra.core"]
+layers = ["zaratustra.cli", "zaratustra.local", "zaratustra.core"]
 
 [[tool.importlinter.contracts]]
 name = "Core has no surface dependency"
 type = "forbidden"
 source_modules = ["zaratustra.core"]
-forbidden_modules = ["zaratustra.cli"]
+forbidden_modules = ["zaratustra.cli", "zaratustra.local"]
 
 [dependency-groups]
 dev = [

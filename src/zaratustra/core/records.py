@@ -1,4 +1,4 @@
-"""Initial domain records and a consistent read model; no execution or update protocol."""
+"""Domain records, coherent snapshot values and the bounded create-once bootstrap."""
 
 from __future__ import annotations
 
@@ -61,11 +61,17 @@ class Work(Record):
     acceptance: Annotated[tuple[Text, ...], Field(min_length=1)]
     boundaries: Annotated[tuple[Text, ...], Field(min_length=1)]
     budget: Text
-    status: Literal["draft"] = "draft"
-    authority_scope: Literal["none"] = "none"
+    status: Literal["draft", "ready", "cancelled"] = "draft"
+    authority_scope: Literal["none", "work_metadata"] = "none"
     context_handles: tuple[()] = ()
     dependencies: tuple[()] = ()
     executor_requirements: tuple[Text, ...] = ()
+
+    @model_validator(mode="after")
+    def draft_has_no_authority(self) -> Self:
+        if self.status == "draft" and self.authority_scope != "none":
+            raise ValueError("Draft Work cannot have authority")
+        return self
 
 
 class Artifact(Record):
@@ -127,9 +133,13 @@ class RecordsSnapshot(RecordModel):
             raise ValueError("Record refers to another Work")
         if event.affected_ids != (process.id, work.id, artifact.id):
             raise ValueError("Event does not describe these records")
-        if self.state_revision != 1 or event.state_revision != self.state_revision:
-            raise ValueError("Unsupported initial state revision")
-        if any(record.revision != 1 for record in self.records):
+        if self.state_revision < 1 or event.state_revision != 1:
+            raise ValueError("Invalid state/initial event revision")
+        if work.revision != self.state_revision:
+            raise ValueError("Work revision must match this single-Work state")
+        if work.revision == 1 and (work.status != "draft" or work.authority_scope != "none"):
+            raise ValueError("Initial Work must remain a draft without rights")
+        if any(record.revision != 1 for record in (process, artifact, event)):
             raise ValueError("Unsupported record revision")
         return self
 
@@ -151,27 +161,24 @@ def _read_records(connection: sqlite3.Connection, workspace_id: UUID) -> Records
     )
 
 
-def read_records(path: Path) -> RecordsSnapshot:
-    """Read persisted records through a single read-only SQLite transaction."""
-    with workspace_connection(path) as (connection, info):
-        if info.schema_version != 2:
-            raise WorkspaceError("Records require schema 2; run zara migrate explicitly.")
-        return _read_records(connection, info.workspace_id)
-
-
 def create_initial_records(path: Path, initial: InitialRecords) -> RecordsSnapshot:
-    """The sole domain write entry: create initial drafts only in an empty record store.
+    """Create initial drafts only in an empty record store, never update a Work.
 
     This direct local bootstrap grants no authority and never executes a Work.
-    Work 3 must supply the general mutation protocol before updates are admitted.
+    Every later domain change goes through mutations.apply_mutation.
     """
     initial = InitialRecords.model_validate(initial.model_dump())
     with workspace_connection(path, write=True) as (connection, info):
-        if info.schema_version != 2:
-            raise WorkspaceError("Records require schema 2; run zara migrate explicitly.")
+        if info.schema_version < 2:
+            raise WorkspaceError("Records require schema 2 or later; run zara migrate explicitly.")
         before = _read_records(connection, info.workspace_id)
         if before.records:
             raise WorkspaceError("Initial records already exist; no changes made.")
+        if info.schema_version == 3 and (
+            connection.execute("SELECT COUNT(*) FROM mutation_events").fetchone()[0]
+            or connection.execute("SELECT COUNT(*) FROM mutation_receipts").fetchone()[0]
+        ):
+            raise WorkspaceError("Initial creation cannot replace existing mutation history")
         now = datetime.now(UTC)
         process = Process(id=uuid4(), revision=1, created_at=now, title=initial.process_title)
         work = Work(

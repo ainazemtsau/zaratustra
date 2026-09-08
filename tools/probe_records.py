@@ -120,7 +120,7 @@ print(json.dumps(dict(package=str(package), version=importlib.metadata.version('
     assert digest(copied / ".zara/state.sqlite3") == old_hashes[str(old_database)]
     run([str(zara), "records", "read", str(copied)], expected=1)
     assert digest(copied / ".zara/state.sqlite3") == old_hashes[str(old_database)]
-    upgraded = json.loads(run([str(zara), "migrate", str(copied)]))
+    upgraded = json.loads(run([str(zara), "migrate", str(copied), "--to", "2"]))
     assert upgraded["schema_version"] == 2
     assert upgraded["workspace_id"] == before["workspace_id"]
     assert upgraded["created_at"] == before["created_at"]
@@ -166,7 +166,7 @@ print(json.dumps(dict(package=str(package), version=importlib.metadata.version('
     )
     run([str(zara), *create_arguments], expected=1)
     assert json.loads(run([str(zara), "init", str(copied)])) == upgraded
-    assert json.loads(run([str(zara), "migrate", str(copied)])) == upgraded
+    assert json.loads(run([str(zara), "migrate", str(copied), "--to", "2"])) == upgraded
     run([str(old_zara), "status", str(copied)], expected=1)
     assert digest(copied / ".zara/state.sqlite3") == database_hash
     assert json.loads(run([str(old_zara), "status", str(old_workspace)])) == original
@@ -178,7 +178,7 @@ print(json.dumps(dict(package=str(package), version=importlib.metadata.version('
     fresh.mkdir()
     initialized = json.loads(run([str(zara), "init", str(fresh)]))
     assert initialized["schema_version"] == 1
-    run([str(zara), "migrate", str(fresh)])
+    run([str(zara), "migrate", str(fresh), "--to", "2"])
     fresh_arguments = [str(fresh) if arg == str(copied) else arg for arg in create_arguments]
     fresh_created = json.loads(run([str(zara), *fresh_arguments]))
     assert json.loads(run([str(zara), "records", "read", str(fresh)])) == fresh_created

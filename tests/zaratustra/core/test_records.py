@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from contextlib import closing
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -46,7 +47,7 @@ def test_explicit_migration_preserves_bootstrap_and_repeat_bytes(tmp_path: Path)
     with pytest.raises(WorkspaceError, match="migrate explicitly"):
         read_records(tmp_path)
     assert original.database.read_bytes() == before
-    upgraded = migrate_workspace(tmp_path)
+    upgraded = migrate_workspace(tmp_path, target_version=2)
     assert upgraded.workspace_id == original.workspace_id
     assert upgraded.created_at == original.created_at
     assert upgraded.schema_version == 2
@@ -55,7 +56,7 @@ def test_explicit_migration_preserves_bootstrap_and_repeat_bytes(tmp_path: Path)
             "SELECT version, name, sha256 FROM schema_migrations WHERE version = 2"
         ).fetchone() == (2, V2_NAME, V2_SHA256)
     migrated_bytes = original.database.read_bytes()
-    assert migrate_workspace(tmp_path) == upgraded
+    assert migrate_workspace(tmp_path, target_version=2) == upgraded
     assert init_workspace(tmp_path) == upgraded
     assert read_records(tmp_path).records == ()
     assert read_records(tmp_path).state_revision == 0
@@ -66,7 +67,7 @@ def test_records_restart_preserves_all_fields_revisions_and_links(
     tmp_path: Path, draft: InitialRecords
 ) -> None:
     info = init_workspace(tmp_path)
-    migrate_workspace(tmp_path)
+    migrate_workspace(tmp_path, target_version=2)
     created = create_initial_records(tmp_path, draft)
     before = info.database.read_bytes()
     reopened = read_records(tmp_path)
@@ -82,7 +83,7 @@ def test_records_restart_preserves_all_fields_revisions_and_links(
     assert work.authority_scope == "none" and work.status == "draft"
     assert artifact.active_version is None and artifact.work_id == work.id
     assert event.affected_ids == (work.process_id, work.id, artifact.id)
-    assert event.product_version == "0.2.0"
+    assert event.product_version == version("zaratustra")
     with pytest.raises(WorkspaceError, match="already exist"):
         create_initial_records(tmp_path, draft)
     assert info.database.read_bytes() == before
@@ -131,17 +132,17 @@ def test_migration_failure_leaves_original_database(
     with monkeypatch.context() as patch:
         patch.setattr(sqlite3, "connect", failing_connect)
         with pytest.raises(WorkspaceError):
-            migrate_workspace(tmp_path)
+            migrate_workspace(tmp_path, target_version=2)
     assert read_workspace(tmp_path) == info
     assert info.database.read_bytes() == before
-    assert migrate_workspace(tmp_path).schema_version == 2
+    assert migrate_workspace(tmp_path, target_version=2).schema_version == 2
 
 
 def test_event_insert_failure_rolls_back_records_and_revision(
     tmp_path: Path, draft: InitialRecords, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     info = init_workspace(tmp_path)
-    migrate_workspace(tmp_path)
+    migrate_workspace(tmp_path, target_version=2)
     before = info.database.read_bytes()
     connect = sqlite3.connect
 
@@ -168,7 +169,7 @@ def test_invalid_stored_records_are_refused_without_repair(
     tmp_path: Path, draft: InitialRecords, damage: str
 ) -> None:
     info = init_workspace(tmp_path)
-    migrate_workspace(tmp_path)
+    migrate_workspace(tmp_path, target_version=2)
     create_initial_records(tmp_path, draft)
     # Deliberately corrupt disposable fixtures; never repair the passing runtime trial.
     with closing(sqlite3.connect(info.database, autocommit=True)) as connection:
