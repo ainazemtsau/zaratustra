@@ -13,8 +13,9 @@ from typing import Any
 from .artifacts import current_artifact, read_versions, resolve_version, verified_content
 from .handoffs import AcceptedHandoff
 from .mutations import LocalAuthorization, MutationError, _caller, _history, _work
-from .protocol import ArtifactReference, ContextQuery, event_receipt
-from .records import Process, _read_records
+from .protocol import ArtifactReference, ContextQuery, SavedResult, event_receipt
+from .records import Artifact, Process, _read_records
+from .results import incoming_events
 from .workspace import WorkspaceInfo, workspace_connection
 
 
@@ -58,7 +59,7 @@ def _collect(
         raise MutationError("schema", "Work context requires explicit schema 5")
     snapshot = _read_records(connection, info.workspace_id)
     _caller(info.workspace, query, caller, snapshot)
-    work = _work(snapshot)
+    work = _work(snapshot, query.work_id)
     if work.status != "ready" or work.authority_scope not in (
         "work_metadata",
         "work_metadata_and_artifact",
@@ -73,7 +74,7 @@ def _collect(
             "conflict", "Context expected revision is not current; rebuild explicitly"
         )
     history = _history(connection, snapshot, artifacts_enabled=True)
-    artifact = current_artifact(snapshot)
+    artifact = current_artifact(snapshot, query.work_id)
     process = next(row for row in snapshot.records if isinstance(row, Process))
     versions = read_versions(connection)
     sources: list[dict[str, Any]] = []
@@ -83,7 +84,22 @@ def _collect(
 
     for record in (process, work, artifact):
         add(f"{record.kind}:{record.id}", record.revision, record.model_dump(mode="json"))
-    refs = list(query.references)
+    incoming = incoming_events(history.events, work.id)
+    granted = {ref.version_id: ref for event in incoming for ref in event.result_references}
+    inherited_acceptances = {
+        identity
+        for event in incoming
+        if event.request.submission is not None
+        for identity in event.request.submission.acceptance_ids
+    }
+    for event in incoming:
+        add(
+            f"result:{event.request.operation_id}",
+            event.state_revision,
+            SavedResult(event=event, receipt=event_receipt(event)).model_dump(mode="json"),
+        )
+    refs = [*query.references, *granted.values()]
+    artifacts = {r.id: r for r in snapshot.records if isinstance(r, Artifact)}
     decisions = []
     publications = {
         event.request.operation_id: event
@@ -94,10 +110,12 @@ def _collect(
         handoff, delivery = event.request.handoff, event.request.delivery
         if handoff is None or delivery is None:
             continue
+        if handoff.related_work != work.id and handoff.handoff_id not in inherited_acceptances:
+            continue
         if (handoff.workspace_id, handoff.process, handoff.related_work) != (
             snapshot.workspace_id,
             process.id,
-            work.id,
+            event.before.id,
         ):
             raise MutationError("scope", "Accepted decision is outside this Work")
         accepted = AcceptedHandoff(
@@ -115,16 +133,23 @@ def _collect(
         refs.extend((handoff.result, *handoff.basis))
     if not decisions:
         raise MutationError("dependency_missing", "Post-Handoff Work context requires acceptance")
-    active = resolve_version(versions, artifact)
-    refs.append(
-        ArtifactReference(artifact_id=artifact.id, version_id=active.id, sha256=active.sha256)
-    )
+    if artifact.active_version is not None:
+        active = resolve_version(versions, artifact)
+        refs.append(
+            ArtifactReference(artifact_id=artifact.id, version_id=active.id, sha256=active.sha256)
+        )
+    elif not incoming:
+        raise MutationError(
+            "dependency_missing", "Work requires published content or an incoming Result"
+        )
     seen = set()
     raw_bytes = 0
     for ref in refs:
-        if ref.artifact_id != artifact.id:
-            raise MutationError("scope", "Referenced Artifact is outside this Work")
-        descriptor = resolve_version(versions, artifact, ref.version_id)
+        if ref.artifact_id != artifact.id and granted.get(ref.version_id) != ref:
+            raise MutationError(
+                "scope", "Referenced Artifact is outside this Work and its exact grant"
+            )
+        descriptor = resolve_version(versions, artifacts[ref.artifact_id], ref.version_id)
         if ref.sha256 != descriptor.sha256:
             raise MutationError(
                 "dependency_changed", "Reference hash differs from registered bytes"
@@ -156,7 +181,7 @@ def _collect(
                 ),
             ),
         )
-    envelope = dict(
+    envelope: dict[str, Any] = dict(
         version=1,
         workspace_id=str(snapshot.workspace_id),
         process_id=str(process.id),
@@ -183,6 +208,19 @@ def _collect(
         tools=[],
         memory_entries=[],
     )
+    if incoming:
+        envelope["namespaces"].extend(
+            f"artifact-version:{ref.version_id}" for ref in granted.values()
+        )
+        envelope["dependencies"]["results"] = [
+            dict(
+                id=str(e.request.operation_id),
+                revision=e.state_revision,
+                source_revision=e.request.expected_revision,
+            )
+            for e in incoming
+        ]
+        envelope["selection"] = "all_current_acceptances_and_exact_incoming_result_grounds"
     # Include even non-disclosed history in the consistency guard, never in output.
     guard = _json(
         dict(

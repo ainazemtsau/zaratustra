@@ -46,6 +46,9 @@ declared Artifact, an immutable Result record/link, event and receipt, with one
 global revision increment. A unique source Work constraint prevents two Result
 effects; next identities must be new. The next Work is ready only because its
 complete value and scope were separately authorized with this exact request.
+The completed source also retains completion_id=the Result operation id; bare
+done without a completion identity remains invalid. None is omitted from old Work
+serialization to preserve previous exact context and authorization bytes.
 Old acceptances are historical grounds, not fabricated acceptance of the new Work.
 The new Work has its own criteria; the Result retains the old acceptance ids,
 source Work/Artifact images, source revision and exact content closure.

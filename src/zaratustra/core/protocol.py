@@ -28,6 +28,7 @@ Operation = Literal[
     "publish_artifact",
     "restore_artifact",
     "accept_handoff",
+    "submit_result",
 ]
 ARTIFACT_OPERATIONS = ("authorize_artifact", "publish_artifact", "restore_artifact")
 V2_FIELDS = {
@@ -39,12 +40,41 @@ V2_FIELDS = {
     "references",
 }
 V3_FIELDS = {"handoff", "delivery"}
+V4_FIELDS = {"submission"}
+
+
+class NextWork(RecordModel):
+    work_id: UUID
+    artifact_id: UUID
+    goal: Text
+    expected_result: Text
+    acceptance: Annotated[tuple[Text, ...], Field(min_length=1)]
+    boundaries: Annotated[tuple[Text, ...], Field(min_length=1)]
+    budget: Text
+    executor_requirements: tuple[Text, ...]
+    artifact_title: Text
+    authority_scope: Literal["work_metadata"]
 
 
 class ArtifactReference(RecordModel):
     artifact_id: UUID
     version_id: UUID
     sha256: Digest
+
+
+class ResultSubmission(RecordModel):
+    source_revision: Revision
+    result: ArtifactReference
+    acceptance_ids: Annotated[tuple[UUID, ...], Field(min_length=1)]
+    next_work: NextWork
+
+    @model_validator(mode="after")
+    def distinct(self) -> Self:
+        if len(set(self.acceptance_ids)) != len(self.acceptance_ids):
+            raise ValueError("Acceptance ids must be unique")
+        if self.next_work.work_id == self.next_work.artifact_id:
+            raise ValueError("Next Work and Artifact ids must be distinct")
+        return self
 
 
 class ArtifactVersion(RecordModel):
@@ -92,7 +122,7 @@ class HandoffDelivery(RecordModel):
 
 
 class MutationRequest(RecordModel):
-    version: Annotated[int, Field(strict=True, ge=1, le=3)] = 1
+    version: Annotated[int, Field(strict=True, ge=1, le=4)] = 1
     operation_id: UUID
     workspace_id: UUID
     work_id: UUID
@@ -109,10 +139,13 @@ class MutationRequest(RecordModel):
     references: tuple[ArtifactReference, ...] = ()
     handoff: Handoff | None = None
     delivery: HandoffDelivery | None = None
+    submission: ResultSubmission | None = None
 
     @model_serializer(mode="wrap")
     def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         value: dict[str, Any] = handler(self)
+        if self.version < 4 and self.submission is None:
+            value.pop("submission", None)
         if self.version < 3 and all(getattr(self, name) is None for name in V3_FIELDS):
             for name in V3_FIELDS:
                 value.pop(name, None)
@@ -124,6 +157,13 @@ class MutationRequest(RecordModel):
 
     @model_validator(mode="after")
     def operation_payload(self) -> Self:
+        if self.operation == "submit_result":
+            if self.version != 4 or self.submission is None:
+                raise ValueError("Result requires request version 4 and complete submission")
+            if self.references != (self.submission.result,) or self.artifact_references:
+                raise ValueError("Result request must retain its exact result reference")
+        elif self.submission is not None or self.version == 4:
+            raise ValueError("Only submit_result uses request version 4/submission")
         if self.operation == "accept_handoff":
             handoff = self.handoff
             if self.version != 3 or handoff is None or self.delivery is None:
@@ -186,6 +226,8 @@ def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
         excluded |= V2_FIELDS
     if isinstance(value, MutationRequest) and value.version < 3:
         excluded |= V3_FIELDS
+    if isinstance(value, MutationRequest) and value.version < 4:
+        excluded |= V4_FIELDS
     return json.dumps(
         value.model_dump(mode="json", exclude=excluded),
         sort_keys=True,
@@ -222,15 +264,16 @@ def evolve_work(work: Work, request: MutationRequest) -> Work:
     """Narrow state transition, also used to validate retained journal before/after images."""
     if request.work_id != work.id:
         raise ValueError("Wrong Work")
-    change: dict[str, object] = {"revision": work.revision + 1}
+    change: dict[str, object] = {"revision": request.expected_revision + 1}
     if request.operation == "revoke_work":
         change["authority_scope"] = "none"
     elif request.operation == "authorize_work":
-        if work.status == "cancelled":
+        if work.status in ("cancelled", "done"):
             raise ValueError("Terminal Work cannot be authorized")
         change.update(status="ready", authority_scope="work_metadata")
     else:
-        if work.status != "ready" or work.authority_scope not in (
+        repair_done = work.status == "done" and request.operation == "restore_artifact"
+        if (work.status != "ready" and not repair_done) or work.authority_scope not in (
             "work_metadata",
             "work_metadata_and_artifact",
         ):
@@ -244,6 +287,9 @@ def evolve_work(work: Work, request: MutationRequest) -> Work:
         elif request.operation == "accept_handoff":
             if request.handoff is None or request.handoff.process != work.process_id:
                 raise ValueError("Handoff is outside this Work's Process")
+        elif request.operation == "submit_result":
+            change["status"] = "done"
+            change["completion_id"] = request.operation_id
         elif work.authority_scope != "work_metadata_and_artifact":
             raise ValueError("Work has no current Artifact permission")
     return Work.model_validate({**work.model_dump(), **change})
@@ -280,6 +326,18 @@ class MutationEvent(RecordModel):
     artifact_before: Artifact | None = None
     artifact_after: Artifact | None = None
     artifact_version: ArtifactVersion | None = None
+    next_work: Work | None = None
+    next_artifact: Artifact | None = None
+    result_artifact: Artifact | None = None
+    result_references: tuple[ArtifactReference, ...] = ()
+
+    @model_serializer(mode="wrap")
+    def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        value: dict[str, Any] = handler(self)
+        if self.request.version < 4:
+            for name in ("next_work", "next_artifact", "result_artifact", "result_references"):
+                value.pop(name, None)
+        return value
 
     @model_validator(mode="after")
     def consistent(self) -> Self:
@@ -289,10 +347,25 @@ class MutationEvent(RecordModel):
             self.confirmation.workspace_path, self.request
         ):
             raise ValueError("Event authorization binding mismatch")
-        if self.request.expected_revision != self.before.revision:
+        if self.request.expected_revision < self.before.revision:
             raise ValueError("Event expected revision mismatch")
         if self.state_revision != self.after.revision:
             raise ValueError("Event state revision mismatch")
+        if self.state_revision != self.request.expected_revision + 1:
+            raise ValueError("Event must advance global revision exactly once")
+        if self.request.submission is not None:
+            if self.request.submission.source_revision != self.request.expected_revision:
+                raise ValueError("Result source revision must be current at acceptance")
+            work, artifact = next_records(self.request, self.recorded_at, self.before.process_id)
+            if self.next_work != work or self.next_artifact != artifact:
+                raise ValueError("Event must retain exact confirmed next records")
+            if self.result_artifact is None or not self.result_references:
+                raise ValueError("Result must retain source Artifact and reference closure")
+        elif (
+            any(x is not None for x in (self.next_work, self.next_artifact, self.result_artifact))
+            or self.result_references
+        ):
+            raise ValueError("Only Result creates a continuation")
         if self.request.artifact_references or evolve_work(self.before, self.request) != self.after:
             raise ValueError("Event does not describe an admitted change")
         if self.request.handoff is not None and (
@@ -356,3 +429,50 @@ class MutationHistory(RecordModel):
     state_revision: Annotated[int, Field(strict=True, ge=0)]
     events: tuple[MutationEvent, ...]
     receipts: tuple[MutationReceipt, ...]
+
+
+def next_records(
+    request: MutationRequest, at: AwareDatetime, process_id: UUID
+) -> tuple[Work, Artifact]:
+    if request.submission is None:
+        raise ValueError("Missing Result submission")
+    spec = request.submission.next_work
+    work = Work(
+        id=spec.work_id,
+        revision=request.expected_revision + 1,
+        created_at=at,
+        process_id=process_id,
+        goal=spec.goal,
+        expected_result=spec.expected_result,
+        acceptance=spec.acceptance,
+        boundaries=spec.boundaries,
+        budget=spec.budget,
+        executor_requirements=spec.executor_requirements,
+        status="ready",
+        authority_scope=spec.authority_scope,
+    )
+    artifact = Artifact(
+        id=spec.artifact_id,
+        revision=1,
+        created_at=at,
+        process_id=process_id,
+        work_id=work.id,
+        title=spec.artifact_title,
+    )
+    return work, artifact
+
+
+class SavedResult(RecordModel):
+    event: MutationEvent
+    receipt: MutationReceipt
+
+    @model_validator(mode="after")
+    def consistent(self) -> Self:
+        if self.event.request.submission is None or self.receipt != event_receipt(self.event):
+            raise ValueError("Saved Result must match its committed event and receipt")
+        return self
+
+    @property
+    def next_work_id(self) -> UUID:
+        assert self.event.next_work is not None
+        return self.event.next_work.id

@@ -35,9 +35,9 @@ class ArtifactInspection(RecordModel):
     unregistered_files: tuple[str, ...]
 
 
-def current_artifact(snapshot: RecordsSnapshot) -> Artifact:
+def current_artifact(snapshot: RecordsSnapshot, work_id: UUID | None = None) -> Artifact:
     for record in snapshot.records:
-        if isinstance(record, Artifact):
+        if isinstance(record, Artifact) and (work_id is None or record.work_id == work_id):
             return record
     raise ArtifactError("invalid_artifact", "Create initial records first")
 
@@ -144,17 +144,17 @@ def inspect_files(
             status = str(error)
         health.append(ArtifactHealth(version=descriptor, status=status))
     registered = {descriptor.relative_path for descriptor in versions}
-    unknown = []
-    # Do not traverse foreign directories or links. Only the sole declared Artifact.
-    if snapshot.records:
-        directory = root / "artifacts" / str(current_artifact(snapshot).id)
+    unknown: list[str] = []
+    # Owner-local inspection covers declared Artifacts only, never foreign directories.
+    for artifact in (r for r in snapshot.records if isinstance(r, Artifact)):
+        directory = root / "artifacts" / str(artifact.id)
         _plain_path(directory)
         if directory.is_dir():
-            unknown = [
+            unknown.extend(
                 path.relative_to(root).as_posix()
                 for path in directory.iterdir()
                 if path.relative_to(root).as_posix() not in registered
-            ]
+            )
     return ArtifactInspection(
         state_revision=snapshot.state_revision,
         versions=tuple(health),

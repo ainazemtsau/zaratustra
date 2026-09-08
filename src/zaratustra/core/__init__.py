@@ -2,7 +2,7 @@
 
 from .artifacts import ArtifactContent, ArtifactError, ArtifactInspection
 from .context import ContextPackage, open_work
-from .handoffs import MAX_HANDOFF_BYTES, AcceptedHandoff, handoff_request
+from .handoffs import MAX_HANDOFF_BYTES, AcceptedHandoff, handoff_request, parse_result_request
 from .mutations import (
     AuthorizationPrompt,
     LocalAuthorization,
@@ -18,7 +18,9 @@ from .mutations import (
     read_projection_status,
     read_receipt,
     read_records,
+    read_result,
     rebuild_projections,
+    submit_result,
 )
 from .projections import ProjectionStatus
 from .protocol import (
@@ -31,7 +33,10 @@ from .protocol import (
     MutationHistory,
     MutationReceipt,
     MutationRequest,
+    NextWork,
     ReceiptQuery,
+    ResultSubmission,
+    SavedResult,
 )
 from .records import (
     Artifact,
@@ -51,6 +56,12 @@ from .workspace import (
 )
 
 __all__ = [
+    "parse_result_request",
+    "NextWork",
+    "ResultSubmission",
+    "SavedResult",
+    "read_result",
+    "submit_result",
     "ContextPackage",
     "ContextQuery",
     "open_work",

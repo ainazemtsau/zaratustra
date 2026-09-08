@@ -29,6 +29,7 @@ from zaratustra.core import (
     inspect_artifacts,
     migrate_workspace,
     open_work,
+    parse_result_request,
     prepare_authorization,
     read_artifact,
     read_handoffs,
@@ -36,8 +37,10 @@ from zaratustra.core import (
     read_projection_status,
     read_receipt,
     read_records,
+    read_result,
     read_workspace,
     rebuild_projections,
+    submit_result,
 )
 from zaratustra.local import confirm_on_console
 
@@ -46,6 +49,16 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="zara", description="Zaratustra workspace foundation")
     parser.add_argument("--version", action="version", version=f"zara {version('zaratustra')}")
     commands = parser.add_subparsers(dest="command", required=True)
+    result_command = commands.add_parser(
+        "result", help="Submit or discover an exact Result and continuation."
+    )
+    result_commands = result_command.add_subparsers(dest="result_command", required=True)
+    result_submit = result_commands.add_parser("submit")
+    result_submit.add_argument("path", type=Path)
+    result_submit.add_argument("request_file", type=Path)
+    result_read = result_commands.add_parser("read")
+    result_read.add_argument("path", type=Path)
+    result_read.add_argument("query_json")
     work_command = commands.add_parser("work", help="Open current bounded Work context.")
     work_commands = work_command.add_subparsers(dest="work_command", required=True)
     work_open = work_commands.add_parser("open")
@@ -59,13 +72,13 @@ def main(argv: list[str] | None = None) -> int:
     for name, description in (
         ("init", "Initialize an empty directory or read its existing workspace."),
         ("status", "Read persisted workspace metadata without changing it."),
-        ("migrate", "Explicit migration; use --to 5 for Handoff storage (default 4)."),
+        ("migrate", "Explicit migration; use --to 6 for Result storage (default 4)."),
         ("history", "Read the owner-local mutation audit; not Work context."),
     ):
         command = commands.add_parser(name, help=description, description=description)
         command.add_argument("path", nargs="?", default=".", type=Path)
         if name == "migrate":
-            command.add_argument("--to", type=int, choices=(2, 3, 4, 5), default=4)
+            command.add_argument("--to", type=int, choices=(2, 3, 4, 5, 6), default=4)
     for name in ("mutate", "receipt"):
         command = commands.add_parser(name, help="Confirm an exact internal operation/query.")
         command.add_argument("path", type=Path)
@@ -114,7 +127,21 @@ def main(argv: list[str] | None = None) -> int:
     create.add_argument("--boundary", action="append", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == "work":
+        if args.command == "result":
+            if args.result_command == "submit":
+                with args.request_file.open("rb") as stream:
+                    raw = stream.read(65537)
+                if len(raw) > 65536:
+                    raise WorkspaceError("Result request exceeds 64 KiB input limit")
+                # Use the same duplicate-key rejection as the portable Handoff parser.
+                request = parse_result_request(raw)
+                caller = confirm_on_console(prepare_authorization(args.path, request))
+                output = submit_result(args.path, request, caller).model_dump_json(indent=2)
+            else:
+                query = ReceiptQuery.model_validate_json(args.query_json)
+                caller = confirm_on_console(prepare_authorization(args.path, query))
+                output = read_result(args.path, query, caller).model_dump_json(indent=2)
+        elif args.command == "work":
             context_query = ContextQuery(
                 workspace_id=args.workspace_id,
                 work_id=args.work_id,

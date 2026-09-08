@@ -63,3 +63,18 @@ class AcceptedHandoff(RecordModel):
     delivery: HandoffDelivery
     confirmation: Confirmation
     receipt: MutationReceipt
+
+
+def parse_result_request(content: bytes) -> MutationRequest:
+    """Bounded untrusted file data; no self-authorization or silent key overwrite."""
+    if len(content) > MAX_HANDOFF_BYTES:
+        raise WorkspaceError("Result request exceeds the 64 KiB input limit")
+    try:
+        request = MutationRequest.model_validate(
+            json.loads(content.decode("utf-8-sig"), object_pairs_hook=_unique_object)
+        )
+        if request.operation != "submit_result":
+            raise ValueError("Expected submit_result")
+        return request
+    except (ValueError, RecursionError) as error:
+        raise WorkspaceError(f"Invalid Result request: {error}") from error

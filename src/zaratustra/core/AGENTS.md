@@ -28,7 +28,18 @@ the read-only open_work compiler: exact ContextQuery/current caller, ready Work,
 scope, revision, all accepted bases and verified content closure. Revalidate the
 entire collection under the existing writer lock before returning exact JSON bytes.
 No DML, projection rebuild or inferred budget in this read seam. Reject overflow;
-manifest accounts for actual output. No submit_result or successor Work.
+manifest accounts for actual output. Schema6 adds atomic submit_result and read_result;
+all writes still use apply_mutation. Completion carries the Result operation identity.
+Records/journal validate the whole single-Process Work chain by explicit Work/Artifact
+ids, global revisions and exact created records. Result retains all source acceptances
+and complete exact historical content grants. results.py re-derives those edges;
+it never writes. A next Work is separately confirmed with full content and metadata
+scope; its inherited grounds are not acceptance of its new goal or arbitrary foreign
+Artifact access. Done refuses renewed execution/authorization; only exact registered
+Artifact repair under retained artifact rights and revocation remain administrative
+writes. read_result needs current source metadata rights and returns historical
+metadata, never current-byte availability. New Work opening revalidates full bytes.
+Released migrations1–5 stay fixed; new explicit6 never changes default migrate4.
 Initial Event stays fixed.
 Read/init never migrate or repair existing state. Keep migration bytes stable after release.
 END_OF_FILE: src/zaratustra/core/AGENTS.md

@@ -14,8 +14,10 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    SerializerFunctionWrapHandler,
     StringConstraints,
     TypeAdapter,
+    model_serializer,
     model_validator,
 )
 
@@ -61,14 +63,24 @@ class Work(Record):
     acceptance: Annotated[tuple[Text, ...], Field(min_length=1)]
     boundaries: Annotated[tuple[Text, ...], Field(min_length=1)]
     budget: Text
-    status: Literal["draft", "ready", "cancelled"] = "draft"
+    status: Literal["draft", "ready", "cancelled", "done"] = "draft"
     authority_scope: Literal["none", "work_metadata", "work_metadata_and_artifact"] = "none"
     context_handles: tuple[()] = ()
     dependencies: tuple[()] = ()
     executor_requirements: tuple[Text, ...] = ()
+    completion_id: UUID | None = None
+
+    @model_serializer(mode="wrap")
+    def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, object]:
+        value: dict[str, object] = handler(self)
+        if self.completion_id is None:
+            value.pop("completion_id", None)
+        return value
 
     @model_validator(mode="after")
     def draft_has_no_authority(self) -> Self:
+        if (self.status == "done") != (self.completion_id is not None):
+            raise ValueError("Completed Work requires its Result operation identity")
         if self.status == "draft" and self.authority_scope != "none":
             raise ValueError("Draft Work cannot have authority")
         return self
@@ -121,37 +133,41 @@ class RecordsSnapshot(RecordModel):
             if self.state_revision != 0:
                 raise ValueError("Empty records require revision zero")
             return self
-        by_kind = {record.kind: record for record in self.records}
-        if len(self.records) != 4 or len(by_kind) != 4:
-            raise ValueError("Incomplete initial records")
-        process, work, artifact, event = (
-            by_kind[name] for name in ("process", "work", "artifact", "event")
-        )
-        if not (
-            isinstance(process, Process)
-            and isinstance(work, Work)
-            and isinstance(artifact, Artifact)
-            and isinstance(event, Event)
-        ):
-            raise ValueError("Invalid record kinds")
-        if len({record.id for record in self.records}) != 4:
+        processes = [r for r in self.records if isinstance(r, Process)]
+        events = [r for r in self.records if isinstance(r, Event)]
+        works = {r.id: r for r in self.records if isinstance(r, Work)}
+        artifacts = [r for r in self.records if isinstance(r, Artifact)]
+        if len(processes) != 1 or len(events) != 1 or not works or len(artifacts) != len(works):
+            raise ValueError("Incomplete Process/Work/Artifact graph")
+        process, event = processes[0], events[0]
+        if len({r.id for r in self.records}) != len(self.records):
             raise ValueError("Record identities must be distinct")
-        if any(record.process_id != process.id for record in (work, artifact, event)):
+        members: tuple[Work | Artifact | Event, ...] = (*works.values(), *artifacts, event)
+        if any(r.process_id != process.id for r in members):
             raise ValueError("Record refers to another Process")
-        if artifact.work_id != work.id or event.work_id != work.id:
-            raise ValueError("Record refers to another Work")
-        if event.affected_ids != (process.id, work.id, artifact.id):
-            raise ValueError("Event does not describe these records")
+        if {r.work_id for r in artifacts} != set(works):
+            raise ValueError("Every Work must have exactly one declared Artifact")
+        initial = works.get(event.work_id)
+        artifact = next((r for r in artifacts if r.work_id == event.work_id), None)
+        if (
+            initial is None
+            or artifact is None
+            or event.affected_ids != (process.id, initial.id, artifact.id)
+        ):
+            raise ValueError("Initial event does not describe initial records")
         if self.state_revision < 1 or event.state_revision != 1:
             raise ValueError("Invalid state/initial event revision")
-        if work.revision != self.state_revision:
-            raise ValueError("Work revision must match this single-Work state")
-        if work.revision == 1 and (work.status != "draft" or work.authority_scope != "none"):
+        if max(w.revision for w in works.values()) != self.state_revision:
+            raise ValueError("Latest Work revision must match global state")
+        if any(
+            w.revision == 1 and (w.status != "draft" or w.authority_scope != "none")
+            for w in works.values()
+        ):
             raise ValueError("Initial Work must remain a draft without rights")
-        if artifact.revision > self.state_revision:
-            raise ValueError("Artifact revision exceeds state")
-        if any(record.revision != 1 for record in (process, event)):
-            raise ValueError("Unsupported record revision")
+        if any(r.revision > self.state_revision for r in self.records):
+            raise ValueError("Record revision exceeds state")
+        if process.revision != 1 or event.revision != 1:
+            raise ValueError("Unsupported Process/initial event revision")
         return self
 
 
@@ -167,9 +183,15 @@ def _read_records(connection: sqlite3.Connection, workspace_id: UUID) -> Records
         if (str(record.id), record.kind, record.revision) != (identity, kind, revision):
             raise WorkspaceError("Record metadata does not match its content")
         records.append(record)
-    return RecordsSnapshot(
+    snapshot = RecordsSnapshot(
         workspace_id=workspace_id, state_revision=state[0][1], records=tuple(records)
     )
+    if connection.execute("PRAGMA user_version").fetchone()[0] < 6 and (
+        len(records) not in (0, 4)
+        or any(isinstance(r, Work) and r.status == "done" for r in records)
+    ):
+        raise WorkspaceError("Result/continuation records require explicit schema 6")
+    return snapshot
 
 
 def create_initial_records(path: Path, initial: InitialRecords) -> RecordsSnapshot:

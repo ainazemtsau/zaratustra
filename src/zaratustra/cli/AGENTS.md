@@ -18,4 +18,9 @@ through the existing local console, calls public open_work and writes its full e
 bytes to stdout. No partial context on refusal; no implicit output file or workspace
 mutation. A saved packet cannot replace a current query.
 Failures go to stderr with nonzero exit.
+result submit takes a bounded request file through the Core parser and confirms
+the complete request before submit_result. result read confirms an exact ReceiptQuery
+and discovers saved Result/next under current rights. Neither text nor a result-read
+response authorizes future opening; use work open with explicit current revision
+and budget. Migration6 is opt-in; default4 remains.
 END_OF_FILE: src/zaratustra/cli/AGENTS.md
