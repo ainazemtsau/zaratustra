@@ -13,5 +13,9 @@ base64 bytes with metadata. A post-commit rebuild failure emits the stored recei
 and rebuild_required with exit 2. Other refusals use exit 1. stdin import gets
 exact approval from a separate controlling console after EOF. No auto-retry/rebase.
 handoff list is owner-local saved acceptance audit, not Work 6 context delivery.
+work open requires explicit identity/revision/budget, confirms the exact ContextQuery
+through the existing local console, calls public open_work and writes its full exact
+bytes to stdout. No partial context on refusal; no implicit output file or workspace
+mutation. A saved packet cannot replace a current query.
 Failures go to stderr with nonzero exit.
 END_OF_FILE: src/zaratustra/cli/AGENTS.md

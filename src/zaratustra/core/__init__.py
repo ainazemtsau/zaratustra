@@ -1,6 +1,7 @@
 """Public Core surface for the admitted workspace foundation."""
 
 from .artifacts import ArtifactContent, ArtifactError, ArtifactInspection
+from .context import ContextPackage, open_work
 from .handoffs import MAX_HANDOFF_BYTES, AcceptedHandoff, handoff_request
 from .mutations import (
     AuthorizationPrompt,
@@ -23,6 +24,7 @@ from .projections import ProjectionStatus
 from .protocol import (
     ArtifactReference,
     ArtifactVersion,
+    ContextQuery,
     Handoff,
     HandoffDelivery,
     MutationEvent,
@@ -49,6 +51,9 @@ from .workspace import (
 )
 
 __all__ = [
+    "ContextPackage",
+    "ContextQuery",
+    "open_work",
     "AcceptedHandoff",
     "Handoff",
     "HandoffDelivery",

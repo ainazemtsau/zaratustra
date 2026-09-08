@@ -23,7 +23,12 @@ authority and delegates mutations. accept_handoff preserves exact result/basis r
 owner text and provenance, with acceptance/event/receipt in one transaction. Current
 ready Work metadata scope is required. Source revision stays immutable on replay;
 only explicit transport expected_revision refresh can return a prior receipt.
-read_handoffs is owner-local inspection, not Work-scoped context. No context,
-submit_result or successor Work. Initial Event stays fixed.
+read_handoffs is owner-local inspection, not Work-scoped context. context.py owns
+the read-only open_work compiler: exact ContextQuery/current caller, ready Work,
+scope, revision, all accepted bases and verified content closure. Revalidate the
+entire collection under the existing writer lock before returning exact JSON bytes.
+No DML, projection rebuild or inferred budget in this read seam. Reject overflow;
+manifest accounts for actual output. No submit_result or successor Work.
+Initial Event stays fixed.
 Read/init never migrate or repair existing state. Keep migration bytes stable after release.
 END_OF_FILE: src/zaratustra/core/AGENTS.md

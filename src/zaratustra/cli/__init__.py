@@ -14,6 +14,8 @@ from pydantic import ValidationError
 
 from zaratustra.core import (
     MAX_HANDOFF_BYTES,
+    ArtifactReference,
+    ContextQuery,
     Handoff,
     InitialRecords,
     MutationRequest,
@@ -26,6 +28,7 @@ from zaratustra.core import (
     init_workspace,
     inspect_artifacts,
     migrate_workspace,
+    open_work,
     prepare_authorization,
     read_artifact,
     read_handoffs,
@@ -43,6 +46,16 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="zara", description="Zaratustra workspace foundation")
     parser.add_argument("--version", action="version", version=f"zara {version('zaratustra')}")
     commands = parser.add_subparsers(dest="command", required=True)
+    work_command = commands.add_parser("work", help="Open current bounded Work context.")
+    work_commands = work_command.add_subparsers(dest="work_command", required=True)
+    work_open = work_commands.add_parser("open")
+    work_open.add_argument("work_id", type=UUID)
+    work_open.add_argument("--workspace", type=Path, required=True)
+    work_open.add_argument("--workspace-id", type=UUID, required=True)
+    work_open.add_argument("--process", type=UUID, required=True)
+    work_open.add_argument("--expected-revision", type=int, required=True)
+    work_open.add_argument("--max-bytes", type=int, required=True)
+    work_open.add_argument("--reference", action="append", default=[])
     for name, description in (
         ("init", "Initialize an empty directory or read its existing workspace."),
         ("status", "Read persisted workspace metadata without changing it."),
@@ -101,7 +114,23 @@ def main(argv: list[str] | None = None) -> int:
     create.add_argument("--boundary", action="append", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == "handoff":
+        if args.command == "work":
+            context_query = ContextQuery(
+                workspace_id=args.workspace_id,
+                work_id=args.work_id,
+                process_id=args.process,
+                expected_revision=args.expected_revision,
+                max_bytes=args.max_bytes,
+                references=tuple(
+                    ArtifactReference.model_validate_json(ref) for ref in args.reference
+                ),
+            )
+            caller = confirm_on_console(prepare_authorization(args.workspace, context_query))
+            package = open_work(args.workspace, context_query, caller)
+            sys.stdout.buffer.write(package.output)
+            sys.stdout.buffer.flush()
+            return 0
+        elif args.command == "handoff":
             if args.handoff_command == "schema":
                 output = json.dumps(Handoff.model_json_schema(), indent=2)
             elif args.handoff_command == "list":

@@ -167,6 +167,18 @@ class ReceiptQuery(RecordModel):
     operation_id: UUID
 
 
+class ContextQuery(RecordModel):
+    """Exact read request; the value itself never grants authority."""
+
+    version: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
+    workspace_id: UUID
+    work_id: UUID
+    process_id: UUID
+    expected_revision: Revision
+    max_bytes: Annotated[int, Field(strict=True, ge=1, le=1048576)]
+    references: Annotated[tuple[ArtifactReference, ...], Field(max_length=32)] = ()
+
+
 def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
     # Keep the accepted v1 request bytes/digests despite additional v2 model fields.
     excluded = set(exclude or ())
@@ -190,7 +202,7 @@ def fingerprint(request: MutationRequest) -> str:
     return hashlib.sha256(canonical(request, exclude=excluded).encode("utf-8")).hexdigest()
 
 
-def authorization_digest(path: str, request: MutationRequest | ReceiptQuery) -> str:
+def authorization_digest(path: str, request: MutationRequest | ReceiptQuery | ContextQuery) -> str:
     envelope = json.dumps(
         [path, type(request).__name__, canonical(request)], ensure_ascii=True, separators=(",", ":")
     )

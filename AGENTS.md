@@ -18,11 +18,12 @@ Work 4 adds explicit schema 4, exact scoped versioned artifact publication/repai
 verified content reads and deterministic owner-local projection rebuild.
 Work 5 adds explicit schema 5 and exact accepted-result Handoff import from file/stdin,
 with separate trusted console confirmation and durable acceptance/provenance reads.
-Works 6–8 remain unimplemented.
+Work 6 adds read-only open_work with exact trusted query, bounded actual manifest,
+scope/reference closure and full final revalidation. Works 7–8 remain unimplemented.
 `src/zaratustra/core` owns workspace logic; `src/zaratustra/cli` delegates to it.
 Installed product code and user-chosen data workspace are separate.
 Read the current CALL before doing product work; a completed Work admits no successor.
-Current mechanics and W19–W27 disposition: docs/work5/PLAN.md.
+Current mechanics and W19–W27 disposition: docs/work6/PLAN.md.
 W21 owner trust decision: docs/work3/OWNER-DECISION-20260908.md.
 Outside-checkout runtime proof: `uv run --locked python -m tools.probe_install`.
 Work 2 installed/migration proof: `uv run --locked python -m tools.probe_records --accepted-trial <path>`.
