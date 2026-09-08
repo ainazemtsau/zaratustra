@@ -1,0 +1,18 @@
+{
+  "command": [
+    "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+    "run",
+    "--locked",
+    "python",
+    "-m",
+    "tools.check",
+    "--deliver"
+  ],
+  "cwd": "C:\\projects\\zaratustra\\_scratch\\work6-context",
+  "started_at": "2026-09-08T12:16:47.752509+00:00",
+  "ended_at": "2026-09-08T12:17:11.809775+00:00",
+  "exit": 0,
+  "source_commit": "e5576df5550d54de47c1d29d666d60c0194412f3",
+  "stdout_sha256": "c31b386649aab242bbebf26eec6b01b840c05fe37decb5b662c3bde114cd3b24",
+  "stderr_sha256": "13884dcf6b8d379c7c63434dd6c4805d7b538819a9242e2bf257e6ec95db5691"
+}

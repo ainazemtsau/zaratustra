@@ -1,0 +1,1439 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index d038342..039e2e6 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -18,11 +18,12 @@ Work 4 adds explicit schema 4, exact scoped versioned artifact publication/repai
+ verified content reads and deterministic owner-local projection rebuild.
+ Work 5 adds explicit schema 5 and exact accepted-result Handoff import from file/stdin,
+ with separate trusted console confirmation and durable acceptance/provenance reads.
+-Works 6–8 remain unimplemented.
++Work 6 adds read-only open_work with exact trusted query, bounded actual manifest,
++scope/reference closure and full final revalidation. Works 7–8 remain unimplemented.
+ `src/zaratustra/core` owns workspace logic; `src/zaratustra/cli` delegates to it.
+ Installed product code and user-chosen data workspace are separate.
+ Read the current CALL before doing product work; a completed Work admits no successor.
+-Current mechanics and W19–W27 disposition: docs/work5/PLAN.md.
++Current mechanics and W19–W27 disposition: docs/work6/PLAN.md.
+ W21 owner trust decision: docs/work3/OWNER-DECISION-20260908.md.
+ Outside-checkout runtime proof: `uv run --locked python -m tools.probe_install`.
+ Work 2 installed/migration proof: `uv run --locked python -m tools.probe_records --accepted-trial <path>`.
+diff --git a/docs/work6/PLAN.md b/docs/work6/PLAN.md
+new file mode 100644
+index 0000000..49167ac
+--- /dev/null
++++ b/docs/work6/PLAN.md
+@@ -0,0 +1,145 @@
++# Work 6 — current bounded Work context
++
++call: c-solmax-zaratustra-m0-context-20260908-work6
++mode: PROBA; engineering_contract: 36
++base: 589861c4657f19763b0af4ab965bd84646eecb70 (0.5.0)
++actual_checkout: C:/projects/zaratustra/_scratch/work6-context
++branch: codex/work6-context
++status: technical HOW recorded before dependent implementation
++
++## Authority and size
++
++Compared the full CALL, fresh Direction context (no owner inputs pending), Product
++AGENTS/validation.config, Work 5 PLAN/INSTALL and binding F1 aggregate PASS,
++Work 3 exact owner words, architecture §§3–7/10/25/28–29/41–43 (SHA-256
++4f90d19fc742ab616301b6b4121880f76c75faaeb1f606c8190a84853d8b3e0e),
++converge-arch W22/W23/W27 and CONTRACTS C02/C04–C07/E1–E12. Conforming HOW under
++owner-ack:solmax-plan-conforming-20260907; this is not new owner runtime acceptance.
++Both no-automation owner acknowledgments remain. Setup evaluator is a bounded
++read-only in-session smoke, not a feature reviewer or binding fresh G5.
++
++One read seam, one query schema, one deterministic compiler, CLI, hidden tests,
++installed evidence and retained trial. No domain schema/migration or new dependency.
++Estimated within half a focused working day; no new deadline, spending or scope cut.
++Only NEW selected copies of accepted fictional Work 5 main workspace are used.
++Old worktrees, refs, DBs, wheels, receipts and G5 evidence remain intact.
++
++## W19 / W20 — open is a read, existing effects stay exact
++
++open_work does not start an autonomous executor, change Work status, append events,
++register output, repair files, or issue a receipt. Reopening a currently ready Work
++is a fresh read, not a second domain effect. Only ready with current metadata rights
++can open; draft/revoked/cancelled refuse. A future completed status is not admitted
++by today's Work schema and cannot open. Work 7 owns completion and next linkage.
++All managed changes still use apply_mutation in literal §5 order: input -> current
++Work/authority -> revision -> duplicate -> artifact references -> DB/event/receipt
++-> projections. Released migrations and old request serialization remain unchanged.
++
++Registered hashes do not prove availability. Every included content version is
++read and verified at assembly and again at final validation. Missing/corrupt bytes
++refuse the entire package. Work 4 file-before-DB/orphans/exact repair/rebuild and
++Work 5 v2 restore stay unchanged. Output is immutable returned bytes, not operational
++state; the caller may retain stdout outside workspace. No automatic repair/retry.
++
++## W21 / W22 — envelope, dependencies and freshness
++
++ContextQuery v1 binds workspace, Work, Process, expected global revision, max_bytes
++and zero or more exact additionally requested artifact references. The trusted
++local console displays the exact query and current Work; the existing in-process
++local-chat seam requires actual prior permission. No serialized approval field or
++file/model self-authorization. No new identity/account/same-user isolation gate.
++Current ready Work metadata authority permits reading its own metadata and exact
++Artifact refs, as in Work 5 import; the separately confirmed query bounds this read.
++
++The deterministic mandatory set is current Process, entire Work (including authority,
++acceptance, boundaries, budget and executor requirements), its Artifact metadata,
++ALL committed accepted Handoffs for this Work with provenance/confirmation/receipt,
++the active Artifact content and all result/basis/additional exact content refs.
++All accepted Handoffs are retained: no latest-wins/supersession semantics are invented.
++Their source revisions are historical; current Work/global revision governs opening.
++Publication-event references are followed transitively with per-edge scope/hash
++validation and deduplication. Each content's publication request/confirmation/receipt
++is retained as provenance. At least one accepted Handoff is required for this
++post-Work-5 consumer. No optional selection or silent removal of mandatory sources.
++
++Allowed namespaces are this workspace/Process/Work and its declared Artifact only.
++An exact reference must match all membership ids and registered version/hash before
++reading bytes. Text/URI/path/projection/Handoff owner text is inert content: no link
++fetching, filesystem discovery or recursive interpretation. No memory, skills or
++external tools are admitted; their manifest lists are explicitly empty.
++
++First collect one validated DB snapshot plus verified content. Compile outside its
++transaction. Then acquire existing BEGIN IMMEDIATE, recheck caller/current rights,
++expected revision, full validated snapshot/journal/membership/acceptances/descriptors
++and every included byte; compare the complete collected value before returning.
++Any managed change during assembly conflicts (revocation/terminal refuses authority
++first). The final lock serializes managed writers through validation; BUSY follows
++the existing five-second refusal, no retries. Currentness is at final validation,
++not a perpetual lease through a later chat. A subsequent mutation must still pass
++expected_revision; opening from an old manifest/Next Call requires a fresh query.
++
++Global revision conservatively invalidates on ANY domain mutation, including rights,
++requirements, publication/active switch, exact repair and accepted decisions. Process
++membership is fixed in this single graph and checked through snapshot/journal and
++each descriptor; future membership changes must bump revision through Mutation API.
++No unversioned dependency is silently accepted. Physical file loss can invalidate
++without DB revision and is separately checked. Snapshot, schema version and complete
++source data are compared as well as revision. No newly invented Process API.
++
++## W22 / W23 / W24 — exact wire output and budget
++
++Product 0.6.0, DB schema 5 unchanged, explicit default migrate target still 4.
++CLI: zara work open <work-id> --workspace <path> --process <id>
++--workspace-id <id> --expected-revision <n> --max-bytes <n>, with optional
++--reference <exact-reference-json>. No inferred budget; query maximum 1 MiB.
++This technical context budget is an additional exact read limit, not conversion
++of the Work's preserved human effort budget or authority to extend it.
++
++The full output is canonical sorted compact ASCII-escaped JSON encoded UTF-8 with
++one LF. Artifact content is exact base64; descriptors carry original byte hashes.
++The context object contains envelope and actual ordered sources. Manifest lists
++each actual source locator, revision, canonical value hash/size, content hash/size
++when applicable, dependency revisions and context-object hash. Manifest accounts
++for the ENTIRE emitted JSON including itself and trailing LF, using a deterministic
++size fixed point. Caller max_bytes is hard: overflow reports required/allowed,
++returns no partial stdout, and never silently raises the limit.
++
++ContextPackage exposes immutable output bytes and their SHA-256 (external, avoiding
++self-hash recursion). CLI writes these exact bytes once; approval prompts go to
++stderr. Save output.bin/json and external SHA-256 together. Future Work 8 must verify
++exact delivered input and separately save actual clean-session response on five
++facts; current manifest/automated checks do not establish understanding or cleanliness.
++
++## W25 — fictional fixtures and evidence
++
++New copies of accepted Work 5 main graph (including tests). Positive repeated read,
++source/manifest reconstruction, hash and full byte-budget boundary; original stale
++query, changed decision/requirements/rights/active Artifact, terminal Work; changed
++dependency during assembly, BUSY, missing/corrupt bytes including during assembly;
++foreign workspace/Process/Work/ref/hash and inert forbidden link to a minimal
++sentinel file. No second complete Process. Mutations use public Core; filesystem
++damage occurs only in labeled negative copies, never by repairing operational DB.
++Native full build/hygiene/types/boundaries/tests and --deliver are required.
++Installed wheel runs from unrelated cwd with -I; source/wheel/installed hashes,
++raw commands/stdout/stderr/refusals, exact query/output, preservation and new trial
++archive with ALL files AND directories are retained. Restore is exercised anew.
++
++## Carried W19–W27 — answerer, moment and rewrites
++
++| ID | Decision here / remaining answerer and moment | rewrites |
++|---|---|---|
++| W19 | Product PLAN before Work 6 reads: read-only open; old acceptance/replay/stale/collision unchanged. Product PLAN before Work 7: Result/next effect unit. | importer/receipts/linkage/failures/migrations; cheap reversal unproved |
++| W20 | Product PLAN before content reads: exact bytes twice, no repair, retain restore v2. Product PLAN before Work 7: continuation/recovery. | durable refs/recovery/evidence/migrations |
++| W21 | Product PLAN before reads: exact trusted query/current rights and nontransitive authority above; accepted Work 3 owner words reused. Product PLAN before Work 7: Result consumer. | adapters/permissions/consumer boundaries; decision is not runtime PASS |
++| W22 | Product PLAN before Work 6: complete revalidation, global invalidation, membership, namespaces, mandatory closure, byte overflow and actual manifest above. Later dependent PLAN owns extensions. | snapshot/context/tests/possible migrations; no freshness/scope/budget cut |
++| W23 | Product PLAN before Work 6: exact output bytes/hash plus manual delivery protocol. Product PLAN/owner at Work 8: actual clean session/five facts. | delivery/demo/repeat Work 8; unprovable cleanliness is blocker |
++| W24 | Product PLAN before implementation: query/wire v1, 0.6.0/schema5, no migration, fixed-point bytes, existing BUSY/layout. Later PLAN per admitted Work. | mechanics/tests/migrations; semantic change returns W19–W22 |
++| W25 | Product PLAN before fixtures: new copies of one fictional graph and minimal foreign sentinel above. Product PLAN/owner before Work 8 actual demo. | fixtures/tests/demo; no second full or real Process |
++| W26 | Product PLAN before start: actual isolated checkout/ref above and separate local installed trial. Owner before permanent location/hosting/independent external install-upgrade. | package/layout/docs; no new external rights |
++| W27 | Product PLAN before public consumer: only versioned M0 ContextQuery/open_work/ContextPackage seam. Future consumer PLAN at its own admission. E1–E12 remain in Direction CONTRACTS; E4/E5/E7/E12 get no invented direct M0 APIs. | public Core/data/consumer migrations; M1+ not prerequisite; cheap replacement unproved |
++
++Product REPORT/ESCALATE returns HOME solmax only. No Direction writes, T5/CALL/M0
++close, successor Direction CALL, Work 7–8 or owner runtime PASS. Behavioral T5
++closure needs binding fresh physical G5 of the exact delivered version.
++
++END_OF_FILE: docs/work6/PLAN.md
+diff --git a/pyproject.toml b/pyproject.toml
+index 2d0b5ce..1fde9cd 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,6 +1,6 @@
+ [project]
+ name = "zaratustra"
+-version = "0.5.0"
++version = "0.6.0"
+ description = "Zaratustra local workspace and transactional mutation protocol"
+ readme = "README.md"
+ requires-python = ">=3.13,<3.14"
+diff --git a/src/zaratustra/cli/AGENTS.md b/src/zaratustra/cli/AGENTS.md
+index 2d0e317..f61f693 100644
+--- a/src/zaratustra/cli/AGENTS.md
++++ b/src/zaratustra/cli/AGENTS.md
+@@ -13,5 +13,9 @@ base64 bytes with metadata. A post-commit rebuild failure emits the stored recei
+ and rebuild_required with exit 2. Other refusals use exit 1. stdin import gets
+ exact approval from a separate controlling console after EOF. No auto-retry/rebase.
+ handoff list is owner-local saved acceptance audit, not Work 6 context delivery.
++work open requires explicit identity/revision/budget, confirms the exact ContextQuery
++through the existing local console, calls public open_work and writes its full exact
++bytes to stdout. No partial context on refusal; no implicit output file or workspace
++mutation. A saved packet cannot replace a current query.
+ Failures go to stderr with nonzero exit.
+ END_OF_FILE: src/zaratustra/cli/AGENTS.md
+diff --git a/src/zaratustra/cli/__init__.py b/src/zaratustra/cli/__init__.py
+index 98bedc2..7566240 100644
+--- a/src/zaratustra/cli/__init__.py
++++ b/src/zaratustra/cli/__init__.py
+@@ -14,6 +14,8 @@ from pydantic import ValidationError
+ 
+ from zaratustra.core import (
+     MAX_HANDOFF_BYTES,
++    ArtifactReference,
++    ContextQuery,
+     Handoff,
+     InitialRecords,
+     MutationRequest,
+@@ -26,6 +28,7 @@ from zaratustra.core import (
+     init_workspace,
+     inspect_artifacts,
+     migrate_workspace,
++    open_work,
+     prepare_authorization,
+     read_artifact,
+     read_handoffs,
+@@ -43,6 +46,16 @@ def main(argv: list[str] | None = None) -> int:
+     parser = argparse.ArgumentParser(prog="zara", description="Zaratustra workspace foundation")
+     parser.add_argument("--version", action="version", version=f"zara {version('zaratustra')}")
+     commands = parser.add_subparsers(dest="command", required=True)
++    work_command = commands.add_parser("work", help="Open current bounded Work context.")
++    work_commands = work_command.add_subparsers(dest="work_command", required=True)
++    work_open = work_commands.add_parser("open")
++    work_open.add_argument("work_id", type=UUID)
++    work_open.add_argument("--workspace", type=Path, required=True)
++    work_open.add_argument("--workspace-id", type=UUID, required=True)
++    work_open.add_argument("--process", type=UUID, required=True)
++    work_open.add_argument("--expected-revision", type=int, required=True)
++    work_open.add_argument("--max-bytes", type=int, required=True)
++    work_open.add_argument("--reference", action="append", default=[])
+     for name, description in (
+         ("init", "Initialize an empty directory or read its existing workspace."),
+         ("status", "Read persisted workspace metadata without changing it."),
+@@ -101,7 +114,23 @@ def main(argv: list[str] | None = None) -> int:
+     create.add_argument("--boundary", action="append", required=True)
+     args = parser.parse_args(argv)
+     try:
+-        if args.command == "handoff":
++        if args.command == "work":
++            context_query = ContextQuery(
++                workspace_id=args.workspace_id,
++                work_id=args.work_id,
++                process_id=args.process,
++                expected_revision=args.expected_revision,
++                max_bytes=args.max_bytes,
++                references=tuple(
++                    ArtifactReference.model_validate_json(ref) for ref in args.reference
++                ),
++            )
++            caller = confirm_on_console(prepare_authorization(args.workspace, context_query))
++            package = open_work(args.workspace, context_query, caller)
++            sys.stdout.buffer.write(package.output)
++            sys.stdout.buffer.flush()
++            return 0
++        elif args.command == "handoff":
+             if args.handoff_command == "schema":
+                 output = json.dumps(Handoff.model_json_schema(), indent=2)
+             elif args.handoff_command == "list":
+diff --git a/src/zaratustra/core/AGENTS.md b/src/zaratustra/core/AGENTS.md
+index d49a02a..75481a0 100644
+--- a/src/zaratustra/core/AGENTS.md
++++ b/src/zaratustra/core/AGENTS.md
+@@ -23,7 +23,12 @@ authority and delegates mutations. accept_handoff preserves exact result/basis r
+ owner text and provenance, with acceptance/event/receipt in one transaction. Current
+ ready Work metadata scope is required. Source revision stays immutable on replay;
+ only explicit transport expected_revision refresh can return a prior receipt.
+-read_handoffs is owner-local inspection, not Work-scoped context. No context,
+-submit_result or successor Work. Initial Event stays fixed.
++read_handoffs is owner-local inspection, not Work-scoped context. context.py owns
++the read-only open_work compiler: exact ContextQuery/current caller, ready Work,
++scope, revision, all accepted bases and verified content closure. Revalidate the
++entire collection under the existing writer lock before returning exact JSON bytes.
++No DML, projection rebuild or inferred budget in this read seam. Reject overflow;
++manifest accounts for actual output. No submit_result or successor Work.
++Initial Event stays fixed.
+ Read/init never migrate or repair existing state. Keep migration bytes stable after release.
+ END_OF_FILE: src/zaratustra/core/AGENTS.md
+diff --git a/src/zaratustra/core/__init__.py b/src/zaratustra/core/__init__.py
+index 84f034d..ead624d 100644
+--- a/src/zaratustra/core/__init__.py
++++ b/src/zaratustra/core/__init__.py
+@@ -1,6 +1,7 @@
+ """Public Core surface for the admitted workspace foundation."""
+ 
+ from .artifacts import ArtifactContent, ArtifactError, ArtifactInspection
++from .context import ContextPackage, open_work
+ from .handoffs import MAX_HANDOFF_BYTES, AcceptedHandoff, handoff_request
+ from .mutations import (
+     AuthorizationPrompt,
+@@ -23,6 +24,7 @@ from .projections import ProjectionStatus
+ from .protocol import (
+     ArtifactReference,
+     ArtifactVersion,
++    ContextQuery,
+     Handoff,
+     HandoffDelivery,
+     MutationEvent,
+@@ -49,6 +51,9 @@ from .workspace import (
+ )
+ 
+ __all__ = [
++    "ContextPackage",
++    "ContextQuery",
++    "open_work",
+     "AcceptedHandoff",
+     "Handoff",
+     "HandoffDelivery",
+diff --git a/src/zaratustra/core/context.py b/src/zaratustra/core/context.py
+new file mode 100644
+index 0000000..0b440cc
+--- /dev/null
++++ b/src/zaratustra/core/context.py
+@@ -0,0 +1,253 @@
++"""Bounded Work reads with complete final revalidation, never domain writes."""
++
++from __future__ import annotations
++
++import base64
++import hashlib
++import json
++import sqlite3
++from dataclasses import dataclass
++from pathlib import Path
++from typing import Any
++
++from .artifacts import current_artifact, read_versions, resolve_version, verified_content
++from .handoffs import AcceptedHandoff
++from .mutations import LocalAuthorization, MutationError, _caller, _history, _work
++from .protocol import ArtifactReference, ContextQuery, event_receipt
++from .records import Process, _read_records
++from .workspace import WorkspaceInfo, workspace_connection
++
++
++def _json(value: Any) -> bytes:
++    return json.dumps(
++        value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
++    ).encode("utf-8")
++
++
++def _sha(value: bytes) -> str:
++    return hashlib.sha256(value).hexdigest()
++
++
++@dataclass(frozen=True)
++class ContextPackage:
++    """The complete exact wire bytes, including manifest and one trailing LF.
++
++    A retained package is historical evidence, not current read authorization.
++    """
++
++    output: bytes
++
++    @property
++    def output_sha256(self) -> str:
++        return _sha(self.output)
++
++
++@dataclass(frozen=True)
++class _Collected:
++    context: dict[str, Any]
++    guard: bytes
++
++
++def _collect(
++    connection: sqlite3.Connection,
++    info: WorkspaceInfo,
++    query: ContextQuery,
++    caller: LocalAuthorization | None,
++) -> _Collected:
++    if info.schema_version < 5:
++        raise MutationError("schema", "Work context requires explicit schema 5")
++    snapshot = _read_records(connection, info.workspace_id)
++    _caller(info.workspace, query, caller, snapshot)
++    work = _work(snapshot)
++    if work.status != "ready" or work.authority_scope not in (
++        "work_metadata",
++        "work_metadata_and_artifact",
++    ):
++        raise MutationError(
++            "permission_denied", "Work is terminal, not ready or lacks current rights"
++        )
++    if query.process_id != work.process_id:
++        raise MutationError("scope", "Process is outside this Work")
++    if query.expected_revision != snapshot.state_revision:
++        raise MutationError(
++            "conflict", "Context expected revision is not current; rebuild explicitly"
++        )
++    history = _history(connection, snapshot, artifacts_enabled=True)
++    artifact = current_artifact(snapshot)
++    process = next(row for row in snapshot.records if isinstance(row, Process))
++    versions = read_versions(connection)
++    sources: list[dict[str, Any]] = []
++
++    def add(locator: str, revision: int, data: Any) -> None:
++        sources.append(dict(locator=locator, revision=revision, data=data))
++
++    for record in (process, work, artifact):
++        add(f"{record.kind}:{record.id}", record.revision, record.model_dump(mode="json"))
++    refs = list(query.references)
++    decisions = []
++    publications = {
++        event.request.operation_id: event
++        for event in history.events
++        if event.artifact_version is not None
++    }
++    for event in history.events:
++        handoff, delivery = event.request.handoff, event.request.delivery
++        if handoff is None or delivery is None:
++            continue
++        if (handoff.workspace_id, handoff.process, handoff.related_work) != (
++            snapshot.workspace_id,
++            process.id,
++            work.id,
++        ):
++            raise MutationError("scope", "Accepted decision is outside this Work")
++        accepted = AcceptedHandoff(
++            handoff=handoff,
++            delivery=delivery,
++            confirmation=event.confirmation,
++            receipt=event_receipt(event),
++        )
++        add(
++            f"acceptance:{handoff.handoff_id}",
++            event.state_revision,
++            accepted.model_dump(mode="json"),
++        )
++        decisions.append(dict(id=str(handoff.handoff_id), revision=event.state_revision))
++        refs.extend((handoff.result, *handoff.basis))
++    if not decisions:
++        raise MutationError("dependency_missing", "Post-Handoff Work context requires acceptance")
++    active = resolve_version(versions, artifact)
++    refs.append(
++        ArtifactReference(artifact_id=artifact.id, version_id=active.id, sha256=active.sha256)
++    )
++    seen = set()
++    raw_bytes = 0
++    for ref in refs:
++        if ref.artifact_id != artifact.id:
++            raise MutationError("scope", "Referenced Artifact is outside this Work")
++        descriptor = resolve_version(versions, artifact, ref.version_id)
++        if ref.sha256 != descriptor.sha256:
++            raise MutationError(
++                "dependency_changed", "Reference hash differs from registered bytes"
++            )
++        if descriptor.id in seen:
++            continue
++        seen.add(descriptor.id)
++        raw_bytes += descriptor.size
++        if raw_bytes > query.max_bytes:
++            raise MutationError(
++                "budget_exceeded",
++                f"Mandatory content alone requires at least {raw_bytes} bytes; "
++                f"allowed {query.max_bytes}; no output",
++            )
++        publication = publications[descriptor.id]
++        # Edges are checked individually even when their target has been visited.
++        refs.extend(publication.request.references)
++        content = verified_content(info.workspace, descriptor)
++        add(
++            f"artifact-version:{descriptor.id}",
++            descriptor.state_revision,
++            dict(
++                descriptor=descriptor.model_dump(mode="json"),
++                content_base64=base64.b64encode(content.content).decode("ascii"),
++                publication=dict(
++                    request=publication.request.model_dump(mode="json"),
++                    confirmation=publication.confirmation.model_dump(mode="json"),
++                    receipt=event_receipt(publication).model_dump(mode="json"),
++                ),
++            ),
++        )
++    envelope = dict(
++        version=1,
++        workspace_id=str(snapshot.workspace_id),
++        process_id=str(process.id),
++        work_id=str(work.id),
++        state_revision=snapshot.state_revision,
++        schema_version=info.schema_version,
++        namespaces=[
++            f"workspace:{snapshot.workspace_id}/process:{process.id}/work:{work.id}",
++            f"artifact:{artifact.id}",
++        ],
++        budget=dict(unit="utf8_bytes_entire_output", maximum=query.max_bytes),
++        dependencies=dict(
++            state_revision=snapshot.state_revision,
++            work_revision=work.revision,
++            authority_revision=work.revision,
++            process_revision=process.revision,
++            artifact_revision=artifact.revision,
++            acceptances=decisions,
++        ),
++        selection="all_work_acceptances_active_artifact_and_exact_reference_closure",
++        freshness="fully_revalidated_at_return; reopen_after_any_change",
++        text_links="inert; never authorization or implicit content reads",
++        skills=[],
++        tools=[],
++        memory_entries=[],
++    )
++    # Include even non-disclosed history in the consistency guard, never in output.
++    guard = _json(
++        dict(
++            schema=info.schema_version,
++            snapshot=snapshot.model_dump(mode="json"),
++            history=history.model_dump(mode="json"),
++            versions=[v.model_dump(mode="json") for v in versions],
++        )
++    )
++    return _Collected(dict(envelope=envelope, sources=sources), guard)
++
++
++def _compile(collected: _Collected, query: ContextQuery) -> ContextPackage:
++    context = collected.context
++    inventory = []
++    for source in context["sources"]:
++        data = source["data"]
++        encoded = _json(data)
++        item = dict(
++            locator=source["locator"],
++            revision=source["revision"],
++            value_sha256=_sha(encoded),
++            value_bytes=len(encoded),
++        )
++        if "content_base64" in data:
++            item.update(
++                content_sha256=data["descriptor"]["sha256"],
++                content_bytes=data["descriptor"]["size"],
++            )
++        inventory.append(item)
++    manifest = dict(
++        version=1,
++        sources=inventory,
++        context_sha256=_sha(_json(context)),
++        dependencies=context["envelope"]["dependencies"],
++        skills=[],
++        tools=[],
++        memory_entries=[],
++        budget=dict(unit="utf8_bytes_entire_output", maximum=query.max_bytes, used=0),
++        delivery="exact_cli_stdout; chat_receipt_and_understanding_unverified",
++    )
++    while True:
++        wire = _json(dict(context=context, manifest=manifest)) + bytes([10])
++        if manifest["budget"]["used"] == len(wire):
++            break
++        manifest["budget"]["used"] = len(wire)
++    if len(wire) > query.max_bytes:
++        raise MutationError(
++            "budget_exceeded",
++            f"Mandatory output requires {len(wire)} bytes; allowed {query.max_bytes}; no output",
++        )
++    return ContextPackage(wire)
++
++
++def open_work(
++    path: Path, query: ContextQuery, caller: LocalAuthorization | None = None
++) -> ContextPackage:
++    """Read current scoped context, then fully revalidate before exposing any bytes."""
++    query = ContextQuery.model_validate(query.model_dump())
++    with workspace_connection(path) as (connection, info):
++        collected = _collect(connection, info, query, caller)
++    package = _compile(collected, query)
++    # Serialize managed writers for final validation. This lock performs no DML.
++    with workspace_connection(path, write=True) as (connection, info):
++        checked = _collect(connection, info, query, caller)
++        if checked != collected:
++            raise MutationError("dependency_changed", "Context changed during assembly; reopen")
++    return package
+diff --git a/src/zaratustra/core/mutations.py b/src/zaratustra/core/mutations.py
+index 90eba8a..24e1b31 100644
+--- a/src/zaratustra/core/mutations.py
++++ b/src/zaratustra/core/mutations.py
+@@ -32,6 +32,7 @@ from .protocol import (
+     ARTIFACT_OPERATIONS,
+     ArtifactVersion,
+     Confirmation,
++    ContextQuery,
+     MutationEvent,
+     MutationHistory,
+     MutationReceipt,
+@@ -62,7 +63,7 @@ class ProjectionRebuildError(MutationError):
+ class AuthorizationPrompt(RecordModel):
+     workspace_path: Text
+     current: RecordsSnapshot
+-    request: MutationRequest | ReceiptQuery
++    request: MutationRequest | ReceiptQuery | ContextQuery
+     request_sha256: Text
+ 
+ 
+@@ -85,7 +86,7 @@ def _work(snapshot: RecordsSnapshot) -> Work:
+ 
+ 
+ def prepare_authorization(
+-    path: Path, request: MutationRequest | ReceiptQuery
++    path: Path, request: MutationRequest | ReceiptQuery | ContextQuery
+ ) -> AuthorizationPrompt:
+     """Owner-local preview only; no permission issued and no mutation performed."""
+     request = type(request).model_validate(request.model_dump())
+@@ -136,7 +137,7 @@ def authorize_local(
+ 
+ def _caller(
+     path: Path,
+-    request: MutationRequest | ReceiptQuery,
++    request: MutationRequest | ReceiptQuery | ContextQuery,
+     caller: LocalAuthorization | None,
+     snapshot: RecordsSnapshot,
+ ) -> Confirmation:
+diff --git a/src/zaratustra/core/protocol.py b/src/zaratustra/core/protocol.py
+index 9b564bb..0ead979 100644
+--- a/src/zaratustra/core/protocol.py
++++ b/src/zaratustra/core/protocol.py
+@@ -167,6 +167,18 @@ class ReceiptQuery(RecordModel):
+     operation_id: UUID
+ 
+ 
++class ContextQuery(RecordModel):
++    """Exact read request; the value itself never grants authority."""
++
++    version: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
++    workspace_id: UUID
++    work_id: UUID
++    process_id: UUID
++    expected_revision: Revision
++    max_bytes: Annotated[int, Field(strict=True, ge=1, le=1048576)]
++    references: Annotated[tuple[ArtifactReference, ...], Field(max_length=32)] = ()
++
++
+ def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
+     # Keep the accepted v1 request bytes/digests despite additional v2 model fields.
+     excluded = set(exclude or ())
+@@ -190,7 +202,7 @@ def fingerprint(request: MutationRequest) -> str:
+     return hashlib.sha256(canonical(request, exclude=excluded).encode("utf-8")).hexdigest()
+ 
+ 
+-def authorization_digest(path: str, request: MutationRequest | ReceiptQuery) -> str:
++def authorization_digest(path: str, request: MutationRequest | ReceiptQuery | ContextQuery) -> str:
+     envelope = json.dumps(
+         [path, type(request).__name__, canonical(request)], ensure_ascii=True, separators=(",", ":")
+     )
+diff --git a/tests/zaratustra/core/test_context.py b/tests/zaratustra/core/test_context.py
+new file mode 100644
+index 0000000..90bb824
+--- /dev/null
++++ b/tests/zaratustra/core/test_context.py
+@@ -0,0 +1,296 @@
++"""Context invariants on NEW copies of the retained accepted fictional Work 5 graph."""
++
++from __future__ import annotations
++
++import base64
++import hashlib
++import json
++import shutil
++import sqlite3
++import zipfile
++from pathlib import Path
++from typing import Any
++from uuid import uuid4
++
++import pytest
++from pydantic import ValidationError
++
++from zaratustra.core import (
++    Artifact,
++    ArtifactError,
++    ArtifactReference,
++    ContextQuery,
++    LocalAuthorization,
++    MutationError,
++    MutationRequest,
++    Work,
++    WorkspaceError,
++    apply_mutation,
++    authorize_local,
++    handoff_request,
++    open_work,
++    prepare_authorization,
++    read_artifact,
++    read_handoffs,
++    read_records,
++    read_workspace,
++)
++
++
++@pytest.fixture
++def workspace(tmp_path: Path) -> Path:
++    archive = Path(__file__).resolve().parents[3] / "docs/work5/evidence/retained-trial-v2.zip"
++    with zipfile.ZipFile(archive) as bundle:
++        bundle.extractall(tmp_path / "selected-copy")
++    return tmp_path / "selected-copy/workspace"
++
++
++def confirm(path: Path, query: ContextQuery | MutationRequest) -> LocalAuthorization:
++    return authorize_local(
++        prepare_authorization(path, query),
++        channel="local-chat",
++        actor="fictional-test-adapter",
++        source_ref="executor-CALL:simulated-prior-permission",
++    )
++
++
++def query_for(path: Path, **changes: Any) -> ContextQuery:
++    state = read_records(path)
++    work = next(row for row in state.records if isinstance(row, Work))
++    return ContextQuery.model_validate(
++        dict(
++            workspace_id=state.workspace_id,
++            work_id=work.id,
++            process_id=work.process_id,
++            expected_revision=state.state_revision,
++            max_bytes=65536,
++        )
++        | changes
++    )
++
++
++def mutate(path: Path, name: str, *, content: bytes | None = None, **fields: Any) -> None:
++    query = query_for(path)
++    artifact = next(row for row in read_records(path).records if isinstance(row, Artifact))
++    if name in ("authorize_artifact", "publish_artifact", "restore_artifact"):
++        fields.update(version=2, artifact_id=artifact.id, artifact_revision=artifact.revision)
++    if content is not None:
++        fields.update(content_sha256=hashlib.sha256(content).hexdigest(), content_size=len(content))
++    request = MutationRequest.model_validate(
++        dict(
++            workspace_id=query.workspace_id,
++            work_id=query.work_id,
++            expected_revision=query.expected_revision,
++            operation_id=uuid4(),
++            operation=name,
++            provenance="Fictional context negative fixture",
++        )
++        | fields
++    )
++    apply_mutation(path, request, confirm(path, request), content=content)
++
++
++def compiled(path: Path, **changes: Any) -> bytes:
++    query = query_for(path, **changes)
++    return open_work(path, query, confirm(path, query)).output
++
++
++def canonical(value: Any) -> bytes:
++    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
++
++
++def test_actual_sources_budget_hashes_and_read_only_repeat(workspace: Path) -> None:
++    database = read_workspace(workspace).database
++    before = database.read_bytes()
++    output = compiled(workspace)
++    assert compiled(workspace) == output and database.read_bytes() == before
++    value = json.loads(output)
++    context, manifest = value["context"], value["manifest"]
++    assert manifest["budget"]["used"] == len(output) <= manifest["budget"]["maximum"]
++    assert manifest["context_sha256"] == hashlib.sha256(canonical(context)).hexdigest()
++    for source, item in zip(context["sources"], manifest["sources"], strict=True):
++        assert (source["locator"], source["revision"]) == (item["locator"], item["revision"])
++        data = canonical(source["data"])
++        assert item["value_bytes"] == len(data)
++        assert item["value_sha256"] == hashlib.sha256(data).hexdigest()
++        if "content_base64" in source["data"]:
++            content = base64.b64decode(source["data"]["content_base64"], validate=True)
++            assert item["content_bytes"] == len(content)
++            assert item["content_sha256"] == hashlib.sha256(content).hexdigest()
++    acceptances = [s["data"] for s in context["sources"] if s["locator"].startswith("acceptance:")]
++    assert acceptances == [row.model_dump(mode="json") for row in read_handoffs(workspace)]
++    assert context["envelope"]["skills"] == context["envelope"]["memory_entries"] == []
++    limit = len(output)
++    exact = compiled(workspace, max_bytes=limit)
++    assert len(exact) == limit
++    with pytest.raises(MutationError, match="budget_exceeded"):
++        compiled(workspace, max_bytes=limit - 1)
++    assert database.read_bytes() == before
++
++
++@pytest.mark.parametrize("field", ["work_id", "workspace_id", "process_id"])
++def test_foreign_identity_has_no_disclosure(workspace: Path, field: str) -> None:
++    good = query_for(workspace)
++    caller = confirm(workspace, good)
++    bad = good.model_copy(update={field: uuid4()})
++    with pytest.raises(MutationError):
++        open_work(workspace, bad, caller)
++    if field == "process_id":
++        with pytest.raises(MutationError, match="scope"):
++            open_work(workspace, bad, confirm(workspace, bad))
++    assert read_records(workspace).state_revision == good.expected_revision
++
++
++def test_exact_caller_budget_path_and_no_self_authority(workspace: Path) -> None:
++    query = query_for(workspace)
++    with pytest.raises(MutationError, match="permission_denied"):
++        open_work(workspace, query)
++    with pytest.raises(ValidationError):
++        ContextQuery.model_validate(query.model_dump() | {"approved": True})
++    caller = confirm(workspace, query)
++    with pytest.raises(MutationError, match="permission_denied"):
++        open_work(workspace, query.model_copy(update={"max_bytes": 100000}), caller)
++    copy = workspace.parent / "another-selected-copy"
++    shutil.copytree(workspace, copy)
++    with pytest.raises(MutationError, match="permission_denied"):
++        open_work(copy, query, caller)
++    assert compiled(workspace)
++
++
++@pytest.mark.parametrize("change", ["set_work_requirements", "revoke_work", "cancel_work"])
++def test_current_rights_terminal_and_stale(workspace: Path, change: str) -> None:
++    query = query_for(workspace)
++    caller = confirm(workspace, query)
++    if change == "set_work_requirements":
++        mutate(workspace, change, requirements=("New requirement",))
++    else:
++        mutate(workspace, change)
++    expected = "conflict" if change == "set_work_requirements" else "permission_denied"
++    before = read_workspace(workspace).database.read_bytes()
++    with pytest.raises(MutationError, match=expected):
++        open_work(workspace, query, caller)
++    if change == "set_work_requirements":
++        assert "New requirement" in compiled(workspace).decode()
++    else:
++        with pytest.raises(MutationError, match="permission_denied"):
++            compiled(workspace)
++    assert read_workspace(workspace).database.read_bytes() == before
++
++
++@pytest.mark.parametrize("damage", ["missing", "changed"])
++def test_late_content_failure_despite_saved_receipt(workspace: Path, damage: str) -> None:
++    ref = read_handoffs(workspace)[0].handoff.basis[0]
++    content = read_artifact(workspace, ref.artifact_id, ref.version_id)
++    file = workspace / content.version.relative_path
++    if damage == "missing":
++        file.unlink()
++    else:
++        file.write_bytes(b"x" * len(content.content))
++    with pytest.raises(ArtifactError):
++        compiled(workspace)
++    assert len(read_handoffs(workspace)) == 2
++
++
++@pytest.mark.parametrize("field", ["artifact_id", "version_id", "sha256"])
++def test_exact_reference_scope_is_not_transitive_authority(workspace: Path, field: str) -> None:
++    ref = read_handoffs(workspace)[0].handoff.result
++    bad = ref.model_copy(update={field: "0" * 64 if field == "sha256" else uuid4()})
++    before = read_workspace(workspace).database.read_bytes()
++    with pytest.raises(WorkspaceError):
++        compiled(workspace, references=(bad,))
++    assert read_workspace(workspace).database.read_bytes() == before
++
++
++def test_publication_closure_and_inert_foreign_link(workspace: Path) -> None:
++    # One foreign file, no second Process. Link text cannot confer read authority.
++    sentinel = workspace.parent / "foreign-context.txt"
++    secret = b"FICTIONAL_FOREIGN_CONTENT_MUST_NOT_BE_DISCLOSED"
++    sentinel.write_bytes(secret)
++    old = read_handoffs(workspace)[0].handoff.result
++    mutate(workspace, "authorize_artifact")
++    first = b"Intermediate mandatory dependency"
++    mutate(workspace, "publish_artifact", content=first, references=(old,))
++    descriptor = read_artifact(workspace, old.artifact_id).version
++    ref = ArtifactReference(
++        artifact_id=descriptor.artifact_id, version_id=descriptor.id, sha256=descriptor.sha256
++    )
++    content = ("Foreign link is data: " + sentinel.as_uri()).encode()
++    mutate(workspace, "publish_artifact", content=content, references=(ref,))
++    output = compiled(workspace)
++    decoded = [
++        base64.b64decode(s["data"]["content_base64"])
++        for s in json.loads(output)["context"]["sources"]
++        if "content_base64" in s["data"]
++    ]
++    assert first in decoded and content in decoded and secret not in decoded
++    assert all(secret not in data for data in decoded)
++    assert len(decoded) == 4
++
++
++@pytest.mark.parametrize("change", ["decision", "rights", "requirements", "bytes"])
++def test_dependency_changes_during_compilation_refuse(
++    workspace: Path, monkeypatch: pytest.MonkeyPatch, change: str
++) -> None:
++    from zaratustra.core import context
++
++    original = context._compile
++
++    def interleaved(*args: Any, **kwargs: Any) -> Any:
++        package = original(*args, **kwargs)
++        if change == "decision":
++            value = read_handoffs(workspace)[-1].handoff.model_dump(mode="json")
++            value.update(
++                handoff_id=str(uuid4()),
++                source_revision=query_for(workspace).expected_revision,
++                owner_instruction="Different fictional accepted decision",
++            )
++            request = handoff_request(
++                json.dumps(value).encode(), source_ref="fixture:changed-decision"
++            )
++            apply_mutation(workspace, request, confirm(workspace, request))
++        elif change == "rights":
++            mutate(workspace, "revoke_work")
++        elif change == "requirements":
++            mutate(workspace, "set_work_requirements", requirements=("Changed dependency",))
++        else:
++            ref = read_handoffs(workspace)[0].handoff.result
++            content = read_artifact(workspace, ref.artifact_id, ref.version_id)
++            (workspace / content.version.relative_path).unlink()
++        return package
++
++    monkeypatch.setattr(context, "_compile", interleaved)
++    with pytest.raises(WorkspaceError):
++        compiled(workspace)
++    assert read_records(workspace).state_revision >= 11
++
++
++def test_final_busy_refuses_and_never_mutates(
++    workspace: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    from zaratustra.core import context
++
++    original = context._compile
++    database = read_workspace(workspace).database
++    before = database.read_bytes()
++    lock = sqlite3.connect(database, autocommit=True)
++
++    def locked(*args: Any, **kwargs: Any) -> Any:
++        package = original(*args, **kwargs)
++        lock.execute("BEGIN IMMEDIATE")
++        return package
++
++    monkeypatch.setattr(context, "_compile", locked)
++    try:
++        with pytest.raises(WorkspaceError, match="locked"):
++            compiled(workspace)
++    finally:
++        lock.execute("ROLLBACK")
++        lock.close()
++    assert database.read_bytes() == before
++
++
++def test_unsupported_completed_value_cannot_open(workspace: Path) -> None:
++    work = next(row for row in read_records(workspace).records if isinstance(row, Work))
++    with pytest.raises(ValidationError):
++        Work.model_validate(work.model_dump() | {"status": "done"})
++    assert work.status == "ready"
+diff --git a/tools/probe_context.py b/tools/probe_context.py
+new file mode 100644
+index 0000000..9a45e4b
+--- /dev/null
++++ b/tools/probe_context.py
+@@ -0,0 +1,480 @@
++"""Installed Work 6 trial on new copies of the accepted fictional Work 5 workspace."""
++
++from __future__ import annotations
++
++import argparse
++import base64
++import hashlib
++import json
++import os
++import shutil
++import sqlite3
++import subprocess
++import sys
++import tempfile
++import zipfile
++from importlib.metadata import version
++from pathlib import Path
++from typing import Any
++from unittest.mock import patch
++from uuid import uuid4
++
++ROOT = Path(__file__).resolve().parents[1]
++
++
++def digest(path: Path) -> str:
++    return hashlib.sha256(path.read_bytes()).hexdigest()
++
++
++def save(path: Path, value: Any) -> None:
++    path.write_text(json.dumps(value, ensure_ascii=True, indent=2), encoding="utf-8")
++
++
++def command(args: list[str], cwd: Path) -> dict[str, Any]:
++    result = subprocess.run(args, cwd=cwd, capture_output=True, encoding="utf-8", check=False)
++    record = dict(
++        command=args,
++        cwd=str(cwd),
++        exit=result.returncode,
++        stdout=result.stdout,
++        stderr=result.stderr,
++    )
++    if result.returncode:
++        raise RuntimeError(record)
++    return record
++
++
++def exercise(base: Path, source: Path) -> None:
++    import pydantic
++
++    import zaratustra
++    from zaratustra.core import (
++        Artifact,
++        ArtifactReference,
++        ContextQuery,
++        LocalAuthorization,
++        MutationRequest,
++        Work,
++        WorkspaceError,
++        apply_mutation,
++        authorize_local,
++        context,
++        handoff_request,
++        open_work,
++        prepare_authorization,
++        read_artifact,
++        read_handoffs,
++        read_records,
++        read_workspace,
++    )
++
++    workspace = base / "workspace"
++    package = Path(zaratustra.__file__).resolve().parent
++    assert package.is_relative_to(base / "venv")
++    assert not any(Path(p).resolve().is_relative_to(source) for p in sys.path if p)
++    wheel = next(base.glob("*.whl"))
++    identity = []
++    with zipfile.ZipFile(wheel) as bundle:
++        for name in bundle.namelist():
++            if name.startswith("zaratustra/") and name.endswith(".py"):
++                installed = package.parent / name
++                assert (
++                    installed.read_bytes()
++                    == bundle.read(name)
++                    == (source / "src" / name).read_bytes()
++                )
++                identity.append(dict(path=name, sha256=digest(installed)))
++    save(base / "installed-source.json", identity)
++    save(
++        base / "runtime.json",
++        dict(
++            version=version("zaratustra"),
++            package=str(package),
++            python=sys.version,
++            sqlite=sqlite3.sqlite_version,
++            pydantic=pydantic.__version__,
++            sys_path=sys.path,
++        ),
++    )
++
++    def query_for(path: Path, **changes: Any) -> ContextQuery:
++        state = read_records(path)
++        work = next(row for row in state.records if isinstance(row, Work))
++        return ContextQuery.model_validate(
++            dict(
++                workspace_id=state.workspace_id,
++                work_id=work.id,
++                process_id=work.process_id,
++                expected_revision=state.state_revision,
++                max_bytes=65536,
++            )
++            | changes
++        )
++
++    def confirmed(path: Path, value: ContextQuery | MutationRequest) -> LocalAuthorization:
++        return authorize_local(
++            prepare_authorization(path, value),
++            channel="local-chat",
++            actor="executor-fictional-adapter",
++            source_ref="Work6-CALL:simulated-prior-permission",
++        )
++
++    def mutate(path: Path, name: str, content: bytes | None = None, **fields: Any) -> None:
++        query = query_for(path)
++        if name in ("authorize_artifact", "publish_artifact"):
++            artifact = next(row for row in read_records(path).records if isinstance(row, Artifact))
++            fields.update(version=2, artifact_id=artifact.id, artifact_revision=artifact.revision)
++        if content is not None:
++            fields.update(
++                content_sha256=hashlib.sha256(content).hexdigest(), content_size=len(content)
++            )
++        request = MutationRequest.model_validate(
++            dict(
++                workspace_id=query.workspace_id,
++                work_id=query.work_id,
++                expected_revision=query.expected_revision,
++                operation_id=uuid4(),
++                operation=name,
++                provenance="Fictional Work6 installed check",
++            )
++            | fields
++        )
++        apply_mutation(path, request, confirmed(path, request), content=content)
++
++    query = query_for(workspace)
++    before = digest(read_workspace(workspace).database)
++    output = open_work(workspace, query, confirmed(workspace, query))
++    (base / "context-library.json").write_bytes(output.output)
++    save(base / "query.json", query.model_dump(mode="json"))
++    value = json.loads(output.output)
++    assert value["manifest"]["budget"]["used"] == len(output.output)
++    assert open_work(workspace, query, confirmed(workspace, query)).output == output.output
++    for row, item in zip(value["context"]["sources"], value["manifest"]["sources"], strict=True):
++        canonical = json.dumps(
++            row["data"], sort_keys=True, separators=(",", ":"), ensure_ascii=True
++        ).encode()
++        assert item["value_sha256"] == hashlib.sha256(canonical).hexdigest()
++        if "content_base64" in row["data"]:
++            raw = base64.b64decode(row["data"]["content_base64"], validate=True)
++            assert item["content_sha256"] == hashlib.sha256(raw).hexdigest()
++    save(base / "context-manifest.json", value["manifest"])
++    save(
++        base / "context-identity.json",
++        dict(
++            output_sha256=output.output_sha256,
++            output_bytes=len(output.output),
++            state_revision=query.expected_revision,
++            database_sha256=before,
++            source_count=len(value["manifest"]["sources"]),
++        ),
++    )
++
++    checks: list[dict[str, Any]] = []
++
++    def refusal(
++        label: str,
++        path: Path,
++        request: ContextQuery,
++        expected: str,
++        *,
++        caller: LocalAuthorization | None = None,
++    ) -> None:
++        prior = digest(read_workspace(path).database)
++        try:
++            open_work(path, request, caller)
++        except WorkspaceError as error:
++            assert expected in str(error), str(error)
++            checks.append(
++                dict(
++                    case=label,
++                    error=str(error),
++                    query=request.model_dump(mode="json"),
++                    before_db_sha256=prior,
++                    after_db_sha256=digest(read_workspace(path).database),
++                )
++            )
++            save(base / "hidden-checks.json", checks)
++        else:
++            raise AssertionError(f"{label}: unexpected output")
++
++    refusal("no-permission", workspace, query, "permission_denied")
++    for label, changes, expected in (
++        ("stale", dict(expected_revision=query.expected_revision - 1), "conflict"),
++        ("overflow", dict(max_bytes=len(output.output) - 1), "budget_exceeded"),
++        ("foreign-process", dict(process_id=uuid4()), "scope"),
++        (
++            "foreign-artifact",
++            dict(
++                references=(
++                    ArtifactReference(artifact_id=uuid4(), version_id=uuid4(), sha256="0" * 64),
++                )
++            ),
++            "scope",
++        ),
++    ):
++        altered = query.model_copy(update=changes)
++        refusal(label, workspace, altered, expected, caller=confirmed(workspace, altered))
++
++    def copied(label: str) -> Path:
++        selected = base / "negative-copies" / label
++        shutil.copytree(workspace, selected)
++        return selected
++
++    for label, operation in (("revoked", "revoke_work"), ("terminal", "cancel_work")):
++        selected = copied(label)
++        mutate(selected, operation)
++        current = query_for(selected)
++        refusal(label, selected, current, "permission_denied", caller=confirmed(selected, current))
++    for label in ("missing", "corrupt"):
++        selected = copied(label)
++        ref = read_handoffs(selected)[0].handoff.basis[0]
++        content = read_artifact(selected, ref.artifact_id, ref.version_id)
++        file = selected / content.version.relative_path
++        if label == "missing":
++            file.unlink()  # Explicit negative copy; never repair operational DB.
++        else:
++            file.write_bytes(b"x" * len(content.content))
++        refusal(label, selected, query, "content_", caller=confirmed(selected, query))
++
++    for change in ("decision", "rights", "requirements", "bytes"):
++        selected = copied(f"during-{change}")
++        original = context._compile
++
++        def interleaved(
++            *args: Any,
++            selected: Path = selected,
++            change: str = change,
++            original: Any = original,
++            **kwargs: Any,
++        ) -> Any:
++            result = original(*args, **kwargs)
++            if change == "decision":
++                handoff = read_handoffs(selected)[-1].handoff.model_dump(mode="json")
++                handoff.update(
++                    handoff_id=str(uuid4()),
++                    source_revision=query.expected_revision,
++                    owner_instruction="Changed fictional decision during compilation",
++                )
++                mutation = handoff_request(
++                    json.dumps(handoff).encode(), source_ref="executor:interleaving"
++                )
++                apply_mutation(selected, mutation, confirmed(selected, mutation))
++            elif change == "rights":
++                mutate(selected, "revoke_work")
++            elif change == "requirements":
++                mutate(selected, "set_work_requirements", requirements=("Changed dependency",))
++            else:
++                ref = read_handoffs(selected)[0].handoff.result
++                content = read_artifact(selected, ref.artifact_id, ref.version_id)
++                (selected / content.version.relative_path).unlink()
++            return result
++
++        with patch.object(context, "_compile", interleaved):
++            expected = (
++                "permission_denied"
++                if change == "rights"
++                else ("content_unavailable" if change == "bytes" else "conflict")
++            )
++            refusal(
++                f"during-{change}", selected, query, expected, caller=confirmed(selected, query)
++            )
++
++    selected = copied("foreign-text-link")
++    sentinel = base / "foreign-context.txt"
++    secret = b"FOREIGN_FICTIONAL_SENTINEL_CONTENT"
++    sentinel.write_bytes(secret)
++    mutate(selected, "authorize_artifact")
++    mutate(selected, "publish_artifact", ("Inert link: " + sentinel.as_uri()).encode())
++    current = query_for(selected)
++    foreign_output = open_work(selected, current, confirmed(selected, current)).output
++    (base / "foreign-link-context.json").write_bytes(foreign_output)
++    contents = [
++        base64.b64decode(row["data"]["content_base64"])
++        for row in json.loads(foreign_output)["context"]["sources"]
++        if "content_base64" in row["data"]
++    ]
++    assert all(secret not in content for content in contents)
++    checks.append(
++        dict(
++            case="foreign-text-link",
++            sentinel_sha256=digest(sentinel),
++            output_sha256=hashlib.sha256(foreign_output).hexdigest(),
++            foreign_content_disclosed=False,
++        )
++    )
++    save(base / "hidden-checks.json", checks)
++    assert digest(read_workspace(workspace).database) == before
++    save(
++        base / "exercise-receipt.json",
++        dict(
++            checks=len(checks),
++            before_db_sha256=before,
++            after_db_sha256=digest(read_workspace(workspace).database),
++            acceptance="Executor checks; no owner runtime, clean chat or binding G5 verdict",
++        ),
++    )
++    print(f"PASS: installed context and {len(checks)} hidden checks; trial={base}", flush=True)
++
++
++def console_checks(base: Path) -> None:
++    from zaratustra.core import ContextQuery, prepare_authorization
++
++    workspace = base / "workspace"
++    query = ContextQuery.model_validate_json((base / "query.json").read_bytes())
++    zara = base / "venv" / ("Scripts/zara.exe" if os.name == "nt" else "bin/zara")
++    records = []
++    for label, changes, expected in (
++        ("open", {}, 0),
++        ("stale", dict(expected_revision=query.expected_revision - 1), 1),
++        ("budget", dict(max_bytes=5000), 1),
++        ("scope", dict(process_id=uuid4()), 1),
++    ):
++        current = ContextQuery.model_validate(query.model_dump() | changes)
++        args = [
++            str(zara),
++            "work",
++            "open",
++            str(current.work_id),
++            "--workspace",
++            str(workspace),
++            "--workspace-id",
++            str(current.workspace_id),
++            "--process",
++            str(current.process_id),
++            "--expected-revision",
++            str(current.expected_revision),
++            "--max-bytes",
++            str(current.max_bytes),
++        ]
++        save(
++            base / f"console-{label}-prompt.json",
++            prepare_authorization(workspace, current).model_dump(mode="json"),
++        )
++        print(f"Executor fictional console check: {label}", flush=True)
++        result = subprocess.run(
++            args, cwd=base / "unrelated-cwd", stdout=subprocess.PIPE, stderr=None, check=False
++        )
++        (base / f"console-{label}.stdout").write_bytes(result.stdout)
++        records.append(
++            dict(
++                label=label,
++                command=args,
++                cwd=str(base / "unrelated-cwd"),
++                exit=result.returncode,
++                stdout_sha256=hashlib.sha256(result.stdout).hexdigest(),
++                stderr="inherited console; retained terminal-session transcript",
++            )
++        )
++        save(base / "console-checks.json", records)
++        assert result.returncode == expected
++        if expected == 0:
++            assert result.stdout == (base / "context-library.json").read_bytes()
++        else:
++            assert result.stdout == b""
++    print(
++        "PASS: actual installed console open/stale/budget/scope; executor confirmations only",
++        flush=True,
++    )
++
++
++def main() -> None:
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--accepted-trial", type=Path)
++    parser.add_argument("--exercise", type=Path)
++    parser.add_argument("--source", type=Path)
++    parser.add_argument("--console", type=Path)
++    args = parser.parse_args()
++    if args.console is not None:
++        console_checks(args.console.resolve())
++        return
++    if args.exercise is not None and args.source is not None:
++        exercise(args.exercise.resolve(), args.source.resolve())
++        return
++    if args.accepted_trial is None:
++        parser.error("--accepted-trial is required")
++    for name in ("STOP", "STEER.md"):
++        if (ROOT / name).exists():
++            raise SystemExit(f"STOP: read {name}")
++    accepted = args.accepted_trial.resolve()
++    expected = json.loads(
++        (ROOT / "docs/work5/evidence/retained-trial-v2-manifest.json").read_text(encoding="utf-8")
++    )
++    before = {name: digest(accepted / name) for name in expected["files"]}
++    assert before == expected["files"], "Accepted Work 5 trial does not match retained v2"
++    base = Path(tempfile.mkdtemp(prefix="zaratustra-work6-")).resolve()
++    shutil.copytree(accepted / "workspace", base / "workspace")
++    (base / "unrelated-cwd").mkdir()
++    wheel = base / "zaratustra-0.6.0-py3-none-any.whl"
++    shutil.copyfile(ROOT / "dist" / wheel.name, wheel)
++    shutil.copyfile(Path(__file__), base / "exercise.py")
++    uv = shutil.which("uv")
++    if uv is None:
++        raise SystemExit("STOP: required uv unavailable")
++    python = base / "venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
++    requirements = base / "runtime-requirements.txt"
++    runs = [
++        command(
++            [
++                uv,
++                "export",
++                "--locked",
++                "--offline",
++                "--no-dev",
++                "--no-emit-project",
++                "--no-hashes",
++                "--output-file",
++                str(requirements),
++            ],
++            ROOT,
++        ),
++        command([uv, "venv", "--python", str(Path(sys.executable)), str(base / "venv")], ROOT),
++        command(
++            [
++                uv,
++                "pip",
++                "install",
++                "--offline",
++                "--python",
++                str(python),
++                "-r",
++                str(requirements),
++                str(wheel),
++            ],
++            ROOT,
++        ),
++        command([uv, "pip", "check", "--python", str(python)], ROOT),
++    ]
++    save(base / "install.json", runs)
++    run = command(
++        [
++            str(python),
++            "-I",
++            str(base / "exercise.py"),
++            "--exercise",
++            str(base),
++            "--source",
++            str(ROOT),
++        ],
++        base / "unrelated-cwd",
++    )
++    save(base / "installed-run.json", run)
++    after = {name: digest(accepted / name) for name in before}
++    assert after == before
++    save(
++        base / "manifest.json",
++        dict(
++            trial=str(base),
++            accepted_trial=str(accepted),
++            source_commit=command(["git", "rev-parse", "HEAD"], ROOT)["stdout"].strip(),
++            wheel_sha256=digest(wheel),
++            accepted_before=before,
++            accepted_after=after,
++            accepted_directories=expected["directories"],
++            exercise_exit=run["exit"],
++        ),
++    )
++    print(run["stdout"], flush=True)
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/uv.lock b/uv.lock
+index 028f5fd..c755621 100644
+--- a/uv.lock
++++ b/uv.lock
+@@ -350,7 +350,7 @@ wheels = [
+ 
+ [[package]]
+ name = "zaratustra"
+-version = "0.5.0"
++version = "0.6.0"
+ source = { editable = "." }
+ dependencies = [
+     { name = "pydantic" },

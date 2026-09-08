@@ -1,0 +1,95 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+import zipfile
+
+root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(root))
+from tools.retain_trial import retain_trial
+
+trial = Path(sys.argv[1]).resolve()
+evidence = root / 'docs/work6/evidence'
+uv = shutil.which('uv')
+assert uv
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def save(path, value):
+    path.write_text(json.dumps(value, ensure_ascii=True, indent=2), encoding='utf-8')
+
+def run(args, cwd, prefix):
+    result = subprocess.run(args, cwd=cwd, capture_output=True, check=False)
+    (evidence / (prefix + '.stdout')).write_bytes(result.stdout)
+    (evidence / (prefix + '.stderr')).write_bytes(result.stderr)
+    save(evidence / (prefix + '.json'), dict(command=[str(x) for x in args], cwd=str(cwd),
+        exit=result.returncode, stdout_sha256=hashlib.sha256(result.stdout).hexdigest(),
+        stderr_sha256=hashlib.sha256(result.stderr).hexdigest()))
+    assert result.returncode == 0, (prefix, result.stderr.decode('utf-8', errors='replace'))
+    return result.stdout
+
+shutil.copyfile(evidence / 'terminal-session.json', trial / 'terminal-session.json')
+archive = evidence / 'retained-trial.zip'
+manifest = retain_trial(trial, archive)
+manifest['archive'] = archive.relative_to(root).as_posix()
+save(evidence / 'retained-trial-manifest.json', manifest)
+restored = Path(tempfile.mkdtemp(prefix='zaratustra-work6-restore-')).resolve()
+with zipfile.ZipFile(archive) as z:
+    assert z.testzip() is None
+    for entry in z.infolist():
+        assert (restored / entry.filename).resolve().is_relative_to(restored)
+    z.extractall(restored)
+
+def inventory():
+    files = {p.relative_to(restored).as_posix(): digest(p) for p in restored.rglob('*') if p.is_file()}
+    dirs = sorted(p.relative_to(restored).as_posix() + '/' for p in restored.rglob('*') if p.is_dir())
+    assert files == manifest['files']
+    assert dirs == manifest['directories']
+    return dict(files=files, directories=dirs)
+
+before = inventory()
+runtime = Path(tempfile.mkdtemp(prefix='zaratustra-work6-restore-runtime-')).resolve()
+python = runtime / 'Scripts/python.exe'
+zara = runtime / 'Scripts/zara.exe'
+run([uv, 'venv', '--python', sys.executable, str(runtime)], root, 'restore-venv')
+run([uv, 'pip', 'install', '--offline', '--python', str(python), '-r',
+     str(restored / 'runtime-requirements.txt'), str(restored / 'zaratustra-0.6.0-py3-none-any.whl')],
+    root, 'restore-install')
+run([uv, 'pip', 'check', '--python', str(python)], root, 'restore-pip-check')
+workspace = restored / 'workspace'
+for label, args in [('version', ['--version']), ('status', ['status', str(workspace)]),
+                    ('handoffs', ['handoff', 'list', str(workspace)]),
+                    ('history', ['history', str(workspace)]), ('init', ['init', str(workspace)]),
+                    ('projection', ['projections', 'status', str(workspace)])]:
+    run([str(zara), *args], restored / 'unrelated-cwd', 'restore-' + label)
+code = '''from pathlib import Path
+import sys
+from zaratustra.core import ContextQuery, prepare_authorization, authorize_local, open_work
+root = Path(sys.argv[1])
+workspace = root / "workspace"
+query = ContextQuery.model_validate_json((root / "query.json").read_bytes())
+caller = authorize_local(prepare_authorization(workspace, query), channel="local-chat",
+    actor="executor-restore-fixture", source_ref="Work6-CALL:simulated-prior-permission")
+sys.stdout.buffer.write(open_work(workspace, query, caller).output)
+'''
+(evidence / 'restore-context-script.txt').write_text(code, encoding='utf-8')
+output = run([str(python), '-I', '-c', code, str(restored)], restored / 'unrelated-cwd', 'restore-context')
+assert output == (trial / 'console-open.stdout').read_bytes()
+after = inventory()
+assert before == after
+save(evidence / 'restore-verification.json', dict(archive_sha256=digest(archive), restored=str(restored),
+    runtime=str(runtime), files=len(before['files']), directories=len(before['directories']),
+    before=before, after=after, exact_context_sha256=hashlib.sha256(output).hexdigest(),
+    exact_context_bytes=len(output), verdict='executor restore check PASS; not external install or owner runtime'))
+for p in trial.iterdir():
+    if p.is_file() and p.suffix in {'.json', '.stdout'} and p.name != 'terminal-session.json':
+        target = 'installed-manifest.json' if p.name == 'manifest.json' else p.name
+        shutil.copyfile(p, evidence / target)
+shutil.copyfile(Path(__file__), evidence / 'evidence-script.txt')
+print(json.dumps(dict(trial=str(trial), restored=str(restored), runtime=str(runtime),
+    archive_sha256=digest(archive), files=len(before['files']), directories=len(before['directories']),
+    output_sha256=hashlib.sha256(output).hexdigest()), indent=2))

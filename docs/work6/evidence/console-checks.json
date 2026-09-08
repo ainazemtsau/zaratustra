@@ -1,0 +1,94 @@
+[
+  {
+    "label": "open",
+    "command": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\venv\\Scripts\\zara.exe",
+      "work",
+      "open",
+      "56785bef-c147-4236-b12a-cad24845567a",
+      "--workspace",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\workspace",
+      "--workspace-id",
+      "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "--process",
+      "bae978a9-a181-4368-be55-b1837fd47747",
+      "--expected-revision",
+      "11",
+      "--max-bytes",
+      "65536"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\unrelated-cwd",
+    "exit": 0,
+    "stdout_sha256": "438bf8af803b20763c9e904097c7f5f250e2b06f34928720535d7e903604df85",
+    "stderr": "inherited console; retained terminal-session transcript"
+  },
+  {
+    "label": "stale",
+    "command": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\venv\\Scripts\\zara.exe",
+      "work",
+      "open",
+      "56785bef-c147-4236-b12a-cad24845567a",
+      "--workspace",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\workspace",
+      "--workspace-id",
+      "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "--process",
+      "bae978a9-a181-4368-be55-b1837fd47747",
+      "--expected-revision",
+      "10",
+      "--max-bytes",
+      "65536"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\unrelated-cwd",
+    "exit": 1,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": "inherited console; retained terminal-session transcript"
+  },
+  {
+    "label": "budget",
+    "command": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\venv\\Scripts\\zara.exe",
+      "work",
+      "open",
+      "56785bef-c147-4236-b12a-cad24845567a",
+      "--workspace",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\workspace",
+      "--workspace-id",
+      "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "--process",
+      "bae978a9-a181-4368-be55-b1837fd47747",
+      "--expected-revision",
+      "11",
+      "--max-bytes",
+      "5000"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\unrelated-cwd",
+    "exit": 1,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": "inherited console; retained terminal-session transcript"
+  },
+  {
+    "label": "scope",
+    "command": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\venv\\Scripts\\zara.exe",
+      "work",
+      "open",
+      "56785bef-c147-4236-b12a-cad24845567a",
+      "--workspace",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\workspace",
+      "--workspace-id",
+      "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "--process",
+      "f7b78864-bc23-44ea-94c7-ed84dd5d6d17",
+      "--expected-revision",
+      "11",
+      "--max-bytes",
+      "65536"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\unrelated-cwd",
+    "exit": 1,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": "inherited console; retained terminal-session transcript"
+  }
+]

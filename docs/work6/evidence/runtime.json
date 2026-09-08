@@ -1,0 +1,15 @@
+{
+  "version": "0.6.0",
+  "package": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\venv\\Lib\\site-packages\\zaratustra",
+  "python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]",
+  "sqlite": "3.50.4",
+  "pydantic": "2.13.5",
+  "sys_path": [
+    "C:\\Users\\Anton\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\python313.zip",
+    "C:\\Users\\Anton\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\DLLs",
+    "C:\\Users\\Anton\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\Lib",
+    "C:\\Users\\Anton\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\venv",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\venv\\Lib\\site-packages"
+  ]
+}

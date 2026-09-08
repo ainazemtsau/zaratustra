@@ -1,0 +1,78 @@
+{
+  "budget": {
+    "maximum": 65536,
+    "unit": "utf8_bytes_entire_output",
+    "used": 12320
+  },
+  "context_sha256": "55736d3be494a043d38bc9334cdc8277ba2b2a5f7f0c54b39da51ffd320ea985",
+  "delivery": "exact_cli_stdout; chat_receipt_and_understanding_unverified",
+  "dependencies": {
+    "acceptances": [
+      {
+        "id": "d0032728-4bb3-41b7-b8ee-b3996c872dc8",
+        "revision": 10
+      },
+      {
+        "id": "9530e3d4-0ccb-4a93-845f-bfcd724dd771",
+        "revision": 11
+      }
+    ],
+    "artifact_revision": 3,
+    "authority_revision": 11,
+    "process_revision": 1,
+    "state_revision": 11,
+    "work_revision": 11
+  },
+  "memory_entries": [],
+  "skills": [],
+  "sources": [
+    {
+      "locator": "process:bae978a9-a181-4368-be55-b1837fd47747",
+      "revision": 1,
+      "value_bytes": 150,
+      "value_sha256": "85594a75828460b94829ec1ad4170fede539f5c7b41d9407e50e286a10e2f4c7"
+    },
+    {
+      "locator": "work:56785bef-c147-4236-b12a-cad24845567a",
+      "revision": 11,
+      "value_bytes": 518,
+      "value_sha256": "b4b5da8334fe455c72bd69e98dca026de9572fc48066153d46bae23bdba84669"
+    },
+    {
+      "locator": "artifact:ae7eca56-fd16-41ad-b262-2981468b922e",
+      "revision": 3,
+      "value_bytes": 326,
+      "value_sha256": "02619e5ec57519603e5d02c1b4a948c5fd7eed2b2ca2c02ceaf70dfabac1098f"
+    },
+    {
+      "locator": "acceptance:d0032728-4bb3-41b7-b8ee-b3996c872dc8",
+      "revision": 10,
+      "value_bytes": 2001,
+      "value_sha256": "42f8cb17ba9e0d693f00f6b46874600affaee3689c121f1dc74bdf250f337298"
+    },
+    {
+      "locator": "acceptance:9530e3d4-0ccb-4a93-845f-bfcd724dd771",
+      "revision": 11,
+      "value_bytes": 1932,
+      "value_sha256": "44698930fe20da6caeea62ca8f62c64e94f45a4168282a38ed976781815d0bc8"
+    },
+    {
+      "content_bytes": 68,
+      "content_sha256": "6fd73651c03ddf966703c5b96f6b7a7da79a6d3482b82342f191dd4ea9299b45",
+      "locator": "artifact-version:75a8c7b3-3f17-4a50-a777-c70f3515bfd8",
+      "revision": 8,
+      "value_bytes": 1895,
+      "value_sha256": "fdcdedc8eee32c1bac5e17f42f19701fd6c1582f47034d3737f861b5a09db899"
+    },
+    {
+      "content_bytes": 59,
+      "content_sha256": "de22a67833d4525f95d460d75890f8a046a08d51e19bd086e380df104afd1214",
+      "locator": "artifact-version:258ea271-3f06-4c29-9caa-09cf2613d2d4",
+      "revision": 7,
+      "value_bytes": 1883,
+      "value_sha256": "7770723d4ba553a209daf6ba2e170b09bd1c1c7d756fb0a873417223665d0c42"
+    }
+  ],
+  "tools": [],
+  "version": 1
+}

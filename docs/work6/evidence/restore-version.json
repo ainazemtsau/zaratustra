@@ -1,0 +1,10 @@
+{
+  "command": [
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-restore-runtime-2sclf4if\\Scripts\\zara.exe",
+    "--version"
+  ],
+  "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-restore-x6gm4klu\\unrelated-cwd",
+  "exit": 0,
+  "stdout_sha256": "d410fcaf3c480b4125f469ee935287515f356dfa98c7fd1b0e02ca9efdc0da5a",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

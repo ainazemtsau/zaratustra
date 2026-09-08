@@ -1,0 +1,68 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+
+root = Path(__file__).resolve().parents[1]
+evidence = root / 'docs/work6/evidence'
+direction = Path('C:/my_global_workflow_worktrees/solmax')
+accepted = Path('C:/projects/zaratustra/_scratch/work5-handoff')
+trial = Path('C:/Users/Anton/AppData/Local/Temp/zaratustra-work5-96nw94ii')
+base = '589861c4657f19763b0af4ab965bd84646eecb70'
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def git(where, *args):
+    return subprocess.check_output(['git', *args], cwd=where)
+
+sources = ['live/solmax/work/calls/c-solmax-zaratustra-m0-context-20260908-work6.md',
+    'live/solmax/work/zaratustra-architecture-plan-2026-09-05.md',
+    'live/solmax/work/converge-g-zara-m0-continuity-arch.md',
+    'live/solmax/work/converge-g-zara-m0-continuity.md',
+    'live/solmax/knowledge/zaratustra-plan-conforming-approval-2026-09-07.md',
+    'live/solmax/knowledge/zaratustra-local-no-automation-2026-09-07.md',
+    'live/solmax/work/evidence/zaratustra-m0-work5-close-20260908/G5-F1-RECHECK.md',
+    'live/solmax/work/evidence/zaratustra-m0-work5-close-20260908/g5-f1-recheck-evidence.zip',
+    'live/solmax/work/evidence/zaratustra-m0-work5-close-20260908/retained-trial-v2.zip']
+source_hashes = {str(direction / p): sha(direction / p) for p in sources}
+shutil.copyfile(direction / sources[0], root / 'docs/work6/CALL.md')
+expected = json.loads((accepted / 'docs/work5/evidence/retained-trial-v2-manifest.json').read_text(encoding='utf-8'))
+trial_hashes = {name: sha(trial / name) for name in expected['files']}
+assert trial_hashes == expected['files']
+assert all((trial / p).is_dir() for p in expected['directories'])
+assert git(accepted, 'rev-parse', 'HEAD').decode().strip() == base
+assert git(accepted, 'status', '--porcelain', '--untracked-files=no').strip() == b''
+assert git(accepted, 'diff', base).strip() == b''
+unchanged = ['src/zaratustra/core/migrations.py', *[
+    f'src/zaratustra/core/migration_v{v}.py' for v in range(2,6)],
+    'src/zaratustra/core/artifacts.py','src/zaratustra/core/handoffs.py',
+    'src/zaratustra/core/workspace.py','src/zaratustra/core/records.py',
+    'src/zaratustra/core/projections.py','src/zaratustra/local/__init__.py',
+    'validation.config','tools/retain_trial.py']
+unchanged_hashes = {}
+for name in unchanged:
+    original = git(root, 'show', base + ':' + name)
+    actual = (root / name).read_bytes()
+    assert original == actual, name
+    unchanged_hashes[name] = sha(root / name)
+assert not git(root,'diff',base,'HEAD','--','docs/work1','docs/work2','docs/work3','docs/work4','docs/work5').strip()
+paths = git(accepted, 'ls-files', '-z').decode().split(chr(0))
+accepted_files = {p: sha(accepted / p) for p in paths if p and (accepted/p).is_file()}
+(evidence / 'implementation.patch').write_bytes(git(root, 'diff', '--binary', base, 'HEAD'))
+data = dict(base=base, implementation=git(root,'rev-parse','HEAD').decode().strip(),
+    branch=git(root,'branch','--show-current').decode().strip(), checkout=str(root),
+    remote=git(root,'remote','-v').decode(),
+    accepted_checkout=str(accepted), accepted_branch=git(accepted,'branch','--show-current').decode().strip(),
+    accepted_head=base, accepted_clean=True, accepted_current_files=accepted_files,
+    accepted_trial=str(trial), accepted_trial_files=trial_hashes,
+    accepted_trial_directories=expected['directories'],
+    unchanged_exact_bytes=unchanged_hashes, direction_sources=source_hashes,
+    scope='No Direction/old Product/archive write; accepted checkout clean before setup and after work',
+    implementation_diff_sha256=sha(evidence / 'implementation.patch'),
+    wheel_sha256=sha(root / 'dist/zaratustra-0.6.0-py3-none-any.whl'))
+(evidence/'preservation.json').write_text(json.dumps(data,indent=2),encoding='utf-8')
+shutil.copyfile(Path(__file__), evidence/'preservation-script.txt')
+print(json.dumps(dict(accepted_files=len(accepted_files), trial_files=len(trial_hashes),
+    preserved_sources=len(unchanged_hashes), wheel=data['wheel_sha256'], old_checkout_clean=True),indent=2))

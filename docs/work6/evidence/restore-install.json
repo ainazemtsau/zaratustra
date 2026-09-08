@@ -1,0 +1,17 @@
+{
+  "command": [
+    "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+    "pip",
+    "install",
+    "--offline",
+    "--python",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-restore-runtime-2sclf4if\\Scripts\\python.exe",
+    "-r",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-restore-x6gm4klu\\runtime-requirements.txt",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-restore-x6gm4klu\\zaratustra-0.6.0-py3-none-any.whl"
+  ],
+  "cwd": "C:\\projects\\zaratustra\\_scratch\\work6-context",
+  "exit": 0,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "c669c1f730b097d4f9c7115b16d25f213e564b12099055af37c98692779c8213"
+}

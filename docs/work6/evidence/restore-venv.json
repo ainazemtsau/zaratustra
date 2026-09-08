@@ -1,0 +1,13 @@
+{
+  "command": [
+    "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+    "venv",
+    "--python",
+    "C:\\projects\\zaratustra\\_scratch\\work6-context\\.venv\\Scripts\\python.exe",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-restore-runtime-2sclf4if"
+  ],
+  "cwd": "C:\\projects\\zaratustra\\_scratch\\work6-context",
+  "exit": 0,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3d304b2ca9137207591be688fc6606ade09d1b5829be2fca4fda092602d155a"
+}

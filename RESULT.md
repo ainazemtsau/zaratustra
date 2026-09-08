@@ -1,211 +1,144 @@
-# Work 5 — Product RESULT / HOME solmax
+# Product RESULT — Work 6, HOME solmax
 
-call: c-solmax-zaratustra-m0-handoff-20260908-work5
-task: t-zara-m0-handoff; node: g-zara-m0-continuity
+call: c-solmax-zaratustra-m0-context-20260908-work6
 mode: PROBA; engineering_contract: 36
+product: C:/projects/zaratustra/_scratch/work6-context
+branch: codex/work6-context
+base: 589861c4657f19763b0af4ab965bd84646eecb70
+plan_commit: cafe07b2617c2dc8ccda5d71842ad5432236b2d1
+implementation_commit: e5576df5550d54de47c1d29d666d60c0194412f3
+version: 0.6.0; schema: 5; default explicit migration target: 4 (unchanged)
 
 ## outcome
 
-Implemented 0.5.0 Handoff accepted_result import from file/stdin through the one
-apply_mutation API. Accepted result, exact version/hash references, basis, quoted
-owner text and provenance are saved with one revision/event/receipt effect.
-The three done_when have local engineering PASS in the declared SQLite/I/O model.
-First binding fresh physical G5 at 55912da264dab923eddc8f5545b78b0e91b3a369 returned
-FAIL/F1: retained backup omitted empty directories. Importer/runtime checks passed.
-F1 is repaired in df79b2fc385bd2db5747968bc09422a580d98559. The separate reviewer
-verified that commit and the new archive: F1 PASS; aggregate Work5 PASS/PASS/PASS.
-No owner runtime acceptance is claimed.
-Product does not close T4/CALL/M0, issue a successor CALL or start Work 6.
-Direction OS was read only. Work 4 G5 does not verify new Handoff behavior.
+REPORT: Work 6 engineering implementation and executor evidence delivered HOME.
+Public open_work and zara work open return current bounded exact context plus an
+actual-output manifest under exact trusted authorization. Full revalidation catches
+changes during assembly; stale, terminal/revoked, scope, bytes and budget failures
+return no package. Opening performs no domain mutation or projection write.
+
+| CALL done_when | Actual engineering evidence / boundary |
+|---|---|
+| 1. Current Work and effective bases/revisions; obsolete/terminal does not reopen | Ready/current rights and exact expected revision checked twice. Installed positive revision 11; stale revision 10 conflicts; revoked/terminal and decision/requirements/rights changes during compilation refuse. Cancelled is today's terminal state; Work 7 completion state is not implemented, unsupported done fails schema validation. |
+| 2. Manifest names actual bounded scoped sources; foreign content excluded | Exact CLI stdout: 12320 bytes / 65536, 7 sources, complete acceptance/bases and exact content/provenance. Library/CLI/restored bytes match. Foreign Process/exact Artifact refs refuse; inert foreign file link transfers no sentinel content. No second full Process. |
+| 3. Freshness/dependencies/scope/budget without silent loss | Native full-byte boundary, late missing/corrupt bytes, publication-reference closure, BUSY and assembly interleavings pass. Installed selected runtime checks run outside checkout; overflow gives empty stdout. Manifest is not proof of clean-chat understanding. |
 
 ## evidence
 
-### Identity and changes
+Contract and individual W19–W27 dispositions: docs/work6/PLAN.md, committed before
+implementation. Walkthrough, expected observations and evidence to save:
+docs/work6/INSTALL.md. Complete base-to-implementation diff:
+docs/work6/evidence/implementation.patch. Actual refs, source locators/hashes and
+preservation: docs/work6/evidence/preservation.json. Final evidence/docs commit id
+is returned in the HOME message; no self-referential commit hash is invented.
 
-Actual worktree: C:/projects/zaratustra/_scratch/work5-handoff.
-Branch: codex/work5-handoff. Primary repo: C:/projects/zaratustra, unchanged branch.
-Accepted base: 0b5ad766545d2cb32c4ef1edfc1cf06fb0e6e35f, not old main.
-PLAN/CALL before dependent implementation: a4aa06e (full id in implementation.txt).
-Implementation: e1b831bfbb1bebb6faad27e41c0960da6c28fc99.
-Harness-only commits: fac7e55aa70033d441ab827aea6ca72b7d00562b and
-3bd46cfdcb71ec4df403034f146e66492239500d. Runtime bytes remain e1b831b.
-Diff/history: docs/work5/evidence/implementation.patch and implementation.txt.
-Full report/evidence commit: e5f6c2b5621608069d8dfa66f1185b02f3060778.
-Original locator-only commit: 55912da264dab923eddc8f5545b78b0e91b3a369.
-The subsequent F1 repair changes only a development packer/regression test,
-new backup/evidence and handback documentation. Source under src/, wheel, locked
-dependencies and every old evidence file remain unchanged. The current repair
-commit is df79b2fc385bd2db5747968bc09422a580d98559. This subsequent handback-only
-update records the received independent verdict; reviewed implementation, packer,
-test, backup and evidence bytes remain unchanged. No remote/publication.
-Prior RESULT remains at accepted Git base and in the prior durable Work 4 evidence.
+Native full tools.check: 119 tests PASS, wheel/sdist build, ruff format/lint, mypy,
+hygiene and 2 import boundaries PASS. Final --deliver raw:
+docs/work6/evidence/native-deliver.json, native-deliver.stdout, native-deliver.stderr.
+20 context tests use new accepted-v2 main-workspace copies; all previous 99 checks
+remain in the complete run, including W19/W20 mutation/artifact/restore semantics.
 
-New Handoff 1 / request 3 / explicit DB migration 5; existing default migrate target
-stays 4 for compatibility, Work 5 uses --to 5. Core owns parsing/types, narrow
-accept_handoff and saved acceptance/history checks. CLI uses Core and a separate
-exact console permission. Old request canonical bytes remain compatible. Released
-migration files 1–4, validation.config and REVIEW.md are unchanged against accepted
-base. The unknown-schema negative fixture advances from 5 to 6 because 5 is supported.
+Installed raw in docs/work6/evidence: install.json, installed-run.json, runtime.json,
+installed-source.json, hidden-checks.json (14 cases), exercise-receipt.json,
+console-checks.json, console-*-prompt.json, terminal-session.json, console-*.stdout.
+17 installed Python files equal wheel/source. Python 3.13.7, SQLite 3.50.4,
+Pydantic 2.13.5; isolated -I/unrelated-cwd, source absent from sys.path.
+Four actual console confirmations were entered by the executor on the authorized
+fictional copy. Hidden library checks explicitly simulate prior-permission local-chat.
+Neither is owner runtime acceptance or binding G5.
 
-### Three done_when
+Trial: C:/Users/Anton/AppData/Local/Temp/zaratustra-work6-_0caf231.
+Runtime: its venv; selected data: its workspace. Main remains schema 5/revision 11;
+DB SHA-256 9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24.
+Faults use separate negative-copies; these are not working/restore bases.
 
-| Criterion | Actual evidence and result |
+| Exact artifact | SHA-256 / measurement |
 |---|---|
-| 1. Shared file/stdin Mutation API; saved accepted result/provenance | PASS: installed zara.exe file and binary-stdin imports create two distinct acceptances at revisions 10/11 on a new Work 4 copy. Explicit migration preserves previous records/history. handoff list in a later process returns full Handoff/delivery/confirmation/receipt. The acceptance table is cross-checked against committed events. Work requirements/rights are not substituted by imported text. Evidence: cli.json, installed-receipt.json, retained-trial-v2.zip/acceptances.json, core/handoffs.py and mutations.py. |
-| 2. One effect, stale conflict and named W19 answers | PASS: installed original replay at revision 9 conflicts when current is 11; refreshed stdin replay at 11 returns the original revision-10 receipt with no third effect. Native tests check changed-intent collision, stale new source despite transport override, concurrent delivery, foreign refs, rollback and late availability. Current rights precede revision, revision precedes duplicate, refs follow duplicate. PLAN records identity/effect/replay/collision/receipt and Work 7 remainder. |
-| 3. No self-authority, current rights and exact native/installed evidence | PASS: real file CLI without interactive permission refuses; installed CLI main after Windows FreeConsole refuses stdin. Four displayed exact console confirmations were entered by the executor on fictional data. Native tests reject forged owner/approved fields, wrong path/request/digest, revoked/terminal rights before stale/duplicate; metadata-only scope permits import. All 16 installed .py match wheel/source. Full native check: 98 tests, format/lint/hygiene/types, 2 boundaries, wheel/sdist PASS. |
+| zaratustra-0.6.0-py3-none-any.whl, retained in ZIP | 876f623afe6a96f937e3584ea54470e5510002ef67f2b55480b99f1f6b41c816 |
+| console-open.stdout = context-library.json = restore-context.stdout | 438bf8af803b20763c9e904097c7f5f250e2b06f34928720535d7e903604df85; 12320 exact bytes including LF |
+| retained-trial.zip | 1657d3a559ba1275ea010b5d83ff0cb818ba26fa74ab195cc86f8218ac57d539; 75 files, 72 directories |
+| accepted Work 5 retained-trial-v2.zip, unchanged | fdb39d39441f9e739e2d6ec17391ad7500a8d86284a79b186df073088487bb51 |
 
-Raw native output: check-implementation.txt; final report/build check: deliver.txt.
-F1 repair full native check: g5-f1-deliver.txt (99 tests including the new restore regression).
-Development attempts: check.txt, check-pass.txt, check-final.txt. Tests verify
-hidden consistency, not owner-visible wording/tuning. No source scanner is used
-as behavioral evidence. No frozen pair, review artifact or subagent requirement
-was added to PROBA; no binding fresh review occurred in this authoring session.
+Actual manifest: docs/work6/evidence/context-manifest.json; full wire includes
+matching envelope. State/Work/authority revision 11, Process revision 1, Artifact
+revision 3, acceptances revisions 10/11 and two immutable content versions.
+All 7 source locators/revisions/value hashes/sizes and raw content hashes/sizes
+are listed. Full budget includes manifest and LF. Installed maximum 5000 reports
+required 12318 and empty stdout; native maximum 12320 passes / 12319 refuses.
+No implicit budget expansion, pruning or interpretation of text links as read grants.
 
-### Installed bytes and retained sample
+Restored trial: C:/Users/Anton/AppData/Local/Temp/zaratustra-work6-restore-x6gm4klu.
+Separate runtime: C:/Users/Anton/AppData/Local/Temp/zaratustra-work6-restore-runtime-2sclf4if.
+ZIP CRC, all file hashes and directory inventory match; new offline install,
+CLI version/status/handoffs/history/init/projection and exact open pass.
+All 75 files/72 directories unchanged after reads. Raw: restore-*.json/stdout/stderr,
+restore-verification.json and evidence-script.txt. Original locators remain in
+provenance/manifests. No manual DB or layout repair.
 
-Trial: C:/Users/Anton/AppData/Local/Temp/zaratustra-work5-96nw94ii.
-Installed command: trial/venv/Scripts/zara.exe. Data: trial/workspace.
-Python 3.13.7 / SQLite 3.50.4 / Pydantic 2.13.5; Python -I outside checkout,
-no Product source in sys.path. Runtime dependencies installed offline from lock.
+### W19–W27 returned individually
 
-| Bytes | SHA-256 |
-|---|---|
-| zaratustra-0.5.0-py3-none-any.whl | cc11753b83bbfddf670c255c46a8dc414d8c5216e78e77e8f686977243461894 |
-| Main workspace/.zara/state.sqlite3, revision 11 | 9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24 |
-| fault-workspace/.zara/state.sqlite3, revision 12 | a834da057d2344b4a5ac6d1c4b15bb2c174fc25a4e99a21daf9bd3fc82a83e29 |
-| handoff-file.json, actual file input | 64ea7acfd4bdc41d93599b3450f9f75b33034fde71cbec726995b55b1f2a58e3 |
-| handoff-stdin.json, actual binary stdin input | 376a8514fc9ad46687f163dc9b1c96622e40476bde137b5c9ef460d59451eb00 |
-| evidence/retained-trial-v2.zip, 26 files and 15 directories; current backup | fdb39d39441f9e739e2d6ec17391ad7500a8d86284a79b186df073088487bb51 |
-| evidence/retained-trial.zip; superseded, F1 diagnostic only | b6eb95efa32e834b5f5e0ff3d16f60d5e7899e7a4b2a1ca81e640fe7e0a9892c |
-
-File receipt: d0032728-4bb3-41b7-b8ee-b3996c872dc8, event
-72885554-1023-4b45-9b1a-332273dd45ba, 9->10. Stdin receipt:
-9530e3d4-0ccb-4a93-845f-bfcd724dd771, event
-22ece12d-198b-4730-88c0-1c7f8c18ac8f, 10->11. Both retain Work 4 result version
-75a8c7b3-3f17-4a50-a777-c70f3515bfd8 and first-version basis
-258ea271-3f06-4c29-9caa-09cf2613d2d4 with exact registered hashes.
-
-cli.json stores each command, stdout/stderr/exit and actual delivered stdin hash;
-terminal-session.json stores raw previews and exact typed approvals. File/stdin
-prompt JSON matches delivered requests. installed-source.json pins 16 .py files;
-runtime.json pins install/sys.path; installed-manifest.json pins wheel and originals.
-retained-trial-v2.zip contains wheel, requirements, exercised probe source, main/fault
-DB/content/projections, inputs, prompts, raw CLI, receipts, terminal session and all
-15 selected directories. CRC, all 26 file hashes and directory inventory match the
-unchanged originals; full map is retained-trial-v2-manifest.json. Actual extraction
-into a NEW folder passed installed status/handoff list/history/init for both copies,
-main result/basis reads and the intentional fault-copy missing-content refusal.
-All extracted bytes/layout remain unchanged: g5-f1-restored.json (11 CLI checks).
-The exact documented PowerShell Expand-Archive walkthrough also passed with a
-separate fresh offline wheel installation and four CLI commands; all 26 files and
-15 directories survived unchanged: g5-f1-walkthrough.json and its install log.
-The old retained-trial.zip/manifest remain untouched as F1 evidence; do not restore
-from them. Follow docs/work5/INSTALL.md for the current backup.
-
-162 prior files (0.1/0.2/0.3/0.4 DBs/wheels/receipts/G5 evidence) and 14 Direction
-sources are unchanged: preserved-before.json, preserved-after.json, sources.json.
-Original Work 4 DB remains
-bec53e48c79ccfc7e83a72a1439feacf759b48cad9a621d10cd1fa508def77a0.
-
-### Fresh G5 feedback and F1 disposition
-
-Binding report: C:/Users/Anton/Documents/Codex/2026-09-08/zaratustra-work5-fresh-g5/outputs/G5-REPORT.md.
-Its original evidence ZIP SHA-256 is
-b44fc75323792228eeb2fbfaf8a3a2e98f839c196576dde538d57d600158b918.
-This separate physical reviewer passed the importer/authority checks, native 98
-tests and 12 independent negative-case categories; overall FAIL was solely F1.
-The author reproduced F1, then verified the repaired archive through installed CLI.
-Detailed invariant, sibling sweep and reproduction: docs/work5/F1-REPAIR.md.
-Independent recheck: C:/Users/Anton/Documents/Codex/2026-09-08/zaratustra-work5-fresh-g5/outputs/G5-F1-RECHECK.md.
-Checked commit df79b2fc385bd2db5747968bc09422a580d98559: F1 PASS and aggregate
-PASS/PASS/PASS. The reviewer independently ran 14 restored workspace/content checks,
-four expected refusals from the old archive, and the full native gate (99 PASS).
-85 previous files and all 16 installed Python files matched the first G5; its
-runtime negative-case evidence was reused explicitly after byte comparison.
-Recheck report SHA-256:
-de6c9cdcb0ddcfcb0ce79ca2d3b55a972b5eca016372efcf9a1dcbf538e4074c.
-Recheck bundle: same outputs directory, g5-f1-recheck-evidence.zip; SHA-256
-afeab5227162e4d99b1bf485ed131afc103bd0072483b61d02c519cc9cc97d03.
-The original FAIL report remains unchanged. This records external binding evidence,
-not a binding verdict produced by the author or an owner runtime acceptance.
+| ID | Decision here / remaining answerer and moment | rewrites |
+|---|---|---|
+| W19 | Product PLAN before Work 6 reads: read-only open; old acceptance/replay/stale/collision unchanged. Product PLAN before Work 7: Result/next effect unit. | importer/receipts/linkage/failures/migrations; cheap reversal unproved |
+| W20 | Product PLAN before content reads: exact bytes twice, no repair, retain restore v2. Product PLAN before Work 7: continuation/recovery. | durable refs/recovery/evidence/migrations |
+| W21 | Product PLAN before reads: exact trusted query/current rights and nontransitive authority above; accepted Work 3 owner words reused. Product PLAN before Work 7: Result consumer. | adapters/permissions/consumer boundaries; decision is not runtime PASS |
+| W22 | Product PLAN before Work 6: complete revalidation, global invalidation, membership, namespaces, mandatory closure, byte overflow and actual manifest above. Later dependent PLAN owns extensions. | snapshot/context/tests/possible migrations; no freshness/scope/budget cut |
+| W23 | Product PLAN before Work 6: exact output bytes/hash plus manual delivery protocol. Product PLAN/owner at Work 8: actual clean session/five facts. | delivery/demo/repeat Work 8; unprovable cleanliness is blocker |
+| W24 | Product PLAN before implementation: query/wire v1, 0.6.0/schema5, no migration, fixed-point bytes, existing BUSY/layout. Later PLAN per admitted Work. | mechanics/tests/migrations; semantic change returns W19–W22 |
+| W25 | Product PLAN before fixtures: new copies of one fictional graph and minimal foreign sentinel above. Product PLAN/owner before Work 8 actual demo. | fixtures/tests/demo; no second full or real Process |
+| W26 | Product PLAN before start: actual isolated checkout/ref above and separate local installed trial. Owner before permanent location/hosting/independent external install-upgrade. | package/layout/docs; no new external rights |
+| W27 | Product PLAN before public consumer: only versioned M0 ContextQuery/open_work/ContextPackage seam. Future consumer PLAN at its own admission. E1–E12 remain in Direction CONTRACTS; E4/E5/E7/E12 get no invented direct M0 APIs. | public Core/data/consumer migrations; M1+ not prerequisite; cheap replacement unproved |
 
 ## assumptions
 
-PLAN records conforming HOW under owner-ack:solmax-plan-conforming-20260907; no new
-owner words are invented. W21 permits exact console confirmation or an in-process
-trusted local-chat adapter after actual permission, without repeated identity
-checking. The CLI ships the console route. No accounts or hostile same-user
-isolation. Import requires current ready Work metadata authority and exact scoped
-Artifact reads, grants nothing, and treats owner_instruction/created_by as data.
-
-Result content already exists in a Work 4 immutable Artifact. Handoff records
-acceptance and grounds; it does not judge correctness, finish the Work, implement
-submit_result or create a successor. read_handoffs is owner-local inspection, not
-Work 6 context. Source revision stays immutable; an explicit transport revision
-refresh can reach a prior receipt, but cannot make a new stale decision current.
-
-Tested failure model: local SQLite statement/COMMIT rejection and I/O/rebuild
-failure. File/DB publication is separate; receipt does not prove late availability.
-Work 4 orphan/exact repair/rebuild remain. The fault copy intentionally contains
-missing Artifact bytes and is not a working base. Power/disk/controller loss,
-process-kill recovery and hostile path races are unproved. Windows console is
-measured; POSIX console is implemented but not measured.
+Existing exact W21 owner words and both no-automation acknowledgments remain.
+HOW conforms under owner-ack:solmax-plan-conforming-20260907; no new owner words.
+Query budget is an additional exact context byte limit; human Work budget is
+preserved without conversion/extension. All accepted Handoffs are mandatory;
+no semantic supersession policy is inferred. Global revision invalidates every
+managed mutation; complete snapshot/journal/descriptors and included bytes are
+rechecked under the writer lock. Membership is fixed and validated in today's
+single graph; no new membership API. Freshness is at final validation, not a
+perpetual lease. Later mutation still needs expected_revision; later opening
+rechecks current state and bytes. Historical receipt never proves late availability.
 
 ## cuts
 
-No admitted Work 5 acceptance cut. accepted_result with existing exact result/basis
-references is the selected minimum within WHAT. Work 6 context, Work 7 Result/next,
-Work 8 clean-chat/five-fact owner demonstration, M1+, MCP/automatic transport,
-memory, real personal Process, permanent workspace, independent external install/
-upgrade/full migration, publication and new external/spending/irreversible rights
-remain outside this CALL. Both no-automation acknowledgments remain; no CI/CD,
-Actions, notifications or Product remote.
+No Work 6 acceptance or W19–W27 cut. Work 7 submit_result/next Work and Work 8
+actual clean-chat five facts/owner demo unstarted. No M1+, automatic transport/MCP,
+retrieval/router/memory/frontend/autonomy, second full/real Process, external
+install-upgrade/full migration, permanent workspace, remote/publication/spending,
+CI/CD/Actions/notifications. No live Direction OS, archive or old-repo edits.
+No additional power-loss/disk-loss/hostile same-user guarantee.
 
 ## cost
 
-One executor session; no delegation, new dependency, service, expense or deadline.
-Implementation/evidence fit the half-day calibration. Native development corrected
-test namespace resolution and advanced the unknown-schema fixture. Installed
-harness exposed Windows launcher console allocation, then text-pipe LF->CRLF;
-committed harness corrections preserve runtime bytes. Earlier attempts remain
-labeled in terminal-attempt-1.json and terminal-text-pipe.json. The reported final
-trial uses exact binary stdin. Four executor-entered console approvals in that
-trial. Token/account cost was not measured. No new owner-owned choice was needed.
-F1 follow-up adds a small development-only packer and one restore regression;
-runtime/dependency/version remain unchanged. Initial scoped lint caught a one-character
-line-length excess; it was corrected before the final native check.
+One executor leg and one required read-only setup smoke child; no other delegation,
+reviewer or binding G5 session. No new dependency/service/paid API/external right.
+First complete native run: 119 tests in 39.99 seconds. Final --deliver repeats the
+full gate after probe/evidence additions; raw duration is retained. Four executor
+console confirmations, no owner interaction requested during build.
+Total effort was not instrumented; no unsupported numeric cost/efficiency claim.
+Focused feedback corrected one test typing issue and probe closure lint. No
+behavioral test failure was hidden or acceptance reduced to obtain PASS.
 
 ## manual-acceptance
 
-No owner runtime words or Work 8 demonstration occurred. A separate binding fresh
-G5 returned FAIL/F1, then independently rechecked the repaired candidate with
-PASS/PASS/PASS. This authoring session supplies local repair evidence and records
-the separate review; it does not grant owner runtime acceptance.
-Console approvals are executor development actions on fictional copies under this
-CALL, never fabricated owner acceptance. W21/plan decisions authorize mechanics
-only. Reproducible commands, expected observations and what to save are in
-docs/work5/INSTALL.md. Engineering checks do not close Direction state.
+Not obtained. Executor engineering checks are separate from PROBA completion in
+the owner's words. Binding fresh physical G5 must refute this exact version against
+all three Work 6 done_when. Work 5 G5 applies only to unchanged prior claims/inputs.
+Setup smoke was in-session setup verification, not feature review or G5.
+T5/CALL/M0 remain open in Direction; no light-close or successor CALL asserted.
 
 ## next
 
 solmax
 
-Return RESULT, exact commits/evidence and docs/work5/HOME.md with both independent
-G5 reports to the separate Direction session. Required binding evidence is now
-available; T4/open_call/M0 remain unchanged until a valid Direction RESULT is applied.
-Product issues no successor Direction CALL.
-
-| ID | Answerer and decision point / remaining work | rewrites |
-|---|---|---|
-| W19 | Product PLAN before Work 5: acceptance effect, identity, literal replay/stale/collision/receipt. PLAN before Work 7: Result/next unit. | importer/receipts/linkage/failures/migrations; cheap reversal unproved |
-| W20 | Product PLAN before import: verified Work 4 refs and file/DB/orphan/repair/rebuild/availability. PLAN before Work 7: continuation. | refs/recovery/evidence/migrations |
-| W21 | Product PLAN before delivery: actual exact console/current rights. PLAN before Works 6/7: context/Result channels. | adapters/permissions; decision not owner runtime PASS |
-| W22 | Product PLAN before import refs: version/hash/global-source freshness. PLAN before Work 6: scope/dependencies/budget/delivered manifest. | snapshot/context/tests; duties retained |
-| W23 | PLAN before Works 6/8: exact input and real separate five-fact response in Work 8. | delivery/demo; unprovable cleanliness is blocker |
-| W24 | Product PLAN before Work 5: Handoff 1/request 3/schema 5/UTF-8/CLI/explicit migration. | mechanics/tests/migrations; meaning returns W19–W22 |
-| W25 | Product PLAN before Work 5: one fictional graph with valid/duplicate/stale/foreign/unauthorized fixtures. PLAN before Works 6/8: context/demo. | fixtures/tests/demo; no second full Process |
-| W26 | Product PLAN before Work 5 verified local base/ref/checkout/install. Later admission: permanent folder/hosting/independent external install-upgrade. | package/layout/docs |
-| W27 | Product PLAN before Work 5 consumer: versioned Core Handoff/read seams. Later PLAN per consumer; E1–E12 retained, E4/E5/E7/E12 have no invented direct M0 API. | Core/data/consumer migrations; M1+ not prerequisite |
+HOME receives this full Product RESULT and exact commit/evidence for fresh binding
+Work 6 G5 and subsequent Direction decision. Work 7–8 do not begin here.
+W19–W27 remain individually assigned in docs/work6/PLAN.md: resolved choice,
+remaining answerer, decision point and rewrites. Result/next, continuation/recovery,
+future consumer boundaries and actual clean-session proof remain with their
+separately admitted Works.
 
 END_OF_FILE: RESULT.md

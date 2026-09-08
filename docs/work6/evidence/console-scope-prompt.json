@@ -1,0 +1,79 @@
+{
+  "workspace_path": "C:/Users/Anton/AppData/Local/Temp/zaratustra-work6-_0caf231/workspace",
+  "current": {
+    "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+    "state_revision": 11,
+    "records": [
+      {
+        "id": "ae7eca56-fd16-41ad-b262-2981468b922e",
+        "revision": 3,
+        "created_at": "2026-09-08T04:03:30.216247Z",
+        "kind": "artifact",
+        "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+        "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+        "title": "Observation draft",
+        "status": "registered",
+        "active_version": "75a8c7b3-3f17-4a50-a777-c70f3515bfd8"
+      },
+      {
+        "id": "b0257ea3-6179-4ac2-95a2-de033bf98078",
+        "revision": 1,
+        "created_at": "2026-09-08T04:03:30.216247Z",
+        "kind": "event",
+        "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+        "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+        "action": "initial_records_created",
+        "actor": "local-invocation",
+        "basis": "explicit-workspace-bootstrap",
+        "product_version": "0.2.0",
+        "state_revision": 1,
+        "affected_ids": [
+          "bae978a9-a181-4368-be55-b1837fd47747",
+          "56785bef-c147-4236-b12a-cad24845567a",
+          "ae7eca56-fd16-41ad-b262-2981468b922e"
+        ]
+      },
+      {
+        "id": "bae978a9-a181-4368-be55-b1837fd47747",
+        "revision": 1,
+        "created_at": "2026-09-08T04:03:30.216247Z",
+        "kind": "process",
+        "title": "Fictional observatory"
+      },
+      {
+        "id": "56785bef-c147-4236-b12a-cad24845567a",
+        "revision": 11,
+        "created_at": "2026-09-08T04:03:30.216247Z",
+        "kind": "work",
+        "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+        "goal": "Describe an imaginary moon",
+        "expected_result": "A short fictional observation",
+        "acceptance": [
+          "The observation is saved"
+        ],
+        "boundaries": [
+          "Fictional data only"
+        ],
+        "budget": "One short local session",
+        "status": "ready",
+        "authority_scope": "work_metadata_and_artifact",
+        "context_handles": [],
+        "dependencies": [],
+        "executor_requirements": [
+          "reasoning",
+          "coding"
+        ]
+      }
+    ]
+  },
+  "request": {
+    "version": 1,
+    "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+    "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+    "process_id": "f7b78864-bc23-44ea-94c7-ed84dd5d6d17",
+    "expected_revision": 11,
+    "max_bytes": 65536,
+    "references": []
+  },
+  "request_sha256": "5bca7ede12c7b18340cb22a13a01d1f2d5fd48d2a3376c364639b349befe2cd9"
+}

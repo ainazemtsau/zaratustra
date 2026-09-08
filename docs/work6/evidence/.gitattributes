@@ -1,0 +1,5 @@
+*.stdout -text -whitespace
+*.stderr -text -whitespace
+*.patch -text -whitespace
+*.json -text -whitespace
+*.txt -text -whitespace

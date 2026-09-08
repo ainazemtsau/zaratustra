@@ -1,0 +1,15 @@
+{
+  "command": [
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\venv\\Scripts\\python.exe",
+    "-I",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\exercise.py",
+    "--exercise",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231",
+    "--source",
+    "C:\\projects\\zaratustra\\_scratch\\work6-context"
+  ],
+  "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\\unrelated-cwd",
+  "exit": 0,
+  "stdout": "PASS: installed context and 14 hidden checks; trial=C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-_0caf231\n",
+  "stderr": ""
+}

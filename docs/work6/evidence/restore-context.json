@@ -1,0 +1,13 @@
+{
+  "command": [
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-restore-runtime-2sclf4if\\Scripts\\python.exe",
+    "-I",
+    "-c",
+    "from pathlib import Path\nimport sys\nfrom zaratustra.core import ContextQuery, prepare_authorization, authorize_local, open_work\nroot = Path(sys.argv[1])\nworkspace = root / \"workspace\"\nquery = ContextQuery.model_validate_json((root / \"query.json\").read_bytes())\ncaller = authorize_local(prepare_authorization(workspace, query), channel=\"local-chat\",\n    actor=\"executor-restore-fixture\", source_ref=\"Work6-CALL:simulated-prior-permission\")\nsys.stdout.buffer.write(open_work(workspace, query, caller).output)\n",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-restore-x6gm4klu"
+  ],
+  "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-restore-x6gm4klu\\unrelated-cwd",
+  "exit": 0,
+  "stdout_sha256": "438bf8af803b20763c9e904097c7f5f250e2b06f34928720535d7e903604df85",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

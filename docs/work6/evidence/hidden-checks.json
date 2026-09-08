@@ -1,0 +1,209 @@
+[
+  {
+    "case": "no-permission",
+    "error": "permission_denied: Separate trusted local authorization required",
+    "query": {
+      "version": 1,
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "expected_revision": 11,
+      "max_bytes": 65536,
+      "references": []
+    },
+    "before_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+    "after_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24"
+  },
+  {
+    "case": "stale",
+    "error": "conflict: Context expected revision is not current; rebuild explicitly",
+    "query": {
+      "version": 1,
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "expected_revision": 10,
+      "max_bytes": 65536,
+      "references": []
+    },
+    "before_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+    "after_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24"
+  },
+  {
+    "case": "overflow",
+    "error": "budget_exceeded: Mandatory output requires 12320 bytes; allowed 12319; no output",
+    "query": {
+      "version": 1,
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "expected_revision": 11,
+      "max_bytes": 12319,
+      "references": []
+    },
+    "before_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+    "after_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24"
+  },
+  {
+    "case": "foreign-process",
+    "error": "scope: Process is outside this Work",
+    "query": {
+      "version": 1,
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "process_id": "c9b827c9-f397-4b79-bdef-a433be88523a",
+      "expected_revision": 11,
+      "max_bytes": 65536,
+      "references": []
+    },
+    "before_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+    "after_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24"
+  },
+  {
+    "case": "foreign-artifact",
+    "error": "scope: Referenced Artifact is outside this Work",
+    "query": {
+      "version": 1,
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "expected_revision": 11,
+      "max_bytes": 65536,
+      "references": [
+        {
+          "artifact_id": "61aa3719-3eb0-40f4-ad27-9b8fef48cece",
+          "version_id": "27efbad4-fba1-4446-be91-33a076215ad9",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    "before_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+    "after_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24"
+  },
+  {
+    "case": "revoked",
+    "error": "permission_denied: Work is terminal, not ready or lacks current rights",
+    "query": {
+      "version": 1,
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "expected_revision": 12,
+      "max_bytes": 65536,
+      "references": []
+    },
+    "before_db_sha256": "39148a868ac1f762f282c677244db5edc90afa4e2a010de6dafbe4889c8ceac4",
+    "after_db_sha256": "39148a868ac1f762f282c677244db5edc90afa4e2a010de6dafbe4889c8ceac4"
+  },
+  {
+    "case": "terminal",
+    "error": "permission_denied: Work is terminal, not ready or lacks current rights",
+    "query": {
+      "version": 1,
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "expected_revision": 12,
+      "max_bytes": 65536,
+      "references": []
+    },
+    "before_db_sha256": "476541f81c30daab8a9e8910248dd2e5e23422de5943a558918bca2e25d6bb9f",
+    "after_db_sha256": "476541f81c30daab8a9e8910248dd2e5e23422de5943a558918bca2e25d6bb9f"
+  },
+  {
+    "case": "missing",
+    "error": "content_unavailable: Registered content is not a regular file",
+    "query": {
+      "version": 1,
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "expected_revision": 11,
+      "max_bytes": 65536,
+      "references": []
+    },
+    "before_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+    "after_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24"
+  },
+  {
+    "case": "corrupt",
+    "error": "content_changed: Content differs from the confirmed digest/size",
+    "query": {
+      "version": 1,
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "expected_revision": 11,
+      "max_bytes": 65536,
+      "references": []
+    },
+    "before_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+    "after_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24"
+  },
+  {
+    "case": "during-decision",
+    "error": "conflict: Context expected revision is not current; rebuild explicitly",
+    "query": {
+      "version": 1,
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "expected_revision": 11,
+      "max_bytes": 65536,
+      "references": []
+    },
+    "before_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+    "after_db_sha256": "b085fededed305deb0a315f49a2bb8c147d974af0da467929dab6d32bfe4bc4c"
+  },
+  {
+    "case": "during-rights",
+    "error": "permission_denied: Work is terminal, not ready or lacks current rights",
+    "query": {
+      "version": 1,
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "expected_revision": 11,
+      "max_bytes": 65536,
+      "references": []
+    },
+    "before_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+    "after_db_sha256": "4de9cdf45dbf8aa757e737a76b33d19b11d5ec7ef43cdaeee0d5446bc842953b"
+  },
+  {
+    "case": "during-requirements",
+    "error": "conflict: Context expected revision is not current; rebuild explicitly",
+    "query": {
+      "version": 1,
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "expected_revision": 11,
+      "max_bytes": 65536,
+      "references": []
+    },
+    "before_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+    "after_db_sha256": "2634aba6ab69ddc6a00e3a9700e96ab0f3db1a4ea8408b025280ff2b0c4f291b"
+  },
+  {
+    "case": "during-bytes",
+    "error": "content_unavailable: Registered content is not a regular file",
+    "query": {
+      "version": 1,
+      "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "expected_revision": 11,
+      "max_bytes": 65536,
+      "references": []
+    },
+    "before_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+    "after_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24"
+  },
+  {
+    "case": "foreign-text-link",
+    "sentinel_sha256": "b340c22567b36fe8dea91b14c57e0af840fada83477a28a5ae25187e28aec75f",
+    "output_sha256": "bb51f4e6f95ce6e49219544d55c353907a7229b2018e31fbacbd55c53eec7259",
+    "foreign_content_disclosed": false
+  }
+]

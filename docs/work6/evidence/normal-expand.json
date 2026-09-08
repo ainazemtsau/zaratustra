@@ -1,0 +1,9 @@
+{
+  "command": "PowerShell Expand-Archive",
+  "path": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-expand-604f5759-049d-4282-b783-14b37c32d340",
+  "files": 75,
+  "directories": 72,
+  "schema_version": 5,
+  "main_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+  "verdict": "PASS"
+}

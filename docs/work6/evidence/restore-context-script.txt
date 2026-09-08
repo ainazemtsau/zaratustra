@@ -1,0 +1,9 @@
+from pathlib import Path
+import sys
+from zaratustra.core import ContextQuery, prepare_authorization, authorize_local, open_work
+root = Path(sys.argv[1])
+workspace = root / "workspace"
+query = ContextQuery.model_validate_json((root / "query.json").read_bytes())
+caller = authorize_local(prepare_authorization(workspace, query), channel="local-chat",
+    actor="executor-restore-fixture", source_ref="Work6-CALL:simulated-prior-permission")
+sys.stdout.buffer.write(open_work(workspace, query, caller).output)

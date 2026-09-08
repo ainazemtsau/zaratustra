@@ -1,0 +1,6 @@
+{
+  "checks": 14,
+  "before_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+  "after_db_sha256": "9069fd067bfd792da663d2281508e0cb12bcd3ebd6e9fed991ffb9830a3d2c24",
+  "acceptance": "Executor checks; no owner runtime, clean chat or binding G5 verdict"
+}

@@ -1,0 +1,13 @@
+{
+  "command": [
+    "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+    "pip",
+    "check",
+    "--python",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work6-restore-runtime-2sclf4if\\Scripts\\python.exe"
+  ],
+  "cwd": "C:\\projects\\zaratustra\\_scratch\\work6-context",
+  "exit": 0,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "f2dd8f8d620e1998ee87eecc6936f8ee9f846478ae90a62033a357dec060fd2f"
+}
