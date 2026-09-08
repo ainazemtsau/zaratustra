@@ -1,0 +1,26 @@
+commit ce8ae68cf555f05864c9dd6b82cfbfd9babe61b1
+Author:     Anton <antoninozemcev@gmail.com>
+AuthorDate: Tue Sep 8 06:36:28 2026 +0300
+Commit:     Anton <antoninozemcev@gmail.com>
+CommitDate: Tue Sep 8 06:36:28 2026 +0300
+
+    Add initial Core records and explicit schema v2 migration for Work 2
+
+ AGENTS.md                               |   8 +-
+ README.md                               |  16 ++-
+ docs/work2/INSTALL.md                   |  88 +++++++++++++
+ docs/work2/RECORDS.md                   | 122 ++++++++++++++++++
+ pyproject.toml                          |   4 +-
+ src/zaratustra/AGENTS.md                |   2 +-
+ src/zaratustra/cli/AGENTS.md            |   6 +-
+ src/zaratustra/cli/__init__.py          |  57 ++++++++-
+ src/zaratustra/core/AGENTS.md           |  15 +--
+ src/zaratustra/core/__init__.py         |  34 ++++-
+ src/zaratustra/core/migration_v2.py     |  35 ++++++
+ src/zaratustra/core/records.py          | 212 ++++++++++++++++++++++++++++++++
+ src/zaratustra/core/workspace.py        | 114 ++++++++++++-----
+ tests/zaratustra/core/test_records.py   | 196 +++++++++++++++++++++++++++++
+ tests/zaratustra/core/test_workspace.py |   2 +-
+ tools/probe_records.py                  | 204 ++++++++++++++++++++++++++++++
+ uv.lock                                 |   2 +-
+ 17 files changed, 1057 insertions(+), 60 deletions(-)

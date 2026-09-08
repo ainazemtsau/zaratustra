@@ -1,0 +1,76 @@
+{
+  "source_commit": "ce8ae68cf555f05864c9dd6b82cfbfd9babe61b1",
+  "version": "0.2.0",
+  "wheel_sha256": "a50f0f2d195b33a5eac08d9dd8a2479b9863cd029af703341781fb0c63d5d53c",
+  "retained_trial": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work2-8cv9m8jt",
+  "installed_command": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work2-8cv9m8jt\\venv\\Scripts\\zara.exe",
+  "workspace": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work2-8cv9m8jt\\workspace",
+  "accepted_inputs_unchanged": {
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\solmax-work1-accept-20260907-a1\\retained-trial\\workspace\\.zara\\state.sqlite3": "ec4fd2c045922578fa1344a5c126c94b0b929215efd57e93b773baf3785ca207",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\solmax-work1-accept-20260907-a1\\retained-trial\\zaratustra-0.1.0-py3-none-any.whl": "4f71d1b2aff54d8680d22e01cb58483681a69969c3c3501667e2bb5aabb9482c"
+  },
+  "database_sha256_after_reread": "cd8169923aa0836bf6964537f2ea59543a44fffec3d4c4d7c2104ab221759de0",
+  "snapshot": {
+    "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+    "state_revision": 1,
+    "records": [
+      {
+        "id": "54f63a72-759c-470c-9ba5-c08d47a25066",
+        "revision": 1,
+        "created_at": "2026-09-08T03:37:06.194216Z",
+        "kind": "artifact",
+        "process_id": "79d30aa9-4ccd-4940-ac7c-cb3d7ce5e323",
+        "work_id": "945545ed-3c7d-46d0-80df-6314c08916a3",
+        "title": "Observation draft",
+        "status": "declared",
+        "active_version": null
+      },
+      {
+        "id": "8d160b2c-69e4-48d1-984c-e55dec06bfa7",
+        "revision": 1,
+        "created_at": "2026-09-08T03:37:06.194216Z",
+        "kind": "event",
+        "process_id": "79d30aa9-4ccd-4940-ac7c-cb3d7ce5e323",
+        "work_id": "945545ed-3c7d-46d0-80df-6314c08916a3",
+        "action": "initial_records_created",
+        "actor": "local-invocation",
+        "basis": "explicit-workspace-bootstrap",
+        "product_version": "0.2.0",
+        "state_revision": 1,
+        "affected_ids": [
+          "79d30aa9-4ccd-4940-ac7c-cb3d7ce5e323",
+          "945545ed-3c7d-46d0-80df-6314c08916a3",
+          "54f63a72-759c-470c-9ba5-c08d47a25066"
+        ]
+      },
+      {
+        "id": "79d30aa9-4ccd-4940-ac7c-cb3d7ce5e323",
+        "revision": 1,
+        "created_at": "2026-09-08T03:37:06.194216Z",
+        "kind": "process",
+        "title": "Fictional observatory"
+      },
+      {
+        "id": "945545ed-3c7d-46d0-80df-6314c08916a3",
+        "revision": 1,
+        "created_at": "2026-09-08T03:37:06.194216Z",
+        "kind": "work",
+        "process_id": "79d30aa9-4ccd-4940-ac7c-cb3d7ce5e323",
+        "goal": "Describe an imaginary moon",
+        "expected_result": "A short fictional observation",
+        "acceptance": [
+          "The observation is saved"
+        ],
+        "boundaries": [
+          "Fictional data only"
+        ],
+        "budget": "One short local session",
+        "status": "draft",
+        "authority_scope": "none",
+        "context_handles": [],
+        "dependencies": [],
+        "executor_requirements": []
+      }
+    ]
+  }
+}
