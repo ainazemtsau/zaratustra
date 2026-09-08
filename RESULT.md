@@ -12,7 +12,8 @@ owner text and provenance are saved with one revision/event/receipt effect.
 The three done_when have local engineering PASS in the declared SQLite/I/O model.
 First binding fresh physical G5 at 55912da264dab923eddc8f5545b78b0e91b3a369 returned
 FAIL/F1: retained backup omitted empty directories. Importer/runtime checks passed.
-F1 is repaired locally with a new archive; independent artifact recheck is pending.
+F1 is repaired in df79b2fc385bd2db5747968bc09422a580d98559. The separate reviewer
+verified that commit and the new archive: F1 PASS; aggregate Work5 PASS/PASS/PASS.
 No owner runtime acceptance is claimed.
 Product does not close T4/CALL/M0, issue a successor CALL or start Work 6.
 Direction OS was read only. Work 4 G5 does not verify new Handoff behavior.
@@ -34,7 +35,9 @@ Original locator-only commit: 55912da264dab923eddc8f5545b78b0e91b3a369.
 The subsequent F1 repair changes only a development packer/regression test,
 new backup/evidence and handback documentation. Source under src/, wheel, locked
 dependencies and every old evidence file remain unchanged. The current repair
-commit contains this report and docs/work5/F1-REPAIR.md. No remote/publication.
+commit is df79b2fc385bd2db5747968bc09422a580d98559. This subsequent handback-only
+update records the received independent verdict; reviewed implementation, packer,
+test, backup and evidence bytes remain unchanged. No remote/publication.
 Prior RESULT remains at accepted Git base and in the prior durable Work 4 evidence.
 
 New Handoff 1 / request 3 / explicit DB migration 5; existing default migrate target
@@ -114,7 +117,18 @@ This separate physical reviewer passed the importer/authority checks, native 98
 tests and 12 independent negative-case categories; overall FAIL was solely F1.
 The author reproduced F1, then verified the repaired archive through installed CLI.
 Detailed invariant, sibling sweep and reproduction: docs/work5/F1-REPAIR.md.
-These local repair checks do not replace the pending independent F1 recheck.
+Independent recheck: C:/Users/Anton/Documents/Codex/2026-09-08/zaratustra-work5-fresh-g5/outputs/G5-F1-RECHECK.md.
+Checked commit df79b2fc385bd2db5747968bc09422a580d98559: F1 PASS and aggregate
+PASS/PASS/PASS. The reviewer independently ran 14 restored workspace/content checks,
+four expected refusals from the old archive, and the full native gate (99 PASS).
+85 previous files and all 16 installed Python files matched the first G5; its
+runtime negative-case evidence was reused explicitly after byte comparison.
+Recheck report SHA-256:
+de6c9cdcb0ddcfcb0ce79ca2d3b55a972b5eca016372efcf9a1dcbf538e4074c.
+Recheck bundle: same outputs directory, g5-f1-recheck-evidence.zip; SHA-256
+afeab5227162e4d99b1bf485ed131afc103bd0072483b61d02c519cc9cc97d03.
+The original FAIL report remains unchanged. This records external binding evidence,
+not a binding verdict produced by the author or an owner runtime acceptance.
 
 ## assumptions
 
@@ -165,7 +179,9 @@ line-length excess; it was corrected before the final native check.
 ## manual-acceptance
 
 No owner runtime words or Work 8 demonstration occurred. A separate binding fresh
-G5 returned FAIL/F1; this authoring session supplies local repair evidence only.
+G5 returned FAIL/F1, then independently rechecked the repaired candidate with
+PASS/PASS/PASS. This authoring session supplies local repair evidence and records
+the separate review; it does not grant owner runtime acceptance.
 Console approvals are executor development actions on fictional copies under this
 CALL, never fabricated owner acceptance. W21/plan decisions authorize mechanics
 only. Reproducible commands, expected observations and what to save are in
@@ -175,9 +191,10 @@ docs/work5/INSTALL.md. Engineering checks do not close Direction state.
 
 solmax
 
-Return RESULT, exact commits/evidence and docs/work5/HOME.md for independent F1
-artifact recheck alongside the first G5's unchanged runtime evidence. Keep T4/open_call/M0 open until required
-close evidence exists. Product issues no successor Direction CALL.
+Return RESULT, exact commits/evidence and docs/work5/HOME.md with both independent
+G5 reports to the separate Direction session. Required binding evidence is now
+available; T4/open_call/M0 remain unchanged until a valid Direction RESULT is applied.
+Product issues no successor Direction CALL.
 
 | ID | Answerer and decision point / remaining work | rewrites |
 |---|---|---|

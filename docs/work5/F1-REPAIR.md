@@ -55,13 +55,18 @@ strict types, two dependency boundaries, wheel/sdist and report structure.
 The earlier first scoped lint attempt found one overlong line, corrected before
 this full run. No product behavior or old evidence was changed for verification.
 
-## Independent recheck required
+## Independent recheck received
 
-The local checks above are executor evidence. The original binding FAIL remains
-until the separate reviewer verifies the exact new commit/artifact. Recheck normal
-extraction and installed reads, all files/directories, unchanged runtime/wheel and
-the original archive. Existing runtime claims may reuse the first G5 after exact
-source comparison. Record the new verdict separately, preserving G5-REPORT.md.
+The local checks above are executor evidence. The separate reviewer verified repair
+commit df79b2fc385bd2db5747968bc09422a580d98559 and returned F1 PASS with aggregate
+Work5 PASS/PASS/PASS. Report:
+C:/Users/Anton/Documents/Codex/2026-09-08/zaratustra-work5-fresh-g5/outputs/G5-F1-RECHECK.md.
+SHA-256: de6c9cdcb0ddcfcb0ce79ca2d3b55a972b5eca016372efcf9a1dcbf538e4074c.
+Independent normal extraction, 14 installed workspace/content checks and full
+native 99 tests passed; old archive still failed the four expected control commands.
+The original FAIL remains unchanged for its original candidate. Runtime evidence
+was reused only after exact source/wheel/evidence comparison. This handback-only
+update records that received verdict and changes no reviewed implementation or ZIP.
 This Product repair neither closes T4/open_call/M0 nor starts Work6; HOME is solmax.
 No owner runtime words or full Work8 demonstration are claimed.
 

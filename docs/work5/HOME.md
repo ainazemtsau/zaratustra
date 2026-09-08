@@ -1,7 +1,8 @@
 # Work 5 — HOME solmax
 
 Product 0.5.0 received binding fresh G5 FAIL/F1 for retained backup layout.
-The importer/runtime passed. F1 is repaired locally; independent artifact recheck is pending.
+The importer/runtime passed. F1 repair df79b2fc385bd2db5747968bc09422a580d98559
+received independent F1 PASS and aggregate Work5 PASS/PASS/PASS.
 File/stdin accepted_result import, literal stale/duplicate behavior and actual
 console/current-authority checks have local engineering evidence. Owner runtime
 PASS, T4/CALL/M0 close and Work 6 start are not claimed or performed.
@@ -17,7 +18,8 @@ Implementation: e1b831bfbb1bebb6faad27e41c0960da6c28fc99
 Exact exercised harness: 3bd46cfdcb71ec4df403034f146e66492239500d
 Report/evidence: e5f6c2b5621608069d8dfa66f1185b02f3060778.
 Original reviewed locator: 55912da264dab923eddc8f5545b78b0e91b3a369.
-Current F1 repair commit contains this HOME and F1-REPAIR.md; runtime and old evidence are unchanged.
+F1 repair commit: df79b2fc385bd2db5747968bc09422a580d98559.
+This subsequent handback-only update records the independent verdict; reviewed bytes are unchanged.
 No Product remote or publication. Primary checkout retains its old branch.
 
 Final trial: C:/Users/Anton/AppData/Local/Temp/zaratustra-work5-96nw94ii
@@ -45,7 +47,13 @@ has a missing Artifact file and must not be used as a working base.
 Both no-automation owner acknowledgments remain. The owner requested a separate
 fresh G5 task. Its original report is at
 C:/Users/Anton/Documents/Codex/2026-09-08/zaratustra-work5-fresh-g5/outputs/G5-REPORT.md.
-Return the fixed artifact to that independent reviewer; retain the original FAIL evidence.
+Independent recheck report: same directory, G5-F1-RECHECK.md.
+Report SHA-256: de6c9cdcb0ddcfcb0ce79ca2d3b55a972b5eca016372efcf9a1dcbf538e4074c.
+Evidence: same directory, g5-f1-recheck-evidence.zip.
+Evidence SHA-256: afeab5227162e4d99b1bf485ed131afc103bd0072483b61d02c519cc9cc97d03.
+14 independent restored CLI checks and full native 99 PASS; prior runtime proof
+reused after exact byte comparison. Original FAIL evidence remains unchanged.
+Return both reports to a separate Direction session for a valid work/close RESULT.
 
 next: solmax
 
