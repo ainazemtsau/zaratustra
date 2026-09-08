@@ -13,6 +13,8 @@ from uuid import UUID
 from pydantic import ValidationError
 
 from zaratustra.core import (
+    MAX_HANDOFF_BYTES,
+    Handoff,
     InitialRecords,
     MutationRequest,
     ProjectionRebuildError,
@@ -20,11 +22,13 @@ from zaratustra.core import (
     WorkspaceError,
     apply_mutation,
     create_initial_records,
+    handoff_request,
     init_workspace,
     inspect_artifacts,
     migrate_workspace,
     prepare_authorization,
     read_artifact,
+    read_handoffs,
     read_history,
     read_projection_status,
     read_receipt,
@@ -42,13 +46,13 @@ def main(argv: list[str] | None = None) -> int:
     for name, description in (
         ("init", "Initialize an empty directory or read its existing workspace."),
         ("status", "Read persisted workspace metadata without changing it."),
-        ("migrate", "Explicitly migrate an initialized workspace to schema 4."),
+        ("migrate", "Explicit migration; use --to 5 for Handoff storage (default 4)."),
         ("history", "Read the owner-local mutation audit; not Work context."),
     ):
         command = commands.add_parser(name, help=description, description=description)
         command.add_argument("path", nargs="?", default=".", type=Path)
         if name == "migrate":
-            command.add_argument("--to", type=int, choices=(2, 3, 4), default=4)
+            command.add_argument("--to", type=int, choices=(2, 3, 4, 5), default=4)
     for name in ("mutate", "receipt"):
         command = commands.add_parser(name, help="Confirm an exact internal operation/query.")
         command.add_argument("path", type=Path)
@@ -72,6 +76,15 @@ def main(argv: list[str] | None = None) -> int:
     for name in ("status", "rebuild"):
         command = projection_commands.add_parser(name)
         command.add_argument("path", type=Path)
+    handoff = commands.add_parser("handoff", help="Import or inspect saved accepted results.")
+    handoff_commands = handoff.add_subparsers(dest="handoff_command", required=True)
+    handoff_commands.add_parser("schema", help="Print the portable Handoff JSON schema.")
+    handoff_list = handoff_commands.add_parser("list", help="Owner-local saved acceptance audit.")
+    handoff_list.add_argument("path", type=Path)
+    handoff_import = handoff_commands.add_parser("import", help="Confirm a file/stdin Handoff.")
+    handoff_import.add_argument("path", type=Path)
+    handoff_import.add_argument("source", help="UTF-8 JSON file, or '-' for stdin until EOF.")
+    handoff_import.add_argument("--expected-revision", type=int, help="Explicit replay revision.")
     records = commands.add_parser("records", help="Create initial drafts or read stored records.")
     record_commands = records.add_subparsers(dest="records_command", required=True)
     read = record_commands.add_parser(
@@ -88,7 +101,31 @@ def main(argv: list[str] | None = None) -> int:
     create.add_argument("--boundary", action="append", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == "mutate":
+        if args.command == "handoff":
+            if args.handoff_command == "schema":
+                output = json.dumps(Handoff.model_json_schema(), indent=2)
+            elif args.handoff_command == "list":
+                output = json.dumps(
+                    [item.model_dump(mode="json") for item in read_handoffs(args.path)], indent=2
+                )
+            else:
+                from_stdin = args.source == "-"
+                if from_stdin:
+                    content = sys.stdin.buffer.read(MAX_HANDOFF_BYTES + 1)
+                    source_ref = "stdin"
+                else:
+                    source = Path(args.source).expanduser().resolve()
+                    with source.open("rb") as stream:
+                        content = stream.read(MAX_HANDOFF_BYTES + 1)
+                    source_ref = source.as_posix()
+                request = handoff_request(
+                    content, source_ref=source_ref, expected_revision=args.expected_revision
+                )
+                caller = confirm_on_console(
+                    prepare_authorization(args.path, request), separate_terminal=from_stdin
+                )
+                output = apply_mutation(args.path, request, caller).model_dump_json(indent=2)
+        elif args.command == "mutate":
             request = MutationRequest.model_validate_json(args.request_json)
             caller = confirm_on_console(prepare_authorization(args.path, request))
             content = args.content_file.read_bytes() if args.content_file is not None else None

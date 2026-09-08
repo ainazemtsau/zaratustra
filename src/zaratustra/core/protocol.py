@@ -27,6 +27,7 @@ Operation = Literal[
     "authorize_artifact",
     "publish_artifact",
     "restore_artifact",
+    "accept_handoff",
 ]
 ARTIFACT_OPERATIONS = ("authorize_artifact", "publish_artifact", "restore_artifact")
 V2_FIELDS = {
@@ -37,6 +38,7 @@ V2_FIELDS = {
     "restore_version",
     "references",
 }
+V3_FIELDS = {"handoff", "delivery"}
 
 
 class ArtifactReference(RecordModel):
@@ -61,8 +63,36 @@ class ArtifactVersion(RecordModel):
         return f"artifacts/{self.artifact_id}/{self.id}.blob"
 
 
+HandoffText = Annotated[str, Field(strict=True, min_length=1, max_length=4096)]
+
+
+class Handoff(RecordModel):
+    """Portable accepted-result data. Every field is untrusted, including owner text."""
+
+    kind: Literal["handoff"]
+    version: Annotated[int, Field(strict=True, ge=1, le=1)]
+    handoff_id: UUID
+    workspace_id: UUID
+    process: UUID
+    related_work: UUID
+    intent: Literal["accepted_result"]
+    source_revision: Revision
+    result: ArtifactReference
+    basis: Annotated[tuple[ArtifactReference, ...], Field(max_length=32)] = ()
+    provenance: HandoffText
+    owner_instruction: HandoffText | None = None
+    constraints: Annotated[tuple[HandoffText, ...], Field(max_length=32)] = ()
+    open_questions: Annotated[tuple[HandoffText, ...], Field(max_length=32)] = ()
+    created_by: Annotated[str, Field(strict=True, min_length=1, max_length=256)]
+
+
+class HandoffDelivery(RecordModel):
+    source_ref: HandoffText
+    input_sha256: Digest
+
+
 class MutationRequest(RecordModel):
-    version: Annotated[int, Field(strict=True, ge=1, le=2)] = 1
+    version: Annotated[int, Field(strict=True, ge=1, le=3)] = 1
     operation_id: UUID
     workspace_id: UUID
     work_id: UUID
@@ -77,10 +107,15 @@ class MutationRequest(RecordModel):
     content_size: Annotated[int, Field(strict=True, ge=0)] | None = None
     restore_version: UUID | None = None
     references: tuple[ArtifactReference, ...] = ()
+    handoff: Handoff | None = None
+    delivery: HandoffDelivery | None = None
 
     @model_serializer(mode="wrap")
     def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         value: dict[str, Any] = handler(self)
+        if self.version < 3 and all(getattr(self, name) is None for name in V3_FIELDS):
+            for name in V3_FIELDS:
+                value.pop(name, None)
         if self.version == 1 and all(getattr(self, name) in (None, ()) for name in V2_FIELDS):
             # Preserve old request JSON and all stored authorization/fingerprint hashes.
             for name in V2_FIELDS:
@@ -89,6 +124,20 @@ class MutationRequest(RecordModel):
 
     @model_validator(mode="after")
     def operation_payload(self) -> Self:
+        if self.operation == "accept_handoff":
+            handoff = self.handoff
+            if self.version != 3 or handoff is None or self.delivery is None:
+                raise ValueError("Handoff import requires request 3, Handoff and delivery")
+            if (
+                (self.operation_id, self.workspace_id, self.work_id)
+                != (handoff.handoff_id, handoff.workspace_id, handoff.related_work)
+                or self.references != (handoff.result, *handoff.basis)
+                or self.provenance != handoff.provenance.strip()
+                or self.artifact_references
+            ):
+                raise ValueError("Mutation must preserve the complete Handoff meaning")
+        elif self.handoff is not None or self.delivery is not None or self.version == 3:
+            raise ValueError("Only accept_handoff uses request 3/Handoff/delivery")
         if self.operation != "set_work_requirements" and self.requirements:
             raise ValueError("Only set_work_requirements accepts requirements")
         if self.version == 1 and (
@@ -123,6 +172,8 @@ def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
     excluded = set(exclude or ())
     if isinstance(value, MutationRequest) and value.version == 1:
         excluded |= V2_FIELDS
+    if isinstance(value, MutationRequest) and value.version < 3:
+        excluded |= V3_FIELDS
     return json.dumps(
         value.model_dump(mode="json", exclude=excluded),
         sort_keys=True,
@@ -133,9 +184,10 @@ def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
 
 
 def fingerprint(request: MutationRequest) -> str:
-    return hashlib.sha256(
-        canonical(request, exclude={"operation_id", "expected_revision"}).encode("utf-8")
-    ).hexdigest()
+    excluded = {"operation_id", "expected_revision"}
+    if request.operation == "accept_handoff":
+        excluded.add("delivery")
+    return hashlib.sha256(canonical(request, exclude=excluded).encode("utf-8")).hexdigest()
 
 
 def authorization_digest(path: str, request: MutationRequest | ReceiptQuery) -> str:
@@ -177,6 +229,9 @@ def evolve_work(work: Work, request: MutationRequest) -> Work:
             change["status"] = "cancelled"
         elif request.operation == "authorize_artifact":
             change["authority_scope"] = "work_metadata_and_artifact"
+        elif request.operation == "accept_handoff":
+            if request.handoff is None or request.handoff.process != work.process_id:
+                raise ValueError("Handoff is outside this Work's Process")
         elif work.authority_scope != "work_metadata_and_artifact":
             raise ValueError("Work has no current Artifact permission")
     return Work.model_validate({**work.model_dump(), **change})
@@ -228,6 +283,10 @@ class MutationEvent(RecordModel):
             raise ValueError("Event state revision mismatch")
         if self.request.artifact_references or evolve_work(self.before, self.request) != self.after:
             raise ValueError("Event does not describe an admitted change")
+        if self.request.handoff is not None and (
+            self.request.handoff.source_revision != self.request.expected_revision
+        ):
+            raise ValueError("Accepted Handoff must have a current source revision")
         if self.request.operation == "publish_artifact":
             descriptor = self.artifact_version
             if descriptor is None or self.artifact_before is None:

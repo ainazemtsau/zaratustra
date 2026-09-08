@@ -1,6 +1,6 @@
 # Zaratustra
 
-Version **0.4.0**, Work 4: `zara init` creates a local workspace;
+Version **0.5.0**, Work 5: `zara init` creates a local workspace;
 `zara migrate` explicitly adds schema 4; `zara records create` stores initial
 Process, draft Work, declared Artifact and Event records with revisions.
 `zara status` and `zara records read` read persisted facts in later invocations.
@@ -21,7 +21,7 @@ build. The installation probe installs the wheel with locked runtime dependencie
 in a disposable environment outside checkout, runs the real `zara` executable in
 separate processes, then cleans up its own temporary folders.
 
-For the current run, follow [installation and walkthrough](docs/work4/INSTALL.md).
+For the current run, follow [installation and walkthrough](docs/work5/INSTALL.md).
 Run the installed commands in a newly created empty folder, or name that folder:
 
 ```text
@@ -59,10 +59,16 @@ registration and active version. `artifacts read` verifies bytes on every read;
 `restore_artifact` repairs exact registered content through the same Mutation API.
 `projections status` and `projections rebuild` inspect/recreate the deterministic
 overview from DB without another state change. These are owner-local inspection
-surfaces. Handoff, context, Result and next Work remain Works 5–8.
+surfaces. `zara migrate <workspace> --to 5` explicitly enables Handoff storage.
+`zara handoff import <workspace> <file>` (or `-` for UTF-8 stdin) obtains separate
+exact console confirmation and records accepted_result with provenance through
+the same Mutation API. `zara handoff list <workspace>` reads saved acceptances;
+`zara handoff schema` prints the portable JSON schema. A receipt records the prior
+effect, not late availability of referenced bytes. Context, submit_result and
+next Work remain Works 6–8.
 M0 is not closed; no personal workspace is selected.
 
-Read [lifecycle decisions and W19–W27](docs/work4/PLAN.md) before later work,
+Read [lifecycle decisions and W19–W27](docs/work5/PLAN.md) before later work,
 and [Product RESULT](RESULT.md) for exact commits and runtime evidence.
 Setup evidence remains under docs/setup/ as history. Windows is the observed
 platform; Linux/macOS and an independent participant's installation remain unverified.

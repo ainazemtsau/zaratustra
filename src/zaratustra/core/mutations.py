@@ -21,6 +21,7 @@ from .artifacts import (
     validate_bytes,
     verified_content,
 )
+from .handoffs import AcceptedHandoff
 from .projections import (
     ProjectionStatus,
     projection_status,
@@ -245,6 +246,30 @@ def _history(
         snapshot.records and current_artifact(snapshot).active_version is not None
     ):
         raise WorkspaceError("Artifact lifecycle requires schema 4")
+    imported = {
+        str(event.request.operation_id): (
+            str(event.id),
+            AcceptedHandoff(
+                handoff=event.request.handoff,
+                delivery=event.request.delivery,
+                confirmation=event.confirmation,
+                receipt=event_receipt(event),
+            ),
+        )
+        for event in events
+        if event.request.handoff is not None and event.request.delivery is not None
+    }
+    if connection.execute("PRAGMA user_version").fetchone()[0] >= 5:
+        saved = {
+            identity: (event_id, AcceptedHandoff.model_validate_json(body))
+            for identity, event_id, body in connection.execute(
+                "SELECT id, event_id, body FROM accepted_handoffs"
+            )
+        }
+        if saved != imported:
+            raise WorkspaceError("Accepted Handoff records do not match the committed history")
+    elif imported:
+        raise WorkspaceError("Handoff import requires schema 5")
     return MutationHistory(
         workspace_id=snapshot.workspace_id,
         state_revision=snapshot.state_revision,
@@ -296,6 +321,26 @@ def read_receipt(
         raise MutationError("not_found", "No committed operation in this Work")
 
 
+def read_handoffs(path: Path) -> tuple[AcceptedHandoff, ...]:
+    """Owner-local saved acceptance inspection, not a scoped Work context package."""
+    with workspace_connection(path) as (connection, info):
+        if info.schema_version < 5:
+            raise MutationError("schema", "Handoff storage requires explicit migration to 5")
+        history = _history(
+            connection, _read_records(connection, info.workspace_id), artifacts_enabled=True
+        )
+        return tuple(
+            AcceptedHandoff(
+                handoff=event.request.handoff,
+                delivery=event.request.delivery,
+                confirmation=event.confirmation,
+                receipt=event_receipt(event),
+            )
+            for event in history.events
+            if event.request.handoff is not None and event.request.delivery is not None
+        )
+
+
 def _mutate(
     connection: sqlite3.Connection,
     info: WorkspaceInfo,
@@ -305,6 +350,8 @@ def _mutate(
 ) -> MutationReceipt:
     if info.schema_version < 3 or (request.version == 2 and info.schema_version < 4):
         raise MutationError("schema", "Mutation requires explicit migration to 3/4")
+    if request.version == 3 and info.schema_version < 5:
+        raise MutationError("schema", "Handoff import requires explicit migration to 5")
     # 2. Current Work + authority, in the same write transaction as the effect.
     snapshot = _read_records(connection, info.workspace_id)
     confirmation = _caller(info.workspace, request, caller, snapshot)
@@ -329,6 +376,8 @@ def _mutate(
                 raise MutationError("collision", "Operation id already belongs to another intent")
             return stored
     # 5. Exact scoped references and bytes, before any DB/domain effect.
+    if request.handoff is not None and request.handoff.source_revision != snapshot.state_revision:
+        raise MutationError("conflict", "Handoff source revision is not current")
     if request.artifact_references:
         raise MutationError("unsupported_artifacts", "Use version 2 exact version/hash references")
     versions = read_versions(connection) if enabled else ()
@@ -411,6 +460,17 @@ def _mutate(
         "INSERT INTO mutation_receipts VALUES (?, ?, ?, ?)",
         (str(request.operation_id), str(event.id), intent, receipt.model_dump_json()),
     )
+    if request.handoff is not None and request.delivery is not None:
+        accepted = AcceptedHandoff(
+            handoff=request.handoff,
+            delivery=request.delivery,
+            confirmation=confirmation,
+            receipt=receipt,
+        )
+        connection.execute(
+            "INSERT INTO accepted_handoffs VALUES (?, ?, ?)",
+            (str(request.operation_id), str(event.id), accepted.model_dump_json()),
+        )
     _history(connection, _read_records(connection, info.workspace_id), artifacts_enabled=enabled)
     return receipt
 

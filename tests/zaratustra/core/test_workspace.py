@@ -52,7 +52,7 @@ def test_newer_schema_is_refused_without_rewriting(tmp_path: Path, command: obje
     info = init_workspace(tmp_path)
     # Deliberately invalid isolated fixture, never a repair of acceptance data.
     with closing(sqlite3.connect(info.database)) as connection:
-        connection.execute("PRAGMA user_version = 5")
+        connection.execute("PRAGMA user_version = 6")
     before = info.database.read_bytes()
     assert callable(command)
     with pytest.raises(WorkspaceError, match="Unsupported"):

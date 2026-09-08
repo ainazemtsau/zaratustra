@@ -2,7 +2,7 @@
 Public API is __init__.py: workspace/records, mutation and authorized receipt APIs,
 owner-local history, immutable models and errors. Core never imports CLI/local adapter.
 workspace.py owns checked transactions/layout/metadata; migrations.py retains released
-v1/v2/v3 migration bytes stay fixed; migration_v4.py adds version metadata only.
+v1/v2/v3/v4 migration bytes stay fixed; migration_v5.py adds accepted Handoff storage.
 records.py owns create-once bootstrap and record models; protocol.py owns operation
 and journal values; mutations.py owns the ONE post-bootstrap domain mutation path.
 Initial creation is one local bootstrap into an empty record store; it grants no rights.
@@ -18,6 +18,12 @@ files precede DB registration/active switch. Retain/report orphans; no automatic
 projections.py renders DB-only overview bytes; mutations.py serializes rebuild after
 commit and returns the committed receipt on rebuild failure. Rebuild changes no DB state.
 Read verifies registered content every time; metadata history remains inspectable
-after file loss. No context, Result or successor Work. Initial Event stays fixed.
+after file loss. handoffs.py parses bounded portable accepted_result data, grants no
+authority and delegates mutations. accept_handoff preserves exact result/basis refs,
+owner text and provenance, with acceptance/event/receipt in one transaction. Current
+ready Work metadata scope is required. Source revision stays immutable on replay;
+only explicit transport expected_revision refresh can return a prior receipt.
+read_handoffs is owner-local inspection, not Work-scoped context. No context,
+submit_result or successor Work. Initial Event stays fixed.
 Read/init never migrate or repair existing state. Keep migration bytes stable after release.
 END_OF_FILE: src/zaratustra/core/AGENTS.md
