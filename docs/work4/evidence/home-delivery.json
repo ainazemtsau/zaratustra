@@ -1,0 +1,8 @@
+{
+  "tool": "send_message_to_thread",
+  "target_thread": "01a07fb3-d836-76b3-847a-39fa165cf71d",
+  "isError": true,
+  "message_delivered": false,
+  "reason": "The originating task is archived.",
+  "resolution": "Preserved full RESULT and HOME locators in Product; returned them in final answer. No task unarchived or alternate recipient selected."
+}

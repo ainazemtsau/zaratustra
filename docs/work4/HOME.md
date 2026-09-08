@@ -49,4 +49,9 @@ were executor-entered under the fictional development CALL, not owner acceptance
 
 next: solmax
 
+App delivery note: send_message_to_thread to the originating task
+01a07fb3-d836-76b3-847a-39fa165cf71d was refused because it is archived. No task was
+unarchived and no alternate recipient selected. This file and RESULT are the
+durable HOME handoff; Product final answer returns their exact locators.
+
 END_OF_FILE: docs/work4/HOME.md

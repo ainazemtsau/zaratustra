@@ -232,6 +232,12 @@ from executor evidence and is not automatically inferred as acceptance.
 ## next
 
 next: solmax
+Direct app delivery to the originating Solmax task
+01a07fb3-d836-76b3-847a-39fa165cf71d was refused because that task is archived.
+No task was unarchived and no substitute recipient was guessed. The complete
+durable handoff is docs/work4/HOME.md plus this RESULT; exact locators are returned
+in the Product task's final answer. This transport limitation does not change the
+measured engineering verdict or authorize a Direction transition.
 HOME: evaluate all three Work 4 done_when against implementation
 2100775adfd78ad83a3ff615f9d9e4eeec32eb5b, exact wheel/hash, full native/installed raw
 evidence, declared file/DB boundary and W19–W27. T3 close route remains binding
