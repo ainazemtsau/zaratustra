@@ -1,0 +1,12 @@
+{
+  "source_commit": "2100775adfd78ad83a3ff615f9d9e4eeec32eb5b",
+  "version": "0.4.0",
+  "retained_trial": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt",
+  "wheel": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\zaratustra-0.4.0-py3-none-any.whl",
+  "wheel_sha256": "a1fb2df9ed33d5c5fb8e33cc484fd9425e7cd9e17701c535696af8025f07585f",
+  "accepted_inputs_unchanged": {
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work3-gnt5ksg0\\workspace\\.zara\\state.sqlite3": "8c42aab9da01d270ff8a054122e2ae9bbe004cd70ab66b10927961e85c5409ea",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work3-gnt5ksg0\\zaratustra-0.3.0-py3-none-any.whl": "860804660548cd20bbd976f96bf5d27fe21855a56406b5bc7c7dcbe0ab08c1f2"
+  },
+  "installed_receipt": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\receipt.json"
+}

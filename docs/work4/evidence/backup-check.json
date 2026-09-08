@@ -1,0 +1,71 @@
+{
+  "restored_copy": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-backup-check-wl16w8bq",
+  "outputs": [
+    {
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\venv\\Scripts\\zara.exe",
+        "records",
+        "read",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-backup-check-wl16w8bq\\workspace"
+      ],
+      "stdout": "{\n  \"workspace_id\": \"4846e59f-b3f8-4ed1-9bb3-fea22f713b88\",\n  \"state_revision\": 9,\n  \"records\": [\n    {\n      \"id\": \"ae7eca56-fd16-41ad-b262-2981468b922e\",\n      \"revision\": 3,\n      \"created_at\": \"2026-09-08T04:03:30.216247Z\",\n      \"kind\": \"artifact\",\n      \"process_id\": \"bae978a9-a181-4368-be55-b1837fd47747\",\n      \"work_id\": \"56785bef-c147-4236-b12a-cad24845567a\",\n      \"title\": \"Observation draft\",\n      \"status\": \"registered\",\n      \"active_version\": \"75a8c7b3-3f17-4a50-a777-c70f3515bfd8\"\n    },\n    {\n      \"id\": \"b0257ea3-6179-4ac2-95a2-de033bf98078\",\n      \"revision\": 1,\n      \"created_at\": \"2026-09-08T04:03:30.216247Z\",\n      \"kind\": \"event\",\n      \"process_id\": \"bae978a9-a181-4368-be55-b1837fd47747\",\n      \"work_id\": \"56785bef-c147-4236-b12a-cad24845567a\",\n      \"action\": \"initial_records_created\",\n      \"actor\": \"local-invocation\",\n      \"basis\": \"explicit-workspace-bootstrap\",\n      \"product_version\": \"0.2.0\",\n      \"state_revision\": 1,\n      \"affected_ids\": [\n        \"bae978a9-a181-4368-be55-b1837fd47747\",\n        \"56785bef-c147-4236-b12a-cad24845567a\",\n        \"ae7eca56-fd16-41ad-b262-2981468b922e\"\n      ]\n    },\n    {\n      \"id\": \"bae978a9-a181-4368-be55-b1837fd47747\",\n      \"revision\": 1,\n      \"created_at\": \"2026-09-08T04:03:30.216247Z\",\n      \"kind\": \"process\",\n      \"title\": \"Fictional observatory\"\n    },\n    {\n      \"id\": \"56785bef-c147-4236-b12a-cad24845567a\",\n      \"revision\": 9,\n      \"created_at\": \"2026-09-08T04:03:30.216247Z\",\n      \"kind\": \"work\",\n      \"process_id\": \"bae978a9-a181-4368-be55-b1837fd47747\",\n      \"goal\": \"Describe an imaginary moon\",\n      \"expected_result\": \"A short fictional observation\",\n      \"acceptance\": [\n        \"The observation is saved\"\n      ],\n      \"boundaries\": [\n        \"Fictional data only\"\n      ],\n      \"budget\": \"One short local session\",\n      \"status\": \"ready\",\n      \"authority_scope\": \"work_metadata_and_artifact\",\n      \"context_handles\": [],\n      \"dependencies\": [],\n      \"executor_requirements\": [\n        \"reasoning\",\n        \"coding\"\n      ]\n    }\n  ]\n}\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\venv\\Scripts\\zara.exe",
+        "artifacts",
+        "inspect",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-backup-check-wl16w8bq\\workspace"
+      ],
+      "stdout": "{\n  \"state_revision\": 9,\n  \"versions\": [\n    {\n      \"version\": {\n        \"id\": \"258ea271-3f06-4c29-9caa-09cf2613d2d4\",\n        \"artifact_id\": \"ae7eca56-fd16-41ad-b262-2981468b922e\",\n        \"work_id\": \"56785bef-c147-4236-b12a-cad24845567a\",\n        \"process_id\": \"bae978a9-a181-4368-be55-b1837fd47747\",\n        \"artifact_revision\": 2,\n        \"sha256\": \"de22a67833d4525f95d460d75890f8a046a08d51e19bd086e380df104afd1214\",\n        \"size\": 59,\n        \"created_at\": \"2026-09-08T07:37:13.726233Z\",\n        \"state_revision\": 7\n      },\n      \"status\": \"verified\"\n    },\n    {\n      \"version\": {\n        \"id\": \"75a8c7b3-3f17-4a50-a777-c70f3515bfd8\",\n        \"artifact_id\": \"ae7eca56-fd16-41ad-b262-2981468b922e\",\n        \"work_id\": \"56785bef-c147-4236-b12a-cad24845567a\",\n        \"process_id\": \"bae978a9-a181-4368-be55-b1837fd47747\",\n        \"artifact_revision\": 3,\n        \"sha256\": \"6fd73651c03ddf966703c5b96f6b7a7da79a6d3482b82342f191dd4ea9299b45\",\n        \"size\": 68,\n        \"created_at\": \"2026-09-08T07:37:23.595872Z\",\n        \"state_revision\": 8\n      },\n      \"status\": \"verified\"\n    }\n  ],\n  \"unregistered_files\": [\n    \"artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/quarantine-b3f151fd-49b7-45c6-ab84-170fb6375a92.blob\"\n  ]\n}\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\venv\\Scripts\\zara.exe",
+        "projections",
+        "status",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-backup-check-wl16w8bq\\workspace"
+      ],
+      "stdout": "{\n  \"generated_from_revision\": 9,\n  \"generated_at\": \"2026-09-08T07:37:48.631916Z\",\n  \"relative_path\": \"projections/overview.md\",\n  \"status\": \"current\",\n  \"expected_sha256\": \"e05588084174f583d7da6878269063b1927154316bbc7a96348cf47b57adbe93\"\n}\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\venv\\Scripts\\zara.exe",
+        "records",
+        "read",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-backup-check-wl16w8bq\\fault-workspace"
+      ],
+      "stdout": "{\n  \"workspace_id\": \"4846e59f-b3f8-4ed1-9bb3-fea22f713b88\",\n  \"state_revision\": 10,\n  \"records\": [\n    {\n      \"id\": \"ae7eca56-fd16-41ad-b262-2981468b922e\",\n      \"revision\": 4,\n      \"created_at\": \"2026-09-08T04:03:30.216247Z\",\n      \"kind\": \"artifact\",\n      \"process_id\": \"bae978a9-a181-4368-be55-b1837fd47747\",\n      \"work_id\": \"56785bef-c147-4236-b12a-cad24845567a\",\n      \"title\": \"Observation draft\",\n      \"status\": \"registered\",\n      \"active_version\": \"35f62fde-6519-478f-8dd9-2ec0c47b5c53\"\n    },\n    {\n      \"id\": \"b0257ea3-6179-4ac2-95a2-de033bf98078\",\n      \"revision\": 1,\n      \"created_at\": \"2026-09-08T04:03:30.216247Z\",\n      \"kind\": \"event\",\n      \"process_id\": \"bae978a9-a181-4368-be55-b1837fd47747\",\n      \"work_id\": \"56785bef-c147-4236-b12a-cad24845567a\",\n      \"action\": \"initial_records_created\",\n      \"actor\": \"local-invocation\",\n      \"basis\": \"explicit-workspace-bootstrap\",\n      \"product_version\": \"0.2.0\",\n      \"state_revision\": 1,\n      \"affected_ids\": [\n        \"bae978a9-a181-4368-be55-b1837fd47747\",\n        \"56785bef-c147-4236-b12a-cad24845567a\",\n        \"ae7eca56-fd16-41ad-b262-2981468b922e\"\n      ]\n    },\n    {\n      \"id\": \"bae978a9-a181-4368-be55-b1837fd47747\",\n      \"revision\": 1,\n      \"created_at\": \"2026-09-08T04:03:30.216247Z\",\n      \"kind\": \"process\",\n      \"title\": \"Fictional observatory\"\n    },\n    {\n      \"id\": \"56785bef-c147-4236-b12a-cad24845567a\",\n      \"revision\": 10,\n      \"created_at\": \"2026-09-08T04:03:30.216247Z\",\n      \"kind\": \"work\",\n      \"process_id\": \"bae978a9-a181-4368-be55-b1837fd47747\",\n      \"goal\": \"Describe an imaginary moon\",\n      \"expected_result\": \"A short fictional observation\",\n      \"acceptance\": [\n        \"The observation is saved\"\n      ],\n      \"boundaries\": [\n        \"Fictional data only\"\n      ],\n      \"budget\": \"One short local session\",\n      \"status\": \"ready\",\n      \"authority_scope\": \"work_metadata_and_artifact\",\n      \"context_handles\": [],\n      \"dependencies\": [],\n      \"executor_requirements\": [\n        \"reasoning\",\n        \"coding\"\n      ]\n    }\n  ]\n}\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\venv\\Scripts\\zara.exe",
+        "artifacts",
+        "inspect",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-backup-check-wl16w8bq\\fault-workspace"
+      ],
+      "stdout": "{\n  \"state_revision\": 10,\n  \"versions\": [\n    {\n      \"version\": {\n        \"id\": \"258ea271-3f06-4c29-9caa-09cf2613d2d4\",\n        \"artifact_id\": \"ae7eca56-fd16-41ad-b262-2981468b922e\",\n        \"work_id\": \"56785bef-c147-4236-b12a-cad24845567a\",\n        \"process_id\": \"bae978a9-a181-4368-be55-b1837fd47747\",\n        \"artifact_revision\": 2,\n        \"sha256\": \"de22a67833d4525f95d460d75890f8a046a08d51e19bd086e380df104afd1214\",\n        \"size\": 59,\n        \"created_at\": \"2026-09-08T07:37:13.726233Z\",\n        \"state_revision\": 7\n      },\n      \"status\": \"verified\"\n    },\n    {\n      \"version\": {\n        \"id\": \"35f62fde-6519-478f-8dd9-2ec0c47b5c53\",\n        \"artifact_id\": \"ae7eca56-fd16-41ad-b262-2981468b922e\",\n        \"work_id\": \"56785bef-c147-4236-b12a-cad24845567a\",\n        \"process_id\": \"bae978a9-a181-4368-be55-b1837fd47747\",\n        \"artifact_revision\": 4,\n        \"sha256\": \"1863cbc57e98c5f570d2d8cf9c757b5e03527b61f5d74bfb3b3f3eeece55535c\",\n        \"size\": 22,\n        \"created_at\": \"2026-09-08T07:37:49.685021Z\",\n        \"state_revision\": 10\n      },\n      \"status\": \"verified\"\n    },\n    {\n      \"version\": {\n        \"id\": \"75a8c7b3-3f17-4a50-a777-c70f3515bfd8\",\n        \"artifact_id\": \"ae7eca56-fd16-41ad-b262-2981468b922e\",\n        \"work_id\": \"56785bef-c147-4236-b12a-cad24845567a\",\n        \"process_id\": \"bae978a9-a181-4368-be55-b1837fd47747\",\n        \"artifact_revision\": 3,\n        \"sha256\": \"6fd73651c03ddf966703c5b96f6b7a7da79a6d3482b82342f191dd4ea9299b45\",\n        \"size\": 68,\n        \"created_at\": \"2026-09-08T07:37:23.595872Z\",\n        \"state_revision\": 8\n      },\n      \"status\": \"verified\"\n    }\n  ],\n  \"unregistered_files\": [\n    \"artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/quarantine-b3f151fd-49b7-45c6-ab84-170fb6375a92.blob\"\n  ]\n}\n",
+      "stderr": "",
+      "exit": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt\\venv\\Scripts\\zara.exe",
+        "projections",
+        "status",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-backup-check-wl16w8bq\\fault-workspace"
+      ],
+      "stdout": "{\n  \"generated_from_revision\": 10,\n  \"generated_at\": \"2026-09-08T07:37:49.685021Z\",\n  \"relative_path\": \"projections/overview.md\",\n  \"status\": \"current\",\n  \"expected_sha256\": \"804249e19f1ebfbefc07115e84191882d09a248241943f6c2c45c998dcaf8851\"\n}\n",
+      "stderr": "",
+      "exit": 0
+    }
+  ]
+}

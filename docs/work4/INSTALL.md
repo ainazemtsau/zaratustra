@@ -7,12 +7,11 @@
 
 ## Посмотреть подготовленный результат
 
-1. Откройте PowerShell. Подставьте installed_command и workspace из RESULT.md
-   в две переменные. Это пути новой 0.4.0, а не сохранённой старой установки.
+1. Откройте PowerShell и выполните команды для сохранённого прогона 0.4.0:
 
 ```powershell
-$zara = '<installed_command из RESULT.md>'
-$workspace = '<installed_workspace из RESULT.md>'
+$zara = 'C:/Users/Anton/AppData/Local/Temp/zaratustra-work4-viai92mt/venv/Scripts/zara.exe'
+$workspace = 'C:/Users/Anton/AppData/Local/Temp/zaratustra-work4-viai92mt/workspace'
 & $zara --version
 & $zara records read $workspace
 & $zara artifacts inspect $workspace

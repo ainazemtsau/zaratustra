@@ -1,0 +1,112 @@
+zara 0.4.0
+{
+  "workspace_id": "4846e59f-b3f8-4ed1-9bb3-fea22f713b88",
+  "state_revision": 9,
+  "records": [
+    {
+      "id": "ae7eca56-fd16-41ad-b262-2981468b922e",
+      "revision": 3,
+      "created_at": "2026-09-08T04:03:30.216247Z",
+      "kind": "artifact",
+      "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "title": "Observation draft",
+      "status": "registered",
+      "active_version": "75a8c7b3-3f17-4a50-a777-c70f3515bfd8"
+    },
+    {
+      "id": "b0257ea3-6179-4ac2-95a2-de033bf98078",
+      "revision": 1,
+      "created_at": "2026-09-08T04:03:30.216247Z",
+      "kind": "event",
+      "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+      "action": "initial_records_created",
+      "actor": "local-invocation",
+      "basis": "explicit-workspace-bootstrap",
+      "product_version": "0.2.0",
+      "state_revision": 1,
+      "affected_ids": [
+        "bae978a9-a181-4368-be55-b1837fd47747",
+        "56785bef-c147-4236-b12a-cad24845567a",
+        "ae7eca56-fd16-41ad-b262-2981468b922e"
+      ]
+    },
+    {
+      "id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "revision": 1,
+      "created_at": "2026-09-08T04:03:30.216247Z",
+      "kind": "process",
+      "title": "Fictional observatory"
+    },
+    {
+      "id": "56785bef-c147-4236-b12a-cad24845567a",
+      "revision": 9,
+      "created_at": "2026-09-08T04:03:30.216247Z",
+      "kind": "work",
+      "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+      "goal": "Describe an imaginary moon",
+      "expected_result": "A short fictional observation",
+      "acceptance": [
+        "The observation is saved"
+      ],
+      "boundaries": [
+        "Fictional data only"
+      ],
+      "budget": "One short local session",
+      "status": "ready",
+      "authority_scope": "work_metadata_and_artifact",
+      "context_handles": [],
+      "dependencies": [],
+      "executor_requirements": [
+        "reasoning",
+        "coding"
+      ]
+    }
+  ]
+}
+{
+  "state_revision": 9,
+  "versions": [
+    {
+      "version": {
+        "id": "258ea271-3f06-4c29-9caa-09cf2613d2d4",
+        "artifact_id": "ae7eca56-fd16-41ad-b262-2981468b922e",
+        "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+        "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+        "artifact_revision": 2,
+        "sha256": "de22a67833d4525f95d460d75890f8a046a08d51e19bd086e380df104afd1214",
+        "size": 59,
+        "created_at": "2026-09-08T07:37:13.726233Z",
+        "state_revision": 7
+      },
+      "status": "verified"
+    },
+    {
+      "version": {
+        "id": "75a8c7b3-3f17-4a50-a777-c70f3515bfd8",
+        "artifact_id": "ae7eca56-fd16-41ad-b262-2981468b922e",
+        "work_id": "56785bef-c147-4236-b12a-cad24845567a",
+        "process_id": "bae978a9-a181-4368-be55-b1837fd47747",
+        "artifact_revision": 3,
+        "sha256": "6fd73651c03ddf966703c5b96f6b7a7da79a6d3482b82342f191dd4ea9299b45",
+        "size": 68,
+        "created_at": "2026-09-08T07:37:23.595872Z",
+        "state_revision": 8
+      },
+      "status": "verified"
+    }
+  ],
+  "unregistered_files": [
+    "artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/quarantine-b3f151fd-49b7-45c6-ab84-170fb6375a92.blob"
+  ]
+}
+{
+  "generated_from_revision": 9,
+  "generated_at": "2026-09-08T07:37:48.631916Z",
+  "relative_path": "projections/overview.md",
+  "status": "current",
+  "expected_sha256": "e05588084174f583d7da6878269063b1927154316bbc7a96348cf47b57adbe93"
+}
+Fictional observation, revision two: the silver rim appears at dusk.
+DB SHA256 before/after: BEC53E48C79CCFC7E83A72A1439FEACF759B48CAD9A621D10CD1FA508DEF77A0

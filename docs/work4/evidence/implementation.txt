@@ -1,0 +1,39 @@
+commit 2100775adfd78ad83a3ff615f9d9e4eeec32eb5b
+Author:     Anton <antoninozemcev@gmail.com>
+AuthorDate: Tue Sep 8 10:36:25 2026 +0300
+Commit:     Anton <antoninozemcev@gmail.com>
+CommitDate: Tue Sep 8 10:36:25 2026 +0300
+
+    Implement Work 4 versioned artifacts and recoverable projections
+
+ AGENTS.md                                   |   6 +-
+ README.md                                   |  18 +-
+ docs/work4/CALL.md                          | 122 +++++++
+ docs/work4/INSTALL.md                       | 135 +++++++
+ docs/work4/PLAN.md                          | 156 ++++++++
+ docs/work4/evidence/baseline-check.txt      |  38 ++
+ docs/work4/evidence/development-check.txt   |  39 ++
+ docs/work4/evidence/development-tests-1.txt |   2 +
+ docs/work4/evidence/development-tests-2.txt |   2 +
+ docs/work4/evidence/preserved-before.json   |  26 ++
+ docs/work4/evidence/sources.json            | 107 ++++++
+ pyproject.toml                              |   2 +-
+ src/zaratustra/cli/AGENTS.md                |   7 +-
+ src/zaratustra/cli/__init__.py              |  72 +++-
+ src/zaratustra/core/AGENTS.md               |  12 +-
+ src/zaratustra/core/__init__.py             |  28 +-
+ src/zaratustra/core/artifacts.py            | 162 ++++++++
+ src/zaratustra/core/migration_v4.py         |  26 ++
+ src/zaratustra/core/mutations.py            | 342 +++++++++++++----
+ src/zaratustra/core/projections.py          |  95 +++++
+ src/zaratustra/core/protocol.py             | 150 +++++++-
+ src/zaratustra/core/records.py              |  21 +-
+ src/zaratustra/core/workspace.py            |  31 +-
+ tests/zaratustra/core/test_artifacts.py     | 549 ++++++++++++++++++++++++++++
+ tests/zaratustra/core/test_mutations.py     |  14 +-
+ tests/zaratustra/core/test_workspace.py     |   2 +-
+ tests/zaratustra/local/test_confirmation.py |   2 +-
+ tools/probe_artifacts.py                    | 359 ++++++++++++++++++
+ tools/probe_mutations.py                    |   4 +-
+ uv.lock                                     |   2 +-
+ 30 files changed, 2406 insertions(+), 125 deletions(-)

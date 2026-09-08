@@ -1,0 +1,232 @@
+{
+  "description": "Fictional Work 4 only. Extract into a new empty folder. Install retained wheel/runtime requirements separately. Never repair DB by hand.",
+  "source_commit": "2100775adfd78ad83a3ff615f9d9e4eeec32eb5b",
+  "trial": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-work4-viai92mt",
+  "archive": "docs/work4/evidence/retained-trial.zip",
+  "archive_sha256": "1cc89ce63d6b6ff7e73699257db7dfbf80a6025076edad056cbfa3fc0f856f82",
+  "installed_wheel_source_identity": [
+    {
+      "path": "zaratustra/__init__.py",
+      "sha256": "3746eb54a1ec89225dbad473e995bae88ea9a18f610995e445bdac608cb687de"
+    },
+    {
+      "path": "zaratustra/cli/__init__.py",
+      "sha256": "24ec07f82b84708b3170f39965a269a81bfa5b8f95165875502717b0b3fffd7d"
+    },
+    {
+      "path": "zaratustra/core/__init__.py",
+      "sha256": "ec05b54c08718c16e5fa60b73ef463ba3e5991bbaee3b3de89bcf3b8bc74569d"
+    },
+    {
+      "path": "zaratustra/core/artifacts.py",
+      "sha256": "9f9c4caa99c6bc9a27b3e4b7d38631790d2849cd0f26386788a8b3a415bf7ac8"
+    },
+    {
+      "path": "zaratustra/core/migration_v2.py",
+      "sha256": "bfbb7c16ac43239e9775058d48a9716a867865fa58ddda2af318bcb7ac599a6f"
+    },
+    {
+      "path": "zaratustra/core/migration_v3.py",
+      "sha256": "78e1798b59e97ca33bf0db2758fb9505fcbfeaa1fb7cf73999e227564eb4e479"
+    },
+    {
+      "path": "zaratustra/core/migration_v4.py",
+      "sha256": "4832ca48d25cbc68efa94cb8d100c68f9b43b61eda203e2f01408c712b1ba1e1"
+    },
+    {
+      "path": "zaratustra/core/migrations.py",
+      "sha256": "e02eabf89c1e5692587cd945f686b45bffc54971f79339d13923c9a2c13f66b4"
+    },
+    {
+      "path": "zaratustra/core/mutations.py",
+      "sha256": "4fb6c1d99590b1b35d09f52546e2a9c1ebdeccbaed1d94c292b9e09c0c8d0f5b"
+    },
+    {
+      "path": "zaratustra/core/projections.py",
+      "sha256": "8b77413868b84706fadeee061112320e468cdc595687a15138b0dea632051227"
+    },
+    {
+      "path": "zaratustra/core/protocol.py",
+      "sha256": "227fa50f323be0d9eb237f6255304094dcbfa1dd46122a51379f130f637fddbf"
+    },
+    {
+      "path": "zaratustra/core/records.py",
+      "sha256": "da5463f8bcd02a87a424edec57dba6843e01185952471b8bd8cd632af971a038"
+    },
+    {
+      "path": "zaratustra/core/workspace.py",
+      "sha256": "8227a097a2e83c58260e75e1aaee63050f528a9de044990ce09caae00b921be5"
+    },
+    {
+      "path": "zaratustra/local/__init__.py",
+      "sha256": "90894af80665a2b0d34aa3afcd74226c4a51cf2840bc48274d4dc8fed7249de3"
+    }
+  ],
+  "files": [
+    {
+      "path": "workspace/",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "workspace/.zara/",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "workspace/artifacts/",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "workspace/inbox/",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "workspace/processes/",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "workspace/projections/",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "fault-workspace/",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "fault-workspace/.zara/",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "fault-workspace/artifacts/",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "fault-workspace/inbox/",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "fault-workspace/processes/",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "fault-workspace/projections/",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "fault-workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "exercise.py",
+      "bytes": 14540,
+      "sha256": "3ca230670ebfc282c8c9a99edfc1cbbad0c483f3d0abbe68bcadade2091eeb37"
+    },
+    {
+      "path": "fault-workspace/.zara/state.sqlite3",
+      "bytes": 102400,
+      "sha256": "625b9543287db44a047ea0ab0359fce8b649b2afe9cf112228b74268635699d0"
+    },
+    {
+      "path": "fault-workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/258ea271-3f06-4c29-9caa-09cf2613d2d4.blob",
+      "bytes": 59,
+      "sha256": "de22a67833d4525f95d460d75890f8a046a08d51e19bd086e380df104afd1214"
+    },
+    {
+      "path": "fault-workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/35f62fde-6519-478f-8dd9-2ec0c47b5c53.blob",
+      "bytes": 22,
+      "sha256": "1863cbc57e98c5f570d2d8cf9c757b5e03527b61f5d74bfb3b3f3eeece55535c"
+    },
+    {
+      "path": "fault-workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/75a8c7b3-3f17-4a50-a777-c70f3515bfd8.blob",
+      "bytes": 68,
+      "sha256": "6fd73651c03ddf966703c5b96f6b7a7da79a6d3482b82342f191dd4ea9299b45"
+    },
+    {
+      "path": "fault-workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/quarantine-b3f151fd-49b7-45c6-ab84-170fb6375a92.blob",
+      "bytes": 15,
+      "sha256": "b4be968770c7ce4fa5559291f0c38473f3eab7175591153f5c9c1fc5fc8ab4be"
+    },
+    {
+      "path": "fault-workspace/projections/overview.md",
+      "bytes": 30426,
+      "sha256": "804249e19f1ebfbefc07115e84191882d09a248241943f6c2c45c998dcaf8851"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 881,
+      "sha256": "767294b9311e81959a07586bada9774855fe218ae752a9f0a55b004f51406c31"
+    },
+    {
+      "path": "observation-1.txt",
+      "bytes": 59,
+      "sha256": "de22a67833d4525f95d460d75890f8a046a08d51e19bd086e380df104afd1214"
+    },
+    {
+      "path": "observation-2.txt",
+      "bytes": 68,
+      "sha256": "6fd73651c03ddf966703c5b96f6b7a7da79a6d3482b82342f191dd4ea9299b45"
+    },
+    {
+      "path": "receipt.json",
+      "bytes": 39962,
+      "sha256": "d3c4746a897e0840673fea6b8f86462a6d7eecae6cf473cca76fba430d25bf0b"
+    },
+    {
+      "path": "runtime-requirements.txt",
+      "bytes": 491,
+      "sha256": "d76167da0792d0e6275d87318a3c04e49aefd852a5f3271e48ee9d1487d8d593"
+    },
+    {
+      "path": "transcript.txt",
+      "bytes": 92446,
+      "sha256": "f6c8569869c5004e704386aeec295fef58208bc5c5b8214e046aba738220da80"
+    },
+    {
+      "path": "workspace/.zara/state.sqlite3",
+      "bytes": 98304,
+      "sha256": "bec53e48c79ccfc7e83a72a1439feacf759b48cad9a621d10cd1fa508def77a0"
+    },
+    {
+      "path": "workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/258ea271-3f06-4c29-9caa-09cf2613d2d4.blob",
+      "bytes": 59,
+      "sha256": "de22a67833d4525f95d460d75890f8a046a08d51e19bd086e380df104afd1214"
+    },
+    {
+      "path": "workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/75a8c7b3-3f17-4a50-a777-c70f3515bfd8.blob",
+      "bytes": 68,
+      "sha256": "6fd73651c03ddf966703c5b96f6b7a7da79a6d3482b82342f191dd4ea9299b45"
+    },
+    {
+      "path": "workspace/artifacts/ae7eca56-fd16-41ad-b262-2981468b922e/quarantine-b3f151fd-49b7-45c6-ab84-170fb6375a92.blob",
+      "bytes": 15,
+      "sha256": "b4be968770c7ce4fa5559291f0c38473f3eab7175591153f5c9c1fc5fc8ab4be"
+    },
+    {
+      "path": "workspace/projections/overview.md",
+      "bytes": 26226,
+      "sha256": "e05588084174f583d7da6878269063b1927154316bbc7a96348cf47b57adbe93"
+    },
+    {
+      "path": "zaratustra-0.4.0-py3-none-any.whl",
+      "bytes": 31075,
+      "sha256": "a1fb2df9ed33d5c5fb8e33cc484fd9425e7cd9e17701c535696af8025f07585f"
+    }
+  ]
+}
