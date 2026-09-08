@@ -14,6 +14,7 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, ValidationError
 
 from .migration_v2 import V2_NAME, V2_SHA256, migrate_v2
 from .migration_v3 import V3_NAME, V3_SHA256, migrate_v3
+from .migration_v4 import V4_NAME, V4_SHA256, migrate_v4
 from .migrations import APPLICATION_ID, V1_NAME, V1_SHA256, migrate_v1
 
 WORKSPACE_DIRECTORIES = ("processes", "artifacts", "projections", "inbox")
@@ -31,7 +32,7 @@ class WorkspaceInfo(BaseModel):
     database: Path
     workspace_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3]
+    schema_version: Literal[1, 2, 3, 4]
 
 
 def _root(path: Path) -> Path:
@@ -55,7 +56,7 @@ def _database_path(root: Path) -> Path:
         raise WorkspaceError(
             "No initialized workspace at this path; run zara init in an empty folder."
         )
-    if any(not (root / name).is_dir() for name in WORKSPACE_DIRECTORIES):
+    if any(not (root / name).is_dir() for name in ("processes", "inbox")):
         raise WorkspaceError("Workspace layout is incomplete; existing files were left unchanged.")
     return database
 
@@ -63,8 +64,14 @@ def _database_path(root: Path) -> Path:
 def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> WorkspaceInfo:
     application = connection.execute("PRAGMA application_id").fetchone()[0]
     version = connection.execute("PRAGMA user_version").fetchone()[0]
-    if application != APPLICATION_ID or version not in (1, 2, 3):
+    if application != APPLICATION_ID or version not in (1, 2, 3, 4):
         raise WorkspaceError(f"Unsupported workspace database/schema version: {version}.")
+    for name in ("artifacts", "projections"):
+        entry = root / name
+        if (entry.exists() or version < 4) and not entry.is_dir():
+            raise WorkspaceError(
+                "Workspace layout is incomplete; existing files were left unchanged."
+            )
     migrations = connection.execute(
         "SELECT version, name, sha256, applied_at FROM schema_migrations ORDER BY version"
     ).fetchall()
@@ -93,6 +100,12 @@ def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> Wor
         connection.execute(
             "SELECT operation_id, event_id, fingerprint, body FROM mutation_receipts LIMIT 0"
         )
+    if version >= 4:
+        if migrations[3][:3] != (4, V4_NAME, V4_SHA256):
+            raise WorkspaceError("Migration history does not match this installed version.")
+        if datetime.fromisoformat(migrations[3][3]).tzinfo is None:
+            raise WorkspaceError("Migration timestamp must have a timezone.")
+        connection.execute("SELECT id, artifact_id, body FROM artifact_versions LIMIT 0")
     return WorkspaceInfo(
         workspace=root,
         database=database,
@@ -138,16 +151,16 @@ def _read_workspace(root: Path) -> WorkspaceInfo:
         return info
 
 
-def migrate_workspace(path: Path, *, target_version: Literal[2, 3] = 3) -> WorkspaceInfo:
+def migrate_workspace(path: Path, *, target_version: Literal[2, 3, 4] = 4) -> WorkspaceInfo:
     """Explicit sequential upgrade; never grant rights, silently downgrade or repair."""
-    if type(target_version) is not int or target_version not in (2, 3):
+    if type(target_version) is not int or target_version not in (2, 3, 4):
         raise WorkspaceError("Unsupported migration target")
     with workspace_connection(path, write=True) as (connection, info):
         if info.schema_version > target_version:
             raise WorkspaceError("Schema downgrade is not supported")
         if info.schema_version == 1:
             migrate_v2(connection, datetime.now(UTC).isoformat())
-        if info.schema_version < 3 and target_version == 3:
+        if info.schema_version < 3 and target_version >= 3:
             # Local import avoids a module initialization cycle with record models.
             from .records import _read_records
 
@@ -155,6 +168,12 @@ def migrate_workspace(path: Path, *, target_version: Literal[2, 3] = 3) -> Works
             if legacy.state_revision not in (0, 1):
                 raise WorkspaceError("Schema 2 only supports initial records")
             migrate_v3(connection, datetime.now(UTC).isoformat())
+        if info.schema_version < 4 and target_version == 4:
+            from .mutations import _history
+            from .records import _read_records
+
+            _history(connection, _read_records(connection, info.workspace_id))
+            migrate_v4(connection, datetime.now(UTC).isoformat())
         return _metadata(connection, info.workspace, info.database)
 
 

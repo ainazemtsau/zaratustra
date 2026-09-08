@@ -8,9 +8,28 @@ from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
 from typing import Literal
-from uuid import uuid4
+from uuid import UUID, uuid4
 
+from .artifacts import (
+    ArtifactContent,
+    ArtifactInspection,
+    current_artifact,
+    inspect_files,
+    publish_bytes,
+    read_versions,
+    resolve_version,
+    validate_bytes,
+    verified_content,
+)
+from .projections import (
+    ProjectionStatus,
+    projection_status,
+    render_overview,
+    write_projection,
+)
 from .protocol import (
+    ARTIFACT_OPERATIONS,
+    ArtifactVersion,
     Confirmation,
     MutationEvent,
     MutationHistory,
@@ -19,17 +38,24 @@ from .protocol import (
     ReceiptQuery,
     authorization_digest,
     event_receipt,
+    evolve_artifact,
     evolve_work,
     fingerprint,
 )
-from .records import RecordModel, RecordsSnapshot, Text, Work, _read_records
-from .workspace import WorkspaceError, workspace_connection
+from .records import Artifact, RecordModel, RecordsSnapshot, Text, Work, _read_records
+from .workspace import WorkspaceError, WorkspaceInfo, workspace_connection
 
 
 class MutationError(WorkspaceError):
     def __init__(self, code: str, detail: str) -> None:
         self.code = code
         super().__init__(f"{code}: {detail}")
+
+
+class ProjectionRebuildError(MutationError):
+    def __init__(self, receipt: MutationReceipt, detail: str) -> None:
+        self.receipt = receipt
+        super().__init__("rebuild_required", f"Mutation committed; {detail}")
 
 
 class AuthorizationPrompt(RecordModel):
@@ -63,7 +89,7 @@ def prepare_authorization(
     """Owner-local preview only; no permission issued and no mutation performed."""
     request = type(request).model_validate(request.model_dump())
     with workspace_connection(path) as (connection, info):
-        if info.schema_version != 3:
+        if info.schema_version < 3:
             raise MutationError("schema", "Mutation protocol requires explicit migration to 3")
         snapshot = _read_records(connection, info.workspace_id)
         if request.workspace_id != info.workspace_id or request.work_id != _work(snapshot).id:
@@ -126,7 +152,9 @@ def _caller(
     return confirmation
 
 
-def _history(connection: sqlite3.Connection, snapshot: RecordsSnapshot) -> MutationHistory:
+def _history(
+    connection: sqlite3.Connection, snapshot: RecordsSnapshot, *, artifacts_enabled: bool = False
+) -> MutationHistory:
     events = []
     for identity, revision, body in connection.execute(
         "SELECT id, state_revision, body FROM mutation_events ORDER BY state_revision"
@@ -166,6 +194,57 @@ def _history(connection: sqlite3.Connection, snapshot: RecordsSnapshot) -> Mutat
         previous = event.after
     if previous is not None and previous != _work(snapshot):
         raise WorkspaceError("Mutation history does not reconstruct current Work")
+    if artifacts_enabled:
+        versions = read_versions(connection)
+        published: dict[UUID, ArtifactVersion] = {}
+        if snapshot.records:
+            current = current_artifact(snapshot)
+            reconstructed = Artifact.model_validate(
+                {
+                    **current.model_dump(),
+                    "revision": 1,
+                    "status": "declared",
+                    "active_version": None,
+                }
+            )
+            for event in events:
+                request = event.request
+                if request.operation in ARTIFACT_OPERATIONS and (
+                    request.artifact_id != reconstructed.id
+                    or request.artifact_revision != reconstructed.revision
+                ):
+                    raise WorkspaceError("Artifact event target/revision mismatch")
+                for reference in request.references:
+                    descriptor = resolve_version(
+                        tuple(published.values()), reconstructed, reference.version_id
+                    )
+                    if (reference.artifact_id, reference.sha256) != (
+                        descriptor.artifact_id,
+                        descriptor.sha256,
+                    ):
+                        raise WorkspaceError("Historical artifact reference mismatch")
+                if request.operation == "restore_artifact":
+                    restored = resolve_version(
+                        tuple(published.values()), reconstructed, request.restore_version
+                    )
+                    if (restored.sha256, restored.size) != (
+                        request.content_sha256,
+                        request.content_size,
+                    ):
+                        raise WorkspaceError("Historical restore descriptor mismatch")
+                if event.artifact_version is not None:
+                    if event.artifact_before != reconstructed or event.artifact_after is None:
+                        raise WorkspaceError("Broken Artifact before/after chain")
+                    published[event.artifact_version.id] = event.artifact_version
+                    reconstructed = event.artifact_after
+            if reconstructed != current:
+                raise WorkspaceError("History does not reconstruct current Artifact")
+        if published != {descriptor.id: descriptor for descriptor in versions}:
+            raise WorkspaceError("Version registrations do not match committed publications")
+    elif any(event.request.version != 1 for event in events) or (
+        snapshot.records and current_artifact(snapshot).active_version is not None
+    ):
+        raise WorkspaceError("Artifact lifecycle requires schema 4")
     return MutationHistory(
         workspace_id=snapshot.workspace_id,
         state_revision=snapshot.state_revision,
@@ -180,8 +259,8 @@ def read_records(path: Path) -> RecordsSnapshot:
         if info.schema_version < 2:
             raise WorkspaceError("Records require schema 2 or later; run zara migrate explicitly.")
         snapshot = _read_records(connection, info.workspace_id)
-        if info.schema_version == 3:
-            _history(connection, snapshot)
+        if info.schema_version >= 3:
+            _history(connection, snapshot, artifacts_enabled=info.schema_version >= 4)
         elif snapshot.state_revision not in (0, 1):
             raise WorkspaceError("Schema 2 only supports initial records")
         return snapshot
@@ -190,9 +269,13 @@ def read_records(path: Path) -> RecordsSnapshot:
 def read_history(path: Path) -> MutationHistory:
     """Owner-local audit. Not a Work-scoped context/receipt-disclosure endpoint."""
     with workspace_connection(path) as (connection, info):
-        if info.schema_version != 3:
+        if info.schema_version < 3:
             raise MutationError("schema", "History requires explicit migration to 3")
-        return _history(connection, _read_records(connection, info.workspace_id))
+        return _history(
+            connection,
+            _read_records(connection, info.workspace_id),
+            artifacts_enabled=info.schema_version >= 4,
+        )
 
 
 def read_receipt(
@@ -200,82 +283,197 @@ def read_receipt(
 ) -> MutationReceipt:
     query = ReceiptQuery.model_validate(query.model_dump())
     with workspace_connection(path) as (connection, info):
-        if info.schema_version != 3:
+        if info.schema_version < 3:
             raise MutationError("schema", "Receipt requires explicit migration to 3")
         snapshot = _read_records(connection, info.workspace_id)
         _caller(info.workspace, query, caller, snapshot)
-        if _work(snapshot).authority_scope != "work_metadata":
+        if _work(snapshot).authority_scope not in ("work_metadata", "work_metadata_and_artifact"):
             raise MutationError("permission_denied", "Current Work has no receipt-read permission")
-        history = _history(connection, snapshot)
+        history = _history(connection, snapshot, artifacts_enabled=info.schema_version >= 4)
         for receipt in history.receipts:
             if receipt.operation_id == query.operation_id and receipt.work_id == query.work_id:
                 return receipt
         raise MutationError("not_found", "No committed operation in this Work")
 
 
-def apply_mutation(
-    path: Path, request: MutationRequest, caller: LocalAuthorization | None = None
+def _mutate(
+    connection: sqlite3.Connection,
+    info: WorkspaceInfo,
+    request: MutationRequest,
+    caller: LocalAuthorization | None,
+    content: bytes | None,
 ) -> MutationReceipt:
-    # 1. Input schema. Revalidate even a model constructed by trusted Python code.
-    request = MutationRequest.model_validate(request.model_dump())
-    with workspace_connection(path, write=True) as (connection, info):
-        if info.schema_version != 3:
-            raise MutationError("schema", "Mutation requires explicit migration to 3")
-        # 2. Current Work + authority, in the same write transaction as the effect.
-        snapshot = _read_records(connection, info.workspace_id)
-        confirmation = _caller(info.workspace, request, caller, snapshot)
-        before = _work(snapshot)
-        try:
-            after = evolve_work(before, request)
-        except ValueError as error:
-            raise MutationError("permission_denied", str(error)) from error
-        # 3. Expected global revision. Never look up a duplicate before this check.
-        if request.expected_revision != snapshot.state_revision:
-            raise MutationError("conflict", "Expected revision is not the current state revision")
-        # 4. Duplicate identity + intent, with authorized disclosure only.
-        history = _history(connection, snapshot)
-        intent = fingerprint(request)
-        for stored in history.receipts:
-            if stored.operation_id == request.operation_id:
-                if stored.fingerprint != intent:
-                    raise MutationError(
-                        "collision", "Operation id already belongs to another intent"
-                    )
-                return stored
-        # 5. No content publication exists yet: reject every unsupported reference.
-        if request.artifact_references:
-            raise MutationError("unsupported_artifacts", "Content references require Work 4")
-        # 6. Narrow DB change; goal/acceptance/bounds/budget/membership stay immutable.
+    if info.schema_version < 3 or (request.version == 2 and info.schema_version < 4):
+        raise MutationError("schema", "Mutation requires explicit migration to 3/4")
+    # 2. Current Work + authority, in the same write transaction as the effect.
+    snapshot = _read_records(connection, info.workspace_id)
+    confirmation = _caller(info.workspace, request, caller, snapshot)
+    before = _work(snapshot)
+    artifact = current_artifact(snapshot)
+    try:
+        after = evolve_work(before, request)
+        if request.operation in ARTIFACT_OPERATIONS and request.artifact_id != artifact.id:
+            raise ValueError("The scope permits only this Work's declared Artifact")
+    except ValueError as error:
+        raise MutationError("permission_denied", str(error)) from error
+    # 3. Global revision first, including refreshed duplicates.
+    if request.expected_revision != snapshot.state_revision:
+        raise MutationError("conflict", "Expected revision is not the current state revision")
+    # 4. Saved identity and intent. Do not check physical bytes on duplicate delivery.
+    enabled = info.schema_version >= 4
+    history = _history(connection, snapshot, artifacts_enabled=enabled)
+    intent = fingerprint(request)
+    for stored in history.receipts:
+        if stored.operation_id == request.operation_id:
+            if stored.fingerprint != intent:
+                raise MutationError("collision", "Operation id already belongs to another intent")
+            return stored
+    # 5. Exact scoped references and bytes, before any DB/domain effect.
+    if request.artifact_references:
+        raise MutationError("unsupported_artifacts", "Use version 2 exact version/hash references")
+    versions = read_versions(connection) if enabled else ()
+    for reference in request.references:
+        if reference.artifact_id != artifact.id:
+            raise MutationError("invalid_artifact", "Reference is outside this Work")
+        descriptor = resolve_version(versions, artifact, reference.version_id)
+        if reference.sha256 != descriptor.sha256:
+            raise MutationError("invalid_artifact", "Reference hash does not match registration")
+        verified_content(info.workspace, descriptor)
+    if request.operation in ARTIFACT_OPERATIONS and request.artifact_revision != artifact.revision:
+        raise MutationError("conflict", "Expected Artifact revision is not current")
+    now = datetime.now(UTC)
+    published: ArtifactVersion | None = None
+    artifact_after: Artifact | None = None
+    if request.operation in ("publish_artifact", "restore_artifact"):
+        checked = validate_bytes(content, request.content_sha256, request.content_size)
+        if request.operation == "restore_artifact":
+            descriptor = resolve_version(versions, artifact, request.restore_version)
+            if (descriptor.sha256, descriptor.size) != (
+                request.content_sha256,
+                request.content_size,
+            ):
+                raise MutationError("invalid_artifact", "Repair must match the registered version")
+            publish_bytes(info.workspace, descriptor, checked, restore=True)
+        else:
+            assert request.content_sha256 is not None and request.content_size is not None
+            published = ArtifactVersion(
+                id=request.operation_id,
+                artifact_id=artifact.id,
+                work_id=before.id,
+                process_id=before.process_id,
+                artifact_revision=artifact.revision + 1,
+                sha256=request.content_sha256,
+                size=request.content_size,
+                created_at=now,
+                state_revision=after.revision,
+            )
+            publish_bytes(info.workspace, published, checked)
+            artifact_after = evolve_artifact(artifact, published)
+    elif content is not None:
+        raise MutationError("invalid_artifact", "This operation does not accept content")
+    # 6. Complete file already exists. Registration + active switch commit with Work.
+    if published is not None and artifact_after is not None:
+        connection.execute(
+            "INSERT INTO artifact_versions VALUES (?, ?, ?)",
+            (str(published.id), str(artifact.id), published.model_dump_json()),
+        )
         connection.execute(
             "UPDATE core_records SET revision = ?, body = ? WHERE id = ?",
-            (after.revision, after.model_dump_json(), str(after.id)),
+            (artifact_after.revision, artifact_after.model_dump_json(), str(artifact.id)),
         )
-        connection.execute(
-            "UPDATE core_state SET revision = ? WHERE singleton = 1", (after.revision,)
-        )
-        # 7. Event and receipt commit with the mutation, including exact provenance.
-        event = MutationEvent(
-            id=uuid4(),
-            state_revision=after.revision,
-            recorded_at=datetime.now(UTC),
-            product_version=version("zaratustra"),
-            request=request,
-            confirmation=confirmation,
-            fingerprint=intent,
-            before=before,
-            after=after,
-        )
-        connection.execute(
-            "INSERT INTO mutation_events VALUES (?, ?, ?)",
-            (str(event.id), event.state_revision, event.model_dump_json()),
-        )
-        receipt = event_receipt(event)
-        connection.execute(
-            "INSERT INTO mutation_receipts VALUES (?, ?, ?, ?)",
-            (str(request.operation_id), str(event.id), intent, receipt.model_dump_json()),
-        )
-        _history(connection, _read_records(connection, info.workspace_id))
-    # 8. Context manager has committed before any response escapes.
-    # 9. The admitted DB-only operations have no implemented affected projections.
-    # The persisted empty set is explicit; Work 4 must add actual rebuild behavior.
+    connection.execute(
+        "UPDATE core_records SET revision = ?, body = ? WHERE id = ?",
+        (after.revision, after.model_dump_json(), str(after.id)),
+    )
+    connection.execute("UPDATE core_state SET revision = ? WHERE singleton = 1", (after.revision,))
+    # 7. One immutable event and receipt, including old/new Artifact and exact descriptor.
+    event = MutationEvent(
+        id=uuid4(),
+        state_revision=after.revision,
+        recorded_at=now,
+        product_version=version("zaratustra"),
+        request=request,
+        confirmation=confirmation,
+        fingerprint=intent,
+        before=before,
+        after=after,
+        affected_projections=("overview.md",) if enabled else (),
+        artifact_before=artifact if published is not None else None,
+        artifact_after=artifact_after,
+        artifact_version=published,
+    )
+    connection.execute(
+        "INSERT INTO mutation_events VALUES (?, ?, ?)",
+        (str(event.id), event.state_revision, event.model_dump_json()),
+    )
+    receipt = event_receipt(event)
+    connection.execute(
+        "INSERT INTO mutation_receipts VALUES (?, ?, ?, ?)",
+        (str(request.operation_id), str(event.id), intent, receipt.model_dump_json()),
+    )
+    _history(connection, _read_records(connection, info.workspace_id), artifacts_enabled=enabled)
     return receipt
+
+
+def apply_mutation(
+    path: Path,
+    request: MutationRequest,
+    caller: LocalAuthorization | None = None,
+    *,
+    content: bytes | None = None,
+) -> MutationReceipt:
+    # 1. Input schema, even for an already constructed Python value.
+    request = MutationRequest.model_validate(request.model_dump())
+    with workspace_connection(path, write=True) as (connection, info):
+        receipt = _mutate(connection, info, request, caller, content)
+    # 8. The receipt is durable. No post-commit file error may imply a rollback.
+    # 9. Rebuild latest DB state, including when an authorized duplicate was delivered.
+    if info.schema_version >= 4:
+        try:
+            rebuild_projections(path)
+        except (WorkspaceError, OSError, ValueError) as error:
+            raise ProjectionRebuildError(receipt, str(error)) from error
+    return receipt
+
+
+def _artifact_snapshot(
+    connection: sqlite3.Connection, info: WorkspaceInfo
+) -> tuple[RecordsSnapshot, MutationHistory, tuple[ArtifactVersion, ...]]:
+    if info.schema_version < 4:
+        raise MutationError("schema", "Artifacts/projections require explicit migration to 4")
+    snapshot = _read_records(connection, info.workspace_id)
+    history = _history(connection, snapshot, artifacts_enabled=True)
+    return snapshot, history, read_versions(connection)
+
+
+def read_artifact(path: Path, artifact_id: UUID, version_id: UUID | None = None) -> ArtifactContent:
+    """Owner-local content inspection; every read verifies the returned immutable bytes."""
+    with workspace_connection(path) as (connection, info):
+        snapshot, _, versions = _artifact_snapshot(connection, info)
+        artifact = current_artifact(snapshot)
+        if artifact.id != artifact_id:
+            raise MutationError("invalid_artifact", "Artifact is outside this Work")
+        return verified_content(info.workspace, resolve_version(versions, artifact, version_id))
+
+
+def inspect_artifacts(path: Path) -> ArtifactInspection:
+    """Owner-local diagnosis. Never register, remove, repair or activate files."""
+    with workspace_connection(path) as (connection, info):
+        snapshot, _, versions = _artifact_snapshot(connection, info)
+        return inspect_files(info.workspace, snapshot, versions)
+
+
+def read_projection_status(path: Path) -> ProjectionStatus:
+    with workspace_connection(path) as (connection, info):
+        snapshot, history, versions = _artifact_snapshot(connection, info)
+        content, timestamp = render_overview(snapshot, history, versions, info.created_at)
+        return projection_status(info.workspace, content, snapshot.state_revision, timestamp)
+
+
+def rebuild_projections(path: Path) -> ProjectionStatus:
+    """Serialize writers, rebuild latest authoritative snapshot, change no DB state."""
+    with workspace_connection(path, write=True) as (connection, info):
+        snapshot, history, versions = _artifact_snapshot(connection, info)
+        content, timestamp = render_overview(snapshot, history, versions, info.created_at)
+        write_projection(info.workspace, content)
+        return projection_status(info.workspace, content, snapshot.state_revision, timestamp)

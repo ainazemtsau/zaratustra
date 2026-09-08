@@ -62,7 +62,7 @@ class Work(Record):
     boundaries: Annotated[tuple[Text, ...], Field(min_length=1)]
     budget: Text
     status: Literal["draft", "ready", "cancelled"] = "draft"
-    authority_scope: Literal["none", "work_metadata"] = "none"
+    authority_scope: Literal["none", "work_metadata", "work_metadata_and_artifact"] = "none"
     context_handles: tuple[()] = ()
     dependencies: tuple[()] = ()
     executor_requirements: tuple[Text, ...] = ()
@@ -79,8 +79,17 @@ class Artifact(Record):
     process_id: UUID
     work_id: UUID
     title: Text
-    status: Literal["declared"] = "declared"
-    active_version: None = None
+    status: Literal["declared", "registered"] = "declared"
+    active_version: UUID | None = None
+
+    @model_validator(mode="after")
+    def version_status(self) -> Self:
+        if self.status == "declared":
+            if self.active_version is not None or self.revision != 1:
+                raise ValueError("Declared Artifact has no version")
+        elif self.active_version is None or self.revision < 2:
+            raise ValueError("Registered Artifact requires an active version")
+        return self
 
 
 class Event(Record):
@@ -139,7 +148,9 @@ class RecordsSnapshot(RecordModel):
             raise ValueError("Work revision must match this single-Work state")
         if work.revision == 1 and (work.status != "draft" or work.authority_scope != "none"):
             raise ValueError("Initial Work must remain a draft without rights")
-        if any(record.revision != 1 for record in (process, artifact, event)):
+        if artifact.revision > self.state_revision:
+            raise ValueError("Artifact revision exceeds state")
+        if any(record.revision != 1 for record in (process, event)):
             raise ValueError("Unsupported record revision")
         return self
 
@@ -174,7 +185,7 @@ def create_initial_records(path: Path, initial: InitialRecords) -> RecordsSnapsh
         before = _read_records(connection, info.workspace_id)
         if before.records:
             raise WorkspaceError("Initial records already exist; no changes made.")
-        if info.schema_version == 3 and (
+        if info.schema_version >= 3 and (
             connection.execute("SELECT COUNT(*) FROM mutation_events").fetchone()[0]
             or connection.execute("SELECT COUNT(*) FROM mutation_receipts").fetchone()[0]
         ):

@@ -125,13 +125,13 @@ print(json.dumps(dict(version=importlib.metadata.version('zaratustra'), python=s
     original = json.loads(run([str(old_zara), "records", "read", str(workspace)]))
     before = json.loads(run([str(zara), "records", "read", str(workspace)]))
     assert before == original
-    upgraded = json.loads(run([str(zara), "migrate", str(workspace)]))
+    upgraded = json.loads(run([str(zara), "migrate", str(workspace), "--to", "3"]))
     assert upgraded["schema_version"] == 3
     assert json.loads(run([str(zara), "records", "read", str(workspace)])) == before
     database = workspace / ".zara/state.sqlite3"
     migrated_hash = digest(database)
     run([str(old_zara), "records", "read", str(workspace)], expected=1)
-    assert json.loads(run([str(zara), "migrate", str(workspace)])) == upgraded
+    assert json.loads(run([str(zara), "migrate", str(workspace), "--to", "3"])) == upgraded
     assert digest(database) == migrated_hash
     work = next(record for record in before["records"] if record["kind"] == "work")
 

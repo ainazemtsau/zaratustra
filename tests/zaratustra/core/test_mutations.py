@@ -88,7 +88,7 @@ def execute(path: Path, request: MutationRequest) -> None:
 
 
 def ready(path: Path) -> None:
-    migrate_workspace(path)
+    migrate_workspace(path, target_version=3)
     execute(path, request_for(path))
 
 
@@ -99,7 +99,7 @@ def test_explicit_v3_migration_preserves_v2_and_grants_nothing(workspace: Path) 
     with pytest.raises(MutationError, match="migration"):
         apply_mutation(workspace, request_for(workspace))
     assert original.database.read_bytes() == before
-    upgraded = migrate_workspace(workspace)
+    upgraded = migrate_workspace(workspace, target_version=3)
     assert upgraded.schema_version == 3
     assert (upgraded.workspace_id, upgraded.created_at) == (
         original.workspace_id,
@@ -112,7 +112,7 @@ def test_explicit_v3_migration_preserves_v2_and_grants_nothing(workspace: Path) 
             "SELECT version, name, sha256 FROM schema_migrations WHERE version = 3"
         ).fetchone() == (3, V3_NAME, V3_SHA256)
     migrated = original.database.read_bytes()
-    assert migrate_workspace(workspace) == upgraded
+    assert migrate_workspace(workspace, target_version=3) == upgraded
     with pytest.raises(WorkspaceError, match="downgrade"):
         migrate_workspace(workspace, target_version=2)
     assert original.database.read_bytes() == migrated
@@ -175,7 +175,7 @@ def test_current_rights_terminal_state_and_receipt_disclosure(workspace: Path) -
 
 
 def test_ungranted_work_and_exact_authorization_binding(workspace: Path) -> None:
-    migrate_workspace(workspace)
+    migrate_workspace(workspace, target_version=3)
     request = request_for(workspace, "set_work_requirements", requirements=("reasoning",))
     before = read_workspace(workspace).database.read_bytes()
     with pytest.raises(MutationError, match="permission_denied"):
@@ -309,15 +309,15 @@ def test_v3_migration_failure_retains_v2(workspace: Path, monkeypatch: pytest.Mo
     with monkeypatch.context() as patch:
         patch.setattr(sqlite3, "connect", failing_connect)
         with pytest.raises(WorkspaceError):
-            migrate_workspace(workspace)
+            migrate_workspace(workspace, target_version=3)
     assert read_workspace(workspace).schema_version == 2
     assert read_workspace(workspace).database.read_bytes() == before
-    assert migrate_workspace(workspace).schema_version == 3
+    assert migrate_workspace(workspace, target_version=3).schema_version == 3
 
 
 @pytest.mark.parametrize("same_id", [False, True])
 def test_concurrent_requests_have_one_effect(workspace: Path, same_id: bool) -> None:
-    migrate_workspace(workspace)
+    migrate_workspace(workspace, target_version=3)
     first = request_for(workspace)
     second = first if same_id else request_for(workspace)
     callers = [confirm(workspace, request) for request in (first, second)]

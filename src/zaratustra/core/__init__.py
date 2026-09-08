@@ -1,17 +1,32 @@
 """Public Core surface for the admitted workspace foundation."""
 
+from .artifacts import ArtifactContent, ArtifactError, ArtifactInspection
 from .mutations import (
     AuthorizationPrompt,
     LocalAuthorization,
     MutationError,
+    ProjectionRebuildError,
     apply_mutation,
     authorize_local,
+    inspect_artifacts,
     prepare_authorization,
+    read_artifact,
     read_history,
+    read_projection_status,
     read_receipt,
     read_records,
+    rebuild_projections,
 )
-from .protocol import MutationEvent, MutationHistory, MutationReceipt, MutationRequest, ReceiptQuery
+from .projections import ProjectionStatus
+from .protocol import (
+    ArtifactReference,
+    ArtifactVersion,
+    MutationEvent,
+    MutationHistory,
+    MutationReceipt,
+    MutationRequest,
+    ReceiptQuery,
+)
 from .records import (
     Artifact,
     Event,
@@ -30,6 +45,17 @@ from .workspace import (
 )
 
 __all__ = [
+    "ArtifactContent",
+    "ArtifactError",
+    "ArtifactInspection",
+    "ArtifactReference",
+    "ArtifactVersion",
+    "ProjectionRebuildError",
+    "ProjectionStatus",
+    "read_artifact",
+    "inspect_artifacts",
+    "read_projection_status",
+    "rebuild_projections",
     "AuthorizationPrompt",
     "LocalAuthorization",
     "MutationError",

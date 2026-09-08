@@ -1,0 +1,107 @@
+{
+  "direction": "C:\\my_global_workflow_worktrees\\solmax",
+  "sources": [
+    {
+      "path": "live/solmax/NOW.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "571a8f9532d02048fabff949fbf171d4a34d85870a088edf448f3e7e52947f6e",
+      "bytes": 74
+    },
+    {
+      "path": "live/solmax/CHARTER.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "6fb467b8ef2e510c846edf7a453b4739a8f042b8fe37f08972b562cb260bd9f6",
+      "bytes": 22334
+    },
+    {
+      "path": "live/solmax/cards/t-zara-m0-artifacts.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "d9e8a4647177bc306bfe4ea0db70d6de545fd72216cdbc69a34523049c72173e",
+      "bytes": 3444
+    },
+    {
+      "path": "live/solmax/cards/closed/t-zara-m0-mutation.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "c68128012f14a20de41b6ca784ccf5b9b507e1181570ddfea5fc79df19f2f4d5",
+      "bytes": 4834
+    },
+    {
+      "path": "live/solmax/cards/bet-g-zara-m0-continuity.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "7300663212d094e160465e0133658892727cac9f591a67cd17fa2b00a8d8e16c",
+      "bytes": 15393
+    },
+    {
+      "path": "live/solmax/work/zaratustra-m0-work3-g5-2026-09-08.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "5b9299a47a1ff0a4196c478006019384d06ad18008bfd54f42acabc99f41a99f",
+      "bytes": 16373
+    },
+    {
+      "path": "live/solmax/history/2026-09-08-s-solmax-zaratustra-work3-g5-20260908-a1.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "460fd772c02942f2a6fe58cfea773e98eaa18c7466033c83e31689be2ac96d29",
+      "bytes": 6855
+    },
+    {
+      "path": "live/solmax/work/zaratustra-m0-work4-admission-2026-09-08.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "b39f2a0c0b382f7d66f5d65b6bbe5bd2e3f0420ae4fa426a02384451c80e7d47",
+      "bytes": 6188
+    },
+    {
+      "path": "live/solmax/work/zaratustra-architecture-plan-2026-09-05.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "4f90d19fc742ab616301b6b4121880f76c75faaeb1f606c8190a84853d8b3e0e",
+      "bytes": 45851
+    },
+    {
+      "path": "live/solmax/work/converge-g-zara-m0-continuity-arch.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "f042e5acf921bc3b2a19eb93900f48e995226f5e34e076204d70e81188ef99cc",
+      "bytes": 30561
+    },
+    {
+      "path": "live/solmax/work/converge-g-zara-m0-continuity-verification-input-20260907.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "e428e19a9342dd12541462dfff953de969a64609257cd2c8c79f6145bae3cdfe",
+      "bytes": 46904
+    },
+    {
+      "path": "live/solmax/knowledge/zaratustra-plan-conforming-approval-2026-09-07.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "f7b1c90d3981681e48d8d856e9d00901756e4cb259a6449f109fb54d1b872578",
+      "bytes": 3511
+    },
+    {
+      "path": "live/solmax/knowledge/zaratustra-local-no-automation-2026-09-07.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "cf3c1ef09bcfb27625bcd1ae2db672d3c22852be09922f6f8780fff2264f6c1f",
+      "bytes": 2081
+    },
+    {
+      "path": "live/solmax/work/evidence/zaratustra-m0-work2-20260908/retained-trials.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "33be04a881da8d0f6376b3b37597380985d72ab6de5f0ba98f14a9da859d89fa",
+      "bytes": 9555
+    },
+    {
+      "path": "live/solmax/work/evidence/zaratustra-m0-work3-g5-20260908/identity-preservation.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "fd79659f224cc499e4555ca919beb1766f6f6cc090db86fff27a3b3885734726",
+      "bytes": 3394
+    },
+    {
+      "path": "live/solmax/work/evidence/zaratustra-m0-work3-g5-20260908/retained-trials-manifest.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "8e0183be027cc18f7f82fcb55ef5b1052ff966b3c85b21ab27ee481022845395",
+      "bytes": 3717
+    },
+    {
+      "path": "live/solmax/work/calls/c-solmax-zaratustra-m0-artifacts-20260908-work4.md",
+      "commit": "e223143d9fc90127ae3e198b96f57d49254a171b",
+      "sha256": "de6c21968b964e66b91e6347be07068cede7c8e5096d05dc6637840aefb580e1",
+      "bytes": 12658
+    }
+  ]
+}

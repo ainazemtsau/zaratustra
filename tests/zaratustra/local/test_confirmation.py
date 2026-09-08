@@ -36,7 +36,7 @@ def test_console_confirmation_pipe_denial_and_lost_reply(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     info = init_workspace(tmp_path)
-    migrate_workspace(tmp_path)
+    migrate_workspace(tmp_path, target_version=3)
     snapshot = create_initial_records(
         tmp_path,
         InitialRecords(
