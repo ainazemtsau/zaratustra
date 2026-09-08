@@ -113,32 +113,33 @@ def exercise(base: Path, source: Path) -> None:
             full,
             cwd=cwd,
             env=env,
-            input=data.decode("utf-8") if data else None,
+            input=data,
             stdin=None if data or console else subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=None if console else subprocess.PIPE,
-            encoding="utf-8",
             creationflags=(0x08000000 if os.name == "nt" and not console else 0),
             timeout=None if console else 30,
         )
+        stdout = result.stdout.decode("utf-8")
+        stderr = result.stderr.decode("utf-8") if result.stderr is not None else None
         record = dict(
             label=label,
             command=full,
             input_sha256=hashlib.sha256(data).hexdigest() if data else None,
-            stdout=result.stdout,
-            stderr=result.stderr,
+            stdout=stdout,
+            stderr=stderr,
             console=console,
             exit=result.returncode,
         )
         runs.append(record)
         save(base / "cli.json", runs)
-        print(result.stdout, flush=True)
-        if result.stderr:
-            print(result.stderr, flush=True)
+        print(stdout, flush=True)
+        if stderr:
+            print(stderr, flush=True)
         print(f"exit={result.returncode}", flush=True)
         if result.returncode != expected:
             raise RuntimeError(f"{label}: expected {expected}; got {result.returncode}")
-        return result.stdout
+        return stdout
 
     cli("version", ["--version"])
     before = read_records(workspace)
@@ -219,6 +220,8 @@ def exercise(base: Path, source: Path) -> None:
         cli("stdin-import", ["handoff", "import", str(workspace), "-"], data=second, console=True)
     )
     assert len(read_handoffs(workspace)) == 2
+    for saved, payload in zip(read_handoffs(workspace), (first, second), strict=True):
+        assert saved.delivery.input_sha256 == hashlib.sha256(payload).hexdigest()
     current = read_records(workspace).state_revision
     cli(
         "original-stale-replay",
