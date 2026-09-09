@@ -78,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
         command = commands.add_parser(name, help=description, description=description)
         command.add_argument("path", nargs="?", default=".", type=Path)
         if name == "migrate":
-            command.add_argument("--to", type=int, choices=(2, 3, 4, 5, 6), default=4)
+            command.add_argument("--to", type=int, choices=(2, 3, 4, 5, 6, 7), default=4)
     for name in ("mutate", "receipt"):
         command = commands.add_parser(name, help="Confirm an exact internal operation/query.")
         command.add_argument("path", type=Path)

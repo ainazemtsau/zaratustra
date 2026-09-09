@@ -43,6 +43,7 @@ from .protocol import (
     authorization_digest,
     event_receipt,
     evolve_artifact,
+    evolve_process,
     evolve_work,
     fingerprint,
     next_records,
@@ -210,6 +211,10 @@ def _history(
         ):
             raise WorkspaceError("Mutation history must start from initial draft")
         reconstructed = {r.id: r for r in snapshot.records if isinstance(r, (Process, Event))}
+        process = next(r for r in snapshot.records if isinstance(r, Process))
+        reconstructed[process.id] = Process.model_validate(
+            process.model_dump() | dict(revision=1, pack_binding=None)
+        )
         reconstructed[beginning.id] = beginning
         reconstructed[initial_artifact.id] = Artifact.model_validate(
             {
@@ -242,6 +247,15 @@ def _history(
             records=tuple(reconstructed.values()),
         )
         artifact = current_artifact(prior, request.work_id)
+        if request.operation == "bind_pack":
+            if (
+                schema < 7
+                or event.process_before is None
+                or event.process_after is None
+                or reconstructed.get(event.process_before.id) != event.process_before
+            ):
+                raise WorkspaceError("Pack binding requires schema7 and exact Process history")
+            reconstructed[event.process_after.id] = event.process_after
         if request.operation in ARTIFACT_OPERATIONS and (
             request.artifact_id != artifact.id or request.artifact_revision != artifact.revision
         ):
@@ -418,6 +432,8 @@ def _mutate(
         raise MutationError("schema", "Handoff import requires explicit migration to 5")
     if request.version == 4 and info.schema_version < 6:
         raise MutationError("schema", "Result requires explicit migration to 6")
+    if request.version == 5 and info.schema_version < 7:
+        raise MutationError("schema", "Pack binding requires explicit migration to 7")
     # 2. Current Work + authority, in the same write transaction as the effect.
     snapshot = _read_records(connection, info.workspace_id)
     confirmation = _caller(info.workspace, request, caller, snapshot)
@@ -441,6 +457,18 @@ def _mutate(
             if stored.fingerprint != intent:
                 raise MutationError("collision", "Operation id already belongs to another intent")
             return stored
+    process_before = None
+    process_after = None
+    if request.operation == "bind_pack":
+        process_before = next(
+            row
+            for row in snapshot.records
+            if isinstance(row, Process) and row.id == before.process_id
+        )
+        try:
+            process_after = evolve_process(process_before, request)
+        except ValueError as error:
+            raise MutationError("pack_bound", str(error)) from error
     # 5. Exact scoped references and bytes, before any DB/domain effect.
     if request.handoff is not None and request.handoff.source_revision != snapshot.state_revision:
         raise MutationError("conflict", "Handoff source revision is not current")
@@ -500,7 +528,9 @@ def _mutate(
     continuation_work = None
     continuation_artifact = None
     if request.submission is not None:
-        continuation_work, continuation_artifact = next_records(request, now, before.process_id)
+        continuation_work, continuation_artifact = next_records(
+            request, now, before.process_id, before.pack_binding
+        )
         for record in (continuation_work, continuation_artifact):
             connection.execute(
                 "INSERT INTO core_records (id, kind, revision, body) VALUES (?, ?, ?, ?)",
@@ -520,6 +550,11 @@ def _mutate(
         "UPDATE core_records SET revision = ?, body = ? WHERE id = ?",
         (after.revision, after.model_dump_json(), str(after.id)),
     )
+    if process_after is not None:
+        connection.execute(
+            "UPDATE core_records SET revision = ?, body = ? WHERE id = ?",
+            (process_after.revision, process_after.model_dump_json(), str(process_after.id)),
+        )
     connection.execute("UPDATE core_state SET revision = ? WHERE singleton = 1", (after.revision,))
     # 7. One immutable event and receipt, including old/new Artifact and exact descriptor.
     event = MutationEvent(
@@ -540,6 +575,8 @@ def _mutate(
         next_artifact=continuation_artifact,
         result_artifact=artifact if request.submission is not None else None,
         result_references=closure,
+        process_before=process_before,
+        process_after=process_after,
     )
     connection.execute(
         "INSERT INTO mutation_events VALUES (?, ?, ?)",

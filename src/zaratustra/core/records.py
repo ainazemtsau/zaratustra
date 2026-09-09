@@ -50,9 +50,27 @@ class Record(RecordModel):
     created_at: AwareDatetime
 
 
+class PackReference(RecordModel):
+    """Exact external identity only; no code, version selection or authority."""
+
+    pack_id: Annotated[str, Field(strict=True, pattern="^[a-z][a-z0-9._-]{0,127}$")]
+    pack_version: Annotated[str, Field(strict=True, pattern="^[0-9]+[.][0-9]+[.][0-9]+$")]
+    process_type: Annotated[str, Field(strict=True, pattern="^[a-z][a-z0-9._-]{0,127}$")]
+    contract_version: Annotated[int, Field(strict=True, ge=1)]
+    state_version: Annotated[int, Field(strict=True, ge=1)]
+
+
 class Process(Record):
     kind: Literal["process"] = "process"
     title: Text
+    pack_binding: PackReference | None = None
+
+    @model_serializer(mode="wrap")
+    def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, object]:
+        value: dict[str, object] = handler(self)
+        if self.pack_binding is None:
+            value.pop("pack_binding", None)
+        return value
 
 
 class Work(Record):
@@ -69,12 +87,15 @@ class Work(Record):
     dependencies: tuple[()] = ()
     executor_requirements: tuple[Text, ...] = ()
     completion_id: UUID | None = None
+    pack_binding: PackReference | None = None
 
     @model_serializer(mode="wrap")
     def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, object]:
         value: dict[str, object] = handler(self)
         if self.completion_id is None:
             value.pop("completion_id", None)
+        if self.pack_binding is None:
+            value.pop("pack_binding", None)
         return value
 
     @model_validator(mode="after")
@@ -166,8 +187,15 @@ class RecordsSnapshot(RecordModel):
             raise ValueError("Initial Work must remain a draft without rights")
         if any(r.revision > self.state_revision for r in self.records):
             raise ValueError("Record revision exceeds state")
-        if process.revision != 1 or event.revision != 1:
+        if event.revision != 1 or (
+            process.revision != 1 if process.pack_binding is None else process.revision < 2
+        ):
             raise ValueError("Unsupported Process/initial event revision")
+        if any(
+            w.pack_binding is not None and w.pack_binding != process.pack_binding
+            for w in works.values()
+        ):
+            raise ValueError("Work binding must match its Process")
         return self
 
 
@@ -186,6 +214,10 @@ def _read_records(connection: sqlite3.Connection, workspace_id: UUID) -> Records
     snapshot = RecordsSnapshot(
         workspace_id=workspace_id, state_revision=state[0][1], records=tuple(records)
     )
+    if connection.execute("PRAGMA user_version").fetchone()[0] < 7 and any(
+        isinstance(r, Process | Work) and r.pack_binding is not None for r in records
+    ):
+        raise WorkspaceError("Pack bindings require explicit schema 7")
     if connection.execute("PRAGMA user_version").fetchone()[0] < 6 and (
         len(records) not in (0, 4)
         or any(isinstance(r, Work) and r.status == "done" for r in records)

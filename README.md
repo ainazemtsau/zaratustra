@@ -1,6 +1,13 @@
 # Zaratustra
 
-Version **0.5.0**, Work 5: `zara init` creates a local workspace;
+Version **0.8.0**, M1 T2: exact external pack registration and immutable Process/Work
+binding, with explicit schema7. A newer installed pack never retargets unfinished
+Work; missing/incompatible versions refuse package continuation. The lifecycle
+uses the existing Core authority, Mutation and history boundary.
+See [T2 plan](docs/m1-packs/PLAN.md) and [current report](RESULT.md).
+The seven capabilities, full two-process scenarios and common overview remain later M1 work.
+
+The underlying M0 foundation: `zara init` creates a local workspace;
 `zara migrate` explicitly adds schema 4; `zara records create` stores initial
 Process, draft Work, declared Artifact and Event records with revisions.
 `zara status` and `zara records read` read persisted facts in later invocations.
@@ -21,7 +28,7 @@ build. The installation probe installs the wheel with locked runtime dependencie
 in a disposable environment outside checkout, runs the real `zara` executable in
 separate processes, then cleans up its own temporary folders.
 
-For the current run, follow [installation and walkthrough](docs/work5/INSTALL.md).
+For the M0 Handoff walkthrough, see [Work 5 installation](docs/work5/INSTALL.md).
 Run the installed commands in a newly created empty folder, or name that folder:
 
 ```text
@@ -64,11 +71,13 @@ surfaces. `zara migrate <workspace> --to 5` explicitly enables Handoff storage.
 exact console confirmation and records accepted_result with provenance through
 the same Mutation API. `zara handoff list <workspace>` reads saved acceptances;
 `zara handoff schema` prints the portable JSON schema. A receipt records the prior
-effect, not late availability of referenced bytes. Context, submit_result and
-next Work remain Works 6–8.
-M0 is not closed; no personal workspace is selected.
+effect, not late availability of referenced bytes. Work6 provides authorized
+`work open`; Work7 adds schema6 and atomic `result submit`/next Work.
+`zara migrate <workspace> --to 7` admits exact pack binding explicitly;
+the default target remains 4. T2 package use is through the public Python API.
+M0 remains partial; no personal workspace is selected.
 
-Read [lifecycle decisions and W19–W27](docs/work5/PLAN.md) before later work,
+Read [pack lifecycle decisions and W15–W20](docs/m1-packs/PLAN.md) before later M1 work,
 and [Product RESULT](RESULT.md) for exact commits and runtime evidence.
 Setup evidence remains under docs/setup/ as history. Windows is the observed
 platform; Linux/macOS and an independent participant's installation remain unverified.

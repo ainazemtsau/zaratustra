@@ -42,4 +42,9 @@ metadata, never current-byte availability. New Work opening revalidates full byt
 Released migrations1–5 stay fixed; new explicit6 never changes default migrate4.
 Initial Event stays fixed.
 Read/init never migrate or repair existing state. Keep migration bytes stable after release.
+Schema7 explicitly admits optional exact PackReference in Process/Work. bind_pack
+request5 is an atomic one-time binding through apply_mutation with Process images
+in the same event. No rights are changed. Result inherits the source binding;
+legacy unbound serialization stays fixed. Released migrations1–6 stay fixed.
+Core knows identity/integrity only, never installed adapters or process rules.
 END_OF_FILE: src/zaratustra/core/AGENTS.md

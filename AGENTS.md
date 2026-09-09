@@ -21,6 +21,11 @@ with separate trusted console confirmation and durable acceptance/provenance rea
 Work 6 adds read-only open_work with exact trusted query, bounded actual manifest,
 scope/reference closure and full final revalidation. Work7 adds explicit schema6,
 atomic Result/completion/next Work and exact inherited context; Work8 is unimplemented.
+M1 T2 adds explicit schema7 and exact immutable Process/Work pack binding through
+Mutation API, external runtime registration/resolution and pinned continuation.
+Missing/incompatible packs refuse package execution; no in-place version migration.
+Technical plan and lifecycle reproduction: docs/m1-packs/PLAN.md and tools.probe_packs.
+Seven capabilities and the full two-Process M1 remain separate work.
 `src/zaratustra/core` owns workspace logic; `src/zaratustra/cli` delegates to it.
 Installed product code and user-chosen data workspace are separate.
 Read the current CALL before doing product work; a completed Work admits no successor.

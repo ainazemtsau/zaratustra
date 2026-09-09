@@ -1,6 +1,6 @@
 [project]
 name = "zaratustra"
-version = "0.7.0"
+version = "0.8.0"
 description = "Zaratustra local workspace and transactional mutation protocol"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -64,3 +64,15 @@ dev = [
     "pytest==9.1.1",
     "ruff==0.16.6",
 ]
+
+[[tool.importlinter.contracts]]
+name = "Core has no external pack dependency"
+type = "forbidden"
+source_modules = ["zaratustra.core"]
+forbidden_modules = ["zaratustra.process_packs"]
+
+[[tool.importlinter.contracts]]
+name = "Packs have no trusted adapter or fictional probe dependency"
+type = "forbidden"
+source_modules = ["zaratustra.process_packs"]
+forbidden_modules = ["zaratustra.local", "zaratustra.cli", "zaratustra.process_probe"]

@@ -15,7 +15,7 @@ from pydantic import (
     model_validator,
 )
 
-from .records import Artifact, RecordModel, Text, Work
+from .records import Artifact, PackReference, Process, RecordModel, Text, Work
 
 Revision = Annotated[int, Field(strict=True, ge=1)]
 Digest = Annotated[str, Field(strict=True, pattern="^[0-9a-f]{64}$")]
@@ -29,6 +29,7 @@ Operation = Literal[
     "restore_artifact",
     "accept_handoff",
     "submit_result",
+    "bind_pack",
 ]
 ARTIFACT_OPERATIONS = ("authorize_artifact", "publish_artifact", "restore_artifact")
 V2_FIELDS = {
@@ -41,6 +42,7 @@ V2_FIELDS = {
 }
 V3_FIELDS = {"handoff", "delivery"}
 V4_FIELDS = {"submission"}
+V5_FIELDS = {"pack_binding"}
 
 
 class NextWork(RecordModel):
@@ -122,7 +124,7 @@ class HandoffDelivery(RecordModel):
 
 
 class MutationRequest(RecordModel):
-    version: Annotated[int, Field(strict=True, ge=1, le=4)] = 1
+    version: Annotated[int, Field(strict=True, ge=1, le=5)] = 1
     operation_id: UUID
     workspace_id: UUID
     work_id: UUID
@@ -140,10 +142,13 @@ class MutationRequest(RecordModel):
     handoff: Handoff | None = None
     delivery: HandoffDelivery | None = None
     submission: ResultSubmission | None = None
+    pack_binding: PackReference | None = None
 
     @model_serializer(mode="wrap")
     def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         value: dict[str, Any] = handler(self)
+        if self.version < 5 and self.pack_binding is None:
+            value.pop("pack_binding", None)
         if self.version < 4 and self.submission is None:
             value.pop("submission", None)
         if self.version < 3 and all(getattr(self, name) is None for name in V3_FIELDS):
@@ -157,6 +162,13 @@ class MutationRequest(RecordModel):
 
     @model_validator(mode="after")
     def operation_payload(self) -> Self:
+        if self.operation == "bind_pack":
+            if self.version != 5 or self.pack_binding is None:
+                raise ValueError("Pack binding requires request 5 and an exact reference")
+            if self.references or self.artifact_references:
+                raise ValueError("Pack binding accepts no Artifact references")
+        elif self.pack_binding is not None or self.version == 5:
+            raise ValueError("Only bind_pack uses request 5/pack_binding")
         if self.operation == "submit_result":
             if self.version != 4 or self.submission is None:
                 raise ValueError("Result requires request version 4 and complete submission")
@@ -228,6 +240,8 @@ def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
         excluded |= V3_FIELDS
     if isinstance(value, MutationRequest) and value.version < 4:
         excluded |= V4_FIELDS
+    if isinstance(value, MutationRequest) and value.version < 5:
+        excluded |= V5_FIELDS
     return json.dumps(
         value.model_dump(mode="json", exclude=excluded),
         sort_keys=True,
@@ -280,6 +294,10 @@ def evolve_work(work: Work, request: MutationRequest) -> Work:
             raise ValueError("Work is not ready or has no current permission")
         if request.operation == "set_work_requirements":
             change["executor_requirements"] = request.requirements
+        elif request.operation == "bind_pack":
+            if work.pack_binding not in (None, request.pack_binding):
+                raise ValueError("An existing Work pack binding cannot be changed")
+            change["pack_binding"] = request.pack_binding
         elif request.operation == "cancel_work":
             change["status"] = "cancelled"
         elif request.operation == "authorize_artifact":
@@ -293,6 +311,17 @@ def evolve_work(work: Work, request: MutationRequest) -> Work:
         elif work.authority_scope != "work_metadata_and_artifact":
             raise ValueError("Work has no current Artifact permission")
     return Work.model_validate({**work.model_dump(), **change})
+
+
+def evolve_process(process: Process, request: MutationRequest) -> Process:
+    if request.operation != "bind_pack" or request.pack_binding is None:
+        raise ValueError("Only bind_pack changes a Process binding")
+    if process.pack_binding is not None:
+        raise ValueError("Process is already bound; in-place pack migration is not supported")
+    return Process.model_validate(
+        process.model_dump()
+        | dict(pack_binding=request.pack_binding, revision=request.expected_revision + 1)
+    )
 
 
 def evolve_artifact(artifact: Artifact, descriptor: ArtifactVersion) -> Artifact:
@@ -330,10 +359,15 @@ class MutationEvent(RecordModel):
     next_artifact: Artifact | None = None
     result_artifact: Artifact | None = None
     result_references: tuple[ArtifactReference, ...] = ()
+    process_before: Process | None = None
+    process_after: Process | None = None
 
     @model_serializer(mode="wrap")
     def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         value: dict[str, Any] = handler(self)
+        if self.request.version != 5:
+            value.pop("process_before", None)
+            value.pop("process_after", None)
         if self.request.version < 4:
             for name in ("next_work", "next_artifact", "result_artifact", "result_references"):
                 value.pop(name, None)
@@ -353,10 +387,22 @@ class MutationEvent(RecordModel):
             raise ValueError("Event state revision mismatch")
         if self.state_revision != self.request.expected_revision + 1:
             raise ValueError("Event must advance global revision exactly once")
+        if self.request.operation == "bind_pack":
+            if (
+                self.process_before is None
+                or self.process_before.id != self.before.process_id
+                or self.before.pack_binding is not None
+                or evolve_process(self.process_before, self.request) != self.process_after
+            ):
+                raise ValueError("Binding event must retain the exact Process transition")
+        elif self.process_before is not None or self.process_after is not None:
+            raise ValueError("Only bind_pack changes a Process")
         if self.request.submission is not None:
             if self.request.submission.source_revision != self.request.expected_revision:
                 raise ValueError("Result source revision must be current at acceptance")
-            work, artifact = next_records(self.request, self.recorded_at, self.before.process_id)
+            work, artifact = next_records(
+                self.request, self.recorded_at, self.before.process_id, self.before.pack_binding
+            )
             if self.next_work != work or self.next_artifact != artifact:
                 raise ValueError("Event must retain exact confirmed next records")
             if self.result_artifact is None or not self.result_references:
@@ -432,7 +478,10 @@ class MutationHistory(RecordModel):
 
 
 def next_records(
-    request: MutationRequest, at: AwareDatetime, process_id: UUID
+    request: MutationRequest,
+    at: AwareDatetime,
+    process_id: UUID,
+    pack_binding: PackReference | None = None,
 ) -> tuple[Work, Artifact]:
     if request.submission is None:
         raise ValueError("Missing Result submission")
@@ -450,6 +499,7 @@ def next_records(
         executor_requirements=spec.executor_requirements,
         status="ready",
         authority_scope=spec.authority_scope,
+        pack_binding=pack_binding,
     )
     artifact = Artifact(
         id=spec.artifact_id,
