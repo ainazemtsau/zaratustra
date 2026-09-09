@@ -45,6 +45,18 @@ type = "forbidden"
 source_modules = ["zaratustra.core"]
 forbidden_modules = ["zaratustra.cli", "zaratustra.local"]
 
+[[tool.importlinter.contracts]]
+name = "Process probe uses Core; Core has no process-rule dependency"
+type = "forbidden"
+source_modules = ["zaratustra.core"]
+forbidden_modules = ["zaratustra.process_probe"]
+
+[[tool.importlinter.contracts]]
+name = "Process rules have no trusted adapter dependency"
+type = "forbidden"
+source_modules = ["zaratustra.process_probe"]
+forbidden_modules = ["zaratustra.local", "zaratustra.cli"]
+
 [dependency-groups]
 dev = [
     "import-linter==2.15",
