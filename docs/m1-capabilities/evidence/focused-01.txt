@@ -1,0 +1,341 @@
+..............FFFFFF........F..                                          [100%]
+================================== FAILURES ===================================
+_ test_adapter_cannot_fabricate_reference_membership_or_partition[foreign_notice] _
+
+trial = <tools.probe_capabilities.CapabilitiesTrial object at 0x0000022F7E62B520>
+mode = 'foreign_notice'
+
+    @pytest.mark.parametrize(
+        "mode",
+        [
+            "foreign_notice",
+            "foreign_result",
+            "overlap",
+            "missing_active",
+            "foreign_requirement",
+            "duplicate_available",
+        ],
+    )
+    def test_adapter_cannot_fabricate_reference_membership_or_partition(
+        trial: CapabilitiesTrial, mode: str
+    ) -> None:
+        class Invalid(FixtureReader):
+            def describe(self, metadata: ProcessMetadata) -> CapabilitySelection:
+                selection = super().describe(metadata)
+                identity = metadata.works[0].id
+                changes = {
+                    "foreign_notice": dict(
+                        open_decisions=(Notice(key="fake", work_id=uuid4(), text="bad"),)
+                    ),
+                    "foreign_result": dict(recent_important_results=(uuid4(),)),
+                    "overlap": dict(blocked_works=(Notice(key="fake", work_id=identity, text="bad"),)),
+                    "missing_active": dict(available_works=()),
+                    "foreign_requirement": dict(
+                        context_requirements=ContextRequirements(
+                            references=(
+                                ArtifactReference(
+                                    artifact_id=uuid4(), version_id=uuid4(), sha256="a" * 64
+                                ),
+                            )
+                        )
+                    ),
+                    "duplicate_available": dict(available_works=(identity, identity)),
+                }[mode]
+                return selection.model_copy(update=changes)
+    
+        value = read(trial, registry=installed(Invalid()))
+>       assert all(
+            answer == dict(state="unavailable", code="invalid_read_response")
+            for answer in value["answers"].values()
+        )
+E       assert False
+E        +  where False = all(<generator object test_adapter_cannot_fabricate_reference_membership_or_partition.<locals>.<genexpr> at 0x0000022F7E639030>)
+
+tests\zaratustra\process_packs\test_capabilities.py:206: AssertionError
+_ test_adapter_cannot_fabricate_reference_membership_or_partition[foreign_result] _
+
+trial = <tools.probe_capabilities.CapabilitiesTrial object at 0x0000022F7E571B50>
+mode = 'foreign_result'
+
+    @pytest.mark.parametrize(
+        "mode",
+        [
+            "foreign_notice",
+            "foreign_result",
+            "overlap",
+            "missing_active",
+            "foreign_requirement",
+            "duplicate_available",
+        ],
+    )
+    def test_adapter_cannot_fabricate_reference_membership_or_partition(
+        trial: CapabilitiesTrial, mode: str
+    ) -> None:
+        class Invalid(FixtureReader):
+            def describe(self, metadata: ProcessMetadata) -> CapabilitySelection:
+                selection = super().describe(metadata)
+                identity = metadata.works[0].id
+                changes = {
+                    "foreign_notice": dict(
+                        open_decisions=(Notice(key="fake", work_id=uuid4(), text="bad"),)
+                    ),
+                    "foreign_result": dict(recent_important_results=(uuid4(),)),
+                    "overlap": dict(blocked_works=(Notice(key="fake", work_id=identity, text="bad"),)),
+                    "missing_active": dict(available_works=()),
+                    "foreign_requirement": dict(
+                        context_requirements=ContextRequirements(
+                            references=(
+                                ArtifactReference(
+                                    artifact_id=uuid4(), version_id=uuid4(), sha256="a" * 64
+                                ),
+                            )
+                        )
+                    ),
+                    "duplicate_available": dict(available_works=(identity, identity)),
+                }[mode]
+                return selection.model_copy(update=changes)
+    
+        value = read(trial, registry=installed(Invalid()))
+>       assert all(
+            answer == dict(state="unavailable", code="invalid_read_response")
+            for answer in value["answers"].values()
+        )
+E       assert False
+E        +  where False = all(<generator object test_adapter_cannot_fabricate_reference_membership_or_partition.<locals>.<genexpr> at 0x0000022F7E47FF10>)
+
+tests\zaratustra\process_packs\test_capabilities.py:206: AssertionError
+__ test_adapter_cannot_fabricate_reference_membership_or_partition[overlap] ___
+
+trial = <tools.probe_capabilities.CapabilitiesTrial object at 0x0000022F7E570890>
+mode = 'overlap'
+
+    @pytest.mark.parametrize(
+        "mode",
+        [
+            "foreign_notice",
+            "foreign_result",
+            "overlap",
+            "missing_active",
+            "foreign_requirement",
+            "duplicate_available",
+        ],
+    )
+    def test_adapter_cannot_fabricate_reference_membership_or_partition(
+        trial: CapabilitiesTrial, mode: str
+    ) -> None:
+        class Invalid(FixtureReader):
+            def describe(self, metadata: ProcessMetadata) -> CapabilitySelection:
+                selection = super().describe(metadata)
+                identity = metadata.works[0].id
+                changes = {
+                    "foreign_notice": dict(
+                        open_decisions=(Notice(key="fake", work_id=uuid4(), text="bad"),)
+                    ),
+                    "foreign_result": dict(recent_important_results=(uuid4(),)),
+                    "overlap": dict(blocked_works=(Notice(key="fake", work_id=identity, text="bad"),)),
+                    "missing_active": dict(available_works=()),
+                    "foreign_requirement": dict(
+                        context_requirements=ContextRequirements(
+                            references=(
+                                ArtifactReference(
+                                    artifact_id=uuid4(), version_id=uuid4(), sha256="a" * 64
+                                ),
+                            )
+                        )
+                    ),
+                    "duplicate_available": dict(available_works=(identity, identity)),
+                }[mode]
+                return selection.model_copy(update=changes)
+    
+        value = read(trial, registry=installed(Invalid()))
+>       assert all(
+            answer == dict(state="unavailable", code="invalid_read_response")
+            for answer in value["answers"].values()
+        )
+E       assert False
+E        +  where False = all(<generator object test_adapter_cannot_fabricate_reference_membership_or_partition.<locals>.<genexpr> at 0x0000022F7E639210>)
+
+tests\zaratustra\process_packs\test_capabilities.py:206: AssertionError
+_ test_adapter_cannot_fabricate_reference_membership_or_partition[missing_active] _
+
+trial = <tools.probe_capabilities.CapabilitiesTrial object at 0x0000022F7E600890>
+mode = 'missing_active'
+
+    @pytest.mark.parametrize(
+        "mode",
+        [
+            "foreign_notice",
+            "foreign_result",
+            "overlap",
+            "missing_active",
+            "foreign_requirement",
+            "duplicate_available",
+        ],
+    )
+    def test_adapter_cannot_fabricate_reference_membership_or_partition(
+        trial: CapabilitiesTrial, mode: str
+    ) -> None:
+        class Invalid(FixtureReader):
+            def describe(self, metadata: ProcessMetadata) -> CapabilitySelection:
+                selection = super().describe(metadata)
+                identity = metadata.works[0].id
+                changes = {
+                    "foreign_notice": dict(
+                        open_decisions=(Notice(key="fake", work_id=uuid4(), text="bad"),)
+                    ),
+                    "foreign_result": dict(recent_important_results=(uuid4(),)),
+                    "overlap": dict(blocked_works=(Notice(key="fake", work_id=identity, text="bad"),)),
+                    "missing_active": dict(available_works=()),
+                    "foreign_requirement": dict(
+                        context_requirements=ContextRequirements(
+                            references=(
+                                ArtifactReference(
+                                    artifact_id=uuid4(), version_id=uuid4(), sha256="a" * 64
+                                ),
+                            )
+                        )
+                    ),
+                    "duplicate_available": dict(available_works=(identity, identity)),
+                }[mode]
+                return selection.model_copy(update=changes)
+    
+        value = read(trial, registry=installed(Invalid()))
+>       assert all(
+            answer == dict(state="unavailable", code="invalid_read_response")
+            for answer in value["answers"].values()
+        )
+E       assert False
+E        +  where False = all(<generator object test_adapter_cannot_fabricate_reference_membership_or_partition.<locals>.<genexpr> at 0x0000022F7E6389A0>)
+
+tests\zaratustra\process_packs\test_capabilities.py:206: AssertionError
+_ test_adapter_cannot_fabricate_reference_membership_or_partition[foreign_requirement] _
+
+trial = <tools.probe_capabilities.CapabilitiesTrial object at 0x0000022F7E601650>
+mode = 'foreign_requirement'
+
+    @pytest.mark.parametrize(
+        "mode",
+        [
+            "foreign_notice",
+            "foreign_result",
+            "overlap",
+            "missing_active",
+            "foreign_requirement",
+            "duplicate_available",
+        ],
+    )
+    def test_adapter_cannot_fabricate_reference_membership_or_partition(
+        trial: CapabilitiesTrial, mode: str
+    ) -> None:
+        class Invalid(FixtureReader):
+            def describe(self, metadata: ProcessMetadata) -> CapabilitySelection:
+                selection = super().describe(metadata)
+                identity = metadata.works[0].id
+                changes = {
+                    "foreign_notice": dict(
+                        open_decisions=(Notice(key="fake", work_id=uuid4(), text="bad"),)
+                    ),
+                    "foreign_result": dict(recent_important_results=(uuid4(),)),
+                    "overlap": dict(blocked_works=(Notice(key="fake", work_id=identity, text="bad"),)),
+                    "missing_active": dict(available_works=()),
+                    "foreign_requirement": dict(
+                        context_requirements=ContextRequirements(
+                            references=(
+                                ArtifactReference(
+                                    artifact_id=uuid4(), version_id=uuid4(), sha256="a" * 64
+                                ),
+                            )
+                        )
+                    ),
+                    "duplicate_available": dict(available_works=(identity, identity)),
+                }[mode]
+                return selection.model_copy(update=changes)
+    
+        value = read(trial, registry=installed(Invalid()))
+>       assert all(
+            answer == dict(state="unavailable", code="invalid_read_response")
+            for answer in value["answers"].values()
+        )
+E       assert False
+E        +  where False = all(<generator object test_adapter_cannot_fabricate_reference_membership_or_partition.<locals>.<genexpr> at 0x0000022F7E638310>)
+
+tests\zaratustra\process_packs\test_capabilities.py:206: AssertionError
+_ test_adapter_cannot_fabricate_reference_membership_or_partition[duplicate_available] _
+
+trial = <tools.probe_capabilities.CapabilitiesTrial object at 0x0000022F7E5F5DB0>
+mode = 'duplicate_available'
+
+    @pytest.mark.parametrize(
+        "mode",
+        [
+            "foreign_notice",
+            "foreign_result",
+            "overlap",
+            "missing_active",
+            "foreign_requirement",
+            "duplicate_available",
+        ],
+    )
+    def test_adapter_cannot_fabricate_reference_membership_or_partition(
+        trial: CapabilitiesTrial, mode: str
+    ) -> None:
+        class Invalid(FixtureReader):
+            def describe(self, metadata: ProcessMetadata) -> CapabilitySelection:
+                selection = super().describe(metadata)
+                identity = metadata.works[0].id
+                changes = {
+                    "foreign_notice": dict(
+                        open_decisions=(Notice(key="fake", work_id=uuid4(), text="bad"),)
+                    ),
+                    "foreign_result": dict(recent_important_results=(uuid4(),)),
+                    "overlap": dict(blocked_works=(Notice(key="fake", work_id=identity, text="bad"),)),
+                    "missing_active": dict(available_works=()),
+                    "foreign_requirement": dict(
+                        context_requirements=ContextRequirements(
+                            references=(
+                                ArtifactReference(
+                                    artifact_id=uuid4(), version_id=uuid4(), sha256="a" * 64
+                                ),
+                            )
+                        )
+                    ),
+                    "duplicate_available": dict(available_works=(identity, identity)),
+                }[mode]
+                return selection.model_copy(update=changes)
+    
+        value = read(trial, registry=installed(Invalid()))
+>       assert all(
+            answer == dict(state="unavailable", code="invalid_read_response")
+            for answer in value["answers"].values()
+        )
+E       assert False
+E        +  where False = all(<generator object test_adapter_cannot_fabricate_reference_membership_or_partition.<locals>.<genexpr> at 0x0000022F7E638040>)
+
+tests\zaratustra\process_packs\test_capabilities.py:206: AssertionError
+________________ test_byte_budget_returns_no_partial_metadata _________________
+
+trial = <tools.probe_capabilities.CapabilitiesTrial object at 0x0000022F7E5E4C50>
+
+    def test_byte_budget_returns_no_partial_metadata(trial: CapabilitiesTrial) -> None:
+        identity = work_at(trial.path).id
+        query = process_query(trial.path, identity, (identity,), identity).model_copy(
+            update=dict(max_bytes=1)
+        )
+        value = read(trial, query=query)
+>       assert all(
+            answer == dict(state="unavailable", code="budget_exceeded")
+            for answer in value["answers"].values()
+        )
+E       assert False
+E        +  where False = all(<generator object test_byte_budget_returns_no_partial_metadata.<locals>.<genexpr> at 0x0000022F7E6398A0>)
+
+tests\zaratustra\process_packs\test_capabilities.py:383: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/zaratustra/process_packs/test_capabilities.py::test_adapter_cannot_fabricate_reference_membership_or_partition[foreign_notice]
+FAILED tests/zaratustra/process_packs/test_capabilities.py::test_adapter_cannot_fabricate_reference_membership_or_partition[foreign_result]
+FAILED tests/zaratustra/process_packs/test_capabilities.py::test_adapter_cannot_fabricate_reference_membership_or_partition[overlap]
+FAILED tests/zaratustra/process_packs/test_capabilities.py::test_adapter_cannot_fabricate_reference_membership_or_partition[missing_active]
+FAILED tests/zaratustra/process_packs/test_capabilities.py::test_adapter_cannot_fabricate_reference_membership_or_partition[foreign_requirement]
+FAILED tests/zaratustra/process_packs/test_capabilities.py::test_adapter_cannot_fabricate_reference_membership_or_partition[duplicate_available]
+FAILED tests/zaratustra/process_packs/test_capabilities.py::test_byte_budget_returns_no_partial_metadata
+7 failed, 24 passed in 9.86s

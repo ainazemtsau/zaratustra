@@ -75,6 +75,10 @@ effect, not late availability of referenced bytes. Work6 provides authorized
 `work open`; Work7 adds schema6 and atomic `result submit`/next Work.
 `zara migrate <workspace> --to 7` admits exact pack binding explicitly;
 the default target remains 4. T2 package use is through the public Python API.
+T3 adds `process_packs.read_capabilities`: seven derived answers over an exact
+authorized metadata scope, with separately authorized selected Work context.
+Read [the capability contract](docs/m1-capabilities/PLAN.md) and
+[the reproducible example](docs/m1-capabilities/REPRODUCE.md).
 M0 remains partial; no personal workspace is selected.
 
 Read [pack lifecycle decisions and W15–W20](docs/m1-packs/PLAN.md) before later M1 work,

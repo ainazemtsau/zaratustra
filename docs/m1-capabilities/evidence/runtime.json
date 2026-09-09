@@ -1,0 +1,11 @@
+{
+  "call": "c-solmax-zaratustra-m1-capabilities-20260909-exec",
+  "commit": "d0cb354807ab16b1d917d500a4e3d1d46f59ad3e",
+  "diff": "",
+  "python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]",
+  "argv": [
+    "C:\\projects\\zaratustra\\_scratch\\m1-capabilities-20260909\\tools\\probe_capabilities.py",
+    "--output",
+    "_scratch/t3-contract-01"
+  ]
+}

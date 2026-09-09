@@ -1,130 +1,109 @@
-# M1 / T2 — точная версия пакета сохраняется вместе с Process и Work
+# T3 — единый read/context contract Process
 
 ## outcome
 
-REPORT HOME на c-solmax-zaratustra-m1-packs-20260909-exec, engineering_contract36,
-PROBA. Техническая реализация T2 подготовлена и проверена; завершение PROBA,
-Direction T2 и всей M1 не заявляется: owner acceptance и fresh physical G5 pending.
+REPORT HOME на c-solmax-zaratustra-m1-capabilities-20260909-exec; pin36, PROBA.
+Техническая реализация и авторские проверки T3 готовы. Owner acceptance T3 и
+binding fresh physical G5 pending; завершение PROBA, Direction T3 и M1 не заявляется.
 
-Zaratustra0.8.0 добавляет immutable external registration и PackReference,
-явный schema7 и bind_pack через единственный apply_mutation. Привязка Process/Work
-атомарна и одноразова; next Work наследует exact binding. Missing/incompatible
-отказывают без изменений; новая установленная версия не заменяет старую.
-Общее управление authority/history/repair остаётся в Core, а предметный rule — снаружи.
+Product0.9.0/schema7 возвращает семь derived ответов из разрешённого Core snapshot.
+Пустой поддержанный ответ, отказ и недоступность различаются. Exact ProcessQuery
+раскрывает только явно выбранные Work metadata; counts относятся только к ответу.
+Отдельный ContextQuery ограничивает содержимое selected Work и её точными Core grants.
+Core сериализует чтение с managed writers и перепроверяет входы перед возвратом.
+Общий Mutation API и прежняя семантика состояния не меняются.
 
 ## evidence
 
-Точные версии:
-- basis: f67959e7c1a412c202ebb0d6e67938ec4355042f;
-- PLAN + verified baseline до source edits: 8dfaa5c50faa6c50bd6e67d357ee7bcef3dbf200;
-- implementation/source: f728ad6a8645ba04532e1cd74a34ea57c31c4dd8;
-- этот финальный REPORT сохраняется отдельным docs/evidence commit поверх source;
-  source/tests/tools/lock/authority после source commit не менялись.
+- Basis: a5efbb15c7c39e52072f4fb1593a294ebe109a80 — чистая принятая T2 review-версия.
+- PLAN + retained baseline до implementation: 9eb43fa.
+- Implementation/source: d0cb354807ab16b1d917d500a4e3d1d46f59ad3e.
+- REPORT/evidence — последующий docs-only commit; точный SHA в финальном handback.
+- Execution: C:/projects/zaratustra/_scratch/m1-capabilities-20260909,
+  branch codex/m1-capabilities-20260909. Source/pin/stamp/свободные path/branch/STOP/STEER
+  проверены на запуске. live/** и исходные Work/пакеты/G5 не редактировались.
 
-Worktree C:/projects/zaratustra/_scratch/m1-packs-20260909;
-branch codex/m1-packs-20260909. Source review worktree остался на basis.
-Исходный worktree был чист; path/branch свободны; pin/stamp36 и отсутствие
-STOP/STEER перепроверены перед созданием и перед каждым запуском.
-
-| done_when исходного CALL | Полученное evidence | Граница вывода |
+| Исходный done_when | Evidence | Предел |
 |---|---|---|
-| 1. PLAN-модель pack/type/instance, registration, compatibility, сохранённая связь | docs/m1-packs/PLAN.md записан первым; Registry проверяет identity/collision, exact contract1/state1. bind_pack записывает Process и Work в одном event/receipt, revision3→4, без изменения scope. Context и отдельный Python restart читают exact binding. | Технические проверки T2 PASS; не полная семь-capability M1. |
-| 2. Missing/incompatible и версия незавершённой Work | lifecycle missing/v2-only/incompatible-contract/incompatible-state/in-place-change: пять отказов, DB bytes/history неизменны. Возврат v1 позволяет Result7→8 и next Work с v1. Другой новый Process явно связывается и продолжается с v2. | In-place миграция не предоставлена: явный отказ, не скрытый upgrade. |
-| 3. Commit, runnable Mutation/revision/history evidence | native tools.check --deliver на clean source: 173 tests PASS, 44.58s pytest, build/hygiene/types, шесть import contracts. 25 новых тестов проверяют exact authority, stale, replay/collision, journal, наследование, отказ после revoke/terminal, transaction rollback и legacy6→7 bytes, включая старый Result. | Это авторская инженерная проверка; binding G5 всё ещё нужна. |
+| 1. Семь возможностей через единый контракт | docs/m1-capabilities/PLAN.md, public read_capabilities, CapabilitySelection, exact ProcessQuery; contract.zip показывает ready7, attention/open decision/blocked8, important Result10 и контекст выбранной next Work. | Общий API и fictional contract fixture; два полных процесса и renderer остаются T4–T6. |
+| 2. Empty/denied/unavailable, scope/revisions, metadata/counts, state и изоляция | 31 новый Core-backed test; full native204 PASS. Read tests проверяют bytes/layout; invalid scopes/rights/queries не вызывают adapter. Контекст равен прежнему open_work; foreign reference отвергается; hidden Result не раскрывается в metadata; exact inherited grounds допустимы; loss bytes не даёт partial output; managed writer ждёт завершения snapshot. | Не hostile same-user Python sandbox, power-loss доказательство или fresh G5. |
+| 3. Exact version/checks, derived ответы и отсутствие M2 prerequisite | runtime.json: source d0cb354, source diff пустой. contract.zip/manifest сохраняют exact queries/callers/output/state/history/mutations/backups. В новой папке восстановлен before-result и записан настоящий Core Result7→8. source-verification связывает wheel с source и 37 неизменными файлами. | Нет нового persistence/projection writer, schema migration, зависимостей или M2 компонентов. |
 
-Основные сохранённые артефакты в docs/m1-packs/:
-- READOUT.md — короткий показ; REPRODUCE.md — команды и rollback;
-- evidence/check-deliver.txt — полный native output;
-- evidence/lifecycle.zip и lifecycle-manifest.json — exact inputs, requests,
-  confirmations, receipts, state/history/context, rollback backups, восстановленные
-  состояния и runtime.json (source f728ad6, source diff пустой);
-- evidence/summary.json — итог того же сценария;
-- evidence/restart-read.json и restart_read.py.txt — отдельный interpreter,
-  retained schema7/revision8, ready Work, exact v1 и новое scoped context без записи;
-- evidence/source-verification.json, source.diff — Git blobs/hashes и граница diff;
-- evidence/zaratustra-0.8.0-py3-none-any.whl — проверенная сборка; Python files внутри
-  wheel сверены с проверенными исходниками;
-- evidence/manifest.json — SHA256/размер каждого evidence файла, кроме самого manifest.
+Артефакты в docs/m1-capabilities/evidence/: baseline.whl, baseline-trial.zip и
+baseline-files-manifest.json; native-02.txt (204 PASS, pytest62.98s), финальный
+check-deliver.txt; contract.zip/contract-manifest.json, summary/runtime,
+source.diff/source-verification, exact0.9.0 wheel, raw focused01/02 и остановленного
+native01. manifest.json содержит SHA256/размеры. Повтор/rollback: REPRODUCE.md.
 
-Released migrations1–6, прежние Core tests, T1 process_probe, local adapter и
-validation.config побайтно/по Git неизменны относительно basis. Это проверка
-provenance, не source-scanner доказательство поведения. Реальное поведение
-проверяют Core tests и lifecycle. Новая schema7 — semantic JSON-format migration:
-добавляет запись schema_migrations, не переписывает старые domain rows/history.
-Default migrate4, init/read без миграции и текущие scoped rights сохранены.
+Released migrations1–7, context/records/results/artifacts, все старые tests,
+local/CLI, T1 rules, validation.config и tools.check сохранены. В mutations.py
+расширены только типы authorization query; новый read seam — Core/process_read.py,
+external meaning — process_packs. Lock меняет только собственную версию продукта.
+Сравнение source — byte evidence; поведение подтверждают реальные Core tests.
 
-Rollback: baseline0.7.0 wheel и исходные fictional backups сохранены до edits.
-В T2 восстановлены pre-migration, pre-bind и pre-result в НОВЫЕ папки;
-полный layout/hashes совпали. Core перечитал legacy state; bind и submit повторены
-с exact request и новым разрешением на восстановленный путь. Исходные folders и
-все evidence сохранены, прямых SQL/state Markdown edits нет. Schema downgrade
-не предлагается: возврат старого продукта использует старый backup в новой папке.
+Development self-check: focused01 выявил потерю точного PackError code на границе
+Core context manager. Invariant/class: read-error-envelope-preservation.
+sweep: новые missing/incompatible/reader failure/invalid selection/budget paths —
+closed общей обработкой внутри Core boundary; final revalidation сохранена.
+Старый propose_result разрешает pack вне Core context manager — n/a. Focused02:
+31 PASS, весь native204 PASS. Это не review artifact или fresh refutation.
+
+Исполнительский сбой: native01 остановлен из-за пропущенного explicit scratch
+basetemp; pytest успел начать в default temporary directory. Exact path не записан;
+полная изоляция того прогона не заявляется. Ничего там не очищалось. Native02 и
+Deliver задают явно новые execution _scratch папки. Raw сохранён; native01 не PASS.
 
 ## assumptions
 
-- Pack содержит один process_type; Process.id — instance. Exact manifest включает
-  pack_id, pack_version, process_type, contract_version и state_version.
-- Registry — явная immutable trusted-host конфигурация установленного Python кода;
-  её восстановление при старте не создаёт Operational authority. Manifest identity
-  не аттестует код, и trusted same-user Python не sandboxed (сохранённая W21 модель).
-- Core хранит generic reference и проверяет state/authority/integrity; совместимость
-  установки проверяет внешний registry. Core не импортирует pack и не ищет latest.
-  Только отдельно подтверждённый request изменяет state; packet/file не даёт прав.
-- Process/начатая Work не перепривязываются. Версии могут сосуществовать; для старой
-  Work нужен exact старый pack. Отсутствие pack не отменяет owner-local историю,
-  revoke и разрешённый Artifact repair. Для state migration нужен отдельный PLAN.
-- T2 сохраняет существующий один Process/workspace. Разрешение совместного размещения
-  остаётся W17 в полном M1, не объявляется решённым или вырезанным.
+- W16 HOW выбран до code и сверен по owner-ack:solmax-plan-conforming-20260907
+  с Direction plan §§8/30/40, shape T3, C03/C04/C05. Новая реплика approval не выдумана.
+- Explicit metadata scope — один Process/workspace. Anchor и каждый visible
+  member требуют current metadata rights; terminal Work только metadata.
+  Нет hidden counts; глобальная revision явно разрешена envelope.
+- Status/attention/open questions/importance выводит adapter из текущих metadata;
+  он не получает DB/path/caller/content. Вопрос fixture — metadata-маркер,
+  не новое хранилище решений. Available — candidate по правилам pack/metadata,
+  actual context и mutation отдельно проверяются Core.
+- Context requirements не выдают прав. Exact references ограничены выбранной Work
+  и inherited grants; содержимое требует отдельного caller на точный ContextQuery.
+  Внешние текстовые ссылки не разыменовываются. Retained answer — historical.
+- Byte budget ограничивает успешные данные; даже при max_bytes=1 возвращается
+  небольшой фиксированный error envelope без metadata/counts.
+- Registry — trusted Python, без code attestation/latest/migration; reader identity
+  входит в collision. Повторно использованы fictional входы T2; новые операции
+  текущего T3 runner имеют отдельные exact confirmations на RUN этого CALL.
 
 ## cuts
 
-Новых cuts исходного T2 CALL нет. Полная диспозиция с rewrites — PLAN W15–W20:
-W15 lifecycle решён в пределах T2; W16 OPEN → PLAN/T3 (все семь capabilities,
-scope/revisions, empty/denied/unavailable, metadata/counts/consistency); W17 OPEN
-→ PLAN/T3–T5 (окончательный baseline и сосуществование); W18 OPEN → PLAN/T4/T5
-(два полных fictional процесса); W19 OPEN → PLAN/T6 (общий обзор); W20 OPEN
-→ PLAN/T4–T7 (полные сценарии и доказательство второго). T2 W20 evidence сохранено.
-
-Обе гарантии P§30 «без изменения основной семантики Core» и P§40 «без изменения
-Core» сохранены. Изменения Core здесь — общая подготовка T2 до подключения полного
-второго Process; они не предъявляются как доказательство W17/Proof C. Предметных
-веток в Core нет; выбранная фикстура повторно использует принятый T1 batch rule.
-
-M0 partial; Work8/original attachment не читались и не повторялись. Реальные
-процессы, M2+, новый frontend/transport/scheduler, автономность, CI/CD/Actions,
-уведомления, внешние/денежные права, расходы и публикация отсутствуют.
+Новых cuts T3 нет. W15 exact T2 lifecycle сохранён; W16 реализован по PLAN.
+W17: T3 — общая подготовка; обе гарантии P§30 «без изменения основной семантики
+Core» и P§40 «без изменения Core» сохранены. Final placement и baseline перед
+вторым OPEN T4/T5; один Process/workspace не объявляется окончательным M1.
+W18 — полная fictional пара OPEN T4/T5; W19 — renderer OPEN T6; W20 — T3 evidence
+сохранено, оба полных сценария/итоговая проверка OPEN T4–T7. Исходные rewrites
+сохранены в CALL.md. M0 partial; Work8 не читался/не повторялся. T4/M2+ не запускались.
 
 ## cost
 
-Одна ограниченная T2 source-реализация и два отчётных этапа (PLAN/baseline и handback).
-Новых runtime/dev dependencies нет; lock меняет только zaratustra0.7.0→0.8.0.
-Baseline native: 148 tests PASS, pytest31.13s. Предварительные native запуски:
-один unused import в новом тесте, затем две type-аннотации; после исправления
-24 focused tests PASS (6.94s). Ещё один legacy-chain тест добавлен перед полным
-native запуском; полный 173 PASS с первого запуска. Все raw выводы сохранены.
-Final lifecycle и отдельное чтение после restart прошли с первого запуска.
-
-Managed sandbox не читал установленный uv Python и запрещал Git refs; действия
-прошли разрешённое escalation. Требуемые uv/native tools доступны; обхода тестов
-или источника нет. Денежная стоимость/API tokens не измерялись; дедлайн не назначен.
+Одна авторская сессия, без подагентов. Baseline173 PASS; focused01 7 failed/24 passed,
+focused02 31 PASS; native204 PASS и обязательный final Deliver. Исправлялись также
+форматирование/типы; один native запуск остановлен. Полный wall-clock/token cost
+не измерен; новых внешних/денежных действий не было.
 
 ## manual-acceptance
 
-PENDING. Владелец сказал «RUN c-solmax-zaratustra-m1-packs-20260909-exec» — запуск
-реализации и новых fictional проверок. Это не принятие результата T2. Технический
-PLAN соответствует принятому плану по сохранённой делегации; новых слов approval
-не придумано. Старое «принимаю» относится только к T1.
-
-Предмет будущей приёмки — docs/m1-packs/READOUT.md: точная версия переживает
-смену установки, отказы не портят state, возврат old pack восстанавливает продолжение.
-Fresh binding physical G5 pending, не light close; separate Python process и
-авторские тесты не физическая G5. Подагенты не запускались.
+Показ: docs/m1-capabilities/READOUT.md; exact answers — contract.zip; команды того
+же runner и восстановление — REPRODUCE.md. Actual owner words о T3: pending.
+Слова «да» относятся к принятой T2; RUN текущего CALL разрешает исполнение,
+не является приёмкой T3. Binding fresh physical G5: pending. Авторские проверки
+не заменяют её. Этот REPORT не является Direction close.
 
 ## next
 
-solmax — REPORT HOME на исходный CALL для отдельной свежей G5 exact candidate
-и фактической приёмки владельцем, затем Direction сверяет закрытие.
-Этот Product REPORT не закрывает Direction CALL/T2/M1, не выдаёт successor
-и не запускает T3. live/** и чужие product worktrees не изменены.
+solmax
+
+REPORT HOME на исходный CALL. Остаются отдельная свежая physical G5 и
+реальная приёмка предъявленной T3. Direction сама ведёт продолжение.
+Successor CALL/T4 не создавался; live/** не менялся.
 
 END_OF_FILE: RESULT.md

@@ -1,0 +1,55 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import zipfile
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from tools.check import report_errors
+
+ROOT = Path.cwd()
+OUT = ROOT / 'docs/m1-capabilities/evidence'
+SOURCE = 'd0cb354807ab16b1d917d500a4e3d1d46f59ad3e'
+
+def git(*args):
+    return subprocess.check_output(['git', *args], cwd=ROOT)
+
+def digest(data):
+    return dict(sha256=hashlib.sha256(data).hexdigest(), bytes=len(data))
+
+def save(path, value):
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + chr(10), encoding='utf-8')
+
+assert not (ROOT / 'STOP').exists() and not (ROOT / 'STEER.md').exists()
+assert not report_errors(ROOT, required=True)
+assert not git('diff', SOURCE, '--', 'src', 'tools', 'tests', 'pyproject.toml', 'uv.lock', 'AGENTS.md')
+assert git('show', SOURCE + ':RESULT.md') == (ROOT / 'docs/results/m1-packs-20260909.md').read_bytes()
+raw = (OUT / 'check-deliver.txt').read_text(encoding='utf-8')
+assert '204 passed' in raw and 'PASS: native build, hygiene, types, boundaries, tests, report structure' in raw
+shutil.copyfile(ROOT / 'dist/zaratustra-0.9.0-py3-none-any.whl', OUT / 'zaratustra-0.9.0-py3-none-any.whl')
+with zipfile.ZipFile(OUT / 'zaratustra-0.9.0-py3-none-any.whl') as archive:
+    names = {name for name in archive.namelist() if name.endswith('.py')}
+    expected = {name.removeprefix('src/') for name in git('ls-tree', '-r', '--name-only', SOURCE, 'src').decode().splitlines() if name.endswith('.py')}
+    assert names == expected
+    for name in names:
+        assert archive.read(name) == git('show', SOURCE + ':src/' + name)
+receipt = dict(
+    kind='engineering_author_REPORT', call='c-solmax-zaratustra-m1-capabilities-20260909-exec',
+    basis='a5efbb15c7c39e52072f4fb1593a294ebe109a80', plan='9eb43fa', source=SOURCE,
+    candidate='docs-only commit containing RESULT.md and this receipt; exact SHA in final handback',
+    mode='PROBA', engineering_contract=36, product_version='0.9.0', schema_version=7,
+    native_check='PASS:204', deliver='PASS:204; pytest62.43s',
+    self_check_only=True, binding_fresh_physical_g5='pending', owner_acceptance='pending',
+    direction_t3_closed=False, direction_m1_closed=False, m0='partial', next='solmax',
+    implementation_unchanged_after_source=True, final_wheel_python_matches_git=True,
+    archived_t2_report_exact_source_bytes=True,
+    execution_issue='native-01 interrupted: explicit scratch basetemp omitted; no PASS/isolation claim for that run; successful native02/Deliver explicitly use fresh execution scratch basetemps',
+)
+save(OUT / 'receipt.json', receipt)
+shutil.copyfile(__file__, OUT / 'finalize_t3.py.txt')
+save(OUT / 'manifest.json', {path.name: digest(path.read_bytes()) for path in sorted(OUT.iterdir()) if path.is_file() and path.name != 'manifest.json'})
+manifest = json.loads((OUT / 'manifest.json').read_text(encoding='utf-8'))
+for name, value in manifest.items():
+    assert digest((OUT / name).read_bytes()) == value
+print(json.dumps(dict(report_structure='PASS', manifest_files=len(manifest), final_wheel_source='PASS', prior_report_preserved='PASS', source=SOURCE), indent=2))

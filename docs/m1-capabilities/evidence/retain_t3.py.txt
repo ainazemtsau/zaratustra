@@ -1,0 +1,99 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import tomllib
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / 'docs/m1-capabilities/evidence'
+BASIS = 'a5efbb15c7c39e52072f4fb1593a294ebe109a80'
+SOURCE = 'd0cb354807ab16b1d917d500a4e3d1d46f59ad3e'
+
+def save(path, value):
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + chr(10), encoding='utf-8')
+
+def digest(data):
+    return dict(sha256=hashlib.sha256(data).hexdigest(), bytes=len(data))
+
+def git(*args):
+    return subprocess.check_output(['git', *args], cwd=ROOT)
+
+def retain(directory, destination):
+    assert not destination.exists()
+    inventory = {}
+    directories = []
+    with zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED) as archive:
+        for path in sorted(directory.rglob('*')):
+            relative = path.relative_to(directory).as_posix()
+            if path.is_dir():
+                directories.append(relative + '/')
+                archive.writestr(relative + '/', b'')
+            elif path.is_file():
+                archive.write(path, relative)
+                inventory[relative] = digest(path.read_bytes())
+    with zipfile.ZipFile(destination) as archive:
+        assert archive.testzip() is None
+        assert len(archive.namelist()) == len(set(archive.namelist()))
+        assert set(archive.namelist()) == set(inventory) | set(directories)
+        for name, expected in inventory.items():
+            assert digest(archive.read(name)) == expected
+    save(destination.with_name(destination.stem + '-manifest.json'), dict(files=inventory, directories=directories, archive=digest(destination.read_bytes())))
+
+if (ROOT / 'STOP').exists() or (ROOT / 'STEER.md').exists():
+    raise RuntimeError('Read STOP/STEER')
+assert git('rev-parse', 'HEAD').decode().strip() == SOURCE
+assert not git('diff', 'HEAD', '--', 'src', 'tests', 'tools', 'pyproject.toml', 'uv.lock')
+retained = ROOT / '_scratch/t3-contract-01'
+runtime = json.loads((retained / 'runtime.json').read_text(encoding='utf-8'))
+assert runtime['commit'] == SOURCE and runtime['diff'] == ''
+retain(retained, OUT / 'contract.zip')
+shutil.copyfile(retained / 'summary.json', OUT / 'summary.json')
+shutil.copyfile(retained / 'runtime.json', OUT / 'runtime.json')
+for name in ('baseline-check', 'baseline-packs', 'focused-01', 'focused-02', 'native-01', 'native-02', 'contract-01'):
+    shutil.copyfile(ROOT / '_scratch/m1-capabilities-evidence' / (name + '.txt'), OUT / (name + '.txt'))
+shutil.copyfile(ROOT / 'dist/zaratustra-0.9.0-py3-none-any.whl', OUT / 'zaratustra-0.9.0-py3-none-any.whl')
+baseline = ROOT / '_scratch/t3-baseline-packs'
+with zipfile.ZipFile(OUT / 'baseline-trial.zip') as archive:
+    assert archive.testzip() is None
+    names = [name for name in archive.namelist() if not name.endswith('/')]
+    expected = {f't3-baseline-packs/{path.relative_to(baseline).as_posix()}': digest(path.read_bytes()) for path in baseline.rglob('*') if path.is_file()}
+    assert set(names) == set(expected), (set(names) - set(expected), set(expected) - set(names))
+    for name in names:
+        assert digest(archive.read(name)) == expected[name]
+    save(OUT / 'baseline-files-manifest.json', expected)
+changed = git('diff', '--name-only', BASIS, SOURCE).decode().splitlines()
+protected = [
+    'validation.config', 'tools/check.py', 'src/zaratustra/core/context.py',
+    'src/zaratustra/core/records.py', 'src/zaratustra/core/results.py',
+    'src/zaratustra/core/artifacts.py', 'src/zaratustra/core/migrations.py',
+    *[f'src/zaratustra/core/migration_v{n}.py' for n in range(2, 8)],
+    *[name for name in git('ls-tree', '-r', '--name-only', BASIS, 'tests', 'src/zaratustra/cli', 'src/zaratustra/local', 'src/zaratustra/process_probe').decode().splitlines()]
+]
+for name in protected:
+    assert git('show', f'{BASIS}:{name}') == git('show', f'{SOURCE}:{name}'), name
+with zipfile.ZipFile(OUT / 'zaratustra-0.9.0-py3-none-any.whl') as archive:
+    wheel_python = {name for name in archive.namelist() if name.endswith('.py')}
+    source_python = {name.removeprefix('src/') for name in git('ls-tree', '-r', '--name-only', SOURCE, 'src').decode().splitlines() if name.endswith('.py')}
+    assert wheel_python == source_python
+    for name in wheel_python:
+        assert archive.read(name) == git('show', f'{SOURCE}:src/{name}')
+old_lock = tomllib.loads(git('show', f'{BASIS}:uv.lock').decode())
+new_lock = tomllib.loads(git('show', f'{SOURCE}:uv.lock').decode())
+for package in old_lock['package']:
+    if package['name'] == 'zaratustra':
+        package['version'] = '0.9.0'
+assert old_lock == new_lock
+(OUT / 'source.diff').write_bytes(git('diff', BASIS, SOURCE, '--', 'src', 'tools', 'tests', 'pyproject.toml', 'uv.lock', 'AGENTS.md'))
+save(OUT / 'source-verification.json', dict(
+    kind='Exact Git/artifact byte verification, not semantic source scanning',
+    basis=BASIS, plan='9eb43fa', source=SOURCE,
+    protected_equal=protected, changed_paths=changed,
+    dependencies_unchanged_except_local_product_version=True,
+    wheel_python_exact_git_bytes=True, runtime_clean_source=True,
+    baseline_archive_every_file_matches_original=True,
+))
+shutil.copyfile(__file__, OUT / 'retain_t3.py.txt')
+save(OUT / 'manifest.json', {path.name: digest(path.read_bytes()) for path in sorted(OUT.iterdir()) if path.is_file() and path.name != 'manifest.json'})
+print(json.dumps({'source': SOURCE, 'contract_archive': 'PASS', 'baseline_archive': 'PASS', 'wheel_git_bytes': 'PASS', 'protected_files': len(protected)}, indent=2))

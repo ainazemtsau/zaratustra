@@ -1,0 +1,86 @@
+{
+  "baseline-check.txt": {
+    "sha256": "cb1a0628624cecd7f7db08999680d07a58b8615a12dc91c23518df88807ca242",
+    "bytes": 2673
+  },
+  "baseline-files-manifest.json": {
+    "sha256": "a6503203a8417fc0c621264e4391b59d5dcfe9a79b0f7500c6e9e0daba7d01ba",
+    "bytes": 14237
+  },
+  "baseline-packs.txt": {
+    "sha256": "ede3518b5968c8062f1a921cc1265bfc7d4a65c38780cea55286f4c0109d4f57",
+    "bytes": 1178
+  },
+  "baseline-trial.zip": {
+    "sha256": "45b16d9cb2017234c74252cc542eeb8f278eaed46718d6299a6943aecc233e9f",
+    "bytes": 140990
+  },
+  "baseline.whl": {
+    "sha256": "a4dfbf8e08829ed9fbd18f5661ea60700f35908e47fb8a2c054747589187805a",
+    "bytes": 54812
+  },
+  "check-deliver.txt": {
+    "sha256": "8d01e2f29562af8a3364acc5cc1716b39f9265f3240f5a84f2bd93e73e95b1f1",
+    "bytes": 2425
+  },
+  "contract-01.txt": {
+    "sha256": "8f9d536b43ee1b62d028072213ae6272bde93530f02c1e0c40737012464284d5",
+    "bytes": 430
+  },
+  "contract-manifest.json": {
+    "sha256": "3aae45a6db63470db342b8318701a996add28f6b7ad7ac347eb87cc3eb3a0550",
+    "bytes": 16619
+  },
+  "contract.zip": {
+    "sha256": "c9c2f9ffaa290a042e334be9620ea44111fbe1cb135f57193dce9afb8509c8f8",
+    "bytes": 142938
+  },
+  "finalize_t3.py.txt": {
+    "sha256": "999648370abe4b46aff7a2157e59cc2f49996a744df22509697b906bacad79d8",
+    "bytes": 3181
+  },
+  "focused-01.txt": {
+    "sha256": "46156db07a9c4ddca61ed7efb344052c6d485125be69810648d677e941113f63",
+    "bytes": 16190
+  },
+  "focused-02.txt": {
+    "sha256": "c4662781e552122c37e66bf4a0ba0d641f77c825712b3064dc46a5c1864937b6",
+    "bytes": 101
+  },
+  "native-01.txt": {
+    "sha256": "69b9c77c272dfe362a8fc562a031034cb31c39c4cbca5dca4335fa9980c030af",
+    "bytes": 1961
+  },
+  "native-02.txt": {
+    "sha256": "0af24e5179121d1019b6443082f90e8352b046cb783ceaae63ec114bf2a3dcf7",
+    "bytes": 2407
+  },
+  "receipt.json": {
+    "sha256": "39dbdaf069a6ae5690fd809d292a6ab448bc60fab822515b1f22d4abc89da390",
+    "bytes": 1077
+  },
+  "retain_t3.py.txt": {
+    "sha256": "01b934cdb35354dd3b34c3255ab30696a326d55a354d944c65882f8f2c05075a",
+    "bytes": 5553
+  },
+  "runtime.json": {
+    "sha256": "02bdeb53f5430ff1c5d19f513a049d9fca9c0505237e014895ca13a84462c2d3",
+    "bytes": 388
+  },
+  "source-verification.json": {
+    "sha256": "cb4fe373a913c171607f8265a13a571f763268aa7c0737c0a2293f1e595ddef7",
+    "bytes": 3032
+  },
+  "source.diff": {
+    "sha256": "d651f3dc294c45488daf898dce60eb94cd4f8048c7909ffe41cceca0c41e5ce7",
+    "bytes": 57488
+  },
+  "summary.json": {
+    "sha256": "8f9d536b43ee1b62d028072213ae6272bde93530f02c1e0c40737012464284d5",
+    "bytes": 430
+  },
+  "zaratustra-0.9.0-py3-none-any.whl": {
+    "sha256": "c3bbac4ade5c89a9f061f04de9ef6d673c1af1f500747f036713c4bdce2fa9ca",
+    "bytes": 61438
+  }
+}
