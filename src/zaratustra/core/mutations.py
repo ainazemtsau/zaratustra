@@ -38,6 +38,7 @@ from .protocol import (
     MutationHistory,
     MutationReceipt,
     MutationRequest,
+    ProcessQuery,
     ReceiptQuery,
     SavedResult,
     authorization_digest,
@@ -77,7 +78,7 @@ class ProjectionRebuildError(MutationError):
 class AuthorizationPrompt(RecordModel):
     workspace_path: Text
     current: RecordsSnapshot
-    request: MutationRequest | ReceiptQuery | ContextQuery
+    request: MutationRequest | ReceiptQuery | ContextQuery | ProcessQuery
     request_sha256: Text
 
 
@@ -100,7 +101,7 @@ def _work(snapshot: RecordsSnapshot, work_id: UUID | None = None) -> Work:
 
 
 def prepare_authorization(
-    path: Path, request: MutationRequest | ReceiptQuery | ContextQuery
+    path: Path, request: MutationRequest | ReceiptQuery | ContextQuery | ProcessQuery
 ) -> AuthorizationPrompt:
     """Owner-local preview only; no permission issued and no mutation performed."""
     request = type(request).model_validate(request.model_dump())
@@ -153,7 +154,7 @@ def authorize_local(
 
 def _caller(
     path: Path,
-    request: MutationRequest | ReceiptQuery | ContextQuery,
+    request: MutationRequest | ReceiptQuery | ContextQuery | ProcessQuery,
     caller: LocalAuthorization | None,
     snapshot: RecordsSnapshot,
 ) -> Confirmation:

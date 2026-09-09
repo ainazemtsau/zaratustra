@@ -47,4 +47,10 @@ request5 is an atomic one-time binding through apply_mutation with Process image
 in the same event. No rights are changed. Result inherits the source binding;
 legacy unbound serialization stays fixed. Released migrations1–6 stay fixed.
 Core knows identity/integrity only, never installed adapters or process rules.
+T3 process_read.py owns exact ProcessQuery metadata scope and optional selected
+ContextQuery under one writer lock without DML. Reuse the context compiler;
+final input revalidation precedes return. Disclose only explicit visible Work
+metadata/results and selected exact reference grants; no hidden counts/content.
+Process metadata authorization is type/path/query-bound, never mutation/context
+authorization. Adapter selections/meaning stay outside Core. Schema7 unchanged.
 END_OF_FILE: src/zaratustra/core/AGENTS.md

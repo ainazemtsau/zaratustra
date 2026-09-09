@@ -6,5 +6,11 @@ Open authorized Core context before resolution; a rule sees immutable Work and
 verified own accepted result bytes, never a path or authority. A proposal grants
 no permission; trusted host separately confirms exact Result through Core.
 contract1/state1 only; missing/incompatible fail without fallback or migration.
-Seven capabilities and multi-Process overview remain T3+; do not invent defaults.
+T3 adds optional explicit read adapter identity; absent/unsupported is unavailable.
+read_capabilities returns seven derived answers over exact Core ProcessQuery scope.
+Core owns metadata authority, references, locked revision and final revalidation;
+adapters receive immutable scoped inputs without path, authority or content bytes.
+Context requirements grant nothing; materialization needs a separately confirmed
+ContextQuery for the selected Work. No hidden counts or inferred scope expansion.
+Full two-Process scenarios/placement and renderer remain T4-T6.
 END_OF_FILE: src/zaratustra/process_packs/AGENTS.md

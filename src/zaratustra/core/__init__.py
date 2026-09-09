@@ -22,6 +22,7 @@ from .mutations import (
     rebuild_projections,
     submit_result,
 )
+from .process_read import ProcessMetadata, ProcessView, ResultHeader, process_view
 from .projections import ProjectionStatus
 from .protocol import (
     ArtifactReference,
@@ -34,6 +35,7 @@ from .protocol import (
     MutationReceipt,
     MutationRequest,
     NextWork,
+    ProcessQuery,
     ReceiptQuery,
     ResultSubmission,
     SavedResult,
@@ -57,6 +59,11 @@ from .workspace import (
 )
 
 __all__ = [
+    "ProcessMetadata",
+    "ProcessQuery",
+    "ProcessView",
+    "ResultHeader",
+    "process_view",
     "parse_result_request",
     "NextWork",
     "ResultSubmission",

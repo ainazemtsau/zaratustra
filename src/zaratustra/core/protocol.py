@@ -231,6 +231,27 @@ class ContextQuery(RecordModel):
     references: Annotated[tuple[ArtifactReference, ...], Field(max_length=32)] = ()
 
 
+class ProcessQuery(RecordModel):
+    """Explicit metadata scope; neither the query nor a capability grants rights."""
+
+    version: Literal[1] = 1
+    workspace_id: UUID
+    work_id: UUID
+    process_id: UUID
+    expected_revision: Revision
+    visible_work_ids: Annotated[tuple[UUID, ...], Field(max_length=64)]
+    selected_work_id: UUID | None = None
+    max_bytes: Annotated[int, Field(strict=True, ge=1, le=1048576)]
+
+    @model_validator(mode="after")
+    def exact_scope(self) -> Self:
+        if len(set(self.visible_work_ids)) != len(self.visible_work_ids):
+            raise ValueError("Repeated metadata scope member")
+        if self.selected_work_id is not None and self.selected_work_id not in self.visible_work_ids:
+            raise ValueError("Selected Work must be in the explicit metadata scope")
+        return self
+
+
 def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
     # Keep the accepted v1 request bytes/digests despite additional v2 model fields.
     excluded = set(exclude or ())
@@ -258,7 +279,9 @@ def fingerprint(request: MutationRequest) -> str:
     return hashlib.sha256(canonical(request, exclude=excluded).encode("utf-8")).hexdigest()
 
 
-def authorization_digest(path: str, request: MutationRequest | ReceiptQuery | ContextQuery) -> str:
+def authorization_digest(
+    path: str, request: MutationRequest | ReceiptQuery | ContextQuery | ProcessQuery
+) -> str:
     envelope = json.dumps(
         [path, type(request).__name__, canonical(request)], ensure_ascii=True, separators=(",", ":")
     )

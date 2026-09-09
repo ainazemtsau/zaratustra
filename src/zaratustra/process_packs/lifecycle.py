@@ -8,6 +8,8 @@ from uuid import UUID
 
 from zaratustra.core import MutationRequest, NextWork, PackReference, Work
 
+from .capability_models import CapabilityReader
+
 
 class PackError(ValueError):
     def __init__(self, code: str, detail: str) -> None:
@@ -25,12 +27,15 @@ class PackRule(Protocol):
 class PackRegistration:
     reference: PackReference
     rule: PackRule
+    reader: CapabilityReader | None = None
 
     def __post_init__(self) -> None:
         reference = PackReference.model_validate(self.reference.model_dump())
         object.__setattr__(self, "reference", reference)
         if not callable(getattr(self.rule, "next_work", None)):
             raise PackError("invalid_pack", "Registration needs a callable rule adapter")
+        if self.reader is not None and not callable(getattr(self.reader, "describe", None)):
+            raise PackError("invalid_pack", "Read adapter needs describe")
 
 
 @dataclass(frozen=True)
@@ -54,6 +59,7 @@ class PackRegistry:
                 if (
                     current.reference == registration.reference
                     and current.rule is registration.rule
+                    and current.reader is registration.reader
                 ):
                     return self
                 raise PackError("registration_collision", "An existing pack/version cannot change")

@@ -25,7 +25,10 @@ M1 T2 adds explicit schema7 and exact immutable Process/Work pack binding throug
 Mutation API, external runtime registration/resolution and pinned continuation.
 Missing/incompatible packs refuse package execution; no in-place version migration.
 Technical plan and lifecycle reproduction: docs/m1-packs/PLAN.md and tools.probe_packs.
-Seven capabilities and the full two-Process M1 remain separate work.
+M1 T3 adds seven derived read capabilities through process_packs.read_capabilities,
+exact metadata ProcessQuery scope, one locked revision and separately authorized
+selected ContextQuery. Public API and reproduction: docs/m1-capabilities/PLAN.md,
+tools.probe_capabilities. Full two-Process scenarios and common renderer remain T4-T6.
 `src/zaratustra/core` owns workspace logic; `src/zaratustra/cli` delegates to it.
 Installed product code and user-chosen data workspace are separate.
 Read the current CALL before doing product work; a completed Work admits no successor.
