@@ -1,0 +1,21 @@
+"""Run original retained product code in an isolated new Python process."""
+import json
+import sys
+from importlib.metadata import version
+from pathlib import Path
+sys.path.insert(0,sys.argv[1])
+import zaratustra.core as core
+path=Path(sys.argv[2])
+request=core.MutationRequest.model_validate_json(Path(sys.argv[3]).read_bytes())
+before=core.read_records(path)
+history=core.read_history(path)
+assert core.read_workspace(path).schema_version==6
+assert "baseline.whl" in core.__file__
+auth=core.authorize_local(core.prepare_authorization(path,request),channel="local-chat",actor="fresh-G5-retained-old-wheel",source_ref="Explicit owner G5 authorization; review 01a0869b-59b5-7b62-9e19-e2f8056f4341; new restored fictional workspace; acceptance pending")
+receipt=core.submit_result(path,request,auth)
+after=core.read_records(path)
+after_history=core.read_history(path)
+assert receipt.new_revision==before.state_revision+1==after.state_revision
+assert after_history.events[:-1]==history.events
+assert next(r for r in after.records if isinstance(r,core.Work) and r.id==request.work_id).status=="done"
+print(json.dumps(dict(version=version("zaratustra"),core_file=core.__file__,workspace=str(path),before=before.model_dump(mode="json"),after=after.model_dump(mode="json"),receipt=receipt.model_dump(mode="json"),confirmation=auth.confirmation.model_dump(mode="json")),indent=2))

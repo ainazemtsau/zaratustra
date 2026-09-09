@@ -1,0 +1,8 @@
+PASS retained independent: CRC, hashes, layout and exact check output
+PASS retained provenance: CRC, hashes, layout and exact check output
+PASS retained supplemental: CRC, hashes, layout and exact check output
+PASS executed script bytes preserved
+PASS authored Markdown LF/trailers
+PASS protected source remains exact candidate; all new tracked-scope files are review docs
+PASS receipt retains pending owner acceptance
+PASS review artifact integrity (not a product semantic gate)

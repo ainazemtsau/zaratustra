@@ -1,0 +1,688 @@
+diff --git a/src/zaratustra/core/AGENTS.md b/src/zaratustra/core/AGENTS.md
+index 4f5a3b5..38d26b2 100644
+--- a/src/zaratustra/core/AGENTS.md
++++ b/src/zaratustra/core/AGENTS.md
+@@ -42,4 +42,9 @@ metadata, never current-byte availability. New Work opening revalidates full byt
+ Released migrations1–5 stay fixed; new explicit6 never changes default migrate4.
+ Initial Event stays fixed.
+ Read/init never migrate or repair existing state. Keep migration bytes stable after release.
++Schema7 explicitly admits optional exact PackReference in Process/Work. bind_pack
++request5 is an atomic one-time binding through apply_mutation with Process images
++in the same event. No rights are changed. Result inherits the source binding;
++legacy unbound serialization stays fixed. Released migrations1–6 stay fixed.
++Core knows identity/integrity only, never installed adapters or process rules.
+ END_OF_FILE: src/zaratustra/core/AGENTS.md
+diff --git a/src/zaratustra/core/__init__.py b/src/zaratustra/core/__init__.py
+index b0afb53..a0b2fd8 100644
+--- a/src/zaratustra/core/__init__.py
++++ b/src/zaratustra/core/__init__.py
+@@ -42,6 +42,7 @@ from .records import (
+     Artifact,
+     Event,
+     InitialRecords,
++    PackReference,
+     Process,
+     RecordsSnapshot,
+     Work,
+@@ -98,6 +99,7 @@ __all__ = [
+     "Artifact",
+     "Event",
+     "InitialRecords",
++    "PackReference",
+     "Process",
+     "RecordsSnapshot",
+     "Work",
+diff --git a/src/zaratustra/core/migration_v7.py b/src/zaratustra/core/migration_v7.py
+new file mode 100644
+index 0000000..04e52cb
+--- /dev/null
++++ b/src/zaratustra/core/migration_v7.py
+@@ -0,0 +1,21 @@
++"""Explicit JSON format admission; old record/event bytes and tables stay intact."""
++
++import hashlib
++import sqlite3
++
++V7_NAME = "0007_exact_process_work_pack_binding"
++V7_FORMAT = (
++    "Process/Work optional immutable PackReference; bind_pack request5; "
++    "event Process before/after; Result continuation inherits exact source binding"
++)
++V7_SHA256 = hashlib.sha256(V7_FORMAT.encode("utf-8")).hexdigest()
++
++
++def migrate_v7(connection: sqlite3.Connection, applied_at: str) -> None:
++    if not connection.in_transaction:
++        raise ValueError("Migration v7 requires a transaction")
++    connection.execute(
++        "INSERT INTO schema_migrations VALUES (?, ?, ?, ?)",
++        (7, V7_NAME, V7_SHA256, applied_at),
++    )
++    connection.execute("PRAGMA user_version = 7")
+diff --git a/src/zaratustra/core/mutations.py b/src/zaratustra/core/mutations.py
+index 8227313..b99d5a4 100644
+--- a/src/zaratustra/core/mutations.py
++++ b/src/zaratustra/core/mutations.py
+@@ -43,6 +43,7 @@ from .protocol import (
+     authorization_digest,
+     event_receipt,
+     evolve_artifact,
++    evolve_process,
+     evolve_work,
+     fingerprint,
+     next_records,
+@@ -210,6 +211,10 @@ def _history(
+         ):
+             raise WorkspaceError("Mutation history must start from initial draft")
+         reconstructed = {r.id: r for r in snapshot.records if isinstance(r, (Process, Event))}
++        process = next(r for r in snapshot.records if isinstance(r, Process))
++        reconstructed[process.id] = Process.model_validate(
++            process.model_dump() | dict(revision=1, pack_binding=None)
++        )
+         reconstructed[beginning.id] = beginning
+         reconstructed[initial_artifact.id] = Artifact.model_validate(
+             {
+@@ -242,6 +247,15 @@ def _history(
+             records=tuple(reconstructed.values()),
+         )
+         artifact = current_artifact(prior, request.work_id)
++        if request.operation == "bind_pack":
++            if (
++                schema < 7
++                or event.process_before is None
++                or event.process_after is None
++                or reconstructed.get(event.process_before.id) != event.process_before
++            ):
++                raise WorkspaceError("Pack binding requires schema7 and exact Process history")
++            reconstructed[event.process_after.id] = event.process_after
+         if request.operation in ARTIFACT_OPERATIONS and (
+             request.artifact_id != artifact.id or request.artifact_revision != artifact.revision
+         ):
+@@ -418,6 +432,8 @@ def _mutate(
+         raise MutationError("schema", "Handoff import requires explicit migration to 5")
+     if request.version == 4 and info.schema_version < 6:
+         raise MutationError("schema", "Result requires explicit migration to 6")
++    if request.version == 5 and info.schema_version < 7:
++        raise MutationError("schema", "Pack binding requires explicit migration to 7")
+     # 2. Current Work + authority, in the same write transaction as the effect.
+     snapshot = _read_records(connection, info.workspace_id)
+     confirmation = _caller(info.workspace, request, caller, snapshot)
+@@ -441,6 +457,18 @@ def _mutate(
+             if stored.fingerprint != intent:
+                 raise MutationError("collision", "Operation id already belongs to another intent")
+             return stored
++    process_before = None
++    process_after = None
++    if request.operation == "bind_pack":
++        process_before = next(
++            row
++            for row in snapshot.records
++            if isinstance(row, Process) and row.id == before.process_id
++        )
++        try:
++            process_after = evolve_process(process_before, request)
++        except ValueError as error:
++            raise MutationError("pack_bound", str(error)) from error
+     # 5. Exact scoped references and bytes, before any DB/domain effect.
+     if request.handoff is not None and request.handoff.source_revision != snapshot.state_revision:
+         raise MutationError("conflict", "Handoff source revision is not current")
+@@ -500,7 +528,9 @@ def _mutate(
+     continuation_work = None
+     continuation_artifact = None
+     if request.submission is not None:
+-        continuation_work, continuation_artifact = next_records(request, now, before.process_id)
++        continuation_work, continuation_artifact = next_records(
++            request, now, before.process_id, before.pack_binding
++        )
+         for record in (continuation_work, continuation_artifact):
+             connection.execute(
+                 "INSERT INTO core_records (id, kind, revision, body) VALUES (?, ?, ?, ?)",
+@@ -520,6 +550,11 @@ def _mutate(
+         "UPDATE core_records SET revision = ?, body = ? WHERE id = ?",
+         (after.revision, after.model_dump_json(), str(after.id)),
+     )
++    if process_after is not None:
++        connection.execute(
++            "UPDATE core_records SET revision = ?, body = ? WHERE id = ?",
++            (process_after.revision, process_after.model_dump_json(), str(process_after.id)),
++        )
+     connection.execute("UPDATE core_state SET revision = ? WHERE singleton = 1", (after.revision,))
+     # 7. One immutable event and receipt, including old/new Artifact and exact descriptor.
+     event = MutationEvent(
+@@ -540,6 +575,8 @@ def _mutate(
+         next_artifact=continuation_artifact,
+         result_artifact=artifact if request.submission is not None else None,
+         result_references=closure,
++        process_before=process_before,
++        process_after=process_after,
+     )
+     connection.execute(
+         "INSERT INTO mutation_events VALUES (?, ?, ?)",
+diff --git a/src/zaratustra/core/protocol.py b/src/zaratustra/core/protocol.py
+index 6f51871..e06c4d7 100644
+--- a/src/zaratustra/core/protocol.py
++++ b/src/zaratustra/core/protocol.py
+@@ -15,7 +15,7 @@ from pydantic import (
+     model_validator,
+ )
+ 
+-from .records import Artifact, RecordModel, Text, Work
++from .records import Artifact, PackReference, Process, RecordModel, Text, Work
+ 
+ Revision = Annotated[int, Field(strict=True, ge=1)]
+ Digest = Annotated[str, Field(strict=True, pattern="^[0-9a-f]{64}$")]
+@@ -29,6 +29,7 @@ Operation = Literal[
+     "restore_artifact",
+     "accept_handoff",
+     "submit_result",
++    "bind_pack",
+ ]
+ ARTIFACT_OPERATIONS = ("authorize_artifact", "publish_artifact", "restore_artifact")
+ V2_FIELDS = {
+@@ -41,6 +42,7 @@ V2_FIELDS = {
+ }
+ V3_FIELDS = {"handoff", "delivery"}
+ V4_FIELDS = {"submission"}
++V5_FIELDS = {"pack_binding"}
+ 
+ 
+ class NextWork(RecordModel):
+@@ -122,7 +124,7 @@ class HandoffDelivery(RecordModel):
+ 
+ 
+ class MutationRequest(RecordModel):
+-    version: Annotated[int, Field(strict=True, ge=1, le=4)] = 1
++    version: Annotated[int, Field(strict=True, ge=1, le=5)] = 1
+     operation_id: UUID
+     workspace_id: UUID
+     work_id: UUID
+@@ -140,10 +142,13 @@ class MutationRequest(RecordModel):
+     handoff: Handoff | None = None
+     delivery: HandoffDelivery | None = None
+     submission: ResultSubmission | None = None
++    pack_binding: PackReference | None = None
+ 
+     @model_serializer(mode="wrap")
+     def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+         value: dict[str, Any] = handler(self)
++        if self.version < 5 and self.pack_binding is None:
++            value.pop("pack_binding", None)
+         if self.version < 4 and self.submission is None:
+             value.pop("submission", None)
+         if self.version < 3 and all(getattr(self, name) is None for name in V3_FIELDS):
+@@ -157,6 +162,13 @@ class MutationRequest(RecordModel):
+ 
+     @model_validator(mode="after")
+     def operation_payload(self) -> Self:
++        if self.operation == "bind_pack":
++            if self.version != 5 or self.pack_binding is None:
++                raise ValueError("Pack binding requires request 5 and an exact reference")
++            if self.references or self.artifact_references:
++                raise ValueError("Pack binding accepts no Artifact references")
++        elif self.pack_binding is not None or self.version == 5:
++            raise ValueError("Only bind_pack uses request 5/pack_binding")
+         if self.operation == "submit_result":
+             if self.version != 4 or self.submission is None:
+                 raise ValueError("Result requires request version 4 and complete submission")
+@@ -228,6 +240,8 @@ def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
+         excluded |= V3_FIELDS
+     if isinstance(value, MutationRequest) and value.version < 4:
+         excluded |= V4_FIELDS
++    if isinstance(value, MutationRequest) and value.version < 5:
++        excluded |= V5_FIELDS
+     return json.dumps(
+         value.model_dump(mode="json", exclude=excluded),
+         sort_keys=True,
+@@ -280,6 +294,10 @@ def evolve_work(work: Work, request: MutationRequest) -> Work:
+             raise ValueError("Work is not ready or has no current permission")
+         if request.operation == "set_work_requirements":
+             change["executor_requirements"] = request.requirements
++        elif request.operation == "bind_pack":
++            if work.pack_binding not in (None, request.pack_binding):
++                raise ValueError("An existing Work pack binding cannot be changed")
++            change["pack_binding"] = request.pack_binding
+         elif request.operation == "cancel_work":
+             change["status"] = "cancelled"
+         elif request.operation == "authorize_artifact":
+@@ -295,6 +313,17 @@ def evolve_work(work: Work, request: MutationRequest) -> Work:
+     return Work.model_validate({**work.model_dump(), **change})
+ 
+ 
++def evolve_process(process: Process, request: MutationRequest) -> Process:
++    if request.operation != "bind_pack" or request.pack_binding is None:
++        raise ValueError("Only bind_pack changes a Process binding")
++    if process.pack_binding is not None:
++        raise ValueError("Process is already bound; in-place pack migration is not supported")
++    return Process.model_validate(
++        process.model_dump()
++        | dict(pack_binding=request.pack_binding, revision=request.expected_revision + 1)
++    )
++
++
+ def evolve_artifact(artifact: Artifact, descriptor: ArtifactVersion) -> Artifact:
+     if (descriptor.artifact_id, descriptor.work_id, descriptor.process_id) != (
+         artifact.id,
+@@ -330,10 +359,15 @@ class MutationEvent(RecordModel):
+     next_artifact: Artifact | None = None
+     result_artifact: Artifact | None = None
+     result_references: tuple[ArtifactReference, ...] = ()
++    process_before: Process | None = None
++    process_after: Process | None = None
+ 
+     @model_serializer(mode="wrap")
+     def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+         value: dict[str, Any] = handler(self)
++        if self.request.version != 5:
++            value.pop("process_before", None)
++            value.pop("process_after", None)
+         if self.request.version < 4:
+             for name in ("next_work", "next_artifact", "result_artifact", "result_references"):
+                 value.pop(name, None)
+@@ -353,10 +387,22 @@ class MutationEvent(RecordModel):
+             raise ValueError("Event state revision mismatch")
+         if self.state_revision != self.request.expected_revision + 1:
+             raise ValueError("Event must advance global revision exactly once")
++        if self.request.operation == "bind_pack":
++            if (
++                self.process_before is None
++                or self.process_before.id != self.before.process_id
++                or self.before.pack_binding is not None
++                or evolve_process(self.process_before, self.request) != self.process_after
++            ):
++                raise ValueError("Binding event must retain the exact Process transition")
++        elif self.process_before is not None or self.process_after is not None:
++            raise ValueError("Only bind_pack changes a Process")
+         if self.request.submission is not None:
+             if self.request.submission.source_revision != self.request.expected_revision:
+                 raise ValueError("Result source revision must be current at acceptance")
+-            work, artifact = next_records(self.request, self.recorded_at, self.before.process_id)
++            work, artifact = next_records(
++                self.request, self.recorded_at, self.before.process_id, self.before.pack_binding
++            )
+             if self.next_work != work or self.next_artifact != artifact:
+                 raise ValueError("Event must retain exact confirmed next records")
+             if self.result_artifact is None or not self.result_references:
+@@ -432,7 +478,10 @@ class MutationHistory(RecordModel):
+ 
+ 
+ def next_records(
+-    request: MutationRequest, at: AwareDatetime, process_id: UUID
++    request: MutationRequest,
++    at: AwareDatetime,
++    process_id: UUID,
++    pack_binding: PackReference | None = None,
+ ) -> tuple[Work, Artifact]:
+     if request.submission is None:
+         raise ValueError("Missing Result submission")
+@@ -450,6 +499,7 @@ def next_records(
+         executor_requirements=spec.executor_requirements,
+         status="ready",
+         authority_scope=spec.authority_scope,
++        pack_binding=pack_binding,
+     )
+     artifact = Artifact(
+         id=spec.artifact_id,
+diff --git a/src/zaratustra/core/records.py b/src/zaratustra/core/records.py
+index 7f5d612..80dceaf 100644
+--- a/src/zaratustra/core/records.py
++++ b/src/zaratustra/core/records.py
+@@ -50,9 +50,27 @@ class Record(RecordModel):
+     created_at: AwareDatetime
+ 
+ 
++class PackReference(RecordModel):
++    """Exact external identity only; no code, version selection or authority."""
++
++    pack_id: Annotated[str, Field(strict=True, pattern="^[a-z][a-z0-9._-]{0,127}$")]
++    pack_version: Annotated[str, Field(strict=True, pattern="^[0-9]+[.][0-9]+[.][0-9]+$")]
++    process_type: Annotated[str, Field(strict=True, pattern="^[a-z][a-z0-9._-]{0,127}$")]
++    contract_version: Annotated[int, Field(strict=True, ge=1)]
++    state_version: Annotated[int, Field(strict=True, ge=1)]
++
++
+ class Process(Record):
+     kind: Literal["process"] = "process"
+     title: Text
++    pack_binding: PackReference | None = None
++
++    @model_serializer(mode="wrap")
++    def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, object]:
++        value: dict[str, object] = handler(self)
++        if self.pack_binding is None:
++            value.pop("pack_binding", None)
++        return value
+ 
+ 
+ class Work(Record):
+@@ -69,12 +87,15 @@ class Work(Record):
+     dependencies: tuple[()] = ()
+     executor_requirements: tuple[Text, ...] = ()
+     completion_id: UUID | None = None
++    pack_binding: PackReference | None = None
+ 
+     @model_serializer(mode="wrap")
+     def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, object]:
+         value: dict[str, object] = handler(self)
+         if self.completion_id is None:
+             value.pop("completion_id", None)
++        if self.pack_binding is None:
++            value.pop("pack_binding", None)
+         return value
+ 
+     @model_validator(mode="after")
+@@ -166,8 +187,15 @@ class RecordsSnapshot(RecordModel):
+             raise ValueError("Initial Work must remain a draft without rights")
+         if any(r.revision > self.state_revision for r in self.records):
+             raise ValueError("Record revision exceeds state")
+-        if process.revision != 1 or event.revision != 1:
++        if event.revision != 1 or (
++            process.revision != 1 if process.pack_binding is None else process.revision < 2
++        ):
+             raise ValueError("Unsupported Process/initial event revision")
++        if any(
++            w.pack_binding is not None and w.pack_binding != process.pack_binding
++            for w in works.values()
++        ):
++            raise ValueError("Work binding must match its Process")
+         return self
+ 
+ 
+@@ -186,6 +214,10 @@ def _read_records(connection: sqlite3.Connection, workspace_id: UUID) -> Records
+     snapshot = RecordsSnapshot(
+         workspace_id=workspace_id, state_revision=state[0][1], records=tuple(records)
+     )
++    if connection.execute("PRAGMA user_version").fetchone()[0] < 7 and any(
++        isinstance(r, Process | Work) and r.pack_binding is not None for r in records
++    ):
++        raise WorkspaceError("Pack bindings require explicit schema 7")
+     if connection.execute("PRAGMA user_version").fetchone()[0] < 6 and (
+         len(records) not in (0, 4)
+         or any(isinstance(r, Work) and r.status == "done" for r in records)
+diff --git a/src/zaratustra/core/workspace.py b/src/zaratustra/core/workspace.py
+index c38b580..3032eb5 100644
+--- a/src/zaratustra/core/workspace.py
++++ b/src/zaratustra/core/workspace.py
+@@ -17,6 +17,7 @@ from .migration_v3 import V3_NAME, V3_SHA256, migrate_v3
+ from .migration_v4 import V4_NAME, V4_SHA256, migrate_v4
+ from .migration_v5 import V5_NAME, V5_SHA256, migrate_v5
+ from .migration_v6 import V6_NAME, V6_SHA256, migrate_v6
++from .migration_v7 import V7_NAME, V7_SHA256, migrate_v7
+ from .migrations import APPLICATION_ID, V1_NAME, V1_SHA256, migrate_v1
+ 
+ WORKSPACE_DIRECTORIES = ("processes", "artifacts", "projections", "inbox")
+@@ -34,7 +35,7 @@ class WorkspaceInfo(BaseModel):
+     database: Path
+     workspace_id: UUID
+     created_at: AwareDatetime
+-    schema_version: Literal[1, 2, 3, 4, 5, 6]
++    schema_version: Literal[1, 2, 3, 4, 5, 6, 7]
+ 
+ 
+ def _root(path: Path) -> Path:
+@@ -66,7 +67,7 @@ def _database_path(root: Path) -> Path:
+ def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> WorkspaceInfo:
+     application = connection.execute("PRAGMA application_id").fetchone()[0]
+     version = connection.execute("PRAGMA user_version").fetchone()[0]
+-    if application != APPLICATION_ID or version not in (1, 2, 3, 4, 5, 6):
++    if application != APPLICATION_ID or version not in (1, 2, 3, 4, 5, 6, 7):
+         raise WorkspaceError(f"Unsupported workspace database/schema version: {version}.")
+     for name in ("artifacts", "projections"):
+         entry = root / name
+@@ -125,6 +126,11 @@ def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> Wor
+         connection.execute(
+             "SELECT operation_id, work_id, next_work_id, body FROM work_results LIMIT 0"
+         )
++    if version >= 7:
++        if migrations[6][:3] != (7, V7_NAME, V7_SHA256):
++            raise WorkspaceError("Migration history does not match this installed version.")
++        if datetime.fromisoformat(migrations[6][3]).tzinfo is None:
++            raise WorkspaceError("Migration timestamp must have a timezone.")
+     return WorkspaceInfo(
+         workspace=root,
+         database=database,
+@@ -170,9 +176,11 @@ def _read_workspace(root: Path) -> WorkspaceInfo:
+         return info
+ 
+ 
+-def migrate_workspace(path: Path, *, target_version: Literal[2, 3, 4, 5, 6] = 4) -> WorkspaceInfo:
++def migrate_workspace(
++    path: Path, *, target_version: Literal[2, 3, 4, 5, 6, 7] = 4
++) -> WorkspaceInfo:
+     """Explicit sequential upgrade; never grant rights, silently downgrade or repair."""
+-    if type(target_version) is not int or target_version not in (2, 3, 4, 5, 6):
++    if type(target_version) is not int or target_version not in (2, 3, 4, 5, 6, 7):
+         raise WorkspaceError("Unsupported migration target")
+     with workspace_connection(path, write=True) as (connection, info):
+         if info.schema_version > target_version:
+@@ -209,6 +217,14 @@ def migrate_workspace(path: Path, *, target_version: Literal[2, 3, 4, 5, 6] = 4)
+                 connection, _read_records(connection, info.workspace_id), artifacts_enabled=True
+             )
+             migrate_v6(connection, datetime.now(UTC).isoformat())
++        if info.schema_version < 7 and target_version >= 7:
++            from .mutations import _history
++            from .records import _read_records
++
++            _history(
++                connection, _read_records(connection, info.workspace_id), artifacts_enabled=True
++            )
++            migrate_v7(connection, datetime.now(UTC).isoformat())
+         return _metadata(connection, info.workspace, info.database)
+ 
+ 
+diff --git a/src/zaratustra/process_packs/AGENTS.md b/src/zaratustra/process_packs/AGENTS.md
+new file mode 100644
+index 0000000..e0b8e67
+--- /dev/null
++++ b/src/zaratustra/process_packs/AGENTS.md
+@@ -0,0 +1,10 @@
++# External Process Pack lifecycle
++T2 owns explicit immutable runtime registrations and exact version resolution.
++Public surface is __init__.py; no dynamic loading, implicit latest or state writer.
++Core owns PackReference, atomic bind_pack, revisions/history and inherited binding.
++Open authorized Core context before resolution; a rule sees immutable Work and
++verified own accepted result bytes, never a path or authority. A proposal grants
++no permission; trusted host separately confirms exact Result through Core.
++contract1/state1 only; missing/incompatible fail without fallback or migration.
++Seven capabilities and multi-Process overview remain T3+; do not invent defaults.
++END_OF_FILE: src/zaratustra/process_packs/AGENTS.md
+diff --git a/src/zaratustra/process_packs/__init__.py b/src/zaratustra/process_packs/__init__.py
+new file mode 100644
+index 0000000..ecb3dab
+--- /dev/null
++++ b/src/zaratustra/process_packs/__init__.py
+@@ -0,0 +1,13 @@
++"""Public external pack registration, binding proposal and continuation surface."""
++
++from .lifecycle import PackError, PackRegistration, PackRegistry, PackRule, binding_request
++from .runner import propose_result
++
++__all__ = [
++    "PackError",
++    "PackRegistration",
++    "PackRegistry",
++    "PackRule",
++    "binding_request",
++    "propose_result",
++]
+diff --git a/src/zaratustra/process_packs/lifecycle.py b/src/zaratustra/process_packs/lifecycle.py
+new file mode 100644
+index 0000000..2e5547c
+--- /dev/null
++++ b/src/zaratustra/process_packs/lifecycle.py
+@@ -0,0 +1,97 @@
++"""Local trusted registrations select exact code; they never write or grant rights."""
++
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Protocol
++from uuid import UUID
++
++from zaratustra.core import MutationRequest, NextWork, PackReference, Work
++
++
++class PackError(ValueError):
++    def __init__(self, code: str, detail: str) -> None:
++        self.code = code
++        super().__init__(f"{code}: {detail}")
++
++
++class PackRule(Protocol):
++    def next_work(
++        self, work: Work, accepted_result: bytes, work_id: UUID, artifact_id: UUID
++    ) -> NextWork: ...
++
++
++@dataclass(frozen=True)
++class PackRegistration:
++    reference: PackReference
++    rule: PackRule
++
++    def __post_init__(self) -> None:
++        reference = PackReference.model_validate(self.reference.model_dump())
++        object.__setattr__(self, "reference", reference)
++        if not callable(getattr(self.rule, "next_work", None)):
++            raise PackError("invalid_pack", "Registration needs a callable rule adapter")
++
++
++@dataclass(frozen=True)
++class PackRegistry:
++    registrations: tuple[PackRegistration, ...] = ()
++
++    def __post_init__(self) -> None:
++        # Copy the container; callers cannot mutate a registered set through a list.
++        object.__setattr__(self, "registrations", tuple(self.registrations))
++        coordinates = [self._coordinate(row.reference) for row in self.registrations]
++        if len(coordinates) != len(set(coordinates)):
++            raise PackError("registration_collision", "A pack/version has more than one adapter")
++
++    @staticmethod
++    def _coordinate(reference: PackReference) -> tuple[str, str]:
++        return reference.pack_id, reference.pack_version
++
++    def register(self, registration: PackRegistration) -> PackRegistry:
++        for current in self.registrations:
++            if self._coordinate(current.reference) == self._coordinate(registration.reference):
++                if (
++                    current.reference == registration.reference
++                    and current.rule is registration.rule
++                ):
++                    return self
++                raise PackError("registration_collision", "An existing pack/version cannot change")
++        return PackRegistry((*self.registrations, registration))
++
++    def resolve(self, reference: PackReference) -> PackRegistration:
++        reference = PackReference.model_validate(reference.model_dump())
++        for registration in self.registrations:
++            if self._coordinate(registration.reference) != self._coordinate(reference):
++                continue
++            if registration.reference != reference or (
++                reference.contract_version,
++                reference.state_version,
++            ) != (1, 1):
++                raise PackError("incompatible_pack", "Exact type, contract1 and state1 required")
++            return registration
++        raise PackError("missing_pack", "The exact saved pack/version is not registered")
++
++
++def binding_request(
++    registry: PackRegistry,
++    reference: PackReference,
++    *,
++    operation_id: UUID,
++    workspace_id: UUID,
++    work_id: UUID,
++    expected_revision: int,
++    provenance: str,
++) -> MutationRequest:
++    """Validate installation and propose a bind; Core still requires exact authorization."""
++    registered = registry.resolve(reference)
++    return MutationRequest(
++        version=5,
++        operation="bind_pack",
++        operation_id=operation_id,
++        workspace_id=workspace_id,
++        work_id=work_id,
++        expected_revision=expected_revision,
++        provenance=provenance,
++        pack_binding=registered.reference,
++    )
+diff --git a/src/zaratustra/process_packs/runner.py b/src/zaratustra/process_packs/runner.py
+new file mode 100644
+index 0000000..5ed0d7d
+--- /dev/null
++++ b/src/zaratustra/process_packs/runner.py
+@@ -0,0 +1,73 @@
++"""Propose through the exact saved pack using one real authorized Core context."""
++
++from __future__ import annotations
++
++import base64
++import json
++from pathlib import Path
++from uuid import UUID
++
++from zaratustra.core import (
++    AcceptedHandoff,
++    ContextQuery,
++    LocalAuthorization,
++    MutationRequest,
++    NextWork,
++    Process,
++    ResultSubmission,
++    Work,
++    open_work,
++)
++
++from .lifecycle import PackError, PackRegistry
++
++
++def propose_result(
++    path: Path,
++    query: ContextQuery,
++    caller: LocalAuthorization | None,
++    registry: PackRegistry,
++    *,
++    operation_id: UUID,
++    next_work_id: UUID,
++    next_artifact_id: UUID,
++) -> MutationRequest:
++    package = json.loads(open_work(path, query, caller).output)
++    sources = {row["locator"]: row["data"] for row in package["context"]["sources"]}
++    work = Work.model_validate(sources[f"work:{query.work_id}"])
++    process = Process.model_validate(sources[f"process:{query.process_id}"])
++    reference = work.pack_binding
++    if reference is None or reference != process.pack_binding:
++        raise PackError("unbound_pack", "Work needs its saved Process pack binding")
++    registration = registry.resolve(reference)
++    acceptances = [
++        AcceptedHandoff.model_validate(value)
++        for key, value in sources.items()
++        if key.startswith("acceptance:")
++    ]
++    own = [row for row in acceptances if row.handoff.related_work == work.id]
++    if not own:
++        raise PackError("missing_observation", "Work needs its own accepted result")
++    result = own[-1].handoff.result
++    source = sources[f"artifact-version:{result.version_id}"]
++    accepted_bytes = base64.b64decode(source["content_base64"], validate=True)
++    continuation = registration.rule.next_work(work, accepted_bytes, next_work_id, next_artifact_id)
++    continuation = NextWork.model_validate(continuation.model_dump())
++    if (continuation.work_id, continuation.artifact_id) != (next_work_id, next_artifact_id):
++        raise PackError("invalid_proposal", "Pack changed the selected continuation identities")
++    return MutationRequest(
++        version=4,
++        operation="submit_result",
++        operation_id=operation_id,
++        workspace_id=query.workspace_id,
++        work_id=query.work_id,
++        expected_revision=query.expected_revision,
++        provenance=f"Exact pack proposal: {reference.model_dump_json()}; no authority granted",
++        references=(result,),
++        submission=ResultSubmission(
++            source_revision=query.expected_revision,
++            result=result,
++            acceptance_ids=tuple(row.handoff.handoff_id for row in own),
++            next_work=continuation,
++        ),
++    )

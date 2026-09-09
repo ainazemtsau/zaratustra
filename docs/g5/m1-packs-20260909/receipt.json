@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "kind": "binding_fresh_physical_g5",
+  "verdict": "PASS",
+  "scope": "M1/T2 pack registration, exact binding and lifecycle only",
+  "candidate": "25a35b449570caf500cf09fca560b2bb64313169",
+  "implementation_source": "f728ad6a8645ba04532e1cd74a34ea57c31c4dd8",
+  "plan_retained_baseline": "8dfaa5c50faa6c50bd6e67d357ee7bcef3dbf200",
+  "accepted_t1_review_basis": "f67959e7c1a412c202ebb0d6e67938ec4355042f",
+  "product_version": "0.8.0",
+  "engineering_contract": 36,
+  "mode": "PROBA",
+  "call": "c-solmax-zaratustra-m1-packs-20260909-exec",
+  "review_task_id": "01a0869b-59b5-7b62-9e19-e2f8056f4341",
+  "source_task_id": "01a0865e-b759-7bf3-9d21-e86819e52156",
+  "physical_independence": "New app-managed physical task, separate from implementation; no subagents used",
+  "review_path": "C:/my_global_workflow/fa61/zaratustra",
+  "review_branch": "codex/g5-m1-packs-20260909",
+  "review_artifact_path": "docs/g5/m1-packs-20260909",
+  "review_commit_identity": "The docs-only Git commit containing this receipt; exact SHA supplied in final handoff",
+  "authorization": {
+    "owner_words_as_supplied_by_source_task": "запусти G5",
+    "meaning": "Review and new isolated fictional data; not T2 acceptance"
+  },
+  "owner_acceptance": "pending",
+  "direction_t2_closed": false,
+  "direction_m1_closed": false,
+  "m0_status": "partial",
+  "successor_created": false,
+  "t3_started": false,
+  "done_when": [
+    {
+      "id": 1,
+      "verdict": "PASS",
+      "claim": "PLAN pack/type/instance registration, version compatibility and durable Work binding",
+      "evidence": ["independent-checks.json", "supplemental-checks.json", "independent.zip", "supplemental.zip"]
+    },
+    {
+      "id": 2,
+      "verdict": "PASS",
+      "claim": "Missing/incompatible and version changes have explicit behavior without silent rights/state changes",
+      "evidence": ["independent-checks.json", "independent.zip", "supplemental-checks.json"]
+    },
+    {
+      "id": 3,
+      "verdict": "PASS",
+      "claim": "Committed reproducible real Mutation/revision/history checks and rollback",
+      "evidence": ["raw/check-deliver-01.txt", "provenance-checks.json", "provenance.zip", "independent-checks.json", "candidate-protected-bytes.json"]
+    }
+  ],
+  "findings": [],
+  "checks": {
+    "uv_sync_locked": "PASS; raw/uv-sync-02.txt, first sandbox refusal retained separately",
+    "native_deliver": "PASS; 173 tests, ruff format/check, mypy, 6 import contracts, wheel/sdist build",
+    "native_pytest_seconds": 36.89,
+    "pytest_basetemp": "_scratch/g5-m1-packs-20260909/pytest-native-01",
+    "independent_checks": 72,
+    "supplemental_checks": 12,
+    "provenance_and_rollback_checks": 32,
+    "source_candidate_protected_surfaces": "identical",
+    "original_retained_zip_crc_layout_hashes": "PASS",
+    "retained_and_built_wheel_source_bytes_and_record": "PASS",
+    "old_retained_wheel_real_rollback": "PASS; separate python -I, 0.7.0 from baseline.whl, original Result request revision9 to10",
+    "legacy6_to7_original_result_preservation": "PASS"
+  },
+  "trust_boundary": {
+    "host_registry": "Explicit immutable registrations enforce exact installation identity and contract1/state1 on package execution",
+    "core": "Generic reference/state integrity and exact authority/revision/history checks; no installed-code lookup",
+    "characterization": "Exactly authorized generic Core bind may persist state_version2; package runner then refuses incompatible_pack with no call/write",
+    "code_attestation": false,
+    "hostile_same_user_python_sandbox": false
+  },
+  "limits": [
+    "No full seven-capability contract, two full Processes or common overview",
+    "T2 generic Core preparation is not final Proof C or closure of either P30/P40 guarantee",
+    "No in-place version migration or multi-Process placement proof",
+    "Exception fault injection is not power-loss or exhaustive concurrency testing",
+    "Old wheel rollback uses locked venv dependencies; no independent installation claim",
+    "No owner acceptance inferred from PASS or original T1 acceptance"
+  ],
+  "w15_w20": {
+    "W15": "T2 lifecycle answered; full subject rules remain T4/T5",
+    "W16": "OPEN PLAN/T3",
+    "W17": "OPEN PLAN/T3-T5; both P30/P40 guarantees retained",
+    "W18": "OPEN PLAN/T4-T5",
+    "W19": "OPEN PLAN/T6",
+    "W20": "T2 evidence retained; full scenarios OPEN PLAN/T4-T7"
+  },
+  "writes": "Only new review docs and isolated ignored review scratch; no source/test/tool/authority/original RESULT/evidence changes",
+  "next": "solmax"
+}

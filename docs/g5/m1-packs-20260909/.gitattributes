@@ -1,0 +1,2 @@
+# Preserve exact evidence and command output, including CRLF and console spacing.
+* -text -whitespace

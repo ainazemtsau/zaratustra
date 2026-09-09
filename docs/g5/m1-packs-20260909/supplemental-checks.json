@@ -1,0 +1,160 @@
+[
+  {
+    "case": "adapter cannot change chosen next ids",
+    "verdict": "PASS",
+    "code": "invalid_proposal",
+    "detail": "invalid_proposal: Pack changed the selected continuation identities",
+    "unchanged_layout_and_bytes": true,
+    "before": {
+      "files": {
+        ".zara/state.sqlite3": "3bd6267d3a78a5fbd9ed4280735fa3b2f35003e965f382cad2be017512a29604",
+        "artifacts/43da8ce6-e8b0-4d1c-8ba8-d4326e2ddc81/ec88a342-60ef-4875-8eff-774ca02b0906.blob": "32213d3e00e4cbc005916f88f0f1fb2939db275c350012b61da5827570f28154",
+        "projections/overview.md": "fa830cba0d47a080f97443d406e41ab529de346353137e699b57e8bfd8a1651d"
+      },
+      "directories": [
+        ".zara/",
+        "artifacts/",
+        "artifacts/43da8ce6-e8b0-4d1c-8ba8-d4326e2ddc81/",
+        "inbox/",
+        "processes/",
+        "projections/"
+      ]
+    }
+  },
+  {
+    "case": "adapter cannot grant next Artifact authority",
+    "verdict": "PASS",
+    "code": "ValidationError",
+    "detail": "1 validation error for NextWork\nauthority_scope\n  Input should be 'work_metadata' [type=literal_error, input_value='work_metadata_and_artifact', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/literal_error",
+    "unchanged_layout_and_bytes": true,
+    "before": {
+      "files": {
+        ".zara/state.sqlite3": "3bd6267d3a78a5fbd9ed4280735fa3b2f35003e965f382cad2be017512a29604",
+        "artifacts/43da8ce6-e8b0-4d1c-8ba8-d4326e2ddc81/ec88a342-60ef-4875-8eff-774ca02b0906.blob": "32213d3e00e4cbc005916f88f0f1fb2939db275c350012b61da5827570f28154",
+        "projections/overview.md": "fa830cba0d47a080f97443d406e41ab529de346353137e699b57e8bfd8a1651d"
+      },
+      "directories": [
+        ".zara/",
+        "artifacts/",
+        "artifacts/43da8ce6-e8b0-4d1c-8ba8-d4326e2ddc81/",
+        "inbox/",
+        "processes/",
+        "projections/"
+      ]
+    }
+  },
+  {
+    "case": "adapter rule refusal does not write",
+    "verdict": "PASS",
+    "code": "ValueError",
+    "detail": "Fictional adapter refused its own rule",
+    "unchanged_layout_and_bytes": true,
+    "before": {
+      "files": {
+        ".zara/state.sqlite3": "3bd6267d3a78a5fbd9ed4280735fa3b2f35003e965f382cad2be017512a29604",
+        "artifacts/43da8ce6-e8b0-4d1c-8ba8-d4326e2ddc81/ec88a342-60ef-4875-8eff-774ca02b0906.blob": "32213d3e00e4cbc005916f88f0f1fb2939db275c350012b61da5827570f28154",
+        "projections/overview.md": "fa830cba0d47a080f97443d406e41ab529de346353137e699b57e8bfd8a1651d"
+      },
+      "directories": [
+        ".zara/",
+        "artifacts/",
+        "artifacts/43da8ce6-e8b0-4d1c-8ba8-d4326e2ddc81/",
+        "inbox/",
+        "processes/",
+        "projections/"
+      ]
+    }
+  },
+  {
+    "case": "next identities cannot collide with saved records",
+    "verdict": "PASS",
+    "code": "invalid_result",
+    "detail": "invalid_result: Next Work and Artifact identities must be new",
+    "unchanged_layout_and_bytes": true,
+    "before": {
+      "files": {
+        ".zara/state.sqlite3": "3bd6267d3a78a5fbd9ed4280735fa3b2f35003e965f382cad2be017512a29604",
+        "artifacts/43da8ce6-e8b0-4d1c-8ba8-d4326e2ddc81/ec88a342-60ef-4875-8eff-774ca02b0906.blob": "32213d3e00e4cbc005916f88f0f1fb2939db275c350012b61da5827570f28154",
+        "projections/overview.md": "fa830cba0d47a080f97443d406e41ab529de346353137e699b57e8bfd8a1651d"
+      },
+      "directories": [
+        ".zara/",
+        "artifacts/",
+        "artifacts/43da8ce6-e8b0-4d1c-8ba8-d4326e2ddc81/",
+        "inbox/",
+        "processes/",
+        "projections/"
+      ]
+    }
+  },
+  {
+    "case": "new instance identities differ from restored original",
+    "verdict": "PASS",
+    "new_workspace": "403ac8a8-067b-42aa-b634-07fdcef2d082",
+    "new_process": "a8984e6e-7099-4dbd-b4de-5f6883fd474d",
+    "new_work": "9921526d-0edd-4513-9d3f-1feba3f0b629"
+  },
+  {
+    "case": "binding gives no extra Artifact scope",
+    "verdict": "PASS",
+    "code": "permission_denied",
+    "detail": "permission_denied: Work has no current Artifact permission",
+    "unchanged_layout_and_bytes": true,
+    "before": {
+      "files": {
+        ".zara/state.sqlite3": "4004dce58ec67f31879a09ad34e1c6c5f423b9d6b261e709c9d02c57b9977685",
+        "projections/overview.md": "d2127f76ef1c5da53914fc8ad2a3157d9203d0c7c256bc79f281301132832b09"
+      },
+      "directories": [
+        ".zara/",
+        "artifacts/",
+        "inbox/",
+        "processes/",
+        "projections/"
+      ]
+    }
+  },
+  {
+    "case": "distinct instance pinned continuation 0",
+    "verdict": "PASS"
+  },
+  {
+    "case": "distinct instance pinned continuation 1",
+    "verdict": "PASS"
+  },
+  {
+    "case": "next context reads inherited grounds after two transitions",
+    "verdict": "PASS"
+  },
+  {
+    "case": "Core stores explicit generic reference without registry lookup",
+    "verdict": "PASS",
+    "interpretation": "Declared trusted-host compatibility boundary; not a defect and not registry authorization bypass"
+  },
+  {
+    "case": "unsupported bound reference cannot execute via package runner",
+    "verdict": "PASS",
+    "code": "incompatible_pack",
+    "detail": "incompatible_pack: Exact type, contract1 and state1 required",
+    "unchanged_layout_and_bytes": true,
+    "before": {
+      "files": {
+        ".zara/state.sqlite3": "4033471ba8042b37942d9355ffdd15ce8a38347ff0c06230c433bb919153f954",
+        "artifacts/43da8ce6-e8b0-4d1c-8ba8-d4326e2ddc81/2fefb8b3-d174-4c8e-9928-48035bb4bf72.blob": "32213d3e00e4cbc005916f88f0f1fb2939db275c350012b61da5827570f28154",
+        "projections/overview.md": "79233aa7bc0eb1f36a9fde6cbc19c4ee9b1a4da277172653bc7af7d6e0803c0d"
+      },
+      "directories": [
+        ".zara/",
+        "artifacts/",
+        "artifacts/43da8ce6-e8b0-4d1c-8ba8-d4326e2ddc81/",
+        "inbox/",
+        "processes/",
+        "projections/"
+      ]
+    }
+  },
+  {
+    "case": "unsupported adapter not called",
+    "verdict": "PASS"
+  }
+]

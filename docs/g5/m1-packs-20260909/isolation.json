@@ -1,0 +1,41 @@
+{
+  "review_task": "01a0869b-59b5-7b62-9e19-e2f8056f4341",
+  "source_task": "01a0865e-b759-7bf3-9d21-e86819e52156",
+  "physical_session": "new app-managed task, separate from implementation",
+  "initial_head": "512c7a1657aee9295a1e2e826eb3abc698d05fd8",
+  "initial_status": "clean detached HEAD",
+  "candidate": "25a35b449570caf500cf09fca560b2bb64313169",
+  "review_path": "C:\\my_global_workflow\\fa61\\zaratustra",
+  "branch": "codex/g5-m1-packs-20260909",
+  "controls": [
+    {
+      "path": "C:\\my_global_workflow\\fa61\\zaratustra\\STOP",
+      "exists": false
+    },
+    {
+      "path": "C:\\my_global_workflow\\fa61\\zaratustra\\STEER.md",
+      "exists": false
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\_scratch\\m1-packs-20260909\\STOP",
+      "exists": false
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\_scratch\\m1-packs-20260909\\STEER.md",
+      "exists": false
+    }
+  ],
+  "source_path": "C:/projects/zaratustra/_scratch/m1-packs-20260909",
+  "source_head": "25a35b449570caf500cf09fca560b2bb64313169",
+  "source_status": "clean codex/m1-packs-20260909 at final read-only inspection",
+  "source_access": "read-only; git safe.directory set per command only",
+  "initial_git_switch": "workspace sandbox denied .git/worktrees/zaratustra1/index.lock; authorized escalation succeeded",
+  "uv_sync_first_attempt": "sandbox could not access standard uv cache; raw/uv-sync-01.txt retained",
+  "uv_sync_second_attempt": "authorized escalation succeeded, raw/uv-sync-02.txt",
+  "native": "uv run --locked python -m tools.check --deliver, exact candidate",
+  "pytest_addopts": "--basetemp=_scratch/g5-m1-packs-20260909/pytest-native-01",
+  "owner_acceptance": "pending",
+  "delegation": "No subagents; fresh physical G5 is this task",
+  "direction_access": "Only named current CALL/authority/plan/shape/knowledge; read-only",
+  "work8": "Root attachments and original input were neither opened nor searched; scenario not repeated; M0 partial"
+}

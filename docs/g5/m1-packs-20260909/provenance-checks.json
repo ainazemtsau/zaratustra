@@ -1,0 +1,230 @@
+[
+  {
+    "case": "exact candidate checkout",
+    "verdict": "PASS"
+  },
+  {
+    "case": "commit ancestry f67959e to 8dfaa5c",
+    "verdict": "PASS"
+  },
+  {
+    "case": "commit ancestry 8dfaa5c to f728ad6",
+    "verdict": "PASS"
+  },
+  {
+    "case": "commit ancestry f728ad6 to 25a35b4",
+    "verdict": "PASS"
+  },
+  {
+    "case": "candidate source authority tests tools dependencies unchanged",
+    "verdict": "PASS",
+    "changed_paths": [
+      "RESULT.md",
+      "docs/m1-packs/READOUT.md",
+      "docs/m1-packs/REPRODUCE.md",
+      "docs/m1-packs/evidence/.gitattributes",
+      "docs/m1-packs/evidence/baseline-check.txt",
+      "docs/m1-packs/evidence/baseline-manifest.json",
+      "docs/m1-packs/evidence/baseline-probe.txt",
+      "docs/m1-packs/evidence/check-deliver.txt",
+      "docs/m1-packs/evidence/focused-01.txt",
+      "docs/m1-packs/evidence/focused-02.txt",
+      "docs/m1-packs/evidence/focused-03.txt",
+      "docs/m1-packs/evidence/lifecycle-01.txt",
+      "docs/m1-packs/evidence/lifecycle-manifest.json",
+      "docs/m1-packs/evidence/lifecycle.zip",
+      "docs/m1-packs/evidence/manifest.json",
+      "docs/m1-packs/evidence/restart-read.json",
+      "docs/m1-packs/evidence/restart_read.py.txt",
+      "docs/m1-packs/evidence/source-verification.json",
+      "docs/m1-packs/evidence/source.diff",
+      "docs/m1-packs/evidence/summary.json",
+      "docs/m1-packs/evidence/zaratustra-0.8.0-py3-none-any.whl"
+    ]
+  },
+  {
+    "case": "review working tree protected surfaces unchanged",
+    "verdict": "PASS"
+  },
+  {
+    "case": "checked out protected files equal exact Git blobs",
+    "verdict": "PASS",
+    "files": 67,
+    "mismatches": []
+  },
+  {
+    "case": "released migrations old adapters authority unchanged from basis",
+    "verdict": "PASS"
+  },
+  {
+    "case": "CALL copied exactly modulo filesystem newline",
+    "verdict": "PASS",
+    "committed_sha256": "7c7d940d6ad655ea3cf0779d71ffd4873958d2fad6910233b251284980a49f6f",
+    "external_raw_sha256": "7c7d940d6ad655ea3cf0779d71ffd4873958d2fad6910233b251284980a49f6f"
+  },
+  {
+    "case": "original evidence manifest exact committed bytes",
+    "verdict": "PASS",
+    "files": 19,
+    "mismatches": []
+  },
+  {
+    "case": "author provenance claims rederived from Git",
+    "verdict": "PASS",
+    "files": 66,
+    "mismatches": []
+  },
+  {
+    "case": "archive exact CRC layout baseline-trial.zip",
+    "verdict": "PASS",
+    "archive_sha256": "5802879e187464edc24ae07c38e40502a26005bfa0d7e52ef4c09bfcaff5ec56",
+    "files": 158,
+    "directories": 46
+  },
+  {
+    "case": "archive exact CRC layout lifecycle.zip",
+    "verdict": "PASS",
+    "archive_sha256": "e568a33bb6a6135c9a62f7c39df62d01fce435ccf6ca6c079a627d1eb95f2a77",
+    "files": 83,
+    "directories": 35
+  },
+  {
+    "case": "original runtime pins",
+    "verdict": "PASS",
+    "baseline_runtime": {
+      "python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]",
+      "executable": "C:\\projects\\zaratustra\\_scratch\\m1-packs-20260909\\.venv\\Scripts\\python.exe",
+      "product_root": "C:\\projects\\zaratustra\\_scratch\\m1-packs-20260909",
+      "commit": "f67959e7c1a412c202ebb0d6e67938ec4355042f",
+      "dirty": "",
+      "call": "c-solmax-zaratustra-m1-probe-admission-20260909-exec",
+      "owner_acceptance": "pending"
+    },
+    "lifecycle_runtime": {
+      "call": "c-solmax-zaratustra-m1-packs-20260909-exec",
+      "commit": "f728ad6a8645ba04532e1cd74a34ea57c31c4dd8",
+      "diff": "",
+      "python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]",
+      "argv": [
+        "C:\\projects\\zaratustra\\_scratch\\m1-packs-20260909\\tools\\probe_packs.py",
+        "--output",
+        "_scratch/t2-lifecycle-01"
+      ]
+    }
+  },
+  {
+    "case": "baseline check text matches pre-BUILD version",
+    "verdict": "PASS",
+    "sha256": "8cd89d1f01d12ca5fc00613671fc9f7697f8666eeec8544b762ffb027da55d4f",
+    "crlf": 42
+  },
+  {
+    "case": "baseline raw probe matches retained summary",
+    "verdict": "PASS",
+    "sha256": "7c8991b303f572f7d001d153c417b541b8ce3eca83032866d73e1e529f631c66",
+    "crlf": 77
+  },
+  {
+    "case": "wheel source identity baseline.whl",
+    "verdict": "PASS",
+    "source": "f67959e7c1a412c202ebb0d6e67938ec4355042f",
+    "python_files": 23,
+    "sha256": "be03388aec6f41ef057839cbd0a0a93f953a493e50ce821330198bbbf1058fe8",
+    "mismatches": [],
+    "invalid_RECORD": []
+  },
+  {
+    "case": "wheel source identity zaratustra-0.8.0-py3-none-any.whl",
+    "verdict": "PASS",
+    "source": "f728ad6a8645ba04532e1cd74a34ea57c31c4dd8",
+    "python_files": 27,
+    "sha256": "a4dfbf8e08829ed9fbd18f5661ea60700f35908e47fb8a2c054747589187805a",
+    "mismatches": [],
+    "invalid_RECORD": []
+  },
+  {
+    "case": "wheel source identity zaratustra-0.8.0-py3-none-any.whl",
+    "verdict": "PASS",
+    "source": "25a35b449570caf500cf09fca560b2bb64313169",
+    "python_files": 27,
+    "sha256": "a4dfbf8e08829ed9fbd18f5661ea60700f35908e47fb8a2c054747589187805a",
+    "mismatches": [],
+    "invalid_RECORD": []
+  },
+  {
+    "case": "original exact bind request located",
+    "verdict": "PASS"
+  },
+  {
+    "case": "archive exact CRC layout before-migration.zip",
+    "verdict": "PASS",
+    "archive_sha256": "6a26ab197883e1734dcf214d4f7ddebdd6316ee9d7c3a79dd1f3fe83050b913d",
+    "files": 2,
+    "directories": 5
+  },
+  {
+    "case": "original pre-migration reads schema6",
+    "verdict": "PASS"
+  },
+  {
+    "case": "archive exact CRC layout before-bind.zip",
+    "verdict": "PASS",
+    "archive_sha256": "8e4c8f13fd4e77a4bd0b50cdbd6a32e7ca8df81f3cd328f6c64279b0e730497e",
+    "files": 2,
+    "directories": 5
+  },
+  {
+    "case": "original backup replay bind",
+    "verdict": "PASS",
+    "previous_revision": 3,
+    "new_revision": 4,
+    "fingerprint": "0d66c81dfa7105b0e820688aa2db5fe2793e7a7ee583892618fa89c41ee9c65a"
+  },
+  {
+    "case": "archive exact CRC layout before-result.zip",
+    "verdict": "PASS",
+    "archive_sha256": "77c817e539cb8514ef2d48d8d9356db2ed6099d5b4903a2612b8e5290d4366e5",
+    "files": 3,
+    "directories": 6
+  },
+  {
+    "case": "original backup replay result",
+    "verdict": "PASS",
+    "previous_revision": 7,
+    "new_revision": 8,
+    "fingerprint": "4246e6ae1527b79b66cb6b53c908332e48114675f32dfac4175e313889251109"
+  },
+  {
+    "case": "original legacy includes Results",
+    "verdict": "PASS",
+    "results": 1,
+    "events": 9
+  },
+  {
+    "case": "original legacy6 to7 preserves prior rows events Results",
+    "verdict": "PASS"
+  },
+  {
+    "case": "bind next preserves legacy accepted Results and event prefix",
+    "verdict": "PASS",
+    "new_revision": 11
+  },
+  {
+    "case": "archive exact CRC layout before.zip",
+    "verdict": "PASS",
+    "archive_sha256": "125e00c9044fe6d7399cd486843a9173766783652e51fbc7a6c060d45db10e94",
+    "files": 4,
+    "directories": 6
+  },
+  {
+    "case": "old retained wheel actual rollback continuation",
+    "verdict": "PASS",
+    "returncode": 0,
+    "stdout": "{\r\n  \"version\": \"0.7.0\",\r\n  \"core_file\": \"C:\\\\my_global_workflow\\\\fa61\\\\zaratustra\\\\docs\\\\m1-packs\\\\evidence\\\\baseline.whl\\\\zaratustra\\\\core\\\\__init__.py\",\r\n  \"workspace\": \"C:\\\\my_global_workflow\\\\fa61\\\\zaratustra\\\\_scratch\\\\g5-m1-packs-20260909\\\\provenance-01\\\\old-wheel-restored\",\r\n  \"before\": {\r\n    \"workspace_id\": \"79808c51-1d22-4dad-a30a-5d5a6a87ba95\",\r\n    \"state_revision\": 9,\r\n    \"records\": [\r\n      {\r\n        \"id\": \"5cd8f6cd-d081-44c2-8d11-26606f209cc6\",\r\n        \"revision\": 3,\r\n        \"created_at\": \"2026-09-09T13:37:57.658036Z\",\r\n        \"kind\": \"artifact\",\r\n        \"process_id\": \"cc8299ec-3f8f-419b-a4a8-50abbf7b24a8\",\r\n        \"work_id\": \"d3e60b63-5569-4eec-b631-c217dace2472\",\r\n        \"title\": \"Fictional observation\",\r\n        \"status\": \"registered\",\r\n        \"active_version\": \"162287df-92c3-4649-b8d6-04da6365c796\"\r\n      },\r\n      {\r\n        \"id\": \"cd5acde4-9de7-4f98-8ebb-d81dd186754f\",\r\n        \"revision\": 1,\r\n        \"created_at\": \"2026-09-09T13:37:57.658036Z\",\r\n        \"kind\": \"event\",\r\n        \"process_id\": \"cc8299ec-3f8f-419b-a4a8-50abbf7b24a8\",\r\n        \"work_id\": \"d3e60b63-5569-4eec-b631-c217dace2472\",\r\n        \"action\": \"initial_records_created\",\r\n        \"actor\": \"local-invocation\",\r\n        \"basis\": \"explicit-workspace-bootstrap\",\r\n        \"product_version\": \"0.7.0\",\r\n        \"state_revision\": 1,\r\n        \"affected_ids\": [\r\n          \"cc8299ec-3f8f-419b-a4a8-50abbf7b24a8\",\r\n          \"d3e60b63-5569-4eec-b631-c217dace2472\",\r\n          \"5cd8f6cd-d081-44c2-8d11-26606f209cc6\"\r\n        ]\r\n      },\r\n      {\r\n        \"id\": \"cc8299ec-3f8f-419b-a4a8-50abbf7b24a8\",\r\n        \"revision\": 1,\r\n        \"created_at\": \"2026-09-09T13:37:57.658036Z\",\r\n        \"kind\": \"process\",\r\n        \"title\": \"Fictional probe.batch/v1\"\r\n      },\r\n      {\r\n        \"id\": \"d3e60b63-5569-4eec-b631-c217dace2472\",\r\n        \"revision\": 9,\r\n        \"created_at\": \"2026-09-09T13:37:57.658036Z\",\r\n        \"kind\": \"work\",\r\n        \"process_id\": \"cc8299ec-3f8f-419b-a4a8-50abbf7b24a8\",\r\n        \"goal\": \"Evaluate the selected fictional rule\",\r\n        \"expected_result\": \"Exact recorded observation and permitted continuation\",\r\n        \"acceptance\": [\r\n          \"Only explicitly selected fictional inputs\"\r\n        ],\r\n        \"boundaries\": [\r\n          \"Local fictional workspace only\"\r\n        ],\r\n        \"budget\": \"One minimal rule contrast\",\r\n        \"status\": \"ready\",\r\n        \"authority_scope\": \"work_metadata_and_artifact\",\r\n        \"context_handles\": [],\r\n        \"dependencies\": [],\r\n        \"executor_requirements\": [\r\n          \"probe.batch/v1\"\r\n        ]\r\n      }\r\n    ]\r\n  },\r\n  \"after\": {\r\n    \"workspace_id\": \"79808c51-1d22-4dad-a30a-5d5a6a87ba95\",\r\n    \"state_revision\": 10,\r\n    \"records\": [\r\n      {\r\n        \"id\": \"5cd8f6cd-d081-44c2-8d11-26606f209cc6\",\r\n        \"revision\": 3,\r\n        \"created_at\": \"2026-09-09T13:37:57.658036Z\",\r\n        \"kind\": \"artifact\",\r\n        \"process_id\": \"cc8299ec-3f8f-419b-a4a8-50abbf7b24a8\",\r\n        \"work_id\": \"d3e60b63-5569-4eec-b631-c217dace2472\",\r\n        \"title\": \"Fictional observation\",\r\n        \"status\": \"registered\",\r\n        \"active_version\": \"162287df-92c3-4649-b8d6-04da6365c796\"\r\n      },\r\n      {\r\n        \"id\": \"c4fbe44c-beba-413a-a808-4b8d15964da7\",\r\n        \"revision\": 1,\r\n        \"created_at\": \"2026-09-09T14:50:01.106531Z\",\r\n        \"kind\": \"artifact\",\r\n        \"process_id\": \"cc8299ec-3f8f-419b-a4a8-50abbf7b24a8\",\r\n        \"work_id\": \"0c7e94d8-1fe3-4ded-878f-4bcd2403b54a\",\r\n        \"title\": \"Next fictional batch observation\",\r\n        \"status\": \"declared\",\r\n        \"active_version\": null\r\n      },\r\n      {\r\n        \"id\": \"cd5acde4-9de7-4f98-8ebb-d81dd186754f\",\r\n        \"revision\": 1,\r\n        \"created_at\": \"2026-09-09T13:37:57.658036Z\",\r\n        \"kind\": \"event\",\r\n        \"process_id\": \"cc8299ec-3f8f-419b-a4a8-50abbf7b24a8\",\r\n        \"work_id\": \"d3e60b63-5569-4eec-b631-c217dace2472\",\r\n        \"action\": \"initial_records_created\",\r\n        \"actor\": \"local-invocation\",\r\n        \"basis\": \"explicit-workspace-bootstrap\",\r\n        \"product_version\": \"0.7.0\",\r\n        \"state_revision\": 1,\r\n        \"affected_ids\": [\r\n          \"cc8299ec-3f8f-419b-a4a8-50abbf7b24a8\",\r\n          \"d3e60b63-5569-4eec-b631-c217dace2472\",\r\n          \"5cd8f6cd-d081-44c2-8d11-26606f209cc6\"\r\n        ]\r\n      },\r\n      {\r\n        \"id\": \"cc8299ec-3f8f-419b-a4a8-50abbf7b24a8\",\r\n        \"revision\": 1,\r\n        \"created_at\": \"2026-09-09T13:37:57.658036Z\",\r\n        \"kind\": \"process\",\r\n        \"title\": \"Fictional probe.batch/v1\"\r\n      },\r\n      {\r\n        \"id\": \"0c7e94d8-1fe3-4ded-878f-4bcd2403b54a\",\r\n        \"revision\": 10,\r\n        \"created_at\": \"2026-09-09T14:50:01.106531Z\",\r\n        \"kind\": \"work\",\r\n        \"process_id\": \"cc8299ec-3f8f-419b-a4a8-50abbf7b24a8\",\r\n        \"goal\": \"Inspect the next fictional batch\",\r\n        \"expected_result\": \"Both independent marks\",\r\n        \"acceptance\": [\r\n          \"Observation and recording marks are both present\"\r\n        ],\r\n        \"boundaries\": [\r\n          \"Local fictional workspace only\"\r\n        ],\r\n        \"budget\": \"One minimal rule contrast\",\r\n        \"status\": \"ready\",\r\n        \"authority_scope\": \"work_metadata\",\r\n        \"context_handles\": [],\r\n        \"dependencies\": [],\r\n        \"executor_requirements\": [\r\n          \"probe.batch/v1\"\r\n        ]\r\n      },\r\n      {\r\n        \"id\": \"d3e60b63-5569-4eec-b631-c217dace2472\",\r\n        \"revision\": 10,\r\n        \"created_at\": \"2026-09-09T13:37:57.658036Z\",\r\n        \"kind\": \"work\",\r\n        \"process_id\": \"cc8299ec-3f8f-419b-a4a8-50abbf7b24a8\",\r\n        \"goal\": \"Evaluate the selected fictional rule\",\r\n        \"expected_result\": \"Exact recorded observation and permitted continuation\",\r\n        \"acceptance\": [\r\n          \"Only explicitly selected fictional inputs\"\r\n        ],\r\n        \"boundaries\": [\r\n          \"Local fictional workspace only\"\r\n        ],\r\n        \"budget\": \"One minimal rule contrast\",\r\n        \"status\": \"done\",\r\n        \"authority_scope\": \"work_metadata_and_artifact\",\r\n        \"context_handles\": [],\r\n        \"dependencies\": [],\r\n        \"executor_requirements\": [\r\n          \"probe.batch/v1\"\r\n        ],\r\n        \"completion_id\": \"8469b776-a88f-4c44-afa3-39f714cd6970\"\r\n      }\r\n    ]\r\n  },\r\n  \"receipt\": {\r\n    \"operation_id\": \"8469b776-a88f-4c44-afa3-39f714cd6970\",\r\n    \"event_id\": \"add860db-e7ae-462d-ba01-cb3408ff49ef\",\r\n    \"workspace_id\": \"79808c51-1d22-4dad-a30a-5d5a6a87ba95\",\r\n    \"work_id\": \"d3e60b63-5569-4eec-b631-c217dace2472\",\r\n    \"previous_revision\": 9,\r\n    \"new_revision\": 10,\r\n    \"fingerprint\": \"6d59e81746d76f979af9a886a6e10c7022fe5af0cf0d787f41f17545ed2894e8\",\r\n    \"recorded_at\": \"2026-09-09T14:50:01.106531Z\",\r\n    \"product_version\": \"0.7.0\",\r\n    \"affected_projections\": [\r\n      \"overview.md\"\r\n    ]\r\n  },\r\n  \"confirmation\": {\r\n    \"channel\": \"local-chat\",\r\n    \"actor\": \"fresh-G5-retained-old-wheel\",\r\n    \"source_ref\": \"Explicit owner G5 authorization; review 01a0869b-59b5-7b62-9e19-e2f8056f4341; new restored fictional workspace; acceptance pending\",\r\n    \"confirmed_at\": \"2026-09-09T14:50:01.101936Z\",\r\n    \"workspace_path\": \"C:/my_global_workflow/fa61/zaratustra/_scratch/g5-m1-packs-20260909/provenance-01/old-wheel-restored\",\r\n    \"request_sha256\": \"e7f4c91137b3673c9460f74736e4dc552b89573ecc220944a515f827cca6d50c\"\r\n  }\r\n}\r\n",
+    "stderr": ""
+  },
+  {
+    "case": "old wheel exact request receipt",
+    "verdict": "PASS"
+  }
+]

@@ -1,0 +1,304 @@
+"""Fresh T2 refutation. Fictional writes use public Core; SQL is read-only.
+
+Run from exact candidate checkout: uv run --locked python SCRIPT NEW_OUTPUT.
+Output must be a new directory inside this checkout's ignored _scratch.
+"""
+from __future__ import annotations
+
+import hashlib
+import importlib
+import json
+import sqlite3
+import sys
+from pathlib import Path
+from unittest.mock import patch
+from uuid import uuid4
+
+ROOT = Path.cwd().resolve()
+sys.path.insert(0, str(ROOT))
+from tools.retain_trial import retain_trial
+from tools.probe_m1 import restore_snapshot
+from zaratustra.core import (
+    Artifact, ArtifactReference, ContextQuery, Handoff, InitialRecords,
+    MutationError, MutationRequest, NextWork, PackReference, Process,
+    ReceiptQuery, Work, apply_mutation, authorize_local, create_initial_records,
+    handoff_request, init_workspace, migrate_workspace, open_work,
+    prepare_authorization, read_history, read_records, read_result, read_workspace,
+)
+from zaratustra.process_packs import (
+    PackError, PackRegistration, PackRegistry, binding_request, propose_result,
+)
+
+TASK = "01a0869b-59b5-7b62-9e19-e2f8056f4341"
+OUT = Path(sys.argv[1]).resolve()
+if OUT.exists() or not OUT.is_relative_to(ROOT / "_scratch"):
+    raise ValueError("Choose NEW output inside this review checkout _scratch")
+for control in [ROOT / "STOP", ROOT / "STEER.md", *[Path("C:/projects/zaratustra/_scratch/m1-packs-20260909") / n for n in ("STOP", "STEER.md")]]:
+    if control.exists():
+        raise RuntimeError(f"Read/resolve control: {control}")
+OUT.mkdir(parents=True)
+LOG = []
+
+def save(name, value):
+    target = OUT / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(value, indent=2, ensure_ascii=False, default=str) + "\n", encoding="utf-8", newline="\n")
+
+def check(name, condition, **details):
+    row = dict(case=name, verdict="PASS" if condition else "FAIL", **details)
+    LOG.append(row)
+    save("checks.json", LOG)
+    print(json.dumps(row, ensure_ascii=True), flush=True)
+    if not condition:
+        raise AssertionError(name)
+
+def hash_bytes(data):
+    return hashlib.sha256(data).hexdigest()
+
+def inventory(path):
+    return dict(files={p.relative_to(path).as_posix(): hash_bytes(p.read_bytes()) for p in sorted(path.rglob("*")) if p.is_file()}, directories=sorted(p.relative_to(path).as_posix() + "/" for p in path.rglob("*") if p.is_dir()))
+
+def db_rows(path):
+    db = read_workspace(path).database
+    with sqlite3.connect(db.as_uri() + "?mode=ro", uri=True) as connection:
+        names = [r[0] for r in connection.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
+        return {name: connection.execute('SELECT * FROM "' + name + '" ORDER BY 1').fetchall() for name in names}
+
+def confirm(path, value):
+    return authorize_local(prepare_authorization(path, value), channel="local-chat", actor="fresh-physical-G5-fictional-review", source_ref=f"Owner authorized G5 in source task 01a0865e-b759-7bf3-9d21-e86819e52156; review {TASK}; fictional fixture only; owner acceptance pending")
+
+def work(path, identity=None):
+    return next(r for r in read_records(path).records if isinstance(r, Work) and (identity is None or r.id == identity))
+
+def request(path, identity, operation, **payload):
+    state = read_records(path)
+    values = dict(operation_id=uuid4(), workspace_id=state.workspace_id, work_id=identity, operation=operation, expected_revision=state.state_revision, provenance="Fresh G5 fictional bounded request")
+    if operation in ("authorize_artifact", "publish_artifact", "restore_artifact"):
+        artifact = next(r for r in state.records if isinstance(r, Artifact) and r.work_id == identity)
+        values.update(version=2, artifact_id=artifact.id, artifact_revision=artifact.revision)
+    return MutationRequest.model_validate(values | payload)
+
+SEQUENCE = 0
+def execute(path, value, content=None):
+    global SEQUENCE
+    SEQUENCE += 1
+    auth = confirm(path, value)
+    stem = f"operations/{SEQUENCE:03d}-{value.operation}"
+    save(stem + "-input.json", dict(path=path, request=value.model_dump(mode="json"), confirmation=auth.confirmation.model_dump(mode="json"), content_hex=content.hex() if content is not None else None))
+    receipt = apply_mutation(path, value, auth, content=content)
+    save(stem + "-receipt.json", receipt.model_dump(mode="json"))
+    return receipt
+
+def retain(path, name):
+    manifest = retain_trial(path, OUT / (name + ".zip"))
+    save(name + "-manifest.json", manifest)
+    return OUT / (name + ".zip"), manifest
+
+def clone(backup, name):
+    return restore_snapshot(backup[0], OUT / name, backup[1])
+
+def refused(name, fn, *, path=None, codes=()):
+    before = inventory(path) if path else None
+    try:
+        fn()
+    except Exception as error:
+        code = getattr(error, "code", type(error).__name__)
+        check(name, (not codes or code in codes) and (path is None or inventory(path) == before), code=code, detail=str(error), unchanged_layout_and_bytes=path is None or inventory(path) == before, before=before)
+        return
+    check(name, False, reason="Expected refusal but call returned")
+
+def ref(**changes):
+    return PackReference.model_validate(dict(pack_id="review.unseen", pack_version="3.1.4", process_type="review.unseen-type", contract_version=1, state_version=1) | changes)
+
+class Rule:
+    def __init__(self, label):
+        self.label = label
+        self.calls = []
+
+    def next_work(self, current, accepted, work_id, artifact_id):
+        self.calls.append(dict(work=str(current.id), binding=current.pack_binding.model_dump(mode="json"), accepted=accepted.hex()))
+        return NextWork(work_id=work_id, artifact_id=artifact_id, goal=f"Fictional continuation {self.label}", expected_result="Independent retained observation", acceptance=("Fictional check",), boundaries=("Review-only fixture",), budget="One review transition", executor_requirements=("review.external-rule",), artifact_title="Independent next artifact", authority_scope="work_metadata")
+
+def installed(reference, rule=None):
+    return PackRegistry((PackRegistration(reference, rule or Rule("unused")),))
+
+def bind(path, identity, reference, registry):
+    state = read_records(path)
+    return binding_request(registry, reference, operation_id=uuid4(), workspace_id=state.workspace_id, work_id=identity, expected_revision=state.state_revision, provenance="Fresh G5 explicit fictional binding")
+
+def query(path, identity):
+    state = read_records(path)
+    return ContextQuery(workspace_id=state.workspace_id, work_id=identity, process_id=work(path, identity).process_id, expected_revision=state.state_revision, max_bytes=1048576)
+
+def proposal(path, identity, registry, q=None, caller="new"):
+    q = q or query(path, identity)
+    auth = confirm(path, q) if caller == "new" else caller
+    return propose_result(path, q, auth, registry, operation_id=uuid4(), next_work_id=uuid4(), next_artifact_id=uuid4())
+
+def observe(path, identity):
+    data = b"Fresh G5 observation: this is not the T1 batch JSON rule."
+    execute(path, request(path, identity, "authorize_artifact"))
+    publication = request(path, identity, "publish_artifact", content_sha256=hash_bytes(data), content_size=len(data))
+    execute(path, publication, data)
+    h = Handoff(kind="handoff", version=1, handoff_id=uuid4(), workspace_id=publication.workspace_id, process=work(path, identity).process_id, related_work=identity, intent="accepted_result", source_revision=read_records(path).state_revision, result=ArtifactReference(artifact_id=publication.artifact_id, version_id=publication.operation_id, sha256=hash_bytes(data)), provenance="Independent fictional evidence", created_by="Fresh G5 review")
+    execute(path, handoff_request(h.model_dump_json().encode(), source_ref=TASK))
+    return h.result, data
+
+def main():
+    v1, v2 = ref(), ref(pack_version="9.0.0")
+    first, second = Rule("exact old"), Rule("new version")
+    reg = PackRegistration(v1, first)
+    mutable_input = [reg]
+    registry = PackRegistry(mutable_input)
+    mutable_input.clear()
+    check("registry copies input container", registry.resolve(v1) is reg)
+    check("same registration idempotent", registry.register(reg) is registry)
+    refused("duplicate constructor", lambda: PackRegistry((reg, reg)), codes=("registration_collision",))
+    for field, value in dict(pack_version="v1", pack_id="../untrusted", contract_version=True, state_version=0, process_type="").items():
+        refused("invalid manifest " + field, lambda f=field, v=value: ref(**{f: v}), codes=("ValidationError",))
+    refused("missing callable", lambda: PackRegistration(v1, object()), codes=("invalid_pack",))
+    for field, value in dict(process_type="review.other", contract_version=2, state_version=2).items():
+        changed = ref(**{field: value})
+        refused("registration collision " + field, lambda c=changed: registry.register(PackRegistration(c, first)), codes=("registration_collision",))
+        refused("exact identity mismatch " + field, lambda c=changed: registry.resolve(c), codes=("incompatible_pack",))
+    refused("adapter collision", lambda: registry.register(PackRegistration(v1, second)), codes=("registration_collision",))
+    for field in ("contract_version", "state_version"):
+        future = ref(**{field: 2})
+        refused("unsupported registered " + field, lambda f=future: installed(f).resolve(f), codes=("incompatible_pack",))
+    both = registry.register(PackRegistration(v2, second))
+    check("versions coexist with exact selection", both.resolve(v1).rule is first and both.resolve(v2).rule is second and len(registry.registrations) == 1)
+    p = OUT / "workspace"
+    p.mkdir()
+    init_workspace(p)
+    migrate_workspace(p, target_version=6)
+    create_initial_records(p, InitialRecords(process_title="Unseen fictional review process", goal="Attempt to refute retained pack identity", expected_result="Exact persistent reference", acceptance=("Fictional review evidence",), boundaries=("Review _scratch only",), budget="One independent fixture", artifact_title="Independent evidence"))
+    wid = work(p).id
+    execute(p, request(p, wid, "authorize_work"))
+    before_migration = retain(p, "before-migration")
+    rows6 = db_rows(p)
+    legacy_records = read_records(p)
+    legacy_history = read_history(p)
+    refused("bind requires explicit schema7", lambda: execute(p, bind(p, wid, v1, both)), path=p, codes=("schema",))
+    before_init = inventory(p)
+    init_workspace(p)
+    check("init/read do not migrate", inventory(p) == before_init and read_workspace(p).schema_version == 6)
+    migrate_workspace(p, target_version=7)
+    rows7 = db_rows(p)
+    check("migration7 preserves every previous table row", all(rows7[k] == v for k, v in rows6.items() if k != "schema_migrations") and rows7["schema_migrations"][:-1] == rows6["schema_migrations"] and read_records(p) == legacy_records and read_history(p) == legacy_history)
+    before_idempotent = inventory(p)
+    migrate_workspace(p, target_version=7)
+    check("migration7 idempotent", inventory(p) == before_idempotent)
+    refused("schema downgrade refused", lambda: migrate_workspace(p, target_version=6), path=p, codes=("WorkspaceError",))
+    before_bind = retain(p, "before-bind")
+    b = bind(p, wid, v1, both)
+    auth = confirm(p, b)
+    refused("bind without authority", lambda: apply_mutation(p, b), path=p, codes=("permission_denied",))
+    for field, value in dict(pack_id="review.changed", pack_version="9.0.0", process_type="review.changed", contract_version=2, state_version=2).items():
+        changed = MutationRequest.model_validate(b.model_dump() | dict(pack_binding=ref(**{field: value})))
+        refused("confirmation binds manifest field " + field, lambda c=changed: apply_mutation(p, c, auth), path=p, codes=("permission_denied",))
+    # Inject after receipt/event/record writes: read-only observation proves injection stage.
+    module = importlib.import_module("zaratustra.core.mutations")
+    original_history = module._history
+    stage = {}
+    def fail_after_writes(connection, snapshot, **kwargs):
+        if snapshot.state_revision == b.expected_revision + 1:
+            stage.update(events=connection.execute("SELECT COUNT(*) FROM mutation_events").fetchone()[0], receipts=connection.execute("SELECT COUNT(*) FROM mutation_receipts").fetchone()[0], process=next(r.pack_binding.model_dump(mode="json") for r in snapshot.records if isinstance(r, Process)), work=next(r.pack_binding.model_dump(mode="json") for r in snapshot.records if isinstance(r, Work)))
+            raise RuntimeError("Independent G5 fault after both record updates and event/receipt insertion")
+        return original_history(connection, snapshot, **kwargs)
+    with patch.object(module, "_history", fail_after_writes):
+        refused("bind transaction rollback after receipt insertion", lambda: apply_mutation(p, b, auth), path=p, codes=("RuntimeError",))
+    check("fault reached common writes", stage.get("process") == v1.model_dump(mode="json") and stage.get("work") == v1.model_dump(mode="json") and stage.get("events") == stage.get("receipts") == b.expected_revision, stage=stage)
+    old = read_records(p)
+    receipt = execute(p, b)
+    after = read_records(p)
+    event = read_history(p).events[-1]
+    check("atomic Process Work binding retains other fields", all(r.model_dump(exclude={"pack_binding", "revision"}) == next(x for x in old.records if x.id == r.id).model_dump(exclude={"pack_binding", "revision"}) for r in after.records) and event.process_after.pack_binding == event.after.pack_binding == v1 and receipt.new_revision == old.state_revision + 1 == after.state_revision)
+    refused("stale bind replay", lambda: execute(p, b), path=p, codes=("conflict",))
+    refreshed = MutationRequest.model_validate(b.model_dump() | dict(expected_revision=after.state_revision))
+    replay_before = inventory(p)
+    check("exact refreshed bind replay", execute(p, refreshed) == receipt and inventory(p) == replay_before)
+    colliding = MutationRequest.model_validate(refreshed.model_dump() | dict(provenance="Changed intent"))
+    refused("operation id collision", lambda: execute(p, colliding), path=p, codes=("collision",))
+    refused("new operation cannot bind again", lambda: execute(p, bind(p, wid, v1, both)), path=p, codes=("pack_bound",))
+    refused("in-place version switch", lambda: execute(p, bind(p, wid, v2, both)), path=p, codes=("permission_denied", "pack_bound"))
+    accepted, data = observe(p, wid)
+    ready = retain(p, "ready-before-result")
+    for label, unavailable, code in [("missing", PackRegistry(), "missing_pack"), ("only new version", installed(v2, second), "missing_pack"), *[(f"changed {f}", installed(ref(**{f: v}), second), "incompatible_pack") for f, v in dict(process_type="review.other", contract_version=2, state_version=2).items()]]:
+        refused("unfinished Work " + label, lambda r=unavailable: proposal(p, wid, r), path=p, codes=(code,))
+    check("unavailable pack never ran rule", not first.calls and not second.calls)
+    q = query(p, wid)
+    package = json.loads(open_work(p, q, confirm(p, q)).output)
+    save("bound-context.json", package)
+    source_map = {s["locator"]: s["data"] for s in package["context"]["sources"]}
+    check("context retains Process Work binding", source_map[f"work:{wid}"]["pack_binding"] == source_map[f"process:{work(p,wid).process_id}"]["pack_binding"] == v1.model_dump(mode="json"))
+    refused("context no authority before dispatch", lambda: proposal(p, wid, both, caller=None), path=p, codes=("permission_denied",))
+    changed_q = ContextQuery.model_validate(q.model_dump() | dict(max_bytes=q.max_bytes-1))
+    refused("context changed exact query", lambda: proposal(p, wid, both, q=changed_q, caller=confirm(p,q)), path=p, codes=("permission_denied",))
+    foreign_q = ContextQuery.model_validate(q.model_dump() | dict(process_id=uuid4()))
+    refused("context foreign scope", lambda: proposal(p, wid, both, q=foreign_q), path=p)
+    # Saved proposal cannot override changed current rights, state revision or path.
+    for label, op in [("revoked", "revoke_work"), ("cancelled", "cancel_work"), ("stale", "set_work_requirements")]:
+        branch = clone(ready, label)
+        pre_q = query(branch, wid)
+        saved_proposal = proposal(branch, wid, both)
+        saved_auth = confirm(branch, saved_proposal)
+        change = {"requirements": ("changed by owner",)} if op == "set_work_requirements" else {}
+        execute(branch, request(branch, wid, op, **change))
+        calls = len(first.calls)
+        refused(label + " context before rule", lambda: proposal(branch, wid, both, q=pre_q, caller=confirm(branch, pre_q)), path=branch)
+        check(label + " rule untouched", len(first.calls) == calls)
+        refused(label + " proposal submission", lambda: apply_mutation(branch, saved_proposal, saved_auth), path=branch, codes=("permission_denied", "conflict"))
+    prop = proposal(p, wid, both)
+    check("unseen external rule runs exact old version", first.calls[-1]["accepted"] == data.hex() and not second.calls and prop.submission.next_work.goal.endswith("exact old"))
+    save("exact-proposal.json", prop.model_dump(mode="json"))
+    refused("proposal grants no authority", lambda: apply_mutation(p, prop), path=p, codes=("permission_denied",))
+    altered_next = prop.submission.next_work.model_dump() | dict(goal="Silently changed goal")
+    altered = MutationRequest.model_validate(prop.model_dump() | dict(submission=prop.submission.model_dump() | dict(next_work=altered_next)))
+    refused("confirmation binds exact next Work", lambda: apply_mutation(p, altered, confirm(p,prop)), path=p, codes=("permission_denied",))
+    restored = clone(ready, "restored-ready")
+    refused("authorization bound to original path", lambda: apply_mutation(restored, prop, confirm(p,prop)), path=restored, codes=("permission_denied",))
+    # Fault after full Result insert, independently later than author's bind fault.
+    result_stage = {}
+    def fail_result(connection, snapshot, **kwargs):
+        if snapshot.state_revision == prop.expected_revision + 1:
+            result_stage.update(results=connection.execute("SELECT COUNT(*) FROM work_results").fetchone()[0], records=len(snapshot.records), events=connection.execute("SELECT COUNT(*) FROM mutation_events").fetchone()[0], receipts=connection.execute("SELECT COUNT(*) FROM mutation_receipts").fetchone()[0])
+            raise RuntimeError("Independent G5 fault after Result/next/history writes")
+        return original_history(connection, snapshot, **kwargs)
+    with patch.object(module, "_history", fail_result):
+        refused("Result transaction rollback after Result insertion", lambda: execute(p, prop), path=p, codes=("RuntimeError",))
+    check("fault reached Result and next records", result_stage.get("results") == 1 and result_stage.get("records") == 6 and result_stage.get("events") == result_stage.get("receipts") == prop.expected_revision, stage=result_stage)
+    res = execute(p, prop)
+    restored_res = execute(restored, prop)
+    check("legal restored exact request replay", restored_res.fingerprint == res.fingerprint and work(restored, prop.submission.next_work.work_id).pack_binding == v1)
+    next_id = prop.submission.next_work.work_id
+    check("Result Work next preserve binding and separate scope", work(p,wid).status == "done" and work(p,wid).pack_binding == work(p,next_id).pack_binding == v1 and work(p,next_id).authority_scope == "work_metadata" and work(p,next_id).id != wid)
+    rq = ReceiptQuery(workspace_id=prop.workspace_id, work_id=wid, operation_id=prop.operation_id)
+    saved = read_result(p, rq, confirm(p, rq))
+    check("retained Result has exact event receipt and grounds", saved.receipt == res and saved.event.request == prop and saved.event.next_work == work(p,next_id) and saved.event.result_references == (accepted,))
+    refused("terminal work cannot authorize", lambda: execute(p, request(p,wid,"authorize_work")), path=p, codes=("permission_denied",))
+    refused("next Work cannot rebind version", lambda: execute(p,bind(p,next_id,v2,both)), path=p, codes=("permission_denied", "pack_bound"))
+    missing_before = inventory(p)
+    read_history(p)
+    check("owner history needs no registry", inventory(p) == missing_before)
+    # Confirm generic owner-local repair remains possible without any registry.
+    repair = request(p,wid,"restore_artifact",content_sha256=accepted.sha256,content_size=len(data),restore_version=accepted.version_id)
+    execute(p,repair,data)
+    execute(p,request(p,wid,"revoke_work"))
+    check("missing registry does not remove owner repair and revoke", work(p,wid).pack_binding == v1 and work(p,wid).authority_scope == "none")
+    final = read_records(p)
+    save("final-records.json", final.model_dump(mode="json"))
+    save("final-history.json", read_history(p).model_dump(mode="json"))
+    retain(p,"final-workspace")
+    # Retained pre-migration rollback uses original bytes in a new folder.
+    restored6 = clone(before_migration,"restored-schema6")
+    check("new-folder rollback exact schema6", read_records(restored6) == legacy_records and read_history(restored6) == legacy_history and read_workspace(restored6).schema_version == 6 and db_rows(restored6) == rows6)
+    unbound = clone(before_bind,"restored-unbound")
+    execute(unbound,bind(unbound,wid,v2,both))
+    observe(unbound,wid)
+    new_prop = proposal(unbound,wid,both)
+    execute(unbound,new_prop)
+    check("explicit new instance selects new version", work(unbound,wid).pack_binding == v2 and new_prop.submission.next_work.goal.endswith("new version") and work(p,next_id).pack_binding == v1)
+    save("summary.json", dict(verdict="PASS", checks=len(LOG), task=TASK, path=OUT, owner_acceptance="pending"))
+
+if __name__ == "__main__":
+    main()

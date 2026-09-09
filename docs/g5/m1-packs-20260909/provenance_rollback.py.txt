@@ -1,0 +1,201 @@
+"""Verify original committed evidence and execute retained rollback via public Core."""
+from __future__ import annotations
+import base64
+import csv
+import hashlib
+import io
+import json
+import sqlite3
+import subprocess
+import sys
+import zipfile
+from pathlib import Path
+from uuid import uuid4
+
+ROOT = Path.cwd().resolve()
+sys.path.insert(0, str(ROOT))
+from tools.retain_trial import retain_trial
+from tools.probe_m1 import restore_snapshot
+from zaratustra.core import (MutationRequest, PackReference, Process, ReceiptQuery, Work, apply_mutation, authorize_local, migrate_workspace, prepare_authorization, read_history, read_records, read_result, read_workspace)
+from zaratustra.process_packs import PackRegistration, PackRegistry, binding_request
+
+OUT = Path(sys.argv[1]).resolve()
+if OUT.exists() or not OUT.is_relative_to(ROOT / "_scratch"):
+    raise ValueError("Choose NEW review _scratch output")
+for c in [ROOT / "STOP", ROOT / "STEER.md", *[Path("C:/projects/zaratustra/_scratch/m1-packs-20260909") / n for n in ("STOP", "STEER.md")]]:
+    if c.exists():
+        raise RuntimeError(f"Read/resolve {c}")
+OUT.mkdir(parents=True)
+E = ROOT / "docs/m1-packs/evidence"
+CANDIDATE = "25a35b449570caf500cf09fca560b2bb64313169"
+SOURCE = "f728ad6a8645ba04532e1cd74a34ea57c31c4dd8"
+PLAN = "8dfaa5c50faa6c50bd6e67d357ee7bcef3dbf200"
+BASIS = "f67959e7c1a412c202ebb0d6e67938ec4355042f"
+LOG=[]
+
+def digest(data): return hashlib.sha256(data).hexdigest()
+def save(name,value):
+    p=OUT/name
+    p.parent.mkdir(parents=True,exist_ok=True)
+    p.write_text(json.dumps(value,indent=2,ensure_ascii=False,default=str)+"\n",encoding="utf-8",newline="\n")
+def check(name,condition,**details):
+    row=dict(case=name,verdict="PASS" if condition else "FAIL",**details)
+    LOG.append(row)
+    save("checks.json",LOG)
+    print(json.dumps(row,ensure_ascii=True),flush=True)
+    if not condition: raise AssertionError(name)
+def git(*args): return subprocess.check_output(["git",*args],cwd=ROOT)
+def j(path): return json.loads(path.read_bytes())
+def rows(path):
+    with sqlite3.connect(read_workspace(path).database.as_uri()+"?mode=ro",uri=True) as con:
+        tables=[r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
+        return {t:con.execute('SELECT * FROM "'+t+'" ORDER BY 1').fetchall() for t in tables}
+def confirm(path,value):
+    return authorize_local(prepare_authorization(path,value),channel="local-chat",actor="fresh-G5-original-backup-replay",source_ref="G5 explicitly authorized in source task 01a0865e-b759-7bf3-9d21-e86819e52156; review 01a0869b-59b5-7b62-9e19-e2f8056f4341; fictional only; owner acceptance pending")
+def snapshot(path,name):
+    manifest=retain_trial(path,OUT/(name+".zip"))
+    save(name+"-manifest.json",manifest)
+    return OUT/(name+".zip"),manifest
+def checked_zip(archive,manifest):
+    with zipfile.ZipFile(archive) as z:
+        names=z.namelist()
+        files={i.filename:digest(z.read(i)) for i in z.infolist() if not i.is_dir()}
+        dirs=sorted(i.filename for i in z.infolist() if i.is_dir())
+        check("archive exact CRC layout "+archive.name,z.testzip() is None and len(set(names))==len(names) and files==manifest["files"] and dirs==manifest["directories"] and digest(archive.read_bytes())==manifest["archive_sha256"],archive_sha256=digest(archive.read_bytes()),files=len(files),directories=len(dirs))
+def wheel_check(path,commit):
+    with zipfile.ZipFile(path) as z:
+        members=z.namelist()
+        mismatch=[]
+        source_members=[]
+        for name in members:
+            if name.startswith("zaratustra/") and name.endswith(".py"):
+                source_members.append("src/"+name)
+                if z.read(name)!=git("show",commit+":src/"+name): mismatch.append(name)
+        expected=[n for n in git("ls-tree","-r","--name-only",commit,"--","src/zaratustra").decode().splitlines() if n.endswith(".py")]
+        record=next(n for n in members if n.endswith(".dist-info/RECORD"))
+        records=list(csv.reader(io.StringIO(z.read(record).decode())))
+        invalid_record=[]
+        for name, hashed, size in records:
+            if not hashed: continue
+            data=z.read(name)
+            actual="sha256="+base64.urlsafe_b64encode(hashlib.sha256(data).digest()).decode().rstrip("=")
+            if actual!=hashed or int(size)!=len(data): invalid_record.append(name)
+        check("wheel source identity "+path.name,not mismatch and sorted(source_members)==sorted(expected) and not invalid_record and z.testzip() is None,source=commit,python_files=len(expected),sha256=digest(path.read_bytes()),mismatches=mismatch,invalid_RECORD=invalid_record)
+
+def main():
+    check("exact candidate checkout",git("rev-parse","HEAD").decode().strip()==CANDIDATE)
+    for before,after in [(BASIS,PLAN),(PLAN,SOURCE),(SOURCE,CANDIDATE)]:
+        rc=subprocess.run(["git","merge-base","--is-ancestor",before,after],cwd=ROOT).returncode
+        check("commit ancestry "+before[:7]+" to "+after[:7],rc==0)
+    candidate_diff=git("diff","--name-only",SOURCE,CANDIDATE).decode().splitlines()
+    check("candidate source authority tests tools dependencies unchanged",all(n=="RESULT.md" or n.startswith("docs/m1-packs/") for n in candidate_diff),changed_paths=candidate_diff)
+    protected=["src","tests","tools","pyproject.toml","uv.lock","validation.config","AGENTS.md",".python-version",".gitattributes"]
+    check("review working tree protected surfaces unchanged",git("diff","HEAD","--",*protected)==b"")
+    paths=[]
+    for path in protected:
+        paths.extend(git("ls-tree","-r","--name-only",CANDIDATE,"--",path).decode().splitlines())
+    byte_manifest={p:dict(sha256=digest(git("show",CANDIDATE+":"+p)),size=len(git("show",CANDIDATE+":"+p))) for p in sorted(set(paths))}
+    mismatches=[p for p,v in byte_manifest.items() if digest((ROOT/p).read_bytes())!=v["sha256"]]
+    check("checked out protected files equal exact Git blobs",not mismatches,files=len(byte_manifest),mismatches=mismatches)
+    save("candidate-protected-bytes.json",byte_manifest)
+    unchanged=["src/zaratustra/core/migrations.py",*[f"src/zaratustra/core/migration_v{i}.py" for i in range(2,7)],"src/zaratustra/process_probe","src/zaratustra/local","validation.config"]
+    check("released migrations old adapters authority unchanged from basis",git("diff",BASIS,CANDIDATE,"--",*unchanged)==b"")
+    diff=git("diff",PLAN,SOURCE,"--","src/zaratustra/core","src/zaratustra/process_packs")
+    (OUT/"source-core-pack.diff").write_bytes(diff)
+    external=Path("C:/my_global_workflow_worktrees/solmax/live/solmax/work/calls/c-solmax-zaratustra-m1-packs-20260909-exec.md")
+    call=git("show",CANDIDATE+":docs/m1-packs/CALL.md")
+    check("CALL copied exactly modulo filesystem newline",external.read_bytes().replace(b"\r\n",b"\n")==call,committed_sha256=digest(call),external_raw_sha256=digest(external.read_bytes()))
+    manifest=j(E/"manifest.json")
+    expected=set(manifest["files"])
+    actual={p.relative_to(E).as_posix() for p in E.rglob("*") if p.is_file()}-{"manifest.json"}
+    mismatched=[]
+    for name,expected_value in manifest["files"].items():
+        data=git("show",CANDIDATE+":docs/m1-packs/evidence/"+name)
+        if digest(data)!=expected_value["sha256"] or len(data)!=expected_value["size"] or data!=(E/name).read_bytes(): mismatched.append(name)
+    check("original evidence manifest exact committed bytes",expected==actual and not mismatched,files=len(expected),mismatches=mismatched)
+    author_verification=j(E/"source-verification.json")
+    author_errors=[]
+    for name,value in author_verification["committed_files"].items():
+        data=git("show",SOURCE+":"+name)
+        if dict(sha256=digest(data),size=len(data))!=value: author_errors.append(name)
+    check("author provenance claims rederived from Git",not author_errors,files=len(author_verification["committed_files"]),mismatches=author_errors)
+    # The late raw CRLF fix is checked against the archived pre-build outputs.
+    for archive_name,manifest_name,folder in [("baseline-trial.zip","baseline-manifest.json","original-baseline"),("lifecycle.zip","lifecycle-manifest.json","original-lifecycle")]:
+        man=j(E/manifest_name)
+        checked_zip(E/archive_name,man)
+        restore_snapshot(E/archive_name,OUT/folder,man)
+    base=OUT/"original-baseline"
+    life=OUT/"original-lifecycle"
+    check("original runtime pins",j(base/"runtime.json")["commit"]==BASIS and j(life/"runtime.json")["commit"]==SOURCE and j(life/"runtime.json")["diff"]=="",baseline_runtime=j(base/"runtime.json"),lifecycle_runtime=j(life/"runtime.json"))
+    for candidate_name,relative_name in [("baseline-check.txt","baseline-check.txt"),("baseline-probe.txt","summary.json")]:
+        # Summary is inside trial; baseline check retained separately at PLAN.
+        data=(E/candidate_name).read_bytes()
+        if candidate_name=="baseline-probe.txt":
+            check("baseline raw probe matches retained summary",data==(base/relative_name).read_bytes(),sha256=digest(data),crlf=data.count(b"\r\n"))
+        else:
+            original=git("show",PLAN+":docs/m1-packs/evidence/"+candidate_name)
+            check("baseline check text matches pre-BUILD version",data.replace(b"\r\n",b"\n")==original.replace(b"\r\n",b"\n"),sha256=digest(data),crlf=data.count(b"\r\n"))
+    wheel_check(E/"baseline.whl",BASIS)
+    wheel_check(E/"zaratustra-0.8.0-py3-none-any.whl",SOURCE)
+    wheel_check(ROOT/"dist/zaratustra-0.8.0-py3-none-any.whl",CANDIDATE)
+    bind_inputs=[p for p in (life/"events").glob("*-bind_pack.request.json") if j(p)["pack_binding"]["pack_version"]=="1.0.0"]
+    check("original exact bind request located",len(bind_inputs)==1)
+    b=MutationRequest.model_validate(j(bind_inputs[0]))
+    prop=MutationRequest.model_validate(j(life/"proposal.json"))
+    for stage,value in [("migration",None),("bind",b),("result",prop)]:
+        man=j(life/f"before-{stage}-manifest.json")
+        checked_zip(life/f"before-{stage}.zip",man)
+        target=restore_snapshot(life/f"before-{stage}.zip",OUT/f"replay-original-{stage}",man)
+        initial=read_records(target)
+        initial_history=read_history(target)
+        save(f"original-{stage}-before-records.json",initial.model_dump(mode="json"))
+        save(f"original-{stage}-before-history.json",initial_history.model_dump(mode="json"))
+        if value:
+            auth=confirm(target,value)
+            receipt=apply_mutation(target,value,auth)
+            save(f"original-{stage}-replay-authority.json",auth.confirmation.model_dump(mode="json"))
+            save(f"original-{stage}-replay-receipt.json",receipt.model_dump(mode="json"))
+            save(f"original-{stage}-after-records.json",read_records(target).model_dump(mode="json"))
+            save(f"original-{stage}-after-history.json",read_history(target).model_dump(mode="json"))
+            expected_receipt=j(life/"saved-result.json")["receipt"] if stage=="result" else j(bind_inputs[0].with_name(bind_inputs[0].name.replace(".request.json",".receipt.json")))
+            check("original backup replay "+stage,receipt.fingerprint==expected_receipt["fingerprint"] and receipt.new_revision==expected_receipt["new_revision"],previous_revision=receipt.previous_revision,new_revision=receipt.new_revision,fingerprint=receipt.fingerprint)
+        else:
+            check("original pre-migration reads schema6",read_workspace(target).schema_version==6 and initial.state_revision==3)
+    # Original legacy final workspace includes a real retained Result, not a new approximation.
+    legacy=base/"batch/workspace"
+    legacy_backup=snapshot(legacy,"original-legacy-result")
+    legacy_target=restore_snapshot(*[legacy_backup[0],OUT/"legacy6-to7",legacy_backup[1]])
+    before=rows(legacy_target)
+    legacy_history=read_history(legacy_target)
+    check("original legacy includes Results",len(before["work_results"])>0 and read_workspace(legacy_target).schema_version==6,results=len(before["work_results"]),events=len(legacy_history.events))
+    migrate_workspace(legacy_target,target_version=7)
+    after=rows(legacy_target)
+    check("original legacy6 to7 preserves prior rows events Results",all(after[k]==v for k,v in before.items() if k!="schema_migrations") and after["schema_migrations"][:-1]==before["schema_migrations"] and read_history(legacy_target)==legacy_history)
+    state=read_records(legacy_target)
+    ready=next(r for r in state.records if isinstance(r,Work) and r.status=="ready")
+    class NeverRun:
+        def next_work(self,*args): raise AssertionError("Registration is not execution")
+    reference=PackReference(pack_id="review.legacy",pack_version="1.0.0",process_type="review.legacy-type",contract_version=1,state_version=1)
+    registry=PackRegistry((PackRegistration(reference,NeverRun()),))
+    req=binding_request(registry,reference,operation_id=uuid4(),workspace_id=state.workspace_id,work_id=ready.id,expected_revision=state.state_revision,provenance="Fresh G5 bind after original legacy Result")
+    save("legacy-bind-request.json",req.model_dump(mode="json"))
+    receipt=apply_mutation(legacy_target,req,confirm(legacy_target,req))
+    bound=rows(legacy_target)
+    after_records=read_records(legacy_target)
+    terminal_ids=[r.id for r in state.records if isinstance(r,Work) and r.status=="done"]
+    check("bind next preserves legacy accepted Results and event prefix",bound["work_results"]==before["work_results"] and bound["accepted_handoffs"]==before["accepted_handoffs"] and all(row in bound["mutation_events"] for row in before["mutation_events"]) and all(row in bound["mutation_receipts"] for row in before["mutation_receipts"]) and len(bound["mutation_events"])==len(before["mutation_events"])+1 and len(bound["mutation_receipts"])==len(before["mutation_receipts"])+1 and read_history(legacy_target).events[:-1]==legacy_history.events and all(next(r for r in after_records.records if r.id==wid).pack_binding is None for wid in terminal_ids),new_revision=receipt.new_revision)
+    # Execute retained old wheel in a separate isolated interpreter. It is first on sys.path;
+    # the existing venv supplies its locked dependencies, not another product implementation.
+    old_man=j(base/"batch/step-1/before-manifest.json")
+    checked_zip(base/"batch/step-1/before.zip",old_man)
+    old_target=restore_snapshot(base/"batch/step-1/before.zip",OUT/"old-wheel-restored",old_man)
+    worker=Path(__file__).with_name("retained_wheel_worker.py")
+    proc=subprocess.run([sys.executable,"-I",str(worker),str(E/"baseline.whl"),str(old_target),str(base/"batch/step-1/proposal.json")],cwd=OUT,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    (OUT/"retained-wheel-stdout.json").write_bytes(proc.stdout)
+    (OUT/"retained-wheel-stderr.txt").write_bytes(proc.stderr)
+    check("old retained wheel actual rollback continuation",proc.returncode==0,returncode=proc.returncode,stdout=proc.stdout.decode("utf-8",errors="replace"),stderr=proc.stderr.decode("utf-8",errors="replace"))
+    readback=json.loads(proc.stdout)
+    check("old wheel exact request receipt",readback["version"]=="0.7.0" and readback["receipt"]["fingerprint"]==j(base/"batch/step-1/saved-result.json")["receipt"]["fingerprint"] and "baseline.whl" in readback["core_file"])
+    save("summary.json",dict(verdict="PASS",checks=len(LOG),candidate=CANDIDATE,source=SOURCE,plan=PLAN,basis=BASIS,owner_acceptance="pending"))
+
+if __name__=="__main__": main()

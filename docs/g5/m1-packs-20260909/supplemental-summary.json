@@ -1,0 +1,6 @@
+{
+  "verdict": "PASS",
+  "checks": 12,
+  "owner_acceptance": "pending",
+  "interpretation": "Core public generic mutations require exact permission; registry enforces installed compatibility only for package path."
+}

@@ -1,0 +1,9 @@
+{
+  "verdict": "PASS",
+  "checks": 32,
+  "candidate": "25a35b449570caf500cf09fca560b2bb64313169",
+  "source": "f728ad6a8645ba04532e1cd74a34ea57c31c4dd8",
+  "plan": "8dfaa5c50faa6c50bd6e67d357ee7bcef3dbf200",
+  "basis": "f67959e7c1a412c202ebb0d6e67938ec4355042f",
+  "owner_acceptance": "pending"
+}

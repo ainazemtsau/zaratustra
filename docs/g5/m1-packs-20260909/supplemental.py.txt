@@ -1,0 +1,84 @@
+"""Narrow additional challenges: malformed adapter, separate instance, host boundary.
+
+Imports independent.py helpers only; does not run its main suite.
+"""
+import json
+import sys
+from pathlib import Path
+from uuid import uuid4
+import independent as h
+
+original = Path(sys.argv[2]).resolve()
+ready_backup = (original / "ready-before-result.zip", json.loads((original / "ready-before-result-manifest.json").read_bytes()))
+bind_backup = (original / "before-bind.zip", json.loads((original / "before-bind-manifest.json").read_bytes()))
+ready = h.clone(ready_backup, "ready-copy")
+wid = h.work(ready).id
+old = h.ref()
+
+class BadIdentity(h.Rule):
+    def next_work(self, current, accepted, work_id, artifact_id):
+        return super().next_work(current, accepted, uuid4(), artifact_id)
+
+class BadScope(h.Rule):
+    def next_work(self, current, accepted, work_id, artifact_id):
+        result = super().next_work(current, accepted, work_id, artifact_id)
+        return result.model_copy(update={"authority_scope": "work_metadata_and_artifact"})
+
+class Throwing(h.Rule):
+    def next_work(self, *args):
+        raise ValueError("Fictional adapter refused its own rule")
+
+for label, rule, codes in [("adapter cannot change chosen next ids",BadIdentity("bad"),("invalid_proposal",)),("adapter cannot grant next Artifact authority",BadScope("bad"),("ValidationError",)),("adapter rule refusal does not write",Throwing("bad"),("ValueError",))]:
+    h.refused(label,lambda r=rule:h.proposal(ready,wid,h.installed(old,r)),path=ready,codes=codes)
+
+prop=h.proposal(ready,wid,h.installed(old,h.Rule("valid")))
+artifact=next(r for r in h.read_records(ready).records if isinstance(r,h.Artifact) and r.work_id==wid)
+reuse=h.MutationRequest.model_validate(prop.model_dump() | dict(submission=prop.submission.model_dump() | dict(next_work=prop.submission.next_work.model_dump() | dict(work_id=wid,artifact_id=artifact.id))))
+h.refused("next identities cannot collide with saved records",lambda:h.execute(ready,reuse),path=ready,codes=("invalid_result",))
+
+# A NEW bootstrap creates different workspace/Process/Work identities, unlike restore clones.
+new=h.OUT/"new-instance"
+new.mkdir()
+h.init_workspace(new)
+h.migrate_workspace(new,target_version=7)
+h.create_initial_records(new,h.InitialRecords(process_title="Separate fictional G5 instance",goal="Run an explicitly chosen newer pack",expected_result="Pinned continuation",acceptance=("Fictional only",),boundaries=("G5 review workspace",),budget="Two bounded transitions",artifact_title="New observation"))
+nid=h.work(new).id
+h.check("new instance identities differ from restored original",h.read_records(new).workspace_id!=h.read_records(ready).workspace_id and h.work(new).process_id!=h.work(ready).process_id and nid!=wid,new_workspace=str(h.read_records(new).workspace_id),new_process=str(h.work(new).process_id),new_work=str(nid))
+h.execute(new,h.request(new,nid,"authorize_work"))
+h.retain(new,"new-before-binding")
+new_ref=h.ref(pack_version="9.0.0")
+new_rule=h.Rule("new distinct instance")
+registry=h.installed(new_ref,new_rule)
+h.execute(new,h.bind(new,nid,new_ref,registry))
+data=b"must not publish without Artifact authority"
+publish=h.request(new,nid,"publish_artifact",content_sha256=h.hash_bytes(data),content_size=len(data))
+h.refused("binding gives no extra Artifact scope",lambda:h.execute(new,publish,data),path=new,codes=("permission_denied",))
+for step in range(2):
+    current=nid
+    h.observe(new,current)
+    h.retain(new,f"new-before-result-{step}")
+    request=h.proposal(new,current,registry)
+    h.execute(new,request)
+    nid=request.submission.next_work.work_id
+    h.check(f"distinct instance pinned continuation {step}",h.work(new,current).pack_binding==h.work(new,nid).pack_binding==new_ref and h.work(new,nid).authority_scope=="work_metadata")
+q=h.query(new,nid)
+context=json.loads(h.open_work(new,q,h.confirm(new,q)).output)
+h.save("two-step-context.json",context)
+h.check("next context reads inherited grounds after two transitions",any(s["locator"].startswith("result:") for s in context["context"]["sources"]) and h.work(ready,wid).pack_binding==old)
+h.retain(new,"distinct-final-workspace")
+
+# Explicitly characterize declared trust boundary. Core persists generic valid identity;
+# installed compatibility is a trusted-host registry policy, not a DB-side code loader.
+generic=h.clone(bind_backup,"generic-host-boundary")
+gid=h.work(generic).id
+future=h.ref(state_version=2)
+state=h.read_records(generic)
+raw=h.MutationRequest(version=5,operation="bind_pack",operation_id=uuid4(),workspace_id=state.workspace_id,work_id=gid,expected_revision=state.state_revision,provenance="Explicit fictional generic Core reference; assess declared host boundary",pack_binding=future)
+h.execute(generic,raw)
+h.check("Core stores explicit generic reference without registry lookup",h.work(generic,gid).pack_binding==future and h.work(generic,gid).authority_scope=="work_metadata",interpretation="Declared trusted-host compatibility boundary; not a defect and not registry authorization bypass")
+h.observe(generic,gid)
+h.retain(generic,"unsupported-bound-reference")
+future_rule=h.Rule("never run")
+h.refused("unsupported bound reference cannot execute via package runner",lambda:h.proposal(generic,gid,h.installed(future,future_rule)),path=generic,codes=("incompatible_pack",))
+h.check("unsupported adapter not called",not future_rule.calls)
+h.save("summary.json",dict(verdict="PASS",checks=len(h.LOG),owner_acceptance="pending",interpretation="Core public generic mutations require exact permission; registry enforces installed compatibility only for package path."))

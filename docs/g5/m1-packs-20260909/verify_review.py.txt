@@ -1,0 +1,46 @@
+"""Review-artifact integrity only; not product behavior evidence."""
+import hashlib
+import json
+import subprocess
+import sys
+import zipfile
+from pathlib import Path
+root=Path.cwd().resolve()
+dest=root/"docs/g5/m1-packs-20260909"
+run=root/"_scratch/g5-m1-packs-20260909"
+def sha(data):return hashlib.sha256(data).hexdigest()
+def git(*args):return subprocess.check_output(["git",*args],cwd=root)
+def save(p,value):p.write_text(json.dumps(value,indent=2,ensure_ascii=False)+"\n",encoding="utf-8",newline="\n")
+if len(sys.argv)>1 and sys.argv[1]=="manifest":
+    save(dest/"manifest.json",dict(candidate="25a35b449570caf500cf09fca560b2bb64313169",review_task="01a0869b-59b5-7b62-9e19-e2f8056f4341",files={p.relative_to(dest).as_posix():dict(sha256=sha(p.read_bytes()),size=p.stat().st_size) for p in sorted(dest.rglob("*")) if p.is_file() and p.name!="manifest.json"}))
+    print("Review manifest written; excludes only itself.")
+    raise SystemExit(0)
+for name in ("independent","provenance","supplemental"):
+    manifest=json.loads((dest/(name+"-manifest.json")).read_bytes())
+    arc=dest/(name+".zip")
+    assert sha(arc.read_bytes())==manifest["archive_sha256"]
+    with zipfile.ZipFile(arc) as z:
+        assert z.testzip() is None
+        assert {i.filename:sha(z.read(i)) for i in z.infolist() if not i.is_dir()}==manifest["files"]
+        assert sorted(i.filename for i in z.infolist() if i.is_dir())==manifest["directories"]
+    assert (dest/(name+"-checks.json")).read_bytes()==(run/(name+"-01")/"checks.json").read_bytes()
+    print(f"PASS retained {name}: CRC, hashes, layout and exact check output")
+for name in ("independent","provenance_rollback","retained_wheel_worker","supplemental","package_review","verify_review"):
+    assert (run/(name+".py")).read_bytes()==(dest/(name+".py.txt")).read_bytes()
+print("PASS executed script bytes preserved")
+for p in dest.glob("*.md"):
+    text=p.read_text(encoding="utf-8")
+    assert text.endswith("END_OF_FILE: "+p.relative_to(root).as_posix()+"\n")
+    assert b"\r" not in p.read_bytes()
+print("PASS authored Markdown LF/trailers")
+protected=json.loads((dest/"candidate-protected-bytes.json").read_bytes())
+for p,entry in protected.items():assert sha((root/p).read_bytes())==entry["sha256"]
+assert git("diff","HEAD","--",".",":(exclude)docs/g5/m1-packs-20260909")==b""
+untracked=git("ls-files","--others","--exclude-standard").decode().splitlines()
+assert all(n.startswith("docs/g5/m1-packs-20260909/") for n in untracked)
+print("PASS protected source remains exact candidate; all new tracked-scope files are review docs")
+receipt=json.loads((dest/"receipt.json").read_bytes())
+assert receipt["verdict"]=="PASS" and receipt["owner_acceptance"]=="pending"
+assert [v["verdict"] for v in receipt["done_when"]]==["PASS"]*3
+print("PASS receipt retains pending owner acceptance")
+print("PASS review artifact integrity (not a product semantic gate)")
