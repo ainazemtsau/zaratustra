@@ -1,7 +1,7 @@
 """Real Core tests for the rule seam's invisible state and authority obligations."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 import pytest
@@ -17,19 +17,25 @@ from zaratustra.core import (
     read_workspace,
     submit_result,
 )
-from zaratustra.process_probe import BatchRule, RuleBlocked, propose_result
+from zaratustra.process_probe import BatchRule, CycleRule, Rule, RuleBlocked, propose_result
+
+
+@pytest.fixture(params=[BatchRule(), CycleRule()])
+def rule(request: pytest.FixtureRequest) -> Rule:
+    return cast(Rule, request.param)
 
 
 @pytest.fixture
-def trial(tmp_path: Path) -> Trial:
+def trial(tmp_path: Path, rule: Rule) -> Trial:
     trial = Trial(tmp_path / "workspace", tmp_path / "evidence")
-    identity = trial.bootstrap("probe.batch/v1")
+    binding = "probe.batch/v1" if isinstance(rule, BatchRule) else "probe.cycle/v1:observe"
+    identity = trial.bootstrap(binding)
     trial.observation(identity, dict(observed=True, recorded=True))
     return trial
 
 
-def test_rule_proposal_requires_separate_exact_authority(trial: Trial) -> None:
-    request = proposed(trial.path, work_at(trial.path).id, BatchRule())
+def test_rule_proposal_requires_separate_exact_authority(trial: Trial, rule: Rule) -> None:
+    request = proposed(trial.path, work_at(trial.path).id, rule)
     db = read_workspace(trial.path).database
     before = db.read_bytes()
     with pytest.raises(MutationError, match="permission_denied"):
@@ -43,7 +49,9 @@ def test_rule_proposal_requires_separate_exact_authority(trial: Trial) -> None:
     assert db.read_bytes() == before
 
 
-def test_stale_context_foreign_process_and_unbound_rule_do_not_write(trial: Trial) -> None:
+def test_stale_context_foreign_process_and_unbound_rule_do_not_write(
+    trial: Trial, rule: Rule
+) -> None:
     identity = work_at(trial.path).id
     query = query_for(trial.path, identity)
     before = read_workspace(trial.path).database.read_bytes()
@@ -58,7 +66,7 @@ def test_stale_context_foreign_process_and_unbound_rule_do_not_write(trial: Tria
                 trial.path,
                 changed,
                 confirm(trial.path, changed),
-                BatchRule(),
+                rule,
                 operation_id=uuid4(),
                 next_work_id=uuid4(),
                 next_artifact_id=uuid4(),
@@ -67,21 +75,27 @@ def test_stale_context_foreign_process_and_unbound_rule_do_not_write(trial: Tria
     trial.execute(trial.request(identity, "set_work_requirements", requirements=("unknown/v2",)))
     before = read_workspace(trial.path).database.read_bytes()
     with pytest.raises(RuleBlocked, match="not bound"):
-        proposed(trial.path, identity, BatchRule())
+        proposed(trial.path, identity, rule)
     assert read_workspace(trial.path).database.read_bytes() == before
 
 
-def test_state_change_after_proposal_and_replay_preserve_one_effect(trial: Trial) -> None:
+def test_state_change_after_proposal_and_replay_preserve_one_effect(
+    trial: Trial, rule: Rule
+) -> None:
     identity = work_at(trial.path).id
-    request = proposed(trial.path, identity, BatchRule())
+    request = proposed(trial.path, identity, rule)
     trial.execute(
-        trial.request(identity, "set_work_requirements", requirements=("probe.batch/v1",))
+        trial.request(
+            identity,
+            "set_work_requirements",
+            requirements=work_at(trial.path, identity).executor_requirements,
+        )
     )
     before = read_workspace(trial.path).database.read_bytes()
     with pytest.raises(MutationError, match="conflict"):
         submit_result(trial.path, request, confirm(trial.path, request))
     assert read_workspace(trial.path).database.read_bytes() == before
-    request = proposed(trial.path, identity, BatchRule())
+    request = proposed(trial.path, identity, rule)
     receipt = submit_result(trial.path, request, confirm(trial.path, request))
     before = read_workspace(trial.path).database.read_bytes()
     replay = MutationRequest.model_validate(
@@ -97,3 +111,14 @@ def test_state_change_after_proposal_and_replay_preserve_one_effect(trial: Trial
     assert read_result(trial.path, query, confirm(trial.path, query)).receipt == receipt
     assert read_workspace(trial.path).database.read_bytes() == before
     assert len([e for e in read_history(trial.path).events if e.request.submission]) == 1
+
+
+def test_rule_refusal_preserves_records_and_journal(trial: Trial, rule: Rule) -> None:
+    identity = work_at(trial.path).id
+    trial.observation(identity, dict(observed=False, recorded=False))
+    before = read_workspace(trial.path).database.read_bytes()
+    history = read_history(trial.path)
+    with pytest.raises(RuleBlocked):
+        proposed(trial.path, identity, rule)
+    assert read_workspace(trial.path).database.read_bytes() == before
+    assert read_history(trial.path) == history

@@ -38,7 +38,7 @@ from zaratustra.core import (
     read_workspace,
     submit_result,
 )
-from zaratustra.process_probe import BatchRule, Rule, RuleBlocked, propose_result
+from zaratustra.process_probe import BatchRule, CycleRule, Rule, RuleBlocked, propose_result
 
 from .retain_trial import retain_trial
 
@@ -339,6 +339,17 @@ def main() -> None:
             BatchRule(),
             "probe.batch/v1",
             [dict(observed=True, recorded=False), dict(observed=True, recorded=True)],
+        ),
+        run_case(
+            base,
+            "cycle",
+            CycleRule(),
+            "probe.cycle/v1:observe",
+            [
+                dict(observed=True, recorded=False),
+                dict(observed=True, recorded=False),
+                dict(observed=False, recorded=True),
+            ],
         ),
     ]
     save(base / "summary.json", results)
