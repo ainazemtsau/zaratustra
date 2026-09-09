@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "C:\my_global_workflow\943d\zaratustra\_scratch\g5-20260909\package_review.py", line 122, in <module>
+    assert changes.strip()=='?? docs/g5/m1-probe-20260909/',changes
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ?? docs/g5/
+

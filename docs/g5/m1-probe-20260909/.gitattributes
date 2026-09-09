@@ -1,0 +1,5 @@
+# Retain exact review evidence bytes, including native Windows output.
+raw/** -text -diff
+*.zip binary
+*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+*.py.txt -text -diff

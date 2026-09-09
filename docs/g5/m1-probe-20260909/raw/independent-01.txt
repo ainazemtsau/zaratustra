@@ -1,0 +1,42 @@
+{"name": "batch-conjunction-block", "status": "PASS", "error": "RuleBlocked", "no_write": true}
+{"name": "context-no-authority", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "foreign-process", "status": "PASS", "error": "scope", "no_write": true}
+{"name": "bounded-context", "status": "PASS", "error": "budget_exceeded", "no_write": true}
+{"name": "wrong-rule-binding", "status": "PASS", "error": "RuleBlocked", "no_write": true}
+{"name": "cross-workspace-authority", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "stale-phase-proposal", "status": "PASS", "error": "conflict", "no_write": true}
+{"name": "stale-query", "status": "PASS", "error": "conflict", "no_write": true}
+{"name": "persisted-phase-wins", "status": "PASS", "error": "RuleBlocked", "no_write": true}
+{"name": "cycle-observe-no-authority", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "cycle-observe-changed-next", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "cycle-observe-replay-exact", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "cycle-observe-replay-fresh-revision", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "cycle-observe-replay-new-operation", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "cycle-observe-inherited-is-not-own", "status": "PASS", "error": "RuleBlocked", "no_write": true}
+{"name": "cycle-observe", "status": "PASS", "source_revision": 8, "new_revision": 9, "selected_version": "84d3a93c-0f2e-4068-abc5-c158a4d32f64", "acceptances": ["7986d7e4-a949-4927-a480-b23e468fe627"], "next_phase": "probe.cycle/v1:record"}
+{"name": "cycle-record-blocks-same-input", "status": "PASS", "error": "RuleBlocked", "no_write": true}
+{"name": "cycle-record-no-authority", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "cycle-record-changed-next", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "cycle-record-replay-exact", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "cycle-record-replay-fresh-revision", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "cycle-record-replay-new-operation", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "cycle-record-inherited-is-not-own", "status": "PASS", "error": "RuleBlocked", "no_write": true}
+{"name": "cycle-record", "status": "PASS", "source_revision": 15, "new_revision": 16, "selected_version": "ce0e510d-4b81-442b-8efa-9e3c15d989da", "acceptances": ["f27ac10f-f379-41ac-8209-bce13a2a84fc", "e53ff7a6-6952-42e2-b1ab-7cfdc03ac370"], "next_phase": "probe.cycle/v1:observe"}
+{"name": "active-unaccepted-cannot-enable", "status": "PASS", "error": "RuleBlocked", "no_write": true}
+{"name": "active-unaccepted-cannot-replace", "status": "PASS", "selected": "8108e8a9-9d1e-432b-842c-e8c6c8b2055c", "active": "63731669-2af3-420f-b9d6-9f516bcf2d1b"}
+{"name": "latest-own-acceptance-wins", "status": "PASS", "error": "RuleBlocked", "no_write": true}
+{"name": "batch-success-no-authority", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "batch-success-changed-next", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "batch-success-replay-exact", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "batch-success-replay-fresh-revision", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "batch-success-replay-new-operation", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "batch-success-inherited-is-not-own", "status": "PASS", "error": "RuleBlocked", "no_write": true}
+{"name": "batch-success", "status": "PASS", "source_revision": 17, "new_revision": 18, "selected_version": "4763f4f3-ed4a-491c-9886-033be870e93f", "acceptances": ["0979f161-1c78-40bc-971f-7ffbfdd3554a", "db16c2e0-f26b-444a-9b4c-db22e4300653", "f0f65f31-596b-4f80-90b0-2c06d8dba8c6", "dd51686a-a815-4d9b-860f-dd463521d3d6"], "next_phase": "probe.batch/v1"}
+{"name": "strict-observation-types", "status": "PASS", "error": "ValidationError", "no_write": true}
+{"name": "unknown-binding", "status": "PASS", "error": "RuleBlocked", "no_write": true}
+{"name": "revoked-after-confirmation", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "revoked-context", "status": "PASS", "error": "permission_denied", "no_write": true}
+{"name": "restore-batch/step-1", "status": "PASS", "bytes_layout": true, "original_context_exact": true, "proposal_exact": true, "fingerprint": "845c74ba11031ec45d1dca6dfa591520ddb33a418c5c716ced0437689cbf06a5", "new_revision": 10}
+{"name": "restore-cycle/step-0", "status": "PASS", "bytes_layout": true, "original_context_exact": true, "proposal_exact": true, "fingerprint": "96f6233f62ee7ba2b9219972436dac140df9b15fdcb1c983488d63672d687f12", "new_revision": 7}
+{"name": "restore-cycle/step-2", "status": "PASS", "bytes_layout": true, "original_context_exact": true, "proposal_exact": true, "fingerprint": "b1d6b647235d3158f3d41e222dcf413004163136fce8f96bf8f376ad4c70f326", "new_revision": 14}
+PASS: independent behavioral checks and all three retained backup restores

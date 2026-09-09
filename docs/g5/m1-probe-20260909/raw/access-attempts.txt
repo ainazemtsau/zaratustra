@@ -1,0 +1,21 @@
+Verbatim tool-output excerpts for access attempts (not product failures).
+
+1. git switch -c codex/g5-m1-probe-20260909 f917565e141804508c11954c5de51566e82c48ca
+sandbox exit 128:
+fatal: Unable to create 'C:/projects/zaratustra/.git/worktrees/zaratustra/index.lock': Permission denied
+Retry of the same guarded command with require_escalated: exit 0.
+Previous HEAD position was 512c7a1 Exclude CI CD Actions and push notifications until explicit owner request
+Switched to a new branch 'codex/g5-m1-probe-20260909'
+f917565e141804508c11954c5de51566e82c48ca
+
+2. uv sync --locked sandbox exit 2. Exact raw: uv-sync.txt.
+Retry with require_escalated: exit 0. Exact raw: uv-sync-escalated.txt.
+
+3. Preliminary read-only stdin audit through .venv/Scripts/python.exe -
+sandbox exit 1 before Python started:
+Unable to create process using '"C:\my_global_workflow\943d\zaratustra\.venv\Scripts\python.exe" -': ???????? ? ???????.
+Replaced the launch method with approved uv run --locked; candidate/runtime unchanged.
+The complete audit script then passed on its first execution: audit-01.txt.
+
+All executed test TMP/TEMP pointed to this copy's _scratch/g5-20260909/tmp.
+No automatic approval rejection occurred. No reset/clean was used.

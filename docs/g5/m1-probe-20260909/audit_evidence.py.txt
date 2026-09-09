@@ -1,0 +1,167 @@
+"""Byte provenance and retained-state audit, separate from behavioral refutation."""
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+import sys
+import zipfile
+
+from zaratustra.core import read_records, read_history, Work, ReceiptQuery, read_result, prepare_authorization, authorize_local
+
+ROOT = Path(__file__).resolve().parents[2]
+OUT = Path(sys.argv[1]).resolve()
+assert OUT.is_relative_to(ROOT/'_scratch') and not OUT.exists()
+OUT.mkdir(parents=True)
+C = 'f917565e141804508c11954c5de51566e82c48ca'
+S = 'fc32c8dcf79d88e2799e061638ad7b51ff94a98c'
+F = 'eeb5da071aa610b41ddf353f84db6a1da0fae076'
+B = 'a6e6a2e5be90eed111504712c7443b8a907576c1'
+P = '05047e38acc7386484223a5feacc510b015b2a85'
+E = ROOT/'docs/m1-probe/evidence'
+checks = []
+
+def git(*args):
+    return subprocess.check_output(['git',*args],cwd=ROOT)
+
+def sha(b):
+    return hashlib.sha256(b).hexdigest()
+
+def dump(p,obj):
+    p.write_text(json.dumps(obj,ensure_ascii=True,indent=2)+'\n',encoding='utf-8')
+
+def mark(name,**details):
+    checks.append(dict(name=name,status='PASS',**details))
+    dump(OUT/'checks.json',checks)
+    print(json.dumps(checks[-1]),flush=True)
+
+assert git('rev-parse','HEAD').decode().strip()==C
+assert git('status','--porcelain')==b''
+for rev,parent in [(S,F),(F,B),(B,P)]:
+    assert git('rev-parse',rev+'^').decode().strip()==parent
+subprocess.run(['git','merge-base','--is-ancestor',S,C],cwd=ROOT,check=True)
+paths=['src','tools','tests','pyproject.toml','uv.lock','validation.config','AGENTS.md','.python-version']
+assert git('diff','--name-only',S,C,'--',*paths)==b''
+assert git('diff','--name-only',P,B,'--',*paths)==b''
+identities={rev:{p:git('rev-parse',rev+':'+p).decode().strip() for p in paths} for rev in [P,B,F,S,C]}
+dump(OUT/'git-identities.json',identities)
+dump(OUT/'runtime.json',dict(candidate=C,source=S,basis=B,first=F,python=sys.version,executable=sys.executable,
+    cwd=str(ROOT),branch=git('branch','--show-current').decode().strip(),dirty=git('status','--porcelain').decode(),
+    task='01a08622-47fd-7d82-974e-15ef8e1f2263',worktrees=git('worktree','list','--porcelain').decode()))
+mark('candidate-and-source-identity',candidate=C,source=S,basis=B)
+
+v=json.loads((E/'versions.json').read_bytes())
+for entry in v['unchanged']:
+    objects=[]
+    for rev,expected in entry['git_objects'].items():
+        actual=git('rev-parse',rev+':'+entry['path']).decode().strip()
+        assert actual==expected
+        objects.append(actual)
+    objects.append(git('rev-parse',C+':'+entry['path']).decode().strip())
+    assert len(set(objects))==1
+for p in ['src/zaratustra/process_probe/runner.py','src/zaratustra/process_probe/batch.py','docs/m1-probe/PLAN.md']:
+    assert git('show',F+':'+p)==git('show',C+':'+p)
+assert sha(git('show',C+':src/zaratustra/process_probe/runner.py'))==v['shared_runner_sha256']
+assert git('diff','--name-status',F,S).decode()==v['second_changed_paths']
+mark('unchanged-core-boundaries-and-plan',unchanged_entries=len(v['unchanged']),plan_in_first_source_commit=True)
+
+manifest=json.loads((E/'handoff-manifest.json').read_bytes())
+checkout_conversion=[]
+for p,expected in manifest['files'].items():
+    committed=git('show',C+':'+p)
+    assert sha(committed)==expected,(p,sha(committed),expected)
+    working=(ROOT/p).read_bytes()
+    if sha(working)!=expected:
+        assert working.replace(b'\r\n',b'\n')==committed
+        checkout_conversion.append(p)
+dump(OUT/'checkout-newline-conversions.json',checkout_conversion)
+mark('handoff-manifest-committed-bytes',files=len(manifest['files']),checkout_crlf_paths=checkout_conversion)
+for name,a,b in [('from-m0',B,S),('second-connection',F,S)]:
+    actual=git('diff',a,b)
+    saved=(E/(name+'.diff')).read_bytes()
+    assert saved==actual,(name,len(saved),len(actual))
+    (OUT/(name+'.diff')).write_bytes(actual)
+    mark(name+'-diff',sha256=sha(actual),bytes=len(actual))
+
+for name in ['first-batch','two-rule-contrast']:
+    archive=E/(name+'.zip')
+    m=json.loads((E/(name+'-manifest.json')).read_bytes())
+    assert sha(archive.read_bytes())==m['archive_sha256']==manifest['archives'][name]['archive_sha256']
+    target=OUT/(name+'-restored-final')
+    target.mkdir()
+    with zipfile.ZipFile(archive) as z:
+        assert z.testzip() is None
+        files={i.filename:sha(z.read(i)) for i in z.infolist() if not i.is_dir()}
+        dirs=sorted(i.filename for i in z.infolist() if i.is_dir())
+        assert files==m['files'] and dirs==m['directories']
+        assert len(files)==manifest['archives'][name]['files']
+        assert len(dirs)==manifest['archives'][name]['directories']
+        for i in z.infolist():
+            assert (target/i.filename).resolve().is_relative_to(target.resolve())
+        z.extractall(target)
+    assert {p.relative_to(target).as_posix():sha(p.read_bytes()) for p in target.rglob('*') if p.is_file()}==files
+    assert sorted(p.relative_to(target).as_posix()+'/' for p in target.rglob('*') if p.is_dir())==dirs
+    runtime=json.loads((target/'runtime.json').read_bytes())
+    assert runtime==v['actual_runs'][name]
+    assert runtime['commit']==(F if name=='first-batch' else S) and runtime['dirty']==''
+    summary=json.loads((target/'summary.json').read_bytes())
+    if name=='two-rule-contrast':
+        assert summary==json.loads((E/'contrast-summary.json').read_bytes())
+    assert summary==json.loads((E/(name+'-output.txt')).read_bytes())
+    mutation_count=0
+    for case in summary:
+        folder=target/case['case']
+        path=folder/'workspace'
+        final=folder/f"step-{len(case['outcomes'])-1}"
+        state=read_records(path).model_dump(mode='json')
+        history=read_history(path).model_dump(mode='json')
+        assert state==json.loads((final/'state-after.json').read_bytes())
+        assert history==json.loads((final/'history-after.json').read_bytes())
+        events={e['request']['operation_id']:e for e in history['events']}
+        for request_file in (folder/'evidence').glob('*.request.json'):
+            request=json.loads(request_file.read_bytes())
+            prefix=request_file.name.removesuffix('.request.json')
+            authority=json.loads((request_file.parent/(prefix+'.authority.json')).read_bytes())
+            receipt=json.loads((request_file.parent/(prefix+'.receipt.json')).read_bytes())
+            event=events[request['operation_id']]
+            assert request==event['request'] and authority==event['confirmation']
+            assert receipt['new_revision']==event['state_revision']
+            assert receipt['fingerprint']==event['fingerprint']
+            if request['operation']=='publish_artifact':
+                content=(request_file.parent/(prefix+'.input.json')).read_bytes()
+                assert sha(content)==request['content_sha256'] and len(content)==request['content_size']
+                assert content==(path/'artifacts'/request['artifact_id']/(request['operation_id']+'.blob')).read_bytes()
+            mutation_count+=1
+        for idx,outcome in enumerate(case['outcomes']):
+            step=folder/f'step-{idx}'
+            assert json.loads((step/'outcome.json').read_bytes())==outcome
+            nested=json.loads((step/'before-manifest.json').read_bytes())
+            assert sha((step/'before.zip').read_bytes())==nested['archive_sha256']
+            with zipfile.ZipFile(step/'before.zip') as nz:
+                assert nz.testzip() is None
+                assert {i.filename:sha(nz.read(i)) for i in nz.infolist() if not i.is_dir()}==nested['files']
+                assert sorted(i.filename for i in nz.infolist() if i.is_dir())==nested['directories']
+            if outcome['disposition']=='blocked':
+                assert (step/'state-before.json').read_bytes()==(step/'state-after.json').read_bytes()
+                assert (step/'history-before.json').read_bytes()==(step/'history-after.json').read_bytes()
+            else:
+                req=json.loads((step/'proposal.json').read_bytes())
+                saved=json.loads((step/'saved-result.json').read_bytes())
+                assert req==saved['event']['request']
+                assert saved['event']==events[req['operation_id']]
+                assert outcome['after_revision']==saved['receipt']['new_revision']
+                assert outcome['restored_request_fingerprint']==saved['receipt']['fingerprint']
+    mark(name+'-archive-and-final-state',files=len(files),directories=len(dirs),mutations_matched=mutation_count,
+        runtime=runtime['commit'],final_state_and_history_exact=True)
+
+source_paths=git('ls-tree','-r','--name-only',C,'--',*paths).decode().splitlines()
+source_bytes={p:sha(git('show',C+':'+p)) for p in source_paths}
+dump(OUT/'protected-source-sha256.json',source_bytes)
+direction=Path('C:/my_global_workflow_worktrees/solmax')
+named=['AGENTS.md','os/KERNEL.md','os/plays/work.md',
+ 'live/solmax/work/calls/c-solmax-zaratustra-m1-probe-admission-20260909-exec.md',
+ 'live/solmax/cards/t-zara-m1-probe.md','live/solmax/work/zaratustra-m1-shape-2026-09-09.md',
+ 'live/solmax/work/zaratustra-architecture-plan-2026-09-05.md',
+ 'live/solmax/knowledge/zaratustra-plan-conforming-approval-2026-09-07.md']
+dump(OUT/'authority-sha256.json',{str(direction/p):sha((direction/p).read_bytes()) for p in named})
+mark('source-manifest',files=len(source_bytes))
+print('PASS: candidate provenance, manifests, diffs, archives and actual final records/history',flush=True)

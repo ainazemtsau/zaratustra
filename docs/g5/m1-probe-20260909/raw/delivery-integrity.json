@@ -1,0 +1,8 @@
+{
+  "native_hygiene": "PASS",
+  "report_presence": "PASS",
+  "protected_source_files": 58,
+  "protected_source_hashes_match": true,
+  "status_before_stage": "?? docs/g5/m1-probe-20260909/.gitattributes\n?? docs/g5/m1-probe-20260909/G5-REPORT.md\n?? docs/g5/m1-probe-20260909/REPRODUCE.md\n?? docs/g5/m1-probe-20260909/RESULT.md\n?? docs/g5/m1-probe-20260909/audit-evidence.zip\n?? docs/g5/m1-probe-20260909/audit-manifest.json\n?? docs/g5/m1-probe-20260909/audit_evidence.py.txt\n?? docs/g5/m1-probe-20260909/behavior-evidence.zip\n?? docs/g5/m1-probe-20260909/behavior-manifest.json\n?? docs/g5/m1-probe-20260909/independent_probe.py.txt\n?? docs/g5/m1-probe-20260909/raw/access-attempts.txt\n?? docs/g5/m1-probe-20260909/raw/audit-01.exit.txt\n?? docs/g5/m1-probe-20260909/raw/audit-01.txt\n?? docs/g5/m1-probe-20260909/raw/audit-02.exit.txt\n?? docs/g5/m1-probe-20260909/raw/audit-02.txt\n?? docs/g5/m1-probe-20260909/raw/audit-checks.json\n?? docs/g5/m1-probe-20260909/raw/authority-sha256.json\n?? docs/g5/m1-probe-20260909/raw/behavior-checks.json\n?? docs/g5/m1-probe-20260909/raw/git-identities.json\n?? docs/g5/m1-probe-20260909/raw/independent-01.exit.txt\n?? docs/g5/m1-probe-20260909/raw/independent-01.txt\n?? docs/g5/m1-probe-20260909/raw/native-deliver.exit.txt\n?? docs/g5/m1-probe-20260909/raw/native-deliver.txt\n?? docs/g5/m1-probe-20260909/raw/package-review-first.txt\n?? docs/g5/m1-probe-20260909/raw/protected-source-sha256.json\n?? docs/g5/m1-probe-20260909/raw/runtime.json\n?? docs/g5/m1-probe-20260909/raw/uv-sync-escalated.txt\n?? docs/g5/m1-probe-20260909/raw/uv-sync.txt\n?? docs/g5/m1-probe-20260909/receipt.json\n",
+  "review_only": true
+}

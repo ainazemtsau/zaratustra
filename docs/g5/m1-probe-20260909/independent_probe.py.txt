@@ -1,0 +1,319 @@
+"""Fresh G5 behavioral refutation; fixtures use only public Core mutation APIs."""
+from pathlib import Path
+from uuid import uuid4
+import base64
+import hashlib
+import json
+import sys
+import traceback
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+from zaratustra.core import (
+    Artifact, ArtifactReference, ContextQuery, Handoff, InitialRecords,
+    MutationError, MutationRequest, ReceiptQuery, Work, apply_mutation,
+    authorize_local, create_initial_records, handoff_request, init_workspace,
+    migrate_workspace, open_work, prepare_authorization, read_history,
+    read_records, read_result, read_workspace, submit_result,
+)
+from zaratustra.process_probe import BatchRule, CycleRule, RuleBlocked, propose_result
+from tools.retain_trial import retain_trial
+
+OUT = Path(sys.argv[1]).resolve()
+assert OUT.is_relative_to(ROOT / '_scratch') and not OUT.exists()
+OUT.mkdir(parents=True)
+CHECKS = []
+
+def dump(path, obj):
+    if hasattr(obj, 'model_dump'):
+        obj = obj.model_dump(mode='json')
+    path.write_text(json.dumps(obj, ensure_ascii=True, indent=2) + '\n', encoding='utf-8')
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+def mark(name, **data):
+    item = dict(name=name, status='PASS', **data)
+    CHECKS.append(item)
+    dump(OUT / 'checks.json', CHECKS)
+    print(json.dumps(item), flush=True)
+
+def auth(path, request):
+    return authorize_local(prepare_authorization(path, request), channel='local-chat',
+        actor='fresh-G5-01a08622-47fd-7d82-974e-15ef8e1f2263',
+        source_ref='Explicit G5 instruction: independent real Core probes in NEW fictional scratch folders; not owner acceptance')
+
+def work(path, wid=None):
+    return next(r for r in read_records(path).records if isinstance(r, Work) and (wid is None or r.id == wid))
+
+def query(path, wid):
+    s = read_records(path)
+    return ContextQuery(workspace_id=s.workspace_id, work_id=wid, process_id=work(path,wid).process_id,
+                        expected_revision=s.state_revision, max_bytes=1048576)
+
+def sources(wire):
+    return {r['locator']: r['data'] for r in json.loads(wire)['context']['sources']}
+
+def snapshot(path):
+    return dict(db_sha256=sha(read_workspace(path).database.read_bytes()),
+                state=read_records(path).model_dump(mode='json'),
+                history=read_history(path).model_dump(mode='json'))
+
+def reject(name, path, fn, expected):
+    before = snapshot(path)
+    try:
+        fn()
+    except Exception as e:
+        code = e.code if isinstance(e, MutationError) else type(e).__name__
+        assert code in expected, (name, code, str(e), expected)
+        after = snapshot(path)
+        dump(OUT / (name + '.json'), dict(before=before, after=after, error=repr(e), code=code))
+        assert after == before, name + ' changed state/history/database'
+        mark(name, error=code, no_write=True)
+    else:
+        raise AssertionError(name + ' unexpectedly accepted')
+
+class Fixture:
+    def __init__(self, name, binding):
+        self.folder = OUT / name
+        self.folder.mkdir()
+        self.path = self.folder / 'workspace'
+        self.path.mkdir()
+        self.seq = 0
+        init_workspace(self.path)
+        migrate_workspace(self.path, target_version=6)
+        initial = InitialRecords(process_title='Fictional G5 ' + name, goal='Check exact rule inputs',
+            expected_result='Evidence of permitted continuation', acceptance=('Fictional marks',),
+            boundaries=('Only this new fictional workspace',), budget='One narrow T1 contrast',
+            artifact_title='G5 fictional observations')
+        dump(self.folder / 'initial.json', initial)
+        create_initial_records(self.path, initial)
+        self.wid = work(self.path).id
+        self.execute(self.request('authorize_work'))
+        self.execute(self.request('set_work_requirements', requirements=(binding,)))
+
+    def request(self, operation, **data):
+        s = read_records(self.path)
+        fields = dict(operation_id=uuid4(), workspace_id=s.workspace_id, work_id=self.wid,
+            expected_revision=s.state_revision, operation=operation, provenance='Explicit fictional fresh G5 input')
+        if operation in ('authorize_artifact', 'publish_artifact'):
+            a = next(r for r in s.records if isinstance(r, Artifact) and r.work_id == self.wid)
+            fields.update(version=2, artifact_id=a.id, artifact_revision=a.revision)
+        return MutationRequest.model_validate(fields | data)
+
+    def execute(self, request, content=None):
+        self.seq += 1
+        folder = self.folder / f'{self.seq:03d}-{request.operation}'
+        folder.mkdir()
+        caller = auth(self.path, request)
+        dump(folder / 'request.json', request)
+        dump(folder / 'authority.json', caller.confirmation)
+        if content is not None:
+            (folder / 'input.bin').write_bytes(content)
+        result = apply_mutation(self.path, request, caller, content=content)
+        dump(folder / 'receipt.json', result)
+        return result
+
+    def publish(self, value):
+        content = (json.dumps(value, sort_keys=True) + '\n').encode('utf-8')
+        self.execute(self.request('authorize_artifact'))
+        req = self.request('publish_artifact', content_sha256=sha(content), content_size=len(content))
+        self.execute(req, content)
+        return ArtifactReference(artifact_id=req.artifact_id, version_id=req.operation_id, sha256=sha(content))
+
+    def accept(self, ref):
+        s = read_records(self.path)
+        handoff = Handoff(kind='handoff', version=1, handoff_id=uuid4(), workspace_id=s.workspace_id,
+            process=work(self.path,self.wid).process_id, related_work=self.wid, intent='accepted_result',
+            source_revision=s.state_revision, result=ref, provenance='G5 fictional acceptance only',
+            created_by='Fresh G5 trusted fictional adapter')
+        self.execute(handoff_request(handoff.model_dump_json().encode(), source_ref='G5 new fictional input'))
+        return handoff.handoff_id
+
+    def propose(self, rule, q=None, caller=None):
+        q = q or query(self.path,self.wid)
+        return propose_result(self.path,q,caller or auth(self.path,q),rule,
+            operation_id=uuid4(), next_work_id=uuid4(), next_artifact_id=uuid4())
+
+def continue_exact(f, rule, label, accepted_ids, selected_ref, phase):
+    stage = f.folder / label
+    stage.mkdir()
+    before = snapshot(f.path)
+    q = query(f.path,f.wid)
+    wire = open_work(f.path,q,auth(f.path,q)).output
+    (stage / 'context-before.json').write_bytes(wire)
+    req = f.propose(rule)
+    assert snapshot(f.path) == before
+    assert req.expected_revision == before['state']['state_revision'] == req.submission.source_revision
+    assert req.references == (selected_ref,) and req.submission.result == selected_ref
+    assert req.submission.acceptance_ids == tuple(accepted_ids)
+    old = work(f.path,f.wid)
+    assert req.submission.next_work.boundaries == old.boundaries
+    assert req.submission.next_work.budget == old.budget
+    assert req.submission.next_work.executor_requirements == (phase,)
+    dump(stage / 'proposal.json',req)
+    dump(stage / 'before.json',before)
+    backup = retain_trial(f.path,stage / 'pre-submit.zip')
+    dump(stage / 'pre-submit-manifest.json',backup)
+    reject(label+'-no-authority',f.path,lambda:submit_result(f.path,req),['permission_denied'])
+    caller = auth(f.path,req)
+    changed = req.model_dump()
+    changed['submission']['next_work']['goal'] = 'Unconfirmed changed next goal'
+    changed = MutationRequest.model_validate(changed)
+    reject(label+'-changed-next',f.path,lambda:submit_result(f.path,changed,caller),['permission_denied'])
+    receipt = f.execute(req)
+    rq = ReceiptQuery(workspace_id=req.workspace_id,work_id=req.work_id,operation_id=req.operation_id)
+    result = read_result(f.path,rq,auth(f.path,rq))
+    assert result.receipt == receipt and result.event.request == req
+    new = work(f.path,req.submission.next_work.work_id)
+    assert new.status == 'ready' and new.authority_scope == 'work_metadata'
+    assert new.executor_requirements == (phase,) and new.process_id == old.process_id
+    for field in ('goal','expected_result','acceptance','boundaries','budget','executor_requirements','authority_scope'):
+        assert getattr(new,field) == getattr(req.submission.next_work,field), field
+    assert work(f.path,old.id).status == 'done'
+    assert work(f.path,old.id).completion_id == req.operation_id
+    assert len(read_records(f.path).records) == len(before['state']['records']) + 2
+    assert receipt.new_revision == before['state']['state_revision'] + 1
+    nq = query(f.path,new.id)
+    afterwire = open_work(f.path,nq,auth(f.path,nq)).output
+    src = sources(afterwire)
+    assert src[f'result:{req.operation_id}'] == result.model_dump(mode='json')
+    assert src[f'work:{new.id}'] == new.model_dump(mode='json')
+    selected = src[f'artifact-version:{selected_ref.version_id}']
+    assert sha(base64.b64decode(selected['content_base64'])) == selected_ref.sha256
+    (stage / 'context-after.json').write_bytes(afterwire)
+    dump(stage / 'saved-result.json',result)
+    dump(stage / 'after.json',snapshot(f.path))
+    for suffix, retry in [('exact',req),('fresh-revision',MutationRequest.model_validate(req.model_dump() | {'expected_revision':receipt.new_revision})),
+            ('new-operation',MutationRequest.model_validate(req.model_dump() | {'expected_revision':receipt.new_revision,'operation_id':uuid4()}))]:
+        reject(label+'-replay-'+suffix,f.path,lambda retry=retry:submit_result(f.path,retry,auth(f.path,retry)),['permission_denied'])
+    assert len([e for e in read_history(f.path).events if e.request.operation=='submit_result' and e.before.id==old.id]) == 1
+    f.wid = new.id
+    reject(label+'-inherited-is-not-own',f.path,lambda:f.propose(rule),['RuleBlocked'])
+    mark(label, source_revision=req.expected_revision, new_revision=receipt.new_revision,
+         selected_version=str(selected_ref.version_id), acceptances=[str(i) for i in accepted_ids], next_phase=phase)
+
+def behavioral():
+    b = Fixture('batch','probe.batch/v1')
+    c = Fixture('cycle','probe.cycle/v1:observe')
+    first = {'observed':True,'recorded':False}
+    br = b.publish(first); bid = b.accept(br)
+    cr = c.publish(first); cid = c.accept(cr)
+    reject('batch-conjunction-block',b.path,lambda:b.propose(BatchRule()),['RuleBlocked'])
+    q = query(c.path,c.wid)
+    reject('context-no-authority',c.path,lambda:propose_result(c.path,q,None,CycleRule(),operation_id=uuid4(),next_work_id=uuid4(),next_artifact_id=uuid4()),['permission_denied'])
+    foreign = ContextQuery.model_validate(q.model_dump() | {'process_id':uuid4()})
+    reject('foreign-process',c.path,lambda:c.propose(CycleRule(),foreign),['scope'])
+    small = ContextQuery.model_validate(q.model_dump() | {'max_bytes':128})
+    reject('bounded-context',c.path,lambda:c.propose(CycleRule(),small),['budget_exceeded'])
+    reject('wrong-rule-binding',c.path,lambda:c.propose(BatchRule()),['RuleBlocked'])
+    bq = query(b.path,b.wid)
+    reject('cross-workspace-authority',c.path,lambda:c.propose(CycleRule(),q,auth(b.path,bq)),['permission_denied'])
+    stale = c.propose(CycleRule())
+    c.execute(c.request('set_work_requirements',requirements=('probe.cycle/v1:record',)))
+    reject('stale-phase-proposal',c.path,lambda:submit_result(c.path,stale,auth(c.path,stale)),['conflict'])
+    reject('stale-query',c.path,lambda:c.propose(CycleRule(),q),['conflict'])
+    reject('persisted-phase-wins',c.path,lambda:c.propose(CycleRule()),['RuleBlocked'])
+    c.execute(c.request('set_work_requirements',requirements=('probe.cycle/v1:observe',)))
+    continue_exact(c,CycleRule(),'cycle-observe', [cid], cr,'probe.cycle/v1:record')
+    cr2 = c.publish(first); cid2 = c.accept(cr2)
+    reject('cycle-record-blocks-same-input',c.path,lambda:c.propose(CycleRule()),['RuleBlocked'])
+    cr3 = c.publish({'observed':False,'recorded':True}); cid3 = c.accept(cr3)
+    continue_exact(c,CycleRule(),'cycle-record',[cid2,cid3],cr3,'probe.cycle/v1:observe')
+    # An unaccepted active version cannot replace the latest accepted observation.
+    b.publish({'observed':True,'recorded':True})
+    reject('active-unaccepted-cannot-enable',b.path,lambda:b.propose(BatchRule()),['RuleBlocked'])
+    good = b.publish({'observed':True,'recorded':True}); good_id = b.accept(good)
+    newer = b.publish({'observed':False,'recorded':False})
+    req = b.propose(BatchRule())
+    assert req.submission.result == good and req.submission.acceptance_ids == (bid,good_id)
+    mark('active-unaccepted-cannot-replace',selected=str(good.version_id),active=str(newer.version_id))
+    newer_id = b.accept(newer)
+    reject('latest-own-acceptance-wins',b.path,lambda:b.propose(BatchRule()),['RuleBlocked'])
+    latest = b.publish({'observed':True,'recorded':True}); latest_id = b.accept(latest)
+    continue_exact(b,BatchRule(),'batch-success',[bid,good_id,newer_id,latest_id],latest,'probe.batch/v1')
+    bad = Fixture('invalid-observation','probe.batch/v1')
+    ref = bad.publish({'observed':'true','recorded':True}); bad.accept(ref)
+    reject('strict-observation-types',bad.path,lambda:bad.propose(BatchRule()),['ValidationError'])
+    bad.execute(bad.request('set_work_requirements',requirements=('probe.batch/v2',)))
+    ref = bad.publish({'observed':True,'recorded':True}); bad.accept(ref)
+    reject('unknown-binding',bad.path,lambda:bad.propose(BatchRule()),['RuleBlocked'])
+    bad.execute(bad.request('set_work_requirements',requirements=('probe.batch/v1',)))
+    req = bad.propose(BatchRule()); caller = auth(bad.path,req)
+    bad.execute(bad.request('revoke_work'))
+    reject('revoked-after-confirmation',bad.path,lambda:submit_result(bad.path,req,caller),['permission_denied'])
+    reject('revoked-context',bad.path,lambda:bad.propose(BatchRule()),['permission_denied'])
+
+def extract_checked(archive, manifest, target):
+    assert not target.exists()
+    target.mkdir()
+    with zipfile.ZipFile(archive) as z:
+        assert z.testzip() is None
+        files = {i.filename:sha(z.read(i)) for i in z.infolist() if not i.is_dir()}
+        dirs = sorted(i.filename for i in z.infolist() if i.is_dir())
+        assert files == manifest['files'] and dirs == manifest['directories']
+        for i in z.infolist():
+            assert (target/i.filename).resolve().is_relative_to(target.resolve())
+        z.extractall(target)
+    actual = {p.relative_to(target).as_posix():sha(p.read_bytes()) for p in target.rglob('*') if p.is_file()}
+    actual_dirs = sorted(p.relative_to(target).as_posix()+'/' for p in target.rglob('*') if p.is_dir())
+    assert actual == files and actual_dirs == dirs
+
+def restore_author_backups():
+    archive = ROOT/'docs/m1-probe/evidence/two-rule-contrast.zip'
+    with zipfile.ZipFile(archive) as z:
+        for label in ('batch/step-1','cycle/step-0','cycle/step-2'):
+            stage = OUT / ('restore-'+label.replace('/','-'))
+            stage.mkdir()
+            backup = stage/'pre-submit.zip'
+            backup.write_bytes(z.read(label+'/before.zip'))
+            manifest = json.loads(z.read(label+'/before-manifest.json'))
+            assert sha(backup.read_bytes()) == manifest['archive_sha256']
+            path = stage/'restored'
+            extract_checked(backup,manifest,path)
+            assert read_records(path).model_dump(mode='json') == json.loads(z.read(label+'/state-before.json'))
+            assert read_history(path).model_dump(mode='json') == json.loads(z.read(label+'/history-before.json'))
+            q = ContextQuery.model_validate_json(z.read(label+'/query.json'))
+            caller = auth(path,q)
+            dump(stage/'query-authority.json',caller.confirmation)
+            wire = open_work(path,q,caller).output
+            assert wire == z.read(label+'/context-before.json')
+            (stage/'context-before.json').write_bytes(wire)
+            req = MutationRequest.model_validate_json(z.read(label+'/proposal.json'))
+            rule = BatchRule() if label.startswith('batch') else CycleRule()
+            target = req.submission.next_work
+            regenerated = propose_result(path,q,caller,rule,operation_id=req.operation_id,
+                next_work_id=target.work_id,next_artifact_id=target.artifact_id)
+            assert regenerated == req
+            dump(stage/'regenerated-proposal.json',regenerated)
+            caller = auth(path,req)
+            dump(stage/'submit-authority.json',caller.confirmation)
+            receipt = submit_result(path,req,caller)
+            expected = json.loads(z.read(label+'/saved-result.json'))
+            assert receipt.fingerprint == expected['receipt']['fingerprint']
+            assert receipt.new_revision == expected['receipt']['new_revision']
+            assert work(path,target.work_id).executor_requirements == target.executor_requirements
+            rq = ReceiptQuery(workspace_id=req.workspace_id,work_id=req.work_id,operation_id=req.operation_id)
+            saved = read_result(path,rq,auth(path,rq))
+            assert saved.event.request == req and saved.receipt == receipt
+            nq = query(path,target.work_id)
+            after = open_work(path,nq,auth(path,nq)).output
+            assert sources(after)[f'result:{req.operation_id}'] == saved.model_dump(mode='json')
+            (stage/'context-after.json').write_bytes(after)
+            dump(stage/'receipt.json',receipt)
+            dump(stage/'saved-result.json',saved)
+            dump(stage/'after.json',snapshot(path))
+            mark('restore-'+label, bytes_layout=True, original_context_exact=True,
+                proposal_exact=True, fingerprint=receipt.fingerprint,new_revision=receipt.new_revision)
+
+try:
+    behavioral()
+    restore_author_backups()
+except Exception:
+    (OUT/'failure.txt').write_text(traceback.format_exc(),encoding='utf-8')
+    raise
+finally:
+    dump(OUT/'checks.json',CHECKS)
+
+print('PASS: independent behavioral checks and all three retained backup restores',flush=True)

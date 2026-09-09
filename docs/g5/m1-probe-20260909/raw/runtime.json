@@ -1,0 +1,13 @@
+{
+  "candidate": "f917565e141804508c11954c5de51566e82c48ca",
+  "source": "fc32c8dcf79d88e2799e061638ad7b51ff94a98c",
+  "basis": "a6e6a2e5be90eed111504712c7443b8a907576c1",
+  "first": "eeb5da071aa610b41ddf353f84db6a1da0fae076",
+  "python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]",
+  "executable": "C:\\my_global_workflow\\943d\\zaratustra\\.venv\\Scripts\\python.exe",
+  "cwd": "C:\\my_global_workflow\\943d\\zaratustra",
+  "branch": "codex/g5-m1-probe-20260909",
+  "dirty": "",
+  "task": "01a08622-47fd-7d82-974e-15ef8e1f2263",
+  "worktrees": "worktree C:/projects/zaratustra\nHEAD 11b4b95d0f696c63e3ae4d56cb8fb4b748cd933d\nbranch refs/heads/codex/work3-mutation-plan\n\nworktree C:/my_global_workflow/943d/zaratustra\nHEAD f917565e141804508c11954c5de51566e82c48ca\nbranch refs/heads/codex/g5-m1-probe-20260909\n\nworktree C:/projects/zaratustra/_scratch/m1-probe-20260909\nHEAD f917565e141804508c11954c5de51566e82c48ca\nbranch refs/heads/codex/m1-probe-20260909\n\nworktree C:/projects/zaratustra/_scratch/work5-handoff\nHEAD 589861c4657f19763b0af4ab965bd84646eecb70\nbranch refs/heads/codex/work5-handoff\n\nworktree C:/projects/zaratustra/_scratch/work6-context\nHEAD 2fa3111666139eef3ae699319444809fce563ead\nbranch refs/heads/codex/work6-context\n\nworktree C:/projects/zaratustra/_scratch/work7-result\nHEAD a6e6a2e5be90eed111504712c7443b8a907576c1\nbranch refs/heads/codex/work7-result\n\n"
+}

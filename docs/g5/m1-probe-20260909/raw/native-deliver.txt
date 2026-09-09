@@ -1,0 +1,42 @@
+$ C:\my_global_workflow\943d\zaratustra\.venv\Scripts\python.exe -m ruff format --check src tools tests
+52 files already formatted
+$ C:\my_global_workflow\943d\zaratustra\.venv\Scripts\python.exe -m ruff check src tools tests
+All checks passed!
+$ C:\my_global_workflow\943d\zaratustra\.venv\Scripts\python.exe -m mypy src tools tests
+Success: no issues found in 47 source files
+$ C:\my_global_workflow\943d\zaratustra\.venv\Scripts\lint-imports.EXE --no-cache
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 23 files, 55 dependencies.
+-----------------------------------
+
+CLI may depend on Core, Core cannot depend on CLI KEPT
+Core has no surface dependency KEPT
+Process probe uses Core; Core has no process-rule dependency KEPT
+Process rules have no trusted adapter dependency KEPT
+
+Contracts: 4 kept, 0 broken.
+$ C:\my_global_workflow\943d\zaratustra\.venv\Scripts\python.exe -m pytest tests -q
+........................................................................ [ 48%]
+........................................................................ [ 97%]
+....                                                                     [100%]
+148 passed in 33.21s
+$ C:\Users\Anton\.local\bin\uv.EXE build --no-sources
+Building source distribution (uv build backend)...
+Building wheel from source distribution (uv build backend)...
+Successfully built dist\zaratustra-0.7.0.tar.gz
+Successfully built dist\zaratustra-0.7.0-py3-none-any.whl
+PASS: native build, hygiene, types, boundaries, tests, report structure

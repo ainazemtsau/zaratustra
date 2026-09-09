@@ -1,0 +1,9 @@
+{"name": "candidate-and-source-identity", "status": "PASS", "candidate": "f917565e141804508c11954c5de51566e82c48ca", "source": "fc32c8dcf79d88e2799e061638ad7b51ff94a98c", "basis": "a6e6a2e5be90eed111504712c7443b8a907576c1"}
+{"name": "unchanged-core-boundaries-and-plan", "status": "PASS", "unchanged_entries": 7, "plan_in_first_source_commit": true}
+{"name": "handoff-manifest-committed-bytes", "status": "PASS", "files": 19, "checkout_crlf_paths": []}
+{"name": "from-m0-diff", "status": "PASS", "sha256": "4a2a91537e9addd215ac8712343738e2659d50902468ed93c955a1c82803ad69", "bytes": 38945}
+{"name": "second-connection-diff", "status": "PASS", "sha256": "57d9b8b4920545eb8211d2e7a974c233752b28250322a8d5425e855db63aac1f", "bytes": 8541}
+{"name": "first-batch-archive-and-final-state", "status": "PASS", "files": 64, "directories": 18, "mutations_matched": 9, "runtime": "eeb5da071aa610b41ddf353f84db6a1da0fae076", "final_state_and_history_exact": true}
+{"name": "two-rule-contrast-archive-and-final-state", "status": "PASS", "files": 158, "directories": 46, "mutations_matched": 22, "runtime": "fc32c8dcf79d88e2799e061638ad7b51ff94a98c", "final_state_and_history_exact": true}
+{"name": "source-manifest", "status": "PASS", "files": 58}
+PASS: candidate provenance, manifests, diffs, archives and actual final records/history

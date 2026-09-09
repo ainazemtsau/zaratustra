@@ -1,0 +1,52 @@
+{
+  "05047e38acc7386484223a5feacc510b015b2a85": {
+    "src": "f3d57e7b31c7763785c0d4864353873916f33b53",
+    "tools": "815d84664a056a50455367d72e6bfb84c9ebcb88",
+    "tests": "2b9b654b26f31c0e5d2700ecea33d34b3a488064",
+    "pyproject.toml": "19d0f1ec95f4c85cc2c15e2cfed7dfb79dce8f79",
+    "uv.lock": "ac10e7d46ed961781e50718d1f972ce7c6b30b77",
+    "validation.config": "6a378f85ba54672e04a1b5dbdcc60eb32dbd9800",
+    "AGENTS.md": "eb0438baaa8b5d3e08ee6c1cb33e369e4d8b2bb9",
+    ".python-version": "976544ccbf47196df7aebb6ae27016f98fec009a"
+  },
+  "a6e6a2e5be90eed111504712c7443b8a907576c1": {
+    "src": "f3d57e7b31c7763785c0d4864353873916f33b53",
+    "tools": "815d84664a056a50455367d72e6bfb84c9ebcb88",
+    "tests": "2b9b654b26f31c0e5d2700ecea33d34b3a488064",
+    "pyproject.toml": "19d0f1ec95f4c85cc2c15e2cfed7dfb79dce8f79",
+    "uv.lock": "ac10e7d46ed961781e50718d1f972ce7c6b30b77",
+    "validation.config": "6a378f85ba54672e04a1b5dbdcc60eb32dbd9800",
+    "AGENTS.md": "eb0438baaa8b5d3e08ee6c1cb33e369e4d8b2bb9",
+    ".python-version": "976544ccbf47196df7aebb6ae27016f98fec009a"
+  },
+  "eeb5da071aa610b41ddf353f84db6a1da0fae076": {
+    "src": "a4ca57554ab675eafab63f5ee976ff07009f2684",
+    "tools": "a096fa369dc667568dc22b2cb84f93f0d6c20732",
+    "tests": "4d918662fb4a83194abc0b7fe979568fda9d8222",
+    "pyproject.toml": "98a2311f924555b00f410ba8923c3fc388a4cbe2",
+    "uv.lock": "ac10e7d46ed961781e50718d1f972ce7c6b30b77",
+    "validation.config": "6a378f85ba54672e04a1b5dbdcc60eb32dbd9800",
+    "AGENTS.md": "eb0438baaa8b5d3e08ee6c1cb33e369e4d8b2bb9",
+    ".python-version": "976544ccbf47196df7aebb6ae27016f98fec009a"
+  },
+  "fc32c8dcf79d88e2799e061638ad7b51ff94a98c": {
+    "src": "4dd1b177b1539213ac9de42d581d3eb22d88f748",
+    "tools": "2668b97d65fb3d1025561fa48c735ec336fed1b9",
+    "tests": "a809bfa7fff53cb0852e3d9d991be9f5333ef2e0",
+    "pyproject.toml": "98a2311f924555b00f410ba8923c3fc388a4cbe2",
+    "uv.lock": "ac10e7d46ed961781e50718d1f972ce7c6b30b77",
+    "validation.config": "6a378f85ba54672e04a1b5dbdcc60eb32dbd9800",
+    "AGENTS.md": "eb0438baaa8b5d3e08ee6c1cb33e369e4d8b2bb9",
+    ".python-version": "976544ccbf47196df7aebb6ae27016f98fec009a"
+  },
+  "f917565e141804508c11954c5de51566e82c48ca": {
+    "src": "4dd1b177b1539213ac9de42d581d3eb22d88f748",
+    "tools": "2668b97d65fb3d1025561fa48c735ec336fed1b9",
+    "tests": "a809bfa7fff53cb0852e3d9d991be9f5333ef2e0",
+    "pyproject.toml": "98a2311f924555b00f410ba8923c3fc388a4cbe2",
+    "uv.lock": "ac10e7d46ed961781e50718d1f972ce7c6b30b77",
+    "validation.config": "6a378f85ba54672e04a1b5dbdcc60eb32dbd9800",
+    "AGENTS.md": "eb0438baaa8b5d3e08ee6c1cb33e369e4d8b2bb9",
+    ".python-version": "976544ccbf47196df7aebb6ae27016f98fec009a"
+  }
+}
