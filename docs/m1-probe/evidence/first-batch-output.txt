@@ -1,0 +1,32 @@
+[
+  {
+    "case": "batch",
+    "initial_binding": "probe.batch/v1",
+    "outcomes": [
+      {
+        "input": {
+          "observed": true,
+          "recorded": false
+        },
+        "disposition": "blocked",
+        "reason": "Batch requires both observed and recorded",
+        "no_write": true
+      },
+      {
+        "input": {
+          "observed": true,
+          "recorded": true
+        },
+        "disposition": "continued",
+        "before_revision": 9,
+        "after_revision": 10,
+        "next_work_id": "860c778f-818c-4f3f-8fae-65d1508e7413",
+        "next_requirements": [
+          "probe.batch/v1"
+        ],
+        "backup_restored_exactly": true,
+        "restored_request_fingerprint": "30f94817111058fa470746291396c0e9c3f8eda61d177fcc160850d72ceda106"
+      }
+    ]
+  }
+]

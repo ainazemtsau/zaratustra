@@ -1,0 +1,826 @@
+diff --git a/docs/m1-probe/PLAN.md b/docs/m1-probe/PLAN.md
+new file mode 100644
+index 0000000..c9eb2cc
+--- /dev/null
++++ b/docs/m1-probe/PLAN.md
+@@ -0,0 +1,107 @@
++# M1 / T1 — узкая исполнимая проба
++
++CALL: c-solmax-zaratustra-m1-probe-admission-20260909-exec, contract 36, PROBA.
++База: a6e6a2e5be90eed111504712c7443b8a907576c1, прямой потомок принятого
++05047e38acc7386484223a5feacc510b015b2a85; отличие — пять docs/evidence путей.
++Worktree: C:/projects/zaratustra/_scratch/m1-probe-20260909.
++Branch: codex/m1-probe-20260909. Source Work7 и Work3 не изменяются.
++
++## Решение перед исполнением
++
++Проверяем только process-rules-outside-core-on-real-m0: предметное решение
++о допустимом продолжении принимает внешний Python rule; настоящее M0 открывает
++ограниченный context и атомарно сохраняет Result/next Work через Mutation API.
++Rule не получает путь к workspace или authority и возвращает лишь предложение.
++Доверенный локальный адаптер отдельно подтверждает точный запрос на основании
++владельческого RUN и разрешения CALL на новые fictional данные. Это разрешение
++исполнения пробы, не owner acceptance продукта.
++
++Конкретная пара: fictional batch требует одновременно observed=true и
++recorded=true; fictional cycle требует отметку только текущей фазы, сохранённой
++в executor_requirements выбранной Work, и переводит следующую Work в другую
++фазу. На одинаковых observed=true, recorded=false первая блокирует продолжение,
++вторая переходит observe→record; в фазе record тот же вход блокируется. Затем
++recorded=true позволяет record→observe. Для batch также выполняется успешный
++случай с обеими отметками. Это различие переходов, не названий.
++
++До фиксации плана рассмотрено разовое завершение без next Work: текущий
++ResultSubmission требует next_work. Оно не выбрано сценарием этой пробы;
++поддержка терминального Result не заявляется и Core для неё не расширяется.
++
++В M0 один Process на workspace. Здесь каждый процесс получает отдельную новую
++workspace; это ограничение раннего T1, не ответ о сосуществовании обоих в M1.
++Core, schema и принятые тесты остаются точными bytes базы. Ни §30 «без изменения
++основной семантики Core», ни §40 «без изменения Core» не ослабляются.
++
++## Проверка и falsifier
++
++Отказ правила оставляет DB/history неизменными. Успех создаёт один Result и
++одну ready next Work с точными данными правила; следующий context содержит их
++и исходный accepted artifact. Проверяются отсутствие authority, чужой Process,
++устаревшая revision, смена запроса после подтверждения и повтор через Core.
++Если для этого нужны предметная ветка Core, прямой state writer или изменение
++основания — остановка и HOME с контрпримером. Native tools.check обязателен.
++Тесты проверяют ненаблюдаемые authority/state свойства; owner-visible выбор
++fictional процесса предъявляется человеку, не объявляется принятым по тестам.
++
++## Версии, evidence и rollback до изменения
++
++Сначала commit общей подготовки + batch; затем отдельный commit подключения
++cycle. Сохраняются оба SHA и diff подключения второго, полный diff от M0,
++exact JSON inputs/context/proposal/authorization/receipts/history/state,
++команды/выводы, runtime и hashes. Это узкая запись W20 до первого прогона.
++Производственные файлы идут в пакет process_probe; development runner — tools.
++Пробные workspace и exploratory output — только новый ignored _scratch/.
++Проверенные отчёты и retained ZIP/manifest копируются в docs/m1-probe/evidence.
++
++Перед каждым сценарием сохраняется quiescent pre-submit snapshot штатным
++tools.retain_trial; восстановление — его документированный restore: извлечь
++точные сохранённые bytes/layout в НОВУЮ папку, проверить hash всех файлов,
++открыть через read_records/read_history/open_work с новым точным разрешением
++на путь и снова исполнить тот же запрос. Исходные state и evidence сохраняются.
++Это восстановление backup, не SQL/Markdown edits; identity/history не правятся.
++В случае отказа сохраняется полное состояние; ни reset/clean, ни стирания данных.
++Все прогоны синхронны и локальны; новые процессы пользователя не запускаются.
++
++## W15–W20: частичный ответ и оставшееся open
++
++- W15: для T1 rule — явно выбранный доверенным адаптером Python объект;
++  binding/phase — существующие executor_requirements Work, schema6 без миграции;
++  неизвестный binding отклоняется. Это probe schema v1, не регистрация M1.
++  OPEN: pack/type/instance, registration, сохранённые ссылки и missing/incompatible
++  pack, смена версии начатой Work. answerer PLAN; rewrites: registry, manifests,
++  привязки Work/context, adapters, сохранённые ссылки и migrations; ≤1 дня не доказано.
++- W16: OPEN целиком — все семь capabilities, scope/revisions, empty/denied/
++  unavailable, metadata/counts, consistency и изменение прав. answerer PLAN;
++  rewrites: публичный контракт, read guards, mapping, context/projections и
++  потребители; ≤1 дня не доказано. Существующая Work isolation используется.
++- W17: T1 Core неизменен; baseline второго — committed common runner+batch.
++  OPEN: полный M1 baseline, совместное размещение, гарантия полного внешнего
++  контракта. answerer PLAN; rewrites: границы модулей, refactor, замороженный
++  diff/evidence и повтор сценариев; ≤1 дня не доказано. Изменение гарантии → OWNER.
++- W18: T1 conjunction vs persisted alternating phase, описанные выше.
++  OPEN: полные работающие сценарии двух существенно разных M1 процессов;
++  примеры не product templates. answerer PLAN; rewrites: fixtures/сценарии/
++  ожидания, обычно обратимо до связанной реализации; после предметного кода
++  оценить заново. Новый owner concept/acceptance → OWNER.
++- W19: OPEN целиком — единый обзор без нового frontend/assistant. answerer PLAN;
++  rewrites: renderer/adapters и проверки вывода; обычно ≤1 дня до фиксации внешнего
++  контракта. Семантика остаётся W16.
++- W20: T1 exact evidence и граница commits определены выше. OPEN: evidence обоих
++  полных сценариев/общего обзора M1. answerer PLAN; rewrites: evidence capture/
++  manifest, контрольные состояния и повтор сценариев; до прогона обычно ≤1 дня,
++  потерянную provenance после прогона восстановить не гарантировано.
++
++## Источники и owner boundary
++
++Direction live/solmax/work/: zaratustra-architecture-plan-2026-09-05.md §§8,30,40;
++zaratustra-m1-shape-2026-09-09.md §4/T1/K1; converge-g-zara-m1-modularity.md
++W01–W20/C01–C06; zaratustra-m1-probe-admission-2026-09-09.md.
++Планирование HOW не вводит новую owner concept. Действует точное разрешение
++«Если нет каких-то расхождений с планом, то я как бы подтверждаю, да, ты можешь
++идти.» — knowledge/zaratustra-plan-conforming-approval-2026-09-07.md.
++Verdict для этого технического плана: conforms within T1 scope under delegation.
++Новая продуктовая приёмка pending; binding fresh Direction G5 не выполнялась.
++M0 partial; T1/M1 не закрываются, T2 не запускается; next: solmax.
++
++END_OF_FILE: docs/m1-probe/PLAN.md
+diff --git a/pyproject.toml b/pyproject.toml
+index 19d0f1e..98a2311 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -45,6 +45,18 @@ type = "forbidden"
+ source_modules = ["zaratustra.core"]
+ forbidden_modules = ["zaratustra.cli", "zaratustra.local"]
+ 
++[[tool.importlinter.contracts]]
++name = "Process probe uses Core; Core has no process-rule dependency"
++type = "forbidden"
++source_modules = ["zaratustra.core"]
++forbidden_modules = ["zaratustra.process_probe"]
++
++[[tool.importlinter.contracts]]
++name = "Process rules have no trusted adapter dependency"
++type = "forbidden"
++source_modules = ["zaratustra.process_probe"]
++forbidden_modules = ["zaratustra.local", "zaratustra.cli"]
++
+ [dependency-groups]
+ dev = [
+     "import-linter==2.15",
+diff --git a/src/zaratustra/process_probe/AGENTS.md b/src/zaratustra/process_probe/AGENTS.md
+new file mode 100644
+index 0000000..6054288
+--- /dev/null
++++ b/src/zaratustra/process_probe/AGENTS.md
+@@ -0,0 +1,7 @@
++# Process rule probe
++T1 only: explicit trusted rule selection, no registry or full M1 capabilities.
++Public surface is __init__.py. runner.py opens real Core context and returns a
++proposal; it never authorizes or writes. Rules see Work and verified observation
++data, not a workspace path or caller. All state changes belong to Core.
++Core must not depend on this module. Fictional examples are not product templates.
++END_OF_FILE: src/zaratustra/process_probe/AGENTS.md
+diff --git a/src/zaratustra/process_probe/__init__.py b/src/zaratustra/process_probe/__init__.py
+new file mode 100644
+index 0000000..1225396
+--- /dev/null
++++ b/src/zaratustra/process_probe/__init__.py
+@@ -0,0 +1,7 @@
++"""Narrow T1 rule seam, not the complete Process Pack contract."""
++
++from .batch import BatchRule
++from .cycle import CycleRule
++from .runner import Observation, Rule, RuleBlocked, propose_result
++
++__all__ = ["BatchRule", "CycleRule", "Observation", "Rule", "RuleBlocked", "propose_result"]
+diff --git a/src/zaratustra/process_probe/batch.py b/src/zaratustra/process_probe/batch.py
+new file mode 100644
+index 0000000..021978f
+--- /dev/null
++++ b/src/zaratustra/process_probe/batch.py
+@@ -0,0 +1,29 @@
++"""Fictional batch gate: every independent mark is required before continuation."""
++
++from uuid import UUID
++
++from zaratustra.core import NextWork, Work
++
++from .runner import Observation, RuleBlocked
++
++
++class BatchRule:
++    def next_work(
++        self, work: Work, observation: Observation, work_id: UUID, artifact_id: UUID
++    ) -> NextWork:
++        if work.executor_requirements != ("probe.batch/v1",):
++            raise RuleBlocked("Work is not bound to batch probe v1")
++        if not (observation.observed and observation.recorded):
++            raise RuleBlocked("Batch requires both observed and recorded")
++        return NextWork(
++            work_id=work_id,
++            artifact_id=artifact_id,
++            goal="Inspect the next fictional batch",
++            expected_result="Both independent marks",
++            acceptance=("Observation and recording marks are both present",),
++            boundaries=work.boundaries,
++            budget=work.budget,
++            executor_requirements=("probe.batch/v1",),
++            artifact_title="Next fictional batch observation",
++            authority_scope="work_metadata",
++        )
+diff --git a/src/zaratustra/process_probe/cycle.py b/src/zaratustra/process_probe/cycle.py
+new file mode 100644
+index 0000000..355285a
+--- /dev/null
++++ b/src/zaratustra/process_probe/cycle.py
+@@ -0,0 +1,35 @@
++"""Fictional alternating cycle: only the current persisted phase's mark is needed."""
++
++from uuid import UUID
++
++from zaratustra.core import NextWork, Work
++
++from .runner import Observation, RuleBlocked
++
++
++class CycleRule:
++    def next_work(
++        self, work: Work, observation: Observation, work_id: UUID, artifact_id: UUID
++    ) -> NextWork:
++        if work.executor_requirements == ("probe.cycle/v1:observe",):
++            if not observation.observed:
++                raise RuleBlocked("Observe phase needs its observation mark")
++            next_phase = "record"
++        elif work.executor_requirements == ("probe.cycle/v1:record",):
++            if not observation.recorded:
++                raise RuleBlocked("Record phase needs its recording mark")
++            next_phase = "observe"
++        else:
++            raise RuleBlocked("Work is not bound to a cycle probe v1 phase")
++        return NextWork(
++            work_id=work_id,
++            artifact_id=artifact_id,
++            goal=f"Perform the fictional {next_phase} phase",
++            expected_result=f"The {next_phase} mark",
++            acceptance=(f"The current {next_phase} phase has its own mark",),
++            boundaries=work.boundaries,
++            budget=work.budget,
++            executor_requirements=(f"probe.cycle/v1:{next_phase}",),
++            artifact_title=f"Fictional {next_phase} observation",
++            authority_scope="work_metadata",
++        )
+diff --git a/src/zaratustra/process_probe/runner.py b/src/zaratustra/process_probe/runner.py
+new file mode 100644
+index 0000000..874e2fe
+--- /dev/null
++++ b/src/zaratustra/process_probe/runner.py
+@@ -0,0 +1,86 @@
++"""Read authorized Core context and propose a Result; never grant rights or write."""
++
++from __future__ import annotations
++
++import base64
++import json
++from pathlib import Path
++from typing import Protocol
++from uuid import UUID
++
++from pydantic import BaseModel, ConfigDict
++
++from zaratustra.core import (
++    AcceptedHandoff,
++    ContextQuery,
++    LocalAuthorization,
++    MutationRequest,
++    NextWork,
++    ResultSubmission,
++    Work,
++    open_work,
++)
++
++
++class Observation(BaseModel):
++    model_config = ConfigDict(frozen=True, extra="forbid", strict=True)
++    observed: bool
++    recorded: bool
++
++
++class RuleBlocked(ValueError):
++    """The selected rule refuses this observation or Work binding."""
++
++
++class Rule(Protocol):
++    def next_work(
++        self, work: Work, observation: Observation, work_id: UUID, artifact_id: UUID
++    ) -> NextWork: ...
++
++
++def propose_result(
++    path: Path,
++    query: ContextQuery,
++    caller: LocalAuthorization | None,
++    rule: Rule,
++    *,
++    operation_id: UUID,
++    next_work_id: UUID,
++    next_artifact_id: UUID,
++) -> MutationRequest:
++    """Use latest own acceptance for the rule; retain all own acceptance identities.
++
++    The caller separately confirms the returned EXACT proposal before Core submit.
++    No path, authorization handle or arbitrary context is passed into a rule.
++    """
++    package = json.loads(open_work(path, query, caller).output)
++    sources = {row["locator"]: row["data"] for row in package["context"]["sources"]}
++    work = Work.model_validate(sources[f"work:{query.work_id}"])
++    acceptances = [
++        AcceptedHandoff.model_validate(value)
++        for key, value in sources.items()
++        if key.startswith("acceptance:")
++    ]
++    own = [row for row in acceptances if row.handoff.related_work == work.id]
++    if not own:
++        raise RuleBlocked("This Work needs its own accepted observation")
++    result = own[-1].handoff.result
++    source = sources[f"artifact-version:{result.version_id}"]
++    observation = Observation.model_validate_json(base64.b64decode(source["content_base64"]))
++    continuation = rule.next_work(work, observation, next_work_id, next_artifact_id)
++    return MutationRequest(
++        version=4,
++        operation_id=operation_id,
++        workspace_id=query.workspace_id,
++        work_id=query.work_id,
++        expected_revision=query.expected_revision,
++        operation="submit_result",
++        provenance="M1 T1 fictional rule proposal; authority supplied separately",
++        references=(result,),
++        submission=ResultSubmission(
++            source_revision=query.expected_revision,
++            result=result,
++            acceptance_ids=tuple(row.handoff.handoff_id for row in own),
++            next_work=continuation,
++        ),
++    )
+diff --git a/tests/zaratustra/process_probe/test_boundary.py b/tests/zaratustra/process_probe/test_boundary.py
+new file mode 100644
+index 0000000..dcf9166
+--- /dev/null
++++ b/tests/zaratustra/process_probe/test_boundary.py
+@@ -0,0 +1,124 @@
++"""Real Core tests for the rule seam's invisible state and authority obligations."""
++
++from pathlib import Path
++from typing import Any, cast
++from uuid import uuid4
++
++import pytest
++
++from tools.probe_m1 import Trial, confirm, proposed, query_for, work_at
++from zaratustra.core import (
++    MutationError,
++    MutationRequest,
++    ReceiptQuery,
++    read_history,
++    read_records,
++    read_result,
++    read_workspace,
++    submit_result,
++)
++from zaratustra.process_probe import BatchRule, CycleRule, Rule, RuleBlocked, propose_result
++
++
++@pytest.fixture(params=[BatchRule(), CycleRule()])
++def rule(request: pytest.FixtureRequest) -> Rule:
++    return cast(Rule, request.param)
++
++
++@pytest.fixture
++def trial(tmp_path: Path, rule: Rule) -> Trial:
++    trial = Trial(tmp_path / "workspace", tmp_path / "evidence")
++    binding = "probe.batch/v1" if isinstance(rule, BatchRule) else "probe.cycle/v1:observe"
++    identity = trial.bootstrap(binding)
++    trial.observation(identity, dict(observed=True, recorded=True))
++    return trial
++
++
++def test_rule_proposal_requires_separate_exact_authority(trial: Trial, rule: Rule) -> None:
++    request = proposed(trial.path, work_at(trial.path).id, rule)
++    db = read_workspace(trial.path).database
++    before = db.read_bytes()
++    with pytest.raises(MutationError, match="permission_denied"):
++        submit_result(trial.path, request)
++    caller = confirm(trial.path, request)
++    changed = MutationRequest.model_validate(
++        request.model_dump() | dict(provenance="Changed after confirmation")
++    )
++    with pytest.raises(MutationError, match="permission_denied"):
++        submit_result(trial.path, changed, caller)
++    assert db.read_bytes() == before
++
++
++def test_stale_context_foreign_process_and_unbound_rule_do_not_write(
++    trial: Trial, rule: Rule
++) -> None:
++    identity = work_at(trial.path).id
++    query = query_for(trial.path, identity)
++    before = read_workspace(trial.path).database.read_bytes()
++    variants: list[tuple[dict[str, Any], str]] = [
++        (dict(expected_revision=query.expected_revision - 1), "conflict"),
++        (dict(process_id=uuid4()), "scope"),
++    ]
++    for changes, code in variants:
++        changed = type(query).model_validate(query.model_dump() | changes)
++        with pytest.raises(MutationError, match=code):
++            propose_result(
++                trial.path,
++                changed,
++                confirm(trial.path, changed),
++                rule,
++                operation_id=uuid4(),
++                next_work_id=uuid4(),
++                next_artifact_id=uuid4(),
++            )
++    assert read_workspace(trial.path).database.read_bytes() == before
++    trial.execute(trial.request(identity, "set_work_requirements", requirements=("unknown/v2",)))
++    before = read_workspace(trial.path).database.read_bytes()
++    with pytest.raises(RuleBlocked, match="not bound"):
++        proposed(trial.path, identity, rule)
++    assert read_workspace(trial.path).database.read_bytes() == before
++
++
++def test_state_change_after_proposal_and_replay_preserve_one_effect(
++    trial: Trial, rule: Rule
++) -> None:
++    identity = work_at(trial.path).id
++    request = proposed(trial.path, identity, rule)
++    trial.execute(
++        trial.request(
++            identity,
++            "set_work_requirements",
++            requirements=work_at(trial.path, identity).executor_requirements,
++        )
++    )
++    before = read_workspace(trial.path).database.read_bytes()
++    with pytest.raises(MutationError, match="conflict"):
++        submit_result(trial.path, request, confirm(trial.path, request))
++    assert read_workspace(trial.path).database.read_bytes() == before
++    request = proposed(trial.path, identity, rule)
++    receipt = submit_result(trial.path, request, confirm(trial.path, request))
++    before = read_workspace(trial.path).database.read_bytes()
++    replay = MutationRequest.model_validate(
++        request.model_dump() | dict(expected_revision=read_records(trial.path).state_revision)
++    )
++    # M0 deliberately refuses renewed execution of done Work before replay lookup.
++    # Recovery discovers the committed Result through the separate read seam.
++    with pytest.raises(MutationError, match="permission_denied"):
++        submit_result(trial.path, replay, confirm(trial.path, replay))
++    query = ReceiptQuery(
++        workspace_id=request.workspace_id, work_id=identity, operation_id=request.operation_id
++    )
++    assert read_result(trial.path, query, confirm(trial.path, query)).receipt == receipt
++    assert read_workspace(trial.path).database.read_bytes() == before
++    assert len([e for e in read_history(trial.path).events if e.request.submission]) == 1
++
++
++def test_rule_refusal_preserves_records_and_journal(trial: Trial, rule: Rule) -> None:
++    identity = work_at(trial.path).id
++    trial.observation(identity, dict(observed=False, recorded=False))
++    before = read_workspace(trial.path).database.read_bytes()
++    history = read_history(trial.path)
++    with pytest.raises(RuleBlocked):
++        proposed(trial.path, identity, rule)
++    assert read_workspace(trial.path).database.read_bytes() == before
++    assert read_history(trial.path) == history
+diff --git a/tools/probe_m1.py b/tools/probe_m1.py
+new file mode 100644
+index 0000000..7772376
+--- /dev/null
++++ b/tools/probe_m1.py
+@@ -0,0 +1,360 @@
++"""Run an explicitly selected fictional T1 trial in a NEW ignored workspace tree."""
++
++from __future__ import annotations
++
++import argparse
++import hashlib
++import json
++import subprocess
++import sys
++import zipfile
++from pathlib import Path
++from typing import Any
++from uuid import UUID, uuid4
++
++from zaratustra.core import (
++    Artifact,
++    ArtifactReference,
++    ContextQuery,
++    Handoff,
++    InitialRecords,
++    LocalAuthorization,
++    MutationError,
++    MutationReceipt,
++    MutationRequest,
++    ReceiptQuery,
++    Work,
++    apply_mutation,
++    authorize_local,
++    create_initial_records,
++    handoff_request,
++    init_workspace,
++    migrate_workspace,
++    open_work,
++    prepare_authorization,
++    read_history,
++    read_records,
++    read_result,
++    read_workspace,
++    submit_result,
++)
++from zaratustra.process_probe import BatchRule, CycleRule, Rule, RuleBlocked, propose_result
++
++from .retain_trial import retain_trial
++
++ROOT = Path(__file__).resolve().parents[1]
++CALL = "c-solmax-zaratustra-m1-probe-admission-20260909-exec"
++
++
++def save(path: Path, value: Any) -> None:
++    path.write_text(json.dumps(value, indent=2, ensure_ascii=True) + chr(10), encoding="utf-8")
++
++
++def confirm(path: Path, value: MutationRequest | ContextQuery | ReceiptQuery) -> LocalAuthorization:
++    """Trusted fictional adapter under the RUN/CALL; no runtime acceptance claim."""
++    return authorize_local(
++        prepare_authorization(path, value),
++        channel="local-chat",
++        actor="T1-fictional-probe-adapter",
++        source_ref=f"RUN {CALL}; only newly selected fictional probe workspace",
++    )
++
++
++def work_at(path: Path, identity: UUID | None = None) -> Work:
++    return next(
++        row
++        for row in read_records(path).records
++        if isinstance(row, Work) and (identity is None or row.id == identity)
++    )
++
++
++def query_for(path: Path, identity: UUID) -> ContextQuery:
++    snapshot = read_records(path)
++    work = work_at(path, identity)
++    return ContextQuery(
++        workspace_id=snapshot.workspace_id,
++        work_id=identity,
++        process_id=work.process_id,
++        expected_revision=snapshot.state_revision,
++        max_bytes=1048576,
++    )
++
++
++class Trial:
++    """Development-only recorder; production authority/mutations stay in Core."""
++
++    def __init__(self, path: Path, evidence: Path) -> None:
++        self.path = path
++        self.evidence = evidence
++        evidence.mkdir(parents=True)
++        self.sequence = 0
++
++    def execute(self, request: MutationRequest, content: bytes | None = None) -> MutationReceipt:
++        self.sequence += 1
++        prefix = self.evidence / f"{self.sequence:03d}-{request.operation}"
++        caller = confirm(self.path, request)
++        save(prefix.with_suffix(".request.json"), request.model_dump(mode="json"))
++        save(prefix.with_suffix(".authority.json"), caller.confirmation.model_dump(mode="json"))
++        if content is not None:
++            prefix.with_suffix(".input.json").write_bytes(content)
++        receipt = apply_mutation(self.path, request, caller, content=content)
++        save(prefix.with_suffix(".receipt.json"), receipt.model_dump(mode="json"))
++        return receipt
++
++    def request(self, identity: UUID, operation: str, **payload: Any) -> MutationRequest:
++        snapshot = read_records(self.path)
++        fields: dict[str, Any] = dict(
++            operation=operation,
++            operation_id=uuid4(),
++            workspace_id=snapshot.workspace_id,
++            work_id=identity,
++            expected_revision=snapshot.state_revision,
++            provenance=f"Fictional T1 fixture authorized by RUN {CALL}",
++        )
++        if operation in ("authorize_artifact", "publish_artifact"):
++            artifact = next(
++                row
++                for row in snapshot.records
++                if isinstance(row, Artifact) and row.work_id == identity
++            )
++            fields.update(version=2, artifact_id=artifact.id, artifact_revision=artifact.revision)
++        return MutationRequest.model_validate(fields | payload)
++
++    def bootstrap(self, binding: str) -> UUID:
++        self.path.mkdir(parents=True)
++        init_workspace(self.path)
++        migrate_workspace(self.path, target_version=6)
++        initial = InitialRecords(
++            process_title=f"Fictional {binding}",
++            goal="Evaluate the selected fictional rule",
++            expected_result="Exact recorded observation and permitted continuation",
++            acceptance=("Only explicitly selected fictional inputs",),
++            boundaries=("Local fictional workspace only",),
++            budget="One minimal rule contrast",
++            artifact_title="Fictional observation",
++        )
++        save(self.evidence / "bootstrap.json", initial.model_dump(mode="json"))
++        create_initial_records(self.path, initial)
++        identity = work_at(self.path).id
++        self.execute(self.request(identity, "authorize_work"))
++        self.execute(self.request(identity, "set_work_requirements", requirements=(binding,)))
++        return identity
++
++    def observation(self, identity: UUID, value: dict[str, bool]) -> None:
++        content = (json.dumps(value, sort_keys=True) + chr(10)).encode("utf-8")
++        self.execute(self.request(identity, "authorize_artifact"))
++        request = self.request(
++            identity,
++            "publish_artifact",
++            content_sha256=hashlib.sha256(content).hexdigest(),
++            content_size=len(content),
++        )
++        self.execute(request, content)
++        assert request.artifact_id is not None
++        snapshot = read_records(self.path)
++        handoff = Handoff(
++            kind="handoff",
++            version=1,
++            handoff_id=uuid4(),
++            workspace_id=snapshot.workspace_id,
++            process=work_at(self.path, identity).process_id,
++            related_work=identity,
++            intent="accepted_result",
++            source_revision=snapshot.state_revision,
++            result=ArtifactReference(
++                artifact_id=request.artifact_id,
++                version_id=request.operation_id,
++                sha256=hashlib.sha256(content).hexdigest(),
++            ),
++            provenance="Explicit fictional observation, not owner product acceptance",
++            created_by="T1 fictional adapter",
++        )
++        self.execute(handoff_request(handoff.model_dump_json().encode(), source_ref=CALL))
++
++
++def proposed(path: Path, identity: UUID, rule: Rule) -> MutationRequest:
++    query = query_for(path, identity)
++    return propose_result(
++        path,
++        query,
++        confirm(path, query),
++        rule,
++        operation_id=uuid4(),
++        next_work_id=uuid4(),
++        next_artifact_id=uuid4(),
++    )
++
++
++def restore_snapshot(archive: Path, target: Path, manifest: dict[str, Any]) -> Path:
++    """Execute retain_trial's documented restore into a fresh directory, preserving bytes."""
++    target.mkdir()
++    with zipfile.ZipFile(archive) as bundle:
++        for member in bundle.infolist():
++            if not (target / member.filename).resolve().is_relative_to(target.resolve()):
++                raise ValueError("Unsafe retained member")
++        bundle.extractall(target)
++    actual = {
++        p.relative_to(target).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
++        for p in target.rglob("*")
++        if p.is_file()
++    }
++    directories = sorted(
++        p.relative_to(target).as_posix() + "/" for p in target.rglob("*") if p.is_dir()
++    )
++    if actual != manifest["files"] or directories != manifest["directories"]:
++        raise ValueError("Restore differs from retained bytes/layout")
++    return target
++
++
++def run_case(
++    base: Path, name: str, rule: Rule, binding: str, values: list[dict[str, bool]]
++) -> dict[str, Any]:
++    trial = Trial(base / name / "workspace", base / name / "evidence")
++    identity = trial.bootstrap(binding)
++    outcomes: list[dict[str, Any]] = []
++    for index, value in enumerate(values):
++        trial.observation(identity, value)
++        stage = base / name / f"step-{index}"
++        stage.mkdir()
++        before = read_records(trial.path)
++        history_before = read_history(trial.path)
++        query = query_for(trial.path, identity)
++        save(stage / "query.json", query.model_dump(mode="json"))
++        (stage / "context-before.json").write_bytes(
++            open_work(trial.path, query, confirm(trial.path, query)).output
++        )
++        save(stage / "state-before.json", before.model_dump(mode="json"))
++        save(stage / "history-before.json", history_before.model_dump(mode="json"))
++        manifest = retain_trial(trial.path, stage / "before.zip")
++        save(stage / "before-manifest.json", manifest)
++        database = read_workspace(trial.path).database
++        before_bytes = database.read_bytes()
++        try:
++            request = proposed(trial.path, identity, rule)
++        except RuleBlocked as error:
++            assert database.read_bytes() == before_bytes
++            assert read_history(trial.path) == history_before
++            outcome = dict(input=value, disposition="blocked", reason=str(error), no_write=True)
++        else:
++            assert database.read_bytes() == before_bytes
++            save(stage / "proposal.json", request.model_dump(mode="json"))
++            # The proposal itself confers no authority.
++            try:
++                submit_result(trial.path, request)
++            except MutationError as error:
++                assert error.code == "permission_denied"
++                assert database.read_bytes() == before_bytes
++                save(stage / "denied.json", dict(code=error.code, no_write=True))
++            else:
++                raise AssertionError("Unconfirmed rule proposal gained authority")
++            receipt = trial.execute(request)
++            assert request.submission is not None
++            target = request.submission.next_work
++            source = work_at(trial.path, identity)
++            next_work = work_at(trial.path, target.work_id)
++            assert source.status == "done" and source.completion_id == request.operation_id
++            assert next_work.executor_requirements == target.executor_requirements
++            assert next_work.goal == target.goal and next_work.process_id == source.process_id
++            assert len(read_records(trial.path).records) == len(before.records) + 2
++            assert read_records(trial.path).state_revision == before.state_revision + 1
++            q = ReceiptQuery(
++                workspace_id=request.workspace_id,
++                work_id=identity,
++                operation_id=request.operation_id,
++            )
++            saved = read_result(trial.path, q, confirm(trial.path, q))
++            assert saved.event.request == request and saved.receipt == receipt
++            save(stage / "saved-result.json", saved.model_dump(mode="json"))
++            next_query = query_for(trial.path, target.work_id)
++            wire = open_work(trial.path, next_query, confirm(trial.path, next_query)).output
++            (stage / "context-after.json").write_bytes(wire)
++            sources = {s["locator"]: s["data"] for s in json.loads(wire)["context"]["sources"]}
++            assert sources[f"result:{request.operation_id}"] == saved.model_dump(mode="json")
++            assert sources[f"work:{target.work_id}"] == next_work.model_dump(mode="json")
++            # Restore the pre-submit copy, open it using newly bound path authority,
++            # and execute the SAME exact request through the same Core.
++            restored = restore_snapshot(stage / "before.zip", stage / "restored", manifest)
++            assert read_records(restored) == before and read_history(restored) == history_before
++            restored_wire = open_work(restored, query, confirm(restored, query)).output
++            assert restored_wire == (stage / "context-before.json").read_bytes()
++            replay_receipt = submit_result(restored, request, confirm(restored, request))
++            assert replay_receipt.fingerprint == receipt.fingerprint
++            assert replay_receipt.new_revision == receipt.new_revision
++            assert (
++                work_at(restored, target.work_id).executor_requirements
++                == target.executor_requirements
++            )
++            save(stage / "restore-receipt.json", replay_receipt.model_dump(mode="json"))
++            outcome = dict(
++                input=value,
++                disposition="continued",
++                before_revision=before.state_revision,
++                after_revision=receipt.new_revision,
++                next_work_id=str(target.work_id),
++                next_requirements=list(target.executor_requirements),
++                backup_restored_exactly=True,
++                restored_request_fingerprint=replay_receipt.fingerprint,
++            )
++            identity = target.work_id
++        save(stage / "state-after.json", read_records(trial.path).model_dump(mode="json"))
++        save(stage / "history-after.json", read_history(trial.path).model_dump(mode="json"))
++        save(stage / "outcome.json", outcome)
++        outcomes.append(outcome)
++    result = dict(case=name, initial_binding=binding, outcomes=outcomes)
++    save(base / name / "summary.json", result)
++    return result
++
++
++def main() -> None:
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--output", required=True, type=Path)
++    args = parser.parse_args()
++    if (ROOT / "STOP").exists() or (ROOT / "STEER.md").exists():
++        parser.error("Read and resolve STOP/STEER before running")
++    base = args.output.resolve()
++    scratch = (ROOT / "_scratch").resolve()
++    if base == scratch or not base.is_relative_to(scratch) or base.exists():
++        parser.error("Output must be a NEW directory inside this worktree's _scratch")
++    base.mkdir(parents=True)
++    save(
++        base / "runtime.json",
++        dict(
++            python=sys.version,
++            executable=sys.executable,
++            product_root=str(ROOT),
++            commit=subprocess.check_output(
++                ["git", "rev-parse", "HEAD"], cwd=ROOT, encoding="utf-8"
++            ).strip(),
++            dirty=subprocess.check_output(
++                ["git", "status", "--porcelain"], cwd=ROOT, encoding="utf-8"
++            ),
++            call=CALL,
++            owner_acceptance="pending",
++        ),
++    )
++    results = [
++        run_case(
++            base,
++            "batch",
++            BatchRule(),
++            "probe.batch/v1",
++            [dict(observed=True, recorded=False), dict(observed=True, recorded=True)],
++        ),
++        run_case(
++            base,
++            "cycle",
++            CycleRule(),
++            "probe.cycle/v1:observe",
++            [
++                dict(observed=True, recorded=False),
++                dict(observed=True, recorded=False),
++                dict(observed=False, recorded=True),
++            ],
++        ),
++    ]
++    save(base / "summary.json", results)
++    print(json.dumps(results, indent=2))
++
++
++if __name__ == "__main__":
++    main()

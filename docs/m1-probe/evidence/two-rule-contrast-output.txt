@@ -1,0 +1,77 @@
+[
+  {
+    "case": "batch",
+    "initial_binding": "probe.batch/v1",
+    "outcomes": [
+      {
+        "input": {
+          "observed": true,
+          "recorded": false
+        },
+        "disposition": "blocked",
+        "reason": "Batch requires both observed and recorded",
+        "no_write": true
+      },
+      {
+        "input": {
+          "observed": true,
+          "recorded": true
+        },
+        "disposition": "continued",
+        "before_revision": 9,
+        "after_revision": 10,
+        "next_work_id": "3a36c1a8-78fb-4bc6-a8f3-5a1059cb43f4",
+        "next_requirements": [
+          "probe.batch/v1"
+        ],
+        "backup_restored_exactly": true,
+        "restored_request_fingerprint": "845c74ba11031ec45d1dca6dfa591520ddb33a418c5c716ced0437689cbf06a5"
+      }
+    ]
+  },
+  {
+    "case": "cycle",
+    "initial_binding": "probe.cycle/v1:observe",
+    "outcomes": [
+      {
+        "input": {
+          "observed": true,
+          "recorded": false
+        },
+        "disposition": "continued",
+        "before_revision": 6,
+        "after_revision": 7,
+        "next_work_id": "8fce0bf7-e314-4ad6-b74e-c8a8d93b69ca",
+        "next_requirements": [
+          "probe.cycle/v1:record"
+        ],
+        "backup_restored_exactly": true,
+        "restored_request_fingerprint": "96f6233f62ee7ba2b9219972436dac140df9b15fdcb1c983488d63672d687f12"
+      },
+      {
+        "input": {
+          "observed": true,
+          "recorded": false
+        },
+        "disposition": "blocked",
+        "reason": "Record phase needs its recording mark",
+        "no_write": true
+      },
+      {
+        "input": {
+          "observed": false,
+          "recorded": true
+        },
+        "disposition": "continued",
+        "before_revision": 13,
+        "after_revision": 14,
+        "next_work_id": "258d78f5-31ff-42b7-afa5-b757e25c6444",
+        "next_requirements": [
+          "probe.cycle/v1:observe"
+        ],
+        "backup_restored_exactly": true,
+        "restored_request_fingerprint": "b1d6b647235d3158f3d41e222dcf413004163136fce8f96bf8f376ad4c70f326"
+      }
+    ]
+  }
+]

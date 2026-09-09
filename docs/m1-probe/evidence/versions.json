@@ -1,0 +1,87 @@
+{
+  "basis": "a6e6a2e5be90eed111504712c7443b8a907576c1",
+  "first_rule": "eeb5da071aa610b41ddf353f84db6a1da0fae076",
+  "both_rules": "fc32c8dcf79d88e2799e061638ad7b51ff94a98c",
+  "unchanged": [
+    {
+      "path": "src/zaratustra/core",
+      "git_objects": {
+        "a6e6a2e5be90eed111504712c7443b8a907576c1": "20e6ea1d9ea694e77404bd7de61f4fea83d9bd74",
+        "eeb5da071aa610b41ddf353f84db6a1da0fae076": "20e6ea1d9ea694e77404bd7de61f4fea83d9bd74",
+        "fc32c8dcf79d88e2799e061638ad7b51ff94a98c": "20e6ea1d9ea694e77404bd7de61f4fea83d9bd74"
+      }
+    },
+    {
+      "path": "src/zaratustra/local",
+      "git_objects": {
+        "a6e6a2e5be90eed111504712c7443b8a907576c1": "29b54ddd850f8f2fac59d4742e68bab09586307d",
+        "eeb5da071aa610b41ddf353f84db6a1da0fae076": "29b54ddd850f8f2fac59d4742e68bab09586307d",
+        "fc32c8dcf79d88e2799e061638ad7b51ff94a98c": "29b54ddd850f8f2fac59d4742e68bab09586307d"
+      }
+    },
+    {
+      "path": "src/zaratustra/cli",
+      "git_objects": {
+        "a6e6a2e5be90eed111504712c7443b8a907576c1": "9f2c1baba5730c7529d1e3de276fcbdb03d9f632",
+        "eeb5da071aa610b41ddf353f84db6a1da0fae076": "9f2c1baba5730c7529d1e3de276fcbdb03d9f632",
+        "fc32c8dcf79d88e2799e061638ad7b51ff94a98c": "9f2c1baba5730c7529d1e3de276fcbdb03d9f632"
+      }
+    },
+    {
+      "path": "tests/zaratustra/core",
+      "git_objects": {
+        "a6e6a2e5be90eed111504712c7443b8a907576c1": "ebb31dc2322fcdfa407ed27af3d2614e5fcc45c6",
+        "eeb5da071aa610b41ddf353f84db6a1da0fae076": "ebb31dc2322fcdfa407ed27af3d2614e5fcc45c6",
+        "fc32c8dcf79d88e2799e061638ad7b51ff94a98c": "ebb31dc2322fcdfa407ed27af3d2614e5fcc45c6"
+      }
+    },
+    {
+      "path": "uv.lock",
+      "git_objects": {
+        "a6e6a2e5be90eed111504712c7443b8a907576c1": "ac10e7d46ed961781e50718d1f972ce7c6b30b77",
+        "eeb5da071aa610b41ddf353f84db6a1da0fae076": "ac10e7d46ed961781e50718d1f972ce7c6b30b77",
+        "fc32c8dcf79d88e2799e061638ad7b51ff94a98c": "ac10e7d46ed961781e50718d1f972ce7c6b30b77"
+      }
+    },
+    {
+      "path": "validation.config",
+      "git_objects": {
+        "a6e6a2e5be90eed111504712c7443b8a907576c1": "6a378f85ba54672e04a1b5dbdcc60eb32dbd9800",
+        "eeb5da071aa610b41ddf353f84db6a1da0fae076": "6a378f85ba54672e04a1b5dbdcc60eb32dbd9800",
+        "fc32c8dcf79d88e2799e061638ad7b51ff94a98c": "6a378f85ba54672e04a1b5dbdcc60eb32dbd9800"
+      }
+    },
+    {
+      "path": "AGENTS.md",
+      "git_objects": {
+        "a6e6a2e5be90eed111504712c7443b8a907576c1": "eb0438baaa8b5d3e08ee6c1cb33e369e4d8b2bb9",
+        "eeb5da071aa610b41ddf353f84db6a1da0fae076": "eb0438baaa8b5d3e08ee6c1cb33e369e4d8b2bb9",
+        "fc32c8dcf79d88e2799e061638ad7b51ff94a98c": "eb0438baaa8b5d3e08ee6c1cb33e369e4d8b2bb9"
+      }
+    }
+  ],
+  "shared_runner_sha256": "4d831b2d4becff6d13c825afb91751118cea57ef41c50ad44816f2bfa9024bc1",
+  "second_changed_paths": "M\tsrc/zaratustra/process_probe/__init__.py\nA\tsrc/zaratustra/process_probe/cycle.py\nM\ttests/zaratustra/process_probe/test_boundary.py\nM\ttools/probe_m1.py\n",
+  "source_basis_parent": "05047e38acc7386484223a5feacc510b015b2a85",
+  "actual_runs": {
+    "first-batch": {
+      "python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]",
+      "executable": "C:\\projects\\zaratustra\\_scratch\\m1-probe-20260909\\.venv\\Scripts\\python.exe",
+      "product_root": "C:\\projects\\zaratustra\\_scratch\\m1-probe-20260909",
+      "commit": "eeb5da071aa610b41ddf353f84db6a1da0fae076",
+      "dirty": "",
+      "call": "c-solmax-zaratustra-m1-probe-admission-20260909-exec",
+      "owner_acceptance": "pending"
+    },
+    "two-rule-contrast": {
+      "python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]",
+      "executable": "C:\\projects\\zaratustra\\_scratch\\m1-probe-20260909\\.venv\\Scripts\\python.exe",
+      "product_root": "C:\\projects\\zaratustra\\_scratch\\m1-probe-20260909",
+      "commit": "fc32c8dcf79d88e2799e061638ad7b51ff94a98c",
+      "dirty": "",
+      "call": "c-solmax-zaratustra-m1-probe-admission-20260909-exec",
+      "owner_acceptance": "pending"
+    }
+  },
+  "scope": "Git bytes establish identity only; behavioral evidence is in the retained real Core runs"
+}

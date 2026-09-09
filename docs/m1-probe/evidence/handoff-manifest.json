@@ -1,0 +1,46 @@
+{
+  "source_commit": "fc32c8dcf79d88e2799e061638ad7b51ff94a98c",
+  "final_source_unchanged": true,
+  "archives": {
+    "first-batch": {
+      "files": 64,
+      "directories": 18,
+      "archive_sha256": "4c39dc6eed7c978d840b7952ed34eff0a35983fc25b57cf93f4cab54d53ffe8f"
+    },
+    "two-rule-contrast": {
+      "files": 158,
+      "directories": 46,
+      "archive_sha256": "16c4b779b925bd860d01608ea3dbe10197397f5132587832b7cd9c695a39666a"
+    }
+  },
+  "files": {
+    "RESULT.md": "47c998b0653eea74648511d085e53fa4408a4c966b69f09750f1f60e3b9325e9",
+    "docs/m1-probe/evidence/.gitattributes": "7ef271da9c1b8da02daa94b9867994b147c991a4fab09cb9c3d974a72c6861fc",
+    "docs/m1-probe/evidence/check-deliver.txt": "fbc54e74e3b5725bf4844ceae898311b282aa31a4be3534f683d1b3e04f3ffbb",
+    "docs/m1-probe/evidence/check-first-focused.txt": "08dccc81bc5a4280a28baf72fff57ded2e0819855de83657f72210b9ad0d35fc",
+    "docs/m1-probe/evidence/check-first-retry.txt": "87427c4c98e33822d6af5bc169c34cde59d06e74a938cd1fec547ceef9840b31",
+    "docs/m1-probe/evidence/check-first.txt": "8ef51fe2be3ceab5dabe57576c4572fb57dc436c306fe8d2eb14b1713cfae120",
+    "docs/m1-probe/evidence/check-second-focused.txt": "32d289b10f3809e02d7e96bf3ba6259b5e4620628d3e7eec214dd0f1c8fec5b0",
+    "docs/m1-probe/evidence/contrast-summary.json": "78689b8340a56cfa501369e9cf4b63797c7d0396a453235c7841c12cb1537ee1",
+    "docs/m1-probe/evidence/first-batch-manifest.json": "0187dc16fe4f2b4501f3e8811af42d03f778434fafeccecab8b7a2d38a9d3486",
+    "docs/m1-probe/evidence/first-batch-output.txt": "135289a1623b72711f438c56055753c8092c0514537b0163f41c4411387cd2e2",
+    "docs/m1-probe/evidence/first-batch.zip": "4c39dc6eed7c978d840b7952ed34eff0a35983fc25b57cf93f4cab54d53ffe8f",
+    "docs/m1-probe/evidence/from-m0.diff": "4a2a91537e9addd215ac8712343738e2659d50902468ed93c955a1c82803ad69",
+    "docs/m1-probe/evidence/second-connection.diff": "57d9b8b4920545eb8211d2e7a974c233752b28250322a8d5425e855db63aac1f",
+    "docs/m1-probe/evidence/two-rule-contrast-manifest.json": "46fa9285ec89b6cb6afbb769d350dbe8549dc33515e88016987ff74cc7c07729",
+    "docs/m1-probe/evidence/two-rule-contrast-output.txt": "78689b8340a56cfa501369e9cf4b63797c7d0396a453235c7841c12cb1537ee1",
+    "docs/m1-probe/evidence/two-rule-contrast.zip": "16c4b779b925bd860d01608ea3dbe10197397f5132587832b7cd9c695a39666a",
+    "docs/m1-probe/evidence/versions.json": "e4a30bd341529810d0f2ea31aabcd5dd2966d510cdab9a4951dcb9cce1299033",
+    "docs/m1-probe/PLAN.md": "987297a0032081af83e79cf8ff5e92be79176a3618e05a9bd47bac791ce17176",
+    "docs/m1-probe/READOUT.md": "d1762eb2f0d964445139e070f94e45af565bcf0294b4112673818eb261413132"
+  },
+  "native_deliver": {
+    "exit": 0,
+    "tests": 148,
+    "seconds": 35.86
+  },
+  "report_structure": "PASS after final docs-only update",
+  "owner_acceptance": "pending",
+  "binding_fresh_g5": "pending",
+  "next": "solmax"
+}

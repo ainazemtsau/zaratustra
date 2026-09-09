@@ -1,0 +1,197 @@
+diff --git a/src/zaratustra/process_probe/__init__.py b/src/zaratustra/process_probe/__init__.py
+index 706c010..1225396 100644
+--- a/src/zaratustra/process_probe/__init__.py
++++ b/src/zaratustra/process_probe/__init__.py
+@@ -1,6 +1,7 @@
+ """Narrow T1 rule seam, not the complete Process Pack contract."""
+ 
+ from .batch import BatchRule
++from .cycle import CycleRule
+ from .runner import Observation, Rule, RuleBlocked, propose_result
+ 
+-__all__ = ["BatchRule", "Observation", "Rule", "RuleBlocked", "propose_result"]
++__all__ = ["BatchRule", "CycleRule", "Observation", "Rule", "RuleBlocked", "propose_result"]
+diff --git a/src/zaratustra/process_probe/cycle.py b/src/zaratustra/process_probe/cycle.py
+new file mode 100644
+index 0000000..355285a
+--- /dev/null
++++ b/src/zaratustra/process_probe/cycle.py
+@@ -0,0 +1,35 @@
++"""Fictional alternating cycle: only the current persisted phase's mark is needed."""
++
++from uuid import UUID
++
++from zaratustra.core import NextWork, Work
++
++from .runner import Observation, RuleBlocked
++
++
++class CycleRule:
++    def next_work(
++        self, work: Work, observation: Observation, work_id: UUID, artifact_id: UUID
++    ) -> NextWork:
++        if work.executor_requirements == ("probe.cycle/v1:observe",):
++            if not observation.observed:
++                raise RuleBlocked("Observe phase needs its observation mark")
++            next_phase = "record"
++        elif work.executor_requirements == ("probe.cycle/v1:record",):
++            if not observation.recorded:
++                raise RuleBlocked("Record phase needs its recording mark")
++            next_phase = "observe"
++        else:
++            raise RuleBlocked("Work is not bound to a cycle probe v1 phase")
++        return NextWork(
++            work_id=work_id,
++            artifact_id=artifact_id,
++            goal=f"Perform the fictional {next_phase} phase",
++            expected_result=f"The {next_phase} mark",
++            acceptance=(f"The current {next_phase} phase has its own mark",),
++            boundaries=work.boundaries,
++            budget=work.budget,
++            executor_requirements=(f"probe.cycle/v1:{next_phase}",),
++            artifact_title=f"Fictional {next_phase} observation",
++            authority_scope="work_metadata",
++        )
+diff --git a/tests/zaratustra/process_probe/test_boundary.py b/tests/zaratustra/process_probe/test_boundary.py
+index 323d194..dcf9166 100644
+--- a/tests/zaratustra/process_probe/test_boundary.py
++++ b/tests/zaratustra/process_probe/test_boundary.py
+@@ -1,7 +1,7 @@
+ """Real Core tests for the rule seam's invisible state and authority obligations."""
+ 
+ from pathlib import Path
+-from typing import Any
++from typing import Any, cast
+ from uuid import uuid4
+ 
+ import pytest
+@@ -17,19 +17,25 @@ from zaratustra.core import (
+     read_workspace,
+     submit_result,
+ )
+-from zaratustra.process_probe import BatchRule, RuleBlocked, propose_result
++from zaratustra.process_probe import BatchRule, CycleRule, Rule, RuleBlocked, propose_result
++
++
++@pytest.fixture(params=[BatchRule(), CycleRule()])
++def rule(request: pytest.FixtureRequest) -> Rule:
++    return cast(Rule, request.param)
+ 
+ 
+ @pytest.fixture
+-def trial(tmp_path: Path) -> Trial:
++def trial(tmp_path: Path, rule: Rule) -> Trial:
+     trial = Trial(tmp_path / "workspace", tmp_path / "evidence")
+-    identity = trial.bootstrap("probe.batch/v1")
++    binding = "probe.batch/v1" if isinstance(rule, BatchRule) else "probe.cycle/v1:observe"
++    identity = trial.bootstrap(binding)
+     trial.observation(identity, dict(observed=True, recorded=True))
+     return trial
+ 
+ 
+-def test_rule_proposal_requires_separate_exact_authority(trial: Trial) -> None:
+-    request = proposed(trial.path, work_at(trial.path).id, BatchRule())
++def test_rule_proposal_requires_separate_exact_authority(trial: Trial, rule: Rule) -> None:
++    request = proposed(trial.path, work_at(trial.path).id, rule)
+     db = read_workspace(trial.path).database
+     before = db.read_bytes()
+     with pytest.raises(MutationError, match="permission_denied"):
+@@ -43,7 +49,9 @@ def test_rule_proposal_requires_separate_exact_authority(trial: Trial) -> None:
+     assert db.read_bytes() == before
+ 
+ 
+-def test_stale_context_foreign_process_and_unbound_rule_do_not_write(trial: Trial) -> None:
++def test_stale_context_foreign_process_and_unbound_rule_do_not_write(
++    trial: Trial, rule: Rule
++) -> None:
+     identity = work_at(trial.path).id
+     query = query_for(trial.path, identity)
+     before = read_workspace(trial.path).database.read_bytes()
+@@ -58,7 +66,7 @@ def test_stale_context_foreign_process_and_unbound_rule_do_not_write(trial: Tria
+                 trial.path,
+                 changed,
+                 confirm(trial.path, changed),
+-                BatchRule(),
++                rule,
+                 operation_id=uuid4(),
+                 next_work_id=uuid4(),
+                 next_artifact_id=uuid4(),
+@@ -67,21 +75,27 @@ def test_stale_context_foreign_process_and_unbound_rule_do_not_write(trial: Tria
+     trial.execute(trial.request(identity, "set_work_requirements", requirements=("unknown/v2",)))
+     before = read_workspace(trial.path).database.read_bytes()
+     with pytest.raises(RuleBlocked, match="not bound"):
+-        proposed(trial.path, identity, BatchRule())
++        proposed(trial.path, identity, rule)
+     assert read_workspace(trial.path).database.read_bytes() == before
+ 
+ 
+-def test_state_change_after_proposal_and_replay_preserve_one_effect(trial: Trial) -> None:
++def test_state_change_after_proposal_and_replay_preserve_one_effect(
++    trial: Trial, rule: Rule
++) -> None:
+     identity = work_at(trial.path).id
+-    request = proposed(trial.path, identity, BatchRule())
++    request = proposed(trial.path, identity, rule)
+     trial.execute(
+-        trial.request(identity, "set_work_requirements", requirements=("probe.batch/v1",))
++        trial.request(
++            identity,
++            "set_work_requirements",
++            requirements=work_at(trial.path, identity).executor_requirements,
++        )
+     )
+     before = read_workspace(trial.path).database.read_bytes()
+     with pytest.raises(MutationError, match="conflict"):
+         submit_result(trial.path, request, confirm(trial.path, request))
+     assert read_workspace(trial.path).database.read_bytes() == before
+-    request = proposed(trial.path, identity, BatchRule())
++    request = proposed(trial.path, identity, rule)
+     receipt = submit_result(trial.path, request, confirm(trial.path, request))
+     before = read_workspace(trial.path).database.read_bytes()
+     replay = MutationRequest.model_validate(
+@@ -97,3 +111,14 @@ def test_state_change_after_proposal_and_replay_preserve_one_effect(trial: Trial
+     assert read_result(trial.path, query, confirm(trial.path, query)).receipt == receipt
+     assert read_workspace(trial.path).database.read_bytes() == before
+     assert len([e for e in read_history(trial.path).events if e.request.submission]) == 1
++
++
++def test_rule_refusal_preserves_records_and_journal(trial: Trial, rule: Rule) -> None:
++    identity = work_at(trial.path).id
++    trial.observation(identity, dict(observed=False, recorded=False))
++    before = read_workspace(trial.path).database.read_bytes()
++    history = read_history(trial.path)
++    with pytest.raises(RuleBlocked):
++        proposed(trial.path, identity, rule)
++    assert read_workspace(trial.path).database.read_bytes() == before
++    assert read_history(trial.path) == history
+diff --git a/tools/probe_m1.py b/tools/probe_m1.py
+index 37ad2fd..7772376 100644
+--- a/tools/probe_m1.py
++++ b/tools/probe_m1.py
+@@ -38,7 +38,7 @@ from zaratustra.core import (
+     read_workspace,
+     submit_result,
+ )
+-from zaratustra.process_probe import BatchRule, Rule, RuleBlocked, propose_result
++from zaratustra.process_probe import BatchRule, CycleRule, Rule, RuleBlocked, propose_result
+ 
+ from .retain_trial import retain_trial
+ 
+@@ -340,6 +340,17 @@ def main() -> None:
+             "probe.batch/v1",
+             [dict(observed=True, recorded=False), dict(observed=True, recorded=True)],
+         ),
++        run_case(
++            base,
++            "cycle",
++            CycleRule(),
++            "probe.cycle/v1:observe",
++            [
++                dict(observed=True, recorded=False),
++                dict(observed=True, recorded=False),
++                dict(observed=False, recorded=True),
++            ],
++        ),
+     ]
+     save(base / "summary.json", results)
+     print(json.dumps(results, indent=2))

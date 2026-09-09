@@ -1,0 +1,26 @@
+$ C:\projects\zaratustra\_scratch\m1-probe-20260909\.venv\Scripts\python.exe -m ruff format --check src tools tests
+51 files already formatted
+$ C:\projects\zaratustra\_scratch\m1-probe-20260909\.venv\Scripts\python.exe -m ruff check src tools tests
+All checks passed!
+$ C:\projects\zaratustra\_scratch\m1-probe-20260909\.venv\Scripts\python.exe -m mypy src tools tests
+tests\zaratustra\process_probe\test_boundary.py:51: error: No overload variant of "__or__" of "dict" matches argument type "object"  [operator]
+tests\zaratustra\process_probe\test_boundary.py:51: note: Possible overload variants:
+tests\zaratustra\process_probe\test_boundary.py:51: note:     def __or__(self, dict[str, Any], /) -> dict[str, Any]
+tests\zaratustra\process_probe\test_boundary.py:51: note:     def [_T1, _T2] __or__(self, dict[_T1, _T2], /) -> dict[str | _T1, Any | _T2]
+Found 1 error in 1 file (checked 46 source files)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\projects\zaratustra\_scratch\m1-probe-20260909\tools\check.py", line 148, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "C:\projects\zaratustra\_scratch\m1-probe-20260909\tools\check.py", line 127, in main
+    run([sys.executable, "-m", "mypy", *files])
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\zaratustra\_scratch\m1-probe-20260909\tools\check.py", line 19, in run
+    subprocess.run(command, cwd=root, check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['C:\\projects\\zaratustra\\_scratch\\m1-probe-20260909\\.venv\\Scripts\\python.exe', '-m', 'mypy', 'src', 'tools', 'tests']' returned non-zero exit status 1.

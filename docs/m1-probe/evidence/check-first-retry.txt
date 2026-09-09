@@ -1,0 +1,178 @@
+$ C:\projects\zaratustra\_scratch\m1-probe-20260909\.venv\Scripts\python.exe -m ruff format --check src tools tests
+51 files already formatted
+$ C:\projects\zaratustra\_scratch\m1-probe-20260909\.venv\Scripts\python.exe -m ruff check src tools tests
+All checks passed!
+$ C:\projects\zaratustra\_scratch\m1-probe-20260909\.venv\Scripts\python.exe -m mypy src tools tests
+Success: no issues found in 46 source files
+$ C:\projects\zaratustra\_scratch\m1-probe-20260909\.venv\Scripts\lint-imports.EXE --no-cache
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 22 files, 52 dependencies.
+-----------------------------------
+
+CLI may depend on Core, Core cannot depend on CLI KEPT
+Core has no surface dependency KEPT
+Process probe uses Core; Core has no process-rule dependency KEPT
+Process rules have no trusted adapter dependency KEPT
+
+Contracts: 4 kept, 0 broken.
+$ C:\projects\zaratustra\_scratch\m1-probe-20260909\.venv\Scripts\python.exe -m pytest tests -q
+........................................................................ [ 50%]
+......................................................................F  [100%]
+================================== FAILURES ===================================
+_______ test_state_change_after_proposal_and_replay_preserve_one_effect _______
+
+connection = <sqlite3.Connection object at 0x0000021607B613F0>
+info = WorkspaceInfo(workspace=WindowsPath('C:/projects/zaratustra/_scratch/m1-probe-20260909/_scratch/runtime-tmp/pytest-of-...4-ac90-92387410e7df'), created_at=datetime.datetime(2026, 9, 9, 12, 3, 14, 835028, tzinfo=TzInfo(0)), schema_version=6)
+request = MutationRequest(version=4, operation_id=UUID('8ee81de3-5ece-4ac2-b5b1-36bf009ceef0'), workspace_id=UUID('85f30fff-4f70...requirements=('probe.batch/v1',), artifact_title='Next fictional batch observation', authority_scope='work_metadata')))
+caller = LocalAuthorization(confirmation=Confirmation(channel='local-chat', actor='T1-fictional-probe-adapter', source_ref='RUN...te_change_after_propos0/workspace', request_sha256='ff81a388ec48803912289401021e6ad96dad5650daae20a83a2c8d306fe2d4ac'))
+content = None
+
+    def _mutate(
+        connection: sqlite3.Connection,
+        info: WorkspaceInfo,
+        request: MutationRequest,
+        caller: LocalAuthorization | None,
+        content: bytes | None,
+    ) -> MutationReceipt:
+        if info.schema_version < 3 or (request.version == 2 and info.schema_version < 4):
+            raise MutationError("schema", "Mutation requires explicit migration to 3/4")
+        if request.version == 3 and info.schema_version < 5:
+            raise MutationError("schema", "Handoff import requires explicit migration to 5")
+        if request.version == 4 and info.schema_version < 6:
+            raise MutationError("schema", "Result requires explicit migration to 6")
+        # 2. Current Work + authority, in the same write transaction as the effect.
+        snapshot = _read_records(connection, info.workspace_id)
+        confirmation = _caller(info.workspace, request, caller, snapshot)
+        before = _work(snapshot, request.work_id)
+        artifact = current_artifact(snapshot, request.work_id)
+        try:
+>           after = evolve_work(before, request)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+src\zaratustra\core\mutations.py:427: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+work = Work(id=UUID('e2caf36e-527e-44f0-bb2a-2442aca0438c'), revision=8, created_at=datetime.datetime(2026, 9, 9, 12, 3, 14, ...dependencies=(), executor_requirements=('probe.batch/v1',), completion_id=UUID('8ee81de3-5ece-4ac2-b5b1-36bf009ceef0'))
+request = MutationRequest(version=4, operation_id=UUID('8ee81de3-5ece-4ac2-b5b1-36bf009ceef0'), workspace_id=UUID('85f30fff-4f70...requirements=('probe.batch/v1',), artifact_title='Next fictional batch observation', authority_scope='work_metadata')))
+
+    def evolve_work(work: Work, request: MutationRequest) -> Work:
+        """Narrow state transition, also used to validate retained journal before/after images."""
+        if request.work_id != work.id:
+            raise ValueError("Wrong Work")
+        change: dict[str, object] = {"revision": request.expected_revision + 1}
+        if request.operation == "revoke_work":
+            change["authority_scope"] = "none"
+        elif request.operation == "authorize_work":
+            if work.status in ("cancelled", "done"):
+                raise ValueError("Terminal Work cannot be authorized")
+            change.update(status="ready", authority_scope="work_metadata")
+        else:
+            repair_done = work.status == "done" and request.operation == "restore_artifact"
+            if (work.status != "ready" and not repair_done) or work.authority_scope not in (
+                "work_metadata",
+                "work_metadata_and_artifact",
+            ):
+>               raise ValueError("Work is not ready or has no current permission")
+E               ValueError: Work is not ready or has no current permission
+
+src\zaratustra\core\protocol.py:280: ValueError
+
+The above exception was the direct cause of the following exception:
+
+trial = <tools.probe_m1.Trial object at 0x000002160AB09BD0>
+
+    def test_state_change_after_proposal_and_replay_preserve_one_effect(trial: Trial) -> None:
+        identity = work_at(trial.path).id
+        request = proposed(trial.path, identity, BatchRule())
+        trial.execute(
+            trial.request(identity, "set_work_requirements", requirements=("probe.batch/v1",))
+        )
+        before = read_workspace(trial.path).database.read_bytes()
+        with pytest.raises(MutationError, match="conflict"):
+            submit_result(trial.path, request, confirm(trial.path, request))
+        assert read_workspace(trial.path).database.read_bytes() == before
+        request = proposed(trial.path, identity, BatchRule())
+        receipt = submit_result(trial.path, request, confirm(trial.path, request))
+        before = read_workspace(trial.path).database.read_bytes()
+        replay = MutationRequest.model_validate(
+            request.model_dump() | dict(expected_revision=read_records(trial.path).state_revision)
+        )
+>       assert submit_result(trial.path, replay, confirm(trial.path, replay)) == receipt
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\zaratustra\process_probe\test_boundary.py:88: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\zaratustra\core\mutations.py:652: in submit_result
+    return apply_mutation(path, request, caller)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\zaratustra\core\mutations.py:589: in apply_mutation
+    receipt = _mutate(connection, info, request, caller, content)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+connection = <sqlite3.Connection object at 0x0000021607B613F0>
+info = WorkspaceInfo(workspace=WindowsPath('C:/projects/zaratustra/_scratch/m1-probe-20260909/_scratch/runtime-tmp/pytest-of-...4-ac90-92387410e7df'), created_at=datetime.datetime(2026, 9, 9, 12, 3, 14, 835028, tzinfo=TzInfo(0)), schema_version=6)
+request = MutationRequest(version=4, operation_id=UUID('8ee81de3-5ece-4ac2-b5b1-36bf009ceef0'), workspace_id=UUID('85f30fff-4f70...requirements=('probe.batch/v1',), artifact_title='Next fictional batch observation', authority_scope='work_metadata')))
+caller = LocalAuthorization(confirmation=Confirmation(channel='local-chat', actor='T1-fictional-probe-adapter', source_ref='RUN...te_change_after_propos0/workspace', request_sha256='ff81a388ec48803912289401021e6ad96dad5650daae20a83a2c8d306fe2d4ac'))
+content = None
+
+    def _mutate(
+        connection: sqlite3.Connection,
+        info: WorkspaceInfo,
+        request: MutationRequest,
+        caller: LocalAuthorization | None,
+        content: bytes | None,
+    ) -> MutationReceipt:
+        if info.schema_version < 3 or (request.version == 2 and info.schema_version < 4):
+            raise MutationError("schema", "Mutation requires explicit migration to 3/4")
+        if request.version == 3 and info.schema_version < 5:
+            raise MutationError("schema", "Handoff import requires explicit migration to 5")
+        if request.version == 4 and info.schema_version < 6:
+            raise MutationError("schema", "Result requires explicit migration to 6")
+        # 2. Current Work + authority, in the same write transaction as the effect.
+        snapshot = _read_records(connection, info.workspace_id)
+        confirmation = _caller(info.workspace, request, caller, snapshot)
+        before = _work(snapshot, request.work_id)
+        artifact = current_artifact(snapshot, request.work_id)
+        try:
+            after = evolve_work(before, request)
+            if request.operation in ARTIFACT_OPERATIONS and request.artifact_id != artifact.id:
+                raise ValueError("The scope permits only this Work's declared Artifact")
+        except ValueError as error:
+>           raise MutationError("permission_denied", str(error)) from error
+E           zaratustra.core.mutations.MutationError: permission_denied: Work is not ready or has no current permission
+
+src\zaratustra\core\mutations.py:431: MutationError
+=========================== short test summary info ===========================
+FAILED tests/zaratustra/process_probe/test_boundary.py::test_state_change_after_proposal_and_replay_preserve_one_effect
+1 failed, 142 passed in 34.58s
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\projects\zaratustra\_scratch\m1-probe-20260909\tools\check.py", line 148, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "C:\projects\zaratustra\_scratch\m1-probe-20260909\tools\check.py", line 134, in main
+    run([sys.executable, "-m", "pytest", *(test_files or ["tests"]), "-q"])
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\zaratustra\_scratch\m1-probe-20260909\tools\check.py", line 19, in run
+    subprocess.run(command, cwd=root, check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['C:\\projects\\zaratustra\\_scratch\\m1-probe-20260909\\.venv\\Scripts\\python.exe', '-m', 'pytest', 'tests', '-q']' returned non-zero exit status 1.
