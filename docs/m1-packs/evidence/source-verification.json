@@ -1,0 +1,294 @@
+{
+  "basis": "f67959e7c1a412c202ebb0d6e67938ec4355042f",
+  "source": "f728ad6a8645ba04532e1cd74a34ea57c31c4dd8",
+  "plan": "8dfaa5c50faa6c50bd6e67d357ee7bcef3dbf200",
+  "runtime_commit": "f728ad6a8645ba04532e1cd74a34ea57c31c4dd8",
+  "runtime_source_diff": "",
+  "committed_files": {
+    "AGENTS.md": {
+      "sha256": "3a3034eb3230fc89cfb3c17a23b26c1e219deb0cf4a801fff6fdcdfed1de099a",
+      "size": 6422
+    },
+    "docs/m1-packs/PLAN.md": {
+      "sha256": "80bc48afe01e1304e0aff6a02b7bb8a94d167c547980b2ec8fd2454816bf298a",
+      "size": 9950
+    },
+    "pyproject.toml": {
+      "sha256": "faa950be6cb6f3b95d28e4f4027183d43caa17c617e16c625acbf5baf7d5c11f",
+      "size": 2021
+    },
+    "src/zaratustra/AGENTS.md": {
+      "sha256": "119939515a4f03678d075aa86bc22d1672e7250d402897e9ffcf2272c52b2b93",
+      "size": 300
+    },
+    "src/zaratustra/__init__.py": {
+      "sha256": "3746eb54a1ec89225dbad473e995bae88ea9a18f610995e445bdac608cb687de",
+      "size": 62
+    },
+    "src/zaratustra/cli/AGENTS.md": {
+      "sha256": "52cc394338d4a82e79b31c3ec7747f7e43cf9c0b7d108fd2cd2a0aa60067c0d6",
+      "size": 2000
+    },
+    "src/zaratustra/cli/__init__.py": {
+      "sha256": "2c9a30371204e768abf9961bc56ebef880c9cf8b0156dd4731fc9be052a43117",
+      "size": 12374
+    },
+    "src/zaratustra/core/AGENTS.md": {
+      "sha256": "6336fd50c5b6554cf3d521fc514f0a2382c85c583d01e2d7d63037b92ce28061",
+      "size": 4016
+    },
+    "src/zaratustra/core/__init__.py": {
+      "sha256": "8b482b96aa427382bf4170b781bd2b9c15a4f20093ac090a2aad6249fa412799",
+      "size": 2473
+    },
+    "src/zaratustra/core/artifacts.py": {
+      "sha256": "46e5079ff1245d1f45a88559c0c61cf248c617d964c3c55838d135d0889f67b4",
+      "size": 6363
+    },
+    "src/zaratustra/core/context.py": {
+      "sha256": "7465ede96f060da8a81aad9c6991fda7f4329221ec0b1498278782ba7a5a0ac4",
+      "size": 11377
+    },
+    "src/zaratustra/core/handoffs.py": {
+      "sha256": "bc17ac0a62c37f2192a60a99406ab93234ddca0b7990890474504fad7318f01f",
+      "size": 2648
+    },
+    "src/zaratustra/core/migration_v2.py": {
+      "sha256": "bfbb7c16ac43239e9775058d48a9716a867865fa58ddda2af318bcb7ac599a6f",
+      "size": 1293
+    },
+    "src/zaratustra/core/migration_v3.py": {
+      "sha256": "78e1798b59e97ca33bf0db2758fb9505fcbfeaa1fb7cf73999e227564eb4e479",
+      "size": 1151
+    },
+    "src/zaratustra/core/migration_v4.py": {
+      "sha256": "4832ca48d25cbc68efa94cb8d100c68f9b43b61eda203e2f01408c712b1ba1e1",
+      "size": 891
+    },
+    "src/zaratustra/core/migration_v5.py": {
+      "sha256": "840bd878273e8d9d40c624b12161f3e480c2e9604255e57eb895d301c819c51e",
+      "size": 905
+    },
+    "src/zaratustra/core/migration_v6.py": {
+      "sha256": "05c9251c53a7b651a942f957e7caccaedb7a2c3f4a5923dcb3ebd5714c6fb69c",
+      "size": 1013
+    },
+    "src/zaratustra/core/migration_v7.py": {
+      "sha256": "0d68fedc52de5439fbe619a8fed45bb9c4e005ce8234d6b8e91c3496d53c7130",
+      "size": 769
+    },
+    "src/zaratustra/core/migrations.py": {
+      "sha256": "e02eabf89c1e5692587cd945f686b45bffc54971f79339d13923c9a2c13f66b4",
+      "size": 1549
+    },
+    "src/zaratustra/core/mutations.py": {
+      "sha256": "3d7d467dc58a21fdcaf3b013ee039c6bfaa2706d20a58d48578dafd9134c0619",
+      "size": 31945
+    },
+    "src/zaratustra/core/projections.py": {
+      "sha256": "8b77413868b84706fadeee061112320e468cdc595687a15138b0dea632051227",
+      "size": 3514
+    },
+    "src/zaratustra/core/protocol.py": {
+      "sha256": "46a9a76e78efc8fa7b8d3e63ac1c014cda93a0813e732464c0a3a840c34639bd",
+      "size": 21679
+    },
+    "src/zaratustra/core/records.py": {
+      "sha256": "998a5b1c69b70dbcdcc74c22584e3fa80e36c3b0a2c4440a3cd94b38f013a489",
+      "size": 11699
+    },
+    "src/zaratustra/core/results.py": {
+      "sha256": "777e63802cd8c761f734bc0e8a82e13f44ff16943ac5444606efb490060bea09",
+      "size": 3837
+    },
+    "src/zaratustra/core/workspace.py": {
+      "sha256": "9cee9ee9a5c26b0e4d40c114cc50acf2411127f63797a7aca12f57e245a11f67",
+      "size": 12351
+    },
+    "src/zaratustra/local/AGENTS.md": {
+      "sha256": "9b43979c2a5ff867e0507ee56acb94057738b4bcc345fc6006f4dc914dc687ff",
+      "size": 778
+    },
+    "src/zaratustra/local/__init__.py": {
+      "sha256": "89ddc2e43d350dfbebea9b116d095eeed8756a55a3e4a0b761a33aad4afe37df",
+      "size": 2093
+    },
+    "src/zaratustra/process_packs/AGENTS.md": {
+      "sha256": "4cc2954ac800d3f8c280e8218601f6c58592faff3dd6787f5e306b1bf768711d",
+      "size": 730
+    },
+    "src/zaratustra/process_packs/__init__.py": {
+      "sha256": "54caab70b9b760d855fa98bb62be90e67a2203ed8daf4435d166e3b14bbed60d",
+      "size": 349
+    },
+    "src/zaratustra/process_packs/lifecycle.py": {
+      "sha256": "aba40d2a9cf184a24f5cd7029ee3e81fee23cb0c43f3d40738040197b3f2b1c9",
+      "size": 3622
+    },
+    "src/zaratustra/process_packs/runner.py": {
+      "sha256": "56e86e0349eb811c4e504241551da26258132b25b6f73567219c85e887005c5c",
+      "size": 2668
+    },
+    "src/zaratustra/process_probe/AGENTS.md": {
+      "sha256": "a3aa4cde46cf6f55ea9105e1cd5c41dc18ec4620d252771e8ca168618b686e9e",
+      "size": 467
+    },
+    "src/zaratustra/process_probe/__init__.py": {
+      "sha256": "90831bfd55ab3f79679e968448d70311f823d0817e0a4f96eed90b9dd9efb85d",
+      "size": 287
+    },
+    "src/zaratustra/process_probe/batch.py": {
+      "sha256": "fc3e4e7e0109ab2d326c8d30486e58292a0ba06fbf53461bb58722abba0f05f4",
+      "size": 1130
+    },
+    "src/zaratustra/process_probe/cycle.py": {
+      "sha256": "11bd9eeea0fb119bfe8091ddad898bdc746fbf3caa007365ef70fbfe66512830",
+      "size": 1424
+    },
+    "src/zaratustra/process_probe/runner.py": {
+      "sha256": "4d831b2d4becff6d13c825afb91751118cea57ef41c50ad44816f2bfa9024bc1",
+      "size": 2730
+    },
+    "src/zaratustra/py.typed": {
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "size": 1
+    },
+    "tests/__init__.py": {
+      "sha256": "e79085492eb49beb5adeefa62c8c934895bbadb7a5991eb9c0ed7a294cc3e3a4",
+      "size": 83
+    },
+    "tests/tools/test_check.py": {
+      "sha256": "8ffa6de4d80cf62f1fa93511b50bb685fa2e2f0d96f9f660f349d43be87f8a12",
+      "size": 6235
+    },
+    "tests/tools/test_retain_trial.py": {
+      "sha256": "6b6fb65b9464fef8c03fda995c485ca696f9d3f0a02ab82e5b3317059a9cc5af",
+      "size": 1200
+    },
+    "tests/zaratustra/core/test_artifacts.py": {
+      "sha256": "052a889026ad59e081e3c6f389f7911f1e4618f919770fae5bf1fec3bccc74d3",
+      "size": 23046
+    },
+    "tests/zaratustra/core/test_context.py": {
+      "sha256": "c2ddd2725fb4460c49a62f71e7d0daff4a70edfc4000b3058d1048e0bb1df993",
+      "size": 11948
+    },
+    "tests/zaratustra/core/test_handoffs.py": {
+      "sha256": "fad715445a0f995d321877cce3449c332a109b7a6dbb155289cf3eb5ceea4cbf",
+      "size": 15899
+    },
+    "tests/zaratustra/core/test_mutations.py": {
+      "sha256": "da085026919dd432d072ca51a687ae0992408699cb4074b252ba3b3de902d398",
+      "size": 15356
+    },
+    "tests/zaratustra/core/test_pack_bindings.py": {
+      "sha256": "f781680678ed1dde733f6ff5449a5d3b3e2c13d43e583e69512dba19c71295bb",
+      "size": 8784
+    },
+    "tests/zaratustra/core/test_records.py": {
+      "sha256": "c5b886199b6dcd18e7c3e5581b5fb87de7dc2e386371b68e4c3d8c8221ee7c84",
+      "size": 8182
+    },
+    "tests/zaratustra/core/test_results.py": {
+      "sha256": "de280c077115641892504d5e580408fc96d5ec0bdda7414cb0864323a64d0bf4",
+      "size": 20286
+    },
+    "tests/zaratustra/core/test_workspace.py": {
+      "sha256": "e251dd307470a26a3dad9530bbfc85fa9ab069dfd4c4b38152ec88fc863f4abd",
+      "size": 4196
+    },
+    "tests/zaratustra/local/test_confirmation.py": {
+      "sha256": "e59fb0890c177082a62175a7c9c8a5f14acc20d8464116bf920677b2d22e6776",
+      "size": 3538
+    },
+    "tests/zaratustra/local/test_handoff_delivery.py": {
+      "sha256": "30d39111685a87be58fffd8e374cb5c2b2bbd30f5b73a18ef480576e860b208c",
+      "size": 3321
+    },
+    "tests/zaratustra/process_packs/test_lifecycle.py": {
+      "sha256": "676fac621ebc8e5f96c6d25d42e0cbfde5880b7b40fb66a5ca4a9e52c2e822ad",
+      "size": 8760
+    },
+    "tests/zaratustra/process_probe/test_boundary.py": {
+      "sha256": "6346b33391a4fb710b41b10c3abac1637cde602b42335fc8d4bf852d6e4e11c4",
+      "size": 5127
+    },
+    "tools/__init__.py": {
+      "sha256": "68f53236abbf4ba2681ef2c1b364b0cda6994e5e258d748177669ad80f7a7930",
+      "size": 58
+    },
+    "tools/check.py": {
+      "sha256": "6f3f1c2455da07bd275e69812f7e5643efe9468e672a461815ca3a7a0acaab80",
+      "size": 6424
+    },
+    "tools/probe_artifacts.py": {
+      "sha256": "3ca230670ebfc282c8c9a99edfc1cbbad0c483f3d0abbe68bcadade2091eeb37",
+      "size": 14540
+    },
+    "tools/probe_context.py": {
+      "sha256": "707c31413fbb2ea8b8deb548afaa5020f6dde16f193e929572857557ce1daa49",
+      "size": 17697
+    },
+    "tools/probe_handoffs.py": {
+      "sha256": "2e284def2ebe3876b97d07a8a695cb388f8e4c7c28aab4463e28d3c672d27af1",
+      "size": 16447
+    },
+    "tools/probe_install.py": {
+      "sha256": "87cb9cfcc579dbc54ea4520c6020e5b3fb46128404ca98182984e457abfa4137",
+      "size": 5759
+    },
+    "tools/probe_m1.py": {
+      "sha256": "33c87ca97736f3d0ddf332612e5c95092ead7033591f87f7754d06ad02c02f96",
+      "size": 14925
+    },
+    "tools/probe_mutations.py": {
+      "sha256": "4c82bfa5568e984076833bcca5b97ed0598ce9b0a36baf67e4fe655a68f5949b",
+      "size": 9608
+    },
+    "tools/probe_packs.py": {
+      "sha256": "e08d466f7ec0cfd5b87262bbdf7fa6ae28fc43a7b28087fefe2beb0313dcb2a7",
+      "size": 14888
+    },
+    "tools/probe_records.py": {
+      "sha256": "56934dcd450a9bc5717d508af5b0c76a13bfd2549c028cd242df67d33d33bea9",
+      "size": 8415
+    },
+    "tools/probe_result.py": {
+      "sha256": "a359b7d9ebe1ba024f20a10a3750d957d1125e8a6a0adbe9abbcd069ae86d5de",
+      "size": 19991
+    },
+    "tools/retain_trial.py": {
+      "sha256": "fe82fcd618c1917c8f019a658597ebdb961cd16f406901eef654c290307f615f",
+      "size": 2984
+    },
+    "uv.lock": {
+      "sha256": "7bbfb3bb52a6414f425f8830461914fdf4198cc80f8ff1ee43f948baf1727c73",
+      "size": 50133
+    },
+    "validation.config": {
+      "sha256": "450f08e6af97ccd104bd84499c8fd28a213e55e8a8515b1151ce01e43e5da9db",
+      "size": 1717
+    }
+  },
+  "unchanged_from_basis": [
+    "src/zaratustra/core/migrations.py",
+    "src/zaratustra/core/migration_v2.py",
+    "src/zaratustra/core/migration_v3.py",
+    "src/zaratustra/core/migration_v4.py",
+    "src/zaratustra/core/migration_v5.py",
+    "src/zaratustra/core/migration_v6.py",
+    "src/zaratustra/process_probe",
+    "src/zaratustra/local",
+    "validation.config",
+    "tests/zaratustra/core/test_artifacts.py",
+    "tests/zaratustra/core/test_context.py",
+    "tests/zaratustra/core/test_handoffs.py",
+    "tests/zaratustra/core/test_mutations.py",
+    "tests/zaratustra/core/test_records.py",
+    "tests/zaratustra/core/test_results.py",
+    "tests/zaratustra/core/test_workspace.py",
+    "tests/zaratustra/process_probe",
+    "tests/zaratustra/local"
+  ],
+  "note": "Git blob/hash provenance only; behavior comes from native checks and real Core lifecycle"
+}

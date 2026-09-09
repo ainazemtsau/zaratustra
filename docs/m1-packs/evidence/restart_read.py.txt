@@ -1,0 +1,55 @@
+"""Read the retained T2 workspace in a separate interpreter; no state writes."""
+
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+from zaratustra.core import (
+    ContextQuery, Process, Work, authorize_local, open_work, prepare_authorization,
+    read_history, read_records, read_workspace,
+)
+from zaratustra.process_packs import PackError, PackRegistration, PackRegistry
+
+
+class NeverRun:
+    def next_work(self, *args, **kwargs):
+        raise AssertionError("This fresh interpreter only inspects state and resolves registration")
+
+
+path = Path(sys.argv[1]).resolve()
+before = read_workspace(path).database.read_bytes()
+snapshot = read_records(path)
+process = next(row for row in snapshot.records if isinstance(row, Process))
+work = next(row for row in snapshot.records if isinstance(row, Work) and row.status == "ready")
+assert work.pack_binding == process.pack_binding and work.pack_binding is not None
+query = ContextQuery(
+    workspace_id=snapshot.workspace_id, work_id=work.id, process_id=process.id,
+    expected_revision=snapshot.state_revision, max_bytes=1048576,
+)
+caller = authorize_local(
+    prepare_authorization(path, query), channel="local-chat",
+    actor="T2-fictional-restart-reader",
+    source_ref="RUN c-solmax-zaratustra-m1-packs-20260909-exec; retained fictional read only",
+)
+context = open_work(path, query, caller)
+installed = PackRegistry((PackRegistration(work.pack_binding, NeverRun()),))
+assert installed.resolve(work.pack_binding).reference == work.pack_binding
+try:
+    PackRegistry().resolve(work.pack_binding)
+except PackError as error:
+    assert error.code == "missing_pack"
+else:
+    raise AssertionError("Missing installation was inferred from retained state")
+assert read_workspace(path).database.read_bytes() == before
+print(json.dumps(dict(
+    workspace_id=str(snapshot.workspace_id), process_id=str(process.id), work_id=str(work.id),
+    schema=read_workspace(path).schema_version, revision=snapshot.state_revision,
+    process_binding=process.pack_binding.model_dump(mode="json"),
+    work_binding=work.pack_binding.model_dump(mode="json"),
+    work_status=work.status, authority_scope=work.authority_scope,
+    history_events=len(read_history(path).events),
+    context_sha256=hashlib.sha256(context.output).hexdigest(),
+    database_sha256=hashlib.sha256(before).hexdigest(), no_write=True,
+    absent_registry="missing_pack", exact_registry="resolved", physical_g5=False,
+), indent=2))

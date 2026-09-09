@@ -1,0 +1,30 @@
+{
+  "workspace_id": "d736d3b9-0933-41e0-bc8b-f8e5875e7e5a",
+  "process_id": "98a35214-a003-4f7a-a286-6d0091ba9584",
+  "work_id": "bc3791c8-b6ec-4d30-8faf-19e9efdc558d",
+  "schema": 7,
+  "revision": 8,
+  "process_binding": {
+    "pack_id": "fictional.batch",
+    "pack_version": "1.0.0",
+    "process_type": "fictional.batch-check",
+    "contract_version": 1,
+    "state_version": 1
+  },
+  "work_binding": {
+    "pack_id": "fictional.batch",
+    "pack_version": "1.0.0",
+    "process_type": "fictional.batch-check",
+    "contract_version": 1,
+    "state_version": 1
+  },
+  "work_status": "ready",
+  "authority_scope": "work_metadata",
+  "history_events": 7,
+  "context_sha256": "bf22e592a163cfe27f424ca182983239febce89c46478ec5431be1211a0f179e",
+  "database_sha256": "e23d904caba9ec42c819b597147f981da9462c10e438f384b65d05ee8fe77ec6",
+  "no_write": true,
+  "absent_registry": "missing_pack",
+  "exact_registry": "resolved",
+  "physical_g5": false
+}

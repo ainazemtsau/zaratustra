@@ -1,0 +1,2 @@
+# Retained command output and diffs keep exact bytes, including CRLF/ASCII-art spaces.
+* -text -whitespace

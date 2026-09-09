@@ -1,0 +1,50 @@
+{
+  "binding_revision": [
+    3,
+    4
+  ],
+  "result_revision": [
+    7,
+    8
+  ],
+  "process_work_and_next_binding": {
+    "pack_id": "fictional.batch",
+    "pack_version": "1.0.0",
+    "process_type": "fictional.batch-check",
+    "contract_version": 1,
+    "state_version": 1
+  },
+  "refusals": [
+    {
+      "case": "missing",
+      "code": "missing_pack",
+      "no_write": true
+    },
+    {
+      "case": "v2-only",
+      "code": "missing_pack",
+      "no_write": true
+    },
+    {
+      "case": "incompatible-contract",
+      "code": "incompatible_pack",
+      "no_write": true
+    },
+    {
+      "case": "incompatible-state",
+      "code": "incompatible_pack",
+      "no_write": true
+    },
+    {
+      "case": "in-place-version-change",
+      "code": "permission_denied",
+      "no_write": true
+    }
+  ],
+  "rights_unchanged_by_bind": true,
+  "proposal_without_authority": "permission_denied",
+  "restore_legacy_bind_and_result": "exact bytes/layout, then real Core read/mutation",
+  "v2_independent_process": "bound and continued; v1 Process unchanged",
+  "manual_acceptance": "pending",
+  "binding_g5": "pending"
+}

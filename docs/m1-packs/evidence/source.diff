@@ -1,0 +1,1617 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index eb0438b..dc78880 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -21,6 +21,11 @@ with separate trusted console confirmation and durable acceptance/provenance rea
+ Work 6 adds read-only open_work with exact trusted query, bounded actual manifest,
+ scope/reference closure and full final revalidation. Work7 adds explicit schema6,
+ atomic Result/completion/next Work and exact inherited context; Work8 is unimplemented.
++M1 T2 adds explicit schema7 and exact immutable Process/Work pack binding through
++Mutation API, external runtime registration/resolution and pinned continuation.
++Missing/incompatible packs refuse package execution; no in-place version migration.
++Technical plan and lifecycle reproduction: docs/m1-packs/PLAN.md and tools.probe_packs.
++Seven capabilities and the full two-Process M1 remain separate work.
+ `src/zaratustra/core` owns workspace logic; `src/zaratustra/cli` delegates to it.
+ Installed product code and user-chosen data workspace are separate.
+ Read the current CALL before doing product work; a completed Work admits no successor.
+diff --git a/README.md b/README.md
+index c33bbe5..d97f95e 100644
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,13 @@
+ # Zaratustra
+ 
+-Version **0.5.0**, Work 5: `zara init` creates a local workspace;
++Version **0.8.0**, M1 T2: exact external pack registration and immutable Process/Work
++binding, with explicit schema7. A newer installed pack never retargets unfinished
++Work; missing/incompatible versions refuse package continuation. The lifecycle
++uses the existing Core authority, Mutation and history boundary.
++See [T2 plan](docs/m1-packs/PLAN.md) and [current report](RESULT.md).
++The seven capabilities, full two-process scenarios and common overview remain later M1 work.
++
++The underlying M0 foundation: `zara init` creates a local workspace;
+ `zara migrate` explicitly adds schema 4; `zara records create` stores initial
+ Process, draft Work, declared Artifact and Event records with revisions.
+ `zara status` and `zara records read` read persisted facts in later invocations.
+@@ -21,7 +28,7 @@ build. The installation probe installs the wheel with locked runtime dependencie
+ in a disposable environment outside checkout, runs the real `zara` executable in
+ separate processes, then cleans up its own temporary folders.
+ 
+-For the current run, follow [installation and walkthrough](docs/work5/INSTALL.md).
++For the M0 Handoff walkthrough, see [Work 5 installation](docs/work5/INSTALL.md).
+ Run the installed commands in a newly created empty folder, or name that folder:
+ 
+ ```text
+@@ -64,11 +71,13 @@ surfaces. `zara migrate <workspace> --to 5` explicitly enables Handoff storage.
+ exact console confirmation and records accepted_result with provenance through
+ the same Mutation API. `zara handoff list <workspace>` reads saved acceptances;
+ `zara handoff schema` prints the portable JSON schema. A receipt records the prior
+-effect, not late availability of referenced bytes. Context, submit_result and
+-next Work remain Works 6–8.
+-M0 is not closed; no personal workspace is selected.
++effect, not late availability of referenced bytes. Work6 provides authorized
++`work open`; Work7 adds schema6 and atomic `result submit`/next Work.
++`zara migrate <workspace> --to 7` admits exact pack binding explicitly;
++the default target remains 4. T2 package use is through the public Python API.
++M0 remains partial; no personal workspace is selected.
+ 
+-Read [lifecycle decisions and W19–W27](docs/work5/PLAN.md) before later work,
++Read [pack lifecycle decisions and W15–W20](docs/m1-packs/PLAN.md) before later M1 work,
+ and [Product RESULT](RESULT.md) for exact commits and runtime evidence.
+ Setup evidence remains under docs/setup/ as history. Windows is the observed
+ platform; Linux/macOS and an independent participant's installation remain unverified.
+diff --git a/pyproject.toml b/pyproject.toml
+index 98a2311..a4a0a70 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,6 +1,6 @@
+ [project]
+ name = "zaratustra"
+-version = "0.7.0"
++version = "0.8.0"
+ description = "Zaratustra local workspace and transactional mutation protocol"
+ readme = "README.md"
+ requires-python = ">=3.13,<3.14"
+@@ -64,3 +64,15 @@ dev = [
+     "pytest==9.1.1",
+     "ruff==0.16.6",
+ ]
++
++[[tool.importlinter.contracts]]
++name = "Core has no external pack dependency"
++type = "forbidden"
++source_modules = ["zaratustra.core"]
++forbidden_modules = ["zaratustra.process_packs"]
++
++[[tool.importlinter.contracts]]
++name = "Packs have no trusted adapter or fictional probe dependency"
++type = "forbidden"
++source_modules = ["zaratustra.process_packs"]
++forbidden_modules = ["zaratustra.local", "zaratustra.cli", "zaratustra.process_probe"]
+diff --git a/src/zaratustra/cli/__init__.py b/src/zaratustra/cli/__init__.py
+index 19df179..f77ebc0 100644
+--- a/src/zaratustra/cli/__init__.py
++++ b/src/zaratustra/cli/__init__.py
+@@ -78,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
+         command = commands.add_parser(name, help=description, description=description)
+         command.add_argument("path", nargs="?", default=".", type=Path)
+         if name == "migrate":
+-            command.add_argument("--to", type=int, choices=(2, 3, 4, 5, 6), default=4)
++            command.add_argument("--to", type=int, choices=(2, 3, 4, 5, 6, 7), default=4)
+     for name in ("mutate", "receipt"):
+         command = commands.add_parser(name, help="Confirm an exact internal operation/query.")
+         command.add_argument("path", type=Path)
+diff --git a/src/zaratustra/core/AGENTS.md b/src/zaratustra/core/AGENTS.md
+index 4f5a3b5..38d26b2 100644
+--- a/src/zaratustra/core/AGENTS.md
++++ b/src/zaratustra/core/AGENTS.md
+@@ -42,4 +42,9 @@ metadata, never current-byte availability. New Work opening revalidates full byt
+ Released migrations1–5 stay fixed; new explicit6 never changes default migrate4.
+ Initial Event stays fixed.
+ Read/init never migrate or repair existing state. Keep migration bytes stable after release.
++Schema7 explicitly admits optional exact PackReference in Process/Work. bind_pack
++request5 is an atomic one-time binding through apply_mutation with Process images
++in the same event. No rights are changed. Result inherits the source binding;
++legacy unbound serialization stays fixed. Released migrations1–6 stay fixed.
++Core knows identity/integrity only, never installed adapters or process rules.
+ END_OF_FILE: src/zaratustra/core/AGENTS.md
+diff --git a/src/zaratustra/core/__init__.py b/src/zaratustra/core/__init__.py
+index b0afb53..a0b2fd8 100644
+--- a/src/zaratustra/core/__init__.py
++++ b/src/zaratustra/core/__init__.py
+@@ -42,6 +42,7 @@ from .records import (
+     Artifact,
+     Event,
+     InitialRecords,
++    PackReference,
+     Process,
+     RecordsSnapshot,
+     Work,
+@@ -98,6 +99,7 @@ __all__ = [
+     "Artifact",
+     "Event",
+     "InitialRecords",
++    "PackReference",
+     "Process",
+     "RecordsSnapshot",
+     "Work",
+diff --git a/src/zaratustra/core/migration_v7.py b/src/zaratustra/core/migration_v7.py
+new file mode 100644
+index 0000000..04e52cb
+--- /dev/null
++++ b/src/zaratustra/core/migration_v7.py
+@@ -0,0 +1,21 @@
++"""Explicit JSON format admission; old record/event bytes and tables stay intact."""
++
++import hashlib
++import sqlite3
++
++V7_NAME = "0007_exact_process_work_pack_binding"
++V7_FORMAT = (
++    "Process/Work optional immutable PackReference; bind_pack request5; "
++    "event Process before/after; Result continuation inherits exact source binding"
++)
++V7_SHA256 = hashlib.sha256(V7_FORMAT.encode("utf-8")).hexdigest()
++
++
++def migrate_v7(connection: sqlite3.Connection, applied_at: str) -> None:
++    if not connection.in_transaction:
++        raise ValueError("Migration v7 requires a transaction")
++    connection.execute(
++        "INSERT INTO schema_migrations VALUES (?, ?, ?, ?)",
++        (7, V7_NAME, V7_SHA256, applied_at),
++    )
++    connection.execute("PRAGMA user_version = 7")
+diff --git a/src/zaratustra/core/mutations.py b/src/zaratustra/core/mutations.py
+index 8227313..b99d5a4 100644
+--- a/src/zaratustra/core/mutations.py
++++ b/src/zaratustra/core/mutations.py
+@@ -43,6 +43,7 @@ from .protocol import (
+     authorization_digest,
+     event_receipt,
+     evolve_artifact,
++    evolve_process,
+     evolve_work,
+     fingerprint,
+     next_records,
+@@ -210,6 +211,10 @@ def _history(
+         ):
+             raise WorkspaceError("Mutation history must start from initial draft")
+         reconstructed = {r.id: r for r in snapshot.records if isinstance(r, (Process, Event))}
++        process = next(r for r in snapshot.records if isinstance(r, Process))
++        reconstructed[process.id] = Process.model_validate(
++            process.model_dump() | dict(revision=1, pack_binding=None)
++        )
+         reconstructed[beginning.id] = beginning
+         reconstructed[initial_artifact.id] = Artifact.model_validate(
+             {
+@@ -242,6 +247,15 @@ def _history(
+             records=tuple(reconstructed.values()),
+         )
+         artifact = current_artifact(prior, request.work_id)
++        if request.operation == "bind_pack":
++            if (
++                schema < 7
++                or event.process_before is None
++                or event.process_after is None
++                or reconstructed.get(event.process_before.id) != event.process_before
++            ):
++                raise WorkspaceError("Pack binding requires schema7 and exact Process history")
++            reconstructed[event.process_after.id] = event.process_after
+         if request.operation in ARTIFACT_OPERATIONS and (
+             request.artifact_id != artifact.id or request.artifact_revision != artifact.revision
+         ):
+@@ -418,6 +432,8 @@ def _mutate(
+         raise MutationError("schema", "Handoff import requires explicit migration to 5")
+     if request.version == 4 and info.schema_version < 6:
+         raise MutationError("schema", "Result requires explicit migration to 6")
++    if request.version == 5 and info.schema_version < 7:
++        raise MutationError("schema", "Pack binding requires explicit migration to 7")
+     # 2. Current Work + authority, in the same write transaction as the effect.
+     snapshot = _read_records(connection, info.workspace_id)
+     confirmation = _caller(info.workspace, request, caller, snapshot)
+@@ -441,6 +457,18 @@ def _mutate(
+             if stored.fingerprint != intent:
+                 raise MutationError("collision", "Operation id already belongs to another intent")
+             return stored
++    process_before = None
++    process_after = None
++    if request.operation == "bind_pack":
++        process_before = next(
++            row
++            for row in snapshot.records
++            if isinstance(row, Process) and row.id == before.process_id
++        )
++        try:
++            process_after = evolve_process(process_before, request)
++        except ValueError as error:
++            raise MutationError("pack_bound", str(error)) from error
+     # 5. Exact scoped references and bytes, before any DB/domain effect.
+     if request.handoff is not None and request.handoff.source_revision != snapshot.state_revision:
+         raise MutationError("conflict", "Handoff source revision is not current")
+@@ -500,7 +528,9 @@ def _mutate(
+     continuation_work = None
+     continuation_artifact = None
+     if request.submission is not None:
+-        continuation_work, continuation_artifact = next_records(request, now, before.process_id)
++        continuation_work, continuation_artifact = next_records(
++            request, now, before.process_id, before.pack_binding
++        )
+         for record in (continuation_work, continuation_artifact):
+             connection.execute(
+                 "INSERT INTO core_records (id, kind, revision, body) VALUES (?, ?, ?, ?)",
+@@ -520,6 +550,11 @@ def _mutate(
+         "UPDATE core_records SET revision = ?, body = ? WHERE id = ?",
+         (after.revision, after.model_dump_json(), str(after.id)),
+     )
++    if process_after is not None:
++        connection.execute(
++            "UPDATE core_records SET revision = ?, body = ? WHERE id = ?",
++            (process_after.revision, process_after.model_dump_json(), str(process_after.id)),
++        )
+     connection.execute("UPDATE core_state SET revision = ? WHERE singleton = 1", (after.revision,))
+     # 7. One immutable event and receipt, including old/new Artifact and exact descriptor.
+     event = MutationEvent(
+@@ -540,6 +575,8 @@ def _mutate(
+         next_artifact=continuation_artifact,
+         result_artifact=artifact if request.submission is not None else None,
+         result_references=closure,
++        process_before=process_before,
++        process_after=process_after,
+     )
+     connection.execute(
+         "INSERT INTO mutation_events VALUES (?, ?, ?)",
+diff --git a/src/zaratustra/core/protocol.py b/src/zaratustra/core/protocol.py
+index 6f51871..e06c4d7 100644
+--- a/src/zaratustra/core/protocol.py
++++ b/src/zaratustra/core/protocol.py
+@@ -15,7 +15,7 @@ from pydantic import (
+     model_validator,
+ )
+ 
+-from .records import Artifact, RecordModel, Text, Work
++from .records import Artifact, PackReference, Process, RecordModel, Text, Work
+ 
+ Revision = Annotated[int, Field(strict=True, ge=1)]
+ Digest = Annotated[str, Field(strict=True, pattern="^[0-9a-f]{64}$")]
+@@ -29,6 +29,7 @@ Operation = Literal[
+     "restore_artifact",
+     "accept_handoff",
+     "submit_result",
++    "bind_pack",
+ ]
+ ARTIFACT_OPERATIONS = ("authorize_artifact", "publish_artifact", "restore_artifact")
+ V2_FIELDS = {
+@@ -41,6 +42,7 @@ V2_FIELDS = {
+ }
+ V3_FIELDS = {"handoff", "delivery"}
+ V4_FIELDS = {"submission"}
++V5_FIELDS = {"pack_binding"}
+ 
+ 
+ class NextWork(RecordModel):
+@@ -122,7 +124,7 @@ class HandoffDelivery(RecordModel):
+ 
+ 
+ class MutationRequest(RecordModel):
+-    version: Annotated[int, Field(strict=True, ge=1, le=4)] = 1
++    version: Annotated[int, Field(strict=True, ge=1, le=5)] = 1
+     operation_id: UUID
+     workspace_id: UUID
+     work_id: UUID
+@@ -140,10 +142,13 @@ class MutationRequest(RecordModel):
+     handoff: Handoff | None = None
+     delivery: HandoffDelivery | None = None
+     submission: ResultSubmission | None = None
++    pack_binding: PackReference | None = None
+ 
+     @model_serializer(mode="wrap")
+     def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+         value: dict[str, Any] = handler(self)
++        if self.version < 5 and self.pack_binding is None:
++            value.pop("pack_binding", None)
+         if self.version < 4 and self.submission is None:
+             value.pop("submission", None)
+         if self.version < 3 and all(getattr(self, name) is None for name in V3_FIELDS):
+@@ -157,6 +162,13 @@ class MutationRequest(RecordModel):
+ 
+     @model_validator(mode="after")
+     def operation_payload(self) -> Self:
++        if self.operation == "bind_pack":
++            if self.version != 5 or self.pack_binding is None:
++                raise ValueError("Pack binding requires request 5 and an exact reference")
++            if self.references or self.artifact_references:
++                raise ValueError("Pack binding accepts no Artifact references")
++        elif self.pack_binding is not None or self.version == 5:
++            raise ValueError("Only bind_pack uses request 5/pack_binding")
+         if self.operation == "submit_result":
+             if self.version != 4 or self.submission is None:
+                 raise ValueError("Result requires request version 4 and complete submission")
+@@ -228,6 +240,8 @@ def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
+         excluded |= V3_FIELDS
+     if isinstance(value, MutationRequest) and value.version < 4:
+         excluded |= V4_FIELDS
++    if isinstance(value, MutationRequest) and value.version < 5:
++        excluded |= V5_FIELDS
+     return json.dumps(
+         value.model_dump(mode="json", exclude=excluded),
+         sort_keys=True,
+@@ -280,6 +294,10 @@ def evolve_work(work: Work, request: MutationRequest) -> Work:
+             raise ValueError("Work is not ready or has no current permission")
+         if request.operation == "set_work_requirements":
+             change["executor_requirements"] = request.requirements
++        elif request.operation == "bind_pack":
++            if work.pack_binding not in (None, request.pack_binding):
++                raise ValueError("An existing Work pack binding cannot be changed")
++            change["pack_binding"] = request.pack_binding
+         elif request.operation == "cancel_work":
+             change["status"] = "cancelled"
+         elif request.operation == "authorize_artifact":
+@@ -295,6 +313,17 @@ def evolve_work(work: Work, request: MutationRequest) -> Work:
+     return Work.model_validate({**work.model_dump(), **change})
+ 
+ 
++def evolve_process(process: Process, request: MutationRequest) -> Process:
++    if request.operation != "bind_pack" or request.pack_binding is None:
++        raise ValueError("Only bind_pack changes a Process binding")
++    if process.pack_binding is not None:
++        raise ValueError("Process is already bound; in-place pack migration is not supported")
++    return Process.model_validate(
++        process.model_dump()
++        | dict(pack_binding=request.pack_binding, revision=request.expected_revision + 1)
++    )
++
++
+ def evolve_artifact(artifact: Artifact, descriptor: ArtifactVersion) -> Artifact:
+     if (descriptor.artifact_id, descriptor.work_id, descriptor.process_id) != (
+         artifact.id,
+@@ -330,10 +359,15 @@ class MutationEvent(RecordModel):
+     next_artifact: Artifact | None = None
+     result_artifact: Artifact | None = None
+     result_references: tuple[ArtifactReference, ...] = ()
++    process_before: Process | None = None
++    process_after: Process | None = None
+ 
+     @model_serializer(mode="wrap")
+     def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+         value: dict[str, Any] = handler(self)
++        if self.request.version != 5:
++            value.pop("process_before", None)
++            value.pop("process_after", None)
+         if self.request.version < 4:
+             for name in ("next_work", "next_artifact", "result_artifact", "result_references"):
+                 value.pop(name, None)
+@@ -353,10 +387,22 @@ class MutationEvent(RecordModel):
+             raise ValueError("Event state revision mismatch")
+         if self.state_revision != self.request.expected_revision + 1:
+             raise ValueError("Event must advance global revision exactly once")
++        if self.request.operation == "bind_pack":
++            if (
++                self.process_before is None
++                or self.process_before.id != self.before.process_id
++                or self.before.pack_binding is not None
++                or evolve_process(self.process_before, self.request) != self.process_after
++            ):
++                raise ValueError("Binding event must retain the exact Process transition")
++        elif self.process_before is not None or self.process_after is not None:
++            raise ValueError("Only bind_pack changes a Process")
+         if self.request.submission is not None:
+             if self.request.submission.source_revision != self.request.expected_revision:
+                 raise ValueError("Result source revision must be current at acceptance")
+-            work, artifact = next_records(self.request, self.recorded_at, self.before.process_id)
++            work, artifact = next_records(
++                self.request, self.recorded_at, self.before.process_id, self.before.pack_binding
++            )
+             if self.next_work != work or self.next_artifact != artifact:
+                 raise ValueError("Event must retain exact confirmed next records")
+             if self.result_artifact is None or not self.result_references:
+@@ -432,7 +478,10 @@ class MutationHistory(RecordModel):
+ 
+ 
+ def next_records(
+-    request: MutationRequest, at: AwareDatetime, process_id: UUID
++    request: MutationRequest,
++    at: AwareDatetime,
++    process_id: UUID,
++    pack_binding: PackReference | None = None,
+ ) -> tuple[Work, Artifact]:
+     if request.submission is None:
+         raise ValueError("Missing Result submission")
+@@ -450,6 +499,7 @@ def next_records(
+         executor_requirements=spec.executor_requirements,
+         status="ready",
+         authority_scope=spec.authority_scope,
++        pack_binding=pack_binding,
+     )
+     artifact = Artifact(
+         id=spec.artifact_id,
+diff --git a/src/zaratustra/core/records.py b/src/zaratustra/core/records.py
+index 7f5d612..80dceaf 100644
+--- a/src/zaratustra/core/records.py
++++ b/src/zaratustra/core/records.py
+@@ -50,9 +50,27 @@ class Record(RecordModel):
+     created_at: AwareDatetime
+ 
+ 
++class PackReference(RecordModel):
++    """Exact external identity only; no code, version selection or authority."""
++
++    pack_id: Annotated[str, Field(strict=True, pattern="^[a-z][a-z0-9._-]{0,127}$")]
++    pack_version: Annotated[str, Field(strict=True, pattern="^[0-9]+[.][0-9]+[.][0-9]+$")]
++    process_type: Annotated[str, Field(strict=True, pattern="^[a-z][a-z0-9._-]{0,127}$")]
++    contract_version: Annotated[int, Field(strict=True, ge=1)]
++    state_version: Annotated[int, Field(strict=True, ge=1)]
++
++
+ class Process(Record):
+     kind: Literal["process"] = "process"
+     title: Text
++    pack_binding: PackReference | None = None
++
++    @model_serializer(mode="wrap")
++    def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, object]:
++        value: dict[str, object] = handler(self)
++        if self.pack_binding is None:
++            value.pop("pack_binding", None)
++        return value
+ 
+ 
+ class Work(Record):
+@@ -69,12 +87,15 @@ class Work(Record):
+     dependencies: tuple[()] = ()
+     executor_requirements: tuple[Text, ...] = ()
+     completion_id: UUID | None = None
++    pack_binding: PackReference | None = None
+ 
+     @model_serializer(mode="wrap")
+     def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, object]:
+         value: dict[str, object] = handler(self)
+         if self.completion_id is None:
+             value.pop("completion_id", None)
++        if self.pack_binding is None:
++            value.pop("pack_binding", None)
+         return value
+ 
+     @model_validator(mode="after")
+@@ -166,8 +187,15 @@ class RecordsSnapshot(RecordModel):
+             raise ValueError("Initial Work must remain a draft without rights")
+         if any(r.revision > self.state_revision for r in self.records):
+             raise ValueError("Record revision exceeds state")
+-        if process.revision != 1 or event.revision != 1:
++        if event.revision != 1 or (
++            process.revision != 1 if process.pack_binding is None else process.revision < 2
++        ):
+             raise ValueError("Unsupported Process/initial event revision")
++        if any(
++            w.pack_binding is not None and w.pack_binding != process.pack_binding
++            for w in works.values()
++        ):
++            raise ValueError("Work binding must match its Process")
+         return self
+ 
+ 
+@@ -186,6 +214,10 @@ def _read_records(connection: sqlite3.Connection, workspace_id: UUID) -> Records
+     snapshot = RecordsSnapshot(
+         workspace_id=workspace_id, state_revision=state[0][1], records=tuple(records)
+     )
++    if connection.execute("PRAGMA user_version").fetchone()[0] < 7 and any(
++        isinstance(r, Process | Work) and r.pack_binding is not None for r in records
++    ):
++        raise WorkspaceError("Pack bindings require explicit schema 7")
+     if connection.execute("PRAGMA user_version").fetchone()[0] < 6 and (
+         len(records) not in (0, 4)
+         or any(isinstance(r, Work) and r.status == "done" for r in records)
+diff --git a/src/zaratustra/core/workspace.py b/src/zaratustra/core/workspace.py
+index c38b580..3032eb5 100644
+--- a/src/zaratustra/core/workspace.py
++++ b/src/zaratustra/core/workspace.py
+@@ -17,6 +17,7 @@ from .migration_v3 import V3_NAME, V3_SHA256, migrate_v3
+ from .migration_v4 import V4_NAME, V4_SHA256, migrate_v4
+ from .migration_v5 import V5_NAME, V5_SHA256, migrate_v5
+ from .migration_v6 import V6_NAME, V6_SHA256, migrate_v6
++from .migration_v7 import V7_NAME, V7_SHA256, migrate_v7
+ from .migrations import APPLICATION_ID, V1_NAME, V1_SHA256, migrate_v1
+ 
+ WORKSPACE_DIRECTORIES = ("processes", "artifacts", "projections", "inbox")
+@@ -34,7 +35,7 @@ class WorkspaceInfo(BaseModel):
+     database: Path
+     workspace_id: UUID
+     created_at: AwareDatetime
+-    schema_version: Literal[1, 2, 3, 4, 5, 6]
++    schema_version: Literal[1, 2, 3, 4, 5, 6, 7]
+ 
+ 
+ def _root(path: Path) -> Path:
+@@ -66,7 +67,7 @@ def _database_path(root: Path) -> Path:
+ def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> WorkspaceInfo:
+     application = connection.execute("PRAGMA application_id").fetchone()[0]
+     version = connection.execute("PRAGMA user_version").fetchone()[0]
+-    if application != APPLICATION_ID or version not in (1, 2, 3, 4, 5, 6):
++    if application != APPLICATION_ID or version not in (1, 2, 3, 4, 5, 6, 7):
+         raise WorkspaceError(f"Unsupported workspace database/schema version: {version}.")
+     for name in ("artifacts", "projections"):
+         entry = root / name
+@@ -125,6 +126,11 @@ def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> Wor
+         connection.execute(
+             "SELECT operation_id, work_id, next_work_id, body FROM work_results LIMIT 0"
+         )
++    if version >= 7:
++        if migrations[6][:3] != (7, V7_NAME, V7_SHA256):
++            raise WorkspaceError("Migration history does not match this installed version.")
++        if datetime.fromisoformat(migrations[6][3]).tzinfo is None:
++            raise WorkspaceError("Migration timestamp must have a timezone.")
+     return WorkspaceInfo(
+         workspace=root,
+         database=database,
+@@ -170,9 +176,11 @@ def _read_workspace(root: Path) -> WorkspaceInfo:
+         return info
+ 
+ 
+-def migrate_workspace(path: Path, *, target_version: Literal[2, 3, 4, 5, 6] = 4) -> WorkspaceInfo:
++def migrate_workspace(
++    path: Path, *, target_version: Literal[2, 3, 4, 5, 6, 7] = 4
++) -> WorkspaceInfo:
+     """Explicit sequential upgrade; never grant rights, silently downgrade or repair."""
+-    if type(target_version) is not int or target_version not in (2, 3, 4, 5, 6):
++    if type(target_version) is not int or target_version not in (2, 3, 4, 5, 6, 7):
+         raise WorkspaceError("Unsupported migration target")
+     with workspace_connection(path, write=True) as (connection, info):
+         if info.schema_version > target_version:
+@@ -209,6 +217,14 @@ def migrate_workspace(path: Path, *, target_version: Literal[2, 3, 4, 5, 6] = 4)
+                 connection, _read_records(connection, info.workspace_id), artifacts_enabled=True
+             )
+             migrate_v6(connection, datetime.now(UTC).isoformat())
++        if info.schema_version < 7 and target_version >= 7:
++            from .mutations import _history
++            from .records import _read_records
++
++            _history(
++                connection, _read_records(connection, info.workspace_id), artifacts_enabled=True
++            )
++            migrate_v7(connection, datetime.now(UTC).isoformat())
+         return _metadata(connection, info.workspace, info.database)
+ 
+ 
+diff --git a/src/zaratustra/process_packs/AGENTS.md b/src/zaratustra/process_packs/AGENTS.md
+new file mode 100644
+index 0000000..e0b8e67
+--- /dev/null
++++ b/src/zaratustra/process_packs/AGENTS.md
+@@ -0,0 +1,10 @@
++# External Process Pack lifecycle
++T2 owns explicit immutable runtime registrations and exact version resolution.
++Public surface is __init__.py; no dynamic loading, implicit latest or state writer.
++Core owns PackReference, atomic bind_pack, revisions/history and inherited binding.
++Open authorized Core context before resolution; a rule sees immutable Work and
++verified own accepted result bytes, never a path or authority. A proposal grants
++no permission; trusted host separately confirms exact Result through Core.
++contract1/state1 only; missing/incompatible fail without fallback or migration.
++Seven capabilities and multi-Process overview remain T3+; do not invent defaults.
++END_OF_FILE: src/zaratustra/process_packs/AGENTS.md
+diff --git a/src/zaratustra/process_packs/__init__.py b/src/zaratustra/process_packs/__init__.py
+new file mode 100644
+index 0000000..ecb3dab
+--- /dev/null
++++ b/src/zaratustra/process_packs/__init__.py
+@@ -0,0 +1,13 @@
++"""Public external pack registration, binding proposal and continuation surface."""
++
++from .lifecycle import PackError, PackRegistration, PackRegistry, PackRule, binding_request
++from .runner import propose_result
++
++__all__ = [
++    "PackError",
++    "PackRegistration",
++    "PackRegistry",
++    "PackRule",
++    "binding_request",
++    "propose_result",
++]
+diff --git a/src/zaratustra/process_packs/lifecycle.py b/src/zaratustra/process_packs/lifecycle.py
+new file mode 100644
+index 0000000..2e5547c
+--- /dev/null
++++ b/src/zaratustra/process_packs/lifecycle.py
+@@ -0,0 +1,97 @@
++"""Local trusted registrations select exact code; they never write or grant rights."""
++
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Protocol
++from uuid import UUID
++
++from zaratustra.core import MutationRequest, NextWork, PackReference, Work
++
++
++class PackError(ValueError):
++    def __init__(self, code: str, detail: str) -> None:
++        self.code = code
++        super().__init__(f"{code}: {detail}")
++
++
++class PackRule(Protocol):
++    def next_work(
++        self, work: Work, accepted_result: bytes, work_id: UUID, artifact_id: UUID
++    ) -> NextWork: ...
++
++
++@dataclass(frozen=True)
++class PackRegistration:
++    reference: PackReference
++    rule: PackRule
++
++    def __post_init__(self) -> None:
++        reference = PackReference.model_validate(self.reference.model_dump())
++        object.__setattr__(self, "reference", reference)
++        if not callable(getattr(self.rule, "next_work", None)):
++            raise PackError("invalid_pack", "Registration needs a callable rule adapter")
++
++
++@dataclass(frozen=True)
++class PackRegistry:
++    registrations: tuple[PackRegistration, ...] = ()
++
++    def __post_init__(self) -> None:
++        # Copy the container; callers cannot mutate a registered set through a list.
++        object.__setattr__(self, "registrations", tuple(self.registrations))
++        coordinates = [self._coordinate(row.reference) for row in self.registrations]
++        if len(coordinates) != len(set(coordinates)):
++            raise PackError("registration_collision", "A pack/version has more than one adapter")
++
++    @staticmethod
++    def _coordinate(reference: PackReference) -> tuple[str, str]:
++        return reference.pack_id, reference.pack_version
++
++    def register(self, registration: PackRegistration) -> PackRegistry:
++        for current in self.registrations:
++            if self._coordinate(current.reference) == self._coordinate(registration.reference):
++                if (
++                    current.reference == registration.reference
++                    and current.rule is registration.rule
++                ):
++                    return self
++                raise PackError("registration_collision", "An existing pack/version cannot change")
++        return PackRegistry((*self.registrations, registration))
++
++    def resolve(self, reference: PackReference) -> PackRegistration:
++        reference = PackReference.model_validate(reference.model_dump())
++        for registration in self.registrations:
++            if self._coordinate(registration.reference) != self._coordinate(reference):
++                continue
++            if registration.reference != reference or (
++                reference.contract_version,
++                reference.state_version,
++            ) != (1, 1):
++                raise PackError("incompatible_pack", "Exact type, contract1 and state1 required")
++            return registration
++        raise PackError("missing_pack", "The exact saved pack/version is not registered")
++
++
++def binding_request(
++    registry: PackRegistry,
++    reference: PackReference,
++    *,
++    operation_id: UUID,
++    workspace_id: UUID,
++    work_id: UUID,
++    expected_revision: int,
++    provenance: str,
++) -> MutationRequest:
++    """Validate installation and propose a bind; Core still requires exact authorization."""
++    registered = registry.resolve(reference)
++    return MutationRequest(
++        version=5,
++        operation="bind_pack",
++        operation_id=operation_id,
++        workspace_id=workspace_id,
++        work_id=work_id,
++        expected_revision=expected_revision,
++        provenance=provenance,
++        pack_binding=registered.reference,
++    )
+diff --git a/src/zaratustra/process_packs/runner.py b/src/zaratustra/process_packs/runner.py
+new file mode 100644
+index 0000000..5ed0d7d
+--- /dev/null
++++ b/src/zaratustra/process_packs/runner.py
+@@ -0,0 +1,73 @@
++"""Propose through the exact saved pack using one real authorized Core context."""
++
++from __future__ import annotations
++
++import base64
++import json
++from pathlib import Path
++from uuid import UUID
++
++from zaratustra.core import (
++    AcceptedHandoff,
++    ContextQuery,
++    LocalAuthorization,
++    MutationRequest,
++    NextWork,
++    Process,
++    ResultSubmission,
++    Work,
++    open_work,
++)
++
++from .lifecycle import PackError, PackRegistry
++
++
++def propose_result(
++    path: Path,
++    query: ContextQuery,
++    caller: LocalAuthorization | None,
++    registry: PackRegistry,
++    *,
++    operation_id: UUID,
++    next_work_id: UUID,
++    next_artifact_id: UUID,
++) -> MutationRequest:
++    package = json.loads(open_work(path, query, caller).output)
++    sources = {row["locator"]: row["data"] for row in package["context"]["sources"]}
++    work = Work.model_validate(sources[f"work:{query.work_id}"])
++    process = Process.model_validate(sources[f"process:{query.process_id}"])
++    reference = work.pack_binding
++    if reference is None or reference != process.pack_binding:
++        raise PackError("unbound_pack", "Work needs its saved Process pack binding")
++    registration = registry.resolve(reference)
++    acceptances = [
++        AcceptedHandoff.model_validate(value)
++        for key, value in sources.items()
++        if key.startswith("acceptance:")
++    ]
++    own = [row for row in acceptances if row.handoff.related_work == work.id]
++    if not own:
++        raise PackError("missing_observation", "Work needs its own accepted result")
++    result = own[-1].handoff.result
++    source = sources[f"artifact-version:{result.version_id}"]
++    accepted_bytes = base64.b64decode(source["content_base64"], validate=True)
++    continuation = registration.rule.next_work(work, accepted_bytes, next_work_id, next_artifact_id)
++    continuation = NextWork.model_validate(continuation.model_dump())
++    if (continuation.work_id, continuation.artifact_id) != (next_work_id, next_artifact_id):
++        raise PackError("invalid_proposal", "Pack changed the selected continuation identities")
++    return MutationRequest(
++        version=4,
++        operation="submit_result",
++        operation_id=operation_id,
++        workspace_id=query.workspace_id,
++        work_id=query.work_id,
++        expected_revision=query.expected_revision,
++        provenance=f"Exact pack proposal: {reference.model_dump_json()}; no authority granted",
++        references=(result,),
++        submission=ResultSubmission(
++            source_revision=query.expected_revision,
++            result=result,
++            acceptance_ids=tuple(row.handoff.handoff_id for row in own),
++            next_work=continuation,
++        ),
++    )
+diff --git a/tests/zaratustra/core/test_pack_bindings.py b/tests/zaratustra/core/test_pack_bindings.py
+new file mode 100644
+index 0000000..44e261d
+--- /dev/null
++++ b/tests/zaratustra/core/test_pack_bindings.py
+@@ -0,0 +1,211 @@
++"""Real migration, atomic bind, replay and retained-history checks."""
++
++from __future__ import annotations
++
++import sqlite3
++from importlib import import_module
++from pathlib import Path
++from typing import Any
++from uuid import uuid4
++
++import pytest
++
++from tools.probe_m1 import query_for, restore_snapshot, work_at
++from tools.probe_packs import PacksTrial, confirm, reference, registry
++from tools.retain_trial import retain_trial
++from zaratustra.core import (
++    MutationError,
++    MutationRequest,
++    Process,
++    apply_mutation,
++    migrate_workspace,
++    read_history,
++    read_records,
++    read_workspace,
++)
++from zaratustra.process_probe import BatchRule, propose_result
++
++
++def domain_bytes(path: Path) -> dict[str, list[Any]]:
++    database = read_workspace(path).database
++    with sqlite3.connect(database.as_uri() + "?mode=ro", uri=True) as connection:
++        return {
++            table: connection.execute(f"SELECT * FROM {table} ORDER BY 1").fetchall()
++            for table in (
++                "core_records",
++                "core_state",
++                "mutation_events",
++                "mutation_receipts",
++                "artifact_versions",
++                "accepted_handoffs",
++                "work_results",
++            )
++        }
++
++
++@pytest.fixture
++def trial(tmp_path: Path) -> PacksTrial:
++    trial = PacksTrial(tmp_path / "workspace", tmp_path / "evidence")
++    trial.bootstrap()
++    return trial
++
++
++def test_schema7_is_explicit_preserves_legacy_bytes_and_restores(
++    trial: PacksTrial, tmp_path: Path
++) -> None:
++    identity = work_at(trial.path).id
++    trial.observation(identity)
++    snapshot = read_records(trial.path)
++    history = read_history(trial.path)
++    original = domain_bytes(trial.path)
++    db = read_workspace(trial.path).database
++    before = db.read_bytes()
++    request = trial.bind(identity, reference(), registry(reference()))
++    with pytest.raises(MutationError, match="schema"):
++        trial.execute(request)
++    assert db.read_bytes() == before and read_workspace(trial.path).schema_version == 6
++    manifest = retain_trial(trial.path, tmp_path / "before.zip")
++    assert migrate_workspace(trial.path, target_version=7).schema_version == 7
++    assert domain_bytes(trial.path) == original
++    assert read_records(trial.path) == snapshot and read_history(trial.path) == history
++    migrated = db.read_bytes()
++    migrate_workspace(trial.path, target_version=7)
++    assert db.read_bytes() == migrated
++    restored = restore_snapshot(tmp_path / "before.zip", tmp_path / "restore", manifest)
++    assert domain_bytes(restored) == original
++    assert read_workspace(restored).schema_version == 6
++
++
++def test_binding_requires_exact_authority_and_retains_every_other_field(trial: PacksTrial) -> None:
++    migrate_workspace(trial.path, target_version=7)
++    identity = work_at(trial.path).id
++    request = trial.bind(identity, reference(), registry(reference()))
++    before = read_records(trial.path)
++    db = read_workspace(trial.path).database
++    original = db.read_bytes()
++    with pytest.raises(MutationError, match="permission_denied"):
++        apply_mutation(trial.path, request)
++    caller = confirm(trial.path, request)
++    changed = MutationRequest.model_validate(
++        request.model_dump() | dict(pack_binding=reference("2.0.0"))
++    )
++    with pytest.raises(MutationError, match="permission_denied"):
++        apply_mutation(trial.path, changed, caller)
++    assert db.read_bytes() == original
++    receipt = apply_mutation(trial.path, request, caller)
++    after = read_records(trial.path)
++    before_rows = {r.id: r for r in before.records}
++    for row in after.records:
++        old = before_rows[row.id]
++        if row.id == identity or isinstance(row, Process):
++            assert row.model_dump(exclude={"revision", "pack_binding"}) == old.model_dump(
++                exclude={"revision", "pack_binding"}
++            )
++        else:
++            assert row == old
++    event = read_history(trial.path).events[-1]
++    assert event.before.pack_binding is None and event.after.pack_binding == reference()
++    assert event.process_before is not None and event.process_before.pack_binding is None
++    assert event.process_after is not None and event.process_after.pack_binding == reference()
++    assert receipt.new_revision == before.state_revision + 1 == after.state_revision
++
++
++def test_binding_replay_conflict_and_collision_have_one_effect(trial: PacksTrial) -> None:
++    migrate_workspace(trial.path, target_version=7)
++    identity = work_at(trial.path).id
++    request = trial.bind(identity, reference(), registry(reference()))
++    receipt = trial.execute(request)
++    db = read_workspace(trial.path).database
++    before = db.read_bytes()
++    with pytest.raises(MutationError, match="conflict"):
++        trial.execute(request)
++    refreshed = MutationRequest.model_validate(
++        request.model_dump() | dict(expected_revision=receipt.new_revision)
++    )
++    assert trial.execute(refreshed) == receipt
++    collision = MutationRequest.model_validate(
++        refreshed.model_dump() | dict(provenance="different")
++    )
++    with pytest.raises(MutationError, match="collision"):
++        trial.execute(collision)
++    repeated = MutationRequest.model_validate(refreshed.model_dump() | dict(operation_id=uuid4()))
++    with pytest.raises(MutationError, match="pack_bound"):
++        trial.execute(repeated)
++    assert db.read_bytes() == before
++    assert (
++        len([e for e in read_history(trial.path).events if e.request.operation == "bind_pack"]) == 1
++    )
++
++
++@pytest.mark.parametrize("operation", ["revoke_work", "cancel_work"])
++def test_binding_respects_current_work_rights(trial: PacksTrial, operation: str) -> None:
++    migrate_workspace(trial.path, target_version=7)
++    identity = work_at(trial.path).id
++    trial.execute(trial.request(identity, operation))
++    request = trial.bind(identity, reference(), registry(reference()))
++    before = read_workspace(trial.path).database.read_bytes()
++    with pytest.raises(MutationError, match="permission_denied"):
++        trial.execute(request)
++    assert read_workspace(trial.path).database.read_bytes() == before
++
++
++def test_binding_transaction_failure_rolls_back_both_records_and_history(
++    trial: PacksTrial, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    migrate_workspace(trial.path, target_version=7)
++    identity = work_at(trial.path).id
++    request = trial.bind(identity, reference(), registry(reference()))
++    caller = confirm(trial.path, request)
++    before = read_workspace(trial.path).database.read_bytes()
++    state = read_records(trial.path)
++    history = read_history(trial.path)
++    mutation_module = import_module("zaratustra.core.mutations")
++
++    def fail(*args: Any, **kwargs: Any) -> Any:
++        raise RuntimeError("Injected failure after Process/Work/event writes, before receipt")
++
++    original = mutation_module.event_receipt
++
++    # Earlier history validation also calls event_receipt; fail only on the new bind event.
++    def fail_new(event: Any) -> Any:
++        if event.request.operation == "bind_pack":
++            return fail(event)
++        return original(event)
++
++    with monkeypatch.context() as patch:
++        patch.setattr(mutation_module, "event_receipt", fail_new)
++        with pytest.raises(RuntimeError, match="Injected failure"):
++            apply_mutation(trial.path, request, caller)
++    assert read_workspace(trial.path).database.read_bytes() == before
++    assert read_records(trial.path) == state and read_history(trial.path) == history
++    receipt = apply_mutation(trial.path, request, caller)
++    assert receipt.new_revision == state.state_revision + 1
++
++
++def test_binding_later_work_preserves_legacy_result_and_process_history(trial: PacksTrial) -> None:
++    identity = work_at(trial.path).id
++    trial.observation(identity)
++    query = query_for(trial.path, identity)
++    proposal = propose_result(
++        trial.path,
++        query,
++        confirm(trial.path, query),
++        BatchRule(),
++        operation_id=uuid4(),
++        next_work_id=uuid4(),
++        next_artifact_id=uuid4(),
++    )
++    trial.execute(proposal)
++    before = domain_bytes(trial.path)
++    legacy_history = read_history(trial.path)
++    migrate_workspace(trial.path, target_version=7)
++    assert domain_bytes(trial.path) == before
++    assert proposal.submission is not None
++    next_id = proposal.submission.next_work.work_id
++    trial.execute(trial.bind(next_id, reference(), registry(reference())))
++    assert read_history(trial.path).events[:-1] == legacy_history.events
++    assert work_at(trial.path, identity).pack_binding is None
++    assert work_at(trial.path, next_id).pack_binding == reference()
++    after = domain_bytes(trial.path)
++    assert after["work_results"] == before["work_results"]
++    assert after["accepted_handoffs"] == before["accepted_handoffs"]
+diff --git a/tests/zaratustra/process_packs/test_lifecycle.py b/tests/zaratustra/process_packs/test_lifecycle.py
+new file mode 100644
+index 0000000..ee776dd
+--- /dev/null
++++ b/tests/zaratustra/process_packs/test_lifecycle.py
+@@ -0,0 +1,209 @@
++"""Behavior checks of exact installation, retained state and authority boundaries."""
++
++from __future__ import annotations
++
++import json
++from dataclasses import replace
++from pathlib import Path
++from typing import Any
++from uuid import uuid4
++
++import pytest
++
++from tools.probe_m1 import query_for, work_at
++from tools.probe_packs import (
++    FictionalBatchAdapter,
++    PacksTrial,
++    confirm,
++    proposed,
++    reference,
++    registry,
++)
++from zaratustra.core import (
++    ContextQuery,
++    LocalAuthorization,
++    MutationError,
++    MutationRequest,
++    Process,
++    migrate_workspace,
++    open_work,
++    read_history,
++    read_records,
++    read_workspace,
++    submit_result,
++)
++from zaratustra.process_packs import PackError, PackRegistration, PackRegistry, propose_result
++
++
++@pytest.fixture
++def trial(tmp_path: Path) -> PacksTrial:
++    trial = PacksTrial(tmp_path / "workspace", tmp_path / "evidence")
++    identity = trial.bootstrap()
++    migrate_workspace(trial.path, target_version=7)
++    trial.execute(trial.bind(identity, reference(), registry(reference())))
++    trial.observation(identity)
++    return trial
++
++
++def test_registration_identity_is_immutable_and_versions_coexist() -> None:
++    ref = reference()
++    registration = PackRegistration(ref, FictionalBatchAdapter())
++    empty = PackRegistry()
++    installed = empty.register(registration)
++    assert empty.registrations == ()
++    assert installed.register(registration) is installed
++    for collision in (
++        PackRegistration(ref, FictionalBatchAdapter()),
++        replace(registration, reference=reference(state_version=2)),
++    ):
++        with pytest.raises(PackError, match="registration_collision"):
++            installed.register(collision)
++    v2 = PackRegistration(reference("2.0.0"), FictionalBatchAdapter())
++    both = installed.register(v2)
++    assert both.resolve(ref) is registration
++    assert both.resolve(v2.reference) is v2
++    with pytest.raises(PackError, match="registration_collision"):
++        PackRegistry((registration, registration))
++
++
++@pytest.mark.parametrize("field", ["contract_version", "state_version"])
++def test_unsupported_version_never_resolves_even_when_registered(field: str) -> None:
++    ref = reference(**{field: 2})
++    with pytest.raises(PackError, match="incompatible_pack"):
++        registry(ref).resolve(ref)
++
++
++@pytest.mark.parametrize(
++    ("installed", "error"),
++    [
++        (registry(), "missing_pack"),
++        (registry(reference("2.0.0")), "missing_pack"),
++        (registry(reference(state_version=2)), "incompatible_pack"),
++        (registry(reference(contract_version=2)), "incompatible_pack"),
++        (registry(reference(process_type="other.type")), "incompatible_pack"),
++    ],
++)
++def test_missing_and_incompatible_pack_preserve_state(
++    trial: PacksTrial, installed: PackRegistry, error: str
++) -> None:
++    state = read_records(trial.path)
++    history = read_history(trial.path)
++    before = read_workspace(trial.path).database.read_bytes()
++    with pytest.raises(PackError, match=error):
++        proposed(trial.path, work_at(trial.path).id, installed)
++    assert read_workspace(trial.path).database.read_bytes() == before
++    assert read_records(trial.path) == state and read_history(trial.path) == history
++
++
++def test_reinstall_exact_version_continues_old_work_and_inherits_binding(trial: PacksTrial) -> None:
++    identity = work_at(trial.path).id
++    before = read_records(trial.path)
++    request = proposed(trial.path, identity, registry(reference(), reference("2.0.0")))
++    assert read_records(trial.path) == before
++    with pytest.raises(MutationError, match="permission_denied"):
++        submit_result(trial.path, request)
++    changed = MutationRequest.model_validate(request.model_dump() | dict(provenance="replacement"))
++    with pytest.raises(MutationError, match="permission_denied"):
++        submit_result(trial.path, changed, confirm(trial.path, request))
++    receipt = trial.execute(request)
++    assert request.submission is not None
++    continuation = work_at(trial.path, request.submission.next_work.work_id)
++    assert continuation.pack_binding == work_at(trial.path, identity).pack_binding == reference()
++    assert continuation.authority_scope == "work_metadata"
++    assert receipt.new_revision == before.state_revision + 1
++    event = read_history(trial.path).events[-1]
++    assert event.next_work == continuation and event.after.status == "done"
++    query = query_for(trial.path, continuation.id)
++    content = json.loads(open_work(trial.path, query, confirm(trial.path, query)).output)
++    rows = {s["locator"]: s["data"] for s in content["context"]["sources"]}
++    assert rows[f"work:{continuation.id}"]["pack_binding"] == reference().model_dump(mode="json")
++    assert (
++        rows[f"process:{continuation.process_id}"]["pack_binding"]
++        == rows[f"work:{continuation.id}"]["pack_binding"]
++    )
++    with pytest.raises(PackError, match="missing_observation"):
++        proposed(trial.path, continuation.id, registry(reference()))
++    trial.observation(continuation.id)
++    second = proposed(trial.path, continuation.id, registry(reference()))
++    trial.execute(second)
++    assert second.submission is not None
++    assert work_at(trial.path, second.submission.next_work.work_id).pack_binding == reference()
++
++
++def test_bound_process_and_work_cannot_be_retargeted(trial: PacksTrial) -> None:
++    identity = work_at(trial.path).id
++    before = read_workspace(trial.path).database.read_bytes()
++    for ref in (reference("2.0.0"), reference()):
++        request = trial.bind(identity, ref, registry(ref))
++        with pytest.raises(MutationError, match="permission_denied|pack_bound"):
++            trial.execute(request)
++        assert read_workspace(trial.path).database.read_bytes() == before
++    trial.execute(
++        trial.request(identity, "set_work_requirements", requirements=("plain metadata",))
++    )
++    assert work_at(trial.path).pack_binding == reference()
++    process = next(r for r in read_records(trial.path).records if isinstance(r, Process))
++    assert process.pack_binding == reference()
++
++
++@pytest.mark.parametrize("mode", ["none", "revoked", "cancelled", "stale", "foreign", "changed"])
++def test_context_authority_precedes_pack_dispatch(trial: PacksTrial, mode: str) -> None:
++    identity = work_at(trial.path).id
++    query = query_for(trial.path, identity)
++    caller: LocalAuthorization | None = confirm(trial.path, query)
++    if mode == "none":
++        caller = None
++    elif mode in ("revoked", "cancelled"):
++        operation = "revoke_work" if mode == "revoked" else "cancel_work"
++        trial.execute(trial.request(identity, operation))
++    elif mode == "stale":
++        trial.execute(
++            trial.request(identity, "set_work_requirements", requirements=("probe.batch/v1",))
++        )
++    else:
++        payload: dict[str, Any] = (
++            dict(process_id=uuid4()) if mode == "foreign" else dict(max_bytes=99999)
++        )
++        query = ContextQuery.model_validate(query.model_dump() | payload)
++        if mode == "foreign":
++            caller = confirm(trial.path, query)
++    before = read_workspace(trial.path).database.read_bytes()
++
++    class NeverCalled(FictionalBatchAdapter):
++        def next_work(self, *args: Any, **kwargs: Any) -> Any:
++            raise AssertionError("Rule ran without a current authorized context")
++
++    installed = PackRegistry((PackRegistration(reference(), NeverCalled()),))
++    with pytest.raises(MutationError):
++        propose_result(
++            trial.path,
++            query,
++            caller,
++            installed,
++            operation_id=uuid4(),
++            next_work_id=uuid4(),
++            next_artifact_id=uuid4(),
++        )
++    assert read_workspace(trial.path).database.read_bytes() == before
++
++
++def test_change_between_proposal_and_submit_conflicts(trial: PacksTrial) -> None:
++    identity = work_at(trial.path).id
++    proposal = proposed(trial.path, identity, registry(reference()))
++    trial.execute(
++        trial.request(identity, "set_work_requirements", requirements=("probe.batch/v1",))
++    )
++    before = read_workspace(trial.path).database.read_bytes()
++    with pytest.raises(MutationError, match="conflict"):
++        submit_result(trial.path, proposal, confirm(trial.path, proposal))
++    assert read_workspace(trial.path).database.read_bytes() == before
++
++
++def test_legacy_unbound_work_requires_explicit_binding(tmp_path: Path) -> None:
++    trial = PacksTrial(tmp_path / "workspace", tmp_path / "evidence")
++    identity = trial.bootstrap()
++    trial.observation(identity)
++    before = read_workspace(trial.path).database.read_bytes()
++    with pytest.raises(PackError, match="unbound_pack"):
++        proposed(trial.path, identity, registry(reference()))
++    assert read_workspace(trial.path).database.read_bytes() == before
+diff --git a/tools/probe_packs.py b/tools/probe_packs.py
+new file mode 100644
+index 0000000..a616044
+--- /dev/null
++++ b/tools/probe_packs.py
+@@ -0,0 +1,375 @@
++"""Reproduce T2 lifecycle through real Core in a NEW selected fictional workspace."""
++
++from __future__ import annotations
++
++import argparse
++import hashlib
++import json
++import subprocess
++import sys
++from pathlib import Path
++from typing import Any
++from uuid import UUID, uuid4
++
++from zaratustra.core import (
++    Artifact,
++    ArtifactReference,
++    ContextQuery,
++    Handoff,
++    InitialRecords,
++    LocalAuthorization,
++    MutationError,
++    MutationReceipt,
++    MutationRequest,
++    NextWork,
++    PackReference,
++    ReceiptQuery,
++    Work,
++    apply_mutation,
++    authorize_local,
++    create_initial_records,
++    handoff_request,
++    init_workspace,
++    migrate_workspace,
++    open_work,
++    prepare_authorization,
++    read_history,
++    read_records,
++    read_result,
++    read_workspace,
++    submit_result,
++)
++from zaratustra.process_packs import (
++    PackError,
++    PackRegistration,
++    PackRegistry,
++    binding_request,
++    propose_result,
++)
++from zaratustra.process_probe import BatchRule, Observation
++
++from .probe_m1 import query_for, restore_snapshot, save, work_at
++from .retain_trial import retain_trial
++
++ROOT = Path(__file__).resolve().parents[1]
++CALL = "c-solmax-zaratustra-m1-packs-20260909-exec"
++
++
++class FictionalBatchAdapter:
++    """Reuse the accepted T1 observation rule, solely as a T2 lifecycle fixture."""
++
++    def next_work(
++        self, work: Work, accepted_result: bytes, work_id: UUID, artifact_id: UUID
++    ) -> NextWork:
++        return BatchRule().next_work(
++            work, Observation.model_validate_json(accepted_result), work_id, artifact_id
++        )
++
++
++def reference(version: str = "1.0.0", /, **changes: Any) -> PackReference:
++    return PackReference.model_validate(
++        dict(
++            pack_id="fictional.batch",
++            pack_version=version,
++            process_type="fictional.batch-check",
++            contract_version=1,
++            state_version=1,
++        )
++        | changes
++    )
++
++
++def registry(*references: PackReference) -> PackRegistry:
++    return PackRegistry(tuple(PackRegistration(ref, FictionalBatchAdapter()) for ref in references))
++
++
++def confirm(path: Path, value: MutationRequest | ContextQuery | ReceiptQuery) -> LocalAuthorization:
++    return authorize_local(
++        prepare_authorization(path, value),
++        channel="local-chat",
++        actor="T2-fictional-lifecycle-adapter",
++        source_ref=f"RUN {CALL}; exact local fictional fixture only; acceptance pending",
++    )
++
++
++class PacksTrial:
++    def __init__(self, path: Path, evidence: Path) -> None:
++        self.path = path
++        self.evidence = evidence
++        evidence.mkdir(parents=True)
++        self.sequence = 0
++
++    def request(self, identity: UUID, operation: str, **payload: Any) -> MutationRequest:
++        snapshot = read_records(self.path)
++        fields: dict[str, Any] = dict(
++            operation=operation,
++            operation_id=uuid4(),
++            workspace_id=snapshot.workspace_id,
++            work_id=identity,
++            expected_revision=snapshot.state_revision,
++            provenance=f"Fictional T2 fixture authorized by RUN {CALL}",
++        )
++        if operation in ("authorize_artifact", "publish_artifact"):
++            artifact = next(
++                row
++                for row in snapshot.records
++                if isinstance(row, Artifact) and row.work_id == identity
++            )
++            fields.update(version=2, artifact_id=artifact.id, artifact_revision=artifact.revision)
++        return MutationRequest.model_validate(fields | payload)
++
++    def execute(self, request: MutationRequest, content: bytes | None = None) -> MutationReceipt:
++        self.sequence += 1
++        prefix = self.evidence / f"{self.sequence:03d}-{request.operation}"
++        caller = confirm(self.path, request)
++        save(prefix.with_suffix(".request.json"), request.model_dump(mode="json"))
++        save(prefix.with_suffix(".authority.json"), caller.confirmation.model_dump(mode="json"))
++        if content is not None:
++            prefix.with_suffix(".input.json").write_bytes(content)
++        receipt = apply_mutation(self.path, request, caller, content=content)
++        save(prefix.with_suffix(".receipt.json"), receipt.model_dump(mode="json"))
++        return receipt
++
++    def bootstrap(self) -> UUID:
++        self.path.mkdir(parents=True)
++        init_workspace(self.path)
++        migrate_workspace(self.path, target_version=6)
++        initial = InitialRecords(
++            process_title="Fictional pack lifecycle",
++            goal="Continue a fictional batch with an exact retained pack version",
++            expected_result="Recorded observation and continuation",
++            acceptance=("Both fictional marks",),
++            boundaries=("Local fictional data only",),
++            budget="One T2 lifecycle example",
++            artifact_title="Fictional batch observation",
++        )
++        save(self.evidence / "bootstrap.json", initial.model_dump(mode="json"))
++        create_initial_records(self.path, initial)
++        identity = work_at(self.path).id
++        self.execute(self.request(identity, "authorize_work"))
++        self.execute(
++            self.request(identity, "set_work_requirements", requirements=("probe.batch/v1",))
++        )
++        return identity
++
++    def bind(self, identity: UUID, ref: PackReference, installed: PackRegistry) -> MutationRequest:
++        snapshot = read_records(self.path)
++        return binding_request(
++            installed,
++            ref,
++            operation_id=uuid4(),
++            workspace_id=snapshot.workspace_id,
++            work_id=identity,
++            expected_revision=snapshot.state_revision,
++            provenance=f"Explicit fictional Process/Work binding under RUN {CALL}",
++        )
++
++    def observation(self, identity: UUID) -> None:
++        content = b'{"observed": true, "recorded": true}'
++        self.execute(self.request(identity, "authorize_artifact"))
++        publication = self.request(
++            identity,
++            "publish_artifact",
++            content_sha256=hashlib.sha256(content).hexdigest(),
++            content_size=len(content),
++        )
++        self.execute(publication, content)
++        assert publication.artifact_id is not None
++        snapshot = read_records(self.path)
++        handoff = Handoff(
++            kind="handoff",
++            version=1,
++            handoff_id=uuid4(),
++            workspace_id=snapshot.workspace_id,
++            process=work_at(self.path, identity).process_id,
++            related_work=identity,
++            intent="accepted_result",
++            source_revision=snapshot.state_revision,
++            result=ArtifactReference(
++                artifact_id=publication.artifact_id,
++                version_id=publication.operation_id,
++                sha256=hashlib.sha256(content).hexdigest(),
++            ),
++            provenance="Fictional T2 observation; no owner acceptance claim",
++            created_by="T2 fictional adapter",
++        )
++        self.execute(handoff_request(handoff.model_dump_json().encode(), source_ref=CALL))
++
++
++def proposed(path: Path, identity: UUID, installed: PackRegistry) -> MutationRequest:
++    query = query_for(path, identity)
++    return propose_result(
++        path,
++        query,
++        confirm(path, query),
++        installed,
++        operation_id=uuid4(),
++        next_work_id=uuid4(),
++        next_artifact_id=uuid4(),
++    )
++
++
++def run(base: Path) -> dict[str, Any]:
++    base.mkdir()
++    save(
++        base / "runtime.json",
++        dict(
++            call=CALL,
++            commit=subprocess.check_output(
++                ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, encoding="utf-8"
++            ).strip(),
++            diff=subprocess.check_output(
++                ["git", "diff", "HEAD", "--", "src", "tools", "tests", "pyproject.toml", "uv.lock"],
++                cwd=ROOT,
++                text=True,
++                encoding="utf-8",
++            ),
++            python=sys.version,
++            argv=sys.argv,
++        ),
++    )
++    trial = PacksTrial(base / "workspace", base / "events")
++    identity = trial.bootstrap()
++    legacy = read_records(trial.path)
++    legacy_history = read_history(trial.path)
++    legacy_manifest = retain_trial(trial.path, base / "before-migration.zip")
++    save(base / "before-migration-manifest.json", legacy_manifest)
++    migrate_workspace(trial.path, target_version=7)
++    assert read_records(trial.path) == legacy and read_history(trial.path) == legacy_history
++    v1, v2 = reference(), reference("2.0.0")
++    installed = registry(v1, v2)
++    save(
++        base / "registrations.json",
++        [r.reference.model_dump(mode="json") for r in installed.registrations],
++    )
++    bind = trial.bind(identity, v1, installed)
++    before_bind = read_records(trial.path)
++    save(base / "before-bind.json", before_bind.model_dump(mode="json"))
++    bind_manifest = retain_trial(trial.path, base / "before-bind.zip")
++    save(base / "before-bind-manifest.json", bind_manifest)
++    bound_receipt = trial.execute(bind)
++    prior_work = next(
++        row for row in before_bind.records if isinstance(row, Work) and row.id == identity
++    )
++    assert work_at(trial.path, identity).authority_scope == prior_work.authority_scope
++    save(base / "after-bind.json", read_records(trial.path).model_dump(mode="json"))
++    trial.observation(identity)
++    before = read_workspace(trial.path).database.read_bytes()
++    before_history = read_history(trial.path)
++    outcomes = []
++    for name, unavailable in (
++        ("missing", registry()),
++        ("v2-only", registry(v2)),
++        ("incompatible-contract", registry(reference(contract_version=2))),
++        ("incompatible-state", registry(reference(state_version=2))),
++    ):
++        try:
++            proposed(trial.path, identity, unavailable)
++        except PackError as error:
++            assert read_workspace(trial.path).database.read_bytes() == before
++            assert read_history(trial.path) == before_history
++            outcomes.append(dict(case=name, code=error.code, no_write=True))
++        else:
++            raise AssertionError(f"Unexpected continuation: {name}")
++    switch = trial.bind(identity, v2, installed)
++    try:
++        trial.execute(switch)
++    except MutationError as error:
++        assert read_workspace(trial.path).database.read_bytes() == before
++        assert read_history(trial.path) == before_history
++        outcomes.append(dict(case="in-place-version-change", code=error.code, no_write=True))
++    else:
++        raise AssertionError("Existing Work binding changed")
++    save(base / "refusals.json", outcomes)
++    query = query_for(trial.path, identity)
++    save(base / "query.json", query.model_dump(mode="json"))
++    (base / "context.json").write_bytes(
++        open_work(trial.path, query, confirm(trial.path, query)).output
++    )
++    manifest = retain_trial(trial.path, base / "before-result.zip")
++    save(base / "before-result-manifest.json", manifest)
++    request = proposed(trial.path, identity, registry(v1))
++    save(base / "proposal.json", request.model_dump(mode="json"))
++    try:
++        submit_result(trial.path, request)
++    except MutationError as error:
++        assert error.code == "permission_denied"
++        assert read_workspace(trial.path).database.read_bytes() == before
++    else:
++        raise AssertionError("A pack proposal issued authority")
++    receipt = trial.execute(request)
++    assert request.submission is not None
++    next_id = request.submission.next_work.work_id
++    assert work_at(trial.path, next_id).pack_binding == v1
++    assert work_at(trial.path, identity).pack_binding == v1
++    saved_query = ReceiptQuery(
++        workspace_id=request.workspace_id, work_id=identity, operation_id=request.operation_id
++    )
++    save(
++        base / "saved-result.json",
++        read_result(trial.path, saved_query, confirm(trial.path, saved_query)).model_dump(
++            mode="json"
++        ),
++    )
++    save(base / "final-state.json", read_records(trial.path).model_dump(mode="json"))
++    save(base / "final-history.json", read_history(trial.path).model_dump(mode="json"))
++    next_query = query_for(trial.path, next_id)
++    (base / "next-context.json").write_bytes(
++        open_work(trial.path, next_query, confirm(trial.path, next_query)).output
++    )
++    restored = restore_snapshot(base / "before-result.zip", base / "restored-result", manifest)
++    replay = submit_result(restored, request, confirm(restored, request))
++    assert work_at(restored, next_id).pack_binding == v1
++    assert replay.fingerprint == receipt.fingerprint
++    restored_bind = restore_snapshot(
++        base / "before-bind.zip", base / "restored-bind", bind_manifest
++    )
++    bind_replay = apply_mutation(restored_bind, bind, confirm(restored_bind, bind))
++    assert bind_replay.fingerprint == bound_receipt.fingerprint
++    assert work_at(restored_bind).pack_binding == v1
++    restored_legacy = restore_snapshot(
++        base / "before-migration.zip", base / "restored-legacy", legacy_manifest
++    )
++    assert read_records(restored_legacy) == legacy
++    assert read_history(restored_legacy) == legacy_history
++    other = PacksTrial(base / "new-v2-workspace", base / "new-v2-events")
++    other_id = other.bootstrap()
++    migrate_workspace(other.path, target_version=7)
++    other.execute(other.bind(other_id, v2, registry(v2)))
++    other.observation(other_id)
++    other_result = proposed(other.path, other_id, registry(v2))
++    other.execute(other_result)
++    save(base / "v2-final-state.json", read_records(other.path).model_dump(mode="json"))
++    summary = dict(
++        binding_revision=[bound_receipt.previous_revision, bound_receipt.new_revision],
++        result_revision=[receipt.previous_revision, receipt.new_revision],
++        process_work_and_next_binding=v1.model_dump(mode="json"),
++        refusals=outcomes,
++        rights_unchanged_by_bind=True,
++        proposal_without_authority="permission_denied",
++        restore_legacy_bind_and_result="exact bytes/layout, then real Core read/mutation",
++        v2_independent_process="bound and continued; v1 Process unchanged",
++        manual_acceptance="pending",
++        binding_g5="pending",
++    )
++    save(base / "summary.json", summary)
++    final_manifest = retain_trial(trial.path, base / "final-workspace.zip")
++    save(base / "final-workspace-manifest.json", final_manifest)
++    return summary
++
++
++def main() -> None:
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--output", type=Path, required=True)
++    args = parser.parse_args()
++    for leaf in ("STOP", "STEER.md"):
++        if (ROOT / leaf).exists():
++            parser.error(f"Read and resolve {leaf} before running")
++    base = args.output.resolve()
++    if base.exists() or not base.is_relative_to((ROOT / "_scratch").resolve()):
++        parser.error("Choose a NEW directory under this execution worktree's ignored _scratch")
++    print(json.dumps(run(base), indent=2))
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/uv.lock b/uv.lock
+index ac10e7d..85933d9 100644
+--- a/uv.lock
++++ b/uv.lock
+@@ -350,7 +350,7 @@ wheels = [
+ 
+ [[package]]
+ name = "zaratustra"
+-version = "0.7.0"
++version = "0.8.0"
+ source = { editable = "." }
+ dependencies = [
+     { name = "pydantic" },

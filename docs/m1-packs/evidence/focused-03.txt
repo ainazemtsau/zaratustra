@@ -1,0 +1,42 @@
+$ C:\projects\zaratustra\_scratch\m1-packs-20260909\.venv\Scripts\python.exe -m ruff format --check src/zaratustra/core src/zaratustra/process_packs src/zaratustra/cli tools/probe_packs.py tests/zaratustra/core/test_pack_bindings.py tests/zaratustra/process_packs
+27 files already formatted
+$ C:\projects\zaratustra\_scratch\m1-packs-20260909\.venv\Scripts\python.exe -m ruff check src/zaratustra/core src/zaratustra/process_packs src/zaratustra/cli tools/probe_packs.py tests/zaratustra/core/test_pack_bindings.py tests/zaratustra/process_packs
+All checks passed!
+$ C:\projects\zaratustra\_scratch\m1-packs-20260909\.venv\Scripts\python.exe -m mypy src/zaratustra/core src/zaratustra/process_packs src/zaratustra/cli tools/probe_packs.py tests/zaratustra/core/test_pack_bindings.py tests/zaratustra/process_packs
+Success: no issues found in 24 source files
+$ C:\projects\zaratustra\_scratch\m1-packs-20260909\.venv\Scripts\lint-imports.EXE --no-cache
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 27 files, 61 dependencies.
+-----------------------------------
+
+CLI may depend on Core, Core cannot depend on CLI KEPT
+Core has no surface dependency KEPT
+Process probe uses Core; Core has no process-rule dependency KEPT
+Process rules have no trusted adapter dependency KEPT
+Core has no external pack dependency KEPT
+Packs have no trusted adapter or fictional probe dependency KEPT
+
+Contracts: 6 kept, 0 broken.
+$ C:\projects\zaratustra\_scratch\m1-packs-20260909\.venv\Scripts\python.exe -m pytest tests/zaratustra/core/test_pack_bindings.py tests/zaratustra/process_packs -q
+........................                                                 [100%]
+24 passed in 6.94s
+$ C:\Users\Anton\.local\bin\uv.EXE build --no-sources
+Building source distribution (uv build backend)...
+Building wheel from source distribution (uv build backend)...
+Successfully built dist\zaratustra-0.7.0.tar.gz
+Successfully built dist\zaratustra-0.7.0-py3-none-any.whl
+PASS: native build, hygiene, types, boundaries, tests

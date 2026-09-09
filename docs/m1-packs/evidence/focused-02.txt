@@ -1,0 +1,24 @@
+$ C:\projects\zaratustra\_scratch\m1-packs-20260909\.venv\Scripts\python.exe -m ruff format --check src/zaratustra/core src/zaratustra/process_packs src/zaratustra/cli tools/probe_packs.py tests/zaratustra/core/test_pack_bindings.py tests/zaratustra/process_packs
+27 files already formatted
+$ C:\projects\zaratustra\_scratch\m1-packs-20260909\.venv\Scripts\python.exe -m ruff check src/zaratustra/core src/zaratustra/process_packs src/zaratustra/cli tools/probe_packs.py tests/zaratustra/core/test_pack_bindings.py tests/zaratustra/process_packs
+All checks passed!
+$ C:\projects\zaratustra\_scratch\m1-packs-20260909\.venv\Scripts\python.exe -m mypy src/zaratustra/core src/zaratustra/process_packs src/zaratustra/cli tools/probe_packs.py tests/zaratustra/core/test_pack_bindings.py tests/zaratustra/process_packs
+tests\zaratustra\process_packs\test_lifecycle.py:70: error: Argument 1 to "reference" has incompatible type "**dict[str, int]"; expected "str"  [arg-type]
+tests\zaratustra\process_packs\test_lifecycle.py:154: error: Incompatible types in assignment (expression has type "None", variable has type "LocalAuthorization")  [assignment]
+Found 2 errors in 1 file (checked 24 source files)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\projects\zaratustra\_scratch\m1-packs-20260909\tools\check.py", line 148, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "C:\projects\zaratustra\_scratch\m1-packs-20260909\tools\check.py", line 127, in main
+    run([sys.executable, "-m", "mypy", *files])
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\zaratustra\_scratch\m1-packs-20260909\tools\check.py", line 19, in run
+    subprocess.run(command, cwd=root, check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['C:\\projects\\zaratustra\\_scratch\\m1-packs-20260909\\.venv\\Scripts\\python.exe', '-m', 'mypy', 'src/zaratustra/core', 'src/zaratustra/process_packs', 'src/zaratustra/cli', 'tools/probe_packs.py', 'tests/zaratustra/core/test_pack_bindings.py', 'tests/zaratustra/process_packs']' returned non-zero exit status 1.

@@ -1,0 +1,81 @@
+{
+  "source": "f728ad6a8645ba04532e1cd74a34ea57c31c4dd8",
+  "files": {
+    ".gitattributes": {
+      "sha256": "b5b37e1e3dd760c39d093f250e3bf188df6d72932688da1b02dd75bfa43c99e6",
+      "size": 107
+    },
+    "baseline-check.txt": {
+      "sha256": "8cd89d1f01d12ca5fc00613671fc9f7697f8666eeec8544b762ffb027da55d4f",
+      "size": 2253
+    },
+    "baseline-manifest.json": {
+      "sha256": "47d0c5caaa57f8a08f8f06917ecf136100a1f45181b2dc7c6b4cb1074ce54e76",
+      "size": 21515
+    },
+    "baseline-probe.txt": {
+      "sha256": "7c8991b303f572f7d001d153c417b541b8ce3eca83032866d73e1e529f631c66",
+      "size": 2176
+    },
+    "baseline-trial.zip": {
+      "sha256": "5802879e187464edc24ae07c38e40502a26005bfa0d7e52ef4c09bfcaff5ec56",
+      "size": 278491
+    },
+    "baseline.whl": {
+      "sha256": "be03388aec6f41ef057839cbd0a0a93f953a493e50ce821330198bbbf1058fe8",
+      "size": 48956
+    },
+    "check-deliver.txt": {
+      "sha256": "7616476ed9cc77afe50828fce69cf316ff4b9769ee464b68624b616d41a69c91",
+      "size": 2380
+    },
+    "focused-01.txt": {
+      "sha256": "9e03c46bdd4d17d79c3957810ab5e63593282bbf5a6c12ca4232a03c4bfe5db1",
+      "size": 2343
+    },
+    "focused-02.txt": {
+      "sha256": "db721d52536543ee2678f33c1dbd22c8f725e1e84b36c6b494ba1c3f470cc9f9",
+      "size": 2483
+    },
+    "focused-03.txt": {
+      "sha256": "017a32499702235b10c7347ee539d6acae820877608bb2c48576a163921965c2",
+      "size": 2711
+    },
+    "lifecycle-01.txt": {
+      "sha256": "ede3518b5968c8062f1a921cc1265bfc7d4a65c38780cea55286f4c0109d4f57",
+      "size": 1178
+    },
+    "lifecycle-manifest.json": {
+      "sha256": "f3b264fd5a0edbd0c55dfa10d1de69539d04366ba62aff243f7d579aa3c07040",
+      "size": 11324
+    },
+    "lifecycle.zip": {
+      "sha256": "e568a33bb6a6135c9a62f7c39df62d01fce435ccf6ca6c079a627d1eb95f2a77",
+      "size": 138347
+    },
+    "restart-read.json": {
+      "sha256": "38cbb3b74825b24905d9568f69f09beac5b8fe1be00547556de3e91d308fd70f",
+      "size": 978
+    },
+    "restart_read.py.txt": {
+      "sha256": "6c07f5d264abc4fc058b1fd461b9f81f6b0a8c4025329e952afe30d4a3722703",
+      "size": 2453
+    },
+    "source-verification.json": {
+      "sha256": "7d0074cb2c91cd2010f409bf4786d020cc9bb74ac1f3d3b2dc9e007239f6f994",
+      "size": 11379
+    },
+    "source.diff": {
+      "sha256": "01b4dd395a2971df6a447d27d364f90baf37774b93ff1f866131e1b2cf1859d7",
+      "size": 70032
+    },
+    "summary.json": {
+      "sha256": "ede3518b5968c8062f1a921cc1265bfc7d4a65c38780cea55286f4c0109d4f57",
+      "size": 1178
+    },
+    "zaratustra-0.8.0-py3-none-any.whl": {
+      "sha256": "a4dfbf8e08829ed9fbd18f5661ea60700f35908e47fb8a2c054747589187805a",
+      "size": 54812
+    }
+  }
+}
