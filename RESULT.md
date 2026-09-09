@@ -27,6 +27,16 @@ This is Product engineering evidence; T6/CALL/M0 remain Direction responsibiliti
 
 ## evidence
 
+Binding G5 received 2026-09-09: PASS/PASS/PASS, no blocking findings, exact
+Product candidate 05047e38acc7386484223a5feacc510b015b2a85, fresh physical task
+01a0837c-d088-7eb3-bd31-973ac5d9654e, review commit
+cf239d7fe0a99fec533fa3977f419d5146962306. Full receipt and portable review/runtime bundle:
+docs/work7/G5-HOME.md and docs/work7/evidence/g5-return-20260909/.
+Independent native --deliver passed 140 tests; 58 semantic groups and complete
+installed restore are recorded in G5. Product bytes stayed unchanged. N1 is the
+known nonblocking legacy records-read encoding residual, already routed HOME:
+work7-locale-output-audit. This addition records the external binding verdict.
+
 Authority was checked against issuing Direction main
 3b9db6e2460dcf271e95b3937f4d123dbd9e2c04, authenticated remote main at start.
 PLAN records the required architecture/contract/Work6 close inputs; CALL.md retains
@@ -168,17 +178,18 @@ cost was not measured; no new owner deadline or budget was promised.
 
 Owner fixture permission exists; owner runtime acceptance does not. Seven console
 confirmations above were executor actions on the authorized fictional copy.
-Binding fresh physical G5 of this exact candidate has NOT been performed here.
+Binding fresh physical G5 passed in the separate task cited above;
+it was not performed by this authoring task.
 This Product RESULT cannot close T6, its open CALL or M0. Five-fact actual clean
 chat and demonstration to the owner have NOT happened and Work8 has NOT started.
 
 ## next
 
 next: solmax
-HOME receives this complete Product RESULT, source candidate and retained raw
-evidence. Direction arranges the required fresh physical G5 against all three
-claims and decides T6 close/any later Work8 admission. No Direction successor is
-issued by this Product session. Concrete additional follow-up, not a CALL:
+HOME receives this complete Product RESULT, exact candidate, retained raw
+evidence and the completed binding G5 against all three claims. Direction can
+use these grounds for T6 close and decides any later Work8 admission. No
+Direction successor is issued by this Product session. Concrete additional follow-up, not a CALL:
 HOME:work7-locale-output-audit in docs/work7/OUTPUT-REPAIR.md.
 
 END_OF_FILE: RESULT.md

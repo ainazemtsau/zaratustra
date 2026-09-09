@@ -1,0 +1,29 @@
+{
+  "received_at": "2026-09-09T00:59:10.701840+00:00",
+  "candidate": "05047e38acc7386484223a5feacc510b015b2a85",
+  "source_candidate": "5866a48c5f9d0f492ad55723120366ffe8f08921",
+  "review_commit": "cf239d7fe0a99fec533fa3977f419d5146962306",
+  "review_parent": "05047e38acc7386484223a5feacc510b015b2a85",
+  "physical_task": "01a0837c-d088-7eb3-bd31-973ac5d9654e",
+  "reported_verdict": [
+    "PASS",
+    "PASS",
+    "PASS"
+  ],
+  "report_sha256": "8cf557c315d1e41324420279cc116305c177cffa66d00ddebdab7689a0600f1c",
+  "review_manifest_sha256": "a96872b7c0789cfb8e038851be58e58f458f612fac90127106352eb09add45ef",
+  "review_bundle_sha256": "2271667af5240efcab251166462444307cefcdd3b9b982324677cdbf5e150510",
+  "review_files_verified": 279,
+  "review_directories_verified": 5,
+  "runtime_bundle_sha256": "167e432e738ffedb6cc61d1d3e1e19e42aa6d883da07e26649714e823f07c571",
+  "runtime_files_verified": 556,
+  "runtime_directories_verified": 675,
+  "committed_report_manifest_bundle_match": true,
+  "review_commit_only_review_artifacts": true,
+  "source_tests_tools_dependencies_unchanged": true,
+  "native_raw_pass": "140 passed in 29.29s",
+  "verification_scope": "receipt, Git identity and complete archive custody; behavioral verdict belongs to fresh G5 task",
+  "residual": "N1, nonblocking legacy records read ASCII stdout; HOME:work7-locale-output-audit",
+  "direction_state_written": false,
+  "work8_started": false
+}
