@@ -1,0 +1,17 @@
+{
+  "ready_revision": 7,
+  "blocked_revision": 8,
+  "continued_revision": 10,
+  "next_only_results": {
+    "count": 0,
+    "state": "empty",
+    "value": []
+  },
+  "ready_context": "ok",
+  "inherited_context": "ok",
+  "restore": "exact retained bytes/layout; real read and subsequent Core Result",
+  "restored_result_revision": 8,
+  "manual_acceptance": "pending",
+  "binding_g5": "pending",
+  "next": "solmax"
+}

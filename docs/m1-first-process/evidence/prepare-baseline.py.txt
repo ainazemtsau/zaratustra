@@ -1,0 +1,46 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from tools.retain_trial import retain_trial
+
+OUT = ROOT / 'docs/m1-first-process/evidence'
+OUT.mkdir(parents=True, exist_ok=True)
+def git(*args):
+    return subprocess.check_output(['git', *args], cwd=ROOT)
+def save(path, value):
+    path.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
+basis = git('rev-parse', 'HEAD').decode().strip()
+assert basis == '4e892153200d6fa0b1ef3add0bfeceae06b23331'
+paths = git('ls-tree', '-r', '--name-only', basis, '--', 'src', 'tests', 'tools',
+            'pyproject.toml', 'uv.lock', 'validation.config', 'AGENTS.md', '.python-version').decode().splitlines()
+manifest = {}
+with zipfile.ZipFile(OUT / 'baseline-source.zip', 'x', zipfile.ZIP_DEFLATED) as archive:
+    for name in paths:
+        value = git('show', f'{basis}:{name}')
+        archive.writestr(name, value)
+        manifest[name] = dict(sha256=hashlib.sha256(value).hexdigest(), bytes=len(value))
+save(OUT / 'baseline-source-manifest.json', dict(commit=basis, files=manifest))
+shutil.copyfile(ROOT/'dist/zaratustra-0.9.0-py3-none-any.whl', OUT/'baseline.whl')
+for name in ('baseline-check.txt', 'baseline-capabilities.txt', 'prepare-01.txt', 'prepare-02.txt'):
+    shutil.copyfile(ROOT/'_scratch/t4-environment'/name, OUT/name)
+save(OUT/'baseline-trial-manifest.json', retain_trial(ROOT/'_scratch/t4-before-edits', OUT/'baseline-trial.zip'))
+source = Path('C:/my_global_workflow/ba2e/zaratustra')
+save(OUT/'preflight.json', dict(basis=basis, source=str(source), execution=str(ROOT),
+    branch=git('branch','--show-current').decode().strip(), source_status=subprocess.check_output(
+        ['git','status','--porcelain'],cwd=source).decode(),
+    source_head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=source).decode().strip(),
+    pin=36, stamp=36, mode='PROBA', STOP=False, STEER=False,
+    native_basetemp=str(ROOT/'_scratch/t4-baseline-native'),
+    actual_basetemp_exists=(ROOT/'_scratch/t4-baseline-native').is_dir(),
+    baseline_native_exit=0, baseline_tests=204,
+    setup_first_attempt='sandbox denied Python read; unchanged required tool succeeded under reviewed escalation',
+    python=sys.version))
+shutil.copyfile(Path(__file__), OUT/'prepare-baseline.py.txt')
+print(json.dumps(dict(basis=basis, baseline_files=len(manifest), retained=True)))

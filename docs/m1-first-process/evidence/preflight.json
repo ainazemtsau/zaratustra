@@ -1,0 +1,19 @@
+{
+  "basis": "4e892153200d6fa0b1ef3add0bfeceae06b23331",
+  "source": "C:\\my_global_workflow\\ba2e\\zaratustra",
+  "execution": "C:\\projects\\zaratustra\\_scratch\\m1-first-process-20260910",
+  "branch": "codex/m1-first-process-20260910",
+  "source_status": "",
+  "source_head": "4e892153200d6fa0b1ef3add0bfeceae06b23331",
+  "pin": 36,
+  "stamp": 36,
+  "mode": "PROBA",
+  "STOP": false,
+  "STEER": false,
+  "native_basetemp": "C:\\projects\\zaratustra\\_scratch\\m1-first-process-20260910\\_scratch\\t4-baseline-native",
+  "actual_basetemp_exists": true,
+  "baseline_native_exit": 0,
+  "baseline_tests": 204,
+  "setup_first_attempt": "sandbox denied Python read; unchanged required tool succeeded under reviewed escalation",
+  "python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]"
+}
