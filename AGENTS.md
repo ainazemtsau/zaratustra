@@ -32,9 +32,14 @@ tools.probe_capabilities. T4 adds one finite fictional_lot Process using those e
 contracts; reproduce via tools.probe_first_process and docs/m1-first-process/PLAN.md.
 Core and generic process_packs bytes are unchanged. T5 adds development-only
 fictional_signal (observe/compare rounds), a shared host and two-process/install
-scenarios; see docs/m1-second-process/PLAN.md. T5 is an unverified candidate:
-the owner requires implementation here and tests/fresh review in Claude Code.
-No native or behavioral PASS is claimed for T5. The common renderer remains T6.
+scenarios; see docs/m1-second-process/PLAN.md. T5 passed its full native gate and
+binding fresh review (f4e3a26, then fa4e079: 235 tests, 11 contracts); the owner
+accepted that step as owner-ack:solmax-m1-second-process-accepted-20260910.
+T6 adds process_packs.read_overview: one derived shared view of several explicitly
+selected Processes through that same seven-answer contract, with overview_lines and
+tools.probe_overview; see docs/m1-overview/PLAN.md. Rows stay independent and the
+view writes nothing. T6 is an unverified candidate: the owner requires implementation
+here and tests/fresh review in Claude Code. No PASS is claimed for T6.
 T4 candidate 46718e4 passed fresh G5 (9c9c978); owner
 accepted its testing purpose and requires fictional examples only in dev tests.
 T1/T4 examples live in tests/fixtures, outside the installed product. Reproduction

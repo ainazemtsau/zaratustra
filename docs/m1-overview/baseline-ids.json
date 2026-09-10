@@ -16,12 +16,13 @@
   },
   "changed_by_design": {
     "src/zaratustra/process_packs/__init__.py": "716128325b48445f717a926da59dea1f501e9e3a gains export lines only",
+    "src/zaratustra/process_packs/AGENTS.md": "documents the new overview module",
     "src/zaratustra/process_packs/overview.py": "new additive module",
     "tools/probe_overview.py": "new development-only reproduction",
     "tests/zaratustra/process_packs/test_overview.py": "new tests",
     "docs/m1-overview/": "new task documents"
   },
   "changed_tree_expected_after_t6": {
-    "src/zaratustra": "differs from 2610df3b5e130eaf96ecb5566f08d564bfc42d43 only through process_packs/__init__.py and process_packs/overview.py"
+    "src/zaratustra": "differs from 2610df3b5e130eaf96ecb5566f08d564bfc42d43 only through process_packs/__init__.py, process_packs/AGENTS.md and process_packs/overview.py"
   }
 }
