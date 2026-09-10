@@ -98,13 +98,21 @@ def test_scratch_ignore_and_forced_stage_rejected(sandbox: Path) -> None:
     assert "scratch file is tracked: _scratch/seed.txt" in hygiene(sandbox)
 
 
-def test_real_boundary_clean_and_reverse_import_rejected(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "forbidden", ["zaratustra.cli", "tests.fixtures.fictional_lot", "tools.probe_first_process"]
+)
+def test_real_boundary_clean_and_reverse_import_rejected(tmp_path: Path, forbidden: str) -> None:
     """Run the installed linter on an isolated copy; do not alter the product tree."""
-    shutil.copytree(ROOT / "src", tmp_path / "src")
+    for name in ("src", "tools", "tests"):
+        shutil.copytree(ROOT / name, tmp_path / name, ignore=shutil.ignore_patterns("__pycache__"))
     shutil.copy(ROOT / "pyproject.toml", tmp_path / "pyproject.toml")
     command = shutil.which("lint-imports")
     assert command is not None, "required tool lint-imports unavailable"
-    environment = dict(os.environ, PYTHONPATH=str(tmp_path / "src"), PYTHONIOENCODING="utf-8")
+    environment = dict(
+        os.environ,
+        PYTHONPATH=os.pathsep.join((str(tmp_path / "src"), str(tmp_path))),
+        PYTHONIOENCODING="utf-8",
+    )
     clean = subprocess.run(
         [command, "--no-cache"],
         cwd=tmp_path,
@@ -115,7 +123,7 @@ def test_real_boundary_clean_and_reverse_import_rejected(tmp_path: Path) -> None
     )
     assert clean.returncode == 0, clean.stdout + clean.stderr
     (tmp_path / "src/zaratustra/core/boundary_seed.py").write_text(
-        "import zaratustra.cli\n", encoding="utf-8"
+        f"import {forbidden}\n", encoding="utf-8"
     )
     broken = subprocess.run(
         [command, "--no-cache"],
