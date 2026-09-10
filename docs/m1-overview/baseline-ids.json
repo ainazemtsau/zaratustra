@@ -1,7 +1,7 @@
 {
   "call": "c-solmax-zaratustra-m1-overview-20260910-exec",
   "basis": "c4b8aea4db38fea4c39a473c47d0d8b82d8552a0",
-  "purpose": "Byte identity of Core, the generic pack contract and both fictional rule packages before T6. Identity is not a semantic PASS.",
+  "purpose": "Byte identity of Core, the generic pack contract and both fictional rule packages before T6, plus a complete account of every path T6 changes. Identity is not a semantic PASS.",
   "unchanged_trees_expected_after_t6": {
     "src/zaratustra/core": "a93fdbb567c69c14dc1c645bede50157d3c3fc00",
     "tests/fixtures": "c8b4594826173680343566049945cac14fad082b",
@@ -15,14 +15,30 @@
     "src/zaratustra/process_packs/runner.py": "5ed0d7d4ae6a8e46040bb30dc22e97a7dd71ae7a"
   },
   "changed_by_design": {
-    "src/zaratustra/process_packs/__init__.py": "716128325b48445f717a926da59dea1f501e9e3a gains export lines only",
-    "src/zaratustra/process_packs/AGENTS.md": "documents the new overview module",
-    "src/zaratustra/process_packs/overview.py": "new additive module",
-    "tools/probe_overview.py": "new development-only reproduction",
-    "tests/zaratustra/process_packs/test_overview.py": "new tests",
-    "docs/m1-overview/": "new task documents",
-    "AGENTS.md": "records T5 acceptance and the new T6 overview",
-    "tools/AGENTS.md": "records the overview probe"
+    "note": "Exhaustive by path: git diff --name-only <basis> HEAD must return exactly the seventeen paths named below and nothing else. No entry stands for a directory.",
+    "product_source": {
+      "src/zaratustra/process_packs/overview.py": "new additive module: read_overview and overview_lines",
+      "src/zaratustra/process_packs/__init__.py": "from 716128325b48445f717a926da59dea1f501e9e3a: one rewritten docstring line, one added import line and four added __all__ entries; nothing else",
+      "src/zaratustra/process_packs/AGENTS.md": "documents the overview module and its one-line view invariant"
+    },
+    "development_only": {
+      "tools/probe_overview.py": "new reproduction of one shared overview over the accepted pair scenario",
+      "tools/AGENTS.md": "records the overview probe and the T5/T6 check assignment",
+      "tests/zaratustra/process_packs/test_overview.py": "new tests of the invisible guarantees"
+    },
+    "repository_documents": {
+      "AGENTS.md": "records T5 acceptance and the new T6 overview",
+      "RESULT.md": "the T6 engineering report returned to Solmax",
+      "docs/m1-overview/CALL.md": "the recorded CALL",
+      "docs/m1-overview/PLAN.md": "the W19 decision taken before implementation",
+      "docs/m1-overview/REPRODUCE.md": "commands and observable results",
+      "docs/m1-overview/baseline-ids.json": "this file",
+      "docs/m1-overview/FIX-G5-20260910.md": "the record of every review return and its fix",
+      "docs/m1-overview/CLAUDE-CHECK.md": "first check handoff, source 87db23a",
+      "docs/m1-overview/CLAUDE-RECHECK.md": "second check handoff, source 4dad08e",
+      "docs/m1-overview/CLAUDE-RECHECK-2.md": "third check handoff, source 456776a",
+      "docs/m1-overview/CLAUDE-RECHECK-3.md": "fourth check handoff, documents only"
+    }
   },
   "changed_tree_expected_after_t6": {
     "src/zaratustra": "differs from 2610df3b5e130eaf96ecb5566f08d564bfc42d43 only through process_packs/__init__.py, process_packs/AGENTS.md and process_packs/overview.py"
