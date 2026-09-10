@@ -1,0 +1,27 @@
+{
+  "call": "c-solmax-zaratustra-m1-overview-20260910-exec",
+  "basis": "c4b8aea4db38fea4c39a473c47d0d8b82d8552a0",
+  "purpose": "Byte identity of Core, the generic pack contract and both fictional rule packages before T6. Identity is not a semantic PASS.",
+  "unchanged_trees_expected_after_t6": {
+    "src/zaratustra/core": "a93fdbb567c69c14dc1c645bede50157d3c3fc00",
+    "tests/fixtures": "c8b4594826173680343566049945cac14fad082b",
+    "tests/fixtures/fictional_lot": "562949e5984875f50d58c22848a6f279e19821ef",
+    "tests/fixtures/fictional_signal": "29708288ddaaadaba45184da8e04385847dca551"
+  },
+  "unchanged_blobs_expected_after_t6": {
+    "src/zaratustra/process_packs/capabilities.py": "2579131d82de0dcca5664a52c3f4ea6e85ae39ee",
+    "src/zaratustra/process_packs/capability_models.py": "f1b2c6698ae9cc6f1acb5d712a10e200ee1a1e4a",
+    "src/zaratustra/process_packs/lifecycle.py": "f5c3c62a54eb21aa9b8de22d7a3e383b59385faa",
+    "src/zaratustra/process_packs/runner.py": "5ed0d7d4ae6a8e46040bb30dc22e97a7dd71ae7a"
+  },
+  "changed_by_design": {
+    "src/zaratustra/process_packs/__init__.py": "716128325b48445f717a926da59dea1f501e9e3a gains export lines only",
+    "src/zaratustra/process_packs/overview.py": "new additive module",
+    "tools/probe_overview.py": "new development-only reproduction",
+    "tests/zaratustra/process_packs/test_overview.py": "new tests",
+    "docs/m1-overview/": "new task documents"
+  },
+  "changed_tree_expected_after_t6": {
+    "src/zaratustra": "differs from 2610df3b5e130eaf96ecb5566f08d564bfc42d43 only through process_packs/__init__.py and process_packs/overview.py"
+  }
+}
