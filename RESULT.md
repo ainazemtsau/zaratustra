@@ -1,72 +1,63 @@
-# T5 — второй процесс подготовлен, проверки ожидаются
+# T5 — G5-S01 исправлен, полный native gate ждёт повтора
 
 ## outcome
 
 CALL c-solmax-zaratustra-m1-second-process-20260910-exec, PROBA36.
-Подготовлен development-only fictional_signal: steady → observe,
-changed → сравнение с exact digest → observe. Есть shared PackRegistry,
-общий host, сценарий обоих процессов и проверка отдельной wheel-установки.
-Core, generic process_packs, первые правила и зависимости не менялись.
-Статус unverified: владелец поручил реализацию здесь, проверки в Claude Code.
-Это передача кандидата, не REPORT PASS, приёмка или закрытие T5.
+Source fix b4a2aa88caea717663e7a5afdc064eb3e15bc922: в development installation
+probe __file__ сохраняется в локальную переменную и проверяется на None перед
+Path. Остальные правила/проверки/host и установленный src/zaratustra не меняются.
+Это кандидат исправления; зелёный полный gate и проверенное закрытие G5-S01 pending.
 
 ## evidence
 
-Основание 2df9b286b3b54ac3fabd07db0e7d9b343bc17850; его source
-5b145b8bdfb9239939ca118ebe70542ffbb13b68. Historical до поправки упаковки
-b1e0853f9b405e2910f2085dae6fd7f6100ba009 сохраняется отдельно.
-PLAN и baseline закреплены ДО кода: ba1dd8f280ba2bc07fa1f26d2f26a10c0852d5c0.
-docs/m1-second-process/baseline-source.zip содержит 78 committed files;
-baseline-manifest.json содержит SHA256/размеры. CALL/PLAN лежат рядом.
+Исходный source5348690b, handoff9b7f367. Fresh Claude G5
+f4e3a26d85507f76429fc01e53c4dfdc1c4b18c5:
+C:/projects/zaratustra/_scratch/g5-m1-second-process-20260910/docs/g5/m1-second-process-20260910/G5-REPORT.md.
+По этому отчёту: deliver FAIL на mypy2.3.1, отдельно235tests/11contracts/build,
+оба сценария,9bytechecks/13ownprobes PASS. Здесь сверены report, native raw,
+minimal repro и итог pytest. Эти результаты относятся к старому exact candidate.
+Review-дельта содержит только docs/g5, исходники авторского candidate не менялись.
 
-Код: tests/fixtures/fictional_signal; tools/probe_process_host.py,
-probe_second_process.py, probe_second_install.py. Первый runner использует
-выделенный общий host и сохраняет прежнюю последовательность шагов.
-tests/tools/test_second_process.py задаёт проверки exact basis, реальных
-Results/context/replay, неправильных inputs/stages, missing/incompatible pack,
-прав/scope/revision и взаимной изоляции. Это написанные проверки, не результаты.
-
-Автор новых native tests/build/types/lint, scenarios и installed checks не запускал.
-Source formatting и Git/byte/commit-hygiene inspection не подменяют эти проверки.
-Старый T4 PASS относится к старому source; refactor host требует повторения.
-Команды/evidence: docs/m1-second-process/REPRODUCE.md. Отдельный handoff закрепит
-source commit, полный diff и готовый Claude CALL. Все три done_when T5 ждут
-исполнения и binding fresh G5; гарантии P§30/§40 по байтам не объявляются PASS.
+Исправление: git diff9b7f367..b4a2aa88 содержит один Python-файл, +3/-1.
+src/zaratustra в old5348690b и newb4a2aa88 имеет один tree id
+2610df3b5e130eaf96ecb5566f08d564bfc42d43. Git identity не заменяет full native.
+Решение/граница: docs/m1-second-process/FIX-G5-S01.md; новый готовый handoff
+проверяющему: docs/m1-second-process/CLAUDE-RECHECK.md.
+Автор fix не запускал native/mypy/pytest/scenarios; только source/evidence reading,
+Git diff/tree inspection и обычный commit hygiene. Полный --deliver назначен Claude.
+Исходные PLAN/baseline/CANDIDATE.json и ZIP сохранены с прежними pins без перезаписи.
 
 ## assumptions
 
-Владелец: «Реализация здесь, проверки в Claude Code». Примеры только в тестах
-разработки, вне установленного продукта и его данных. BEACON выдуман;
-comparison не вводит реального мониторинга. Оба assessment сохраняются и
-возвращают observe согласно PLAN. Четыре действия — ограниченный показ правила,
-не гарантия бесконечного роста контекста: общие бюджеты/лимиты Core действуют.
+Распределение владельца «Реализация здесь, проверки в Claude Code» сохраняется.
+Явная None-проверка сужает тип и отвергает модуль без файла, не обходит guard.
+При существующем файле сохраняется прежняя проверка расположения обеих fixtures.
+Исходная поведенческая G5 может быть использована повторно после проверки узкой
+дельты; addendum подтверждает full native и неизменность установленного продукта.
 
 ## cuts
 
-Новых cuts нет. Проверки переданы по выбору владельца, не признаны PASS.
-Обе формулировки P§30/§40 сохранены; скрытые обходы должен опровергать fresh review.
-W15/W16 без изменения, W17/W18/W20 ждут evidence; W19/T6 и T7 не исполнялись.
-M1 не закрыта, M0 partial. Нет product push/merge, real data, новых зависимостей,
-внешних прав, расписаний или нового интерфейса.
+Новых cuts нет; полный native обязателен, selective mypy не заменяет его.
+Неблокирующие ограничения review сохранены: одинаковые changed-байты имеют
+одинаковый digest; долгие цепи NOT RUN; G5-S02 про старую смену provenance не
+требует новой правки. W17/W18/W20 обсуждаются с исходной G5 и новым addendum.
+P§30/P§40 не ослаблены. Нет T6/T7/M1 close, real data или product push/merge.
 
 ## cost
 
-Одно ограниченное приращение внешнего тестового пакета. Общие операции записи
-и контекста взяты из T4; новая версия установленного продукта не требуется.
-Проверки исполняются владельцем в Claude Code. Токены/денежная стоимость не измерялись.
+Одно локальное исправление типизации в dev-инструменте; dependencies, schema
+и package version не менялись. Токены/денежная стоимость не измерялись.
 
 ## manual-acceptance
 
-T5 pending. Приёмка первого процесса не переносится на второй. После проверок
-владелец увидит конечный KITE, четыре результата BEACON и следующий готовый раунд
-на одной версии Core, плюс конкретные найденные ограничения.
+T5 pending. Старый candidate не прошёл полный gate; новый ещё не проверен.
+Приёмка T4 не переносится на T5. Direction root остаётся открытым, M0 partial.
 
 ## next
 
 solmax
 
-Передать exact candidate и готовый текст для свежей проверки в Claude Code.
-FAIL → автору raw/воспроизведение; PASS → HOME evidence для review.
-Root T5 открыт; закрытие Direction и запуск T6 здесь не заявлены.
+Свежий Claude Code: full --deliver и узкий G5 addendum по CLAUDE-RECHECK.md.
+FAIL → автору raw/воспроизведение; PASS → HOME с original report и addendum.
 
 END_OF_FILE: RESULT.md
