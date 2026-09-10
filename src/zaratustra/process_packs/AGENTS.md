@@ -15,7 +15,8 @@ ContextQuery for the selected Work. No hidden counts or inferred scope expansion
 Full two-Process scenarios and placement are T4-T5 evidence, not this module.
 T6 adds overview.py: one derived shared view over several explicitly selected
 Processes. Each row is exactly one read_capabilities call and is embedded whole
-with its own request echo, byte digest and a state/count projection only.
+with its own request echo, byte digest and a projection of the state, the
+count and the refusal code that answer already carries.
 Rows stay independent: own workspace, process, revision, rights and selected
 context; no shared transaction, no shared revision, no cross-row inheritance.
 A refused row stays visible without value or count and hides no other row.

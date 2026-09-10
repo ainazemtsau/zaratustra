@@ -15,7 +15,7 @@
     "src/zaratustra/process_packs/runner.py": "5ed0d7d4ae6a8e46040bb30dc22e97a7dd71ae7a"
   },
   "changed_by_design": {
-    "note": "Exhaustive by path: git diff --name-only <basis> HEAD must return exactly the seventeen paths named below and nothing else. No entry stands for a directory.",
+    "note": "Exhaustive by path: git diff --name-only <basis> HEAD must return exactly the eighteen paths named below and nothing else. No entry stands for a directory.",
     "product_source": {
       "src/zaratustra/process_packs/overview.py": "new additive module: read_overview and overview_lines",
       "src/zaratustra/process_packs/__init__.py": "from 716128325b48445f717a926da59dea1f501e9e3a: one rewritten docstring line, one added import line and four added __all__ entries; nothing else",
@@ -37,7 +37,8 @@
       "docs/m1-overview/CLAUDE-CHECK.md": "first check handoff, source 87db23a",
       "docs/m1-overview/CLAUDE-RECHECK.md": "second check handoff, source 4dad08e",
       "docs/m1-overview/CLAUDE-RECHECK-2.md": "third check handoff, source 456776a",
-      "docs/m1-overview/CLAUDE-RECHECK-3.md": "fourth check handoff, documents only"
+      "docs/m1-overview/CLAUDE-RECHECK-3.md": "fourth check handoff, documents only",
+      "docs/m1-overview/CLAUDE-RECHECK-4.md": "fifth check handoff, documents only"
     }
   },
   "changed_tree_expected_after_t6": {
