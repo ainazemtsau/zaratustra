@@ -1,0 +1,35 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_______ test_built_distributions_exclude_residual_fictional_directories _______
+
+tmp_path = WindowsPath('C:/projects/zaratustra/_scratch/m1-test-only-processes-20260910/_scratch/residual-before/test_built_distributions_exclu0')
+
+    def test_built_distributions_exclude_residual_fictional_directories(tmp_path: Path) -> None:
+        """Old checkout caches must not leave importable namespace directories in a wheel."""
+        shutil.copytree(ROOT / "src", tmp_path / "src", ignore=shutil.ignore_patterns("__pycache__"))
+        for name in ("pyproject.toml", "uv.lock", ".python-version", "README.md"):
+            shutil.copyfile(ROOT / name, tmp_path / name)
+        for name in ("fictional_lot", "process_probe"):
+            cache = tmp_path / "src/zaratustra" / name / "__pycache__"
+            cache.mkdir(parents=True)
+            (cache / "stale.cpython-313.pyc").write_bytes(b"retained cache marker")
+        uv = shutil.which("uv")
+        assert uv is not None, "required tool uv unavailable"
+        subprocess.run([uv, "build", "--no-sources"], cwd=tmp_path, check=True)
+        with zipfile.ZipFile(next((tmp_path / "dist").glob("*.whl"))) as wheel:
+>           assert not any(
+                name.startswith(("zaratustra/fictional_lot/", "zaratustra/process_probe/"))
+                for name in wheel.namelist()
+            )
+E           assert not True
+E            +  where True = any(<generator object test_built_distributions_exclude_residual_fictional_directories.<locals>.<genexpr> at 0x0000022CB01DE400>)
+
+tests\tools\test_check.py:156: AssertionError
+---------------------------- Captured stderr call -----------------------------
+Building source distribution (uv build backend)...
+Building wheel from source distribution (uv build backend)...
+Successfully built dist\zaratustra-0.10.1.tar.gz
+Successfully built dist\zaratustra-0.10.1-py3-none-any.whl
+=========================== short test summary info ===========================
+FAILED tests/tools/test_check.py::test_built_distributions_exclude_residual_fictional_directories
+1 failed, 15 deselected in 0.25s

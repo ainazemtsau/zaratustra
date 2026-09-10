@@ -1,0 +1,150 @@
+{
+  "source_commit": "5b145b8bdfb9239939ca118ebe70542ffbb13b68",
+  "hash_basis": "Git index blobs after normalization",
+  "files": {
+    "RESULT.md": {
+      "sha256": "c5d4dcd6ccd1730c2d53e5868feb0f3987d6e35264eab0c0608f57447ee912c3",
+      "bytes": 6292
+    },
+    "docs/m1-test-only/.gitattributes": {
+      "sha256": "ef9db2ac1a7fcf15e2192d1e38730ef7773474a99a890ff6dd0501ab45556ab7",
+      "bytes": 59
+    },
+    "docs/m1-test-only/OWNER-DECISION.md": {
+      "sha256": "df23ab0cea835ae4f4f90ddd8fc7c85a385a8fce2402bea775f9b1228567dffd",
+      "bytes": 1394
+    },
+    "docs/m1-test-only/PLAN.md": {
+      "sha256": "33e8e44db4bee2e89d54264e0a043e6d752d7063526333f2ae510c00c508a15e",
+      "bytes": 1893
+    },
+    "docs/m1-test-only/REPRODUCE.md": {
+      "sha256": "c4ec53aa8d3100286ffe1535e2c0336cce566af1fa64f1c6e59fce93e501fc31",
+      "bytes": 4276
+    },
+    "docs/m1-test-only/evidence/blank-workspace-manifest.json": {
+      "sha256": "53b9b8a543d4456146d5a219d2ee8e0c613309b6299e06994ac192cfcfb63db7",
+      "bytes": 903
+    },
+    "docs/m1-test-only/evidence/blank-workspace.zip": {
+      "sha256": "3f4d0b9679374bbc076a57c5f2154ad5038062b473c69de6bc4ff7a08e223d6b",
+      "bytes": 2366
+    },
+    "docs/m1-test-only/evidence/boundary-02.txt": {
+      "sha256": "3c955dd3c3627b5a6c4bad7ce83bd50da0d332b6d6bd8b8851eeb777b539322e",
+      "bytes": 115
+    },
+    "docs/m1-test-only/evidence/final-install/blank-workspace-manifest.json": {
+      "sha256": "6a157047b92b9cea9e1ed01d908f46a78a37e3b6a10efd9c76da4d6ce12f0aaa",
+      "bytes": 918
+    },
+    "docs/m1-test-only/evidence/final-install/blank-workspace.zip": {
+      "sha256": "9a8209397f129c6377fbbc95691e0dc2d13978e5c26834d2047e1089a5132ebc",
+      "bytes": 2365
+    },
+    "docs/m1-test-only/evidence/final-install/installed.json": {
+      "sha256": "c61b4aa78cfb0f7ae448146667a2c8be336a6286bba8bd93b7a93e4db1e06a03",
+      "bytes": 299
+    },
+    "docs/m1-test-only/evidence/final-install/isolated_child.py.txt": {
+      "sha256": "eaefc8ce7be6a3717518fc3e96a55f09c8b3bfcac1681e23ece7822fc2d87b9e",
+      "bytes": 2287
+    },
+    "docs/m1-test-only/evidence/final-install/product-module-paths.json": {
+      "sha256": "258e1d291a094a7d6473097185ff2243eb8a61bb509ac234b683e3b40a89b3d2",
+      "bytes": 4491
+    },
+    "docs/m1-test-only/evidence/final-install/runtime-requirements.txt": {
+      "sha256": "da58a8ac22a519b93d513567e07d03cc946eceba7684851eb8ef8594d87b50e7",
+      "bytes": 515
+    },
+    "docs/m1-test-only/evidence/final-install/scenario-manifest.json": {
+      "sha256": "976b504d0353b29b03840585fbeee3cd52d894661184427b30ae5e63af4655c4",
+      "bytes": 24368
+    },
+    "docs/m1-test-only/evidence/final-install/scenario.zip": {
+      "sha256": "afd4959a5a0e6a2fad24efa993f169c1c3406c8bab9a96f620387278354d550c",
+      "bytes": 525940
+    },
+    "docs/m1-test-only/evidence/final-install/verification.json": {
+      "sha256": "f0c373bc9f063faec1a85660e33bcb498989c357fb8f72d384a3c48f55270cf3",
+      "bytes": 3062
+    },
+    "docs/m1-test-only/evidence/final-install/zaratustra-0.10.1-py3-none-any.whl": {
+      "sha256": "29b207cb3ad5a752ae4095872c52f1b8d40fcc146c0ecfbbb08198da893b5888",
+      "bytes": 57761
+    },
+    "docs/m1-test-only/evidence/finalize.py.txt": {
+      "sha256": "edceb599996f17286c9db31b5497dafaa91a150c44c363083f2e937cd19db2f4",
+      "bytes": 1355
+    },
+    "docs/m1-test-only/evidence/install-01.txt": {
+      "sha256": "efec017e42fc905fe73a9aeff53279eb6b03e7667fb3b25763dd00470c13d8a7",
+      "bytes": 6241
+    },
+    "docs/m1-test-only/evidence/install-02.txt": {
+      "sha256": "026ba12d312d3d55a99c11f1a686fc3122f3502ad863871a32a9e627e152bd06",
+      "bytes": 6244
+    },
+    "docs/m1-test-only/evidence/installed.json": {
+      "sha256": "5c08f59a6789ecfed3f5a3e67057f9efc762312b0bd13b251e92492672bc0d40",
+      "bytes": 299
+    },
+    "docs/m1-test-only/evidence/isolated_child.py.txt": {
+      "sha256": "eaefc8ce7be6a3717518fc3e96a55f09c8b3bfcac1681e23ece7822fc2d87b9e",
+      "bytes": 2287
+    },
+    "docs/m1-test-only/evidence/native-01.txt": {
+      "sha256": "61bcbe6137307c03192208c05127c8e8216a624aab16827d71a52db98707a6cd",
+      "bytes": 6197
+    },
+    "docs/m1-test-only/evidence/native-02.txt": {
+      "sha256": "0457aa1452d52ed97c4a5a45f0b2ba7afcd37b05d49aa63f87369a567855715a",
+      "bytes": 2739
+    },
+    "docs/m1-test-only/evidence/native-03.txt": {
+      "sha256": "23baf7ba323f4b83802ec203bed3911eeacf7b318bc42acc6ae26e7af9488663",
+      "bytes": 2739
+    },
+    "docs/m1-test-only/evidence/product-module-paths.json": {
+      "sha256": "22827a9ed19e75f9be0ea05995d36009b10bc476a34f0b796e7b3a4ceb967615",
+      "bytes": 4491
+    },
+    "docs/m1-test-only/evidence/residual-after.txt": {
+      "sha256": "94785bb174f65122f42b25156384922fe294e1a5e4bcc1825325b72300722292",
+      "bytes": 115
+    },
+    "docs/m1-test-only/evidence/residual-before.txt": {
+      "sha256": "cf30ce91a5182c447da85a69473feab99e2e65f0b501cccc26c2302cf7e49670",
+      "bytes": 2285
+    },
+    "docs/m1-test-only/evidence/retain_install.py.txt": {
+      "sha256": "1ea3df065cb32df1d3fce0334e416ac050dd066c52e2747b9413f064040927c0",
+      "bytes": 1236
+    },
+    "docs/m1-test-only/evidence/runtime-requirements.txt": {
+      "sha256": "59f30fb89a69380fffd6fc2c397cfc6e36e1f8febefcae90e0faa6556c6e45e0",
+      "bytes": 515
+    },
+    "docs/m1-test-only/evidence/scenario-manifest.json": {
+      "sha256": "cd5a9e1c12051a9ec58b010a63d40a9c6ea0937517603cc06201642410bcd697",
+      "bytes": 24353
+    },
+    "docs/m1-test-only/evidence/scenario.zip": {
+      "sha256": "5344123ff73af7cd35bd802dd1b70a77e5c999a94975ae9681c328f1ecd1a76d",
+      "bytes": 526088
+    },
+    "docs/m1-test-only/evidence/verification.json": {
+      "sha256": "8fe56a574786c43ebc5a9ecbebc801478122edd6c7c16825d7a4475561c14d5f",
+      "bytes": 3062
+    },
+    "docs/m1-test-only/evidence/verify_install.py.txt": {
+      "sha256": "2576249d69375ebebc1cedd66b0eb02628fb23fa24ad1593fccf48b02de3eda6",
+      "bytes": 5930
+    },
+    "docs/m1-test-only/evidence/zaratustra-0.10.1-py3-none-any.whl": {
+      "sha256": "29b207cb3ad5a752ae4095872c52f1b8d40fcc146c0ecfbbb08198da893b5888",
+      "bytes": 57761
+    }
+  }
+}

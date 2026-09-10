@@ -1,0 +1,21 @@
+{
+  "trial": "C:\\projects\\zaratustra\\_scratch\\m1-test-only-processes-20260910\\_scratch\\install-02\\blank-workspace",
+  "archive": "C:\\projects\\zaratustra\\_scratch\\m1-test-only-processes-20260910\\docs\\m1-test-only\\evidence\\final-install\\blank-workspace.zip",
+  "archive_sha256": "9a8209397f129c6377fbbc95691e0dc2d13978e5c26834d2047e1089a5132ebc",
+  "files": {
+    ".zara/state.sqlite3": "5ce97048a135f3d31eb4cbdb08cb79fb8c04e7bf5aedb8a51411b0f6f624ebe9"
+  },
+  "directories": [
+    ".zara/",
+    "artifacts/",
+    "inbox/",
+    "processes/",
+    "projections/"
+  ],
+  "excluded_directories": [
+    "venv",
+    "__pycache__"
+  ],
+  "method": "ZIP CRC, every decompressed file SHA-256 and complete directory inventory",
+  "restore": "Extract into a NEW folder; install retained wheel and locked requirements separately. Do not use fault-workspace as a base. Historical absolute paths remain provenance."
+}

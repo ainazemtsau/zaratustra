@@ -1,0 +1,28 @@
+"""Retain bounded verification outputs, excluding disposable installed dependencies."""
+import json
+from pathlib import Path
+import shutil
+import sys
+
+root = Path(__file__).resolve().parents[3]
+assert not any((root / n).exists() for n in ("STOP", "STEER.md"))
+sys.path.insert(0, str(root))
+from tools.retain_trial import retain_trial
+
+base = root / sys.argv[1]
+out = root / sys.argv[2]
+assert base.resolve().is_relative_to(root / "_scratch")
+assert out.resolve().is_relative_to(root / "docs/m1-test-only/evidence")
+out.mkdir(parents=True, exist_ok=True)
+for name in ("verification.json", "installed.json", "product-module-paths.json",
+             "runtime-requirements.txt", "isolated_child.py",
+             "zaratustra-0.10.1-py3-none-any.whl"):
+    target = out / (name + ".txt" if name.endswith(".py") else name)
+    assert not target.exists(), target
+    shutil.copyfile(base / name, target)
+for name in ("scenario", "blank-workspace"):
+    manifest = retain_trial(base / name, out / f"{name}.zip")
+    (out / f"{name}-manifest.json").write_text(
+        json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
+print("PASS: retained wheel, installed paths, empty workspace and full external fixture scenario")

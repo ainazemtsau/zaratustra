@@ -1,0 +1,38 @@
+
+import importlib.metadata, importlib.util, json, sys
+from pathlib import Path
+base, checkout = map(Path, sys.argv[1:])
+import zaratustra, zaratustra.core
+installed_root = Path(zaratustra.__file__).resolve().parent
+assert installed_root.is_relative_to(base / "venv"), installed_root
+assert not any(Path(p).resolve() in {checkout, checkout / "src"} for p in sys.path if p)
+assert list(Path.cwd().iterdir()) == []
+for name in ("zaratustra.fictional_lot", "zaratustra.process_probe", "tests", "tools"):
+    assert importlib.util.find_spec(name) is None, name
+from zaratustra.core import init_workspace, migrate_workspace, read_records
+blank = base / "blank-workspace"
+blank.mkdir()
+init_workspace(blank)
+migrate_workspace(blank, target_version=7)
+snapshot = read_records(blank)
+assert snapshot.records == () and snapshot.state_revision == 0
+report = dict(version=importlib.metadata.version("zaratustra"), installed_root=str(installed_root),
+              fixture_modules_absent=True, dev_packages_absent=True, initial_records=0,
+              initial_revision=snapshot.state_revision)
+(base / "installed.json").write_text(json.dumps(report, indent=2) + chr(10), encoding="utf-8")
+print(json.dumps(report, indent=2), flush=True)
+
+# Product was loaded and absence checked above, before exposing development fixtures.
+sys.path.append(str(checkout))
+from tools.probe_first_process import run
+import tests.fixtures.fictional_lot as fixture
+assert Path(fixture.__file__).resolve().is_relative_to(checkout / "tests/fixtures")
+summary = run(base / "scenario", checkout / "docs/m1-first-process/inputs.json")
+assert summary["outcome"] == "release" and summary["final_revision"] == 19
+assert summary["expected_refusals"] == dict(incomplete="lot_blocked", missing_pack="missing_pack",
+                                            wrong_basis="lot_blocked")
+modules = {n: m.__file__ for n, m in sys.modules.items()
+           if (n == "zaratustra" or n.startswith("zaratustra.")) and getattr(m, "__file__", None)}
+assert all(Path(p).resolve().is_relative_to(installed_root) for p in modules.values())
+(base / "product-module-paths.json").write_text(json.dumps(modules, indent=2) + chr(10), encoding="utf-8")
+print("PASS: installed product only; external fixture release, revision19; expected refusals")

@@ -1,0 +1,117 @@
+"""Retained verification: wheel-only installation, then an external dev fixture."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[3]
+BASE = (ROOT / sys.argv[1]).resolve()
+assert BASE.is_relative_to(ROOT / "_scratch") and not BASE.exists()
+assert not any((ROOT / name).exists() for name in ("STOP", "STEER.md"))
+BASE.mkdir(parents=True)
+UV = shutil.which("uv")
+assert UV
+
+def command(args, cwd=ROOT):
+    print("$ " + " ".join(map(str, args)), flush=True)
+    subprocess.run(list(map(str, args)), cwd=cwd, check=True)
+
+def git(*args):
+    return subprocess.check_output(["git", *args], cwd=ROOT)
+
+def digest(raw):
+    return dict(sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw))
+
+head = git("rev-parse", "HEAD").decode().strip()
+assert not git("diff", "HEAD", "--", "src", "tests", "tools", "pyproject.toml", "uv.lock")
+basis = "9c9c97889bb79256ebca7d2409233167f2599a41"
+assert not git("diff", basis, head, "--", "src/zaratustra/core", "src/zaratustra/process_packs")
+moves = {}
+for module in ("fictional_lot", "process_probe"):
+    old = f"src/zaratustra/{module}"
+    names = git("ls-tree", "-r", "--name-only", basis, old).decode().splitlines()
+    for name in names:
+        if not name.endswith(".py"):
+            continue
+        new = name.replace("src/zaratustra/", "tests/fixtures/", 1)
+        before = git("show", f"{basis}:{name}")
+        assert before == git("show", f"{head}:{new}")
+        moves[new] = digest(before)
+
+wheel = ROOT / "dist/zaratustra-0.10.1-py3-none-any.whl"
+assert wheel.is_file(), "Run the successful native Deliver first"
+retained = BASE / wheel.name
+shutil.copyfile(wheel, retained)
+with zipfile.ZipFile(retained) as archive:
+    assert not any("fictional_lot" in n or "process_probe" in n for n in archive.namelist())
+    names = [n for n in archive.namelist() if not n.endswith("/")]
+    assert {n.split("/")[0] for n in names} == {"zaratustra", "zaratustra-0.10.1.dist-info"}
+    package = {n: archive.read(n) for n in names if n.startswith("zaratustra/")}
+    source = git("ls-tree", "-r", "--name-only", head, "src/zaratustra").decode().splitlines()
+    assert set(package) == {n.removeprefix("src/") for n in source}
+    for name, raw in package.items():
+        assert raw == git("show", f"{head}:src/{name}")
+
+environment = BASE / "venv"
+working = BASE / "empty-cwd"
+working.mkdir()
+requirements = BASE / "runtime-requirements.txt"
+command([UV, "export", "--locked", "--no-dev", "--no-emit-project", "--no-hashes",
+         "--output-file", requirements])
+command([UV, "venv", "--python", "3.13.7", "--python-preference", "only-managed", environment])
+python = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+command([UV, "pip", "install", "--python", python, "-r", requirements, retained], working)
+command([UV, "pip", "check", "--python", python], working)
+
+code = '''
+import importlib.metadata, importlib.util, json, sys
+from pathlib import Path
+base, checkout = map(Path, sys.argv[1:])
+import zaratustra, zaratustra.core
+installed_root = Path(zaratustra.__file__).resolve().parent
+assert installed_root.is_relative_to(base / "venv"), installed_root
+assert not any(Path(p).resolve() in {checkout, checkout / "src"} for p in sys.path if p)
+assert list(Path.cwd().iterdir()) == []
+for name in ("zaratustra.fictional_lot", "zaratustra.process_probe", "tests", "tools"):
+    assert importlib.util.find_spec(name) is None, name
+from zaratustra.core import init_workspace, migrate_workspace, read_records
+blank = base / "blank-workspace"
+blank.mkdir()
+init_workspace(blank)
+migrate_workspace(blank, target_version=7)
+snapshot = read_records(blank)
+assert snapshot.records == () and snapshot.state_revision == 0
+report = dict(version=importlib.metadata.version("zaratustra"), installed_root=str(installed_root),
+              fixture_modules_absent=True, dev_packages_absent=True, initial_records=0,
+              initial_revision=snapshot.state_revision)
+(base / "installed.json").write_text(json.dumps(report, indent=2) + chr(10), encoding="utf-8")
+print(json.dumps(report, indent=2), flush=True)
+
+# Product was loaded and absence checked above, before exposing development fixtures.
+sys.path.append(str(checkout))
+from tools.probe_first_process import run
+import tests.fixtures.fictional_lot as fixture
+assert Path(fixture.__file__).resolve().is_relative_to(checkout / "tests/fixtures")
+summary = run(base / "scenario", checkout / "docs/m1-first-process/inputs.json")
+assert summary["outcome"] == "release" and summary["final_revision"] == 19
+assert summary["expected_refusals"] == dict(incomplete="lot_blocked", missing_pack="missing_pack",
+                                            wrong_basis="lot_blocked")
+modules = {n: m.__file__ for n, m in sys.modules.items()
+           if (n == "zaratustra" or n.startswith("zaratustra.")) and getattr(m, "__file__", None)}
+assert all(Path(p).resolve().is_relative_to(installed_root) for p in modules.values())
+(base / "product-module-paths.json").write_text(json.dumps(modules, indent=2) + chr(10), encoding="utf-8")
+print("PASS: installed product only; external fixture release, revision19; expected refusals")
+'''
+(BASE / "isolated_child.py").write_text(code, encoding="utf-8", newline="\n")
+command([python, "-I", BASE / "isolated_child.py", BASE, ROOT], working)
+report = dict(source_commit=head, basis=basis, wheel=digest(retained.read_bytes()),
+              wheel_files=names, package_files_equal_git=len(package), rule_moves=moves,
+              core_and_generic_packs_unchanged=True,
+              isolated=json.loads((BASE / "installed.json").read_bytes()),
+              external_fixture_scenario="PASS release revision19")
+(BASE / "verification.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n")
+print(json.dumps(report, indent=2), flush=True)

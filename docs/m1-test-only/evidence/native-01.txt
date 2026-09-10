@@ -1,0 +1,97 @@
+$ C:\projects\zaratustra\_scratch\m1-test-only-processes-20260910\.venv\Scripts\python.exe -m ruff format --check src tools tests
+72 files already formatted
+$ C:\projects\zaratustra\_scratch\m1-test-only-processes-20260910\.venv\Scripts\python.exe -m ruff check src tools tests
+All checks passed!
+$ C:\projects\zaratustra\_scratch\m1-test-only-processes-20260910\.venv\Scripts\python.exe -m mypy src tools tests
+Success: no issues found in 64 source files
+$ C:\projects\zaratustra\_scratch\m1-test-only-processes-20260910\.venv\Scripts\lint-imports.EXE --no-cache
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 48 files, 109 dependencies.
+------------------------------------
+
+Installed product never imports development tests or tools KEPT
+CLI may depend on Core, Core cannot depend on CLI KEPT
+Core has no surface dependency KEPT
+Process probe uses Core; Core has no process-rule dependency KEPT
+Process rules have no trusted adapter dependency KEPT
+Core has no external pack dependency KEPT
+Packs have no trusted adapter or fictional probe dependency KEPT
+Core and generic packs do not depend on fictional lot rules KEPT
+Fictional lot has no trusted surface or probe dependency KEPT
+
+Contracts: 9 kept, 0 broken.
+$ C:\projects\zaratustra\_scratch\m1-test-only-processes-20260910\.venv\Scripts\python.exe -m pytest tests -q
+...........F............................................................ [ 33%]
+........................................................................ [ 66%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+================================== FAILURES ===================================
+____________ test_real_boundary_clean_and_reverse_import_rejected _____________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/_scratch/m1-test-only-processes-20260910/_scratch/native-01/test_real_boundary_clean_and_r0')
+
+    def test_real_boundary_clean_and_reverse_import_rejected(tmp_path: Path) -> None:
+        """Run the installed linter on an isolated copy; do not alter the product tree."""
+        shutil.copytree(ROOT / "src", tmp_path / "src")
+        shutil.copy(ROOT / "pyproject.toml", tmp_path / "pyproject.toml")
+        command = shutil.which("lint-imports")
+        assert command is not None, "required tool lint-imports unavailable"
+        environment = dict(os.environ, PYTHONPATH=str(tmp_path / "src"), PYTHONIOENCODING="utf-8")
+        clean = subprocess.run(
+            [command, "--no-cache"],
+            cwd=tmp_path,
+            env=environment,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
+>       assert clean.returncode == 0, clean.stdout + clean.stderr
+E       AssertionError: 
+E         ╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+E         ╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+E          ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+E          ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+E         ╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+E         ╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+E           └──▶║║                    ▲ 
+E               ╚╝────────────────────┘
+E         
+E         Could not find package 'tests' in your Python path.
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['C:\\projects\\zaratustra\\_scratch\\m1-test-only-processes-20260910\\.venv\\Scripts\\lint-impo...                ▲ \n      ╚╝────────────────────┘\n\nCould not find package 'tests' in your Python path.\n", stderr='').returncode
+
+tests\tools\test_check.py:116: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/tools/test_check.py::test_real_boundary_clean_and_reverse_import_rejected
+1 failed, 216 passed in 62.65s (0:01:02)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\projects\zaratustra\_scratch\m1-test-only-processes-20260910\tools\check.py", line 148, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "C:\projects\zaratustra\_scratch\m1-test-only-processes-20260910\tools\check.py", line 134, in main
+    run([sys.executable, "-m", "pytest", *(test_files or ["tests"]), "-q"])
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\zaratustra\_scratch\m1-test-only-processes-20260910\tools\check.py", line 19, in run
+    subprocess.run(command, cwd=root, check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py", line 577, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['C:\\projects\\zaratustra\\_scratch\\m1-test-only-processes-20260910\\.venv\\Scripts\\python.exe', '-m', 'pytest', 'tests', '-q']' returned non-zero exit status 1.

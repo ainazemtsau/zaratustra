@@ -1,0 +1,32 @@
+"""Hash Git index bytes, never pre-normalization working-copy text."""
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+import sys
+
+root = Path(__file__).resolve().parents[3]
+folder = "docs/m1-test-only/"
+destination = folder + "evidence/manifest.json"
+assert not any((root / n).exists() for n in ("STOP", "STEER.md"))
+
+def git(*args):
+    return subprocess.check_output(["git", *args], cwd=root)
+
+def describe(name):
+    raw = git("show", ":" + name)
+    return dict(sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw))
+
+if len(sys.argv) > 1 and sys.argv[1] == "verify":
+    manifest = json.loads(git("show", ":" + destination))
+    assert all(describe(name) == data for name, data in manifest["files"].items())
+    print("PASS: all retained manifest hashes match staged Git bytes")
+else:
+    names = git("ls-files", folder).decode().splitlines()
+    assert names
+    files = {name: describe(name) for name in ["RESULT.md", *names] if name != destination}
+    manifest = dict(source_commit="5b145b8bdfb9239939ca118ebe70542ffbb13b68",
+                    hash_basis="Git index blobs after normalization", files=files)
+    (root / destination).write_text(json.dumps(manifest, indent=2) + "\n",
+                                    encoding="utf-8", newline="\n")
+    print("Created manifest from staged bytes:", len(files), "files")
