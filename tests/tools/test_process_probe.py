@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import pytest
 
+from tests.fixtures.process_probe import BatchRule, CycleRule, Rule, RuleBlocked, propose_result
 from tools.probe_m1 import Trial, confirm, proposed, query_for, work_at
 from zaratustra.core import (
     MutationError,
@@ -17,7 +18,6 @@ from zaratustra.core import (
     read_workspace,
     submit_result,
 )
-from zaratustra.process_probe import BatchRule, CycleRule, Rule, RuleBlocked, propose_result
 
 
 @pytest.fixture(params=[BatchRule(), CycleRule()])

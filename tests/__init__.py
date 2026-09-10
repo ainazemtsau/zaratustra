@@ -1,1 +1,1 @@
-"""Explicit test package keeps shared fixtures unambiguous for pytest and mypy."""
+"""Development tests; excluded from the installed product."""

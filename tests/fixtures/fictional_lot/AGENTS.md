@@ -7,4 +7,5 @@ inspect requires every named check; decide binds the exact prior inspection dige
 closed is a non-executable continuation; the trusted host explicitly cancels it
 through Core. Never claim it completed a third Result. Unknown state fails closed.
 Views describe only supplied metadata scope; context references grant no authority.
-END_OF_FILE: src/zaratustra/fictional_lot/AGENTS.md
+This fixture is development-only and must never enter the installed product.
+END_OF_FILE: tests/fixtures/fictional_lot/AGENTS.md

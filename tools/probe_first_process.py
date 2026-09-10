@@ -11,6 +11,12 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
+from tests.fixtures.fictional_lot import (
+    initial_records,
+    initial_requirements,
+    reference,
+    registration,
+)
 from zaratustra.core import (
     ArtifactReference,
     ContextQuery,
@@ -33,7 +39,6 @@ from zaratustra.core import (
     read_records,
     read_result,
 )
-from zaratustra.fictional_lot import initial_records, initial_requirements, reference, registration
 from zaratustra.process_packs import (
     PackError,
     PackRegistry,

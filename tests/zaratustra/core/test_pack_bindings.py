@@ -10,6 +10,7 @@ from uuid import uuid4
 
 import pytest
 
+from tests.fixtures.process_probe import BatchRule, propose_result
 from tools.probe_m1 import query_for, restore_snapshot, work_at
 from tools.probe_packs import PacksTrial, confirm, reference, registry
 from tools.retain_trial import retain_trial
@@ -23,7 +24,6 @@ from zaratustra.core import (
     read_records,
     read_workspace,
 )
-from zaratustra.process_probe import BatchRule, propose_result
 
 
 def domain_bytes(path: Path) -> dict[str, list[Any]]:

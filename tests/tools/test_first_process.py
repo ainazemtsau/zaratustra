@@ -8,6 +8,7 @@ from typing import Any
 
 import pytest
 
+from tests.fixtures.fictional_lot import reference
 from tools.probe_first_process import ROOT, LotTrial, confirm, footprint, installed, wire
 from tools.probe_m1 import query_for, work_at
 from zaratustra.core import (
@@ -18,7 +19,6 @@ from zaratustra.core import (
     open_work,
     read_records,
 )
-from zaratustra.fictional_lot import reference
 from zaratustra.process_packs import PackError, PackRegistry, read_capabilities
 
 

@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
+from tests.fixtures.process_probe import BatchRule, CycleRule, Rule, RuleBlocked, propose_result
 from zaratustra.core import (
     Artifact,
     ArtifactReference,
@@ -38,7 +39,6 @@ from zaratustra.core import (
     read_workspace,
     submit_result,
 )
-from zaratustra.process_probe import BatchRule, CycleRule, Rule, RuleBlocked, propose_result
 
 from .retain_trial import retain_trial
 

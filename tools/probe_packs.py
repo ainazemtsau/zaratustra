@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
+from tests.fixtures.process_probe import BatchRule, Observation
 from zaratustra.core import (
     Artifact,
     ArtifactReference,
@@ -46,7 +47,6 @@ from zaratustra.process_packs import (
     binding_request,
     propose_result,
 )
-from zaratustra.process_probe import BatchRule, Observation
 
 from .probe_m1 import query_for, restore_snapshot, save, work_at
 from .retain_trial import retain_trial
