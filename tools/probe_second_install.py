@@ -74,7 +74,9 @@ def isolated_child(base: Path) -> None:
     from tools.probe_second_process import run
 
     for fixture in (lot, signal):
-        assert Path(fixture.__file__).resolve().is_relative_to(ROOT / "tests/fixtures")
+        fixture_file = fixture.__file__
+        assert fixture_file is not None, fixture.__name__
+        assert Path(fixture_file).resolve().is_relative_to(ROOT / "tests/fixtures")
     summary = run(
         base / "scenario",
         ROOT / "docs/m1-second-process/inputs.json",
