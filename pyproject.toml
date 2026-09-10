@@ -88,6 +88,18 @@ source_modules = ["zaratustra.process_packs"]
 forbidden_modules = ["zaratustra.local", "zaratustra.cli", "tests.fixtures.process_probe"]
 
 [[tool.importlinter.contracts]]
+name = "Core and generic packs do not depend on fictional signal rules"
+type = "forbidden"
+source_modules = ["zaratustra.core", "zaratustra.process_packs"]
+forbidden_modules = ["tests.fixtures.fictional_signal"]
+
+[[tool.importlinter.contracts]]
+name = "Fictional signal has no trusted surface or other fixture dependency"
+type = "forbidden"
+source_modules = ["tests.fixtures.fictional_signal"]
+forbidden_modules = ["zaratustra.local", "zaratustra.cli", "tools", "tests.fixtures.fictional_lot", "tests.fixtures.process_probe"]
+
+[[tool.importlinter.contracts]]
 name = "Core and generic packs do not depend on fictional lot rules"
 type = "forbidden"
 source_modules = ["zaratustra.core", "zaratustra.process_packs"]

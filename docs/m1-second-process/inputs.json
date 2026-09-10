@@ -1,0 +1,9 @@
+{
+  "invalid_observation": {"kind": "observation", "signal": "FOREIGN", "observation": "steady"},
+  "rounds": [
+    {"kind": "observation", "signal": "BEACON", "observation": "steady"},
+    {"kind": "observation", "signal": "BEACON", "observation": "changed"},
+    {"kind": "comparison", "signal": "BEACON", "assessment": "unexplained"},
+    {"kind": "observation", "signal": "BEACON", "observation": "steady"}
+  ]
+}

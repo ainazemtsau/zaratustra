@@ -1,83 +1,72 @@
-# T4 — выдуманные процессы только для тестов, REPORT HOME
+# T5 — второй процесс подготовлен, проверки ожидаются
 
 ## outcome
 
-Продолжение c-solmax-zaratustra-m1-first-process-20260910-exec, PROBA36.
-По уточнению владельца T1 process_probe и T4 fictional_lot перенесены в
-tests/fixtures. Устанавливаемая версия 0.10.1 содержит только общие механизмы.
-Python-правила перенесены без изменений; development runners явно импортируют
-fixtures. Core/process_packs не изменялись. Это product handback, не Direction close.
+CALL c-solmax-zaratustra-m1-second-process-20260910-exec, PROBA36.
+Подготовлен development-only fictional_signal: steady → observe,
+changed → сравнение с exact digest → observe. Есть shared PackRegistry,
+общий host, сценарий обоих процессов и проверка отдельной wheel-установки.
+Core, generic process_packs, первые правила и зависимости не менялись.
+Статус unverified: владелец поручил реализацию здесь, проверки в Claude Code.
+Это передача кандидата, не REPORT PASS, приёмка или закрытие T5.
 
 ## evidence
 
-Basis 9c9c97889bb79256ebca7d2409233167f2599a41: отдельная G5 исходного candidate
-46718e4da82810e57ba7126c8ec3ef0fc4f57268, PASS трёх done_when, одно P3 замечание
-к CRLF/LF хешу CALL в старом manifest. Старые evidence/baseline сохранены.
-План и owner words: docs/m1-test-only/PLAN.md, OWNER-DECISION.md.
-Source: 5b145b8bdfb9239939ca118ebe70542ffbb13b68, отдельная ветка
-codex/m1-test-only-processes-20260910. Native Deliver: PASS, 220 tests (60.61s),
-9 import contracts, build/hygiene/types/report structure PASS. Raw: native-03.txt.
-Предыдущий native01: 216PASS/1FAIL в подготовке sandbox для boundary gate:
-копировался только src. Исправлено на src/tools/tests; реальные отрицательные
-импорты CLI/test fixture/tool отвергаются, focused3PASS; native02:219PASS.
-Fresh G5 выявила residual-directory эффект на aca494: старые __pycache__ оставляли
-в wheel два пустых namespace directories; кода/данных примеров уже не было,
-но find_spec видел имена. Собственный test воспроизвёл FAIL и после явного
-source-exclude обоих старых src-путей получил PASS. Он проверяет sdist и все ZIP
-entries, включая directories. Invariant/class: удалённая test fixture не оставляет
-устанавливаемого namespace из cache; sweep обоих бывших модулей. Failed raw сохранён.
+Основание 2df9b286b3b54ac3fabd07db0e7d9b343bc17850; его source
+5b145b8bdfb9239939ca118ebe70542ffbb13b68. Historical до поправки упаковки
+b1e0853f9b405e2910f2085dae6fd7f6100ba009 сохраняется отдельно.
+PLAN и baseline закреплены ДО кода: ba1dd8f280ba2bc07fa1f26d2f26a10c0852d5c0.
+docs/m1-second-process/baseline-source.zip содержит 78 committed files;
+baseline-manifest.json содержит SHA256/размеры. CALL/PLAN лежат рядом.
 
-Отдельная установка: wheel 0.10.1, SHA256
-29b207cb3ad5a752ae4095872c52f1b8d40fcc146c0ecfbbb08198da893b5888.
-Все package files сверены с Git source; шесть Python-файлов правил совпадают
-с прежними побайтно. Core и generic process_packs diff пуст. Python -I из пустой
-папки загрузил только wheel: fictional_lot/process_probe, tests/tools отсутствуют.
-Новая база после init/migration7: 0 records, revision0. Затем явно подключена
-внешняя fixture из tests и повторён полный release/revision19 с ожидаемыми
-отказами. Все загруженные product modules остались из wheel, не src checkout.
-Финальная установка: install-02.txt и docs/m1-test-only/evidence/final-install/
-(wheel/verification/installed paths/scenario/blank workspace). Install01 на прежнем
-source отдельно сохранён в корневом evidence. Повтор: docs/m1-test-only/REPRODUCE.md.
+Код: tests/fixtures/fictional_signal; tools/probe_process_host.py,
+probe_second_process.py, probe_second_install.py. Первый runner использует
+выделенный общий host и сохраняет прежнюю последовательность шагов.
+tests/tools/test_second_process.py задаёт проверки exact basis, реальных
+Results/context/replay, неправильных inputs/stages, missing/incompatible pack,
+прав/scope/revision и взаимной изоляции. Это написанные проверки, не результаты.
+
+Автор новых native tests/build/types/lint, scenarios и installed checks не запускал.
+Source formatting и Git/byte/commit-hygiene inspection не подменяют эти проверки.
+Старый T4 PASS относится к старому source; refactor host требует повторения.
+Команды/evidence: docs/m1-second-process/REPRODUCE.md. Отдельный handoff закрепит
+source commit, полный diff и готовый Claude CALL. Все три done_when T5 ждут
+исполнения и binding fresh G5; гарантии P§30/§40 по байтам не объявляются PASS.
 
 ## assumptions
 
-Владелец принимает проверочный смысл T4 и требует исключить выдуманные примеры
-из устанавливаемого продукта и своих данных. Проверки используют только NEW
-_scratch этой изолированной копии. Пользовательская установка не исследуется.
+Владелец: «Реализация здесь, проверки в Claude Code». Примеры только в тестах
+разработки, вне установленного продукта и его данных. BEACON выдуман;
+comparison не вводит реального мониторинга. Оба assessment сохраняются и
+возвращают observe согласно PLAN. Четыре действия — ограниченный показ правила,
+не гарантия бесконечного роста контекста: общие бюджеты/лимиты Core действуют.
 
 ## cuts
 
-Новых cuts нет. Второй Process/T5, renderer/T6, T7/M1 и Direction close не заявлены.
-Remote/merge/push, реальные данные и новые внешние права не использовались.
-Старый G5 относится к прежнему candidate, не автоматически к этому переносу.
+Новых cuts нет. Проверки переданы по выбору владельца, не признаны PASS.
+Обе формулировки P§30/§40 сохранены; скрытые обходы должен опровергать fresh review.
+W15/W16 без изменения, W17/W18/W20 ждут evidence; W19/T6 и T7 не исполнялись.
+M1 не закрыта, M0 partial. Нет product push/merge, real data, новых зависимостей,
+внешних прав, расписаний или нового интерфейса.
 
 ## cost
 
-Одна локальная поправка упаковки по уточнению владельца; новых зависимостей нет.
-План сохранён отдельным коммитом d14a6f3. Денежная стоимость не измерена.
+Одно ограниченное приращение внешнего тестового пакета. Общие операции записи
+и контекста взяты из T4; новая версия установленного продукта не требуется.
+Проверки исполняются владельцем в Claude Code. Токены/денежная стоимость не измерялись.
 
 ## manual-acceptance
 
-Владелец: «Но если только протестировать, так если, ну, тесты все прошли, если он
-прошёл, то окей, я этот шаг принимаю.» Уточнение: «В тестах разработки можно;
-в продукте и моих данных — нет». Exact words в docs/m1-test-only/OWNER-DECISION.md.
-Граница проверена фактически на новой отдельной установке. Существующая
-установка и данные владельца не читались и не менялись. Дополнительная binding
-fresh G5 в отдельной reviewer задаче 01a08a4d-cc87-7be2-929a-1b28d577bc63
-подтвердила final source 5b145b8: 220tests/9contracts, отсутствие старых
-каталогов в wheel при сохранённых caches, пустое начальное состояние и
-внешнюю fixture до revision19. Это отдельная проверка переноса; исходный
-полный G5 PASS остаётся привязан к 46718e4.
-Review commit: af1005b0e2483df9199804d972fe69cdb5bdd45f, прямой docs-only
-потомок final source. Addendum:
-C:/my_global_workflow/ebf7/zaratustra/docs/g5/m1-test-only-20260910/G5-ADDENDUM.md.
-Оба узких критерия PASS, незакрытых relocation findings нет; собственный reviewer
-native03:220PASS/69.97s/9contracts. Review сохранён отдельно, не слит в author branch.
+T5 pending. Приёмка первого процесса не переносится на второй. После проверок
+владелец увидит конечный KITE, четыре результата BEACON и следующий готовый раунд
+на одной версии Core, плюс конкретные найденные ограничения.
 
 ## next
 
 solmax
 
-Executor возвращает evidence HOME, не закрывает Direction T4/M1 и не открывает T5.
+Передать exact candidate и готовый текст для свежей проверки в Claude Code.
+FAIL → автору raw/воспроизведение; PASS → HOME evidence для review.
+Root T5 открыт; закрытие Direction и запуск T6 здесь не заявлены.
 
 END_OF_FILE: RESULT.md

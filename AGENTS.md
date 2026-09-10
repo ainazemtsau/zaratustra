@@ -30,8 +30,12 @@ exact metadata ProcessQuery scope, one locked revision and separately authorized
 selected ContextQuery. Public API and reproduction: docs/m1-capabilities/PLAN.md,
 tools.probe_capabilities. T4 adds one finite fictional_lot Process using those exact
 contracts; reproduce via tools.probe_first_process and docs/m1-first-process/PLAN.md.
-Core and generic process_packs bytes are unchanged. A second full Process and common
-renderer remain T5/T6. T4 candidate 46718e4 passed fresh G5 (9c9c978); owner
+Core and generic process_packs bytes are unchanged. T5 adds development-only
+fictional_signal (observe/compare rounds), a shared host and two-process/install
+scenarios; see docs/m1-second-process/PLAN.md. T5 is an unverified candidate:
+the owner requires implementation here and tests/fresh review in Claude Code.
+No native or behavioral PASS is claimed for T5. The common renderer remains T6.
+T4 candidate 46718e4 passed fresh G5 (9c9c978); owner
 accepted its testing purpose and requires fictional examples only in dev tests.
 T1/T4 examples live in tests/fixtures, outside the installed product. Reproduction
 tools explicitly load those external fixtures. See docs/m1-test-only/PLAN.md and
