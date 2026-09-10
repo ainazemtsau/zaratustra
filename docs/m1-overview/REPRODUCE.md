@@ -49,7 +49,12 @@ probes допустимы с явным статусом исполнения.
   контекста как not_requested при сохранённых видимых требованиях.
 - Контроли: `overview-foreign-caller` (чужое подтверждение) даёт denied строку без
   value/count; `overview-stale-row` — conflict; `overview-missing-pack` —
-  missing_pack. В каждом случае соседняя строка остаётся полной.
+  missing_pack. В каждом случае соседняя строка остаётся полной. Код отказа виден
+  и в проекции строки, и в тексте как `state:code`.
+- Отказанная строка в тексте печатает `requested_revision=` — число, которое
+  запросил потребитель, потому что revision workspace она не читала. Строка с
+  ответом печатает `revision=` из собственного envelope. У успешной строки Core
+  требует равенства этих чисел, поэтому её вид не меняется.
 - Обе workspace побайтно неизменны до и после всех обзоров:
   `workspaces-before-overview.json` равен `workspaces-after-overview.json`.
 - Пустой законный ответ остаётся `empty` с count 0 и не превращается в
