@@ -1,0 +1,89 @@
+{
+  "process": "fictional.lot-release",
+  "pack": {
+    "pack_id": "fictional.lot",
+    "pack_version": "1.0.0",
+    "process_type": "fictional.lot-release",
+    "contract_version": 1,
+    "state_version": 1
+  },
+  "inspection": {
+    "artifact_id": "cbe90a0a-63c0-4f83-8ac9-fc1f0ef9d6be",
+    "version_id": "80314889-44d7-4c91-869b-61ee19cce764",
+    "sha256": "e9713526f4c6a5be58f911d6bba578bcbe4384fad7f077bdc9d843e11c1e0312"
+  },
+  "disposition": {
+    "artifact_id": "64acc893-cbf3-4011-a93e-9aaec11b5f44",
+    "version_id": "2a2c77e8-2840-42e7-acb2-d1a0ae5c7116",
+    "sha256": "baa2a2877997bf1a3567eb17c279053873c4b5f35d7656a73089e28a593a10cb"
+  },
+  "outcome": "release",
+  "work_ids": [
+    "d754bb30-3054-47a3-9820-75aa21c2d78d",
+    "5531899c-c993-4d83-84c6-83b98b506315",
+    "cc81e398-054f-4621-96b4-0891a6e954d0"
+  ],
+  "expected_refusals": {
+    "incomplete": "lot_blocked",
+    "missing_pack": "missing_pack",
+    "wrong_basis": "lot_blocked"
+  },
+  "decision_revision": 11,
+  "selected_context": "ok",
+  "selected_only_result_headers": {
+    "count": 0,
+    "state": "empty",
+    "value": []
+  },
+  "final_revision": 19,
+  "final_answers": {
+    "available_works": {
+      "count": 0,
+      "state": "empty",
+      "value": []
+    },
+    "blocked_works": {
+      "count": 0,
+      "state": "empty",
+      "value": []
+    },
+    "context_requirements": {
+      "code": "not_requested",
+      "state": "unavailable"
+    },
+    "current_status": {
+      "state": "ok",
+      "value": "Visible KITE stages: inspect/done, decide/done, closed(release)/cancelled"
+    },
+    "items_needing_attention": {
+      "count": 0,
+      "state": "empty",
+      "value": []
+    },
+    "open_decisions": {
+      "count": 0,
+      "state": "empty",
+      "value": []
+    },
+    "recent_important_results": {
+      "count": 2,
+      "state": "ok",
+      "value": [
+        {
+          "id": "1124aa90-79dd-44fb-a1c4-feb0c07a4c7e",
+          "state_revision": 18,
+          "work_id": "5531899c-c993-4d83-84c6-83b98b506315"
+        },
+        {
+          "id": "a53cb7f3-9c73-45fd-865e-fcdb9ff15e4e",
+          "state_revision": 11,
+          "work_id": "d754bb30-3054-47a3-9820-75aa21c2d78d"
+        }
+      ]
+    }
+  },
+  "rollback": "Two exact pre-Result snapshots restored and same requests replayed through Core",
+  "manual_acceptance": "pending",
+  "binding_fresh_G5": "pending",
+  "next": "solmax"
+}

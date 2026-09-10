@@ -1,0 +1,355 @@
+[
+  {
+    "name": "incomplete expected refusal",
+    "pass": true,
+    "detail": {
+      "actual": "lot_blocked",
+      "expected": "lot_blocked"
+    }
+  },
+  {
+    "name": "incomplete unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "missing-version expected refusal",
+    "pass": true,
+    "detail": {
+      "actual": "missing_pack",
+      "expected": "missing_pack"
+    }
+  },
+  {
+    "name": "missing-version unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "incompatible-state expected refusal",
+    "pass": true,
+    "detail": {
+      "actual": "incompatible_pack",
+      "expected": "incompatible_pack"
+    }
+  },
+  {
+    "name": "incompatible-state unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "inspection proposal has no writes",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "no-mutation-authority expected refusal",
+    "pass": true,
+    "detail": {
+      "actual": "permission_denied",
+      "expected": "permission_denied"
+    }
+  },
+  {
+    "name": "no-mutation-authority unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "metadata-is-not-mutation-authority expected refusal",
+    "pass": true,
+    "detail": {
+      "actual": "permission_denied",
+      "expected": "permission_denied"
+    }
+  },
+  {
+    "name": "metadata-is-not-mutation-authority unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "exact raw inspection digest inherited",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "immutable binding inherited",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "negative observation retained in Result grounds",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "selected-metadata read unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "selected-metadata seven answers",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "hidden first Result header absent",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "metadata has no content bytes",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "inherited exact refs include both inspection observations",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "metadata-is-not-context-authority expected refusal",
+    "pass": true,
+    "detail": {
+      "actual": "permission_denied",
+      "expected": "permission_denied"
+    }
+  },
+  {
+    "name": "metadata-is-not-context-authority unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "selected-context read unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "selected-context seven answers",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "separately authorized context succeeds",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "actual inspection bytes in context",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "same meaning distinct bytes chosen",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "same-meaning-wrong-bytes expected refusal",
+    "pass": true,
+    "detail": {
+      "actual": "lot_blocked",
+      "expected": "lot_blocked"
+    }
+  },
+  {
+    "name": "same-meaning-wrong-bytes unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "disposition proposal has no writes",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "two Results and ready closed continuation",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "second Result retains failed disposition and inherited inspection",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "closed-before-cancel read unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "closed-before-cancel seven answers",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "closed continuation blocked, not available",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "final read unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "final seven answers",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "finite discard through cancel_work",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "cancelled-context expected refusal",
+    "pass": true,
+    "detail": {
+      "actual": "permission_denied",
+      "expected": "permission_denied"
+    }
+  },
+  {
+    "name": "cancelled-context unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "closed-pack-rule expected refusal",
+    "pass": true,
+    "detail": {
+      "actual": "lot_closed",
+      "expected": "lot_closed"
+    }
+  },
+  {
+    "name": "closed-pack-rule unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "own-registry-read read unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "own-registry-read seven answers",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "foreign-path-authority read unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "foreign-path-authority seven answers",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "foreign path denied without values/counts/envelope",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "before-revision-change proposal has no writes",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "stale-proposal expected refusal",
+    "pass": true,
+    "detail": {
+      "actual": "conflict",
+      "expected": "conflict"
+    }
+  },
+  {
+    "name": "stale-proposal unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "stale-read read unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "stale-read seven answers",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "stale read does not disclose data",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "empty-scope read unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "empty-scope seven answers",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "empty scope hides own Work identity",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "unknown-stage expected refusal",
+    "pass": true,
+    "detail": {
+      "actual": "invalid_lot_state",
+      "expected": "invalid_lot_state"
+    }
+  },
+  {
+    "name": "unknown-stage unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "unknown-stage-read read unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "unknown-stage-read seven answers",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "unknown stage blocked",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "revoked read unchanged",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "revoked seven answers",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "revoked rights deny all seven answers",
+    "pass": true,
+    "detail": null
+  },
+  {
+    "name": "second workspace did not change completed first",
+    "pass": true,
+    "detail": null
+  }
+]

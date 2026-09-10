@@ -1,0 +1,11 @@
+{
+  "archives": [
+    "source-scenario",
+    "refutation-01",
+    "refutation-02",
+    "retained"
+  ],
+  "candidate_unchanged": true,
+  "native": "PASS",
+  "receipt": "written"
+}

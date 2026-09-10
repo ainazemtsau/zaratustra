@@ -1,0 +1,31 @@
+{
+  "checks": 21,
+  "failures": [],
+  "modules": {
+    "zaratustra.core": "C:\\my_global_workflow\\ebf7\\zaratustra\\docs\\m1-first-process\\evidence\\zaratustra-0.10.0-py3-none-any.whl\\zaratustra\\core\\__init__.py",
+    "zaratustra.process_packs": "C:\\my_global_workflow\\ebf7\\zaratustra\\docs\\m1-first-process\\evidence\\zaratustra-0.10.0-py3-none-any.whl\\zaratustra\\process_packs\\__init__.py",
+    "zaratustra.fictional_lot": "C:\\my_global_workflow\\ebf7\\zaratustra\\docs\\m1-first-process\\evidence\\zaratustra-0.10.0-py3-none-any.whl\\zaratustra\\fictional_lot\\__init__.py"
+  },
+  "replays": [
+    {
+      "stage": "inspection",
+      "revision": 11,
+      "fingerprint": "547234cd4e9204d8a3a36659c1c157b8b84466d807928c4a1d4e0caf194b9e93",
+      "context_sha256": "9f13b65c19ba3df9be8565bd2a8d29e14f73207cf0fd819ee5d112bd50eca243",
+      "workspace": "C:\\my_global_workflow\\ebf7\\zaratustra\\_scratch\\g5-retained-01\\inspection-restored"
+    },
+    {
+      "stage": "disposition",
+      "revision": 18,
+      "fingerprint": "b86e800519eeafc0ca77f6ca5a7337bd675cfc84914068eb31810096b2bbaf6a",
+      "context_sha256": "aa70fc10d25422dcd4940178167ef0c4e0685b84a0300f0f2f28a5f95b20ff3e",
+      "workspace": "C:\\my_global_workflow\\ebf7\\zaratustra\\_scratch\\g5-retained-01\\disposition-restored"
+    }
+  ],
+  "wheel_outcome": "release",
+  "wheel_revision": 19,
+  "actual_basetemp": "C:\\my_global_workflow\\ebf7\\zaratustra\\_scratch\\g5-native-deliver-01",
+  "finding": "Outer manifest CALL.md hash is pre-commit CRLF, committed candidate CALL.md is LF; content identical after line-ending normalization.",
+  "audit_correction": "First byte-audit compared source.diff to unrestricted diff; retained generator explicitly scopes it. Scoped comparison passes."
+}
+

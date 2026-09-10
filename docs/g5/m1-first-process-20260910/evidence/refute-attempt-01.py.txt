@@ -1,0 +1,300 @@
+"""Bounded independent host: real public APIs, no state-file or database edits."""
+import base64
+import hashlib
+import json
+import sys
+from pathlib import Path
+from uuid import UUID, uuid4
+
+ROOT = Path.cwd().resolve()
+sys.path.insert(0, str(ROOT))
+from tools.probe_m1 import restore_snapshot
+from tools.retain_trial import retain_trial
+from zaratustra.core import (
+    Artifact, ArtifactReference, ContextQuery, Handoff, MutationError, MutationRequest,
+    ProcessQuery, ReceiptQuery, Work, apply_mutation, authorize_local, create_initial_records,
+    handoff_request, init_workspace, migrate_workspace, open_work, prepare_authorization,
+    read_history, read_records, read_result,
+)
+from zaratustra.fictional_lot import initial_records, initial_requirements, reference, registration
+from zaratustra.process_packs import (
+    PackError, PackRegistration, PackRegistry, binding_request, propose_result, read_capabilities,
+)
+
+RUN = 'G5 separate physical task 01a08a4d-cc87-7be2-929a-1b28d577bc63; owner said zapusti g5; fictional review workspaces only'
+BASE = (ROOT / sys.argv[1]).resolve()
+assert BASE.is_relative_to(ROOT / '_scratch') and not BASE.exists()
+BASE.mkdir()
+checks = []
+REGISTRY = PackRegistry((registration(),))
+NAMES = {'current_status', 'items_needing_attention', 'open_decisions', 'available_works',
+         'blocked_works', 'recent_important_results', 'context_requirements'}
+
+def guard():
+    for name in ('STOP', 'STEER.md'):
+        if (ROOT / name).exists():
+            raise RuntimeError('Read and resolve ' + name)
+
+def dump(path, value):
+    path.write_text(json.dumps(value, indent=2, default=str)+'\n', encoding='utf-8')
+
+def check(name, value, detail=None):
+    checks.append({'name': name, 'pass': bool(value), 'detail': detail})
+    dump(BASE / 'checks.json', checks)
+    if not value:
+        raise AssertionError(name)
+
+def footprint(path):
+    return {p.relative_to(path).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+            if p.is_file() else None for p in sorted(path.rglob('*'))}
+
+def confirm(path, request):
+    caller = authorize_local(prepare_authorization(path, request), channel='local-chat',
+                             actor='independent-G5-reviewer', source_ref=RUN)
+    return caller
+
+def work(path, identity=None):
+    return next(r for r in read_records(path).records if isinstance(r, Work)
+                and (identity is None or r.id == identity))
+
+def context_query(path, identity, **options):
+    state = read_records(path)
+    return ContextQuery.model_validate(dict(workspace_id=state.workspace_id, work_id=identity,
+        process_id=work(path, identity).process_id, expected_revision=state.state_revision,
+        max_bytes=1048576) | options)
+
+def metadata_query(path, identity, visible, selected=None, **options):
+    state = read_records(path)
+    return ProcessQuery.model_validate(dict(workspace_id=state.workspace_id,
+        process_id=work(path, identity).process_id, work_id=identity,
+        expected_revision=state.state_revision, visible_work_ids=visible,
+        selected_work_id=selected, max_bytes=1048576) | options)
+
+class Host:
+    def __init__(self, name, restored=None):
+        self.base = BASE / name
+        self.base.mkdir()
+        self.path = restored or self.base / 'workspace'
+        self.seq = 0
+
+    def request(self, identity, operation, **payload):
+        state = read_records(self.path)
+        fields = dict(operation=operation, operation_id=uuid4(), workspace_id=state.workspace_id,
+                      work_id=identity, expected_revision=state.state_revision, provenance=RUN)
+        if operation in ('authorize_artifact', 'publish_artifact'):
+            artifact = next(r for r in state.records if isinstance(r, Artifact) and r.work_id == identity)
+            fields.update(version=2, artifact_id=artifact.id, artifact_revision=artifact.revision)
+        return MutationRequest.model_validate(fields | payload)
+
+    def execute(self, request, content=None):
+        guard()
+        self.seq += 1
+        prefix = self.base / f'{self.seq:03d}-{request.operation}'
+        caller = confirm(self.path, request)
+        dump(prefix.with_suffix('.request.json'), request.model_dump(mode='json'))
+        dump(prefix.with_suffix('.authority.json'), caller.confirmation.model_dump(mode='json'))
+        dump(prefix.with_suffix('.before.json'), footprint(self.path))
+        if content is not None:
+            prefix.with_suffix('.input.json').write_bytes(content)
+        receipt = apply_mutation(self.path, request, caller, content=content)
+        dump(prefix.with_suffix('.receipt.json'), receipt.model_dump(mode='json'))
+        dump(prefix.with_suffix('.after.json'), footprint(self.path))
+        return receipt
+
+    def bootstrap(self):
+        guard()
+        self.path.mkdir()
+        init_workspace(self.path)
+        migrate_workspace(self.path, target_version=7)
+        initial = initial_records()
+        dump(self.base / 'bootstrap.json', initial.model_dump(mode='json'))
+        create_initial_records(self.path, initial)
+        identity = work(self.path).id
+        self.execute(self.request(identity, 'authorize_work'))
+        self.execute(self.request(identity, 'set_work_requirements', requirements=initial_requirements()))
+        state = read_records(self.path)
+        self.execute(binding_request(REGISTRY, reference(), operation_id=uuid4(),
+            workspace_id=state.workspace_id, work_id=identity, expected_revision=state.state_revision,
+            provenance=RUN))
+        return identity
+
+    def accept(self, identity, raw):
+        self.execute(self.request(identity, 'authorize_artifact'))
+        publication = self.request(identity, 'publish_artifact',
+            content_sha256=hashlib.sha256(raw).hexdigest(), content_size=len(raw))
+        self.execute(publication, raw)
+        ref = ArtifactReference(artifact_id=publication.artifact_id, version_id=publication.operation_id,
+                                sha256=hashlib.sha256(raw).hexdigest())
+        state = read_records(self.path)
+        handoff = Handoff(kind='handoff', version=1, handoff_id=uuid4(),
+            workspace_id=state.workspace_id, process=work(self.path, identity).process_id,
+            related_work=identity, intent='accepted_result', source_revision=state.state_revision,
+            result=ref, provenance=RUN, created_by='G5 fictional host')
+        self.execute(handoff_request(handoff.model_dump_json().encode(), source_ref=RUN))
+        return ref
+
+    def propose(self, identity, name, registry=REGISTRY):
+        query = context_query(self.path, identity)
+        caller = confirm(self.path, query)
+        dump(self.base / (name+'.query.json'), query.model_dump(mode='json'))
+        dump(self.base / (name+'.authority.json'), caller.confirmation.model_dump(mode='json'))
+        before = footprint(self.path)
+        result = propose_result(self.path, query, caller, registry, operation_id=uuid4(),
+                                next_work_id=uuid4(), next_artifact_id=uuid4())
+        check(name+' proposal has no writes', before == footprint(self.path))
+        dump(self.base / (name+'.proposal.json'), result.model_dump(mode='json'))
+        return result
+
+    def read(self, name, query, caller='auto', registry=REGISTRY, **options):
+        if caller == 'auto':
+            caller = confirm(self.path, query)
+        dump(self.base / (name+'.query.json'), query.model_dump(mode='json'))
+        if caller is not None:
+            dump(self.base / (name+'.authority.json'), caller.confirmation.model_dump(mode='json'))
+        before = footprint(self.path)
+        response = read_capabilities(self.path, query, caller, registry, **options)
+        (self.base / (name+'.response.json')).write_bytes(response.output)
+        check(name+' read unchanged', before == footprint(self.path))
+        value = json.loads(response.output)
+        check(name+' seven answers', set(value['answers']) == NAMES)
+        return value
+
+def refusal(host, name, action, code):
+    before = footprint(host.path)
+    dump(host.base / (name+'.before.json'), before)
+    try:
+        action()
+    except (MutationError, PackError) as error:
+        dump(host.base / (name+'.refusal.json'), {'code': error.code, 'detail': str(error)})
+        check(name+' expected refusal', error.code == code, {'actual': error.code, 'expected': code})
+    else:
+        check(name+' expected refusal', False)
+    after = footprint(host.path)
+    dump(host.base / (name+'.after.json'), after)
+    check(name+' unchanged', before == after)
+
+def snapshot(host, name):
+    manifest = retain_trial(host.path, host.base / (name+'.zip'))
+    dump(host.base / (name+'-manifest.json'), manifest)
+    return manifest
+
+guard()
+raw_inputs = (ROOT / 'docs/m1-first-process/inputs.json').read_bytes()
+(BASE / 'input-template.json').write_bytes(raw_inputs)
+data = json.loads(raw_inputs)
+host = Host('discard-exact-bytes')
+first = host.bootstrap()
+bad_ref = host.accept(first, json.dumps(data['incomplete_inspection']).encode())
+refusal(host, 'incomplete', lambda: host.propose(first, 'incomplete'), 'lot_blocked')
+# Same JSON meaning, different actual bytes from the author and from compact JSON.
+inspection_bytes = (json.dumps(data['inspection'], indent=3) + '\n\n').encode()
+inspection = host.accept(first, inspection_bytes)
+refusal(host, 'missing-version', lambda: host.propose(first, 'missing-version', PackRegistry()), 'missing_pack')
+reg = registration()
+incompatible = PackRegistry((PackRegistration(reference().model_copy(update={'state_version': 2}), reg.rule, reg.reader),))
+refusal(host, 'incompatible-state', lambda: host.propose(first, 'incompatible-state', incompatible), 'incompatible_pack')
+proposal = host.propose(first, 'inspection')
+refusal(host, 'no-mutation-authority', lambda: apply_mutation(host.path, proposal), 'permission_denied')
+pq = metadata_query(host.path, first, (first,), first)
+refusal(host, 'metadata-is-not-mutation-authority', lambda: apply_mutation(host.path, proposal, confirm(host.path, pq)), 'permission_denied')
+sm = snapshot(host, 'before-inspection')
+receipt = host.execute(proposal)
+second = proposal.submission.next_work.work_id
+check('exact raw inspection digest inherited', work(host.path, second).executor_requirements[1] == inspection.sha256)
+check('immutable binding inherited', work(host.path, second).pack_binding == reference())
+rq = ReceiptQuery(workspace_id=proposal.workspace_id, work_id=first, operation_id=proposal.operation_id)
+result = read_result(host.path, rq, confirm(host.path, rq))
+dump(host.base / 'inspection.saved-result.json', result.model_dump(mode='json'))
+check('negative observation retained in Result grounds', bad_ref in result.event.result_references)
+pq = metadata_query(host.path, second, (second,), second)
+view = host.read('selected-metadata', pq)
+check('hidden first Result header absent', view['answers']['recent_important_results']['count'] == 0)
+check('metadata has no content bytes', 'content_base64' not in json.dumps(view))
+refs = tuple(ArtifactReference.model_validate(r) for r in view['answers']['context_requirements']['value']['references'])
+check('inherited exact refs include both inspection observations', inspection in refs and bad_ref in refs)
+cq = context_query(host.path, second, references=refs)
+refusal(host, 'metadata-is-not-context-authority', lambda: open_work(host.path, cq, confirm(host.path, pq)), 'permission_denied')
+context_caller = confirm(host.path, cq)
+dump(host.base / 'selected.context-query.json', cq.model_dump(mode='json'))
+dump(host.base / 'selected.context-authority.json', context_caller.confirmation.model_dump(mode='json'))
+view = host.read('selected-context', pq, context_query=cq, context_caller=context_caller)
+check('separately authorized context succeeds', view['answers']['context_requirements']['value']['context']['state'] == 'ok')
+raw_context = open_work(host.path, cq, context_caller).output
+(host.base / 'selected.context.json').write_bytes(raw_context)
+check('actual inspection bytes in context', base64.b64encode(inspection_bytes).decode() in raw_context.decode())
+compact_digest = hashlib.sha256(json.dumps(data['inspection'], separators=(',', ':')).encode()).hexdigest()
+check('same meaning distinct bytes chosen', compact_digest != inspection.sha256)
+wrong = dict(data['disposition'], decision='discard', inspection_sha256=compact_digest)
+wrong_ref = host.accept(second, json.dumps(wrong).encode())
+refusal(host, 'same-meaning-wrong-bytes', lambda: host.propose(second, 'wrong-digest'), 'lot_blocked')
+correct = dict(wrong, inspection_sha256=inspection.sha256)
+disposition = host.accept(second, json.dumps(correct).encode())
+proposal2 = host.propose(second, 'disposition')
+snapshot(host, 'before-disposition')
+receipt2 = host.execute(proposal2)
+third = proposal2.submission.next_work.work_id
+check('two Results and ready closed continuation', work(host.path, third).status == 'ready' and
+      work(host.path, third).executor_requirements == ('fictional.lot/v1:closed', 'discard'))
+rq2 = ReceiptQuery(workspace_id=proposal2.workspace_id, work_id=second, operation_id=proposal2.operation_id)
+result2 = read_result(host.path, rq2, confirm(host.path, rq2))
+dump(host.base / 'disposition.saved-result.json', result2.model_dump(mode='json'))
+check('second Result retains failed disposition and inherited inspection',
+      wrong_ref in result2.event.result_references and inspection in result2.event.result_references)
+closed_manifest = snapshot(host, 'closed-ready')
+closed_view = host.read('closed-before-cancel', metadata_query(host.path, third, (first, second, third), third))
+check('closed continuation blocked, not available', closed_view['answers']['available_works']['count'] == 0 and
+      closed_view['answers']['blocked_works']['count'] == 1)
+host.execute(host.request(third, 'cancel_work'))
+final = host.read('final', metadata_query(host.path, third, (first, second, third)))
+check('finite discard through cancel_work', final['answers']['recent_important_results']['count'] == 2 and
+      final['answers']['available_works']['count'] == 0 and final['answers']['open_decisions']['count'] == 0 and
+      work(host.path, third).status == 'cancelled' and work(host.path, third).completion_id is None)
+refusal(host, 'cancelled-context', lambda: open_work(host.path, context_query(host.path, third),
+      confirm(host.path, context_query(host.path, third))), 'invalid_work')
+dump(host.base / 'final.history.json', read_history(host.path).model_dump(mode='json'))
+dump(host.base / 'final.state.json', read_records(host.path).model_dump(mode='json'))
+snapshot(host, 'final')
+final_footprint = footprint(host.path)
+
+# A separate restored ready continuation probes the pack terminal guard; main final remains empty.
+restored = restore_snapshot(host.base / 'closed-ready.zip', BASE / 'closed-guard-workspace', closed_manifest)
+closed = Host('closed-guard', restored)
+closed.accept(third, json.dumps(correct).encode())
+refusal(closed, 'closed-pack-rule', lambda: closed.propose(third, 'closed-pack-rule'), 'lot_closed')
+
+# Two instances of the SAME first process test placement and path isolation, not T5.
+other = Host('other-lot-instance')
+other_id = other.bootstrap()
+before_other = footprint(other.path)
+query_other = metadata_query(other.path, other_id, (other_id,), other_id)
+other.read('own-registry-read', query_other)
+own = metadata_query(host.path, third, (first, second, third))
+denied = host.read('foreign-path-authority', own, caller=confirm(other.path, query_other))
+check('foreign path denied without values/counts/envelope', 'envelope' not in denied and
+      all(a['state'] == 'denied' and 'value' not in a and 'count' not in a for a in denied['answers'].values()))
+other.accept(other_id, inspection_bytes)
+op = other.propose(other_id, 'before-revision-change')
+old_caller = confirm(other.path, op)
+old_q = metadata_query(other.path, other_id, (other_id,), other_id)
+old_read_caller = confirm(other.path, old_q)
+other.execute(other.request(other_id, 'authorize_artifact'))
+refusal(other, 'stale-proposal', lambda: apply_mutation(other.path, op, old_caller), 'stale_revision')
+stale = other.read('stale-read', old_q, caller=old_read_caller)
+check('stale read does not disclose data', 'envelope' not in stale and all('value' not in a for a in stale['answers'].values()))
+empty = other.read('empty-scope', metadata_query(other.path, other_id, ()))
+check('empty scope hides own Work identity', str(other_id) not in json.dumps(empty))
+other.execute(other.request(other_id, 'set_work_requirements', requirements=('fictional.lot/v1:unknown',)))
+refusal(other, 'unknown-stage', lambda: other.propose(other_id, 'unknown-stage'), 'invalid_lot_state')
+unknown = other.read('unknown-stage-read', metadata_query(other.path, other_id, (other_id,), other_id))
+check('unknown stage blocked', unknown['answers']['blocked_works']['count'] == 1 and unknown['answers']['available_works']['count'] == 0)
+other.execute(other.request(other_id, 'revoke_work'))
+revoked = other.read('revoked', metadata_query(other.path, other_id, (other_id,), other_id))
+check('revoked rights deny all seven answers', all(a['state'] == 'denied' for a in revoked['answers'].values()))
+check('second workspace did not change completed first', footprint(host.path) == final_footprint)
+
+dump(BASE / 'summary.json', {'checks': len(checks), 'failed': [c for c in checks if not c['pass']],
+    'scope': 'first lot only; two instances for isolation; no second Process implementation',
+    'registry': [r.reference.model_dump(mode='json') for r in REGISTRY.registrations],
+    'inspection': inspection.model_dump(mode='json'), 'disposition': disposition.model_dump(mode='json'),
+    'final_revision': final['envelope']['state_revision'], 'outcome': 'discard', 'authority': RUN})
+print((BASE / 'summary.json').read_text(encoding='utf-8'))

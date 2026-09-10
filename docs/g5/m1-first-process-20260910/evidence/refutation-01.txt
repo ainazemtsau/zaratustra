@@ -1,0 +1,31 @@
+Traceback (most recent call last):
+  File "C:\my_global_workflow\ebf7\zaratustra\docs\g5\m1-first-process-20260910\evidence\refute.py.txt", line 166, in refusal
+    action()
+    ~~~~~~^^
+  File "C:\my_global_workflow\ebf7\zaratustra\docs\g5\m1-first-process-20260910\evidence\refute.py.txt", line 252, in <lambda>
+    refusal(host, 'cancelled-context', lambda: open_work(host.path, context_query(host.path, third),
+                                               ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          confirm(host.path, context_query(host.path, third))), 'invalid_work')
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\my_global_workflow\ebf7\zaratustra\src\zaratustra\core\context.py", line 284, in open_work
+    collected = _collect(connection, info, query, caller)
+  File "C:\my_global_workflow\ebf7\zaratustra\src\zaratustra\core\context.py", line 67, in _collect
+    raise MutationError(
+        "permission_denied", "Work is terminal, not ready or lacks current rights"
+    )
+zaratustra.core.mutations.MutationError: permission_denied: Work is terminal, not ready or lacks current rights
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\my_global_workflow\ebf7\zaratustra\docs\g5\m1-first-process-20260910\evidence\refute.py.txt", line 252, in <module>
+    refusal(host, 'cancelled-context', lambda: open_work(host.path, context_query(host.path, third),
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          confirm(host.path, context_query(host.path, third))), 'invalid_work')
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\my_global_workflow\ebf7\zaratustra\docs\g5\m1-first-process-20260910\evidence\refute.py.txt", line 169, in refusal
+    check(name+' expected refusal', error.code == code, {'actual': error.code, 'expected': code})
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\my_global_workflow\ebf7\zaratustra\docs\g5\m1-first-process-20260910\evidence\refute.py.txt", line 45, in check
+    raise AssertionError(name)
+AssertionError: cancelled-context expected refusal

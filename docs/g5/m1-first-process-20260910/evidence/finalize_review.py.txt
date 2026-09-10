@@ -1,0 +1,66 @@
+"""Bounded delivery check and manifest for the immutable G5 package."""
+import hashlib
+import json
+import subprocess
+import zipfile
+from pathlib import Path
+ROOT = Path.cwd().resolve()
+OUT = ROOT / 'docs/g5/m1-first-process-20260910'
+E = OUT / 'evidence'
+for name in ('STOP','STEER.md'):
+    assert not (ROOT/name).exists(), 'Read and resolve '+name
+def git(*args):
+    return subprocess.check_output(['git',*args],cwd=ROOT).decode('utf-8')
+def digest(raw):
+    return dict(sha256=hashlib.sha256(raw).hexdigest(),bytes=len(raw))
+def dump(path,value):
+    path.write_text(json.dumps(value,indent=2)+'\n',encoding='utf-8')
+archives=[]
+for name in ('source-scenario','refutation-01','refutation-02','retained'):
+    m=json.loads((E/(name+'-manifest.json')).read_bytes())
+    archive=E/(name+'.zip')
+    assert digest(archive.read_bytes())['sha256']==m['archive_sha256']
+    with zipfile.ZipFile(archive) as z:
+        assert z.testzip() is None
+        assert len(z.namelist())==len(set(z.namelist()))
+        assert {i.filename:digest(z.read(i))['sha256'] for i in z.infolist() if not i.is_dir()}==m['files']
+        assert sorted(i.filename for i in z.infolist() if i.is_dir())==m['directories']
+    archives.append(name)
+receipt=json.loads((OUT/'receipt.json').read_bytes())
+(OUT/'receipt.json').write_bytes((OUT/'receipt.json').read_bytes().replace(b'\r\n', b'\n'))
+assert receipt['candidate']=='46718e4da82810e57ba7126c8ec3ef0fc4f57268'
+assert receipt['owner_acceptance']=='pending' and receipt['next']=='solmax'
+assert set(receipt['criteria'].values())=={'PASS'}
+assert not receipt['T5_started'] and not receipt['direction_T4_closed']
+refutation=json.loads((E/'refutation-checks.json').read_bytes())
+assert len(refutation)==64 and all(c['pass'] for c in refutation)
+retained=json.loads((E/'retained-checks.json').read_bytes())
+assert len(retained)==21 and all(c['passed'] for c in retained)
+audit=json.loads((E/'candidate-byte-checks.json').read_bytes())
+assert {c['name'] for c in audit if not c['pass']}=={'outer CALL.md','recorded source diff bytes'}
+assert receipt['findings'][0]['id']=='G5-F01' and not receipt['findings'][0]['blocking']
+for name in ('RESULT.md','G5-REPORT.md'):
+    text=(OUT/name).read_text(encoding='utf-8')
+    for field in ('outcome','evidence','assumptions','cuts','cost','manual-acceptance','next'):
+        assert '\n## '+field+'\n' in text
+for name in ('RESULT.md','G5-REPORT.md','REPRODUCE.md'):
+    raw=(OUT/name).read_bytes()
+    assert b'\r' not in raw
+    assert raw.decode().endswith('END_OF_FILE: docs/g5/m1-first-process-20260910/'+name+'\n')
+assert git('diff',receipt['candidate'],'--','.',':!docs/g5/m1-first-process-20260910')==''
+assert git('diff','--check')==''
+dump(E/'final-verification.json',dict(command='uv run --locked python docs/g5/m1-first-process-20260910/evidence/finalize_review.py.txt',
+    candidate=receipt['candidate'],protected_diff='',verified_review_archives=archives,
+    crc_file_hashes_and_directories='PASS',refutation_checks=64,retained_checks=21,
+    native_raw='native-deliver-01.txt',native='PASS',report_fields='PASS',
+    failed_attempts_preserved=True,document_LF_and_trailers='PASS',
+    candidate_manifest_exception='G5-F01 explicitly preserved, not reported as full outer-manifest PASS',
+    status_before_stage=git('status','--porcelain'),
+    owner_acceptance='pending',next='solmax'))
+manifest=dict(candidate=receipt['candidate'],scope='Only this independent review package; manifest itself excluded',
+    files={p.relative_to(OUT).as_posix():digest(p.read_bytes())
+           for p in sorted(OUT.rglob('*')) if p.is_file() and p!=E/'manifest.json'})
+dump(E/'manifest.json',manifest)
+assert all(digest((OUT/name).read_bytes())==expected for name,expected in manifest['files'].items())
+print(json.dumps(dict(package_files=len(manifest['files']),archives_verified=archives,
+    protected_bytes_unchanged=True,review_manifest='PASS',review_verdict='PASS with nonblocking G5-F01',next='solmax')))

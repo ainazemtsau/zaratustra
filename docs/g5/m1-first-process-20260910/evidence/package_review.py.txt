@@ -1,0 +1,107 @@
+"""Retain only this review's trials, pin refs and verify its delivery file set."""
+import hashlib
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+ROOT = Path.cwd().resolve()
+sys.path.insert(0, str(ROOT))
+from tools.retain_trial import retain_trial
+OUT = ROOT / 'docs/g5/m1-first-process-20260910'
+E = OUT / 'evidence'
+CANDIDATE = '46718e4da82810e57ba7126c8ec3ef0fc4f57268'
+for control in ('STOP', 'STEER.md'):
+    if (ROOT / control).exists():
+        raise RuntimeError('Read and resolve '+control)
+def dump(path, value):
+    path.write_text(json.dumps(value, indent=2)+'\n', encoding='utf-8')
+def git(*args):
+    return subprocess.check_output(['git', *args], cwd=ROOT).decode('utf-8')
+def digest(raw):
+    return dict(sha256=hashlib.sha256(raw).hexdigest(), bytes=len(raw))
+
+trials = {'source-scenario': '_scratch/g5-source-01',
+          'refutation-01': '_scratch/g5-refutation-01',
+          'refutation-02': '_scratch/g5-refutation-02',
+          'retained': '_scratch/g5-retained-01'}
+for name, relative in trials.items():
+    path = (ROOT / relative).resolve()
+    assert path.is_relative_to(ROOT / '_scratch')
+    assert git('check-ignore', relative).strip() == relative
+    dump(E / (name+'-manifest.json'), retain_trial(path, E / (name+'.zip')))
+(E / 'refutation-checks.json').write_bytes((ROOT / trials['refutation-02'] / 'checks.json').read_bytes())
+(E / 'refutation-summary.json').write_bytes((ROOT / trials['refutation-02'] / 'summary.json').read_bytes())
+protected = git('diff', CANDIDATE, '--', '.', ':!docs/g5/m1-first-process-20260910')
+assert protected == ''
+source_dir = Path('C:/projects/zaratustra/_scratch/m1-first-process-20260910')
+source_state = subprocess.check_output(['git','status','--porcelain'], cwd=source_dir).decode('utf-8')
+assert source_state == ''
+native = (E / 'native-deliver-01.txt').read_text(encoding='utf-8')
+assert '217 passed in 67.31s' in native
+assert 'Contracts: 8 kept, 0 broken.' in native
+assert 'PASS: native build, hygiene, types, boundaries, tests, report structure' in native
+preflight = dict(review_thread=os.environ.get('CODEX_THREAD_ID'),
+    author_thread='01a08a2a-1109-7211-8aa0-17cc639cf1d7',
+    initial_head='512c7a1657aee9295a1e2e826eb3abc698d05fd8', initial_status='',
+    worktree=str(ROOT), branch=git('branch','--show-current').strip(),
+    git_dir=git('rev-parse','--git-dir').strip(), common_dir=git('rev-parse','--git-common-dir').strip(),
+    candidate=CANDIDATE, candidate_controls_absent=True,
+    instructions_read_before_switch=['git show CANDIDATE:AGENTS.md','git show CANDIDATE:validation.config'],
+    switch_attempts=[dict(exit=1, outcome='sandbox index.lock denied'),
+                     dict(exit=0, outcome='reviewed escalation; created requested free branch')],
+    author_checkout_read_only=str(source_dir), author_status_final=source_state,
+    author_head_final=subprocess.check_output(['git','rev-parse','HEAD'],cwd=source_dir).decode().strip(),
+    candidate_tracked_diff_outside_review=protected,
+    controls_final={name:(ROOT/name).exists() for name in ('STOP','STEER.md')})
+dump(E / 'preflight-and-isolation.json', preflight)
+receipt = dict(kind='binding fresh physical G5', date='2026-09-10', verdict='PASS',
+    criteria={'done_when_1':'PASS','done_when_2':'PASS','done_when_3':'PASS'},
+    author_thread=preflight['author_thread'], review_thread=preflight['review_thread'],
+    physical_separation='new Codex task, separate app worktree/index/venv/runtime; shared Git object database',
+    source_history_loaded=False, subagents_used=False, mode='PROBA',pin=36,stamp=36,
+    owner_authorization='Owner words relayed with G5 task: «запусти g5» after Product REPORT',
+    call='c-solmax-zaratustra-m1-first-process-20260910-exec',
+    candidate=CANDIDATE, source='b1e0853f9b405e2910f2085dae6fd7f6100ba009',
+    before_second_baseline='b1e0853f9b405e2910f2085dae6fd7f6100ba009',
+    plan='ae7a809a4055f31b5da1a9920b508f3e6f13d474', basis='4e892153200d6fa0b1ef3add0bfeceae06b23331',
+    review_branch=preflight['branch'],review_path=OUT.as_posix(),
+    review_commit='Resolve commit containing this file; deliberately no self-referential hash',
+    native=dict(command='uv run --locked python -m tools.check --deliver',exit_code=0,
+                tests=217,pytest_seconds=67.31,import_contracts=8,raw='evidence/native-deliver-01.txt',
+                prepare='uv sync --locked',python='3.13.7',
+                PYTEST_ADDOPTS='--basetemp=_scratch/g5-native-deliver-01',
+                actual_basetemp=(ROOT/'_scratch/g5-native-deliver-01').as_posix(),
+                actual_location_verified=True),
+    source_scenario=dict(exit_code=0,outcome='release',results=2,revisions=[11,18,19]),
+    independent_refutation=dict(exit_code=0,attempt=2,named_checks=64,outcome='discard',
+                               results=2,final_revision=19),
+    retained=dict(exit_code=0,named_checks=21,wheel='zipimport with locked dependencies',
+                  original_snapshot_replay_revisions=[11,18],wheel_final_revision=19),
+    findings=[dict(id='G5-F01',priority=3,blocking=False,
+                   file='docs/m1-first-process/evidence/manifest.json',line=13,
+                   summary='CALL.md outer digest uses pre-commit CRLF bytes, committed candidate is LF',
+                   scope='packaging only; all source/state/wheel and text content verified',
+                   evidence='evidence/retained-checks.json')],
+    behavioral_findings=[],blocked=[],candidate_bytes_unchanged=True,
+    W15='preserved',W16='preserved',W17='baseline B and placement verified for T4; Proof C open T5/T7',
+    W18='first finite lot executed; different recurring signal only pre-BUILD PLAN',
+    W19='open T6 renderer',W20='T4 exact evidence/restore verified; both-scenario comparison open T5-T7',
+    guarantees=['P30: без изменения основной семантики Core','P40: без изменения Core'],
+    owner_acceptance='pending',direction_T4_closed=False,M1_complete=False,M0='partial',
+    T5_started=False,T6_complete=False,T7_complete=False,Proof_C_complete=False,
+    merged=False,pushed=False,next='solmax')
+dump(OUT / 'receipt.json', receipt)
+commands = [
+    dict(command='uv sync --locked',attempt=1,exit=2,raw='uv-sync-01.txt',environment='sandbox; managed Python directory denied'),
+    dict(command='uv sync --locked',attempt=2,exit=0,raw='uv-sync-02.txt',environment='reviewed escalation'),
+    dict(command='uv run --locked python -m tools.check --deliver',attempt=1,exit=0,raw='native-deliver-01.txt'),
+    dict(command='uv run --locked python -m tools.probe_first_process --output _scratch/g5-source-01',exit=0,raw='source-scenario-01.txt'),
+    dict(command='uv run --locked python docs/g5/m1-first-process-20260910/evidence/verify_candidate.py.txt',exit=0,raw='byte-audit-01.txt',note='records discrepancies; exit0 is not all-checks PASS'),
+    dict(command='uv run --locked python docs/g5/m1-first-process-20260910/evidence/refute.py.txt _scratch/g5-refutation-01',exit=1,raw='refutation-01.txt',script='refute-attempt-01.py.txt'),
+    dict(command='uv run --locked python docs/g5/m1-first-process-20260910/evidence/refute.py.txt _scratch/g5-refutation-02',exit=0,raw='refutation-02.txt',script='refute.py.txt'),
+    dict(command='uv run --locked python docs/g5/m1-first-process-20260910/evidence/retained_replay.py.txt',exit=0,raw='retained-replay-01.txt'),
+]
+dump(E / 'commands.json',dict(cwd=ROOT.as_posix(),
+    common_environment={'UV_CACHE_DIR':(ROOT/'_scratch/g5-environment/uv-cache').as_posix()},commands=commands))
+print(json.dumps(dict(archives=list(trials),candidate_unchanged=True,native='PASS',receipt='written'),indent=2))

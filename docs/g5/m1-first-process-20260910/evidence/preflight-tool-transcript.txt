@@ -1,0 +1,25 @@
+Transcription of the initial tool results, before the review evidence directory existed.
+This is an administrative transcript, not behavioral evidence.
+
+Working directory: C:/my_global_workflow/ebf7/zaratustra
+Initial git status --porcelain=v1: empty stdout.
+Initial HEAD: 512c7a1657aee9295a1e2e826eb3abc698d05fd8
+STOP / STEER.md: absent in working copy and candidate tree.
+Candidate AGENTS.md and validation.config: read with git show before branch creation.
+git branch --list codex/g5-m1-first-process-20260910*: empty stdout.
+
+Command:
+git switch -c codex/g5-m1-first-process-20260910 46718e4da82810e57ba7126c8ec3ef0fc4f57268
+Sandbox attempt, exit 1:
+fatal: Unable to create 'C:/projects/zaratustra/.git/worktrees/zaratustra2/index.lock': Permission denied
+
+Same command after clean-status preflight and reviewed escalation, exit 0:
+Previous HEAD position was 512c7a1 Exclude CI CD Actions and push notifications until explicit owner request
+Switched to a new branch 'codex/g5-m1-first-process-20260910'
+
+Read-only sandbox commands also emitted this warning:
+warning: unable to access 'C:\Users\Anton/.config/git/ignore': Permission denied
+Local _scratch ignore was verified through the repository's own rule.
+
+Managed Python discovery failure is preserved directly in uv-sync-01.txt.
+Successful reviewed sync and native run have their own complete Tee-Object logs.

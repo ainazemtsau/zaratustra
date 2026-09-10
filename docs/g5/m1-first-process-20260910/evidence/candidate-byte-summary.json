@@ -1,0 +1,28 @@
+{
+  "candidate": "46718e4da82810e57ba7126c8ec3ef0fc4f57268",
+  "source": "b1e0853f9b405e2910f2085dae6fd7f6100ba009",
+  "plan": "ae7a809a4055f31b5da1a9920b508f3e6f13d474",
+  "basis": "4e892153200d6fa0b1ef3add0bfeceae06b23331",
+  "scope": "byte equality and provenance, never semantic scanner evidence",
+  "checks": 426,
+  "failed": [
+    {
+      "name": "outer CALL.md",
+      "pass": false,
+      "actual": {
+        "sha256": "52c6a45de5b86b4710fd1df0155b0393b389bf33761758478463fe549d07ab4f",
+        "bytes": 11464
+      },
+      "expected": {
+        "sha256": "5c0b4674c59b67c9e80e8e6f7ee6a89101d4cd3ef61863b0edc672b2ee8ff054",
+        "bytes": 11565
+      }
+    },
+    {
+      "name": "recorded source diff bytes",
+      "pass": false,
+      "actual": false,
+      "expected": true
+    }
+  ]
+}

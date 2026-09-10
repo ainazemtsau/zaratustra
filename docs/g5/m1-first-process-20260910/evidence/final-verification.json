@@ -1,0 +1,23 @@
+{
+  "command": "uv run --locked python docs/g5/m1-first-process-20260910/evidence/finalize_review.py.txt",
+  "candidate": "46718e4da82810e57ba7126c8ec3ef0fc4f57268",
+  "protected_diff": "",
+  "verified_review_archives": [
+    "source-scenario",
+    "refutation-01",
+    "refutation-02",
+    "retained"
+  ],
+  "crc_file_hashes_and_directories": "PASS",
+  "refutation_checks": 64,
+  "retained_checks": 21,
+  "native_raw": "native-deliver-01.txt",
+  "native": "PASS",
+  "report_fields": "PASS",
+  "failed_attempts_preserved": true,
+  "document_LF_and_trailers": "PASS",
+  "candidate_manifest_exception": "G5-F01 explicitly preserved, not reported as full outer-manifest PASS",
+  "status_before_stage": "A  docs/g5/m1-first-process-20260910/.gitattributes\nA  docs/g5/m1-first-process-20260910/G5-REPORT.md\nA  docs/g5/m1-first-process-20260910/REPRODUCE.md\nA  docs/g5/m1-first-process-20260910/RESULT.md\nA  docs/g5/m1-first-process-20260910/evidence/basis-to-source.diff\nA  docs/g5/m1-first-process-20260910/evidence/byte-audit-01.txt\nA  docs/g5/m1-first-process-20260910/evidence/candidate-byte-checks.json\nA  docs/g5/m1-first-process-20260910/evidence/candidate-byte-summary.json\nA  docs/g5/m1-first-process-20260910/evidence/commands.json\nA  docs/g5/m1-first-process-20260910/evidence/core-trees.json\nA  docs/g5/m1-first-process-20260910/evidence/final-verification.json\nAM docs/g5/m1-first-process-20260910/evidence/finalize_review.py.txt\nA  docs/g5/m1-first-process-20260910/evidence/manifest.json\nA  docs/g5/m1-first-process-20260910/evidence/native-deliver-01.txt\nA  docs/g5/m1-first-process-20260910/evidence/package-review-01.txt\nA  docs/g5/m1-first-process-20260910/evidence/package_review.py.txt\nA  docs/g5/m1-first-process-20260910/evidence/preflight-and-isolation.json\nA  docs/g5/m1-first-process-20260910/evidence/preflight-tool-transcript.txt\nA  docs/g5/m1-first-process-20260910/evidence/process_packs-trees.json\nA  docs/g5/m1-first-process-20260910/evidence/refutation-01-manifest.json\nA  docs/g5/m1-first-process-20260910/evidence/refutation-01.txt\nA  docs/g5/m1-first-process-20260910/evidence/refutation-01.zip\nA  docs/g5/m1-first-process-20260910/evidence/refutation-02-manifest.json\nA  docs/g5/m1-first-process-20260910/evidence/refutation-02.txt\nA  docs/g5/m1-first-process-20260910/evidence/refutation-02.zip\nA  docs/g5/m1-first-process-20260910/evidence/refutation-checks.json\nA  docs/g5/m1-first-process-20260910/evidence/refutation-summary.json\nA  docs/g5/m1-first-process-20260910/evidence/refute-attempt-01.py.txt\nA  docs/g5/m1-first-process-20260910/evidence/refute.py.txt\nA  docs/g5/m1-first-process-20260910/evidence/retained-checks.json\nA  docs/g5/m1-first-process-20260910/evidence/retained-manifest.json\nA  docs/g5/m1-first-process-20260910/evidence/retained-replay-01.txt\nA  docs/g5/m1-first-process-20260910/evidence/retained-summary.json\nA  docs/g5/m1-first-process-20260910/evidence/retained.zip\nA  docs/g5/m1-first-process-20260910/evidence/retained_replay.py.txt\nA  docs/g5/m1-first-process-20260910/evidence/source-scenario-01.txt\nA  docs/g5/m1-first-process-20260910/evidence/source-scenario-manifest.json\nA  docs/g5/m1-first-process-20260910/evidence/source-scenario.zip\nA  docs/g5/m1-first-process-20260910/evidence/source-to-candidate.diff\nA  docs/g5/m1-first-process-20260910/evidence/uv-sync-01.txt\nA  docs/g5/m1-first-process-20260910/evidence/uv-sync-02.txt\nA  docs/g5/m1-first-process-20260910/evidence/verify_candidate.py.txt\nAM docs/g5/m1-first-process-20260910/receipt.json\n",
+  "owner_acceptance": "pending",
+  "next": "solmax"
+}

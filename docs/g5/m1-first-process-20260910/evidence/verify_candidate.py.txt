@@ -1,0 +1,94 @@
+"""Independent byte/provenance audit; hashes are not behavioral evidence."""
+import hashlib
+import json
+import subprocess
+import zipfile
+from pathlib import Path
+
+ROOT = Path.cwd().resolve()
+OUT = ROOT / 'docs/g5/m1-first-process-20260910/evidence'
+DOC = ROOT / 'docs/m1-first-process'
+E = DOC / 'evidence'
+CANDIDATE = '46718e4da82810e57ba7126c8ec3ef0fc4f57268'
+SOURCE = 'b1e0853f9b405e2910f2085dae6fd7f6100ba009'
+PLAN = 'ae7a809a4055f31b5da1a9920b508f3e6f13d474'
+BASIS = '4e892153200d6fa0b1ef3add0bfeceae06b23331'
+checks = []
+
+def git(*args):
+    return subprocess.check_output(['git', *args], cwd=ROOT)
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+def digest(data):
+    return {'sha256': sha(data), 'bytes': len(data)}
+
+def check(name, actual, expected):
+    checks.append({'name': name, 'pass': actual == expected, 'actual': actual,
+                   'expected': expected})
+
+for control in ('STOP', 'STEER.md'):
+    if (ROOT / control).exists():
+        raise RuntimeError('Read and resolve ' + control)
+check('candidate HEAD before review commit', git('rev-parse', 'HEAD').decode().strip(), CANDIDATE)
+for older, newer in ((BASIS, PLAN), (PLAN, SOURCE), (SOURCE, CANDIDATE)):
+    result = subprocess.run(['git', 'merge-base', '--is-ancestor', older, newer], cwd=ROOT)
+    check('ancestry ' + older + ' -> ' + newer, result.returncode, 0)
+check('PLAN bytes committed before BUILD', git('show', PLAN + ':docs/m1-first-process/PLAN.md') ==
+      git('show', SOURCE + ':docs/m1-first-process/PLAN.md'), True)
+check('no fictional source at PLAN', git('ls-tree', '-r', PLAN, '--', 'src/zaratustra/fictional_lot').decode(), '')
+for tree in ('src/zaratustra/core', 'src/zaratustra/process_packs'):
+    records = {commit: git('ls-tree', '-r', commit, '--', tree).decode()
+               for commit in (BASIS, PLAN, SOURCE, CANDIDATE)}
+    check(tree + ' full path/mode/blob equality', len(set(records.values())), 1)
+    (OUT / (tree.split('/')[-1] + '-trees.json')).write_text(json.dumps(records, indent=2)+'\n', encoding='utf-8')
+protected = ('src', 'tests', 'tools', 'AGENTS.md', 'validation.config', 'RESULT.md',
+             'pyproject.toml', 'uv.lock', 'docs/m1-first-process')
+check('candidate working bytes unchanged', git('diff', CANDIDATE, '--', *protected).decode(), '')
+check('source to candidate source/tests/authority unchanged',
+      git('diff', SOURCE, CANDIDATE, '--', 'src', 'tests', 'tools', 'AGENTS.md',
+          'validation.config', 'pyproject.toml', 'uv.lock').decode(), '')
+(OUT / 'basis-to-source.diff').write_bytes(git('diff', '--binary', BASIS, SOURCE))
+(OUT / 'source-to-candidate.diff').write_bytes(git('diff', '--binary', SOURCE, CANDIDATE))
+
+outer = json.loads((E / 'manifest.json').read_bytes())
+check('outer RESULT digest', digest((ROOT / 'RESULT.md').read_bytes()), outer['result'])
+for name, expected in outer['files'].items():
+    check('outer ' + name, digest((DOC / name).read_bytes()), expected)
+for stem in ('baseline-trial', 'scenario', 'failed-focused-01', 'handoff-attempt-01', 'wheel-scenario'):
+    manifest = json.loads((E / (stem + '-manifest.json')).read_bytes())
+    archive = E / (stem + '.zip')
+    check(stem + ' archive digest', sha(archive.read_bytes()), manifest['archive_sha256'])
+    with zipfile.ZipFile(archive) as z:
+        check(stem + ' CRC', z.testzip(), None)
+        check(stem + ' duplicate members', len(z.namelist()), len(set(z.namelist())))
+        check(stem + ' decompressed file hashes',
+              {i.filename: sha(z.read(i)) for i in z.infolist() if not i.is_dir()}, manifest['files'])
+        check(stem + ' directories', sorted(i.filename for i in z.infolist() if i.is_dir()), manifest['directories'])
+for stem in ('baseline-source', 'before-second-source'):
+    manifest = json.loads((E / (stem + '-manifest.json')).read_bytes())
+    with zipfile.ZipFile(E / (stem + '.zip')) as z:
+        check(stem + ' CRC', z.testzip(), None)
+        check(stem + ' members', sorted(z.namelist()), sorted(manifest['files']))
+        for name, expected in manifest['files'].items():
+            raw = z.read(name)
+            check(stem + ':' + name, digest(raw), expected)
+            check(stem + ' exact Git blob:' + name, sha(raw), sha(git('show', manifest['commit'] + ':' + name)))
+wheel = E / 'zaratustra-0.10.0-py3-none-any.whl'
+expected = json.loads((E / 'wheel-verification.json').read_bytes())
+check('retained wheel digest', sha(wheel.read_bytes()), expected['wheel_sha256'])
+with zipfile.ZipFile(wheel) as z:
+    check('wheel CRC', z.testzip(), None)
+    members = [i.filename for i in z.infolist() if i.filename.startswith('zaratustra/') and not i.is_dir()]
+    git_files = git('ls-tree', '-r', '--name-only', SOURCE, '--', 'src/zaratustra').decode().splitlines()
+    check('complete installed package file set', sorted(members), sorted(n[4:] for n in git_files))
+    for name in members:
+        check('wheel Git blob:' + name, sha(z.read(name)), sha(git('show', SOURCE + ':src/' + name)))
+check('recorded source diff bytes', (E / 'source.diff').read_bytes() == git('diff', BASIS, SOURCE), True)
+summary = {'candidate': CANDIDATE, 'source': SOURCE, 'plan': PLAN, 'basis': BASIS,
+           'scope': 'byte equality and provenance, never semantic scanner evidence',
+           'checks': len(checks), 'failed': [c for c in checks if not c['pass']]}
+(OUT / 'candidate-byte-checks.json').write_text(json.dumps(checks, indent=2)+'\n', encoding='utf-8')
+(OUT / 'candidate-byte-summary.json').write_text(json.dumps(summary, indent=2)+'\n', encoding='utf-8')
+print(json.dumps(summary, indent=2))

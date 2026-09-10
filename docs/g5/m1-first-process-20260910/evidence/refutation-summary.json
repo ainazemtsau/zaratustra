@@ -1,0 +1,27 @@
+{
+  "checks": 64,
+  "failed": [],
+  "scope": "first lot only; two instances for isolation; no second Process implementation",
+  "registry": [
+    {
+      "pack_id": "fictional.lot",
+      "pack_version": "1.0.0",
+      "process_type": "fictional.lot-release",
+      "contract_version": 1,
+      "state_version": 1
+    }
+  ],
+  "inspection": {
+    "artifact_id": "c313e8ff-d400-4bb4-a094-d745bbf4a9b4",
+    "version_id": "f03d3956-94ea-41ec-9660-0260170adfe1",
+    "sha256": "4c1119dfc48d9e2fe712e0bc7b1e63389930279129ffc0fc4b0409f1e964904d"
+  },
+  "disposition": {
+    "artifact_id": "a3046ecb-ee8e-46d3-b463-e9d956f545f6",
+    "version_id": "540d98ee-ef50-40f2-be0c-530d84544675",
+    "sha256": "4e7324a0ead1005489f1cc620b3b9790fb42b4932cbba6aae7e8e17f071edf75"
+  },
+  "final_revision": 19,
+  "outcome": "discard",
+  "authority": "G5 separate physical task 01a08a4d-cc87-7be2-929a-1b28d577bc63; owner said zapusti g5; fictional review workspaces only"
+}

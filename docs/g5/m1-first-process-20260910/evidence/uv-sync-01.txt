@@ -1,0 +1,3 @@
+error: Failed to discover managed Python installations
+  Caused by: Failed to read Python installation directory: C:\Users\Anton\AppData\Roaming\uv\python
+  Caused by: failed to read directory `C:\Users\Anton\AppData\Roaming\uv\python`: Отказано в доступе. (os error 5)

@@ -1,0 +1,56 @@
+{
+  "cwd": "C:/my_global_workflow/ebf7/zaratustra",
+  "common_environment": {
+    "UV_CACHE_DIR": "C:/my_global_workflow/ebf7/zaratustra/_scratch/g5-environment/uv-cache"
+  },
+  "commands": [
+    {
+      "command": "uv sync --locked",
+      "attempt": 1,
+      "exit": 2,
+      "raw": "uv-sync-01.txt",
+      "environment": "sandbox; managed Python directory denied"
+    },
+    {
+      "command": "uv sync --locked",
+      "attempt": 2,
+      "exit": 0,
+      "raw": "uv-sync-02.txt",
+      "environment": "reviewed escalation"
+    },
+    {
+      "command": "uv run --locked python -m tools.check --deliver",
+      "attempt": 1,
+      "exit": 0,
+      "raw": "native-deliver-01.txt"
+    },
+    {
+      "command": "uv run --locked python -m tools.probe_first_process --output _scratch/g5-source-01",
+      "exit": 0,
+      "raw": "source-scenario-01.txt"
+    },
+    {
+      "command": "uv run --locked python docs/g5/m1-first-process-20260910/evidence/verify_candidate.py.txt",
+      "exit": 0,
+      "raw": "byte-audit-01.txt",
+      "note": "records discrepancies; exit0 is not all-checks PASS"
+    },
+    {
+      "command": "uv run --locked python docs/g5/m1-first-process-20260910/evidence/refute.py.txt _scratch/g5-refutation-01",
+      "exit": 1,
+      "raw": "refutation-01.txt",
+      "script": "refute-attempt-01.py.txt"
+    },
+    {
+      "command": "uv run --locked python docs/g5/m1-first-process-20260910/evidence/refute.py.txt _scratch/g5-refutation-02",
+      "exit": 0,
+      "raw": "refutation-02.txt",
+      "script": "refute.py.txt"
+    },
+    {
+      "command": "uv run --locked python docs/g5/m1-first-process-20260910/evidence/retained_replay.py.txt",
+      "exit": 0,
+      "raw": "retained-replay-01.txt"
+    }
+  ]
+}

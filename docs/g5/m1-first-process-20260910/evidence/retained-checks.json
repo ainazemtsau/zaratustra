@@ -1,0 +1,138 @@
+[
+  {
+    "name": "runtime loaded retained wheel",
+    "passed": true,
+    "detail": {
+      "zaratustra.core": "C:\\my_global_workflow\\ebf7\\zaratustra\\docs\\m1-first-process\\evidence\\zaratustra-0.10.0-py3-none-any.whl\\zaratustra\\core\\__init__.py",
+      "zaratustra.process_packs": "C:\\my_global_workflow\\ebf7\\zaratustra\\docs\\m1-first-process\\evidence\\zaratustra-0.10.0-py3-none-any.whl\\zaratustra\\process_packs\\__init__.py",
+      "zaratustra.fictional_lot": "C:\\my_global_workflow\\ebf7\\zaratustra\\docs\\m1-first-process\\evidence\\zaratustra-0.10.0-py3-none-any.whl\\zaratustra\\fictional_lot\\__init__.py"
+    }
+  },
+  {
+    "name": "CALL discrepancy exactly LF -> CRLF",
+    "passed": true,
+    "detail": {
+      "committed": {
+        "sha256": "52c6a45de5b86b4710fd1df0155b0393b389bf33761758478463fe549d07ab4f",
+        "bytes": 11464
+      },
+      "manifested": {
+        "sha256": "5c0b4674c59b67c9e80e8e6f7ee6a89101d4cd3ef61863b0edc672b2ee8ff054",
+        "bytes": 11565
+      }
+    }
+  },
+  {
+    "name": "author CALL has manifest CRLF bytes",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "author source remains exact candidate",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "author source clean",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "source diff matches its retained generator scope",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "PLAN excluded by diff scope is independently retained",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "author scenario exact committed source",
+    "passed": true,
+    "detail": {
+      "call": "c-solmax-zaratustra-m1-first-process-20260910-exec",
+      "python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]",
+      "executable": "C:\\projects\\zaratustra\\_scratch\\m1-first-process-20260910\\.venv\\Scripts\\python.exe",
+      "argv": [
+        "C:\\projects\\zaratustra\\_scratch\\m1-first-process-20260910\\tools\\probe_first_process.py",
+        "--output",
+        "_scratch/t4-scenario-01"
+      ],
+      "commit": "b1e0853f9b405e2910f2085dae6fd7f6100ba009",
+      "source_diff": "",
+      "inputs_sha256": "0787a54ef9d9a25b1bd2ce31c5cfd8b55aecd81f481ee47766e1adf4e8a757a5"
+    }
+  },
+  {
+    "name": "author scenario input bytes pinned",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "inspection nested snapshot digest",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "inspection restored exact context bytes",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "inspection replay fingerprint/revision",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "inspection exactly one revision committed",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "disposition nested snapshot digest",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "disposition restored exact context bytes",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "disposition replay fingerprint/revision",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "disposition exactly one revision committed",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "retained wheel finite source-equivalent release",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "native actual basetemp exists",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "native actual tests populated inside this review scratch",
+    "passed": true,
+    "detail": [
+      "C:\\my_global_workflow\\ebf7\\zaratustra\\_scratch\\g5-native-deliver-01\\test_acceptance_is_durable_exa0",
+      "C:\\my_global_workflow\\ebf7\\zaratustra\\_scratch\\g5-native-deliver-01\\test_actual_sources_budget_has0",
+      "C:\\my_global_workflow\\ebf7\\zaratustra\\_scratch\\g5-native-deliver-01\\test_adapter_cannot_fabricate_0",
+      "C:\\my_global_workflow\\ebf7\\zaratustra\\_scratch\\g5-native-deliver-01\\test_adapter_cannot_fabricate_1",
+      "C:\\my_global_workflow\\ebf7\\zaratustra\\_scratch\\g5-native-deliver-01\\test_adapter_cannot_fabricate_2"
+    ]
+  },
+  {
+    "name": "native basetemp ignored",
+    "passed": true,
+    "detail": null
+  }
+]

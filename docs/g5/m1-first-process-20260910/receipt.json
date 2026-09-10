@@ -1,0 +1,105 @@
+{
+  "kind": "binding fresh physical G5",
+  "date": "2026-09-10",
+  "verdict": "PASS",
+  "criteria": {
+    "done_when_1": "PASS",
+    "done_when_2": "PASS",
+    "done_when_3": "PASS"
+  },
+  "author_thread": "01a08a2a-1109-7211-8aa0-17cc639cf1d7",
+  "review_thread": "01a08a4d-cc87-7be2-929a-1b28d577bc63",
+  "physical_separation": "new Codex task, separate app worktree/index/venv/runtime; shared Git object database",
+  "source_history_loaded": false,
+  "subagents_used": false,
+  "mode": "PROBA",
+  "pin": 36,
+  "stamp": 36,
+  "owner_authorization": "Owner words relayed with G5 task: \u00ab\u0437\u0430\u043f\u0443\u0441\u0442\u0438 g5\u00bb after Product REPORT",
+  "call": "c-solmax-zaratustra-m1-first-process-20260910-exec",
+  "candidate": "46718e4da82810e57ba7126c8ec3ef0fc4f57268",
+  "source": "b1e0853f9b405e2910f2085dae6fd7f6100ba009",
+  "before_second_baseline": "b1e0853f9b405e2910f2085dae6fd7f6100ba009",
+  "plan": "ae7a809a4055f31b5da1a9920b508f3e6f13d474",
+  "basis": "4e892153200d6fa0b1ef3add0bfeceae06b23331",
+  "review_branch": "codex/g5-m1-first-process-20260910",
+  "review_path": "C:/my_global_workflow/ebf7/zaratustra/docs/g5/m1-first-process-20260910",
+  "review_commit": "Resolve commit containing this file; deliberately no self-referential hash",
+  "native": {
+    "command": "uv run --locked python -m tools.check --deliver",
+    "exit_code": 0,
+    "tests": 217,
+    "pytest_seconds": 67.31,
+    "import_contracts": 8,
+    "raw": "evidence/native-deliver-01.txt",
+    "prepare": "uv sync --locked",
+    "python": "3.13.7",
+    "PYTEST_ADDOPTS": "--basetemp=_scratch/g5-native-deliver-01",
+    "actual_basetemp": "C:/my_global_workflow/ebf7/zaratustra/_scratch/g5-native-deliver-01",
+    "actual_location_verified": true
+  },
+  "source_scenario": {
+    "exit_code": 0,
+    "outcome": "release",
+    "results": 2,
+    "revisions": [
+      11,
+      18,
+      19
+    ]
+  },
+  "independent_refutation": {
+    "exit_code": 0,
+    "attempt": 2,
+    "named_checks": 64,
+    "outcome": "discard",
+    "results": 2,
+    "final_revision": 19
+  },
+  "retained": {
+    "exit_code": 0,
+    "named_checks": 21,
+    "wheel": "zipimport with locked dependencies",
+    "original_snapshot_replay_revisions": [
+      11,
+      18
+    ],
+    "wheel_final_revision": 19
+  },
+  "findings": [
+    {
+      "id": "G5-F01",
+      "priority": 3,
+      "blocking": false,
+      "file": "docs/m1-first-process/evidence/manifest.json",
+      "line": 13,
+      "summary": "CALL.md outer digest uses pre-commit CRLF bytes, committed candidate is LF",
+      "scope": "packaging only; all source/state/wheel and text content verified",
+      "evidence": "evidence/retained-checks.json"
+    }
+  ],
+  "behavioral_findings": [],
+  "blocked": [],
+  "candidate_bytes_unchanged": true,
+  "W15": "preserved",
+  "W16": "preserved",
+  "W17": "baseline B and placement verified for T4; Proof C open T5/T7",
+  "W18": "first finite lot executed; different recurring signal only pre-BUILD PLAN",
+  "W19": "open T6 renderer",
+  "W20": "T4 exact evidence/restore verified; both-scenario comparison open T5-T7",
+  "guarantees": [
+    "P30: \u0431\u0435\u0437 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f \u043e\u0441\u043d\u043e\u0432\u043d\u043e\u0439 \u0441\u0435\u043c\u0430\u043d\u0442\u0438\u043a\u0438 Core",
+    "P40: \u0431\u0435\u0437 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f Core"
+  ],
+  "owner_acceptance": "pending",
+  "direction_T4_closed": false,
+  "M1_complete": false,
+  "M0": "partial",
+  "T5_started": false,
+  "T6_complete": false,
+  "T7_complete": false,
+  "Proof_C_complete": false,
+  "merged": false,
+  "pushed": false,
+  "next": "solmax"
+}

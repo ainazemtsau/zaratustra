@@ -1,0 +1,106 @@
+"""Check retained provenance, restore actual author snapshots, execute retained wheel."""
+import hashlib
+import json
+import subprocess
+import sys
+import zipfile
+from pathlib import Path
+
+ROOT = Path.cwd().resolve()
+E = ROOT / 'docs/m1-first-process/evidence'
+OUT = ROOT / 'docs/g5/m1-first-process-20260910/evidence'
+BASE = ROOT / '_scratch/g5-retained-01'
+assert not BASE.exists()
+for name in ('STOP', 'STEER.md'):
+    if (ROOT / name).exists():
+        raise RuntimeError('Read and resolve ' + name)
+BASE.mkdir()
+sys.path.insert(0, str(ROOT))
+wheel = E / 'zaratustra-0.10.0-py3-none-any.whl'
+sys.path.insert(0, str(wheel))
+import zaratustra.core as core
+import zaratustra.process_packs as packs
+import zaratustra.fictional_lot as lot
+from tools.probe_first_process import run
+from tools.probe_m1 import restore_snapshot
+
+checks = []
+def dump(path, data):
+    path.write_text(json.dumps(data, indent=2, default=str)+'\n', encoding='utf-8')
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+def check(name, condition, detail=None):
+    checks.append(dict(name=name, passed=bool(condition), detail=detail))
+    dump(OUT / 'retained-checks.json', checks)
+    assert condition, name
+def git(*args):
+    return subprocess.check_output(['git', *args], cwd=ROOT)
+def confirm(path, value):
+    caller = core.authorize_local(core.prepare_authorization(path, value), channel='local-chat',
+        actor='G5-retained-replay', source_ref='Owner authorized separate G5 task 01a08a4d-cc87-7be2-929a-1b28d577bc63; only new fictional review workspaces')
+    return caller
+modules = {m.__name__: m.__file__ for m in (core, packs, lot)}
+check('runtime loaded retained wheel', all(str(wheel) in value for value in modules.values()), modules)
+candidate = '46718e4da82810e57ba7126c8ec3ef0fc4f57268'
+basis = '4e892153200d6fa0b1ef3add0bfeceae06b23331'
+source = 'b1e0853f9b405e2910f2085dae6fd7f6100ba009'
+call_raw = git('show', candidate + ':docs/m1-first-process/CALL.md')
+outer = json.loads((E / 'manifest.json').read_bytes())
+expected = outer['files']['CALL.md']
+crlf = call_raw.replace(b'\n', b'\r\n')
+check('CALL discrepancy exactly LF -> CRLF', {'sha256': sha(crlf), 'bytes': len(crlf)} == expected,
+      dict(committed=dict(sha256=sha(call_raw), bytes=len(call_raw)), manifested=expected))
+author_path = Path('C:/projects/zaratustra/_scratch/m1-first-process-20260910')
+author_call = (author_path / 'docs/m1-first-process/CALL.md').read_bytes()
+check('author CALL has manifest CRLF bytes', sha(author_call) == expected['sha256'])
+check('author source remains exact candidate', subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=author_path).decode().strip() == candidate)
+check('author source clean', subprocess.check_output(['git', 'status', '--porcelain'], cwd=author_path).decode() == '')
+scope = ['src', 'tools', 'tests', 'AGENTS.md', 'pyproject.toml', 'uv.lock', 'docs/m1-first-process/inputs.json']
+check('source diff matches its retained generator scope', (E / 'source.diff').read_bytes() == git('diff', basis, source, '--', *scope))
+check('PLAN excluded by diff scope is independently retained', git('show', 'ae7a809a4055f31b5da1a9920b508f3e6f13d474:docs/m1-first-process/PLAN.md') == (ROOT / 'docs/m1-first-process/PLAN.md').read_bytes())
+
+manifest = json.loads((E / 'scenario-manifest.json').read_bytes())
+unpacked = restore_snapshot(E / 'scenario.zip', BASE / 'author-scenario', manifest)
+runtime = json.loads((unpacked / 'runtime.json').read_bytes())
+check('author scenario exact committed source', runtime['commit'] == source and runtime['source_diff'] == '', runtime)
+check('author scenario input bytes pinned', sha((unpacked / 'inputs.json').read_bytes()) == runtime['inputs_sha256'])
+replays = []
+for name in ('inspection', 'disposition'):
+    events = unpacked / 'events'
+    archive = events / (name + '.snapshot.zip')
+    m = json.loads((events / (name + '.snapshot-manifest.json')).read_bytes())
+    check(name + ' nested snapshot digest', sha(archive.read_bytes()) == m['archive_sha256'])
+    path = restore_snapshot(archive, BASE / (name+'-restored'), m)
+    query = core.ContextQuery.model_validate_json((events / (name+'.query.json')).read_bytes())
+    caller = confirm(path, query)
+    dump(BASE / (name+'.context-authority.json'), caller.confirmation.model_dump(mode='json'))
+    context = core.open_work(path, query, caller).output
+    (BASE / (name+'.context.json')).write_bytes(context)
+    check(name + ' restored exact context bytes', context == (events / (name+'.context.json')).read_bytes())
+    request = core.MutationRequest.model_validate_json((events / (name+'.proposal.json')).read_bytes())
+    before = core.read_records(path)
+    new_caller = confirm(path, request)
+    dump(BASE / (name+'.mutation-authority.json'), new_caller.confirmation.model_dump(mode='json'))
+    receipt = core.apply_mutation(path, request, new_caller)
+    dump(BASE / (name+'.replay-receipt.json'), receipt.model_dump(mode='json'))
+    original = json.loads((events / (name+'.restore-receipt.json')).read_bytes())
+    check(name + ' replay fingerprint/revision', receipt.fingerprint == original['fingerprint'] and receipt.new_revision == original['new_revision'])
+    after = core.read_records(path)
+    check(name + ' exactly one revision committed', after.state_revision == before.state_revision+1)
+    replays.append(dict(stage=name, revision=receipt.new_revision, fingerprint=receipt.fingerprint,
+                        context_sha256=sha(context), workspace=str(path)))
+
+summary = run(BASE / 'wheel-scenario', ROOT / 'docs/m1-first-process/inputs.json')
+check('retained wheel finite source-equivalent release', summary['outcome'] == 'release' and summary['final_revision'] == 19 and
+      summary['final_answers']['recent_important_results']['count'] == 2 and summary['final_answers']['available_works']['count'] == 0)
+actual_temp = ROOT / '_scratch/g5-native-deliver-01'
+check('native actual basetemp exists', actual_temp.is_dir())
+check('native actual tests populated inside this review scratch', any(p.is_dir() for p in actual_temp.iterdir()) and
+      actual_temp.resolve().is_relative_to(ROOT / '_scratch'), [str(p) for p in list(actual_temp.iterdir())[:5]])
+check('native basetemp ignored', git('check-ignore', '_scratch/g5-native-deliver-01').decode().strip() == '_scratch/g5-native-deliver-01')
+dump(OUT / 'retained-summary.json', dict(checks=len(checks), failures=[c for c in checks if not c['passed']],
+    modules=modules, replays=replays, wheel_outcome=summary['outcome'], wheel_revision=summary['final_revision'],
+    actual_basetemp=str(actual_temp.resolve()),
+    finding='Outer manifest CALL.md hash is pre-commit CRLF, committed candidate CALL.md is LF; content identical after line-ending normalization.',
+    audit_correction='First byte-audit compared source.diff to unrestricted diff; retained generator explicitly scopes it. Scoped comparison passes.'))
+print((OUT / 'retained-summary.json').read_text(encoding='utf-8'))
