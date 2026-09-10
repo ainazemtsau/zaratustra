@@ -1,0 +1,29 @@
+{
+  "trial": "C:\\my_global_workflow\\ba2e\\zaratustra\\_scratch\\g5-m1-capabilities-20260910\\audit-01",
+  "archive": "C:\\my_global_workflow\\ba2e\\zaratustra\\docs\\g5\\m1-capabilities-20260910\\audit-01.zip",
+  "archive_sha256": "0b472c71400cd78ba9ef39babc29e2c0dae2f33bbc0f94583245b7b84b810be4",
+  "files": {
+    "author-final-manifest.json": "2455c1a0eaaeb0f24fbf0101faa7ee8d0bb12941537ecede1b51abd5e519ac71",
+    "author-final.zip": "ebe3621d3d3f3e1db4daa85ba16e535b71a6fc473b52a7ba50c70bb3ae7c64da",
+    "checks.json": "b5f13312a78b906b35f36a6454fb214a570cd9a0fa011d66758c65ec8d76a428",
+    "summary.json": "70fd4ac27db91aeed9df084bd5d4c840fd9d0894facf74baee98505fb2cfad65",
+    "author-final-restored/.zara/state.sqlite3": "f9df67fc9b5cacf53fcd24d5bd7dad77ccd3a2b901a0d4310334e0d67fbcbd85",
+    "author-final-restored/artifacts/c416ce65-6eb2-41eb-8be2-1d641f7a1175/eca36dd8-0023-4dcb-856b-e40c08fe6690.blob": "9bd4f2518d0531c2e0fe596e668e67a59b380143203dc53d05c28fb5f8576e38",
+    "author-final-restored/projections/overview.md": "debba07938f534a88081253512aefb593827807dcf41fe1c27eeea054608d642"
+  },
+  "directories": [
+    "author-final-restored/",
+    "author-final-restored/.zara/",
+    "author-final-restored/artifacts/",
+    "author-final-restored/artifacts/c416ce65-6eb2-41eb-8be2-1d641f7a1175/",
+    "author-final-restored/inbox/",
+    "author-final-restored/processes/",
+    "author-final-restored/projections/"
+  ],
+  "excluded_directories": [
+    "venv",
+    "__pycache__"
+  ],
+  "method": "ZIP CRC, every decompressed file SHA-256 and complete directory inventory",
+  "restore": "Extract into a NEW folder; install retained wheel and locked requirements separately. Do not use fault-workspace as a base. Historical absolute paths remain provenance."
+}

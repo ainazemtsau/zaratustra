@@ -1,0 +1,26 @@
+"""Verify all deliverable hashes and staged scope; no product behavior claims."""
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+ROOT=Path(__file__).resolve().parents[2]
+OUT=ROOT/'docs/g5/m1-capabilities-20260910'
+sys.path.insert(0,str(ROOT))
+from tools.check import hygiene
+
+for base in (ROOT,Path('C:/projects/zaratustra/_scratch/m1-capabilities-20260909')):
+    assert not any((base/n).exists() for n in ('STOP','STEER.md'))
+shutil.copyfile(__file__,OUT/'verify-review.py.txt')
+entries={p.relative_to(OUT).as_posix():dict(sha256=hashlib.sha256(p.read_bytes()).hexdigest(),bytes=p.stat().st_size)
+         for p in sorted(OUT.rglob('*')) if p.is_file() and p!=OUT/'manifest.json'}
+(OUT/'manifest.json').write_text(json.dumps(entries,indent=2)+'\n',encoding='utf-8')
+assert not hygiene(ROOT)
+assert not subprocess.check_output(['git','diff','HEAD'],cwd=ROOT)
+assert (ROOT/'_scratch/g5-m1-capabilities-20260910/pytest-deliver-02').is_dir()
+assert json.loads((OUT/'receipt.json').read_text())['candidate']=='73ee71a3282291592040083df64adc9c6567eeda'
+assert '204 passed in 51.82s' in (OUT/'raw/check-deliver-02.txt').read_text(encoding='utf-8')
+print(json.dumps(dict(files=len(entries),manifest='PASS',hygiene='PASS',tracked_candidate='unchanged',
+                      final_basetemp='verified',review_only=True)))

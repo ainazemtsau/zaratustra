@@ -1,0 +1,105 @@
+"""Audit persisted evidence linkage and retained wheel metadata, not source semantics."""
+import base64
+import csv
+import hashlib
+import io
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tomllib
+import zipfile
+
+ROOT=Path(__file__).resolve().parents[2]
+E=ROOT/'docs/m1-capabilities/evidence'
+OUT=Path(sys.argv[1]).resolve()
+assert OUT.is_relative_to(ROOT/'_scratch') and not OUT.exists()
+for base in (ROOT,Path('C:/projects/zaratustra/_scratch/m1-capabilities-20260909')):
+    assert not any((base/n).exists() for n in ('STOP','STEER.md'))
+OUT.mkdir()
+sys.path.insert(0,str(ROOT))
+from tools.probe_m1 import restore_snapshot
+
+checks=[]
+def save(n,v):
+    (OUT/n).write_text(json.dumps(v,indent=2)+'\n',encoding='utf-8')
+def check(n,b,details=None):
+    checks.append(dict(name=n,passed=bool(b),details=details))
+    save('checks.json',checks)
+    print(json.dumps(checks[-1]),flush=True)
+def sha(b): return hashlib.sha256(b).hexdigest()
+def git(*a):return subprocess.check_output(['git',*a],cwd=ROOT)
+candidate='73ee71a3282291592040083df64adc9c6567eeda'
+source='d0cb354807ab16b1d917d500a4e3d1d46f59ad3e'
+basis='a5efbb15c7c39e52072f4fb1593a294ebe109a80'
+plan=git('rev-parse','9eb43fa').decode().strip()
+check('linear-pins',git('rev-parse',candidate+'^').decode().strip()==source and
+      git('rev-parse',source+'^').decode().strip()==plan and
+      git('rev-parse',plan+'^').decode().strip()==basis,dict(plan=plan))
+paths=git('diff','--name-only',source,candidate).decode().splitlines()
+check('candidate-docs-only',all(p=='RESULT.md' or p.startswith('docs/m1-capabilities/') for p in paths),paths)
+for p in ('baseline.whl','baseline-trial.zip','baseline-check.txt','baseline-packs.txt'):
+    check('baseline-preimplementation-'+p,(E/p).read_bytes()==
+          git('show',f'{plan}:docs/m1-capabilities/evidence/{p}'))
+check('source-diff-exact',(E/'source.diff').read_bytes()==git('diff',basis,source,'--',
+      'src','tools','tests','pyproject.toml','uv.lock','AGENTS.md'))
+old=tomllib.loads(git('show',basis+':uv.lock').decode())
+new=tomllib.loads(git('show',candidate+':uv.lock').decode())
+for row in old['package']:
+    if row['name']=='zaratustra':row['version']='0.9.0'
+check('dependency-lock-only-product-version',old==new)
+for name in ('zaratustra-0.9.0-py3-none-any.whl','baseline.whl'):
+    with zipfile.ZipFile(E/name) as z:
+        bad=[]
+        record=next(n for n in z.namelist() if n.endswith('.dist-info/RECORD'))
+        for n,h,s in csv.reader(io.StringIO(z.read(record).decode())):
+            if not h:continue
+            data=z.read(n)
+            actual='sha256='+base64.urlsafe_b64encode(hashlib.sha256(data).digest()).decode().rstrip('=')
+            if actual!=h or int(s)!=len(data):bad.append(n)
+        check('wheel-RECORD-'+name,not bad,bad)
+runtime=json.loads((E/'runtime.json').read_text())
+check('author-runtime-source-clean',runtime['commit']==source and runtime['diff']=='')
+with zipfile.ZipFile(E/'contract.zip') as z:
+    check('retained-runtime-equals-published',z.read('runtime.json')==(E/'runtime.json').read_bytes())
+    observations=[]
+    for n in z.namelist():
+        if not n.endswith('.response.json') or n.startswith('restored'):continue
+        prefix=n.removesuffix('.response.json')
+        v=json.loads(z.read(n)); q=json.loads(z.read(prefix+'.query.json'))
+        s=json.loads(z.read(prefix+'.state.json')); h=json.loads(z.read(prefix+'.history.json'))
+        ok=set(v['answers'])=={'current_status','items_needing_attention','open_decisions',
+             'available_works','blocked_works','recent_important_results','context_requirements'}
+        if 'envelope' in v:
+            ok &= v['envelope']['state_revision']==s['state_revision']==q['expected_revision']
+            ok &= v['envelope']['visible_work_ids']==q['visible_work_ids']
+            works={r['id']:r for r in s['records'] if r['kind']=='work' and r['id'] in q['visible_work_ids']}
+            for k,a in v['answers'].items():
+                if 'count' in a: ok &= a['count']==len(a['value'])
+                if a['state'] not in ('ok','empty'):continue
+                if k=='available_works':ok &= all(row==works.get(row['id']) for row in a['value'])
+                if k in ('blocked_works','items_needing_attention','open_decisions'):
+                    ok &= all(row['work_id'] in works and row['work_revision']==works[row['work_id']]['revision'] for row in a['value'])
+                if k=='context_requirements':
+                    c=a['value']['context']
+                    if c['state']=='ok':
+                        env=c['value']['context']['envelope']
+                        ok &= env['work_id']==q['selected_work_id'] and env['state_revision']==q['expected_revision']
+        else:
+            ok &= all(set(a)=={'state','code'} for a in v['answers'].values())
+        observations.append(dict(prefix=prefix,consistent=bool(ok)))
+    check('persisted-responses-query-state-coherence',all(x['consistent'] for x in observations),observations)
+    inner=json.loads(z.read('final-workspace-manifest.json'))
+    (OUT/'author-final.zip').write_bytes(z.read('final-workspace.zip'))
+    restored=restore_snapshot(OUT/'author-final.zip',OUT/'author-final-restored',inner)
+    check('author-final-retained-restore',all(sha((restored/n).read_bytes())==h for n,h in inner['files'].items()))
+    save('author-final-manifest.json',inner)
+initial=json.loads((ROOT/'_scratch/g5-m1-capabilities-20260910/independent-04/restored-initial-state.json').read_text())
+check('retained-author-workspace-explicit-schema7', initial['state_revision']==7)
+check('source-still-candidate',git('-c','safe.directory=C:/projects/zaratustra/_scratch/m1-capabilities-20260909',
+      '-C','C:/projects/zaratustra/_scratch/m1-capabilities-20260909','rev-parse','HEAD').decode().strip()==candidate)
+check('source-still-clean',not git('-c','safe.directory=C:/projects/zaratustra/_scratch/m1-capabilities-20260909',
+      '-C','C:/projects/zaratustra/_scratch/m1-capabilities-20260909','status','--porcelain'))
+save('summary.json',dict(checks=len(checks),passed=sum(r['passed'] for r in checks),
+                        failures=[r for r in checks if not r['passed']]))
+raise SystemExit(0 if all(r['passed'] for r in checks) else 1)

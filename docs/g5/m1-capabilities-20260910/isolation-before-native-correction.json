@@ -1,0 +1,22 @@
+{
+  "review_task_id": "01a089d2-1faa-78f2-a543-47a480b1744b",
+  "source_task_id": "01a086ca-b1ad-7692-a503-4f4b3bcfa8f9",
+  "cwd": "C:\\my_global_workflow\\ba2e\\zaratustra",
+  "initial_head": "512c7a1657aee9295a1e2e826eb3abc698d05fd8",
+  "initial_status": "clean detached HEAD",
+  "review_branch": "codex/g5-m1-capabilities-20260910",
+  "candidate": "73ee71a3282291592040083df64adc9c6567eeda",
+  "source": "C:/projects/zaratustra/_scratch/m1-capabilities-20260909",
+  "source_initial_and_final_head": "73ee71a3282291592040083df64adc9c6567eeda",
+  "source_initial_and_final_status": "clean",
+  "controls": "STOP/STEER absent here and source; checked before execution",
+  "subagents": [],
+  "global_git_config_changed": false,
+  "source_mutated": false,
+  "native_command": "uv run --locked python -m tools.check --deliver",
+  "native_exit_code": 0,
+  "PYTEST_ADDOPTS": "--basetemp=C:\\my_global_workflow\\ba2e\\zaratustra\\_scratch\\g5-m1-capabilities-20260910\\pytest-deliver-01",
+  "basetemp_guard": "Test-Path refused existing path; explicitly set before native invocation",
+  "native_stdout": "raw/check-deliver-01.txt",
+  "sandbox": "Initial Git index.lock and uv cache denied; standard environment escalations approved. Per-command safe.directory used for source read; no global mutation."
+}

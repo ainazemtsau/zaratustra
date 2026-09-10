@@ -1,0 +1,26 @@
+{
+  "native01": {
+    "command": "uv run --locked python -m tools.check --deliver",
+    "PYTEST_ADDOPTS": "--basetemp=C:\\my_global_workflow\\ba2e\\zaratustra\\_scratch\\g5-m1-capabilities-20260910\\pytest-deliver-01",
+    "shlex_parsed_value": "C:my_global_workflowba2ezaratustra_scratchg5-m1-capabilities-20260910pytest-deliver-01",
+    "actual_original_path": "C:/my_global_workflow/ba2e/zaratustra/my_global_workflowba2ezaratustra_scratchg5-m1-capabilities-20260910pytest-deliver-01",
+    "exit_code": 0,
+    "tests": 204,
+    "pytest_seconds": 53.23,
+    "isolation": "FAIL: outside ignored _scratch, inside own review worktree",
+    "retention": "Moved with PowerShell Move-Item after verifying both absolute paths stay inside review workspace; no deletion",
+    "retained_path": "C:/my_global_workflow/ba2e/zaratustra/_scratch/g5-m1-capabilities-20260910/pytest-deliver-01-misparsed-retained",
+    "files": 2569
+  },
+  "native02": {
+    "PYTEST_ADDOPTS": "--basetemp=_scratch/g5-m1-capabilities-20260910/pytest-deliver-02",
+    "actual_basetemp": "C:/my_global_workflow/ba2e/zaratustra/_scratch/g5-m1-capabilities-20260910/pytest-deliver-02",
+    "exit_code": 0,
+    "tests": 204,
+    "pytest_seconds": 51.82,
+    "isolation": "PASS",
+    "raw": "raw/check-deliver-02.txt"
+  },
+  "source_or_other_user_folders_mutated": false,
+  "disposition": "No isolation claim for native01; native02 is final required native evidence"
+}

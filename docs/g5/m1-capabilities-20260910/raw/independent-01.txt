@@ -1,0 +1,13 @@
+{"name": "retained-wheel-runtime", "passed": true, "evidence": "C:\\my_global_workflow\\ba2e\\zaratustra\\docs\\m1-capabilities\\evidence\\zaratustra-0.9.0-py3-none-any.whl\\zaratustra\\core\\__init__.py"}
+{"name": "author-evidence-manifest", "passed": true, "evidence": 21}
+{"name": "candidate-product-equals-source", "passed": true, "evidence": null}
+{"name": "37-protected-files-equal", "passed": true, "evidence": null}
+{"name": "wheel-exact-python-inventory", "passed": true, "evidence": 30}
+{"name": "fresh-build-wheel-same-python", "passed": true, "evidence": null}
+{"name": "baseline-wheel-equals-accepted-T2", "passed": true, "evidence": null}
+{"name": "contract.zip-contents", "passed": false, "evidence": 103}
+Traceback (most recent call last):
+  File "C:\my_global_workflow\ba2e\zaratustra\_scratch\g5-m1-capabilities-20260910\independent.py", line 173, in <module>
+    check(archive+'-contents', files==m['files'] and dirs==m['directories'],len(files))
+                                      ~^^^^^^^^^
+KeyError: 'files'

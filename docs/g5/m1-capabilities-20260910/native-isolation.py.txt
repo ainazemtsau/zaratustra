@@ -1,0 +1,37 @@
+"""Keep the first native path failure, demonstrate parsing and record the corrected run."""
+from pathlib import Path
+import hashlib
+import json
+import shlex
+
+ROOT=Path(__file__).resolve().parents[2]
+OUT=ROOT/'docs/g5/m1-capabilities-20260910'
+old=json.loads((OUT/'isolation.json').read_text())
+(OUT/'isolation-before-native-correction.json').write_text(json.dumps(old,indent=2)+'\n',encoding='utf-8')
+first=old['PYTEST_ADDOPTS']
+parsed=shlex.split(first)[0].split('=',1)[1]
+former=(ROOT/parsed).resolve()
+retained=ROOT/'_scratch/g5-m1-capabilities-20260910/pytest-deliver-01-misparsed-retained'
+correct=ROOT/'_scratch/g5-m1-capabilities-20260910/pytest-deliver-02'
+assert correct.is_dir() and correct.resolve().is_relative_to((ROOT/'_scratch').resolve())
+assert retained.is_dir() and not former.exists()
+records={p.relative_to(retained).as_posix():dict(sha256=hashlib.sha256(p.read_bytes()).hexdigest(),bytes=p.stat().st_size)
+         for p in sorted(retained.rglob('*')) if p.is_file()}
+(OUT/'native01-retained-files.json').write_text(json.dumps(records,indent=2)+'\n',encoding='utf-8')
+old.update(PYTEST_ADDOPTS='--basetemp=_scratch/g5-m1-capabilities-20260910/pytest-deliver-02',
+           native_stdout='raw/check-deliver-02.txt',
+           actual_basetemp_verified=correct.as_posix(),
+           basetemp_guard='New relative POSIX path, absent before invocation; actual folder verified after PASS')
+(OUT/'isolation.json').write_text(json.dumps(old,indent=2)+'\n',encoding='utf-8')
+issue=dict(native01=dict(command='uv run --locked python -m tools.check --deliver',
+    PYTEST_ADDOPTS=first,shlex_parsed_value=parsed,actual_original_path=former.as_posix(),
+    exit_code=0,tests=204,pytest_seconds=53.23,isolation='FAIL: outside ignored _scratch, inside own review worktree',
+    retention='Moved with PowerShell Move-Item after verifying both absolute paths stay inside review workspace; no deletion',
+    retained_path=retained.as_posix(),files=len(records)),
+    native02=dict(PYTEST_ADDOPTS=old['PYTEST_ADDOPTS'],actual_basetemp=correct.as_posix(),
+        exit_code=0,tests=204,pytest_seconds=51.82,isolation='PASS',raw='raw/check-deliver-02.txt'),
+    source_or_other_user_folders_mutated=False,
+    disposition='No isolation claim for native01; native02 is final required native evidence')
+(OUT/'native-isolation.json').write_text(json.dumps(issue,indent=2)+'\n',encoding='utf-8')
+(OUT/'native-isolation.py.txt').write_bytes(Path(__file__).read_bytes())
+print(json.dumps(dict(final_native='PASS',first_native_isolation='FAIL retained',retained_files=len(records))))

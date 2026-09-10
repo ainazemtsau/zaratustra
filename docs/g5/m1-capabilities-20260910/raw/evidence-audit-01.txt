@@ -1,0 +1,17 @@
+{"name": "linear-pins", "passed": true, "details": {"plan": "9eb43fabc029931148355007f156123156fcb90b"}}
+{"name": "candidate-docs-only", "passed": false, "details": ["README.md", "RESULT.md", "docs/m1-capabilities/READOUT.md", "docs/m1-capabilities/REPRODUCE.md", "docs/m1-capabilities/evidence/baseline-check.txt", "docs/m1-capabilities/evidence/baseline-files-manifest.json", "docs/m1-capabilities/evidence/baseline-packs.txt", "docs/m1-capabilities/evidence/check-deliver.txt", "docs/m1-capabilities/evidence/contract-01.txt", "docs/m1-capabilities/evidence/contract-manifest.json", "docs/m1-capabilities/evidence/contract.zip", "docs/m1-capabilities/evidence/finalize_t3.py.txt", "docs/m1-capabilities/evidence/focused-01.txt", "docs/m1-capabilities/evidence/focused-02.txt", "docs/m1-capabilities/evidence/manifest.json", "docs/m1-capabilities/evidence/native-01.txt", "docs/m1-capabilities/evidence/native-02.txt", "docs/m1-capabilities/evidence/receipt.json", "docs/m1-capabilities/evidence/retain_t3.py.txt", "docs/m1-capabilities/evidence/runtime.json", "docs/m1-capabilities/evidence/source-verification.json", "docs/m1-capabilities/evidence/source.diff", "docs/m1-capabilities/evidence/summary.json", "docs/m1-capabilities/evidence/zaratustra-0.9.0-py3-none-any.whl", "docs/results/m1-packs-20260909.md"]}
+{"name": "baseline-preimplementation-baseline.whl", "passed": true, "details": null}
+{"name": "baseline-preimplementation-baseline-trial.zip", "passed": true, "details": null}
+{"name": "baseline-preimplementation-baseline-check.txt", "passed": false, "details": null}
+{"name": "baseline-preimplementation-baseline-packs.txt", "passed": false, "details": null}
+{"name": "source-diff-exact", "passed": true, "details": null}
+{"name": "dependency-lock-only-product-version", "passed": true, "details": null}
+{"name": "wheel-RECORD-zaratustra-0.9.0-py3-none-any.whl", "passed": true, "details": []}
+{"name": "wheel-RECORD-baseline.whl", "passed": true, "details": []}
+{"name": "author-runtime-source-clean", "passed": true, "details": null}
+{"name": "retained-runtime-equals-published", "passed": true, "details": null}
+{"name": "persisted-responses-query-state-coherence", "passed": true, "details": [{"prefix": "blocked", "consistent": true}, {"prefix": "continued", "consistent": true}, {"prefix": "denied", "consistent": true}, {"prefix": "empty-scope", "consistent": true}, {"prefix": "missing-pack", "consistent": true}, {"prefix": "missing-reader", "consistent": true}, {"prefix": "next-only", "consistent": true}, {"prefix": "ready", "consistent": true}, {"prefix": "revoked", "consistent": true}, {"prefix": "stale", "consistent": true}]}
+{"name": "author-final-retained-restore", "passed": true, "details": null}
+{"name": "retained-author-workspace-explicit-schema7", "passed": true, "details": null}
+{"name": "source-still-candidate", "passed": true, "details": null}
+{"name": "source-still-clean", "passed": true, "details": null}

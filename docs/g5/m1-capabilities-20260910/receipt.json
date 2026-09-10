@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "kind": "binding_fresh_physical_g5",
+  "verdict": "PASS",
+  "scope": "M1/T3 seven Process read/context capabilities only",
+  "candidate": "73ee71a3282291592040083df64adc9c6567eeda",
+  "implementation_source": "d0cb354807ab16b1d917d500a4e3d1d46f59ad3e",
+  "plan_retained_baseline": "9eb43fabc029931148355007f156123156fcb90b",
+  "accepted_t2_basis": "a5efbb15c7c39e52072f4fb1593a294ebe109a80",
+  "product_version": "0.9.0",
+  "schema": 7,
+  "engineering_contract": 36,
+  "mode": "PROBA",
+  "call": "c-solmax-zaratustra-m1-capabilities-20260909-exec",
+  "review_task_id": "01a089d2-1faa-78f2-a543-47a480b1744b",
+  "source_task_id": "01a086ca-b1ad-7692-a503-4f4b3bcfa8f9",
+  "physical_independence": "New physical app-managed task and clean worktree; no participation in author implementation/evidence; no subagents",
+  "review_path": "C:/my_global_workflow/ba2e/zaratustra",
+  "review_branch": "codex/g5-m1-capabilities-20260910",
+  "review_commit_identity": "The docs-only Git commit containing this receipt; exact SHA in final handback",
+  "done_when": [
+    {
+      "id": 1,
+      "verdict": "PASS",
+      "claim": "Seven capabilities through one contract",
+      "evidence": [
+        "independent-04-checks.json",
+        "independent-04.zip!reads/ready/",
+        "independent-04.zip!reads/blocked-current/",
+        "independent-04.zip!reads/continued/"
+      ]
+    },
+    {
+      "id": 2,
+      "verdict": "PASS",
+      "claim": "PLAN empty/refusal/unavailability, revisions/scope/counts/state/context isolation",
+      "evidence": [
+        "independent-04-checks.json",
+        "independent-04.zip!reads/",
+        "independent-04.zip!concurrency/"
+      ]
+    },
+    {
+      "id": 3,
+      "verdict": "PASS",
+      "claim": "Exact reproducible versions/evidence; derived read-only responses without M2+ prerequisites",
+      "evidence": [
+        "raw/check-deliver-02.txt",
+        "protected-bytes.json",
+        "audit-01-checks.json",
+        "audit-dispositions.json",
+        "final-verification.json"
+      ]
+    }
+  ],
+  "checks": {
+    "native_deliver": "PASS:204; pytest51.82s; full build/hygiene/types/6 boundaries/report",
+    "native_exit_code": 0,
+    "basetemp": "_scratch/g5-m1-capabilities-20260910/pytest-deliver-02",
+    "independent": "240/240 PASS in independent-04; includes auxiliary count/shape/footprint checks",
+    "independent_attempts": 4,
+    "retries_after_initial": 3,
+    "evidence_audit": "14/17 initial; 3 audit assumptions resolved with retained evidence in audit-dispositions.json",
+    "author_manifest_files": 21,
+    "protected_equal_files": 37,
+    "wheel_python_files": 30,
+    "retained_wheel_runtime": "zipimport retained wheel with locked venv dependencies",
+    "authoritative_final_restored": "schema7 revision11 exact retained bytes/layout"
+  },
+  "findings": [],
+  "blocked": [],
+  "author_execution_issue": {
+    "native01": "interrupted; explicit scratch basetemp omitted; exact default temp path unknown",
+    "disposition": "Not PASS and no full isolation claim; original raw unchanged; current G5 native has new explicit local basetemp",
+    "historical_successful_native": "native02/Deliver author reports explicit scratch basetemp; raw confirms PASS but does not print environment"
+  },
+  "review_execution_issues": [
+    "Native01 tests PASS but Windows backslashes in PYTEST_ADDOPTS were removed by pytest shlex; actual temp was outside ignored scratch inside own review root. Retained without deletion and moved to scratch; 2569 file manifest and raw preserved. Final native02 uses new relative POSIX basetemp, actual location verified, full PASS",
+    "Initial Git/index and uv cache sandbox refusals; approved standard escalation; no global config change",
+    "Independent01 wrong manifest-shape assumption; original FAIL/KeyError retained",
+    "Independent02 expected early invalid_work from prepare_authorization not caught; original traceback retained",
+    "Independent03 omitted separate authorize_artifact; Core permission_denied and unchanged footprint confirmed; original preserved",
+    "Audit01 narrow docs whitelist and exact LF/CRLF assumptions resolved; all initial checks/raw retained",
+    "Finalizer01 used nonexistent inspect_workspace API; original ImportError retained; corrected to public read_workspace"
+  ],
+  "w15_w20": {
+    "W15": "Accepted T2 lifecycle preserved; no reopening of historical pending",
+    "W16": "T3 technical contract independently PASS; owner acceptance pending",
+    "W17": "Both P30 without changing main Core semantics and P40 without changing Core retained; full placement/baseline/Proof C remain T4-T5",
+    "W18": "Full fictional pair remains T4-T5",
+    "W19": "Common renderer remains T6",
+    "W20": "T3 exact evidence retained; full scenarios/comparison remain T4-T7"
+  },
+  "limits": [
+    "Trusted same-user Python; no hostile sandbox or code attestation",
+    "Callback file-loss/byte-corruption fault injection is not power-loss or exhaustive concurrency proof",
+    "Two OS processes test one Process reader/writer; not full two-Process M1 placement",
+    "Baseline two raw text files differ LF/CRLF between PLAN and candidate; exact originals retained, no byte identity claim",
+    "No independent wheel installation claim; runtime uses retained wheel with locked venv dependencies"
+  ],
+  "source_unchanged": true,
+  "candidate_source_tests_rules_validation_result_unchanged": true,
+  "direction_live_written": false,
+  "direction_archive_read": false,
+  "work8_read_or_repeated": false,
+  "owner_acceptance": "pending",
+  "direction_t3_closed": false,
+  "direction_m1_closed": false,
+  "m0": "partial",
+  "successor_created": false,
+  "t4_started": false,
+  "next": "solmax"
+}

@@ -1,0 +1,18 @@
+{
+  "trial": "C:\\my_global_workflow\\ba2e\\zaratustra\\_scratch\\g5-m1-capabilities-20260910\\independent-01",
+  "archive": "C:\\my_global_workflow\\ba2e\\zaratustra\\docs\\g5\\m1-capabilities-20260910\\independent-01.zip",
+  "archive_sha256": "51267130238a9d4eaa899dc61205ca074a40b12989f1e65b40609101bef2beef",
+  "files": {
+    "checks.json": "c7108364c06de67af5ce1afc2e0467c94dcb73672640491f958b5f24fca84876",
+    "protected-bytes.json": "a6105caa0593a1366532b9ad3029fbf5614f6fbab114c535877224888ce16874",
+    "runtime.json": "8e8c4c9dd0b108766c9491238a2c75b24c989bb45eb9c867c1836ce48544645a",
+    "wheel-files.json": "9aae5f3575d7b9acf6eba1de88d87bb76331f945b8736021f3cfcc3655c7312d"
+  },
+  "directories": [],
+  "excluded_directories": [
+    "venv",
+    "__pycache__"
+  ],
+  "method": "ZIP CRC, every decompressed file SHA-256 and complete directory inventory",
+  "restore": "Extract into a NEW folder; install retained wheel and locked requirements separately. Do not use fault-workspace as a base. Historical absolute paths remain provenance."
+}

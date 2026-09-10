@@ -1,0 +1,66 @@
+"""Retain all G5 attempts and resolve byte-audit observations without rewriting inputs."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+
+ROOT=Path(__file__).resolve().parents[2]
+BASE=ROOT/'_scratch/g5-m1-capabilities-20260910'
+OUT=ROOT/'docs/g5/m1-capabilities-20260910'
+sys.path.insert(0,str(ROOT))
+from tools.retain_trial import retain_trial
+def git(*a):return subprocess.check_output(['git',*a],cwd=ROOT)
+def sha(b):return hashlib.sha256(b).hexdigest()
+def save(n,v):
+    p=OUT/n;p.parent.mkdir(parents=True,exist_ok=True)
+    p.write_text(json.dumps(v,indent=2,ensure_ascii=True)+'\n',encoding='utf-8')
+for base in (ROOT,Path('C:/projects/zaratustra/_scratch/m1-capabilities-20260909')):
+    assert not any((base/n).exists() for n in ('STOP','STEER.md'))
+plan='9eb43fabc029931148355007f156123156fcb90b'
+candidate='73ee71a3282291592040083df64adc9c6567eeda'
+source='d0cb354807ab16b1d917d500a4e3d1d46f59ad3e'
+dispositions=[]
+for name in ('baseline-check.txt','baseline-packs.txt'):
+    p='docs/m1-capabilities/evidence/'+name
+    old=git('show',plan+':'+p);new=git('show',candidate+':'+p)
+    f=OUT/'evidence';f.mkdir(exist_ok=True)
+    (f/('plan-'+name)).write_bytes(old)
+    (f/('candidate-'+name)).write_bytes(new)
+    assert old!=new and old.replace(b'\r\n',b'\n')==new.replace(b'\r\n',b'\n')
+    dispositions.append(dict(name=name,exact_bytes_equal=False,
+        resolution='Only LF in PLAN vs CRLF in candidate raw; content identical; both originals retained',
+        plan_sha256=sha(old),candidate_sha256=sha(new),
+        plan_bytes=len(old),candidate_bytes=len(new),plan_crlf=old.count(b'\r\n'),candidate_crlf=new.count(b'\r\n')))
+paths=git('diff','--name-only',source,candidate).decode().splitlines()
+assert all(p in ('README.md','RESULT.md','docs/results/m1-packs-20260909.md') or
+           p.startswith('docs/m1-capabilities/') for p in paths)
+assert git('show',source+':RESULT.md')==git('show',candidate+':docs/results/m1-packs-20260909.md')
+dispositions.append(dict(name='candidate-docs-only',resolution='Initial audit whitelist omitted README.md and archived T2 RESULT; actual delta is docs-only',paths=paths))
+save('audit-dispositions.json',dict(resolved=True,product_findings=[],observations=dispositions,
+                                  archived_t2_result_exact_source=True))
+for attempt in ('independent-01','independent-02','independent-03','independent-04','audit-01'):
+    save(attempt+'-manifest.json',retain_trial(BASE/attempt,OUT/(attempt+'.zip')))
+    shutil.copyfile(BASE/attempt/'checks.json',OUT/(attempt+'-checks.json'))
+    if (BASE/attempt/'summary.json').exists():
+        shutil.copyfile(BASE/attempt/'summary.json',OUT/(attempt+'-summary.json'))
+for s,t in [('independent.py','independent-04.py.txt'),('evidence_audit.py','evidence-audit.py.txt'),
+            ('package_review.py','package-review.py.txt')]:
+    shutil.copyfile(BASE/s,OUT/t)
+shutil.copyfile(BASE/'independent-04/protected-bytes.json',OUT/'protected-bytes.json')
+shutil.copyfile(BASE/'independent-04/runtime.json',OUT/'runtime.json')
+save('isolation.json',dict(review_task_id='01a089d2-1faa-78f2-a543-47a480b1744b',
+    source_task_id='01a086ca-b1ad-7692-a503-4f4b3bcfa8f9',cwd=str(ROOT),
+    initial_head='512c7a1657aee9295a1e2e826eb3abc698d05fd8',initial_status='clean detached HEAD',
+    review_branch=git('branch','--show-current').decode().strip(),candidate=candidate,
+    source='C:/projects/zaratustra/_scratch/m1-capabilities-20260909',
+    source_initial_and_final_head=candidate,source_initial_and_final_status='clean',
+    controls='STOP/STEER absent here and source; checked before execution',
+    subagents=[],global_git_config_changed=False,source_mutated=False,
+    native_command='uv run --locked python -m tools.check --deliver',native_exit_code=0,
+    PYTEST_ADDOPTS='--basetemp=C:\\my_global_workflow\\ba2e\\zaratustra\\_scratch\\g5-m1-capabilities-20260910\\pytest-deliver-01',
+    basetemp_guard='Test-Path refused existing path; explicitly set before native invocation',
+    native_stdout='raw/check-deliver-01.txt',
+    sandbox='Initial Git index.lock and uv cache denied; standard environment escalations approved. Per-command safe.directory used for source read; no global mutation.'))
+print(json.dumps(dict(retained_attempts=5,audit_observations_resolved=True)))

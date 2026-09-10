@@ -1,0 +1,150 @@
+{
+  "validation.config": {
+    "basis": "450f08e6af97ccd104bd84499c8fd28a213e55e8a8515b1151ce01e43e5da9db",
+    "candidate": "450f08e6af97ccd104bd84499c8fd28a213e55e8a8515b1151ce01e43e5da9db"
+  },
+  "tools/check.py": {
+    "basis": "6f3f1c2455da07bd275e69812f7e5643efe9468e672a461815ca3a7a0acaab80",
+    "candidate": "6f3f1c2455da07bd275e69812f7e5643efe9468e672a461815ca3a7a0acaab80"
+  },
+  "src/zaratustra/core/context.py": {
+    "basis": "7465ede96f060da8a81aad9c6991fda7f4329221ec0b1498278782ba7a5a0ac4",
+    "candidate": "7465ede96f060da8a81aad9c6991fda7f4329221ec0b1498278782ba7a5a0ac4"
+  },
+  "src/zaratustra/core/records.py": {
+    "basis": "998a5b1c69b70dbcdcc74c22584e3fa80e36c3b0a2c4440a3cd94b38f013a489",
+    "candidate": "998a5b1c69b70dbcdcc74c22584e3fa80e36c3b0a2c4440a3cd94b38f013a489"
+  },
+  "src/zaratustra/core/results.py": {
+    "basis": "777e63802cd8c761f734bc0e8a82e13f44ff16943ac5444606efb490060bea09",
+    "candidate": "777e63802cd8c761f734bc0e8a82e13f44ff16943ac5444606efb490060bea09"
+  },
+  "src/zaratustra/core/artifacts.py": {
+    "basis": "46e5079ff1245d1f45a88559c0c61cf248c617d964c3c55838d135d0889f67b4",
+    "candidate": "46e5079ff1245d1f45a88559c0c61cf248c617d964c3c55838d135d0889f67b4"
+  },
+  "src/zaratustra/core/migrations.py": {
+    "basis": "e02eabf89c1e5692587cd945f686b45bffc54971f79339d13923c9a2c13f66b4",
+    "candidate": "e02eabf89c1e5692587cd945f686b45bffc54971f79339d13923c9a2c13f66b4"
+  },
+  "src/zaratustra/core/migration_v2.py": {
+    "basis": "bfbb7c16ac43239e9775058d48a9716a867865fa58ddda2af318bcb7ac599a6f",
+    "candidate": "bfbb7c16ac43239e9775058d48a9716a867865fa58ddda2af318bcb7ac599a6f"
+  },
+  "src/zaratustra/core/migration_v3.py": {
+    "basis": "78e1798b59e97ca33bf0db2758fb9505fcbfeaa1fb7cf73999e227564eb4e479",
+    "candidate": "78e1798b59e97ca33bf0db2758fb9505fcbfeaa1fb7cf73999e227564eb4e479"
+  },
+  "src/zaratustra/core/migration_v4.py": {
+    "basis": "4832ca48d25cbc68efa94cb8d100c68f9b43b61eda203e2f01408c712b1ba1e1",
+    "candidate": "4832ca48d25cbc68efa94cb8d100c68f9b43b61eda203e2f01408c712b1ba1e1"
+  },
+  "src/zaratustra/core/migration_v5.py": {
+    "basis": "840bd878273e8d9d40c624b12161f3e480c2e9604255e57eb895d301c819c51e",
+    "candidate": "840bd878273e8d9d40c624b12161f3e480c2e9604255e57eb895d301c819c51e"
+  },
+  "src/zaratustra/core/migration_v6.py": {
+    "basis": "05c9251c53a7b651a942f957e7caccaedb7a2c3f4a5923dcb3ebd5714c6fb69c",
+    "candidate": "05c9251c53a7b651a942f957e7caccaedb7a2c3f4a5923dcb3ebd5714c6fb69c"
+  },
+  "src/zaratustra/core/migration_v7.py": {
+    "basis": "0d68fedc52de5439fbe619a8fed45bb9c4e005ce8234d6b8e91c3496d53c7130",
+    "candidate": "0d68fedc52de5439fbe619a8fed45bb9c4e005ce8234d6b8e91c3496d53c7130"
+  },
+  "src/zaratustra/cli/AGENTS.md": {
+    "basis": "52cc394338d4a82e79b31c3ec7747f7e43cf9c0b7d108fd2cd2a0aa60067c0d6",
+    "candidate": "52cc394338d4a82e79b31c3ec7747f7e43cf9c0b7d108fd2cd2a0aa60067c0d6"
+  },
+  "src/zaratustra/cli/__init__.py": {
+    "basis": "2c9a30371204e768abf9961bc56ebef880c9cf8b0156dd4731fc9be052a43117",
+    "candidate": "2c9a30371204e768abf9961bc56ebef880c9cf8b0156dd4731fc9be052a43117"
+  },
+  "src/zaratustra/local/AGENTS.md": {
+    "basis": "9b43979c2a5ff867e0507ee56acb94057738b4bcc345fc6006f4dc914dc687ff",
+    "candidate": "9b43979c2a5ff867e0507ee56acb94057738b4bcc345fc6006f4dc914dc687ff"
+  },
+  "src/zaratustra/local/__init__.py": {
+    "basis": "89ddc2e43d350dfbebea9b116d095eeed8756a55a3e4a0b761a33aad4afe37df",
+    "candidate": "89ddc2e43d350dfbebea9b116d095eeed8756a55a3e4a0b761a33aad4afe37df"
+  },
+  "src/zaratustra/process_probe/AGENTS.md": {
+    "basis": "a3aa4cde46cf6f55ea9105e1cd5c41dc18ec4620d252771e8ca168618b686e9e",
+    "candidate": "a3aa4cde46cf6f55ea9105e1cd5c41dc18ec4620d252771e8ca168618b686e9e"
+  },
+  "src/zaratustra/process_probe/__init__.py": {
+    "basis": "90831bfd55ab3f79679e968448d70311f823d0817e0a4f96eed90b9dd9efb85d",
+    "candidate": "90831bfd55ab3f79679e968448d70311f823d0817e0a4f96eed90b9dd9efb85d"
+  },
+  "src/zaratustra/process_probe/batch.py": {
+    "basis": "fc3e4e7e0109ab2d326c8d30486e58292a0ba06fbf53461bb58722abba0f05f4",
+    "candidate": "fc3e4e7e0109ab2d326c8d30486e58292a0ba06fbf53461bb58722abba0f05f4"
+  },
+  "src/zaratustra/process_probe/cycle.py": {
+    "basis": "11bd9eeea0fb119bfe8091ddad898bdc746fbf3caa007365ef70fbfe66512830",
+    "candidate": "11bd9eeea0fb119bfe8091ddad898bdc746fbf3caa007365ef70fbfe66512830"
+  },
+  "src/zaratustra/process_probe/runner.py": {
+    "basis": "4d831b2d4becff6d13c825afb91751118cea57ef41c50ad44816f2bfa9024bc1",
+    "candidate": "4d831b2d4becff6d13c825afb91751118cea57ef41c50ad44816f2bfa9024bc1"
+  },
+  "tests/__init__.py": {
+    "basis": "e79085492eb49beb5adeefa62c8c934895bbadb7a5991eb9c0ed7a294cc3e3a4",
+    "candidate": "e79085492eb49beb5adeefa62c8c934895bbadb7a5991eb9c0ed7a294cc3e3a4"
+  },
+  "tests/tools/test_check.py": {
+    "basis": "8ffa6de4d80cf62f1fa93511b50bb685fa2e2f0d96f9f660f349d43be87f8a12",
+    "candidate": "8ffa6de4d80cf62f1fa93511b50bb685fa2e2f0d96f9f660f349d43be87f8a12"
+  },
+  "tests/tools/test_retain_trial.py": {
+    "basis": "6b6fb65b9464fef8c03fda995c485ca696f9d3f0a02ab82e5b3317059a9cc5af",
+    "candidate": "6b6fb65b9464fef8c03fda995c485ca696f9d3f0a02ab82e5b3317059a9cc5af"
+  },
+  "tests/zaratustra/core/test_artifacts.py": {
+    "basis": "052a889026ad59e081e3c6f389f7911f1e4618f919770fae5bf1fec3bccc74d3",
+    "candidate": "052a889026ad59e081e3c6f389f7911f1e4618f919770fae5bf1fec3bccc74d3"
+  },
+  "tests/zaratustra/core/test_context.py": {
+    "basis": "c2ddd2725fb4460c49a62f71e7d0daff4a70edfc4000b3058d1048e0bb1df993",
+    "candidate": "c2ddd2725fb4460c49a62f71e7d0daff4a70edfc4000b3058d1048e0bb1df993"
+  },
+  "tests/zaratustra/core/test_handoffs.py": {
+    "basis": "fad715445a0f995d321877cce3449c332a109b7a6dbb155289cf3eb5ceea4cbf",
+    "candidate": "fad715445a0f995d321877cce3449c332a109b7a6dbb155289cf3eb5ceea4cbf"
+  },
+  "tests/zaratustra/core/test_mutations.py": {
+    "basis": "da085026919dd432d072ca51a687ae0992408699cb4074b252ba3b3de902d398",
+    "candidate": "da085026919dd432d072ca51a687ae0992408699cb4074b252ba3b3de902d398"
+  },
+  "tests/zaratustra/core/test_pack_bindings.py": {
+    "basis": "f781680678ed1dde733f6ff5449a5d3b3e2c13d43e583e69512dba19c71295bb",
+    "candidate": "f781680678ed1dde733f6ff5449a5d3b3e2c13d43e583e69512dba19c71295bb"
+  },
+  "tests/zaratustra/core/test_records.py": {
+    "basis": "c5b886199b6dcd18e7c3e5581b5fb87de7dc2e386371b68e4c3d8c8221ee7c84",
+    "candidate": "c5b886199b6dcd18e7c3e5581b5fb87de7dc2e386371b68e4c3d8c8221ee7c84"
+  },
+  "tests/zaratustra/core/test_results.py": {
+    "basis": "de280c077115641892504d5e580408fc96d5ec0bdda7414cb0864323a64d0bf4",
+    "candidate": "de280c077115641892504d5e580408fc96d5ec0bdda7414cb0864323a64d0bf4"
+  },
+  "tests/zaratustra/core/test_workspace.py": {
+    "basis": "e251dd307470a26a3dad9530bbfc85fa9ab069dfd4c4b38152ec88fc863f4abd",
+    "candidate": "e251dd307470a26a3dad9530bbfc85fa9ab069dfd4c4b38152ec88fc863f4abd"
+  },
+  "tests/zaratustra/local/test_confirmation.py": {
+    "basis": "e59fb0890c177082a62175a7c9c8a5f14acc20d8464116bf920677b2d22e6776",
+    "candidate": "e59fb0890c177082a62175a7c9c8a5f14acc20d8464116bf920677b2d22e6776"
+  },
+  "tests/zaratustra/local/test_handoff_delivery.py": {
+    "basis": "30d39111685a87be58fffd8e374cb5c2b2bbd30f5b73a18ef480576e860b208c",
+    "candidate": "30d39111685a87be58fffd8e374cb5c2b2bbd30f5b73a18ef480576e860b208c"
+  },
+  "tests/zaratustra/process_packs/test_lifecycle.py": {
+    "basis": "676fac621ebc8e5f96c6d25d42e0cbfde5880b7b40fb66a5ca4a9e52c2e822ad",
+    "candidate": "676fac621ebc8e5f96c6d25d42e0cbfde5880b7b40fb66a5ca4a9e52c2e822ad"
+  },
+  "tests/zaratustra/process_probe/test_boundary.py": {
+    "basis": "6346b33391a4fb710b41b10c3abac1637cde602b42335fc8d4bf852d6e4e11c4",
+    "candidate": "6346b33391a4fb710b41b10c3abac1637cde602b42335fc8d4bf852d6e4e11c4"
+  }
+}

@@ -1,0 +1,427 @@
+"""Fresh G5, bounded real-Core adversarial observations, no product edits."""
+import base64
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+import traceback
+from uuid import UUID, uuid4
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[2]
+E = ROOT / 'docs/m1-capabilities/evidence'
+WHEEL = E / 'zaratustra-0.9.0-py3-none-any.whl'
+sys.path[:0] = [str(WHEEL), str(ROOT)]
+from zaratustra import core
+from zaratustra.core import *
+from zaratustra.process_packs import *
+from tools.probe_m1 import restore_snapshot
+from tools.retain_trial import retain_trial
+from tools.probe_packs import FictionalBatchAdapter
+
+TASK = '01a089d2-1faa-78f2-a543-47a480b1744b'
+NAMES = {'current_status','items_needing_attention','open_decisions','available_works',
+         'blocked_works','recent_important_results','context_requirements'}
+
+def save(p, obj):
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(obj, indent=2, ensure_ascii=True) + '\n', encoding='utf-8')
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+def controls():
+    for base in (ROOT, Path('C:/projects/zaratustra/_scratch/m1-capabilities-20260909')):
+        for name in ('STOP', 'STEER.md'):
+            if (base/name).exists():
+                raise RuntimeError(f'Read and resolve {base/name}')
+
+def auth(path, q):
+    return authorize_local(prepare_authorization(path, q), channel='local-chat',
+        actor='fresh-physical-G5-fictional-review',
+        source_ref=f'Owner authorized isolated G5 fixtures; task {TASK}; acceptance pending')
+
+def work(path, identity=None):
+    return next(r for r in read_records(path).records if isinstance(r, Work)
+                and (identity is None or r.id == identity))
+
+def request(path, identity, operation, **changes):
+    s = read_records(path)
+    return MutationRequest.model_validate(dict(operation=operation, operation_id=uuid4(),
+        workspace_id=s.workspace_id, work_id=identity, expected_revision=s.state_revision,
+        provenance=f'Fictional fresh G5 {TASK}') | changes)
+
+def pq(path, anchor, visible, chosen=None, **changes):
+    s = read_records(path)
+    return ProcessQuery.model_validate(dict(workspace_id=s.workspace_id,
+        process_id=work(path, anchor).process_id, work_id=anchor,
+        visible_work_ids=visible, selected_work_id=chosen, expected_revision=s.state_revision,
+        max_bytes=1048576) | changes)
+
+def cq(path, identity, **changes):
+    s = read_records(path)
+    return ContextQuery.model_validate(dict(workspace_id=s.workspace_id,
+        process_id=work(path, identity).process_id, work_id=identity,
+        expected_revision=s.state_revision, max_bytes=1048576) | changes)
+
+def footprint(path):
+    return {p.relative_to(path).as_posix(): digest(p.read_bytes()) if p.is_file() else None
+            for p in sorted(path.rglob('*'))}
+
+class Reader:
+    def __init__(self, refs=(), variant=None, hook=None):
+        self.refs, self.variant, self.hook = refs, variant, hook
+        self.calls = 0
+        self.inputs = []
+    def describe(self, m):
+        self.calls += 1
+        self.inputs.append(m.model_dump(mode='json'))
+        active = [w for w in m.works if w.status not in ('done','cancelled')]
+        available = tuple(w.id for w in active if w.status == 'ready'
+                          and 'g5:choice' not in w.executor_requirements)
+        blocked = tuple(Notice(key=str(w.id), work_id=w.id, text='Fictional choice or readiness')
+                        for w in active if w.id not in available)
+        result = CapabilitySelection(current_status=f'Visible active {len(active)}',
+            items_needing_attention=blocked, open_decisions=blocked,
+            available_works=available, blocked_works=blocked,
+            recent_important_results=tuple(r.id for r in reversed(m.results)),
+            context_requirements=ContextRequirements(notes=('Exact selected grants only',),
+                                                     references=self.refs))
+        if self.hook:
+            self.hook(m)
+        if self.variant:
+            return self.variant(result, m)
+        return result
+
+def registry(path, reader=None, **changes):
+    ref = next(r for r in read_records(path).records if isinstance(r, Process)).pack_binding
+    return PackRegistry((PackRegistration(ref.model_copy(update=changes),
+        FictionalBatchAdapter(), reader),))
+
+def child():
+    path, folder = map(Path, sys.argv[2:4])
+    controls()
+    q = MutationRequest.model_validate_json((folder/'writer.request.json').read_text())
+    a = auth(path, q)
+    save(folder/'writer.authority.json', a.confirmation.model_dump(mode='json'))
+    save(folder/'writer.entered.json', {'time_ns':time.time_ns(), 'pid':os.getpid()})
+    try:
+        receipt = apply_mutation(path, q, a)
+        save(folder/'writer.receipt.json', receipt.model_dump(mode='json'))
+    except Exception:
+        (folder/'writer.exception.txt').write_text(traceback.format_exc(), encoding='utf-8')
+        raise
+
+if len(sys.argv)>1 and sys.argv[1]=='writer':
+    child()
+    raise SystemExit()
+
+BASE = Path(sys.argv[1]).resolve()
+controls()
+assert BASE.is_relative_to(ROOT/'_scratch') and not BASE.exists()
+BASE.mkdir()
+checks = []
+
+def check(name, condition, evidence=None):
+    row = dict(name=name, passed=bool(condition), evidence=evidence)
+    checks.append(row)
+    save(BASE/'checks.json', checks)
+    print(json.dumps(row), flush=True)
+
+def git(*args):
+    return subprocess.check_output(['git',*args], cwd=ROOT)
+
+save(BASE/'runtime.json', dict(task=TASK, parent_task='01a086ca-b1ad-7692-a503-4f4b3bcfa8f9',
+    candidate=git('rev-parse','HEAD').decode().strip(), cwd=str(ROOT), pid=os.getpid(),
+    python=sys.version, core_file=core.__file__, wheel_sha256=digest(WHEEL.read_bytes()),
+    argv=sys.argv, started_ns=time.time_ns()))
+check('retained-wheel-runtime', str(WHEEL) in core.__file__, core.__file__)
+
+# Exact provenance is byte evidence only, not a semantic source scanner.
+manifest = json.loads((E/'manifest.json').read_text())
+check('author-evidence-manifest', all(digest((E/n).read_bytes())==v['sha256'] and
+      len((E/n).read_bytes())==v['bytes'] for n,v in manifest.items()), len(manifest))
+source='d0cb354807ab16b1d917d500a4e3d1d46f59ad3e'
+candidate='73ee71a3282291592040083df64adc9c6567eeda'
+basis='a5efbb15c7c39e52072f4fb1593a294ebe109a80'
+check('candidate-product-equals-source', not git('diff',source,candidate,'--','src','tools',
+      'tests','pyproject.toml','uv.lock','validation.config'))
+protected=json.loads((E/'source-verification.json').read_text())['protected_equal']
+rows={p:dict(basis=digest(git('show',f'{basis}:{p}')),
+             candidate=digest(git('show',f'{candidate}:{p}'))) for p in protected}
+save(BASE/'protected-bytes.json',rows)
+check('37-protected-files-equal',len(rows)==37 and all(v['basis']==v['candidate'] for v in rows.values()))
+with zipfile.ZipFile(WHEEL) as z:
+    wheel_py={n:digest(z.read(n)) for n in z.namelist() if n.endswith('.py')}
+    expected={p[4:]:digest(git('show',f'{candidate}:{p}')) for p in
+        git('ls-tree','-r','--name-only',candidate,'--','src').decode().splitlines() if p.endswith('.py')}
+    check('wheel-exact-python-inventory',wheel_py==expected, len(wheel_py))
+    save(BASE/'wheel-files.json',wheel_py)
+check('fresh-build-wheel-same-python', all(zipfile.ZipFile(ROOT/'dist'/WHEEL.name).read(n)==
+      zipfile.ZipFile(WHEEL).read(n) for n in wheel_py))
+check('baseline-wheel-equals-accepted-T2', (E/'baseline.whl').read_bytes()==
+      git('show',f'{basis}:docs/m1-packs/evidence/zaratustra-0.8.0-py3-none-any.whl'))
+for archive, mf in [('contract.zip','contract-manifest.json'),
+                    ('baseline-trial.zip','baseline-files-manifest.json')]:
+    m=json.loads((E/mf).read_text())
+    with zipfile.ZipFile(E/archive) as z:
+        files={n:dict(sha256=digest(z.read(n)),bytes=len(z.read(n))) for n in z.namelist() if not n.endswith('/')}
+        dirs=sorted(n for n in z.namelist() if n.endswith('/'))
+        expected_files=m['files'] if archive=='contract.zip' else m
+        check(archive+'-contents', files==expected_files and
+              (archive!='contract.zip' or dirs==sorted(m['directories'])),len(files))
+cm=json.loads((E/'contract-manifest.json').read_text())
+# The outer evidence manifest stores {sha256, bytes}; restore_snapshot uses hash strings.
+restore_cm=dict(files={n:v['sha256'] for n,v in cm['files'].items()},directories=sorted(cm['directories']))
+contract=restore_snapshot(E/'contract.zip',BASE/'author-contract',restore_cm)
+seed=contract/'before-result.zip'
+seed_manifest=json.loads((contract/'before-result-manifest.json').read_text())
+P=restore_snapshot(seed,BASE/'workspace',seed_manifest)
+save(BASE/'restored-initial-state.json', read_records(P).model_dump(mode='json'))
+check('legal-exact-restore-revision7',read_records(P).state_revision==7)
+I=work(P).id
+counter=0
+
+def execute(path, q, content=None):
+    global counter
+    controls()
+    counter+=1
+    f=BASE/'events'/f'{counter:03d}-{q.operation}'
+    a=auth(path,q)
+    save(f.with_suffix('.request.json'),q.model_dump(mode='json'))
+    save(f.with_suffix('.authority.json'),a.confirmation.model_dump(mode='json'))
+    if content is not None:
+        f.with_suffix('.input.bin').write_bytes(content)
+    r=apply_mutation(path,q,a,content=content)
+    save(f.with_suffix('.receipt.json'),r.model_dump(mode='json'))
+    return r
+
+DEFAULT=object()
+def read(name, path=P, query=None, reader=None, caller=DEFAULT, reg=None,
+         context=None, context_caller=DEFAULT, stable=True):
+    controls()
+    q=query if query is not None else pq(path,I,(I,),I)
+    rd=reader if reader is not None else Reader()
+    a=auth(path,q) if caller is DEFAULT else caller
+    ca=auth(path,context) if context is not None and context_caller is DEFAULT else context_caller
+    if ca is DEFAULT: ca=None
+    f=BASE/'reads'/name
+    save(f/'query.json',q.model_dump(mode='json'))
+    save(f/'authority.json',a.confirmation.model_dump(mode='json') if a else None)
+    if context:
+        save(f/'context-query.json',context.model_dump(mode='json'))
+        save(f/'context-authority.json',ca.confirmation.model_dump(mode='json') if ca else None)
+    before=footprint(path)
+    save(f/'state-before.json',read_records(path).model_dump(mode='json'))
+    save(f/'history-before.json',read_history(path).model_dump(mode='json'))
+    out=read_capabilities(path,q,a,reg if reg is not None else registry(path,rd),
+                          context_query=context,context_caller=ca)
+    (f/'response.json').write_bytes(out.output)
+    save(f/'adapter-inputs.json',rd.inputs)
+    after=footprint(path)
+    save(f/'footprints.json',dict(before=before,after=after))
+    if stable: check(name+'-no-writes',before==after,str(f.relative_to(BASE)))
+    value=json.loads(out.output)
+    check(name+'-seven',set(value['answers'])==NAMES)
+    for k,v in value['answers'].items():
+        if 'count' in v: check(name+'-'+k+'-count',v['count']==len(v['value']))
+    return value
+
+def fail(name, value, code, denied=False):
+    check(name, 'envelope' not in value and all(v==dict(state='denied' if denied else
+         'unavailable',code=code) for v in value['answers'].values()),value)
+
+def content(v): return v['answers']['context_requirements']['value']['context']
+
+q0=pq(P,I,(I,),I)
+c0=cq(P,I)
+full=read('ready',context=c0)
+direct=json.loads(open_work(P,c0,auth(P,c0)).output)
+save(BASE/'open-work-oracle.json',direct)
+check('context-equals-public-open-work',content(full)==dict(state='ok',value=direct))
+check('available-equals-authoritative-work',full['answers']['available_works']['value']==
+      [work(P,I).model_dump(mode='json')])
+empty=read('empty-scope',query=pq(P,I,()))
+check('empty-scope-no-hidden-identity',str(I) not in json.dumps(empty))
+fail('none-denied',read('none',caller=None),'permission_denied',True)
+changed=q0.model_copy(update={'max_bytes':100000})
+fail('query-digest-bound',read('changed-query',query=changed,caller=auth(P,q0)),'permission_denied',True)
+fail('context-auth-not-metadata',read('context-auth-as-metadata',caller=auth(P,c0)),
+     'permission_denied',True)
+swapped=read('metadata-auth-as-context',context=c0,context_caller=auth(P,q0))
+check('separate-content-authority',content(swapped)==dict(state='denied',code='permission_denied'))
+for label, changes in [('wrong-process',{'process_id':uuid4()}),
+                       ('wrong-workspace',{'workspace_id':uuid4()}),
+                       ('unknown-member',{'visible_work_ids':(I,uuid4())})]:
+    rd=Reader()
+    adjusted=ProcessQuery.model_validate(q0.model_dump()|changes)
+    if label=='wrong-workspace':
+        try:
+            auth(P,adjusted)
+        except MutationError as error:
+            check('wrong-workspace-early-authorization-refusal',error.code=='invalid_work',str(error))
+        v=read(label,query=adjusted,reader=rd,caller=auth(P,q0))
+    else:
+        v=read(label,query=adjusted,reader=rd)
+    fail(label+'-denied',v,'permission_denied',True)
+    check(label+'-no-dispatch',rd.calls==0)
+for label,rg,code in [('missing',PackRegistry(),'missing_pack'),
+    ('missing-reader',registry(P),'missing_read_adapter'),
+    ('other-version',registry(P,Reader(),pack_version='99.0.0'),'missing_pack'),
+    ('incompatible',registry(P,Reader(),state_version=2),'incompatible_pack')]:
+    fail(label,read(label,reg=rg),code)
+unsupported=read('unsupported',reader=Reader(variant=lambda s,m:CapabilitySelection()))
+check('unsupported-not-empty',all(v==dict(state='unavailable',code='unsupported')
+      for v in unsupported['answers'].values()))
+def raises(s,m): raise RuntimeError('G5-private-error-detail')
+fail('reader-exception-sanitized',read('reader-exception',reader=Reader(variant=raises)),
+     'read_adapter_failed')
+for label,fn in {
+    'foreign-notice':lambda s,m:s.model_copy(update={'open_decisions':(Notice(key='x',work_id=uuid4(),text='x'),)}),
+    'foreign-result':lambda s,m:s.model_copy(update={'recent_important_results':(uuid4(),)}),
+    'missing-partition':lambda s,m:s.model_copy(update={'available_works':()}),
+    'duplicate-available':lambda s,m:s.model_copy(update={'available_works':(I,I)}),
+    'overlap':lambda s,m:s.model_copy(update={'blocked_works':(Notice(key='x',work_id=I,text='x'),)}),
+    'duplicate-notice':lambda s,m:s.model_copy(update={'open_decisions':(Notice(key='x',work_id=I,text='x'),)*2}),
+}.items():
+    fail(label,read(label,reader=Reader(variant=fn)),'invalid_read_response')
+fail('no-partial-budget',read('budget-one',query=q0.model_copy(update={'max_bytes':1})),
+     'budget_exceeded')
+exact_bytes=len(read_capabilities(P,q0,auth(P,q0),registry(P,Reader())).output)
+for delta in (0,-1):
+    val=read('exact-budget'+str(delta),query=q0.model_copy(update={'max_bytes':exact_bytes+delta}))
+    check('exact-budget-boundary'+str(delta),('envelope' in val)==(delta==0))
+execute(P,request(P,I,'set_work_requirements',requirements=('g5:choice',)))
+fail('stale-confirmation',read('stale',query=q0),'conflict')
+blocked=read('blocked-current')
+check('blocked-attention-decisions-coherent',blocked['answers']['available_works']['count']==0
+      and all(blocked['answers'][n]['count']==1 for n in
+              ('blocked_works','items_needing_attention','open_decisions')))
+execute(P,request(P,I,'set_work_requirements',requirements=('probe.batch/v1',)))
+# Legitimate replay of retained state: real exact Result API, preserving W15.
+ctx=cq(P,I)
+proposal=propose_result(P,ctx,auth(P,ctx),registry(P),operation_id=uuid4(),
+                       next_work_id=uuid4(),next_artifact_id=uuid4())
+execute(P,proposal)
+J=proposal.submission.next_work.work_id
+allq=pq(P,J,(I,J),J)
+allv=read('continued',query=allq,context=cq(P,J))
+check('result-header-from-authoritative-event',allv['answers']['recent_important_results']['value']==
+      [dict(id=str(proposal.operation_id),work_id=str(I),state_revision=read_records(P).state_revision)])
+check('terminal-excluded-from-partition',allv['answers']['available_works']['value']==
+      [work(P,J).model_dump(mode='json')] and allv['answers']['blocked_works']['count']==0)
+check('W15-next-exact-binding',work(P,I).pack_binding==work(P,J).pack_binding)
+nextq=pq(P,J,(J,),J)
+nv=read('next-only-metadata',query=nextq)
+check('hidden-old-work-and-result-not-in-metadata',str(I) not in json.dumps(nv)
+      and str(proposal.operation_id) not in json.dumps(nv)
+      and nv['answers']['recent_important_results']['count']==0)
+nc=cq(P,J)
+nv=read('next-only-inherited',query=nextq,context=nc)
+check('inherited-equals-public-core',content(nv)==dict(state='ok',
+      value=json.loads(open_work(P,nc,auth(P,nc)).output)))
+terminal=read('terminal-metadata',query=pq(P,I,(I,),I),context=cq(P,I))
+check('terminal-content-denied-metadata-readable',content(terminal)==
+      dict(state='denied',code='permission_denied') and 'envelope' in terminal)
+fail('terminal-invalid-available',read('terminal-selected-as-available',query=pq(P,I,(I,),I),
+    reader=Reader(variant=lambda s,m:s.model_copy(update={'available_works':(I,)}))),
+    'invalid_read_response')
+wrong=cq(P,I)
+check('different-selected-context-denied',content(read('wrong-selected-context',query=nextq,
+      context=wrong))==dict(state='denied',code='scope'))
+old_ref=read_handoffs(P)[0].handoff.result
+explicit=cq(P,J,references=(old_ref,))
+check('exact-inherited-reference-allowed',content(read('explicit-inherited-ref',query=nextq,
+      reader=Reader((old_ref,)),context=explicit))['state']=='ok')
+check('required-reference-mismatch-unavailable',content(read('requirements-mismatch',query=nextq,
+      reader=Reader((old_ref,)),context=cq(P,J)))==dict(state='unavailable',code='requirements_changed'))
+tampered=old_ref.model_copy(update={'sha256':'a'*64})
+fail('tampered-grant-requirement-denied',read('tampered-grant',query=nextq,reader=Reader((tampered,))),
+     'invalid_read_response')
+# Publish bytes for J; I has no forward grant to that real stored artifact.
+artifact=next(r for r in read_records(P).records if isinstance(r,Artifact) and r.work_id==J)
+payload=b'G5-foreign-future-content-do-not-leak'
+pub=request(P,J,'publish_artifact',version=2,artifact_id=artifact.id,
+    artifact_revision=artifact.revision,content_sha256=digest(payload),content_size=len(payload))
+execute(P,pub,payload)
+foreign=ArtifactReference(artifact_id=artifact.id,version_id=pub.operation_id,sha256=digest(payload))
+fail('real-future-reference-rejected',read('real-foreign-requirement',query=pq(P,I,(I,J),I),
+    reader=Reader((foreign,))),'invalid_read_response')
+# Missing and changed registered bytes: injected only in fresh selected fixture.
+fault=restore_snapshot(seed,BASE/'fault-workspace',seed_manifest)
+F=work(fault).id
+fp=fault/read_artifact(fault,old_ref.artifact_id,old_ref.version_id).version.relative_path
+original=fp.read_bytes()
+save(BASE/'fault-original.json',dict(path=str(fp),sha256=digest(original)))
+(BASE/'fault-original.bin').write_bytes(original)
+fp.rename(fp.with_suffix('.held'))
+missing=read('missing-bytes',path=fault,query=pq(fault,F,(F,),F),context=cq(fault,F))
+check('missing-no-partial-context',content(missing)==dict(state='unavailable',code='context_unavailable'))
+fp.with_suffix('.held').rename(fp)
+fp.write_bytes(b'X'*len(original))
+changed=read('changed-bytes',path=fault,query=pq(fault,F,(F,),F),context=cq(fault,F))
+check('changed-no-partial-context',content(changed)==dict(state='unavailable',code='context_unavailable'))
+# Restore byte corruption through exact public repair, never direct DB/state edits.
+repair=request(fault,F,'restore_artifact',version=2,artifact_id=old_ref.artifact_id,
+    artifact_revision=next(r.revision for r in read_records(fault).records if isinstance(r,Artifact)
+                           and r.id==old_ref.artifact_id),restore_version=old_ref.version_id,
+    content_sha256=digest(original),content_size=len(original))
+execute(fault,repair,original)
+check('legitimate-repair-restored-content',fp.read_bytes()==original)
+late=lambda m:fp.rename(fp.with_suffix('.late-held'))
+latev=read('late-byte-loss',path=fault,query=pq(fault,F,(F,),F),context=cq(fault,F),
+          reader=Reader(hook=late),stable=False)
+fail('final-revalidation-refuses-whole-response',latev,'dependency_changed')
+fp.with_suffix('.late-held').rename(fp)
+# Final revalidation also follows adapter error, not only successful selections.
+latev=read('late-loss-and-reader-error',path=fault,query=pq(fault,F,(F,),F),context=cq(fault,F),
+          reader=Reader(hook=late,variant=raises),stable=False)
+fail('final-revalidation-after-adapter-error',latev,'dependency_changed')
+fp.with_suffix('.late-held').rename(fp)
+# Two OS processes, one Process workspace: managed writer cannot interleave read.
+C=restore_snapshot(seed,BASE/'concurrency-workspace',seed_manifest)
+K=work(C).id
+folder=BASE/'concurrency'
+save(folder/'writer.request.json',request(C,K,'revoke_work').model_dump(mode='json'))
+children=[]
+def concurrent(m):
+    proc=subprocess.Popen([sys.executable,str(Path(__file__).resolve()),'writer',str(C),str(folder)],
+        stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,encoding='utf-8',
+        creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+    children.append(proc)
+    end=time.monotonic()+10
+    while not (folder/'writer.entered.json').exists() and time.monotonic()<end:
+        time.sleep(.01)
+    check('writer-entered-during-reader', (folder/'writer.entered.json').exists())
+    time.sleep(.3)
+    check('managed-writer-still-blocked',proc.poll() is None and not (folder/'writer.receipt.json').exists())
+rv=read('concurrent-reader',path=C,query=pq(C,K,(K,),K),reader=Reader(hook=concurrent),
+        context=cq(C,K),stable=False)
+out,err=children[0].communicate(timeout=15)
+(folder/'writer.stdout.txt').write_text(out,encoding='utf-8')
+(folder/'writer.stderr.txt').write_text(err,encoding='utf-8')
+check('writer-committed-after-read',children[0].returncode==0 and read_records(C).state_revision==8
+      and rv['envelope']['state_revision']==7 and content(rv)['state']=='ok')
+fail('revoked-after-read',read('revoked-current',path=C,query=pq(C,K,(K,),K)),
+     'permission_denied',True)
+# A revoked terminal hidden member cannot poison a narrower lawful metadata scope.
+execute(P,request(P,I,'revoke_work'))
+fail('one-revoked-member-rejects-whole',read('revoked-mixed-scope',query=pq(P,J,(I,J),J)),
+     'permission_denied',True)
+check('hidden-revoked-work-does-not-expand-or-deny-scope','envelope' in
+      read('hidden-revoked',query=pq(P,J,(J,),J)))
+fail('revoked-anchor-even-empty-scope',read('revoked-anchor',query=pq(P,I,())),
+     'permission_denied',True)
+check('inherited-grant-survives-source-revocation',content(read('revoked-source-inherited-context',
+      query=pq(P,J,(J,),J),context=cq(P,J)))['state']=='ok')
+save(BASE/'final-state.json',read_records(P).model_dump(mode='json'))
+save(BASE/'final-history.json',read_history(P).model_dump(mode='json'))
+save(BASE/'final-workspace-manifest.json',retain_trial(P,BASE/'final-workspace.zip'))
+summary=dict(checks=len(checks),passed=sum(x['passed'] for x in checks),
+             failures=[x for x in checks if not x['passed']],finished_ns=time.time_ns())
+save(BASE/'summary.json',summary)
+print(json.dumps(summary),flush=True)
+raise SystemExit(0 if not summary['failures'] else 1)

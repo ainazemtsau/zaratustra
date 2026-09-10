@@ -1,0 +1,60 @@
+{"name": "retained-wheel-runtime", "passed": true, "evidence": "C:\\my_global_workflow\\ba2e\\zaratustra\\docs\\m1-capabilities\\evidence\\zaratustra-0.9.0-py3-none-any.whl\\zaratustra\\core\\__init__.py"}
+{"name": "author-evidence-manifest", "passed": true, "evidence": 21}
+{"name": "candidate-product-equals-source", "passed": true, "evidence": null}
+{"name": "37-protected-files-equal", "passed": true, "evidence": null}
+{"name": "wheel-exact-python-inventory", "passed": true, "evidence": 30}
+{"name": "fresh-build-wheel-same-python", "passed": true, "evidence": null}
+{"name": "baseline-wheel-equals-accepted-T2", "passed": true, "evidence": null}
+{"name": "contract.zip-contents", "passed": true, "evidence": 103}
+{"name": "baseline-trial.zip-contents", "passed": true, "evidence": 83}
+{"name": "legal-exact-restore-revision7", "passed": true, "evidence": null}
+{"name": "ready-no-writes", "passed": true, "evidence": "reads\\ready"}
+{"name": "ready-seven", "passed": true, "evidence": null}
+{"name": "ready-available_works-count", "passed": true, "evidence": null}
+{"name": "ready-blocked_works-count", "passed": true, "evidence": null}
+{"name": "ready-items_needing_attention-count", "passed": true, "evidence": null}
+{"name": "ready-open_decisions-count", "passed": true, "evidence": null}
+{"name": "ready-recent_important_results-count", "passed": true, "evidence": null}
+{"name": "context-equals-public-open-work", "passed": true, "evidence": null}
+{"name": "available-equals-authoritative-work", "passed": true, "evidence": null}
+{"name": "empty-scope-no-writes", "passed": true, "evidence": "reads\\empty-scope"}
+{"name": "empty-scope-seven", "passed": true, "evidence": null}
+{"name": "empty-scope-available_works-count", "passed": true, "evidence": null}
+{"name": "empty-scope-blocked_works-count", "passed": true, "evidence": null}
+{"name": "empty-scope-items_needing_attention-count", "passed": true, "evidence": null}
+{"name": "empty-scope-open_decisions-count", "passed": true, "evidence": null}
+{"name": "empty-scope-recent_important_results-count", "passed": true, "evidence": null}
+{"name": "empty-scope-no-hidden-identity", "passed": true, "evidence": null}
+{"name": "none-no-writes", "passed": true, "evidence": "reads\\none"}
+{"name": "none-seven", "passed": true, "evidence": null}
+{"name": "none-denied", "passed": true, "evidence": {"answers": {"available_works": {"code": "permission_denied", "state": "denied"}, "blocked_works": {"code": "permission_denied", "state": "denied"}, "context_requirements": {"code": "permission_denied", "state": "denied"}, "current_status": {"code": "permission_denied", "state": "denied"}, "items_needing_attention": {"code": "permission_denied", "state": "denied"}, "open_decisions": {"code": "permission_denied", "state": "denied"}, "recent_important_results": {"code": "permission_denied", "state": "denied"}}, "version": 1}}
+{"name": "changed-query-no-writes", "passed": true, "evidence": "reads\\changed-query"}
+{"name": "changed-query-seven", "passed": true, "evidence": null}
+{"name": "query-digest-bound", "passed": true, "evidence": {"answers": {"available_works": {"code": "permission_denied", "state": "denied"}, "blocked_works": {"code": "permission_denied", "state": "denied"}, "context_requirements": {"code": "permission_denied", "state": "denied"}, "current_status": {"code": "permission_denied", "state": "denied"}, "items_needing_attention": {"code": "permission_denied", "state": "denied"}, "open_decisions": {"code": "permission_denied", "state": "denied"}, "recent_important_results": {"code": "permission_denied", "state": "denied"}}, "version": 1}}
+{"name": "context-auth-as-metadata-no-writes", "passed": true, "evidence": "reads\\context-auth-as-metadata"}
+{"name": "context-auth-as-metadata-seven", "passed": true, "evidence": null}
+{"name": "context-auth-not-metadata", "passed": true, "evidence": {"answers": {"available_works": {"code": "permission_denied", "state": "denied"}, "blocked_works": {"code": "permission_denied", "state": "denied"}, "context_requirements": {"code": "permission_denied", "state": "denied"}, "current_status": {"code": "permission_denied", "state": "denied"}, "items_needing_attention": {"code": "permission_denied", "state": "denied"}, "open_decisions": {"code": "permission_denied", "state": "denied"}, "recent_important_results": {"code": "permission_denied", "state": "denied"}}, "version": 1}}
+{"name": "metadata-auth-as-context-no-writes", "passed": true, "evidence": "reads\\metadata-auth-as-context"}
+{"name": "metadata-auth-as-context-seven", "passed": true, "evidence": null}
+{"name": "metadata-auth-as-context-available_works-count", "passed": true, "evidence": null}
+{"name": "metadata-auth-as-context-blocked_works-count", "passed": true, "evidence": null}
+{"name": "metadata-auth-as-context-items_needing_attention-count", "passed": true, "evidence": null}
+{"name": "metadata-auth-as-context-open_decisions-count", "passed": true, "evidence": null}
+{"name": "metadata-auth-as-context-recent_important_results-count", "passed": true, "evidence": null}
+{"name": "separate-content-authority", "passed": true, "evidence": null}
+{"name": "wrong-process-no-writes", "passed": true, "evidence": "reads\\wrong-process"}
+{"name": "wrong-process-seven", "passed": true, "evidence": null}
+{"name": "wrong-process-denied", "passed": true, "evidence": {"answers": {"available_works": {"code": "permission_denied", "state": "denied"}, "blocked_works": {"code": "permission_denied", "state": "denied"}, "context_requirements": {"code": "permission_denied", "state": "denied"}, "current_status": {"code": "permission_denied", "state": "denied"}, "items_needing_attention": {"code": "permission_denied", "state": "denied"}, "open_decisions": {"code": "permission_denied", "state": "denied"}, "recent_important_results": {"code": "permission_denied", "state": "denied"}}, "version": 1}}
+{"name": "wrong-process-no-dispatch", "passed": true, "evidence": null}
+Traceback (most recent call last):
+  File "C:\my_global_workflow\ba2e\zaratustra\_scratch\g5-m1-capabilities-20260910\independent.py", line 260, in <module>
+    v=read(label,query=ProcessQuery.model_validate(q0.model_dump()|changes),reader=rd)
+  File "C:\my_global_workflow\ba2e\zaratustra\_scratch\g5-m1-capabilities-20260910\independent.py", line 208, in read
+    a=auth(path,q) if caller is DEFAULT else caller
+      ~~~~^^^^^^^^
+  File "C:\my_global_workflow\ba2e\zaratustra\_scratch\g5-m1-capabilities-20260910\independent.py", line 43, in auth
+    return authorize_local(prepare_authorization(path, q), channel='local-chat',
+                           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\my_global_workflow\ba2e\zaratustra\docs\m1-capabilities\evidence\zaratustra-0.9.0-py3-none-any.whl\zaratustra\core\mutations.py", line 115, in prepare_authorization
+    raise MutationError("invalid_work", "Request does not name this workspace and Work")
+zaratustra.core.mutations.MutationError: invalid_work: Request does not name this workspace and Work

@@ -1,0 +1,112 @@
+"""Create receipt/manifest and verify the review-only deliverable."""
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import zipfile
+
+ROOT=Path(__file__).resolve().parents[2]
+OUT=ROOT/'docs/g5/m1-capabilities-20260910'
+BASE=ROOT/'_scratch/g5-m1-capabilities-20260910'
+sys.path.insert(0,str(ROOT))
+from zaratustra.core import read_workspace, read_records
+def git(*a):return subprocess.check_output(['git',*a],cwd=ROOT)
+def d(data):return dict(sha256=hashlib.sha256(data).hexdigest(),bytes=len(data))
+def save(n,v):(OUT/n).write_text(json.dumps(v,indent=2,ensure_ascii=True)+'\n',encoding='utf-8')
+def controls():
+    for p in (ROOT,Path('C:/projects/zaratustra/_scratch/m1-capabilities-20260909')):
+        assert not any((p/n).exists() for n in ('STOP','STEER.md'))
+controls()
+candidate='73ee71a3282291592040083df64adc9c6567eeda'
+assert git('rev-parse','HEAD').decode().strip()==candidate
+assert not git('diff','HEAD')
+assert not git('diff','--cached')
+untracked=git('ls-files','--others','--exclude-standard').decode().splitlines()
+assert all(p.startswith('docs/g5/m1-capabilities-20260910/') for p in untracked)
+assert git('check-ignore','_scratch/g5-m1-capabilities-20260910/independent.py')
+author_final=BASE/'audit-01/author-final-restored'
+version=read_workspace(author_final)
+assert version.schema_version==7
+assert read_records(author_final).state_revision==11
+prior=BASE/'independent-03'
+prior_read=json.loads((prior/'reads/tampered-grant/footprints.json').read_text())['after']
+def footprint(path):
+    return {p.relative_to(path).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() if p.is_file() else None
+            for p in sorted(path.rglob('*'))}
+assert footprint(prior/'workspace')==prior_read
+save('final-verification.json',dict(author_final_schema=version.schema_version,
+    author_final_revision=11,independent03_denied_publish_no_writes=True,
+    review_only_untracked=True,candidate_tracked_bytes_unchanged=True,
+    scratch_ignored=True,independent_reads=len(list((BASE/'independent-04/reads').iterdir()))))
+shutil.copyfile(__file__,OUT/'finalize-review.py.txt')
+save('receipt.json',dict(schema_version=1,kind='binding_fresh_physical_g5',verdict='PASS',
+    scope='M1/T3 seven Process read/context capabilities only',
+    candidate=candidate,implementation_source='d0cb354807ab16b1d917d500a4e3d1d46f59ad3e',
+    plan_retained_baseline='9eb43fabc029931148355007f156123156fcb90b',
+    accepted_t2_basis='a5efbb15c7c39e52072f4fb1593a294ebe109a80',
+    product_version='0.9.0',schema=7,engineering_contract=36,mode='PROBA',
+    call='c-solmax-zaratustra-m1-capabilities-20260909-exec',
+    review_task_id='01a089d2-1faa-78f2-a543-47a480b1744b',
+    source_task_id='01a086ca-b1ad-7692-a503-4f4b3bcfa8f9',
+    physical_independence='New physical app-managed task and clean worktree; no participation in author implementation/evidence; no subagents',
+    review_path=ROOT.as_posix(),review_branch='codex/g5-m1-capabilities-20260910',
+    review_commit_identity='The docs-only Git commit containing this receipt; exact SHA in final handback',
+    done_when=[
+      dict(id=1,verdict='PASS',claim='Seven capabilities through one contract',
+           evidence=['independent-04-checks.json','independent-04.zip!reads/ready/','independent-04.zip!reads/blocked-current/','independent-04.zip!reads/continued/']),
+      dict(id=2,verdict='PASS',claim='PLAN empty/refusal/unavailability, revisions/scope/counts/state/context isolation',
+           evidence=['independent-04-checks.json','independent-04.zip!reads/','independent-04.zip!concurrency/']),
+      dict(id=3,verdict='PASS',claim='Exact reproducible versions/evidence; derived read-only responses without M2+ prerequisites',
+           evidence=['raw/check-deliver-02.txt','protected-bytes.json','audit-01-checks.json','audit-dispositions.json','final-verification.json'])],
+    checks=dict(native_deliver='PASS:204; pytest51.82s; full build/hygiene/types/6 boundaries/report',
+        native_exit_code=0,basetemp='_scratch/g5-m1-capabilities-20260910/pytest-deliver-02',
+        independent='240/240 PASS in independent-04; includes auxiliary count/shape/footprint checks',
+        independent_attempts=4,retries_after_initial=3,
+        evidence_audit='14/17 initial; 3 audit assumptions resolved with retained evidence in audit-dispositions.json',
+        author_manifest_files=21,protected_equal_files=37,wheel_python_files=30,
+        retained_wheel_runtime='zipimport retained wheel with locked venv dependencies',
+        authoritative_final_restored='schema7 revision11 exact retained bytes/layout'),
+    findings=[],blocked=[],
+    author_execution_issue=dict(native01='interrupted; explicit scratch basetemp omitted; exact default temp path unknown',
+        disposition='Not PASS and no full isolation claim; original raw unchanged; current G5 native has new explicit local basetemp',
+        historical_successful_native='native02/Deliver author reports explicit scratch basetemp; raw confirms PASS but does not print environment'),
+    review_execution_issues=[
+      'Native01 tests PASS but Windows backslashes in PYTEST_ADDOPTS were removed by pytest shlex; actual temp was outside ignored scratch inside own review root. Retained without deletion and moved to scratch; 2569 file manifest and raw preserved. Final native02 uses new relative POSIX basetemp, actual location verified, full PASS',
+      'Initial Git/index and uv cache sandbox refusals; approved standard escalation; no global config change',
+      'Independent01 wrong manifest-shape assumption; original FAIL/KeyError retained',
+      'Independent02 expected early invalid_work from prepare_authorization not caught; original traceback retained',
+      'Independent03 omitted separate authorize_artifact; Core permission_denied and unchanged footprint confirmed; original preserved',
+      'Audit01 narrow docs whitelist and exact LF/CRLF assumptions resolved; all initial checks/raw retained',
+      'Finalizer01 used nonexistent inspect_workspace API; original ImportError retained; corrected to public read_workspace'],
+    w15_w20=dict(W15='Accepted T2 lifecycle preserved; no reopening of historical pending',
+        W16='T3 technical contract independently PASS; owner acceptance pending',
+        W17='Both P30 without changing main Core semantics and P40 without changing Core retained; full placement/baseline/Proof C remain T4-T5',
+        W18='Full fictional pair remains T4-T5',W19='Common renderer remains T6',
+        W20='T3 exact evidence retained; full scenarios/comparison remain T4-T7'),
+    limits=['Trusted same-user Python; no hostile sandbox or code attestation',
+        'Callback file-loss/byte-corruption fault injection is not power-loss or exhaustive concurrency proof',
+        'Two OS processes test one Process reader/writer; not full two-Process M1 placement',
+        'Baseline two raw text files differ LF/CRLF between PLAN and candidate; exact originals retained, no byte identity claim',
+        'No independent wheel installation claim; runtime uses retained wheel with locked venv dependencies'],
+    source_unchanged=True,candidate_source_tests_rules_validation_result_unchanged=True,
+    direction_live_written=False,direction_archive_read=False,work8_read_or_repeated=False,
+    owner_acceptance='pending',direction_t3_closed=False,direction_m1_closed=False,
+    m0='partial',successor_created=False,t4_started=False,next='solmax'))
+# Verify every retained ZIP against its native manifest before delivery.
+for path in sorted(OUT.glob('*-manifest.json')):
+    m=json.loads(path.read_text())
+    archive=OUT/(path.name.removesuffix('-manifest.json')+'.zip')
+    with zipfile.ZipFile(archive) as z:
+        assert z.testzip() is None
+        assert len(z.namelist())==len(set(z.namelist()))
+        assert {n:hashlib.sha256(z.read(n)).hexdigest() for n in z.namelist() if not n.endswith('/')}==m['files']
+        assert sorted(n for n in z.namelist() if n.endswith('/'))==m['directories']
+    assert hashlib.sha256(archive.read_bytes()).hexdigest()==m['archive_sha256']
+# The calling raw file is written after return, so it is deliberately excluded here;
+# the final manifest is refreshed by a separate short finalize-manifest command.
+save('manifest.json',{p.relative_to(OUT).as_posix():d(p.read_bytes()) for p in sorted(OUT.rglob('*'))
+    if p.is_file() and p.name!='manifest.json' and p.name!='finalize-review.txt'})
+print(json.dumps(dict(verdict='PASS',candidate=candidate,all_archive_manifests='PASS',
+    native='PASS:204',independent='PASS:240',review_only=True)))

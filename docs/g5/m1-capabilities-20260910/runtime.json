@@ -1,0 +1,15 @@
+{
+  "task": "01a089d2-1faa-78f2-a543-47a480b1744b",
+  "parent_task": "01a086ca-b1ad-7692-a503-4f4b3bcfa8f9",
+  "candidate": "73ee71a3282291592040083df64adc9c6567eeda",
+  "cwd": "C:\\my_global_workflow\\ba2e\\zaratustra",
+  "pid": 53776,
+  "python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]",
+  "core_file": "C:\\my_global_workflow\\ba2e\\zaratustra\\docs\\m1-capabilities\\evidence\\zaratustra-0.9.0-py3-none-any.whl\\zaratustra\\core\\__init__.py",
+  "wheel_sha256": "c3bbac4ade5c89a9f061f04de9ef6d673c1af1f500747f036713c4bdce2fa9ca",
+  "argv": [
+    "_scratch/g5-m1-capabilities-20260910/independent.py",
+    "_scratch/g5-m1-capabilities-20260910/independent-04"
+  ],
+  "started_ns": 1789019257373623700
+}

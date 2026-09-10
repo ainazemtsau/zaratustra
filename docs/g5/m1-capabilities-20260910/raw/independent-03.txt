@@ -1,0 +1,202 @@
+{"name": "retained-wheel-runtime", "passed": true, "evidence": "C:\\my_global_workflow\\ba2e\\zaratustra\\docs\\m1-capabilities\\evidence\\zaratustra-0.9.0-py3-none-any.whl\\zaratustra\\core\\__init__.py"}
+{"name": "author-evidence-manifest", "passed": true, "evidence": 21}
+{"name": "candidate-product-equals-source", "passed": true, "evidence": null}
+{"name": "37-protected-files-equal", "passed": true, "evidence": null}
+{"name": "wheel-exact-python-inventory", "passed": true, "evidence": 30}
+{"name": "fresh-build-wheel-same-python", "passed": true, "evidence": null}
+{"name": "baseline-wheel-equals-accepted-T2", "passed": true, "evidence": null}
+{"name": "contract.zip-contents", "passed": true, "evidence": 103}
+{"name": "baseline-trial.zip-contents", "passed": true, "evidence": 83}
+{"name": "legal-exact-restore-revision7", "passed": true, "evidence": null}
+{"name": "ready-no-writes", "passed": true, "evidence": "reads\\ready"}
+{"name": "ready-seven", "passed": true, "evidence": null}
+{"name": "ready-available_works-count", "passed": true, "evidence": null}
+{"name": "ready-blocked_works-count", "passed": true, "evidence": null}
+{"name": "ready-items_needing_attention-count", "passed": true, "evidence": null}
+{"name": "ready-open_decisions-count", "passed": true, "evidence": null}
+{"name": "ready-recent_important_results-count", "passed": true, "evidence": null}
+{"name": "context-equals-public-open-work", "passed": true, "evidence": null}
+{"name": "available-equals-authoritative-work", "passed": true, "evidence": null}
+{"name": "empty-scope-no-writes", "passed": true, "evidence": "reads\\empty-scope"}
+{"name": "empty-scope-seven", "passed": true, "evidence": null}
+{"name": "empty-scope-available_works-count", "passed": true, "evidence": null}
+{"name": "empty-scope-blocked_works-count", "passed": true, "evidence": null}
+{"name": "empty-scope-items_needing_attention-count", "passed": true, "evidence": null}
+{"name": "empty-scope-open_decisions-count", "passed": true, "evidence": null}
+{"name": "empty-scope-recent_important_results-count", "passed": true, "evidence": null}
+{"name": "empty-scope-no-hidden-identity", "passed": true, "evidence": null}
+{"name": "none-no-writes", "passed": true, "evidence": "reads\\none"}
+{"name": "none-seven", "passed": true, "evidence": null}
+{"name": "none-denied", "passed": true, "evidence": {"answers": {"available_works": {"code": "permission_denied", "state": "denied"}, "blocked_works": {"code": "permission_denied", "state": "denied"}, "context_requirements": {"code": "permission_denied", "state": "denied"}, "current_status": {"code": "permission_denied", "state": "denied"}, "items_needing_attention": {"code": "permission_denied", "state": "denied"}, "open_decisions": {"code": "permission_denied", "state": "denied"}, "recent_important_results": {"code": "permission_denied", "state": "denied"}}, "version": 1}}
+{"name": "changed-query-no-writes", "passed": true, "evidence": "reads\\changed-query"}
+{"name": "changed-query-seven", "passed": true, "evidence": null}
+{"name": "query-digest-bound", "passed": true, "evidence": {"answers": {"available_works": {"code": "permission_denied", "state": "denied"}, "blocked_works": {"code": "permission_denied", "state": "denied"}, "context_requirements": {"code": "permission_denied", "state": "denied"}, "current_status": {"code": "permission_denied", "state": "denied"}, "items_needing_attention": {"code": "permission_denied", "state": "denied"}, "open_decisions": {"code": "permission_denied", "state": "denied"}, "recent_important_results": {"code": "permission_denied", "state": "denied"}}, "version": 1}}
+{"name": "context-auth-as-metadata-no-writes", "passed": true, "evidence": "reads\\context-auth-as-metadata"}
+{"name": "context-auth-as-metadata-seven", "passed": true, "evidence": null}
+{"name": "context-auth-not-metadata", "passed": true, "evidence": {"answers": {"available_works": {"code": "permission_denied", "state": "denied"}, "blocked_works": {"code": "permission_denied", "state": "denied"}, "context_requirements": {"code": "permission_denied", "state": "denied"}, "current_status": {"code": "permission_denied", "state": "denied"}, "items_needing_attention": {"code": "permission_denied", "state": "denied"}, "open_decisions": {"code": "permission_denied", "state": "denied"}, "recent_important_results": {"code": "permission_denied", "state": "denied"}}, "version": 1}}
+{"name": "metadata-auth-as-context-no-writes", "passed": true, "evidence": "reads\\metadata-auth-as-context"}
+{"name": "metadata-auth-as-context-seven", "passed": true, "evidence": null}
+{"name": "metadata-auth-as-context-available_works-count", "passed": true, "evidence": null}
+{"name": "metadata-auth-as-context-blocked_works-count", "passed": true, "evidence": null}
+{"name": "metadata-auth-as-context-items_needing_attention-count", "passed": true, "evidence": null}
+{"name": "metadata-auth-as-context-open_decisions-count", "passed": true, "evidence": null}
+{"name": "metadata-auth-as-context-recent_important_results-count", "passed": true, "evidence": null}
+{"name": "separate-content-authority", "passed": true, "evidence": null}
+{"name": "wrong-process-no-writes", "passed": true, "evidence": "reads\\wrong-process"}
+{"name": "wrong-process-seven", "passed": true, "evidence": null}
+{"name": "wrong-process-denied", "passed": true, "evidence": {"answers": {"available_works": {"code": "permission_denied", "state": "denied"}, "blocked_works": {"code": "permission_denied", "state": "denied"}, "context_requirements": {"code": "permission_denied", "state": "denied"}, "current_status": {"code": "permission_denied", "state": "denied"}, "items_needing_attention": {"code": "permission_denied", "state": "denied"}, "open_decisions": {"code": "permission_denied", "state": "denied"}, "recent_important_results": {"code": "permission_denied", "state": "denied"}}, "version": 1}}
+{"name": "wrong-process-no-dispatch", "passed": true, "evidence": null}
+{"name": "wrong-workspace-early-authorization-refusal", "passed": true, "evidence": "invalid_work: Request does not name this workspace and Work"}
+{"name": "wrong-workspace-no-writes", "passed": true, "evidence": "reads\\wrong-workspace"}
+{"name": "wrong-workspace-seven", "passed": true, "evidence": null}
+{"name": "wrong-workspace-denied", "passed": true, "evidence": {"answers": {"available_works": {"code": "permission_denied", "state": "denied"}, "blocked_works": {"code": "permission_denied", "state": "denied"}, "context_requirements": {"code": "permission_denied", "state": "denied"}, "current_status": {"code": "permission_denied", "state": "denied"}, "items_needing_attention": {"code": "permission_denied", "state": "denied"}, "open_decisions": {"code": "permission_denied", "state": "denied"}, "recent_important_results": {"code": "permission_denied", "state": "denied"}}, "version": 1}}
+{"name": "wrong-workspace-no-dispatch", "passed": true, "evidence": null}
+{"name": "unknown-member-no-writes", "passed": true, "evidence": "reads\\unknown-member"}
+{"name": "unknown-member-seven", "passed": true, "evidence": null}
+{"name": "unknown-member-denied", "passed": true, "evidence": {"answers": {"available_works": {"code": "permission_denied", "state": "denied"}, "blocked_works": {"code": "permission_denied", "state": "denied"}, "context_requirements": {"code": "permission_denied", "state": "denied"}, "current_status": {"code": "permission_denied", "state": "denied"}, "items_needing_attention": {"code": "permission_denied", "state": "denied"}, "open_decisions": {"code": "permission_denied", "state": "denied"}, "recent_important_results": {"code": "permission_denied", "state": "denied"}}, "version": 1}}
+{"name": "unknown-member-no-dispatch", "passed": true, "evidence": null}
+{"name": "missing-no-writes", "passed": true, "evidence": "reads\\missing"}
+{"name": "missing-seven", "passed": true, "evidence": null}
+{"name": "missing", "passed": true, "evidence": {"answers": {"available_works": {"code": "missing_pack", "state": "unavailable"}, "blocked_works": {"code": "missing_pack", "state": "unavailable"}, "context_requirements": {"code": "missing_pack", "state": "unavailable"}, "current_status": {"code": "missing_pack", "state": "unavailable"}, "items_needing_attention": {"code": "missing_pack", "state": "unavailable"}, "open_decisions": {"code": "missing_pack", "state": "unavailable"}, "recent_important_results": {"code": "missing_pack", "state": "unavailable"}}, "version": 1}}
+{"name": "missing-reader-no-writes", "passed": true, "evidence": "reads\\missing-reader"}
+{"name": "missing-reader-seven", "passed": true, "evidence": null}
+{"name": "missing-reader", "passed": true, "evidence": {"answers": {"available_works": {"code": "missing_read_adapter", "state": "unavailable"}, "blocked_works": {"code": "missing_read_adapter", "state": "unavailable"}, "context_requirements": {"code": "missing_read_adapter", "state": "unavailable"}, "current_status": {"code": "missing_read_adapter", "state": "unavailable"}, "items_needing_attention": {"code": "missing_read_adapter", "state": "unavailable"}, "open_decisions": {"code": "missing_read_adapter", "state": "unavailable"}, "recent_important_results": {"code": "missing_read_adapter", "state": "unavailable"}}, "version": 1}}
+{"name": "other-version-no-writes", "passed": true, "evidence": "reads\\other-version"}
+{"name": "other-version-seven", "passed": true, "evidence": null}
+{"name": "other-version", "passed": true, "evidence": {"answers": {"available_works": {"code": "missing_pack", "state": "unavailable"}, "blocked_works": {"code": "missing_pack", "state": "unavailable"}, "context_requirements": {"code": "missing_pack", "state": "unavailable"}, "current_status": {"code": "missing_pack", "state": "unavailable"}, "items_needing_attention": {"code": "missing_pack", "state": "unavailable"}, "open_decisions": {"code": "missing_pack", "state": "unavailable"}, "recent_important_results": {"code": "missing_pack", "state": "unavailable"}}, "version": 1}}
+{"name": "incompatible-no-writes", "passed": true, "evidence": "reads\\incompatible"}
+{"name": "incompatible-seven", "passed": true, "evidence": null}
+{"name": "incompatible", "passed": true, "evidence": {"answers": {"available_works": {"code": "incompatible_pack", "state": "unavailable"}, "blocked_works": {"code": "incompatible_pack", "state": "unavailable"}, "context_requirements": {"code": "incompatible_pack", "state": "unavailable"}, "current_status": {"code": "incompatible_pack", "state": "unavailable"}, "items_needing_attention": {"code": "incompatible_pack", "state": "unavailable"}, "open_decisions": {"code": "incompatible_pack", "state": "unavailable"}, "recent_important_results": {"code": "incompatible_pack", "state": "unavailable"}}, "version": 1}}
+{"name": "unsupported-no-writes", "passed": true, "evidence": "reads\\unsupported"}
+{"name": "unsupported-seven", "passed": true, "evidence": null}
+{"name": "unsupported-not-empty", "passed": true, "evidence": null}
+{"name": "reader-exception-no-writes", "passed": true, "evidence": "reads\\reader-exception"}
+{"name": "reader-exception-seven", "passed": true, "evidence": null}
+{"name": "reader-exception-sanitized", "passed": true, "evidence": {"answers": {"available_works": {"code": "read_adapter_failed", "state": "unavailable"}, "blocked_works": {"code": "read_adapter_failed", "state": "unavailable"}, "context_requirements": {"code": "read_adapter_failed", "state": "unavailable"}, "current_status": {"code": "read_adapter_failed", "state": "unavailable"}, "items_needing_attention": {"code": "read_adapter_failed", "state": "unavailable"}, "open_decisions": {"code": "read_adapter_failed", "state": "unavailable"}, "recent_important_results": {"code": "read_adapter_failed", "state": "unavailable"}}, "version": 1}}
+{"name": "foreign-notice-no-writes", "passed": true, "evidence": "reads\\foreign-notice"}
+{"name": "foreign-notice-seven", "passed": true, "evidence": null}
+{"name": "foreign-notice", "passed": true, "evidence": {"answers": {"available_works": {"code": "invalid_read_response", "state": "unavailable"}, "blocked_works": {"code": "invalid_read_response", "state": "unavailable"}, "context_requirements": {"code": "invalid_read_response", "state": "unavailable"}, "current_status": {"code": "invalid_read_response", "state": "unavailable"}, "items_needing_attention": {"code": "invalid_read_response", "state": "unavailable"}, "open_decisions": {"code": "invalid_read_response", "state": "unavailable"}, "recent_important_results": {"code": "invalid_read_response", "state": "unavailable"}}, "version": 1}}
+{"name": "foreign-result-no-writes", "passed": true, "evidence": "reads\\foreign-result"}
+{"name": "foreign-result-seven", "passed": true, "evidence": null}
+{"name": "foreign-result", "passed": true, "evidence": {"answers": {"available_works": {"code": "invalid_read_response", "state": "unavailable"}, "blocked_works": {"code": "invalid_read_response", "state": "unavailable"}, "context_requirements": {"code": "invalid_read_response", "state": "unavailable"}, "current_status": {"code": "invalid_read_response", "state": "unavailable"}, "items_needing_attention": {"code": "invalid_read_response", "state": "unavailable"}, "open_decisions": {"code": "invalid_read_response", "state": "unavailable"}, "recent_important_results": {"code": "invalid_read_response", "state": "unavailable"}}, "version": 1}}
+{"name": "missing-partition-no-writes", "passed": true, "evidence": "reads\\missing-partition"}
+{"name": "missing-partition-seven", "passed": true, "evidence": null}
+{"name": "missing-partition", "passed": true, "evidence": {"answers": {"available_works": {"code": "invalid_read_response", "state": "unavailable"}, "blocked_works": {"code": "invalid_read_response", "state": "unavailable"}, "context_requirements": {"code": "invalid_read_response", "state": "unavailable"}, "current_status": {"code": "invalid_read_response", "state": "unavailable"}, "items_needing_attention": {"code": "invalid_read_response", "state": "unavailable"}, "open_decisions": {"code": "invalid_read_response", "state": "unavailable"}, "recent_important_results": {"code": "invalid_read_response", "state": "unavailable"}}, "version": 1}}
+{"name": "duplicate-available-no-writes", "passed": true, "evidence": "reads\\duplicate-available"}
+{"name": "duplicate-available-seven", "passed": true, "evidence": null}
+{"name": "duplicate-available", "passed": true, "evidence": {"answers": {"available_works": {"code": "invalid_read_response", "state": "unavailable"}, "blocked_works": {"code": "invalid_read_response", "state": "unavailable"}, "context_requirements": {"code": "invalid_read_response", "state": "unavailable"}, "current_status": {"code": "invalid_read_response", "state": "unavailable"}, "items_needing_attention": {"code": "invalid_read_response", "state": "unavailable"}, "open_decisions": {"code": "invalid_read_response", "state": "unavailable"}, "recent_important_results": {"code": "invalid_read_response", "state": "unavailable"}}, "version": 1}}
+{"name": "overlap-no-writes", "passed": true, "evidence": "reads\\overlap"}
+{"name": "overlap-seven", "passed": true, "evidence": null}
+{"name": "overlap", "passed": true, "evidence": {"answers": {"available_works": {"code": "invalid_read_response", "state": "unavailable"}, "blocked_works": {"code": "invalid_read_response", "state": "unavailable"}, "context_requirements": {"code": "invalid_read_response", "state": "unavailable"}, "current_status": {"code": "invalid_read_response", "state": "unavailable"}, "items_needing_attention": {"code": "invalid_read_response", "state": "unavailable"}, "open_decisions": {"code": "invalid_read_response", "state": "unavailable"}, "recent_important_results": {"code": "invalid_read_response", "state": "unavailable"}}, "version": 1}}
+{"name": "duplicate-notice-no-writes", "passed": true, "evidence": "reads\\duplicate-notice"}
+{"name": "duplicate-notice-seven", "passed": true, "evidence": null}
+{"name": "duplicate-notice", "passed": true, "evidence": {"answers": {"available_works": {"code": "invalid_read_response", "state": "unavailable"}, "blocked_works": {"code": "invalid_read_response", "state": "unavailable"}, "context_requirements": {"code": "invalid_read_response", "state": "unavailable"}, "current_status": {"code": "invalid_read_response", "state": "unavailable"}, "items_needing_attention": {"code": "invalid_read_response", "state": "unavailable"}, "open_decisions": {"code": "invalid_read_response", "state": "unavailable"}, "recent_important_results": {"code": "invalid_read_response", "state": "unavailable"}}, "version": 1}}
+{"name": "budget-one-no-writes", "passed": true, "evidence": "reads\\budget-one"}
+{"name": "budget-one-seven", "passed": true, "evidence": null}
+{"name": "no-partial-budget", "passed": true, "evidence": {"answers": {"available_works": {"code": "budget_exceeded", "state": "unavailable"}, "blocked_works": {"code": "budget_exceeded", "state": "unavailable"}, "context_requirements": {"code": "budget_exceeded", "state": "unavailable"}, "current_status": {"code": "budget_exceeded", "state": "unavailable"}, "items_needing_attention": {"code": "budget_exceeded", "state": "unavailable"}, "open_decisions": {"code": "budget_exceeded", "state": "unavailable"}, "recent_important_results": {"code": "budget_exceeded", "state": "unavailable"}}, "version": 1}}
+{"name": "exact-budget0-no-writes", "passed": true, "evidence": "reads\\exact-budget0"}
+{"name": "exact-budget0-seven", "passed": true, "evidence": null}
+{"name": "exact-budget0-available_works-count", "passed": true, "evidence": null}
+{"name": "exact-budget0-blocked_works-count", "passed": true, "evidence": null}
+{"name": "exact-budget0-items_needing_attention-count", "passed": true, "evidence": null}
+{"name": "exact-budget0-open_decisions-count", "passed": true, "evidence": null}
+{"name": "exact-budget0-recent_important_results-count", "passed": true, "evidence": null}
+{"name": "exact-budget-boundary0", "passed": true, "evidence": null}
+{"name": "exact-budget-1-no-writes", "passed": true, "evidence": "reads\\exact-budget-1"}
+{"name": "exact-budget-1-seven", "passed": true, "evidence": null}
+{"name": "exact-budget-boundary-1", "passed": true, "evidence": null}
+{"name": "stale-no-writes", "passed": true, "evidence": "reads\\stale"}
+{"name": "stale-seven", "passed": true, "evidence": null}
+{"name": "stale-confirmation", "passed": true, "evidence": {"answers": {"available_works": {"code": "conflict", "state": "unavailable"}, "blocked_works": {"code": "conflict", "state": "unavailable"}, "context_requirements": {"code": "conflict", "state": "unavailable"}, "current_status": {"code": "conflict", "state": "unavailable"}, "items_needing_attention": {"code": "conflict", "state": "unavailable"}, "open_decisions": {"code": "conflict", "state": "unavailable"}, "recent_important_results": {"code": "conflict", "state": "unavailable"}}, "version": 1}}
+{"name": "blocked-current-no-writes", "passed": true, "evidence": "reads\\blocked-current"}
+{"name": "blocked-current-seven", "passed": true, "evidence": null}
+{"name": "blocked-current-available_works-count", "passed": true, "evidence": null}
+{"name": "blocked-current-blocked_works-count", "passed": true, "evidence": null}
+{"name": "blocked-current-items_needing_attention-count", "passed": true, "evidence": null}
+{"name": "blocked-current-open_decisions-count", "passed": true, "evidence": null}
+{"name": "blocked-current-recent_important_results-count", "passed": true, "evidence": null}
+{"name": "blocked-attention-decisions-coherent", "passed": true, "evidence": null}
+{"name": "continued-no-writes", "passed": true, "evidence": "reads\\continued"}
+{"name": "continued-seven", "passed": true, "evidence": null}
+{"name": "continued-available_works-count", "passed": true, "evidence": null}
+{"name": "continued-blocked_works-count", "passed": true, "evidence": null}
+{"name": "continued-items_needing_attention-count", "passed": true, "evidence": null}
+{"name": "continued-open_decisions-count", "passed": true, "evidence": null}
+{"name": "continued-recent_important_results-count", "passed": true, "evidence": null}
+{"name": "result-header-from-authoritative-event", "passed": true, "evidence": null}
+{"name": "terminal-excluded-from-partition", "passed": true, "evidence": null}
+{"name": "W15-next-exact-binding", "passed": true, "evidence": null}
+{"name": "next-only-metadata-no-writes", "passed": true, "evidence": "reads\\next-only-metadata"}
+{"name": "next-only-metadata-seven", "passed": true, "evidence": null}
+{"name": "next-only-metadata-available_works-count", "passed": true, "evidence": null}
+{"name": "next-only-metadata-blocked_works-count", "passed": true, "evidence": null}
+{"name": "next-only-metadata-items_needing_attention-count", "passed": true, "evidence": null}
+{"name": "next-only-metadata-open_decisions-count", "passed": true, "evidence": null}
+{"name": "next-only-metadata-recent_important_results-count", "passed": true, "evidence": null}
+{"name": "hidden-old-work-and-result-not-in-metadata", "passed": true, "evidence": null}
+{"name": "next-only-inherited-no-writes", "passed": true, "evidence": "reads\\next-only-inherited"}
+{"name": "next-only-inherited-seven", "passed": true, "evidence": null}
+{"name": "next-only-inherited-available_works-count", "passed": true, "evidence": null}
+{"name": "next-only-inherited-blocked_works-count", "passed": true, "evidence": null}
+{"name": "next-only-inherited-items_needing_attention-count", "passed": true, "evidence": null}
+{"name": "next-only-inherited-open_decisions-count", "passed": true, "evidence": null}
+{"name": "next-only-inherited-recent_important_results-count", "passed": true, "evidence": null}
+{"name": "inherited-equals-public-core", "passed": true, "evidence": null}
+{"name": "terminal-metadata-no-writes", "passed": true, "evidence": "reads\\terminal-metadata"}
+{"name": "terminal-metadata-seven", "passed": true, "evidence": null}
+{"name": "terminal-metadata-available_works-count", "passed": true, "evidence": null}
+{"name": "terminal-metadata-blocked_works-count", "passed": true, "evidence": null}
+{"name": "terminal-metadata-items_needing_attention-count", "passed": true, "evidence": null}
+{"name": "terminal-metadata-open_decisions-count", "passed": true, "evidence": null}
+{"name": "terminal-metadata-recent_important_results-count", "passed": true, "evidence": null}
+{"name": "terminal-content-denied-metadata-readable", "passed": true, "evidence": null}
+{"name": "terminal-selected-as-available-no-writes", "passed": true, "evidence": "reads\\terminal-selected-as-available"}
+{"name": "terminal-selected-as-available-seven", "passed": true, "evidence": null}
+{"name": "terminal-invalid-available", "passed": true, "evidence": {"answers": {"available_works": {"code": "invalid_read_response", "state": "unavailable"}, "blocked_works": {"code": "invalid_read_response", "state": "unavailable"}, "context_requirements": {"code": "invalid_read_response", "state": "unavailable"}, "current_status": {"code": "invalid_read_response", "state": "unavailable"}, "items_needing_attention": {"code": "invalid_read_response", "state": "unavailable"}, "open_decisions": {"code": "invalid_read_response", "state": "unavailable"}, "recent_important_results": {"code": "invalid_read_response", "state": "unavailable"}}, "version": 1}}
+{"name": "wrong-selected-context-no-writes", "passed": true, "evidence": "reads\\wrong-selected-context"}
+{"name": "wrong-selected-context-seven", "passed": true, "evidence": null}
+{"name": "wrong-selected-context-available_works-count", "passed": true, "evidence": null}
+{"name": "wrong-selected-context-blocked_works-count", "passed": true, "evidence": null}
+{"name": "wrong-selected-context-items_needing_attention-count", "passed": true, "evidence": null}
+{"name": "wrong-selected-context-open_decisions-count", "passed": true, "evidence": null}
+{"name": "wrong-selected-context-recent_important_results-count", "passed": true, "evidence": null}
+{"name": "different-selected-context-denied", "passed": true, "evidence": null}
+{"name": "explicit-inherited-ref-no-writes", "passed": true, "evidence": "reads\\explicit-inherited-ref"}
+{"name": "explicit-inherited-ref-seven", "passed": true, "evidence": null}
+{"name": "explicit-inherited-ref-available_works-count", "passed": true, "evidence": null}
+{"name": "explicit-inherited-ref-blocked_works-count", "passed": true, "evidence": null}
+{"name": "explicit-inherited-ref-items_needing_attention-count", "passed": true, "evidence": null}
+{"name": "explicit-inherited-ref-open_decisions-count", "passed": true, "evidence": null}
+{"name": "explicit-inherited-ref-recent_important_results-count", "passed": true, "evidence": null}
+{"name": "exact-inherited-reference-allowed", "passed": true, "evidence": null}
+{"name": "requirements-mismatch-no-writes", "passed": true, "evidence": "reads\\requirements-mismatch"}
+{"name": "requirements-mismatch-seven", "passed": true, "evidence": null}
+{"name": "requirements-mismatch-available_works-count", "passed": true, "evidence": null}
+{"name": "requirements-mismatch-blocked_works-count", "passed": true, "evidence": null}
+{"name": "requirements-mismatch-items_needing_attention-count", "passed": true, "evidence": null}
+{"name": "requirements-mismatch-open_decisions-count", "passed": true, "evidence": null}
+{"name": "requirements-mismatch-recent_important_results-count", "passed": true, "evidence": null}
+{"name": "required-reference-mismatch-unavailable", "passed": true, "evidence": null}
+{"name": "tampered-grant-no-writes", "passed": true, "evidence": "reads\\tampered-grant"}
+{"name": "tampered-grant-seven", "passed": true, "evidence": null}
+{"name": "tampered-grant-requirement-denied", "passed": true, "evidence": {"answers": {"available_works": {"code": "invalid_read_response", "state": "unavailable"}, "blocked_works": {"code": "invalid_read_response", "state": "unavailable"}, "context_requirements": {"code": "invalid_read_response", "state": "unavailable"}, "current_status": {"code": "invalid_read_response", "state": "unavailable"}, "items_needing_attention": {"code": "invalid_read_response", "state": "unavailable"}, "open_decisions": {"code": "invalid_read_response", "state": "unavailable"}, "recent_important_results": {"code": "invalid_read_response", "state": "unavailable"}}, "version": 1}}
+Traceback (most recent call last):
+  File "C:\my_global_workflow\ba2e\zaratustra\docs\m1-capabilities\evidence\zaratustra-0.9.0-py3-none-any.whl\zaratustra\core\mutations.py", line 444, in _mutate
+    after = evolve_work(before, request)
+  File "C:\my_global_workflow\ba2e\zaratustra\docs\m1-capabilities\evidence\zaratustra-0.9.0-py3-none-any.whl\zaratustra\core\protocol.py", line 335, in evolve_work
+    raise ValueError("Work has no current Artifact permission")
+ValueError: Work has no current Artifact permission
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\my_global_workflow\ba2e\zaratustra\_scratch\g5-m1-capabilities-20260910\independent.py", line 349, in <module>
+    execute(P,pub,payload)
+    ~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\my_global_workflow\ba2e\zaratustra\_scratch\g5-m1-capabilities-20260910\independent.py", line 198, in execute
+    r=apply_mutation(path,q,a,content=content)
+  File "C:\my_global_workflow\ba2e\zaratustra\docs\m1-capabilities\evidence\zaratustra-0.9.0-py3-none-any.whl\zaratustra\core\mutations.py", line 627, in apply_mutation
+    receipt = _mutate(connection, info, request, caller, content)
+  File "C:\my_global_workflow\ba2e\zaratustra\docs\m1-capabilities\evidence\zaratustra-0.9.0-py3-none-any.whl\zaratustra\core\mutations.py", line 448, in _mutate
+    raise MutationError("permission_denied", str(error)) from error
+zaratustra.core.mutations.MutationError: permission_denied: Work has no current Artifact permission
