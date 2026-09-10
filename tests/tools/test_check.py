@@ -6,6 +6,8 @@ import os
 import shutil
 import subprocess
 import sys
+import tarfile
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -136,6 +138,30 @@ def test_real_boundary_clean_and_reverse_import_rejected(tmp_path: Path, forbidd
     assert broken.returncode != 0
     assert "BROKEN" in broken.stdout, broken.stdout + broken.stderr
     print(clean.stdout, broken.stdout)
+
+
+def test_built_distributions_exclude_residual_fictional_directories(tmp_path: Path) -> None:
+    """Old checkout caches must not leave importable namespace directories in a wheel."""
+    shutil.copytree(ROOT / "src", tmp_path / "src", ignore=shutil.ignore_patterns("__pycache__"))
+    for name in ("pyproject.toml", "uv.lock", ".python-version", "README.md"):
+        shutil.copyfile(ROOT / name, tmp_path / name)
+    for name in ("fictional_lot", "process_probe"):
+        cache = tmp_path / "src/zaratustra" / name / "__pycache__"
+        cache.mkdir(parents=True)
+        (cache / "stale.cpython-313.pyc").write_bytes(b"retained cache marker")
+    uv = shutil.which("uv")
+    assert uv is not None, "required tool uv unavailable"
+    subprocess.run([uv, "build", "--no-sources"], cwd=tmp_path, check=True)
+    with zipfile.ZipFile(next((tmp_path / "dist").glob("*.whl"))) as wheel:
+        assert not any(
+            name.startswith(("zaratustra/fictional_lot/", "zaratustra/process_probe/"))
+            for name in wheel.namelist()
+        )
+    with tarfile.open(next((tmp_path / "dist").glob("*.tar.gz"))) as source:
+        assert not any(
+            "/src/zaratustra/fictional_lot" in name or "/src/zaratustra/process_probe" in name
+            for name in source.getnames()
+        )
 
 
 def test_python_hook_rejects_forced_scratch_commit(sandbox: Path) -> None:

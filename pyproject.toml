@@ -16,6 +16,10 @@ build-backend = "uv_build"
 [tool.uv]
 python-preference = "only-managed"
 
+[tool.uv.build-backend]
+# Exclude the directories themselves, including leftovers from older checkouts.
+source-exclude = ["src/zaratustra/fictional_lot", "src/zaratustra/process_probe"]
+
 [tool.ruff]
 target-version = "py313"
 line-length = 100
