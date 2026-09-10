@@ -12,10 +12,20 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
+from tests.fixtures.fictional_lot import reference as lot_reference
+from tests.fixtures.fictional_lot import registration as lot_registration
 from tests.fixtures.fictional_signal import registration as signal_registration
-from zaratustra.core import ArtifactReference, LocalAuthorization, ProcessQuery, read_records
+from zaratustra.core import (
+    ArtifactReference,
+    LocalAuthorization,
+    ProcessMetadata,
+    ProcessQuery,
+    read_records,
+)
 from zaratustra.process_packs import (
+    CapabilitySelection,
     OverviewRow,
+    PackRegistration,
     PackRegistry,
     overview_lines,
     read_capabilities,
@@ -23,13 +33,22 @@ from zaratustra.process_packs import (
 )
 
 from .probe_m1 import query_for, save, work_at
-from .probe_process_host import footprint
-from .probe_process_host import confirm as host_confirm
+from .probe_process_host import confirm, footprint
 from .probe_second_process import installed
 from .probe_second_process import run as run_pair
 
 ROOT = Path(__file__).resolve().parents[1]
 CALL = "c-solmax-zaratustra-m1-overview-20260910-exec"
+FORGED_ROW = "3. forged pack=forged@9.9.9 process=none revision=1"
+FORGED_STATES = "   available_works=ok(99)  one shared transaction"
+NOISY = "Ready" + chr(10) + FORGED_ROW + chr(10) + FORGED_STATES + chr(27) + "[31m"
+
+
+class NoisyReader:
+    """Development control: free pack text must never forge rows, counts or claims."""
+
+    def describe(self, metadata: ProcessMetadata) -> CapabilitySelection:
+        return CapabilitySelection(current_status=NOISY)
 
 
 def row_query(
@@ -49,7 +68,7 @@ def row_query(
 
 def metadata_row(path: Path, anchor: UUID, visible: tuple[UUID, ...]) -> OverviewRow:
     query = row_query(path, anchor, visible)
-    return OverviewRow(path, query, host_confirm(path, query, call=CALL))
+    return OverviewRow(path, query, confirm(path, query, call=CALL))
 
 
 def selected_row(
@@ -57,13 +76,13 @@ def selected_row(
 ) -> OverviewRow:
     """Read the requirements first, then confirm exactly those bytes on their own."""
     query = row_query(path, anchor, visible, anchor)
-    caller = host_confirm(path, query, call=CALL)
+    caller = confirm(path, query, call=CALL)
     answer = json.loads(read_capabilities(path, query, caller, registry).output)
     references = answer["answers"]["context_requirements"]["value"]["references"]
     context = query_for(path, anchor).model_copy(
         update=dict(references=tuple(ArtifactReference.model_validate(row) for row in references))
     )
-    return OverviewRow(path, query, caller, context, host_confirm(path, context, call=CALL))
+    return OverviewRow(path, query, caller, context, confirm(path, context, call=CALL))
 
 
 def confirmation_of(caller: LocalAuthorization | None) -> dict[str, Any] | None:
@@ -159,10 +178,13 @@ def run(base: Path) -> dict[str, Any]:
     crossed = capture(base, "overview-foreign-caller", [foreign, signal], registry)
     older = lot.query.expected_revision - 1
     stale_query = lot.query.model_copy(update=dict(expected_revision=older))
-    stale_row = OverviewRow(lot_path, stale_query, host_confirm(lot_path, stale_query, call=CALL))
+    stale_row = OverviewRow(lot_path, stale_query, confirm(lot_path, stale_query, call=CALL))
     stale = capture(base, "overview-stale-row", [stale_row, signal], registry)
     only_signal = PackRegistry((signal_registration(),))
     partial = capture(base, "overview-missing-pack", [lot, signal], only_signal)
+    noisy = PackRegistration(lot_reference(), lot_registration().rule, NoisyReader())
+    forged_registry = PackRegistry((noisy, signal_registration()))
+    forged = capture(base, "overview-forged-status", [lot, signal], forged_registry)
 
     direct = read_capabilities(
         signal.path,
@@ -187,6 +209,11 @@ def run(base: Path) -> dict[str, Any]:
     assert context_state(overview["rows"][1]) == "ok"
     assert context_state(plain["rows"][1]) == "not_requested"
     assert context_state(overview["rows"][0]) == "not_requested"
+    rendered = (base / "overview-forged-status.txt").read_text(encoding="utf-8").splitlines()
+    assert sum(1 for line in rendered if line[:2] in ("1.", "2.")) == 2
+    assert not any(line.startswith("3.") for line in rendered)
+    assert chr(27) not in chr(10).join(rendered)
+    assert forged["rows"][0]["response"]["answers"]["current_status"]["value"] == NOISY
 
     revisions = [row["response"]["envelope"]["state_revision"] for row in overview["rows"]]
     retained = (base / "overview.json").read_bytes()
@@ -207,6 +234,8 @@ def run(base: Path) -> dict[str, Any]:
             foreign_caller_row=sorted(codes(crossed["rows"][0])),
             stale_row=sorted(codes(stale["rows"][0])),
             missing_pack_row=sorted(codes(partial["rows"][0])),
+            forged_status_rendered_rows=sum(1 for line in rendered if line[:2] in ("1.", "2.")),
+            forged_status_kept_verbatim_in_document=True,
             neighbour_row_intact=all(
                 "envelope" in document["rows"][1]["response"]
                 for document in (crossed, stale, partial)

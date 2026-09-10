@@ -126,6 +126,12 @@ def read_overview(
     return OverviewResponse(output)
 
 
+def _flat(value: Any) -> str:
+    # Read values are free pack text; one rendered element must stay one safe line.
+    plain = "".join(item if item.isprintable() else " " for item in str(value))
+    return " ".join(plain.split())
+
+
 def _clip(text: str) -> str:
     return text if len(text) <= STATUS_LIMIT else text[: STATUS_LIMIT - 3] + "..."
 
@@ -135,24 +141,28 @@ def _title(row: dict[str, Any]) -> str:
     if envelope is None:
         return "unavailable"
     binding = envelope["pack_binding"]
-    process_type = binding["process_type"]
-    pack = binding["pack_id"] + "@" + binding["pack_version"]
+    process_type = _flat(binding["process_type"])
+    pack = _flat(binding["pack_id"]) + "@" + _flat(binding["pack_version"])
     return f"{process_type} pack={pack}"
 
 
 def overview_lines(output: bytes) -> tuple[str, ...]:
-    """Render exactly these bytes; this view reads no state, registry or instructions."""
+    """Render exactly these bytes; this view reads no state, registry or instructions.
+
+    Every read value is flattened to one printable line, so pack text can never forge
+    a row, a count or an envelope claim here. The document keeps the exact bytes.
+    """
     document: dict[str, Any] = json.loads(output)
     if "rows" not in document:
-        code = document["code"]
+        code = _flat(document["code"])
         return (f"shared process overview unavailable: {code}",)
     envelope = document["envelope"]
-    count = envelope["row_count"]
+    count = _flat(envelope["row_count"])
     lines: list[str] = [
         f"shared process overview: {count} rows",
-        "derived: " + envelope["derived"],
-        "consistency: " + envelope["consistency"],
-        "across workspaces: " + envelope["cross_workspace"],
+        "derived: " + _flat(envelope["derived"]),
+        "consistency: " + _flat(envelope["consistency"]),
+        "across workspaces: " + _flat(envelope["cross_workspace"]),
     ]
     for index, row in enumerate(document["rows"], start=1):
         answers = row["answers"]
@@ -160,14 +170,14 @@ def overview_lines(output: bytes) -> tuple[str, ...]:
         for name in NAMES:
             answer = answers[name]
             amount = answer.get("count")
-            suffix = "" if amount is None else "(" + str(amount) + ")"
-            states.append(name + "=" + answer["state"] + suffix)
+            suffix = "" if amount is None else "(" + _flat(amount) + ")"
+            states.append(name + "=" + _flat(answer["state"]) + suffix)
         title = _title(row)
-        process = row["request"]["process_id"]
-        revision = row["request"]["expected_revision"]
+        process = _flat(row["request"]["process_id"])
+        revision = _flat(row["request"]["expected_revision"])
         lines.append(f"{index}. {title} process={process} revision={revision}")
         lines.append("   " + "  ".join(states))
         status = row["response"]["answers"]["current_status"]
         if status["state"] == "ok":
-            lines.append("   status: " + _clip(status["value"]))
+            lines.append("   status: " + _clip(_flat(status["value"])))
     return tuple(lines)

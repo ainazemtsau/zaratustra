@@ -21,5 +21,8 @@ context; no shared transaction, no shared revision, no cross-row inheritance.
 A refused row stays visible without value or count and hides no other row.
 The overview writes nothing, grants nothing and adds no state of its own.
 overview_lines renders those same bytes; it reads no state, registry or rules.
+It flattens every read value to one printable line, so free pack text can never
+forge a row, a count or an envelope claim in the view. The document keeps the
+exact answer bytes; the human view is normalized, not pack-controlled layout.
 No installed pack loader: registries stay trusted registrations chosen in code.
 END_OF_FILE: src/zaratustra/process_packs/AGENTS.md

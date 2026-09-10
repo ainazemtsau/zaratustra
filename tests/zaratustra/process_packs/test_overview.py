@@ -14,7 +14,16 @@ from tests.fixtures.fictional_lot import registration as lot_registration
 from tests.fixtures.fictional_signal import registration as signal_registration
 from tools.probe_first_process import LotTrial
 from tools.probe_m1 import work_at
-from tools.probe_overview import CALL, codes, context_state, refused, row_query, selected_row
+from tools.probe_overview import (
+    CALL,
+    NOISY,
+    NoisyReader,
+    codes,
+    context_state,
+    refused,
+    row_query,
+    selected_row,
+)
 from tools.probe_process_host import ProcessTrial, confirm, footprint, wire
 from tools.probe_second_process import SignalTrial, installed
 from zaratustra.core import ProcessMetadata, read_records
@@ -255,3 +264,19 @@ def test_a_refused_row_echoes_only_the_consumer_own_query(
     assert request["workspace_id"] == str(rows[0].query.workspace_id)
     assert refused(document["rows"][0])
     assert "pack_binding" not in json.dumps(document["rows"][0])
+
+
+def test_pack_text_cannot_forge_a_row_a_count_or_an_envelope_claim(
+    lot: LotTrial, signal: SignalTrial, registry: PackRegistry
+) -> None:
+    noisy = PackRegistration(lot_reference(), lot_registration().rule, NoisyReader())
+    selected = PackRegistry((noisy, signal_registration()))
+    response = read_overview([one_row(lot), one_row(signal)], selected)
+    lines = overview_lines(response.output)
+    assert all(len(line.splitlines()) <= 1 for line in lines)
+    assert sum(1 for line in lines if line[:2] in ("1.", "2.", "3.")) == 2
+    assert not any(line.startswith("3.") for line in lines)
+    assert sum(1 for line in lines if line.startswith("   status: Ready 3. forged")) == 1
+    assert chr(27) not in chr(10).join(lines)
+    status = json.loads(response.output)["rows"][0]["response"]["answers"]["current_status"]
+    assert status["value"] == NOISY
