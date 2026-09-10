@@ -28,7 +28,10 @@ Technical plan and lifecycle reproduction: docs/m1-packs/PLAN.md and tools.probe
 M1 T3 adds seven derived read capabilities through process_packs.read_capabilities,
 exact metadata ProcessQuery scope, one locked revision and separately authorized
 selected ContextQuery. Public API and reproduction: docs/m1-capabilities/PLAN.md,
-tools.probe_capabilities. Full two-Process scenarios and common renderer remain T4-T6.
+tools.probe_capabilities. T4 adds one finite fictional_lot Process using those exact
+contracts; reproduce via tools.probe_first_process and docs/m1-first-process/PLAN.md.
+Core and generic process_packs bytes are unchanged. A second full Process and common
+renderer remain T5/T6; T4 owner acceptance and binding fresh G5 remain pending.
 `src/zaratustra/core` owns workspace logic; `src/zaratustra/cli` delegates to it.
 Installed product code and user-chosen data workspace are separate.
 Read the current CALL before doing product work; a completed Work admits no successor.

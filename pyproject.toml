@@ -1,6 +1,6 @@
 [project]
 name = "zaratustra"
-version = "0.9.0"
+version = "0.10.0"
 description = "Zaratustra local workspace and transactional mutation protocol"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -75,4 +75,16 @@ forbidden_modules = ["zaratustra.process_packs"]
 name = "Packs have no trusted adapter or fictional probe dependency"
 type = "forbidden"
 source_modules = ["zaratustra.process_packs"]
+forbidden_modules = ["zaratustra.local", "zaratustra.cli", "zaratustra.process_probe"]
+
+[[tool.importlinter.contracts]]
+name = "Core and generic packs do not depend on fictional lot rules"
+type = "forbidden"
+source_modules = ["zaratustra.core", "zaratustra.process_packs"]
+forbidden_modules = ["zaratustra.fictional_lot"]
+
+[[tool.importlinter.contracts]]
+name = "Fictional lot has no trusted surface or probe dependency"
+type = "forbidden"
+source_modules = ["zaratustra.fictional_lot"]
 forbidden_modules = ["zaratustra.local", "zaratustra.cli", "zaratustra.process_probe"]

@@ -1,0 +1,19 @@
+{
+  "incomplete_inspection": {
+    "kind": "inspection", "batch": "KITE",
+    "checks": [
+      {"item": "casing", "observed": true, "recorded": true},
+      {"item": "label", "observed": true, "recorded": false}
+    ]
+  },
+  "inspection": {
+    "kind": "inspection", "batch": "KITE",
+    "checks": [
+      {"item": "casing", "observed": true, "recorded": true},
+      {"item": "label", "observed": true, "recorded": true}
+    ]
+  },
+  "disposition": {
+    "kind": "disposition", "batch": "KITE", "decision": "release"
+  }
+}
