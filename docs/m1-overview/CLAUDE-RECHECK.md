@@ -31,9 +31,11 @@ branch codex/g5-m1-overview-recheck-20260910, от source fix выше. При �
 
 ## Проверить ровно оставшееся
 
-1. Изучи diff 87db23a → 4dad08e. Ожидается ровно четыре файла: `_flat` и его
-   применение в `overview_lines`, одна строка импорта в tools/probe_overview.py
-   плюс её вызовы, новый контроль NOISY и новый тест, строки в module AGENTS.
+1. Изучи исходную дельту `git diff a457a18 4dad08e`: ровно четыре файла —
+   `_flat` и его применение в `overview_lines`, одна строка импорта в
+   tools/probe_overview.py плюс её вызовы, новый контроль NOISY и новый тест,
+   строки в module AGENTS. Диапазон 87db23a → 4dad08e дополнительно содержит
+   промежуточный docs-only commit a457a18, это ожидаемо.
    Не должно быть ослабления проверок, изменения JSON-документа, изменения
    контракта T3, правил, host и установленного src/zaratustra за пределами
    process_packs/overview.py и process_packs/AGENTS.md.
