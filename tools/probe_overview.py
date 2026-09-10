@@ -209,6 +209,10 @@ def run(base: Path) -> dict[str, Any]:
     assert context_state(overview["rows"][1]) == "ok"
     assert context_state(plain["rows"][1]) == "not_requested"
     assert context_state(overview["rows"][0]) == "not_requested"
+    stale_text = (base / "overview-stale-row.txt").read_text(encoding="utf-8").splitlines()
+    assert any("requested_revision=" + str(older) in line for line in stale_text)
+    assert any(":conflict" in line for line in stale_text)
+    assert not any("requested_revision=" in line for line in stale_text[-3:])
     rendered = (base / "overview-forged-status.txt").read_text(encoding="utf-8").splitlines()
     assert sum(1 for line in rendered if line[:2] in ("1.", "2.")) == 2
     assert not any(line.startswith("3.") for line in rendered)
@@ -235,6 +239,7 @@ def run(base: Path) -> dict[str, Any]:
             stale_row=sorted(codes(stale["rows"][0])),
             missing_pack_row=sorted(codes(partial["rows"][0])),
             forged_status_rendered_rows=sum(1 for line in rendered if line[:2] in ("1.", "2.")),
+            stale_row_shows_requested_revision_and_code=True,
             forged_status_kept_verbatim_in_document=True,
             neighbour_row_intact=all(
                 "envelope" in document["rows"][1]["response"]

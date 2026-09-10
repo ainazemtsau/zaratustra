@@ -54,14 +54,15 @@ def _request(row: OverviewRow) -> dict[str, Any]:
 
 
 def _summary(answers: dict[str, Any]) -> dict[str, Any]:
+    # Mirror state, count and refusal code; each already belongs to that same answer.
     summary: dict[str, Any] = {}
     for name in NAMES:
         answer = answers[name]
-        summary[name] = (
-            dict(state=answer["state"], count=answer["count"])
-            if "count" in answer
-            else dict(state=answer["state"])
-        )
+        projection: dict[str, Any] = dict(state=answer["state"])
+        for key in ("count", "code"):
+            if key in answer:
+                projection[key] = answer[key]
+        summary[name] = projection
     return summary
 
 
@@ -136,8 +137,7 @@ def _clip(text: str) -> str:
     return text if len(text) <= STATUS_LIMIT else text[: STATUS_LIMIT - 3] + "..."
 
 
-def _title(row: dict[str, Any]) -> str:
-    envelope = row["response"].get("envelope")
+def _title(envelope: dict[str, Any] | None) -> str:
     if envelope is None:
         return "unavailable"
     binding = envelope["pack_binding"]
@@ -151,6 +151,7 @@ def overview_lines(output: bytes) -> tuple[str, ...]:
 
     Every read value is flattened to one printable line, so pack text can never forge
     a row, a count or an envelope claim here. The document keeps the exact bytes.
+    A refused row names its code and only the revision its consumer asked for.
     """
     document: dict[str, Any] = json.loads(output)
     if "rows" not in document:
@@ -169,13 +170,20 @@ def overview_lines(output: bytes) -> tuple[str, ...]:
         states: list[str] = []
         for name in NAMES:
             answer = answers[name]
-            amount = answer.get("count")
-            suffix = "" if amount is None else "(" + _flat(amount) + ")"
-            states.append(name + "=" + _flat(answer["state"]) + suffix)
-        title = _title(row)
+            amount, reason = answer.get("count"), answer.get("code")
+            state = name + "=" + _flat(answer["state"])
+            state = state if amount is None else state + "(" + _flat(amount) + ")"
+            states.append(state if reason is None else state + ":" + _flat(reason))
+        header = row["response"].get("envelope")
+        title = _title(header)
         process = _flat(row["request"]["process_id"])
-        revision = _flat(row["request"]["expected_revision"])
-        lines.append(f"{index}. {title} process={process} revision={revision}")
+        # A refused row read no revision; only the consumer's own number exists.
+        revision = (
+            "requested_revision=" + _flat(row["request"]["expected_revision"])
+            if header is None
+            else "revision=" + _flat(header["state_revision"])
+        )
+        lines.append(f"{index}. {title} process={process} {revision}")
         lines.append("   " + "  ".join(states))
         status = row["response"]["answers"]["current_status"]
         if status["state"] == "ok":

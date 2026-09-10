@@ -104,8 +104,9 @@ def test_each_row_is_exactly_the_public_answer_and_a_state_projection(
         for name, projection in row["answers"].items():
             answer = row["response"]["answers"][name]
             expected: dict[str, Any] = dict(state=answer["state"])
-            if "count" in answer:
-                expected["count"] = answer["count"]
+            for key in ("count", "code"):
+                if key in answer:
+                    expected[key] = answer[key]
             assert projection == expected
 
 
@@ -150,6 +151,7 @@ def test_one_refused_row_hides_no_value_and_keeps_its_neighbour(
     document = read([first, second], selected)
     assert refused(document["rows"][0])
     assert codes(document["rows"][0]) == {REFUSAL_CODES[case]}
+    assert document["rows"][0]["answers"]["available_works"]["code"] == REFUSAL_CODES[case]
     assert "envelope" in document["rows"][1]["response"]
     assert document["rows"][1]["answers"]["available_works"] == dict(state="ok", count=1)
 
@@ -176,8 +178,7 @@ def test_unsupported_answers_stay_unsupported_and_never_read_as_empty(
     answers = document["rows"][0]["answers"]
     assert answers["current_status"] == dict(state="ok")
     for name in LISTS:
-        assert answers[name] == dict(state="unavailable")
-        assert document["rows"][0]["response"]["answers"][name]["code"] == "unsupported"
+        assert answers[name] == dict(state="unavailable", code="unsupported")
     assert document["rows"][1]["answers"]["available_works"] == dict(state="ok", count=1)
 
 
@@ -280,3 +281,25 @@ def test_pack_text_cannot_forge_a_row_a_count_or_an_envelope_claim(
     assert chr(27) not in chr(10).join(lines)
     status = json.loads(response.output)["rows"][0]["response"]["answers"]["current_status"]
     assert status["value"] == NOISY
+
+
+def test_a_refused_row_names_its_code_and_only_the_requested_revision(
+    lot: LotTrial, signal: SignalTrial, registry: PackRegistry
+) -> None:
+    first = one_row(lot)
+    older = first.query.expected_revision - 1
+    query = first.query.model_copy(update=dict(expected_revision=older))
+    stale = OverviewRow(first.path, query, confirm(first.path, query, call=CALL))
+    response = read_overview([stale, one_row(signal)], registry)
+    document: dict[str, Any] = json.loads(response.output)
+    answers = document["rows"][0]["answers"]
+    assert answers["blocked_works"] == dict(state="unavailable", code="conflict")
+    lines = overview_lines(response.output)
+    header = next(line for line in lines if line.startswith("1. "))
+    assert header.startswith("1. unavailable ")
+    assert "requested_revision=" + str(older) in header
+    assert "revision=" + str(first.query.expected_revision) not in header
+    assert ":conflict" in lines[lines.index(header) + 1]
+    live = next(line for line in lines if line.startswith("2. "))
+    assert "revision=" + str(read_records(signal.path).state_revision) in live
+    assert "requested_revision=" not in live
