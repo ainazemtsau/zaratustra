@@ -1,0 +1,320 @@
+{
+  "baseline": "2df9b286b3b54ac3fabd07db0e7d9b343bc17850",
+  "source": "5b145b8bdfb9239939ca118ebe70542ffbb13b68",
+  "historical": "b1e0853f9b405e2910f2085dae6fd7f6100ba009",
+  "files": {
+    ".python-version": {
+      "sha256": "3ce16e94590543a327d3e5ae412e663206e0ed1b46628ed3dd5ad29caa1ff5ac",
+      "bytes": 7
+    },
+    "AGENTS.md": {
+      "sha256": "ebfa78fe5a461d39982470ee7b9494d7fda60431f908330a080f0b6e8ca82b3a",
+      "bytes": 7258
+    },
+    "pyproject.toml": {
+      "sha256": "8da8cf000109943f485345c89c389d4cdc0a0fbeb5a4e977938138c2ce8488c2",
+      "bytes": 2931
+    },
+    "src/zaratustra/AGENTS.md": {
+      "sha256": "119939515a4f03678d075aa86bc22d1672e7250d402897e9ffcf2272c52b2b93",
+      "bytes": 300
+    },
+    "src/zaratustra/__init__.py": {
+      "sha256": "3746eb54a1ec89225dbad473e995bae88ea9a18f610995e445bdac608cb687de",
+      "bytes": 62
+    },
+    "src/zaratustra/cli/AGENTS.md": {
+      "sha256": "52cc394338d4a82e79b31c3ec7747f7e43cf9c0b7d108fd2cd2a0aa60067c0d6",
+      "bytes": 2000
+    },
+    "src/zaratustra/cli/__init__.py": {
+      "sha256": "2c9a30371204e768abf9961bc56ebef880c9cf8b0156dd4731fc9be052a43117",
+      "bytes": 12374
+    },
+    "src/zaratustra/core/AGENTS.md": {
+      "sha256": "9b3fdec0251efeba7dfa5c1033b5592da9a601bb61c6c08222a72a619def5c94",
+      "bytes": 4490
+    },
+    "src/zaratustra/core/__init__.py": {
+      "sha256": "14d7a7d97ea7865fac44cefe147b8d90d945e031c7fa4e8db46798067d9dfcef",
+      "bytes": 2676
+    },
+    "src/zaratustra/core/artifacts.py": {
+      "sha256": "46e5079ff1245d1f45a88559c0c61cf248c617d964c3c55838d135d0889f67b4",
+      "bytes": 6363
+    },
+    "src/zaratustra/core/context.py": {
+      "sha256": "7465ede96f060da8a81aad9c6991fda7f4329221ec0b1498278782ba7a5a0ac4",
+      "bytes": 11377
+    },
+    "src/zaratustra/core/handoffs.py": {
+      "sha256": "bc17ac0a62c37f2192a60a99406ab93234ddca0b7990890474504fad7318f01f",
+      "bytes": 2648
+    },
+    "src/zaratustra/core/migration_v2.py": {
+      "sha256": "bfbb7c16ac43239e9775058d48a9716a867865fa58ddda2af318bcb7ac599a6f",
+      "bytes": 1293
+    },
+    "src/zaratustra/core/migration_v3.py": {
+      "sha256": "78e1798b59e97ca33bf0db2758fb9505fcbfeaa1fb7cf73999e227564eb4e479",
+      "bytes": 1151
+    },
+    "src/zaratustra/core/migration_v4.py": {
+      "sha256": "4832ca48d25cbc68efa94cb8d100c68f9b43b61eda203e2f01408c712b1ba1e1",
+      "bytes": 891
+    },
+    "src/zaratustra/core/migration_v5.py": {
+      "sha256": "840bd878273e8d9d40c624b12161f3e480c2e9604255e57eb895d301c819c51e",
+      "bytes": 905
+    },
+    "src/zaratustra/core/migration_v6.py": {
+      "sha256": "05c9251c53a7b651a942f957e7caccaedb7a2c3f4a5923dcb3ebd5714c6fb69c",
+      "bytes": 1013
+    },
+    "src/zaratustra/core/migration_v7.py": {
+      "sha256": "0d68fedc52de5439fbe619a8fed45bb9c4e005ce8234d6b8e91c3496d53c7130",
+      "bytes": 769
+    },
+    "src/zaratustra/core/migrations.py": {
+      "sha256": "e02eabf89c1e5692587cd945f686b45bffc54971f79339d13923c9a2c13f66b4",
+      "bytes": 1549
+    },
+    "src/zaratustra/core/mutations.py": {
+      "sha256": "1435dfa66e9b9fcdfcc02ddbe7a701012cbbaf7015e8e735f02075b95d033415",
+      "bytes": 32008
+    },
+    "src/zaratustra/core/process_read.py": {
+      "sha256": "36206fe022e8e0210bbb2fe5684fef3de49c969f7c02112b8516ed3b4ca553f5",
+      "bytes": 5699
+    },
+    "src/zaratustra/core/projections.py": {
+      "sha256": "8b77413868b84706fadeee061112320e468cdc595687a15138b0dea632051227",
+      "bytes": 3514
+    },
+    "src/zaratustra/core/protocol.py": {
+      "sha256": "4b48f0f803dbc39b31665a035e257b3bdd1b8613befb62f976a64818f7967cff",
+      "bytes": 22538
+    },
+    "src/zaratustra/core/records.py": {
+      "sha256": "998a5b1c69b70dbcdcc74c22584e3fa80e36c3b0a2c4440a3cd94b38f013a489",
+      "bytes": 11699
+    },
+    "src/zaratustra/core/results.py": {
+      "sha256": "777e63802cd8c761f734bc0e8a82e13f44ff16943ac5444606efb490060bea09",
+      "bytes": 3837
+    },
+    "src/zaratustra/core/workspace.py": {
+      "sha256": "9cee9ee9a5c26b0e4d40c114cc50acf2411127f63797a7aca12f57e245a11f67",
+      "bytes": 12351
+    },
+    "src/zaratustra/local/AGENTS.md": {
+      "sha256": "9b43979c2a5ff867e0507ee56acb94057738b4bcc345fc6006f4dc914dc687ff",
+      "bytes": 778
+    },
+    "src/zaratustra/local/__init__.py": {
+      "sha256": "89ddc2e43d350dfbebea9b116d095eeed8756a55a3e4a0b761a33aad4afe37df",
+      "bytes": 2093
+    },
+    "src/zaratustra/process_packs/AGENTS.md": {
+      "sha256": "4156d759210c67b7819d4a226dd9ad812ce553a368fdf170f0a88bf91f511c5c",
+      "bytes": 1208
+    },
+    "src/zaratustra/process_packs/__init__.py": {
+      "sha256": "c9163b7296af2f7b1c967800acd31ff04b5e837f9c6a770be340e003c52c378f",
+      "bytes": 654
+    },
+    "src/zaratustra/process_packs/capabilities.py": {
+      "sha256": "dd476f91e6ceb9425c99c507704a5bddfa4d81a0628f7b779d35e678bb85f411",
+      "bytes": 9331
+    },
+    "src/zaratustra/process_packs/capability_models.py": {
+      "sha256": "a4a39955ffebf216f806a2499d76451704ff0948388401ff9780058a056bca75",
+      "bytes": 1366
+    },
+    "src/zaratustra/process_packs/lifecycle.py": {
+      "sha256": "b0355c62ff9374e800da9918739338c8be255108ce67b1a17e2528d35d8c57b1",
+      "bytes": 3944
+    },
+    "src/zaratustra/process_packs/runner.py": {
+      "sha256": "56e86e0349eb811c4e504241551da26258132b25b6f73567219c85e887005c5c",
+      "bytes": 2668
+    },
+    "src/zaratustra/py.typed": {
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "bytes": 1
+    },
+    "tests/__init__.py": {
+      "sha256": "1f17bb6b02e92c264fed18c5cea1d84947a0212208babb43c1fd0fde3fee6293",
+      "bytes": 62
+    },
+    "tests/fixtures/AGENTS.md": {
+      "sha256": "0ed36b0f2aeaf3cf429a47329fc38a1166412f760c2f0cc15d46b7cfb72773cb",
+      "bytes": 399
+    },
+    "tests/fixtures/__init__.py": {
+      "sha256": "9a4bbcf86ea4b8aa0cc62d4078b46e74efe69bd452e415b626b3e20cf53f7d27",
+      "bytes": 81
+    },
+    "tests/fixtures/fictional_lot/AGENTS.md": {
+      "sha256": "1b8172c1323fcbb09feeba4b8a494645078f927157f15a404e74dc4708f7731f",
+      "bytes": 821
+    },
+    "tests/fixtures/fictional_lot/__init__.py": {
+      "sha256": "37827c1f529e51210078db17fe239417c42439f04f6d40ff97dc5b9687772acb",
+      "bytes": 325
+    },
+    "tests/fixtures/fictional_lot/pack.py": {
+      "sha256": "b78cd2af949157d214c468f7031e0e3c3f0fd81a74c46445df4372194970fc3f",
+      "bytes": 7017
+    },
+    "tests/fixtures/process_probe/AGENTS.md": {
+      "sha256": "785478153d695b6a2e1ede7efe0e0751dd40cd12003e8c1c57bf2d21a19bae51",
+      "bytes": 544
+    },
+    "tests/fixtures/process_probe/__init__.py": {
+      "sha256": "90831bfd55ab3f79679e968448d70311f823d0817e0a4f96eed90b9dd9efb85d",
+      "bytes": 287
+    },
+    "tests/fixtures/process_probe/batch.py": {
+      "sha256": "fc3e4e7e0109ab2d326c8d30486e58292a0ba06fbf53461bb58722abba0f05f4",
+      "bytes": 1130
+    },
+    "tests/fixtures/process_probe/cycle.py": {
+      "sha256": "11bd9eeea0fb119bfe8091ddad898bdc746fbf3caa007365ef70fbfe66512830",
+      "bytes": 1424
+    },
+    "tests/fixtures/process_probe/runner.py": {
+      "sha256": "4d831b2d4becff6d13c825afb91751118cea57ef41c50ad44816f2bfa9024bc1",
+      "bytes": 2730
+    },
+    "tests/tools/test_check.py": {
+      "sha256": "170c05b3a327c90882e71bc8915759cc96d12f071616315f767912e1795e9c92",
+      "bytes": 7858
+    },
+    "tests/tools/test_first_process.py": {
+      "sha256": "ffd02f8458d7565c884d5d45087ec16dafbf6291e5354bcb337dd8c56fb087ec",
+      "bytes": 5891
+    },
+    "tests/tools/test_process_probe.py": {
+      "sha256": "eb73caabd61a1ffdfc85d809e1f75ffb23e59ef891c1eb3d0853dca80644c8a1",
+      "bytes": 5131
+    },
+    "tests/tools/test_retain_trial.py": {
+      "sha256": "6b6fb65b9464fef8c03fda995c485ca696f9d3f0a02ab82e5b3317059a9cc5af",
+      "bytes": 1200
+    },
+    "tests/zaratustra/core/test_artifacts.py": {
+      "sha256": "052a889026ad59e081e3c6f389f7911f1e4618f919770fae5bf1fec3bccc74d3",
+      "bytes": 23046
+    },
+    "tests/zaratustra/core/test_context.py": {
+      "sha256": "c2ddd2725fb4460c49a62f71e7d0daff4a70edfc4000b3058d1048e0bb1df993",
+      "bytes": 11948
+    },
+    "tests/zaratustra/core/test_handoffs.py": {
+      "sha256": "fad715445a0f995d321877cce3449c332a109b7a6dbb155289cf3eb5ceea4cbf",
+      "bytes": 15899
+    },
+    "tests/zaratustra/core/test_mutations.py": {
+      "sha256": "da085026919dd432d072ca51a687ae0992408699cb4074b252ba3b3de902d398",
+      "bytes": 15356
+    },
+    "tests/zaratustra/core/test_pack_bindings.py": {
+      "sha256": "93e742bb37911d9cc011594aa7df593b3ea24d6a36e2cc8ca12a7f8547338707",
+      "bytes": 8788
+    },
+    "tests/zaratustra/core/test_records.py": {
+      "sha256": "c5b886199b6dcd18e7c3e5581b5fb87de7dc2e386371b68e4c3d8c8221ee7c84",
+      "bytes": 8182
+    },
+    "tests/zaratustra/core/test_results.py": {
+      "sha256": "de280c077115641892504d5e580408fc96d5ec0bdda7414cb0864323a64d0bf4",
+      "bytes": 20286
+    },
+    "tests/zaratustra/core/test_workspace.py": {
+      "sha256": "e251dd307470a26a3dad9530bbfc85fa9ab069dfd4c4b38152ec88fc863f4abd",
+      "bytes": 4196
+    },
+    "tests/zaratustra/local/test_confirmation.py": {
+      "sha256": "e59fb0890c177082a62175a7c9c8a5f14acc20d8464116bf920677b2d22e6776",
+      "bytes": 3538
+    },
+    "tests/zaratustra/local/test_handoff_delivery.py": {
+      "sha256": "30d39111685a87be58fffd8e374cb5c2b2bbd30f5b73a18ef480576e860b208c",
+      "bytes": 3321
+    },
+    "tests/zaratustra/process_packs/test_capabilities.py": {
+      "sha256": "b2bbf687e27eccce0898b5f44d510a29b21f4e11a410281901bf6bdf03a5fb57",
+      "bytes": 17175
+    },
+    "tests/zaratustra/process_packs/test_lifecycle.py": {
+      "sha256": "676fac621ebc8e5f96c6d25d42e0cbfde5880b7b40fb66a5ca4a9e52c2e822ad",
+      "bytes": 8760
+    },
+    "tools/__init__.py": {
+      "sha256": "68f53236abbf4ba2681ef2c1b364b0cda6994e5e258d748177669ad80f7a7930",
+      "bytes": 58
+    },
+    "tools/check.py": {
+      "sha256": "6f3f1c2455da07bd275e69812f7e5643efe9468e672a461815ca3a7a0acaab80",
+      "bytes": 6424
+    },
+    "tools/probe_artifacts.py": {
+      "sha256": "3ca230670ebfc282c8c9a99edfc1cbbad0c483f3d0abbe68bcadade2091eeb37",
+      "bytes": 14540
+    },
+    "tools/probe_capabilities.py": {
+      "sha256": "18a14fdf20013b96479b7378707539842c0dab769b927a15eb2a64b7b509f922",
+      "bytes": 10979
+    },
+    "tools/probe_context.py": {
+      "sha256": "707c31413fbb2ea8b8deb548afaa5020f6dde16f193e929572857557ce1daa49",
+      "bytes": 17697
+    },
+    "tools/probe_first_process.py": {
+      "sha256": "4032dd44795c92d7f968a832ad27b85fecf8169a3174765d77b09879bfdc3dae",
+      "bytes": 16326
+    },
+    "tools/probe_handoffs.py": {
+      "sha256": "2e284def2ebe3876b97d07a8a695cb388f8e4c7c28aab4463e28d3c672d27af1",
+      "bytes": 16447
+    },
+    "tools/probe_install.py": {
+      "sha256": "87cb9cfcc579dbc54ea4520c6020e5b3fb46128404ca98182984e457abfa4137",
+      "bytes": 5759
+    },
+    "tools/probe_m1.py": {
+      "sha256": "1e3cb689cb53356a6f3d81b8f0a0422b759ec357e333cff71fb395787abe306a",
+      "bytes": 14929
+    },
+    "tools/probe_mutations.py": {
+      "sha256": "4c82bfa5568e984076833bcca5b97ed0598ce9b0a36baf67e4fe655a68f5949b",
+      "bytes": 9608
+    },
+    "tools/probe_packs.py": {
+      "sha256": "c76edefe52e1f9b412b1215d1f260637dde6babe87e118908f12eeeb8dafbf7b",
+      "bytes": 14892
+    },
+    "tools/probe_records.py": {
+      "sha256": "56934dcd450a9bc5717d508af5b0c76a13bfd2549c028cd242df67d33d33bea9",
+      "bytes": 8415
+    },
+    "tools/probe_result.py": {
+      "sha256": "a359b7d9ebe1ba024f20a10a3750d957d1125e8a6a0adbe9abbcd069ae86d5de",
+      "bytes": 19991
+    },
+    "tools/retain_trial.py": {
+      "sha256": "fe82fcd618c1917c8f019a658597ebdb961cd16f406901eef654c290307f615f",
+      "bytes": 2984
+    },
+    "uv.lock": {
+      "sha256": "576c5cad3647734502faef6d858396e1df4bc456ed65ff9036995df66cec9fea",
+      "bytes": 50134
+    },
+    "validation.config": {
+      "sha256": "450f08e6af97ccd104bd84499c8fd28a213e55e8a8515b1151ce01e43e5da9db",
+      "bytes": 1717
+    }
+  },
+  "zip_sha256": "3d42c76aad371e625fd45636505add59c79d44a8b754bd88a12795c14fed6474"
+}
