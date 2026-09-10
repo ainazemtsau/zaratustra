@@ -1,0 +1,15 @@
+{
+  "source_commit": "b1e0853f9b405e2910f2085dae6fd7f6100ba009",
+  "wheel": "zaratustra-0.10.0-py3-none-any.whl",
+  "wheel_sha256": "170065b2ff6d9a6d2819c334e741dd1aeb5e11abbcb4fd7044d837e56370b39c",
+  "all_installed_package_files_match_git": true,
+  "installed_package_files": 40,
+  "runtime_modules": {
+    "zaratustra.core": "C:\\projects\\zaratustra\\_scratch\\m1-first-process-20260910\\docs\\m1-first-process\\evidence\\zaratustra-0.10.0-py3-none-any.whl\\zaratustra\\core\\__init__.py",
+    "zaratustra.fictional_lot": "C:\\projects\\zaratustra\\_scratch\\m1-first-process-20260910\\docs\\m1-first-process\\evidence\\zaratustra-0.10.0-py3-none-any.whl\\zaratustra\\fictional_lot\\__init__.py",
+    "zaratustra.process_packs": "C:\\projects\\zaratustra\\_scratch\\m1-first-process-20260910\\docs\\m1-first-process\\evidence\\zaratustra-0.10.0-py3-none-any.whl\\zaratustra\\process_packs\\__init__.py"
+  },
+  "full_first_process_outcome": "release",
+  "final_revision": 19,
+  "scope": "zipimport of retained wheel with locked venv dependencies; not independent user installation"
+}

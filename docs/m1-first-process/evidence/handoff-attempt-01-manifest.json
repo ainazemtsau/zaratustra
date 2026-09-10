@@ -1,0 +1,16 @@
+{
+  "trial": "C:\\projects\\zaratustra\\_scratch\\m1-first-process-20260910\\_scratch\\t4-handoff-attempt-01",
+  "archive": "C:\\projects\\zaratustra\\_scratch\\m1-first-process-20260910\\docs\\m1-first-process\\evidence\\handoff-attempt-01.zip",
+  "archive_sha256": "3ac649b4211bf208e594a2b822edcd015e48d5f81b73ce164fdf5648ed6dfbe0",
+  "files": {
+    "probe_first_process.py.txt": "2b07894ff55378367a9e209ed08cbed12746463288acbe43734800ab5d2ab3b0",
+    "test_contract.py.txt": "8f9f19434f2651d6465b98e4284e4939279e845a837f2f55b7f19587b91d3f78"
+  },
+  "directories": [],
+  "excluded_directories": [
+    "venv",
+    "__pycache__"
+  ],
+  "method": "ZIP CRC, every decompressed file SHA-256 and complete directory inventory",
+  "restore": "Extract into a NEW folder; install retained wheel and locked requirements separately. Do not use fault-workspace as a base. Historical absolute paths remain provenance."
+}

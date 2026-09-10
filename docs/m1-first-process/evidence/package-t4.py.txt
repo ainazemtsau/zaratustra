@@ -1,0 +1,47 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from tools.retain_trial import retain_trial
+OUT=ROOT/'docs/m1-first-process/evidence'
+def git(*args):
+    return subprocess.check_output(['git', *args], cwd=ROOT)
+def save(path, value):
+    path.write_text(json.dumps(value,indent=2)+'\n',encoding='utf-8')
+source=git('rev-parse','HEAD').decode().strip()
+basis='4e892153200d6fa0b1ef3add0bfeceae06b23331'
+plan=git('rev-parse','ae7a809').decode().strip()
+assert not git('diff',basis,source,'--','src/zaratustra/core','src/zaratustra/process_packs')
+paths=git('ls-tree','-r','--name-only',source,'--','src','tools','tests','pyproject.toml',
+    'uv.lock','validation.config','AGENTS.md','.python-version','docs/m1-first-process/inputs.json',
+    'docs/m1-first-process/PLAN.md').decode().splitlines()
+files={}
+with zipfile.ZipFile(OUT/'before-second-source.zip','x',zipfile.ZIP_DEFLATED) as bundle:
+    for name in paths:
+        data=git('show',f'{source}:{name}')
+        bundle.writestr(name,data)
+        files[name]=dict(sha256=hashlib.sha256(data).hexdigest(),bytes=len(data))
+save(OUT/'before-second-source-manifest.json',dict(commit=source,files=files))
+(OUT/'source.diff').write_bytes(git('diff',basis,source,'--','src','tools','tests','AGENTS.md','pyproject.toml','uv.lock','docs/m1-first-process/inputs.json'))
+save(OUT/'scenario-manifest.json',retain_trial(ROOT/'_scratch/t4-scenario-01',OUT/'scenario.zip'))
+save(OUT/'failed-focused-01-manifest.json',retain_trial(ROOT/'_scratch/t4-focused-01',OUT/'failed-focused-01.zip'))
+save(OUT/'handoff-attempt-01-manifest.json',retain_trial(ROOT/'_scratch/t4-handoff-attempt-01',OUT/'handoff-attempt-01.zip'))
+for path in (ROOT/'_scratch/t4-environment').glob('*.txt'):
+    if not (OUT/path.name).exists():
+        shutil.copyfile(path,OUT/path.name)
+shutil.copyfile(Path(__file__),OUT/'package-t4.py.txt')
+summary=json.loads((ROOT/'_scratch/t4-scenario-01/summary.json').read_bytes())
+save(OUT/'summary.json',summary)
+save(OUT/'receipt.json',dict(call='c-solmax-zaratustra-m1-first-process-20260910-exec',
+    basis=basis,plan_commit=plan,source_commit=source,before_second_baseline=source,
+    package_version='0.10.0',schema=7,core_diff='empty',generic_pack_diff='empty',
+    scenario='scenario.zip',scenario_source_diff=json.loads((ROOT/'_scratch/t4-scenario-01/runtime.json').read_bytes())['source_diff'],
+    native='pending',owner_acceptance='pending',binding_fresh_G5='pending',
+    direction_T4_closed=False,second_Process_implemented=False,next='solmax'))
+print(json.dumps(dict(source=source,plan=plan,core_unchanged=True,files=len(files))))

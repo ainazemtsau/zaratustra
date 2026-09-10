@@ -1,0 +1,52 @@
+{
+  "call": "c-solmax-zaratustra-m1-first-process-20260910-exec",
+  "basis": "4e892153200d6fa0b1ef3add0bfeceae06b23331",
+  "plan_commit": "ae7a809a4055f31b5da1a9920b508f3e6f13d474",
+  "source_commit": "b1e0853f9b405e2910f2085dae6fd7f6100ba009",
+  "before_second_baseline": "b1e0853f9b405e2910f2085dae6fd7f6100ba009",
+  "package_version": "0.10.0",
+  "schema": 7,
+  "core_diff": "empty",
+  "generic_pack_diff": "empty",
+  "scenario": "scenario.zip",
+  "scenario_source_diff": "",
+  "native": {
+    "command": "uv run --locked python -m tools.check --deliver",
+    "exit_code": 0,
+    "tests": 217,
+    "pytest_seconds": 67.79,
+    "import_contracts": 8,
+    "raw": "native-deliver-01.txt",
+    "actual_basetemp": "C:\\projects\\zaratustra\\_scratch\\m1-first-process-20260910\\_scratch\\t4-native-deliver-01",
+    "isolation_verified": true
+  },
+  "owner_acceptance": "pending",
+  "binding_fresh_G5": "pending",
+  "direction_T4_closed": false,
+  "second_Process_implemented": false,
+  "next": "solmax",
+  "retained_wheel_runtime": "PASS",
+  "source_final_status": "",
+  "protected_bytes": [
+    {
+      "path": "src/zaratustra/core",
+      "tree_entries_sha256": "e741670ec726d835ce836ccf745a10a85b9f8d3d19f2395d0b6a96d35acf242e",
+      "equal": true
+    },
+    {
+      "path": "src/zaratustra/process_packs",
+      "tree_entries_sha256": "d4e96a4c7bc7d67f6d68796b8da5f34af2ff90cd7706fa71af2e8f7cdc325f97",
+      "equal": true
+    }
+  ],
+  "verified_archives": [
+    "baseline-trial",
+    "scenario",
+    "failed-focused-01",
+    "handoff-attempt-01",
+    "wheel-scenario",
+    "baseline-source",
+    "before-second-source"
+  ],
+  "close": "author REPORT; pending owner acceptance and binding fresh physical G5"
+}

@@ -1,0 +1,234 @@
+.......FF....                                                            [100%]
+================================== FAILURES ===================================
+_____ test_exact_basis_result_grants_restore_and_terminal_guard[release] ______
+
+trial = <tools.probe_first_process.LotTrial object at 0x000001B4E1E22250>
+decision = 'release'
+
+    @pytest.mark.parametrize("decision", ["release", "discard"])
+    def test_exact_basis_result_grants_restore_and_terminal_guard(
+        trial: LotTrial, decision: str
+    ) -> None:
+        identity = work_at(trial.path).id
+        inspection = trial.accept(identity, wire(inputs()["inspection"]))
+        next_id = trial.finish(identity, "inspection")
+        assert work_at(trial.path, next_id).pack_binding == reference()
+        assert work_at(trial.path, next_id).executor_requirements[1] == inspection.sha256
+        scoped = trial.capture("scope", next_id, (next_id,))
+        requirements = scoped["answers"]["context_requirements"]["value"]
+        refs = tuple(ArtifactReference.model_validate(row) for row in requirements["references"])
+        assert inspection in refs
+        assert requirements["context"]["state"] == "ok"
+        assert scoped["answers"]["recent_important_results"]["count"] == 0
+        disposition = inputs()["disposition"] | dict(decision=decision, inspection_sha256="0" * 64)
+>       trial.accept(next_id, wire(disposition), (inspection,))
+
+tests\zaratustra\fictional_lot\test_contract.py:91: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\probe_first_process.py:166: in accept
+    self.execute(handoff_request(handoff.model_dump_json().encode(), source_ref=CALL))
+tools\probe_first_process.py:104: in execute
+    receipt = apply_mutation(self.path, request, caller, content=content)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\zaratustra\core\mutations.py:627: in apply_mutation
+    receipt = _mutate(connection, info, request, caller, content)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+connection = <sqlite3.Connection object at 0x000001B4E1CD35B0>
+info = WorkspaceInfo(workspace=WindowsPath('C:/projects/zaratustra/_scratch/m1-first-process-20260910/_scratch/t4-focused-01/...-b713-47f15e57356d'), created_at=datetime.datetime(2026, 9, 10, 7, 29, 20, 435355, tzinfo=TzInfo(0)), schema_version=7)
+request = MutationRequest(version=3, operation_id=UUID('34577ed5-a0f1-4647-9f3f-b99925d03732'), workspace_id=UUID('82c48c2a-d57e..., input_sha256='495e7d694e18c0f884647b22eb0f2ca710bb87ea411a65e1e7f611e399b12168'), submission=None, pack_binding=None)
+caller = LocalAuthorization(confirmation=Confirmation(channel='local-chat', actor='T4-fictional-host', source_ref='RUN c-solmax...ct_basis_result_grants0/workspace', request_sha256='4ed02e10bea9eac5f28e532b19a2953d19bf01bd23a9543bf8b7155f40ed1db5'))
+content = None
+
+    def _mutate(
+        connection: sqlite3.Connection,
+        info: WorkspaceInfo,
+        request: MutationRequest,
+        caller: LocalAuthorization | None,
+        content: bytes | None,
+    ) -> MutationReceipt:
+        if info.schema_version < 3 or (request.version == 2 and info.schema_version < 4):
+            raise MutationError("schema", "Mutation requires explicit migration to 3/4")
+        if request.version == 3 and info.schema_version < 5:
+            raise MutationError("schema", "Handoff import requires explicit migration to 5")
+        if request.version == 4 and info.schema_version < 6:
+            raise MutationError("schema", "Result requires explicit migration to 6")
+        if request.version == 5 and info.schema_version < 7:
+            raise MutationError("schema", "Pack binding requires explicit migration to 7")
+        # 2. Current Work + authority, in the same write transaction as the effect.
+        snapshot = _read_records(connection, info.workspace_id)
+        confirmation = _caller(info.workspace, request, caller, snapshot)
+        before = _work(snapshot, request.work_id)
+        artifact = current_artifact(snapshot, request.work_id)
+        try:
+            after = evolve_work(before, request)
+            if request.operation in ARTIFACT_OPERATIONS and request.artifact_id != artifact.id:
+                raise ValueError("The scope permits only this Work's declared Artifact")
+        except ValueError as error:
+            raise MutationError("permission_denied", str(error)) from error
+        # 3. Global revision first, including refreshed duplicates.
+        if request.expected_revision != snapshot.state_revision:
+            raise MutationError("conflict", "Expected revision is not the current state revision")
+        # 4. Saved identity and intent. Do not check physical bytes on duplicate delivery.
+        enabled = info.schema_version >= 4
+        history = _history(connection, snapshot, artifacts_enabled=enabled)
+        intent = fingerprint(request)
+        for stored in history.receipts:
+            if stored.operation_id == request.operation_id:
+                if stored.fingerprint != intent:
+                    raise MutationError("collision", "Operation id already belongs to another intent")
+                return stored
+        process_before = None
+        process_after = None
+        if request.operation == "bind_pack":
+            process_before = next(
+                row
+                for row in snapshot.records
+                if isinstance(row, Process) and row.id == before.process_id
+            )
+            try:
+                process_after = evolve_process(process_before, request)
+            except ValueError as error:
+                raise MutationError("pack_bound", str(error)) from error
+        # 5. Exact scoped references and bytes, before any DB/domain effect.
+        if request.handoff is not None and request.handoff.source_revision != snapshot.state_revision:
+            raise MutationError("conflict", "Handoff source revision is not current")
+        if request.artifact_references:
+            raise MutationError("unsupported_artifacts", "Use version 2 exact version/hash references")
+        versions = read_versions(connection) if enabled else ()
+        closure: tuple[ArtifactReference, ...] = ()
+        if request.submission is not None:
+            if request.submission.source_revision != snapshot.state_revision:
+                raise MutationError("conflict", "Result source revision is not current")
+            try:
+                closure = result_basis(request, snapshot, history.events, versions)
+            except (ValueError, KeyError) as error:
+                raise MutationError("invalid_result", str(error)) from error
+            by_version = {v.id: v for v in versions}
+            for ref in closure:
+                verified_content(info.workspace, by_version[ref.version_id])
+        for reference in request.references:
+            if reference.artifact_id != artifact.id:
+>               raise MutationError("invalid_artifact", "Reference is outside this Work")
+E               zaratustra.core.mutations.MutationError: invalid_artifact: Reference is outside this Work
+
+src\zaratustra\core\mutations.py:492: MutationError
+_____ test_exact_basis_result_grants_restore_and_terminal_guard[discard] ______
+
+trial = <tools.probe_first_process.LotTrial object at 0x000001B4E1DEB650>
+decision = 'discard'
+
+    @pytest.mark.parametrize("decision", ["release", "discard"])
+    def test_exact_basis_result_grants_restore_and_terminal_guard(
+        trial: LotTrial, decision: str
+    ) -> None:
+        identity = work_at(trial.path).id
+        inspection = trial.accept(identity, wire(inputs()["inspection"]))
+        next_id = trial.finish(identity, "inspection")
+        assert work_at(trial.path, next_id).pack_binding == reference()
+        assert work_at(trial.path, next_id).executor_requirements[1] == inspection.sha256
+        scoped = trial.capture("scope", next_id, (next_id,))
+        requirements = scoped["answers"]["context_requirements"]["value"]
+        refs = tuple(ArtifactReference.model_validate(row) for row in requirements["references"])
+        assert inspection in refs
+        assert requirements["context"]["state"] == "ok"
+        assert scoped["answers"]["recent_important_results"]["count"] == 0
+        disposition = inputs()["disposition"] | dict(decision=decision, inspection_sha256="0" * 64)
+>       trial.accept(next_id, wire(disposition), (inspection,))
+
+tests\zaratustra\fictional_lot\test_contract.py:91: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools\probe_first_process.py:166: in accept
+    self.execute(handoff_request(handoff.model_dump_json().encode(), source_ref=CALL))
+tools\probe_first_process.py:104: in execute
+    receipt = apply_mutation(self.path, request, caller, content=content)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\zaratustra\core\mutations.py:627: in apply_mutation
+    receipt = _mutate(connection, info, request, caller, content)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+connection = <sqlite3.Connection object at 0x000001B4E1CD3E20>
+info = WorkspaceInfo(workspace=WindowsPath('C:/projects/zaratustra/_scratch/m1-first-process-20260910/_scratch/t4-focused-01/...-a95f-d454fe89851a'), created_at=datetime.datetime(2026, 9, 10, 7, 29, 21, 444928, tzinfo=TzInfo(0)), schema_version=7)
+request = MutationRequest(version=3, operation_id=UUID('c7ad7dc0-8dd5-4e58-817e-db886c02d88b'), workspace_id=UUID('003a786c-fcc2..., input_sha256='2081d141862f87de88a70dd58d1e2e96805b63f60f24d564a18517135d62f52c'), submission=None, pack_binding=None)
+caller = LocalAuthorization(confirmation=Confirmation(channel='local-chat', actor='T4-fictional-host', source_ref='RUN c-solmax...ct_basis_result_grants1/workspace', request_sha256='0ae8d7fc723b2c73ef2c5ed1d3f5a4bba8a7e38b2cf770f8b9fda446a6c3d5a3'))
+content = None
+
+    def _mutate(
+        connection: sqlite3.Connection,
+        info: WorkspaceInfo,
+        request: MutationRequest,
+        caller: LocalAuthorization | None,
+        content: bytes | None,
+    ) -> MutationReceipt:
+        if info.schema_version < 3 or (request.version == 2 and info.schema_version < 4):
+            raise MutationError("schema", "Mutation requires explicit migration to 3/4")
+        if request.version == 3 and info.schema_version < 5:
+            raise MutationError("schema", "Handoff import requires explicit migration to 5")
+        if request.version == 4 and info.schema_version < 6:
+            raise MutationError("schema", "Result requires explicit migration to 6")
+        if request.version == 5 and info.schema_version < 7:
+            raise MutationError("schema", "Pack binding requires explicit migration to 7")
+        # 2. Current Work + authority, in the same write transaction as the effect.
+        snapshot = _read_records(connection, info.workspace_id)
+        confirmation = _caller(info.workspace, request, caller, snapshot)
+        before = _work(snapshot, request.work_id)
+        artifact = current_artifact(snapshot, request.work_id)
+        try:
+            after = evolve_work(before, request)
+            if request.operation in ARTIFACT_OPERATIONS and request.artifact_id != artifact.id:
+                raise ValueError("The scope permits only this Work's declared Artifact")
+        except ValueError as error:
+            raise MutationError("permission_denied", str(error)) from error
+        # 3. Global revision first, including refreshed duplicates.
+        if request.expected_revision != snapshot.state_revision:
+            raise MutationError("conflict", "Expected revision is not the current state revision")
+        # 4. Saved identity and intent. Do not check physical bytes on duplicate delivery.
+        enabled = info.schema_version >= 4
+        history = _history(connection, snapshot, artifacts_enabled=enabled)
+        intent = fingerprint(request)
+        for stored in history.receipts:
+            if stored.operation_id == request.operation_id:
+                if stored.fingerprint != intent:
+                    raise MutationError("collision", "Operation id already belongs to another intent")
+                return stored
+        process_before = None
+        process_after = None
+        if request.operation == "bind_pack":
+            process_before = next(
+                row
+                for row in snapshot.records
+                if isinstance(row, Process) and row.id == before.process_id
+            )
+            try:
+                process_after = evolve_process(process_before, request)
+            except ValueError as error:
+                raise MutationError("pack_bound", str(error)) from error
+        # 5. Exact scoped references and bytes, before any DB/domain effect.
+        if request.handoff is not None and request.handoff.source_revision != snapshot.state_revision:
+            raise MutationError("conflict", "Handoff source revision is not current")
+        if request.artifact_references:
+            raise MutationError("unsupported_artifacts", "Use version 2 exact version/hash references")
+        versions = read_versions(connection) if enabled else ()
+        closure: tuple[ArtifactReference, ...] = ()
+        if request.submission is not None:
+            if request.submission.source_revision != snapshot.state_revision:
+                raise MutationError("conflict", "Result source revision is not current")
+            try:
+                closure = result_basis(request, snapshot, history.events, versions)
+            except (ValueError, KeyError) as error:
+                raise MutationError("invalid_result", str(error)) from error
+            by_version = {v.id: v for v in versions}
+            for ref in closure:
+                verified_content(info.workspace, by_version[ref.version_id])
+        for reference in request.references:
+            if reference.artifact_id != artifact.id:
+>               raise MutationError("invalid_artifact", "Reference is outside this Work")
+E               zaratustra.core.mutations.MutationError: invalid_artifact: Reference is outside this Work
+
+src\zaratustra\core\mutations.py:492: MutationError
+=========================== short test summary info ===========================
+FAILED tests/zaratustra/fictional_lot/test_contract.py::test_exact_basis_result_grants_restore_and_terminal_guard[release]
+FAILED tests/zaratustra/fictional_lot/test_contract.py::test_exact_basis_result_grants_restore_and_terminal_guard[discard]
+2 failed, 11 passed in 5.96s

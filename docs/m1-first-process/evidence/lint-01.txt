@@ -1,0 +1,12 @@
+E501 Line too long (101 > 100)
+   --> src\zaratustra\fictional_lot\pack.py:152:101
+    |
+150 |                             key=f"disposition:{work.id}",
+151 |                             work_id=work.id,
+152 |                             text="Explicit fictional release or discard with exact inspection basis",
+    |                                                                                                     ^
+153 |                         )
+154 |                     )
+    |
+
+Found 1 error.

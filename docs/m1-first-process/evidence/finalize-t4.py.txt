@@ -1,0 +1,81 @@
+"""Package native evidence and verify bytes; no product behavior is inferred by scanning."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+import zipfile
+
+ROOT=Path(__file__).resolve().parents[1]
+DOC=ROOT/'docs/m1-first-process'
+OUT=DOC/'evidence'
+sys.path.insert(0,str(ROOT))
+from tools.check import report_errors
+def save(path,value):
+    path.write_text(json.dumps(value,indent=2)+'\n',encoding='utf-8')
+def git(*args,cwd=ROOT):
+    return subprocess.check_output(['git',*args],cwd=cwd)
+def digest(path):
+    data=path.read_bytes()
+    return dict(sha256=hashlib.sha256(data).hexdigest(),bytes=len(data))
+receipt=json.loads((OUT/'receipt.json').read_bytes())
+source=receipt['source_commit']
+assert git('rev-parse','HEAD').decode().strip()==source
+assert not git('diff',source,'--','src','tools','tests','pyproject.toml','uv.lock','AGENTS.md',
+    'validation.config','docs/m1-first-process/inputs.json','docs/m1-first-process/PLAN.md')
+for name in ('native-deliver-01.txt','wheel-01.txt'):
+    shutil.copyfile(ROOT/'_scratch/t4-environment'/name,OUT/name)
+native=(OUT/'native-deliver-01.txt').read_text(encoding='utf-8')
+assert '217 passed' in native and 'Contracts: 8 kept, 0 broken.' in native
+assert 'PASS: native build, hygiene, types, boundaries, tests, report structure' in native
+temp=ROOT/'_scratch/t4-native-deliver-01'
+assert temp.is_dir() and temp.resolve().is_relative_to((ROOT/'_scratch').resolve())
+original=Path('C:/my_global_workflow/ba2e/zaratustra')
+original_status=git('status','--porcelain',cwd=original).decode()
+assert original_status=='' and git('rev-parse','HEAD',cwd=original).decode().strip()==receipt['basis']
+protected=[]
+for tree in ('src/zaratustra/core','src/zaratustra/process_packs'):
+    before=git('ls-tree','-r',receipt['basis'],'--',tree)
+    after=git('ls-tree','-r',source,'--',tree)
+    assert before==after
+    protected.append(dict(path=tree,tree_entries_sha256=hashlib.sha256(after).hexdigest(),equal=True))
+verified=[]
+for name in ('baseline-trial','scenario','failed-focused-01','handoff-attempt-01','wheel-scenario'):
+    manifest=json.loads((OUT/f'{name}-manifest.json').read_bytes())
+    archive=OUT/f'{name}.zip'
+    assert hashlib.sha256(archive.read_bytes()).hexdigest()==manifest['archive_sha256']
+    with zipfile.ZipFile(archive) as bundle:
+        assert bundle.testzip() is None
+        actual={item.filename:hashlib.sha256(bundle.read(item)).hexdigest()
+            for item in bundle.infolist() if not item.is_dir()}
+        assert actual==manifest['files']
+        assert sorted(item.filename for item in bundle.infolist() if item.is_dir())==manifest['directories']
+        assert len(bundle.namelist())==len(set(bundle.namelist()))
+    verified.append(name)
+for name in ('baseline-source','before-second-source'):
+    manifest=json.loads((OUT/f'{name}-manifest.json').read_bytes())
+    with zipfile.ZipFile(OUT/f'{name}.zip') as bundle:
+        assert set(bundle.namelist())==set(manifest['files'])
+        for path,expected in manifest['files'].items():
+            data=bundle.read(path)
+            assert dict(sha256=hashlib.sha256(data).hexdigest(),bytes=len(data))==expected
+    verified.append(name)
+receipt.update(native=dict(command='uv run --locked python -m tools.check --deliver',
+    exit_code=0,tests=217,pytest_seconds=67.79,import_contracts=8,raw='native-deliver-01.txt',
+    actual_basetemp=str(temp),isolation_verified=True),
+    retained_wheel_runtime='PASS',source_final_status=original_status,
+    protected_bytes=protected,verified_archives=verified,
+    close='author REPORT; pending owner acceptance and binding fresh physical G5')
+save(OUT/'receipt.json',receipt)
+assert not report_errors(ROOT,required=True)
+shutil.copyfile(Path(__file__),OUT/'finalize-t4.py.txt')
+save(OUT/'manifest.json',dict(source_commit=source,
+    result=digest(ROOT/'RESULT.md'),
+    files={path.relative_to(DOC).as_posix():digest(path)
+        for path in sorted(DOC.rglob('*')) if path.is_file() and path != OUT/'manifest.json'}))
+manifest=json.loads((OUT/'manifest.json').read_bytes())
+assert all(digest(DOC/name)==value for name,value in manifest['files'].items())
+assert manifest['result']==digest(ROOT/'RESULT.md')
+print(json.dumps(dict(report_errors=[],native='PASS',tests=217,archives_verified=verified,
+    protected_bytes='equal',source_checkout='clean unchanged',manifest_files=len(manifest['files']))))

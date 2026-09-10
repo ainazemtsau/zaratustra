@@ -1,0 +1,44 @@
+"""Execute retained T4 wheel bytes with locked dependencies, not editable source."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+import zipfile
+
+ROOT=Path(__file__).resolve().parents[1]
+OUT=ROOT/'docs/m1-first-process/evidence'
+source=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT).decode().strip()
+wheel=OUT/'zaratustra-0.10.0-py3-none-any.whl'
+shutil.copyfile(ROOT/'dist'/wheel.name,wheel)
+source_files=json.loads((OUT/'before-second-source-manifest.json').read_bytes())['files']
+source_package={name.removeprefix('src/') for name in source_files if name.startswith('src/zaratustra/')}
+with zipfile.ZipFile(wheel) as archive:
+    package_files={name for name in archive.namelist() if name.startswith('zaratustra/') and not name.endswith('/')}
+    assert package_files == source_package, (package_files-source_package,source_package-package_files)
+    for name in package_files:
+        expected=source_files['src/'+name]
+        value=archive.read(name)
+        assert len(value)==expected['bytes'] and hashlib.sha256(value).hexdigest()==expected['sha256'], name
+sys.path.insert(0,str(ROOT))
+sys.path.insert(0,str(wheel))
+from zaratustra.fictional_lot import LotRule
+from zaratustra import core, fictional_lot, process_packs
+for module in (core,fictional_lot,process_packs):
+    assert str(wheel) in str(module.__file__), module.__file__
+from tools.probe_first_process import run
+from tools.retain_trial import retain_trial
+summary=run(ROOT/'_scratch/t4-wheel-scenario-01',ROOT/'docs/m1-first-process/inputs.json')
+def save(path,value):
+    path.write_text(json.dumps(value,indent=2)+'\n',encoding='utf-8')
+save(OUT/'wheel-scenario-manifest.json',retain_trial(ROOT/'_scratch/t4-wheel-scenario-01',OUT/'wheel-scenario.zip'))
+save(OUT/'wheel-verification.json',dict(source_commit=source,wheel=wheel.name,
+    wheel_sha256=hashlib.sha256(wheel.read_bytes()).hexdigest(),
+    all_installed_package_files_match_git=True,installed_package_files=len(package_files),
+    runtime_modules={module.__name__:module.__file__ for module in (core,fictional_lot,process_packs)},
+    full_first_process_outcome=summary['outcome'],final_revision=summary['final_revision'],
+    scope='zipimport of retained wheel with locked venv dependencies; not independent user installation'))
+shutil.copyfile(Path(__file__),OUT/'verify-wheel-t4.py.txt')
+print(json.dumps(dict(wheel_matches_source=True,files=len(package_files),
+    retained_wheel_runtime='PASS',outcome=summary['outcome'],revision=summary['final_revision'])))
