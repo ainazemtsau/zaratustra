@@ -51,6 +51,9 @@ from .protocol import (
     ResultSubmission,
     SavedResult,
 )
+from .protocol import (
+    fingerprint as mutation_fingerprint,
+)
 from .records import (
     Artifact,
     Event,
@@ -114,6 +117,7 @@ __all__ = [
     "MutationHistory",
     "MutationReceipt",
     "MutationRequest",
+    "mutation_fingerprint",
     "ReceiptQuery",
     "apply_mutation",
     "authorize_local",

@@ -1,15 +1,15 @@
 # Zaratustra
 
-Version **0.10.1** is a technical foundation preview. It implements durable local
+Version **0.11.0** is a technical foundation preview. It implements durable local
 workspaces, authorized mutations, versioned artifacts, accepted-result handoff,
 bounded Work context, Result/next Work, external process-pack binding, seven
 process read capabilities, a shared overview, explicit entry discovery/basic read,
-and exact preview/publication/acceptance of new external text material. See the
-[current report](RESULT.md) and [incoming-material contract](docs/entry-t3/PLAN.md).
+and recoverable exact preview/publication/acceptance of new external text material.
+See the [current report](RESULT.md) and [transfer recovery plan](docs/entry-t4/PLAN.md).
 
 This version does **not** yet provide an end-user process-creation assistant,
-provider-integrated external research, durable intake replay/recovery, personal
-memory, model routing or a graphical UI.
+provider-integrated external research, personal memory, model routing or a graphical
+UI.
 The two fictional processes used to verify the pack contract are development
 fixtures under `tests/fixtures`; they are not installed product templates.
 Publication of this foundation is not a claim that it is ready for everyday use.
@@ -91,7 +91,11 @@ validates a strict external-material envelope and current Work/basis/rights, dis
 the full exact material and two planned operations for trusted confirmation, then
 uses standard Artifact publication and Handoff acceptance. Its receipt keeps input,
 publication, acceptance and Work completion distinct; this bounded feature never
-completes Work. See [the installed reproduction](docs/entry-t3/REPRODUCE.md).
+completes Work. Entry T4 adds a non-authoritative coordinator journal and authorized
+Core receipt/content recovery. Repeated or restarted delivery returns the original
+stage receipts and saved continuation without rebasing the original intent; a later
+standard Result is displayed separately as the current terminal continuation. See
+[the installed recovery reproduction](docs/entry-t4/REPRODUCE.md).
 M0 remains partial; no personal workspace is selected.
 
 Read [pack lifecycle decisions and W15–W20](docs/m1-packs/PLAN.md) for immutable

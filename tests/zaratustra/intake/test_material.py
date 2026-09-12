@@ -6,6 +6,8 @@ import hashlib
 import io
 import json
 import shutil
+import sqlite3
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
@@ -19,7 +21,9 @@ from zaratustra.core import (
     InitialRecords,
     MutationError,
     MutationRequest,
+    NextWork,
     Process,
+    ResultSubmission,
     Work,
     apply_mutation,
     authorize_local,
@@ -30,6 +34,7 @@ from zaratustra.core import (
     read_artifact,
     read_handoffs,
     read_records,
+    submit_result,
 )
 from zaratustra.intake import (
     MAX_INTAKE_BYTES,
@@ -39,6 +44,7 @@ from zaratustra.intake import (
     IntakeSelection,
     authorize_material_intake,
     execute_material_intake,
+    inspect_material_intake_progress,
     prepare_material_intake,
     preview_bytes,
 )
@@ -436,3 +442,358 @@ def test_console_confirmation_displays_complete_preview_and_requires_exact_diges
     monkeypatch.setattr("sys.stdin", io.StringIO(f"approve {value.preview_sha256}\n"))
     with pytest.raises(MutationError, match="permission_denied"):
         confirm_material_intake_on_console(value)
+
+
+def test_completed_transfer_repeats_with_original_receipts_and_one_effect(
+    tmp_path: Path,
+) -> None:
+    scenario = bootstrap(tmp_path)
+    content = envelope(scenario)
+    value = prepared(scenario, content)
+    first = execute_material_intake(value, authorize(value))
+    after = read_records(scenario.path)
+
+    recovered = prepared(scenario, content)
+    second = execute_material_intake(recovered, authorize(recovered))
+
+    assert second.publication == first.publication
+    assert second.acceptance == first.acceptance
+    assert second.continuation == first.continuation
+    assert second.current_continuation.state == "selected_work_ready"
+    assert read_records(scenario.path) == after
+    assert len(read_handoffs(scenario.path)) == 1
+    inspection = inspect_material_intake_progress(scenario.path, value.envelope.intake_id)
+    assert inspection is not None
+    assert inspection.claimed_stages == ("publication", "acceptance")
+    assert inspection.trust == "unverified_coordinator_journal"
+    assert inspection.authorization_required_for_recovery is True
+    assert "receipt" not in inspection.model_dump_json()
+    assert value.envelope.material not in inspection.model_dump_json()
+
+
+@pytest.mark.parametrize("change", ["material", "target", "basis"])
+def test_changed_intent_under_completed_intake_identity_is_refused(
+    tmp_path: Path, change: str
+) -> None:
+    scenario = bootstrap(tmp_path)
+    content = envelope(scenario)
+    value = prepared(scenario, content)
+    execute_material_intake(value, authorize(value))
+    body = json.loads(content)
+    if change == "material":
+        body["material"] = "Changed report under an old identity.\n"
+    elif change == "target":
+        body["artifact_id"] = str(uuid4())
+    else:
+        body["basis"] = []
+    changed = json.dumps(body).encode()
+    before = read_records(scenario.path)
+    with pytest.raises(IntakeError, match="intake_collision|target_mismatch"):
+        prepared(scenario, changed)
+    assert read_records(scenario.path) == before
+
+
+def test_publication_commit_survives_missing_progress_update_and_restart(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scenario = bootstrap(tmp_path)
+    content = envelope(scenario)
+    value = prepared(scenario, content)
+    original_save = __import__("zaratustra.intake", fromlist=["_save_journal"])._save_journal
+
+    def fail_after_publication(path: Path, journal: Any) -> None:
+        if journal.publication is not None:
+            raise IntakeError("injected", "publication progress reply was lost")
+        original_save(path, journal)
+
+    monkeypatch.setattr("zaratustra.intake._save_journal", fail_after_publication)
+    with pytest.raises(IncompleteIntakeError) as failure:
+        execute_material_intake(value, authorize(value))
+    assert failure.value.stage == "acceptance"
+    assert failure.value.progress.publication is not None
+    assert read_handoffs(scenario.path) == ()
+    committed = read_records(scenario.path)
+    monkeypatch.setattr("zaratustra.intake._save_journal", original_save)
+
+    recovered = prepared(scenario, content)
+    receipt = execute_material_intake(recovered, authorize(recovered))
+    assert receipt.publication == failure.value.progress.publication
+    assert receipt.acceptance.new_revision == receipt.publication.new_revision + 1
+    assert read_records(scenario.path).state_revision == committed.state_revision + 1
+    assert len(read_handoffs(scenario.path)) == 1
+
+
+def test_acceptance_commit_survives_lost_progress_and_final_response(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scenario = bootstrap(tmp_path)
+    content = envelope(scenario)
+    value = prepared(scenario, content)
+    original_save = __import__("zaratustra.intake", fromlist=["_save_journal"])._save_journal
+
+    def fail_after_acceptance(path: Path, journal: Any) -> None:
+        if journal.acceptance is not None:
+            raise IntakeError("injected", "acceptance response was lost")
+        original_save(path, journal)
+
+    monkeypatch.setattr("zaratustra.intake._save_journal", fail_after_acceptance)
+    with pytest.raises(IncompleteIntakeError) as failure:
+        execute_material_intake(value, authorize(value))
+    assert failure.value.stage == "continuation"
+    assert failure.value.progress.acceptance is not None
+    accepted_state = read_records(scenario.path)
+    monkeypatch.setattr("zaratustra.intake._save_journal", original_save)
+
+    recovered = prepared(scenario, content)
+    receipt = execute_material_intake(recovered, authorize(recovered))
+    assert receipt.publication == failure.value.progress.publication
+    assert receipt.acceptance == failure.value.progress.acceptance
+    assert read_records(scenario.path) == accepted_state
+    assert len(read_handoffs(scenario.path)) == 1
+
+
+def test_lost_final_response_after_saved_progress_replays_without_effect(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scenario = bootstrap(tmp_path)
+    content = envelope(scenario)
+    value = prepared(scenario, content)
+    original_current = __import__(
+        "zaratustra.intake", fromlist=["_current_continuation"]
+    )._current_continuation
+
+    def lose_final_response(*args: Any, **kwargs: Any) -> Any:
+        raise OSError("injected final response loss")
+
+    monkeypatch.setattr("zaratustra.intake._current_continuation", lose_final_response)
+    with pytest.raises(IncompleteIntakeError) as failure:
+        execute_material_intake(value, authorize(value))
+    assert failure.value.stage == "continuation"
+    assert failure.value.progress.acceptance is not None
+    accepted_state = read_records(scenario.path)
+    inspection = inspect_material_intake_progress(scenario.path, value.envelope.intake_id)
+    assert inspection is not None and inspection.claimed_stages == ("publication", "acceptance")
+    monkeypatch.setattr("zaratustra.intake._current_continuation", original_current)
+
+    recovered = prepared(scenario, content)
+    receipt = execute_material_intake(recovered, authorize(recovered))
+    assert receipt.acceptance == failure.value.progress.acceptance
+    assert read_records(scenario.path) == accepted_state
+    assert len(read_handoffs(scenario.path)) == 1
+
+
+def test_authoritative_receipts_recover_when_journal_is_absent(tmp_path: Path) -> None:
+    scenario = bootstrap(tmp_path)
+    content = envelope(scenario)
+    value = prepared(scenario, content)
+    first = execute_material_intake(value, authorize(value))
+    journal = scenario.path / "inbox" / "transfers" / f"{value.envelope.intake_id}.json"
+    journal.unlink()
+    assert inspect_material_intake_progress(scenario.path, value.envelope.intake_id) is None
+    before = read_records(scenario.path)
+
+    recovered = prepared(scenario, content)
+    second = execute_material_intake(recovered, authorize(recovered))
+    assert second.publication == first.publication
+    assert second.acceptance == first.acceptance
+    assert read_records(scenario.path) == before
+    assert len(read_handoffs(scenario.path)) == 1
+
+
+def test_malformed_and_inconsistent_progress_are_refused_safely(tmp_path: Path) -> None:
+    malformed = bootstrap(tmp_path / "malformed")
+    malformed_content = envelope(malformed)
+    malformed_value = prepared(malformed, malformed_content)
+    transfer_dir = malformed.path / "inbox" / "transfers"
+    transfer_dir.mkdir()
+    malformed_path = transfer_dir / f"{malformed_value.envelope.intake_id}.json"
+    malformed_path.write_text("{not-json", encoding="utf-8")
+    before = read_records(malformed.path)
+    with pytest.raises(IntakeError, match="progress_invalid"):
+        prepared(malformed, malformed_content)
+    assert read_records(malformed.path) == before
+
+    inconsistent = bootstrap(tmp_path / "inconsistent")
+    inconsistent_content = envelope(inconsistent)
+    inconsistent_value = prepared(inconsistent, inconsistent_content)
+    execute_material_intake(inconsistent_value, authorize(inconsistent_value))
+    journal_path = (
+        inconsistent.path / "inbox" / "transfers" / f"{inconsistent_value.envelope.intake_id}.json"
+    )
+    body = json.loads(journal_path.read_bytes())
+    body["publication"]["event_id"] = str(uuid4())
+    journal_path.write_text(json.dumps(body), encoding="utf-8")
+    recovered = prepared(inconsistent, inconsistent_content)
+    with pytest.raises(IntakeError, match="progress_invalid"):
+        execute_material_intake(recovered, authorize(recovered))
+
+
+def test_failure_before_first_effect_saves_no_false_stage(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scenario = bootstrap(tmp_path)
+    value = prepared(scenario)
+    before = read_records(scenario.path)
+
+    def fail_before_effect(*args: Any, **kwargs: Any) -> Any:
+        raise MutationError("injected", "no effect ran")
+
+    monkeypatch.setattr("zaratustra.intake.apply_mutation", fail_before_effect)
+    with pytest.raises(IncompleteIntakeError) as failure:
+        execute_material_intake(value, authorize(value))
+    assert failure.value.stage == "publication"
+    assert failure.value.progress.publication is None
+    assert read_records(scenario.path) == before
+    inspection = inspect_material_intake_progress(scenario.path, value.envelope.intake_id)
+    assert inspection is not None and inspection.claimed_stages == ()
+
+
+def test_unregistered_publication_file_is_reused_but_not_claimed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scenario = bootstrap(tmp_path)
+    content = envelope(scenario)
+    value = prepared(scenario, content)
+    connect = sqlite3.connect
+
+    def failing_connect(*args: Any, **kwargs: Any) -> sqlite3.Connection:
+        connection: sqlite3.Connection = connect(*args, **kwargs)
+
+        def block(action: int, target: str | None, *_: object) -> int:
+            if (action, target) == (sqlite3.SQLITE_INSERT, "artifact_versions"):
+                return sqlite3.SQLITE_DENY
+            return sqlite3.SQLITE_OK
+
+        connection.set_authorizer(block)
+        return connection
+
+    before = read_records(scenario.path)
+    with monkeypatch.context() as patch:
+        patch.setattr(sqlite3, "connect", failing_connect)
+        with pytest.raises(IncompleteIntakeError) as failure:
+            execute_material_intake(value, authorize(value))
+    assert failure.value.unregistered_bytes_possible is True
+    assert failure.value.progress.publication is None
+    assert read_records(scenario.path) == before
+
+    receipt = execute_material_intake(prepared(scenario, content), authorize(value))
+    assert receipt.publication.previous_revision == before.state_revision
+    assert len(read_handoffs(scenario.path)) == 1
+
+
+def test_unrelated_change_after_publication_is_not_adopted_as_acceptance_basis(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scenario = bootstrap(tmp_path)
+    content = envelope(scenario)
+    value = prepared(scenario, content)
+    original_apply = apply_mutation
+    calls = 0
+
+    def stop_acceptance(*args: Any, **kwargs: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise MutationError("injected", "acceptance paused")
+        return original_apply(*args, **kwargs)
+
+    monkeypatch.setattr("zaratustra.intake.apply_mutation", stop_acceptance)
+    with pytest.raises(IncompleteIntakeError):
+        execute_material_intake(value, authorize(value))
+    monkeypatch.setattr("zaratustra.intake.apply_mutation", original_apply)
+    foreign = request(
+        scenario.path,
+        scenario.selection.work_id,
+        "set_work_requirements",
+        requirements=("Unrelated current change",),
+    )
+    apply_mutation(scenario.path, foreign, confirm(scenario.path, foreign))
+    before = read_records(scenario.path)
+
+    resumed = prepared(scenario, content)
+    with pytest.raises(IntakeError, match="stale_basis"):
+        execute_material_intake(resumed, authorize(resumed))
+    assert read_records(scenario.path) == before
+    assert read_handoffs(scenario.path) == ()
+
+
+def test_completed_work_reports_saved_result_without_resurrection(tmp_path: Path) -> None:
+    scenario = bootstrap(tmp_path)
+    content = envelope(scenario)
+    value = prepared(scenario, content)
+    transfer = execute_material_intake(value, authorize(value))
+    accepted = read_handoffs(scenario.path)[0]
+    state = read_records(scenario.path)
+    result = MutationRequest(
+        version=4,
+        operation_id=uuid4(),
+        workspace_id=state.workspace_id,
+        work_id=scenario.selection.work_id,
+        expected_revision=state.state_revision,
+        operation="submit_result",
+        provenance="Generic standard completion after material transfer",
+        references=(accepted.handoff.result,),
+        submission=ResultSubmission(
+            source_revision=state.state_revision,
+            result=accepted.handoff.result,
+            acceptance_ids=(accepted.handoff.handoff_id,),
+            next_work=NextWork(
+                work_id=uuid4(),
+                artifact_id=uuid4(),
+                goal="Review the saved generic continuation",
+                expected_result="One bounded generic follow-up",
+                acceptance=("The saved continuation remains explicit",),
+                boundaries=("No external action",),
+                budget="One local follow-up",
+                executor_requirements=(),
+                artifact_title="Generic follow-up",
+                authority_scope="work_metadata",
+            ),
+        ),
+    )
+    submit_result(scenario.path, result, confirm(scenario.path, result))
+    terminal = read_records(scenario.path)
+
+    recovered = prepared(scenario, content)
+    receipt = execute_material_intake(recovered, authorize(recovered))
+    assert receipt.publication == transfer.publication
+    assert receipt.acceptance == transfer.acceptance
+    assert receipt.continuation.state == "selected_work_ready"
+    assert receipt.continuation.at_revision == transfer.acceptance.new_revision
+    assert receipt.current_continuation.state == "saved_result"
+    assert receipt.current_continuation.result_operation_id == result.operation_id
+    assert result.submission is not None
+    assert receipt.current_continuation.next_work_id == result.submission.next_work.work_id
+    assert read_records(scenario.path) == terminal
+
+
+def test_receipt_recovery_requires_current_metadata_rights(tmp_path: Path) -> None:
+    scenario = bootstrap(tmp_path)
+    content = envelope(scenario)
+    value = prepared(scenario, content)
+    execute_material_intake(value, authorize(value))
+    revoke = request(scenario.path, scenario.selection.work_id, "revoke_work")
+    apply_mutation(scenario.path, revoke, confirm(scenario.path, revoke))
+    inspection = inspect_material_intake_progress(scenario.path, value.envelope.intake_id)
+    assert inspection is not None and inspection.claimed_stages == ("publication", "acceptance")
+
+    recovered = prepared(scenario, content)
+    with pytest.raises(MutationError, match="permission_denied"):
+        execute_material_intake(recovered, authorize(recovered))
+
+
+def test_cooperating_simultaneous_retry_serializes_to_one_transfer(tmp_path: Path) -> None:
+    scenario = bootstrap(tmp_path)
+    content = envelope(scenario)
+    first = prepared(scenario, content)
+    second = prepared(scenario, content)
+    approvals = (authorize(first), authorize(second))
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futures = (
+            pool.submit(execute_material_intake, first, approvals[0]),
+            pool.submit(execute_material_intake, second, approvals[1]),
+        )
+        receipts = tuple(future.result(timeout=20) for future in futures)
+    assert receipts[0].publication == receipts[1].publication
+    assert receipts[0].acceptance == receipts[1].acceptance
+    assert len(read_handoffs(scenario.path)) == 1

@@ -1,99 +1,83 @@
-# Exact incoming material preview and acceptance
+# Recoverable exact material transfer
 
 ## outcome
 
-Scope achieved for the bounded new-material intake increment.
+Scope achieved for the bounded entry-T4 recovery increment.
 
-Follow-up correction: external-material envelope `version` is now exactly the JSON
-integer `1`, without Pydantic coercion. JSON `true`, `1.0`, and `"1"` are refused
-at intake parsing; no Core semantics, authority behavior, or feature scope changed.
+The existing intake seam now saves one exact coordinator plan before its first Core
+effect and its returned stage receipts after publication and acceptance. A stable
+per-intake advisory lock serializes cooperating retries. Every recovery obtains a new
+trusted confirmation, uses current authorized Core receipt reads, compares the exact
+original request fingerprints/revisions, verifies registered bytes and the accepted
+Handoff, and runs only a missing stage whose revision was produced by this transfer.
 
-One installed coordinator receives a strict external-material envelope for an
-explicitly selected catalog Work, validates the current workspace/Process/Work/
-Artifact identities, original revision, ready Artifact rights, immutable Pack
-binding and every declared basis version and byte hash. Its confirmation preview
-contains the full exact UTF-8 material, input/material hashes, current active version,
-target/rights, basis and the complete planned `publish_artifact` and `accept_handoff`
-requests.
-
-After one exact trusted confirmation, the coordinator uses those two standard Core
-mutations. The returned receipt distinguishes validated input receipt, immutable-byte
-publication/registration, material acceptance and Work completion. Publication and
-acceptance have separate Core receipts. Completion is explicitly `not_requested`,
-and the accepted Work remains ready with no Result or invented next Work.
-
-The original envelope revision is never refreshed. Material, target, basis or state
-changes invalidate prior confirmation. Partial cross-call failure reports every known
-committed receipt and does not claim rollback. Core identity, authority, immutable
-Pack binding, Artifact and accepted-Handoff semantics are unchanged.
+The saved transfer continuation remains the selected ready Work at the acceptance
+revision. A separate current continuation reports ready, cancelled or the standard
+saved Result/next Work when the Work later closes. Intake never completes or reopens
+Work and never fabricates a Result. Version 0.11.0 changes no Core transaction,
+authority, identity, Pack-binding, Handoff or Result semantics.
 
 ## evidence
 
-Commands executed on the finished candidate:
+Focused checks on the candidate:
 
-- `uv run --locked python -m pytest tests/zaratustra/intake/test_material.py -q -o cache_dir=_scratch/toolchain/entry-t3-version-pytest-cache`
-- `uv run --locked python -m tools.check --deliver` (complete output:
-  `_scratch/entry-t3-version-final-deliver-20260912.log`)
+- 38 intake/reproduction tests passed, including repeat/restart, absent/stale/
+  malformed/inconsistent journal, changed content/target/basis identity collisions,
+  before-first-effect failure, publication file versus registration, publication and
+  acceptance commits before progress persistence, final-response loss, unrelated
+  post-publication revision, terminal Result, revoked read rights, projection errors
+  and cooperating simultaneous retry.
+- Strict mypy passed for all 85 checked source files; focused Ruff passed.
+- `uv run --locked python -m tools.probe_entry_t4 --output
+  _scratch/entry-t4-installed-20260912` exited 0. Two fresh isolated installed-wheel
+  processes from an unrelated directory returned the same publication, acceptance
+  and saved-continuation receipts with no second revision and one acceptance. Raw
+  proof is retained under `_scratch/entry-t4-installed-20260912/`.
 
-The focused suite passed 22 tests. It covers exact new-byte preview/publication/
-acceptance, first-version creation, current basis and content integrity, selected
-identities, stale state, insufficient rights, terminal Work, malformed/duplicate/
-oversized input, hidden approval, payload/target/basis changes after preview, missing
-confirmation, partial acceptance and committed projection-error reporting. The
-version regression accepts only JSON integer `1`; JSON `true`, `1.0`, and `"1"` are
-refused through the public preparation path before any workspace effect.
-
-Before the correction, a disposable new generic schema-7 workspace showed that JSON
-`true` and `1.0` were accepted and normalized to parsed version `1`, while `"1"` was
-refused (`_scratch/entry-t3-version-before-20260912.log`). After it, a separate new
-generic workspace accepted integer `1` and refused all three invalid variants
-(`_scratch/entry-t3-version-after-20260912.log`).
-
-The final complete native delivery gate exited successfully after formatting, lint,
-strict types, 13 import contracts, 287 passing tests and wheel/source build. Technical
-decisions and limits are in `docs/entry-t3/PLAN.md`; reproducible installed steps and
-retained-output inventory are in `docs/entry-t3/REPRODUCE.md`.
+The complete delivery gate passed formatting for 97 files, Ruff, strict types for 85
+source files, all 13 import contracts, 303 tests, report structure, and wheel/source
+build. Its terminal exit was 0. The final task-local-cache output is retained at
+`_scratch/entry-t4-final-deliver-cache-20260912.log`.
 
 ## assumptions
 
-The caller explicitly chooses the catalog, designation and external envelope. The
-catalog is discovery only. A trusted local console or already-authorized local-chat
-application confirms the complete preview; no envelope/file field grants authority.
-The selected schema-7 workspace contains the existing one-Process graph and a ready
-Work with Artifact rights. Incoming material is UTF-8 text, not arbitrary binary.
+The caller explicitly selects one catalog Work and supplies the same exact external
+envelope on retry. A trusted local console or already-authorized local-chat adapter
+reviews the complete plan in every new session. The selected schema-7 workspace and
+its existing `inbox` are local, writable and on a filesystem supporting the retained
+advisory-lock and atomic-replace behavior used elsewhere in the product.
 
 ## cuts
 
-No provider is launched or contacted. This increment does not add durable transfer
-replay/restart recovery, an all-or-nothing transaction across both Core calls, a
-Process constructor, startup assistant, Pack installation/execution, Result/next
-Work, subject-specific methods, real health or game data, model routing, memory, GUI,
-actual ChatGPT transfer, paid/API activity or CI. A failed publication can retain an
-unregistered final file under existing Core semantics; the incomplete receipt reports
-that possibility.
+No spanning rollback is claimed: publication and acceptance remain two standard Core
+transactions. An unregistered leftover file is reported and may be reused only by the
+ordinary exact Core retry; it is not acceptance. Journal inspection without approval
+shows only its unverified intake id, preview hash and claimed stage names. Receipt
+lookup still requires current metadata rights.
 
-The envelope is limited to 393,216 bytes and its UTF-8 material to 262,144 bytes.
-Those are wrapper limits only, not universal Artifact or future research-report
-limits. Generated Handoff metadata remains subject to Core's separate 64 KiB limit.
+No hostile same-user writer, network-filesystem, sudden-power-loss or disk-loss
+guarantee is added. No provider is contacted; this is not automatic research, a full
+constructor/startup flow, actual ChatGPT transfer, personal workspace use, Pack
+execution, UI, memory/model routing, paid service, CI/CD or notification work.
 
 ## cost
 
-One strict intake-schema field correction, focused regression coverage and factual
-public documentation/report updates. Envelope/preview/confirmation policy remains
-isolated from Core. The exact ids, hashes, planned requests and stage receipts are a
-small compatible boundary for the next replay/recovery increment.
+One coordinator journal/lock and recovery path in the installed intake package, a
+public alias for the existing Core request fingerprint, focused generic fault and
+concurrency tests, one two-process installed reproduction, documentation and a minor
+version bump. No schema, migration or dependency was added.
 
 ## manual-acceptance
 
-No personal-use pass or owner acceptance is claimed. Automated checks establish the
-stated technical behavior only; the parent performs the separate fresh review.
+No personal-use pass or owner acceptance is claimed. Automated checks substantiate
+only the stated technical behavior; a separate fresh physical reviewer follows.
 
 ## next
 
 solmax
 
-The next engineering risk is durable cross-invocation transfer replay and recovery:
-it must discover already committed publication/acceptance stages without refreshing
-the original intended basis, duplicating effects or misreporting orphaned bytes.
+Remaining engineering risk is the next increment's full first-use setup and actual
+external-chat handoff. This coordinator is intentionally limited to cooperating local
+processes and the existing trusted adapter boundary.
 
 END_OF_FILE: RESULT.md

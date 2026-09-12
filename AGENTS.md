@@ -46,6 +46,9 @@ accepted its testing purpose and requires fictional examples only in dev tests.
 T1/T4 examples live in tests/fixtures, outside the installed product. Reproduction
 tools explicitly load those external fixtures. See docs/m1-test-only/PLAN.md and
 OWNER-DECISION.md there; the earlier G5 does not review later packaging changes.
+Entry T4 adds one recoverable exact external-material transfer around the existing
+publication/acceptance seam, with coordinator journal/lock and authorized Core
+receipt recovery; see docs/entry-t4/PLAN.md and tools.probe_entry_t4.
 `src/zaratustra/core` owns workspace logic; `src/zaratustra/cli` delegates to it.
 Installed product code and user-chosen data workspace are separate.
 Read the current CALL before doing product work; a completed Work admits no successor.

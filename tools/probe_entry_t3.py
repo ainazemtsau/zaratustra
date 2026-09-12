@@ -157,7 +157,7 @@ def exercise(base: Path) -> dict[str, Any]:
         provenance="New explicit generic external demo material",
         owner_instruction="Accept only after reviewing the exact displayed change.",
         constraints=["No personal data"],
-        open_questions=["Replay and restart recovery remain the next increment"],
+        open_questions=["External provider interaction remains outside this demonstration"],
         created_by="generic-manual-provider",
     )
     external.parent.mkdir()

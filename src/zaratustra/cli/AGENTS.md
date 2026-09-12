@@ -26,4 +26,7 @@ and budget. Migration6 is opt-in; default4 remains.
 entry add/find/relocate use the explicit installed discovery catalog. entry read
 resolves one exact row, confirms its exact ProcessQuery, and emits the complete
 generic Core metadata package. Catalog rows and aliases never count as authority.
+entry intake retains its exact plan and stage receipts below the selected workspace
+inbox. A repeated invocation obtains a new exact confirmation, recovers authoritative
+Core receipts and runs only a missing valid stage; it never rebases the original plan.
 END_OF_FILE: src/zaratustra/cli/AGENTS.md
