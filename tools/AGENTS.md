@@ -9,4 +9,6 @@ Read STOP/STEER before mutations. T5/T6 checks are assigned to fresh Claude Code
 by the owner; authoring/formatting source is not a native or behavioral PASS.
 probe_overview reuses the T5 pair run, then reads one shared overview over both
 workspaces through the public contract only; it adds no state and no authority.
+probe_entry_t5 builds and installs the wheel, then creates two NEW generic instances
+and simulates only the local return leg; it never contacts an external provider.
 END_OF_FILE: tools/AGENTS.md

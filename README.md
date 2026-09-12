@@ -1,15 +1,17 @@
 # Zaratustra
 
-Version **0.11.0** is a technical foundation preview. It implements durable local
+Version **0.12.0** is a technical foundation preview. It implements durable local
 workspaces, authorized mutations, versioned artifacts, accepted-result handoff,
 bounded Work context, Result/next Work, external process-pack binding, seven
 process read capabilities, a shared overview, explicit entry discovery/basic read,
-and recoverable exact preview/publication/acceptance of new external text material.
-See the [current report](RESULT.md) and [transfer recovery plan](docs/entry-t4/PLAN.md).
+and recoverable exact preview/publication/acceptance of new external text material,
+plus a modest installed first-use/manual external-chat path. See the [current
+report](RESULT.md) and [first-use plan](docs/entry-t5/PLAN.md).
 
-This version does **not** yet provide an end-user process-creation assistant,
+This version does **not** provide a full interactive method constructor,
 provider-integrated external research, personal memory, model routing or a graphical
-UI.
+UI. Its generic first-use command deliberately creates unbound Core metadata instead
+of inventing a production Process Pack.
 The two fictional processes used to verify the pack contract are development
 fixtures under `tests/fixtures`; they are not installed product templates.
 Publication of this foundation is not a claim that it is ready for everyday use.
@@ -99,6 +101,15 @@ displayed separately as the current terminal continuation. If the whole original
 journal is lost after state advances, preparation refuses rather than inventing an
 original wrapper from current facts. See [the installed recovery
 reproduction](docs/entry-t4/REPRODUCE.md).
+Entry T5 adds `zara entry start`, which accepts user-facing generic setup JSON and
+initial UTF-8 material, creates/registers one explicitly designated instance, and
+uses the four ordinary confirmed Core operations to make its initial material an
+accepted basis. `zara entry open` resolves current bounded context without user
+handling identities or revisions. `zara entry request` saves a copyable
+provider-neutral request with that exact context and basis; `zara entry receive`
+wraps returned text and reuses the recoverable intake confirmation without refreshing
+the saved request. No command contacts a provider. Follow the [installed first-use
+walkthrough](docs/entry-t5/REPRODUCE.md).
 M0 remains partial; no personal workspace is selected.
 
 Read [pack lifecycle decisions and W15–W20](docs/m1-packs/PLAN.md) for immutable

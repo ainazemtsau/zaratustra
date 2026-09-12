@@ -49,6 +49,9 @@ OWNER-DECISION.md there; the earlier G5 does not review later packaging changes.
 Entry T4 adds one recoverable exact external-material transfer around the existing
 publication/acceptance seam, with coordinator journal/lock and authorized Core
 receipt recovery; see docs/entry-t4/PLAN.md and tools.probe_entry_t4.
+Entry T5 adds the modest installed first-use coordinator and designation-based
+context/manual external-chat request/return path; see docs/entry-t5/PLAN.md and
+tools.probe_entry_t5. It uses generic unbound Core records and existing mutations.
 `src/zaratustra/core` owns workspace logic; `src/zaratustra/cli` delegates to it.
 Installed product code and user-chosen data workspace are separate.
 Read the current CALL before doing product work; a completed Work admits no successor.

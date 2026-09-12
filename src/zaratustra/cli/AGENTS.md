@@ -29,4 +29,9 @@ generic Core metadata package. Catalog rows and aliases never count as authority
 entry intake retains its exact plan and stage receipts below the selected workspace
 inbox. A repeated invocation obtains a new exact confirmation, recovers authoritative
 Core receipts and runs only a missing valid stage; it never rebases the original plan.
+entry start creates one generic unbound graph, catalogs it and uses four exact standard
+mutations to establish an accepted initial basis; its retained plan grants no rights.
+entry open resolves the current ContextQuery by designation. entry request saves one
+non-overwriting provider-neutral context snapshot, and entry receive preserves that
+snapshot's revision/basis while wrapping returned text for the ordinary intake preview.
 END_OF_FILE: src/zaratustra/cli/AGENTS.md

@@ -52,6 +52,19 @@ from zaratustra.entry import (
     resolve_entry,
     source_path,
 )
+from zaratustra.first_use import (
+    MAX_REQUEST_BYTES,
+    MAX_SETUP_BYTES,
+    FirstUseError,
+    IncompleteFirstUseError,
+    create_external_chat_request,
+    execute_first_use,
+    open_selected_context,
+    prepare_external_chat_response,
+    prepare_first_use,
+    prepare_selected_context,
+    save_external_chat_request,
+)
 from zaratustra.intake import (
     MAX_INTAKE_BYTES,
     IncompleteIntakeError,
@@ -98,6 +111,36 @@ def main(argv: list[str] | None = None) -> int:
     entry_intake.add_argument("catalog", type=Path)
     entry_intake.add_argument("designation")
     entry_intake.add_argument("source", help="UTF-8 external-material JSON file, or '-' for stdin.")
+    entry_start = entry_commands.add_parser(
+        "start", help="Create, register and establish one generic accepted starting basis."
+    )
+    entry_start.add_argument("catalog", type=Path)
+    entry_start.add_argument("designation")
+    entry_start.add_argument("workspace", type=Path)
+    entry_start.add_argument("setup", type=Path, help="Generic first-use JSON; no technical ids.")
+    entry_start.add_argument("initial_material", type=Path, help="Initial UTF-8 basis text.")
+    entry_start.add_argument("--alias", action="append", default=[])
+    entry_open = entry_commands.add_parser(
+        "open", help="Open current bounded accepted context by designation."
+    )
+    entry_open.add_argument("catalog", type=Path)
+    entry_open.add_argument("designation")
+    entry_open.add_argument("--max-bytes", type=int, default=1_048_576)
+    entry_request = entry_commands.add_parser(
+        "request", help="Save a copyable provider-neutral request with its exact basis."
+    )
+    entry_request.add_argument("catalog", type=Path)
+    entry_request.add_argument("designation")
+    entry_request.add_argument("output", type=Path)
+    entry_request.add_argument("--max-bytes", type=int, default=1_048_576)
+    entry_receive = entry_commands.add_parser(
+        "receive", help="Wrap returned text and use the confirmed recoverable intake."
+    )
+    entry_receive.add_argument("catalog", type=Path)
+    entry_receive.add_argument("designation")
+    entry_receive.add_argument("request", type=Path)
+    entry_receive.add_argument("response", help="Returned UTF-8 text file, or '-' for stdin.")
+    entry_receive.add_argument("--created-by", required=True, help="Human-supplied provider label.")
     result_command = commands.add_parser(
         "result", help="Submit or discover an exact Result and continuation."
     )
@@ -191,6 +234,76 @@ def main(argv: list[str] | None = None) -> int:
                 output = relocate_entry(
                     args.catalog, args.designation, args.workspace
                 ).model_dump_json(indent=2)
+            elif args.entry_command == "start":
+                with args.setup.open("rb") as stream:
+                    setup_content = stream.read(MAX_SETUP_BYTES + 1)
+                with args.initial_material.open("rb") as stream:
+                    initial_material = stream.read(MAX_INTAKE_BYTES + 1)
+                first_use = prepare_first_use(
+                    args.catalog,
+                    args.designation,
+                    args.workspace,
+                    setup_content,
+                    initial_material,
+                    aliases=tuple(args.alias),
+                )
+                authorizations = tuple(
+                    confirm_on_console(prepare_authorization(first_use.workspace, request))
+                    for request in first_use.pending
+                )
+                output = execute_first_use(first_use, authorizations).model_dump_json(indent=2)
+            elif args.entry_command in ("open", "request"):
+                selected = prepare_selected_context(
+                    args.catalog, args.designation, max_bytes=args.max_bytes
+                )
+                caller = confirm_on_console(
+                    prepare_authorization(selected.workspace, selected.query)
+                )
+                package = open_selected_context(selected, caller)
+                if args.entry_command == "open":
+                    sys.stdout.buffer.write(package.output)
+                    sys.stdout.buffer.flush()
+                    return 0
+                external_request = create_external_chat_request(selected, package)
+                save_external_chat_request(args.output, external_request)
+                output = json.dumps(
+                    dict(
+                        status="external_request_saved",
+                        designation=external_request.designation,
+                        output=args.output.expanduser().resolve().as_posix(),
+                        request_id=str(external_request.request_id),
+                        source_revision=external_request.source_revision,
+                        context_sha256=external_request.context_sha256,
+                        provider_contacted=False,
+                    ),
+                    indent=2,
+                )
+            elif args.entry_command == "receive":
+                with args.request.open("rb") as stream:
+                    request_content = stream.read(MAX_REQUEST_BYTES + 1)
+                from_stdin = args.response == "-"
+                if from_stdin:
+                    response_content = sys.stdin.buffer.read(MAX_INTAKE_BYTES + 1)
+                    response_ref = "stdin"
+                else:
+                    response = Path(args.response).expanduser().resolve()
+                    with response.open("rb") as stream:
+                        response_content = stream.read(MAX_INTAKE_BYTES + 1)
+                    response_ref = response.as_posix()
+                intake_prepared = prepare_external_chat_response(
+                    args.catalog,
+                    args.designation,
+                    request_content,
+                    response_content,
+                    created_by=args.created_by,
+                    source_ref=response_ref,
+                )
+                authorization = confirm_material_intake_on_console(
+                    intake_prepared, separate_terminal=from_stdin
+                )
+                output = execute_material_intake(intake_prepared, authorization).model_dump_json(
+                    indent=2
+                )
             elif args.entry_command == "intake":
                 entry = resolve_entry(args.catalog, args.designation)
                 workspace = source_path(args.catalog, entry)
@@ -359,6 +472,19 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 2
+    except IncompleteFirstUseError as error:
+        print(
+            json.dumps(
+                dict(
+                    status="setup_incomplete",
+                    stage=error.stage,
+                    completed=[receipt.model_dump(mode="json") for receipt in error.completed],
+                    error=str(error),
+                ),
+                indent=2,
+            )
+        )
+        return 2
     except ProjectionRebuildError as error:
         print(
             json.dumps(
@@ -375,6 +501,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"zara: [{error.code}] {error}", file=sys.stderr)
         return 1
     except IntakeError as error:
+        print(f"zara: [{error.code}] {error}", file=sys.stderr)
+        return 1
+    except FirstUseError as error:
         print(f"zara: [{error.code}] {error}", file=sys.stderr)
         return 1
     except (WorkspaceError, ValidationError, OSError) as error:
