@@ -16,7 +16,7 @@ confirmation, immutable publication, Handoff acceptance and recovery path. It do
 not refresh the captured basis, infer approval or complete the Work.
 
 Setup retains fixed operation identities before its first Core mutation and replays
-only an exact missing prefix. Two coordinator-reported ordering defects were corrected:
+only the exact uncommitted suffix. Two coordinator-reported ordering defects were corrected:
 a wrong setup can no longer persist a plan over an existing legitimate unplanned
 draft, and a taken designation is refused before creating or planning a second source.
 Both corrected inputs can be retried on the same intended source without manual state
@@ -33,7 +33,8 @@ editing.
   new isolated environment, checked with `uv pip check`, and exercised from an
   unrelated working directory. Its installed `zara entry --help` exposed
   `start/open/request/receive`. The run created two generic instances at revision 5,
-  observed the second at draft revision 1 before preparation, opened both by
+  observed the second at draft revision 1 after preparation and before confirmed
+  execution, opened both by
   designation with their actual initial bytes, accepted new immutable bytes at
   publication/acceptance revisions 6/7 with the exact initial version as basis, and
   retained a ready continuation. It recorded `permission_denied`, `output_exists`,

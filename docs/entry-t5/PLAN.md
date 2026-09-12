@@ -56,9 +56,13 @@ against the selected catalog row, wraps the response bytes in the existing stric
 external-material envelope, displays the unchanged Entry T4 publication/acceptance
 preview for trusted confirmation, and executes the recoverable intake. The wrapper
 uses the request's captured revision and references; it never refreshes them when the
-response arrives. Wrong selection, changed request bytes, stale state or a different
-response under the same request identities refuses without rebasing. Returned text
-is data only and cannot grant rights, confirm itself or complete the Work.
+response arrives. Wrong selection, inconsistent request/context fields, stale state
+or a different response under the same intake identities refuses without rebasing.
+The request file is an untrusted snapshot, not an authenticated or immutable file:
+self-consistent replacement operation identities may prepare a distinct intake,
+which still faces current Core checks and separate exact trusted confirmation.
+Keep the original request file unchanged for retries. Returned text is data only
+and cannot grant rights, confirm itself or complete the Work.
 
 ## Validation and explicit limits
 
