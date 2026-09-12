@@ -1,225 +1,67 @@
-# T6 — общий обзор двух процессов, принят владельцем
+# Installed entry recovery probe
 
 ## outcome
 
-CALL c-solmax-zaratustra-m1-overview-20260910-exec, PROBA36, basis
-c4b8aea4db38fea4c39a473c47d0d8b82d8552a0. Worktree
-C:/projects/zaratustra/_scratch/m1-overview-20260910, branch
-codex/m1-overview-20260910. STOP/STEER отсутствуют; validation.config сверен:
-synced_contract_version 36, default_mode PROBA.
+A development evaluator reproduces creation, authorization, new content publication,
+acceptance and bounded context opening through the installed package's public Core
+operations on explicit disposable data and current schema 7.
 
-Пять свежих G5 вернули восемнадцать пунктов. Все приняты и закрыты, ни одна
-проверка не ослаблена. Четыре пункта меняли файлы Python: 01, 02, 03 и 04.
-Остальные четырнадцать касались точности документов.
-
-Первый круг, source 87db23ae, deliver FAIL. G5-T6-01: обязательный gate падал
-на `ruff check`, лишний алиас развёл два импорта одного модуля. G5-T6-02,
-единственный содержательный дефект: `current_status` приходит от пакета
-свободным текстом, где перенос строки разрешён, поэтому человекочитаемый вид
-получал лишнюю строку, читаемую как настоящая строка обзора, вместе с
-поддельными counts и заявлением, противоречащим envelope. Исправлено в
-`overview_lines`: каждое прочитанное из документа значение проходит через
-`_flat`, который заменяет непечатаемые символы пробелом и схлопывает пробельные
-последовательности. Инвариант: один возвращённый элемент — ровно одна
-печатаемая строка.
-
-Второй круг, source 4dad08e, deliver PASS. G5-T6-03: отказанная строка печатала
-`revision=` из эха собственного запроса, хотя ничего не прочитала; теперь строка
-без envelope печатает `requested_revision=`, а строка с envelope берёт
-`state_revision` из своего ответа. G5-T6-04: проекция хранила только состояние
-и счётчик, поэтому conflict и missing_pack в тексте не различались; проекция
-зеркалит и `code` того же ответа, вид печатает `state:code`. G5-T6-05:
-`changed_by_design` учитывал не все изменённые пути.
-
-Третий круг, source 456776a, deliver PASS, exit 0, 252 passed. Три возврата
-второго круга закрыты и проверены отдельно, подделка статуса не вернулась.
-G5-T6-06: RESULT.md и CLAUDE-RECHECK-2.md утверждали, что второй отчёт не назвал
-результат обязательного deliver; это была ошибка автора, отчёт назвал его прямо.
-G5-T6-07: учёт путей всё ещё неполон.
-
-Четвёртый круг, source f7bf592, deliver PASS, exit 0, 252 passed, блокирующих
-находок нет. Байты src, tools и tests подтверждены идентичными 456776a, оба
-возврата третьего круга закрыты. Возвращены восемь неблокирующих неточностей
-документов, ни одна о коде: описание проекции в module AGENTS и в PLAN, старая
-формулировка про «лишь строки экспорта» в PLAN, неверное «неполный gate» о числе
-251 в двух местах, завышенное число кругов проверки самого 456776a в RESULT.md,
-приписанное третьему отчёту требование про запись-каталог, устаревшая карта
-разделов в FIX-G5 и слово «сохранён» о тексте, из которого удалены четыре
-строки. Все восемь исправлены здесь.
-
-Пятый круг, source 0f5c88b, deliver PASS, exit 0, 252 passed, блокирующих
-находок нет. Восемь возвратов четвёртого круга закрыты и сверены с самими
-отчётами. Возвращены три неточности в тексте автора: неверный счёт «два пункта
-кода», не сходящийся счёт кругов правки документов и пометка, ставшая
-небуквальной после второй правки того же раздела. Все три исправлены здесь.
-
-Ни один файл Python не менялся с 456776a. Единственная правка внутри src за
-два последних круга — одна строка описания в module AGENTS. Полный gate
-пройден свежими сессиями на 456776a, f7bf592 и 0f5c88b, каждый раз exit 0 и
-252 passed. Правки этого круга — три предложения в двух markdown-файлах.
-Новый круг проверки не назначается: последние три отчёта не нашли ни одного
-дефекта кода, и цикл закрывается передачей владельцу.
+It exits after publication and resumes in a separate process. Repeated recovery
+returns the prior receipt without another effect. A foreign state change is
+rejected while the original source revision remains unchanged.
+Installed product sources and Core semantics are unchanged.
 
 ## evidence
 
-Разбор всех восемнадцати возвратов и границы правок:
-docs/m1-overview/FIX-G5-20260910.md. Прежние документы по существу не
-переписаны: CALL.md, CLAUDE-CHECK.md, CLAUDE-RECHECK.md; PLAN.md несёт
-объявленную поправку двух описательных строк, CLAUDE-RECHECK-2.md — пометку об
-ошибке автора. Прошлые handoff остаются как история: CLAUDE-CHECK.md,
-CLAUDE-RECHECK.md, CLAUDE-RECHECK-2.md, CLAUDE-RECHECK-3.md,
-CLAUDE-RECHECK-4.md. Нового handoff этот круг не добавляет.
+Code commit: 64e5e6c579d225d8d82bc21fa77ef071f49c9a1e.
+Instructions: docs/entry-t1/REPRODUCE.md.
 
-Commits: 05398cd PLAN/CALL/baseline; 87db23a первый source; a457a18 первый
-handoff; 4dad08e второй source; 6fdfbea и 8b07b7a второй handoff; 456776a третий
-source; 5c994de и 44c1cf2 третий handoff; f7bf592 исправления документов и
-четвёртый handoff.
+Commands successfully executed at that code version:
 
-Пятая G5 на 0f5c88b: docs/g5/m1-overview-docs2-20260910/G5-ADDENDUM.md,
-branch codex/g5-m1-overview-docs2-20260910, коммиты c961ca6 и 99f5bc0.
-Полный обязательный deliver PASS, exit 0, повторов 0 из 3, 252 passed,
-11 kept и 0 broken, build 0.10.1, структура отчёта PASS. Python относительно
-f7bf592 не менялся; деревья tools и tests байтово те же на трёх pin. Все
-восемь мест 08–15 закрыты и сверены с самими отчётами; PLAN отличается от
-05398cd ровно двумя описательными правками и объявленным разделом; 18
-объявленных путей равны 18 фактическим; восемь идентификаторов совпали.
-Сценарий и поведенческие проверки переиспользованы с f7bf592; done_when
-заново не проверялись.
+- uv run --locked python -m tools.check --deliver
+- uv run --locked python -m tools.probe_entry_t1 --output _scratch/<new-trial>
 
-Четвёртая G5 на f7bf592: docs/g5/m1-overview-docs-20260910/G5-ADDENDUM.md,
-branch codex/g5-m1-overview-docs-20260910, коммиты c933abe и 11cc05a. Её
-названные результаты: полный обязательный deliver PASS, exit 0, повторов 0 из 3,
-ruff format и ruff check на 83 файлах чисто, mypy 73 файла без ошибок,
-lint-imports 11 kept и 0 broken, pytest 252 passed, build и структура отчёта
-PASS; байты src, tools и tests идентичны 456776a и три дерева совпали по id;
-оба возврата о документах закрыты, семнадцать объявленных путей равны
-семнадцати фактическим, восемь идентификаторов неизменности совпали и на basis,
-и на HEAD.
+The native gate passed 255 tests and 11 import contracts, formatting, lint, types,
+wheel/source build and report structure. One non-fatal local pytest-cache warning was recorded. The installed probe produced one accepted
+Handoff after interruption, an exact bounded context, a no-effect duplicate
+recovery, and a foreign-revision refusal. Three focused tests cover recovery,
+publication-intent mismatch and foreign state changes.
 
-Третья G5 на 456776a: docs/g5/m1-overview-third-20260910/G5-ADDENDUM.md, branch
-codex/g5-m1-overview-third-20260910, коммиты 969ba40, 969895d, 000c4a8; deliver
-PASS, 252 passed, 11 contracts kept. Она закрыла три возврата второго круга,
-изолировав причину прямым сравнением прежнего и нынешнего рендерера на одном
-документе, подтвердила, что кодов нет у ok и empty ответов и что ни один код не
-приходит из текста пакета, что враждебный адаптер получает read_adapter_failed,
-а недопустимая выборка — invalid_read_response. Строка обзора байтово равна
-собственному `read_capabilities` на четырнадцати строках семи сценариев и на
-девятнадцати случаях подделки; двадцать прошлых случаев подделки прогнаны заново.
-
-Вторая G5 на 4dad08e: docs/g5/m1-overview-recheck-20260910/G5-ADDENDUM.md,
-commit 31e6a47056ebc2056327910265bfbd1afe31111a; её отдельный раздел
-«Verdict — полный обязательный deliver gate: PASS», exit 0, 251 passed,
-11 contracts kept, два committed raw. Первая G5 на 87db23ae:
-docs/g5/m1-overview-20260910/G5-REPORT.md, commit
-9d46e2e8b3af2924d19c17835c0e5647eedd8ff6, deliver FAIL.
-
-Восемь возвратов четвёртого круга исправлены точечно. В module AGENTS и в PLAN
-описание `answers` называет проекцию состояния, count и кода отказа. В PLAN
-строка про `__init__.py` называет и переписанную строку docstring; обе поправки
-объявлены отдельным разделом, PLAN по существу не переписан. Из
-CLAUDE-RECHECK-2.md и REPRODUCE.md убрано неверное «и к неполному gate»: для 251
-gate был полным. В RESULT.md число кругов проверки самого 456776a приведено к
-одному. В FIX-G5 замена записи-каталога отнесена к решению автора, а не к
-требованию отчёта, и карта разделов приведена к фактическим семи плюс
-четвёртый круг. В CLAUDE-RECHECK-2.md сказано точно, что заголовок и три строки
-заменены поправкой, а остальной текст не переписан.
-
-Неизменность сохраняется: tree src/zaratustra/core
-a93fdbb567c69c14dc1c645bede50157d3c3fc00, tests/fixtures
-c8b4594826173680343566049945cac14fad082b, fictional_lot
-562949e5984875f50d58c22848a6f279e19821ef, fictional_signal
-29708288ddaaadaba45184da8e04385847dca551; blobs capabilities.py 2579131,
-capability_models.py f1b2c66, lifecycle.py f5c3c62, runner.py 5ed0d7d.
-Это байтовая идентичность, а не семантический PASS.
-
-Здесь выполнено только чтение исходников, Git и byte inspection и обычная
-commit hygiene: `.githooks/pre-commit` прошёл на итоговом дереве, exit 0.
-Пройденный gate относится к 0f5c88b. Дельта к нему — три предложения в
-RESULT.md и CLAUDE-RECHECK-2.md; исполняемого кода она не содержит.
+Each local probe preserves its own exact inputs, states, history, receipts, context,
+installed-source hashes and command transcript in the requested output directory.
+The detailed run records are retained by the project maintainer. Running the
+documented command produces fresh independently inspectable records.
+Final report-only edits do not change the tested executable files.
 
 ## assumptions
 
-Распределение владельца «Реализация здесь, проверки в Claude Code»
-сохраняется, поэтому правки предъявляются непроверенными.
-
-Правки этого круга не трогают Python. Байты всех `.py` под src, tools и tests
-равны 456776a и f7bf592, где полный gate пройден и код проверен свежими G5.
-Утверждение о коде опирается на их прогоны, а не на новую непроверенную версию.
-Единственная правка внутри src — строка описания в module AGENTS.
-
-Проекция кода отказа не раскрывает нового: код уже принадлежит тому же ответу
-строки, вложенному дословно, и его словарь задают Core и capabilities. Вид
-остаётся производным и не управляется текстом пакета.
-
-Нормализация вида означает, что человекочитаемый обзор не воспроизводит
-форматирование пакета дословно; авторитетный источник — документ.
-
-Приёмка T5 не является приёмкой T6. Прежние G5 не заменяют решения владельца.
+The evaluator acts as an explicitly requested, trusted development application.
+Its disposable-workspace inspection is not a production multi-process permission
+interface. The coordinator derives its known publication progress and validates
+the exact operation before accepting; it cannot substitute an unrelated revision.
 
 ## cuts
 
-Новых cuts нет. Не вводились: новый frontend, assistant, transport, MCP,
-установленный загрузчик пакетов и CLI-команда обзора, третий процесс,
-дополнительные поверхности, реальные процессы и данные, расписания и
-автономность, product remote/push/merge, CI/CD/Actions/уведомления, новые
-внешние или денежные права. Core и оба правила не менялись, предметных
-исключений нет, гарантии P§30 и P§40 не ослаблены. Ни одна проверка не
-ослаблена ради прохождения. T7 и M1 не закрываются, M0 остаётся partial,
-Direction live/** не изменялся.
-
-Известные пределы: обзор ограничен шестнадцатью явно выбранными строками, и
-наборы у этого предела не проверялись; проверены две строки. Между строками
-нет общей транзакции, поэтому соседняя workspace может измениться между
-чтениями, что заявлено в envelope, а не скрыто. Порядок строк выбирает
-потребитель. Длинный статус усекается по границе знаков, поэтому вид не
-является полным текстом пакета. Краевой перенос строки в сохранённом значении
-снимается ограничением `Text` контракта T3 и здесь не правится.
+A shipped catalog, user entry shell, complete durable transfer coordinator,
+constructor, real process, real chat-to-coding-agent transfer, and every interruption
+boundary remain outside this probe. No new runtime dependencies, paid services,
+automatic research, or installed Core changes.
 
 ## cost
 
-Одна сборка и пять кругов правок: вид и импорт, проекция и подписи, затем
-три круга точности документов. Добавлены контроль подделки, утверждения о
-stale строке и новые тесты. Dependencies, schema, package version 0.10.1 и установленный CLI не
-менялись. Токены и денежная стоимость не измерялись; новых расходов нет.
+One developer tool, three hidden-behavior tests, and reproduction instructions.
+Reuses the public Core operations and the existing locked toolchain.
 
 ## manual-acceptance
 
-Владелец принял T6 2026-09-10. Перед решением ему были предъявлены три файла
-из retained evidence пятой G5: `overview.txt`, `overview-forged-status.txt` и
-`overview-stale-row.txt`, а также сводка пяти независимых проверок. Точный
-вопрос: «принимаете этот шаг или нет», предмет назван как общий обзор двух
-процессов. Точный ответ владельца следующим сообщением: **«принимаю»**.
-
-Предмет приёмки: код на 456776a, побайтно тот же на f7bf592 и 0f5c88b, вместе с
-документами задачи в текущем коммите. Полный обязательный gate пройден свежими
-сессиями на всех трёх pin, каждый раз exit 0 и 252 passed. Все восемнадцать
-возвратов закрыты; четырнадцать из них были неточностями в тексте автора.
-Формально не перегонялся gate только на трёх предложениях в двух
-markdown-файлах, добавленных после 0f5c88b; исполняемого кода в них нет.
-
-Это приёмка именно T6. Она не является приёмкой всего этапа, не открывает T7 и
-не закрывает Direction: запись receipt, идентификатор owner-ack и выдачу
-следующего наряда делает HOME. Прежний owner-ack:solmax-m1-second-process-accepted-20260910
-относится только к T5.
+No personal-use test or owner acceptance is claimed. Technical feasibility of
+this bounded composition is not completion of the user entry or the product.
 
 ## next
 
 solmax
 
-Возврат HOME с принятым результатом и без назначения нового круга проверки.
-Основание: три последних свежих отчёта подряд дали полный deliver PASS и ни
-одного дефекта кода, а все возвраты этих кругов были неточностями в тексте
-автора; продолжение цикла проверяло бы новый текст, который сам этот цикл и
-порождает. HOME записывает receipt приёмки, закрывает T6 и решает выдачу T7.
-
-Владельцу предъявляются: `overview.txt` — общий обзор обоих процессов;
-`overview-forged-status.txt` — тот же обзор, где пакет пытался подделать строку;
-`overview-stale-row.txt` — честная подпись отказанной строки. Все три сохранены
-в retained evidence пятой G5.
-
-Если нужен формально зелёный gate именно на предъявляемом pin, это один прогон
-`uv run --locked python -m tools.check --deliver` в свежей сессии: дельта к
-проверенному 0f5c88b — три предложения в двух markdown-файлах, исполняемого
-кода в ней нет. Owner acceptance T6, Direction close и T7 решает владелец и HOME.
+Continue with human-readable process and work discovery while preserving current
+authority and exact accepted context.
 
 END_OF_FILE: RESULT.md
