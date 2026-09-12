@@ -6,6 +6,9 @@ From the repository, choose a new ignored output directory and run:
 uv run --locked python -m tools.probe_entry_t2 --output _scratch/entry-t2-run
 ```
 
+Concurrent insertion order is unspecified. The probe checks each offered
+designation against its exact catalog row independently of that order.
+
 The probe builds the wheel, installs it with only locked runtime dependencies in
 an isolated environment, and runs from an unrelated current directory. Through
 the installed public product it creates two new generic schema-7 workspaces,

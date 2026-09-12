@@ -40,7 +40,8 @@ Commands successfully executed on the finished candidate:
 The focused catalog suite passed seven tests using a task-local cache. The
 installed-wheel summary records `exact_designation_precedes_alias: true`,
 `ambiguity_choices_actionable: true`, and preserved concurrent adds, alongside
-the read/relocation observations below.
+the read/relocation observations below. The probe checks each ambiguity choice
+against its exact row without assuming a concurrent insertion order.
 
 The final complete native delivery gate exited successfully after formatting,
 lint, strict types, 12 import contracts, 264 passing tests, wheel/source build and

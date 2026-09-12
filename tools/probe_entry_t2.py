@@ -315,7 +315,10 @@ def exercise(base: Path) -> dict[str, Any]:
         raise AssertionError("Overlapping alias was not ambiguous")
     if resolve_entry(catalog, "Morning Notes") != first:
         raise AssertionError("Exact designation did not take precedence over another row's alias")
-    if tuple(resolve_entry(catalog, choice) for choice in ambiguity["choices"]) != (first, second):
+    if {choice: resolve_entry(catalog, choice) for choice in ambiguity["choices"]} != {
+        first.designation: first,
+        second.designation: second,
+    }:
         raise AssertionError("Ambiguity offered a designation that was not actionable")
     reads = {}
     for name in (first.designation, second.designation):
