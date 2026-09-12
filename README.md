@@ -1,14 +1,19 @@
 # Zaratustra
 
-Version **0.8.0**, M1 T2: exact external pack registration and immutable Process/Work
-binding, with explicit schema7. A newer installed pack never retargets unfinished
-Work; missing/incompatible versions refuse package continuation. The lifecycle
-uses the existing Core authority, Mutation and history boundary.
-See [T2 plan](docs/m1-packs/PLAN.md) and [current report](RESULT.md).
-The seven capabilities, full two-process scenarios and common overview remain later M1 work.
+Version **0.10.1** is a technical foundation preview. It implements durable local
+workspaces, authorized mutations, versioned artifacts, accepted-result handoff,
+bounded Work context, Result/next Work, external process-pack binding, seven
+process read capabilities and a shared overview. See the [current report](RESULT.md)
+and [overview contract](docs/m1-overview/PLAN.md).
+
+This version does **not** yet provide an end-user process-creation assistant,
+an external research workflow, personal memory, model routing or a graphical UI.
+The two fictional processes used to verify the pack contract are development
+fixtures under `tests/fixtures`; they are not installed product templates.
+Publication of this foundation is not a claim that it is ready for everyday use.
 
 The underlying M0 foundation: `zara init` creates a local workspace;
-`zara migrate` explicitly adds schema 4; `zara records create` stores initial
+`zara migrate` explicitly upgrades the schema; `zara records create` stores initial
 Process, draft Work, declared Artifact and Event records with revisions.
 `zara status` and `zara records read` read persisted facts in later invocations.
 The installed engine and the workspace are separate directories.
@@ -81,11 +86,16 @@ Read [the capability contract](docs/m1-capabilities/PLAN.md) and
 [the reproducible example](docs/m1-capabilities/REPRODUCE.md).
 M0 remains partial; no personal workspace is selected.
 
-Read [pack lifecycle decisions and W15–W20](docs/m1-packs/PLAN.md) before later M1 work,
-and [Product RESULT](RESULT.md) for exact commits and runtime evidence.
+Read [pack lifecycle decisions and W15–W20](docs/m1-packs/PLAN.md) for immutable
+Process/Work version binding and missing/incompatible-pack behavior. Registration
+and pack reads currently use the public Python API; this is not an interactive
+process-creation flow. Read [Product RESULT](RESULT.md) for the retained T6 evidence.
 Setup evidence remains under docs/setup/ as history. Windows is the observed
 platform; Linux/macOS and an independent participant's installation remain unverified.
 CI/CD, GitHub Actions and notifications are excluded until a separate owner request:
-[owner receipt](docs/setup/OWNER-DECISION-20260907.md). Public hosting is future work.
+[owner receipt](docs/setup/OWNER-DECISION-20260907.md). The owner authorized public
+hosting and integration into `main` on September 11–12, 2026; that authorization
+does not enable CI/CD, notifications or access to a user's workspace.
+The repository does not currently include a distribution license.
 
 END_OF_FILE: README.md

@@ -38,8 +38,9 @@ accepted that step as owner-ack:solmax-m1-second-process-accepted-20260910.
 T6 adds process_packs.read_overview: one derived shared view of several explicitly
 selected Processes through that same seven-answer contract, with overview_lines and
 tools.probe_overview; see docs/m1-overview/PLAN.md. Rows stay independent and the
-view writes nothing. T6 is an unverified candidate: the owner requires implementation
-here and tests/fresh review in Claude Code. No PASS is claimed for T6.
+view writes nothing. T6's owner acceptance and five review rounds are recorded in
+RESULT.md at baseline d7304c9. M1 was accepted in the Direction review on
+September 11, 2026; this does not establish end-user process creation or daily use.
 T4 candidate 46718e4 passed fresh G5 (9c9c978); owner
 accepted its testing purpose and requires fictional examples only in dev tests.
 T1/T4 examples live in tests/fixtures, outside the installed product. Reproduction
@@ -66,7 +67,7 @@ Work 2 installed/migration proof: `uv run --locked python -m tools.probe_records
 10. Setup verification includes one bounded read-only evaluator smoke agent; otherwise delegate only when the CALL or owner explicitly asks. Inherited model defaults; no provider identity gate.
 
 ## Owner scope — 2026-09-07
-CI/CD, GitHub Actions and push notifications are excluded requirements until the owner separately asks. Do not configure them or block setup/delivery on their absence, even if a generic checklist requires them. Public GitHub hosting remains future work; local checks stay required. Authority: docs/setup/OWNER-DECISION-20260907.md, owner-ack:solmax-zaratustra-local-setup-no-automation-20260907.
+CI/CD, GitHub Actions and push notifications are excluded requirements until the owner separately asks. Do not configure them or block setup/delivery on their absence, even if a generic checklist requires them. The owner authorized public GitHub hosting and integration into main on September 11–12, 2026; local checks stay required. That authorization does not grant access to user workspaces or authorize paid services. The original automation boundary remains docs/setup/OWNER-DECISION-20260907.md, owner-ack:solmax-zaratustra-local-setup-no-automation-20260907.
 
 ## Constitution
 - Keep accepted WHAT, ordered Works 1–8 and the M0 stop before M1.
