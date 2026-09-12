@@ -64,6 +64,32 @@ which still faces current Core checks and separate exact trusted confirmation.
 Keep the original request file unchanged for retries. Returned text is data only
 and cannot grant rights, confirm itself or complete the Work.
 
+## Patch 0.12.1: readable manual request rendering
+
+The v0.12.0 request package preserved the exact authorized Core context, but its
+copyable prompt exposed saved material only as base64 and escaped Unicode inside that
+context. That transport was exact but not usable as readable input in an ordinary
+external chat. Version 0.12.1 therefore emits external-request format 2. Its
+`copyable_request` mechanically derives a UTF-8 projection from the already-opened
+Core context: the exact Work goal, expected result, acceptance, boundaries and budget,
+followed by every accepted referenced Artifact version with explicit Artifact id,
+version id, SHA-256, byte size and exact decoded text. The unchanged complete Core
+context remains embedded after the projection, and its original hash and size remain
+the request integrity boundary. No workspace or other source is read while rendering.
+
+Rendering is all-or-nothing. Every referenced version must have one matching context
+source whose descriptor identity, hash, size and actual decoded bytes agree; its bytes
+must be valid UTF-8. A missing, inconsistent, duplicate or non-UTF-8 source refuses
+the request rather than omitting it or labelling it readable. The existing request
+file limit remains 4,500,000 bytes and the Core context limit remains 1,048,576 bytes.
+
+External-request format 1 remains accepted with its original exact v0.12.0 rendering.
+Receiving or retrying such a saved file preserves its request/intake/publication/
+acceptance identities, captured revision, exact basis and hashes. Format 2 changes
+presentation only: both formats enter the same current-target, current-rights, strict
+response preview/confirmation and recoverable intake path. Neither readable text nor
+either request file grants permission or represents provider or owner approval.
+
 ## Validation and explicit limits
 
 Unit and CLI tests cover exact setup/retry, partial/draft truth, two designations,

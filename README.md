@@ -1,6 +1,6 @@
 # Zaratustra
 
-Version **0.12.0** is a technical foundation preview. It implements durable local
+Version **0.12.1** is a technical foundation preview. It implements durable local
 workspaces, authorized mutations, versioned artifacts, accepted-result handoff,
 bounded Work context, Result/next Work, external process-pack binding, seven
 process read capabilities, a shared overview, explicit entry discovery/basic read,
@@ -105,9 +105,12 @@ Entry T5 adds `zara entry start`, which accepts user-facing generic setup JSON a
 initial UTF-8 material, creates/registers one explicitly designated instance, and
 uses the four ordinary confirmed Core operations to make its initial material an
 accepted basis. `zara entry open` resolves current bounded context without user
-handling identities or revisions. `zara entry request` saves a copyable
-provider-neutral request with that exact context and basis; `zara entry receive`
-wraps returned text and reuses the recoverable intake confirmation without refreshing
+handling identities or revisions. In 0.12.1, `zara entry request` saves a copyable
+provider-neutral request with a mechanically decoded readable UTF-8 rendering of the
+exact Work goal and every accepted saved version, plus the unchanged complete Core
+context and original basis identities/hashes. Existing version-1 request files from
+0.12.0 remain valid for receive and same-intent recovery. `zara entry receive` wraps
+returned text and reuses the strict recoverable intake confirmation without refreshing
 the saved request. No command contacts a provider. Follow the [installed first-use
 walkthrough](docs/entry-t5/REPRODUCE.md).
 M0 remains partial; no personal workspace is selected.

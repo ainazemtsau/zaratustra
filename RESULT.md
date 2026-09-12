@@ -1,89 +1,83 @@
-# Shipped generic first use and manual external-chat exchange
+# Readable manual external-chat request correction
 
 ## outcome
 
-The bounded Entry T5 technical outcome is implemented in version 0.12.0. Installed
-users can explicitly create and catalog one generic unbound instance from user-facing
-names and text, confirm the four existing Core operations that establish a ready Work
-and accepted initial Artifact version, and then open its actual bounded saved context
-by human designation. They do not supply or search for UUIDs, revisions or hashes.
+The bounded correction is implemented in version 0.12.1. New manual external-chat
+requests use package format 2. Their `copyable_request` contains a mechanically derived
+readable UTF-8 rendering of the selected Work goal, expected result, acceptance,
+boundaries and budget and of every Artifact-version source present in the authorized
+Core context. Each version is labelled with its source locator/revision, Artifact id,
+version id, SHA-256, byte size and whether it is a direct accepted reference. The
+complete original Core context follows unchanged and retains its original request
+hash and byte size.
 
-The product can save a non-overwriting provider-neutral request containing the exact
-authorized Core context and original accepted basis. A human may copy its supplied
-request to an external chat and return only UTF-8 text. `entry receive` creates the
-strict technical envelope and reuses the existing full preview, separate trusted
-confirmation, immutable publication, Handoff acceptance and recovery path. It does
-not refresh the captured basis, infer approval or complete the Work.
+Rendering reads no workspace or external source. It verifies each embedded descriptor
+against the embedded bytes, verifies every accepted reference has a matching version,
+and refuses missing, duplicate, inconsistent or non-UTF-8 material instead of omitting
+or mislabelling it. Embedded text and links remain inert data. The request does not
+grant rights, confirm intake, impersonate approval or contact a provider.
 
-Setup retains fixed operation identities before its first Core mutation and replays
-only the exact uncommitted suffix. Two coordinator-reported ordering defects were corrected:
-a wrong setup can no longer persist a plan over an existing legitimate unplanned
-draft, and a taken designation is refused before creating or planning a second source.
-Both corrected inputs can be retried on the same intended source without manual state
-editing.
+Already-exported v0.12.0 format-1 requests remain accepted only with their original
+exact rendering. Receive and same-intent recovery preserve their captured revision,
+basis, context hash and request/intake/publication/acceptance identities. Both formats
+enter the unchanged current-target/current-rights checks, strict full-material preview,
+separate trusted confirmation and recoverable Entry T4 intake. Core source, schema,
+identity, authority and mutation semantics are unchanged.
 
 ## evidence
 
-- Eight focused first-use/tool scenarios passed with Ruff and strict mypy. They cover
-  exact setup/retry, both corrected refuse-then-retry sequences, cataloged draft and
-  publication-without-acceptance refusal, actual accepted bytes in bounded context,
-  request integrity/non-overwrite, CLI wiring, recoverable return, wrong/stale target,
-  ambiguous alias and an independently unavailable neighbor.
-- A clean 0.12.0 wheel was built, installed offline with locked dependencies into a
-  new isolated environment, checked with `uv pip check`, and exercised from an
-  unrelated working directory. Its installed `zara entry --help` exposed
-  `start/open/request/receive`. The run created two generic instances at revision 5,
-  observed the second at draft revision 1 after preparation and before confirmed
-  execution, opened both by
-  designation with their actual initial bytes, accepted new immutable bytes at
-  publication/acceptance revisions 6/7 with the exact initial version as basis, and
-  retained a ready continuation. It recorded `permission_denied`, `output_exists`,
-  `wrong_target`, `stale_basis`, `ambiguous`, and available/unavailable neighbor facts.
-  No provider was contacted. Complete commands, outputs, summary and evidence remain
-  under `_scratch/entry-t5-public-probe-20260912/`; the documented public probe exited
-  0 after the addressed steer was retired.
-- The final required `uv run --locked python -m tools.check --deliver` exited 0. It
-  passed formatting and Ruff for 102 files, strict mypy for 89 source files, all 14
-  import contracts, 312 tests, report structure, and wheel/source build. The complete
-  final output is retained at `_scratch/entry-t5-final-deliver-20260912.log`.
+- The focused correction gate exited 0 for the coordinator, its tests and the installed
+  probe: formatting and Ruff passed, strict mypy passed, all 14 import contracts were
+  kept, 10 focused tests passed, and the 0.12.1 distributions built. The new public
+  regression uses a Russian route-choice basis with multiple numeric constraints. It
+  verifies the exact readable goal, result conditions, constraints, saved bytes,
+  Artifact/version ids and hash; it also verifies no post-open workspace read and
+  refusal of an undecodable purported rendering. A format-1 request is received and
+  retried with the original receipts, and a prompt edited to claim approval is refused.
+- `uv run --locked python -m tools.probe_entry_t5 --output
+  _scratch/entry-t5-readable-0.12.1-proof-20260912` exited 0. It built and installed the
+  0.12.1 wheel offline with locked runtime dependencies, passed `uv pip check`, ran
+  from an unrelated working directory, and used only installed public APIs plus newly
+  created generic data. The summary records format 2, exact readable Unicode basis,
+  format-1 identity preservation and same-intent receipt recovery, as well as retained
+  `permission_denied`, `output_exists`, `wrong_target`, `stale_basis`, `ambiguous` and
+  unavailable-neighbor outcomes. No provider was contacted. Evidence is retained in
+  `_scratch/entry-t5-readable-0.12.1-proof-20260912/summary.json`, `commands.json`, the
+  installed wheel and the two saved request packages.
+- `uv sync --locked` exited 0. The full `uv run --locked python -m tools.check` then
+  exited 0: 102 files were formatted, Ruff passed, strict mypy passed for 89 source
+  files, all 14 import contracts were kept, all 314 tests passed, and the 0.12.1 sdist
+  and wheel built. The report-aware `uv run --locked python -m tools.check --deliver`
+  separately exited 0 with the same counts and passed the report-structure gate.
 
 ## assumptions
 
-The user explicitly chooses the catalog, designation, local workspace, generic setup
-data, initial material and provider label. A trusted controlling terminal or
-already-authorized local host actually reviews each displayed operation/context/intake
-before issuing authorization. The local filesystem supports the existing workspace,
-catalog, coordinator-lock and atomic-create behavior. A saved request is used once
-with its selected designation and original response file/source reference on retry.
+The human copies the complete product-supplied `copyable_request` field to the chosen
+ordinary external chat and keeps the saved request file unchanged for receive/retry.
+A trusted controlling terminal reviews the exact response preview before authorizing
+intake. Saved material used through this manual text path is valid UTF-8; a binary or
+otherwise undecodable version requires a different explicitly designed interface.
 
 ## cuts
 
-This is a modest generic unbound Core bootstrap, not a full interactive constructor,
-domain method, neutral/replacement Pack, Pack binding/migration, Result completion,
-model router, memory system or GUI. It adds no Core identity, authority, immutable
-binding or acceptance semantics and no schema or dependency. A later ordinary state
-change makes an exported request stale by design. The request file is intent/data,
-not authority; a user who edits it still faces current Core validation and the exact
-trusted intake preview.
-
-No provider, account, paid API or research service was opened or contacted. The
-installed demonstration simulated only a generic returned text file; it is not the
-later real ChatGPT-to-product-to-new-chat trial, personal-use proof, hostile same-user
-security guarantee, cross-platform certification, CI/CD or notification work.
+No provider rerun, owner-usefulness result or owner acceptance is claimed; the parent
+owns the real ChatGPT rerun and physically separate Sol review. This correction adds
+no provider/API integration, automatic research, GUI, memory, model routing, Process
+constructor, Pack behavior, new runtime dependency, Core change, migration, authority
+or completion behavior. The existing 1,048,576-byte Core-context limit and
+4,500,000-byte saved-request limit remain; a rendered package that exceeds the latter
+is refused rather than truncated.
 
 ## cost
 
-One installed `first_use` coordinator, four designation-based CLI commands, one
-additional import boundary, a retained first-use plan, strict bounded external-request
-package, version bump, focused generic tests, installed-wheel probe, and concise
-PLAN/REPRODUCE/README/report updates. Core and released migrations are unchanged.
+One versioned rendering path in the existing installed `first_use` wrapper, explicit
+format-1 validation compatibility, two focused public regressions, an expanded
+installed-wheel proof, a patch version bump, and bounded public documentation updates.
 
 ## manual-acceptance
 
-No owner use or acceptance is claimed. The evidence is a technical generic
-demonstration only. A fresh physical reviewer remains responsible for the independent
-post-handback review, including the human terminal instructions and real packaging
-surface.
+Pending parent real-provider rerun and independent physically separate Sol review.
+The technical checks above do not establish provider usefulness or owner acceptance.
 
 ## next
 
