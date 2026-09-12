@@ -23,4 +23,7 @@ the complete request before submit_result. result read confirms an exact Receipt
 and discovers saved Result/next under current rights. Neither text nor a result-read
 response authorizes future opening; use work open with explicit current revision
 and budget. Migration6 is opt-in; default4 remains.
+entry add/find/relocate use the explicit installed discovery catalog. entry read
+resolves one exact row, confirms its exact ProcessQuery, and emits the complete
+generic Core metadata package. Catalog rows and aliases never count as authority.
 END_OF_FILE: src/zaratustra/cli/AGENTS.md

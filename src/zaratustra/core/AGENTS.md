@@ -53,4 +53,8 @@ final input revalidation precedes return. Disclose only explicit visible Work
 metadata/results and selected exact reference grants; no hidden counts/content.
 Process metadata authorization is type/path/query-bound, never mutation/context
 authorization. Adapter selections/meaning stay outside Core. Schema7 unchanged.
+entry T2 adds read_basic_process: exactly one selected/visible Work under a
+ProcessQuery, current metadata rights and one managed lock. It returns canonical
+bounded metadata plus exact accepted Handoff/inherited Result references and a
+saved continuation, but no bytes, hidden Works, inferred next step or Pack meaning.
 END_OF_FILE: src/zaratustra/core/AGENTS.md

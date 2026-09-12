@@ -32,6 +32,7 @@ from zaratustra.core import (
     parse_result_request,
     prepare_authorization,
     read_artifact,
+    read_basic_process,
     read_handoffs,
     read_history,
     read_projection_status,
@@ -42,6 +43,13 @@ from zaratustra.core import (
     rebuild_projections,
     submit_result,
 )
+from zaratustra.entry import (
+    EntryError,
+    add_entry,
+    find_entries,
+    prepare_entry_read,
+    relocate_entry,
+)
 from zaratustra.local import confirm_on_console
 
 
@@ -49,6 +57,31 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="zara", description="Zaratustra workspace foundation")
     parser.add_argument("--version", action="version", version=f"zara {version('zaratustra')}")
     commands = parser.add_subparsers(dest="command", required=True)
+    entry_command = commands.add_parser(
+        "entry", help="Discover and read explicitly cataloged Process instances."
+    )
+    entry_commands = entry_command.add_subparsers(dest="entry_command", required=True)
+    entry_add = entry_commands.add_parser("add", help="Add one explicit workspace and Work.")
+    entry_add.add_argument("catalog", type=Path)
+    entry_add.add_argument("designation")
+    entry_add.add_argument("workspace", type=Path)
+    entry_add.add_argument("--work-id", type=UUID, required=True)
+    entry_add.add_argument("--alias", action="append", default=[])
+    entry_find = entry_commands.add_parser("find", help="Search designations and aliases.")
+    entry_find.add_argument("catalog", type=Path)
+    entry_find.add_argument("query", nargs="?", default="")
+    entry_read = entry_commands.add_parser(
+        "read", help="Authorize one selected Work's generic metadata read."
+    )
+    entry_read.add_argument("catalog", type=Path)
+    entry_read.add_argument("designation")
+    entry_read.add_argument("--max-bytes", type=int, default=65536)
+    entry_relocate = entry_commands.add_parser(
+        "relocate", help="Update a path only after stable identity validation."
+    )
+    entry_relocate.add_argument("catalog", type=Path)
+    entry_relocate.add_argument("designation")
+    entry_relocate.add_argument("workspace", type=Path)
     result_command = commands.add_parser(
         "result", help="Submit or discover an exact Result and continuation."
     )
@@ -127,7 +160,33 @@ def main(argv: list[str] | None = None) -> int:
     create.add_argument("--boundary", action="append", required=True)
     args = parser.parse_args(argv)
     try:
-        if args.command == "result":
+        if args.command == "entry":
+            if args.entry_command == "add":
+                output = add_entry(
+                    args.catalog,
+                    args.designation,
+                    args.workspace,
+                    args.work_id,
+                    aliases=tuple(args.alias),
+                ).model_dump_json(indent=2)
+            elif args.entry_command == "find":
+                output = find_entries(args.catalog, args.query).model_dump_json(indent=2)
+            elif args.entry_command == "relocate":
+                output = relocate_entry(
+                    args.catalog, args.designation, args.workspace
+                ).model_dump_json(indent=2)
+            else:
+                prepared = prepare_entry_read(
+                    args.catalog, args.designation, max_bytes=args.max_bytes
+                )
+                caller = confirm_on_console(
+                    prepare_authorization(prepared.workspace, prepared.query)
+                )
+                basic_package = read_basic_process(prepared.workspace, prepared.query, caller)
+                sys.stdout.buffer.write(basic_package.output)
+                sys.stdout.buffer.flush()
+                return 0
+        elif args.command == "result":
             if args.result_command == "submit":
                 with args.request_file.open("rb") as stream:
                     raw = stream.read(65537)
@@ -254,6 +313,9 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 2
+    except EntryError as error:
+        print(f"zara: [{error.code}] {error}", file=sys.stderr)
+        return 1
     except (WorkspaceError, ValidationError, OSError) as error:
         print(f"zara: {error}", file=sys.stderr)
         return 1
