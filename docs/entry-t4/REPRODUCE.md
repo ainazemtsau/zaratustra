@@ -20,11 +20,19 @@ uses authorized Core receipt lookup and verified content, and receives the origi
 publication, acceptance and saved-continuation receipts without another revision or
 acceptance.
 
+That same second process then removes only its coordinator journal to demonstrate the
+boundary: fresh preparation refuses with `progress_unavailable`, because the original
+immutable plan cannot be reconstructed from the advanced Core state. The proof checks
+that committed records, accepted Handoff and original published bytes remain unchanged.
+This is different from a lost response or a missing/stale stage receipt while the exact
+journal remains available, which the recovery path still handles.
+
 The output retains `summary.json`, `commands.json`, the installed wheel/runtime
 environment, disposable workspace, exact external envelope, preview, original receipt
 and recovered receipt. These are ignored local proof only. The summary's `recovery`
-object must report both exact receipts recovered, saved continuation recovered, no
-revision change and one acceptance.
+object must report exact immutable preview/hash and both receipts recovered, saved
+continuation recovered, no revision change and one acceptance, followed by the
+absent-journal refusal with unchanged committed facts.
 
 The same interactive command can be repeated after interruption:
 

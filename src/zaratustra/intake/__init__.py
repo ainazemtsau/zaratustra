@@ -625,7 +625,11 @@ def prepare_material_intake(
             raise IntakeError("stale_basis", "Envelope source revision is not current") from error
         if recovered.content != material:
             raise IntakeError("intake_collision", "Publication identity has different content")
-        artifact_revision = recovered.version.artifact_revision - 1
+        raise IntakeError(
+            "progress_unavailable",
+            "Original transfer progress/plan is unavailable; "
+            "the exact original plan cannot be reconstructed",
+        )
     else:
         raise IntakeError("stale_basis", "Envelope source revision is ahead of current state")
     current_active = None

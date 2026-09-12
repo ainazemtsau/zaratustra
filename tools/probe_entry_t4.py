@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -21,15 +22,17 @@ def _save(path: Path, value: Any) -> None:
 
 def recover(base: Path) -> dict[str, Any]:
     """Run only against the installed wheel from a fresh isolated Python process."""
-    from zaratustra.core import read_handoffs, read_records
+    from zaratustra.core import read_artifact, read_handoffs, read_records
     from zaratustra.entry import resolve_entry, source_path
     from zaratustra.intake import (
+        IntakeError,
         IntakeSelection,
         MaterialIntakeReceipt,
         authorize_material_intake,
         execute_material_intake,
         inspect_material_intake_progress,
         prepare_material_intake,
+        preview_bytes,
     )
 
     catalog = base / "catalog.json"
@@ -44,6 +47,10 @@ def recover(base: Path) -> dict[str, Any]:
     original = MaterialIntakeReceipt.model_validate_json(
         (base / "evidence" / "receipt.json").read_bytes()
     )
+    summary = cast(dict[str, Any], json.loads((base / "summary.json").read_text(encoding="utf-8")))
+    original_preview = cast(
+        dict[str, Any], json.loads((base / "evidence" / "preview.json").read_text(encoding="utf-8"))
+    )
     before = read_records(workspace)
     accepted_before = read_handoffs(workspace)
     inspection = inspect_material_intake_progress(workspace, original.intake_id)
@@ -53,6 +60,12 @@ def recover(base: Path) -> dict[str, Any]:
     prepared = prepare_material_intake(
         workspace, selection, incoming, source_ref=external.as_posix()
     )
+    if (
+        prepared.preview.model_dump(mode="json") != original_preview
+        or prepared.preview_sha256 != summary["preview_sha256"]
+        or hashlib.sha256(preview_bytes(prepared)).hexdigest() != prepared.preview_sha256
+    ):
+        raise AssertionError("Retained journal did not reproduce the complete immutable preview")
     authorization = authorize_material_intake(
         prepared,
         channel="local-chat",
@@ -71,17 +84,46 @@ def recover(base: Path) -> dict[str, Any]:
         or len(accepted_after) != 1
     ):
         raise AssertionError("Fresh-process recovery created or changed a transfer effect")
+    committed_material = read_artifact(
+        workspace, prepared.envelope.artifact_id, original.publication.operation_id
+    ).content
+    journal = workspace / "inbox" / "transfers" / f"{original.intake_id}.json"
+    journal.unlink()
+    if inspect_material_intake_progress(workspace, original.intake_id) is not None:
+        raise AssertionError("Deleted journal remained visible to the inspection surface")
+    absent_before = read_records(workspace)
+    absent_handoffs = read_handoffs(workspace)
+    try:
+        prepare_material_intake(workspace, selection, incoming, source_ref=external.as_posix())
+    except IntakeError as error:
+        if error.code != "progress_unavailable":
+            raise AssertionError("Absent original plan was not refused precisely") from error
+    else:
+        raise AssertionError("Absent original plan was reconstructed")
+    if (
+        read_records(workspace) != absent_before
+        or read_handoffs(workspace) != absent_handoffs
+        or read_artifact(
+            workspace, prepared.envelope.artifact_id, original.publication.operation_id
+        ).content
+        != committed_material
+        or journal.exists()
+    ):
+        raise AssertionError("Absent-journal refusal changed committed transfer facts")
     result = dict(
         restart_process=True,
+        exact_immutable_preview_and_hash_recovered=True,
         exact_publication_receipt_recovered=True,
         exact_acceptance_receipt_recovered=True,
         saved_continuation_recovered=True,
         current_continuation_state=recovered.current_continuation.state,
         no_revision_change=True,
         one_acceptance=True,
+        journal_absent_refusal="progress_unavailable",
+        journal_absent_no_side_effects=True,
+        original_material_preserved=True,
         unconfirmed_progress_fields=sorted(inspection.model_dump(mode="json")),
     )
-    summary = cast(dict[str, Any], json.loads((base / "summary.json").read_text(encoding="utf-8")))
     summary["recovery"] = result
     summary["scenario"] = "installed-recoverable-external-material-transfer"
     _save(base / "summary.json", summary)

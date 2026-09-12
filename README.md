@@ -92,10 +92,13 @@ the full exact material and two planned operations for trusted confirmation, the
 uses standard Artifact publication and Handoff acceptance. Its receipt keeps input,
 publication, acceptance and Work completion distinct; this bounded feature never
 completes Work. Entry T4 adds a non-authoritative coordinator journal and authorized
-Core receipt/content recovery. Repeated or restarted delivery returns the original
-stage receipts and saved continuation without rebasing the original intent; a later
-standard Result is displayed separately as the current terminal continuation. See
-[the installed recovery reproduction](docs/entry-t4/REPRODUCE.md).
+Core receipt/content recovery while the exact original plan remains journaled.
+Repeated or restarted delivery then returns the original stage receipts and saved
+continuation without rebasing the original intent; a later standard Result is
+displayed separately as the current terminal continuation. If the whole original
+journal is lost after state advances, preparation refuses rather than inventing an
+original wrapper from current facts. See [the installed recovery
+reproduction](docs/entry-t4/REPRODUCE.md).
 M0 remains partial; no personal workspace is selected.
 
 Read [pack lifecycle decisions and W15–W20](docs/m1-packs/PLAN.md) for immutable

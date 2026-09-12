@@ -35,6 +35,14 @@ the registered publication bytes, and verifies the accepted Handoff. A malformed
 journal, changed input under its intake identity, mismatched stored receipt or
 receipt/record collision is refused.
 
+The exact original plan is necessary for recovery. If the whole journal has been
+lost after the source revision advanced and the original publication identity is
+present, preparation refuses with `progress_unavailable`: it cannot reconstruct the
+original preview from current active Artifact or Work facts. This is distinct from a
+lost response or a missing/stale stage receipt while the exact plan remains journaled;
+those recover from authorized Core receipts. With no journal, no Core effect, and a
+genuinely current initial basis, preparation remains an ordinary valid new start.
+
 The lock covers authoritative rediscovery, validation, any remaining effect and the
 journal update. Thus cooperating local callers using this coordinator cannot create a
 second stage. The guarantee does not cover hostile writers, manual journal changes,
@@ -77,7 +85,8 @@ after acceptance commit before journal persistence/final response, and during bo
 post-commit projection rebuilds. Fresh preparation/restart tests prove one Artifact
 version, one publication event and one acceptance across repeats. They also cover
 changed content/target/basis under an old identity, a stale original revision,
-terminal Work, malformed/colliding progress, absent progress recovered from Core,
+terminal Work, malformed/colliding progress, missing stage receipts recovered from
+Core while the original plan remains journaled, complete-plan-loss refusal,
 current-rights refusal, later standard Result continuation and cooperating threads.
 
 ## Public boundary and limits

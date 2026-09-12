@@ -10,6 +10,10 @@ per-intake advisory lock serializes cooperating retries. Every recovery obtains 
 trusted confirmation, uses current authorized Core receipt reads, compares the exact
 original request fingerprints/revisions, verifies registered bytes and the accepted
 Handoff, and runs only a missing stage whose revision was produced by this transfer.
+That recovery requires the retained exact plan: if the whole journal is absent after
+the source state advanced and the transfer publication is present, preparation refuses
+with `progress_unavailable` rather than reconstructing an original wrapper from
+current active facts.
 
 The saved transfer continuation remains the selected ready Work at the acceptance
 revision. A separate current continuation reports ready, cancelled or the standard
@@ -19,25 +23,25 @@ authority, identity, Pack-binding, Handoff or Result semantics.
 
 ## evidence
 
-Focused checks on the candidate:
+Focused checks on this correction:
 
-- 38 intake/reproduction tests passed, including repeat/restart, absent/stale/
-  malformed/inconsistent journal, changed content/target/basis identity collisions,
-  before-first-effect failure, publication file versus registration, publication and
-  acceptance commits before progress persistence, final-response loss, unrelated
-  post-publication revision, terminal Result, revoked read rights, projection errors
-  and cooperating simultaneous retry.
-- Strict mypy passed for all 85 checked source files; focused Ruff passed.
+- 39 intake/reproduction tests passed, including normal retained-journal immutable
+  preview/hash replay, absent-whole-journal refusal after partial publication and
+  completed transfer, retained missing/stale-stage recovery, changed
+  content/target/basis identity collisions, projection errors and cooperating retry.
+- Focused Ruff and strict mypy passed.
 - `uv run --locked python -m tools.probe_entry_t4 --output
-  _scratch/entry-t4-installed-20260912` exited 0. Two fresh isolated installed-wheel
-  processes from an unrelated directory returned the same publication, acceptance
-  and saved-continuation receipts with no second revision and one acceptance. Raw
-  proof is retained under `_scratch/entry-t4-installed-20260912/`.
+  _scratch/entry-t4-correction-installed-20260912` exited 0. Two fresh isolated
+  installed-wheel processes from an unrelated directory replayed the full immutable
+  preview/hash, publication, acceptance and saved continuation with no second effect,
+  then refused journal absence while committed records, accepted Handoff and original
+  bytes remained unchanged. Raw proof is retained under
+  `_scratch/entry-t4-correction-installed-20260912/`.
 
 The complete delivery gate passed formatting for 97 files, Ruff, strict types for 85
-source files, all 13 import contracts, 303 tests, report structure, and wheel/source
-build. Its terminal exit was 0. The final task-local-cache output is retained at
-`_scratch/entry-t4-final-deliver-cache-20260912.log`.
+source files, all 13 import contracts, 304 tests, report structure, and wheel/source
+build. Its terminal exit was 0. The complete final log is retained at
+`_scratch/entry-t4-correction-final-deliver-attempt2-20260912.log`.
 
 ## assumptions
 
@@ -53,7 +57,10 @@ No spanning rollback is claimed: publication and acceptance remain two standard 
 transactions. An unregistered leftover file is reported and may be reused only by the
 ordinary exact Core retry; it is not acceptance. Journal inspection without approval
 shows only its unverified intake id, preview hash and claimed stage names. Receipt
-lookup still requires current metadata rights.
+lookup still requires current metadata rights. Loss of the entire original plan is
+not disk-loss reconstruction: it is safely refused after state advancement. Lost
+responses and missing/stale stage receipts remain recoverable only from a retained
+exact journal.
 
 No hostile same-user writer, network-filesystem, sudden-power-loss or disk-loss
 guarantee is added. No provider is contacted; this is not automatic research, a full

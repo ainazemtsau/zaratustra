@@ -456,6 +456,9 @@ def test_completed_transfer_repeats_with_original_receipts_and_one_effect(
     recovered = prepared(scenario, content)
     second = execute_material_intake(recovered, authorize(recovered))
 
+    assert recovered.preview == value.preview
+    assert recovered.preview_sha256 == value.preview_sha256
+    assert preview_bytes(recovered) == preview_bytes(value)
     assert second.publication == first.publication
     assert second.acceptance == first.acceptance
     assert second.continuation == first.continuation
@@ -582,7 +585,9 @@ def test_lost_final_response_after_saved_progress_replays_without_effect(
     assert len(read_handoffs(scenario.path)) == 1
 
 
-def test_authoritative_receipts_recover_when_journal_is_absent(tmp_path: Path) -> None:
+def test_absent_journal_after_completed_transfer_refuses_without_reconstruction(
+    tmp_path: Path,
+) -> None:
     scenario = bootstrap(tmp_path)
     content = envelope(scenario)
     value = prepared(scenario, content)
@@ -591,13 +596,63 @@ def test_authoritative_receipts_recover_when_journal_is_absent(tmp_path: Path) -
     journal.unlink()
     assert inspect_material_intake_progress(scenario.path, value.envelope.intake_id) is None
     before = read_records(scenario.path)
+    original_bytes = read_artifact(
+        scenario.path, scenario.artifact_id, value.envelope.publication_id
+    ).content
 
-    recovered = prepared(scenario, content)
-    second = execute_material_intake(recovered, authorize(recovered))
-    assert second.publication == first.publication
-    assert second.acceptance == first.acceptance
+    with pytest.raises(
+        IntakeError, match="progress_unavailable: Original transfer progress/plan is unavailable"
+    ):
+        prepared(scenario, content)
     assert read_records(scenario.path) == before
     assert len(read_handoffs(scenario.path)) == 1
+    assert (
+        read_artifact(scenario.path, scenario.artifact_id, value.envelope.publication_id).content
+        == original_bytes
+    )
+    assert not journal.exists()
+    assert first.acceptance.new_revision == before.state_revision
+
+
+def test_absent_journal_after_partial_publication_refuses_without_reconstruction(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scenario = bootstrap(tmp_path)
+    content = envelope(scenario)
+    value = prepared(scenario, content)
+    original_apply = apply_mutation
+    calls = 0
+
+    def stop_acceptance(*args: Any, **kwargs: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise MutationError("injected", "acceptance did not run")
+        return original_apply(*args, **kwargs)
+
+    monkeypatch.setattr("zaratustra.intake.apply_mutation", stop_acceptance)
+    with pytest.raises(IncompleteIntakeError) as failure:
+        execute_material_intake(value, authorize(value))
+    assert failure.value.stage == "acceptance"
+    assert failure.value.progress.publication is not None
+    journal = scenario.path / "inbox" / "transfers" / f"{value.envelope.intake_id}.json"
+    journal.unlink()
+    before = read_records(scenario.path)
+    original_bytes = read_artifact(
+        scenario.path, scenario.artifact_id, value.envelope.publication_id
+    ).content
+
+    with pytest.raises(
+        IntakeError, match="progress_unavailable: Original transfer progress/plan is unavailable"
+    ):
+        prepared(scenario, content)
+    assert read_records(scenario.path) == before
+    assert read_handoffs(scenario.path) == ()
+    assert (
+        read_artifact(scenario.path, scenario.artifact_id, value.envelope.publication_id).content
+        == original_bytes
+    )
+    assert not journal.exists()
 
 
 def test_malformed_and_inconsistent_progress_are_refused_safely(tmp_path: Path) -> None:
