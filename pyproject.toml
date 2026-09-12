@@ -53,13 +53,19 @@ layers = ["zaratustra.cli", "zaratustra.local", "zaratustra.core"]
 name = "Core has no surface dependency"
 type = "forbidden"
 source_modules = ["zaratustra.core"]
-forbidden_modules = ["zaratustra.cli", "zaratustra.entry", "zaratustra.local"]
+forbidden_modules = ["zaratustra.cli", "zaratustra.entry", "zaratustra.intake", "zaratustra.local"]
 
 [[tool.importlinter.contracts]]
 name = "Entry catalog depends only on Core"
 type = "forbidden"
 source_modules = ["zaratustra.entry"]
 forbidden_modules = ["zaratustra.cli", "zaratustra.local", "zaratustra.process_packs"]
+
+[[tool.importlinter.contracts]]
+name = "Incoming material coordinator depends only on Core"
+type = "forbidden"
+source_modules = ["zaratustra.intake"]
+forbidden_modules = ["zaratustra.cli", "zaratustra.entry", "zaratustra.local", "zaratustra.process_packs"]
 
 [[tool.importlinter.contracts]]
 name = "Process probe uses Core; Core has no process-rule dependency"

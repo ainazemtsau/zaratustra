@@ -49,8 +49,18 @@ from zaratustra.entry import (
     find_entries,
     prepare_entry_read,
     relocate_entry,
+    resolve_entry,
+    source_path,
 )
-from zaratustra.local import confirm_on_console
+from zaratustra.intake import (
+    MAX_INTAKE_BYTES,
+    IncompleteIntakeError,
+    IntakeError,
+    IntakeSelection,
+    execute_material_intake,
+    prepare_material_intake,
+)
+from zaratustra.local import confirm_material_intake_on_console, confirm_on_console
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -82,6 +92,12 @@ def main(argv: list[str] | None = None) -> int:
     entry_relocate.add_argument("catalog", type=Path)
     entry_relocate.add_argument("designation")
     entry_relocate.add_argument("workspace", type=Path)
+    entry_intake = entry_commands.add_parser(
+        "intake", help="Preview, confirm, publish and accept new external material."
+    )
+    entry_intake.add_argument("catalog", type=Path)
+    entry_intake.add_argument("designation")
+    entry_intake.add_argument("source", help="UTF-8 external-material JSON file, or '-' for stdin.")
     result_command = commands.add_parser(
         "result", help="Submit or discover an exact Result and continuation."
     )
@@ -175,6 +191,34 @@ def main(argv: list[str] | None = None) -> int:
                 output = relocate_entry(
                     args.catalog, args.designation, args.workspace
                 ).model_dump_json(indent=2)
+            elif args.entry_command == "intake":
+                entry = resolve_entry(args.catalog, args.designation)
+                workspace = source_path(args.catalog, entry)
+                from_stdin = args.source == "-"
+                if from_stdin:
+                    content = sys.stdin.buffer.read(MAX_INTAKE_BYTES + 1)
+                    source_ref = "stdin"
+                else:
+                    source = Path(args.source).expanduser().resolve()
+                    with source.open("rb") as stream:
+                        content = stream.read(MAX_INTAKE_BYTES + 1)
+                    source_ref = source.as_posix()
+                intake_prepared = prepare_material_intake(
+                    workspace,
+                    IntakeSelection(
+                        workspace_id=entry.workspace_id,
+                        process_id=entry.process_id,
+                        work_id=entry.work_id,
+                    ),
+                    content,
+                    source_ref=source_ref,
+                )
+                authorization = confirm_material_intake_on_console(
+                    intake_prepared, separate_terminal=from_stdin
+                )
+                output = execute_material_intake(intake_prepared, authorization).model_dump_json(
+                    indent=2
+                )
             else:
                 prepared = prepare_entry_read(
                     args.catalog, args.designation, max_bytes=args.max_bytes
@@ -301,6 +345,20 @@ def main(argv: list[str] | None = None) -> int:
                 "status": read_workspace,
             }[args.command]
             output = operation(args.path).model_dump_json(indent=2)
+    except IncompleteIntakeError as error:
+        print(
+            json.dumps(
+                dict(
+                    status="intake_incomplete",
+                    stage=error.stage,
+                    progress=error.progress.model_dump(mode="json"),
+                    unregistered_bytes_possible=error.unregistered_bytes_possible,
+                    error=str(error),
+                ),
+                indent=2,
+            )
+        )
+        return 2
     except ProjectionRebuildError as error:
         print(
             json.dumps(
@@ -314,6 +372,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
     except EntryError as error:
+        print(f"zara: [{error.code}] {error}", file=sys.stderr)
+        return 1
+    except IntakeError as error:
         print(f"zara: [{error.code}] {error}", file=sys.stderr)
         return 1
     except (WorkspaceError, ValidationError, OSError) as error:

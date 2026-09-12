@@ -3,11 +3,13 @@
 Version **0.10.1** is a technical foundation preview. It implements durable local
 workspaces, authorized mutations, versioned artifacts, accepted-result handoff,
 bounded Work context, Result/next Work, external process-pack binding, seven
-process read capabilities and a shared overview. See the [current report](RESULT.md)
-and [overview contract](docs/m1-overview/PLAN.md).
+process read capabilities, a shared overview, explicit entry discovery/basic read,
+and exact preview/publication/acceptance of new external text material. See the
+[current report](RESULT.md) and [incoming-material contract](docs/entry-t3/PLAN.md).
 
 This version does **not** yet provide an end-user process-creation assistant,
-an external research workflow, personal memory, model routing or a graphical UI.
+provider-integrated external research, durable intake replay/recovery, personal
+memory, model routing or a graphical UI.
 The two fictional processes used to verify the pack contract are development
 fixtures under `tests/fixtures`; they are not installed product templates.
 Publication of this foundation is not a claim that it is ready for everyday use.
@@ -84,6 +86,12 @@ T3 adds `process_packs.read_capabilities`: seven derived answers over an exact
 authorized metadata scope, with separately authorized selected Work context.
 Read [the capability contract](docs/m1-capabilities/PLAN.md) and
 [the reproducible example](docs/m1-capabilities/REPRODUCE.md).
+Entry T3 adds `zara entry intake`: it resolves one explicit catalog selection,
+validates a strict external-material envelope and current Work/basis/rights, displays
+the full exact material and two planned operations for trusted confirmation, then
+uses standard Artifact publication and Handoff acceptance. Its receipt keeps input,
+publication, acceptance and Work completion distinct; this bounded feature never
+completes Work. See [the installed reproduction](docs/entry-t3/REPRODUCE.md).
 M0 remains partial; no personal workspace is selected.
 
 Read [pack lifecycle decisions and W15–W20](docs/m1-packs/PLAN.md) for immutable
