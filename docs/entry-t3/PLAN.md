@@ -7,7 +7,8 @@ UTF-8 material for one explicitly selected Work. A catalog designation resolves 
 source, but the coordinator separately binds and validates the workspace, Process,
 Work and Artifact identities. It neither discovers authority nor executes a Pack.
 
-The external envelope is strict JSON version 1. It names an intake, publication and
+The external envelope is strict JSON version 1: its `version` is exactly the JSON
+integer `1`, with no coercion. It names an intake, publication and
 acceptance identity; the selected workspace/Process/Work/Artifact; the original
 state revision; exact existing Artifact-version basis references; the complete
 material; and bounded provenance fields. Duplicate keys, unknown fields (including

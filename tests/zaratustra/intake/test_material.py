@@ -300,6 +300,19 @@ def test_asserted_approval_boolean_and_real_size_limits_are_refused(tmp_path: Pa
         prepared(scenario, envelope(scenario, material="x" * (MAX_MATERIAL_BYTES + 1)))
 
 
+@pytest.mark.parametrize("invalid_version", [True, 1.0, "1"])
+def test_envelope_version_is_exact_strict_integer_one(
+    tmp_path: Path, invalid_version: object
+) -> None:
+    scenario = bootstrap(tmp_path)
+    accepted = prepared(scenario, envelope(scenario, version=1))
+    before = read_records(scenario.path)
+    assert accepted.envelope.version == 1
+    with pytest.raises(IntakeError, match="invalid_envelope"):
+        prepared(scenario, envelope(scenario, version=invalid_version))
+    assert read_records(scenario.path) == before
+
+
 @pytest.mark.parametrize("change", ["material", "basis", "path"])
 def test_old_confirmation_cannot_follow_changed_payload_basis_or_target(
     tmp_path: Path, change: str

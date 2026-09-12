@@ -4,6 +4,10 @@
 
 Scope achieved for the bounded new-material intake increment.
 
+Follow-up correction: external-material envelope `version` is now exactly the JSON
+integer `1`, without Pydantic coercion. JSON `true`, `1.0`, and `"1"` are refused
+at intake parsing; no Core semantics, authority behavior, or feature scope changed.
+
 One installed coordinator receives a strict external-material envelope for an
 explicitly selected catalog Work, validates the current workspace/Process/Work/
 Artifact identities, original revision, ready Artifact rights, immutable Pack
@@ -27,27 +31,26 @@ Pack binding, Artifact and accepted-Handoff semantics are unchanged.
 
 Commands executed on the finished candidate:
 
-- `uv run --locked python -m pytest tests/zaratustra/intake/test_material.py tests/tools/test_entry_t3.py -q`
-- `uv run --locked python -m tools.probe_entry_t3 --output _scratch/<new-entry-t3-run>`
-- `uv run --locked python -m tools.check --deliver`
+- `uv run --locked python -m pytest tests/zaratustra/intake/test_material.py -q -o cache_dir=_scratch/toolchain/entry-t3-version-pytest-cache`
+- `uv run --locked python -m tools.check --deliver` (complete output:
+  `_scratch/entry-t3-version-final-deliver-20260912.log`)
 
-The focused suite passed 20 tests. It covers exact new-byte preview/publication/
+The focused suite passed 22 tests. It covers exact new-byte preview/publication/
 acceptance, first-version creation, current basis and content integrity, selected
 identities, stale state, insufficient rights, terminal Work, malformed/duplicate/
 oversized input, hidden approval, payload/target/basis changes after preview, missing
-confirmation, partial acceptance and committed projection-error reporting.
+confirmation, partial acceptance and committed projection-error reporting. The
+version regression accepts only JSON integer `1`; JSON `true`, `1.0`, and `"1"` are
+refused through the public preparation path before any workspace effect.
 
-The installed-wheel probe exited successfully from an unrelated directory in an
-isolated Python 3.13.7 environment. On one newly created generic schema-7 source, it
-measured original revision 4, publication revision 5 and acceptance/final revision 6.
-The new material hash had no registered version before intake; afterward the exact
-bytes and exact prior basis were verified through public reads. Publication and
-acceptance event receipts were distinct, completion was `not_requested`, and the
-continuation was the same ready Work. Missing confirmation, changed material, an
-asserted approval field and a foreign Work identity were refused before success.
+Before the correction, a disposable new generic schema-7 workspace showed that JSON
+`true` and `1.0` were accepted and normalized to parsed version `1`, while `"1"` was
+refused (`_scratch/entry-t3-version-before-20260912.log`). After it, a separate new
+generic workspace accepted integer `1` and refused all three invalid variants
+(`_scratch/entry-t3-version-after-20260912.log`).
 
 The final complete native delivery gate exited successfully after formatting, lint,
-strict types, 13 import contracts, 284 passing tests and wheel/source build. Technical
+strict types, 13 import contracts, 287 passing tests and wheel/source build. Technical
 decisions and limits are in `docs/entry-t3/PLAN.md`; reproducible installed steps and
 retained-output inventory are in `docs/entry-t3/REPRODUCE.md`.
 
@@ -75,11 +78,10 @@ limits. Generated Handoff metadata remains subject to Core's separate 64 KiB lim
 
 ## cost
 
-One dependency-bounded installed coordinator, one trusted-console wrapper, one CLI
-subcommand, one added import contract, focused regression coverage, one installed
-generic-data probe and two compact product documents. Envelope/preview/confirmation
-policy is isolated from Core. The exact ids, hashes, planned requests and stage
-receipts are a small compatible boundary for the next replay/recovery increment.
+One strict intake-schema field correction, focused regression coverage and factual
+public documentation/report updates. Envelope/preview/confirmation policy remains
+isolated from Core. The exact ids, hashes, planned requests and stage receipts are a
+small compatible boundary for the next replay/recovery increment.
 
 ## manual-acceptance
 

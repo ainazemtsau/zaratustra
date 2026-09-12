@@ -81,7 +81,7 @@ class ExternalMaterial(IntakeModel):
     """Strict untrusted transport envelope. Every field is data, never approval."""
 
     kind: Literal["external_material"]
-    version: Literal[1]
+    version: Annotated[int, Field(strict=True, ge=1, le=1)]
     intake_id: UUID
     publication_id: UUID
     acceptance_id: UUID
