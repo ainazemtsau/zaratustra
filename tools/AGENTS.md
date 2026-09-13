@@ -19,4 +19,7 @@ then explicitly exposes those same external fixtures to the wheel-only interpret
 probe_process_t3 retains rejection/pending/planned/applied safe-change evidence for
 both exact external fixtures. probe_process_t3_install proves product imports come
 from the wheel before the harness explicitly exposes those development fixtures.
+probe_public_onboarding_t1 builds and installs the current wheel, migrates only an
+isolated copy, and faults/restores only one disposable fictional full pair. It is
+risk evidence for a later updater, not an installed updater or release proof.
 END_OF_FILE: tools/AGENTS.md
