@@ -1,72 +1,68 @@
-# Process creation T2 technical handback
+# Process creation T2 correction technical handback
 
 ## outcome
 
-Version 0.14.0 at implementation commit
-`13f542f042393462421066e9453fc34dfd5da7c3` ships a provider-neutral, recoverable
-`zara entry create` path from saved need/clarifications through exact linked manual
-research, an assistant-authored source-traceable supported definition, and one
-complete UTF-8 activation preview to an immutable bound Process and first common-entry
-openable Work. Research is durably `untrusted_research`, never approval. Core identity,
-authority, immutable binding and released migration semantics are reused unchanged.
+Version 0.14.1 at implementation commit
+`71d76ace9ec443c633ce2019e9dc5676c4cbbdcd` repairs the fresh-review F1 defect.
+Retained preview SHA-256, readable UTF-8 display, authorization and fresh
+revalidation now bind one exact byte representation. The report evidence commit is
+`REPORT_COMMIT_PENDING`. Existing journal/request/source canonical serialization,
+saved source digests, Core identity/authority/immutable bindings and released
+migrations remain unchanged. This is technical correction delivery, not T2 close.
 
 ## evidence
 
-- Focused T2 behavior: 13 tests passed for two complete fictional paths, exact source
-  and return identity, missing capability refusal/status, readable request/preview,
-  no/stale confirmation, partial/replay recovery, current terminal rights and CLI.
-- HOME steering reproduction proved the former wrong-target path migrated an
-  unrelated schema-2 workspace to 7 before refusal. The repaired regression passed
-  with public workspace info and records unchanged at schema 2. Valid strict model
-  JSON now round-trips, and full Cyrillic preview text is real UTF-8.
-- Final `uv run --locked python -m tools.check` exited 0: 114 formatted files, Ruff,
-  strict mypy over 99 source files, 16/16 contracts, 343 tests in 116.94 seconds and
-  the 0.14.0 wheel/sdist. Full log:
-  `_scratch/process-t2-gates-executor-03/full-check.log`.
-- Wheel-only `tools.probe_process_t2_install` exited 0 at exact commit `13f542f...`.
-  Retained `verification.json` proves version 0.14.0, wheel SHA-256
-  `060d033e1484dc0a7ccf68b53e68ed10d733d4819f4a00d6cd2cf6c0296e7441`,
-  all product modules from the isolated venv, and dev packages absent before explicit
-  fixture exposure. Both retained fixture summaries reached activated/openable first
-  Works; small retained recurrence and project retained both dependencies. Research
-  remained `approval: false`; `provider_contacted: false`.
-- `docs/process-t2/READOUT.md` gives the exact CLI/API behavior, stage/recovery rules,
-  commands, evidence paths and limits. Both HOME notes are preserved under
-  `docs/process-t2`; T1 reports are unchanged.
-- Report-aware `uv run --locked python -m tools.check --deliver` exited 0 after the
-  reports existed: the same 114/99/16/343 surface, 343 tests in 126.22 seconds,
-  wheel/sdist and report structure. Full log:
-  `_scratch/process-t2-gates-executor-04/deliver.log`.
+- Independent pre-fix reproduction: ASCII retained/shown hashes matched and
+  authorized; combined Unicode retained/shown hashes differed and refused
+  `permission_denied`. The new regression now authorizes, executes six Core
+  operations and common-entry opens the exact first Work for both cases.
+- Exact pre-fix 0.14.0 Unicode request fixture SHA-256
+  `5f993c2957b78eaedc9d9d70d6a5bb881ef21a6957f5bab4a07dec9f16245272`
+  parses and re-saves byte-for-byte under 0.14.1.
+- Focused T2 suite: 15 passed. Existing wrong/stale/tampered/no-authorization,
+  missing/terminal-rights, replay/reconciliation and wrong-target protections remain
+  covered and their implementation paths were not changed.
+- Native `tools.check`: exit 0; 114 format, Ruff, mypy 99, contracts 16/16,
+  345 tests in 110.72 seconds, wheel/sdist. Log:
+  `_scratch/process-t2-correction-gates-01/full-check.log`.
+- Exact commit `71d76ac...` wheel proof: 0.14.1 wheel SHA-256
+  `7e0b08bc68ec2c074feee309b9c1682f15616a866c50889941d641a5d1d38a56`;
+  both original external fixtures activate/open; dev packages absent before explicit
+  exposure; every product origin is wheel `site-packages`. Correction-specific `-I`
+  empty-cwd proof also activates/opens ASCII and combined Unicode cases with six
+  receipts and equal retained/shown hashes. Evidence:
+  `_scratch/process-t2-correction-installed-01/verification.json` and
+  `_scratch/process-t2-correction-installed-unicode-02/verification.json`.
+- Report-aware `tools.check --deliver`: exit 0; the same 114/99/16 surface,
+  345 tests in 105.23 seconds, wheel/sdist and report structure. Log:
+  `_scratch/process-t2-correction-gates-02/deliver.log`. Detailed reproduction,
+  criteria disposition and limits are in `docs/process-t2/FIX-READOUT.md`; the
+  original `docs/process-t2/READOUT.md` and failed reviewer evidence are preserved.
 
 ## assumptions
 
-The human or assistant supplies the problem-specific draft, actual manual research
-return and proposed generic definition; the product validates and retains them but
-does not fabricate reasoning. One accepted empty canonical snapshot is the initial
-basis required by current Core context opening, not a Work result. Declared node order
-remains T1's deterministic serialization when multiple nodes are eligible.
+Pending drafts retain content, not a stored activation-preview digest; recomputing
+their prepared preview therefore needs no migration. Synthetic local-chat is valid
+technical seam evidence only. Actual human research, confirmation and owner
+acceptance remain separate.
 
 ## cuts
 
-Full safe definition/process evolution, replacement and reviewed migration policy
-remain T3. Full physical installed-reader lifecycle proof remains T4. T2 adds no
-provider/browser/account call, automatic research, real data, personal install,
-domain workflow/template, GUI, universal scheduler/database, arbitrary loader or
-interpreter, paid service, CI/integration, Direction mutation or new external right.
-The first-Work catalog designation is not silently advanced after completion. A
-future actual human research handoff is separate from the synthetic technical probes.
+No T3 safe evolution/replacement/rebinding/migration work and no T4 full physical
+installed-reader/lifecycle work was started. No provider, browser, account, real
+research/data, personal workspace, paid service, Direction state, CI/integration,
+new external right or main push was used.
 
 ## cost
 
-One installed coordinator module with its nearest instructions, one public CLI group,
-one trusted exact-preview console adapter, one import boundary, 13 behavioral tests,
-two extended development fixtures, source and wheel-only probes, a 0.14.0 version
-bump, PLAN/READOUT/report documentation, and no new runtime dependency or expense.
+One preview-hash representation correction, one two-case activation/open regression,
+one immutable pre-fix request fixture, patch version metadata, correction plan/readout
+and isolated native/wheel evidence; no new runtime dependency or expense.
 
 ## manual-acceptance
 
-pending. This is executor technical evidence, not fresh HOME G5, owner acceptance,
-Direction close, or permission to start T3/T4.
+pending. Executor checks are not binding G5, owner acceptance or permission to close
+T2/start T3/T4. HOME must open another fresh physical reviewer after handback.
 
 ## next
 
