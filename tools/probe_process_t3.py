@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Literal
 from uuid import UUID, uuid4
@@ -36,10 +37,12 @@ from zaratustra.core import (
     read_workspace,
 )
 from zaratustra.process_change import (
+    ProcessChangeError,
     ReviewedProcessChange,
     authorize_process_change,
     decide_process_change,
     execute_process_change_continuation,
+    inspect_process_change,
     prepare_process_change,
     prepare_process_change_continuation,
     process_change_continuation_query,
@@ -79,9 +82,9 @@ def _confirm(path: Path, value: MutationRequest | ContextQuery, case: Case) -> L
     return authorize_local(
         prepare_authorization(path, value),
         channel="local-chat",
-        actor="fictional-process-t3-probe",
+        actor="fictional-process-t3-probe-исполнитель",
         source_ref=(
-            f"T3 {case} technical fixture confirmation; simulated local chat, "
+            f"T3 {case} точное technical fixture confirmation; simulated local chat, "
             "not real owner acceptance"
         ),
     )
@@ -194,11 +197,12 @@ def _accept_result(
     return content, publication.operation_id
 
 
-def run(output: Path, case: Case) -> dict[str, Any]:
+def _activate(
+    output: Path, case: Case, designation: str
+) -> tuple[Path, Path, ProcessDefinition, Work]:
     output.mkdir()
     catalog = output / "catalog.json"
     workspace = output / "workspace"
-    designation = f"T3 synthetic {case} process"
     request_file = output / "manual-research-request.json"
     save_creation_draft(catalog, designation, creation_draft(case))
     request = create_research_request(catalog, designation)
@@ -217,9 +221,6 @@ def run(output: Path, case: Case) -> dict[str, Any]:
         hashlib.sha256(request_file.read_bytes()).hexdigest(),
         research.content_sha256,
     )
-    changed = _changed(definition, case)
-    (output / "definition-before.json").write_bytes(definition.model_dump_json(indent=2).encode())
-    (output / "definition-after.json").write_bytes(changed.model_dump_json(indent=2).encode())
     save_supported_proposal(catalog, designation, definition.model_dump_json().encode())
     activation = prepare_process_activation(catalog, designation, workspace)
     activation_auth = authorize_process_activation(
@@ -231,6 +232,86 @@ def run(output: Path, case: Case) -> dict[str, Any]:
     activated = execute_process_activation(activation, activation_auth)
     assert activated.creation.first_work_id is not None
     first_work = _work(workspace, activated.creation.first_work_id)
+    return catalog, workspace, definition, first_work
+
+
+def _refusal(
+    catalog: Path,
+    workspace: Path,
+    designation: str,
+    proposed: ProcessDefinition,
+    expected_code: str,
+    case: Case,
+) -> dict[str, Any]:
+    before_database = read_workspace(workspace).database.read_bytes()
+    before_records = read_records(workspace)
+    prepared = prepare_process_change(
+        catalog, designation, proposed.model_dump_json().encode("utf-8")
+    )
+    try:
+        review_process_change(prepared, _confirm(workspace, prepared.query, case))
+    except ProcessChangeError as error:
+        assert error.code == expected_code
+    else:
+        raise AssertionError(f"{expected_code} change unexpectedly reached saved review")
+    try:
+        inspect_process_change(catalog, designation)
+    except ProcessChangeError as error:
+        assert error.code == "change_not_found"
+    else:
+        raise AssertionError("Refused change unexpectedly created a journal")
+    return dict(
+        refusal_code=expected_code,
+        core_database_unchanged=read_workspace(workspace).database.read_bytes() == before_database,
+        core_records_unchanged=read_records(workspace) == before_records,
+        review_or_approval_saved=False,
+    )
+
+
+def run_correction_refusals(output: Path) -> dict[str, Any]:
+    output.mkdir()
+    edition_only: dict[str, Any] = {}
+    for case in ("small", "project"):
+        designation = f"T3 R1 edition-only {case}"
+        catalog, workspace, definition, _work_row = _activate(
+            output / f"edition-only-{case}", case, designation
+        )
+        edition_only[case] = _refusal(
+            catalog,
+            workspace,
+            designation,
+            definition.model_copy(update=dict(edition=2)),
+            "no_change",
+            case,
+        )
+    designation = "T3 R1 no-future project"
+    catalog, workspace, definition, _work_row = _activate(
+        output / "no-future-project", "project", designation
+    )
+    no_future = _refusal(
+        catalog,
+        workspace,
+        designation,
+        definition.model_copy(update=dict(edition=2, nodes=(definition.nodes[0],))),
+        "no_future_work",
+        "project",
+    )
+    summary = dict(
+        product_version=version("zaratustra"),
+        edition_only=edition_only,
+        no_future=no_future,
+        existing_invalid_journals_edited=False,
+    )
+    _save(output / "summary.json", summary)
+    return summary
+
+
+def run(output: Path, case: Case) -> dict[str, Any]:
+    designation = f"T3 synthetic {case} process"
+    catalog, workspace, definition, first_work = _activate(output, case, designation)
+    changed = _changed(definition, case)
+    (output / "definition-before.json").write_bytes(definition.model_dump_json(indent=2).encode())
+    (output / "definition-after.json").write_bytes(changed.model_dump_json(indent=2).encode())
     process = _process(workspace)
     assert process.pack_binding is not None
     initial_artifact = _artifact(workspace, first_work.id)
@@ -244,13 +325,17 @@ def run(output: Path, case: Case) -> dict[str, Any]:
     database_before_review = read_workspace(workspace).database.read_bytes()
 
     rejected_review = _review(catalog, workspace, designation, changed, case)
+    decision_actor = "fictional-process-t3-probe-рецензент"
+    rejected_source = f"T3 {case} точное synthetic rejection; not owner acceptance"
     rejected_decision = authorize_process_change(
         rejected_review,
         decision="reject",
         channel="local-chat",
-        actor="fictional-process-t3-probe",
-        source_ref=f"T3 {case} explicit synthetic rejection; not owner acceptance",
+        actor=decision_actor,
+        source_ref=rejected_source,
     )
+    assert rejected_decision.actor == decision_actor
+    assert rejected_decision.source_ref == rejected_source
     rejected = decide_process_change(rejected_review, rejected_decision)
     assert rejected.stage == "rejected"
     assert read_workspace(workspace).database.read_bytes() == database_before_review
@@ -258,13 +343,15 @@ def run(output: Path, case: Case) -> dict[str, Any]:
     review = _review(catalog, workspace, designation, changed, case)
     preview = process_change_preview_bytes(review)
     (output / "change-preview.json").write_bytes(preview)
+    approval_source = f"T3 {case} точное synthetic approval; not owner acceptance"
     decision = authorize_process_change(
         review,
         decision="approve",
         channel="local-chat",
-        actor="fictional-process-t3-probe",
-        source_ref=f"T3 {case} explicit synthetic approval; not owner acceptance",
+        actor=decision_actor,
+        source_ref=approval_source,
     )
+    assert decision.actor == decision_actor and decision.source_ref == approval_source
     pending = decide_process_change(review, decision)
     assert pending.stage == "pending" and pending.intent_is_core_effect is False
     assert read_workspace(workspace).database.read_bytes() == database_before_review
@@ -314,9 +401,10 @@ def run(output: Path, case: Case) -> dict[str, Any]:
         source_commit=subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=ROOT, encoding="utf-8"
         ).strip(),
-        product_version="0.15.0",
+        product_version=version("zaratustra"),
         provider_contacted=False,
         simulated_confirmation_not_owner_acceptance=True,
+        unicode_confirmation_preserved=True,
         rejected_without_core_change=True,
         approval_stage=pending.stage,
         approval_is_core_effect=pending.intent_is_core_effect,

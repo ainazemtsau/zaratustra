@@ -402,6 +402,10 @@ def edition_transition(
         work, current.node
     ):
         raise ConstructionError("work_mismatch", "Core Work is not this exact snapshot selection")
+    if to_definition.nodes == snapshot.definition.nodes:
+        raise ConstructionError(
+            "no_change", "Advancing only the definition edition is not a process change"
+        )
     touched = {row.node_id for row in snapshot.results} | {current.node.node_id}
     old_nodes = {row.node_id: row for row in snapshot.definition.nodes}
     new_nodes = {row.node_id: row for row in to_definition.nodes}
@@ -414,6 +418,19 @@ def edition_transition(
     if changed_current != current:
         raise ConstructionError(
             "current_work_changed", "The proposed edition changes current Work selection"
+        )
+    placeholder = tuple(
+        DataValue(key=key, value="Pending exact accepted value") for key in current.node.output_keys
+    )
+    completed = record_result(snapshot, placeholder)
+    changed_completed = ProcessSnapshot(
+        definition=to_definition,
+        results=completed.results,
+    )
+    if evaluate_snapshot(changed_completed).selected is None:
+        raise ConstructionError(
+            "no_future_work",
+            "The proposed edition has no supported Work after the current Result",
         )
     return transition
 

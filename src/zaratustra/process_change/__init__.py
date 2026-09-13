@@ -373,11 +373,27 @@ def _validate_journal(journal: _ChangeJournal) -> None:
             or request.submission.next_work.artifact_id != approved.next_artifact_id
         ):
             raise ProcessChangeError("journal_invalid", "Planned Result request differs")
+        _validate_saved_preview(approved.preview)
     if journal.pending_review is not None and (
         journal.pending_review.workspace_id != journal.workspace_id
         or journal.pending_review.process_id != journal.process_id
     ):
         raise ProcessChangeError("journal_invalid", "Pending review names another Process")
+    if journal.pending_review is not None:
+        _validate_saved_preview(journal.pending_review)
+
+
+def _validate_saved_preview(preview: ProcessChangePreview) -> None:
+    if preview.transition.from_definition.nodes == preview.transition.to_definition.nodes:
+        raise ProcessChangeError(
+            "saved_change_unsupported",
+            "Saved edition-only intent is not a process change",
+        )
+    if preview.next_work_with_change is None:
+        raise ProcessChangeError(
+            "saved_change_unsupported",
+            "Saved intent has no supported future Work effect",
+        )
 
 
 def _process(snapshot: RecordsSnapshot, process_id: UUID) -> Process:

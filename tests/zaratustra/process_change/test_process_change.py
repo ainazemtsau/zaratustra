@@ -76,8 +76,8 @@ def _confirm(path: Path, value: MutationRequest | ContextQuery) -> LocalAuthoriz
     return authorize_local(
         prepare_authorization(path, value),
         channel="local-chat",
-        actor="fictional-process-change-test",
-        source_ref="T3 technical fixture confirmation; not owner acceptance",
+        actor="fictional-process-change-test-исполнитель",
+        source_ref="T3 точное техническое подтверждение; not owner acceptance",
     )
 
 
@@ -218,13 +218,16 @@ def _review(
 def _decide(
     review: ReviewedProcessChange, decision: Literal["approve", "reject"]
 ) -> ProcessChangeStatus:
+    actor = "fictional-process-change-test-рецензент"
+    source_ref = f"T3 точное synthetic {decision}; not owner acceptance"
     authorization = authorize_process_change(
         review,
         decision=decision,
         channel="local-chat",
-        actor="fictional-process-change-test",
-        source_ref=f"T3 synthetic {decision}; not owner acceptance",
+        actor=actor,
+        source_ref=source_ref,
     )
+    assert authorization.actor == actor and authorization.source_ref == source_ref
     return decide_process_change(review, authorization)
 
 
@@ -371,6 +374,30 @@ def test_rejection_retains_decision_and_preserves_all_core_bytes(tmp_path: Path)
     }
     assert status.stage == "rejected" and status.rejected_changes == 1
     assert status.approved_change_id is None and before == after
+
+
+@pytest.mark.parametrize("failure", ["edition_only", "no_future"])
+def test_unsupported_change_refuses_before_review_is_saved(tmp_path: Path, failure: str) -> None:
+    catalog, workspace, designation, definition, _current = _activate(tmp_path, "project")
+    if failure == "edition_only":
+        changed = definition.model_copy(update=dict(edition=2))
+        code = "no_change"
+    else:
+        changed = definition.model_copy(update=dict(edition=2, nodes=(definition.nodes[0],)))
+        code = "no_future_work"
+    before_database = read_workspace(workspace).database.read_bytes()
+    before_records = read_records(workspace)
+    prepared = prepare_process_change(
+        catalog, designation, changed.model_dump_json().encode("utf-8")
+    )
+
+    with pytest.raises(ProcessChangeError, match=code):
+        review_process_change(prepared, _confirm(workspace, prepared.query))
+
+    assert read_workspace(workspace).database.read_bytes() == before_database
+    assert read_records(workspace) == before_records
+    with pytest.raises(ProcessChangeError, match="change_not_found"):
+        inspect_process_change(catalog, designation)
 
 
 @pytest.mark.parametrize("failure", ["wrong_id", "skipped_edition", "current_change"])
@@ -527,6 +554,50 @@ def test_multiple_applied_changes_follow_mutated_continuation_and_rebuild_bases(
     assert review3.preview.source_work_id == work3.id
     assert review3.snapshot.definition == edition3
     assert inspect_process_change(catalog, designation).stage == "review_pending"
+
+
+def test_later_future_change_is_valid_and_later_current_no_future_refuses(
+    tmp_path: Path,
+) -> None:
+    catalog, workspace, designation, edition1, work1 = _activate(tmp_path, "project")
+    later = edition1.nodes[2].model_copy(
+        update=dict(goal="Assemble the later reviewed fictional panel decision")
+    )
+    edition2 = edition1.model_copy(update=dict(edition=2, nodes=(*edition1.nodes[:2], later)))
+    review = _review(catalog, workspace, designation, edition2)
+    without = review.preview.next_work_without_change
+    with_change = review.preview.next_work_with_change
+    assert without is not None and with_change is not None
+    assert (
+        without.model_copy(update=dict(definition_sha256=with_change.definition_sha256))
+        == with_change
+    )
+    _decide(review, "approve")
+    _accept_current_result(
+        workspace,
+        work1,
+        ProcessSnapshot(definition=edition1),
+        project_request_data(),
+    )
+    query = process_change_continuation_query(catalog, designation)
+    planned = prepare_process_change_continuation(catalog, designation, _confirm(workspace, query))
+    applied = execute_process_change_continuation(planned, _confirm(workspace, planned.request))
+    work2 = _work(workspace, applied.change.current_work_id)
+    assert work2.goal == edition1.nodes[1].goal
+    assert f"definition-sha256:{definition_sha256(edition2)}" in (work2.executor_requirements)
+
+    _authorize_artifact(workspace, work2)
+    before_records = read_records(workspace)
+    before_status = inspect_process_change(catalog, designation)
+    no_future = edition2.model_copy(update=dict(edition=3, nodes=edition2.nodes[:2]))
+    prepared = prepare_process_change(
+        catalog, designation, no_future.model_dump_json().encode("utf-8")
+    )
+    with pytest.raises(ProcessChangeError, match="no_future_work"):
+        review_process_change(prepared, _confirm(workspace, prepared.query))
+
+    assert read_records(workspace) == before_records
+    assert inspect_process_change(catalog, designation) == before_status
 
 
 MAX_SMALL_BUDGET = 999_999

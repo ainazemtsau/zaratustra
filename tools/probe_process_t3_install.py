@@ -39,13 +39,17 @@ def _child(base: Path) -> None:
     for name in ("tests", "tools"):
         assert importlib.util.find_spec(name) is None, name
     sys.path.append(str(ROOT))
-    from tools.probe_process_t3 import run
+    from tools.probe_process_t3 import run, run_correction_refusals
 
     small = run(base / "small", "small")
     project = run(base / "project", "project")
+    correction = run_correction_refusals(base / "correction-refusals")
     assert small["stage"] == project["stage"] == "applied"
     assert small["pack_reference_bytes_preserved"] is True
     assert project["pack_reference_bytes_preserved"] is True
+    assert correction["edition_only"]["small"]["refusal_code"] == "no_change"
+    assert correction["edition_only"]["project"]["refusal_code"] == "no_change"
+    assert correction["no_future"]["refusal_code"] == "no_future_work"
     modules = {
         name: str(module.__file__)
         for name, module in sys.modules.items()
@@ -61,6 +65,7 @@ def _child(base: Path) -> None:
             installed_root=str(installed_root),
             small_summary=str((base / "small/summary.json").resolve()),
             project_summary=str((base / "project/summary.json").resolve()),
+            correction_summary=str((base / "correction-refusals/summary.json").resolve()),
             dev_packages_absent_before_explicit_fixture_exposure=True,
             external_fixtures_explicitly_exposed_by_harness=True,
             all_product_modules_loaded_from_wheel=True,
@@ -68,7 +73,10 @@ def _child(base: Path) -> None:
             manual_acceptance="pending",
         ),
     )
-    print("PASS: wheel-only T3 safe change; two explicit external fixtures", flush=True)
+    print(
+        "PASS: wheel-only T3 safe change and R1 refusals; two explicit external fixtures",
+        flush=True,
+    )
 
 
 def verify(base: Path) -> None:

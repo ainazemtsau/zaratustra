@@ -214,6 +214,91 @@ def test_future_edition_changes_only_the_next_work_and_keeps_pack_and_old_bytes(
     assert following.executor_requirements[-2:] == ("node:capture", "occurrence:2")
 
 
+@pytest.mark.parametrize("project", [False, True])
+def test_future_edition_refuses_an_edition_only_relabel(project: bool) -> None:
+    definition = project_definition() if project else small_definition()
+    before = ProcessSnapshot(definition=definition)
+    current = work_for(initial_requirements(definition), project=project)
+
+    with pytest.raises(ConstructionError, match="no_change"):
+        edition_transition(
+            current,
+            before,
+            definition.model_copy(update=dict(edition=definition.edition + 1)),
+        )
+
+
+def test_future_edition_refuses_when_current_result_would_have_no_next_work() -> None:
+    definition = project_definition()
+    before = ProcessSnapshot(definition=definition)
+    current = work_for(initial_requirements(definition), project=True)
+    changed = definition.model_copy(update=dict(edition=2, nodes=(definition.nodes[0],)))
+
+    with pytest.raises(ConstructionError, match="no_future_work"):
+        edition_transition(current, before, changed)
+
+
+def test_future_edition_allows_only_a_later_future_work_to_change() -> None:
+    definition = project_definition()
+    before = ProcessSnapshot(definition=definition)
+    current = work_for(initial_requirements(definition), project=True)
+    later = definition.nodes[2].model_copy(
+        update=dict(goal="Assemble the later reviewed fictional panel decision")
+    )
+    changed = definition.model_copy(update=dict(edition=2, nodes=(*definition.nodes[:2], later)))
+
+    transition = edition_transition(current, before, changed)
+    accepted = record_result(before, project_request_data())
+    next_work = registration(project_reference(), definition, transition).rule.next_work(
+        current, snapshot_bytes(accepted), uuid4(), uuid4()
+    )
+
+    assert next_work.goal == definition.nodes[1].goal
+    assert next_work.expected_result == definition.nodes[1].expected_result
+    assert f"definition-sha256:{definition_sha256(changed)}" in (next_work.executor_requirements)
+
+
+def test_future_edition_refuses_no_future_work_at_a_later_current_node() -> None:
+    definition = project_definition()
+    accepted = record_result(ProcessSnapshot(definition=definition), project_request_data())
+    current_spec = registration(project_reference(), definition).rule.next_work(
+        work_for(initial_requirements(definition), project=True),
+        snapshot_bytes(accepted),
+        uuid4(),
+        uuid4(),
+    )
+    current = work_from_spec(current_spec, project=True)
+    changed = definition.model_copy(update=dict(edition=2, nodes=definition.nodes[:2]))
+
+    with pytest.raises(ConstructionError, match="no_future_work"):
+        edition_transition(current, accepted, changed)
+
+
+@pytest.mark.parametrize("failure", ["edition_only", "no_future"])
+def test_runtime_revalidates_a_retained_invalid_transition(failure: str) -> None:
+    definition = project_definition()
+    before = ProcessSnapshot(definition=definition)
+    current = work_for(initial_requirements(definition), project=True)
+    if failure == "edition_only":
+        changed = definition.model_copy(update=dict(edition=2))
+        code = "no_change"
+    else:
+        changed = definition.model_copy(update=dict(edition=2, nodes=(definition.nodes[0],)))
+        code = "no_future_work"
+    retained = DefinitionTransition(
+        work_id=current.id,
+        from_snapshot_sha256=hashlib.sha256(snapshot_bytes(before)).hexdigest(),
+        from_definition=definition,
+        to_definition=changed,
+    )
+    accepted = record_result(before, project_request_data())
+
+    with pytest.raises(ConstructionError, match=code):
+        registration(project_reference(), definition, retained).rule.next_work(
+            current, snapshot_bytes(accepted), uuid4(), uuid4()
+        )
+
+
 @pytest.mark.parametrize("change", ["current", "source", "edition"])
 def test_future_edition_refuses_started_identity_or_nonsequential_change(change: str) -> None:
     definition = project_definition()
