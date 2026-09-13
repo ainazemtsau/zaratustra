@@ -5,10 +5,11 @@
 Version 0.14.1 at implementation commit
 `71d76ace9ec443c633ce2019e9dc5676c4cbbdcd` repairs the fresh-review F1 defect.
 Retained preview SHA-256, readable UTF-8 display, authorization and fresh
-revalidation now bind one exact byte representation. The report evidence commit is
-`REPORT_COMMIT_PENDING`. Existing journal/request/source canonical serialization,
-saved source digests, Core identity/authority/immutable bindings and released
-migrations remain unchanged. This is technical correction delivery, not T2 close.
+revalidation now bind one exact byte representation. The evidence-bearing report
+commit is `ee96cf81682f70e09cd2ce1d437e901b703da3a1`. Existing
+journal/request/source canonical serialization, saved source digests, Core
+identity/authority/immutable bindings and released migrations remain unchanged.
+This is technical correction delivery, not T2 close.
 
 ## evidence
 

@@ -1,8 +1,8 @@
 # Process creation T2 correction readout
 
 The bounded F1 correction is implemented in commit
-`71d76ace9ec443c633ce2019e9dc5676c4cbbdcd`; the report evidence commit is
-`REPORT_COMMIT_PENDING`. It is based on failed candidate
+`71d76ace9ec443c633ce2019e9dc5676c4cbbdcd`; the evidence-bearing report commit is
+`ee96cf81682f70e09cd2ce1d437e901b703da3a1`. It is based on failed candidate
 `c9a8d6ee68371f6f68e6971a8d51677125d70f06`. The original `PLAN.md` and
 `READOUT.md`, both steering notes, and all fresh-review workspaces/evidence remain
 unchanged. Version 0.14.1 distinguishes the corrected artifact.
