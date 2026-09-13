@@ -2,7 +2,9 @@
 
 T3 is implemented on verified T2 basis `3929b2242a000674d8e408b1f6518c5698b70661`.
 The bounded implementation is commit `3c9db45f1518da617de7c72fb388c01eb69d4495`,
-version 0.15.0. This is a technical candidate handback, not owner acceptance,
+and the evidence-bearing report commit is
+`a10c66f9ed72ba8777e620941ab3d31ad753bad8`, version 0.15.0. This is a
+technical candidate handback, not owner acceptance,
 binding HOME G5, T4 synthesis, or a whole-product/domain release claim.
 
 ## Exact future-edition effect

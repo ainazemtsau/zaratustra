@@ -9,6 +9,8 @@ the current Work, prior snapshots/grounds, Core identities and immutable Pack by
 remain exact. The new edition first has a real effect in the existing authorized
 Core Result transaction that creates its applicable future Work. This is technical
 candidate delivery, not owner acceptance or Direction close.
+The evidence-bearing report commit is
+`a10c66f9ed72ba8777e620941ab3d31ad753bad8`.
 
 ## evidence
 
