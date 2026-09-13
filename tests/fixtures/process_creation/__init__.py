@@ -103,6 +103,11 @@ def creation_research(case: str) -> bytes:
     return (text + "\n").encode()
 
 
+def pre_fix_unicode_request() -> bytes:
+    """Exact canonical request bytes saved by the 0.14.0 product."""
+    return (ROOT / "pre_fix_unicode_request.json").read_bytes()
+
+
 def linked_creation_definition(
     case: str, request_sha256: str, research_sha256: str
 ) -> ProcessDefinition:

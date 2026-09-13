@@ -14,6 +14,7 @@ from tests.fixtures.process_creation import (
     creation_draft,
     creation_research,
     linked_creation_definition,
+    pre_fix_unicode_request,
 )
 from zaratustra.core import (
     InitialRecords,
@@ -38,6 +39,7 @@ from zaratustra.process_creation import (
     create_research_request,
     execute_process_activation,
     inspect_process_creation,
+    parse_research_request,
     prepare_process_activation,
     receive_research_return,
     save_creation_draft,
@@ -389,20 +391,29 @@ def test_cli_exposes_saved_stages_and_exact_activation(
     assert inspect_process_creation(catalog, designation).stage == "activated"
 
 
-def test_activation_preview_keeps_cyrillic_source_text_readable(tmp_path: Path) -> None:
+@pytest.mark.parametrize("unicode_content", [False, True])
+def test_activation_preview_exact_bytes_authorize_and_open_ascii_and_unicode(
+    tmp_path: Path, unicode_content: bool
+) -> None:
     draft = json.loads(creation_draft("small"))
-    draft["need"] = "Нужен вымышленный повторяемый процесс."
+    if unicode_content:
+        draft["need"] = "Нужен вымышленный технический процесс."
     catalog = tmp_path / "catalog.json"
-    designation = "Readable UTF-8 proposal"
+    designation = "Технический процесс" if unicode_content else "Technical process"
     save_creation_draft(catalog, designation, json.dumps(draft, ensure_ascii=False).encode())
     request = create_research_request(catalog, designation)
     request_file = tmp_path / "request.json"
     save_research_request(request_file, request)
-    returned = "Вымышленное исследование, не одобрение.\n".encode()
+    request_bytes = request_file.read_bytes()
+    returned = (
+        "Вымышленное исследование, не одобрение.\n".encode()
+        if unicode_content
+        else creation_research("small")
+    )
     receive_research_return(
         catalog,
         designation,
-        request_file.read_bytes(),
+        request_bytes,
         returned,
         created_by="fictional-utf8-provider",
         source_ref="fixture:utf8-research",
@@ -412,12 +423,49 @@ def test_activation_preview_keeps_cyrillic_source_text_readable(tmp_path: Path) 
         hashlib.sha256(request_file.read_bytes()).hexdigest(),
         hashlib.sha256(returned).hexdigest(),
     )
-    save_supported_proposal(catalog, designation, definition.model_dump_json().encode())
+    definition_json = definition.model_dump(mode="json")
+    if unicode_content:
+        definition_json["title"] = "Вымышленное предложение"
+        definition_json["nodes"][0]["goal"] = "Создать первый технический результат"
+    save_supported_proposal(
+        catalog,
+        designation,
+        json.dumps(definition_json, ensure_ascii=False).encode(),
+    )
     prepared = prepare_process_activation(catalog, designation, tmp_path / "workspace")
     preview = activation_preview_bytes(prepared)
-    assert "Нужен вымышленный" in preview.decode("utf-8")
-    assert "Вымышленное исследование" in preview.decode("utf-8")
-    assert b"\\u041d" not in preview
+    assert hashlib.sha256(preview).hexdigest() == prepared.preview_sha256
+    if unicode_content:
+        assert "Нужен вымышленный" in preview.decode("utf-8")
+        assert "Вымышленное исследование" in preview.decode("utf-8")
+        assert "Создать первый технический результат" in preview.decode("utf-8")
+        assert b"\\u041d" not in preview
+
+    receipt = execute_process_activation(prepared, _activation_authorization(prepared))
+    assert receipt.creation.stage == "activated"
+    assert receipt.creation.first_work_openable
+    assert len(receipt.receipts) == 6
+
+    selected = prepare_selected_context(catalog, designation, max_bytes=1_048_576)
+    caller = authorize_local(
+        prepare_authorization(selected.workspace, selected.query),
+        channel="local-chat",
+        actor="process-creation-test",
+        source_ref="test-unicode-common-entry-open",
+    )
+    opened = json.loads(open_selected_context(selected, caller).output)
+    assert opened["context"]["envelope"]["work_id"] == str(receipt.creation.first_work_id)
+
+
+def test_pre_fix_unicode_request_keeps_exact_canonical_source_bytes(tmp_path: Path) -> None:
+    pre_fix = pre_fix_unicode_request()
+    assert hashlib.sha256(pre_fix).hexdigest() == (
+        "5f993c2957b78eaedc9d9d70d6a5bb881ef21a6957f5bab4a07dec9f16245272"
+    )
+    request = parse_research_request(pre_fix)
+    saved = tmp_path / "saved-request.json"
+    save_research_request(saved, request)
+    assert saved.read_bytes() == pre_fix
 
 
 def test_wrong_existing_target_refuses_before_migration_or_state_change(tmp_path: Path) -> None:

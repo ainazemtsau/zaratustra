@@ -1047,7 +1047,7 @@ def _prepared(catalog: Path, path: Path, journal: _CreationJournal) -> PreparedA
             "Full in-place process evolution is not supported; T3 owns that policy.",
         ),
     )
-    preview_hash = hashlib.sha256(_wire(preview)).hexdigest()
+    preview_hash = hashlib.sha256(_readable_wire(preview)).hexdigest()
     return PreparedActivation(
         catalog.resolve(),
         path,
