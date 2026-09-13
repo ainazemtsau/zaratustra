@@ -1,0 +1,90 @@
+{
+  "definition_id": "fictional.project-assembly",
+  "edition": 1,
+  "title": "Fictional panel project assembly",
+  "required_capabilities": [
+    "zaratustra.graph.dependencies/v1",
+    "zaratustra.graph.predecessor-data/v1",
+    "zaratustra.graph.source-reasons/v1"
+  ],
+  "sources": [
+    {
+      "source_id": "assembly-request",
+      "kind": "request",
+      "locator": "fixture:project:request"
+    },
+    {
+      "source_id": "assembly-research",
+      "kind": "research",
+      "locator": "fixture:project:research-note"
+    },
+    {
+      "source_id": "dependency-capability",
+      "kind": "capability",
+      "locator": "zaratustra.graph.predecessor-data/v1"
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "read-request",
+      "goal": "Read the fictional panel request",
+      "expected_result": "The exact requested panel fact",
+      "acceptance": ["request_fact is present"],
+      "boundaries": ["Fictional local constructor evidence only"],
+      "budget": "One mechanical input",
+      "artifact_title": "Panel request fact",
+      "output_keys": ["request_fact"],
+      "dependencies": [],
+      "recurring": false,
+      "reasons": [
+        {
+          "text": "Retain what the request says before assembly",
+          "source_ids": ["assembly-request"]
+        }
+      ]
+    },
+    {
+      "node_id": "read-research",
+      "goal": "Read the fictional panel research note",
+      "expected_result": "The exact researched limit fact",
+      "acceptance": ["research_fact is present"],
+      "boundaries": ["Fictional local constructor evidence only"],
+      "budget": "One mechanical input",
+      "artifact_title": "Panel research fact",
+      "output_keys": ["research_fact"],
+      "dependencies": [],
+      "recurring": false,
+      "reasons": [
+        {
+          "text": "Retain the separate research ground before assembly",
+          "source_ids": ["assembly-research"]
+        }
+      ]
+    },
+    {
+      "node_id": "assemble",
+      "goal": "Assemble the fictional panel decision from both grounds",
+      "expected_result": "One exact assembly decision",
+      "acceptance": ["decision is present after both predecessor facts"],
+      "boundaries": ["Fictional local constructor evidence only"],
+      "budget": "One mechanically grounded combination",
+      "artifact_title": "Panel assembly decision",
+      "output_keys": ["decision"],
+      "dependencies": [
+        {"node_id": "read-request"},
+        {"node_id": "read-research"}
+      ],
+      "recurring": false,
+      "reasons": [
+        {
+          "text": "Combine only when exact request and research data are available",
+          "source_ids": [
+            "assembly-request",
+            "assembly-research",
+            "dependency-capability"
+          ]
+        }
+      ]
+    }
+  ]
+}

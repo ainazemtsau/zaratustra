@@ -26,4 +26,11 @@ It flattens every read value to one printable line, so free pack text can never
 forge a row, a count or an envelope claim in the view. The document keeps the
 exact answer bytes; the human view is normalized, not pack-controlled layout.
 No installed pack loader: registries stay trusted registrations chosen in code.
+T1 process construction adds one generic immutable definition/snapshot adapter.
+Definitions retain nodes, acyclic dependencies, exact result data, source reasons and
+an edition digest; recurring nodes create numbered occurrences, never graph backedges.
+The adapter deterministically projects one eligible occurrence to the existing focused
+Core Work and accepts only canonical full snapshots. It is read-only except for the
+unchanged trusted Core mutation path used by its Pack proposal. Invented definitions
+remain development fixtures and are never installed templates.
 END_OF_FILE: src/zaratustra/process_packs/AGENTS.md

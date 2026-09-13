@@ -1,0 +1,48 @@
+{
+  "definition_id": "fictional.recurring-brief",
+  "edition": 1,
+  "title": "Fictional recurring amber brief",
+  "required_capabilities": [
+    "zaratustra.graph.dependencies/v1",
+    "zaratustra.graph.predecessor-data/v1",
+    "zaratustra.graph.occurrences/v1",
+    "zaratustra.graph.source-reasons/v1"
+  ],
+  "sources": [
+    {
+      "source_id": "brief-request",
+      "kind": "request",
+      "locator": "fixture:small:request"
+    },
+    {
+      "source_id": "brief-research",
+      "kind": "research",
+      "locator": "fixture:small:research-note"
+    },
+    {
+      "source_id": "recurrence-capability",
+      "kind": "capability",
+      "locator": "zaratustra.graph.occurrences/v1"
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "capture",
+      "goal": "Capture one fictional amber brief",
+      "expected_result": "One exact fictional note",
+      "acceptance": ["The note field is present"],
+      "boundaries": ["Fictional local constructor evidence only"],
+      "budget": "One explicitly selected occurrence",
+      "artifact_title": "Amber brief snapshot",
+      "output_keys": ["note"],
+      "dependencies": [],
+      "recurring": true,
+      "reasons": [
+        {
+          "text": "The request asks for repeated briefs supported by the noted capability",
+          "source_ids": ["brief-request", "brief-research", "recurrence-capability"]
+        }
+      ]
+    }
+  ]
+}

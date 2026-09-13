@@ -1,12 +1,13 @@
 # Zaratustra
 
-Version **0.12.1** is a technical foundation preview. It implements durable local
+Version **0.13.0** is a technical foundation preview. It implements durable local
 workspaces, authorized mutations, versioned artifacts, accepted-result handoff,
 bounded Work context, Result/next Work, external process-pack binding, seven
 process read capabilities, a shared overview, explicit entry discovery/basic read,
 and recoverable exact preview/publication/acceptance of new external text material,
-plus a modest installed first-use/manual external-chat path. See the [current
-report](RESULT.md) and [first-use plan](docs/entry-t5/PLAN.md).
+plus a modest installed first-use/manual external-chat path and a bounded immutable
+process-definition adapter. See the [current report](RESULT.md), [T1 process plan](docs/process-t1/PLAN.md),
+and [first-use plan](docs/entry-t5/PLAN.md).
 
 This version does **not** provide a full interactive method constructor,
 provider-integrated external research, personal memory, model routing or a graphical
@@ -15,6 +16,14 @@ of inventing a production Process Pack.
 The two fictional processes used to verify the pack contract are development
 fixtures under `tests/fixtures`; they are not installed product templates.
 Publication of this foundation is not a claim that it is ready for everyday use.
+
+The T1 process adapter is a public Python seam, not a new CLI or scheduler. It validates
+one exact immutable definition edition and canonical result snapshot, exposes ready and
+blocked domain nodes with exact predecessor data/reasons, and projects one deterministic
+eligible occurrence onto the existing focused Core Work. Recurrence creates a numbered
+occurrence instead of a dependency cycle. The two mechanical definitions used to test
+this behavior remain under `tests/fixtures/process_creation` only. Read the [T1
+readout](docs/process-t1/READOUT.md) for its explicit limits.
 
 The underlying M0 foundation: `zara init` creates a local workspace;
 `zara migrate` explicitly upgrades the schema; `zara records create` stores initial

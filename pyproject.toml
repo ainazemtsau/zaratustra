@@ -1,6 +1,6 @@
 [project]
 name = "zaratustra"
-version = "0.12.1"
+version = "0.13.0"
 description = "Zaratustra local workspace and transactional mutation protocol"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -128,3 +128,9 @@ name = "Fictional lot has no trusted surface or probe dependency"
 type = "forbidden"
 source_modules = ["tests.fixtures.fictional_lot"]
 forbidden_modules = ["zaratustra.local", "zaratustra.cli", "tests.fixtures.process_probe"]
+
+[[tool.importlinter.contracts]]
+name = "Process construction inputs stay development-only and untrusted"
+type = "forbidden"
+source_modules = ["tests.fixtures.process_creation"]
+forbidden_modules = ["zaratustra.local", "zaratustra.cli", "tools"]
