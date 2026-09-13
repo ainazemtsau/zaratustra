@@ -1,6 +1,6 @@
 [project]
 name = "zaratustra"
-version = "0.13.0"
+version = "0.14.0"
 description = "Zaratustra local workspace and transactional mutation protocol"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -72,6 +72,12 @@ name = "First use has no trusted adapter, Pack or development dependency"
 type = "forbidden"
 source_modules = ["zaratustra.first_use"]
 forbidden_modules = ["zaratustra.cli", "zaratustra.local", "zaratustra.process_packs", "tests", "tools"]
+
+[[tool.importlinter.contracts]]
+name = "Process creation has no trusted adapter or development dependency"
+type = "forbidden"
+source_modules = ["zaratustra.process_creation"]
+forbidden_modules = ["zaratustra.cli", "zaratustra.local", "tests", "tools"]
 
 [[tool.importlinter.contracts]]
 name = "Process probe uses Core; Core has no process-rule dependency"

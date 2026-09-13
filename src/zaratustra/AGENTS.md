@@ -5,6 +5,9 @@ The intake coordinator depends only on public Core and composes exact standard
 publication/acceptance operations after separately trusted confirmation.
 The first_use coordinator composes public Core, entry and intake surfaces for one
 explicit generic bootstrap and manual external-chat exchange; it grants no authority.
+The process_creation coordinator composes public Core, entry and process_packs for
+saved manual research and one exact-confirmed constructed activation; it grants no
+authority from retained files.
 Use submodule public __init__.py surfaces. New modules need graph contracts.
 Data/workspaces are not package resources. Do not add product state to source.
 END_OF_FILE: src/zaratustra/AGENTS.md

@@ -19,6 +19,12 @@ from zaratustra.intake import (
     authorize_material_intake,
     preview_bytes,
 )
+from zaratustra.process_creation import (
+    PreparedActivation,
+    ProcessActivationAuthorization,
+    activation_preview_bytes,
+    authorize_process_activation,
+)
 
 
 def _confirm(
@@ -58,6 +64,30 @@ def confirm_on_console(
             return _confirm(prompt, terminal_input, terminal_output)
     except OSError as error:
         raise MutationError("permission_denied", "Controlling local console unavailable") from error
+
+
+def confirm_process_activation_on_console(
+    prepared: PreparedActivation,
+) -> ProcessActivationAuthorization:
+    """Confirm the complete activation preview once at the trusted local console."""
+    if not sys.stdin.isatty() or not sys.stderr.isatty():
+        raise MutationError("permission_denied", "Interactive local console confirmation required")
+    content = activation_preview_bytes(prepared)
+    digest = hashlib.sha256(content).hexdigest()
+    print(content.decode("utf-8").rstrip(), file=sys.stderr)
+    print(
+        "Activate only this displayed process proposal and missing operation suffix.",
+        file=sys.stderr,
+    )
+    print(f"Type activate {digest}", file=sys.stderr, flush=True)
+    if sys.stdin.readline().strip() != f"activate {digest}":
+        raise MutationError("permission_denied", "Process activation was not confirmed")
+    return authorize_process_activation(
+        prepared,
+        channel="local-console",
+        actor="local-console-operator",
+        source_ref=f"console-process-activation:{uuid4()}",
+    )
 
 
 def _confirm_material_intake(
@@ -104,4 +134,8 @@ def confirm_material_intake_on_console(
         raise MutationError("permission_denied", "Controlling local console unavailable") from error
 
 
-__all__ = ["confirm_material_intake_on_console", "confirm_on_console"]
+__all__ = [
+    "confirm_material_intake_on_console",
+    "confirm_on_console",
+    "confirm_process_activation_on_console",
+]

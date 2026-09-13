@@ -34,4 +34,7 @@ mutations to establish an accepted initial basis; its retained plan grants no ri
 entry open resolves the current ContextQuery by designation. entry request saves one
 non-overwriting provider-neutral context snapshot, and entry receive preserves that
 snapshot's revision/basis while wrapping returned text for the ordinary intake preview.
+entry create keeps draft/research/proposal stages separate, accepts an authored generic
+definition, and confirms one complete activation preview before standard Core writes.
+Research files are data, never permission; status rechecks Core before claiming rights.
 END_OF_FILE: src/zaratustra/cli/AGENTS.md

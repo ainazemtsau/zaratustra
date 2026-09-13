@@ -11,4 +11,9 @@ probe_overview reuses the T5 pair run, then reads one shared overview over both
 workspaces through the public contract only; it adds no state and no authority.
 probe_entry_t5 builds and installs the wheel, then creates two NEW generic instances
 and simulates only the local return leg; it never contacts an external provider.
+probe_process_t2 selects only the explicit process_creation fixtures, uses public
+installed APIs and trusted synthetic confirmations, and never calls a provider. Its
+research return is technical fixture data, not evidence of an actual human handoff.
+probe_process_t2_install first proves the wheel contains product but no dev fixtures,
+then explicitly exposes those same external fixtures to the wheel-only interpreter.
 END_OF_FILE: tools/AGENTS.md

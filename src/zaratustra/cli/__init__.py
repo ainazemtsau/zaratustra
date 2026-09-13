@@ -73,7 +73,26 @@ from zaratustra.intake import (
     execute_material_intake,
     prepare_material_intake,
 )
-from zaratustra.local import confirm_material_intake_on_console, confirm_on_console
+from zaratustra.local import (
+    confirm_material_intake_on_console,
+    confirm_on_console,
+    confirm_process_activation_on_console,
+)
+from zaratustra.process_creation import (
+    MAX_DRAFT_BYTES,
+    MAX_PROPOSAL_BYTES,
+    MAX_RESEARCH_BYTES,
+    IncompleteActivationError,
+    ProcessCreationError,
+    create_research_request,
+    execute_process_activation,
+    inspect_process_creation,
+    prepare_process_activation,
+    receive_research_return,
+    save_creation_draft,
+    save_research_request,
+    save_supported_proposal,
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -141,6 +160,48 @@ def main(argv: list[str] | None = None) -> int:
     entry_receive.add_argument("request", type=Path)
     entry_receive.add_argument("response", help="Returned UTF-8 text file, or '-' for stdin.")
     entry_receive.add_argument("--created-by", required=True, help="Human-supplied provider label.")
+    entry_create = entry_commands.add_parser(
+        "create", help="Create a constructed Process through saved manual research."
+    )
+    creation_commands = entry_create.add_subparsers(dest="creation_command", required=True)
+    creation_draft = creation_commands.add_parser(
+        "draft", help="Save need, constraints and necessary clarifications."
+    )
+    creation_draft.add_argument("catalog", type=Path)
+    creation_draft.add_argument("designation")
+    creation_draft.add_argument("draft", type=Path)
+    creation_request = creation_commands.add_parser(
+        "request", help="Save a readable provider-neutral manual research request."
+    )
+    creation_request.add_argument("catalog", type=Path)
+    creation_request.add_argument("designation")
+    creation_request.add_argument("output", type=Path)
+    creation_receive = creation_commands.add_parser(
+        "receive", help="Link exact returned text as untrusted research, never approval."
+    )
+    creation_receive.add_argument("catalog", type=Path)
+    creation_receive.add_argument("designation")
+    creation_receive.add_argument("request", type=Path)
+    creation_receive.add_argument("response", help="Returned UTF-8 text file, or '-' for stdin.")
+    creation_receive.add_argument("--created-by", required=True)
+    creation_propose = creation_commands.add_parser(
+        "propose", help="Validate and retain one assistant-authored generic definition."
+    )
+    creation_propose.add_argument("catalog", type=Path)
+    creation_propose.add_argument("designation")
+    creation_propose.add_argument("proposal", type=Path)
+    creation_status = creation_commands.add_parser(
+        "status", help="Discover the exact saved stage and current Core rights."
+    )
+    creation_status.add_argument("catalog", type=Path)
+    creation_status.add_argument("designation")
+    creation_activate = creation_commands.add_parser(
+        "activate", help="Preview and exactly confirm activation of the first Work."
+    )
+    creation_activate.add_argument("catalog", type=Path)
+    creation_activate.add_argument("designation")
+    creation_activate.add_argument("workspace", type=Path)
+    creation_activate.add_argument("--alias", action="append", default=[])
     result_command = commands.add_parser(
         "result", help="Submit or discover an exact Result and continuation."
     )
@@ -220,7 +281,78 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.command == "entry":
-            if args.entry_command == "add":
+            if args.entry_command == "create":
+                if args.creation_command == "draft":
+                    with args.draft.open("rb") as stream:
+                        content = stream.read(MAX_DRAFT_BYTES + 1)
+                    output = save_creation_draft(
+                        args.catalog, args.designation, content
+                    ).model_dump_json(indent=2)
+                elif args.creation_command == "request":
+                    research_request = create_research_request(args.catalog, args.designation)
+                    save_research_request(args.output, research_request)
+                    print(
+                        json.dumps(
+                            dict(
+                                status="research_waiting",
+                                designation=research_request.designation,
+                                output=args.output.expanduser().resolve().as_posix(),
+                                request_id=str(research_request.request_id),
+                                draft_sha256=research_request.draft_sha256,
+                                provider_contacted=False,
+                            ),
+                            indent=2,
+                        ),
+                        file=sys.stderr,
+                    )
+                    sys.stdout.write(research_request.copyable_request)
+                    if not research_request.copyable_request.endswith("\n"):
+                        sys.stdout.write("\n")
+                    sys.stdout.flush()
+                    return 0
+                elif args.creation_command == "receive":
+                    with args.request.open("rb") as stream:
+                        request_content = stream.read(MAX_RESEARCH_BYTES + 1)
+                    if args.response == "-":
+                        response_content = sys.stdin.buffer.read(MAX_RESEARCH_BYTES + 1)
+                        source_ref = "stdin"
+                    else:
+                        response = Path(args.response).expanduser().resolve()
+                        with response.open("rb") as stream:
+                            response_content = stream.read(MAX_RESEARCH_BYTES + 1)
+                        source_ref = response.as_posix()
+                    output = receive_research_return(
+                        args.catalog,
+                        args.designation,
+                        request_content,
+                        response_content,
+                        created_by=args.created_by,
+                        source_ref=source_ref,
+                    ).model_dump_json(indent=2)
+                elif args.creation_command == "propose":
+                    with args.proposal.open("rb") as stream:
+                        content = stream.read(MAX_PROPOSAL_BYTES + 1)
+                    output = save_supported_proposal(
+                        args.catalog, args.designation, content
+                    ).model_dump_json(indent=2)
+                elif args.creation_command == "activate":
+                    prepared_activation = prepare_process_activation(
+                        args.catalog,
+                        args.designation,
+                        args.workspace,
+                        aliases=tuple(args.alias),
+                    )
+                    activation_authorization = confirm_process_activation_on_console(
+                        prepared_activation
+                    )
+                    output = execute_process_activation(
+                        prepared_activation, activation_authorization
+                    ).model_dump_json(indent=2)
+                else:
+                    output = inspect_process_creation(
+                        args.catalog, args.designation
+                    ).model_dump_json(indent=2)
+            elif args.entry_command == "add":
                 output = add_entry(
                     args.catalog,
                     args.designation,
@@ -485,6 +617,19 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 2
+    except IncompleteActivationError as error:
+        print(
+            json.dumps(
+                dict(
+                    status="activation_incomplete",
+                    stage=error.stage,
+                    creation=error.status.model_dump(mode="json"),
+                    error=str(error),
+                ),
+                indent=2,
+            )
+        )
+        return 2
     except ProjectionRebuildError as error:
         print(
             json.dumps(
@@ -504,6 +649,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"zara: [{error.code}] {error}", file=sys.stderr)
         return 1
     except FirstUseError as error:
+        print(f"zara: [{error.code}] {error}", file=sys.stderr)
+        return 1
+    except ProcessCreationError as error:
         print(f"zara: [{error.code}] {error}", file=sys.stderr)
         return 1
     except (WorkspaceError, ValidationError, OSError) as error:
