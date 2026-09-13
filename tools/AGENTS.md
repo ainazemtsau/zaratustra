@@ -16,4 +16,7 @@ installed APIs and trusted synthetic confirmations, and never calls a provider. 
 research return is technical fixture data, not evidence of an actual human handoff.
 probe_process_t2_install first proves the wheel contains product but no dev fixtures,
 then explicitly exposes those same external fixtures to the wheel-only interpreter.
+probe_process_t3 retains rejection/pending/planned/applied safe-change evidence for
+both exact external fixtures. probe_process_t3_install proves product imports come
+from the wheel before the harness explicitly exposes those development fixtures.
 END_OF_FILE: tools/AGENTS.md

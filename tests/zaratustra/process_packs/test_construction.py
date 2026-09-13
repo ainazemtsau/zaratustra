@@ -35,11 +35,14 @@ from zaratustra.core import (
 from zaratustra.process_packs import (
     ConstructionError,
     DataValue,
+    DefinitionTransition,
     Dependency,
     NodeResult,
     PackRegistry,
     ProcessDefinition,
     ProcessSnapshot,
+    definition_sha256,
+    edition_transition,
     evaluate_snapshot,
     initial_records,
     initial_requirements,
@@ -162,6 +165,80 @@ def test_project_graph_retains_distinct_predecessor_data_before_dependent_work()
     )
     assert combine_spec.goal == ready.selected.node.goal
     assert combine_spec.executor_requirements[-2:] == ("node:assemble", "occurrence:1")
+
+
+def test_future_edition_changes_only_the_next_work_and_keeps_pack_and_old_bytes() -> None:
+    definition = small_definition()
+    before = ProcessSnapshot(definition=definition)
+    current = work_for(initial_requirements(definition))
+    added = definition.nodes[0].model_copy(
+        update=dict(
+            node_id="review",
+            goal="Review the next fictional amber brief",
+            expected_result="One exact fictional review",
+            acceptance=("review is present",),
+            artifact_title="Amber brief review snapshot",
+            output_keys=("review",),
+            recurring=False,
+        )
+    )
+    changed = definition.model_copy(update=dict(edition=2, nodes=(*definition.nodes, added)))
+    transition = edition_transition(current, before, changed)
+    assert isinstance(transition, DefinitionTransition)
+    assert transition.from_snapshot_sha256 == hashlib.sha256(snapshot_bytes(before)).hexdigest()
+
+    accepted = record_result(before, small_result_data())
+    old_bytes = snapshot_bytes(accepted)
+    next_work = registration(small_reference(), definition, transition).rule.next_work(
+        current, old_bytes, uuid4(), uuid4()
+    )
+    transitioned = ProcessSnapshot(definition=changed, results=accepted.results)
+    assert snapshot_bytes(accepted) == old_bytes
+    assert current.pack_binding == small_reference()
+    assert next_work.goal == added.goal
+    assert next_work.executor_requirements == (
+        "zaratustra.process-definition/v1",
+        f"definition-sha256:{definition_sha256(changed)}",
+        f"basis-snapshot-sha256:{hashlib.sha256(snapshot_bytes(transitioned)).hexdigest()}",
+        "node:review",
+        "occurrence:1",
+    )
+
+    future = work_from_spec(next_work)
+    after_review = record_result(
+        transitioned, (DataValue(key="review", value="Fictional review retained"),)
+    )
+    following = registration(small_reference(), definition, transition).rule.next_work(
+        future, snapshot_bytes(after_review), uuid4(), uuid4()
+    )
+    assert following.executor_requirements[-2:] == ("node:capture", "occurrence:2")
+
+
+@pytest.mark.parametrize("change", ["current", "source", "edition"])
+def test_future_edition_refuses_started_identity_or_nonsequential_change(change: str) -> None:
+    definition = project_definition()
+    before = ProcessSnapshot(definition=definition)
+    current = work_for(initial_requirements(definition), project=True)
+    update: dict[str, object]
+    if change == "current":
+        nodes = (
+            definition.nodes[0].model_copy(update=dict(goal="Changed current goal")),
+            *definition.nodes[1:],
+        )
+        update = dict(edition=2, nodes=nodes)
+    elif change == "source":
+        update = dict(
+            edition=2,
+            sources=(
+                definition.sources[0].model_copy(update=dict(locator="fixture:changed")),
+                *definition.sources[1:],
+            ),
+        )
+    else:
+        update = dict(edition=3)
+    changed = definition.model_copy(update=update)
+    with pytest.raises((ConstructionError, ValidationError), match="started|identity|edition"):
+        edition_transition(current, before, changed)
 
 
 @pytest.mark.parametrize(

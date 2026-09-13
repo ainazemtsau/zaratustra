@@ -8,6 +8,9 @@ explicit generic bootstrap and manual external-chat exchange; it grants no autho
 The process_creation coordinator composes public Core, entry and process_packs for
 saved manual research and one exact-confirmed constructed activation; it grants no
 authority from retained files.
+The process_change coordinator retains one exact-reviewed future definition edition
+and composes its eventual effect through the existing authorized Core Result path.
+Its journal grants no authority and actual Work selection follows committed lineage.
 Use submodule public __init__.py surfaces. New modules need graph contracts.
 Data/workspaces are not package resources. Do not add product state to source.
 END_OF_FILE: src/zaratustra/AGENTS.md
