@@ -1,69 +1,64 @@
-# Process creation T2 correction technical handback
+# Process creation T3 technical handback
 
 ## outcome
 
-Version 0.14.1 at implementation commit
-`71d76ace9ec443c633ce2019e9dc5676c4cbbdcd` repairs the fresh-review F1 defect.
-Retained preview SHA-256, readable UTF-8 display, authorization and fresh
-revalidation now bind one exact byte representation. The evidence-bearing report
-commit is `ee96cf81682f70e09cd2ce1d437e901b703da3a1`. Existing
-journal/request/source canonical serialization, saved source digests, Core
-identity/authority/immutable bindings and released migrations remain unchanged.
-This is technical correction delivery, not T2 close.
+Version 0.15.0 implementation commit
+`3c9db45f1518da617de7c72fb388c01eb69d4495` implements the approved T3 safe
+future-edition change. Reviewed/rejected/pending/planned/applied stages are durable;
+the current Work, prior snapshots/grounds, Core identities and immutable Pack bytes
+remain exact. The new edition first has a real effect in the existing authorized
+Core Result transaction that creates its applicable future Work. This is technical
+candidate delivery, not owner acceptance or Direction close.
 
 ## evidence
 
-- Independent pre-fix reproduction: ASCII retained/shown hashes matched and
-  authorized; combined Unicode retained/shown hashes differed and refused
-  `permission_denied`. The new regression now authorizes, executes six Core
-  operations and common-entry opens the exact first Work for both cases.
-- Exact pre-fix 0.14.0 Unicode request fixture SHA-256
-  `5f993c2957b78eaedc9d9d70d6a5bb881ef21a6957f5bab4a07dec9f16245272`
-  parses and re-saves byte-for-byte under 0.14.1.
-- Focused T2 suite: 15 passed. Existing wrong/stale/tampered/no-authorization,
-  missing/terminal-rights, replay/reconciliation and wrong-target protections remain
-  covered and their implementation paths were not changed.
-- Native `tools.check`: exit 0; 114 format, Ruff, mypy 99, contracts 16/16,
-  345 tests in 110.72 seconds, wheel/sdist. Log:
-  `_scratch/process-t2-correction-gates-01/full-check.log`.
-- Exact commit `71d76ac...` wheel proof: 0.14.1 wheel SHA-256
-  `7e0b08bc68ec2c074feee309b9c1682f15616a866c50889941d641a5d1d38a56`;
-  both original external fixtures activate/open; dev packages absent before explicit
-  exposure; every product origin is wheel `site-packages`. Correction-specific `-I`
-  empty-cwd proof also activates/opens ASCII and combined Unicode cases with six
-  receipts and equal retained/shown hashes. Evidence:
-  `_scratch/process-t2-correction-installed-01/verification.json` and
-  `_scratch/process-t2-correction-installed-unicode-02/verification.json`.
-- Report-aware `tools.check --deliver`: exit 0; the same 114/99/16 surface,
-  345 tests in 105.23 seconds, wheel/sdist and report structure. Log:
-  `_scratch/process-t2-correction-gates-02/deliver.log`. Detailed reproduction,
-  criteria disposition and limits are in `docs/process-t2/FIX-READOUT.md`; the
-  original `docs/process-t2/READOUT.md` and failed reviewer evidence are preserved.
+- Final native `uv run --locked python -m tools.check`: exit 0; 120 formatted files,
+  Ruff, strict mypy over 104 sources, 17/17 contracts, 360 tests in 137.90 seconds,
+  wheel and sdist. Log: `_scratch/process-t3-gates-02/full-check.log`.
+- Exact committed wheel SHA-256
+  `2e05915bd42060753a4a9b51a95cb5a58c0c8a75623ad53c8abb6ff88566e3c3`:
+  isolated Python 3.13.7 `-I`, both explicit external fixtures, tests/tools absent
+  before exposure, every product module from wheel `site-packages`. Evidence:
+  `_scratch/process-t3-installed-01/verification.json` and
+  `product-module-paths.json` there.
+- Small: reject/approval preserved Core bytes; snapshots `c6ed4d81...7299` and
+  `9e1c3956...50bf` plus Pack bytes survived; one effect revision 9→10, operation
+  `c32f40b6-fc48-4f63-abc3-a67d7aac4c38`; authorized replay stayed 10.
+- Project: snapshots `74a0e57b...db06` and `a50c11db...fab7` plus Pack bytes
+  survived; one effect revision 9→10, operation
+  `c497e03b-5db1-4f5c-87bf-e3eceacaa7dc`; authorized replay stayed 10.
+- Behavioral coverage includes stale/wrong/missing-rights refusals, saved review
+  resume, changed-current/source/edition refusals, mutable committed lineage, two
+  completed edition changes, reconstructed projected bases, and a third saved review.
+  Full reproduction/manifests/receipts: `docs/process-t3/READOUT.md`.
+- Required `tools.check --deliver`: exit 0; same 120/104/17 surface, 360 tests in
+  123.55 seconds, artifacts and report structure. Log:
+  `_scratch/process-t3-gates-03/deliver.log`.
 
 ## assumptions
 
-Pending drafts retain content, not a stored activation-preview digest; recomputing
-their prepared preview therefore needs no migration. Synthetic local-chat is valid
-technical seam evidence only. Actual human research, confirmation and owner
-acceptance remain separate.
+The fixed Pack identity is the immutable installed runtime contract; an explicitly
+reviewed compatible definition edition can govern future Work without rebinding it.
+Compatibility is narrow: same identity/title/sources/capabilities, exact completed/
+current nodes, next edition only. Synthetic confirmations prove technical seams only.
 
 ## cuts
 
-No T3 safe evolution/replacement/rebinding/migration work and no T4 full physical
-installed-reader/lifecycle work was started. No provider, browser, account, real
-research/data, personal workspace, paid service, Direction state, CI/integration,
-new external right or main push was used.
+No migration/Core change, current-Work reinterpretation, implicit latest, personal or
+domain process approval, real research/provider use, personal installation, other
+checkout/private Direction access, paid service, SQL/state rewrite, CI, GUI,
+integration, push or main update. T4 synthesis and Direction review remain out of scope.
 
 ## cost
 
-One preview-hash representation correction, one two-case activation/open regression,
-one immutable pre-fix request fixture, patch version metadata, correction plan/readout
-and isolated native/wheel evidence; no new runtime dependency or expense.
+One immutable transition extension, one installed non-authoritative coordinator, one
+import boundary, 15 new behavioral/probe tests, two evidence tools, version metadata
+and retained native/wheel evidence; no new runtime dependency or external expense.
 
 ## manual-acceptance
 
-pending. Executor checks are not binding G5, owner acceptance or permission to close
-T2/start T3/T4. HOME must open another fresh physical reviewer after handback.
+pending. Test/probe local-chat confirmations are simulated, not real owner manual
+acceptance. HOME must run separate fresh binding refutation before T3 can close.
 
 ## next
 
