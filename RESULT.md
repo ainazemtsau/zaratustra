@@ -10,6 +10,8 @@ FAIL candidate `2189f3c2ca5c484048200db8e0ded3d42100a3bb`. Edition-only relabeli
 at runtime. Legitimate later-future changes remain supported without requiring the
 immediately next Work to differ. This is technical delivery, not owner acceptance,
 binding HOME G5 or T3 close.
+The evidence-bearing report commit is
+`6fa183869702945c7d6f5208a65e6da032aad032`.
 
 ## evidence
 

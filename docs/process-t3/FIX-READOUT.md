@@ -4,6 +4,8 @@ Correction R1 starts from failed candidate
 `2189f3c2ca5c484048200db8e0ded3d42100a3bb`. The bounded 0.15.1 implementation
 is commit `61cef42275577927a71d92d8aa6e4a628131013a`. This is a technical handback,
 not owner acceptance, binding HOME G5, T3 closure or authorization to launch T4.
+The evidence-bearing report commit is
+`6fa183869702945c7d6f5208a65e6da032aad032`.
 
 ## Corrected invariant
 
