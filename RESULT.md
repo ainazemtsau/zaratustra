@@ -1,87 +1,72 @@
-# Process creation T1 technical handback
+# Process creation T2 technical handback
 
 ## outcome
 
-The bounded T1 constructor/runtime risk is validated at product implementation commit
-`fec97a4b3f858f174a495ef42fd26b711d65fff8` from exact basis
-`2b21060fc9d52d5f9ed7931482eb4892d04cb30a`. Version 0.13.0 adds one generic
-immutable definition/snapshot adapter under the existing public `process_packs`
-surface. It retains graph nodes, acyclic dependencies, definition editions, exact
-result data, traceable request/research/capability reasons, and explicit recurring
-occurrences, then deterministically projects one eligible occurrence onto the existing
-focused Core Work.
-
-Definitions with invalid dependency targets/self-edges/cycles, incomplete or
-out-of-order results, unknown reason sources, or unsupported capabilities refuse.
-The Pack rule also refuses noncanonical bytes, changed definition/binding/Work meaning,
-and changed prior accepted history. It grants no authority and writes no alternate
-state; the existing Core confirmation and mutation path remains authoritative. Core,
-migrations, immutable binding semantics, CLI, existing fixture rule bytes, and user
-workspaces are unchanged.
+Version 0.14.0 at implementation commit
+`13f542f042393462421066e9453fc34dfd5da7c3` ships a provider-neutral, recoverable
+`zara entry create` path from saved need/clarifications through exact linked manual
+research, an assistant-authored source-traceable supported definition, and one
+complete UTF-8 activation preview to an immutable bound Process and first common-entry
+openable Work. Research is durably `untrusted_research`, never approval. Core identity,
+authority, immutable binding and released migration semantics are reused unchanged.
 
 ## evidence
 
-- `uv run --locked python -m tools.probe_process_creation --case small --output
-  _scratch/process-t1-small-fec97a4` exited 0 at the exact implementation commit. It
-  selected recurring `capture` occurrence 2 with occurrence 1's exact `note` ground.
-  Accepted snapshot SHA-256:
-  `80f0691a06ed4b2467d0708e1c16904696d7adc4d6929a2770611d7f75db9efe`.
-- `uv run --locked python -m tools.probe_process_creation --case project --output
-  _scratch/process-t1-project-fec97a4` exited 0 at the same commit. `assemble` was
-  blocked first by two dependencies and then one; after both predecessors it was
-  selected with distinct `request_fact` and `research_fact` data and distinct result
-  digests. Accepted snapshot SHA-256:
-  `76de1183664931898c526651ed4e2d67c98a47709ca35593ad6a9da14ebe0cac`.
-- The scoped native gate exited 0 with 16 construction/probe tests and all 15 import
-  boundaries kept. It includes one real public-Core lifecycle: bootstrap, exact Work
-  requirements, immutable Pack binding, Artifact publication, Handoff acceptance,
-  Pack proposal, confirmed Result submission, and inherited continuation binding.
-- The retained `docs/process-t1/STEER.md` history-continuity finding was valid. Each
-  Work now pins the exact prior canonical snapshot digest. Two sibling regressions that
-  replace earlier predecessor data refuse with `history_mismatch`.
-- `uv run --locked python -m tools.check` exited 0: 108 files were formatted, Ruff
-  passed, strict mypy passed over 94 source files, all 15 import contracts were kept,
-  all 330 tests passed in 117.21 seconds, and the 0.13.0 wheel/sdist built.
-- `uv run --locked python -m tools.check --deliver` separately exited 0 with the same
-  file/type/boundary/test/build counts, 330 tests in 104.41 seconds, and the required
-  report-structure gate passed.
-- `docs/process-t1/READOUT.md` describes the public APIs, observable traces, refusal
-  behavior, repaired defect, exact commands, and limitations. The two definitions and
-  all invented values are confined to `tests/fixtures/process_creation`; the installed
-  product never imports tests/tools under an executable import-linter contract.
+- Focused T2 behavior: 13 tests passed for two complete fictional paths, exact source
+  and return identity, missing capability refusal/status, readable request/preview,
+  no/stale confirmation, partial/replay recovery, current terminal rights and CLI.
+- HOME steering reproduction proved the former wrong-target path migrated an
+  unrelated schema-2 workspace to 7 before refusal. The repaired regression passed
+  with public workspace info and records unchanged at schema 2. Valid strict model
+  JSON now round-trips, and full Cyrillic preview text is real UTF-8.
+- Final `uv run --locked python -m tools.check` exited 0: 114 formatted files, Ruff,
+  strict mypy over 99 source files, 16/16 contracts, 343 tests in 116.94 seconds and
+  the 0.14.0 wheel/sdist. Full log:
+  `_scratch/process-t2-gates-executor-03/full-check.log`.
+- Wheel-only `tools.probe_process_t2_install` exited 0 at exact commit `13f542f...`.
+  Retained `verification.json` proves version 0.14.0, wheel SHA-256
+  `060d033e1484dc0a7ccf68b53e68ed10d733d4819f4a00d6cd2cf6c0296e7441`,
+  all product modules from the isolated venv, and dev packages absent before explicit
+  fixture exposure. Both retained fixture summaries reached activated/openable first
+  Works; small retained recurrence and project retained both dependencies. Research
+  remained `approval: false`; `provider_contacted: false`.
+- `docs/process-t2/READOUT.md` gives the exact CLI/API behavior, stage/recovery rules,
+  commands, evidence paths and limits. Both HOME notes are preserved under
+  `docs/process-t2`; T1 reports are unchanged.
+- Report-aware `uv run --locked python -m tools.check --deliver` exited 0 after the
+  reports existed: the same 114/99/16/343 surface, 343 tests in 126.22 seconds,
+  wheel/sdist and report structure. Full log:
+  `_scratch/process-t2-gates-executor-04/deliver.log`.
 
 ## assumptions
 
-A future activation flow will create initial Core records from `initial_records`, set
-the matching `initial_requirements`, and bind the separately selected exact
-`PackReference` through existing trusted Core operations. Each accepted domain result
-is represented as the canonical full `ProcessSnapshot`; later tooling must preserve
-those bytes. Declared node order is the explicit deterministic serialization policy
-when several domain nodes are eligible.
+The human or assistant supplies the problem-specific draft, actual manual research
+return and proposed generic definition; the product validates and retains them but
+does not fabricate reasoning. One accepted empty canonical snapshot is the initial
+basis required by current Core context opening, not a Work result. Declared node order
+remains T1's deterministic serialization when multiple nodes are eligible.
 
 ## cuts
 
-T1 adds no interactive constructor, draft-question/discovery lifecycle (W10), manual
-research request/return lifecycle (W11), activation/first-use CLI (W14), full
-recovery/status (W15/W17), or safe definition-edition change policy (full W13/A02).
-It adds no universal/parallel scheduler, database, arbitrary code/expression
-interpreter, loader, automatic provider/browser/account call, paid service, external
-integration, workflow/CI, terminal Core operation, real domain data, or installed
-example. Completion of the finite fixture is observable but not mapped to new Core
-semantics. The separately requested fresh verifier remains a post-handback action.
+Full safe definition/process evolution, replacement and reviewed migration policy
+remain T3. Full physical installed-reader lifecycle proof remains T4. T2 adds no
+provider/browser/account call, automatic research, real data, personal install,
+domain workflow/template, GUI, universal scheduler/database, arbitrary loader or
+interpreter, paid service, CI/integration, Direction mutation or new external right.
+The first-Work catalog designation is not silently advanced after completion. A
+future actual human research handoff is separate from the synthetic technical probes.
 
 ## cost
 
-One installed generic module and public exports, one new import boundary, two explicit
-development-only JSON fixtures, focused behavior/integrity and real-Core tests, one
-development probe with two cases, a minor version bump, and bounded plan/readout/report
-documentation. No new runtime dependency, migration, external right, or expense.
+One installed coordinator module with its nearest instructions, one public CLI group,
+one trusted exact-preview console adapter, one import boundary, 13 behavioral tests,
+two extended development fixtures, source and wheel-only probes, a 0.14.0 version
+bump, PLAN/READOUT/report documentation, and no new runtime dependency or expense.
 
 ## manual-acceptance
 
-pending. These are technical executor observations only; they do not constitute owner
-acceptance, Direction close, or the fresh separate verification required after
-handback.
+pending. This is executor technical evidence, not fresh HOME G5, owner acceptance,
+Direction close, or permission to start T3/T4.
 
 ## next
 
