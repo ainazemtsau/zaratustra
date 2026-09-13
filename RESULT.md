@@ -1,66 +1,70 @@
-# Process creation T3 technical handback
+# Process creation T3 correction R1 technical handback
 
 ## outcome
 
-Version 0.15.0 implementation commit
-`3c9db45f1518da617de7c72fb388c01eb69d4495` implements the approved T3 safe
-future-edition change. Reviewed/rejected/pending/planned/applied stages are durable;
-the current Work, prior snapshots/grounds, Core identities and immutable Pack bytes
-remain exact. The new edition first has a real effect in the existing authorized
-Core Result transaction that creates its applicable future Work. This is technical
-candidate delivery, not owner acceptance or Direction close.
-The evidence-bearing report commit is
-`a10c66f9ed72ba8777e620941ab3d31ad753bad8`.
+Version 0.15.1 implementation commit
+`61cef42275577927a71d92d8aa6e4a628131013a` corrects both findings from fresh
+FAIL candidate `2189f3c2ca5c484048200db8e0ded3d42100a3bb`. Edition-only relabeling is
+`no_change`; a transition with no supported Work after the current Result is
+`no_future_work` before review/approval persistence. The same rule is revalidated
+at runtime. Legitimate later-future changes remain supported without requiring the
+immediately next Work to differ. This is technical delivery, not owner acceptance,
+binding HOME G5 or T3 close.
 
 ## evidence
 
-- Final native `uv run --locked python -m tools.check`: exit 0; 120 formatted files,
-  Ruff, strict mypy over 104 sources, 17/17 contracts, 360 tests in 137.90 seconds,
-  wheel and sdist. Log: `_scratch/process-t3-gates-02/full-check.log`.
-- Exact committed wheel SHA-256
-  `2e05915bd42060753a4a9b51a95cb5a58c0c8a75623ad53c8abb6ff88566e3c3`:
-  isolated Python 3.13.7 `-I`, both explicit external fixtures, tests/tools absent
-  before exposure, every product module from wheel `site-packages`. Evidence:
-  `_scratch/process-t3-installed-01/verification.json` and
-  `product-module-paths.json` there.
-- Small: reject/approval preserved Core bytes; snapshots `c6ed4d81...7299` and
-  `9e1c3956...50bf` plus Pack bytes survived; one effect revision 9→10, operation
-  `c32f40b6-fc48-4f63-abc3-a67d7aac4c38`; authorized replay stayed 10.
-- Project: snapshots `74a0e57b...db06` and `a50c11db...fab7` plus Pack bytes
-  survived; one effect revision 9→10, operation
-  `c497e03b-5db1-4f5c-87bf-e3eceacaa7dc`; authorized replay stayed 10.
-- Behavioral coverage includes stale/wrong/missing-rights refusals, saved review
-  resume, changed-current/source/edition refusals, mutable committed lineage, two
-  completed edition changes, reconstructed projected bases, and a third saved review.
-  Full reproduction/manifests/receipts: `docs/process-t3/READOUT.md`.
-- Required `tools.check --deliver`: exit 0; same 120/104/17 surface, 360 tests in
-  123.55 seconds, artifacts and report structure. Log:
-  `_scratch/process-t3-gates-03/deliver.log`.
+- Required full native gate passed: 120 formatted files, strict mypy over 104
+  sources, 17/17 contracts, 371 tests in 122.80s and both 0.15.1 artifacts. Log
+  `_scratch/process-t3-r1-gates/full-check.log`, SHA-256
+  `63d29faeeff3310b2ec3d68a64435da9ba70bf3706dae34e0fef00d908e9112e`.
+- Corrected isolated wheel SHA-256
+  `34b8a3889ceb741fbc5f7576558751c7b85a1f678aad41731b3c61a2b76bb7f5`
+  is bound to the implementation commit by
+  `_scratch/process-t3-r1-installed-01/verification.json`. Tests/tools were absent
+  before explicit fixture exposure; all 29 product imports are under wheel
+  `site-packages`.
+- Installed public APIs refuse edition-only small/project proposals as `no_change`
+  and the no-future project proposal as `no_future_work`; database/records remain
+  exact and no review/approval is saved. Both existing valid semantic paths still
+  apply once, preserve prior bytes/grounds/Pack references, and replay at revision
+  10. Exact manifests, requests, receipts and Unicode confirmation evidence are in
+  `_scratch/process-t3-r1-installed-01` and `docs/process-t3/FIX-READOUT.md`.
+- A valid product-API change affecting only a later future node succeeds while its
+  immediate next Work meaning stays unchanged. At that next, ordinarily mutated
+  Work, dropping the sole future node refuses with no records/stage change.
+- Read-only analysis of both retained pre-correction invalid journals returns
+  `saved_change_unsupported` and leaves every retained file unchanged. Evidence:
+  `_scratch/process-t3-r1-saved-invalid/analysis.json`. No state repair was made.
+- Required `tools.check --deliver` passed the same 120/104/17 surface, 371 tests in
+  136.90s, both artifacts and report structure. Log
+  `_scratch/process-t3-r1-gates/deliver.log`, SHA-256
+  `a76ecde1de2aabec00565d55caf672acd36e5c848450a6144e7685f883eb6239`.
 
 ## assumptions
 
-The fixed Pack identity is the immutable installed runtime contract; an explicitly
-reviewed compatible definition edition can govern future Work without rebinding it.
-Compatibility is narrow: same identity/title/sources/capabilities, exact completed/
-current nodes, next edition only. Synthetic confirmations prove technical seams only.
+The sole supported T3 effect is the existing Core Result transaction that creates a
+next Work. Therefore a reviewed transition must contain a node-semantic change and
+must leave a selectable next Work after the bound current Result. Scheduling depends
+on exact result keys, not their values, so the admission projection and use-time
+revalidation cover the same capability boundary.
 
 ## cuts
 
-No migration/Core change, current-Work reinterpretation, implicit latest, personal or
-domain process approval, real research/provider use, personal installation, other
-checkout/private Direction access, paid service, SQL/state rewrite, CI, GUI,
-integration, push or main update. T4 synthesis and Direction review remain out of scope.
+No Core terminal operation, schema/migration policy, mutable latest/rebind,
+current/completed node alteration, prior invalid-state repair, fixture alteration,
+personal installation, real data, other checkout, Direction OS, provider/browser/
+account/service, paid service, CI, push, main update or T4 launch.
 
 ## cost
 
-One immutable transition extension, one installed non-authoritative coordinator, one
-import boundary, 15 new behavioral/probe tests, two evidence tools, version metadata
-and retained native/wheel evidence; no new runtime dependency or external expense.
+One 33-line product-rule/journal correction, focused regression and installed-probe
+extensions, version 0.15.1, one implementation commit, and retained native/wheel/
+legacy-state evidence. No new runtime dependency or external expense.
 
 ## manual-acceptance
 
-pending. Test/probe local-chat confirmations are simulated, not real owner manual
-acceptance. HOME must run separate fresh binding refutation before T3 can close.
+pending. Synthetic local-chat confirmations are technical evidence only. HOME must
+perform a fresh physical binding refutation before T3 closes.
 
 ## next
 
