@@ -1,83 +1,87 @@
-# Readable manual external-chat request correction
+# Process creation T1 technical handback
 
 ## outcome
 
-The bounded correction is implemented in version 0.12.1. New manual external-chat
-requests use package format 2. Their `copyable_request` contains a mechanically derived
-readable UTF-8 rendering of the selected Work goal, expected result, acceptance,
-boundaries and budget and of every Artifact-version source present in the authorized
-Core context. Each version is labelled with its source locator/revision, Artifact id,
-version id, SHA-256, byte size and whether it is a direct accepted reference. The
-complete original Core context follows unchanged and retains its original request
-hash and byte size.
+The bounded T1 constructor/runtime risk is validated at product implementation commit
+`fec97a4b3f858f174a495ef42fd26b711d65fff8` from exact basis
+`2b21060fc9d52d5f9ed7931482eb4892d04cb30a`. Version 0.13.0 adds one generic
+immutable definition/snapshot adapter under the existing public `process_packs`
+surface. It retains graph nodes, acyclic dependencies, definition editions, exact
+result data, traceable request/research/capability reasons, and explicit recurring
+occurrences, then deterministically projects one eligible occurrence onto the existing
+focused Core Work.
 
-Rendering reads no workspace or external source. It verifies each embedded descriptor
-against the embedded bytes, verifies every accepted reference has a matching version,
-and refuses missing, duplicate, inconsistent or non-UTF-8 material instead of omitting
-or mislabelling it. Embedded text and links remain inert data. The request does not
-grant rights, confirm intake, impersonate approval or contact a provider.
-
-Already-exported v0.12.0 format-1 requests remain accepted only with their original
-exact rendering. Receive and same-intent recovery preserve their captured revision,
-basis, context hash and request/intake/publication/acceptance identities. Both formats
-enter the unchanged current-target/current-rights checks, strict full-material preview,
-separate trusted confirmation and recoverable Entry T4 intake. Core source, schema,
-identity, authority and mutation semantics are unchanged.
+Definitions with invalid dependency targets/self-edges/cycles, incomplete or
+out-of-order results, unknown reason sources, or unsupported capabilities refuse.
+The Pack rule also refuses noncanonical bytes, changed definition/binding/Work meaning,
+and changed prior accepted history. It grants no authority and writes no alternate
+state; the existing Core confirmation and mutation path remains authoritative. Core,
+migrations, immutable binding semantics, CLI, existing fixture rule bytes, and user
+workspaces are unchanged.
 
 ## evidence
 
-- The focused correction gate exited 0 for the coordinator, its tests and the installed
-  probe: formatting and Ruff passed, strict mypy passed, all 14 import contracts were
-  kept, 10 focused tests passed, and the 0.12.1 distributions built. The new public
-  regression uses a Russian route-choice basis with multiple numeric constraints. It
-  verifies the exact readable goal, result conditions, constraints, saved bytes,
-  Artifact/version ids and hash; it also verifies no post-open workspace read and
-  refusal of an undecodable purported rendering. A format-1 request is received and
-  retried with the original receipts, and a prompt edited to claim approval is refused.
-- `uv run --locked python -m tools.probe_entry_t5 --output
-  _scratch/entry-t5-readable-0.12.1-proof-20260912` exited 0. It built and installed the
-  0.12.1 wheel offline with locked runtime dependencies, passed `uv pip check`, ran
-  from an unrelated working directory, and used only installed public APIs plus newly
-  created generic data. The summary records format 2, exact readable Unicode basis,
-  format-1 identity preservation and same-intent receipt recovery, as well as retained
-  `permission_denied`, `output_exists`, `wrong_target`, `stale_basis`, `ambiguous` and
-  unavailable-neighbor outcomes. No provider was contacted. Evidence is retained in
-  `_scratch/entry-t5-readable-0.12.1-proof-20260912/summary.json`, `commands.json`, the
-  installed wheel and the two saved request packages.
-- `uv sync --locked` exited 0. The full `uv run --locked python -m tools.check` then
-  exited 0: 102 files were formatted, Ruff passed, strict mypy passed for 89 source
-  files, all 14 import contracts were kept, all 314 tests passed, and the 0.12.1 sdist
-  and wheel built. The report-aware `uv run --locked python -m tools.check --deliver`
-  separately exited 0 with the same counts and passed the report-structure gate.
+- `uv run --locked python -m tools.probe_process_creation --case small --output
+  _scratch/process-t1-small-fec97a4` exited 0 at the exact implementation commit. It
+  selected recurring `capture` occurrence 2 with occurrence 1's exact `note` ground.
+  Accepted snapshot SHA-256:
+  `80f0691a06ed4b2467d0708e1c16904696d7adc4d6929a2770611d7f75db9efe`.
+- `uv run --locked python -m tools.probe_process_creation --case project --output
+  _scratch/process-t1-project-fec97a4` exited 0 at the same commit. `assemble` was
+  blocked first by two dependencies and then one; after both predecessors it was
+  selected with distinct `request_fact` and `research_fact` data and distinct result
+  digests. Accepted snapshot SHA-256:
+  `76de1183664931898c526651ed4e2d67c98a47709ca35593ad6a9da14ebe0cac`.
+- The scoped native gate exited 0 with 16 construction/probe tests and all 15 import
+  boundaries kept. It includes one real public-Core lifecycle: bootstrap, exact Work
+  requirements, immutable Pack binding, Artifact publication, Handoff acceptance,
+  Pack proposal, confirmed Result submission, and inherited continuation binding.
+- The retained `docs/process-t1/STEER.md` history-continuity finding was valid. Each
+  Work now pins the exact prior canonical snapshot digest. Two sibling regressions that
+  replace earlier predecessor data refuse with `history_mismatch`.
+- `uv run --locked python -m tools.check` exited 0: 108 files were formatted, Ruff
+  passed, strict mypy passed over 94 source files, all 15 import contracts were kept,
+  all 330 tests passed in 117.21 seconds, and the 0.13.0 wheel/sdist built.
+- `uv run --locked python -m tools.check --deliver` separately exited 0 with the same
+  file/type/boundary/test/build counts, 330 tests in 104.41 seconds, and the required
+  report-structure gate passed.
+- `docs/process-t1/READOUT.md` describes the public APIs, observable traces, refusal
+  behavior, repaired defect, exact commands, and limitations. The two definitions and
+  all invented values are confined to `tests/fixtures/process_creation`; the installed
+  product never imports tests/tools under an executable import-linter contract.
 
 ## assumptions
 
-The human copies the complete product-supplied `copyable_request` field to the chosen
-ordinary external chat and keeps the saved request file unchanged for receive/retry.
-A trusted controlling terminal reviews the exact response preview before authorizing
-intake. Saved material used through this manual text path is valid UTF-8; a binary or
-otherwise undecodable version requires a different explicitly designed interface.
+A future activation flow will create initial Core records from `initial_records`, set
+the matching `initial_requirements`, and bind the separately selected exact
+`PackReference` through existing trusted Core operations. Each accepted domain result
+is represented as the canonical full `ProcessSnapshot`; later tooling must preserve
+those bytes. Declared node order is the explicit deterministic serialization policy
+when several domain nodes are eligible.
 
 ## cuts
 
-No provider rerun, owner-usefulness result or owner acceptance is claimed; the parent
-owns the real ChatGPT rerun and physically separate Sol review. This correction adds
-no provider/API integration, automatic research, GUI, memory, model routing, Process
-constructor, Pack behavior, new runtime dependency, Core change, migration, authority
-or completion behavior. The existing 1,048,576-byte Core-context limit and
-4,500,000-byte saved-request limit remain; a rendered package that exceeds the latter
-is refused rather than truncated.
+T1 adds no interactive constructor, draft-question/discovery lifecycle (W10), manual
+research request/return lifecycle (W11), activation/first-use CLI (W14), full
+recovery/status (W15/W17), or safe definition-edition change policy (full W13/A02).
+It adds no universal/parallel scheduler, database, arbitrary code/expression
+interpreter, loader, automatic provider/browser/account call, paid service, external
+integration, workflow/CI, terminal Core operation, real domain data, or installed
+example. Completion of the finite fixture is observable but not mapped to new Core
+semantics. The separately requested fresh verifier remains a post-handback action.
 
 ## cost
 
-One versioned rendering path in the existing installed `first_use` wrapper, explicit
-format-1 validation compatibility, two focused public regressions, an expanded
-installed-wheel proof, a patch version bump, and bounded public documentation updates.
+One installed generic module and public exports, one new import boundary, two explicit
+development-only JSON fixtures, focused behavior/integrity and real-Core tests, one
+development probe with two cases, a minor version bump, and bounded plan/readout/report
+documentation. No new runtime dependency, migration, external right, or expense.
 
 ## manual-acceptance
 
-Pending parent real-provider rerun and independent physically separate Sol review.
-The technical checks above do not establish provider usefulness or owner acceptance.
+pending. These are technical executor observations only; they do not constitute owner
+acceptance, Direction close, or the fresh separate verification required after
+handback.
 
 ## next
 
