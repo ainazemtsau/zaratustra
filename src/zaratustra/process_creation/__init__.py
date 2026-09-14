@@ -440,11 +440,12 @@ def _release_file_lock(stream: BufferedRandom) -> None:
 
 
 @contextmanager
-def _creation_lock(path: Path) -> Iterator[None]:
-    path.parent.mkdir(parents=True, exist_ok=True)
+def _creation_lock(path: Path, *, create: bool = True) -> Iterator[None]:
+    if create:
+        path.parent.mkdir(parents=True, exist_ok=True)
     lock = _lock_path(path)
-    with lock.open("a+b") as stream:
-        if stream.tell() == 0:
+    with lock.open("a+b" if create else "r+b") as stream:
+        if create and stream.tell() == 0:
             stream.write(b"0")
             stream.flush()
         _acquire_file_lock(stream)
@@ -1310,8 +1311,16 @@ def _status(catalog: Path, path: Path, journal: _CreationJournal) -> CreationSta
 
 def inspect_process_creation(catalog: Path, designation: str) -> CreationStatus:
     path = _journal_path(catalog, designation)
-    with _creation_lock(path):
-        return _status(catalog, path, _load(path))
+    # Missing selection must not create a journal directory or lock on a read.
+    # A concurrent creation after this observation is visible on an explicit retry.
+    _load(path)
+    try:
+        with _creation_lock(path, create=False):
+            return _status(catalog, path, _load(path))
+    except OSError as error:
+        raise ProcessCreationError(
+            "journal_unavailable", "Saved creation lock is unavailable; inspection wrote nothing"
+        ) from error
 
 
 __all__ = [

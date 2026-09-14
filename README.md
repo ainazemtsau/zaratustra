@@ -1,5 +1,95 @@
 # Zaratustra
 
+T4 adds a common installed entry and thin standard Codex / Claude Code skills.
+**The T4 public pin is not yet published.** The current public main remains T2
+`daaafe55653c38eaefe36e468858aa68a21429d0` per the T4 CALL. The commands below are
+the exact-pin public installation procedure, pending authorized publication of the
+implementation commit named in the [T4 report](RESULT.md). A failed fetch is a
+blocked public install: do not replace the pin with `main`, `latest` or an older SHA.
+Local built-wheel proof is described in the [T4 plan](docs/public-onboarding-r2-t4/PLAN.md).
+
+From a new empty PowerShell folder, with Git and uv available, paste the full
+`implementation-commit` from that exact T4 report. Keep the report with this README;
+a different report or a moving branch is not an installation pin. These commands
+stop on failure. No personal data folder is selected by installation.
+
+```powershell
+$candidate = Read-Host 'Full 40-character implementation-commit from the T4 report'
+if ($candidate -notmatch '^[0-9a-f]{40}$') { throw 'An exact commit is required' }
+if (@(Get-ChildItem -Force).Count -ne 0) { throw 'Start in a new empty folder' }
+git init program
+if ($LASTEXITCODE -ne 0) { throw 'git init failed' }
+Set-Location program
+git remote add origin https://github.com/ainazemtsau/zaratustra.git
+if ($LASTEXITCODE -ne 0) { throw 'remote setup failed' }
+git fetch --depth 1 origin $candidate
+if ($LASTEXITCODE -ne 0) { throw 'Exact public pin unavailable; stop here' }
+git checkout --detach FETCH_HEAD
+if ($LASTEXITCODE -ne 0) { throw 'checkout failed' }
+if ((git rev-parse HEAD).Trim() -ne $candidate) { throw 'Wrong program commit' }
+uv sync --locked --no-dev --no-editable
+if ($LASTEXITCODE -ne 0) { throw 'Locked installation failed' }
+$python = (Resolve-Path .venv/Scripts/python.exe).Path
+$zara = (Resolve-Path .venv/Scripts/zara.exe).Path
+Set-Location ..
+& $zara entry ready
+if ($LASTEXITCODE -ne 0) { throw 'Program readiness failed' }
+```
+
+Keep this immutable program folder. Installation creates no catalog or Work.
+The runtime reports its actual version, Python and package paths. Git HEAD and the
+report identify the source pin; the runtime does not attest Git or public availability.
+Updates/recovery across releases remain a later task. Windows is the observed platform.
+
+Export a standard connection into a **new** chat folder whose parent exists:
+
+```powershell
+& $zara entry connection codex ./codex-chat
+# Or choose Claude Code and a different NEW folder:
+& $zara entry connection claude ./claude-chat
+```
+
+Open the chosen chat folder in the corresponding agent. In Codex CLI invoke
+`$zaratustra` (or select the skill); in Claude Code invoke `/zaratustra`. The shipped
+files use [Codex's local skill format](https://learn.chatgpt.com/docs/build-skills)
+and [Claude Code's skill format](https://code.claude.com/docs/en/skills).
+Exports refuse existing folders. A partially failed export must be inspected and
+retained; retry in another new folder. Nothing writes to global agent homes.
+
+In every fresh chat, provide the exact catalog path and designation, for example:
+“Use Zaratustra; my catalog is `<chosen path>/catalog.json`, designation `<my name>`.
+Show readiness and resume.” The agent must reread those explicit inputs. It cannot
+infer a workspace from chat history or pick a historical Work. Readiness reports a
+file comparison for the chosen connection, not proof that the agent loaded it.
+
+If skill discovery or PATH invocation fails, read the exported SKILL.md explicitly
+or use the absolute Python printed by readiness. The same fallback works from any
+folder, including a fresh terminal (replace the path below with that actual path):
+
+```powershell
+$python = Read-Host 'Absolute installed Python path printed above'
+& $python -I -m zaratustra entry ready
+& $python -I -m zaratustra entry ready --connection codex --connection-root ./codex-chat
+& $python -I -m zaratustra entry ready --catalog '<chosen path>/catalog.json' --designation '<my name>'
+& $python -I -m zaratustra entry resume '<chosen path>/catalog.json' '<my name>'
+```
+
+Replace `codex` / `codex-chat` with `claude` / `claude-chat` for Claude Code.
+Exact selected reads require the existing trusted console confirmation. If the
+agent's shell has no interactive terminal, run that identical command yourself in
+a terminal. The agent must not type a digest for you or pipe approval. A refusal
+leaves current Work unknown; `no_current_work` is a successful authorized Core answer.
+Missing/changed connection files return nonzero and the direct fallback stays usable.
+
+For a new Process, give ordinary prose: its title, need, desired outcomes and
+constraints. `entry create prose --help` shows those string arguments; choose the
+catalog location and designation explicitly. The product owns its saved catalog
+and journals; you do not author JSON. Resume gives the next manual action through
+draft, research, proposal and activation. Definition authoring remains assisted and
+bounded by the installed supported contract; research is not automatic. Review
+every activation/change preview and confirm each separate requested effect.
+No-current is normal; a later Work is an explicit separate choice.
+
 Version **0.17.0** is a technical foundation preview. It implements durable local
 workspaces, authorized mutations, versioned artifacts, accepted-result handoff,
 bounded Work context, Result/next Work, external process-pack binding, seven

@@ -42,4 +42,8 @@ installed capability producer. entry resume separately confirms the exact Proces
 state read. entry later-work retains one exact no-current intent and confirms its
 Pack-compatible Core request. entry change uses the existing exact review/decision/
 Result continuation; saved intent never grants Core permission.
+entry ready adds program/connection-file diagnostics around that same onboarding
+read and exact confirmation. Unknown/refused is never no-current. entry connection
+exports instruction-only skills into a NEW explicitly chosen chat root; matching
+files do not prove agent session loading. __main__ delegates to this same main.
 END_OF_FILE: src/zaratustra/cli/AGENTS.md

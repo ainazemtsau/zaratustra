@@ -12,6 +12,7 @@ from uuid import UUID
 
 from pydantic import ValidationError
 
+from zaratustra.connections import export_connection, inspect_connection
 from zaratustra.core import (
     MAX_HANDOFF_BYTES,
     ArtifactReference,
@@ -121,6 +122,113 @@ from zaratustra.process_creation import (
 )
 
 
+def _entry_ready(args: argparse.Namespace) -> int:
+    """Compose runtime diagnostics and the existing exactly authorized T3 read."""
+    lines = [
+        f"Program: zaratustra {version('zaratustra')}",
+        f"Python: {Path(sys.executable).as_posix()}",
+        f"Package: {Path(__file__).resolve().parent.parent.as_posix()}",
+        "Fallback: use the Python above with -I -m zaratustra entry ready",
+    ]
+    connection_failed = False
+    if args.connection is None:
+        lines.append("Connection: direct_cli; no agent connection selected")
+    else:
+        connection = inspect_connection(args.connection, args.connection_root)
+        lines.extend(
+            (
+                f"Connection: {connection.agent}; {connection.state}",
+                f"Connection root: {connection.root}",
+                f"Connection file: {connection.skill}",
+                f"Connection expected SHA-256: {connection.expected_sha256}",
+                f"Connection actual SHA-256: {connection.actual_sha256}",
+                "Agent session loading: unverified; file comparison only",
+            )
+        )
+        connection_failed = connection.state != "files_match"
+        if connection_failed:
+            lines.append("Connection next: use the direct fallback or export into a NEW chat root.")
+    if args.catalog is None:
+        lines.extend(
+            (
+                "Data: not_selected",
+                "Workspace: not_selected",
+                "Current Work: unknown; no Process selected",
+                "Next: choose a catalog and designation, or explicitly start entry create prose.",
+            )
+        )
+        print(chr(10).join(lines))
+        return int(connection_failed)
+    catalog = args.catalog.expanduser().resolve()
+    lines.append(f"Data catalog: {catalog.as_posix()}")
+    if args.designation is None:
+        lines.extend(
+            (
+                "Data: catalog path supplied; contents not inspected",
+                "Workspace: not_selected",
+                "Current Work: unknown; no Process selected",
+                "Next: use entry find on this catalog and explicitly choose a designation.",
+            )
+        )
+        print(chr(10).join(lines))
+        return int(connection_failed)
+    lines.append(f"Selected designation: {args.designation}")
+    try:
+        prepared = prepare_onboarding_read(catalog, args.designation)
+        caller = (
+            confirm_on_console(
+                prepare_authorization(prepared.process_read.workspace, prepared.process_read.query)
+            )
+            if prepared.process_read is not None
+            else None
+        )
+        status = read_onboarding(prepared, caller)
+    except (
+        EntryError,
+        ProcessCreationError,
+        OnboardingError,
+        WorkspaceError,
+        ValidationError,
+        OSError,
+    ) as error:
+        lines.extend(
+            (
+                "Data: selected continuation refused",
+                "Workspace: unverified",
+                "Current Work: unknown; read refused",
+                f"Next: resolve the refusal and repeat the same explicit read: {error}",
+            )
+        )
+        print(chr(10).join(lines))
+        print(f"zara: {error}", file=sys.stderr)
+        return 1
+    if prepared.process_read is not None:
+        assert status.process is not None
+        lines.extend(
+            (
+                "Data: exact authorized Core Process state",
+                f"Workspace: {prepared.process_read.workspace.as_posix()}",
+                f"Workspace id: {status.process.workspace_id}",
+                f"Process id: {status.process.process.id}",
+            )
+        )
+    else:
+        assert status.creation is not None
+        target = status.creation.activation_target
+        lines.extend(
+            (
+                "Data: persisted creation stage; not activation authority",
+                "Workspace: not_selected"
+                if target is None
+                else f"Workspace: {target.workspace_path} (saved activation target)",
+                "Current Work: unknown; activation unfinished",
+            )
+        )
+    print(chr(10).join(lines))
+    sys.stdout.write(onboarding_status_text(status))
+    return int(connection_failed)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="zara", description="Zaratustra workspace foundation")
     parser.add_argument("--version", action="version", version=f"zara {version('zaratustra')}")
@@ -129,6 +237,18 @@ def main(argv: list[str] | None = None) -> int:
         "entry", help="Discover and read explicitly cataloged Process instances."
     )
     entry_commands = entry_command.add_subparsers(dest="entry_command", required=True)
+    entry_ready = entry_commands.add_parser(
+        "ready", help="Read program/connection diagnostics and the exact selected continuation."
+    )
+    entry_ready.add_argument("--catalog", type=Path)
+    entry_ready.add_argument("--designation")
+    entry_ready.add_argument("--connection", choices=("codex", "claude"))
+    entry_ready.add_argument("--connection-root", type=Path)
+    entry_connection = entry_commands.add_parser(
+        "connection", help="Export a shipped skill into a NEW explicitly chosen chat project."
+    )
+    entry_connection.add_argument("agent", choices=("codex", "claude"))
+    entry_connection.add_argument("root", type=Path)
     entry_add = entry_commands.add_parser("add", help="Add one explicit workspace and Work.")
     entry_add.add_argument("catalog", type=Path)
     entry_add.add_argument("designation")
@@ -349,7 +469,20 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.command == "entry":
-            if args.entry_command == "create":
+            if args.entry_command == "ready":
+                if args.designation is not None and args.catalog is None:
+                    parser.error("--designation requires an explicit --catalog")
+                if args.connection_root is not None and args.connection is None:
+                    parser.error("--connection-root requires --connection")
+                return _entry_ready(args)
+            elif args.entry_command == "connection":
+                connection = export_connection(args.agent, args.root)
+                print(f"Connection file: {connection.skill}")
+                print(f"Connection SHA-256: {connection.actual_sha256}")
+                print("Open a fresh chat in that root; agent session loading is unverified.")
+                print("Explicit invocation: $zaratustra (Codex) or /zaratustra (Claude Code).")
+                return 0
+            elif args.entry_command == "create":
                 if args.creation_command == "prose":
                     lengths = {
                         len(args.clarification),

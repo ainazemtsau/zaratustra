@@ -20,6 +20,12 @@ python-preference = "only-managed"
 # Exclude the directories themselves, including leftovers from older checkouts.
 source-exclude = ["src/zaratustra/fictional_lot", "src/zaratustra/process_probe"]
 
+[[tool.importlinter.contracts]]
+name = "Standard connection resources have no product authority dependency"
+type = "forbidden"
+source_modules = ["zaratustra.connections"]
+forbidden_modules = ["zaratustra.core", "zaratustra.entry", "zaratustra.onboarding", "zaratustra.process_creation", "zaratustra.process_change", "zaratustra.process_packs", "zaratustra.local", "zaratustra.cli", "tests", "tools"]
+
 [tool.ruff]
 target-version = "py313"
 line-length = 100
