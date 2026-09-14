@@ -1,218 +1,240 @@
-# Public onboarding R2 T4 — local engineering handback
+# Public onboarding R2 T4 correction — engineering ESCALATE
 
 ## outcome
 
-Local T4 candidate is implemented and checked; return HOME for separate fresh
-Direction refutation. Public exact-pin download, model-driven agent execution and
-owner acceptance are not established by this engineering return.
+Documentation correction and local checks pass. The complete corrective CALL is
+**blocked**: actual Codex and Claude chats load the shipped skill and run the common
+installed entry, but an activated Process read requires a real operator's existing
+interactive console confirmation. Both hosts truthfully return unknown current
+Work after that refusal. Successful actual-chat current/no-current evidence has
+not been established; draft continuation and refusal are not substitutes.
 
-implementation-commit: 06d95080bd9d51bbe0dffa88036acffad26e5ed6
+implementation-commit: f2bd8f5601c8cbca90c3392d8a3694bc85055238
 
-implementation-parent: 335e4dadeeabef5552052d0d1982d40e4adcc788
+implementation-parent: c4a0576c56be5427cffdf1c9a6ec300da5b16995
 
-branch: codex/public-onboarding-r2-t4
+original-implementation: 06d95080bd9d51bbe0dffa88036acffad26e5ed6
 
-This separate report commit has that implementation as its exact parent and changes
-only root RESULT.md. Its own SHA and post-commit full deliver result belong in the
-final handback: a report cannot truthfully embed its own Git commit identity.
+accepted-T3-base: 335e4dadeeabef5552052d0d1982d40e4adcc788
 
-README provides clean-folder full-commit fetch/verification, locked non-editable
-installation, explicit skill invocation and absolute Python fallback. Its exact
-pin is implementation-commit above, supplied through this report rather than a
-moving branch. Keep this report with the README. Runtime reports actual version,
-Python and package paths; it does not attest Git or public availability.
+branch: codex/public-onboarding-r2-t4-correction
 
-The common zara entry ready composes program/connection diagnostics with the existing
-T3 onboarding read. Catalog and designation remain explicit. Without selection or
-after refusal, current Work is unknown. Current/no-current comes only from the same
-separately authorized Core ProcessStateQuery. Workspace, revision, materials,
-Results and next action retain T3 meaning. No read-side selection/state file is
-added. python -I -m zaratustra delegates to the same installed CLI main.
+This separate report commit has the corrective implementation as its parent and
+changes only RESULT.md. Its own exact SHA, parent and post-commit check results
+are recorded in the final HOME handback; a report cannot embed its own Git SHA.
 
-The entry connection codex|claude command exports one instruction-only skill from
-the wheel into a NEW selected chat root. Codex uses
-.agents/skills/zaratustra/SKILL.md; Claude uses .claude/skills/zaratustra/SKILL.md.
-Rendered values are only program Python/version and connection kind/root.
-Existing destinations refuse without overwrite. The connection retains no catalog,
-Process state or permission. File comparison does not prove current session loading.
+The implementation changes exactly README.md and
+docs/public-onboarding-r2-t4/PLAN.md: 34 insertions and 10 deletions. README now
+conditions installation on authorized availability of the exact report pin and
+points to dated evidence. Neither durable document asserts a moving public-main
+state. Exact fetch/HEAD verification, locked non-editable install, explicit
+$zaratustra and /zaratustra invocation, and absolute-Python fallback remain.
 
-The absence probe exposed an inherited T3 side effect: inspecting an absent
-creation made a lock directory before refusing. The common creation inspector now
-reads the journal first, opens only its existing lock, then reloads under the lock.
-Missing journal/lock refuses without creation or repair. Writer locking and all
-Core reconciliation/authorization remain unchanged.
+No source, test, development-tool, version/dependency, Core/T3, schema,
+AGENTS.md, validation.config or REVIEW.md bytes changed from c4a0576. Version stays
+0.17.0. No implementation defect was demonstrated by these chats.
 
-Exact HOW: docs/public-onboarding-r2-t4/PLAN.md.
-
-| Scope | Disposition |
+| Obligation | Disposition |
 |---|---|
-| W18 | README/report pin implemented; clean local wheel proof passed; public download pending publication authorization. |
-| W19 | Common read-only readiness, unknown/refused distinction, exact current/no-current and fresh-process proof implemented. |
-| W20 | Both standard shipped skills, non-overwriting export, invocation/fallback and native discovery proved locally. Model-driven use remains for separate G5. |
-| W01-W17/W26-W27, K01-K11 | Preserved; no new acceptance claim. |
-| W21-W23/W28-W32/A05-A09 | Retain prior accepted/residual T1-T3 dispositions; no silent closure. |
-| W24-W25/A03 | Remain T5+ update/recovery/release/independent-use work. |
-
-Implementation changes exactly 16 paths:
-
-- README.md
-- docs/public-onboarding-r2-t4/PLAN.md
-- pyproject.toml
-- src/zaratustra/__main__.py
-- src/zaratustra/cli/AGENTS.md
-- src/zaratustra/cli/__init__.py
-- src/zaratustra/connections/AGENTS.md
-- src/zaratustra/connections/SKILL.md
-- src/zaratustra/connections/__init__.py
-- src/zaratustra/process_creation/__init__.py
-- tests/tools/test_public_onboarding_r2_t4.py
-- tests/tools/test_public_onboarding_r2_t4_hosts.py
-- tests/zaratustra/cli/test_readiness.py
-- tests/zaratustra/connections/test_connections.py
-- tools/probe_public_onboarding_r2_t4.py
-- tools/probe_public_onboarding_r2_t4_hosts.py
-
-Core, process_packs, onboarding, process_change, schema, dependencies/uv.lock,
-validation.config, REVIEW.md and root AGENTS.md bytes are unchanged from 335e4da.
-The sole pyproject change adds a boundary contract for the new resource module.
+| W18 | Durable wording corrected; exact-SHA publication and empty-folder public install remain pending. |
+| W19-W20 | Four actual fresh chats prove shipped-skill use, installed draft continuation and truthful refusal; successful authorized current/no-current chat proof is blocked. |
+| W01-W17/W26-W27, K01-K11 | Prior accepted scope preserved; no new closure or weaker authorization. |
+| W21-W23/W28-W32/A05-A09 | Prior accepted/residual T1-T3 dispositions preserved. |
+| W24-W25/A03 | Remain T5+; no update/release/independent-use claim. |
 
 ## evidence
 
-Authority: CALL c-solmax-zaratustra-public-onboarding-r2-t4-20260914, contract36
-PROBA, repository specification/validation and current T3 PLAN/RESULT/CORRECTION
-documents. Root STOP/STEER were absent throughout. No Direction file was modified.
+Authority is correction CALL
+c-solmax-zaratustra-public-onboarding-r2-t4-correction-20260914, original T4 CALL,
+binding G5 r1 FAIL, repository AGENTS/specification/validation and product PLAN.
+All 19 repo AGENTS files were read. STOP/STEER were absent. Direction OS was read
+only. The new worktree started clean and detached at the exact c4a0576 candidate.
 
-Executor task 01a0a04f-1c63-76d0-bc0d-d829db698620, cwd
-C:/my_global_workflow/3b56/zaratustra; HOME task
-01a09f18-b6a0-7ad2-92c4-176015521998. Exact clean detached 335e4da and its parent
-e7f5d61e567abdd817c0184b766fbad1b1baf3a5 were independently observed by the required
-single bounded read-only setup evaluator. It made no changes and ran no tests;
-it is not binding G5. START RECEIPT and factual progress messages were delivered
-to HOME. This executor did not contact the old coordinator.
+Executor: 01a0a098-3272-7b80-8d22-7138b7239811, worktree
+C:/my_global_workflow/4620/zaratustra. HOME:
+01a09f18-b6a0-7ad2-92c4-176015521998. START and factual progress receipts were sent
+there; the old coordinator was not contacted. The single required read-only setup
+evaluator verified clean candidate/parent/T3 lineage, controls and executable
+availability. It performed no mutation/model call and is not binding G5.
 
-Native focused check passed formatting, Ruff, mypy, 19/19 boundaries, 20 tests
-in 37.49 s and both distributions; wall 42.3499722 s. It covered readiness,
-connection identity, onboarding and T3 corrections before the optional host probe
-was added. Two host-evidence guard tests then passed in 0.07 s. These focused runs
-are feedback, not full-delivery evidence. Log: _scratch/t4-focused.log.
+Historical public observation only: binding G5 r1 recorded public main at accepted
+T3 335e4dadeeabef5552052d0d1982d40e4adcc788 on September 14, 2026, and could not
+fetch either original T4 SHA. This is a dated fact from that review, not a claim
+about current public state. This leg performed no remote fetch, push or publication.
 
-Full uv run --locked python -m tools.check --deliver at exact implementation
-06d9508 passed: 144 formatted files, Ruff, strict mypy over 125 source files,
-19/19 import contracts, 420 passed in 195.57 s, wheel/sdist 0.17.0 and report
-structure; wall 201.4063577 s. Log and exact HEAD/timing:
-_scratch/t4-implementation-deliver.log and its sibling -timing.json.
-The implementation tree contained the inherited T3 report; report presence is
-structural only. This T4 report tree receives a separate post-commit full deliver,
-whose actual result is supplied in the final handback.
+At exact clean implementation f2bd8f5601c8cbca90c3392d8a3694bc85055238:
 
-At exact implementation, the following installed probe passed in 21.1966636 s:
+| Check | Actual result | Wall time |
+|---|---|---|
+| Focused native check of four T4 test files | PASS; 12 tests in 22.99 s, formatting/lint/types, 19 contracts and distributions | 34.8167 s |
+| Full uv run --locked python -m tools.check --deliver | PASS; 144 formatted files, Ruff, strict mypy 125 files, 19 contracts, 420 tests in 197.34 s, wheel/sdist and report structure | 200.5075 s |
+| Installed T4 probe plus both native loaders | PASS; 29 real CLI calls and four loader sessions, no model turns in this probe | 18.1302 s |
+| Unchanged installed T3 correction probe | PASS; 20 fresh CLI processes, F1/F2/F3 | 17.5374 s |
 
-    uv run --locked python -m tools.probe_public_onboarding_r2_t4 --output _scratch/t4-exact-installed --codex C:/Users/Anton/AppData/Local/OpenAI/Codex/bin/bffc5354119c8421/codex.exe --claude C:/Users/Anton/.local/bin/claude.exe
+Focused checks are feedback only. Full implementation delivery used the inherited
+report; the report gate checks structure, not truth. Full delivery, focused,
+installed/native and T3 probes repeat after this report commit. Their actual
+results belong in the final handback. No successful actual-host current/no-current
+report-commit gate is claimed or fabricated while operator confirmation is missing.
 
-It builds locally and installs the wheel with locked cached dependencies using
-uv pip install --offline into a disposable runtime outside checkout. Product
-imports are verified under that wheel-only runtime; tests/tools are absent until
-the harness explicitly exposes fictional fixtures. Dependency checks pass.
-Wheel SHA-256:
-8978903757df01b29b23f496213d806e8ebc5931aaa113495cdaffff62e176b6.
-Wheel, installation identity, generated skills and complete traces are retained at
-_scratch/t4-exact-installed. Temporary Python runtime was cleaned.
-This is not a public remote download.
+Logs and command/HEAD/status/timing receipts are retained as
+_scratch/t4-implementation-focused.log and .json,
+_scratch/t4-implementation-deliver.log and .json,
+_scratch/t4-implementation-installed.log and .json, and
+_scratch/t4-implementation-t3.log and .json.
 
-The command probe retains 29 real CLI invocations: registered executable and module
-fallback, both exports, collisions, changed/missing connections, absent selection,
-ordinary prose draft, two fresh draft reads per agent, and current/no-current reads
-and unconfirmed refusal per agent. Eight CLI processes use explicitly synthetic
-exact confirmation through the existing trusted test seam. Full stdout replays
-are identical at each selected stage; selected data hash manifests are unchanged.
-Normal noninteractive console reads refuse with permission_denied. New home/cwd
-remain empty. No agent gets a second authorization path.
+The installed probe builds locally, installs the wheel and locked cached
+dependencies outside checkout, verifies wheel-only product imports and exercises
+the executable and module fallback, collision, missing/changed/moved connection,
+absent selection, draft/current/no-current and console refusal paths. Its
+synthetic exact confirmations remain explicitly development-only. Codex and
+Claude native discovery each run twice in fresh empty homes. Retained evidence:
+_scratch/t4-implementation-installed-evidence. This is not a public download.
 
-Native discovery passed twice per actual host, with fresh homes/projects outside
-checkout, an environment excluding credentials and no model turns:
+F1 retains identical replay stdout with one operation/event/revision. F2 preserves
+all five unfinished stages byte-for-byte. F3 preserves identical original/retry
+stdout, one event/revision and stale_or_changed warnings until explicit rebuild.
+Retained evidence: _scratch/t4-implementation-t3-evidence/fresh-cli/correction.json.
 
-- Codex 0.154.0-alpha.6.2, PIDs 58032/52728: initialize, initialized, skills/list
-  returned the exact enabled project skill path. Skill SHA-256:
-  2bf1d3c7b7d2ab4567ea0a047877bcb94741d37916c9b7fff390823f4daa0c30.
-- Claude Code 2.1.261, PIDs 58460/59436: SDK control initialize returned the
-  zaratustra project command. Skill SHA-256:
-  b6e6d190e63c45afc5e99feb6901321b5a70d6229b6e09d3c996c6e26c5325a7.
+Actual chats used only the existing configured Codex ChatGPT login and Claude
+claude.ai Max login. Auth checks printed only status/method/subscription and
+versions; no credentials or account identifiers were copied into evidence.
+Exact binaries: C:/Users/Anton/AppData/Local/OpenAI/Codex/bin/bffc5354119c8421/codex.exe
+(version 0.154.0-alpha.6.2) and C:/Users/Anton/.local/bin/claude.exe (2.1.261).
+No model override was passed. Claude reports claude-opus-5; Codex JSONL does not
+report its model identity, so none is inferred.
 
-Skill bytes remained unchanged. Codex warned that it would not create PATH helpers
-inside the temporary home; discovery still succeeded. Binary versions, exact sent
-requests, complete returned discovery and copied generated skills are retained in
-native-hosts under that output. Native roots are retained at trace paths; this run
-used C:/Users/Anton/AppData/Local/Temp/zaratustra-t4-hosts-vfow52o6.
-Only native discovery is established, not model execution or real user approval.
-Readiness correctly leaves loading unverified for whichever future session calls it.
+The actual-chat wheel SHA-256 is
+e46cb5bf36a8489648eddb9b47b6e3ddab07e81059abbf0c29b18ccf656cf628.
+The exact implementation's independent installed probe produced the same wheel.
+The changed README is package metadata; product source bytes are unchanged.
 
-Unchanged installed T3 correction probe at exact implementation passed in
-17.8879675 s:
+The retained isolated root is
+C:/Users/Anton/AppData/Local/Temp/zaratustra-t4-actual-st6ndaw0.
+The wheel-only runtime is runtime/venv; a copy of the existing Python 3.13.7 program
+files under runtime/python-base makes the entire selected runtime accessible
+without granting the host access to another user-profile program directory.
+No persistent host configuration was edited. Fictional fixture setup uses the
+existing public development activation seam, separately from the model sessions.
+The hosts never receive or invoke that fixture helper.
 
-    uv run --locked python -m tools.probe_public_onboarding_r2_t3_correction --output _scratch/t4-exact-t3-corrections
+Each fresh prompt explicitly invokes the shipped skill and supplies these two
+selections under that root:
 
-F1 replay has identical complete stdout and one operation/event/revision. All five
-F2 unfinished stages have byte-stable reads. F3 first/retry have identical stdout,
-one operation/event/revision and unresolved stale_or_changed warnings; explicit
-rebuild changes projection status to current. The installed correction evidence
-retains original Result confirmations, refusal records and receipts.
-Log: _scratch/t4-exact-t3-corrections.log; full observations:
-_scratch/t4-exact-t3-corrections/fresh-cli/correction.json.
+- fictional-data/draft-catalog.json, designation Fictional note draft;
+- fictional-data/simple/catalog.json, designation R2 T3 fictional simple prose.
 
-Key retained evidence SHA-256:
+The prompt requests reads only and forbids approval typing, piping, patching,
+mutation, configuration changes, private data and inferring authority from the
+prompt. No previous conversation/output is supplied to either second session.
+Codex uses exec --ephemeral and a new session each time, with only runtime and
+fictional-data as added directories. Claude uses --no-session-persistence with
+distinct explicit session IDs, project settings, no MCP servers and the standard
+Skill/Read/shell tools. Neither host receives an approval bypass.
 
-- T4 commands/summary.json: 348b828393d0568cad7b49472ec0f2aed9041389f2fdedfabb06f67884d29f46.
-- T4 installation.json: 7882ab14d4d61c4dfd29e34346a83ea4c7184c0b58019540db004d43b10e01bf.
-- T3 fresh-cli/correction.json: 261d6284fbd26173cd12516117a0de1b4b5a6300a8e322ddeede4c5628791726.
+| Host/session | Native session identity | PID | Host exit | Wall time |
+|---|---|---|---|---|
+| Codex 1 | 01a0a0a2-e428-7642-ab2e-092f83c0f2fb | 80228 | 0 | 93.4883 s |
+| Codex 2 | 01a0a0a5-8891-77b0-9fef-4964f7a13805 | 60268 | 0 | 113.7489 s |
+| Claude 1 | a6841642-1785-400d-97eb-ce9f73e296e8 | 107420 | 0 | 65.7960 s |
+| Claude 2 | 63c205b9-7de9-4f04-8ac6-c67e24f7d045 | 94232 | 0 | 60.6327 s |
 
-Pending remote proof: fetch/install exactly
-06d95080bd9d51bbe0dffa88036acffad26e5ed6 from public origin, from an empty folder
-using only the final README/report pair. The CALL says public main is still T2
-daaafe55653c38eaefe36e468858aa68a21429d0 because publication authorization is pending.
-No remote source fetch or push was attempted here; local/cache evidence does not
-satisfy this requirement. G5 must preserve this distinction.
+Host exit 0 means the chat completed, not that its product reads all succeeded.
+The visible host tool events show the real shipped skill load, exact installed
+commands and stdout. Both hosts' draft readiness/resume calls return exit 0:
+Program zaratustra 0.17.0, explicit Python/package/catalog/connection, files_match,
+Workspace not_selected, Stage draft, Current Work unknown; activation unfinished,
+and Next: Answer saved clarifications, then create the manual research request.
+
+For the activated selection both readiness and resume return product exit 1:
+zara: permission_denied: Interactive local console confirmation required.
+Readiness reports Data selected continuation refused, Workspace unverified and
+Current Work unknown; read refused. All four final responses preserve that
+distinction and give the identical manual command. They do not report no-current
+or derive active state from setup files. All 14 selected data files and each
+exported skill remain byte-identical across all four sessions. The common product
+still reports Agent session loading: unverified; file comparison only; actual
+loading evidence comes from the separate native session events.
+
+The missing authority is concrete: src/zaratustra/local/__init__.py requires
+interactive stdin/stderr and an exact displayed confirmation. The shipped
+src/zaratustra/connections/SKILL.md says:
+"Run exact authorization commands in a user-controlled terminal."
+No operator was attached to these headless host tool shells. Supplying synthetic
+approval or patching the adapter would not establish the required actual-chat
+evidence. Exact human-terminal commands are retained in each transcript.
+
+Visible transcripts, exact prompts, invocation/version/exit/timing records, tool
+commands/stdout and hashes are under _scratch/t4-actual-implementation in codex-1,
+codex-2, claude-1 and claude-2. transcript.json is the sanitized machine record;
+transcript.md is the readable copy. Sanitization omits reasoning/signatures and
+unrelated host inventory, preserving visible response/tool text verbatim. Some
+model summaries abbreviate output; the tool records retain the exact output.
+_scratch/t4-actual-implementation/visible-manifest.json indexes every artifact.
+
+Key SHA-256 evidence:
+
+| Artifact | SHA-256 |
+|---|---|
+| Actual-host visible-manifest.json | 826c1fffbb89045b6c1072900b55523dad60f91651196a8f4a6a20a51d52cb4d |
+| Codex 1 transcript.json | ec939e8938f5c850712cdff0243d965d3e4a15189711e17f74916e9227c315a8 |
+| Codex 2 transcript.json | cdc703fb41fc7855ffe3c3e83d8ce09d87524c3a72b62f4580019a9a91f4ee81 |
+| Claude 1 transcript.json | ef8d0e1863913ba4189cb8a3f627a6e8de2315fa7d85560aa958bfd65087b85b |
+| Claude 2 transcript.json | e7691e904f893557137c5ec9ecefaa1c400b5e829c263c60828548c4c91fdbea |
+| Installed commands/summary.json | 34208c2b2f9beccfafa315e490ba31d2c6362de7ed6eaeb3876cbc27e8ba1415 |
+| Installed installation.json | 316b08c0668804ad453738ddfe56e278c36fc70f92fe7b0d615f86650e59b985 |
+| T3 fresh-cli/correction.json | 368e617bebcdb2acc34a75c9a8583d4dca8f198d9426c0ebcf9f97f2c1c720ac |
+| Full implementation log | c52ee8128592399ae851935cbbb31ef1235e48f68e12392aee7fcc1c783317ef |
+| Full implementation timing/identity | 7d969623a1c4a303cb89cdbc21a4e0501c7e017f05613ddc0eec0015959d6d76 |
 
 ## assumptions
 
-Only explicit fictional disposable catalogs/workspaces are used. Core, Mutation,
-exact query/confirmation/receipt authority and T3 continuation remain authoritative.
-Host discovery is a loader observation, not a claim that an LLM followed the skill,
-a user granted confirmation, or installation is ready for independent daily use.
-Windows is the observed platform.
+Windows is the observed platform. The owner-authorized existing paid-host path
+permits these minimal fictional model calls; it does not grant a product read
+confirmation, new service, purchase or personal-data access. Synthetic setup and
+native tests do not constitute owner acceptance or actual chat confirmation.
+Temporary roots and ignored evidence are retained for HOME; no cleanup is claimed.
 
 ## cuts
 
-No requested obligation is silently closed. No user JSON workflow, hidden Work,
-auto-next, history selection/reopen, automatic research, new definition/lifecycle
-planner, second authority, Solmax-specific Core, updater/two-release fence,
-personal/private install, owner-content choice, paid service, CI/CD, notifications,
-Direction write, integration, push, publication or release is included.
-Remote pin availability, actual agent execution and separate fresh binding G5
-remain explicit pending evidence, not substituted by local tests.
+The complete CALL remains open. Successful actual current/no-current reads,
+operator-confirmed fresh continuation and their exact-report model verification
+are blocked, not replaced by successful draft reads or synthetic tests.
+No new authorization mechanism or product change was added to bypass the refusal.
+There was no push/publication/release, private install/data, T5+, user JSON workflow,
+auto-research, hidden Work, auto-next/history reopen, second authority,
+Solmax-specific Core, Resource/lifecycle/planner/orchestration/Pi/router,
+owner-content choice or independent-use claim.
 
 ## cost
 
-One implementation commit (16 paths, 1,244 insertions/7 deletions), then one separate
-root report commit. Product remains 0.17.0 / Python 3.13.7 without new dependencies.
-Twelve test cases were added; the full suite grew from 408 to 420.
+One documentation implementation commit (two paths) and one report-only commit.
+No dependency/version/test count change. Full suite remains 420 tests.
 
-Initial branch/setup and Python execution needed successful local sandbox escalation
-for shared Git metadata and managed uv/Python paths. The first exploratory probe
-failed on the genuine absent-creation lock side effect (1 failed/8 passed); the
-correction passed all nine cases, followed by the extra missing-lock test.
-The first combined installed/native probe completed both loaders but failed during
-Windows temporary-directory cleanup because a host descendant held a cwd handle.
-The harness now deliberately retains native roots as evidence; its repeat passed,
-then its exact-commit repeat passed. No gate exhausted three retries.
-The exact implementation full deliver passed its first attempt. The local Git
-hygiene hook was enabled and passed. No paid/model execution or public action occurred.
+Two initial Codex chats loaded the skill but could not launch the venv interpreter
+across its sandbox boundary: 50.3553 s and 75.3277 s. Their records remain under
+_scratch/t4-actual-preflight; they began at c4a0576 with the two documentation edits
+present and are not exact-commit passing evidence. The final bounded launch attempt
+at f2bd8f5 used a new contained Python runtime and succeeded. No launch retries
+continued beyond that third attempt. Four exact-implementation chats then establish
+only the successful draft path and repeated honest authorization refusal.
+
+The six total model calls use existing subscriptions. No new purchase, account,
+plan or service was made. Claude's retained total_cost_usd fields are list-price
+usage estimates, not evidence of a new charge. Shared Git metadata, uv/Python and
+existing-host execution required sandbox escalation; no automatic review rejected
+an action. The local hygiene hook and all implementation native gates passed.
 
 ## manual-acceptance
 
-pending. HOME is solmax for separate fresh binding G5 of the complete T4 claim,
-including honest pending remote-pin proof and the boundary between native discovery
-and actual agent execution. This report does not close T4 or establish Direction
-acceptance, integration, release or independent use.
+pending. Return HOME with one exact blocker: an operator must perform the existing
+interactive console confirmation before successful actual-chat current/no-current
+reads can be evidenced. The source skill and Core refusal remain unchanged.
+
+Remote publication is explicitly pending. After the missing actual-chat evidence,
+HOME still needs owner authorization for the exact corrected SHA, an empty-folder
+public install of that exact pin and focused fresh binding G5. This engineering
+ESCALATE closes neither Direction T4 nor owner acceptance.
 
 ## next
 
