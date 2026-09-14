@@ -1,4 +1,4 @@
-# Public onboarding R2 T4 correction — engineering ESCALATE
+# Public onboarding R2 T4 correction — owner-confirmation follow-up ESCALATE
 
 ## outcome
 
@@ -8,6 +8,11 @@ installed entry, but an activated Process read requires a real operator's existi
 interactive console confirmation. Both hosts truthfully return unknown current
 Work after that refusal. Successful actual-chat current/no-current evidence has
 not been established; draft continuation and refusal are not substitutes.
+
+The owner subsequently completed a protected terminal read of the same fictional
+selection. Two new fresh-host reads at c45e8d0 still refused: confirmation belongs
+to each invocation and the earlier terminal read did not transfer an authorization
+object into either new host process. Both branches stopped at their first refusal.
 
 implementation-commit: f2bd8f5601c8cbca90c3392d8a3694bc85055238
 
@@ -19,9 +24,15 @@ accepted-T3-base: 335e4dadeeabef5552052d0d1982d40e4adcc788
 
 branch: codex/public-onboarding-r2-t4-correction
 
-This separate report commit has the corrective implementation as its parent and
-changes only RESULT.md. Its own exact SHA, parent and post-commit check results
-are recorded in the final HOME handback; a report cannot embed its own Git SHA.
+prior-report-commit: c45e8d00d4d2b44ac0f7302bb80439b9d92dbd20
+
+report-parent: c45e8d00d4d2b44ac0f7302bb80439b9d92dbd20
+
+This follow-up report commit changes only RESULT.md and has c45e8d0 as its parent.
+The prior report c45e8d0 has the corrective implementation f2bd8f5 as its parent.
+This report's own exact SHA and post-commit checks are recorded in the final HOME
+handback; a report cannot embed its own Git SHA. Concurrent changes were preserved;
+the resumed leg started at the exact clean c45e8d0 candidate.
 
 The implementation changes exactly README.md and
 docs/public-onboarding-r2-t4/PLAN.md: 34 insertions and 10 deletions. README now
@@ -43,6 +54,72 @@ AGENTS.md, validation.config or REVIEW.md bytes changed from c4a0576. Version st
 | W24-W25/A03 | Remain T5+; no update/release/independent-use claim. |
 
 ## evidence
+
+Owner-confirmation follow-up on September 14, 2026: HOME explicitly reported the
+owner's personally completed protected terminal read of the retained fictional
+selection. Its successful output showed revision 7, current Work
+2d077d70-1cda-466a-9a19-24d369ba5f3d, status ready, and next action to open that
+exact Work and review a safe change only against that revision. This statement is
+retained in _scratch/t4-owner-resume/owner-read-context.json as owner-provided
+evidence; the raw terminal stdout was not attached to this executor's delegation.
+It is not relabelled as a fresh host's own successful product read.
+
+Under that exact steering, one new Codex and one new Claude chat used only the
+unchanged shipped skills, existing subscriptions and the retained fictional root.
+Neither prompt supplied the reported Work id/revision as an expected answer.
+Each explicitly selected the same catalog/designation, invoked installed readiness
+once, received product exit 1 with
+permission_denied: Interactive local console confirmation required,
+and stopped immediately without retry, protected fallback or confirmation input.
+Both reported Workspace unverified and Current Work unknown; read refused.
+No new purchase/service, private data, configuration change or product mutation
+occurred. All 14 fictional data files and both skill files stayed byte-identical,
+including across the intervening owner read.
+
+| Follow-up host | Fresh session | PID | Host/product exit | Wall time |
+|---|---|---|---|---|
+| Codex 0.154.0-alpha.6.2 | 01a0a0cf-360b-7cc1-9629-f95721394309 | 18744 | 0 / 1 | 39.0040 s |
+| Claude Code 2.1.261 | b6766c2a-345d-4641-8a78-8a237dd21334 | 2588 | 0 / 1 | 25.7604 s |
+
+Exact sanitized prompts, visible responses, actual commands/stdout, native session
+identities, versions, exits and data/skill hashes are retained in
+_scratch/t4-owner-resume/codex-1 and _scratch/t4-owner-resume/claude-1.
+The readable records are transcript.md; the exact sanitized records are
+transcript.json, indexed by _scratch/t4-owner-resume/visible-manifest.json.
+Codex transcript.json SHA-256:
+1791fca03ed138cbdbbc8d44f58549760e3d8b5454ed63b90637bf7361372c4d.
+Claude transcript.json SHA-256:
+383f5002ab68ac18fd85237c8c88a287814e16b1e14be57d4678c50d324c13e9.
+
+The authoritative observations are the retained tool command and product output.
+Claude's additional narrative claim that no catalog contents were read is not
+established: selection preparation precedes confirmation. Its suggested manual
+command also omits PowerShell's call operator; the retained actual tool command
+contains it. These response limitations are not repaired by another model retry
+and are not installed product code changes.
+
+The CLI prepares the selected query, calls confirm_on_console for each invocation
+and only then passes its returned LocalAuthorization to the common reader.
+The local adapter rejects non-interactive streams before producing that object.
+Consequently, a successful standalone operator read does not authorize a later
+headless invocation. The missing step is operator participation in the protected
+fresh-host read itself. No new authorization path is introduced here.
+
+| Remaining correction done_when | Disposition after owner-confirmation follow-up |
+|---|---|
+| 1: durable publication truth, exact lineage, invocation/fallback | PASS; README/PLAN stay unchanged and this report extends the exact report lineage. |
+| 2: actual fresh-host current/no-current and continuation | FAIL/BLOCKED; both new actual reads refuse. Prior owner-read evidence and successful draft chats do not substitute for this requirement. |
+| 3: all exact-commit evidence and native gates | FAIL overall while actual-agent success is blocked; native gates previously passed on f2bd8f5/c45e8d0. Focused readiness and full deliver repeat at this report-only commit, with exact results in HOME handback. |
+
+No further model retry occurs under the owner's stop-on-new-prompt instruction.
+HOME subsequently designated this as tonight's terminal checkpoint: no further
+model attempts or owner-input requests, no later stages or authorization changes.
+Only this report-only update, proportionate required checks and handback continue.
+Installed/native and T3 F1/F2/F3 evidence at c45e8d0 remains applicable evidence for
+the unchanged product bytes; those probes are not repeated for this report-only
+follow-up. No T4 completion, public install, publication or binding G5 is claimed.
+
+The following records describe the preceding implementation and report leg.
 
 Authority is correction CALL
 c-solmax-zaratustra-public-onboarding-r2-t4-correction-20260914, original T4 CALL,
@@ -208,7 +285,8 @@ owner-content choice or independent-use claim.
 
 ## cost
 
-One documentation implementation commit (two paths) and one report-only commit.
+The initial leg has one documentation implementation commit (two paths) and one
+report-only commit. This resumed leg adds one report-only follow-up commit.
 No dependency/version/test count change. Full suite remains 420 tests.
 
 Two initial Codex chats loaded the skill but could not launch the venv interpreter
@@ -219,17 +297,26 @@ at f2bd8f5 used a new contained Python runtime and succeeded. No launch retries
 continued beyond that third attempt. Four exact-implementation chats then establish
 only the successful draft path and repeated honest authorization refusal.
 
-The six total model calls use existing subscriptions. No new purchase, account,
+The initial six host chat executions use existing subscriptions. The follow-up
+adds exactly two fresh host chat executions, with no retry after either refusal;
+these counts do not count the hosts' internal model requests. No new purchase, account,
 plan or service was made. Claude's retained total_cost_usd fields are list-price
 usage estimates, not evidence of a new charge. Shared Git metadata, uv/Python and
-existing-host execution required sandbox escalation; no automatic review rejected
-an action. The local hygiene hook and all implementation native gates passed.
+existing-host execution required sandbox escalation. The local hygiene hook and
+all implementation native gates passed. After the prior report commit, automatic
+approval review rejected the first final HOME message because its service returned
+HTTP 403. The authorized destination was verified and the same tool retry delivered
+the handback; no product protection was bypassed.
 
 ## manual-acceptance
 
-pending. Return HOME with one exact blocker: an operator must perform the existing
-interactive console confirmation before successful actual-chat current/no-current
-reads can be evidenced. The source skill and Core refusal remain unchanged.
+pending. The owner did perform the reported standalone protected read. Return HOME
+with the remaining exact blocker: each fresh host's own protected invocation still
+requires interactive console confirmation, and both newly invoked reads refused.
+Another detached confirmation cannot by itself transfer LocalAuthorization into
+a later process. The source skill and Core refusal remain unchanged. HOME must
+resolve the operator-attached invocation before claiming successful actual-chat
+current/no-current evidence; neither host branch is retried here.
 
 Remote publication is explicitly pending. After the missing actual-chat evidence,
 HOME still needs owner authorization for the exact corrected SHA, an empty-folder
