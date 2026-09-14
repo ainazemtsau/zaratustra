@@ -15,7 +15,7 @@ from pydantic import (
     model_validator,
 )
 
-from .records import Artifact, PackReference, Process, RecordModel, Text, Work
+from .records import Artifact, PackReference, Process, ProcessMaterial, RecordModel, Text, Work
 
 Revision = Annotated[int, Field(strict=True, ge=1)]
 Digest = Annotated[str, Field(strict=True, pattern="^[0-9a-f]{64}$")]
@@ -43,6 +43,7 @@ V2_FIELDS = {
 V3_FIELDS = {"handoff", "delivery"}
 V4_FIELDS = {"submission"}
 V5_FIELDS = {"pack_binding"}
+V6_FIELDS = {"terminal_submission"}
 
 
 class NextWork(RecordModel):
@@ -64,6 +65,14 @@ class ArtifactReference(RecordModel):
     sha256: Digest
 
 
+class ProcessMaterialSubmission(RecordModel):
+    material_id: UUID
+    title: Text
+    media_type: Text
+    content_sha256: Digest
+    content_size: Annotated[int, Field(strict=True, ge=0)]
+
+
 class ResultSubmission(RecordModel):
     source_revision: Revision
     result: ArtifactReference
@@ -76,6 +85,18 @@ class ResultSubmission(RecordModel):
             raise ValueError("Acceptance ids must be unique")
         if self.next_work.work_id == self.next_work.artifact_id:
             raise ValueError("Next Work and Artifact ids must be distinct")
+        return self
+
+
+class TerminalResultSubmission(RecordModel):
+    source_revision: Revision
+    result: ArtifactReference
+    acceptance_ids: Annotated[tuple[UUID, ...], Field(min_length=1)]
+
+    @model_validator(mode="after")
+    def distinct(self) -> Self:
+        if len(set(self.acceptance_ids)) != len(self.acceptance_ids):
+            raise ValueError("Acceptance ids must be unique")
         return self
 
 
@@ -124,7 +145,7 @@ class HandoffDelivery(RecordModel):
 
 
 class MutationRequest(RecordModel):
-    version: Annotated[int, Field(strict=True, ge=1, le=5)] = 1
+    version: Annotated[int, Field(strict=True, ge=1, le=6)] = 1
     operation_id: UUID
     workspace_id: UUID
     work_id: UUID
@@ -143,12 +164,16 @@ class MutationRequest(RecordModel):
     delivery: HandoffDelivery | None = None
     submission: ResultSubmission | None = None
     pack_binding: PackReference | None = None
+    terminal_submission: TerminalResultSubmission | None = None
 
     @model_serializer(mode="wrap")
     def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         value: dict[str, Any] = handler(self)
         if self.version < 5 and self.pack_binding is None:
             value.pop("pack_binding", None)
+        if self.version < 6:
+            for name in V6_FIELDS:
+                value.pop(name, None)
         if self.version < 4 and self.submission is None:
             value.pop("submission", None)
         if self.version < 3 and all(getattr(self, name) is None for name in V3_FIELDS):
@@ -170,12 +195,20 @@ class MutationRequest(RecordModel):
         elif self.pack_binding is not None or self.version == 5:
             raise ValueError("Only bind_pack uses request 5/pack_binding")
         if self.operation == "submit_result":
-            if self.version != 4 or self.submission is None:
-                raise ValueError("Result requires request version 4 and complete submission")
-            if self.references != (self.submission.result,) or self.artifact_references:
+            if self.version == 4 and self.submission is not None:
+                result = self.submission.result
+            elif self.version == 6 and self.terminal_submission is not None:
+                result = self.terminal_submission.result
+            else:
+                raise ValueError("Result requires request 4+continuation or request 6 terminal")
+            if self.references != (result,) or self.artifact_references:
                 raise ValueError("Result request must retain its exact result reference")
-        elif self.submission is not None or self.version == 4:
-            raise ValueError("Only submit_result uses request version 4/submission")
+        elif (
+            self.submission is not None
+            or self.terminal_submission is not None
+            or self.version in (4, 6)
+        ):
+            raise ValueError("Only submit_result uses request 4/6 Result payload")
         if self.operation == "accept_handoff":
             handoff = self.handoff
             if self.version != 3 or handoff is None or self.delivery is None:
@@ -210,6 +243,17 @@ class MutationRequest(RecordModel):
         if (self.operation == "restore_artifact") != (self.restore_version is not None):
             raise ValueError("Only restoration requires a registered restore_version")
         return self
+
+
+class ProcessMaterialRequest(RecordModel):
+    version: Literal[1] = 1
+    operation: Literal["save_process_material"] = "save_process_material"
+    operation_id: UUID
+    workspace_id: UUID
+    process_id: UUID
+    expected_revision: Revision
+    provenance: Annotated[Text, Field(max_length=4096)]
+    material: ProcessMaterialSubmission
 
 
 class ReceiptQuery(RecordModel):
@@ -252,6 +296,23 @@ class ProcessQuery(RecordModel):
         return self
 
 
+class ProcessStateQuery(RecordModel):
+    """Exact Process read; normal no-current is a value, not an error."""
+
+    version: Literal[1] = 1
+    workspace_id: UUID
+    process_id: UUID
+    expected_revision: Revision
+
+
+class ProcessMaterialQuery(ProcessStateQuery):
+    material_id: UUID
+
+
+class ProcessReceiptQuery(ProcessStateQuery):
+    operation_id: UUID
+
+
 def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
     # Keep the accepted v1 request bytes/digests despite additional v2 model fields.
     excluded = set(exclude or ())
@@ -263,6 +324,8 @@ def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
         excluded |= V4_FIELDS
     if isinstance(value, MutationRequest) and value.version < 5:
         excluded |= V5_FIELDS
+    if isinstance(value, MutationRequest) and value.version < 6:
+        excluded |= V6_FIELDS
     return json.dumps(
         value.model_dump(mode="json", exclude=excluded),
         sort_keys=True,
@@ -272,7 +335,7 @@ def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
     )
 
 
-def fingerprint(request: MutationRequest) -> str:
+def fingerprint(request: MutationRequest | ProcessMaterialRequest) -> str:
     excluded = {"operation_id", "expected_revision"}
     if request.operation == "accept_handoff":
         excluded.add("delivery")
@@ -280,7 +343,17 @@ def fingerprint(request: MutationRequest) -> str:
 
 
 def authorization_digest(
-    path: str, request: MutationRequest | ReceiptQuery | ContextQuery | ProcessQuery
+    path: str,
+    request: (
+        MutationRequest
+        | ProcessMaterialRequest
+        | ReceiptQuery
+        | ContextQuery
+        | ProcessQuery
+        | ProcessStateQuery
+        | ProcessMaterialQuery
+        | ProcessReceiptQuery
+    ),
 ) -> str:
     envelope = json.dumps(
         [path, type(request).__name__, canonical(request)], ensure_ascii=True, separators=(",", ":")
@@ -388,7 +461,7 @@ class MutationEvent(RecordModel):
     @model_serializer(mode="wrap")
     def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         value: dict[str, Any] = handler(self)
-        if self.request.version != 5:
+        if self.request.operation != "bind_pack":
             value.pop("process_before", None)
             value.pop("process_after", None)
         if self.request.version < 4:
@@ -404,12 +477,12 @@ class MutationEvent(RecordModel):
             self.confirmation.workspace_path, self.request
         ):
             raise ValueError("Event authorization binding mismatch")
-        if self.request.expected_revision < self.before.revision:
-            raise ValueError("Event expected revision mismatch")
-        if self.state_revision != self.after.revision:
-            raise ValueError("Event state revision mismatch")
-        if self.state_revision != self.request.expected_revision + 1:
-            raise ValueError("Event must advance global revision exactly once")
+        if (
+            self.request.expected_revision < self.before.revision
+            or self.state_revision != self.after.revision
+            or self.state_revision != self.request.expected_revision + 1
+        ):
+            raise ValueError("Work event before/after revision mismatch")
         if self.request.operation == "bind_pack":
             if (
                 self.process_before is None
@@ -420,14 +493,19 @@ class MutationEvent(RecordModel):
                 raise ValueError("Binding event must retain the exact Process transition")
         elif self.process_before is not None or self.process_after is not None:
             raise ValueError("Only bind_pack changes a Process")
-        if self.request.submission is not None:
-            if self.request.submission.source_revision != self.request.expected_revision:
+        result_submission = self.request.submission or self.request.terminal_submission
+        if result_submission is not None:
+            if result_submission.source_revision != self.request.expected_revision:
                 raise ValueError("Result source revision must be current at acceptance")
-            work, artifact = next_records(
-                self.request, self.recorded_at, self.before.process_id, self.before.pack_binding
-            )
-            if self.next_work != work or self.next_artifact != artifact:
-                raise ValueError("Event must retain exact confirmed next records")
+            if self.request.terminal_submission is not None:
+                if self.next_work is not None or self.next_artifact is not None:
+                    raise ValueError("Terminal Result cannot retain continuation records")
+            else:
+                work, artifact = next_records(
+                    self.request, self.recorded_at, self.before.process_id, self.before.pack_binding
+                )
+                if self.next_work != work or self.next_artifact != artifact:
+                    raise ValueError("Event must retain exact confirmed next records")
             if self.result_artifact is None or not self.result_references:
                 raise ValueError("Result must retain source Artifact and reference closure")
         elif (
@@ -435,7 +513,9 @@ class MutationEvent(RecordModel):
             or self.result_references
         ):
             raise ValueError("Only Result creates a continuation")
-        if self.request.artifact_references or evolve_work(self.before, self.request) != self.after:
+        if self.request.artifact_references:
+            raise ValueError("Event does not describe an admitted change")
+        if evolve_work(self.before, self.request) != self.after:
             raise ValueError("Event does not describe an admitted change")
         if self.request.handoff is not None and (
             self.request.handoff.source_revision != self.request.expected_revision
@@ -493,11 +573,80 @@ def event_receipt(event: MutationEvent) -> MutationReceipt:
     )
 
 
+class ProcessMutationReceipt(RecordModel):
+    operation_id: UUID
+    event_id: UUID
+    workspace_id: UUID
+    process_id: UUID
+    previous_revision: Revision
+    new_revision: Revision
+    fingerprint: Digest
+    recorded_at: AwareDatetime
+    product_version: Text
+    affected_projections: tuple[Literal["overview.md"], ...] = ()
+
+
+class ProcessMaterialEvent(RecordModel):
+    kind: Literal["process_material"] = "process_material"
+    id: UUID
+    state_revision: Revision
+    recorded_at: AwareDatetime
+    product_version: Text
+    request: ProcessMaterialRequest
+    confirmation: Confirmation
+    fingerprint: Digest
+    process_before: Process
+    process_after: Process
+    material: ProcessMaterial
+    affected_projections: tuple[Literal["overview.md"], ...] = ()
+
+    @model_validator(mode="after")
+    def consistent(self) -> Self:
+        if (
+            self.fingerprint != fingerprint(self.request)
+            or self.confirmation.request_sha256
+            != authorization_digest(self.confirmation.workspace_path, self.request)
+            or self.request.process_id != self.process_before.id
+            or self.state_revision != self.request.expected_revision + 1
+            or self.process_after
+            != self.process_before.model_copy(update={"revision": self.state_revision})
+            or material_record(self.request, self.recorded_at) != self.material
+        ):
+            raise ValueError("Material event must retain the exact Process transition")
+        return self
+
+
+def process_event_receipt(event: ProcessMaterialEvent) -> ProcessMutationReceipt:
+    return ProcessMutationReceipt(
+        operation_id=event.request.operation_id,
+        event_id=event.id,
+        workspace_id=event.request.workspace_id,
+        process_id=event.request.process_id,
+        previous_revision=event.request.expected_revision,
+        new_revision=event.state_revision,
+        fingerprint=event.fingerprint,
+        recorded_at=event.recorded_at,
+        product_version=event.product_version,
+        affected_projections=event.affected_projections,
+    )
+
+
 class MutationHistory(RecordModel):
     workspace_id: UUID
     state_revision: Annotated[int, Field(strict=True, ge=0)]
     events: tuple[MutationEvent, ...]
     receipts: tuple[MutationReceipt, ...]
+    process_events: tuple[ProcessMaterialEvent, ...] = ()
+    process_receipts: tuple[ProcessMutationReceipt, ...] = ()
+
+    @model_serializer(mode="wrap")
+    def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        value: dict[str, Any] = handler(self)
+        if not self.process_events:
+            value.pop("process_events", None)
+        if not self.process_receipts:
+            value.pop("process_receipts", None)
+        return value
 
 
 def next_records(
@@ -535,17 +684,47 @@ def next_records(
     return work, artifact
 
 
+def material_record(request: ProcessMaterialRequest, at: AwareDatetime) -> ProcessMaterial:
+    submission = request.material
+    return ProcessMaterial(
+        id=submission.material_id,
+        revision=request.expected_revision + 1,
+        created_at=at,
+        process_id=request.process_id,
+        operation_id=request.operation_id,
+        title=submission.title,
+        media_type=submission.media_type,
+        content_sha256=submission.content_sha256,
+        content_size=submission.content_size,
+    )
+
+
 class SavedResult(RecordModel):
     event: MutationEvent
     receipt: MutationReceipt
 
     @model_validator(mode="after")
     def consistent(self) -> Self:
-        if self.event.request.submission is None or self.receipt != event_receipt(self.event):
+        if (
+            self.event.request.submission is None and self.event.request.terminal_submission is None
+        ) or self.receipt != event_receipt(self.event):
             raise ValueError("Saved Result must match its committed event and receipt")
         return self
 
     @property
-    def next_work_id(self) -> UUID:
-        assert self.event.next_work is not None
-        return self.event.next_work.id
+    def next_work_id(self) -> UUID | None:
+        return self.event.next_work.id if self.event.next_work is not None else None
+
+
+class ProcessMaterialContent(RecordModel):
+    material: ProcessMaterial
+    content: bytes
+
+
+class ProcessState(RecordModel):
+    workspace_id: UUID
+    state_revision: Revision
+    process: Process
+    current_work: Work | None
+    materials: tuple[ProcessMaterial, ...]
+    results: tuple[SavedResult, ...]

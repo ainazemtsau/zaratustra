@@ -57,4 +57,9 @@ entry T2 adds read_basic_process: exactly one selected/visible Work under a
 ProcessQuery, current metadata rights and one managed lock. It returns canonical
 bounded metadata plus exact accepted Handoff/inherited Result references and a
 saved continuation, but no bytes, hidden Works, inferred next step or Pack meaning.
+Schema8 adds Process-owned immutable material and terminal Result through the same
+Mutation event/receipt authority. Process material requires exact Process-local
+authorization and has no Work. Released request4 remains Result+next; request6 is
+terminal Result or Process material. Current Work is the sole draft/ready Work;
+zero is normal and history never selects a terminal Work. Migrations1–7 stay fixed.
 END_OF_FILE: src/zaratustra/core/AGENTS.md

@@ -92,6 +92,11 @@ def work_from_spec(spec: NextWork, *, project: bool = False) -> Work:
     )
 
 
+def required(spec: NextWork | None) -> NextWork:
+    assert spec is not None
+    return spec
+
+
 def test_small_definition_projects_a_new_occurrence_without_a_backedge() -> None:
     definition = small_definition()
     empty = ProcessSnapshot(definition=definition)
@@ -110,8 +115,13 @@ def test_small_definition_projects_a_new_occurrence_without_a_backedge() -> None
     assert definition.nodes[0].dependencies == () and definition.nodes[0].recurring
 
     registered = registration(small_reference(), definition)
-    following = registered.rule.next_work(
-        work_for(initial_requirements(definition)), snapshot_bytes(accepted), uuid4(), uuid4()
+    following = required(
+        registered.rule.next_work(
+            work_for(initial_requirements(definition)),
+            snapshot_bytes(accepted),
+            uuid4(),
+            uuid4(),
+        )
     )
     assert following.executor_requirements[-2:] == ("node:capture", "occurrence:2")
     assert following.authority_scope == "work_metadata"
@@ -151,20 +161,59 @@ def test_project_graph_retains_distinct_predecessor_data_before_dependent_work()
     assert reason_sources == {source.source_id for source in definition.sources}
 
     registered = registration(project_reference(), definition)
-    second_spec = registered.rule.next_work(
+    second_spec = required(
+        registered.rule.next_work(
+            work_for(initial_requirements(definition), project=True),
+            snapshot_bytes(request_done),
+            uuid4(),
+            uuid4(),
+        )
+    )
+    combine_spec = required(
+        registered.rule.next_work(
+            work_from_spec(second_spec, project=True),
+            snapshot_bytes(research_done),
+            uuid4(),
+            uuid4(),
+        )
+    )
+    assert combine_spec.goal == ready.selected.node.goal
+    assert combine_spec.executor_requirements[-2:] == ("node:assemble", "occurrence:1")
+
+
+def test_finite_definition_exhaustion_is_terminal_without_process_completion() -> None:
+    definition = project_definition()
+    registered = registration(project_reference(), definition)
+    empty = ProcessSnapshot(definition=definition)
+    request_done = record_result(empty, project_request_data())
+    second = registered.rule.next_work(
         work_for(initial_requirements(definition), project=True),
         snapshot_bytes(request_done),
         uuid4(),
         uuid4(),
     )
-    combine_spec = registered.rule.next_work(
-        work_from_spec(second_spec, project=True),
+    assert second is not None
+    research_done = record_result(request_done, project_research_data())
+    third = registered.rule.next_work(
+        work_from_spec(second, project=True),
         snapshot_bytes(research_done),
         uuid4(),
         uuid4(),
     )
-    assert combine_spec.goal == ready.selected.node.goal
-    assert combine_spec.executor_requirements[-2:] == ("node:assemble", "occurrence:1")
+    assert third is not None
+    terminal = record_result(
+        research_done,
+        (DataValue(key="decision", value="Fictional assembly is exact"),),
+    )
+    assert evaluate_snapshot(terminal).complete
+    assert (
+        registered.rule.next_work(
+            work_from_spec(third, project=True), snapshot_bytes(terminal), uuid4(), uuid4()
+        )
+        is None
+    )
+    with pytest.raises(ConstructionError, match="no_current_work"):
+        record_result(terminal, (DataValue(key="decision", value="Cannot reopen"),))
 
 
 def test_future_edition_changes_only_the_next_work_and_keeps_pack_and_old_bytes() -> None:
@@ -189,8 +238,10 @@ def test_future_edition_changes_only_the_next_work_and_keeps_pack_and_old_bytes(
 
     accepted = record_result(before, small_result_data())
     old_bytes = snapshot_bytes(accepted)
-    next_work = registration(small_reference(), definition, transition).rule.next_work(
-        current, old_bytes, uuid4(), uuid4()
+    next_work = required(
+        registration(small_reference(), definition, transition).rule.next_work(
+            current, old_bytes, uuid4(), uuid4()
+        )
     )
     transitioned = ProcessSnapshot(definition=changed, results=accepted.results)
     assert snapshot_bytes(accepted) == old_bytes
@@ -208,8 +259,10 @@ def test_future_edition_changes_only_the_next_work_and_keeps_pack_and_old_bytes(
     after_review = record_result(
         transitioned, (DataValue(key="review", value="Fictional review retained"),)
     )
-    following = registration(small_reference(), definition, transition).rule.next_work(
-        future, snapshot_bytes(after_review), uuid4(), uuid4()
+    following = required(
+        registration(small_reference(), definition, transition).rule.next_work(
+            future, snapshot_bytes(after_review), uuid4(), uuid4()
+        )
     )
     assert following.executor_requirements[-2:] == ("node:capture", "occurrence:2")
 
@@ -249,8 +302,10 @@ def test_future_edition_allows_only_a_later_future_work_to_change() -> None:
 
     transition = edition_transition(current, before, changed)
     accepted = record_result(before, project_request_data())
-    next_work = registration(project_reference(), definition, transition).rule.next_work(
-        current, snapshot_bytes(accepted), uuid4(), uuid4()
+    next_work = required(
+        registration(project_reference(), definition, transition).rule.next_work(
+            current, snapshot_bytes(accepted), uuid4(), uuid4()
+        )
     )
 
     assert next_work.goal == definition.nodes[1].goal
@@ -261,11 +316,13 @@ def test_future_edition_allows_only_a_later_future_work_to_change() -> None:
 def test_future_edition_refuses_no_future_work_at_a_later_current_node() -> None:
     definition = project_definition()
     accepted = record_result(ProcessSnapshot(definition=definition), project_request_data())
-    current_spec = registration(project_reference(), definition).rule.next_work(
-        work_for(initial_requirements(definition), project=True),
-        snapshot_bytes(accepted),
-        uuid4(),
-        uuid4(),
+    current_spec = required(
+        registration(project_reference(), definition).rule.next_work(
+            work_for(initial_requirements(definition), project=True),
+            snapshot_bytes(accepted),
+            uuid4(),
+            uuid4(),
+        )
     )
     current = work_from_spec(current_spec, project=True)
     changed = definition.model_copy(update=dict(edition=2, nodes=definition.nodes[:2]))
@@ -338,11 +395,13 @@ def test_next_work_pins_the_exact_prior_snapshot_history(replacement: str) -> No
     empty = ProcessSnapshot(definition=definition)
     request_done = record_result(empty, project_request_data())
     registered = registration(project_reference(), definition)
-    second_spec = registered.rule.next_work(
-        work_for(initial_requirements(definition), project=True),
-        snapshot_bytes(request_done),
-        uuid4(),
-        uuid4(),
+    second_spec = required(
+        registered.rule.next_work(
+            work_for(initial_requirements(definition), project=True),
+            snapshot_bytes(request_done),
+            uuid4(),
+            uuid4(),
+        )
     )
     changed_request = request_done.results[0].model_copy(
         update=dict(data=(DataValue(key="request_fact", value=replacement),))

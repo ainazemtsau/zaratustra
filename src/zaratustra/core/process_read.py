@@ -150,16 +150,23 @@ def _basic_document(
             references=event.result_references,
         )
         for event in incoming
+        if event.before is not None
     )
     completed = tuple(
         event
         for event in history.events
-        if event.before.id == selected_id and event.request.submission is not None
+        if event.before is not None
+        and event.before.id == selected_id
+        and (event.request.submission is not None or event.request.terminal_submission is not None)
     )
     continuation: SavedContinuation | None = None
     continuation_state: Literal["selected_work_ready", "saved_result", "cancelled", "draft"]
     if selected.status == "done":
-        submission = completed[0].request.submission if len(completed) == 1 else None
+        submission = (
+            completed[0].request.submission or completed[0].request.terminal_submission
+            if len(completed) == 1
+            else None
+        )
         if (
             len(completed) != 1
             or selected.completion_id != completed[0].request.operation_id
@@ -167,12 +174,13 @@ def _basic_document(
         ):
             raise WorkspaceError("Completed Work does not match one saved Result")
         event = completed[0]
-        continuation = SavedContinuation(
-            result_id=event.request.operation_id,
-            accepted_revision=event.state_revision,
-            references=event.result_references,
-            next_work=submission.next_work,
-        )
+        if event.request.submission is not None:
+            continuation = SavedContinuation(
+                result_id=event.request.operation_id,
+                accepted_revision=event.state_revision,
+                references=event.result_references,
+                next_work=event.request.submission.next_work,
+            )
         continuation_state = "saved_result"
     elif completed:
         raise WorkspaceError("Nonterminal Work has a saved Result")
@@ -256,7 +264,9 @@ def _metadata(
                 state_revision=event.state_revision,
             )
             for event in reversed(history.events)
-            if event.request.operation == "submit_result" and event.before.id in visible
+            if event.request.operation == "submit_result"
+            and event.before is not None
+            and event.before.id in visible
         ),
         context_references=tuple(allowed.values()),
     )

@@ -307,6 +307,7 @@ def test_postcommit_projection_failure_or_lost_reply_preserves_next(
     query = receipt_query(request)
     saved = read_result(workspace, query, confirm(workspace, query))
     assert saved.receipt.new_revision == request.expected_revision + 1
+    assert saved.next_work_id is not None
     assert opened(workspace, context_query(workspace, saved.next_work_id))
     before = read_workspace(workspace).database.read_bytes()
     assert rebuild_projections(workspace).status == "current"
@@ -322,6 +323,7 @@ def test_late_loss_exact_repair_and_global_invalidation(workspace: Path) -> None
     submit_result(workspace, request, confirm(workspace, request))
     query = receipt_query(request)
     saved = read_result(workspace, query, confirm(workspace, query))
+    assert saved.next_work_id is not None
     q = context_query(workspace, saved.next_work_id)
     ref = saved.event.result_references[0]
     content_path = workspace / "artifacts" / str(ref.artifact_id) / f"{ref.version_id}.blob"
@@ -351,6 +353,7 @@ def test_late_loss_exact_repair_and_global_invalidation(workspace: Path) -> None
     assert read_result(workspace, query, confirm(workspace, query)) == saved
     with pytest.raises(MutationError, match="conflict"):
         opened(workspace, q)
+    assert saved.next_work_id is not None
     assert opened(workspace, context_query(workspace, saved.next_work_id))
 
 

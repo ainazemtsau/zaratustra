@@ -15,6 +15,7 @@ from zaratustra.core import (
     NextWork,
     Process,
     ResultSubmission,
+    TerminalResultSubmission,
     Work,
     open_work,
 )
@@ -52,11 +53,15 @@ def propose_result(
     source = sources[f"artifact-version:{result.version_id}"]
     accepted_bytes = base64.b64decode(source["content_base64"], validate=True)
     continuation = registration.rule.next_work(work, accepted_bytes, next_work_id, next_artifact_id)
-    continuation = NextWork.model_validate(continuation.model_dump())
-    if (continuation.work_id, continuation.artifact_id) != (next_work_id, next_artifact_id):
-        raise PackError("invalid_proposal", "Pack changed the selected continuation identities")
+    if continuation is not None:
+        continuation = NextWork.model_validate(continuation.model_dump())
+        if (continuation.work_id, continuation.artifact_id) != (
+            next_work_id,
+            next_artifact_id,
+        ):
+            raise PackError("invalid_proposal", "Pack changed the selected continuation identities")
     return MutationRequest(
-        version=4,
+        version=4 if continuation is not None else 6,
         operation="submit_result",
         operation_id=operation_id,
         workspace_id=query.workspace_id,
@@ -64,10 +69,23 @@ def propose_result(
         expected_revision=query.expected_revision,
         provenance=f"Exact pack proposal: {reference.model_dump_json()}; no authority granted",
         references=(result,),
-        submission=ResultSubmission(
-            source_revision=query.expected_revision,
-            result=result,
-            acceptance_ids=tuple(row.handoff.handoff_id for row in own),
-            next_work=continuation,
+        submission=(
+            ResultSubmission(
+                source_revision=query.expected_revision,
+                result=result,
+                acceptance_ids=tuple(row.handoff.handoff_id for row in own),
+                next_work=continuation,
+            )
+            if continuation is not None
+            else None
+        ),
+        terminal_submission=(
+            TerminalResultSubmission(
+                source_revision=query.expected_revision,
+                result=result,
+                acceptance_ids=tuple(row.handoff.handoff_id for row in own),
+            )
+            if continuation is None
+            else None
         ),
     )

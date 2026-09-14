@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
-from typing import Literal
+from typing import Literal, overload
 from uuid import UUID, uuid4
 
 from .artifacts import (
@@ -38,7 +40,15 @@ from .protocol import (
     MutationHistory,
     MutationReceipt,
     MutationRequest,
+    ProcessMaterialContent,
+    ProcessMaterialEvent,
+    ProcessMaterialQuery,
+    ProcessMaterialRequest,
+    ProcessMutationReceipt,
     ProcessQuery,
+    ProcessReceiptQuery,
+    ProcessState,
+    ProcessStateQuery,
     ReceiptQuery,
     SavedResult,
     authorization_digest,
@@ -47,12 +57,15 @@ from .protocol import (
     evolve_process,
     evolve_work,
     fingerprint,
+    material_record,
     next_records,
+    process_event_receipt,
 )
 from .records import (
     Artifact,
     Event,
     Process,
+    ProcessMaterial,
     RecordModel,
     RecordsSnapshot,
     Text,
@@ -75,10 +88,25 @@ class ProjectionRebuildError(MutationError):
         super().__init__("rebuild_required", f"Mutation committed; {detail}")
 
 
+class ProcessProjectionRebuildError(MutationError):
+    def __init__(self, receipt: ProcessMutationReceipt, detail: str) -> None:
+        self.receipt = receipt
+        super().__init__("rebuild_required", f"Process mutation committed; {detail}")
+
+
 class AuthorizationPrompt(RecordModel):
     workspace_path: Text
     current: RecordsSnapshot
-    request: MutationRequest | ReceiptQuery | ContextQuery | ProcessQuery
+    request: (
+        MutationRequest
+        | ProcessMaterialRequest
+        | ReceiptQuery
+        | ContextQuery
+        | ProcessQuery
+        | ProcessStateQuery
+        | ProcessMaterialQuery
+        | ProcessReceiptQuery
+    )
     request_sha256: Text
 
 
@@ -100,8 +128,25 @@ def _work(snapshot: RecordsSnapshot, work_id: UUID | None = None) -> Work:
     raise MutationError("invalid_work", "Create initial draft records first")
 
 
+def _process(snapshot: RecordsSnapshot, process_id: UUID | None = None) -> Process:
+    for record in snapshot.records:
+        if isinstance(record, Process) and (process_id is None or record.id == process_id):
+            return record
+    raise MutationError("invalid_process", "Request does not name this Process")
+
+
 def prepare_authorization(
-    path: Path, request: MutationRequest | ReceiptQuery | ContextQuery | ProcessQuery
+    path: Path,
+    request: (
+        MutationRequest
+        | ProcessMaterialRequest
+        | ReceiptQuery
+        | ContextQuery
+        | ProcessQuery
+        | ProcessStateQuery
+        | ProcessMaterialQuery
+        | ProcessReceiptQuery
+    ),
 ) -> AuthorizationPrompt:
     """Owner-local preview only; no permission issued and no mutation performed."""
     request = type(request).model_validate(request.model_dump())
@@ -109,9 +154,14 @@ def prepare_authorization(
         if info.schema_version < 3:
             raise MutationError("schema", "Mutation protocol requires explicit migration to 3")
         snapshot = _read_records(connection, info.workspace_id)
-        if request.workspace_id != info.workspace_id or request.work_id not in {
-            r.id for r in snapshot.records if isinstance(r, Work)
-        }:
+        if request.workspace_id != info.workspace_id:
+            raise MutationError("invalid_work", "Request does not name this workspace")
+        if isinstance(
+            request,
+            (ProcessMaterialRequest, ProcessStateQuery, ProcessMaterialQuery, ProcessReceiptQuery),
+        ):
+            _process(snapshot, request.process_id)
+        elif request.work_id not in {r.id for r in snapshot.records if isinstance(r, Work)}:
             raise MutationError("invalid_work", "Request does not name this workspace and Work")
         resolved = info.workspace.as_posix()
         return AuthorizationPrompt(
@@ -154,16 +204,34 @@ def authorize_local(
 
 def _caller(
     path: Path,
-    request: MutationRequest | ReceiptQuery | ContextQuery | ProcessQuery,
+    request: (
+        MutationRequest
+        | ProcessMaterialRequest
+        | ReceiptQuery
+        | ContextQuery
+        | ProcessQuery
+        | ProcessStateQuery
+        | ProcessMaterialQuery
+        | ProcessReceiptQuery
+    ),
     caller: LocalAuthorization | None,
     snapshot: RecordsSnapshot,
 ) -> Confirmation:
     if type(caller) is not LocalAuthorization:
         raise MutationError("permission_denied", "Separate trusted local authorization required")
     confirmation = Confirmation.model_validate(caller.confirmation.model_dump())
+    if isinstance(
+        request,
+        (ProcessMaterialRequest, ProcessStateQuery, ProcessMaterialQuery, ProcessReceiptQuery),
+    ):
+        target_exists = request.process_id in {
+            r.id for r in snapshot.records if isinstance(r, Process)
+        }
+    else:
+        target_exists = request.work_id in {r.id for r in snapshot.records if isinstance(r, Work)}
     if (
         request.workspace_id != snapshot.workspace_id
-        or request.work_id not in {r.id for r in snapshot.records if isinstance(r, Work)}
+        or not target_exists
         or confirmation.workspace_path != path.as_posix()
         or confirmation.request_sha256 != authorization_digest(path.as_posix(), request)
     ):
@@ -174,19 +242,33 @@ def _caller(
 def _history(
     connection: sqlite3.Connection, snapshot: RecordsSnapshot, *, artifacts_enabled: bool = False
 ) -> MutationHistory:
-    events = []
+    events: list[MutationEvent] = []
+    process_events: list[ProcessMaterialEvent] = []
+    ordered_events: list[MutationEvent | ProcessMaterialEvent] = []
     for identity, revision, body in connection.execute(
         "SELECT id, state_revision, body FROM mutation_events ORDER BY state_revision"
     ):
-        event = MutationEvent.model_validate_json(body)
+        raw = json.loads(body)
+        event: MutationEvent | ProcessMaterialEvent
+        if raw.get("kind") == "process_material":
+            event = ProcessMaterialEvent.model_validate(raw)
+            process_events.append(event)
+        else:
+            event = MutationEvent.model_validate(raw)
+            events.append(event)
         if (str(event.id), event.state_revision) != (identity, revision):
             raise WorkspaceError("Mutation event metadata mismatch")
-        events.append(event)
-    receipts = {}
+        ordered_events.append(event)
+    receipts: dict[UUID, MutationReceipt | ProcessMutationReceipt] = {}
     for operation_id, event_id, intent, body in connection.execute(
         "SELECT operation_id, event_id, fingerprint, body FROM mutation_receipts"
     ):
-        receipt = MutationReceipt.model_validate_json(body)
+        raw = json.loads(body)
+        receipt: MutationReceipt | ProcessMutationReceipt
+        if "process_id" in raw:
+            receipt = ProcessMutationReceipt.model_validate(raw)
+        else:
+            receipt = MutationReceipt.model_validate(raw)
         if (str(receipt.operation_id), str(receipt.event_id), receipt.fingerprint) != (
             operation_id,
             event_id,
@@ -194,7 +276,9 @@ def _history(
         ):
             raise WorkspaceError("Mutation receipt metadata mismatch")
         receipts[receipt.event_id] = receipt
-    if len(events) != max(0, snapshot.state_revision - 1) or len(receipts) != len(events):
+    if len(ordered_events) != max(0, snapshot.state_revision - 1) or len(receipts) != len(
+        ordered_events
+    ):
         raise WorkspaceError("Incomplete mutation/event/receipt history")
     schema = connection.execute("PRAGMA user_version").fetchone()[0]
     versions = read_versions(connection) if artifacts_enabled else ()
@@ -226,9 +310,10 @@ def _history(
             }
         )
     published: dict[UUID, ArtifactVersion] = {}
-    ordered_receipts = []
+    ordered_receipts: list[MutationReceipt] = []
+    ordered_process_receipts: list[ProcessMutationReceipt] = []
     previous_events: list[MutationEvent] = []
-    for revision, event in enumerate(events, start=2):
+    for revision, event in enumerate(ordered_events, start=2):
         request = event.request
         if (
             event.state_revision != revision
@@ -236,19 +321,30 @@ def _history(
             or request.workspace_id != snapshot.workspace_id
         ):
             raise WorkspaceError("Mutation history workspace/revision mismatch")
-        if reconstructed.get(event.before.id) != event.before:
-            raise WorkspaceError("Broken mutation before/after chain")
         retained = receipts.get(event.id)
-        if retained is None or retained != event_receipt(event):
-            raise WorkspaceError("Receipt does not describe the committed event")
-        ordered_receipts.append(retained)
         prior = RecordsSnapshot(
             workspace_id=snapshot.workspace_id,
             state_revision=revision - 1,
             records=tuple(reconstructed.values()),
         )
-        artifact = current_artifact(prior, request.work_id)
-        if request.operation == "bind_pack":
+        if isinstance(event, ProcessMaterialEvent):
+            if (
+                schema < 8
+                or reconstructed.get(event.process_before.id) != event.process_before
+                or retained != process_event_receipt(event)
+            ):
+                raise WorkspaceError("Broken Process material history")
+            reconstructed[event.process_after.id] = event.process_after
+            ordered_process_receipts.append(process_event_receipt(event))
+            continue
+        work_request = event.request
+        if reconstructed.get(event.before.id) != event.before:
+            raise WorkspaceError("Broken mutation before/after chain")
+        if retained != event_receipt(event):
+            raise WorkspaceError("Receipt does not describe the committed event")
+        ordered_receipts.append(event_receipt(event))
+        artifact = current_artifact(prior, work_request.work_id)
+        if work_request.operation == "bind_pack":
             if (
                 schema < 7
                 or event.process_before is None
@@ -257,40 +353,47 @@ def _history(
             ):
                 raise WorkspaceError("Pack binding requires schema7 and exact Process history")
             reconstructed[event.process_after.id] = event.process_after
-        if request.operation in ARTIFACT_OPERATIONS and (
-            request.artifact_id != artifact.id or request.artifact_revision != artifact.revision
+        if work_request.operation in ARTIFACT_OPERATIONS and (
+            work_request.artifact_id != artifact.id
+            or work_request.artifact_revision != artifact.revision
         ):
             raise WorkspaceError("Artifact event target/revision mismatch")
-        for reference in request.references:
+        for reference in work_request.references:
             descriptor = resolve_version(tuple(published.values()), artifact, reference.version_id)
             if (reference.artifact_id, reference.sha256) != (
                 descriptor.artifact_id,
                 descriptor.sha256,
             ):
                 raise WorkspaceError("Historical artifact reference mismatch")
-        if request.operation == "restore_artifact":
-            restored = resolve_version(tuple(published.values()), artifact, request.restore_version)
-            if (restored.sha256, restored.size) != (request.content_sha256, request.content_size):
+        if work_request.operation == "restore_artifact":
+            restored = resolve_version(
+                tuple(published.values()), artifact, work_request.restore_version
+            )
+            if (restored.sha256, restored.size) != (
+                work_request.content_sha256,
+                work_request.content_size,
+            ):
                 raise WorkspaceError("Historical restore descriptor mismatch")
         if event.artifact_version is not None:
             if event.artifact_before != artifact or event.artifact_after is None:
                 raise WorkspaceError("Broken Artifact before/after chain")
             published[event.artifact_version.id] = event.artifact_version
             reconstructed[artifact.id] = event.artifact_after
-        if request.submission is not None:
+        if work_request.submission is not None or work_request.terminal_submission is not None:
             if schema < 6 or event.result_artifact != artifact:
                 raise WorkspaceError("Result requires schema6 and exact source Artifact")
             closure = result_basis(
-                request, prior, tuple(previous_events), tuple(published.values())
+                work_request, prior, tuple(previous_events), tuple(published.values())
             )
             if (
                 closure != event.result_references
-                or event.next_work is None
-                or event.next_artifact is None
+                or (event.next_work is None) != (work_request.terminal_submission is not None)
+                or (event.next_artifact is None) != (work_request.terminal_submission is not None)
             ):
                 raise WorkspaceError("Result does not preserve the complete historical grounds")
-            reconstructed[event.next_work.id] = event.next_work
-            reconstructed[event.next_artifact.id] = event.next_artifact
+            if event.next_work is not None and event.next_artifact is not None:
+                reconstructed[event.next_work.id] = event.next_work
+                reconstructed[event.next_artifact.id] = event.next_artifact
         reconstructed[event.after.id] = event.after
         previous_events.append(event)
     if reconstructed != current:
@@ -305,11 +408,11 @@ def _history(
     results = {
         str(e.request.operation_id): (
             str(e.before.id),
-            str(e.next_work.id),
+            str(e.next_work.id) if e.next_work is not None else None,
             SavedResult(event=e, receipt=event_receipt(e)),
         )
         for e in events
-        if e.next_work is not None
+        if e.request.submission is not None or e.request.terminal_submission is not None
     }
     if schema >= 6:
         saved_results = {
@@ -322,6 +425,36 @@ def _history(
             raise WorkspaceError("Result records do not match the committed history")
     elif results:
         raise WorkspaceError("Result storage requires schema 6")
+    if schema < 8 and any(next_work is None for _, next_work, _ in results.values()):
+        raise WorkspaceError("Terminal Result requires explicit schema 8")
+    expected_materials = {
+        str(event.material.id): (
+            str(event.material.process_id),
+            str(event.request.operation_id),
+            event.material,
+        )
+        for event in process_events
+    }
+    if schema >= 8:
+        saved_materials: dict[str, tuple[str, str, ProcessMaterial]] = {}
+        for material_id, process_id, operation_id, content in connection.execute(
+            "SELECT material_id, process_id, operation_id, content FROM process_materials"
+        ):
+            material_row = expected_materials.get(material_id)
+            if material_row is None:
+                raise WorkspaceError("Process material content has no committed event")
+            material = material_row[2]
+            if (
+                (process_id, operation_id) != material_row[:2]
+                or len(content) != material.content_size
+                or hashlib.sha256(content).hexdigest() != material.content_sha256
+            ):
+                raise WorkspaceError("Process material content differs from committed identity")
+            saved_materials[material_id] = material_row
+        if saved_materials != expected_materials:
+            raise WorkspaceError("Process materials do not match committed history")
+    elif expected_materials:
+        raise WorkspaceError("Process material storage requires schema 8")
     imported = {
         str(event.request.operation_id): (
             str(event.id),
@@ -351,6 +484,8 @@ def _history(
         state_revision=snapshot.state_revision,
         events=tuple(events),
         receipts=tuple(ordered_receipts),
+        process_events=tuple(process_events),
+        process_receipts=tuple(ordered_process_receipts),
     )
 
 
@@ -420,6 +555,75 @@ def read_handoffs(path: Path) -> tuple[AcceptedHandoff, ...]:
         )
 
 
+def _mutate_process_material(
+    connection: sqlite3.Connection,
+    info: WorkspaceInfo,
+    request: ProcessMaterialRequest,
+    caller: LocalAuthorization | None,
+    content: bytes | None,
+) -> ProcessMutationReceipt:
+    if info.schema_version < 8:
+        raise MutationError("schema", "Process material requires explicit migration to 8")
+    snapshot = _read_records(connection, info.workspace_id)
+    confirmation = _caller(info.workspace, request, caller, snapshot)
+    process_before = _process(snapshot, request.process_id)
+    if request.expected_revision != snapshot.state_revision:
+        raise MutationError("conflict", "Expected revision is not the current state revision")
+    history = _history(connection, snapshot, artifacts_enabled=True)
+    intent = fingerprint(request)
+    for work_receipt in history.receipts:
+        if work_receipt.operation_id == request.operation_id:
+            raise MutationError("collision", "Operation id already belongs to a Work intent")
+    for process_receipt in history.process_receipts:
+        if process_receipt.operation_id == request.operation_id:
+            if process_receipt.fingerprint != intent:
+                raise MutationError("collision", "Operation id already belongs to another intent")
+            return process_receipt
+    if request.material.material_id in {event.material.id for event in history.process_events}:
+        raise MutationError("collision", "Material identity already exists")
+    checked = validate_bytes(
+        content, request.material.content_sha256, request.material.content_size
+    )
+    now = datetime.now(UTC)
+    material = material_record(request, now)
+    process_after = process_before.model_copy(update={"revision": snapshot.state_revision + 1})
+    connection.execute(
+        "UPDATE core_records SET revision = ?, body = ? WHERE id = ?",
+        (process_after.revision, process_after.model_dump_json(), str(process_after.id)),
+    )
+    connection.execute(
+        "UPDATE core_state SET revision = ? WHERE singleton = 1", (process_after.revision,)
+    )
+    event = ProcessMaterialEvent(
+        id=uuid4(),
+        state_revision=process_after.revision,
+        recorded_at=now,
+        product_version=version("zaratustra"),
+        request=request,
+        confirmation=confirmation,
+        fingerprint=intent,
+        process_before=process_before,
+        process_after=process_after,
+        material=material,
+        affected_projections=("overview.md",),
+    )
+    connection.execute(
+        "INSERT INTO mutation_events VALUES (?, ?, ?)",
+        (str(event.id), event.state_revision, event.model_dump_json()),
+    )
+    receipt = process_event_receipt(event)
+    connection.execute(
+        "INSERT INTO mutation_receipts VALUES (?, ?, ?, ?)",
+        (str(request.operation_id), str(event.id), intent, receipt.model_dump_json()),
+    )
+    connection.execute(
+        "INSERT INTO process_materials VALUES (?, ?, ?, ?)",
+        (str(material.id), str(material.process_id), str(request.operation_id), checked),
+    )
+    _history(connection, _read_records(connection, info.workspace_id), artifacts_enabled=True)
+    return receipt
+
+
 def _mutate(
     connection: sqlite3.Connection,
     info: WorkspaceInfo,
@@ -435,6 +639,8 @@ def _mutate(
         raise MutationError("schema", "Result requires explicit migration to 6")
     if request.version == 5 and info.schema_version < 7:
         raise MutationError("schema", "Pack binding requires explicit migration to 7")
+    if request.version == 6 and info.schema_version < 8:
+        raise MutationError("schema", "Request 6 requires explicit migration to 8")
     # 2. Current Work + authority, in the same write transaction as the effect.
     snapshot = _read_records(connection, info.workspace_id)
     confirmation = _caller(info.workspace, request, caller, snapshot)
@@ -477,8 +683,9 @@ def _mutate(
         raise MutationError("unsupported_artifacts", "Use version 2 exact version/hash references")
     versions = read_versions(connection) if enabled else ()
     closure: tuple[ArtifactReference, ...] = ()
-    if request.submission is not None:
-        if request.submission.source_revision != snapshot.state_revision:
+    result_submission = request.submission or request.terminal_submission
+    if result_submission is not None:
+        if result_submission.source_revision != snapshot.state_revision:
             raise MutationError("conflict", "Result source revision is not current")
         try:
             closure = result_basis(request, snapshot, history.events, versions)
@@ -574,7 +781,7 @@ def _mutate(
         artifact_version=published,
         next_work=continuation_work,
         next_artifact=continuation_artifact,
-        result_artifact=artifact if request.submission is not None else None,
+        result_artifact=artifact if result_submission is not None else None,
         result_references=closure,
         process_before=process_before,
         process_after=process_after,
@@ -599,14 +806,14 @@ def _mutate(
             "INSERT INTO accepted_handoffs VALUES (?, ?, ?)",
             (str(request.operation_id), str(event.id), accepted.model_dump_json()),
         )
-    if continuation_work is not None:
+    if result_submission is not None:
         saved_result = SavedResult(event=event, receipt=receipt)
         connection.execute(
             "INSERT INTO work_results VALUES (?, ?, ?, ?)",
             (
                 str(request.operation_id),
                 str(before.id),
-                str(continuation_work.id),
+                str(continuation_work.id) if continuation_work is not None else None,
                 saved_result.model_dump_json(),
             ),
         )
@@ -614,23 +821,53 @@ def _mutate(
     return receipt
 
 
+@overload
 def apply_mutation(
     path: Path,
     request: MutationRequest,
     caller: LocalAuthorization | None = None,
     *,
     content: bytes | None = None,
-) -> MutationReceipt:
+) -> MutationReceipt: ...
+
+
+@overload
+def apply_mutation(
+    path: Path,
+    request: ProcessMaterialRequest,
+    caller: LocalAuthorization | None = None,
+    *,
+    content: bytes | None = None,
+) -> ProcessMutationReceipt: ...
+
+
+def apply_mutation(
+    path: Path,
+    request: MutationRequest | ProcessMaterialRequest,
+    caller: LocalAuthorization | None = None,
+    *,
+    content: bytes | None = None,
+) -> MutationReceipt | ProcessMutationReceipt:
     # 1. Input schema, even for an already constructed Python value.
-    request = MutationRequest.model_validate(request.model_dump())
+    request = (
+        ProcessMaterialRequest.model_validate(request.model_dump())
+        if isinstance(request, ProcessMaterialRequest)
+        else MutationRequest.model_validate(request.model_dump())
+    )
+    receipt: MutationReceipt | ProcessMutationReceipt
     with workspace_connection(path, write=True) as (connection, info):
-        receipt = _mutate(connection, info, request, caller, content)
+        if isinstance(request, ProcessMaterialRequest):
+            receipt = _mutate_process_material(connection, info, request, caller, content)
+        else:
+            receipt = _mutate(connection, info, request, caller, content)
     # 8. The receipt is durable. No post-commit file error may imply a rollback.
     # 9. Rebuild latest DB state, including when an authorized duplicate was delivered.
     if info.schema_version >= 4:
         try:
             rebuild_projections(path)
         except (WorkspaceError, OSError, ValueError) as error:
+            if isinstance(receipt, ProcessMutationReceipt):
+                raise ProcessProjectionRebuildError(receipt, str(error)) from error
             raise ProjectionRebuildError(receipt, str(error)) from error
     return receipt
 
@@ -709,8 +946,122 @@ def read_result(
         for event in history.events:
             if (
                 event.request.operation_id == query.operation_id
+                and event.before is not None
                 and event.before.id == query.work_id
-                and event.next_work is not None
             ):
                 return SavedResult(event=event, receipt=event_receipt(event))
         raise MutationError("not_found", "No committed Result in this Work")
+
+
+def save_process_material(
+    path: Path,
+    request: ProcessMaterialRequest,
+    caller: LocalAuthorization | None = None,
+    *,
+    content: bytes,
+) -> ProcessMutationReceipt:
+    """Save exact Process-owned bytes through the one Mutation authority."""
+    request = ProcessMaterialRequest.model_validate(request.model_dump())
+    return apply_mutation(path, request, caller, content=content)
+
+
+def read_process_state(
+    path: Path, query: ProcessStateQuery, caller: LocalAuthorization | None = None
+) -> ProcessState:
+    """Read exact Process history and truthful current-or-no-current state."""
+    query = ProcessStateQuery.model_validate(query.model_dump())
+    with workspace_connection(path) as (connection, info):
+        if info.schema_version < 8:
+            raise MutationError("schema", "Process state requires explicit migration to 8")
+        snapshot = _read_records(connection, info.workspace_id)
+        _caller(info.workspace, query, caller, snapshot)
+        if query.expected_revision != snapshot.state_revision:
+            raise MutationError("conflict", "Reopen against current state")
+        process = _process(snapshot, query.process_id)
+        history = _history(connection, snapshot, artifacts_enabled=True)
+        materials = tuple(
+            event.material
+            for event in history.process_events
+            if event.material.process_id == process.id
+        )
+        results = tuple(
+            SavedResult(event=event, receipt=event_receipt(event))
+            for event in history.events
+            if (
+                event.request.submission is not None
+                or event.request.terminal_submission is not None
+            )
+            and event.before.process_id == process.id
+        )
+        current = snapshot.current_work
+        if current is not None and current.process_id != process.id:
+            raise WorkspaceError("Current Work is outside the selected Process")
+        return ProcessState(
+            workspace_id=snapshot.workspace_id,
+            state_revision=snapshot.state_revision,
+            process=process,
+            current_work=current,
+            materials=materials,
+            results=results,
+        )
+
+
+def read_process_material(
+    path: Path, query: ProcessMaterialQuery, caller: LocalAuthorization | None = None
+) -> ProcessMaterialContent:
+    """Read one exact Process material and verify its retained bytes every time."""
+    query = ProcessMaterialQuery.model_validate(query.model_dump())
+    with workspace_connection(path) as (connection, info):
+        if info.schema_version < 8:
+            raise MutationError("schema", "Process material requires explicit migration to 8")
+        snapshot = _read_records(connection, info.workspace_id)
+        _caller(info.workspace, query, caller, snapshot)
+        if query.expected_revision != snapshot.state_revision:
+            raise MutationError("conflict", "Reopen against current state")
+        history = _history(connection, snapshot, artifacts_enabled=True)
+        material = next(
+            (
+                event.material
+                for event in history.process_events
+                if event.material.id == query.material_id
+                and event.material.process_id == query.process_id
+            ),
+            None,
+        )
+        if material is None:
+            raise MutationError("not_found", "No such material in this Process")
+        row = connection.execute(
+            "SELECT content FROM process_materials WHERE material_id = ? AND process_id = ?",
+            (str(material.id), str(material.process_id)),
+        ).fetchone()
+        if row is None:
+            raise WorkspaceError("Process material content is missing")
+        content = bytes(row[0])
+        if (
+            len(content) != material.content_size
+            or hashlib.sha256(content).hexdigest() != material.content_sha256
+        ):
+            raise WorkspaceError("Process material content differs from committed identity")
+        return ProcessMaterialContent(material=material, content=content)
+
+
+def read_process_receipt(
+    path: Path, query: ProcessReceiptQuery, caller: LocalAuthorization | None = None
+) -> ProcessMutationReceipt:
+    """Recover one Process-scoped mutation receipt under exact current authorization."""
+    query = ProcessReceiptQuery.model_validate(query.model_dump())
+    with workspace_connection(path) as (connection, info):
+        if info.schema_version < 8:
+            raise MutationError("schema", "Process receipt requires explicit migration to 8")
+        snapshot = _read_records(connection, info.workspace_id)
+        _caller(info.workspace, query, caller, snapshot)
+        if query.expected_revision != snapshot.state_revision:
+            raise MutationError("conflict", "Reopen against current state")
+        history = _history(connection, snapshot, artifacts_enabled=True)
+        for receipt in history.process_receipts:
+            if (
+                receipt.operation_id == query.operation_id
+                and receipt.process_id == query.process_id
+            ):
+                return receipt
+        raise MutationError("not_found", "No committed operation in this Process")

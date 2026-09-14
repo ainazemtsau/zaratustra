@@ -334,7 +334,7 @@ def record_result(snapshot: ProcessSnapshot, data: tuple[DataValue, ...]) -> Pro
     """Append exact data for the currently selected occurrence; no state is written."""
     view = evaluate_snapshot(snapshot)
     if view.selected is None:
-        raise ConstructionError("process_complete", "Definition has no next domain occurrence")
+        raise ConstructionError("no_current_work", "Definition has no selected domain occurrence")
     selected = view.selected
     result = NodeResult(
         node_id=selected.node.node_id,
@@ -491,8 +491,12 @@ class DefinitionRule:
             object.__setattr__(self, "transition", copied)
 
     def next_work(
-        self, work: Work, accepted_result: bytes, work_id: UUID, artifact_id: UUID
-    ) -> NextWork:
+        self,
+        work: Work,
+        accepted_result: bytes,
+        work_id: UUID,
+        artifact_id: UUID,
+    ) -> NextWork | None:
         if work.pack_binding != self.reference:
             raise ConstructionError("binding_mismatch", "Work needs this exact Pack binding")
         try:
@@ -546,7 +550,7 @@ class DefinitionRule:
             effective = _apply_transition(self.transition, work, before, snapshot)
         following = evaluate_snapshot(effective).selected
         if following is None:
-            raise ConstructionError("process_complete", "No further domain occurrence is ready")
+            return None
         node = following.node
         return NextWork(
             work_id=work_id,

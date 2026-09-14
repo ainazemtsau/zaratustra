@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Literal
 from uuid import uuid4
 
-from .protocol import ArtifactVersion, MutationHistory
+from .protocol import ArtifactVersion, MutationEvent, MutationHistory, ProcessMaterialEvent
 from .records import RecordModel, RecordsSnapshot
 from .workspace import _plain_path
 
@@ -28,8 +28,11 @@ def render_overview(
     versions: tuple[ArtifactVersion, ...],
     created_at: datetime,
 ) -> tuple[bytes, datetime]:
-    generated_at = history.events[-1].recorded_at if history.events else created_at
-    if snapshot.records and not history.events:
+    events: tuple[MutationEvent | ProcessMaterialEvent, ...] = tuple(
+        sorted((*history.events, *history.process_events), key=lambda row: row.state_revision)
+    )
+    generated_at = events[-1].recorded_at if events else created_at
+    if snapshot.records and not events:
         generated_at = snapshot.records[0].created_at
     lines = [
         "# Zaratustra — generated overview",
@@ -58,7 +61,7 @@ def render_overview(
             ]
         )
     lines.extend(["## Mutation provenance", ""])
-    for event in history.events:
+    for event in events:
         # Escaped JSON keeps untrusted text from becoming Markdown structure.
         lines.extend(["```json", event.model_dump_json(indent=2), "```", ""])
     return (chr(10).join(lines) + chr(10)).encode("utf-8"), generated_at

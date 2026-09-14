@@ -125,6 +125,18 @@ class Artifact(Record):
         return self
 
 
+class ProcessMaterial(Record):
+    """Immutable content identity owned by a Process, never by a Work."""
+
+    kind: Literal["process_material"] = "process_material"
+    process_id: UUID
+    operation_id: UUID
+    title: Text
+    media_type: Text
+    content_sha256: Annotated[str, Field(strict=True, pattern="^[0-9a-f]{64}$")]
+    content_size: Annotated[int, Field(strict=True, ge=0)]
+
+
 class Event(Record):
     kind: Literal["event"] = "event"
     process_id: UUID
@@ -147,6 +159,18 @@ class RecordsSnapshot(RecordModel):
     workspace_id: UUID
     state_revision: Annotated[int, Field(strict=True, ge=0)]
     records: tuple[DomainRecord, ...]
+
+    @property
+    def current_work(self) -> Work | None:
+        """The sole unfinished Work, or normal no-current truth; never historical fallback."""
+        current = [
+            record
+            for record in self.records
+            if isinstance(record, Work) and record.status in ("draft", "ready")
+        ]
+        if len(current) > 1:
+            raise ValueError("A Process cannot have more than one current Work")
+        return current[0] if current else None
 
     @model_validator(mode="after")
     def consistent(self) -> Self:
@@ -178,8 +202,9 @@ class RecordsSnapshot(RecordModel):
             raise ValueError("Initial event does not describe initial records")
         if self.state_revision < 1 or event.state_revision != 1:
             raise ValueError("Invalid state/initial event revision")
-        if max(w.revision for w in works.values()) != self.state_revision:
-            raise ValueError("Latest Work revision must match global state")
+        if max(r.revision for r in (process, *works.values())) != self.state_revision:
+            raise ValueError("Latest Process-owned revision must match global state")
+        _ = self.current_work
         if any(
             w.revision == 1 and (w.status != "draft" or w.authority_scope != "none")
             for w in works.values()
@@ -187,9 +212,7 @@ class RecordsSnapshot(RecordModel):
             raise ValueError("Initial Work must remain a draft without rights")
         if any(r.revision > self.state_revision for r in self.records):
             raise ValueError("Record revision exceeds state")
-        if event.revision != 1 or (
-            process.revision != 1 if process.pack_binding is None else process.revision < 2
-        ):
+        if event.revision != 1 or process.revision < (1 if process.pack_binding is None else 2):
             raise ValueError("Unsupported Process/initial event revision")
         if any(
             w.pack_binding is not None and w.pack_binding != process.pack_binding

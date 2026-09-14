@@ -31,7 +31,7 @@ def result_basis(
     versions: tuple[ArtifactVersion, ...],
 ) -> tuple[ArtifactReference, ...]:
     """Re-derive exact ids, scope and complete closure; caller verifies physical bytes."""
-    submission = request.submission
+    submission = request.submission or request.terminal_submission
     if submission is None or submission.source_revision != snapshot.state_revision:
         raise ValueError("Result source revision is not current")
     artifact = current_artifact(snapshot, request.work_id)
@@ -43,7 +43,10 @@ def result_basis(
     if tuple(h.handoff_id for h in acceptances) != submission.acceptance_ids:
         raise ValueError("Result must retain ALL current Work acceptances in journal order")
     ids = {r.id for r in snapshot.records}
-    if submission.next_work.work_id in ids or submission.next_work.artifact_id in ids:
+    if request.submission is not None and (
+        request.submission.next_work.work_id in ids
+        or request.submission.next_work.artifact_id in ids
+    ):
         raise ValueError("Next Work and Artifact identities must be new")
     if any(
         e.request.work_id == request.work_id and e.request.submission is not None for e in events

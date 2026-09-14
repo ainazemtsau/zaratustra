@@ -19,8 +19,12 @@ class PackError(ValueError):
 
 class PackRule(Protocol):
     def next_work(
-        self, work: Work, accepted_result: bytes, work_id: UUID, artifact_id: UUID
-    ) -> NextWork: ...
+        self,
+        work: Work,
+        accepted_result: bytes,
+        work_id: UUID,
+        artifact_id: UUID,
+    ) -> NextWork | None: ...
 
 
 @dataclass(frozen=True)
