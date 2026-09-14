@@ -11,6 +11,9 @@ authority from retained files.
 The process_change coordinator retains one exact-reviewed future definition edition
 and composes its eventual effect through the existing authorized Core Result path.
 Its journal grants no authority and actual Work selection follows committed lineage.
+The onboarding coordinator renders ordinary prose and exact continuation facts, and
+retains only one recoverable explicit later-Work intent over those public surfaces.
+It grants no authority and never selects a historical Work.
 Use submodule public __init__.py surfaces. New modules need graph contracts.
 Data/workspaces are not package resources. Do not add product state to source.
 END_OF_FILE: src/zaratustra/AGENTS.md

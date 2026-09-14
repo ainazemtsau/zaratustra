@@ -86,6 +86,12 @@ source_modules = ["zaratustra.process_change"]
 forbidden_modules = ["zaratustra.cli", "zaratustra.local", "tests", "tools"]
 
 [[tool.importlinter.contracts]]
+name = "Public onboarding has no trusted adapter or development dependency"
+type = "forbidden"
+source_modules = ["zaratustra.onboarding"]
+forbidden_modules = ["zaratustra.cli", "zaratustra.local", "tests", "tools"]
+
+[[tool.importlinter.contracts]]
 name = "Process probe uses Core; Core has no process-rule dependency"
 type = "forbidden"
 source_modules = ["zaratustra.core"]

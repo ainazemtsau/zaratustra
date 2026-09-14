@@ -37,4 +37,9 @@ snapshot's revision/basis while wrapping returned text for the ordinary intake p
 entry create keeps draft/research/proposal stages separate, accepts an authored generic
 definition, and confirms one complete activation preview before standard Core writes.
 Research files are data, never permission; status rechecks Core before claiming rights.
+entry create prose builds that same persisted draft from ordinary strings and the
+installed capability producer. entry resume separately confirms the exact Process
+state read. entry later-work retains one exact no-current intent and confirms its
+Pack-compatible Core request. entry change uses the existing exact review/decision/
+Result continuation; saved intent never grants Core permission.
 END_OF_FILE: src/zaratustra/cli/AGENTS.md

@@ -57,6 +57,10 @@ Result without a continuation. R2 T2 adds explicit schema9, truthful common Proc
 current-or-no-current read with explicit ambiguous-many refusal, and a separately
 authorized Pack-compatible ordinary Work creation event; see
 docs/public-onboarding-r2-t2/PLAN.md.
+Public onboarding R2 T3 adds the installed common `zara entry` prose/resume/change
+composition and one recoverable explicit later-Work plan over those existing
+authorities; see docs/public-onboarding-r2-t3/PLAN.md and
+tools.probe_public_onboarding_r2_t3.
 `src/zaratustra/core` owns workspace logic; `src/zaratustra/cli` delegates to it.
 Installed product code and user-chosen data workspace are separate.
 Read the current CALL before doing product work; a completed Work admits no successor.

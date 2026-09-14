@@ -77,6 +77,32 @@ from zaratustra.local import (
     confirm_material_intake_on_console,
     confirm_on_console,
     confirm_process_activation_on_console,
+    confirm_process_change_on_console,
+)
+from zaratustra.onboarding import (
+    LaterWorkInput,
+    OnboardingError,
+    ProseClarification,
+    creation_status_text,
+    execute_later_work,
+    onboarding_status_text,
+    prepare_later_work,
+    prepare_onboarding_read,
+    read_onboarding,
+    save_prose_creation_draft,
+)
+from zaratustra.process_change import (
+    MAX_CHANGE_BYTES,
+    ProcessChangeError,
+    decide_process_change,
+    execute_process_change_continuation,
+    inspect_process_change,
+    prepare_process_change,
+    prepare_process_change_continuation,
+    process_change_continuation_query,
+    process_change_review_query,
+    resume_process_change_review,
+    review_process_change,
 )
 from zaratustra.process_creation import (
     MAX_DRAFT_BYTES,
@@ -170,6 +196,19 @@ def main(argv: list[str] | None = None) -> int:
     creation_draft.add_argument("catalog", type=Path)
     creation_draft.add_argument("designation")
     creation_draft.add_argument("draft", type=Path)
+    creation_prose = creation_commands.add_parser(
+        "prose", help="Save an exact readable draft from ordinary text arguments."
+    )
+    creation_prose.add_argument("catalog", type=Path)
+    creation_prose.add_argument("designation")
+    creation_prose.add_argument("need")
+    creation_prose.add_argument("--title", required=True)
+    creation_prose.add_argument("--outcome", action="append", required=True)
+    creation_prose.add_argument("--constraint", action="append", required=True)
+    creation_prose.add_argument("--created-by", required=True)
+    creation_prose.add_argument("--clarification", action="append", default=[])
+    creation_prose.add_argument("--clarification-reason", action="append", default=[])
+    creation_prose.add_argument("--clarification-answer", action="append", default=[])
     creation_request = creation_commands.add_parser(
         "request", help="Save a readable provider-neutral manual research request."
     )
@@ -202,6 +241,35 @@ def main(argv: list[str] | None = None) -> int:
     creation_activate.add_argument("designation")
     creation_activate.add_argument("workspace", type=Path)
     creation_activate.add_argument("--alias", action="append", default=[])
+    entry_resume = entry_commands.add_parser(
+        "resume", help="Render the persisted stage or exact authorized current/no-current truth."
+    )
+    entry_resume.add_argument("catalog", type=Path)
+    entry_resume.add_argument("designation")
+    entry_later = entry_commands.add_parser(
+        "later-work", help="Exactly confirm one explicit Pack-compatible Work after no-current."
+    )
+    entry_later.add_argument("catalog", type=Path)
+    entry_later.add_argument("designation")
+    entry_later.add_argument("definition", type=Path, help="Assistant-authored generic definition.")
+    entry_later.add_argument("--goal", required=True)
+    entry_later.add_argument("--expected-result", required=True)
+    entry_later.add_argument("--acceptance", action="append", required=True)
+    entry_later.add_argument("--boundary", action="append", required=True)
+    entry_later.add_argument("--budget", required=True)
+    entry_later.add_argument("--artifact-title", required=True)
+    entry_change = entry_commands.add_parser(
+        "change", help="Review, decide and apply one safe future-definition edition."
+    )
+    change_commands = entry_change.add_subparsers(dest="change_command", required=True)
+    change_review = change_commands.add_parser("review")
+    change_review.add_argument("catalog", type=Path)
+    change_review.add_argument("designation")
+    change_review.add_argument("definition", type=Path)
+    for name in ("decide", "status", "apply"):
+        command = change_commands.add_parser(name)
+        command.add_argument("catalog", type=Path)
+        command.add_argument("designation")
     result_command = commands.add_parser(
         "result", help="Submit or discover an exact Result and continuation."
     )
@@ -231,7 +299,7 @@ def main(argv: list[str] | None = None) -> int:
         command = commands.add_parser(name, help=description, description=description)
         command.add_argument("path", nargs="?", default=".", type=Path)
         if name == "migrate":
-            command.add_argument("--to", type=int, choices=(2, 3, 4, 5, 6, 7), default=4)
+            command.add_argument("--to", type=int, choices=(2, 3, 4, 5, 6, 7, 8, 9), default=4)
     for name in ("mutate", "receipt"):
         command = commands.add_parser(name, help="Confirm an exact internal operation/query.")
         command.add_argument("path", type=Path)
@@ -282,6 +350,38 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "entry":
             if args.entry_command == "create":
+                if args.creation_command == "prose":
+                    lengths = {
+                        len(args.clarification),
+                        len(args.clarification_reason),
+                        len(args.clarification_answer),
+                    }
+                    if len(lengths) != 1:
+                        raise OnboardingError(
+                            "invalid_prose",
+                            "Every clarification needs one reason and one answer",
+                        )
+                    status = save_prose_creation_draft(
+                        args.catalog,
+                        args.designation,
+                        process_title=args.title,
+                        need=args.need,
+                        desired_outcomes=tuple(args.outcome),
+                        constraints=tuple(args.constraint),
+                        created_by=args.created_by,
+                        clarifications=tuple(
+                            ProseClarification(question=question, why_needed=reason, answer=answer)
+                            for question, reason, answer in zip(
+                                args.clarification,
+                                args.clarification_reason,
+                                args.clarification_answer,
+                                strict=True,
+                            )
+                        ),
+                    )
+                    sys.stdout.write(creation_status_text(status))
+                    sys.stdout.flush()
+                    return 0
                 if args.creation_command == "draft":
                     with args.draft.open("rb") as stream:
                         content = stream.read(MAX_DRAFT_BYTES + 1)
@@ -352,6 +452,100 @@ def main(argv: list[str] | None = None) -> int:
                     output = inspect_process_creation(
                         args.catalog, args.designation
                     ).model_dump_json(indent=2)
+            elif args.entry_command == "resume":
+                prepared_resume = prepare_onboarding_read(args.catalog, args.designation)
+                resume_caller = (
+                    confirm_on_console(
+                        prepare_authorization(
+                            prepared_resume.process_read.workspace,
+                            prepared_resume.process_read.query,
+                        )
+                    )
+                    if prepared_resume.process_read is not None
+                    else None
+                )
+                resumed = read_onboarding(prepared_resume, resume_caller)
+                sys.stdout.write(onboarding_status_text(resumed))
+                sys.stdout.flush()
+                return 0
+            elif args.entry_command == "later-work":
+                prepared_resume = prepare_onboarding_read(args.catalog, args.designation)
+                if prepared_resume.process_read is None:
+                    raise OnboardingError("not_activated", "Process is not activated")
+                resume_caller = confirm_on_console(
+                    prepare_authorization(
+                        prepared_resume.process_read.workspace,
+                        prepared_resume.process_read.query,
+                    )
+                )
+                resumed = read_onboarding(prepared_resume, resume_caller)
+                with args.definition.open("rb") as stream:
+                    definition_content = stream.read(MAX_PROPOSAL_BYTES + 1)
+                later = prepare_later_work(
+                    args.catalog,
+                    args.designation,
+                    resumed,
+                    definition_content,
+                    LaterWorkInput(
+                        goal=args.goal,
+                        expected_result=args.expected_result,
+                        acceptance=tuple(args.acceptance),
+                        boundaries=tuple(args.boundary),
+                        budget=args.budget,
+                        artifact_title=args.artifact_title,
+                    ),
+                )
+                later_caller = confirm_on_console(
+                    prepare_authorization(later.workspace, later.request)
+                )
+                output = execute_later_work(later, later_caller).model_dump_json(indent=2)
+            elif args.entry_command == "change":
+                if args.change_command == "review":
+                    with args.definition.open("rb") as stream:
+                        content = stream.read(MAX_CHANGE_BYTES + 1)
+                    prepared_change = prepare_process_change(
+                        args.catalog, args.designation, content
+                    )
+                    change_caller = confirm_on_console(
+                        prepare_authorization(prepared_change.workspace, prepared_change.query)
+                    )
+                    reviewed = review_process_change(prepared_change, change_caller)
+                    decision = confirm_process_change_on_console(reviewed)
+                    output = decide_process_change(reviewed, decision).model_dump_json(indent=2)
+                elif args.change_command == "decide":
+                    prepared_resume = prepare_onboarding_read(args.catalog, args.designation)
+                    if prepared_resume.process_read is None:
+                        raise OnboardingError("not_activated", "Process is not activated")
+                    change_query = process_change_review_query(args.catalog, args.designation)
+                    change_caller = confirm_on_console(
+                        prepare_authorization(prepared_resume.process_read.workspace, change_query)
+                    )
+                    reviewed = resume_process_change_review(
+                        args.catalog, args.designation, change_caller
+                    )
+                    decision = confirm_process_change_on_console(reviewed)
+                    output = decide_process_change(reviewed, decision).model_dump_json(indent=2)
+                elif args.change_command == "apply":
+                    prepared_resume = prepare_onboarding_read(args.catalog, args.designation)
+                    if prepared_resume.process_read is None:
+                        raise OnboardingError("not_activated", "Process is not activated")
+                    change_query = process_change_continuation_query(args.catalog, args.designation)
+                    change_caller = confirm_on_console(
+                        prepare_authorization(prepared_resume.process_read.workspace, change_query)
+                    )
+                    continuation = prepare_process_change_continuation(
+                        args.catalog, args.designation, change_caller
+                    )
+                    result_caller = confirm_on_console(
+                        prepare_authorization(continuation.workspace, continuation.request)
+                    )
+                    output = execute_process_change_continuation(
+                        continuation, result_caller
+                    ).model_dump_json(indent=2)
+                else:
+                    output = inspect_process_change(args.catalog, args.designation).model_dump_json(
+                        indent=2
+                    )
             elif args.entry_command == "add":
                 output = add_entry(
                     args.catalog,
@@ -652,6 +846,12 @@ def main(argv: list[str] | None = None) -> int:
         print(f"zara: [{error.code}] {error}", file=sys.stderr)
         return 1
     except ProcessCreationError as error:
+        print(f"zara: [{error.code}] {error}", file=sys.stderr)
+        return 1
+    except ProcessChangeError as error:
+        print(f"zara: [{error.code}] {error}", file=sys.stderr)
+        return 1
+    except OnboardingError as error:
         print(f"zara: [{error.code}] {error}", file=sys.stderr)
         return 1
     except (WorkspaceError, ValidationError, OSError) as error:

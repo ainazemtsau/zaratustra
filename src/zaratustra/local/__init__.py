@@ -4,7 +4,7 @@ import hashlib
 import json
 import os
 import sys
-from typing import TextIO
+from typing import Literal, TextIO
 from uuid import uuid4
 
 from zaratustra.core import (
@@ -18,6 +18,12 @@ from zaratustra.intake import (
     PreparedMaterialIntake,
     authorize_material_intake,
     preview_bytes,
+)
+from zaratustra.process_change import (
+    ProcessChangeDecision,
+    ReviewedProcessChange,
+    authorize_process_change,
+    process_change_preview_bytes,
 )
 from zaratustra.process_creation import (
     PreparedActivation,
@@ -90,6 +96,35 @@ def confirm_process_activation_on_console(
     )
 
 
+def confirm_process_change_on_console(
+    review: ReviewedProcessChange,
+) -> ProcessChangeDecision:
+    """Show and bind one explicit approve/reject decision to the exact change preview."""
+    if not sys.stdin.isatty() or not sys.stderr.isatty():
+        raise MutationError("permission_denied", "Interactive local console confirmation required")
+    content = process_change_preview_bytes(review)
+    digest = hashlib.sha256(content).hexdigest()
+    if digest != review.preview_sha256:
+        raise MutationError("permission_denied", "Changed process change preview")
+    print(content.decode("utf-8").rstrip(), file=sys.stderr)
+    print("Decide only this displayed future-edition change.", file=sys.stderr)
+    print(f"Type approve {digest} or reject {digest}", file=sys.stderr, flush=True)
+    answer = sys.stdin.readline().strip()
+    if answer == f"approve {digest}":
+        decision: Literal["approve", "reject"] = "approve"
+    elif answer == f"reject {digest}":
+        decision = "reject"
+    else:
+        raise MutationError("permission_denied", "Process change was not decided")
+    return authorize_process_change(
+        review,
+        decision=decision,
+        channel="local-console",
+        actor="local-console-operator",
+        source_ref=f"console-process-change:{uuid4()}",
+    )
+
+
 def _confirm_material_intake(
     prepared: PreparedMaterialIntake, input_stream: TextIO, output_stream: TextIO
 ) -> MaterialIntakeAuthorization:
@@ -137,5 +172,6 @@ def confirm_material_intake_on_console(
 __all__ = [
     "confirm_material_intake_on_console",
     "confirm_on_console",
+    "confirm_process_change_on_console",
     "confirm_process_activation_on_console",
 ]

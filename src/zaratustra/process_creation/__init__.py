@@ -1120,8 +1120,8 @@ def prepare_process_activation(
             raise ProcessCreationError(
                 "workspace_collision", "Reserved activation workspace identity changed"
             )
-        if info.schema_version < 7:
-            migrate_workspace(selected, target_version=7)
+        if info.schema_version < 9:
+            migrate_workspace(selected, target_version=9)
         snapshot = read_records(selected)
         if not snapshot.records:
             snapshot = create_initial_records(selected, initial_records(proposal.definition))

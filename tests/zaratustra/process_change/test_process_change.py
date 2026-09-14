@@ -9,6 +9,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
+import zaratustra.cli as cli_module
 from tests.fixtures.process_creation import (
     creation_draft,
     creation_research,
@@ -19,6 +20,7 @@ from tests.fixtures.process_creation import (
 from zaratustra.core import (
     Artifact,
     ArtifactReference,
+    AuthorizationPrompt,
     ContextQuery,
     Handoff,
     LocalAuthorization,
@@ -36,6 +38,7 @@ from zaratustra.core import (
     read_workspace,
 )
 from zaratustra.process_change import (
+    ProcessChangeDecision,
     ProcessChangeError,
     ProcessChangeStatus,
     ReviewedProcessChange,
@@ -374,6 +377,44 @@ def test_rejection_retains_decision_and_preserves_all_core_bytes(tmp_path: Path)
     }
     assert status.stage == "rejected" and status.rejected_changes == 1
     assert status.approved_change_id is None and before == after
+
+
+def test_cli_common_entry_exposes_exact_safe_change_review(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    catalog, workspace, designation, definition, _current = _activate(tmp_path, "small")
+    changed = _changed(definition, "small")
+    proposal = tmp_path / "changed-definition.json"
+    proposal.write_text(changed.model_dump_json(indent=2), encoding="utf-8")
+
+    def confirmed(prompt: AuthorizationPrompt) -> LocalAuthorization:
+        return authorize_local(
+            prompt,
+            channel="local-chat",
+            actor="fictional-cli-change-owner",
+            source_ref="exact-cli-query-confirmation",
+        )
+
+    def rejected(review: ReviewedProcessChange) -> ProcessChangeDecision:
+        return authorize_process_change(
+            review,
+            decision="reject",
+            channel="local-chat",
+            actor="fictional-cli-change-owner",
+            source_ref="exact-cli-change-rejection",
+        )
+
+    monkeypatch.setattr(cli_module, "confirm_on_console", confirmed)
+    monkeypatch.setattr(cli_module, "confirm_process_change_on_console", rejected)
+    assert (
+        cli_module.main(["entry", "change", "review", str(catalog), designation, str(proposal)])
+        == 0
+    )
+    assert '"stage": "rejected"' in capsys.readouterr().out
+    assert cli_module.main(["entry", "change", "status", str(catalog), designation]) == 0
+    assert inspect_process_change(catalog, designation).stage == "rejected"
 
 
 @pytest.mark.parametrize("failure", ["edition_only", "no_future"])

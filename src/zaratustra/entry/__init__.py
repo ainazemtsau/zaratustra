@@ -24,6 +24,7 @@ from pydantic import (
 from zaratustra.core import (
     Process,
     ProcessQuery,
+    ProcessStateQuery,
     Work,
     WorkspaceError,
     read_records,
@@ -104,6 +105,13 @@ class PreparedEntryRead:
     entry: CatalogEntry
     workspace: Path
     query: ProcessQuery
+
+
+@dataclass(frozen=True)
+class PreparedProcessStateRead:
+    entry: CatalogEntry
+    workspace: Path
+    query: ProcessStateQuery
 
 
 def _catalog_path(path: Path) -> Path:
@@ -382,6 +390,29 @@ def prepare_entry_read(
     return PreparedEntryRead(entry, workspace, query)
 
 
+def prepare_process_state_read(
+    catalog_path: Path, designation_or_alias: str
+) -> PreparedProcessStateRead:
+    """Resolve one exact Process-state query without selecting a historical Work."""
+    entry = resolve_entry(catalog_path, designation_or_alias)
+    try:
+        workspace = source_path(catalog_path, entry)
+        revision = _source_revision(workspace, entry)
+    except EntryError:
+        raise
+    except (OSError, RuntimeError, WorkspaceError, ValidationError) as error:
+        raise EntryError("source_unavailable", "Selected workspace is unavailable") from error
+    return PreparedProcessStateRead(
+        entry=entry,
+        workspace=workspace,
+        query=ProcessStateQuery(
+            workspace_id=entry.workspace_id,
+            process_id=entry.process_id,
+            expected_revision=revision,
+        ),
+    )
+
+
 def relocate_entry(catalog_path: Path, designation_or_alias: str, workspace: Path) -> CatalogEntry:
     """Rewrite one source path only after exact identity validation at the new path."""
     selected = workspace.expanduser().resolve()
@@ -412,9 +443,11 @@ __all__ = [
     "EntryCatalog",
     "EntryError",
     "PreparedEntryRead",
+    "PreparedProcessStateRead",
     "add_entry",
     "find_entries",
     "prepare_entry_read",
+    "prepare_process_state_read",
     "relocate_entry",
     "resolve_entry",
     "source_path",
