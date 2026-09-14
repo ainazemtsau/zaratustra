@@ -24,6 +24,7 @@ from zaratustra.core import (
     ContextQuery,
     Handoff,
     LocalAuthorization,
+    MutationError,
     MutationRequest,
     Process,
     Work,
@@ -415,6 +416,58 @@ def test_cli_common_entry_exposes_exact_safe_change_review(
     assert '"stage": "rejected"' in capsys.readouterr().out
     assert cli_module.main(["entry", "change", "status", str(catalog), designation]) == 0
     assert inspect_process_change(catalog, designation).stage == "rejected"
+
+
+@pytest.mark.parametrize("denied_scope", ["context", "result"])
+@pytest.mark.parametrize("authority", ["missing", "wrong"])
+def test_cli_apply_requires_exact_context_and_result_confirmation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    denied_scope: str,
+    authority: str,
+) -> None:
+    catalog, workspace, designation, definition, current = _activate(tmp_path, "project")
+    _decide(_review(catalog, workspace, designation, _changed(definition, "project")), "approve")
+    _accept_current_result(
+        workspace, current, ProcessSnapshot(definition=definition), project_request_data()
+    )
+    before = {
+        path.relative_to(workspace): path.read_bytes()
+        for path in workspace.rglob("*")
+        if path.is_file()
+    }
+    scopes: list[str] = []
+
+    def confirm(prompt: AuthorizationPrompt) -> LocalAuthorization:
+        scope = "context" if isinstance(prompt.request, ContextQuery) else "result"
+        scopes.append(scope)
+        if scope == denied_scope:
+            if authority == "missing":
+                raise MutationError("permission_denied", "Synthetic missing confirmation")
+            if isinstance(prompt.request, ContextQuery):
+                prompt = prepare_authorization(
+                    workspace,
+                    prompt.request.model_copy(update=dict(max_bytes=prompt.request.max_bytes - 1)),
+                )
+            else:
+                assert isinstance(prompt.request, MutationRequest)
+                prompt = prepare_authorization(
+                    workspace, prompt.request.model_copy(update=dict(operation_id=uuid4()))
+                )
+        return authorize_local(
+            prompt, channel="local-chat", actor="fictional-cli-owner", source_ref="synthetic test"
+        )
+
+    monkeypatch.setattr(cli_module, "confirm_on_console", confirm)
+    assert cli_module.main(["entry", "change", "apply", str(catalog), designation]) == 1
+    assert "permission_denied:" in capsys.readouterr().err
+    assert scopes == (["context"] if denied_scope == "context" else ["context", "result"])
+    assert {
+        path.relative_to(workspace): path.read_bytes()
+        for path in workspace.rglob("*")
+        if path.is_file()
+    } == before
 
 
 @pytest.mark.parametrize("failure", ["edition_only", "no_future"])

@@ -1,0 +1,50 @@
+"""Fresh CLI replay and retained-stage regression evidence, without freezing prose."""
+
+from typing import Any
+
+import pytest
+
+from tools.probe_public_onboarding_r2_t3_correction import run
+
+
+@pytest.fixture(scope="module")
+def correction(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
+    return run(tmp_path_factory.mktemp("t3-correction") / "fresh-cli")
+
+
+def test_fresh_cli_recovers_one_exact_receipt_with_separate_authority(
+    correction: dict[str, Any],
+) -> None:
+    change = correction["change"]
+    assert change["first"]["rc"] == change["retry"]["rc"] == 0
+    assert change["exact_stdout_replay"] is True
+    assert change["revision_delta"] == change["history_delta"] == change["operation_events"] == 1
+    assert change["api_recovers_original_receipt"] is True
+    assert change["replay_and_refusals_byte_stable"] is True
+    first = change["first"]["runtime"]
+    retry = change["retry"]["runtime"]
+    assert first["pid"] != retry["pid"]
+    assert len(first["prompts"]) == 2
+    assert retry["prompts"] == first["prompts"][-1:]
+    for name in ("missing", "wrong"):
+        assert change[name]["rc"] == 1
+        assert "permission_denied:" in change[name]["stderr"]
+
+
+def test_retained_proposal_continues_to_a_distinct_stage_action_without_writes(
+    correction: dict[str, Any],
+) -> None:
+    stages = {row["stage"]: row for row in correction["stages"]}
+    assert list(stages) == [
+        "draft",
+        "research_waiting",
+        "research_returned",
+        "proposal_pending",
+        "activation_pending",
+    ]
+    assert stages["research_returned"]["proposal_retained"] is False
+    assert stages["proposal_pending"]["proposal_retained"] is True
+    assert stages["activation_pending"]["proposal_retained"] is True
+    assert stages["proposal_pending"]["next_action"] != stages["research_returned"]["next_action"]
+    assert all(row["byte_stable"] for row in stages.values())
+    assert all(row["first"]["runtime"]["prompts"] == [] for row in stages.values())

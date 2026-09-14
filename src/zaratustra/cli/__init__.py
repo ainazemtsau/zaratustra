@@ -529,13 +529,25 @@ def main(argv: list[str] | None = None) -> int:
                     prepared_resume = prepare_onboarding_read(args.catalog, args.designation)
                     if prepared_resume.process_read is None:
                         raise OnboardingError("not_activated", "Process is not activated")
-                    change_query = process_change_continuation_query(args.catalog, args.designation)
-                    change_caller = confirm_on_console(
-                        prepare_authorization(prepared_resume.process_read.workspace, change_query)
-                    )
-                    continuation = prepare_process_change_continuation(
-                        args.catalog, args.designation, change_caller
-                    )
+                    try:
+                        # Recover an exact committed request before asking for new Work context.
+                        continuation = prepare_process_change_continuation(
+                            args.catalog, args.designation, None
+                        )
+                    except ProcessChangeError as error:
+                        if error.code != "permission_denied":
+                            raise
+                        change_query = process_change_continuation_query(
+                            args.catalog, args.designation
+                        )
+                        change_caller = confirm_on_console(
+                            prepare_authorization(
+                                prepared_resume.process_read.workspace, change_query
+                            )
+                        )
+                        continuation = prepare_process_change_continuation(
+                            args.catalog, args.designation, change_caller
+                        )
                     result_caller = confirm_on_console(
                         prepare_authorization(continuation.workspace, continuation.request)
                     )

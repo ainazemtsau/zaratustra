@@ -225,7 +225,10 @@ def _unfinished_action(stage: str) -> str:
         "draft": "Answer saved clarifications, then create the manual research request.",
         "research_waiting": "Return the exact manual research response for the saved request.",
         "research_returned": "Author and retain one supported proposal from the exact grounds.",
-        "proposal_pending": "Author and retain one supported proposal from the exact grounds.",
+        "proposal_pending": (
+            "Choose the target workspace, review the saved proposal's activation preview, "
+            "and exactly confirm activation."
+        ),
         "activation_pending": "Review and exactly confirm the saved activation preview.",
     }[stage]
 
