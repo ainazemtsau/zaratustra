@@ -777,6 +777,9 @@ def _mutate(
             if stored.fingerprint != intent:
                 raise MutationError("collision", "Operation id already belongs to another intent")
             return stored
+    for process_stored in history.process_receipts:
+        if process_stored.operation_id == request.operation_id:
+            raise MutationError("collision", "Operation id already belongs to a Process intent")
     process_before = None
     process_after = None
     if request.operation == "bind_pack":

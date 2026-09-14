@@ -256,6 +256,15 @@ def raw_domain_rows(path: Path) -> tuple[list[tuple[Any, ...]], ...]:
         )
 
 
+def durable_workspace_bytes(path: Path) -> dict[str, bytes]:
+    return {
+        file.relative_to(path).as_posix(): file.read_bytes()
+        for directory in (path / ".zara", path / "artifacts", path / "projections")
+        for file in sorted(directory.rglob("*"))
+        if file.is_file()
+    }
+
+
 def mutate_work(path: Path, work_id: UUID, operation: str, **changes: Any) -> MutationRequest:
     snapshot = read_records(path)
     return MutationRequest.model_validate(
@@ -312,6 +321,147 @@ def accept_later_result(path: Path, work: Work, artifact: Artifact, content: byt
     )
     request = handoff_request(handoff.model_dump_json().encode(), source_ref="fictional-result")
     apply_mutation(path, request, confirm(path, request))
+
+
+@pytest.mark.parametrize("owner_kind", ["process_material", "work_creation"])
+def test_work_mutation_rejects_each_process_receipt_identity_without_effect(
+    workspace: Path, owner_kind: str
+) -> None:
+    migrate_workspace(workspace, target_version=9)
+    process_operation_id = uuid4()
+    content: bytes | None = None
+    process, _ = process_and_current(workspace)
+    if owner_kind == "process_material":
+        content = b"Exact fictional cross-kind identity note.\n"
+        snapshot = read_records(workspace)
+        process_request: ProcessMaterialRequest | WorkCreationRequest = ProcessMaterialRequest(
+            operation_id=process_operation_id,
+            workspace_id=snapshot.workspace_id,
+            process_id=process.id,
+            expected_revision=snapshot.state_revision,
+            provenance="Retain one exact fictional cross-kind identity",
+            material=ProcessMaterialSubmission(
+                material_id=uuid4(),
+                title="Fictional cross-kind identity note",
+                media_type="text/plain; charset=utf-8",
+                content_sha256=hashlib.sha256(content).hexdigest(),
+                content_size=len(content),
+            ),
+        )
+        process_receipt = apply_mutation(
+            workspace,
+            process_request,
+            confirm(workspace, process_request),
+            content=content,
+        )
+        work_request = later_request(workspace)
+        create_later_work(workspace, work_request, confirm(workspace, work_request), REGISTRY)
+    else:
+        process_request = later_request(workspace, operation_id=process_operation_id)
+        process_receipt = create_later_work(
+            workspace,
+            process_request,
+            confirm(workspace, process_request),
+            REGISTRY,
+        )
+
+    snapshot = read_records(workspace)
+    work = snapshot.current_work
+    assert work is not None
+    artifact = next(
+        record
+        for record in snapshot.records
+        if isinstance(record, Artifact) and record.work_id == work.id
+    )
+    changed_intent = mutate_work(
+        workspace,
+        work.id,
+        "authorize_artifact",
+        artifact_id=artifact.id,
+        artifact_revision=artifact.revision,
+    ).model_copy(update={"operation_id": process_operation_id})
+    before = durable_workspace_bytes(workspace)
+    with pytest.raises(MutationError, match="collision") as collision:
+        apply_mutation(workspace, changed_intent, confirm(workspace, changed_intent))
+    assert collision.value.code == "collision"
+    assert durable_workspace_bytes(workspace) == before
+
+    refreshed = process_request.model_copy(update={"expected_revision": snapshot.state_revision})
+    assert (
+        apply_mutation(workspace, refreshed, confirm(workspace, refreshed), content=content)
+        == process_receipt
+    )
+    assert durable_workspace_bytes(workspace) == before
+
+
+@pytest.mark.parametrize("process_kind", ["process_material", "work_creation"])
+def test_process_mutation_rejects_work_receipt_identity_without_effect(
+    workspace: Path, process_kind: str
+) -> None:
+    migrate_workspace(workspace, target_version=9)
+    work_request = later_request(workspace)
+    create_later_work(workspace, work_request, confirm(workspace, work_request), REGISTRY)
+    snapshot = read_records(workspace)
+    work = snapshot.current_work
+    assert work is not None
+    artifact = next(
+        record
+        for record in snapshot.records
+        if isinstance(record, Artifact) and record.work_id == work.id
+    )
+    work_mutation = mutate_work(
+        workspace,
+        work.id,
+        "authorize_artifact",
+        artifact_id=artifact.id,
+        artifact_revision=artifact.revision,
+    )
+    work_receipt = apply_mutation(workspace, work_mutation, confirm(workspace, work_mutation))
+    committed = read_records(workspace)
+    process, _ = process_and_current(workspace)
+    content: bytes | None = None
+    if process_kind == "process_material":
+        content = b"Rejected fictional reverse-kind identity note.\n"
+        process_request: ProcessMaterialRequest | WorkCreationRequest = ProcessMaterialRequest(
+            operation_id=work_mutation.operation_id,
+            workspace_id=committed.workspace_id,
+            process_id=process.id,
+            expected_revision=committed.state_revision,
+            provenance="Attempt to reuse one exact Work identity for Process material",
+            material=ProcessMaterialSubmission(
+                material_id=uuid4(),
+                title="Rejected reverse-kind identity note",
+                media_type="text/plain; charset=utf-8",
+                content_sha256=hashlib.sha256(content).hexdigest(),
+                content_size=len(content),
+            ),
+        )
+    else:
+        assert process.pack_binding is not None
+        process_request = work_creation_request(
+            REGISTRY,
+            process.pack_binding,
+            operation_id=work_mutation.operation_id,
+            workspace_id=committed.workspace_id,
+            process_id=process.id,
+            expected_revision=committed.state_revision,
+            provenance="Attempt to reuse one exact Work identity for Work creation",
+            work=later_spec(),
+        )
+    before = durable_workspace_bytes(workspace)
+    with pytest.raises(MutationError, match="collision") as collision:
+        apply_mutation(
+            workspace,
+            process_request,
+            confirm(workspace, process_request),
+            content=content,
+        )
+    assert collision.value.code == "collision"
+    assert durable_workspace_bytes(workspace) == before
+
+    refreshed = work_mutation.model_copy(update={"expected_revision": committed.state_revision})
+    assert apply_mutation(workspace, refreshed, confirm(workspace, refreshed)) == work_receipt
+    assert durable_workspace_bytes(workspace) == before
 
 
 def test_no_current_read_is_stable_then_material_migration_and_later_work_replay(
