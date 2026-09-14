@@ -1,93 +1,87 @@
-# Public onboarding T1 technical handback
+# Public onboarding R2 T1 engineering handback
 
 ## outcome
 
-T1 selected one minimal recovery boundary for later implementation: immutable
-program/connection release slots plus a fenced, complete same-path recovery root,
-with migrations first exercised on an isolated copy. DB-only recovery is falsified
-by current load-bearing state outside SQLite. The implementation/evidence commit is
-`dd2e16883576b6e7d46876dbdb0bf058d66164fe`; its exact parent/public starting point
-is `25be04cdd28dbd5894a99095f61a014a9e566483` (product 0.15.1).
+T1 is implemented at commit
+`fa126a0daf0aa0f8671c04ec2209651a60158d85`; its exact parent and public starting
+point is `fbca9f9e36242dbcf3410241c9178d51fb66c3d1`. Product version 0.16.0 adds
+schema 8, terminal Result submission, a truthful zero-current-Work state, and exact
+Process-owned material save/read/recovery without borrowing Work identity or rights.
 
-This result is a risk probe and committed PLAN, not a shipped updater, onboarding
-coordinator, public release, owner acceptance, or independent-user proof. T2 was not
-started.
+Released Result+next behavior and serialized history remain readable and unchanged.
+Finite Pack exhaustion now proposes a terminal Result instead of reporting
+`process_complete`. T1 adds no general later ordinary-Work admission and makes no
+claim that a Process itself is complete.
 
 ## evidence
 
-- `docs/public-onboarding-t1/PLAN.md` maps W18–W25 and A03 to current files/seams,
-  inventories all found mutable carriers outside SQLite, records three exact reuse
-  matches, compares three different topologies, and records the remaining sequential
-  task boundaries without changing W01–W17/K01–K11.
-- `tools.probe_public_onboarding_t1` built and installed the current wheel in an
-  isolated environment and used public product APIs. The passing retained run is
-  `_scratch/public-onboarding-t1-02`; its wheel SHA-256 is
-  `34b8a3889ceb741fbc5f7576558751c7b85a1f678aad41731b3c61a2b76bb7f5` and its
-  installed connection is `zara=zaratustra.cli:main`.
-- The migration copy moved schema 2 to 7 while the source stayed at 2. Workspace
-  identity, revision 1, the exact record graph, current Work id, and `draft` status
-  remained unchanged.
-- The recovery scenario reached Core revision 7 with an entry catalog, first-use
-  plan, two immutable artifact versions, intake journal/lock, creation journal/lock,
-  saved external request, projection, and exact publication/acceptance receipts.
-  Removing `inbox/first-use/plan.json` returned `progress_unavailable`, falsifying
-  DB-only recovery. Restoring the complete quiescent pair recovered the exact file
-  manifest, workspace identity, catalog target, revision, receipts, and
-  `selected_work_ready` continuation without another effect.
-- Focused native check passed formatting, lint, strict types, 17/17 import contracts,
-  the runtime behavior test, and build. The full
-  `uv run --locked python -m tools.check` passed formatting/lint/types, 17/17 import
-  contracts, 372 tests in 141.15 seconds, and wheel/sdist build.
-- The required bounded read-only evaluator confirmed branch/base/origin/config facts
-  but its sandbox could not execute the worktree venv. The executor resolved that
-  setup-only limitation with an authorized locked invocation: product 0.15.1 imported
-  from this checkout. `uv sync --locked` also passed after authorized access to the
-  managed uv cache.
+- `docs/public-onboarding-r2-t1/PLAN.md` records the decisions for W28-W32 and
+  A05-A09, the exact authority/failure boundary, the schema/history compatibility
+  rule, and the T2-T7 cuts.
+- Migration 8 rebuilds only `work_results` to allow a null continuation, copies every
+  released row/body without rewriting it, and adds transactional Process-material
+  content storage. Tests compare pre/post-migration Result rows, event rows, receipt
+  rows and the parsed released history, then read the saved Result after restart.
+- Terminal-result tests prove one completion/event/receipt/revision, no inserted
+  Work or Artifact, the source Work durably done, `current_work is None`, exact
+  receipt recovery, and restart-safe Process state.
+- Process-material tests prove post-terminal save and exact content/read receipt;
+  Process rather than Work ownership; fresh revision and exact local authorization;
+  refreshed identical replay; changed-intent, identity, wrong-Process, stale,
+  missing-authorization and changed-content refusal; and transaction rollback with
+  no record/event/receipt residue.
+- Construction/runner tests prove a valid exhausted finite Pack returns `None` and
+  emits request 6 terminal submission, while malformed, changed-history and binding
+  refusals remain errors and released continuation proposals remain request 4.
+- Focused verification passed: 30 terminal/material/construction tests. Strict typing
+  passed for all 108 source/tool/test files. The required bounded read-only evaluator
+  smoke found no setup blocker; it is setup evidence only and not binding Direction
+  G5.
+- Full `uv run --locked python -m tools.check` passed formatting, lint, strict types,
+  all 17 import contracts, 377 tests in 141.07 seconds, and built both
+  `zaratustra-0.16.0` wheel and source distribution.
 - Final `uv run --locked python -m tools.check --deliver`: PASS, including report
-  structure, the same native surfaces, 372 tests, and both build artifacts.
-
-W18 remains T4 public pin/install/README evidence. W19 remains T2 read-only
-readiness/resume. W20 remains T4 thin Codex/Claude assets. W21 remains T3
-prose/capability/draft composition. W22 remains T2/T3 shared stage/receipt
-reconciliation. W23 remains T2 initialized-empty admission. W24 is now bounded for
-T5 by the selected topology but has no installed updater yet. W25 remains T6's full
-fictional release matrix. A03 is answered for PLAN by the surviving topology,
-conditional on T5 proving a real two-release transition and cross-process write fence.
+  structure and the same complete native verification surface.
+- Execution receipt: parent Codex task
+  `01a0988b-ede6-7350-9652-a64a65b38863`; executor task
+  `01a09e85-b8a1-7c03-ba0a-87fd18269b78`; worktree
+  `C:/my_global_workflow/7974/zaratustra`; branch
+  `codex/public-onboarding-r2-t1`.
 
 ## assumptions
 
-The snapshot was taken only after public API operations returned and no product
-operation was open. That quiescent single-process boundary is sufficient to test the
-full-root topology, but it is not the required future cross-process exclusion.
-Current catalog-relative paths were restored to the same selected path. A future
-updater must include or explicitly refuse any unfinished-stage external file outside
-the declared recovery root.
+The existing single-Process workspace model remains authoritative for this task.
+Process material is immutable metadata in the canonical mutation event with exact
+bytes in the same schema-8 transaction; the Process record carries the global
+revision. `current_work` means the unique `draft` or `ready` Work in that Process;
+zero is normal and multiple candidates are invalid history.
 
-The current wheel/CLI identity is enough for this early risk probe. It does not stand
-in for the absent Codex/Claude connection assets or prove compatibility with another
-release.
+The caller supplies explicit identities for continuation candidates to the existing
+Pack runner even when an exhausted rule does not use them. Removing those unused
+candidate inputs belongs with T2's separate ordinary-Work admission/API work, not
+this compatibility-focused T1.
 
 ## cuts
 
-No installed updater, combined coordinator/readiness, initialized-empty activation,
-prose intake, Codex/Claude asset, README install rewrite, release/version bump, second
-product version, concurrent-writer protocol, private/personal workspace, real data,
-provider call, automatic research, GitHub transport, Pi/router work, independent user,
-30-day migration, CI/CD, notification, paid service, Direction OS mutation, or T2.
+No general later ordinary-Work creation, common readiness/resume prose, entry/catalog
+reconciliation, onboarding composition, trusted agent asset, installer/updater,
+cross-process recovery fence, fictional public release, owner/private workspace,
+real personal data, provider call, external service, paid right, push, release,
+Direction OS mutation, Direction G5, or T2-T7 implementation.
 
 ## cost
 
-One committed development-only installed-wheel probe, one runtime behavior test, one
-product decision page, and a three-line tools boundary note. No runtime dependency,
-schema, Core/Mutation behavior, product package surface, external service, or expense.
-One installed probe retry corrected an overly broad provenance assertion; the second
-run passed. The full native gate passed on its first run.
+Nineteen implementation/test/plan paths changed in the implementation commit,
+including one additive migration and one new focused test module. No new runtime
+dependency or external service was added and no money was spent. Verification used
+local CPU and filesystem resources only. Format/import/type feedback was corrected
+before the passing full native gate.
 
 ## manual-acceptance
 
-pending. All authorizations and data in the probe are fictional local technical
-fixtures. No owner or independent person has accepted or used this update boundary,
-and no public release has been produced.
+pending. The evaluator and automated tests use fictional local fixtures and do not
+constitute owner acceptance, a binding fresh Direction G5, an independent-user
+onboarding pass, or a public release.
 
 ## next
 
