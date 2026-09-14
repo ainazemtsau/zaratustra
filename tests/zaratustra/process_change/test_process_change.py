@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import hashlib
+import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Literal
 from uuid import UUID, uuid4
@@ -10,6 +12,7 @@ from uuid import UUID, uuid4
 import pytest
 
 import zaratustra.cli as cli_module
+import zaratustra.process_change as change_module
 from tests.fixtures.process_creation import (
     creation_draft,
     creation_research,
@@ -35,10 +38,13 @@ from zaratustra.core import (
     read_artifact,
     read_handoffs,
     read_history,
+    read_projection_status,
     read_records,
     read_workspace,
+    rebuild_projections,
 )
 from zaratustra.process_change import (
+    PreparedChangeContinuation,
     ProcessChangeDecision,
     ProcessChangeError,
     ProcessChangeStatus,
@@ -695,3 +701,98 @@ def test_later_future_change_is_valid_and_later_current_no_future_refuses(
 
 
 MAX_SMALL_BUDGET = 999_999
+
+
+def _planned_change(tmp_path: Path) -> PreparedChangeContinuation:
+    catalog, workspace, designation, definition, work = _activate(tmp_path, "project")
+    _decide(_review(catalog, workspace, designation, _changed(definition, "project")), "approve")
+    _accept_current_result(
+        workspace, work, ProcessSnapshot(definition=definition), project_request_data()
+    )
+    query = process_change_continuation_query(catalog, designation)
+    return prepare_process_change_continuation(catalog, designation, _confirm(workspace, query))
+
+
+def _state_hashes(root: Path) -> dict[str, str]:
+    return {
+        path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in root.rglob("*")
+        if path.is_file()
+    }
+
+
+@pytest.mark.parametrize("projection_state", ["stale_or_changed", "missing"])
+def test_committed_projection_failure_recovery_tracks_current_projection_status(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, projection_state: str
+) -> None:
+    planned = _planned_change(tmp_path)
+    workspace = planned.workspace
+    if projection_state == "missing":
+        (workspace / "projections/overview.md").unlink()
+    before_revision = read_records(workspace).state_revision
+    before_events = len(read_history(workspace).events)
+    original_replace = os.replace
+
+    def fail_overview(source: Path, destination: Path) -> None:
+        if Path(destination) == workspace / "projections/overview.md":
+            raise PermissionError("fictional projection failure")
+        original_replace(source, destination)
+
+    with monkeypatch.context() as fault:
+        fault.setattr(os, "replace", fail_overview)
+        first = execute_process_change_continuation(planned, _confirm(workspace, planned.request))
+    assert first.warnings and all("rebuild_required" in row for row in first.warnings)
+    assert read_projection_status(workspace).status == projection_state
+    saved = _state_hashes(tmp_path)
+    recovered = prepare_process_change_continuation(planned.catalog, planned.designation, None)
+    assert recovered.request == planned.request
+    with pytest.raises(ProcessChangeError, match="permission_denied"):
+        execute_process_change_continuation(recovered, None)
+    wrong = planned.request.model_copy(update=dict(operation_id=uuid4()))
+    with pytest.raises(ProcessChangeError, match="permission_denied"):
+        execute_process_change_continuation(recovered, _confirm(workspace, wrong))
+    authority = _confirm(workspace, recovered.request)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        retries = list(
+            executor.map(
+                lambda _: execute_process_change_continuation(recovered, authority), range(2)
+            )
+        )
+    assert retries == [first, first]
+    assert read_projection_status(workspace).status == projection_state
+    assert _state_hashes(tmp_path) == saved
+    assert read_records(workspace).state_revision == before_revision + 1
+    events = read_history(workspace).events
+    assert len(events) == before_events + 1
+    assert sum(row.request.operation_id == planned.request.operation_id for row in events) == 1
+    rebuild_projections(workspace)
+    repaired = _state_hashes(tmp_path)
+    replay = execute_process_change_continuation(recovered, authority)
+    assert replay == first.model_copy(update=dict(warnings=()))
+    assert read_projection_status(workspace).status == "current"
+    assert _state_hashes(tmp_path) == repaired
+    assert read_history(workspace).events == events
+
+
+@pytest.mark.parametrize("phase", ["submit", "projection_read"])
+@pytest.mark.parametrize(
+    "error", [OSError("fictional file failure"), ValueError("fictional fault")]
+)
+def test_non_projection_rebuild_errors_are_not_masked_as_success(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, phase: str, error: Exception
+) -> None:
+    planned = _planned_change(tmp_path)
+    authority = _confirm(planned.workspace, planned.request)
+    if phase == "projection_read":
+        execute_process_change_continuation(planned, authority)
+    before = _state_hashes(tmp_path)
+
+    def fail(*args: object) -> None:
+        raise error
+
+    monkeypatch.setattr(
+        change_module, "submit_result" if phase == "submit" else "read_projection_status", fail
+    )
+    with pytest.raises(type(error), match=str(error)):
+        execute_process_change_continuation(planned, authority)
+    assert _state_hashes(tmp_path) == before

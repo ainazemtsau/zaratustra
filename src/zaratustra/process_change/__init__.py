@@ -32,6 +32,7 @@ from zaratustra.core import (
     open_work,
     prepare_authorization,
     read_history,
+    read_projection_status,
     read_records,
     submit_result,
 )
@@ -1122,12 +1123,17 @@ def execute_process_change_continuation(
                 receipt = submit_result(prepared.workspace, prepared.request, caller)
             except ProjectionRebuildError as error:
                 receipt = error.receipt
-                warnings.append(f"Result committed; projection rebuild reported: {error}")
             except MutationError as error:
                 raise ProcessChangeError(error.code, str(error).partition(": ")[2]) from error
         status = inspect_process_change(prepared.catalog, prepared.designation)
         if status.stage != "applied" or status.receipt != receipt:
             raise ProcessChangeError("change_incomplete", "Committed Result was not reconciled")
+        projection = read_projection_status(prepared.workspace)
+        if projection.status != "current":
+            warnings.append(
+                "rebuild_required: Result committed; "
+                f"{projection.relative_path} is {projection.status}; rebuild from saved state"
+            )
         return ProcessChangeReceipt(change=status, receipt=receipt, warnings=tuple(warnings))
 
 

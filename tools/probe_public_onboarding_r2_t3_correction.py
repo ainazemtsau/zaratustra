@@ -1,4 +1,4 @@
-"""Retain fresh-process installed CLI evidence for the two R2 T3 corrections."""
+"""Retain fresh-process installed CLI evidence for the R2 T3 corrections."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import json
 import os
 import subprocess
 import sys
+from contextlib import ExitStack
 from importlib.metadata import distribution
 from pathlib import Path
 from typing import Any
@@ -40,6 +41,15 @@ def _cli_child(mode: str, evidence: Path, product_root: Path, arguments: list[st
     )
 
     prompts: list[str] = []
+    projection_faults = 0
+    original_replace = os.replace
+
+    def fail_projection_replace(source: Any, destination: Any) -> None:
+        nonlocal projection_faults
+        if Path(destination).parts[-2:] == ("projections", "overview.md"):
+            projection_faults += 1
+            raise PermissionError("fictional overview replacement failure")
+        original_replace(source, destination)
 
     def confirm(prompt: AuthorizationPrompt) -> LocalAuthorization:
         prompts.append(prompt.request_sha256)
@@ -61,7 +71,10 @@ def _cli_child(mode: str, evidence: Path, product_root: Path, arguments: list[st
     if mode == "missing":
         result = int(entrypoint.load()())
     else:
-        with patch.object(cli, "confirm_on_console", confirm):
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(cli, "confirm_on_console", confirm))
+            if mode == "projection-failure":
+                stack.enter_context(patch.object(os, "replace", fail_projection_replace))
             result = int(entrypoint.load()())
     modules = {
         name: str(module.__file__)
@@ -70,7 +83,15 @@ def _cli_child(mode: str, evidence: Path, product_root: Path, arguments: list[st
         and getattr(module, "__file__", None)
     }
     assert all(Path(path).resolve().is_relative_to(product_root) for path in modules.values())
-    _save(evidence, dict(pid=os.getpid(), prompts=prompts, product_modules=modules))
+    _save(
+        evidence,
+        dict(
+            pid=os.getpid(),
+            prompts=prompts,
+            projection_faults=projection_faults,
+            product_modules=modules,
+        ),
+    )
     return result
 
 
@@ -102,14 +123,15 @@ def _cli(output: Path, name: str, arguments: list[str], mode: str = "exact") -> 
     return dict(
         rc=result.returncode,
         stdout=result.stdout,
+        stdout_sha256=hashlib.sha256(result.stdout.encode("utf-8")).hexdigest(),
         stderr=result.stderr,
         runtime=json.loads(evidence.read_bytes()),
     )
 
 
-def _change(output: Path) -> dict[str, Any]:
+def _change(output: Path, *, projection_failure: bool = False) -> dict[str, Any]:
     from tools.probe_process_t3 import _accept_result, _activate, _changed, _confirm, _review
-    from zaratustra.core import read_history, read_records
+    from zaratustra.core import read_history, read_projection_status, read_records
     from zaratustra.process_change import (
         authorize_process_change,
         decide_process_change,
@@ -134,12 +156,16 @@ def _change(output: Path) -> dict[str, Any]:
     arguments = ["entry", "change", "apply", str(catalog), designation]
     revision_before = read_records(workspace).state_revision
     history_before = len(read_history(workspace).events)
-    first = _cli(output, "apply-first", arguments)
+    first = _cli(
+        output, "apply-first", arguments, "projection-failure" if projection_failure else "exact"
+    )
     assert first["rc"] == 0, first
     after = _hashes(output / "change")
     revision_after = read_records(workspace).state_revision
     history_after = len(read_history(workspace).events)
+    projection_first = read_projection_status(workspace)
     retry = _cli(output, "apply-retry", arguments)
+    projection_retry = read_projection_status(workspace)
     assert _hashes(output / "change") == after
     missing = _cli(output, "apply-missing", arguments, "missing")
     wrong = _cli(output, "apply-wrong", arguments, "wrong")
@@ -154,6 +180,23 @@ def _change(output: Path) -> dict[str, Any]:
     assert _hashes(output / "change") == after
     events = read_history(workspace).events
     _save(output / "change-state-hashes.json", after)
+    repair: dict[str, Any] | None = None
+    if projection_failure:
+        rebuilt = _cli(output, "projection-rebuild", ["projections", "rebuild", str(workspace)])
+        assert rebuilt["rc"] == 0, rebuilt
+        repaired_hashes = _hashes(output / "change")
+        repaired_retry = _cli(output, "apply-after-rebuild", arguments)
+        assert _hashes(output / "change") == repaired_hashes
+        assert read_records(workspace).state_revision == revision_after
+        assert read_history(workspace).events == events
+        repair = dict(
+            rebuild=rebuilt,
+            retry=repaired_retry,
+            projection=read_projection_status(workspace).model_dump(mode="json"),
+            replay_byte_stable=True,
+            only_overview_changed=[key for key in after if after[key] != repaired_hashes[key]],
+        )
+        _save(output / "repaired-state-hashes.json", repaired_hashes)
     return dict(
         first=first,
         retry=retry,
@@ -161,6 +204,10 @@ def _change(output: Path) -> dict[str, Any]:
         wrong=wrong,
         exact_stdout_replay=first["stdout"] == retry["stdout"],
         api_recovers_original_receipt=True,
+        api_warnings=api.warnings,
+        projection_first=projection_first.model_dump(mode="json"),
+        projection_retry=projection_retry.model_dump(mode="json"),
+        repair=repair,
         replay_and_refusals_byte_stable=True,
         revision_delta=revision_after - revision_before,
         history_delta=history_after - history_before,
@@ -255,8 +302,11 @@ def _stages(output: Path) -> list[dict[str, Any]]:
 
 def run(output: Path) -> dict[str, Any]:
     output.mkdir(parents=True)
+    projection_output = output / "projection-failure"
+    projection_output.mkdir()
     summary = dict(
         change=_change(output),
+        projection_change=_change(projection_output, projection_failure=True),
         stages=_stages(output),
         synthetic_confirmation_not_owner_acceptance=True,
     )
@@ -285,7 +335,10 @@ def main() -> None:
         assert Path(zaratustra.__file__).resolve().is_relative_to(output / "installed" / "venv")
         assert not any(Path(item).resolve() in {ROOT, ROOT / "src"} for item in sys.path if item)
         sys.path.append(str(ROOT))
-        run(output / "fresh-cli")
+        observed = run(output / "fresh-cli")
+        assert observed["projection_change"]["exact_stdout_replay"], (
+            "F3: unresolved projection warning/output changed on exact installed retry"
+        )
     else:
         if output.exists():
             parser.error("Choose a NEW directory; retained evidence is never overwritten")
