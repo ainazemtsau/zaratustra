@@ -1,12 +1,14 @@
 # Zaratustra
 
-Version **0.13.0** is a technical foundation preview. It implements durable local
+Version **0.17.0** is a technical foundation preview. It implements durable local
 workspaces, authorized mutations, versioned artifacts, accepted-result handoff,
 bounded Work context, Result/next Work, external process-pack binding, seven
 process read capabilities, a shared overview, explicit entry discovery/basic read,
 and recoverable exact preview/publication/acceptance of new external text material,
 plus a modest installed first-use/manual external-chat path and a bounded immutable
-process-definition adapter. See the [current report](RESULT.md), [T1 process plan](docs/process-t1/PLAN.md),
+process-definition adapter, Process material/terminal Results, truthful Process
+current-or-no-current reads and explicit later ordinary Work admission. See the
+[current report](RESULT.md), [T1 process plan](docs/process-t1/PLAN.md),
 and [first-use plan](docs/entry-t5/PLAN.md).
 
 This version does **not** provide a full interactive method constructor,
@@ -24,6 +26,14 @@ eligible occurrence onto the existing focused Core Work. Recurrence creates a nu
 occurrence instead of a dependency cycle. The two mechanical definitions used to test
 this behavior remain under `tests/fixtures/process_creation` only. Read the [T1
 readout](docs/process-t1/READOUT.md) for its explicit limits.
+
+Public onboarding R2 T2 is also a Python seam, not a planner or onboarding wizard.
+`read_process_state` derives the unique draft/ready Work or normal no-current state
+and explicitly refuses corrupt many-current history. After a terminal Result, a
+trusted host may use `process_packs.work_creation_request` and `create_later_work`
+to revalidate an exact installed Pack and submit one separately authorized ordinary
+Work to Core. Schema 9 records that effect without changing released migrations or
+old events. Read the [bounded T2 plan](docs/public-onboarding-r2-t2/PLAN.md).
 
 The underlying M0 foundation: `zara init` creates a local workspace;
 `zara migrate` explicitly upgrades the schema; `zara records create` stores initial

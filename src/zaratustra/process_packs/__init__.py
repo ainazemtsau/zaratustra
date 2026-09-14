@@ -35,6 +35,7 @@ from .construction import (
 from .lifecycle import PackError, PackRegistration, PackRegistry, PackRule, binding_request
 from .overview import OverviewResponse, OverviewRow, overview_lines, read_overview
 from .runner import propose_result
+from .work_creation import create_later_work, work_creation_request
 
 __all__ = [
     "CapabilityReader",
@@ -77,6 +78,8 @@ __all__ = [
     "PackRule",
     "binding_request",
     "propose_result",
+    "create_later_work",
+    "work_creation_request",
     "OverviewResponse",
     "OverviewRow",
     "overview_lines",

@@ -2,6 +2,10 @@
 T2 owns explicit immutable runtime registrations and exact version resolution.
 Public surface is __init__.py; no dynamic loading, implicit latest or state writer.
 Core owns PackReference, atomic bind_pack, revisions/history and inherited binding.
+Public onboarding R2 T2 adds work_creation_request/create_later_work. The trusted host
+resolves the exact registration while building and immediately before applying an
+explicit request; Core alone commits the Work/Artifact/event/receipt. No Pack proposal
+grants authority, creates automatically or selects a historical Work.
 Open authorized Core context before resolution; a rule sees immutable Work and
 verified own accepted result bytes, never a path or authority. A proposal grants
 no permission; trusted host separately confirms exact Result through Core.

@@ -52,6 +52,11 @@ receipt recovery; see docs/entry-t4/PLAN.md and tools.probe_entry_t4.
 Entry T5 adds the modest installed first-use coordinator and designation-based
 context/manual external-chat request/return path; see docs/entry-t5/PLAN.md and
 tools.probe_entry_t5. It uses generic unbound Core records and existing mutations.
+Public onboarding R2 T1 adds explicit schema8, Process-owned material and terminal
+Result without a continuation. R2 T2 adds explicit schema9, truthful common Process
+current-or-no-current read with explicit ambiguous-many refusal, and a separately
+authorized Pack-compatible ordinary Work creation event; see
+docs/public-onboarding-r2-t2/PLAN.md.
 `src/zaratustra/core` owns workspace logic; `src/zaratustra/cli` delegates to it.
 Installed product code and user-chosen data workspace are separate.
 Read the current CALL before doing product work; a completed Work admits no successor.

@@ -9,7 +9,13 @@ from pathlib import Path
 from typing import Literal
 from uuid import uuid4
 
-from .protocol import ArtifactVersion, MutationEvent, MutationHistory, ProcessMaterialEvent
+from .protocol import (
+    ArtifactVersion,
+    MutationEvent,
+    MutationHistory,
+    ProcessMaterialEvent,
+    WorkCreationEvent,
+)
 from .records import RecordModel, RecordsSnapshot
 from .workspace import _plain_path
 
@@ -28,8 +34,11 @@ def render_overview(
     versions: tuple[ArtifactVersion, ...],
     created_at: datetime,
 ) -> tuple[bytes, datetime]:
-    events: tuple[MutationEvent | ProcessMaterialEvent, ...] = tuple(
-        sorted((*history.events, *history.process_events), key=lambda row: row.state_revision)
+    events: tuple[MutationEvent | ProcessMaterialEvent | WorkCreationEvent, ...] = tuple(
+        sorted(
+            (*history.events, *history.process_events, *history.work_creation_events),
+            key=lambda row: row.state_revision,
+        )
     )
     generated_at = events[-1].recorded_at if events else created_at
     if snapshot.records and not events:

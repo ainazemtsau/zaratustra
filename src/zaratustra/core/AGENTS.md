@@ -62,4 +62,13 @@ Mutation event/receipt authority. Process material requires exact Process-local
 authorization and has no Work. Released request4 remains Result+next; request6 is
 terminal Result or Process material. Current Work is the sole draft/ready Work;
 zero is normal and history never selects a terminal Work. Migrations1–7 stay fixed.
+Schema9 admits one explicit Process-scoped WorkCreationRequest after normal no-current.
+It creates one ordinary ready Work and declared Artifact through apply_mutation,
+advances Process/global revision and records one immutable work_creation event/receipt.
+The exact request binding must equal the saved Process binding; Core never resolves
+installed code. Refreshed exact replay may return the prior receipt. Existing current,
+unbound/mismatched Pack, stale/denied/wrong and reused identities refuse. Common
+read_process_state derives current_work/no_current_work; corrupt many-current history
+raises explicit ambiguous_current_work and is never repaired or auto-selected.
+Migrations1–8 and old record/event/receipt bytes stay fixed.
 END_OF_FILE: src/zaratustra/core/AGENTS.md

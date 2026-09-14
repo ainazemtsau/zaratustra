@@ -51,6 +51,8 @@ from .protocol import (
     ProcessStateQuery,
     ReceiptQuery,
     SavedResult,
+    WorkCreationEvent,
+    WorkCreationRequest,
     authorization_digest,
     event_receipt,
     evolve_artifact,
@@ -60,6 +62,7 @@ from .protocol import (
     material_record,
     next_records,
     process_event_receipt,
+    work_creation_records,
 )
 from .records import (
     Artifact,
@@ -100,6 +103,7 @@ class AuthorizationPrompt(RecordModel):
     request: (
         MutationRequest
         | ProcessMaterialRequest
+        | WorkCreationRequest
         | ReceiptQuery
         | ContextQuery
         | ProcessQuery
@@ -140,6 +144,7 @@ def prepare_authorization(
     request: (
         MutationRequest
         | ProcessMaterialRequest
+        | WorkCreationRequest
         | ReceiptQuery
         | ContextQuery
         | ProcessQuery
@@ -158,7 +163,13 @@ def prepare_authorization(
             raise MutationError("invalid_work", "Request does not name this workspace")
         if isinstance(
             request,
-            (ProcessMaterialRequest, ProcessStateQuery, ProcessMaterialQuery, ProcessReceiptQuery),
+            (
+                ProcessMaterialRequest,
+                WorkCreationRequest,
+                ProcessStateQuery,
+                ProcessMaterialQuery,
+                ProcessReceiptQuery,
+            ),
         ):
             _process(snapshot, request.process_id)
         elif request.work_id not in {r.id for r in snapshot.records if isinstance(r, Work)}:
@@ -207,6 +218,7 @@ def _caller(
     request: (
         MutationRequest
         | ProcessMaterialRequest
+        | WorkCreationRequest
         | ReceiptQuery
         | ContextQuery
         | ProcessQuery
@@ -222,7 +234,13 @@ def _caller(
     confirmation = Confirmation.model_validate(caller.confirmation.model_dump())
     if isinstance(
         request,
-        (ProcessMaterialRequest, ProcessStateQuery, ProcessMaterialQuery, ProcessReceiptQuery),
+        (
+            ProcessMaterialRequest,
+            WorkCreationRequest,
+            ProcessStateQuery,
+            ProcessMaterialQuery,
+            ProcessReceiptQuery,
+        ),
     ):
         target_exists = request.process_id in {
             r.id for r in snapshot.records if isinstance(r, Process)
@@ -244,15 +262,19 @@ def _history(
 ) -> MutationHistory:
     events: list[MutationEvent] = []
     process_events: list[ProcessMaterialEvent] = []
-    ordered_events: list[MutationEvent | ProcessMaterialEvent] = []
+    work_creation_events: list[WorkCreationEvent] = []
+    ordered_events: list[MutationEvent | ProcessMaterialEvent | WorkCreationEvent] = []
     for identity, revision, body in connection.execute(
         "SELECT id, state_revision, body FROM mutation_events ORDER BY state_revision"
     ):
         raw = json.loads(body)
-        event: MutationEvent | ProcessMaterialEvent
+        event: MutationEvent | ProcessMaterialEvent | WorkCreationEvent
         if raw.get("kind") == "process_material":
             event = ProcessMaterialEvent.model_validate(raw)
             process_events.append(event)
+        elif raw.get("kind") == "work_creation":
+            event = WorkCreationEvent.model_validate(raw)
+            work_creation_events.append(event)
         else:
             event = MutationEvent.model_validate(raw)
             events.append(event)
@@ -335,6 +357,22 @@ def _history(
             ):
                 raise WorkspaceError("Broken Process material history")
             reconstructed[event.process_after.id] = event.process_after
+            ordered_process_receipts.append(process_event_receipt(event))
+            continue
+        if isinstance(event, WorkCreationEvent):
+            existing_ids = {record.id for record in prior.records}
+            if (
+                schema < 9
+                or prior.current_work is not None
+                or reconstructed.get(event.process_before.id) != event.process_before
+                or event.work.id in existing_ids
+                or event.artifact.id in existing_ids
+                or retained != process_event_receipt(event)
+            ):
+                raise WorkspaceError("Broken ordinary Work creation history")
+            reconstructed[event.process_after.id] = event.process_after
+            reconstructed[event.work.id] = event.work
+            reconstructed[event.artifact.id] = event.artifact
             ordered_process_receipts.append(process_event_receipt(event))
             continue
         work_request = event.request
@@ -485,6 +523,7 @@ def _history(
         events=tuple(events),
         receipts=tuple(ordered_receipts),
         process_events=tuple(process_events),
+        work_creation_events=tuple(work_creation_events),
         process_receipts=tuple(ordered_process_receipts),
     )
 
@@ -619,6 +658,80 @@ def _mutate_process_material(
     connection.execute(
         "INSERT INTO process_materials VALUES (?, ?, ?, ?)",
         (str(material.id), str(material.process_id), str(request.operation_id), checked),
+    )
+    _history(connection, _read_records(connection, info.workspace_id), artifacts_enabled=True)
+    return receipt
+
+
+def _mutate_work_creation(
+    connection: sqlite3.Connection,
+    info: WorkspaceInfo,
+    request: WorkCreationRequest,
+    caller: LocalAuthorization | None,
+) -> ProcessMutationReceipt:
+    if info.schema_version < 9:
+        raise MutationError("schema", "Ordinary Work creation requires explicit migration to 9")
+    snapshot = _read_records(connection, info.workspace_id)
+    confirmation = _caller(info.workspace, request, caller, snapshot)
+    process_before = _process(snapshot, request.process_id)
+    if request.expected_revision != snapshot.state_revision:
+        raise MutationError("conflict", "Expected revision is not the current state revision")
+    history = _history(connection, snapshot, artifacts_enabled=True)
+    intent = fingerprint(request)
+    for work_receipt in history.receipts:
+        if work_receipt.operation_id == request.operation_id:
+            raise MutationError("collision", "Operation id already belongs to a Work intent")
+    for process_receipt in history.process_receipts:
+        if process_receipt.operation_id == request.operation_id:
+            if process_receipt.fingerprint != intent:
+                raise MutationError("collision", "Operation id already belongs to another intent")
+            return process_receipt
+    if snapshot.current_work is not None:
+        raise MutationError("current_work_exists", "Finish or cancel the current Work first")
+    if process_before.pack_binding is None:
+        raise MutationError("unbound_pack", "Process has no exact saved Pack binding")
+    if request.pack_binding != process_before.pack_binding:
+        raise MutationError("incompatible_pack", "Request does not match the saved Process Pack")
+    identities = {record.id for record in snapshot.records}
+    if request.work.work_id in identities or request.work.artifact_id in identities:
+        raise MutationError("collision", "Work or Artifact identity already exists")
+    now = datetime.now(UTC)
+    work, artifact = work_creation_records(request, now)
+    process_after = process_before.model_copy(update={"revision": snapshot.state_revision + 1})
+    for record in (work, artifact):
+        connection.execute(
+            "INSERT INTO core_records (id, kind, revision, body) VALUES (?, ?, ?, ?)",
+            (str(record.id), record.kind, record.revision, record.model_dump_json()),
+        )
+    connection.execute(
+        "UPDATE core_records SET revision = ?, body = ? WHERE id = ?",
+        (process_after.revision, process_after.model_dump_json(), str(process_after.id)),
+    )
+    connection.execute(
+        "UPDATE core_state SET revision = ? WHERE singleton = 1", (process_after.revision,)
+    )
+    event = WorkCreationEvent(
+        id=uuid4(),
+        state_revision=process_after.revision,
+        recorded_at=now,
+        product_version=version("zaratustra"),
+        request=request,
+        confirmation=confirmation,
+        fingerprint=intent,
+        process_before=process_before,
+        process_after=process_after,
+        work=work,
+        artifact=artifact,
+        affected_projections=("overview.md",),
+    )
+    connection.execute(
+        "INSERT INTO mutation_events VALUES (?, ?, ?)",
+        (str(event.id), event.state_revision, event.model_dump_json()),
+    )
+    receipt = process_event_receipt(event)
+    connection.execute(
+        "INSERT INTO mutation_receipts VALUES (?, ?, ?, ?)",
+        (str(request.operation_id), str(event.id), intent, receipt.model_dump_json()),
     )
     _history(connection, _read_records(connection, info.workspace_id), artifacts_enabled=True)
     return receipt
@@ -841,9 +954,19 @@ def apply_mutation(
 ) -> ProcessMutationReceipt: ...
 
 
+@overload
 def apply_mutation(
     path: Path,
-    request: MutationRequest | ProcessMaterialRequest,
+    request: WorkCreationRequest,
+    caller: LocalAuthorization | None = None,
+    *,
+    content: bytes | None = None,
+) -> ProcessMutationReceipt: ...
+
+
+def apply_mutation(
+    path: Path,
+    request: MutationRequest | ProcessMaterialRequest | WorkCreationRequest,
     caller: LocalAuthorization | None = None,
     *,
     content: bytes | None = None,
@@ -852,12 +975,20 @@ def apply_mutation(
     request = (
         ProcessMaterialRequest.model_validate(request.model_dump())
         if isinstance(request, ProcessMaterialRequest)
-        else MutationRequest.model_validate(request.model_dump())
+        else (
+            WorkCreationRequest.model_validate(request.model_dump())
+            if isinstance(request, WorkCreationRequest)
+            else MutationRequest.model_validate(request.model_dump())
+        )
     )
     receipt: MutationReceipt | ProcessMutationReceipt
     with workspace_connection(path, write=True) as (connection, info):
         if isinstance(request, ProcessMaterialRequest):
             receipt = _mutate_process_material(connection, info, request, caller, content)
+        elif isinstance(request, WorkCreationRequest):
+            if content is not None:
+                raise MutationError("invalid_work", "Ordinary Work creation accepts no bytes")
+            receipt = _mutate_work_creation(connection, info, request, caller)
         else:
             receipt = _mutate(connection, info, request, caller, content)
     # 8. The receipt is durable. No post-commit file error may imply a rollback.
@@ -965,6 +1096,16 @@ def save_process_material(
     return apply_mutation(path, request, caller, content=content)
 
 
+def create_work(
+    path: Path,
+    request: WorkCreationRequest,
+    caller: LocalAuthorization | None = None,
+) -> ProcessMutationReceipt:
+    """Create one explicit ordinary Work through the one Mutation authority."""
+    request = WorkCreationRequest.model_validate(request.model_dump())
+    return apply_mutation(path, request, caller)
+
+
 def read_process_state(
     path: Path, query: ProcessStateQuery, caller: LocalAuthorization | None = None
 ) -> ProcessState:
@@ -1000,6 +1141,7 @@ def read_process_state(
             workspace_id=snapshot.workspace_id,
             state_revision=snapshot.state_revision,
             process=process,
+            resume_state="current_work" if current is not None else "no_current_work",
             current_work=current,
             materials=materials,
             results=results,

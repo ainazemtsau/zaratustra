@@ -19,6 +19,7 @@ from .migration_v5 import V5_NAME, V5_SHA256, migrate_v5
 from .migration_v6 import V6_NAME, V6_SHA256, migrate_v6
 from .migration_v7 import V7_NAME, V7_SHA256, migrate_v7
 from .migration_v8 import V8_NAME, V8_SHA256, migrate_v8
+from .migration_v9 import V9_NAME, V9_SHA256, migrate_v9
 from .migrations import APPLICATION_ID, V1_NAME, V1_SHA256, migrate_v1
 
 WORKSPACE_DIRECTORIES = ("processes", "artifacts", "projections", "inbox")
@@ -36,7 +37,7 @@ class WorkspaceInfo(BaseModel):
     database: Path
     workspace_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 
 def _root(path: Path) -> Path:
@@ -68,7 +69,7 @@ def _database_path(root: Path) -> Path:
 def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> WorkspaceInfo:
     application = connection.execute("PRAGMA application_id").fetchone()[0]
     version = connection.execute("PRAGMA user_version").fetchone()[0]
-    if application != APPLICATION_ID or version not in (1, 2, 3, 4, 5, 6, 7, 8):
+    if application != APPLICATION_ID or version not in (1, 2, 3, 4, 5, 6, 7, 8, 9):
         raise WorkspaceError(f"Unsupported workspace database/schema version: {version}.")
     for name in ("artifacts", "projections"):
         entry = root / name
@@ -140,6 +141,11 @@ def _metadata(connection: sqlite3.Connection, root: Path, database: Path) -> Wor
         connection.execute(
             "SELECT material_id, process_id, operation_id, content FROM process_materials LIMIT 0"
         )
+    if version >= 9:
+        if migrations[8][:3] != (9, V9_NAME, V9_SHA256):
+            raise WorkspaceError("Migration history does not match this installed version.")
+        if datetime.fromisoformat(migrations[8][3]).tzinfo is None:
+            raise WorkspaceError("Migration timestamp must have a timezone.")
     return WorkspaceInfo(
         workspace=root,
         database=database,
@@ -186,10 +192,10 @@ def _read_workspace(root: Path) -> WorkspaceInfo:
 
 
 def migrate_workspace(
-    path: Path, *, target_version: Literal[2, 3, 4, 5, 6, 7, 8] = 4
+    path: Path, *, target_version: Literal[2, 3, 4, 5, 6, 7, 8, 9] = 4
 ) -> WorkspaceInfo:
     """Explicit sequential upgrade; never grant rights, silently downgrade or repair."""
-    if type(target_version) is not int or target_version not in (2, 3, 4, 5, 6, 7, 8):
+    if type(target_version) is not int or target_version not in (2, 3, 4, 5, 6, 7, 8, 9):
         raise WorkspaceError("Unsupported migration target")
     with workspace_connection(path, write=True) as (connection, info):
         if info.schema_version > target_version:
@@ -242,6 +248,14 @@ def migrate_workspace(
                 connection, _read_records(connection, info.workspace_id), artifacts_enabled=True
             )
             migrate_v8(connection, datetime.now(UTC).isoformat())
+        if info.schema_version < 9 and target_version >= 9:
+            from .mutations import _history
+            from .records import _read_records
+
+            _history(
+                connection, _read_records(connection, info.workspace_id), artifacts_enabled=True
+            )
+            migrate_v9(connection, datetime.now(UTC).isoformat())
         return _metadata(connection, info.workspace, info.database)
 
 

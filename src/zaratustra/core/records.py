@@ -26,6 +26,15 @@ from .workspace import WorkspaceError, workspace_connection
 Text = Annotated[str, StringConstraints(strict=True, strip_whitespace=True, min_length=1)]
 
 
+class AmbiguousCurrentWorkError(WorkspaceError):
+    """Authoritative history has several unfinished Works and cannot select one."""
+
+    code = "ambiguous_current_work"
+
+    def __init__(self) -> None:
+        super().__init__("ambiguous_current_work: Process has more than one draft or ready Work")
+
+
 class RecordModel(BaseModel):
     """Immutable boundary values; tuples avoid mutable collections in frozen models."""
 
@@ -234,6 +243,11 @@ def _read_records(connection: sqlite3.Connection, workspace_id: UUID) -> Records
         if (str(record.id), record.kind, record.revision) != (identity, kind, revision):
             raise WorkspaceError("Record metadata does not match its content")
         records.append(record)
+    if (
+        sum(isinstance(record, Work) and record.status in ("draft", "ready") for record in records)
+        > 1
+    ):
+        raise AmbiguousCurrentWorkError
     snapshot = RecordsSnapshot(
         workspace_id=workspace_id, state_revision=state[0][1], records=tuple(records)
     )

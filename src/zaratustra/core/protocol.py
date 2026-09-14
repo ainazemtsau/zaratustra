@@ -256,6 +256,26 @@ class ProcessMaterialRequest(RecordModel):
     material: ProcessMaterialSubmission
 
 
+class WorkCreationRequest(RecordModel):
+    """Explicit Process-scoped intent to create one ordinary Work."""
+
+    version: Literal[1] = 1
+    operation: Literal["create_work"] = "create_work"
+    operation_id: UUID
+    workspace_id: UUID
+    process_id: UUID
+    expected_revision: Revision
+    provenance: Annotated[Text, Field(max_length=4096)]
+    pack_binding: PackReference
+    work: NextWork
+
+    @model_validator(mode="after")
+    def distinct(self) -> Self:
+        if self.work.work_id == self.work.artifact_id:
+            raise ValueError("Work and Artifact ids must be distinct")
+        return self
+
+
 class ReceiptQuery(RecordModel):
     version: Annotated[int, Field(strict=True, ge=1, le=1)] = 1
     workspace_id: UUID
@@ -335,7 +355,9 @@ def canonical(value: RecordModel, *, exclude: set[str] | None = None) -> str:
     )
 
 
-def fingerprint(request: MutationRequest | ProcessMaterialRequest) -> str:
+def fingerprint(
+    request: MutationRequest | ProcessMaterialRequest | WorkCreationRequest,
+) -> str:
     excluded = {"operation_id", "expected_revision"}
     if request.operation == "accept_handoff":
         excluded.add("delivery")
@@ -347,6 +369,7 @@ def authorization_digest(
     request: (
         MutationRequest
         | ProcessMaterialRequest
+        | WorkCreationRequest
         | ReceiptQuery
         | ContextQuery
         | ProcessQuery
@@ -616,7 +639,43 @@ class ProcessMaterialEvent(RecordModel):
         return self
 
 
-def process_event_receipt(event: ProcessMaterialEvent) -> ProcessMutationReceipt:
+class WorkCreationEvent(RecordModel):
+    kind: Literal["work_creation"] = "work_creation"
+    id: UUID
+    state_revision: Revision
+    recorded_at: AwareDatetime
+    product_version: Text
+    request: WorkCreationRequest
+    confirmation: Confirmation
+    fingerprint: Digest
+    process_before: Process
+    process_after: Process
+    work: Work
+    artifact: Artifact
+    affected_projections: tuple[Literal["overview.md"], ...] = ()
+
+    @model_validator(mode="after")
+    def consistent(self) -> Self:
+        expected_process = self.process_before.model_copy(update={"revision": self.state_revision})
+        expected_work, expected_artifact = work_creation_records(self.request, self.recorded_at)
+        if (
+            self.fingerprint != fingerprint(self.request)
+            or self.confirmation.request_sha256
+            != authorization_digest(self.confirmation.workspace_path, self.request)
+            or self.request.process_id != self.process_before.id
+            or self.process_before.pack_binding is None
+            or self.request.pack_binding != self.process_before.pack_binding
+            or self.state_revision != self.request.expected_revision + 1
+            or self.process_after != expected_process
+            or (self.work, self.artifact) != (expected_work, expected_artifact)
+        ):
+            raise ValueError("Work creation event must retain the exact Process transition")
+        return self
+
+
+def process_event_receipt(
+    event: ProcessMaterialEvent | WorkCreationEvent,
+) -> ProcessMutationReceipt:
     return ProcessMutationReceipt(
         operation_id=event.request.operation_id,
         event_id=event.id,
@@ -637,6 +696,7 @@ class MutationHistory(RecordModel):
     events: tuple[MutationEvent, ...]
     receipts: tuple[MutationReceipt, ...]
     process_events: tuple[ProcessMaterialEvent, ...] = ()
+    work_creation_events: tuple[WorkCreationEvent, ...] = ()
     process_receipts: tuple[ProcessMutationReceipt, ...] = ()
 
     @model_serializer(mode="wrap")
@@ -644,6 +704,8 @@ class MutationHistory(RecordModel):
         value: dict[str, Any] = handler(self)
         if not self.process_events:
             value.pop("process_events", None)
+        if not self.work_creation_events:
+            value.pop("work_creation_events", None)
         if not self.process_receipts:
             value.pop("process_receipts", None)
         return value
@@ -699,6 +761,34 @@ def material_record(request: ProcessMaterialRequest, at: AwareDatetime) -> Proce
     )
 
 
+def work_creation_records(request: WorkCreationRequest, at: AwareDatetime) -> tuple[Work, Artifact]:
+    spec = request.work
+    work = Work(
+        id=spec.work_id,
+        revision=request.expected_revision + 1,
+        created_at=at,
+        process_id=request.process_id,
+        goal=spec.goal,
+        expected_result=spec.expected_result,
+        acceptance=spec.acceptance,
+        boundaries=spec.boundaries,
+        budget=spec.budget,
+        executor_requirements=spec.executor_requirements,
+        status="ready",
+        authority_scope=spec.authority_scope,
+        pack_binding=request.pack_binding,
+    )
+    artifact = Artifact(
+        id=spec.artifact_id,
+        revision=1,
+        created_at=at,
+        process_id=request.process_id,
+        work_id=work.id,
+        title=spec.artifact_title,
+    )
+    return work, artifact
+
+
 class SavedResult(RecordModel):
     event: MutationEvent
     receipt: MutationReceipt
@@ -725,6 +815,16 @@ class ProcessState(RecordModel):
     workspace_id: UUID
     state_revision: Revision
     process: Process
+    resume_state: Literal["current_work", "no_current_work"]
     current_work: Work | None
     materials: tuple[ProcessMaterial, ...]
     results: tuple[SavedResult, ...]
+
+    @model_validator(mode="after")
+    def truthful_resume(self) -> Self:
+        expected = "current_work" if self.current_work is not None else "no_current_work"
+        if self.resume_state != expected:
+            raise ValueError("Process resume state must match the authoritative current Work")
+        if self.current_work is not None and self.current_work.process_id != self.process.id:
+            raise ValueError("Current Work is outside the selected Process")
+        return self
