@@ -1,9 +1,12 @@
 # Public onboarding R2 T4 — pinned installation and standard connections
 
-call: c-solmax-zaratustra-public-onboarding-r2-t4-20260914
+call: c-solmax-zaratustra-public-onboarding-r2-t4-correction-20260914
+original-call: c-solmax-zaratustra-public-onboarding-r2-t4-20260914
 mode: PROBA; engineering_contract: 36
 basis: 335e4dadeeabef5552052d0d1982d40e4adcc788
-branch: codex/public-onboarding-r2-t4
+correction-basis: c4a0576c56be5427cffdf1c9a6ec300da5b16995
+original-implementation: 06d95080bd9d51bbe0dffa88036acffad26e5ed6
+branch: codex/public-onboarding-r2-t4-correction
 
 ## Exact HOW
 
@@ -12,8 +15,9 @@ commit named in this step's separate RESULT report. It verifies HEAD, uses locke
 non-editable installation and an absolute executable. The report supplies that
 immutable pin because an implementation cannot embed its own Git commit hash.
 The README at the report tree and the implementation pin must travel together.
-Current origin/main is still T2 daaafe55653c38eaefe36e468858aa68a21429d0 per CALL.
-Public download of the T4 pin is pending external publication authorization.
+Public availability requires dated evidence for that exact pin in the report.
+Durable instructions make no assertion about a moving public branch. This
+correction leg does not publish; HOME must obtain exact-SHA owner authorization.
 No local build, cached source, or offline installation is called a public download.
 
 W19: add common installed `zara entry ready` presentation. It reports the running
@@ -63,9 +67,29 @@ native discovery twice per host in new homes/projects outside checkout. Codex
 receives only initialize/initialized/skills-list; Claude receives only SDK control
 initialize. The probe verifies the exact enabled Codex project skill path and
 Claude project command, retaining versions and complete protocol traces. No model
-turn, provider permission or interactive user acceptance is supplied. Actual agent
-execution of the instructions remains for the separate fresh Direction refutation.
+turn, provider permission or interactive user acceptance is supplied by that probe.
+It does not establish actual agent execution of the instructions.
 The unchanged T3 correction probe retains F1/F2/F3 coverage.
+
+The correction additionally uses the existing configured Codex and Claude Code
+accounts for actual model turns in new disposable fictional connection roots.
+Use the exact installed host binaries, wheel-only product runtime and unchanged
+exported skills. Each host receives an explicit skill invocation, catalog and
+designation, then a second new session receives the same explicit selection
+without the prior conversation or response. Retain prompts, full sanitized
+responses/tool events, session identities, versions, commands, exit status,
+product stdout and before/after data/skill hashes. Do not infer execution from
+discovery or file matching. A successful unfinished-stage continuation and a
+refused authorized Process-state read must remain distinct observations.
+
+The model must never type a confirmation digest, pipe approval, patch the console
+adapter or infer permission from fixture setup. Fictional setup and existing
+synthetic native probes remain explicitly separate from actual skill execution.
+If the host cannot obtain the existing user-controlled console confirmation,
+retain its exact refusal and identical manual command; return the missing
+confirmation as a blocker to successful current/no-current chat evidence.
+Do not replace that evidence with synthetic authorization. Missing authentication,
+new purchase/account/configuration or new authority likewise stops this leg.
 
 Focused and full `uv run --locked python -m tools.check --deliver` run locally.
 One implementation commit, then only root RESULT.md in a separate report commit;

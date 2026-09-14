@@ -1,10 +1,10 @@
 # Zaratustra
 
 T4 adds a common installed entry and thin standard Codex / Claude Code skills.
-**The T4 public pin is not yet published.** The current public main remains T2
-`daaafe55653c38eaefe36e468858aa68a21429d0` per the T4 CALL. The commands below are
-the exact-pin public installation procedure, pending authorized publication of the
-implementation commit named in the [T4 report](RESULT.md). A failed fetch is a
+The commands below install the exact implementation commit named in the
+[T4 report](RESULT.md), once that commit has been published with authorization.
+This README does not attest public availability; consult the dated publication
+evidence for that exact pin in the report. A failed fetch is a
 blocked public install: do not replace the pin with `main`, `latest` or an older SHA.
 Local built-wheel proof is described in the [T4 plan](docs/public-onboarding-r2-t4/PLAN.md).
 
