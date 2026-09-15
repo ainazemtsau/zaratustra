@@ -7,7 +7,7 @@ from collections.abc import Callable
 from contextlib import redirect_stderr, redirect_stdout
 from typing import Literal
 
-from zaratustra.core import AuthorizationPrompt, LocalAuthorization, authorize_local
+from zaratustra.core import AuthorizationPrompt, LocalAuthorization, MutationError, authorize_local
 from zaratustra.intake import (
     MaterialIntakeAuthorization,
     PreparedMaterialIntake,
@@ -61,8 +61,6 @@ class TrustedLocalChatBackend(ConfirmationBackend):
     ) -> Literal["approve", "reject"]:
         decision = self._elicit(title, exact, allow_reject)
         if decision == "decline":
-            from zaratustra.core import MutationError
-
             raise MutationError(
                 "permission_denied", "Trusted local agent permission was not granted"
             )
