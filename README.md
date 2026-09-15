@@ -31,6 +31,7 @@ uv sync --locked --no-dev --no-editable
 if ($LASTEXITCODE -ne 0) { throw 'Locked installation failed' }
 $python = (Resolve-Path .venv/Scripts/python.exe).Path
 $zara = (Resolve-Path .venv/Scripts/zara.exe).Path
+$zaraAgent = (Resolve-Path .venv/Scripts/zara-agent.exe).Path
 Set-Location ..
 & $zara entry ready
 if ($LASTEXITCODE -ne 0) { throw 'Program readiness failed' }
@@ -70,24 +71,25 @@ folder, including a fresh terminal (replace the path below with that actual path
 $python = Read-Host 'Absolute installed Python path printed above'
 & $python -I -m zaratustra entry ready
 & $python -I -m zaratustra entry ready --connection codex --connection-root ./codex-chat
-& $python -I -m zaratustra entry ready --catalog '<chosen path>/catalog.json' --designation '<my name>'
-& $python -I -m zaratustra entry resume '<chosen path>/catalog.json' '<my name>'
+& $python -I -m zaratustra.trusted_chat.agent read '<chosen path>/catalog.json' '<my name>' --actor 'codex-local' --source-ref 'current-owner-message'
 ```
 
 Replace `codex` / `codex-chat` with `claude` / `claude-chat` for Claude Code.
-Exact selected reads require the existing trusted console confirmation. If the
-agent's shell has no interactive terminal, run that identical command yourself in
-a terminal. The agent must not type a digest for you or pipe approval. A refusal
-leaves current Work unknown; `no_current_work` is a successful authorized Core answer.
-Missing/changed connection files return nonzero and the direct fallback stays usable.
+`zara-agent read` is the ordinary trusted local-agent path for one exact catalog and
+designation. It binds an active Process read to the fresh Core query and requires no
+separate approval form; actor and source reference are agent-supplied provenance for
+the current owner request. A refusal leaves current Work unknown; `no_current_work`
+is a successful Core answer. Missing selection returns nonzero without discovery.
 
 For a new Process, give ordinary prose: its title, need, desired outcomes and
-constraints. `entry create prose --help` shows those string arguments; choose the
-catalog location and designation explicitly. The product owns its saved catalog
-and journals; you do not author JSON. Resume gives the next manual action through
+constraints. `zara-agent draft --help` shows those string arguments; choose the catalog
+location and designation explicitly. The product owns its saved catalog and journals;
+you do not author JSON. A fresh `zara-agent read` resumes the same saved prose and next
+manual action through
 draft, research, proposal and activation. Definition authoring remains assisted and
 bounded by the installed supported contract; research is not automatic. Review
-every activation/change preview and confirm each separate requested effect.
+every activation/change preview and give each separate requested effect a genuine
+decision in conversation; those effects remain on the existing confirmed paths.
 No-current is normal; a later Work is an explicit separate choice.
 
 Version **0.17.0** is a technical foundation preview. It implements durable local

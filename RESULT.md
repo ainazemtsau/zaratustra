@@ -1,89 +1,76 @@
-# Public onboarding R2 T4 — trusted local chat adapter ESCALATE
+# Trusted local-agent core entry fix
 
 ## outcome
 
-The installed implementation began at `aff0ec6`, with refusal/material evidence at
-`5380577` and the final general trusted-agent API in this correction. Shipped Codex
-and Claude connections now
-export a local stdio MCP server. Its `run` tool invokes the existing CLI application
-under one temporary in-process `ConfirmationBackend`, so generic Core operations and
-the existing activation, Process-change and material-intake confirmation surfaces
-all use the same trusted-host boundary. `run_trusted` is the transport-neutral
-application API: a trusted local host supplies its live owner-decision callback,
-actor and owner-instruction source reference. MCP elicitation is an optional adapter.
-The console remains the normal fallback.
+The installed product now ships `zara-agent`, a host-independent ordinary local-agent
+entry with two closed commands. `read` resolves one explicit catalog and designation,
+prepares the fresh Core Process-state query, and binds that exact query/revision to the
+current owner-request provenance without requiring an MCP form. `draft` passes ordinary
+title, need, outcome, constraint and clarification prose to the existing creation API.
+The same draft is recovered by `read` in a later process invocation.
 
-Actual accepted headless-host evidence is not established. Fresh Codex and Claude
-headless hosts both discovered and called the installed tool, but their host modes
-returned an elicitation decline without displaying an owner-operable form. Core
-therefore refused each protected read and reported current Work as unknown.
+The entry exposes no activation, Process-change, material-intake or generic mutation
+route. Those effects continue through the existing displayed proposal and genuine owner
+decision paths. Standard connection instructions now route routine reads and prose
+drafts to `zara-agent`, while retaining the existing confirmed path for effects.
 
 ## evidence
 
-Focused trusted_chat/connections/local check: PASS in 13.3 seconds; formatting,
-Ruff, strict mypy, 19 boundaries, 11 tests and package build. The later correction
-check passed in 11.3 seconds with six trusted-chat tests. It covers accepted and
-declined exact reads, activation, material intake, explicit Process-change reject,
-and rejection on a non-decision form. It also proves one authorized `run_trusted`
-read with the exact supplied local-chat source reference and refusal when the live
-callback says the owner instruction does not cover the request. The corrected rejection raises
-`permission_denied`, never `UnboundLocalError`.
+Focused trusted-chat behavioral tests passed: 12 tests. They run the entry through
+fresh `python -I -m zaratustra.trusted_chat.agent` processes and cover exact UTF-8
+Russian draft save, fresh-process recovery, idempotent repeat, an activated fictional
+Process read with stdin disabled, missing-selection refusal before catalog access, and
+absence of activation/change commands. They also cover a directory catalog with no
+side effect, refusal to shadow a cataloged Process by designation or alias, and an
+explicit conflict when an old retained journal already collides with that Process.
+Existing accepted/refused MCP read, activation, material and explicit Process-change
+reject tests remain green in the same file.
 
-Installed/native probe:
-`uv run --locked python -m tools.probe_public_onboarding_r2_t4 --output
-_scratch/t4-trusted-chat-native-20260915-0435 --codex
-C:/Users/Anton/AppData/Local/OpenAI/Codex/bin/bffc5354119c8421/codex.exe
---claude C:/Users/Anton/.local/bin/claude.exe`
-passed in 26.6 seconds. It built and installed the wheel, exercised both command
-contracts, and completed two fresh no-turn discovery passes per native host.
+The final `uv run --locked python -m tools.check --deliver` passed: formatting, Ruff,
+strict mypy, all 19 import contracts, 432 tests and wheel/sdist build. The only warning
+was pytest's inability to write its optional cache under the managed sandbox; tests and
+build completed successfully. The focused trusted-chat native check also passed with
+12 tests and the same format/lint/type/boundary/build gates.
 
-Fresh actual-host evidence is retained under
-`_scratch/t4-trusted-chat-actual-20260915`. Codex 0.154.0-alpha.6.2 session PID
-136724 ran for 90.7844 seconds. It loaded the shipped skill, called
-`zaratustra.run` for the draft readiness/resume and protected readiness/resume.
-The draft calls passed. Both protected calls returned exactly
-`permission_denied: Trusted local agent permission was not granted`; readiness kept
-Workspace unverified and Current Work unknown.
+Independent installed-product probes outside this checkout reproduced the original
+active Process case after the implementation patch: exit 0, stage `current_work`, Core
+revision 7 and the exact selected Work id, without an approval form. They also verified
+exact Russian save/restart/read, byte-stable read and repeat, missing-selection refusal,
+no activation command, no legacy Process shadowing and explicit pre-existing conflict.
+That is independent process evidence, not a fresh-model-chat proof or acceptance of the
+wider T4 outcome.
 
-Claude Code 2.1.261 session `9f41bb84-521f-4a0f-b7ef-0ebf003ea5d2` loaded the
-exported `.mcp.json` explicitly with `--strict-mcp-config --mcp-config <path>`.
-Its init event records `mcp__zaratustra__run` and server status `connected`. Draft
-readiness/resume passed; protected readiness/resume returned the same exact refusal
-and unknown-current truth. The transcript records 49.230 seconds. The earlier
-Claude preflight omitted `--mcp-config` under strict mode and truthfully reported no
-MCP servers; it is not claimed as discovery evidence.
-
-Neither run supplied or synthesized an elicitation response. Both exact shipped
-configs and all fictional data hashes were retained before and after the sessions.
+A reader-only same-thread reviewer pre-pass reproduced the blank-catalog and legacy
+Process-shadowing risks, then rechecked the installed correction: both refuse without
+side effects, the original active selection remains readable, and a pre-existing
+collision reports `selection_conflict`. This is not the binding fresh Direction G5.
 
 ## assumptions
 
-A trusted host's live callback becomes owner authority only when that host actually
-received the owner's instruction or decision. MCP elicitation is one possible source
-for that callback; it is not required. A headless host's automatic decline is a safe
-refusal, not permission. The temporary runtime contains only fictional data.
+This is a trusted single-user local application. Calling the closed `read` entry from a
+host that received the owner's request is sufficient authority for that routine exact
+read. Actor and source reference are provenance supplied by the host from the current
+session/message; they are not proof tokens or extra questions for the owner. Draft prose
+in the explicit command is the content the owner asked the trusted assistant to retain.
 
 ## cuts
 
-No T5/T6 work, push, publication, release, private data, paid service, alternate
-authorization, serialized token, model-as-permission behavior, router or remote MCP
-service was added. Successful first protected read, fresh re-read/continuation and
-actual-host activation/change/material/Result confirmations remain unproven because
-neither shipped headless adapter supplied a live owner-instruction callback.
+No Pi extension, Solmax integration, updater, provider account, token, private data,
+router, custom UI or host-attestation mechanism was added. The generic MCP `run` API and
+its activation/change/material decision behavior were not widened. This bounded result
+does not prove both Codex and Claude user interfaces or close the original wider T4.
 
 ## cost
 
-Two implementation commits and this report update. Existing local tools and existing
-host subscriptions only; no dependency or account change.
+One small installed entry module, one console-script declaration, focused behavioral
+coverage, and updates to the shipped connection instructions and README. Locked existing
+dependencies only; no external account or paid service.
 
 ## manual-acceptance
 
-The transport-neutral product seam is implemented and locally proven. Codex `exec`
-and Claude `--print --permission-prompts host` connect to the stdio tool but
-automatically decline its optional `elicitation/create` request. Those specific
-headless adapters need to call `run_trusted` from a host-owned instruction/decision
-event, or expose another genuine host callback; passing model text, a serialized
-approval flag or a reusable token is not an acceptable substitute.
+The owner authorized completing the existing Python engine first. Product checks and the
+independent installed active-read probe establish code/process behavior. A real fresh
+model chat using the final installed commit remains separate acceptance evidence.
 
 ## next
 

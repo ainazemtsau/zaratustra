@@ -1,19 +1,23 @@
 """The trusted host adapter composes existing authority paths without console input."""
 
 import json
+import subprocess
+import sys
 from io import StringIO
 from pathlib import Path
 
 import pytest
 
 import zaratustra.trusted_chat.__main__ as server
+from tests.zaratustra.entry.test_catalog import bootstrap as bootstrap_catalog
 from tests.zaratustra.intake.test_material import bootstrap
 from tests.zaratustra.intake.test_material import prepared as prepared_material
 from tests.zaratustra.onboarding.test_onboarding import _activate
 from tests.zaratustra.process_creation.test_creation import _research_and_proposal
 from zaratustra.core import MutationError, prepare_authorization
+from zaratustra.entry import add_entry
 from zaratustra.intake import preview_bytes
-from zaratustra.onboarding import prepare_onboarding_read
+from zaratustra.onboarding import prepare_onboarding_read, save_prose_creation_draft
 from zaratustra.trusted_chat import (
     ElicitationDecision,
     TrustedLocalChatBackend,
@@ -151,3 +155,233 @@ def test_mcp_change_form_preserves_explicit_reject(
     ]
     final = responses[-1]["result"]["content"][0]["text"]
     assert final == "decision=reject\n"
+
+
+def test_agent_entry_saves_and_recovers_prose_in_fresh_processes(tmp_path: Path) -> None:
+    catalog = tmp_path / "catalog.json"
+    designation = "Fictional Russian draft"
+    common = [sys.executable, "-I", "-m", "zaratustra.trusted_chat.agent"]
+    saved = subprocess.run(
+        [
+            *common,
+            "draft",
+            str(catalog),
+            designation,
+            "Сохранить точный вымышленный замысел.",
+            "--title",
+            "Вымышленный процесс",
+            "--outcome",
+            "Черновик доступен после перезапуска.",
+            "--constraint",
+            "Только локальные вымышленные данные.",
+            "--created-by",
+            "trusted-local-agent-test",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    assert saved.returncode == 0, saved.stderr
+    assert "Stage: draft" in saved.stdout
+
+    resumed = subprocess.run(
+        [
+            *common,
+            "read",
+            str(catalog),
+            designation,
+            "--actor",
+            "trusted-local-agent-test",
+            "--source-ref",
+            "owner-message:fresh-read",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    assert resumed.returncode == 0, resumed.stderr
+    assert "Сохранить точный вымышленный замысел." in resumed.stdout
+    assert "Черновик доступен после перезапуска." in resumed.stdout
+
+    repeated = subprocess.run(
+        saved.args, check=False, capture_output=True, text=True, encoding="utf-8"
+    )
+    assert repeated.returncode == 0, repeated.stderr
+    assert repeated.stdout == saved.stdout
+
+
+def test_agent_entry_reads_active_selected_core_state_without_form(tmp_path: Path) -> None:
+    catalog, _workspace, _definition, receipt = _activate(tmp_path, "simple")
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-m",
+            "zaratustra.trusted_chat.agent",
+            "read",
+            str(catalog),
+            "Fictional simple prose",
+            "--actor",
+            "trusted-local-agent-test",
+            "--source-ref",
+            "owner-message:active-selection",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        stdin=subprocess.DEVNULL,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "Stage: current_work" in result.stdout
+    assert f"Current Work: {receipt.entry.work_id}" in result.stdout
+
+
+def test_agent_entry_refuses_missing_selection_without_reading_catalog(tmp_path: Path) -> None:
+    missing = tmp_path / "must-not-be-created.json"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-m",
+            "zaratustra.trusted_chat.agent",
+            "read",
+            str(missing),
+            "",
+            "--actor",
+            "trusted-local-agent-test",
+            "--source-ref",
+            "owner-message:missing-selection",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    assert result.returncode == 1
+    assert "Explicit designation is required" in result.stderr
+    assert not missing.exists()
+
+
+def test_agent_entry_has_no_activation_or_change_route(tmp_path: Path) -> None:
+    catalog = tmp_path / "must-not-be-created.json"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-m",
+            "zaratustra.trusted_chat.agent",
+            "activate",
+            str(catalog),
+            "Fictional selection",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    assert result.returncode == 2
+    assert "invalid choice: 'activate'" in result.stderr
+    assert not catalog.exists()
+
+
+def test_agent_entry_refuses_directory_catalog_without_side_effect(tmp_path: Path) -> None:
+    before = tuple(tmp_path.iterdir())
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-m",
+            "zaratustra.trusted_chat.agent",
+            "draft",
+            str(tmp_path),
+            "Fictional draft",
+            "A need",
+            "--title",
+            "A title",
+            "--outcome",
+            "An outcome",
+            "--constraint",
+            "A constraint",
+            "--created-by",
+            "trusted-local-agent-test",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    assert result.returncode == 1
+    assert "catalog must be a file path" in result.stderr
+    assert tuple(tmp_path.iterdir()) == before
+
+
+def test_agent_entry_cannot_shadow_cataloged_process_and_reports_prior_conflict(
+    tmp_path: Path,
+) -> None:
+    workspace = tmp_path / "workspace"
+    work_id = bootstrap_catalog(workspace, "Legacy fictional Process")
+    catalog = tmp_path / "catalog.json"
+    add_entry(catalog, "Legacy fictional Process", workspace, work_id, aliases=("legacy",))
+    before = catalog.read_bytes()
+    refused = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-m",
+            "zaratustra.trusted_chat.agent",
+            "draft",
+            str(catalog),
+            "legacy",
+            "A shadow must not be saved.",
+            "--title",
+            "Shadow",
+            "--outcome",
+            "No shadow",
+            "--constraint",
+            "Keep exact selection",
+            "--created-by",
+            "trusted-local-agent-test",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    assert refused.returncode == 1
+    assert "A cataloged Process already has this designation or alias" in refused.stderr
+    assert catalog.read_bytes() == before
+    assert not catalog.with_name(f"{catalog.name}.process-creations").exists()
+
+    save_prose_creation_draft(
+        catalog,
+        "Legacy fictional Process",
+        process_title="Pre-existing conflicting draft",
+        need="Simulate a journal retained by an older entry path.",
+        desired_outcomes=("Report ambiguity.",),
+        constraints=("Do not choose silently.",),
+        created_by="legacy-supported-api",
+    )
+    ambiguous = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-m",
+            "zaratustra.trusted_chat.agent",
+            "read",
+            str(catalog),
+            "Legacy fictional Process",
+            "--actor",
+            "trusted-local-agent-test",
+            "--source-ref",
+            "owner-message:ambiguous-selection",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    assert ambiguous.returncode == 1
+    assert "selection_conflict" in ambiguous.stderr
