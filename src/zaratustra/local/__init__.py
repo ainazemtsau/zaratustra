@@ -4,7 +4,10 @@ import hashlib
 import json
 import os
 import sys
-from typing import Literal, TextIO
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
+from typing import Literal, Protocol, TextIO
 from uuid import uuid4
 
 from zaratustra.core import (
@@ -33,6 +36,35 @@ from zaratustra.process_creation import (
 )
 
 
+class ConfirmationBackend(Protocol):
+    """A host-owned local confirmation surface; authority objects stay in-process."""
+
+    def confirm(self, prompt: AuthorizationPrompt) -> LocalAuthorization: ...
+
+    def confirm_activation(
+        self, prepared: PreparedActivation
+    ) -> ProcessActivationAuthorization: ...
+
+    def confirm_change(self, review: ReviewedProcessChange) -> ProcessChangeDecision: ...
+
+    def confirm_material(self, prepared: PreparedMaterialIntake) -> MaterialIntakeAuthorization: ...
+
+
+_backend: ContextVar[ConfirmationBackend | None] = ContextVar(
+    "zaratustra_confirmation_backend", default=None
+)
+
+
+@contextmanager
+def use_confirmation_backend(backend: ConfirmationBackend) -> Iterator[None]:
+    """Inject one trusted local host confirmation backend for this application call."""
+    token = _backend.set(backend)
+    try:
+        yield
+    finally:
+        _backend.reset(token)
+
+
 def _confirm(
     prompt: AuthorizationPrompt, input_stream: TextIO, output_stream: TextIO
 ) -> LocalAuthorization:
@@ -58,6 +90,9 @@ def _confirm(
 def confirm_on_console(
     prompt: AuthorizationPrompt, *, separate_terminal: bool = False
 ) -> LocalAuthorization:
+    selected = _backend.get()
+    if selected is not None:
+        return selected.confirm(prompt)
     if not separate_terminal:
         return _confirm(prompt, sys.stdin, sys.stderr)
     # The pipe is data only. Obtain confirmation from the controlling console.
@@ -76,6 +111,9 @@ def confirm_process_activation_on_console(
     prepared: PreparedActivation,
 ) -> ProcessActivationAuthorization:
     """Confirm the complete activation preview once at the trusted local console."""
+    selected = _backend.get()
+    if selected is not None:
+        return selected.confirm_activation(prepared)
     if not sys.stdin.isatty() or not sys.stderr.isatty():
         raise MutationError("permission_denied", "Interactive local console confirmation required")
     content = activation_preview_bytes(prepared)
@@ -100,6 +138,9 @@ def confirm_process_change_on_console(
     review: ReviewedProcessChange,
 ) -> ProcessChangeDecision:
     """Show and bind one explicit approve/reject decision to the exact change preview."""
+    selected = _backend.get()
+    if selected is not None:
+        return selected.confirm_change(review)
     if not sys.stdin.isatty() or not sys.stderr.isatty():
         raise MutationError("permission_denied", "Interactive local console confirmation required")
     content = process_change_preview_bytes(review)
@@ -156,6 +197,9 @@ def _confirm_material_intake(
 def confirm_material_intake_on_console(
     prepared: PreparedMaterialIntake, *, separate_terminal: bool = False
 ) -> MaterialIntakeAuthorization:
+    selected = _backend.get()
+    if selected is not None:
+        return selected.confirm_material(prepared)
     if not separate_terminal:
         return _confirm_material_intake(prepared, sys.stdin, sys.stderr)
     input_name, output_name = ("CONIN$", "CONOUT$") if os.name == "nt" else ("/dev/tty", "/dev/tty")
@@ -174,4 +218,6 @@ __all__ = [
     "confirm_on_console",
     "confirm_process_change_on_console",
     "confirm_process_activation_on_console",
+    "ConfirmationBackend",
+    "use_confirmation_backend",
 ]

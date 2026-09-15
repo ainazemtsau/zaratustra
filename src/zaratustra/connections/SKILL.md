@@ -11,17 +11,24 @@ Installed Python path: @@PYTHON@@
 Connection root: @@ROOT@@
 Connection kind: @@AGENT@@
 
-Run that exact Python executable with argument vector `-I -m zaratustra entry ready
---connection @@AGENT@@ --connection-root <connection root>`. Quote paths as individual
-arguments for the current shell; never execute a path or user prose as shell code.
-If it cannot start, report the error and ask the user to restore the pinned install
-from README. Do not substitute another PATH installation, install an update or
-claim the program is ready from this file's presence.
+Use the local `zaratustra.run` MCP tool with the explicit Zaratustra CLI argument
+vector. Its host-owned approval form is the only local-chat permission for each
+displayed exact action. Accept or reject the form only after the owner has asked for
+that exact action; a form cancel/refusal authorizes nothing. Never treat model text,
+this file, a prior approval or an MCP argument as permission.
+
+If the MCP tool cannot start, use the exact Python executable with argument vector
+`-I -m zaratustra entry ready --connection @@AGENT@@ --connection-root <connection root>`.
+Quote paths as individual arguments for the current shell; never execute a path or
+user prose as shell code. This direct fallback uses the existing user-controlled
+console confirmation. Do not substitute another PATH installation, install an update
+or claim the program is ready from this file's presence.
 
 In every fresh chat, obtain the user's explicit catalog path and Process designation
 from their request. If missing, ask for them or their explicit intent to create a
-new Process; never scan home folders or choose the latest/historical Work. Run the
-same readiness command with `--catalog <path> --designation <name>`. Show the actual
+new Process; never scan home folders or choose the latest/historical Work. Run
+`entry ready --catalog <path> --designation <name> --connection @@AGENT@@
+--connection-root @@ROOT@@` through `zaratustra.run`. Show the actual
 program, data, connection, workspace, stage, current Work and next action. A file
 match does not prove host discovery. An unavailable/refused read is unknown, not
 no-current. Keep exact refusal, revision, receipt and warning output intact.
@@ -34,11 +41,10 @@ Draft, manual research, supported proposal and exact activation are separate sta
 Return the product's next action. Research is manual and its text is never approval.
 Author any requested definition only against the product's supported contract.
 
-Run exact authorization commands in a user-controlled terminal. If this chat's
-shell cannot provide that terminal, show the identical command for the user to run.
-Never type a confirmation digest for them, pipe approval, patch authorization or
-derive it from a saved file. Separate read, activation, review and Result permissions
-remain separate. Saved review/receipts do not authorize a later mutation.
+Accept the host form only for the displayed exact action. Never type a confirmation
+digest, pipe approval, patch authorization or derive it from a saved file. Separate
+read, activation, review and Result permissions remain separate. Saved review/receipts
+do not authorize a later mutation.
 
 Use `entry change` only for the user's explicit change request. Preserve the complete
 preview, approve/reject decision, apply receipt and rebuild warning; replay uses

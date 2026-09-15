@@ -19,7 +19,9 @@ def test_new_export_exact_identity_and_collision(tmp_path: Path, agent: Agent) -
     assert result.state == "files_match"
     assert result.skill is not None
     before = result.skill.read_bytes()
-    assert result.actual_sha256 == result.expected_sha256 == hashlib.sha256(before).hexdigest()
+    assert result.actual_sha256 == result.expected_sha256
+    assert result.actual_sha256 != hashlib.sha256(before).hexdigest()
+    assert result.tool_config is not None and result.tool_config.is_file()
     with pytest.raises(FileExistsError):
         export_connection(agent, root)
     assert result.skill.read_bytes() == before
