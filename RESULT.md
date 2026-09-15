@@ -2,14 +2,18 @@
 
 ## outcome
 
-The installed implementation is at `aff0ec6`, with the focused refusal correction
-and material-backend evidence at `5380577`. Shipped Codex and Claude connections now
+The installed implementation began at `aff0ec6`, with refusal/material evidence at
+`5380577` and the final general trusted-agent API in this correction. Shipped Codex
+and Claude connections now
 export a local stdio MCP server. Its `run` tool invokes the existing CLI application
 under one temporary in-process `ConfirmationBackend`, so generic Core operations and
 the existing activation, Process-change and material-intake confirmation surfaces
-all use the same trusted-host boundary. The console remains the normal fallback.
+all use the same trusted-host boundary. `run_trusted` is the transport-neutral
+application API: a trusted local host supplies its live owner-decision callback,
+actor and owner-instruction source reference. MCP elicitation is an optional adapter.
+The console remains the normal fallback.
 
-Actual accepted host-form evidence is not established. Fresh Codex and Claude
+Actual accepted headless-host evidence is not established. Fresh Codex and Claude
 headless hosts both discovered and called the installed tool, but their host modes
 returned an elicitation decline without displaying an owner-operable form. Core
 therefore refused each protected read and reported current Work as unknown.
@@ -20,7 +24,9 @@ Focused trusted_chat/connections/local check: PASS in 13.3 seconds; formatting,
 Ruff, strict mypy, 19 boundaries, 11 tests and package build. The later correction
 check passed in 11.3 seconds with six trusted-chat tests. It covers accepted and
 declined exact reads, activation, material intake, explicit Process-change reject,
-and rejection on a non-decision form. The corrected rejection raises
+and rejection on a non-decision form. It also proves one authorized `run_trusted`
+read with the exact supplied local-chat source reference and refusal when the live
+callback says the owner instruction does not cover the request. The corrected rejection raises
 `permission_denied`, never `UnboundLocalError`.
 
 Installed/native probe:
@@ -52,9 +58,10 @@ configs and all fictional data hashes were retained before and after the session
 
 ## assumptions
 
-MCP elicitation becomes owner authority only when the host actually presents the
-form and receives the owner's response. A headless host's automatic decline is a
-safe refusal, not permission. The temporary runtime contains only fictional data.
+A trusted host's live callback becomes owner authority only when that host actually
+received the owner's instruction or decision. MCP elicitation is one possible source
+for that callback; it is not required. A headless host's automatic decline is a safe
+refusal, not permission. The temporary runtime contains only fictional data.
 
 ## cuts
 
@@ -62,7 +69,7 @@ No T5/T6 work, push, publication, release, private data, paid service, alternate
 authorization, serialized token, model-as-permission behavior, router or remote MCP
 service was added. Successful first protected read, fresh re-read/continuation and
 actual-host activation/change/material/Result confirmations remain unproven because
-neither headless host exposed the elicitation UI.
+neither shipped headless adapter supplied a live owner-instruction callback.
 
 ## cost
 
@@ -71,11 +78,12 @@ host subscriptions only; no dependency or account change.
 
 ## manual-acceptance
 
-Pending. The exact blocker is host presentation: Codex `exec` and Claude `--print
---permission-prompts host` connect to and call the stdio tool but automatically
-decline its `elicitation/create` request. An interactive desktop/terminal host that
-renders MCP elicitation must collect the owner's actual response before T4 can claim
-successful host authorization.
+The transport-neutral product seam is implemented and locally proven. Codex `exec`
+and Claude `--print --permission-prompts host` connect to the stdio tool but
+automatically decline its optional `elicitation/create` request. Those specific
+headless adapters need to call `run_trusted` from a host-owned instruction/decision
+event, or expose another genuine host callback; passing model text, a serialized
+approval flag or a reusable token is not an acceptable substitute.
 
 ## next
 

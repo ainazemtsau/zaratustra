@@ -28,8 +28,10 @@ from zaratustra.process_creation import (
     authorize_process_activation,
 )
 
-ElicitationDecision = Literal["approve", "reject", "decline"]
-Elicit = Callable[[str, str, bool], ElicitationDecision]
+TrustedDecision = Literal["approve", "reject", "decline"]
+DecisionProvider = Callable[[str, str, bool], TrustedDecision]
+ElicitationDecision = TrustedDecision
+Elicit = DecisionProvider
 
 
 class _CapturedText(io.StringIO):
@@ -47,19 +49,22 @@ class _CapturedText(io.StringIO):
         return str(self.getvalue()) + self._buffer.getvalue().decode("utf-8", errors="replace")
 
 
-class TrustedLocalChatBackend(ConfirmationBackend):
-    """Mint fresh in-process authorization only after a host-owned form acceptance."""
+class TrustedLocalAgentBackend(ConfirmationBackend):
+    """Bind a live trusted-host decision callback to the existing authority objects."""
 
-    def __init__(self, call_id: str, elicit: Elicit) -> None:
-        if not call_id:
-            raise ValueError("Missing trusted tool call identity")
-        self._call_id = call_id
-        self._elicit = elicit
+    def __init__(self, *, actor: str, source_ref: str, decide: DecisionProvider) -> None:
+        if not actor or not source_ref:
+            raise ValueError(
+                "Trusted local agent identity and owner-instruction source are required"
+            )
+        self._actor = actor
+        self._source_ref_value = source_ref
+        self._decide = decide
 
     def _decision(
         self, title: str, exact: str, *, allow_reject: bool = False
     ) -> Literal["approve", "reject"]:
-        decision = self._elicit(title, exact, allow_reject)
+        decision = self._decide(title, exact, allow_reject)
         if decision == "decline":
             raise MutationError(
                 "permission_denied", "Trusted local agent permission was not granted"
@@ -72,7 +77,7 @@ class TrustedLocalChatBackend(ConfirmationBackend):
         return decision
 
     def _source_ref(self, operation: str) -> str:
-        return f"trusted-local-agent-mcp:{self._call_id}:{operation}"
+        return f"{self._source_ref_value}:{operation}"
 
     def confirm(self, prompt: AuthorizationPrompt) -> LocalAuthorization:
         self._decision(
@@ -81,7 +86,7 @@ class TrustedLocalChatBackend(ConfirmationBackend):
         return authorize_local(
             prompt,
             channel="local-chat",
-            actor="trusted-local-agent-mcp",
+            actor=self._actor,
             source_ref=self._source_ref("operation"),
         )
 
@@ -93,7 +98,7 @@ class TrustedLocalChatBackend(ConfirmationBackend):
         return authorize_process_activation(
             prepared,
             channel="local-chat",
-            actor="trusted-local-agent-mcp",
+            actor=self._actor,
             source_ref=self._source_ref("activation"),
         )
 
@@ -107,7 +112,7 @@ class TrustedLocalChatBackend(ConfirmationBackend):
             review,
             decision=decision,
             channel="local-chat",
-            actor="trusted-local-agent-mcp",
+            actor=self._actor,
             source_ref=self._source_ref("change"),
         )
 
@@ -119,13 +124,25 @@ class TrustedLocalChatBackend(ConfirmationBackend):
         return authorize_material_intake(
             prepared,
             channel="local-chat",
-            actor="trusted-local-agent-mcp",
+            actor=self._actor,
             source_ref=self._source_ref("material"),
         )
 
 
-def run(argv: list[str], *, call_id: str, elicit: Elicit) -> tuple[int, str, str]:
-    """Run the installed CLI application once with the supplied trusted local backend."""
+class TrustedLocalChatBackend(TrustedLocalAgentBackend):
+    """Optional MCP-elicitation transport for the general trusted local-agent backend."""
+
+    def __init__(self, call_id: str, elicit: Elicit) -> None:
+        if not call_id:
+            raise ValueError("Missing trusted tool call identity")
+        super().__init__(
+            actor="trusted-local-agent-mcp",
+            source_ref=f"trusted-local-agent-mcp:{call_id}",
+            decide=elicit,
+        )
+
+
+def _run(argv: list[str], backend: ConfirmationBackend) -> tuple[int, str, str]:
     if not argv or not all(isinstance(value, str) and value for value in argv):
         raise ValueError("Command arguments must be a non-empty list of non-empty strings")
     # Local import keeps CLI's ordinary console path independent of this optional host adapter.
@@ -133,10 +150,37 @@ def run(argv: list[str], *, call_id: str, elicit: Elicit) -> tuple[int, str, str
 
     stdout = _CapturedText()
     stderr = _CapturedText()
-    backend = TrustedLocalChatBackend(call_id, elicit)
     with use_confirmation_backend(backend), redirect_stdout(stdout), redirect_stderr(stderr):
         code = main(argv)
     return code, stdout.output(), stderr.output()
 
 
-__all__ = ["Elicit", "ElicitationDecision", "TrustedLocalChatBackend", "run"]
+def run_trusted(
+    argv: list[str],
+    *,
+    actor: str,
+    source_ref: str,
+    decide: DecisionProvider,
+) -> tuple[int, str, str]:
+    """Run once from a trusted local host that actually received the owner's instruction."""
+    return _run(
+        argv,
+        TrustedLocalAgentBackend(actor=actor, source_ref=source_ref, decide=decide),
+    )
+
+
+def run(argv: list[str], *, call_id: str, elicit: Elicit) -> tuple[int, str, str]:
+    """Run through the optional MCP elicitation transport."""
+    return _run(argv, TrustedLocalChatBackend(call_id, elicit))
+
+
+__all__ = [
+    "DecisionProvider",
+    "Elicit",
+    "ElicitationDecision",
+    "TrustedDecision",
+    "TrustedLocalAgentBackend",
+    "TrustedLocalChatBackend",
+    "run",
+    "run_trusted",
+]

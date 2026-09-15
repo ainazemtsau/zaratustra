@@ -14,7 +14,12 @@ from tests.zaratustra.process_creation.test_creation import _research_and_propos
 from zaratustra.core import MutationError, prepare_authorization
 from zaratustra.intake import preview_bytes
 from zaratustra.onboarding import prepare_onboarding_read
-from zaratustra.trusted_chat import ElicitationDecision, TrustedLocalChatBackend, run
+from zaratustra.trusted_chat import (
+    ElicitationDecision,
+    TrustedLocalChatBackend,
+    run,
+    run_trusted,
+)
 
 
 def test_exact_read_is_authorized_only_by_accepted_host_form(tmp_path: Path) -> None:
@@ -25,10 +30,11 @@ def test_exact_read_is_authorized_only_by_accepted_host_form(tmp_path: Path) -> 
         seen.append((title, exact, allow_reject))
         return "approve"
 
-    code, stdout, stderr = run(
+    code, stdout, stderr = run_trusted(
         ["entry", "ready", "--catalog", str(catalog), "--designation", "Fictional simple prose"],
-        call_id="read-1",
-        elicit=accepted,
+        actor="trusted-codex-host",
+        source_ref="owner-chat-message:fictional-read-1",
+        decide=accepted,
     )
     assert code == 0
     assert not stderr
@@ -39,10 +45,11 @@ def test_exact_read_is_authorized_only_by_accepted_host_form(tmp_path: Path) -> 
 
 def test_refused_host_form_does_not_report_process_state(tmp_path: Path) -> None:
     catalog, _, _, _ = _activate(tmp_path, "simple")
-    code, stdout, stderr = run(
+    code, stdout, stderr = run_trusted(
         ["entry", "ready", "--catalog", str(catalog), "--designation", "Fictional simple prose"],
-        call_id="read-2",
-        elicit=lambda _title, _exact, _allow_reject: "decline",
+        actor="trusted-codex-host",
+        source_ref="owner-chat-message:unrelated-request",
+        decide=lambda _title, _exact, _allow_reject: "decline",
     )
     assert code == 1
     assert "Current Work: unknown; read refused" in stdout
