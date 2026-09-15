@@ -1,6 +1,7 @@
 """The trusted host adapter composes existing authority paths without console input."""
 
 import json
+import shutil
 import subprocess
 import sys
 from io import StringIO
@@ -8,22 +9,36 @@ from pathlib import Path
 
 import pytest
 
+import zaratustra.process_creation as creation_module
 import zaratustra.trusted_chat.__main__ as server
 from tests.zaratustra.entry.test_catalog import bootstrap as bootstrap_catalog
 from tests.zaratustra.intake.test_material import bootstrap
 from tests.zaratustra.intake.test_material import prepared as prepared_material
 from tests.zaratustra.onboarding.test_onboarding import _activate
 from tests.zaratustra.process_creation.test_creation import _research_and_proposal
-from zaratustra.core import MutationError, prepare_authorization
+from zaratustra.core import (
+    MutationError,
+    apply_mutation,
+    authorize_local,
+    init_workspace,
+    prepare_authorization,
+    read_workspace,
+)
 from zaratustra.entry import add_entry
 from zaratustra.intake import preview_bytes
 from zaratustra.onboarding import prepare_onboarding_read, save_prose_creation_draft
+from zaratustra.process_creation import (
+    ProcessCreationError,
+    inspect_process_creation,
+    prepare_process_activation,
+)
 from zaratustra.trusted_chat import (
     ElicitationDecision,
     TrustedLocalChatBackend,
     run,
     run_trusted,
 )
+from zaratustra.trusted_chat.agent import preview_process_activation
 
 
 def test_exact_read_is_authorized_only_by_accepted_host_form(tmp_path: Path) -> None:
@@ -385,3 +400,317 @@ def test_agent_entry_cannot_shadow_cataloged_process_and_reports_prior_conflict(
     )
     assert ambiguous.returncode == 1
     assert "selection_conflict" in ambiguous.stderr
+
+
+def _activation_digest(output: str) -> str:
+    prefix = "Assistant freshness SHA-256: "
+    return next(
+        line.removeprefix(prefix) for line in output.splitlines() if line.startswith(prefix)
+    )
+
+
+def test_agent_entry_previews_then_activates_exact_unchanged_intent(
+    tmp_path: Path,
+) -> None:
+    catalog, workspace, _request, _definition = _research_and_proposal(tmp_path, "small")
+    designation = "Fictional small creation"
+    common = [sys.executable, "-I", "-m", "zaratustra.trusted_chat.agent"]
+    before = {path: path.read_bytes() for path in tmp_path.rglob("*") if path.is_file()}
+    preview = subprocess.run(
+        [*common, "activation-preview", str(catalog), designation, str(workspace)],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        stdin=subprocess.DEVNULL,
+    )
+    assert preview.returncode == 0, preview.stderr
+    assert "Proposed Zaratustra Process activation" in preview.stdout
+    assert "This preview is read-only; it created no Process records." in preview.stdout
+    assert not workspace.exists()
+    assert {path: path.read_bytes() for path in tmp_path.rglob("*") if path.is_file()} == before
+    digest = _activation_digest(preview.stdout)
+
+    missing_confirmation = subprocess.run(
+        [
+            *common,
+            "activation-confirm",
+            str(catalog),
+            designation,
+            str(workspace),
+            "--actor",
+            "trusted-local-agent-test",
+            "--source-ref",
+            "owner-message:missing-confirmation-binding",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        stdin=subprocess.DEVNULL,
+    )
+    assert missing_confirmation.returncode == 2
+    assert "--expected-sha256" in missing_confirmation.stderr
+    assert not workspace.exists()
+
+    wrong_confirmation = subprocess.run(
+        [
+            *common,
+            "activation-confirm",
+            str(catalog),
+            designation,
+            str(workspace),
+            "--expected-sha256",
+            "0" * 64,
+            "--actor",
+            "trusted-local-agent-test",
+            "--source-ref",
+            "owner-message:wrong-confirmation-binding",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        stdin=subprocess.DEVNULL,
+    )
+    assert wrong_confirmation.returncode == 1
+    assert "stale_activation" in wrong_confirmation.stderr
+    assert not workspace.exists()
+
+    changed_target = tmp_path / "changed-target"
+    refused = subprocess.run(
+        [
+            *common,
+            "activation-confirm",
+            str(catalog),
+            designation,
+            str(changed_target),
+            "--expected-sha256",
+            digest,
+            "--actor",
+            "trusted-local-agent-test",
+            "--source-ref",
+            "owner-message:create-exact-proposal",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        stdin=subprocess.DEVNULL,
+    )
+    assert refused.returncode == 1
+    assert "stale_activation" in refused.stderr
+    assert not changed_target.exists()
+    assert inspect_process_creation(catalog, designation).activation_target is None
+
+    activated = subprocess.run(
+        [
+            *common,
+            "activation-confirm",
+            str(catalog),
+            designation,
+            str(workspace),
+            "--expected-sha256",
+            digest,
+            "--actor",
+            "trusted-local-agent-test",
+            "--source-ref",
+            "owner-message:create-exact-proposal",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        stdin=subprocess.DEVNULL,
+    )
+    assert activated.returncode == 0, activated.stderr
+    status = inspect_process_creation(catalog, designation)
+    assert status.stage == "activated"
+    assert str(status.process_id) in activated.stdout
+    assert str(status.first_work_id) in activated.stdout
+
+    fresh_read = subprocess.run(
+        [
+            *common,
+            "read",
+            str(catalog),
+            designation,
+            "--actor",
+            "trusted-local-agent-test",
+            "--source-ref",
+            "owner-message:fresh-activation-read",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        stdin=subprocess.DEVNULL,
+    )
+    assert fresh_read.returncode == 0, fresh_read.stderr
+    assert "Stage: current_work" in fresh_read.stdout
+    assert str(status.first_work_id) in fresh_read.stdout
+
+    repeated_preview = subprocess.run(
+        preview.args,
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        stdin=subprocess.DEVNULL,
+    )
+    assert repeated_preview.returncode == 0, repeated_preview.stderr
+    repeated = subprocess.run(
+        [
+            *common,
+            "activation-confirm",
+            str(catalog),
+            designation,
+            str(workspace),
+            "--expected-sha256",
+            _activation_digest(repeated_preview.stdout),
+            "--actor",
+            "trusted-local-agent-test",
+            "--source-ref",
+            "owner-message:recover-existing-activation",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        stdin=subprocess.DEVNULL,
+    )
+    assert repeated.returncode == 0, repeated.stderr
+    repeated_status = inspect_process_creation(catalog, designation)
+    assert repeated_status.process_id == status.process_id
+    assert repeated_status.first_work_id == status.first_work_id
+
+
+def test_agent_activation_preserves_selected_initialized_empty_workspace(
+    tmp_path: Path,
+) -> None:
+    catalog, _default_workspace, _request, _definition = _research_and_proposal(tmp_path, "small")
+    designation = "Fictional small creation"
+    workspace = tmp_path / "selected-empty-workspace"
+    workspace.mkdir()
+    initialized = init_workspace(workspace)
+    before = {path: path.read_bytes() for path in workspace.rglob("*") if path.is_file()}
+    common = [sys.executable, "-I", "-m", "zaratustra.trusted_chat.agent"]
+    preview = subprocess.run(
+        [*common, "activation-preview", str(catalog), designation, str(workspace)],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        stdin=subprocess.DEVNULL,
+    )
+    assert preview.returncode == 0, preview.stderr
+    assert f"Target workspace identity: {initialized.workspace_id}" in preview.stdout
+    assert {path: path.read_bytes() for path in workspace.rglob("*") if path.is_file()} == before
+
+    confirmed = subprocess.run(
+        [
+            *common,
+            "activation-confirm",
+            str(catalog),
+            designation,
+            str(workspace),
+            "--expected-sha256",
+            _activation_digest(preview.stdout),
+            "--actor",
+            "trusted-local-agent-test",
+            "--source-ref",
+            "owner-message:create-in-selected-workspace",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        stdin=subprocess.DEVNULL,
+    )
+    assert confirmed.returncode == 0, confirmed.stderr
+    assert read_workspace(workspace).workspace_id == initialized.workspace_id
+
+
+def test_agent_activation_fresh_preview_resumes_retained_partial_plan(tmp_path: Path) -> None:
+    catalog, workspace, _request, _definition = _research_and_proposal(tmp_path, "small")
+    designation = "Fictional small creation"
+    prepared = prepare_process_activation(catalog, designation, workspace)
+    first = prepared.pending[0]
+    caller = authorize_local(
+        prepare_authorization(workspace, first),
+        channel="local-chat",
+        actor="trusted-local-agent-test",
+        source_ref="owner-message:interrupted-after-first-operation",
+    )
+    apply_mutation(workspace, first, caller)
+    partial = inspect_process_creation(catalog, designation)
+    assert partial.stage == "activation_pending"
+    assert partial.completed_operations == ("authorize_work",)
+
+    common = [sys.executable, "-I", "-m", "zaratustra.trusted_chat.agent"]
+    preview = subprocess.run(
+        [*common, "activation-preview", str(catalog), designation, str(workspace)],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        stdin=subprocess.DEVNULL,
+    )
+    assert preview.returncode == 0, preview.stderr
+    assert "Target state: activated_workspace" in preview.stdout
+    resumed = subprocess.run(
+        [
+            *common,
+            "activation-confirm",
+            str(catalog),
+            designation,
+            str(workspace),
+            "--expected-sha256",
+            _activation_digest(preview.stdout),
+            "--actor",
+            "trusted-local-agent-test",
+            "--source-ref",
+            "owner-message:resume-same-activation",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        stdin=subprocess.DEVNULL,
+    )
+    assert resumed.returncode == 0, resumed.stderr
+    complete = inspect_process_creation(catalog, designation)
+    assert complete.stage == "activated"
+    assert complete.process_id == partial.process_id
+    assert complete.first_work_id == partial.first_work_id
+
+
+def test_agent_preview_refuses_replaced_early_reserved_workspace(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    catalog, workspace, _request, _definition = _research_and_proposal(tmp_path, "small")
+    designation = "Fictional small creation"
+
+    def interrupted_migrate(_workspace: Path, *, target_version: int) -> None:
+        assert target_version == 9
+        raise OSError("synthetic interruption before activation plan")
+
+    with monkeypatch.context() as context:
+        context.setattr(creation_module, "migrate_workspace", interrupted_migrate)
+        with pytest.raises(OSError, match="synthetic interruption"):
+            prepare_process_activation(catalog, designation, workspace)
+    reserved = inspect_process_creation(catalog, designation)
+    assert reserved.activation_target is not None
+    assert reserved.activation_target.workspace_path == workspace.resolve().as_posix()
+    assert reserved.bootstrap_workspace_id == read_workspace(workspace).workspace_id
+    shutil.rmtree(workspace)
+    workspace.mkdir()
+    replacement = init_workspace(workspace)
+    before = {path: path.read_bytes() for path in workspace.rglob("*") if path.is_file()}
+    assert replacement.workspace_id != reserved.bootstrap_workspace_id
+    with pytest.raises(ProcessCreationError, match="workspace identity changed"):
+        preview_process_activation(catalog, designation, workspace)
+    with pytest.raises(ProcessCreationError, match="workspace identity changed"):
+        prepare_process_activation(catalog, designation, workspace)
+    assert {path: path.read_bytes() for path in workspace.rglob("*") if path.is_file()} == before

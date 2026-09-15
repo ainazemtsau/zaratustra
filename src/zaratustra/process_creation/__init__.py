@@ -295,6 +295,7 @@ class CreationStatus(CreationModel):
     activation_target: ActivationTarget | None
     completed_operations: tuple[str, ...] = ()
     pending_operations: tuple[str, ...] = ()
+    bootstrap_workspace_id: UUID | None = None
     workspace_id: UUID | None = None
     process_id: UUID | None = None
     first_work_id: UUID | None = None
@@ -1096,16 +1097,35 @@ def prepare_process_activation(
                     )
             if (selected / ".zara").exists():
                 try:
-                    read_workspace(selected)
+                    info = read_workspace(selected)
+                    if info.schema_version >= 2:
+                        snapshot = read_records(selected)
+                        if (
+                            snapshot.workspace_id != info.workspace_id
+                            or snapshot.state_revision != 0
+                            or snapshot.records
+                        ):
+                            raise ProcessCreationError(
+                                "workspace_collision",
+                                "Selected target already has managed state",
+                            )
                 except (WorkspaceError, OSError) as error:
                     raise ProcessCreationError(
                         "workspace_collision", "Selected target already has managed state"
                     ) from error
-                raise ProcessCreationError(
-                    "workspace_collision", "Selected target is already a Zaratustra workspace"
-                )
             journal = journal.model_copy(update=dict(activation_target=target))
             _save(path, journal)
+        if journal.bootstrap_workspace_id is not None:
+            try:
+                retained = read_workspace(selected)
+            except (WorkspaceError, OSError) as error:
+                raise ProcessCreationError(
+                    "workspace_collision", "Reserved activation workspace is unavailable"
+                ) from error
+            if retained.workspace_id != journal.bootstrap_workspace_id:
+                raise ProcessCreationError(
+                    "workspace_collision", "Reserved activation workspace identity changed"
+                )
         if not selected.exists():
             try:
                 selected.mkdir(parents=True)
@@ -1299,6 +1319,7 @@ def _status(catalog: Path, path: Path, journal: _CreationJournal) -> CreationSta
         activation_target=journal.activation_target,
         completed_operations=completed_ops,
         pending_operations=pending_ops,
+        bootstrap_workspace_id=journal.bootstrap_workspace_id,
         workspace_id=workspace_id,
         process_id=process_id,
         first_work_id=work_id,

@@ -1,76 +1,70 @@
-# Trusted local-agent core entry fix
+# Trusted local-agent Process activation entry
 
 ## outcome
 
-The installed product now ships `zara-agent`, a host-independent ordinary local-agent
-entry with two closed commands. `read` resolves one explicit catalog and designation,
-prepares the fresh Core Process-state query, and binds that exact query/revision to the
-current owner-request provenance without requiring an MCP form. `draft` passes ordinary
-title, need, outcome, constraint and clarification prose to the existing creation API.
-The same draft is recovered by `read` in a later process invocation.
+The installed `zara-agent` entry now has a closed two-step activation path for one
+saved supported proposal. `activation-preview` renders the owner-readable Process
+design, complete Work graph, selected target, aliases and observed workspace identity
+without calling the mutating activation preparation API. It prints a digest retained
+by the trusted assistant. After the owner agrees in ordinary conversation,
+`activation-confirm` recomputes that exact read-only intent and refuses any change
+before reusing the existing prepare, local authorization and execution APIs.
 
-The entry exposes no activation, Process-change, material-intake or generic mutation
-route. Those effects continue through the existing displayed proposal and genuine owner
-decision paths. Standard connection instructions now route routine reads and prose
-drafts to `zara-agent`, while retaining the existing confirmed path for effects.
+An explicitly selected initialized empty workspace is now a valid first-use target.
+Its workspace identity is retained through migration and Process creation. Schema 2+
+targets must have revision zero and no records; occupied, malformed or mismatched
+workspaces still refuse. A fresh preview can resume the exact retained activation plan
+after interruption or return the same completed Process and first Work.
 
 ## evidence
 
-Focused trusted-chat behavioral tests passed: 12 tests. They run the entry through
-fresh `python -I -m zaratustra.trusted_chat.agent` processes and cover exact UTF-8
-Russian draft save, fresh-process recovery, idempotent repeat, an activated fictional
-Process read with stdin disabled, missing-selection refusal before catalog access, and
-absence of activation/change commands. They also cover a directory catalog with no
-side effect, refusal to shadow a cataloged Process by designation or alias, and an
-explicit conflict when an old retained journal already collides with that Process.
-Existing accepted/refused MCP read, activation, material and explicit Process-change
-reject tests remain green in the same file.
+Focused trusted-chat and process-creation behavior passed with 28 tests before the
+final delivery run. The tests invoke the shipped module in fresh `python -I` processes
+with stdin disabled. They verify a byte-stable read-only preview, missing/wrong/changed
+confirmation refusal before bootstrap, successful confirm and fresh selected read,
+stable Process and first Work on replay, preservation of an initialized schema 1
+workspace id, continuation after a retained partial activation, and byte-stable refusal
+after replacement of an early reserved workspace. Existing occupied-target refusal
+remains covered and unchanged.
 
-The final `uv run --locked python -m tools.check --deliver` passed: formatting, Ruff,
-strict mypy, all 19 import contracts, 432 tests and wheel/sdist build. The only warning
-was pytest's inability to write its optional cache under the managed sandbox; tests and
-build completed successfully. The focused trusted-chat native check also passed with
-12 tests and the same format/lint/type/boundary/build gates.
-
-Independent installed-product probes outside this checkout reproduced the original
-active Process case after the implementation patch: exit 0, stage `current_work`, Core
-revision 7 and the exact selected Work id, without an approval form. They also verified
-exact Russian save/restart/read, byte-stable read and repeat, missing-selection refusal,
-no activation command, no legacy Process shadowing and explicit pre-existing conflict.
-That is independent process evidence, not a fresh-model-chat proof or acceptance of the
-wider T4 outcome.
-
-A reader-only same-thread reviewer pre-pass reproduced the blank-catalog and legacy
-Process-shadowing risks, then rechecked the installed correction: both refuse without
-side effects, the original active selection remains readable, and a pre-existing
-collision reports `selection_conflict`. This is not the binding fresh Direction G5.
+The final native `uv run --python C:\Python313\python.exe --locked python -m
+tools.check --deliver` passed with a task-local uv cache and pytest base temp: 150 files
+formatted, Ruff clean, strict mypy clean over 129 files, all 19 import contracts kept,
+436 tests passed, and wheel/source distributions built. A reader-only same-thread
+reviewer identified the old mutating-prepare preview risk, partial-activation recovery
+edge and early reserved-workspace replacement risk before the final patch, then passed
+the bounded recheck. The implementation keeps preview read-only and admits occupied
+state only when `inspect_process_creation` validates the matching retained activation
+plan. This is an in-session pre-pass, not a binding fresh Direction G5.
 
 ## assumptions
 
-This is a trusted single-user local application. Calling the closed `read` entry from a
-host that received the owner's request is sufficient authority for that routine exact
-read. Actor and source reference are provenance supplied by the host from the current
-session/message; they are not proof tokens or extra questions for the owner. Draft prose
-in the explicit command is the content the owner asked the trusted assistant to retain.
+This is a trusted single-user local application. The trusted assistant supplies actor
+and source-reference provenance from the current host and owner message. The digest is
+freshness binding for the exact displayed intent, not identity proof and never an
+owner question. A new preview is required after target state changes, including after
+completion or interruption.
 
 ## cuts
 
-No Pi extension, Solmax integration, updater, provider account, token, private data,
-router, custom UI or host-attestation mechanism was added. The generic MCP `run` API and
-its activation/change/material decision behavior were not widened. This bounded result
-does not prove both Codex and Claude user interfaces or close the original wider T4.
+No automatic research, Process change, material intake, generic authorization command,
+owner-authored JSON, host form, router, custom UI, Pi extension, private Solmax content,
+provider account, updater or arbitrary workspace discovery was added. This bounded
+result does not prove a real fresh model conversation or close the wider kernel/T4
+outcome.
 
 ## cost
 
-One small installed entry module, one console-script declaration, focused behavioral
-coverage, and updates to the shipped connection instructions and README. Locked existing
-dependencies only; no external account or paid service.
+One extension to the existing common-agent entry, a narrow initialized-empty admission
+in the current process-creation API, focused behavioral coverage, and updates to the
+shared connection instructions and README. Existing dependencies and authorities only.
 
 ## manual-acceptance
 
-The owner authorized completing the existing Python engine first. Product checks and the
-independent installed active-read probe establish code/process behavior. A real fresh
-model chat using the final installed commit remains separate acceptance evidence.
+The owner authorized this small common Python-core correction and requires the exact
+Process and location to be shown before one ordinary conversational creation decision.
+Automated and installed-process checks establish mechanics; a real owner chat remains
+separate acceptance evidence.
 
 ## next
 

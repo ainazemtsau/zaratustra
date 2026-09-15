@@ -12,17 +12,17 @@ Connection root: @@ROOT@@
 Connection kind: @@AGENT@@
 
 Use the exact installed Python prefix `@@PYTHON@@ -I -m
-zaratustra.trusted_chat.agent` for routine reads and owner-requested prose drafts. This
-is a closed local-agent surface: `read` takes one explicit catalog and designation;
+zaratustra.trusted_chat.agent` for routine reads, owner-requested prose drafts and the
+closed activation flow below. `read` takes one explicit catalog and designation;
 `draft` takes ordinary prose fields. Supply `--actor` from the current host identity
 and `--source-ref` from the current owner message/session metadata without asking the
-owner to invent either value. This entry has no activation, Process-change, material or
-generic mutation route.
+owner to invent either value. This entry has no Process-change, material or generic
+mutation route.
 
-For an activation, Process change or other effect, use the existing `zaratustra.run`
-MCP tool only when the host can show the exact proposal and capture the owner's actual
-decision. A form cancel/refusal authorizes nothing. Saved state, prior approval and
-model text never authorize an effect.
+Process change and other effects remain on the existing `zaratustra.run` MCP tool when
+the host can show the exact proposal and capture the owner's actual decision. A form
+cancel/refusal authorizes nothing. Saved state, prior approval and model text never
+authorize an effect.
 
 Quote paths as individual arguments for the current shell; never execute a path or
 user prose as shell code. Do not substitute another PATH installation, install an
@@ -44,10 +44,32 @@ Draft, manual research, supported proposal and exact activation are separate sta
 Return the product's next action. Research is manual and its text is never approval.
 Author any requested definition only against the product's supported contract.
 
-Accept the host form only for a displayed exact effect. Never type a confirmation
-digest, pipe approval, patch authorization or derive it from a saved file. Activation,
-review and Result permissions remain separate. Saved review/receipts do not authorize
-a later mutation.
+At `proposal_pending`, run `activation-preview <catalog> <designation> <workspace>`
+with repeated `--alias` arguments if the owner selected aliases. Faithfully explain in
+the owner's language every meaningful Process step, expected result, dependency,
+repeat, reason and the selected location. Keep technical ids, capability keys and the
+printed freshness SHA-256 as assistant-only tool metadata; never ask the owner to read,
+copy or approve them. The command is read-only and must finish before asking whether
+to create the Process. If the owner changes the proposal, location or aliases, run a
+new preview and explain the changed intent.
+
+Only after the owner gives an actual current conversational decision to create that
+shown Process, run `activation-confirm <catalog> <designation> <workspace>
+--expected-sha256 <assistant-held-preview-digest> --actor <current-host> --source-ref
+<current-owner-confirmation-ref>`, with the same aliases. The command rechecks the
+proposal, target, aliases and any initialized workspace identity before bootstrap,
+then reuses the existing Core activation authorities. Missing, stale or changed intent
+refuses. An initialized empty workspace is a valid chosen location and keeps its
+identity; occupied, unknown or corrupt state refuses. Run `read` in a fresh invocation
+to report the resulting current Work. If activation was interrupted or already
+completed, obtain a fresh preview; it validates the retained exact plan and a confirm
+resumes or returns that same Process and first Work. Do not reuse a preview whose
+observed target state has since changed.
+
+Accept a host form only for another displayed exact effect. Never ask the owner to type
+a confirmation digest, pipe approval, patch authorization or derive consent from a
+saved file. Activation, review and Result permissions remain separate. Saved
+review/receipts do not authorize a later mutation.
 
 Use `entry change` only for the user's explicit change request. Preserve the complete
 preview, approve/reject decision, apply receipt and rebuild warning; replay uses

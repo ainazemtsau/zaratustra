@@ -87,9 +87,17 @@ location and designation explicitly. The product owns its saved catalog and jour
 you do not author JSON. A fresh `zara-agent read` resumes the same saved prose and next
 manual action through
 draft, research, proposal and activation. Definition authoring remains assisted and
-bounded by the installed supported contract; research is not automatic. Review
-every activation/change preview and give each separate requested effect a genuine
-decision in conversation; those effects remain on the existing confirmed paths.
+bounded by the installed supported contract; research is not automatic. Review every
+activation/change preview and give each separate requested effect a genuine decision
+in conversation. For a saved supported proposal, `zara-agent activation-preview
+<catalog> <designation> <workspace>` shows the proposed Process and selected location
+without bootstrapping Process records. After the owner says to create that exact
+proposal, the trusted assistant runs `activation-confirm` with the preview's
+assistant-held digest plus current host provenance. The owner never handles that
+digest or a technical payload. Changed intent refuses before bootstrap; an explicitly
+selected initialized empty workspace keeps its identity. An interrupted activation is
+resumed by showing a fresh preview of the same retained plan. Other effects remain on
+the existing confirmed paths.
 No-current is normal; a later Work is an explicit separate choice.
 
 Version **0.17.0** is a technical foundation preview. It implements durable local
