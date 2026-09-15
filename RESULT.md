@@ -1,60 +1,81 @@
-# Public onboarding R2 T4 — trusted local chat adapter REPORT
+# Public onboarding R2 T4 — trusted local chat adapter ESCALATE
 
 ## outcome
 
-Implemented the accepted trusted-local-agent adapter at commit `aff0ec6`. A shipped
-Codex or Claude project now exports its skill plus a local stdio MCP configuration.
-The adapter runs the existing CLI application under a temporary in-process
-`ConfirmationBackend`: every existing generic Core authorization and specialized
-activation, Process-change, and material-intake confirmation uses a fresh host MCP
-elicitation response to construct the existing local authorization object. The normal
-CLI path remains the console confirmation fallback.
+The installed implementation is at `aff0ec6`, with the focused refusal correction
+and material-backend evidence at `5380577`. Shipped Codex and Claude connections now
+export a local stdio MCP server. Its `run` tool invokes the existing CLI application
+under one temporary in-process `ConfirmationBackend`, so generic Core operations and
+the existing activation, Process-change and material-intake confirmation surfaces
+all use the same trusted-host boundary. The console remains the normal fallback.
 
-The adapter neither serializes authorization nor treats model text, MCP arguments,
-files, saved state, or a previous response as permission. A rejected Process-change
-form produces the existing explicit reject decision; cancellation and all other
-declines refuse the operation.
+Actual accepted host-form evidence is not established. Fresh Codex and Claude
+headless hosts both discovered and called the installed tool, but their host modes
+returned an elicitation decline without displaying an owner-operable form. Core
+therefore refused each protected read and reported current Work as unknown.
 
 ## evidence
 
-At `aff0ec6`, `uv run --locked python -m tools.check --deliver` passed: formatting,
-Ruff, strict mypy across 128 source files, all 19 import-boundary contracts, and the
-full pytest suite passed. Focused adapter evidence also passed: 13 tests cover
-connection identity, accepted exact read, declined exact read, activation through the
-same backend, and the MCP reject form.
+Focused trusted_chat/connections/local check: PASS in 13.3 seconds; formatting,
+Ruff, strict mypy, 19 boundaries, 11 tests and package build. The later correction
+check passed in 11.3 seconds with six trusted-chat tests. It covers accepted and
+declined exact reads, activation, material intake, explicit Process-change reject,
+and rejection on a non-decision form. The corrected rejection raises
+`permission_denied`, never `UnboundLocalError`.
 
-An isolated fresh Codex CLI session loaded the exported skill, discovered
-`zaratustra.run`, and made the exact fictional selected-Process tool call. Codex CLI
-returned an elicitation decline, so the product truthfully returned
-`permission_denied`, unverified workspace, and unknown current Work. No authorization
-was bypassed. The host's automatic CLI decline does not establish an accepted desktop
-Codex or Claude form interaction.
+Installed/native probe:
+`uv run --locked python -m tools.probe_public_onboarding_r2_t4 --output
+_scratch/t4-trusted-chat-native-20260915-0435 --codex
+C:/Users/Anton/AppData/Local/OpenAI/Codex/bin/bffc5354119c8421/codex.exe
+--claude C:/Users/Anton/.local/bin/claude.exe`
+passed in 26.6 seconds. It built and installed the wheel, exercised both command
+contracts, and completed two fresh no-turn discovery passes per native host.
+
+Fresh actual-host evidence is retained under
+`_scratch/t4-trusted-chat-actual-20260915`. Codex 0.154.0-alpha.6.2 session PID
+136724 ran for 90.7844 seconds. It loaded the shipped skill, called
+`zaratustra.run` for the draft readiness/resume and protected readiness/resume.
+The draft calls passed. Both protected calls returned exactly
+`permission_denied: Trusted local agent permission was not granted`; readiness kept
+Workspace unverified and Current Work unknown.
+
+Claude Code 2.1.261 session `9f41bb84-521f-4a0f-b7ef-0ebf003ea5d2` loaded the
+exported `.mcp.json` explicitly with `--strict-mcp-config --mcp-config <path>`.
+Its init event records `mcp__zaratustra__run` and server status `connected`. Draft
+readiness/resume passed; protected readiness/resume returned the same exact refusal
+and unknown-current truth. The transcript records 49.230 seconds. The earlier
+Claude preflight omitted `--mcp-config` under strict mode and truthfully reported no
+MCP servers; it is not claimed as discovery evidence.
+
+Neither run supplied or synthesized an elicitation response. Both exact shipped
+configs and all fictional data hashes were retained before and after the sessions.
 
 ## assumptions
 
-The owner-approved local-chat trust boundary applies only when the host actually
-collects the owner's response through MCP elicitation. The retained temporary test
-workspace contains only fictional fixture data. No remote publication, paid service,
-account change, or user workspace access occurred.
+MCP elicitation becomes owner authority only when the host actually presents the
+form and receives the owner's response. A headless host's automatic decline is a
+safe refusal, not permission. The temporary runtime contains only fictional data.
 
 ## cuts
 
-No T5/T6 work, release, publication, alternate permission path, remote router,
-serialized authorization, or product state migration was added. The current actual
-host proof is one correct refusal rather than accepted Codex and Claude desktop-form
-evidence.
+No T5/T6 work, push, publication, release, private data, paid service, alternate
+authorization, serialized token, model-as-permission behavior, router or remote MCP
+service was added. Successful first protected read, fresh re-read/continuation and
+actual-host activation/change/material/Result confirmations remain unproven because
+neither headless host exposed the elicitation UI.
 
 ## cost
 
-One implementation commit and one report update were made. Existing local tooling
-and subscriptions were used; no dependency was added.
+Two implementation commits and this report update. Existing local tools and existing
+host subscriptions only; no dependency or account change.
 
 ## manual-acceptance
 
-Pending. Home needs accepted fresh Codex and Claude host-form interactions against
-the isolated fictional selection before claiming that those hosts deliver the owner
-permission path in practice. The automated Codex CLI proof is retained only as a
-discovery-and-safe-refusal observation.
+Pending. The exact blocker is host presentation: Codex `exec` and Claude `--print
+--permission-prompts host` connect to and call the stdio tool but automatically
+decline its `elicitation/create` request. An interactive desktop/terminal host that
+renders MCP elicitation must collect the owner's actual response before T4 can claim
+successful host authorization.
 
 ## next
 
