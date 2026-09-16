@@ -53,6 +53,14 @@ class InitialRecords(RecordModel):
     artifact_title: Text
 
 
+class InitialProcess(RecordModel):
+    """A standalone activity; its explicit bootstrap never invents a Work."""
+
+    title: Text
+    purpose: Text
+    operation_id: UUID
+
+
 class Record(RecordModel):
     id: UUID
     revision: Annotated[int, Field(strict=True, ge=1)]
@@ -72,11 +80,14 @@ class PackReference(RecordModel):
 class Process(Record):
     kind: Literal["process"] = "process"
     title: Text
+    purpose: Text | None = None
     pack_binding: PackReference | None = None
 
     @model_serializer(mode="wrap")
     def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, object]:
         value: dict[str, object] = handler(self)
+        if self.purpose is None:
+            value.pop("purpose", None)
         if self.pack_binding is None:
             value.pop("pack_binding", None)
         return value
@@ -149,13 +160,39 @@ class ProcessMaterial(Record):
 class Event(Record):
     kind: Literal["event"] = "event"
     process_id: UUID
-    work_id: UUID
-    action: Literal["initial_records_created"] = "initial_records_created"
+    work_id: UUID | None = None
+    action: Literal["initial_records_created", "process_created"] = "initial_records_created"
     actor: Literal["local-invocation"] = "local-invocation"
-    basis: Literal["explicit-workspace-bootstrap"] = "explicit-workspace-bootstrap"
+    basis: Literal["explicit-workspace-bootstrap", "explicit-process-bootstrap"] = (
+        "explicit-workspace-bootstrap"
+    )
     product_version: Text
     state_revision: Annotated[int, Field(strict=True, ge=1)]
-    affected_ids: tuple[UUID, UUID, UUID]
+    affected_ids: tuple[UUID, ...]
+
+    @model_validator(mode="after")
+    def bootstrap_shape(self) -> Self:
+        if self.action == "process_created":
+            if (
+                self.work_id is not None
+                or self.affected_ids != (self.process_id,)
+                or self.basis != "explicit-process-bootstrap"
+            ):
+                raise ValueError("Standalone bootstrap names only its Process")
+        elif (
+            self.work_id is None
+            or len(self.affected_ids) != 3
+            or self.basis != "explicit-workspace-bootstrap"
+        ):
+            raise ValueError("Legacy bootstrap must name Process, Work and Artifact")
+        return self
+
+    @model_serializer(mode="wrap")
+    def serialized(self, handler: SerializerFunctionWrapHandler) -> dict[str, object]:
+        value: dict[str, object] = handler(self)
+        if self.work_id is None:
+            value.pop("work_id", None)
+        return value
 
 
 DomainRecord = Annotated[Process | Work | Artifact | Event, Field(discriminator="kind")]
@@ -191,7 +228,7 @@ class RecordsSnapshot(RecordModel):
         events = [r for r in self.records if isinstance(r, Event)]
         works = {r.id: r for r in self.records if isinstance(r, Work)}
         artifacts = [r for r in self.records if isinstance(r, Artifact)]
-        if len(processes) != 1 or len(events) != 1 or not works or len(artifacts) != len(works):
+        if len(processes) != 1 or len(events) != 1 or len(artifacts) != len(works):
             raise ValueError("Incomplete Process/Work/Artifact graph")
         process, event = processes[0], events[0]
         if len({r.id for r in self.records}) != len(self.records):
@@ -201,14 +238,16 @@ class RecordsSnapshot(RecordModel):
             raise ValueError("Record refers to another Process")
         if {r.work_id for r in artifacts} != set(works):
             raise ValueError("Every Work must have exactly one declared Artifact")
-        initial = works.get(event.work_id)
+        initial = works.get(event.work_id) if event.work_id is not None else None
         artifact = next((r for r in artifacts if r.work_id == event.work_id), None)
-        if (
+        if event.action == "initial_records_created" and (
             initial is None
             or artifact is None
             or event.affected_ids != (process.id, initial.id, artifact.id)
         ):
             raise ValueError("Initial event does not describe initial records")
+        if event.action == "process_created" and process.purpose is None:
+            raise ValueError("Standalone Process requires a purpose")
         if self.state_revision < 1 or event.state_revision != 1:
             raise ValueError("Invalid state/initial event revision")
         if max(r.revision for r in (process, *works.values())) != self.state_revision:
@@ -251,6 +290,10 @@ def _read_records(connection: sqlite3.Connection, workspace_id: UUID) -> Records
     snapshot = RecordsSnapshot(
         workspace_id=workspace_id, state_revision=state[0][1], records=tuple(records)
     )
+    if connection.execute("PRAGMA user_version").fetchone()[0] < 10 and any(
+        isinstance(r, Event) and r.action == "process_created" for r in records
+    ):
+        raise WorkspaceError("Standalone Process requires explicit schema 10")
     if connection.execute("PRAGMA user_version").fetchone()[0] < 7 and any(
         isinstance(r, Process | Work) and r.pack_binding is not None for r in records
     ):
@@ -261,6 +304,60 @@ def _read_records(connection: sqlite3.Connection, workspace_id: UUID) -> Records
     ):
         raise WorkspaceError("Result/continuation records require explicit schema 6")
     return snapshot
+
+
+def create_process(path: Path, initial: InitialProcess) -> RecordsSnapshot:
+    """Create a Process and its bootstrap journal in one transaction.
+
+    A retry of the same operation returns its existing Process, including later
+    material revisions. Existing legacy or different bootstrap content conflicts.
+    """
+    initial = InitialProcess.model_validate(initial.model_dump())
+    with workspace_connection(path, write=True) as (connection, info):
+        if info.schema_version < 10:
+            raise WorkspaceError("Standalone Process requires explicit schema 10")
+        before = _read_records(connection, info.workspace_id)
+        if before.records:
+            from .mutations import _history
+
+            _history(connection, before, artifacts_enabled=True)
+            process = next(r for r in before.records if isinstance(r, Process))
+            event = next(r for r in before.records if isinstance(r, Event))
+            if (
+                event.action == "process_created"
+                and event.id == initial.operation_id
+                and process.title == initial.title
+                and process.purpose == initial.purpose
+            ):
+                return before
+            raise WorkspaceError("Process already exists; bootstrap intent differs")
+        if (
+            connection.execute("SELECT COUNT(*) FROM mutation_events").fetchone()[0]
+            or (connection.execute("SELECT COUNT(*) FROM mutation_receipts").fetchone()[0])
+        ):
+            raise WorkspaceError("Bootstrap cannot replace existing history")
+        now = datetime.now(UTC)
+        process = Process(
+            id=uuid4(), revision=1, created_at=now, title=initial.title, purpose=initial.purpose
+        )
+        event = Event(
+            id=initial.operation_id,
+            revision=1,
+            created_at=now,
+            process_id=process.id,
+            action="process_created",
+            basis="explicit-process-bootstrap",
+            product_version=version("zaratustra"),
+            state_revision=1,
+            affected_ids=(process.id,),
+        )
+        for record in (process, event):
+            connection.execute(
+                "INSERT INTO core_records (id, kind, revision, body) VALUES (?, ?, ?, ?)",
+                (str(record.id), record.kind, record.revision, record.model_dump_json()),
+            )
+        connection.execute("UPDATE core_state SET revision = 1 WHERE singleton = 1")
+        return _read_records(connection, info.workspace_id)
 
 
 def create_initial_records(path: Path, initial: InitialRecords) -> RecordsSnapshot:

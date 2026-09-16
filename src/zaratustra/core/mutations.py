@@ -308,29 +308,32 @@ def _history(
     reconstructed: dict[UUID, Process | Event | Work | Artifact] = {}
     if snapshot.records:
         initial_event = next(r for r in snapshot.records if isinstance(r, Event))
-        initial_work = _work(snapshot, initial_event.work_id)
-        initial_artifact = current_artifact(snapshot, initial_work.id)
-        beginning = events[0].before if events else initial_work
-        if (
-            beginning.id != initial_work.id
-            or beginning.revision != 1
-            or beginning.status != "draft"
-        ):
-            raise WorkspaceError("Mutation history must start from initial draft")
         reconstructed = {r.id: r for r in snapshot.records if isinstance(r, (Process, Event))}
         process = next(r for r in snapshot.records if isinstance(r, Process))
         reconstructed[process.id] = Process.model_validate(
             process.model_dump() | dict(revision=1, pack_binding=None)
         )
-        reconstructed[beginning.id] = beginning
-        reconstructed[initial_artifact.id] = Artifact.model_validate(
-            {
-                **initial_artifact.model_dump(),
-                "revision": 1,
-                "status": "declared",
-                "active_version": None,
-            }
-        )
+        if initial_event.action == "initial_records_created":
+            initial_work = _work(snapshot, initial_event.work_id)
+            initial_artifact = current_artifact(snapshot, initial_work.id)
+            beginning = events[0].before if events else initial_work
+            if (
+                beginning.id != initial_work.id
+                or beginning.revision != 1
+                or beginning.status != "draft"
+            ):
+                raise WorkspaceError("Mutation history must start from initial draft")
+            reconstructed[beginning.id] = beginning
+            reconstructed[initial_artifact.id] = Artifact.model_validate(
+                {
+                    **initial_artifact.model_dump(),
+                    "revision": 1,
+                    "status": "declared",
+                    "active_version": None,
+                }
+            )
+        elif schema < 10:
+            raise WorkspaceError("Standalone Process requires schema 10")
     published: dict[UUID, ArtifactVersion] = {}
     ordered_receipts: list[MutationReceipt] = []
     ordered_process_receipts: list[ProcessMutationReceipt] = []

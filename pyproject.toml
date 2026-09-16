@@ -1,6 +1,6 @@
 [project]
 name = "zaratustra"
-version = "0.17.0"
+version = "0.18.0"
 description = "Zaratustra local workspace and transactional mutation protocol"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -9,6 +9,7 @@ dependencies = ["pydantic>=2,<3"]
 [project.scripts]
 zara = "zaratustra.cli:main"
 zara-agent = "zaratustra.trusted_chat.agent:main"
+zara-home = "zaratustra.commands.__main__:main"
 
 [build-system]
 requires = ["uv_build==0.8.22"]
@@ -60,7 +61,7 @@ layers = ["zaratustra.cli", "zaratustra.local", "zaratustra.core"]
 name = "Core has no surface dependency"
 type = "forbidden"
 source_modules = ["zaratustra.core"]
-forbidden_modules = ["zaratustra.cli", "zaratustra.entry", "zaratustra.intake", "zaratustra.local"]
+forbidden_modules = ["zaratustra.cli", "zaratustra.entry", "zaratustra.intake", "zaratustra.local", "zaratustra.home", "zaratustra.commands"]
 
 [[tool.importlinter.contracts]]
 name = "Entry catalog depends only on Core"
@@ -117,6 +118,18 @@ dev = [
     "pytest==9.1.1",
     "ruff==0.16.6",
 ]
+
+[[tool.importlinter.contracts]]
+name = "Home Registry has no agent or workflow dependency"
+type = "forbidden"
+source_modules = ["zaratustra.home"]
+forbidden_modules = ["zaratustra.commands", "zaratustra.entry", "zaratustra.cli", "zaratustra.trusted_chat", "zaratustra.process_packs"]
+
+[[tool.importlinter.contracts]]
+name = "Common Home commands never depend on a particular agent host"
+type = "forbidden"
+source_modules = ["zaratustra.commands"]
+forbidden_modules = ["zaratustra.cli", "zaratustra.trusted_chat", "zaratustra.process_packs", "zaratustra.process_creation", "zaratustra.process_change"]
 
 [[tool.importlinter.contracts]]
 name = "Core has no external pack dependency"

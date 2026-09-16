@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from importlib import import_module
@@ -141,7 +141,7 @@ def _release_file_lock(stream: BufferedRandom) -> None:
 
 
 @contextmanager
-def _catalog_mutation(path: Path) -> Iterator[None]:
+def _catalog_mutation(path: Path, *, allow_migrated: bool = False) -> Iterator[None]:
     """Serialize cooperating read-modify-write operations at one stable path."""
     selected = _catalog_path(path)
     selected.parent.mkdir(parents=True, exist_ok=True)
@@ -159,6 +159,8 @@ def _catalog_mutation(path: Path) -> Iterator[None]:
             "catalog_lock_unavailable", "Catalog mutation lock is unavailable"
         ) from error
     try:
+        if not allow_migrated:
+            _check_migrated(selected)
         yield
     finally:
         try:
@@ -168,8 +170,48 @@ def _catalog_mutation(path: Path) -> Iterator[None]:
         stream.close()
 
 
+def _check_migrated(path: Path) -> None:
+    marker = path.with_name(path.name + ".home.json")
+    if marker.exists():
+        raise EntryError(
+            "catalog_migrated", "Catalog retired from this entry; use Home or retry catalog.import"
+        )
+
+
+def transfer_catalog(
+    path: Path,
+    home: Path,
+    prepare_import: Callable[[EntryCatalog, str], Callable[[], dict[str, Any]]],
+) -> dict[str, Any]:
+    """Keep old writers excluded until the new registry and retirement marker exist."""
+    import hashlib
+    import json
+
+    selected = _catalog_path(path)
+    marker = selected.with_name(selected.name + ".home.json")
+    target = home.resolve().as_posix()
+    with _catalog_mutation(selected, allow_migrated=True):
+        if marker.exists() and json.loads(marker.read_text(encoding="utf-8"))["home"] != target:
+            raise EntryError("catalog_migrated", "Catalog already belongs to a different Home")
+        raw = selected.read_bytes()
+        catalog = EntryCatalog.model_validate_json(raw)
+        apply_import = prepare_import(catalog, hashlib.sha256(raw).hexdigest())
+        if not marker.exists():
+            temporary = marker.with_name(f".{marker.name}.{uuid4().hex}.tmp")
+            with temporary.open("x", encoding="utf-8", newline="") as stream:
+                stream.write(json.dumps({"home": target}, ensure_ascii=False) + chr(10))
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, marker)
+        # Retirement precedes import: an interrupted transfer can be retried into
+        # the same Home, while an old writer cannot create competing new entries.
+        result = apply_import()
+        return result
+
+
 def _load(path: Path, *, missing_ok: bool = False) -> EntryCatalog:
     selected = _catalog_path(path)
+    _check_migrated(selected)
     if not selected.exists() and missing_ok:
         return EntryCatalog()
     try:

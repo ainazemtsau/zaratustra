@@ -40,7 +40,7 @@ Artifact repair under retained artifact rights and revocation remain administrat
 writes. read_result needs current source metadata rights and returns historical
 metadata, never current-byte availability. New Work opening revalidates full bytes.
 Released migrations1–5 stay fixed; new explicit6 never changes default migrate4.
-Initial Event stays fixed.
+Released initial Event serialization stays fixed.
 Read/init never migrate or repair existing state. Keep migration bytes stable after release.
 Schema7 explicitly admits optional exact PackReference in Process/Work. bind_pack
 request5 is an atomic one-time binding through apply_mutation with Process images
@@ -71,4 +71,10 @@ unbound/mismatched Pack, stale/denied/wrong and reused identities refuse. Common
 read_process_state derives current_work/no_current_work; corrupt many-current history
 raises explicit ambiguous_current_work and is never repaired or auto-selected.
 Migrations1–8 and old record/event/receipt bytes stay fixed.
+Schema10 admits InitialProcess and create_process: one Process and process_created
+bootstrap Event, no Work/Artifact/Result/Pack. Purpose is required for this path;
+absent purpose/work_id remain absent in old serialized records. History rebuilds
+the bootstrap by its discriminator and then uses the existing mutation authority.
+Bootstrap operation_id is retained as Event id; exact repeats return current history,
+different intent refuses. Default legacy migration target remains4.
 END_OF_FILE: src/zaratustra/core/AGENTS.md

@@ -11,3 +11,4 @@ dist/
 .env.*
 STOP
 STEER.md
+.tmp/

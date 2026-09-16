@@ -9,6 +9,12 @@
 - A focused run is feedback, not full-delivery evidence. Do not claim green from individual tools.
 
 ## What exists
+Stage 1 (0.18) adds SQLite Home and standalone Process bootstrap at schema10.
+The owner's September 16 Stage 1 scope supersedes Work-first creation for the new
+Home path: title/purpose, zero historical Works, groups, typed relations, materials,
+fresh Pi conversations and the same installed command semantics for Codex.
+See docs/stage1/IMPLEMENTATION.md. Legacy Work-based entry remains compatible;
+it is not mandatory for new standalone Processes. Later stages remain excluded.
 Python 3.13 / uv / sqlite3 / Pydantic v2 / pytest / ruff / SHA-256.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,

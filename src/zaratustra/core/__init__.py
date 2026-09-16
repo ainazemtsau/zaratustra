@@ -76,6 +76,7 @@ from .records import (
     AmbiguousCurrentWorkError,
     Artifact,
     Event,
+    InitialProcess,
     InitialRecords,
     PackReference,
     Process,
@@ -83,6 +84,7 @@ from .records import (
     RecordsSnapshot,
     Work,
     create_initial_records,
+    create_process,
 )
 from .workspace import (
     WorkspaceError,
@@ -167,6 +169,8 @@ __all__ = [
     "AmbiguousCurrentWorkError",
     "Event",
     "InitialRecords",
+    "InitialProcess",
+    "create_process",
     "PackReference",
     "Process",
     "RecordsSnapshot",

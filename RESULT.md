@@ -1,73 +1,72 @@
-# Trusted local-agent Process activation entry
+# Stage 1 — Home and standalone Processes
 
 ## outcome
 
-The installed `zara-agent` entry now has a closed two-step activation path for one
-saved supported proposal. `activation-preview` renders the owner-readable Process
-design, complete Work graph, selected target, aliases and observed workspace identity
-without calling the mutating activation preparation API. It prints a digest retained
-by the trusted assistant. After the owner agrees in ordinary conversation,
-`activation-confirm` recomputes that exact read-only intent and refuses any change
-before reusing the existing prepare, local authorization and execution APIs.
-
-An explicitly selected initialized empty workspace is now a valid first-use target.
-Its workspace identity is retained through migration and Process creation. Schema 2+
-targets must have revision zero and no records; occupied, malformed or mismatched
-workspaces still refuse. A fresh preview can resume the exact retained activation plan
-after interruption or return the same completed Process and first Work.
+Version0.18 adds SQLite Home Registry and the shared installed Pi/Codex command
+path. It creates a Process with title/purpose and zero historical Works; supports
+aliases, groups, typed relationships, materials, relocation, unavailability and
+legacy catalog import. Owner authorized Stage1 on September16. This does not close
+the older Direction installation task.
 
 ## evidence
 
-Focused trusted-chat and process-creation behavior passed with 28 tests before the
-final delivery run. The tests invoke the shipped module in fresh `python -I` processes
-with stdin disabled. They verify a byte-stable read-only preview, missing/wrong/changed
-confirmation refusal before bootstrap, successful confirm and fresh selected read,
-stable Process and first Work on replay, preservation of an initialized schema 1
-workspace id, continuation after a retained partial activation, and byte-stable refusal
-after replacement of an early reserved workspace. Existing occupied-target refusal
-remains covered and unchanged.
+Final `uv run --locked python -m tools.check --deliver` passed:448 tests,
+159 formatted files, Ruff clean, strict mypy136 files, 21 import contracts kept,
+wheel/source builds and report structure. The final rerun followed two concrete
+review fixes, not an unchanged repeated test run.
 
-The final native `uv run --python C:\Python313\python.exe --locked python -m
-tools.check --deliver` passed with a task-local uv cache and pytest base temp: 150 files
-formatted, Ruff clean, strict mypy clean over 129 files, all 19 import contracts kept,
-436 tests passed, and wheel/source distributions built. A reader-only same-thread
-reviewer identified the old mutating-prepare preview risk, partial-activation recovery
-edge and early reserved-workspace replacement risk before the final patch, then passed
-the bounded recheck. The implementation keeps preview read-only and admits occupied
-state only when `inspect_process_creation` validates the matching retained activation
-plan. This is an in-session pre-pass, not a binding fresh Direction G5.
+Wheel0.18.0 was installed into a separate runtime outside the source checkout.
+Actual Pi0.85.1 conversations with openai-codex/gpt-5.6-sol verified:
+
+- Creation: two fictional Processes, two groups, three memberships, one relation
+  and one material, followed by readback (12 successful tool calls).
+- Fresh Home chat, without resume/history: both group members and exact material
+  bytes returned. One malformed group.membership read attempt lacked a Process
+  and was refused without mutation; the model corrected to process.list. Five
+  successful reads followed/preceded that one explicit refusal.
+- Fresh direct Process-folder chat: configured Process and saved material returned
+  without a Process name in the user request (three successful calls).
+- Installed Python verification: zero historical Works in both Processes; missing
+  folder displayed unavailable, relocation retained identity, material exact.
+- Codex invoked the same installed command adapter and read the same two available
+  Processes. New Codex skill export exists; separate fresh Codex skill-discovery UI
+  is not claimed. Existing Codex entry regressions passed in the full suite.
+
+Read-only in-session reviewer found changed-location create replay and changed-
+catalog import replay side effects. Both now reserve exact intent before effects;
+regression tests and bounded re-review passed. This is not fresh Direction G5.
+See [sanitized verification record](docs/stage1/VERIFICATION.md).
 
 ## assumptions
 
-This is a trusted single-user local application. The trusted assistant supplies actor
-and source-reference provenance from the current host and owner message. The digest is
-freshness binding for the exact displayed intent, not identity proof and never an
-owner question. A new preview is required after target state changes, including after
-completion or interruption.
+One trusted local OS owner (existing W21), Python3.13 and supported Pi extension
+interface. Data lives outside program files. The model follows current owner intent;
+this is not a hostile-agent sandbox.
 
 ## cuts
 
-No automatic research, Process change, material intake, generic authorization command,
-owner-authored JSON, host form, router, custom UI, Pi extension, private Solmax content,
-provider account, updater or arbitrary workspace discovery was added. This bounded
-result does not prove a real fresh model conversation or close the wider kernel/T4
-outcome.
+Later stages, semantic memory, full development workflow, extension ecosystem,
+coordinator and graphical surfaces remain excluded. No old Workflow machinery is
+required inside a new Process. No personal content was authored.
 
 ## cost
 
-One extension to the existing common-agent entry, a narrow initialized-empty admission
-in the current process-creation API, focused behavioral coverage, and updates to the
-shared connection instructions and README. Existing dependencies and authorities only.
+One implementation branch and one read-only in-session code reviewer. Existing
+dependencies reused; no new service, paid plan or reset purchased. Real Pi checks
+use the configured account with fictional content.
 
 ## manual-acceptance
 
-The owner authorized this small common Python-core correction and requires the exact
-Process and location to be shown before one ordinary conversational creation decision.
-Automated and installed-process checks establish mechanics; a real owner chat remains
-separate acceptance evidence.
+Scope was approved; final behavior is not yet owner-accepted. Developer-run Pi
+conversation is actual host evidence, not independent user proof or a binding
+fresh Direction review. No next stage starts automatically.
 
 ## next
 
 solmax
+
+Show the installed Stage1 result, checks and limits, then stop.
+Candidate is committed locally; this report makes no public push/merge claim.
+Personal Home location remains the owner's choice; all demonstrations are fictional.
 
 END_OF_FILE: RESULT.md

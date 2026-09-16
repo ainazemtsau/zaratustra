@@ -1,8 +1,74 @@
 # Zaratustra
 
+## Home and standalone Processes (0.18)
+
+With the installed Pi connection you can ask:
+
+- "Create Study Notes for collecting reading material. No tasks."
+- "Put Study Notes and Experiments in Learning, and Study Notes also in Personal."
+- "Connect them with a related_to relationship. Save this document in Study Notes."
+- In a **new chat**: "Show Learning, open Study Notes and read the saved document."
+
+Home is a SQLite registry. Each Process has its own workspace and database. A new
+Process starts with title/purpose and **zero Works**, Packs or Results. Groups have
+many-to-many membership; relationships have explicit types. Saved content persists;
+unsaved conversation is not memory. No Direction OS workflow runs inside a Process.
+
+### Install and connect
+
+Install a reviewed checkout with `uv sync --locked --no-dev --no-editable`, or
+install its built wheel into a dedicated Python 3.13 environment. Keep that program
+environment: the exported connection uses its absolute interpreter. Publication
+evidence is in [RESULT.md](RESULT.md); do not infer public availability from this
+README. Home and Process data live outside the program checkout.
+
+Your agent performs setup after you choose the folders. Both folders must exist;
+they can already contain your files. Unrelated files and settings are preserved.
+
+```powershell
+zara-home setup --home '<chosen Home>' --directory '<Pi chat folder>' --agent pi
+# Direct entry to the SAME Process and Home:
+zara-home setup --home '<chosen Home>' --directory '<Process folder>' --workspace '<Process folder>' --agent pi
+# Same operations and databases from Codex:
+zara-home setup --home '<chosen Home>' --directory '<Codex chat folder>' --agent codex
+```
+
+Start a new Pi chat in the connected folder and approve its local extension when
+Pi asks. The shipped `zaratustra` tool is discovered under `.pi/extensions`.
+Codex uses `.agents/skills/zaratustra-home/SKILL.md`; invoke `$zaratustra-home` if
+discovery is not automatic. Every new chat reads `.zara-context.json`; the owner
+does not repeat paths. Neither export changes global agent settings.
+
+### Existing data and updates
+
+Keep the previous program environment while installing the next version. Run the
+same setup from the new installation with `--update-connection` to update only an
+unmodified connection previously exported by Zaratustra. Edited connections and
+different context selections refuse; user settings are never replaced.
+
+Ask the agent to import an old catalog with `catalog.import`. Original bytes remain
+intact, aliases and unavailable registrations are retained, and updated legacy APIs
+refuse further writes to that retired catalog. Retry an interrupted import into
+the same Home. Never run an older product writer against a retired catalog.
+Read/import never migrate Process data. Explicit `workspace.upgrade` backs up the
+SQLite database before schema10 migration; retain the backup and old installation
+for recovery. Do not use old code on new schema10 databases.
+
+Ask the agent to update a moved Process's location: it verifies the same identity.
+Missing/replaced folders stay visible as unavailable/mismatched, with cache clearly
+separated from current facts. A registration_required result means creation already
+happened: register that retained workspace instead of creating another Process.
+
+See [Stage 1 boundaries and verification](docs/stage1/IMPLEMENTATION.md).
+
+## Legacy Work-based entry
+
+The following describes the preserved earlier path. It is not a prerequisite for
+standalone Processes; use Home above for those.
+
 T4 adds a common installed entry and thin standard Codex / Claude Code skills.
 The commands below install the exact implementation commit named in the
-[T4 report](RESULT.md), once that commit has been published with authorization.
+[T4 report](docs/results/2026-09-15-core-activation-entry.md), once that commit has been published with authorization.
 This README does not attest public availability; consult the dated publication
 evidence for that exact pin in the report. A failed fetch is a
 blocked public install: do not replace the pin with `main`, `latest` or an older SHA.
