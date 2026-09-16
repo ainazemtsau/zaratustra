@@ -1,0 +1,2 @@
+# Preserve the original diagnostic bytes, including line endings.
+catalog-first-failure.log -text
