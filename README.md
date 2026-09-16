@@ -1,5 +1,23 @@
 # Zaratustra
 
+## Versioned Process skills (0.20)
+
+In a connected Pi chat, ask to create or revise a skill, apply its exact version
+to a Process, choose supported non-secret settings, make a complete local variant,
+roll back or disable it. Shared revisions leave other Processes' selections alone.
+For example: “Improve the overview from this episode; apply it only to A.” Then
+“Open B and give its current overview.” The active Process belongs to that chat.
+
+Pi refreshes the managed context before each model request. Relevant skill bodies
+load on demand; selected versions and actual body deliveries are observable. A
+failed switch keeps the old selection; prepared actions never silently change target.
+The capability catalog checks installed commands/types/resources and dependencies.
+Saving a draft does not install missing code or make an external operation available.
+
+See [Stage 2B implementation](docs/stage2b/IMPLEMENTATION.md) and
+[verification](docs/stage2b/VERIFICATION.md). Both agent connections use the same
+API. The owner describes intent; the agent handles service commands and setup.
+
 ## Work journal, decisions and revisions (0.19)
 
 In a connected Pi Process, agree on keeping a useful work journal and speak normally:
@@ -20,7 +38,7 @@ or Russian morphological matches. The agent opens found sources before answering
 Standalone package reading: `zara-home inspect-export <package.zip>`; exact contents
 can be opened with `--reference '<JSON reference>'` or the common export.read API.
 See [Stage 2A implementation](docs/stage2a/IMPLEMENTATION.md) and
-[observed checks](docs/stage2a/VERIFICATION.md). Local skills management is still 2B.
+[observed checks](docs/stage2a/VERIFICATION.md). Skills reuse these revision mechanisms.
 
 ## Home and standalone Processes (0.18)
 

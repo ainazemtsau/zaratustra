@@ -164,13 +164,16 @@ class Store:
         old = None
         if change.action == "create":
             if (
-                change.record_id is not None
-                or change.expected_revision is not None
+                change.expected_revision is not None
                 or change.type_name is None
                 or change.title is None
                 or change.payload is None
             ):
-                raise JournalError("invalid_create", "Create needs type, title, payload; no old id")
+                raise JournalError(
+                    "invalid_create", "Create needs type, title, payload; no old revision"
+                )
+            if change.record_id in self.records or change.record_id in self.materials:
+                raise JournalError("record_conflict", "Identity already belongs to a saved record")
             spec = self.registry.get(change.type_name, change.schema_version)
             state = spec.initial_state
         else:
@@ -207,10 +210,18 @@ class Store:
         payload = spec.validate(
             change.payload if change.payload is not None else old.payload if old else {}
         )
-        for link in change.links or ():
+        links = list(change.links if change.links is not None else old.links if old else ())
+        for reference in spec.references(payload):
+            if reference not in links:
+                links.append(reference)
+        if len(links) > 32:
+            raise JournalError(
+                "too_many_links", "At most 32 explicit and typed links are supported"
+            )
+        for link in links:
             resolve([self], link)
         result = Revision(
-            id=old.id if old else change.operation_id,
+            id=old.id if old else change.record_id or change.operation_id,
             revision=old.revision + 1 if old else 1,
             scope=self.scope,
             type_name=spec.name,
@@ -219,7 +230,7 @@ class Store:
             type_source=spec.source,
             title=change.title or (old.title if old else ""),
             payload=payload,
-            links=change.links if change.links is not None else (old.links if old else ()),
+            links=tuple(links),
             state=state,
             action=change.action,
             reason=change.reason,

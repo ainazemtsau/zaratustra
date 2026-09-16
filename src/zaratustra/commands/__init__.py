@@ -34,6 +34,7 @@ from zaratustra.core import (
 )
 from zaratustra.entry import EntryCatalog, source_path, transfer_catalog
 from zaratustra.journal import MEDIA_TYPE, Reference
+from zaratustra.process_skills import SKILL_TYPE as SKILL_TYPE  # registers installed schemas
 
 Name = Annotated[
     str, StringConstraints(strict=True, strip_whitespace=True, min_length=1, max_length=128)
@@ -83,6 +84,11 @@ class Command(BaseModel):
         "source.read",
         "records.export",
         "export.read",
+        "context.read",
+        "skill.catalog",
+        "skill.load",
+        "skill.bind",
+        "skill.unbind",
     ]
     process: Name | None = None
     title: Name | None = None
@@ -118,6 +124,16 @@ class Command(BaseModel):
     state: Name | None = None
     reason: str | None = None
     authority_source: str | None = None
+    slot: Name | None = None
+    settings: Annotated[dict[Name, str | bool | int], Field(max_length=16)] = {}
+    expected_configuration_revision: Annotated[int, Field(strict=True, ge=0)] | None = None
+    loaded_slots: Annotated[tuple[Name, ...], Field(max_length=16)] = ()
+
+
+class ContextGuard(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    process_id: UUID
+    stamp: str
 
 
 def required(value: str | None, name: str) -> str:
@@ -280,7 +296,14 @@ def _import(context: Context, command: Command, operation_id: UUID) -> dict[str,
     return transfer_catalog(catalog_path, registry, prepare_import)
 
 
-def execute(context: Context, command: Command, *, source_ref: str) -> dict[str, Any]:
+def execute(
+    context: Context,
+    command: Command,
+    *,
+    source_ref: str,
+    session_process: UUID | None = None,
+    guard: ContextGuard | None = None,
+) -> dict[str, Any]:
     """Trusted local host invokes this only for the owner's current instruction.
 
     There is no model-supplied permission field. Host instructions distinguish an
@@ -292,10 +315,36 @@ def execute(context: Context, command: Command, *, source_ref: str) -> dict[str,
     home.read_home(registry)
     operation_id = command.operation_id or uuid4()
     action = command.action
+    if session_process is not None and not (action == "process.open" and command.process):
+        workspace, selected = _selected(context, str(session_process))
+        context = context.model_copy(
+            update={"workspace": workspace.as_posix(), "process_id": UUID(selected["id"])}
+        )
+    guarded_revision = None
+    if guard is not None:
+        from .skills_adapter import service
+
+        skills, selected = service(context, None, source_ref)
+        compiled = skills.compile(selected, ())
+        if str(guard.process_id) != selected["id"] or guard.stamp != compiled["stamp"]:
+            raise home.HomeError(
+                "context_changed", "Active configuration changed; read fresh context"
+            )
+        guarded_revision = skills.local.query.expected_revision
+    if action.startswith("skill.") or action == "context.read":
+        from .skills_adapter import execute_skills
+
+        return execute_skills(context, command, source_ref, operation_id)
     if action.startswith(("record.", "records.", "source.", "type.", "export.")):
         from .journal_adapter import execute_journal
 
-        return execute_journal(context, command, source_ref=source_ref, operation_id=operation_id)
+        return execute_journal(
+            context,
+            command,
+            source_ref=source_ref,
+            operation_id=operation_id,
+            guarded_revision=guarded_revision,
+        )
     if action == "home.read":
         return {"home": home.read_home(registry), "context": context.model_dump(mode="json")}
     if action == "process.list":
@@ -374,7 +423,11 @@ def execute(context: Context, command: Command, *, source_ref: str) -> dict[str,
     if action == "workspace.upgrade":
         return upgrade_workspace(Path(required(command.path, "workspace path")))
     workspace, source = _selected(context, command.process)
-    revision = command.expected_revision or source["revision"]
+    revision = (
+        command.expected_revision
+        or (guarded_revision if command.process is None else None)
+        or source["revision"]
+    )
     query = ProcessStateQuery(
         workspace_id=UUID(source["workspace_id"]),
         process_id=UUID(source["id"]),

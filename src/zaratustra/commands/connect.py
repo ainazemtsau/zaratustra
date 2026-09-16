@@ -44,6 +44,9 @@ New sessions read the actual saved state. Do not claim memory of unsaved chat.
 INSTRUCTIONS += chr(10) + files("zaratustra.journal").joinpath("SKILL.md").read_text(
     encoding="utf-8"
 )
+INSTRUCTIONS += chr(10) + files("zaratustra.process_skills").joinpath("INSTRUCTIONS.md").read_text(
+    encoding="utf-8"
+)
 
 
 def connect_agent(

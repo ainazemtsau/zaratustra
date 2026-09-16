@@ -15,5 +15,9 @@ are registered there, never enumerated in Command. Searches and source reads onl
 receive selected Process/shared stores; links cannot select another local Process.
 The bundled journal skill is delivered through both agent connections. Decisions
 need dedicated transitions; expected_revision is the logical record revision for them.
+Stage2B shares context compilation through process_skills. Session selection and
+prepared-context guard belong to the host envelope, never global Home configuration.
+Generic record writes cannot bypass managed binding operations. Pi refreshes only
+its metadata-marked active block; retain user text and historical tool evidence.
 
 END_OF_FILE: src/zaratustra/commands/AGENTS.md

@@ -1,6 +1,6 @@
 [project]
 name = "zaratustra"
-version = "0.19.0"
+version = "0.20.0"
 description = "Zaratustra local workspace and transactional mutation protocol"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -178,3 +178,15 @@ name = "Process construction inputs stay development-only and untrusted"
 type = "forbidden"
 source_modules = ["tests.fixtures.process_creation"]
 forbidden_modules = ["zaratustra.local", "zaratustra.cli", "tools"]
+
+[[tool.importlinter.contracts]]
+name = "Process skills depend on journal, not a particular agent or workflow"
+type = "forbidden"
+source_modules = ["zaratustra.process_skills"]
+forbidden_modules = ["zaratustra.commands", "zaratustra.cli", "zaratustra.trusted_chat", "zaratustra.home", "zaratustra.process_packs", "zaratustra.entry"]
+
+[[tool.importlinter.contracts]]
+name = "Core and journal have no skill policy dependency"
+type = "forbidden"
+source_modules = ["zaratustra.core", "zaratustra.journal"]
+forbidden_modules = ["zaratustra.process_skills"]

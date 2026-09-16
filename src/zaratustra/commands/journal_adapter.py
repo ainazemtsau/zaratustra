@@ -20,6 +20,7 @@ from zaratustra.journal import (
     search,
     shared_store,
 )
+from zaratustra.process_skills import SKILL_TYPE, Skill
 
 from . import Command, Context, _selected, required
 
@@ -66,7 +67,12 @@ def _source_page(result: dict[str, Any], command: Command) -> dict[str, Any]:
 
 
 def execute_journal(
-    context: Context, command: Command, *, source_ref: str, operation_id: UUID
+    context: Context,
+    command: Command,
+    *,
+    source_ref: str,
+    operation_id: UUID,
+    guarded_revision: int | None = None,
 ) -> dict[str, Any]:
     action = command.action
     if action == "type.list":
@@ -98,6 +104,13 @@ def execute_journal(
     if command.scope == "process":
         workspace, source = _selected(context, command.process)
         stores.append(Store(workspace, Scope(kind="process", id=UUID(source["id"])), source_ref))
+        if (
+            writing
+            and command.process is None
+            and guarded_revision is not None
+            and stores[0].query.expected_revision != guarded_revision
+        ):
+            raise JournalError("context_changed", "Process changed during command preparation")
     if command.scope == "home" or command.include_shared:
         shared = shared_store(
             home_path, home_id, source_ref, create=writing and command.scope == "home"
@@ -123,6 +136,26 @@ def execute_journal(
         raise JournalError("not_found", "The shared area has no records")
     store = stores[0]
     if writing:
+        if action == "record.create" and command.record is not None:
+            raise JournalError("invalid_create", "New record identity comes from its operation id")
+        old = store.get(command.record) if action != "record.create" and command.record else None
+        type_name = old.type_name if old else required(command.type_name, "record type")
+        spec = DEFAULT_REGISTRY.get(
+            type_name, old.schema_version if old else command.schema_version
+        )
+        if spec.managed_by:
+            raise JournalError("managed_type", "Use " + spec.managed_by)
+        payload = spec.validate(command.payload) if command.payload is not None else None
+        if type_name == SKILL_TYPE and payload is not None:
+            skill = Skill.model_validate(payload)
+            if skill.derived_from:
+                origin = resolve(stores, skill.derived_from)
+                if skill.derived_from.kind != "record" or (
+                    origin["status"] == "available" and origin["record"]["type_name"] != SKILL_TYPE
+                ):
+                    raise JournalError(
+                        "invalid_origin", "Derived skill needs an exact skill source"
+                    )
         change = Change.model_validate(
             {
                 "operation_id": operation_id,
@@ -140,6 +173,8 @@ def execute_journal(
         )
         for link in change.links or ():
             resolve(stores, link)  # Accessible sources must actually exist at the pinned version.
+        for link in spec.references(payload or {}):
+            resolve(stores, link)
         result = store.write(change)
         result["record"] = header(store_record := Revision.model_validate(result["record"]))
         result["reference"] = store_record.reference().model_dump(mode="json")

@@ -7,10 +7,11 @@ import json
 import sys
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from zaratustra.commands import Command, execute, read_context
+from zaratustra.commands import Command, ContextGuard, execute, read_context
 from zaratustra.commands.connect import connect_agent
 from zaratustra.core import WorkspaceError
 from zaratustra.home import HomeError, init_home
@@ -21,6 +22,8 @@ class Invocation(BaseModel):
     model_config = ConfigDict(extra="forbid")
     command: Command
     source_ref: str
+    session_process: UUID | None = None
+    guard: ContextGuard | None = None
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -72,7 +75,11 @@ def main(argv: list[str] | None = None) -> int:
                 raise HomeError("input_too_large", "Command exceeds 2 MB")
             invocation = Invocation.model_validate_json(raw)
             result = execute(
-                read_context(args.directory), invocation.command, source_ref=invocation.source_ref
+                read_context(args.directory),
+                invocation.command,
+                source_ref=invocation.source_ref,
+                session_process=invocation.session_process,
+                guard=invocation.guard,
             )
         print(json.dumps({"ok": True, "result": result}, ensure_ascii=False))
         return 0

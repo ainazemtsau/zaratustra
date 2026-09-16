@@ -103,6 +103,10 @@ def decision_transition(state: str, action: Action) -> str:
     return allowed[state, action]
 
 
+def no_references(payload: dict[str, Any]) -> tuple[Reference, ...]:
+    return ()
+
+
 @dataclass(frozen=True)
 class TypeSpec:
     name: str
@@ -112,6 +116,8 @@ class TypeSpec:
     initial_state: str = "active"
     source: str = "installed: zaratustra.journal"
     transition: Callable[[str, Action], str] = mutable_transition
+    references: Callable[[dict[str, Any]], tuple[Reference, ...]] = no_references
+    managed_by: str | None = None
 
     def schema(self) -> dict[str, Any]:
         return self.payload_model.model_json_schema()
@@ -146,6 +152,7 @@ class Registry:
                 "schema": spec.schema(),
                 "operations": spec.operations,
                 "source": spec.source,
+                "managed_by": spec.managed_by,
             }
             for spec in self._types.values()
         ]

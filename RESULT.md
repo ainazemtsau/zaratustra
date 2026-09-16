@@ -1,78 +1,75 @@
-# Stage 2A — work journal, revisions and grounded continuation
+# Stage 2B — versioned skills and session context
 
 ## outcome
 
-Candidate 0.19.0 continues Stage1 commit
-079bf616cacbbea43a94537f7e6a89c674cc9086. It adds registered record types,
-immutable record/document revisions, distinct decision operations, explicitly shared
-Home records, scoped FTS5 retrieval and standalone exports through Pi and the common
-API. The shipped journal instruction supports agent-initiated meaningful logging
-within the owner's agreed rule. Core/Stage1 storage formats remain unchanged.
-
-The owner approved the v3 scope plus seven supplied clarifications with «да».
-Implementation decisions and constraints: docs/stage2a/IMPLEMENTATION.md.
-The previous Stage1 report is retained in docs/results/2026-09-16-stage1-home.md.
+Candidate 0.20.0 continues Stage2A fc696332dfdd2eb998809059f0065e5574370376.
+The owner explicitly approved the supplied Stage2B implementation brief with «ДА».
+Skills and exact Process selections reuse journal revisions, scopes and history.
+The common API compiles active context and readiness; Pi owns only its session
+selection, safe switching and progressive managed-context delivery. Existing Core
+schema10 and Stage1/2A formats remain unchanged. See docs/stage2b/IMPLEMENTATION.md.
+The previous report is retained in docs/results/2026-09-16-stage2a-journal.md.
 
 ## evidence
 
-Full `uv run --locked python -m tools.check --deliver` passed: 464 tests in 230.28s,
-168 formatted files, Ruff, strict mypy over 143 files, 22 import contracts,
-wheel/source builds, hygiene and report structure. This includes 16 new behavioral
-tests for journal, revisions, type registration, transitions, scopes and export.
+Full native delivery gate passed: 473 tests in 276.76s, 177 formatted files, Ruff,
+strict mypy over 150 files, 24 import contracts, hygiene, report structure and
+wheel/source builds. The first full run had one unchanged legacy catalog concurrency
+test failure; its native focused rerun and the second full gate passed without
+changing that module/test. Both outcomes are retained in docs/stage2b/VERIFICATION.md.
 
-Seven real installed Pi sessions demonstrated automatic episode logging,
-owner-authorized adoption, fresh exact/paraphrased search with source opening,
-an absent-answer query, correction preserving the decision, explicit replacement,
-sharing, separate exports and foreign-source refusal. There were 76 tool attempts:
-74 successful and two safely refused/recovered concurrent operations. One hit a
-Core revision conflict; another observed shared storage while it was initializing.
-Both recovered, and installed API verification found no duplicate operations.
+Installed Pi 0.85.1 loader/subprocess probe confirms session switching and restore,
+independent sessions, both queued and sequential stale-target refusal, owned-block
+replacement preserving user text, failure retaining selection and progressive
+version/body delivery. Real Pi RPC proof spans 11 turns in three sessions and 104
+successful tool calls: shared v1/v2 without automatic application, A-only selection,
+local B variant, A→B→A, independent session, fresh A, exact grounds, rollback,
+disable and autonomous gap logging for a missing required command. No expected
+instruction was inserted into ordinary overview check prompts. See docs/stage2b/DEMO.md.
 
-Independent installed API checks confirmed episode revisions 1–2, decision 1–3,
-unchanged earlier decision, zero Works, local package with seven entries, shared
-package with one entry and one explicitly excluded local source. Standalone CLI
-opened the package from a directory without Home configuration. Codex exercised
-the same common installed API. See docs/stage2a/VERIFICATION.md.
+Installed common API checked A's v1→v2→v1→disabled history, B's exact local origin,
+both shared versions, hidden foreign local grounds, unselected unavailable draft,
+the gap episode and 15 actual body-delivery hashes. Earlier Stage1/2A fictional
+Homes each retain two readable Processes and no historical Works. All 59 installed
+Python/TypeScript code files match the checkout used for the final build.
 
-Read-only in-session evaluator found two export pagination defects. Both were
-verified and repaired, with a regression covering 22 records and 672 links.
-Bounded re-review passed. This is an in-session smoke check, not a fresh Direction G5 review.
+One bounded read-only evaluator found replay incorrectly rechecking current
+dependency readiness. Verified and fixed, with a focused regression. This is an
+in-session pre-pass, not binding fresh Direction review or owner acceptance.
 
 ## assumptions
 
-One trusted local OS owner (existing W21). The model interprets current instructions
-and agreed journaling rules; saved text grants no authority. Host-call references
-are actual available provenance, not invented owner message ids. Authority-source
-descriptions are not a security boundary against arbitrary same-user code.
+The existing trusted local OS-owner boundary applies. The agent interprets intent
+and methodological conflict; code validates operations, exact revisions and scope.
+Settings are non-secret preferences. Available host references are retained without
+inventing owner message ids. Configuration readiness does not prove external access.
 
 ## cuts
 
-Scope is Stage2A only. No local skills version management (2B), concrete extension
-platform (3), vector service, coordinator, autonomous execution, live export import,
-general document editor or automatic merge. FTS5 provides lexical prefixes; Russian
-morphology and arbitrary meaning matches are not promised. Large-history throughput
-is not measured. Concurrent writes can refuse and require an exact retry; initial
-shared-store setup can briefly be unavailable to another caller. All demonstrations use
-fictional content. Personal Development content remains the owner's choice.
+No Stage3 handler, marketplace, background agents, automatic updates/merges, live
+package import, GUI, hostile-agent sandbox or personal Development authored by us.
+Switching replaces managed instructions, not conversation history. No fresh Codex
+UI smoke is claimed; Codex uses the common installed API and generated connection.
+Large-history performance and arbitrary Russian semantic retrieval are unmeasured.
 
 ## cost
 
-One implementation branch; one bounded read-only evaluator smoke. Existing Python,
-SQLite and Pydantic dependencies reused. No paid service, usage reset or external
-rights purchased. Actual Pi checks use the configured account and a separate local
-runtime/Home, preserving the Stage1 demonstration and installation.
+One implementation branch and one bounded read-only evaluator. Existing Python,
+SQLite and Pydantic reused; no new product dependency. Separate local0.20 runtime
+and fictional Home preserve previous installations/demos. No publication, purchase,
+usage reset or external action; Pi uses the already configured account.
 
 ## manual-acceptance
 
-The owner authorized scope, not yet final behavior. Developer-run installed Pi
-proof is separate from personal acceptance and binding fresh Direction review.
-No older Direction task is closed by this product report.
+Approval covers implementation scope. Developer-run checks do not establish the
+owner's final acceptance or close an older Direction-OS task. No live Direction
+state is changed by this product report.
 
 ## next
 
 solmax
 
-Show working behavior, final checks and observed limitations, then stop.
-Do not begin Stage2B automatically. This report makes no public push/merge claim.
+Show working behavior, final checks, exact local commit and limitations; then stop.
+Do not begin Stage3 automatically. No public push/merge is claimed.
 
 END_OF_FILE: RESULT.md
