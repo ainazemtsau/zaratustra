@@ -14,6 +14,7 @@ from zaratustra.commands import Command, execute, read_context
 from zaratustra.commands.connect import connect_agent
 from zaratustra.core import WorkspaceError
 from zaratustra.home import HomeError, init_home
+from zaratustra.journal import Reference, read_export
 
 
 class Invocation(BaseModel):
@@ -39,6 +40,11 @@ def main(argv: list[str] | None = None) -> int:
     setup.add_argument("--update-connection", action="store_true")
     schema = commands.add_parser("schema", help="Describe structured operations")
     schema.set_defaults(command="schema")
+    inspect = commands.add_parser("inspect-export", help="Read a standalone export without a Home")
+    inspect.add_argument("path", type=Path)
+    inspect.add_argument("--reference", help="JSON version-pinned reference inside the package")
+    inspect.add_argument("--offset", type=int, default=0)
+    inspect.add_argument("--limit", type=int, default=20)
     args = parser.parse_args(argv)
     try:
         result: dict[str, Any]
@@ -53,6 +59,13 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.command == "schema":
             result = Command.model_json_schema()
+        elif args.command == "inspect-export":
+            result = read_export(
+                args.path,
+                reference=Reference.model_validate_json(args.reference) if args.reference else None,
+                offset=args.offset,
+                limit=args.limit,
+            )
         else:
             raw = sys.stdin.buffer.read(2_000_001)
             if len(raw) > 2_000_000:

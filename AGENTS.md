@@ -9,6 +9,12 @@
 - A focused run is feedback, not full-delivery evidence. Do not claim green from individual tools.
 
 ## What exists
+Stage 2A (0.19) adds registered journal types, immutable record/document revisions,
+explicit decision transitions, scoped Home sharing, FTS5 retrieval and standalone
+exports through the existing installed commands. Owner authorized the v3 scope plus
+seven clarifications on September16. See docs/stage2a/IMPLEMENTATION.md.
+Core schema10 and Stage1 data remain compatible. Bundled journal instruction is
+included in agent connections; local skill version management remains Stage2B.
 Stage 1 (0.18) adds SQLite Home and standalone Process bootstrap at schema10.
 The owner's September 16 Stage 1 scope supersedes Work-first creation for the new
 Home path: title/purpose, zero historical Works, groups, typed relations, materials,

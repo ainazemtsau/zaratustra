@@ -1,5 +1,27 @@
 # Zaratustra
 
+## Work journal, decisions and revisions (0.19)
+
+In a connected Pi Process, agree on keeping a useful work journal and speak normally:
+
+- “Read this failed check, explain what is known, and suggest the next step.”
+- “Save this decision: postpone the format change until the source is checked.”
+- In a new chat: “Why did we postpone that change? Show the source.”
+- “Correct the explanation; the file was unavailable.” The decision remains accepted.
+- “Replace the decision with this one.” Previous content and authorization remain visible.
+- “Share only this conclusion,” or “Export these records with their evidence.”
+
+The installed agent instruction uses registered episode/decision/document operations.
+Saved sources stay pinned to their historical version. Default writes are local;
+shared Home conclusions do not disclose local evidence to another Process. Search
+uses fields, links and FTS5 with agent reformulation; it does not guarantee semantic
+or Russian morphological matches. The agent opens found sources before answering.
+
+Standalone package reading: `zara-home inspect-export <package.zip>`; exact contents
+can be opened with `--reference '<JSON reference>'` or the common export.read API.
+See [Stage 2A implementation](docs/stage2a/IMPLEMENTATION.md) and
+[observed checks](docs/stage2a/VERIFICATION.md). Local skills management is still 2B.
+
 ## Home and standalone Processes (0.18)
 
 With the installed Pi connection you can ask:

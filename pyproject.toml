@@ -1,6 +1,6 @@
 [project]
 name = "zaratustra"
-version = "0.18.0"
+version = "0.19.0"
 description = "Zaratustra local workspace and transactional mutation protocol"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -61,7 +61,7 @@ layers = ["zaratustra.cli", "zaratustra.local", "zaratustra.core"]
 name = "Core has no surface dependency"
 type = "forbidden"
 source_modules = ["zaratustra.core"]
-forbidden_modules = ["zaratustra.cli", "zaratustra.entry", "zaratustra.intake", "zaratustra.local", "zaratustra.home", "zaratustra.commands"]
+forbidden_modules = ["zaratustra.cli", "zaratustra.entry", "zaratustra.intake", "zaratustra.local", "zaratustra.home", "zaratustra.commands", "zaratustra.journal"]
 
 [[tool.importlinter.contracts]]
 name = "Entry catalog depends only on Core"
@@ -118,6 +118,12 @@ dev = [
     "pytest==9.1.1",
     "ruff==0.16.6",
 ]
+
+[[tool.importlinter.contracts]]
+name = "Journal has no host, Home registry or legacy workflow dependency"
+type = "forbidden"
+source_modules = ["zaratustra.journal"]
+forbidden_modules = ["zaratustra.commands", "zaratustra.home", "zaratustra.cli", "zaratustra.entry", "zaratustra.process_packs", "zaratustra.trusted_chat"]
 
 [[tool.importlinter.contracts]]
 name = "Home Registry has no agent or workflow dependency"

@@ -33,6 +33,7 @@ from zaratustra.core import (
     save_process_material,
 )
 from zaratustra.entry import EntryCatalog, source_path, transfer_catalog
+from zaratustra.journal import MEDIA_TYPE, Reference
 
 Name = Annotated[
     str, StringConstraints(strict=True, strip_whitespace=True, min_length=1, max_length=128)
@@ -49,7 +50,7 @@ class Context(BaseModel):
 
 
 class Command(BaseModel):
-    """Closed stage-one command envelope; identities are handled by the host."""
+    """Fixed operations; record types are independently registered schemas."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
     action: Literal[
@@ -70,6 +71,18 @@ class Command(BaseModel):
         "material.read",
         "catalog.import",
         "workspace.upgrade",
+        "type.list",
+        "record.create",
+        "record.revise",
+        "record.adopt",
+        "record.replace",
+        "record.revoke",
+        "record.read",
+        "record.history",
+        "record.search",
+        "source.read",
+        "records.export",
+        "export.read",
     ]
     process: Name | None = None
     title: Name | None = None
@@ -91,6 +104,20 @@ class Command(BaseModel):
     content_limit: Annotated[int, Field(strict=True, ge=1, le=100_000)] = 20_000
     operation_id: UUID | None = None
     expected_revision: Annotated[int, Field(strict=True, ge=1)] | None = None
+    scope: Literal["process", "home"] = "process"
+    include_shared: bool = True
+    export_shared: bool = False
+    type_name: Name | None = None
+    schema_version: Annotated[int, Field(strict=True, ge=1)] = 1
+    record: UUID | None = None
+    records: Annotated[tuple[UUID, ...], Field(max_length=100)] = ()
+    revision: Annotated[int, Field(strict=True, ge=1)] | None = None
+    payload: dict[str, Any] | None = None
+    links: Annotated[tuple[Reference, ...], Field(max_length=32)] | None = None
+    reference: Reference | None = None
+    state: Name | None = None
+    reason: str | None = None
+    authority_source: str | None = None
 
 
 def required(value: str | None, name: str) -> str:
@@ -265,6 +292,10 @@ def execute(context: Context, command: Command, *, source_ref: str) -> dict[str,
     home.read_home(registry)
     operation_id = command.operation_id or uuid4()
     action = command.action
+    if action.startswith(("record.", "records.", "source.", "type.", "export.")):
+        from .journal_adapter import execute_journal
+
+        return execute_journal(context, command, source_ref=source_ref, operation_id=operation_id)
     if action == "home.read":
         return {"home": home.read_home(registry), "context": context.model_dump(mode="json")}
     if action == "process.list":
@@ -365,6 +396,8 @@ def execute(context: Context, command: Command, *, source_ref: str) -> dict[str,
             "material_count": len(state.materials),
         }
     if action == "material.save":
+        if command.media_type == MEDIA_TYPE:
+            raise home.HomeError("reserved_type", "Use registered record operations")
         if (command.text is None) == (command.path is None):
             raise home.HomeError(
                 "invalid_content", "Supply exactly one of text or a selected file path"
