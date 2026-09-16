@@ -17,6 +17,14 @@ strict mypy over 150 files, 24 import contracts, hygiene, report structure and
 wheel/source builds. The first full run had one unchanged legacy catalog concurrency
 test failure; its native focused rerun and the second full gate passed without
 changing that module/test. Both outcomes are retained in docs/stage2b/VERIFICATION.md.
+This observation remains OPEN and UNFIXED; its original trace and known impact are
+retained in docs/stage2b/OPEN-OBSERVATIONS.md. A passing retry is not a repair.
+
+Owner-requested follow-up: a normal installed Pi CLI conversation changed fictional
+B's local skill to v2; a separate fresh chat used the new behavior from saved state.
+The first conversation had one invalid model-generated read id, refused by input
+validation and corrected by the agent. No code or private installation changed,
+and no full gate was repeated. See docs/stage2b/USER-WALKTHROUGH.md.
 
 Installed Pi 0.85.1 loader/subprocess probe confirms session switching and restore,
 independent sessions, both queued and sequential stale-target refusal, owned-block

@@ -70,6 +70,9 @@ Ruff, strict mypy over 150 files, all 24 import contracts, hygiene, report struc
 source distribution and wheel builds. No change was made to the old catalog test
 or implementation to obtain the pass. The initial error cause is not established;
 it remains a recorded intermittent observation, not silently discarded evidence.
+It is explicitly OPEN and UNFIXED: see [observation and known impact](OPEN-OBSERVATIONS.md).
+The [original failure trace](evidence/catalog-first-failure.log) is retained byte-for-byte.
+Successful reruns do not close it. No further full runs are justified by that success alone.
 All 59 Python/TypeScript files in the demonstration installation match this checkout.
 
 ## Retained local evidence
@@ -93,6 +96,12 @@ Home's .pi/stage2b-main, .pi/stage2b-independent and .pi/stage2b-fresh-a folders
 The failed first gate is retained as .tmp/stage2b-check-first-failed.log.
 
 ## Limits
+
+After the original verification, an owner-requested normal Pi CLI demonstration
+changed only fictional B's local skill to v2 and reopened B in a fresh session.
+The original fixture-state assertions above describe the earlier retained run.
+See [actual conversation and new evidence](USER-WALKTHROUGH.md). No product code,
+private installation or real personal data changed; no further full gate was run.
 
 The owner has not personally accepted this behavior. Context replacement does not
 erase model history. Readiness is configuration evidence, not proof of external
