@@ -17,7 +17,7 @@ from zaratustra.journal import Scope, Store
 from zaratustra.web_exchange import Exchange, Origin
 
 
-def prepare(root: Path) -> dict[str, Any]:
+def prepare(root: Path, *, setup_only: bool = False) -> dict[str, Any]:
     root = root.resolve()
     scratch = Path(__file__).resolve().parents[1] / "_scratch"
     if not root.is_relative_to(scratch) or root.exists():
@@ -39,6 +39,14 @@ def prepare(root: Path) -> dict[str, Any]:
         purpose="Неперсональный показ входящих запросов",
     )["process"]
     context = Context(home=root.as_posix(), workspace=row["location"], process_id=UUID(row["id"]))
+    if setup_only:
+        connect_agent(root, root, agent="pi")
+        return {
+            "version": metadata.version("zaratustra"),
+            "home": root.as_posix(),
+            "process": row["id"],
+            "scenario": "first setup; no channel, packet or request prepared",
+        }
     run("web.configure", payload={"repository": "fictional-owner/private-home"})
     current = run(
         "record.create",
@@ -106,8 +114,9 @@ def prepare(root: Path) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("home", type=Path)
+    parser.add_argument("--setup-only", action="store_true")
     args = parser.parse_args()
-    print(json.dumps(prepare(args.home), ensure_ascii=False))
+    print(json.dumps(prepare(args.home, setup_only=args.setup_only), ensure_ascii=False))
 
 
 if __name__ == "__main__":

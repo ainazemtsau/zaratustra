@@ -464,6 +464,35 @@ def test_registry_schema_connection_and_no_source_edits_for_extra_command(
     ] == ["reviewed_full_request", "items"]
 
 
+def test_project_instructions_without_packet_network_or_writes(
+    context: Context, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def unavailable(*args: Any, **kwargs: Any) -> Any:
+        raise AssertionError("Instruction preview must not write or contact GitHub")
+
+    channel = run(context, "web.channel")
+    run(
+        context,
+        "web.configure",
+        expected_revision=channel["revision"],
+        payload={"repository": "fictional-owner/private-home", "branch": "discussions"},
+    )
+    monkeypatch.setattr(GitHub, "api", unavailable)
+    monkeypatch.setattr(Store, "write", unavailable)
+    before = read_records(Path(context.workspace or "")).state_revision
+    rendered = run(context, "web.instructions")
+    assert "Учебный Development" in rendered["instructions_text"]
+    assert "fictional-owner/private-home" in rendered["instructions_text"]
+    assert "branch discussions" in rendered["instructions_text"]
+    assert rendered["request_path"] in rendered["instructions_text"]
+    assert "__REPOSITORY__" not in rendered["instructions_text"]
+    assert "END_OF_FILE:" not in rendered["instructions_text"]
+    assert "Current selected discussion file:" not in rendered["instructions_text"]
+    assert rendered["publication"] == "not_performed" and rendered["check_prompt"]
+    assert run(context, "web.instructions") == rendered
+    assert read_records(Path(context.workspace or "")).state_revision == before
+
+
 class Remote:
     def __init__(self) -> None:
         self.files: dict[str, bytes] = {}
@@ -528,6 +557,12 @@ def test_github_selected_transport_retries_partial_failures_and_pagination(
         payload={"selected_publication": True},
     )
     assert published["chatgpt_access"] == "not_verified_by_local_publication"
+    preview = run(context, "web.instructions", record=packet["record"]["id"])
+    assert published["instructions_text"] == preview["instructions_text"]
+    assert (
+        published["instructions_text"].encode()
+        == remote.files[published["project_instructions"]["path"]]
+    )
     assert run(
         context,
         "web.publish",

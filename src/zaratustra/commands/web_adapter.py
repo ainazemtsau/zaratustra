@@ -89,6 +89,8 @@ def execute_web(
     if action == "web.prepare":
         data = Prepare.model_validate(command.payload)
         return service.prepare(data.question, data.references, operation)
+    if action == "web.instructions":
+        return service.instructions(command.record)
     if command.record is None:
         raise JournalError("missing_record", "Select a web request or discussion context")
     if action == "web.read":
@@ -124,6 +126,11 @@ def execute_web(
 for name, payload, description in (
     ("web.configure", Channel, "Save owner-selected GitHub repository/branch for this Process"),
     ("web.channel", Empty, "Read configured destination and exact per-Process inbox path"),
+    (
+        "web.instructions",
+        Empty,
+        "Get ready-to-paste Project instructions and a connection check; no packet or GitHub write",
+    ),
     (
         "web.prepare",
         Prepare,

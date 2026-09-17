@@ -590,28 +590,52 @@ class Exchange:
             "Prepare explicitly selected discussion context",
         )
 
-    def publish(self, record_id: UUID, transport: GitHub | None = None) -> dict[str, Any]:
-        record = self.get(record_id, "web_context")
-        packet = Packet.model_validate(record.payload)
-        github = transport or GitHub(self.channel())
+    def instructions(self, record_id: UUID | None = None) -> dict[str, Any]:
+        """Render the shipped template locally; no packet or publication is required."""
+        channel = self.channel()
         instructions = (
             files("zaratustra.web_exchange")
             .joinpath("PROJECT_INSTRUCTIONS.md")
             .read_text(encoding="utf-8")
         )
+        instructions = instructions.removesuffix(
+            "END_OF_FILE: src/zaratustra/web_exchange/PROJECT_INSTRUCTIONS.md\n"
+        ).rstrip() + chr(10)
         instructions = instructions.replace("__REQUEST_PATH__", self.prefix + "/requests/")
         instructions = instructions.replace("__PROCESS_TITLE__", self.process["title"])
-        instructions = instructions.replace("__REPOSITORY__", self.channel().repository)
-        instructions = instructions.replace("__BRANCH__", self.channel().branch)
-        instructions += (
-            chr(10)
-            + "Current selected discussion file: "
-            + self.prefix
-            + "/contexts/"
-            + str(record.id)
-            + ".md"
-            + chr(10)
-        )
+        instructions = instructions.replace("__REPOSITORY__", channel.repository)
+        instructions = instructions.replace("__BRANCH__", channel.branch)
+        if record_id is not None:
+            record = self.get(record_id, "web_context")
+            instructions += (
+                chr(10)
+                + "Current selected discussion file: "
+                + self.prefix
+                + "/contexts/"
+                + str(record.id)
+                + ".md"
+                + chr(10)
+            )
+        return {
+            "instructions_text": instructions,
+            "repository": channel.repository,
+            "branch": channel.branch,
+            "request_path": self.prefix + "/requests/",
+            "publication": "not_performed",
+            "connection_requirement": "The chosen chat needs GitHub tools that can read this "
+            "repository and create request files on this branch. Check actual tools and access; "
+            "instructions alone do not grant them.",
+            "check_prompt": "Create a new request in the configured inbox with this exact text: "
+            "'Connection check only. Report that this request was received; do not create a task "
+            "or change process decisions.' Return the confirmed file link. If creation is "
+            "unavailable, say which tool or access is missing; do not claim it was sent.",
+        }
+
+    def publish(self, record_id: UUID, transport: GitHub | None = None) -> dict[str, Any]:
+        record = self.get(record_id, "web_context")
+        packet = Packet.model_validate(record.payload)
+        instructions = self.instructions(record_id)["instructions_text"]
+        github = transport or GitHub(self.channel())
         context_result = github.publish(
             self.prefix + "/contexts/" + str(record.id) + ".md", packet.markdown.encode("utf-8")
         )
@@ -622,6 +646,7 @@ class Exchange:
         return {
             "context": context_result,
             "project_instructions": instructions_result,
+            "instructions_text": instructions,
             "reference": record.reference().model_dump(mode="json"),
             "chatgpt_access": "not_verified_by_local_publication",
         }

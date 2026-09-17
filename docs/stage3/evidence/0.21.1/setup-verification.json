@@ -1,0 +1,17 @@
+{
+  "actions": [
+    "process.list",
+    "process.open",
+    "command.list",
+    "command.list",
+    "web.configure",
+    "command.list",
+    "web.instructions"
+  ],
+  "journal_types": [
+    "web_channel"
+  ],
+  "whole_rendered_instruction_shown": true,
+  "no_packet_or_publication": true,
+  "tool_errors": 1
+}

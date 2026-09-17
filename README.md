@@ -1,8 +1,14 @@
 # Zaratustra
 
-## Web discussions and incoming requests (0.21 candidate)
+## Web discussions and incoming requests (0.21.1)
 
-Ask Pi to prepare selected material for a ChatGPT discussion. Publish the chosen
+First ask Pi to help set up a ChatGPT Project for the selected Process and private
+repository. It returns complete ready-to-paste Project instructions from the shipped
+template, without requiring a prepared packet or GitHub publication. Pi explains
+the connection requirements and a small round-trip check. See the
+[first-setup correction](docs/stage3/FIRST-SETUP-FIX.md).
+
+Then ask Pi to prepare selected material for a ChatGPT discussion. Publish the chosen
 packet and Project instructions to your GitHub repository when ready. In ChatGPT,
 discuss freely and ask to save the selected result as an incoming request. Later,
 ask Pi to process incoming requests: it preserves the original, distinguishes ideas

@@ -9,7 +9,7 @@
 - A focused run is feedback, not full-delivery evidence. Do not claim green from individual tools.
 
 ## What exists
-Stage 3 candidate (0.21) adds explicit installed command registration, selected
+Stage 3 (0.21) adds explicit installed command registration, selected
 web context and GitHub request intake through public journal/Core operations.
 Owner approved the shown ChatGPT → GitHub → Pi scope with «ок» on September17.
 See docs/stage3/IMPLEMENTATION.md. Personal installation and real ChatGPT write

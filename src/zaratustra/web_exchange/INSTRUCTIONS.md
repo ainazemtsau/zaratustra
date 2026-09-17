@@ -7,6 +7,21 @@ web action to see its payload schema; extension-specific fields go in payload.
 
 Setup: web.configure records the owner's chosen repository/branch for the selected
 Process. web.channel returns the exact inbox prefix. This does not publish data.
+Keep an existing channel's branch. For a newly chosen repository use the channel's
+default branch main unless the owner or actual repository information specifies
+another branch. Do not stop first setup to ask the owner to approve this default.
+For an ordinary request to set up a ChatGPT Project, select the Process and channel,
+then call web.instructions. It returns the complete filled instructions_text from
+the shipped template, connection_requirement and a check_prompt. Show the full
+ready-to-paste text in one block, then explain the next user step in their language:
+create/open their ChatGPT Project and paste it into Project instructions. Explain
+that the chosen chat needs GitHub reading and file-creation access to the selected
+private repository; verify actual capabilities without inventing account settings.
+No prepared packet, empty placeholder material, publication or extra approval is
+needed to obtain this text. Never ask the owner to say an internal command such as
+"publish the empty packet". With no selected discussion material, omit record.
+Continue step by step when the owner asks. Offer the returned connection check only
+after instructions are installed; report the actual GitHub file and Pi receipt.
 Prepare: web.prepare takes question and explicitly selected version-pinned local
 references. Read relevant facts and selected process instructions first; include
 their references only within the owner's discussion scope. Do not upload the Home,
@@ -14,7 +29,7 @@ SQLite files, full journals or linked sources. The returned web_context is a dat
 snapshot, readable through record.read; its markdown can also be copied to a chat.
 web.publish takes its record and payload.selected_publication=true, ONLY on the
 owner's instruction to publish those selected materials. It returns the actual
-context and Project-instruction files for ChatGPT. GitHub success does not prove
+context and Project-instruction files plus instructions_text. GitHub success does not prove
 ChatGPT access. The owner adds the supplied instructions to the ChatGPT Project.
 
 Process the inbox when requested, never at every chat start. web.pull fetches one

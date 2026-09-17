@@ -7,6 +7,10 @@ by implementation evidence, and no personal installation is automatically update
 
 ## User path
 
+As of 0.21.1, initial setup starts with web.instructions: a read-only filled
+template and connection guidance, without a packet or publication. See
+FIRST-SETUP-FIX.md for the first-use defect and its actual Pi check.
+
 Ask Pi to prepare selected material for a discussion. It saves a dated packet of
 chosen exact sources. On a publication instruction it publishes that packet and
 the generated Project instructions to the chosen GitHub repository. The owner
