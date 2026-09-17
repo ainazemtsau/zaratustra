@@ -149,7 +149,9 @@ def connect_agent(
         raise HomeError("connection_conflict", "Invalid managed connection metadata retained")
     if target.exists() and target.read_text(encoding="utf-8") != content:
         digest = hashlib.sha256(target.read_bytes()).hexdigest()
-        if not update or managed.get(agent) != digest:
+        # Git checkouts may convert LF to CRLF. That is not an owner content edit.
+        normalized = hashlib.sha256(target.read_text(encoding="utf-8").encode("utf-8")).hexdigest()
+        if not update or managed.get(agent) not in (digest, normalized):
             raise HomeError(
                 "connection_conflict", f"Different existing connection retained: {target}"
             )

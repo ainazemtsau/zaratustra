@@ -291,8 +291,9 @@ def test_material_repeat_pagination_and_binary_file(tmp_path: Path) -> None:
         execute(context, command.model_copy(update={"text": "Different"}), source_ref="changed")
 
 
+@pytest.mark.parametrize("checkout_crlf", [False, True])
 def test_connection_update_preserves_settings_and_owner_edits(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, checkout_crlf: bool
 ) -> None:
     root = tmp_path / "home"
     context_at(root)
@@ -302,6 +303,8 @@ def test_connection_update_preserves_settings_and_owner_edits(
     first = connect_agent(root, root, agent="pi")
     target = Path(first["connection"])
     before = target.read_bytes()
+    if checkout_crlf:
+        target.write_bytes(before.replace(b"\n", b"\r\n"))
     with monkeypatch.context() as patch:
         patch.setattr(commands.connect, "INSTRUCTIONS", "Changed shipped instructions")
         with pytest.raises(HomeError, match="connection_conflict"):
