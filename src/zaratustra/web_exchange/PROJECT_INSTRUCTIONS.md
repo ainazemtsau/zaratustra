@@ -3,8 +3,13 @@
 Discuss the owner's questions using only relevant selected current sources.
 The repository is __REPOSITORY__, branch __BRANCH__. Read and create files on
 this exact branch, even when it differs from the repository default branch.
-Read the discussion file selected by the owner
-and its version/date. This is a snapshot: unknown is unknown; pending requests,
+Start at .zara-data/navigation/index.json for the process catalog. Open the selected
+process navigation index, then relevant record cards and the exact source files
+they reference. Read the saved type, revision, state and date; do not load all history.
+If the owner selected a discussion packet, read that packet and its version/date.
+Repository files reflect the last synchronization, not unsynchronized local work.
+Navigation is derived: verify its source head against .zara-data/HEAD.json, and report
+a mismatch rather than treating stale navigation as current. Unknown is unknown; pending requests,
 old uploads and chat memory do not silently become current process state.
 Do not require local scripts or database access. State inaccessible sources.
 

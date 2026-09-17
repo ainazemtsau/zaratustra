@@ -12,6 +12,8 @@ from uuid import UUID, uuid4
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, ValidationError
 
+from zaratustra import storage
+
 from .migration_v2 import V2_NAME, V2_SHA256, migrate_v2
 from .migration_v3 import V3_NAME, V3_SHA256, migrate_v3
 from .migration_v4 import V4_NAME, V4_SHA256, migrate_v4
@@ -24,6 +26,36 @@ from .migration_v10 import V10_NAME, V10_SHA256, migrate_v10
 from .migrations import APPLICATION_ID, V1_NAME, V1_SHA256, migrate_v1
 
 WORKSPACE_DIRECTORIES = ("processes", "artifacts", "projections", "inbox")
+
+
+def storage_factory(connection: sqlite3.Connection, version: int) -> None:
+    """Rebuild installed schemas; portable files never provide executable SQL."""
+    if version not in range(1, 11):
+        raise WorkspaceError("Unsupported portable workspace schema")
+    stamp = datetime.now(UTC).isoformat()
+    migrate_v1(connection, str(uuid4()), stamp)
+    connection.execute("BEGIN")
+    try:
+        for number, migration in enumerate(
+            (
+                migrate_v2,
+                migrate_v3,
+                migrate_v4,
+                migrate_v5,
+                migrate_v6,
+                migrate_v7,
+                migrate_v8,
+                migrate_v9,
+                migrate_v10,
+            ),
+            start=2,
+        ):
+            if number <= version:
+                migration(connection, stamp)
+        connection.execute("COMMIT")
+    except BaseException:
+        connection.execute("ROLLBACK")
+        raise
 
 
 class WorkspaceError(Exception):
@@ -168,6 +200,13 @@ def workspace_connection(
     """Validate metadata in the same transaction as the operation; never create a DB."""
     try:
         root = _root(path)
+        if storage.enabled(root):
+            for name in WORKSPACE_DIRECTORIES:
+                _plain_path(root / name)
+                (root / name).mkdir(exist_ok=True)
+            with storage.connection(root, storage_factory, write=write) as (connection, database):
+                yield connection, _metadata(connection, root, database)
+            return
         database = _database_path(root)
         mode = "rw" if write else "ro"
         with closing(
@@ -291,7 +330,7 @@ def init_workspace(path: Path) -> WorkspaceInfo:
         root = _root(path)
         entries = list(root.iterdir())
         if entries:
-            if (root / ".zara").exists() or (root / ".zara").is_symlink():
+            if storage.enabled(root) or (root / ".zara").exists() or (root / ".zara").is_symlink():
                 return _read_workspace(root)
             raise WorkspaceError("Directory is not empty; choose an empty workspace folder.")
         state = root / ".zara"

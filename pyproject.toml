@@ -1,6 +1,6 @@
 [project]
 name = "zaratustra"
-version = "0.21.1"
+version = "0.22.0"
 description = "Zaratustra local workspace and transactional mutation protocol"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -21,6 +21,12 @@ python-preference = "only-managed"
 [tool.uv.build-backend]
 # Exclude the directories themselves, including leftovers from older checkouts.
 source-exclude = ["src/zaratustra/fictional_lot", "src/zaratustra/process_probe"]
+
+[[tool.importlinter.contracts]]
+name = "Portable storage has no domain or host dependency"
+type = "forbidden"
+source_modules = ["zaratustra.storage"]
+forbidden_modules = ["zaratustra.core", "zaratustra.home", "zaratustra.commands", "zaratustra.journal", "zaratustra.cli"]
 
 [[tool.importlinter.contracts]]
 name = "Standard connection resources have no product authority dependency"

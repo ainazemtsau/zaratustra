@@ -92,6 +92,7 @@ from .workspace import (
     init_workspace,
     migrate_workspace,
     read_workspace,
+    storage_factory,
 )
 
 __all__ = [
@@ -182,4 +183,5 @@ __all__ = [
     "migrate_workspace",
     "read_records",
     "read_workspace",
+    "storage_factory",
 ]

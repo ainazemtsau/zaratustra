@@ -1,5 +1,6 @@
 """Public registered journal, scope-aware reads and portable data packages."""
 
+from .retrieval import card
 from .shared import shared_store
 from .store import Store, header, resolve, search
 from .transfer import export_records, load_export, read_export
@@ -15,6 +16,7 @@ from .types import (
     Registry,
     Revision,
     Scope,
+    SearchMetadata,
     TypeSpec,
 )
 
@@ -22,6 +24,7 @@ __all__ = [
     "DEFAULT_REGISTRY",
     "MEDIA_TYPE",
     "Change",
+    "card",
     "Decision",
     "Document",
     "Episode",
@@ -30,6 +33,7 @@ __all__ = [
     "Registry",
     "Revision",
     "Scope",
+    "SearchMetadata",
     "Store",
     "TypeSpec",
     "export_records",

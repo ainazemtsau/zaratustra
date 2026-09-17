@@ -5,13 +5,15 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+import unicodedata
 from collections.abc import Callable, Iterator
 from contextlib import closing, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
+from zaratustra import storage
 from zaratustra.core import Process, WorkspaceError, read_records
 
 APPLICATION_ID = 0x5A484F4D
@@ -49,6 +51,21 @@ SCHEMA = (
     ) STRICT""",
     "CREATE TABLE imports (source TEXT PRIMARY KEY, sha256 TEXT NOT NULL) STRICT",
 )
+VOCABULARY_SCHEMA = """CREATE TABLE vocabulary (
+    id TEXT PRIMARY KEY, kind TEXT NOT NULL, label TEXT NOT NULL,
+    label_key TEXT NOT NULL, meaning TEXT NOT NULL, authority_source TEXT NOT NULL,
+    UNIQUE(kind, label_key)
+) STRICT"""
+VOCABULARY_DEFAULTS = {
+    "category": {"work": "Substantial work episode", "problem": "Problem or obstacle"},
+    "document_purpose": {
+        "plan": "Plan",
+        "backlog": "Possible future work",
+        "reference": "Reference material",
+        "other": "Other document",
+    },
+    "tag": {},
+}
 
 
 class HomeError(WorkspaceError):
@@ -88,8 +105,29 @@ def _database(home: Path) -> Path:
     return database
 
 
+def storage_factory(connection: sqlite3.Connection, version: int) -> None:
+    if version not in (1, 2):
+        raise HomeError("unsupported_schema", "Install a compatible Home version")
+    for statement in SCHEMA:
+        connection.execute(statement)
+    if version == 2:
+        connection.execute(VOCABULARY_SCHEMA)
+    connection.execute(f"PRAGMA application_id={APPLICATION_ID}")
+    connection.execute(f"PRAGMA user_version={version}")
+
+
 @contextmanager
 def _connect(home: Path, *, write: bool = False) -> Iterator[sqlite3.Connection]:
+    if storage.enabled(home):
+        try:
+            with storage.connection(home, storage_factory, write=write) as (connection, _):
+                connection.row_factory = sqlite3.Row
+                if connection.execute("SELECT COUNT(*) FROM home").fetchone()[0] != 1:
+                    raise HomeError("invalid_home", "Home identity is missing")
+                yield connection
+            return
+        except (ValueError, OSError, sqlite3.Error) as error:
+            raise HomeError("home_unavailable", str(error)) from error
     database = _database(home)
     try:
         with closing(
@@ -106,7 +144,7 @@ def _connect(home: Path, *, write: bool = False) -> Iterator[sqlite3.Connection]
                 connection.execute("PRAGMA query_only=ON")
             if (
                 connection.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID
-                or connection.execute("PRAGMA user_version").fetchone()[0] != 1
+                or connection.execute("PRAGMA user_version").fetchone()[0] not in (1, 2)
                 or connection.execute("SELECT COUNT(*) FROM home").fetchone()[0] != 1
             ):
                 raise HomeError("invalid_home", "Unknown or incomplete Home database")
@@ -128,7 +166,7 @@ def init_home(home: Path) -> dict[str, Any]:
     if not root.is_dir():
         raise HomeError("invalid_home", "Choose an existing directory")
     database = _database(root)
-    if database.exists():
+    if storage.enabled(root) or database.exists():
         return read_home(root)
     if database.parent.exists():
         raise HomeError("incomplete_home", "Reserved Home folder exists; inspect it before retry")
@@ -154,8 +192,107 @@ def read_home(home: Path) -> dict[str, Any]:
     with _connect(home) as connection:
         return dict(connection.execute("SELECT * FROM home").fetchone()) | {
             "path": home.expanduser().resolve().as_posix(),
-            "schema": 1,
+            "schema": connection.execute("PRAGMA user_version").fetchone()[0],
         }
+
+
+def vocabulary_key(value: str) -> str:
+    return " ".join(unicodedata.normalize("NFC", value).casefold().split())
+
+
+def upgrade_vocabulary(home: Path, *, existing_categories: tuple[str, ...] = ()) -> None:
+    """Explicit migration: preserve existing classification labels as registered values."""
+    with _connect(home, write=True) as connection:
+        if connection.execute("PRAGMA user_version").fetchone()[0] == 2:
+            return
+        connection.execute(VOCABULARY_SCHEMA)
+        defaults = {kind: dict(values) for kind, values in VOCABULARY_DEFAULTS.items()}
+        for value in existing_categories:
+            defaults["category"].setdefault(
+                value, "Existing episode category, retained by migration"
+            )
+        for kind, values in defaults.items():
+            seen: set[str] = set()
+            for label, meaning in values.items():
+                key = vocabulary_key(label)
+                if key in seen:
+                    continue
+                seen.add(key)
+                identity = str(uuid5(NAMESPACE_URL, f"zaratustra-vocabulary:{kind}:{key}"))
+                connection.execute(
+                    "INSERT INTO vocabulary VALUES (?, ?, ?, ?, ?, ?)",
+                    (identity, kind, label, key, meaning, "installed/migrated"),
+                )
+        connection.execute("PRAGMA user_version=2")
+
+
+def vocabulary(home: Path, kind: str | None = None) -> list[dict[str, Any]]:
+    with _connect(home) as connection:
+        if connection.execute("PRAGMA user_version").fetchone()[0] == 1:
+            return [
+                {
+                    "id": str(
+                        uuid5(NAMESPACE_URL, f"zaratustra-vocabulary:{k}:{vocabulary_key(v)}")
+                    ),
+                    "kind": k,
+                    "label": v,
+                    "meaning": meaning,
+                }
+                for k, values in VOCABULARY_DEFAULTS.items()
+                for v, meaning in values.items()
+                if kind is None or kind == k
+            ]
+        return [
+            dict(row)
+            for row in connection.execute(
+                "SELECT * FROM vocabulary WHERE (? IS NULL OR kind=?) ORDER BY kind,label_key,id",
+                (kind, kind),
+            )
+        ]
+
+
+def vocabulary_generation(home: Path) -> str:
+    return hashlib.sha256(_json(vocabulary(home)).encode()).hexdigest()
+
+
+def add_vocabulary(
+    home: Path,
+    *,
+    kind: str,
+    label: str,
+    meaning: str,
+    expected_generation: str,
+    authority_source: str,
+    operation_id: UUID,
+) -> dict[str, Any]:
+    if kind not in VOCABULARY_DEFAULTS or not meaning.strip() or not authority_source.strip():
+        raise HomeError("invalid_vocabulary", "Kind, meaning and actual owner permission required")
+    label = _name(label)
+    payload = {
+        "kind": kind,
+        "label": label,
+        "meaning": meaning,
+        "expected_generation": expected_generation,
+        "authority_source": authority_source,
+    }
+
+    def apply(connection: sqlite3.Connection) -> dict[str, Any]:
+        rows = [
+            dict(row)
+            for row in connection.execute("SELECT * FROM vocabulary ORDER BY kind,label_key,id")
+        ]
+        if hashlib.sha256(_json(rows).encode()).hexdigest() != expected_generation:
+            raise HomeError("vocabulary_changed", "Read current vocabulary and review duplicates")
+        key = vocabulary_key(label)
+        if any(row["kind"] == kind and row["label_key"] == key for row in rows):
+            raise HomeError("vocabulary_duplicate", "Reuse the existing canonical value")
+        connection.execute(
+            "INSERT INTO vocabulary VALUES (?, ?, ?, ?, ?, ?)",
+            (str(operation_id), kind, label, key, meaning, authority_source),
+        )
+        return {"id": str(operation_id), "kind": kind, "label": label, "meaning": meaning}
+
+    return _mutate(home, "vocabulary.create", payload, operation_id, apply)
 
 
 def _mutate(
@@ -266,7 +403,7 @@ def register_process(
     source = inspect_source(workspace)
     designation = _name(name or source["title"])
     clean_aliases = _aliases(aliases)
-    return _mutate(
+    result = _mutate(
         home,
         "register",
         {
@@ -279,6 +416,9 @@ def register_process(
         operation_id,
         lambda connection: _insert_process(connection, source, designation, clean_aliases),
     )
+    if storage.enabled(home) and not workspace.resolve().is_relative_to(home.resolve()):
+        storage.set_location(home, source["workspace_id"], workspace)
+    return result
 
 
 def _resolve(connection: sqlite3.Connection, selector: str) -> dict[str, Any]:
@@ -386,13 +526,16 @@ def relocate_process(
             connection.execute("SELECT * FROM processes WHERE id=?", (old["id"],)).fetchone()
         )
 
-    return _mutate(
+    result = _mutate(
         home,
         "relocate",
         {"selector": selector, "location": source["location"]},
         operation_id,
         apply,
     )
+    if storage.enabled(home) and not workspace.resolve().is_relative_to(home.resolve()):
+        storage.set_location(home, source["workspace_id"], workspace)
+    return result
 
 
 def set_aliases(

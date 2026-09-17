@@ -3,6 +3,7 @@
 from pathlib import Path
 from uuid import UUID, uuid5
 
+from zaratustra import storage
 from zaratustra.core import (
     Event,
     InitialProcess,
@@ -10,6 +11,7 @@ from zaratustra.core import (
     init_workspace,
     migrate_workspace,
     read_records,
+    storage_factory,
 )
 
 from .store import Store
@@ -26,7 +28,7 @@ def shared_store(
     if not path.exists() and not create:
         return None
     if create:
-        path.mkdir(exist_ok=True)
+        path.mkdir(parents=True, exist_ok=True)
         info = init_workspace(path)
         if info.schema_version == 1:
             migrate_workspace(path, target_version=10)
@@ -38,6 +40,10 @@ def shared_store(
                 operation_id=uuid5(identity, "zaratustra-home-shared-v1"),
             ),
         )
+        if storage.enabled(home) and not storage.enabled(path):
+            database = path / ".zara/state.sqlite3"
+            storage.activate(path, database, "workspace", storage_factory)
+            database.unlink()
     snapshot = read_records(path)
     bootstrap = next((r for r in snapshot.records if isinstance(r, Event)), None)
     if (

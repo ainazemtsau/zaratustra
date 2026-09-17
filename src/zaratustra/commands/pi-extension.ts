@@ -2,9 +2,15 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import { Type } from "typebox";
 import { spawn } from "node:child_process";
 import { randomUUID, createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, resolve, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const python = __ZARA_PYTHON__;
-const directory = __ZARA_DIRECTORY__;
+const directory = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const localPython = join(directory, ".venv", process.platform === "win32" ? "Scripts/python.exe" : "bin/python");
+const runtimeFile = join(directory, ".zara-cache/runtime.json");
+const runtime = existsSync(runtimeFile) ? JSON.parse(readFileSync(runtimeFile, "utf8")) : {};
+const python = process.env.ZARATUSTRA_PYTHON || (existsSync(localPython) ? localPython : runtime.python) || "python";
 const instructions = __ZARA_INSTRUCTIONS__;
 const schema = __ZARA_SCHEMA__;
 

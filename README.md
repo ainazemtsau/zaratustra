@@ -1,5 +1,38 @@
 # Zaratustra
 
+## Portable Home and structured retrieval (0.22)
+
+Home and process data can live in ordinary files in your own repository. You choose
+GitHub, another Git host, a file copy or local-only use. Save locally and synchronize
+when you ask your agent to do so. Zaratustra does not choose a remote, push automatically
+or write a .gitignore for you.
+
+Confirmed `.zara-data/` directories contain records, exact materials and history.
+SQLite under `.zara-cache/` is disposable: after a clone or pull, normal commands
+validate the files and rebuild/update their local cache. Keep source files, artifacts,
+process folders, shared data and portable `.zara-context.json` in your chosen storage.
+Environments, caches and temporary build output can be excluded. A complete backup
+also includes your ordinary files outside the managed records.
+
+Ask your connected agent: “Move this Home to portable files”, “Find unresolved
+installation problems”, “Show our accepted decisions”, or “Save this idea in the
+backlog”. The agent handles migration, filters, ids and tools. Existing installations
+need the explicit backed-up migration; new `zara-home setup` installations use files.
+On another device: clone, install pinned dependencies (`uv sync` for a uv project),
+then start Pi there. A different host can use `zara-home setup --agent codex` or the
+same common API. No SQLite transfer/import is needed.
+
+Search returns small cards before opening selected content. Tags, episode categories
+and document purposes use one extensible Home vocabulary. Agents first inspect and
+reuse existing meanings, then explicitly propose a new value for owner approval.
+Keyword search is optional; no vector service, background job or semantic search is
+required. Git conflicts in the same scope need explicit resolution; independent
+processes can be edited on different devices.
+
+ChatGPT can read `.zara-data/navigation/index.json`, the chosen process index and
+the exact source files referenced by its cards. Selected discussion packets remain
+optional. See [storage, migration and limits](docs/portable-storage/IMPLEMENTATION.md).
+
 ## Web discussions and incoming requests (0.21.1)
 
 First ask Pi to help set up a ChatGPT Project for the selected Process and private
@@ -14,8 +47,8 @@ discuss freely and ask to save the selected result as an incoming request. Later
 ask Pi to process incoming requests: it preserves the original, distinguishes ideas
 from accepted decisions, requests missing attachments, and continues in a new chat.
 Free-form text and malformed JSON are accepted; the agent handles internal schemas.
-Repeated intake does not repeat already tracked delivery. Existing Home data stays
-local; only selected text is published. GitHub requires authenticated `gh`, and the
+Repeated intake does not repeat already tracked delivery. The owner can synchronize
+complete portable Home data; discussion packets are optional. GitHub commands require authenticated `gh`, and the
 ChatGPT connection must separately support creating files in the selected repo.
 
 See [Stage 3 scope and limits](docs/stage3/IMPLEMENTATION.md). Existing connections
@@ -70,7 +103,8 @@ With the installed Pi connection you can ask:
 - "Connect them with a related_to relationship. Save this document in Study Notes."
 - In a **new chat**: "Show Learning, open Study Notes and read the saved document."
 
-Home is a SQLite registry. Each Process has its own workspace and database. A new
+Home has one registry and each Process has its own workspace. From 0.22 onward,
+portable files back new Homes and their disposable SQLite working caches. A new
 Process starts with title/purpose and **zero Works**, Packs or Results. Groups have
 many-to-many membership; relationships have explicit types. Saved content persists;
 unsaved conversation is not memory. No Direction OS workflow runs inside a Process.
@@ -79,7 +113,7 @@ unsaved conversation is not memory. No Direction OS workflow runs inside a Proce
 
 Install a reviewed checkout with `uv sync --locked --no-dev --no-editable`, or
 install its built wheel into a dedicated Python 3.13 environment. Keep that program
-environment: the exported connection uses its absolute interpreter. Publication
+environment. Portable connections resolve the local environment on each device. Publication
 evidence is in [RESULT.md](RESULT.md); do not infer public availability from this
 README. Home and Process data live outside the program checkout.
 

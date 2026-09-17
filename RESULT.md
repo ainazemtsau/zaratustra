@@ -1,72 +1,56 @@
-# Stage 3 — web discussions and incoming requests
+# Portable storage and structured retrieval — 0.22.0
 
 ## outcome
 
-Candidate 0.21.1 fixes first setup: the ordinary Pi request now returns ready Project
-instructions from the shipped template without a prepared packet or GitHub write.
-The earlier 0.21.0 demonstration did not test this initial interaction. See
-docs/stage3/FIRST-SETUP-FIX.md for the defect, correction and actual fresh Pi result.
-
-Version 0.21.0 implements the owner's September17 approved scope over published
-0.20.0 a3e1c970bee97ef73c49084c1b940665d4bed4db: selected web discussion material,
-GitHub handoffs, tolerant original capture, recoverable item/attachment processing
-through ordinary Pi and fresh-chat continuation. See docs/stage3/IMPLEMENTATION.md.
-The prior report is retained in docs/results/2026-09-16-stage2b-skills.md.
+Implemented docs/portable-storage/PLAN.md: file authority, disposable SQLite,
+complete backed-up migration, structured retrieval, explicit Home vocabulary and
+portable agent/repository navigation. Native delivery validation, installed Pi and
+the personal migration rehearsal passed. Publication and personal rollout remain
+to be performed. Previous report is retained in
+docs/results/2026-09-17-stage3-first-setup.md.
 
 ## evidence
 
-For 0.21.1: native delivery gate PASS, 486 tests, 26 contracts and build/hygiene/types.
-A fresh Pi session with no channel or packet initially returned the whole filled
-instruction and one next step. Its only journal write configured the selected
-channel; no packet or publication occurred. The earlier attempt's unnecessary
-default-branch question and the successful attempt's corrected stale-context call
-are retained in the patch evidence. They are not silently described as clean runs.
-
-For 0.21.0: full native delivery gate PASS, 485 tests, 26 import contracts, formatting/lint,
-strict types, hygiene, build and report structure. The focused web suite has 12
-tests. The installed candidate wheel was exercised by ordinary Pi in fresh chats
-in a fictional Home: proposal saved, missing report requested, supplied file
-preserved byte-for-byte, request completed, sources reopened in another new chat.
-Independent public-API checks verify one completed request, zero pending and equal
-original/saved report hashes. See docs/stage3/VERIFICATION.md and its retained
-evidence; docs/stage3/USER-WALKTHROUGH.md shows the ordinary user path.
-
-An in-session read-only evaluator found issues in attachment accounting, source
-freshness, recovery, later authority and branch instructions. Corrections and
-behavioral regressions were added. This is not binding Direction G5 or owner
-acceptance. The legacy catalog concurrency observation remains OPEN and UNFIXED;
-see docs/stage2b/OPEN-OBSERVATIONS.md and its original retained trace.
+Full native delivery passed: 495 tests, 27 import contracts, strict types, lint,
+formatting and source/wheel builds. Another 35 focused tests passed after the final
+instruction clarification. Actual installed Pi saved a problem and explicitly
+approved tag, found the source in a fresh chat, and proposed another tag without
+creating it. A rehearsal on a private copy preserved every existing process row.
+New tests cover migration/clone/history, cache corruption, failed staging, retrieval,
+vocabulary, external registration, shared data, actual Git exchange and decision
+metadata. Installed Pi0.85.1 loader passed active selection/restoration checks.
+See docs/portable-storage/VERIFICATION.md for completed checks and pending work.
+Bounded in-session storage/setup review found issues which were checked and corrected.
+This is engineering verification, not binding Direction G5 or owner acceptance.
 
 ## assumptions
 
-The trusted local-owner boundary remains. Agents interpret actual instructions and
-semantic conflicts; code validates bytes, schemas, scope, references, revisions and
-known delivery accounting. GitHub uses existing gh authentication. Instructions do
-not grant ChatGPT a missing write tool.
+The local owner chooses storage, actual instructions and semantic classification.
+Code checks bytes, schemas, identities, versions and explicit operation boundaries.
+Git is owner-triggered. ChatGPT access depends on its actual repository connector.
 
 ## cuts
 
-No automatic model routing, provider execution, new subscription, background work,
-automatic attachment retrieval or Stage4. Personal dependency/connection upgrades
-were separately authorized on September17. Only selected
-text files are published. The real personal ChatGPT/GitHub transfer is a separate
-visible hookup step; local and fake transport checks do not establish that capability.
+No semantic/vector service, automatic summaries, daemon, Git automation, custom merge
+engine or model routing. Direct file edits do not become document revisions.
+Same-scope conflicts need explicit resolution. External folders remain independent
+and may need mapping on a new device. The prior legacy catalog concurrency observation
+remains OPEN in docs/stage2b/OPEN-OBSERVATIONS.md.
 
 ## cost
 
-One implementation agent, one bounded read-only setup/review helper, existing
-Python/uv tools and installed Pi for fictional verification. No new service or
-dependency. No personal Home data authored or changed.
+One implementation agent and a bounded read-only storage/setup reviewer; existing
+Python/SQLite/Git/Pi tools. No new dependency or service. Tests use fictional data.
+The authorized personal rollout preserves existing user content.
 
 ## manual-acceptance
 
-Scope approved by the owner's «ок». Acceptance of delivered behavior is pending
-the demonstration and owner's verdict. Full development migration is not claimed.
+Owner authorized implementation with «приступай к реализации». Acceptance of the
+delivered behavior remains with the owner after the demonstration.
 
 ## next
 
-solmax — deliver the first-setup correction and its separately authorized personal
-dependency/connection update, preserving owner data. Real ChatGPT/GitHub hookup is
-still a separate user check. Do not automatically start another stage.
+solmax — publish the general product, migrate/synchronize the
+authorized private Home, verify a clean clone, show results and limitations, then stop.
 
 END_OF_FILE: RESULT.md

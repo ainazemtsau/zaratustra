@@ -11,7 +11,15 @@ from datetime import datetime
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    StringConstraints,
+    model_serializer,
+    model_validator,
+)
 
 from zaratustra.core import WorkspaceError
 
@@ -24,7 +32,7 @@ Name = Annotated[
 Positive = Annotated[int, Field(strict=True, ge=1)]
 MEDIA_TYPE = "application/vnd.zaratustra.record+json"
 MAX_CONTENT = 8_000_000
-Action = Literal["create", "revise", "adopt", "replace", "revoke"]
+Action = Literal["create", "revise", "adopt", "replace", "revoke", "metadata"]
 
 
 class JournalError(WorkspaceError):
@@ -185,13 +193,33 @@ class Change(Model):
     links: Annotated[tuple[Reference, ...], Field(max_length=32)] | None = None
     reason: Text
     authority_source: Text | None = None
+    metadata: SearchMetadata | None = None
+
+    @model_serializer(mode="wrap")
+    def serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result: dict[str, Any] = handler(self)
+        if self.metadata is None:
+            result.pop("metadata", None)
+        return result
 
     def fingerprint(self) -> str:
         return hashlib.sha256(canonical(self.model_dump(mode="json"))).hexdigest()
 
 
+class SearchMetadata(Model):
+    tags: Annotated[tuple[UUID, ...], Field(max_length=32)] = ()
+    document_purpose: UUID | None = None
+    problem_status: Literal["open", "resolved"] | None = None
+
+    @model_validator(mode="after")
+    def unique_tags(self) -> SearchMetadata:
+        if len(set(self.tags)) != len(self.tags):
+            raise ValueError("Duplicate tag references")
+        return self
+
+
 class Revision(Model):
-    format: Literal[1] = 1
+    format: Literal[1, 2] = 1
     id: UUID
     revision: Positive
     scope: Scope
@@ -211,6 +239,14 @@ class Revision(Model):
     source_ref: Text
     operation_id: UUID
     fingerprint: str
+    metadata: SearchMetadata = SearchMetadata()
+
+    @model_serializer(mode="wrap")
+    def serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        result: dict[str, Any] = handler(self)
+        if self.format == 1:
+            result.pop("metadata", None)
+        return result
 
     def reference(self) -> Reference:
         return Reference(scope=self.scope, id=self.id, revision=self.revision)
@@ -220,3 +256,6 @@ def canonical(value: Any) -> bytes:
     return json.dumps(
         value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
     ).encode("utf-8")
+
+
+Change.model_rebuild()

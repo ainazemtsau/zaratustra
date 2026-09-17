@@ -7,13 +7,14 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
-from zaratustra import home
+from zaratustra import home, storage
 from zaratustra.journal import (
     DEFAULT_REGISTRY,
     Change,
     JournalError,
     Revision,
     Scope,
+    SearchMetadata,
     Store,
     header,
     resolve,
@@ -23,6 +24,73 @@ from zaratustra.journal import (
 from zaratustra.process_skills import SKILL_TYPE, Skill
 
 from . import Command, Context, _selected, required
+
+
+def _classifications(
+    root: Path, type_name: str, payload: dict[str, Any], metadata: SearchMetadata, *, new: bool
+) -> None:
+    values = home.vocabulary(root)
+    ids = {row["id"]: row for row in values}
+    for kind, identities in (
+        ("tag", metadata.tags),
+        ("document_purpose", (metadata.document_purpose,) if metadata.document_purpose else ()),
+    ):
+        for identity in identities:
+            if str(identity) not in ids or ids[str(identity)]["kind"] != kind:
+                raise JournalError(
+                    "unknown_classification",
+                    "Read vocabulary; new values need an explicit approved proposal",
+                )
+    if type_name == "episode":
+        category = payload.get("category", "work")
+        if not any(
+            row["kind"] == "category"
+            and home.vocabulary_key(row["label"]) == home.vocabulary_key(category)
+            for row in values
+        ):
+            raise JournalError(
+                "unknown_classification", "Propose the new episode category explicitly"
+            )
+        if category == "problem" and new and metadata.problem_status is None:
+            raise JournalError(
+                "missing_problem_status", "New problems require open or resolved status"
+            )
+
+
+def _filters(command: Command, root: Path) -> dict[str, Any]:
+    values = {
+        name: getattr(command, name)
+        for name in (
+            "type_name",
+            "state",
+            "category",
+            "problem_status",
+            "document_purpose",
+            "tags_all",
+            "tags_any",
+            "date_from",
+            "date_to",
+            "history",
+            "generation",
+        )
+    }
+    presets: dict[str, dict[str, Any]] = {
+        "open_problems": {"type_name": "episode", "category": "problem", "problem_status": "open"},
+        "problems": {"type_name": "episode", "category": "problem"},
+        "accepted_decisions": {"type_name": "decision", "state": "accepted"},
+        "journal": {"type_name": "episode"},
+    }
+    if command.view in ("plans", "backlogs"):
+        label = "plan" if command.view == "plans" else "backlog"
+        purpose = next(
+            row for row in home.vocabulary(root, "document_purpose") if row["label"] == label
+        )
+        presets[command.view] = {"type_name": "document", "document_purpose": UUID(purpose["id"])}
+    for field, value in presets.get(command.view or "", {}).items():
+        if values[field] is not None and values[field] != value:
+            raise JournalError("contradictory_filters", f"{field} conflicts with selected view")
+        values[field] = value
+    return values
 
 
 def _page(record: dict[str, Any], command: Command) -> dict[str, Any]:
@@ -90,6 +158,7 @@ def execute_journal(
     writing = action in (
         "record.create",
         "record.revise",
+        "record.metadata",
         "record.adopt",
         "record.replace",
         "record.revoke",
@@ -118,15 +187,38 @@ def execute_journal(
         if shared is not None:
             stores.append(shared)
     if action == "record.search":
-        return search(
+        filters = _filters(command, home_path)
+        result = search(
             stores,
             command.query,
-            type_name=command.type_name,
-            state=command.state,
             linked_to=command.reference,
             limit=command.limit,
             offset=command.offset,
+            **filters,
         )
+        if command.view == "open_problems":
+            unknown = [
+                r
+                for store in stores
+                for r in store.current()
+                if r.type_name == "episode"
+                and r.payload.get("category") == "problem"
+                and r.metadata.problem_status is None
+            ]
+            result["legacy_status_unknown"] = len(unknown)
+        return result
+    if action == "record.facets":
+        records = [r for store in stores for r in store.current()]
+        return {
+            "categories": sorted(
+                {str(r.payload["category"]) for r in records if r.type_name == "episode"}
+            ),
+            "tags": sorted({str(tag) for r in records for tag in r.metadata.tags}),
+            "document_purposes": sorted(
+                {str(r.metadata.document_purpose) for r in records if r.metadata.document_purpose}
+            ),
+            "vocabulary": "Use vocabulary.list to read canonical labels and meanings",
+        }
     if action == "source.read":
         if command.reference is None:
             raise JournalError("missing_reference", "Supply a version-pinned source reference")
@@ -143,9 +235,18 @@ def execute_journal(
         spec = DEFAULT_REGISTRY.get(
             type_name, old.schema_version if old else command.schema_version
         )
-        if spec.managed_by:
+        if spec.managed_by and action != "record.metadata":
             raise JournalError("managed_type", "Use " + spec.managed_by)
         payload = spec.validate(command.payload) if command.payload is not None else None
+        metadata = command.metadata or (old.metadata if old else SearchMetadata())
+        if storage.enabled(home_path):
+            _classifications(
+                home_path,
+                type_name,
+                payload or (old.payload if old else {}),
+                metadata,
+                new=old is None,
+            )
         if type_name == SKILL_TYPE and payload is not None:
             skill = Skill.model_validate(payload)
             if skill.derived_from:
@@ -169,6 +270,7 @@ def execute_journal(
                 "links": command.links,
                 "reason": required(command.reason, "reason"),
                 "authority_source": command.authority_source,
+                "metadata": command.metadata,
             }
         )
         for link in change.links or ():

@@ -24,8 +24,11 @@ Continue step by step when the owner asks. Offer the returned connection check o
 after instructions are installed; report the actual GitHub file and Pi receipt.
 Prepare: web.prepare takes question and explicitly selected version-pinned local
 references. Read relevant facts and selected process instructions first; include
-their references only within the owner's discussion scope. Do not upload the Home,
-SQLite files, full journals or linked sources. The returned web_context is a dated
+their references within the owner's discussion scope. Portable Home files can be
+stored in the owner's chosen repository and read there directly. Repository storage
+does not require web.prepare or web.publish. Those commands offer an optional selected
+discussion packet. Git synchronization happens on the owner's instruction; the product
+does not choose a remote or exclude user data. The returned web_context is a dated
 snapshot, readable through record.read; its markdown can also be copied to a chat.
 web.publish takes its record and payload.selected_publication=true, ONLY on the
 owner's instruction to publish those selected materials. It returns the actual

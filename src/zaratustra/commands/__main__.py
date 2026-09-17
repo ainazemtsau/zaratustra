@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 
 from zaratustra.commands import Command, ContextGuard, execute, read_context
 from zaratustra.commands.connect import connect_agent
+from zaratustra.commands.storage_adapter import migrate
 from zaratustra.core import WorkspaceError
 from zaratustra.home import HomeError, init_home
 from zaratustra.journal import Reference, read_export
@@ -48,11 +49,18 @@ def main(argv: list[str] | None = None) -> int:
     inspect.add_argument("--reference", help="JSON version-pinned reference inside the package")
     inspect.add_argument("--offset", type=int, default=0)
     inspect.add_argument("--limit", type=int, default=20)
+    migration = commands.add_parser("storage-migrate", help="Back up and migrate a complete Home")
+    migration.add_argument("--home", type=Path, required=True)
     args = parser.parse_args(argv)
     try:
         result: dict[str, Any]
         if args.command == "setup":
+            new_home = (
+                not (args.home / ".zara-home").exists() and not (args.home / ".zara-data").exists()
+            )
             init_home(args.home)
+            if new_home:
+                migrate(args.home)
             result = connect_agent(
                 args.directory,
                 args.home,
@@ -60,6 +68,8 @@ def main(argv: list[str] | None = None) -> int:
                 workspace=args.workspace,
                 update=args.update_connection,
             )
+        elif args.command == "storage-migrate":
+            result = migrate(args.home)
         elif args.command == "schema":
             result = Command.model_json_schema()
         elif args.command == "inspect-export":

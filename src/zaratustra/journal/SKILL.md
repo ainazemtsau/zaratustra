@@ -3,11 +3,11 @@ name: zaratustra-journal
 description: Keep a grounded work journal and retrieve decisions in the selected Zaratustra Process.
 ---
 
-# Working journal (Stage 2A)
+# Working journal and structured retrieval
 
 Use the installed zaratustra tool/common API. The user talks normally; you choose
 operations and handle identifiers. Start with process.list/open when the current
-Process is unknown, and type.list to learn registered payload schemas.
+Process is unknown. Use type.list only when the needed installed schema is unknown.
 
 Within work for which the owner has authorized keeping a journal, record substantial
 results, consequential obstacles, constraints and unfinished state on your own,
@@ -61,6 +61,33 @@ FTS5 matches literal prefixes, not meaning or Russian morphology. Open candidate
 records and their sources before answering. Explain gaps, not just successes.
 No match means "not found with these queries", never "this never happened".
 Search results expose queries/snippets/sources, not internal reasoning.
+Prefer structural views first: open_problems, problems, accepted_decisions, plans,
+backlogs or journal. Refine with category, problem_status, document_purpose, tags_all,
+tags_any, date_from/date_to (timezone-aware inclusive start/exclusive end), reference
+and optional keyword query. Current revisions are the default; history=true is explicit.
+Keep generation for subsequent offset pages; restart if search_changed is returned.
+Unknown legacy problem status is not resolved. A successful retry alone does not
+resolve an earlier problem: revise its episode only with evidence addressing that cause.
+
+Tags, episode categories and document purposes use a shared Home vocabulary.
+Before the first vocabulary action in a session, use command.list with query equal
+to that exact action to read its payload schema. Put its fields in payload; do not
+guess names. In vocabulary.propose the alternatives field is considered (UUID list).
+Before introducing a classification, read vocabulary.list (all relevant pages),
+compare meanings and reuse an existing value, including equivalent user wording.
+Never silently invent synonyms or create vocabulary while saving a record.
+If none fits, use vocabulary.propose with label, meaning, reason and considered ids.
+Show the proposed value, nearest relevant alternatives and why they do not fit.
+Obtain the owner's decision, then vocabulary.create with the exact proposal token,
+generation and actual authority_source. An already explicit instruction to create
+that exact value needs no repeated confirmation, but still check existing meanings.
+Code checks exact normalized duplicates and concurrent changes; semantic equivalence
+is your assessment, not an infallible automated detector. A new record type needs
+installed schema/operations; decision states are not extensible vocabulary entries.
+Use vocabulary ids in metadata.tags and metadata.document_purpose. New problem
+episodes require metadata.problem_status=open or resolved with evidence. record.metadata
+changes only tags/purpose with history and a reason; it cannot change decision content
+or resolve problems. record.facets describes values actually used in the selected scope.
 source.read never grants access to another Process merely by following a reference.
 scope_unavailable means not included in this context. If needed, ask the owner to
 select that Process explicitly or to share the specific source/excerpt. Do not

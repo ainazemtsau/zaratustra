@@ -13,7 +13,7 @@ from uuid import UUID, uuid4, uuid5
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
-from zaratustra import home
+from zaratustra import home, storage
 from zaratustra.core import (
     InitialProcess,
     Process,
@@ -33,7 +33,7 @@ from zaratustra.core import (
     save_process_material,
 )
 from zaratustra.entry import EntryCatalog, source_path, transfer_catalog
-from zaratustra.journal import MEDIA_TYPE, Reference
+from zaratustra.journal import MEDIA_TYPE, Reference, SearchMetadata
 from zaratustra.process_skills import SKILL_TYPE as SKILL_TYPE  # registers installed schemas
 
 from . import registry as command_registry
@@ -46,7 +46,7 @@ CONFIG_NAME = ".zara-context.json"
 
 class Context(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
-    version: Literal[1] = 1
+    version: Literal[1, 2] = 1
     home: str
     workspace: str | None = None
     process_id: UUID | None = None
@@ -73,6 +73,8 @@ BuiltinAction = Literal[
     "type.list",
     "record.create",
     "record.revise",
+    "record.metadata",
+    "record.facets",
     "record.adopt",
     "record.replace",
     "record.revoke",
@@ -135,6 +137,20 @@ class Command(BaseModel):
     settings: Annotated[dict[Name, str | bool | int], Field(max_length=16)] = {}
     expected_configuration_revision: Annotated[int, Field(strict=True, ge=0)] | None = None
     loaded_slots: Annotated[tuple[Name, ...], Field(max_length=16)] = ()
+    metadata: SearchMetadata | None = None
+    category: Name | None = None
+    problem_status: Literal["open", "resolved", "unknown"] | None = None
+    document_purpose: UUID | None = None
+    tags_all: tuple[UUID, ...] = ()
+    tags_any: tuple[UUID, ...] = ()
+    date_from: str | None = None
+    date_to: str | None = None
+    history: bool = False
+    generation: str | None = None
+    view: (
+        Literal["open_problems", "problems", "accepted_decisions", "plans", "backlogs", "journal"]
+        | None
+    ) = None
 
     @model_validator(mode="after")
     def installed_command(self) -> Command:
@@ -163,6 +179,15 @@ def read_context(directory: Path) -> Context:
     if not selected.is_file():
         raise home.HomeError("home_not_configured", "Set up Home in this chosen working directory")
     context = Context.model_validate_json(selected.read_bytes())
+    if context.version == 2:
+        context = context.model_copy(
+            update={
+                "home": (selected.parent / context.home).resolve().as_posix(),
+                "workspace": (selected.parent / context.workspace).resolve().as_posix()
+                if context.workspace
+                else None,
+            }
+        )
     if not Path(context.home).is_absolute():
         raise home.HomeError("invalid_context", "Configured Home path must be absolute")
     if context.workspace is not None and not Path(context.workspace).is_absolute():
@@ -175,14 +200,30 @@ def read_context(directory: Path) -> Context:
     return context
 
 
-def write_context(directory: Path, context: Context) -> Path:
+def write_context(directory: Path, context: Context, *, update: bool = False) -> Path:
     """Explicit setup only; never silently replace a prior context selection."""
     path = directory.resolve() / CONFIG_NAME
     if path.exists():
-        if Context.model_validate_json(path.read_bytes()) != context:
+        saved = Context.model_validate_json(path.read_bytes())
+        if saved == context:
+            return path
+        equivalent = all(
+            getattr(read_context(directory), key)
+            == (
+                (directory / value).resolve().as_posix()
+                if value and context.version == 2 and key in ("home", "workspace")
+                else value
+            )
+            for key in ("home", "workspace", "process_id")
+            for value in (getattr(context, key),)
+        )
+        if not update or not equivalent:
             raise home.HomeError(
                 "context_conflict", "A different context is already configured here"
             )
+        from .connect import _replace
+
+        _replace(path, context.model_dump_json(indent=2) + chr(10))
         return path
     with path.open("x", encoding="utf-8", newline="") as stream:
         stream.write(context.model_dump_json(indent=2) + chr(10))
@@ -263,6 +304,10 @@ def _create(context: Context, command: Command, operation_id: UUID) -> dict[str,
                 "upgrade_required", "Explicitly upgrade the existing workspace first"
             )
     snapshot = create_process(workspace, initial)
+    if storage.enabled(registry) and not storage.enabled(workspace):
+        from .storage_adapter import activate_new_workspace
+
+        activate_new_workspace(workspace)
     process = next(row for row in snapshot.records if isinstance(row, Process))
     try:
         row = home.register_process(
@@ -312,7 +357,7 @@ def _import(context: Context, command: Command, operation_id: UUID) -> dict[str,
     return transfer_catalog(catalog_path, registry, prepare_import)
 
 
-def execute(
+def _execute(
     context: Context,
     command: Command,
     *,
@@ -539,4 +584,68 @@ def execute(
     return response
 
 
+from . import storage_adapter as storage_adapter  # noqa: E402
+from . import vocabulary_adapter as vocabulary_adapter  # noqa: E402
+
+
+@storage.request_scoped
+def execute(
+    context: Context,
+    command: Command,
+    *,
+    source_ref: str,
+    session_process: UUID | None = None,
+    guard: ContextGuard | None = None,
+) -> dict[str, Any]:
+    result = _execute(
+        context, command, source_ref=source_ref, session_process=session_process, guard=guard
+    )
+    writes = {
+        "process.create",
+        "process.register",
+        "process.relocate",
+        "process.aliases",
+        "group.create",
+        "group.membership",
+        "relation.set",
+        "relation.delete",
+        "material.save",
+        "record.create",
+        "record.revise",
+        "record.metadata",
+        "record.adopt",
+        "record.replace",
+        "record.revoke",
+        "skill.bind",
+        "skill.unbind",
+        "vocabulary.create",
+        "web.configure",
+        "web.pull",
+        "web.attach",
+        "web.review",
+        "web.complete",
+        "web.prepare",
+    }
+    if command.action in writes and storage.enabled(Path(context.home)):
+        from .navigation import refresh
+
+        try:
+            selected = None
+            if command.scope == "home":
+                selected = Path(context.home) / ".zara-home/shared"
+            else:
+                selector = command.process or (str(session_process) if session_process else None)
+                if command.action == "process.create":
+                    selector = result.get("process", {}).get("id")
+                if selector or context.workspace:
+                    selected, _ = _selected(context, selector)
+            refresh(Path(context.home), selected=selected)
+        except (OSError, ValueError, WorkspaceError) as error:
+            result["navigation_warning"] = str(error)
+            result["committed"] = True
+    return result
+
+
 from . import web_adapter as web_adapter  # noqa: E402
+
+storage_adapter.register()

@@ -1,4 +1,9 @@
 # Core
+Portable file-backed workspaces retain the existing domain transactions and schemas.
+storage owns durable row/content packages; workspace.py supplies installed cache
+schema factories. Reads may rebuild disposable caches, never rewrite canonical
+history or repair damaged source files. Legacy schema migration bytes remain frozen.
+
 Public API is __init__.py: workspace/records, mutation and authorized receipt APIs,
 owner-local history, immutable models and errors. Core never imports CLI/local adapter.
 workspace.py owns checked transactions/layout/metadata; migrations.py retains released

@@ -4,14 +4,12 @@ from __future__ import annotations
 
 import base64
 import hashlib
-import json
-import sqlite3
-from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from uuid import UUID
 
+from zaratustra import storage
 from zaratustra.core import (
     Process,
     ProcessMaterial,
@@ -39,6 +37,7 @@ from .types import (
     Registry,
     Revision,
     Scope,
+    SearchMetadata,
     canonical,
 )
 
@@ -46,6 +45,7 @@ from .types import (
 class Store:
     """One explicitly allowed owner scope. A snapshot never follows foreign links."""
 
+    @storage.request_scoped
     def __init__(
         self, path: Path, scope: Scope, source_ref: str, registry: Registry = DEFAULT_REGISTRY
     ) -> None:
@@ -196,13 +196,18 @@ class Store:
             spec = self.registry.get(old.type_name, old.schema_version)
             if spec.schema() != old.payload_schema:
                 raise JournalError("schema_conflict", "Installed schema differs from saved version")
-            state = spec.transition(old.state, change.action)
-        if change.action not in spec.operations:
+            state = (
+                old.state
+                if change.action == "metadata"
+                else spec.transition(old.state, change.action)
+            )
+        if change.action != "metadata" and change.action not in spec.operations:
             raise JournalError("unsupported_operation", "Type does not support this operation")
         if change.action in ("adopt", "replace", "revoke") and not change.authority_source:
             raise JournalError("missing_authority", "Give the actual available owner instruction")
         if change.action in ("adopt", "revoke") and any(
-            value is not None for value in (change.payload, change.title, change.links)
+            value is not None
+            for value in (change.payload, change.title, change.links, change.metadata)
         ):
             raise JournalError("changed_acceptance", "Adopt/revoke binds exactly the read revision")
         if change.action in ("create", "revise", "replace") and change.payload is None:
@@ -210,6 +215,24 @@ class Store:
         payload = spec.validate(
             change.payload if change.payload is not None else old.payload if old else {}
         )
+        metadata = change.metadata or (old.metadata if old else SearchMetadata())
+        if change.action == "metadata":
+            if any(value is not None for value in (change.payload, change.title, change.links)):
+                raise JournalError(
+                    "metadata_only", "Metadata cannot change record content or links"
+                )
+            if old and metadata.problem_status != old.metadata.problem_status:
+                raise JournalError(
+                    "episode_revision_required", "Resolve a problem through an episode revision"
+                )
+        if metadata.document_purpose is not None and spec.name != "document":
+            raise JournalError("invalid_metadata", "Document purpose applies only to documents")
+        if metadata.problem_status is not None and (
+            spec.name != "episode" or payload.get("category") != "problem"
+        ):
+            raise JournalError(
+                "invalid_metadata", "Problem status applies only to problem episodes"
+            )
         links = list(change.links if change.links is not None else old.links if old else ())
         for reference in spec.references(payload):
             if reference not in links:
@@ -221,6 +244,7 @@ class Store:
         for link in links:
             resolve([self], link)
         result = Revision(
+            format=2 if change.metadata is not None or (old and old.format == 2) else 1,
             id=old.id if old else change.record_id or change.operation_id,
             revision=old.revision + 1 if old else 1,
             scope=self.scope,
@@ -240,6 +264,7 @@ class Store:
             source_ref=self.source_ref,
             operation_id=change.operation_id,
             fingerprint=change.fingerprint(),
+            metadata=metadata,
         )
         content = canonical(result.model_dump(mode="json"))
         if len(content) > 16_000_000:
@@ -274,7 +299,13 @@ class Store:
         }
 
     def current(self) -> list[Revision]:
-        return [history[-1] for history in self.records.values()]
+        return [history[-1] for history in self.records.values()] + [
+            self.legacy(identity)
+            for identity, material in self.materials.items()
+            if identity not in self.records
+            and material.media_type != MEDIA_TYPE
+            and material.content_size <= MAX_CONTENT
+        ]
 
 
 def header(record: Revision) -> dict[str, Any]:
@@ -303,52 +334,20 @@ def search(
     linked_to: Reference | None = None,
     limit: int = 20,
     offset: int = 0,
+    **filters: Any,
 ) -> dict[str, Any]:
-    """FTS5 literal prefix terms, OR recall; agent must open and assess sources."""
-    if not 1 <= limit <= 100 or offset < 0 or len(query) > 128:
-        raise JournalError("invalid_query", "Bounded query/page required")
-    records = [
-        r
-        for store in stores
-        for r in store.current()
-        if (type_name is None or r.type_name == type_name)
-        and (state is None or r.state == state)
-        and (linked_to is None or linked_to in r.links)
-    ]
-    terms = [part for part in "".join(c if c.isalnum() else " " for c in query).split() if part]
-    with closing(sqlite3.connect(":memory:")) as connection:
-        connection.execute(
-            "CREATE VIRTUAL TABLE search USING fts5(title, body, tokenize='unicode61')"
-        )
-        for index, record in enumerate(records):
-            # Binary content is not indexed as base64; scope filtering happened before this point.
-            payload = {k: v for k, v in record.payload.items() if k != "base64"}
-            connection.execute(
-                "INSERT INTO search(rowid, title, body) VALUES (?, ?, ?)",
-                (index + 1, record.title, json.dumps(payload, ensure_ascii=False)),
-            )
-        if terms:
-            match = " OR ".join('"' + term + '"*' for term in terms)
-            rows = connection.execute(
-                "SELECT rowid, snippet(search, 1, '[', ']', '…', 24) FROM search "
-                "WHERE search MATCH ? ORDER BY rank, rowid LIMIT ? OFFSET ?",
-                (match, limit, offset),
-            ).fetchall()
-        else:
-            rows = connection.execute(
-                "SELECT rowid, substr(body, 1, 320) FROM search "
-                "ORDER BY rowid DESC LIMIT ? OFFSET ?",
-                (limit, offset),
-            ).fetchall()
-    return {
-        "matches": [header(records[row[0] - 1]) | {"snippet": row[1]} for row in rows],
-        "query": query,
-        "method": "FTS5 unicode61, literal prefix terms OR",
-        "limit": limit,
-        "offset": offset,
-        "limitation": "No Russian morphology or semantic guarantee. "
-        "No match is not proof of absence.",
-    }
+    from .retrieval import retrieve
+
+    return retrieve(
+        stores,
+        query,
+        type_name=type_name,
+        state=state,
+        linked_to=linked_to,
+        limit=limit,
+        offset=offset,
+        **filters,
+    )
 
 
 def resolve(stores: list[Store], reference: Reference) -> dict[str, Any]:

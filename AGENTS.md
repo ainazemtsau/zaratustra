@@ -9,6 +9,14 @@
 - A focused run is feedback, not full-delivery evidence. Do not claim green from individual tools.
 
 ## What exists
+The owner approved the portable-storage scope on September17 with
+«приступай к реализации», including the Home-wide explicit vocabulary procedure.
+See docs/portable-storage/PLAN.md. Version0.22 makes confirmed files authoritative,
+SQLite reconstructable, connections portable, and structured retrieval explicit.
+This current scope supersedes older local-only storage descriptions. It includes
+the general product release and the approved private installation migration/sync;
+it does not authorize another stage, semantic search or automatic Git operations.
+
 Stage 3 (0.21) adds explicit installed command registration, selected
 web context and GitHub request intake through public journal/Core operations.
 Owner approved the shown ChatGPT → GitHub → Pi scope with «ок» on September17.

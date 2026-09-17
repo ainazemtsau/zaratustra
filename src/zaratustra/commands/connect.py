@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Literal
 from uuid import uuid4
 
+from zaratustra import storage
 from zaratustra.commands import Command, Context, write_context
 from zaratustra.home import HomeError, inspect_source, read_home
 
@@ -52,6 +53,14 @@ INSTRUCTIONS += chr(10) + files("zaratustra.web_exchange").joinpath("INSTRUCTION
 )
 
 
+def _portable_path(path: Path, directory: Path) -> str:
+    try:
+        return Path(os.path.relpath(path, directory)).as_posix()
+    except ValueError:
+        # Different Windows volumes require an explicitly selected local connection.
+        return path.as_posix()
+
+
 def connect_agent(
     directory: Path,
     home: Path,
@@ -67,8 +76,15 @@ def connect_agent(
     read_home(home)
     source = inspect_source(workspace) if workspace is not None else None
     context = Context(
-        home=home.as_posix(),
-        workspace=source["location"] if source else None,
+        version=2 if storage.enabled(home) else 1,
+        home=_portable_path(home, directory) if storage.enabled(home) else home.as_posix(),
+        workspace=(
+            _portable_path(Path(source["location"]), directory)
+            if storage.enabled(home)
+            else source["location"]
+        )
+        if source
+        else None,
         process_id=source["id"] if source else None,
     )
     if agent == "pi":
@@ -94,16 +110,20 @@ def connect_agent(
                 "",
                 INSTRUCTIONS,
                 "",
+                "Run from the configured chat folder. Resolve python from its .venv "
+                "(Scripts/python.exe on Windows, bin/python elsewhere), or the explicitly "
+                "configured local runtime in .zara-cache/runtime.json. After a fresh clone "
+                "install the pinned project dependencies with uv sync first.",
                 "Invoke the common installed adapter using a structured subprocess argument list:",
                 json.dumps(
                     [
-                        str(Path(sys.executable).resolve()),
+                        "<resolved local Python interpreter>",
                         "-I",
                         "-m",
                         "zaratustra.commands",
                         "run",
                         "--directory",
-                        str(directory),
+                        ".",
                     ],
                     ensure_ascii=False,
                 ),
@@ -133,7 +153,10 @@ def connect_agent(
             raise HomeError(
                 "connection_conflict", f"Different existing connection retained: {target}"
             )
-    configuration = write_context(directory, context)
+    configuration = write_context(directory, context, update=update)
+    runtime = directory / ".zara-cache/runtime.json"
+    runtime.parent.mkdir(exist_ok=True)
+    _replace(runtime, json.dumps({"python": str(Path(sys.executable).resolve())}))
     target.parent.mkdir(parents=True, exist_ok=True)
     _replace(target, content)
     managed[agent] = hashlib.sha256(content.encode("utf-8")).hexdigest()
