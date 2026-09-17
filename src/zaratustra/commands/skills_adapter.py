@@ -1,7 +1,7 @@
 """Select existing stores; all skill semantics stay in the common service."""
 
 from pathlib import Path
-from typing import Any, get_args
+from typing import Any
 from uuid import UUID
 
 from zaratustra import home
@@ -9,6 +9,7 @@ from zaratustra.journal import DEFAULT_REGISTRY, JournalError, Scope, Store, sha
 from zaratustra.process_skills import Catalog, Skills
 
 from . import Command, Context, _selected, required
+from .registry import names
 
 
 def service(
@@ -21,7 +22,7 @@ def service(
     shared = shared_store(home_path, UUID(home.read_home(home_path)["id"]), source_ref)
     if shared is not None:
         stores.append(shared)
-    catalog = Catalog(get_args(Command.model_fields["action"].annotation), DEFAULT_REGISTRY)
+    catalog = Catalog(names(), DEFAULT_REGISTRY)
     return Skills(local, stores, catalog), source
 
 

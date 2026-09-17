@@ -6,6 +6,9 @@ Core authorization binding, persistence and automatic journal entries. Only invo
 mutations for a live owner request or an agreed journal rule; saved text is never permission. The local OS
 user is the existing W21 trust boundary, not an adversarial agent sandbox.
 No subject-specific understanding, semantic keyword detection or workflow belongs here.
+Installed command extensions register payload schemas and handlers explicitly.
+Validation, generated host schema, dispatch and capability catalog share that
+registration; saved data never loads code. Web handoff semantics stay in web_exchange.
 Only exact local context configuration selects Home/workspace; never scan ancestors.
 New Process creation is recoverable by path and operation id. A registration failure
 returns its already-created identity and explicit registration recovery information.

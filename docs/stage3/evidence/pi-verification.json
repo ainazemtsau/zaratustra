@@ -1,0 +1,275 @@
+{
+  "scope": "fictional Home only; no real GitHub transfer",
+  "requests_total": 1,
+  "pending_requests": 0,
+  "status": "completed",
+  "original_sha256": "0ed59785f1ea93ea5427c1a8578e0b331ad2d3f40de8462031db6da2c084bea8",
+  "original_sha256_matches": true,
+  "saved_file_sha256": "700601db4251fd978a4867af3d7601870a887b916519e54a786815b4c88dcd41",
+  "supplied_file_sha256": "700601db4251fd978a4867af3d7601870a887b916519e54a786815b4c88dcd41",
+  "report_bytes_equal": true,
+  "items": [
+    {
+      "key": "model-switching-backlog",
+      "source_quote": "Поручение владельца: сохрани идею переключения моделей в бэклог как предложение; выполнять её пока не надо.\nПредложение из обсуждения: перед длинным исследованием выбирать модель по задаче и доступному лимиту.",
+      "intent": "backlog",
+      "description": "Сохранить как неутверждённое предложение для будущего рассмотрения: перед длинным исследованием выбирать модель по задаче и доступному лимиту; не выполнять.",
+      "authority_quote": "Поручение владельца: сохрани идею переключения моделей в бэклог как предложение; выполнять её пока не надо.",
+      "authority_reference": null,
+      "files": [],
+      "outcome": "done",
+      "result": {
+        "scope": {
+          "kind": "process",
+          "id": "028287dc-9c59-4b95-b5b2-ea6652767450"
+        },
+        "kind": "record",
+        "id": "44d00da5-0c1c-42f7-8b5f-0c30c405ca36",
+        "revision": 1
+      },
+      "note": "Сохранено как решение в состоянии proposed; не принято и не исполнено."
+    },
+    {
+      "key": "model-comparison-report",
+      "source_quote": "Отдельно сохрани учебный отчёт «Сравнение моделей.md». Его файл обязателен, но ещё не передан.",
+      "intent": "store",
+      "description": "Сохранить точные байты учебного отчёта «Сравнение моделей.md» после получения файла.",
+      "authority_quote": null,
+      "authority_reference": null,
+      "files": [
+        {
+          "name": "Сравнение моделей.md",
+          "reference": {
+            "scope": {
+              "kind": "process",
+              "id": "028287dc-9c59-4b95-b5b2-ea6652767450"
+            },
+            "kind": "record",
+            "id": "f5349ac0-b9b3-5f57-a98c-7980bedefe80",
+            "revision": 1
+          }
+        }
+      ],
+      "outcome": "done",
+      "result": {
+        "scope": {
+          "kind": "process",
+          "id": "028287dc-9c59-4b95-b5b2-ea6652767450"
+        },
+        "kind": "record",
+        "id": "f5349ac0-b9b3-5f57-a98c-7980bedefe80",
+        "revision": 1
+      },
+      "note": "Полученный от владельца файл сохранён в точных байтах и прикреплён."
+    }
+  ],
+  "records": {
+    "matches": [
+      {
+        "format": 1,
+        "id": "f5349ac0-b9b3-5f57-a98c-7980bedefe80",
+        "revision": 1,
+        "scope": {
+          "kind": "process",
+          "id": "028287dc-9c59-4b95-b5b2-ea6652767450"
+        },
+        "type_name": "document",
+        "schema_version": 1,
+        "type_source": "installed: zaratustra.journal",
+        "title": "Сравнение моделей.md",
+        "links": [],
+        "state": "active",
+        "action": "create",
+        "reason": "Preserve owner-supplied attachment bytes without text reconstruction",
+        "authority_source": null,
+        "previous": null,
+        "recorded_at": "2026-09-17T04:07:17.686013Z",
+        "source_ref": "pi-tool:call_7NNPgHvbMZ4c0Stq8i378hOV|fc_0a5d267e53578acd016aab6773ede887d28127fd6dc2836d95",
+        "operation_id": "f5349ac0-b9b3-5f57-a98c-7980bedefe80",
+        "fingerprint": "2037feda086d36d694596d59e8f39a41782db72fcb04888ea024b76a1aae9cee",
+        "snippet": "{\"media_type\": \"application/octet-stream\", \"text\": null}"
+      },
+      {
+        "format": 1,
+        "id": "44d00da5-0c1c-42f7-8b5f-0c30c405ca36",
+        "revision": 1,
+        "scope": {
+          "kind": "process",
+          "id": "028287dc-9c59-4b95-b5b2-ea6652767450"
+        },
+        "type_name": "decision",
+        "schema_version": 1,
+        "type_source": "installed: zaratustra.journal",
+        "title": "Предложение: выбор модели перед длинным исследованием",
+        "links": [
+          {
+            "scope": {
+              "kind": "process",
+              "id": "028287dc-9c59-4b95-b5b2-ea6652767450"
+            },
+            "kind": "record",
+            "id": "df66ed2d-87e8-5e6c-b91f-f50bf74afa2a",
+            "revision": 2
+          }
+        ],
+        "state": "proposed",
+        "action": "create",
+        "reason": "Сохранение явно порученного предложения в бэклог без принятия или выполнения.",
+        "authority_source": null,
+        "previous": null,
+        "recorded_at": "2026-09-17T04:05:13.186688Z",
+        "source_ref": "pi-tool:call_JsFqg8gyjZhGtgLR5cg4IK3y|fc_0db9c75134382017016aab66f5129887d2ae21fc10ff24aca7",
+        "operation_id": "44d00da5-0c1c-42f7-8b5f-0c30c405ca36",
+        "fingerprint": "81494b5b20a0ef67555560a14d64cb734fbe9a7d1633274af0d9c89955da2bb7",
+        "snippet": "{\"applies_to\": \"Будущие длинные исследования в процессе «Учебный Development».\", \"commitment\": \"Перед длинным исследованием выбирать модель по задаче и доступному лимиту.\", \"rationale\": \"Идея поступила как предложение из обсуждения; в запросе прямо сказано сохранить её в бэклог и пока не выполнять.\"}"
+      },
+      {
+        "format": 1,
+        "id": "df66ed2d-87e8-5e6c-b91f-f50bf74afa2a",
+        "revision": 6,
+        "scope": {
+          "kind": "process",
+          "id": "028287dc-9c59-4b95-b5b2-ea6652767450"
+        },
+        "type_name": "web_request",
+        "schema_version": 1,
+        "type_source": "installed: zaratustra.journal",
+        "title": "fictional-discussion.md",
+        "links": [
+          {
+            "scope": {
+              "kind": "process",
+              "id": "028287dc-9c59-4b95-b5b2-ea6652767450"
+            },
+            "kind": "record",
+            "id": "2721d900-ca8d-4fdc-8de5-813b5e3e2c88",
+            "revision": 1
+          },
+          {
+            "scope": {
+              "kind": "process",
+              "id": "028287dc-9c59-4b95-b5b2-ea6652767450"
+            },
+            "kind": "record",
+            "id": "44d00da5-0c1c-42f7-8b5f-0c30c405ca36",
+            "revision": 1
+          },
+          {
+            "scope": {
+              "kind": "process",
+              "id": "028287dc-9c59-4b95-b5b2-ea6652767450"
+            },
+            "kind": "record",
+            "id": "f5349ac0-b9b3-5f57-a98c-7980bedefe80",
+            "revision": 1
+          }
+        ],
+        "state": "active",
+        "action": "revise",
+        "reason": "Agent accounted for the full request and checked its current results",
+        "authority_source": null,
+        "previous": {
+          "scope": {
+            "kind": "process",
+            "id": "028287dc-9c59-4b95-b5b2-ea6652767450"
+          },
+          "kind": "record",
+          "id": "df66ed2d-87e8-5e6c-b91f-f50bf74afa2a",
+          "revision": 5
+        },
+        "recorded_at": "2026-09-17T04:08:01.672174Z",
+        "source_ref": "pi-tool:call_RI9oK9ymIlibnwXog1WXytsQ|fc_0a5d267e53578acd016aab67a0260887d28d0b60bb4e4889c6",
+        "operation_id": "48af2b47-9085-4b6e-830c-4a89079f5828",
+        "fingerprint": "035cbda5cda085ab4196e299a4dff0a2c132bb4bc7a3f59aeaed9e5cd54db3a5",
+        "snippet": "{\"context_stamp\": \"a840336c8c9084f9adeafceecbcd6113135e48ab23e92b86d270e2e1ea266d8e\", \"origin\": {\"blob\": \"12d3a92e3879e48a2cdccaba0bc1b0f956e5c894\", \"branch\": \"main\", \"commit\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"path\": \"zaratustra-web/028287dc-9c59-4b95-b5b2-ea6652767450/requests/fictional-discussion.md\", \"re"
+      },
+      {
+        "format": 1,
+        "id": "2721d900-ca8d-4fdc-8de5-813b5e3e2c88",
+        "revision": 1,
+        "scope": {
+          "kind": "process",
+          "id": "028287dc-9c59-4b95-b5b2-ea6652767450"
+        },
+        "type_name": "web_context",
+        "schema_version": 1,
+        "type_source": "installed: zaratustra.journal",
+        "title": "Web discussion context",
+        "links": [
+          {
+            "scope": {
+              "kind": "process",
+              "id": "028287dc-9c59-4b95-b5b2-ea6652767450"
+            },
+            "kind": "record",
+            "id": "10d2176e-8246-4fcb-b923-122dbc79c62f",
+            "revision": 1
+          }
+        ],
+        "state": "active",
+        "action": "create",
+        "reason": "Prepare explicitly selected discussion context",
+        "authority_source": null,
+        "previous": null,
+        "recorded_at": "2026-09-17T04:02:40.172680Z",
+        "source_ref": "fictional-stage3-walkthrough",
+        "operation_id": "2721d900-ca8d-4fdc-8de5-813b5e3e2c88",
+        "fingerprint": "e846f8585f2ae6888ae0f9baab538b3c3b68777a85a5d884b553ba2fbf868766",
+        "snippet": "{\"intent_sha256\": \"ff9ef1cd99debf2da2e1025adb9af97f614485aaee29737a331afd4202b0d1ab\", \"markdown\": \"# Учебный Development\\n\\n## Discussion request\\nОбсудить удобство переключения моделей\\n\\nPrepared at 2026-09-17T04:02:40.171886+00:00\\nProcess: 028287dc-9c59-4b95-b5b2-ea6652767450\\nProcess revision: 3\\nContext reference"
+      },
+      {
+        "format": 1,
+        "id": "10d2176e-8246-4fcb-b923-122dbc79c62f",
+        "revision": 1,
+        "scope": {
+          "kind": "process",
+          "id": "028287dc-9c59-4b95-b5b2-ea6652767450"
+        },
+        "type_name": "document",
+        "schema_version": 1,
+        "type_source": "installed: zaratustra.journal",
+        "title": "Текущее состояние",
+        "links": [],
+        "state": "active",
+        "action": "create",
+        "reason": "Fictional current state",
+        "authority_source": null,
+        "previous": null,
+        "recorded_at": "2026-09-17T04:02:40.133920Z",
+        "source_ref": "fictional-stage3-walkthrough",
+        "operation_id": "10d2176e-8246-4fcb-b923-122dbc79c62f",
+        "fingerprint": "2d12f751b2b169726d4789abee2fea8d7a8d924bd38bcef25e1848e1055875bb",
+        "snippet": "{\"media_type\": \"text/plain\", \"text\": \"В работе ничего нет. Идеи можно сохранять для последующего выбора. Разработку не начинали.\"}"
+      },
+      {
+        "format": 1,
+        "id": "7d6ac922-3ea2-50b6-a518-e5dc069709da",
+        "revision": 1,
+        "scope": {
+          "kind": "process",
+          "id": "028287dc-9c59-4b95-b5b2-ea6652767450"
+        },
+        "type_name": "web_channel",
+        "schema_version": 1,
+        "type_source": "installed: zaratustra.journal",
+        "title": "Web exchange",
+        "links": [],
+        "state": "active",
+        "action": "create",
+        "reason": "Owner selected GitHub exchange destination",
+        "authority_source": null,
+        "previous": null,
+        "recorded_at": "2026-09-17T04:02:40.092537Z",
+        "source_ref": "fictional-stage3-walkthrough",
+        "operation_id": "d6598dc2-0d7e-41f3-aefc-69a9c1d611da",
+        "fingerprint": "30767ffd03553bef432c34fa6de3aa9c6469d809c4f7f6e518ffaac337fc25e7",
+        "snippet": "{\"branch\": \"main\", \"repository\": \"fictional-owner/private-home\"}"
+      }
+    ],
+    "query": "",
+    "method": "FTS5 unicode61, literal prefix terms OR",
+    "limit": 100,
+    "offset": 0,
+    "limitation": "No Russian morphology or semantic guarantee. No match is not proof of absence."
+  }
+}

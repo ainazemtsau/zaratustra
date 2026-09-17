@@ -8,10 +8,10 @@ import sqlite3
 from collections.abc import Callable
 from contextlib import closing
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, get_args
 from uuid import UUID, uuid4, uuid5
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from zaratustra import home
 from zaratustra.core import (
@@ -36,6 +36,8 @@ from zaratustra.entry import EntryCatalog, source_path, transfer_catalog
 from zaratustra.journal import MEDIA_TYPE, Reference
 from zaratustra.process_skills import SKILL_TYPE as SKILL_TYPE  # registers installed schemas
 
+from . import registry as command_registry
+
 Name = Annotated[
     str, StringConstraints(strict=True, strip_whitespace=True, min_length=1, max_length=128)
 ]
@@ -50,46 +52,51 @@ class Context(BaseModel):
     process_id: UUID | None = None
 
 
+BuiltinAction = Literal[
+    "home.read",
+    "process.list",
+    "process.create",
+    "process.register",
+    "process.open",
+    "process.relocate",
+    "process.aliases",
+    "group.create",
+    "group.list",
+    "group.membership",
+    "relation.set",
+    "relation.delete",
+    "relation.list",
+    "material.save",
+    "material.read",
+    "catalog.import",
+    "workspace.upgrade",
+    "type.list",
+    "record.create",
+    "record.revise",
+    "record.adopt",
+    "record.replace",
+    "record.revoke",
+    "record.read",
+    "record.history",
+    "record.search",
+    "source.read",
+    "records.export",
+    "export.read",
+    "context.read",
+    "skill.catalog",
+    "skill.load",
+    "skill.bind",
+    "skill.unbind",
+    "command.list",
+]
+command_registry.BUILTINS = get_args(BuiltinAction)
+
+
 class Command(BaseModel):
-    """Fixed operations; record types are independently registered schemas."""
+    """Compatible builtins plus explicitly installed, schema-checked extensions."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
-    action: Literal[
-        "home.read",
-        "process.list",
-        "process.create",
-        "process.register",
-        "process.open",
-        "process.relocate",
-        "process.aliases",
-        "group.create",
-        "group.list",
-        "group.membership",
-        "relation.set",
-        "relation.delete",
-        "relation.list",
-        "material.save",
-        "material.read",
-        "catalog.import",
-        "workspace.upgrade",
-        "type.list",
-        "record.create",
-        "record.revise",
-        "record.adopt",
-        "record.replace",
-        "record.revoke",
-        "record.read",
-        "record.history",
-        "record.search",
-        "source.read",
-        "records.export",
-        "export.read",
-        "context.read",
-        "skill.catalog",
-        "skill.load",
-        "skill.bind",
-        "skill.unbind",
-    ]
+    action: Annotated[str, Field(json_schema_extra=command_registry.action_schema)]
     process: Name | None = None
     title: Name | None = None
     purpose: str | None = None
@@ -128,6 +135,15 @@ class Command(BaseModel):
     settings: Annotated[dict[Name, str | bool | int], Field(max_length=16)] = {}
     expected_configuration_revision: Annotated[int, Field(strict=True, ge=0)] | None = None
     loaded_slots: Annotated[tuple[Name, ...], Field(max_length=16)] = ()
+
+    @model_validator(mode="after")
+    def installed_command(self) -> Command:
+        if self.action not in command_registry.names():
+            raise ValueError("Unknown installed command: " + self.action)
+        spec = command_registry.EXTENSIONS.get(self.action)
+        if spec is not None:
+            spec.payload.model_validate(self.payload or {})
+        return self
 
 
 class ContextGuard(BaseModel):
@@ -331,6 +347,14 @@ def execute(
                 "context_changed", "Active configuration changed; read fresh context"
             )
         guarded_revision = skills.local.query.expected_revision
+    if action == "command.list":
+        return {
+            "extensions": command_registry.describe(command.query),
+            "commands": command_registry.names(),
+        }
+    extension = command_registry.EXTENSIONS.get(action)
+    if extension is not None:
+        return extension.handler(context, command, source_ref, operation_id, guarded_revision)
     if action.startswith("skill.") or action == "context.read":
         from .skills_adapter import execute_skills
 
@@ -513,3 +537,6 @@ def execute(
             next_offset=end if end < len(result.content) else None,
         )
     return response
+
+
+from . import web_adapter as web_adapter  # noqa: E402

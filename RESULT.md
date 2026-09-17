@@ -1,83 +1,58 @@
-# Stage 2B — versioned skills and session context
+# Stage 3 — web discussions and incoming requests
 
 ## outcome
 
-Candidate 0.20.0 continues Stage2A fc696332dfdd2eb998809059f0065e5574370376.
-The owner explicitly approved the supplied Stage2B implementation brief with «ДА».
-Skills and exact Process selections reuse journal revisions, scopes and history.
-The common API compiles active context and readiness; Pi owns only its session
-selection, safe switching and progressive managed-context delivery. Existing Core
-schema10 and Stage1/2A formats remain unchanged. See docs/stage2b/IMPLEMENTATION.md.
-The previous report is retained in docs/results/2026-09-16-stage2a-journal.md.
+Candidate 0.21.0 implements the owner's September17 approved scope over published
+0.20.0 a3e1c970bee97ef73c49084c1b940665d4bed4db: selected web discussion material,
+GitHub handoffs, tolerant original capture, recoverable item/attachment processing
+through ordinary Pi and fresh-chat continuation. See docs/stage3/IMPLEMENTATION.md.
+The prior report is retained in docs/results/2026-09-16-stage2b-skills.md.
 
 ## evidence
 
-Full native delivery gate passed: 473 tests in 276.76s, 177 formatted files, Ruff,
-strict mypy over 150 files, 24 import contracts, hygiene, report structure and
-wheel/source builds. The first full run had one unchanged legacy catalog concurrency
-test failure; its native focused rerun and the second full gate passed without
-changing that module/test. Both outcomes are retained in docs/stage2b/VERIFICATION.md.
-This observation remains OPEN and UNFIXED; its original trace and known impact are
-retained in docs/stage2b/OPEN-OBSERVATIONS.md. A passing retry is not a repair.
+Full native delivery gate: PASS, 485 tests, 26 import contracts, formatting/lint,
+strict types, hygiene, build and report structure. The focused web suite has 12
+tests. The installed candidate wheel was exercised by ordinary Pi in fresh chats
+in a fictional Home: proposal saved, missing report requested, supplied file
+preserved byte-for-byte, request completed, sources reopened in another new chat.
+Independent public-API checks verify one completed request, zero pending and equal
+original/saved report hashes. See docs/stage3/VERIFICATION.md and its retained
+evidence; docs/stage3/USER-WALKTHROUGH.md shows the ordinary user path.
 
-Owner-requested follow-up: a normal installed Pi CLI conversation changed fictional
-B's local skill to v2; a separate fresh chat used the new behavior from saved state.
-The first conversation had one invalid model-generated read id, refused by input
-validation and corrected by the agent. No code or private installation changed,
-and no full gate was repeated. See docs/stage2b/USER-WALKTHROUGH.md.
-
-Installed Pi 0.85.1 loader/subprocess probe confirms session switching and restore,
-independent sessions, both queued and sequential stale-target refusal, owned-block
-replacement preserving user text, failure retaining selection and progressive
-version/body delivery. Real Pi RPC proof spans 11 turns in three sessions and 104
-successful tool calls: shared v1/v2 without automatic application, A-only selection,
-local B variant, A→B→A, independent session, fresh A, exact grounds, rollback,
-disable and autonomous gap logging for a missing required command. No expected
-instruction was inserted into ordinary overview check prompts. See docs/stage2b/DEMO.md.
-
-Installed common API checked A's v1→v2→v1→disabled history, B's exact local origin,
-both shared versions, hidden foreign local grounds, unselected unavailable draft,
-the gap episode and 15 actual body-delivery hashes. Earlier Stage1/2A fictional
-Homes each retain two readable Processes and no historical Works. All 59 installed
-Python/TypeScript code files match the checkout used for the final build.
-
-One bounded read-only evaluator found replay incorrectly rechecking current
-dependency readiness. Verified and fixed, with a focused regression. This is an
-in-session pre-pass, not binding fresh Direction review or owner acceptance.
+An in-session read-only evaluator found issues in attachment accounting, source
+freshness, recovery, later authority and branch instructions. Corrections and
+behavioral regressions were added. This is not binding Direction G5 or owner
+acceptance. The legacy catalog concurrency observation remains OPEN and UNFIXED;
+see docs/stage2b/OPEN-OBSERVATIONS.md and its original retained trace.
 
 ## assumptions
 
-The existing trusted local OS-owner boundary applies. The agent interprets intent
-and methodological conflict; code validates operations, exact revisions and scope.
-Settings are non-secret preferences. Available host references are retained without
-inventing owner message ids. Configuration readiness does not prove external access.
+The trusted local-owner boundary remains. Agents interpret actual instructions and
+semantic conflicts; code validates bytes, schemas, scope, references, revisions and
+known delivery accounting. GitHub uses existing gh authentication. Instructions do
+not grant ChatGPT a missing write tool.
 
 ## cuts
 
-No Stage3 handler, marketplace, background agents, automatic updates/merges, live
-package import, GUI, hostile-agent sandbox or personal Development authored by us.
-Switching replaces managed instructions, not conversation history. No fresh Codex
-UI smoke is claimed; Codex uses the common installed API and generated connection.
-Large-history performance and arbitrary Russian semantic retrieval are unmeasured.
+No automatic model routing, provider execution, new subscription, background work,
+automatic attachment retrieval, private installation update or Stage4. Only selected
+text files are published. The real personal ChatGPT/GitHub transfer is a separate
+visible hookup step; local and fake transport checks do not establish that capability.
 
 ## cost
 
-One implementation branch and one bounded read-only evaluator. Existing Python,
-SQLite and Pydantic reused; no new product dependency. Separate local0.20 runtime
-and fictional Home preserve previous installations/demos. No publication, purchase,
-usage reset or external action; Pi uses the already configured account.
+One implementation agent, one bounded read-only setup/review helper, existing
+Python/uv tools and installed Pi for fictional verification. No new service or
+dependency. No personal Home data authored or changed.
 
 ## manual-acceptance
 
-Approval covers implementation scope. Developer-run checks do not establish the
-owner's final acceptance or close an older Direction-OS task. No live Direction
-state is changed by this product report.
+Scope approved by the owner's «ок». Acceptance of delivered behavior is pending
+the demonstration and owner's verdict. Full development migration is not claimed.
 
 ## next
 
-solmax
-
-Show working behavior, final checks, exact local commit and limitations; then stop.
-Do not begin Stage3 automatically. No public push/merge is claimed.
+solmax — show actual checks and limitations, then one explicit personal hookup step.
+Do not automatically start another stage or change the owner's installation.
 
 END_OF_FILE: RESULT.md

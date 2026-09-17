@@ -1,0 +1,89 @@
+{
+  "requests_total": 1,
+  "pending": 0,
+  "status": "completed",
+  "items": [
+    {
+      "key": "model-switching-backlog",
+      "source_quote": "Поручение владельца: сохрани идею переключения моделей в бэклог как предложение; выполнять её пока не надо.\nПредложение из обсуждения: перед длинным исследованием выбирать модель по задаче и доступному лимиту.",
+      "intent": "backlog",
+      "description": "Сохранить предложение о выборе модели перед длинным исследованием как неутверждённую идею в бэклоге, без выполнения или разработки.",
+      "authority_quote": null,
+      "authority_reference": null,
+      "files": [],
+      "outcome": "done",
+      "result": {
+        "scope": {
+          "kind": "process",
+          "id": "1aa4c890-43f6-413c-85ce-bbe47302d99a"
+        },
+        "kind": "record",
+        "id": "820675a2-5590-4c5a-bd20-4b7666662d72",
+        "revision": 1
+      },
+      "note": "Сохранено как эпизод «Бэклог: предложение о выборе модели»; конкретные модель, подписка и критерии выбора не установлены."
+    },
+    {
+      "key": "model-comparison-report",
+      "source_quote": "Отдельно сохрани учебный отчёт «Сравнение моделей.md». Его файл обязателен, но ещё не передан.",
+      "intent": "store",
+      "description": "Сохранить полученный учебный отчёт «Сравнение моделей.md» как материал Process.",
+      "authority_quote": null,
+      "authority_reference": null,
+      "files": [
+        {
+          "name": "Сравнение моделей.md",
+          "reference": {
+            "scope": {
+              "kind": "process",
+              "id": "1aa4c890-43f6-413c-85ce-bbe47302d99a"
+            },
+            "kind": "material",
+            "id": "4ce4d239-962a-477e-8e0c-b9daaf26b460",
+            "revision": 8
+          }
+        }
+      ],
+      "outcome": "done",
+      "result": {
+        "scope": {
+          "kind": "process",
+          "id": "1aa4c890-43f6-413c-85ce-bbe47302d99a"
+        },
+        "kind": "material",
+        "id": "4ce4d239-962a-477e-8e0c-b9daaf26b460",
+        "revision": 8
+      },
+      "note": "Фактические байты отчёта получены от владельца, сохранены и прочитаны для проверки."
+    }
+  ],
+  "saved_report_sha256": "f34925a4c861c4d5e5b602bef95bac23086217e4b47294ac90f6cb5565cd4ef0",
+  "original_report_sha256": "700601db4251fd978a4867af3d7601870a887b916519e54a786815b4c88dcd41",
+  "report_bytes_equal": false,
+  "documents": [
+    {
+      "format": 1,
+      "id": "df208e39-fc25-46fd-85eb-1dea3a28b090",
+      "revision": 1,
+      "scope": {
+        "kind": "process",
+        "id": "1aa4c890-43f6-413c-85ce-bbe47302d99a"
+      },
+      "type_name": "document",
+      "schema_version": 1,
+      "type_source": "installed: zaratustra.journal",
+      "title": "Текущее состояние",
+      "links": [],
+      "state": "active",
+      "action": "create",
+      "reason": "Fictional current state",
+      "authority_source": null,
+      "previous": null,
+      "recorded_at": "2026-09-17T03:40:42.282390Z",
+      "source_ref": "fictional-stage3-walkthrough",
+      "operation_id": "df208e39-fc25-46fd-85eb-1dea3a28b090",
+      "fingerprint": "fb433fd41f375f244071f0a123686b9ddfc6bd91461e8eb2a723b5e7f0ec154e",
+      "snippet": "{\"media_type\": \"text/plain\", \"text\": \"В работе ничего нет. Идеи можно сохранять для последующего выбора. Разработку не начинали.\"}"
+    }
+  ]
+}

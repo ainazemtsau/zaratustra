@@ -9,12 +9,17 @@
 - A focused run is feedback, not full-delivery evidence. Do not claim green from individual tools.
 
 ## What exists
+Stage 3 candidate (0.21) adds explicit installed command registration, selected
+web context and GitHub request intake through public journal/Core operations.
+Owner approved the shown ChatGPT → GitHub → Pi scope with «ок» on September17.
+See docs/stage3/IMPLEMENTATION.md. Personal installation and real ChatGPT write
+access are verified separately; Stage4 remains excluded.
 Stage 2B (0.20) adds registered skills and process-owned pinned configurations,
 supported non-secret settings, complete local variants, actual capability checks
 and progressive context delivery. Pi 0.85.1 refreshes its session-owned Process
 and managed instructions before each model request. Common API serves other hosts.
 Owner explicitly approved the supplied Stage2B implementation brief with «ДА».
-See docs/stage2b/IMPLEMENTATION.md. Stage3 remains excluded.
+See docs/stage2b/IMPLEMENTATION.md. Stage3 is authorized by the later scope above.
 Stage 2A (0.19) adds registered journal types, immutable record/document revisions,
 explicit decision transitions, scoped Home sharing, FTS5 retrieval and standalone
 exports through the existing installed commands. Owner authorized the v3 scope plus

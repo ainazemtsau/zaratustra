@@ -1,6 +1,6 @@
 [project]
 name = "zaratustra"
-version = "0.20.0"
+version = "0.21.0"
 description = "Zaratustra local workspace and transactional mutation protocol"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -190,3 +190,15 @@ name = "Core and journal have no skill policy dependency"
 type = "forbidden"
 source_modules = ["zaratustra.core", "zaratustra.journal"]
 forbidden_modules = ["zaratustra.process_skills"]
+
+[[tool.importlinter.contracts]]
+name = "Web exchange uses public journal and never a host or legacy workflow"
+type = "forbidden"
+source_modules = ["zaratustra.web_exchange"]
+forbidden_modules = ["zaratustra.commands", "zaratustra.home", "zaratustra.cli", "zaratustra.trusted_chat", "zaratustra.entry", "zaratustra.process_packs"]
+
+[[tool.importlinter.contracts]]
+name = "Core and journal do not depend on web exchange policy"
+type = "forbidden"
+source_modules = ["zaratustra.core", "zaratustra.journal"]
+forbidden_modules = ["zaratustra.web_exchange"]

@@ -1,0 +1,68 @@
+$ C:\my_global_workflow_worktrees\solmax\.tmp\zaratustra-stage1-20260916\.venv\Scripts\python.exe -m ruff format --check src tools tests
+188 files already formatted
+$ C:\my_global_workflow_worktrees\solmax\.tmp\zaratustra-stage1-20260916\.venv\Scripts\python.exe -m ruff check src tools tests
+All checks passed!
+$ C:\my_global_workflow_worktrees\solmax\.tmp\zaratustra-stage1-20260916\.venv\Scripts\python.exe -m mypy src tools tests
+Success: no issues found in 158 source files
+$ C:\my_global_workflow_worktrees\solmax\.tmp\zaratustra-stage1-20260916\.venv\Scripts\lint-imports.EXE --no-cache
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 110 files, 321 dependencies.
+-------------------------------------
+
+Standard connection resources have no product authority dependency KEPT
+Installed product never imports development tests or tools KEPT
+CLI may depend on Core, Core cannot depend on CLI KEPT
+Core has no surface dependency KEPT
+Entry catalog depends only on Core KEPT
+Incoming material coordinator depends only on Core KEPT
+First use has no trusted adapter, Pack or development dependency KEPT
+Process creation has no trusted adapter or development dependency KEPT
+Process change has no trusted adapter or development dependency KEPT
+Public onboarding has no trusted adapter or development dependency KEPT
+Process probe uses Core; Core has no process-rule dependency KEPT
+Process rules have no trusted adapter dependency KEPT
+Journal has no host, Home registry or legacy workflow dependency KEPT
+Home Registry has no agent or workflow dependency KEPT
+Common Home commands never depend on a particular agent host KEPT
+Core has no external pack dependency KEPT
+Packs have no trusted adapter or fictional probe dependency KEPT
+Core and generic packs do not depend on fictional signal rules KEPT
+Fictional signal has no trusted surface or other fixture dependency KEPT
+Core and generic packs do not depend on fictional lot rules KEPT
+Fictional lot has no trusted surface or probe dependency KEPT
+Process construction inputs stay development-only and untrusted KEPT
+Process skills depend on journal, not a particular agent or workflow KEPT
+Core and journal have no skill policy dependency KEPT
+Web exchange uses public journal and never a host or legacy workflow KEPT
+Core and journal do not depend on web exchange policy KEPT
+
+Contracts: 26 kept, 0 broken.
+$ C:\my_global_workflow_worktrees\solmax\.tmp\zaratustra-stage1-20260916\.venv\Scripts\python.exe -m pytest tests -q
+........................................................................ [ 14%]
+........................................................................ [ 29%]
+........................................................................ [ 44%]
+........................................................................ [ 59%]
+........................................................................ [ 74%]
+........................................................................ [ 89%]
+.....................................................                    [100%]
+485 passed in 223.33s (0:03:43)
+$ C:\Users\Anton\.local\bin\uv.EXE build --no-sources
+Building source distribution (uv build backend)...
+Building wheel from source distribution (uv build backend)...
+Successfully built dist\zaratustra-0.21.0.tar.gz
+Successfully built dist\zaratustra-0.21.0-py3-none-any.whl
+PASS: native build, hygiene, types, boundaries, tests, report structure

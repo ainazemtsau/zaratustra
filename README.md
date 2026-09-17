@@ -1,5 +1,20 @@
 # Zaratustra
 
+## Web discussions and incoming requests (0.21 candidate)
+
+Ask Pi to prepare selected material for a ChatGPT discussion. Publish the chosen
+packet and Project instructions to your GitHub repository when ready. In ChatGPT,
+discuss freely and ask to save the selected result as an incoming request. Later,
+ask Pi to process incoming requests: it preserves the original, distinguishes ideas
+from accepted decisions, requests missing attachments, and continues in a new chat.
+Free-form text and malformed JSON are accepted; the agent handles internal schemas.
+Repeated intake does not repeat already tracked delivery. Existing Home data stays
+local; only selected text is published. GitHub requires authenticated `gh`, and the
+ChatGPT connection must separately support creating files in the selected repo.
+
+See [Stage 3 scope and limits](docs/stage3/IMPLEMENTATION.md). Existing connections
+require the normal explicit managed connection update after installing this version.
+
 ## Versioned Process skills (0.20)
 
 In a connected Pi chat, ask to create or revise a skill, apply its exact version
