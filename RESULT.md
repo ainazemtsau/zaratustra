@@ -4,22 +4,26 @@
 
 Implemented docs/portable-storage/PLAN.md: file authority, disposable SQLite,
 complete backed-up migration, structured retrieval, explicit Home vocabulary and
-portable agent/repository navigation. Native delivery validation, installed Pi and
-the personal migration rehearsal passed. Publication and personal rollout remain
-to be performed. Previous report is retained in
+portable agent/repository navigation. Published product code:
+`8f98d6b1c409bc451ddba77c825cef6d2080447b` (0.22.0), including the final connection
+CRLF update correction. The authorized private Home was backed up, migrated,
+synchronized to GitHub and opened through an installed Pi from a fresh clone.
+Previous report is retained in
 docs/results/2026-09-17-stage3-first-setup.md.
 
 ## evidence
 
-Full native delivery passed: 495 tests, 27 import contracts, strict types, lint,
+Final full native delivery passed: 496 tests, 27 import contracts, strict types, lint,
 formatting and source/wheel builds. Another 35 focused tests passed after the final
 instruction clarification. Actual installed Pi saved a problem and explicitly
 approved tag, found the source in a fresh chat, and proposed another tag without
-creating it. A rehearsal on a private copy preserved every existing process row.
+creating it. A rehearsal, the actual migration and the fresh remote clone preserved
+every existing process row. Fresh-clone Pi read the actual saved rules/backlog and
+current focus without writing. No old SQLite database was transferred in Git.
 New tests cover migration/clone/history, cache corruption, failed staging, retrieval,
 vocabulary, external registration, shared data, actual Git exchange and decision
 metadata. Installed Pi0.85.1 loader passed active selection/restoration checks.
-See docs/portable-storage/VERIFICATION.md for completed checks and pending work.
+See docs/portable-storage/VERIFICATION.md for checks, observed failures and limits.
 Bounded in-session storage/setup review found issues which were checked and corrected.
 This is engineering verification, not binding Direction G5 or owner acceptance.
 
@@ -50,7 +54,6 @@ delivered behavior remains with the owner after the demonstration.
 
 ## next
 
-solmax — publish the general product, migrate/synchronize the
-authorized private Home, verify a clean clone, show results and limitations, then stop.
+solmax — show the delivered result and limitations, then stop. No next stage started.
 
 END_OF_FILE: RESULT.md

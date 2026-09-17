@@ -1,0 +1,399 @@
+{
+  "data": "fictional demo only",
+  "pi": "0.85.1",
+  "product": "0.22.0",
+  "note": "Observed tool calls, error flags and final answers; excludes reasoning and private Home traces.",
+  "scenarios": [
+    {
+      "scenario": "first",
+      "raw_trace_sha256": "ab12c21332dd567d4d440914516c1b65f6a7b434a1ddffc3f2e64d9c0c4002b5",
+      "events": [
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "process.list",
+            "limit": 100
+          }
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "home.read"
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "process.open",
+            "process": "Demo"
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "context.read"
+          }
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "vocabulary.list",
+            "limit": 100
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "type.list",
+            "type_name": "episode"
+          }
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "vocabulary.propose",
+            "payload": {
+              "kind": "tag",
+              "label": "доступ к файлам",
+              "meaning": "Проблемы и работа, связанные с доступом к файлам",
+              "reason": "Подходящего тега нет; пользователь разрешил создание именно этого тега для отметки открытой проблемы о недоступности файла макета.",
+              "considered_ids": []
+            }
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": true
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "command.list",
+            "query": "vocabulary.propose",
+            "limit": 20
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "vocabulary.propose",
+            "payload": {
+              "kind": "tag",
+              "label": "доступ к файлам",
+              "meaning": "Проблемы и работа, связанные с доступом к файлам",
+              "reason": "Подходящего тега нет; пользователь разрешил создать именно этот тег для отметки открытой проблемы о недоступности файла макета.",
+              "considered": []
+            }
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "command.list",
+            "query": "vocabulary.create",
+            "limit": 20
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "context.read"
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "vocabulary.create",
+            "payload": {
+              "kind": "tag",
+              "label": "доступ к файлам",
+              "meaning": "Проблемы и работа, связанные с доступом к файлам",
+              "reason": "Подходящего тега нет; пользователь разрешил создать именно этот тег для отметки открытой проблемы о недоступности файла макета.",
+              "considered": [],
+              "generation": "cc7b53fab152d6486945b945e17bfbfe0bb973f343e8074489436e33172e627c",
+              "proposal_token": "aecc36e130844be5f5ca74894b03f6fd540b320cc92a66a01659ca12a43cb6ce",
+              "authority_source": "Пользователь прямо разрешил: «если подходящего нет, создание именно этого тега с таким смыслом разрешаю»."
+            }
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "record.create",
+            "type_name": "episode",
+            "title": "Печать остановлена: файл макета недоступен",
+            "payload": {
+              "situation": "Проверка: файл макета недоступен, поэтому печать остановлена.",
+              "actions": [
+                "Зафиксирована открытая проблема."
+              ],
+              "outcome": "Печать остановлена из-за недоступности файла макета.",
+              "evidence": [
+                "Сообщение пользователя в рамках вымышленного проверочного сценария."
+              ],
+              "unknowns": [
+                "Причина недоступности файла пока неизвестна."
+              ],
+              "next_action": "Получить файл и проверить причину его недоступности.",
+              "category": "problem"
+            },
+            "metadata": {
+              "tags": [
+                "071aaacf-b9b7-4195-b997-4066663789b3"
+              ],
+              "problem_status": "open"
+            },
+            "reason": "По прямому указанию пользователя сохранить существенный результат проверки как открытую проблему."
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "assistant_text",
+          "text": "Процесс **Demo** открыт. Создан тег «доступ к файлам» и сохранена открытая проблема: файл макета недоступен, печать остановлена; причина неизвестна. Следующий шаг — получить файл и проверить причину."
+        }
+      ]
+    },
+    {
+      "scenario": "second",
+      "raw_trace_sha256": "eac776276badaa456418a43c675e0073758b822c2387d455dc47b3ee81283490",
+      "events": [
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "process.list",
+            "limit": 20
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "process.open",
+            "process": "Demo"
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "context.read"
+          }
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "record.search",
+            "view": "open_problems",
+            "limit": 100,
+            "include_shared": true
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "source.read",
+            "reference": {
+              "scope": {
+                "kind": "process",
+                "id": "e490b7cc-7762-4f16-bf13-b8a7bf8a1204"
+              },
+              "kind": "record",
+              "id": "7fb20713-a0e7-47af-b2b4-2c499c7293f8",
+              "revision": 1
+            }
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "assistant_text",
+          "text": "В `Demo` осталась одна открытая проблема:\n\n- **«Печать остановлена: файл макета недоступен»** — печать прекращена, потому что файл макета недоступен.\n- **Сохранённое основание:** сообщение пользователя в рамках вымышленного проверочного сценария; причина недоступности пока не установлена.  \n  Запись: `episode` rev. 1, «Печать остановлена: файл макета недоступен».\n- **Ближайший шаг:** получить файл и проверить причину его недоступности.\n\nНичего не изменял."
+        }
+      ]
+    },
+    {
+      "scenario": "proposal",
+      "raw_trace_sha256": "5df14d0c9924703e722f138c2bb6ab80db1151111b2c640dbe719179dc4ecc15",
+      "events": [
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "process.list",
+            "limit": 100
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "process.open",
+            "process": "Demo"
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "context.read"
+          }
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "command.list",
+            "query": "vocabulary.list"
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "vocabulary.list",
+            "payload": {
+              "kind": "tag"
+            }
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "command.list",
+            "query": "vocabulary.propose"
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "tool_execution_start",
+          "tool": "zaratustra",
+          "args": {
+            "action": "vocabulary.propose",
+            "payload": {
+              "kind": "tag",
+              "label": "сборка пакета",
+              "meaning": "Проблемы сборки установленного пакета.",
+              "reason": "Нужен отдельный тег для проблем сборки установленного пакета; он не сводится к доступу к файлам.",
+              "considered": [
+                "071aaacf-b9b7-4195-b997-4066663789b3"
+              ]
+            }
+          }
+        },
+        {
+          "event": "tool_execution_end",
+          "is_error": false
+        },
+        {
+          "event": "assistant_text",
+          "text": "В Demo найден один тег: **«доступ к файлам»** — для проблем, связанных с файловым доступом.\n\nОн не подходит для проблем сборки установленного пакета: это отдельная техническая категория.\n\nПредложен (не создан) тег **«сборка пакета»** со смыслом: «Проблемы сборки установленного пакета»."
+        }
+      ]
+    }
+  ]
+}
