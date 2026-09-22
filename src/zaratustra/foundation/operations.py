@@ -217,11 +217,23 @@ def _expect_absent(connection: object, record_id: UUID) -> None:
         raise FoundationError("record_exists", f"Record already exists: {record_id}")
 
 
-def _expect_revision(connection: object, record_id: UUID, kind: str, expected: int) -> None:
-    current, _, _ = _current_revision(connection, record_id, kind)
+def _expect_revision(
+    connection: object,
+    record_id: UUID,
+    kind: str,
+    expected: int,
+    *,
+    required_status: str | None = None,
+) -> None:
+    current, _, status = _current_revision(connection, record_id, kind)
     if current != expected:
         raise FoundationError(
             "stale_revision", f"Expected {record_id}@{expected}; current revision is {current}"
+        )
+    if required_status is not None and status != required_status:
+        raise FoundationError(
+            "content_unavailable",
+            f"{kind.title()} {record_id} is {status}; it cannot be changed",
         )
 
 
@@ -389,14 +401,26 @@ def _apply_change(
             {"record_id": str(request.artifact_id), "revision": 1}
         ]
     if isinstance(request, ReviseArtifactRequest):
-        _expect_revision(connection, request.artifact_id, "artifact", request.expected_revision)
+        _expect_revision(
+            connection,
+            request.artifact_id,
+            "artifact",
+            request.expected_revision,
+            required_status="active",
+        )
         revision = request.expected_revision + 1
         _write_artifact(connection, request, now, revision)
         return {"record_id": str(request.artifact_id), "revision": revision}, [
             {"record_id": str(request.artifact_id), "revision": revision}
         ]
     if isinstance(request, DeleteArtifactRequest):
-        _expect_revision(connection, request.artifact_id, "artifact", request.expected_revision)
+        _expect_revision(
+            connection,
+            request.artifact_id,
+            "artifact",
+            request.expected_revision,
+            required_status="active",
+        )
         prior_operations = [
             row[0]
             for row in connection.execute(  # type: ignore[attr-defined]
@@ -437,8 +461,8 @@ def _apply_change(
         )
         connection.execute(  # type: ignore[attr-defined]
             "UPDATE backup_inventory SET status = 'contaminated' "
-            "WHERE backup_id IN (SELECT backup_id FROM backup_records WHERE record_id = ?) "
-            "AND status = 'complete'",
+            "WHERE status IN ('planned', 'failed') OR (status = 'complete' AND backup_id IN "
+            "(SELECT backup_id FROM backup_records WHERE record_id = ?))",
             (str(request.artifact_id),),
         )
         return {
@@ -822,6 +846,8 @@ def inspect_recovery(path: Path, authority: RecoveryAuthority) -> dict[str, obje
 
 def create_backup(path: Path, backup_id: UUID, authority: LocalAuthority) -> BackupInfo:
     created_at = utc_now()
+    prepared: BackupInfo | None = None
+    final_package: Path | None = None
     try:
         with space_connection(path, writable=True) as (connection, info):
             _local_space(authority, info)
@@ -838,8 +864,9 @@ def create_backup(path: Path, backup_id: UUID, authority: LocalAuthority) -> Bac
                 "state_revision, status) VALUES (?, ?, ?, ?, 'planned')",
                 (str(backup_id), str(backup_id), created_at.isoformat(), info.state_revision),
             )
-        backup = backup_database(path, backup_id, created_at)
-        snapshot_database = backup.package / DATABASE_NAME
+        prepared = backup_database(path, backup_id, created_at)
+        final_package = prepared.package.parent / str(backup_id)
+        snapshot_database = prepared.package / DATABASE_NAME
         import sqlite3
 
         with closing(sqlite3.connect(snapshot_database)) as snapshot:
@@ -857,31 +884,50 @@ def create_backup(path: Path, backup_id: UUID, authority: LocalAuthority) -> Bac
                 action="maintenance.backup",
                 epoch=info.execution_epoch,
             )
-            connection.execute(
-                "UPDATE backup_inventory SET state_revision = ?, database_sha256 = ?, "
-                "status = 'complete' WHERE backup_id = ? AND status = 'planned'",
-                (
-                    backup.manifest.state_revision,
-                    backup.manifest.database_sha256,
-                    str(backup_id),
-                ),
-            )
+            row = connection.execute(
+                "SELECT status FROM backup_inventory WHERE backup_id = ?",
+                (str(backup_id),),
+            ).fetchone()
+            if row != ("planned",) or info.state_revision != prepared.manifest.state_revision:
+                raise FoundationError(
+                    "backup_invalidated", "Space changed while the backup was being prepared"
+                )
             connection.executemany(
                 "INSERT INTO backup_records(backup_id, record_id) VALUES (?, ?)",
                 ((str(backup_id), record_id) for record_id in record_ids),
             )
-        return backup
-    except BaseException:
+            updated = connection.execute(
+                "UPDATE backup_inventory SET state_revision = ?, database_sha256 = ?, "
+                "status = 'complete' WHERE backup_id = ? AND status = 'planned'",
+                (
+                    prepared.manifest.state_revision,
+                    prepared.manifest.database_sha256,
+                    str(backup_id),
+                ),
+            )
+            if updated.rowcount != 1:
+                raise FoundationError("backup_invalidated", "Backup inventory changed")
+        prepared.package.rename(final_package)
+        return load_backup(final_package)
+    except BaseException as error:
+        for package in (
+            prepared.package if prepared is not None else None,
+            final_package,
+        ):
+            if package is not None and package.exists():
+                shutil.rmtree(package)
         try:
             with space_connection(path, writable=True) as (connection, _):
                 connection.execute(
                     "UPDATE backup_inventory SET status = 'failed' "
-                    "WHERE backup_id = ? AND status = 'planned'",
+                    "WHERE backup_id = ? AND status IN ('planned', 'complete')",
                     (str(backup_id),),
                 )
         except BaseException:
             pass
-        raise
+        if isinstance(error, FoundationError):
+            raise
+        raise FoundationError("backup_failed", str(error)) from error
 
 
 def restore_backup(package: Path, destination: Path, authority: RecoveryAuthority) -> SpaceInfo:
@@ -932,11 +978,15 @@ def complete_deletions(path: Path, authority: LocalAuthority) -> DeletionStatus:
 
     purged = 0
     for backup_id in contaminated:
-        package = (backups / str(backup_id)).resolve()
-        if package.parent != backups.resolve():
-            raise FoundationError("layout", "Backup inventory escaped managed directory")
-        if package.exists():
-            shutil.rmtree(package)
+        packages = (
+            (backups / f".{backup_id}.partial").resolve(),
+            (backups / str(backup_id)).resolve(),
+        )
+        for package in packages:
+            if package.parent != backups.resolve():
+                raise FoundationError("layout", "Backup inventory escaped managed directory")
+            if package.exists():
+                shutil.rmtree(package)
         purged += 1
 
     sanitize_database(root)

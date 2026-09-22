@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from pathlib import Path
+from threading import Event
 from uuid import UUID, uuid4
 
 import pytest
 
+import zaratustra.foundation.operations as operation_module
 from zaratustra.foundation import (
+    BackupInfo,
     BootstrapRequest,
     CreateArtifactRequest,
     DeleteArtifactRequest,
@@ -24,6 +29,7 @@ from zaratustra.foundation import (
     read_receipt,
     restore_backup,
 )
+from zaratustra.foundation.storage import backup_database as prepare_backup_database
 
 
 def ready_space(tmp_path: Path) -> tuple[Path, UUID, LocalAuthority]:
@@ -154,4 +160,72 @@ def test_delete_blocks_all_revisions_and_sanitizes_live_and_managed_backups(
     assert completed.live_store_sanitized and completed.pending_jobs == 0
     assert not backup.package.exists()
     assert all(sentinel not in entry.read_bytes() for entry in files)
+    assert inspect_space(root, owner).contaminated_backups == 0
+
+
+def test_delete_invalidates_backup_prepared_concurrently(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, space_id, owner = ready_space(tmp_path)
+    sentinel = b"CONCURRENT-BACKUP-DELETE-SENTINEL-440C"
+    artifact_id = uuid4()
+    apply_operation(
+        root,
+        CreateArtifactRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            artifact_id=artifact_id,
+            media_type="application/octet-stream",
+            content=sentinel,
+        ),
+        owner,
+    )
+    backup_id = uuid4()
+    prepared = Event()
+    resume = Event()
+    observed_package: list[Path] = []
+
+    def pause_after_prepare(path: Path, identity: UUID, created_at: datetime) -> BackupInfo:
+        backup = prepare_backup_database(path, identity, created_at)
+        observed_package.append(backup.package)
+        prepared.set()
+        assert resume.wait(timeout=10)
+        return backup
+
+    monkeypatch.setattr(operation_module, "backup_database", pause_after_prepare)
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(create_backup, root, backup_id, owner)
+        assert prepared.wait(timeout=10)
+        partial = observed_package[0]
+        assert partial.name == f".{backup_id}.partial"
+        assert sentinel in (partial / "core.sqlite3").read_bytes()
+        with pytest.raises(FoundationError) as unpublished:
+            restore_backup(
+                partial,
+                tmp_path / "never-restored",
+                authorize_recovery(actor="owner", source_ref="fresh-recovery"),
+            )
+        apply_operation(
+            root,
+            DeleteArtifactRequest(
+                operation_id=uuid4(),
+                space_id=space_id,
+                actor="owner",
+                artifact_id=artifact_id,
+                expected_revision=1,
+            ),
+            owner,
+        )
+        resume.set()
+        with pytest.raises(FoundationError) as invalidated:
+            future.result(timeout=10)
+
+    completed = complete_deletions(root, owner)
+
+    assert unpublished.value.code == "invalid_backup"
+    assert invalidated.value.code == "backup_invalidated"
+    assert completed.purged_backups == 1
+    assert not partial.exists()
+    assert not (partial.parent / str(backup_id)).exists()
     assert inspect_space(root, owner).contaminated_backups == 0

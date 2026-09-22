@@ -15,6 +15,7 @@ from zaratustra.foundation import (
     CreateDecisionRequest,
     CreateGrantRequest,
     DecisionState,
+    DeleteArtifactRequest,
     FoundationError,
     GrantState,
     LocalAuthority,
@@ -130,6 +131,50 @@ def test_stale_revision_is_honest_and_does_not_replace_current_bytes(tmp_path: P
 
     assert refusal.value.code == "stale_revision"
     assert read_artifact(root, created.artifact_id, owner).content == b"current"
+
+
+def test_deleted_artifact_is_terminal_even_at_its_exact_current_revision(tmp_path: Path) -> None:
+    root, space_id, owner = ready_space(tmp_path)
+    created, _ = create_artifact(root, space_id, owner)
+    apply_operation(
+        root,
+        DeleteArtifactRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            artifact_id=created.artifact_id,
+            expected_revision=1,
+        ),
+        owner,
+    )
+    revise = ReviseArtifactRequest(
+        operation_id=uuid4(),
+        space_id=space_id,
+        actor="owner",
+        artifact_id=created.artifact_id,
+        expected_revision=2,
+        media_type="text/plain",
+        content=b"must not return",
+    )
+    delete_again = DeleteArtifactRequest(
+        operation_id=uuid4(),
+        space_id=space_id,
+        actor="owner",
+        artifact_id=created.artifact_id,
+        expected_revision=2,
+    )
+
+    with pytest.raises(FoundationError) as revise_refusal:
+        apply_operation(root, revise, owner)
+    with pytest.raises(FoundationError) as delete_refusal:
+        apply_operation(root, delete_again, owner)
+    with pytest.raises(FoundationError) as read_refusal:
+        read_artifact(root, created.artifact_id, owner)
+
+    assert revise_refusal.value.code == "content_unavailable"
+    assert delete_refusal.value.code == "content_unavailable"
+    assert read_refusal.value.code == "content_unavailable"
+    assert len(inspect_space(root, owner).records) == 3
 
 
 def test_grant_revoke_and_receipt_read_are_current_separate_rights(tmp_path: Path) -> None:

@@ -29,8 +29,8 @@ Python/SQLite installation.
 |---|---|---|
 | `BootstrapRequest` | atomically creates the root require-Grant Decision and root space Grant | new empty active space plus trusted-local authority |
 | `CreateArtifactRequest` | creates Artifact revision 1 and exact managed bytes/provenance | `artifact.write` Grant; no applicable deny Decision |
-| `ReviseArtifactRequest` | appends one immutable revision and advances current | exact current revision plus the same current admission |
-| `DeleteArtifactRequest` | blocks every revision read, removes managed payload/provenance, redacts payload-derived receipts/fingerprints and opens cleanup | exact current revision plus `artifact.write` |
+| `ReviseArtifactRequest` | appends one immutable revision and advances current | exact current active revision plus the same current admission |
+| `DeleteArtifactRequest` | terminally blocks every revision read and later revision, removes managed payload/provenance, redacts payload-derived receipts/fingerprints and opens cleanup | exact current active revision plus `artifact.write` |
 | `CreateDecisionRequest` | creates a typed `require_grant` or `deny` Decision | `decision.write` |
 | `ReviseDecisionRequest` | appends a Decision revision, including explicit revocation | exact current revision plus `decision.write` |
 | `CreateGrantRequest` | creates a space- or Artifact-scoped Grant in the current execution epoch | `grant.write` |
@@ -74,10 +74,14 @@ schema, state and epoch metadata.
 
 ## Backup, restore and deletion boundary
 
-`create_backup` uses the SQLite Backup API and writes `manifest.json` last before the
-package directory becomes visible. The manifest binds space, schema, state boundary,
-execution epoch, database filename and SHA-256. Completed packages live under the
-space's managed backup directory and their contained Artifact ids are inventoried.
+`create_backup` uses the SQLite Backup API and first writes a hidden partial package.
+The manifest binds space, schema, state boundary, execution epoch, database filename
+and SHA-256. The matching state boundary and contained Artifact ids are committed to
+inventory before one atomic directory rename publishes the package. Partial package
+names are never restorable. A concurrent mutation invalidates the plan; deletion
+also contaminates every uncertain planned/failed backup and every indexed completed
+backup containing the Artifact. Managed restore checks current inventory status, so
+a contaminated package is unusable before physical cleanup and after a crash.
 
 Restore verifies manifest/hash/database agreement and accepts only a new empty
 destination. It rotates the execution epoch and opens in `quarantined`; backed-up
@@ -119,8 +123,9 @@ Focused automated coverage includes create/reopen, no legacy import, unsupported
 schema/runtime refusal, exact text/binary revisions, provenance, replay/conflict,
 stale revision, separate receipt-read, Grant revocation, Decision denial/revocation,
 rollback at the receipt seam, lost-response recovery, concurrent stale update,
-concurrent exact duplicate, backup tamper refusal, quarantine/fresh recovery and
-closed-store deletion from live SQLite/WAL and managed backups.
+concurrent exact duplicate, terminal deletion, backup tamper refusal, quarantined
+restore/fresh recovery, deterministic backup/delete interleaving and closed-store
+deletion from live SQLite/WAL and managed backups.
 
 This stage deliberately has no Activity/Work runtime, Attempts, scheduler,
 dispatcher, outbox, Pi integration, DBOS dependency, memory, Sleep or developer

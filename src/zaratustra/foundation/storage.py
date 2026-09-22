@@ -391,7 +391,7 @@ def read_space(path: Path) -> SpaceInfo:
 
 
 def backup_database(source: Path, backup_id: UUID, created_at: datetime) -> BackupInfo:
-    """Create one finished SQLite Backup API package; caller owns authorization/inventory."""
+    """Prepare one hidden SQLite Backup API package for later publication."""
 
     root, database, backups = layout(source)
     partial = backups / f".{backup_id}.partial"
@@ -417,8 +417,7 @@ def backup_database(source: Path, backup_id: UUID, created_at: datetime) -> Back
         (partial / "manifest.json").write_text(
             manifest.model_dump_json(indent=2), encoding="utf-8", newline="\n"
         )
-        partial.rename(package)
-        return BackupInfo(manifest=manifest, package=package)
+        return BackupInfo(manifest=manifest, package=partial)
     except BaseException:
         if partial.exists():
             shutil.rmtree(partial)
@@ -435,6 +434,26 @@ def load_backup(package: Path) -> BackupInfo:
         manifest = BackupManifest.model_validate_json(manifest_path.read_text(encoding="utf-8"))
     except (OSError, ValueError) as error:
         raise FoundationError("invalid_backup", f"Invalid backup manifest: {error}") from error
+    if package.name != str(manifest.backup_id):
+        raise FoundationError("invalid_backup", "Backup package was not published")
+    managed_database = package.parent.parent / DATABASE_NAME
+    if (
+        package.parent.name == BACKUP_DIRECTORY
+        and package.parent.parent.name == STATE_DIRECTORY
+        and managed_database.is_file()
+    ):
+        try:
+            with closing(_connect(managed_database, writable=False)) as inventory:
+                row = inventory.execute(
+                    "SELECT status FROM backup_inventory WHERE backup_id = ?",
+                    (str(manifest.backup_id),),
+                ).fetchone()
+        except sqlite3.Error as error:
+            raise FoundationError(
+                "invalid_backup", f"Managed backup inventory is unavailable: {error}"
+            ) from error
+        if row != ("complete",):
+            raise FoundationError("invalid_backup", "Managed backup is not current and complete")
     if file_sha256(database) != manifest.database_sha256:
         raise FoundationError("invalid_backup", "Backup database hash mismatch")
     with closing(_connect(database, writable=False)) as connection:
