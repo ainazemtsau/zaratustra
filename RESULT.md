@@ -1,82 +1,120 @@
-# Core v0.1 Stage 1 technical baseline
+# Core v0.1 Stage 2 domain foundation
 
 ## outcome
 
-The owner-approved Stage 1 boundary is implemented on `codex/core-v0.1` from
-exact base `9913786eacb9c95ce103e29a21fa1e89dbdbd070`. Product authority now points
-to the Core v0.1 baseline while preserving earlier CALLs and Works as history.
+The owner-authorized Stage 2 implementation is ready for manual acceptance on
+`codex/core-v0.1`, based on exact commit
+`7ec6033d234b0e2e870f53796a9dad0711d3b468`. It implements an independent
+`zaratustra.foundation` package and stops at the requested subject foundation. It
+does not read, migrate or write the old `.zara` workspace and does not modify the
+separate `C:\projects\zaratustra` checkout.
 
-The continued Pi integration gate is `positive` for published Pi `0.87.0` on the
-exercised localhost custom-provider/RPC path. Exact final requests, resource reserves,
-usage accounting, real compaction, overflow recovery, current-input delivery,
-busy-session questions and wait redisplay all have joined evidence. This does not
-generalize to untested real provider/auth transports.
+The foundation provides a new empty space identity and schema; exact immutable
+Artifact revisions and provenance; versioned Decision and Grant records; current
+Decision/Grant admission; one atomic operation/audit/receipt path; exact replay,
+conflict and stale-revision behavior; separately authorized inspection and receipt
+reads; verified backup; quarantined restore with execution-epoch rotation; fresh
+recovery; terminal logical deletion; and physical cleanup of managed live and backup
+payloads. No successor Activity/Work execution layer was admitted.
 
-The DBOS durable-execution gate remains `inconclusive`. Readiness and scenarios 1–8
-passed, and preserved logs/database state support application-version routing in
-scenario 10. Scenario 9 still lacks a stable Windows closed-database sanitation
-observation after both targeted repeats stopped with `database is locked`. Neither
-dependency was added to production, and implementation still stops before the Core
-v0.1 domain schema.
+Implementation commits are `9df390a` (foundation), `f5159fb` (terminal deletion and
+backup/delete race closure), and `8a62bdd` (crash-consistent backup publication).
 
 ## evidence
 
-`docs/core-v0.1/TECHNICAL-BASELINE.md` now places the continuation result before the
-preserved initial report. `TECHNICAL-BASELINE-MANIFEST.json` fixes the specification,
-repository, host, Pi, SQLite and DBOS identities. The tracked
-`STAGE1-CONTINUATION-EVIDENCE.json` records source identity, exact attempts, raw
-evidence hashes, reviewed observations, negative controls and the remaining unknown.
+The implementation is grounded in specification file
+`Zaratustra_Core_Specification_v0.1.md`, SHA-256
+`1DDCBF9DBFD58426781F61A67A170D3CE85FCD2BA27B17549773ED3356F9428D`.
+`docs/core-v0.1/STAGE2-PLAN.md` records the admitted plan and
+`docs/core-v0.1/STAGE2-IMPLEMENTATION.md` records the actual contracts, operations,
+storage and reproduction boundary.
 
-The development-only probes live under descriptive `tools/technical_baseline`
-paths and are excluded from the installed `zaratustra` package. The published Pi
-`0.87.0` process contacted only a localhost HTTP/SSE simulator. The DBOS `3.0.0`
-probe used synthetic state in separate `core.sqlite3` and `executor.sqlite3` files.
-No provider login, model request, personal data or old workspace participated. The
-continued Pi runs used an explicit Windows system allowlist and isolated home, config,
-session and temporary directories. Direct inspection of the built wheel found no
-`tools/` or `technical_baseline` entry. Fourteen focused probe tests, including the
-artificial-defect controls, passed.
+The runtime gate accepts Python `3.13.7`, exact SQLite `3.53.3` and FTS5. The
+development run used the official Stage 1 archive identity
+`3a494861ce24d1f330efbc6c3fb58ce4972f2cf8df4e43122246ed987109dc8a`
+(SHA3-256) and extracted DLL identity
+`79FD9EC89DBA3F8BD64529A2CA8E9DDE6AE6EDC486C55A1D3F1CE77975A8375C`
+(SHA-256). The DLL is admitted per process through `ZARATUSTRA_SQLITE_DLL`; it is
+not vendored, downloaded by product code or installed globally.
 
-The complete `uv run --locked python -m tools.check --deliver` run passed on the
-continuation tree: 156 files were formatted, Ruff and strict mypy were clean across
-134 Python files, all 19 import contracts were kept, all 450 tests passed, and both
-source and wheel artifacts built. The required bounded read-only evaluator verified
-the source/evidence hashes, Pi reanalysis boundary, DBOS scenario classification,
-negative controls and unchanged product/dependency boundary; its first smoke found
-only the missing delivery-result paragraph corrected here. This is a setup smoke, not
-a binding Direction G5 verdict.
+The model-free synthetic probe at `_scratch/stage2-foundation-probe-b` passed on
+SQLite `3.53.3`. It demonstrated exact replay, exact historical/current bytes,
+receipt recovery, a verified backup, quarantine-only restore, epoch rotation from 1
+to 2, fresh recovery and exact restored bytes. It made no model, provider, network or
+old-workspace call.
+
+Twenty focused foundation tests pass. They cover new/reopened spaces, unsupported
+runtime/schema refusal, exact binary/text revisions, provenance, replay/conflict,
+stale writes, current Decision/Grant behavior, atomic rollback, response recovery,
+concurrency, tamper refusal, quarantine/recovery, terminal deletion, backup/delete
+interleaving and both backup publication crash windows. In particular, a renamed
+package remains non-restorable before inventory commit and becomes verifiably
+complete immediately after commit.
+
+The final full `uv run --locked python -m tools.check --deliver` run passed: 168
+files were format-clean, Ruff was clean, strict mypy passed across 144 source files,
+all 20 import contracts were kept, all 470 tests passed, source and wheel artifacts
+built, and delivery-report structure passed. Wheel inspection confirms the
+foundation package is installed while development tools remain excluded.
+
+The required bounded setup evaluator found no setup blocker. Independent adversarial
+review first found two Critical defects (deleted-record resurrection and a
+backup/delete publication race) and then one Important inventory/publication crash
+window. Commits `f5159fb` and `8a62bdd` fixed them with deterministic regression
+tests. Final bounded re-review found no Critical or Important issue and returned
+ready. This review is engineering evidence, not owner acceptance or a Direction G5
+artifact.
 
 ## assumptions
 
-Pi remains the provider/model selection and authentication surface; the Core is not
-bound to ChatGPT/Codex, Meta Muse, Qwen or a local model. A localhost custom provider
-can test the integration seam but cannot prove every real provider transport.
+Trusted-local authority is established by an adapter outside model/request content,
+then bound to the resolved space path, space id and execution epoch. This stage
+implements and tests that seam but does not choose the future UI, OS identity or
+interactive confirmation adapter.
 
-The positive Pi result establishes one upstream extension/custom-provider route, not
-provider equivalence. An inconclusive DBOS gate blocks the DBOS-dependent execution
-stage only. A separately authorized domain-foundation stage may proceed without
-choosing a custom dispatcher.
+SQLite `3.53.3` remains an exact build requirement for WAL-backed foundation spaces.
+The ordinary managed Python runtime's SQLite `3.50.4` is intentionally refused; a
+deployment must supply the already verified build or another owner-approved exact
+distribution mechanism without weakening runtime admission.
+
+The deletion claim covers files managed by this stage: the live Core database and
+its WAL/SHM plus registered managed backup packages. SSD remapping, OS snapshots,
+manually copied packages and external systems are outside the claim. Audit keeps
+permitted identifiers and outcome references, but managed payload, payload digest,
+provenance and replayable payload-derived receipt intent are removed.
 
 ## cuts
 
-No Core v0.1 domain schema, Activity/Work runtime, memory, Sleep, installer, updater,
-replacement dispatcher, Pi fork, model router, real model smoke, migration from old
-`.zara`, CI/CD, GitHub Action or push automation was added. Pi and DBOS were not added
-to `pyproject.toml` or `uv.lock`.
+There is no Activity/Work runtime, Attempt, scheduler, dispatcher, outbox, memory,
+Sleep, Pi integration, DBOS dependency, model router, CLI workflow, installer,
+updater, migration from old `.zara`, remote publication, CI/CD, GitHub Action or push
+notification. No real personal data, paid service or new external right was used.
+
+DBOS remains an open technical question rather than a selected dependency. Its Stage
+1 Windows closed-handle sanitation evidence is still inconclusive; this stage neither
+silently narrows deletion semantics nor introduces a custom dispatcher.
 
 ## cost
 
-The change is limited to the authority/baseline documents, exact dependency manifest,
-development-only localhost probes and focused tests. Temporary Pi, fixed SQLite and
-DBOS runtimes exist only in ignored scratch space in the isolated worktree. No paid
-model or external service call was made.
+The installed change is one independent Python package, one strict SQLite schema and
+its tests/docs/probe. New workspace state exists only under a user-selected empty
+directory. Test/probe outputs and the verified SQLite runtime remain in ignored local
+scratch space. No external service cost was incurred.
 
 ## manual-acceptance
 
-The owner explicitly authorized this continuation, its fresh attempt budget and local
-commits, and separately clarified that the product must not be locked to one provider.
-Automated evidence establishes only the mechanics listed above. Transition to Stage 2
-remains a separate owner decision.
+The owner explicitly authorized Stage 2 planning, implementation, local commits and
+the foundation-only boundary. Automated checks and review establish the engineering
+evidence above; they do not declare owner acceptance. The owner should decide whether
+this Stage 2 foundation is accepted before authorizing any successor stage.
+
+## recommendation
+
+Keep `zaratustra.foundation` as the sole subject-state authority and preserve its
+public module boundary. For a successor, first obtain a separate owner CALL that
+defines the smallest Activity/Work contract consuming this foundation. Do not bind
+that work to DBOS until the open Windows deletion/handle gate is resolved, and do not
+add a replacement dispatcher merely to bypass that gate.
 
 ## next
 
