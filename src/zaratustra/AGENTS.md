@@ -1,4 +1,8 @@
 # Package boundary
+`foundation` is the independent Core v0.1 subject foundation and has no dependency on
+the legacy Core or product surfaces. It owns its separate `.zara-core` space through
+its public `__init__.py`; no other installed module uses it until a later authorized
+vertical integration stage.
 Public package contains Core, trusted local adapter and CLI for records and mutations.
 The entry adapter owns an explicit discovery catalog and depends only on public Core.
 The intake coordinator depends only on public Core and composes exact standard

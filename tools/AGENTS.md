@@ -5,6 +5,8 @@ ProcessTrial owns only trusted local confirmations, public Core calls and retain
 evidence; package rules own process decisions. Never add subject branches to Core.
 Standalone probe CLIs require NEW directories inside this checkout's _scratch;
 pytest supplies isolated paths. Never clean old trials or use the owner's data.
+probe_foundation uses only the public independent foundation on synthetic data and an
+explicitly supplied verified SQLite 3.53.3 DLL; it creates no Activity or user data.
 Read STOP/STEER before mutations. T5/T6 checks are assigned to fresh Claude Code
 by the owner; authoring/formatting source is not a native or behavioral PASS.
 probe_overview reuses the T5 pair run, then reads one shared overview over both

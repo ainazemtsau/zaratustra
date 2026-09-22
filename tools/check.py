@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import os
 import re
 import shutil
 import subprocess
@@ -16,7 +17,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def run(command: list[str], root: Path = ROOT) -> None:
     print("$ " + " ".join(command), flush=True)
-    subprocess.run(command, cwd=root, check=True)
+    environment = os.environ.copy()
+    if environment.get("ZARATUSTRA_SQLITE_DLL"):
+        bootstrap = str((root / "tools" / "sqlite_bootstrap").resolve())
+        inherited = environment.get("PYTHONPATH")
+        environment["PYTHONPATH"] = (
+            bootstrap if not inherited else bootstrap + os.pathsep + inherited
+        )
+    subprocess.run(command, cwd=root, check=True, env=environment)
 
 
 def git_paths(root: Path, *, tracked_only: bool = False) -> list[str]:

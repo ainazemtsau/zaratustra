@@ -1,0 +1,545 @@
+"""SQLite layout, checked transactions and maintenance primitives."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import shutil
+import time
+from collections.abc import Iterator
+from contextlib import closing, contextmanager
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+from uuid import UUID, uuid4
+
+from .models import BackupInfo, BackupManifest, SpaceInfo
+from .runtime import ensure_sqlite_runtime
+
+ensure_sqlite_runtime()
+
+import sqlite3  # noqa: E402
+
+APPLICATION_ID = 0x5A434631
+SCHEMA_VERSION = 1
+SCHEMA_NAME = "core-v0.1-foundation-1"
+STATE_DIRECTORY = ".zara-core"
+DATABASE_NAME = "core.sqlite3"
+BACKUP_DIRECTORY = "backups"
+BUSY_TIMEOUT_MS = 250
+BUSY_ATTEMPTS = 3
+
+
+class FoundationError(Exception):
+    """A structured foundation refusal or storage failure."""
+
+    def __init__(self, code: str, detail: str) -> None:
+        self.code = code
+        super().__init__(f"{code}: {detail}")
+
+
+SCHEMA_STATEMENTS = (
+    """
+    CREATE TABLE schema_migrations (
+        version INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        sha256 TEXT NOT NULL,
+        applied_at TEXT NOT NULL
+    ) STRICT
+    """,
+    """
+    CREATE TABLE spaces (
+        singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
+        space_id TEXT NOT NULL UNIQUE,
+        created_at TEXT NOT NULL,
+        state_revision INTEGER NOT NULL CHECK (state_revision >= 0),
+        execution_epoch INTEGER NOT NULL CHECK (execution_epoch >= 1),
+        recovery_state TEXT NOT NULL CHECK (recovery_state IN ('active', 'quarantined'))
+    ) STRICT
+    """,
+    """
+    CREATE TABLE records (
+        record_id TEXT PRIMARY KEY,
+        kind TEXT NOT NULL CHECK (kind IN ('artifact', 'decision', 'grant')),
+        current_revision INTEGER NOT NULL CHECK (current_revision >= 1),
+        status TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    ) STRICT
+    """,
+    """
+    CREATE TABLE operations (
+        operation_id TEXT PRIMARY KEY,
+        fingerprint TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        actor TEXT NOT NULL,
+        committed_at TEXT NOT NULL,
+        state_revision INTEGER NOT NULL UNIQUE CHECK (state_revision >= 1)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE record_revisions (
+        record_id TEXT NOT NULL,
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        operation_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        actor TEXT NOT NULL,
+        status TEXT NOT NULL,
+        body_json TEXT NOT NULL,
+        PRIMARY KEY (record_id, revision),
+        FOREIGN KEY (record_id) REFERENCES records(record_id),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE managed_content (
+        record_id TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        media_type TEXT NOT NULL,
+        payload BLOB NOT NULL,
+        sha256 TEXT NOT NULL,
+        PRIMARY KEY (record_id, revision),
+        FOREIGN KEY (record_id, revision)
+            REFERENCES record_revisions(record_id, revision) ON DELETE CASCADE
+    ) STRICT
+    """,
+    """
+    CREATE TABLE revision_provenance (
+        record_id TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        ordinal INTEGER NOT NULL CHECK (ordinal >= 0),
+        relation TEXT NOT NULL,
+        source_record_id TEXT,
+        source_revision INTEGER,
+        external_ref TEXT,
+        PRIMARY KEY (record_id, revision, ordinal),
+        FOREIGN KEY (record_id, revision)
+            REFERENCES record_revisions(record_id, revision) ON DELETE CASCADE,
+        FOREIGN KEY (source_record_id, source_revision)
+            REFERENCES record_revisions(record_id, revision),
+        CHECK (
+            (source_record_id IS NOT NULL AND source_revision IS NOT NULL AND external_ref IS NULL)
+            OR (source_record_id IS NULL AND source_revision IS NULL AND external_ref IS NOT NULL)
+        )
+    ) STRICT
+    """,
+    """
+    CREATE TABLE operation_audit (
+        operation_id TEXT PRIMARY KEY,
+        authority_source TEXT NOT NULL,
+        target_refs_json TEXT NOT NULL,
+        grant_refs_json TEXT NOT NULL,
+        decision_refs_json TEXT NOT NULL,
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE receipts (
+        operation_id TEXT PRIMARY KEY,
+        fingerprint TEXT NOT NULL,
+        receipt_json TEXT NOT NULL,
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE deletion_jobs (
+        operation_id TEXT PRIMARY KEY,
+        record_id TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('pending', 'complete')),
+        created_at TEXT NOT NULL,
+        completed_at TEXT,
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id),
+        FOREIGN KEY (record_id) REFERENCES records(record_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE backup_inventory (
+        backup_id TEXT PRIMARY KEY,
+        package_name TEXT NOT NULL UNIQUE,
+        created_at TEXT NOT NULL,
+        state_revision INTEGER NOT NULL CHECK (state_revision >= 0),
+        database_sha256 TEXT,
+        status TEXT NOT NULL CHECK (
+            status IN ('planned', 'complete', 'failed', 'contaminated', 'purged')
+        )
+    ) STRICT
+    """,
+    """
+    CREATE TABLE backup_records (
+        backup_id TEXT NOT NULL,
+        record_id TEXT NOT NULL,
+        PRIMARY KEY (backup_id, record_id),
+        FOREIGN KEY (backup_id) REFERENCES backup_inventory(backup_id),
+        FOREIGN KEY (record_id) REFERENCES records(record_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE maintenance_events (
+        event_id TEXT PRIMARY KEY,
+        kind TEXT NOT NULL,
+        occurred_at TEXT NOT NULL,
+        detail_json TEXT NOT NULL
+    ) STRICT
+    """,
+    "CREATE INDEX record_revisions_operation ON record_revisions(operation_id)",
+    "CREATE INDEX provenance_source ON revision_provenance(source_record_id, source_revision)",
+    "CREATE INDEX records_kind ON records(kind, record_id)",
+)
+SCHEMA_SHA256 = (
+    hashlib.sha256("\n".join(statement.strip() for statement in SCHEMA_STATEMENTS).encode())
+    .hexdigest()
+    .upper()
+)
+
+
+def utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
+def canonical_json(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest().upper()
+
+
+def _plain(path: Path) -> None:
+    if path.is_symlink() or path.is_junction():
+        raise FoundationError("layout", f"Managed paths must not be links: {path}")
+
+
+def _new_root(path: Path) -> Path:
+    root = path.expanduser().resolve()
+    if not root.is_dir():
+        raise FoundationError("layout", "Choose an existing empty directory")
+    _plain(root)
+    try:
+        occupied = next(root.iterdir(), None)
+    except OSError as error:
+        raise FoundationError("layout", f"Cannot inspect selected directory: {error}") from error
+    if occupied is not None:
+        raise FoundationError("layout", "New spaces require an empty directory")
+    return root
+
+
+def layout(path: Path) -> tuple[Path, Path, Path]:
+    root = path.expanduser().resolve()
+    state = root / STATE_DIRECTORY
+    database = state / DATABASE_NAME
+    backups = state / BACKUP_DIRECTORY
+    for entry in (root, state, database, backups):
+        if entry.exists():
+            _plain(entry)
+    if not root.is_dir() or not state.is_dir() or not backups.is_dir() or not database.is_file():
+        raise FoundationError("layout", "No complete Core v0.1 space at this path")
+    return root, database, backups
+
+
+def _configure(connection: sqlite3.Connection, *, writable: bool) -> None:
+    connection.execute("PRAGMA foreign_keys = ON")
+    connection.execute(f"PRAGMA busy_timeout = {BUSY_TIMEOUT_MS}")
+    connection.execute("PRAGMA secure_delete = ON")
+    connection.execute("PRAGMA synchronous = FULL")
+    if not writable:
+        connection.execute("PRAGMA query_only = ON")
+
+
+def _connect(database: Path, *, writable: bool) -> sqlite3.Connection:
+    mode = "rw" if writable else "ro"
+    connection = sqlite3.connect(
+        database.as_uri() + f"?mode={mode}",
+        uri=True,
+        autocommit=True,
+        timeout=BUSY_TIMEOUT_MS / 1000,
+    )
+    _configure(connection, writable=writable)
+    return connection
+
+
+def _begin(connection: sqlite3.Connection, *, writable: bool) -> None:
+    statement = "BEGIN IMMEDIATE" if writable else "BEGIN"
+    for attempt in range(BUSY_ATTEMPTS):
+        try:
+            connection.execute(statement)
+            return
+        except sqlite3.OperationalError as error:
+            busy = "locked" in str(error).casefold() or "busy" in str(error).casefold()
+            if not busy or attempt + 1 == BUSY_ATTEMPTS:
+                if busy:
+                    raise FoundationError(
+                        "busy", "SQLite write/read boundary remained busy"
+                    ) from error
+                raise
+            time.sleep(0.05 * (attempt + 1))
+
+
+def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> SpaceInfo:
+    application_id = int(connection.execute("PRAGMA application_id").fetchone()[0])
+    schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
+    if application_id != APPLICATION_ID or schema_version != SCHEMA_VERSION:
+        raise FoundationError(
+            "unsupported_schema",
+            f"Unsupported application/schema identity: {application_id}/{schema_version}",
+        )
+    journal = str(connection.execute("PRAGMA journal_mode").fetchone()[0]).casefold()
+    if journal != "wal":
+        raise FoundationError("unsupported_configuration", f"Expected WAL, found {journal}")
+    migration = connection.execute(
+        "SELECT version, name, sha256 FROM schema_migrations ORDER BY version"
+    ).fetchall()
+    if migration != [(SCHEMA_VERSION, SCHEMA_NAME, SCHEMA_SHA256)]:
+        raise FoundationError("unsupported_schema", "Schema history does not match installed code")
+    rows = connection.execute(
+        "SELECT space_id, created_at, state_revision, execution_epoch, recovery_state FROM spaces"
+    ).fetchall()
+    if len(rows) != 1:
+        raise FoundationError("corrupt_space", "Expected exactly one space identity")
+    space_id, created_at, state_revision, execution_epoch, recovery_state = rows[0]
+    return SpaceInfo(
+        root=root,
+        database=database,
+        space_id=UUID(space_id),
+        created_at=datetime.fromisoformat(created_at),
+        schema_version=1,
+        state_revision=state_revision,
+        execution_epoch=execution_epoch,
+        recovery_state=recovery_state,
+        sqlite_version="3.53.3",
+    )
+
+
+@contextmanager
+def space_connection(
+    path: Path, *, writable: bool = False
+) -> Iterator[tuple[sqlite3.Connection, SpaceInfo]]:
+    """Open, validate and close one bounded transaction; never migrate or repair."""
+
+    connection: sqlite3.Connection | None = None
+    try:
+        root, database, _ = layout(path)
+        connection = _connect(database, writable=writable)
+        _begin(connection, writable=writable)
+        info = _space_info(connection, root, database)
+        yield connection, info
+        connection.execute("COMMIT")
+    except FoundationError:
+        if connection is not None and connection.in_transaction:
+            connection.execute("ROLLBACK")
+        raise
+    except (OSError, ValueError, sqlite3.Error) as error:
+        if connection is not None and connection.in_transaction:
+            connection.execute("ROLLBACK")
+        raise FoundationError("storage", str(error)) from error
+    finally:
+        if connection is not None:
+            connection.close()
+
+
+def initialize_space(path: Path, *, space_id: UUID | None = None) -> SpaceInfo:
+    """Create a new empty Core space without reading or importing any old workspace."""
+
+    root = _new_root(path)
+    state = root / STATE_DIRECTORY
+    backups = state / BACKUP_DIRECTORY
+    database = state / DATABASE_NAME
+    created_at = utc_now().isoformat()
+    identity = space_id or uuid4()
+    try:
+        state.mkdir()
+        backups.mkdir()
+        with closing(sqlite3.connect(database, autocommit=True, timeout=0.25)) as connection:
+            _configure(connection, writable=True)
+            journal = connection.execute("PRAGMA journal_mode = WAL").fetchone()
+            if journal is None or str(journal[0]).casefold() != "wal":
+                raise FoundationError("unsupported_configuration", "SQLite refused WAL mode")
+            connection.execute(f"PRAGMA application_id = {APPLICATION_ID}")
+            connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+            connection.execute("BEGIN IMMEDIATE")
+            try:
+                for statement in SCHEMA_STATEMENTS:
+                    connection.execute(statement)
+                connection.execute(
+                    "INSERT INTO schema_migrations(version, name, sha256, applied_at) "
+                    "VALUES (?, ?, ?, ?)",
+                    (SCHEMA_VERSION, SCHEMA_NAME, SCHEMA_SHA256, created_at),
+                )
+                connection.execute(
+                    "INSERT INTO spaces(singleton, space_id, created_at, state_revision, "
+                    "execution_epoch, recovery_state) VALUES (1, ?, ?, 0, 1, 'active')",
+                    (str(identity), created_at),
+                )
+                connection.execute("COMMIT")
+            except BaseException:
+                if connection.in_transaction:
+                    connection.execute("ROLLBACK")
+                raise
+        return read_space(root)
+    except BaseException:
+        if state.exists():
+            shutil.rmtree(state)
+        raise
+
+
+def read_space(path: Path) -> SpaceInfo:
+    with space_connection(path) as (_, info):
+        return info
+
+
+def backup_database(source: Path, backup_id: UUID, created_at: datetime) -> BackupInfo:
+    """Create one finished SQLite Backup API package; caller owns authorization/inventory."""
+
+    root, database, backups = layout(source)
+    partial = backups / f".{backup_id}.partial"
+    package = backups / str(backup_id)
+    if partial.exists() or package.exists():
+        raise FoundationError("backup_exists", f"Backup package already exists: {backup_id}")
+    partial.mkdir()
+    backup_database_path = partial / DATABASE_NAME
+    try:
+        with space_connection(root) as (source_connection, info):
+            with closing(sqlite3.connect(backup_database_path, autocommit=True)) as target:
+                source_connection.backup(target)
+        digest = file_sha256(backup_database_path)
+        manifest = BackupManifest(
+            backup_id=backup_id,
+            space_id=info.space_id,
+            schema_version=1,
+            state_revision=info.state_revision,
+            execution_epoch=info.execution_epoch,
+            created_at=created_at,
+            database_sha256=digest,
+        )
+        (partial / "manifest.json").write_text(
+            manifest.model_dump_json(indent=2), encoding="utf-8", newline="\n"
+        )
+        partial.rename(package)
+        return BackupInfo(manifest=manifest, package=package)
+    except BaseException:
+        if partial.exists():
+            shutil.rmtree(partial)
+        raise
+
+
+def load_backup(package: Path) -> BackupInfo:
+    package = package.expanduser().resolve()
+    manifest_path = package / "manifest.json"
+    database = package / DATABASE_NAME
+    if not package.is_dir() or not manifest_path.is_file() or not database.is_file():
+        raise FoundationError("invalid_backup", "Backup package is incomplete")
+    try:
+        manifest = BackupManifest.model_validate_json(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        raise FoundationError("invalid_backup", f"Invalid backup manifest: {error}") from error
+    if file_sha256(database) != manifest.database_sha256:
+        raise FoundationError("invalid_backup", "Backup database hash mismatch")
+    with closing(_connect(database, writable=False)) as connection:
+        _begin(connection, writable=False)
+        try:
+            application = int(connection.execute("PRAGMA application_id").fetchone()[0])
+            version = int(connection.execute("PRAGMA user_version").fetchone()[0])
+            row = connection.execute(
+                "SELECT space_id, state_revision, execution_epoch FROM spaces"
+            ).fetchone()
+            if (
+                application != APPLICATION_ID
+                or version != SCHEMA_VERSION
+                or row is None
+                or UUID(row[0]) != manifest.space_id
+                or int(row[1]) != manifest.state_revision
+                or int(row[2]) != manifest.execution_epoch
+            ):
+                raise FoundationError("invalid_backup", "Manifest/database boundary mismatch")
+            connection.execute("COMMIT")
+        except BaseException:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+    return BackupInfo(manifest=manifest, package=package)
+
+
+def restore_database(package: Path, destination: Path) -> SpaceInfo:
+    """Restore only into a new quarantined space and rotate the execution epoch."""
+
+    backup = load_backup(package)
+    root = _new_root(destination)
+    state = root / STATE_DIRECTORY
+    backups = state / BACKUP_DIRECTORY
+    database = state / DATABASE_NAME
+    try:
+        state.mkdir()
+        backups.mkdir()
+        shutil.copy2(backup.package / DATABASE_NAME, database)
+        with closing(_connect(database, writable=True)) as connection:
+            _begin(connection, writable=True)
+            now = utc_now().isoformat()
+            connection.execute(
+                "UPDATE spaces SET state_revision = state_revision + 1, "
+                "execution_epoch = execution_epoch + 1, recovery_state = 'quarantined' "
+                "WHERE singleton = 1"
+            )
+            connection.execute(
+                "INSERT INTO maintenance_events(event_id, kind, occurred_at, detail_json) "
+                "VALUES (?, 'restore', ?, ?)",
+                (
+                    str(uuid4()),
+                    now,
+                    canonical_json(
+                        {
+                            "backup_id": str(backup.manifest.backup_id),
+                            "source_state_revision": backup.manifest.state_revision,
+                        }
+                    ),
+                ),
+            )
+            connection.execute("COMMIT")
+        return read_space(root)
+    except BaseException:
+        if state.exists():
+            shutil.rmtree(state)
+        raise
+
+
+def sanitize_database(path: Path) -> None:
+    """Checkpoint and compact after all product connections have been closed."""
+
+    _, database, _ = layout(path)
+    try:
+        with closing(_connect(database, writable=True)) as connection:
+            checkpoint = connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+            if checkpoint is None or int(checkpoint[0]) != 0:
+                raise FoundationError("maintenance_busy", "WAL checkpoint remained blocked")
+            connection.execute("VACUUM")
+            checkpoint = connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+            if checkpoint is None or int(checkpoint[0]) != 0:
+                raise FoundationError("maintenance_busy", "Final WAL checkpoint remained blocked")
+    except FoundationError:
+        raise
+    except sqlite3.Error as error:
+        code = "maintenance_busy" if "locked" in str(error).casefold() else "storage"
+        raise FoundationError(code, f"Cannot sanitize SQLite store: {error}") from error
+
+
+__all__ = [
+    "BACKUP_DIRECTORY",
+    "DATABASE_NAME",
+    "FoundationError",
+    "SCHEMA_SHA256",
+    "SCHEMA_VERSION",
+    "STATE_DIRECTORY",
+    "backup_database",
+    "canonical_json",
+    "file_sha256",
+    "initialize_space",
+    "layout",
+    "load_backup",
+    "read_space",
+    "restore_database",
+    "sanitize_database",
+    "space_connection",
+    "utc_now",
+]

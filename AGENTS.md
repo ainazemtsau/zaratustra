@@ -2,13 +2,14 @@
 
 ## Current product authority — Core v0.1
 - The current product basis is `docs/core-v0.1/IMPLEMENTATION-BASELINE.md`, the
-  owner-approved Core v0.1 implementation plan recorded there, this AGENTS.md,
-  and `validation.config`.
+  owner-approved Core v0.1 implementation plan recorded there,
+  `docs/core-v0.1/STAGE2-PLAN.md`, this AGENTS.md, and `validation.config`.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
-- Stage 1 is limited to the G07-1 DBOS and G08-1 Pi technical gates. It must stop
-  after recording both outcomes; the Core v0.1 domain schema starts only with a
-  separately authorized transition to Stage 2.
+- Stage 1 stopped after recording the G07-1 DBOS and G08-1 Pi technical outcomes.
+  The owner's September 22, 2026 request authorizes Stage 2: the independent
+  domain foundation only. It stops before Pi integration, DBOS-dependent or custom
+  execution, Activity/Work runtime, memory, Sleep and developer workflows.
 
 ## Commands (run from this repository)
 - Prepare: `uv sync --locked`
@@ -20,6 +21,12 @@
 
 ## What exists
 Python 3.13 / uv / sqlite3 / Pydantic v2 / pytest / ruff / SHA-256.
+Core v0.1 Stage 2 adds the independent `zaratustra.foundation` package: a new empty
+`.zara-core` space, typed Artifact/Decision/Grant revisions and managed bytes,
+one atomic operation/audit/receipt path, current epoch-bound local admission, exact
+reads, model-free inspection and bounded backup/restore/deletion. It does not import
+legacy `zaratustra.core`; exact surface and reproduction are in
+`docs/core-v0.1/STAGE2-IMPLEMENTATION.md` and `tools.probe_foundation`.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,
@@ -80,7 +87,7 @@ Outside-checkout runtime proof: `uv run --locked python -m tools.probe_install`.
 Work 2 installed/migration proof: `uv run --locked python -m tools.probe_records --accepted-trial <path>`.
 
 ## Run contract (v36)
-1. Execution authority is the current owner request + `docs/core-v0.1/IMPLEMENTATION-BASELINE.md` + this AGENTS.md + validation.config; global skills/tools are support and never add requirements.
+1. Execution authority is the current owner request + `docs/core-v0.1/IMPLEMENTATION-BASELINE.md` + `docs/core-v0.1/STAGE2-PLAN.md` + this AGENTS.md + validation.config; global skills/tools are support and never add requirements.
 2. PROBA is the default; only the owner's explicit words select OPORA. This repo enables PROBA only; an OPORA CALL STOPs until its applicable gates are installed.
 3. PROBA keeps native build/hygiene, tests for answers not visible by eye, owner/tool STOPs; it owes no frozen pair, independent test-author, stage receipts, mutation, property audit or review artifact.
 4. Never use self-written source scanning as product behavior evidence. Hygiene/presence checks below make no semantic acceptance claim. Never test tuning magnitudes or an owner-visible answer.
@@ -95,8 +102,9 @@ Work 2 installed/migration proof: `uv run --locked python -m tools.probe_records
 CI/CD, GitHub Actions and push notifications are excluded requirements until the owner separately asks. Do not configure them or block setup/delivery on their absence, even if a generic checklist requires them. The owner authorized public GitHub hosting and integration into main on September 11–12, 2026; local checks stay required. That authorization does not grant access to user workspaces or authorize paid services. The original automation boundary remains docs/setup/OWNER-DECISION-20260907.md, owner-ack:solmax-zaratustra-local-setup-no-automation-20260907.
 
 ## Constitution
-- Keep the accepted Core v0.1 functional composition and the explicit Stage 1
-  stop before Stage 2. Preserve earlier Works/CALLs as history, not current scope.
+- Keep the accepted Core v0.1 functional composition and the completed Stage 1
+  evidence. Implement only the separately authorized Stage 2 foundation and stop
+  at its boundary. Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.
 - No real personal data, remote publication, paid service or new external rights without authorization.
