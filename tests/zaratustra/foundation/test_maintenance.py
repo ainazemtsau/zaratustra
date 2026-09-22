@@ -29,7 +29,12 @@ from zaratustra.foundation import (
     read_receipt,
     restore_backup,
 )
-from zaratustra.foundation.storage import backup_database as prepare_backup_database
+from zaratustra.foundation.storage import (
+    backup_database as prepare_backup_database,
+)
+from zaratustra.foundation.storage import (
+    load_backup as load_backup_package,
+)
 
 
 def ready_space(tmp_path: Path) -> tuple[Path, UUID, LocalAuthority]:
@@ -229,3 +234,47 @@ def test_delete_invalidates_backup_prepared_concurrently(
     assert not partial.exists()
     assert not (partial.parent / str(backup_id)).exists()
     assert inspect_space(root, owner).contaminated_backups == 0
+
+
+def test_backup_publication_is_honest_on_both_sides_of_inventory_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, _, owner = ready_space(tmp_path)
+    backup_id = uuid4()
+    published = Event()
+    allow_commit = Event()
+    committed = Event()
+    allow_return = Event()
+    original_rename = Path.rename
+
+    def pause_after_publish(source: Path, target: Path) -> Path:
+        result = original_rename(source, target)
+        if source.name == f".{backup_id}.partial":
+            published.set()
+            assert allow_commit.wait(timeout=10)
+        return result
+
+    def pause_after_commit(package: Path) -> BackupInfo:
+        committed.set()
+        assert allow_return.wait(timeout=10)
+        return load_backup_package(package)
+
+    monkeypatch.setattr(Path, "rename", pause_after_publish)
+    monkeypatch.setattr("zaratustra.foundation.operations.load_backup", pause_after_commit)
+    final_package = root / ".zara-core" / "backups" / str(backup_id)
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(create_backup, root, backup_id, owner)
+        assert published.wait(timeout=10)
+        assert final_package.is_dir()
+        with pytest.raises(FoundationError) as precommit:
+            load_backup_package(final_package)
+        allow_commit.set()
+        assert committed.wait(timeout=10)
+        verified = load_backup_package(final_package)
+        allow_return.set()
+        completed = future.result(timeout=10)
+
+    assert precommit.value.code == "invalid_backup"
+    assert verified.manifest.backup_id == backup_id
+    assert completed == verified
+    assert inspect_space(root, owner).completed_backups == 1

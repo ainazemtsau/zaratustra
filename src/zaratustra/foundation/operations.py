@@ -896,6 +896,7 @@ def create_backup(path: Path, backup_id: UUID, authority: LocalAuthority) -> Bac
                 "INSERT INTO backup_records(backup_id, record_id) VALUES (?, ?)",
                 ((str(backup_id), record_id) for record_id in record_ids),
             )
+            prepared.package.rename(final_package)
             updated = connection.execute(
                 "UPDATE backup_inventory SET state_revision = ?, database_sha256 = ?, "
                 "status = 'complete' WHERE backup_id = ? AND status = 'planned'",
@@ -907,7 +908,6 @@ def create_backup(path: Path, backup_id: UUID, authority: LocalAuthority) -> Bac
             )
             if updated.rowcount != 1:
                 raise FoundationError("backup_invalidated", "Backup inventory changed")
-        prepared.package.rename(final_package)
         return load_backup(final_package)
     except BaseException as error:
         for package in (

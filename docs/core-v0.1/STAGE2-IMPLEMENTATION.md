@@ -76,12 +76,15 @@ schema, state and epoch metadata.
 
 `create_backup` uses the SQLite Backup API and first writes a hidden partial package.
 The manifest binds space, schema, state boundary, execution epoch, database filename
-and SHA-256. The matching state boundary and contained Artifact ids are committed to
-inventory before one atomic directory rename publishes the package. Partial package
-names are never restorable. A concurrent mutation invalidates the plan; deletion
-also contaminates every uncertain planned/failed backup and every indexed completed
-backup containing the Artifact. Managed restore checks current inventory status, so
-a contaminated package is unusable before physical cleanup and after a crash.
+and SHA-256. One short write transaction checks the state boundary, inventories the
+contained Artifact ids, atomically renames the package and marks it complete. While
+that transaction is uncommitted, even the renamed package is rejected by the last
+committed `planned` status; after commit, both package and honest complete inventory
+exist. Partial package names are never restorable. A concurrent mutation invalidates
+the plan; deletion also contaminates every uncertain planned/failed backup and every
+indexed completed backup containing the Artifact. Managed restore checks current
+inventory status, so a contaminated package is unusable before physical cleanup and
+after a crash.
 
 Restore verifies manifest/hash/database agreement and accepts only a new empty
 destination. It rotates the execution epoch and opens in `quarantined`; backed-up
@@ -125,7 +128,8 @@ stale revision, separate receipt-read, Grant revocation, Decision denial/revocat
 rollback at the receipt seam, lost-response recovery, concurrent stale update,
 concurrent exact duplicate, terminal deletion, backup tamper refusal, quarantined
 restore/fresh recovery, deterministic backup/delete interleaving and closed-store
-deletion from live SQLite/WAL and managed backups.
+deletion from live SQLite/WAL and managed backups. Publication tests pause both after
+rename/before inventory commit and after commit/before return.
 
 This stage deliberately has no Activity/Work runtime, Attempts, scheduler,
 dispatcher, outbox, Pi integration, DBOS dependency, memory, Sleep or developer
