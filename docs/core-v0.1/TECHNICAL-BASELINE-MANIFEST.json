@@ -1,0 +1,57 @@
+{
+  "recordedAt": "2026-09-22",
+  "specification": {
+    "name": "Zaratustra Core Specification v0.1",
+    "sha256": "1DDCBF9DBFD58426781F61A67A170D3CE85FCD2BA27B17549773ED3356F9428D"
+  },
+  "repository": {
+    "baseCommit": "9913786eacb9c95ce103e29a21fa1e89dbdbd070",
+    "branch": "codex/core-v0.1"
+  },
+  "host": {
+    "windows": "10.0.26200",
+    "powershell": "7.6.3",
+    "node": "22.19.0",
+    "python": "3.13.7",
+    "uv": "0.8.22",
+    "git": "2.50.1.windows.1"
+  },
+  "pi": {
+    "package": "@earendil-works/pi-coding-agent",
+    "version": "0.87.0",
+    "npmShasum": "908417741052a4ef12d9b9a8c0acb98a51ce9d87",
+    "npmIntegrity": "sha512-S9JJVGHya/h0e0M+zwPTB6RkPe7PmLLqfBUTssFYW5mxAti6oZEILn4jvaUImENRC3U9RwXAB6H4gw8xj2J0GQ==",
+    "installedPackageJsonSha256": "9BB655451E850A8593BA87F563C26D3D2AF2F503B76318E2F1BBE53EB28C9180"
+  },
+  "sqlite": {
+    "version": "3.53.3",
+    "archive": "sqlite-dll-win-x64-3530300.zip",
+    "archiveSha3_256": "3a494861ce24d1f330efbc6c3fb58ce4972f2cf8df4e43122246ed987109dc8a",
+    "fts5": true
+  },
+  "dbos": {
+    "package": "dbos",
+    "version": "3.0.0",
+    "wheel": "dbos-3.0.0-py3-none-any.whl",
+    "wheelSha256": "cc552877a11e8d017dbaa7a305a81fbc3c15c3c4d5628f9c2edf42f4de8fb537",
+    "installedMetadataSha256": "E4275369BE2816FE049D424F1C7CE4D46B737883FE4152AD57E1D0CFAA9F807C",
+    "resolvedPackages": [
+      "click==8.5.0",
+      "dbos==3.0.0",
+      "greenlet==3.5.6",
+      "psycopg==3.3.6",
+      "psycopg-binary==3.3.6",
+      "python-dateutil==2.9.0.post0",
+      "pyyaml==6.0.3",
+      "six==1.17.0",
+      "sqlalchemy==2.0.54",
+      "typing-extensions==4.16.0",
+      "tzdata==2026.4",
+      "websockets==17.1"
+    ]
+  },
+  "outcomes": {
+    "piIntegration": "inconclusive",
+    "durableExecution": "inconclusive"
+  }
+}

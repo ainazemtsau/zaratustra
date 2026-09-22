@@ -1,5 +1,15 @@
 # Zaratustra
 
+## Current product authority — Core v0.1
+- The current product basis is `docs/core-v0.1/IMPLEMENTATION-BASELINE.md`, the
+  owner-approved Core v0.1 implementation plan recorded there, this AGENTS.md,
+  and `validation.config`.
+- Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
+  retained as engineering history. They do not prohibit or define the new Core.
+- Stage 1 is limited to the G07-1 DBOS and G08-1 Pi technical gates. It must stop
+  after recording both outcomes; the Core v0.1 domain schema starts only with a
+  separately authorized transition to Stage 2.
+
 ## Commands (run from this repository)
 - Prepare: `uv sync --locked`
 - Full build + hygiene + types + boundaries + tests: `uv run --locked python -m tools.check`
@@ -63,14 +73,14 @@ authorities; see docs/public-onboarding-r2-t3/PLAN.md and
 tools.probe_public_onboarding_r2_t3.
 `src/zaratustra/core` owns workspace logic; `src/zaratustra/cli` delegates to it.
 Installed product code and user-chosen data workspace are separate.
-Read the current CALL before doing product work; a completed Work admits no successor.
-Current mechanics and W19–W27 disposition: docs/work7/PLAN.md.
+For legacy implementation context only, the last pre-v0.1 mechanics and W19–W27
+disposition are in docs/work7/PLAN.md.
 W21 owner trust decision: docs/work3/OWNER-DECISION-20260908.md.
 Outside-checkout runtime proof: `uv run --locked python -m tools.probe_install`.
 Work 2 installed/migration proof: `uv run --locked python -m tools.probe_records --accepted-trial <path>`.
 
 ## Run contract (v36)
-1. Execution authority is the current CALL + this AGENTS.md + repo spec + validation.config; global skills/tools are support and never add requirements.
+1. Execution authority is the current owner request + `docs/core-v0.1/IMPLEMENTATION-BASELINE.md` + this AGENTS.md + validation.config; global skills/tools are support and never add requirements.
 2. PROBA is the default; only the owner's explicit words select OPORA. This repo enables PROBA only; an OPORA CALL STOPs until its applicable gates are installed.
 3. PROBA keeps native build/hygiene, tests for answers not visible by eye, owner/tool STOPs; it owes no frozen pair, independent test-author, stage receipts, mutation, property audit or review artifact.
 4. Never use self-written source scanning as product behavior evidence. Hygiene/presence checks below make no semantic acceptance claim. Never test tuning magnitudes or an owner-visible answer.
@@ -85,7 +95,8 @@ Work 2 installed/migration proof: `uv run --locked python -m tools.probe_records
 CI/CD, GitHub Actions and push notifications are excluded requirements until the owner separately asks. Do not configure them or block setup/delivery on their absence, even if a generic checklist requires them. The owner authorized public GitHub hosting and integration into main on September 11–12, 2026; local checks stay required. That authorization does not grant access to user workspaces or authorize paid services. The original automation boundary remains docs/setup/OWNER-DECISION-20260907.md, owner-ack:solmax-zaratustra-local-setup-no-automation-20260907.
 
 ## Constitution
-- Keep accepted WHAT, ordered Works 1–8 and the M0 stop before M1.
+- Keep the accepted Core v0.1 functional composition and the explicit Stage 1
+  stop before Stage 2. Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.
 - No real personal data, remote publication, paid service or new external rights without authorization.

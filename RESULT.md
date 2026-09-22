@@ -1,70 +1,73 @@
-# Trusted local-agent Process activation entry
+# Core v0.1 Stage 1 technical baseline
 
 ## outcome
 
-The installed `zara-agent` entry now has a closed two-step activation path for one
-saved supported proposal. `activation-preview` renders the owner-readable Process
-design, complete Work graph, selected target, aliases and observed workspace identity
-without calling the mutating activation preparation API. It prints a digest retained
-by the trusted assistant. After the owner agrees in ordinary conversation,
-`activation-confirm` recomputes that exact read-only intent and refuses any change
-before reusing the existing prepare, local authorization and execution APIs.
+The owner-approved Stage 1 boundary is implemented on `codex/core-v0.1` from
+exact base `9913786eacb9c95ce103e29a21fa1e89dbdbd070`. Product authority now points
+to the Core v0.1 baseline while preserving earlier CALLs and Works as history.
 
-An explicitly selected initialized empty workspace is now a valid first-use target.
-Its workspace identity is retained through migration and Process creation. Schema 2+
-targets must have revision zero and no records; occupied, malformed or mismatched
-workspaces still refuse. A fresh preview can resume the exact retained activation plan
-after interruption or return the same completed Process and first Work.
+The Pi integration and DBOS durable-execution gates are both `inconclusive`.
+Pi established exact request observation, pre-send refusal, strict JSONL framing,
+busy-session questions and wait redisplay, but not compaction/overflow identity.
+DBOS established real checkpoint recovery and durable queue behavior in the first
+three scenarios, but the bounded Windows run did not complete scenarios 4–10.
+Neither dependency is admitted to production, and implementation stops before the
+Core v0.1 domain schema as required.
 
 ## evidence
 
-Focused trusted-chat and process-creation behavior passed with 28 tests before the
-final delivery run. The tests invoke the shipped module in fresh `python -I` processes
-with stdin disabled. They verify a byte-stable read-only preview, missing/wrong/changed
-confirmation refusal before bootstrap, successful confirm and fresh selected read,
-stable Process and first Work on replay, preservation of an initialized schema 1
-workspace id, continuation after a retained partial activation, and byte-stable refusal
-after replacement of an early reserved workspace. Existing occupied-target refusal
-remains covered and unchanged.
+`docs/core-v0.1/TECHNICAL-BASELINE.md` separates primary-source findings from live
+observations, records both attempts, explains the gate classifications, and names
+what remains untested. `TECHNICAL-BASELINE-MANIFEST.json` fixes the specification,
+repository, host, Pi, SQLite and DBOS identities and artifact hashes.
 
-The final native `uv run --python C:\Python313\python.exe --locked python -m
-tools.check --deliver` passed with a task-local uv cache and pytest base temp: 150 files
-formatted, Ruff clean, strict mypy clean over 129 files, all 19 import contracts kept,
-436 tests passed, and wheel/source distributions built. A reader-only same-thread
-reviewer identified the old mutating-prepare preview risk, partial-activation recovery
-edge and early reserved-workspace replacement risk before the final patch, then passed
-the bounded recheck. The implementation keeps preview read-only and admits occupied
-state only when `inspect_process_creation` validates the matching retained activation
-plan. This is an in-session pre-pass, not a binding fresh Direction G5.
+The development-only probes live under descriptive `tools/technical_baseline`
+paths and are excluded from the installed `zaratustra` package. The published Pi
+`0.87.0` process contacted only a localhost HTTP/SSE simulator. The DBOS `3.0.0`
+probe used synthetic state in separate `core.sqlite3` and `executor.sqlite3` files.
+No provider login, model request, personal data or old workspace participated. The
+Pi run's empty isolated auth file and localhost observations do not prove that its
+previously inherited ambient environment was never read; the delivered runner now
+uses an explicit system allowlist and temporary home that excludes provider secrets.
+Direct inspection of the built wheel found no `tools/` or `technical_baseline` entry.
+
+Focused formatting, Ruff, strict mypy and six probe unit tests passed. The complete
+`uv run --locked python -m tools.check --deliver` gate also passed: 156 files were
+already formatted, Ruff and strict mypy were clean across 134 Python files, all 19
+import contracts were kept, all 442 tests passed, and the source and wheel artifacts
+built successfully. The required bounded read-only evaluator recheck passed the
+complete-check classifier, environment allowlist, descriptive naming and disclosure
+fixes; this is a smoke review, not a binding Direction G5 verdict.
 
 ## assumptions
 
-This is a trusted single-user local application. The trusted assistant supplies actor
-and source-reference provenance from the current host and owner message. The digest is
-freshness binding for the exact displayed intent, not identity proof and never an
-owner question. A new preview is required after target state changes, including after
-completion or interruption.
+Pi remains the provider/model selection and authentication surface; the Core is not
+bound to ChatGPT/Codex, Meta Muse, Qwen or a local model. A localhost custom provider
+can test the integration seam but cannot prove every real provider transport.
+
+An inconclusive DBOS gate blocks the DBOS-dependent execution stage only. A separately
+authorized domain-foundation stage may proceed without choosing a custom dispatcher.
 
 ## cuts
 
-No automatic research, Process change, material intake, generic authorization command,
-owner-authored JSON, host form, router, custom UI, Pi extension, private Solmax content,
-provider account, updater or arbitrary workspace discovery was added. This bounded
-result does not prove a real fresh model conversation or close the wider kernel/T4
-outcome.
+No Core v0.1 domain schema, Activity/Work runtime, memory, Sleep, installer, updater,
+replacement dispatcher, Pi fork, model router, real model smoke, migration from old
+`.zara`, CI/CD, GitHub Action or push automation was added. Pi and DBOS were not added
+to `pyproject.toml` or `uv.lock`.
 
 ## cost
 
-One extension to the existing common-agent entry, a narrow initialized-empty admission
-in the current process-creation API, focused behavioral coverage, and updates to the
-shared connection instructions and README. Existing dependencies and authorities only.
+The change is limited to the authority/baseline documents, exact dependency manifest,
+development-only localhost probes and focused tests. Temporary Pi, fixed SQLite and
+DBOS runtimes exist only in ignored scratch space in the isolated worktree. No paid
+model or external service call was made.
 
 ## manual-acceptance
 
-The owner authorized this small common Python-core correction and requires the exact
-Process and location to be shown before one ordinary conversational creation decision.
-Automated and installed-process checks establish mechanics; a real owner chat remains
-separate acceptance evidence.
+The owner explicitly authorized implementation of Stage 1 and separately clarified
+that the product must not be locked to one provider. Automated evidence establishes
+only the mechanics listed above; both inconclusive gate decisions and any transition
+to Stage 2 remain visible owner decisions.
 
 ## next
 
