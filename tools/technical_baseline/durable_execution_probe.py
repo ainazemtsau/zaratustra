@@ -15,11 +15,36 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from .common import CheckResult, GateReport, GateStatus, new_scratch_output
+from .common import (
+    CheckConclusion,
+    CheckResult,
+    GateReport,
+    GateStatus,
+    append_jsonl,
+    gate_status,
+    new_scratch_output,
+    read_jsonl,
+    sha256_file,
+)
 
 CRASH = 91
 APP_NAME = "zaratustra-durable-execution-probe"
 SENTINEL = "SYNTHETIC-DELETABLE-PAYLOAD-7f93"
+EXPECTED_CHECKS = frozenset(
+    {
+        "executor-readiness",
+        "crash-before-domain-commit",
+        "domain-commit-checkpoint-lost",
+        "outbox-enqueue-retry",
+        "durable-wait-duplicate-answer",
+        "stale-executor-fencing",
+        "current-grant-after-replay",
+        "external-effect-response-lost",
+        "interrupted-call-reserve",
+        "managed-technical-payload-deletion",
+        "workflow-code-version-routing",
+    }
+)
 
 
 def _connect(path: Path) -> sqlite3.Connection:
@@ -351,7 +376,26 @@ def _child(args: argparse.Namespace) -> int:
     _init_core(base)
     dbos, workflows = _launch(base, args.version)
     try:
-        if args.action == "fault":
+        if args.action == "ready":
+            with sqlite3.connect(base / "executor.sqlite3") as connection:
+                migration = connection.execute(
+                    "SELECT MAX(version) FROM dbos_migrations"
+                ).fetchone()
+                table_count = connection.execute(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name LIKE 'dbos_%'"
+                ).fetchone()
+                journal_mode = connection.execute("PRAGMA journal_mode").fetchone()
+            print(
+                json.dumps(
+                    {
+                        "migrationVersion": migration[0] if migration else None,
+                        "dbosTableCount": table_count[0] if table_count else 0,
+                        "journalMode": journal_mode[0] if journal_mode else None,
+                    }
+                ),
+                flush=True,
+            )
+        elif args.action == "fault":
             handle = _start(dbos, args.workflow_id, workflows["fault"], args.case)
             print(json.dumps({"result": handle.get_result()}), flush=True)
         elif args.action == "dispatch":
@@ -423,7 +467,7 @@ def _child(args: argparse.Namespace) -> int:
                     {
                         "status": status.status if status else None,
                         "applicationVersion": status.app_version if status else None,
-                        "runningVersion": dbos.application_version(),
+                        "runningVersion": dbos.application_version,
                     }
                 ),
                 flush=True,
@@ -468,12 +512,18 @@ def _child_command(base: Path, action: str, **values: object) -> list[str]:
     return command
 
 
-def _run_child(base: Path, action: str, **values: object) -> subprocess.CompletedProcess[str]:
+def _run_child(
+    base: Path,
+    action: str,
+    *,
+    timeout: float = 60,
+    **values: object,
+) -> subprocess.CompletedProcess[str]:
     result = subprocess.run(
         _child_command(base, action, **values),
         text=True,
         capture_output=True,
-        timeout=45,
+        timeout=timeout,
     )
     (base / f"{action}-{time.time_ns()}.log").write_text(
         f"exit={result.returncode}\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}",
@@ -526,11 +576,45 @@ def _observe_then_interrupt(
         _kill_pending(base, process, label)
 
 
-def _scenario_dir(output: Path, name: str) -> Path:
+def _backup_database(source: Path, destination: Path) -> None:
+    with sqlite3.connect(f"file:{source.resolve().as_posix()}?mode=ro", uri=True) as source_db:
+        with sqlite3.connect(destination) as destination_db:
+            source_db.backup(destination_db)
+
+
+def _scenario_dir(output: Path, name: str, executor_template: Path) -> Path:
     path = output / name
     path.mkdir()
+    _backup_database(executor_template, path / "executor.sqlite3")
     _init_core(path)
     return path
+
+
+def _record_check(output: Path, checks: list[CheckResult], check: CheckResult) -> None:
+    checks.append(check)
+    append_jsonl(
+        output / "scenario-results.jsonl",
+        {
+            "name": check.name,
+            "passed": check.passed,
+            "conclusion": check.conclusion,
+            "observation": check.observation,
+            "evidence": check.evidence,
+        },
+    )
+
+
+def _load_recorded_checks(output: Path) -> list[CheckResult]:
+    return [
+        CheckResult(
+            name=str(row["name"]),
+            passed=bool(row["passed"]),
+            observation=str(row["observation"]),
+            evidence=dict(row.get("evidence", {})),
+            conclusion=CheckConclusion(str(row["conclusion"])),
+        )
+        for row in read_jsonl(output / "scenario-results.jsonl")
+    ]
 
 
 def _json_stdout(result: subprocess.CompletedProcess[str]) -> dict[str, Any]:
@@ -538,14 +622,33 @@ def _json_stdout(result: subprocess.CompletedProcess[str]) -> dict[str, Any]:
     return json.loads(lines[-1]) if lines else {}
 
 
+def _fencing_contract(
+    stale_result: dict[str, Any],
+    current_result: dict[str, Any],
+    attempt_row: object,
+) -> bool:
+    return (
+        stale_result.get("result") == "fenced"
+        and current_result.get("result") == "accepted"
+        and attempt_row == (1, 1)
+    )
+
+
 def _vacuum(path: Path) -> None:
     connection = sqlite3.connect(path)
     try:
-        connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-        connection.execute("PRAGMA secure_delete=ON")
+        connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+        connection.execute("PRAGMA journal_mode=DELETE").fetchone()
+        connection.execute("PRAGMA secure_delete=ON").fetchone()
         connection.execute("VACUUM")
+        connection.execute("PRAGMA journal_mode=WAL").fetchone()
+        connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
     finally:
         connection.close()
+
+
+def _payload_remnants(files: list[Path], payload: bytes = SENTINEL.encode()) -> list[str]:
+    return [path.name for path in files if payload in path.read_bytes()]
 
 
 def run_probe(output: Path) -> GateReport:
@@ -555,21 +658,47 @@ def run_probe(output: Path) -> GateReport:
         raise RuntimeError("the durable execution probe requires exact DBOS 3.0.0")
     output = new_scratch_output(output)
     checks: list[CheckResult] = []
+    readiness = output / "00-readiness"
+    readiness.mkdir()
+    _init_core(readiness)
+    ready = _run_child(readiness, "ready", timeout=120, version="v1")
+    ready_view = _json_stdout(ready)
+    readiness_check = CheckResult(
+        "executor-readiness",
+        ready.returncode == 0
+        and int(ready_view.get("migrationVersion", 0)) >= 114
+        and int(ready_view.get("dbosTableCount", 0)) > 0,
+        "DBOS launched to completion and exposed its completed initial SQLite migrations.",
+        ready_view,
+        conclusion=(
+            CheckConclusion.PASSED
+            if ready.returncode == 0
+            and int(ready_view.get("migrationVersion", 0)) >= 114
+            and int(ready_view.get("dbosTableCount", 0)) > 0
+            else CheckConclusion.SETUP_FAILURE
+        ),
+    )
+    _record_check(output, checks, readiness_check)
+    if not readiness_check.passed:
+        raise RuntimeError(f"DBOS readiness failed: {ready_view!r}; stderr={ready.stderr!r}")
+    executor_template = readiness / "executor.sqlite3"
 
-    pre = _scenario_dir(output, "01-precommit")
+    pre = _scenario_dir(output, "01-precommit", executor_template)
     first = _run_child(pre, "fault", version="v1", workflow_id="wf-pre", case="precommit")
     before = _query_one(pre, "SELECT COUNT(*) FROM receipts")[0]
     second = _run_child(pre, "fault", version="v1", workflow_id="wf-pre", case="precommit")
     row = _query_one(pre, "SELECT applications FROM receipts WHERE operation_id='precommit'")
-    checks.append(
+    _record_check(
+        output,
+        checks,
         CheckResult(
             "crash-before-domain-commit",
             first.returncode == CRASH and before == 0 and second.returncode == 0 and row == (1,),
             "The crash exposed no partial receipt; DBOS recovered the pending workflow once.",
-        )
+        ),
     )
 
-    post = _scenario_dir(output, "02-postcommit")
+    post = _scenario_dir(output, "02-postcommit", executor_template)
     first = _run_child(post, "fault", version="v1", workflow_id="wf-post", case="postcommit")
     committed = _query_one(
         post, "SELECT result,applications FROM receipts WHERE operation_id='postcommit'"
@@ -578,7 +707,9 @@ def run_probe(output: Path) -> GateReport:
     after = _query_one(
         post, "SELECT result,applications FROM receipts WHERE operation_id='postcommit'"
     )
-    checks.append(
+    _record_check(
+        output,
+        checks,
         CheckResult(
             "domain-commit-checkpoint-lost",
             first.returncode == CRASH
@@ -586,10 +717,10 @@ def run_probe(output: Path) -> GateReport:
             and second.returncode == 0
             and after == committed,
             "DBOS replayed the lost step; the domain receipt prevented a second mutation.",
-        )
+        ),
     )
 
-    outbox = _scenario_dir(output, "03-outbox")
+    outbox = _scenario_dir(output, "03-outbox", executor_template)
     _write(
         outbox,
         lambda connection: connection.execute(
@@ -605,7 +736,9 @@ def run_probe(output: Path) -> GateReport:
         event_id="event-1",
     )
     delivered = _query_one(outbox, "SELECT state,deliveries FROM outbox WHERE event_id='event-1'")
-    checks.append(
+    _record_check(
+        output,
+        checks,
         CheckResult(
             "outbox-enqueue-retry",
             pending == ("pending", 0)
@@ -613,10 +746,10 @@ def run_probe(output: Path) -> GateReport:
             and _json_stdout(dispatched) == {"first": 1, "second": 1}
             and delivered == ("delivered", 1),
             "A stable DBOS workflow ID deduplicated repeated enqueue after an outbox gap.",
-        )
+        ),
     )
 
-    wait = _scenario_dir(output, "04-wait")
+    wait = _scenario_dir(output, "04-wait", executor_template)
     process = _start_pending(
         wait,
         "start-wait",
@@ -640,15 +773,17 @@ def run_probe(output: Path) -> GateReport:
     wait_row = _query_one(
         wait, "SELECT state,answer,continuations FROM waits WHERE wait_id='wait-1'"
     )
-    checks.append(
+    _record_check(
+        output,
+        checks,
         CheckResult(
             "durable-wait-duplicate-answer",
             recovered.returncode == 0 and wait_row == ("answered", "synthetic-answer", 1),
             "The DBOS notification survived process replacement and duplicate send continued once.",
-        )
+        ),
     )
 
-    fencing = _scenario_dir(output, "05-fencing")
+    fencing = _scenario_dir(output, "05-fencing", executor_template)
     _write(
         fencing,
         lambda connection: connection.execute(
@@ -675,17 +810,17 @@ def run_probe(output: Path) -> GateReport:
         fencing,
         "SELECT accepted_writes,stale_material FROM attempts WHERE attempt_id='attempt-1'",
     )
-    checks.append(
+    _record_check(
+        output,
+        checks,
         CheckResult(
             "stale-executor-fencing",
-            _json_stdout(stale).get("result") == "fenced"
-            and _json_stdout(current).get("result") == "accepted"
-            and attempt_row == (1, 1),
+            _fencing_contract(_json_stdout(stale), _json_stdout(current), attempt_row),
             "DBOS ran independent workflows; the domain epoch fenced the stale writer.",
-        )
+        ),
     )
 
-    grant = _scenario_dir(output, "06-grant")
+    grant = _scenario_dir(output, "06-grant", executor_template)
     _write(
         grant,
         lambda connection: connection.execute(
@@ -717,15 +852,17 @@ def run_probe(output: Path) -> GateReport:
         answer="wake",
     )
     grant_effect = _query_one(grant, "SELECT calls FROM effects WHERE effect_id='grant-effect'")
-    checks.append(
+    _record_check(
+        output,
+        checks,
         CheckResult(
             "current-grant-after-replay",
             _json_stdout(denied).get("result") == "denied-current" and grant_effect is None,
             "A fresh domain check after the durable wait rejected the revoked Grant.",
-        )
+        ),
     )
 
-    external = _scenario_dir(output, "07-external-idempotency")
+    external = _scenario_dir(output, "07-external-idempotency", executor_template)
     first = _run_child(
         external,
         "external",
@@ -741,15 +878,17 @@ def run_probe(output: Path) -> GateReport:
         effect_id="effect-1",
     )
     effect_row = _query_one(external, "SELECT state,calls FROM effects WHERE effect_id='effect-1'")
-    checks.append(
+    _record_check(
+        output,
+        checks,
         CheckResult(
             "external-effect-response-lost",
             first.returncode == CRASH and second.returncode == 0 and effect_row == ("confirmed", 1),
             "DBOS replayed the step and the external idempotency key established one effect.",
-        )
+        ),
     )
 
-    unknown = _scenario_dir(output, "08-unknown-resource")
+    unknown = _scenario_dir(output, "08-unknown-resource", executor_template)
     first = _run_child(
         unknown,
         "unknown",
@@ -773,7 +912,9 @@ def run_probe(output: Path) -> GateReport:
         unknown,
         "SELECT reserved,consumed,unknown FROM resources WHERE resource_id='resource-1'",
     )
-    checks.append(
+    _record_check(
+        output,
+        checks,
         CheckResult(
             "interrupted-call-reserve",
             first.returncode == CRASH
@@ -781,10 +922,10 @@ def run_probe(output: Path) -> GateReport:
             and unknown_effect == ("unknown", 1)
             and resource == (1, 0, 1),
             "The domain effect ledger blocked blind replay and retained the resource reserve.",
-        )
+        ),
     )
 
-    deletion = _scenario_dir(output, "09-deletion")
+    deletion = _scenario_dir(output, "09-deletion", executor_template)
     deleted = _run_child(
         deletion,
         "payload-delete",
@@ -794,17 +935,24 @@ def run_probe(output: Path) -> GateReport:
     _vacuum(deletion / "core.sqlite3")
     _vacuum(deletion / "executor.sqlite3")
     files = list(deletion.glob("*.sqlite3*")) + list(deletion.glob("*.log"))
-    remnants = [path.name for path in files if SENTINEL.encode() in path.read_bytes()]
-    checks.append(
+    first_remnants = _payload_remnants(files)
+    time.sleep(0.25)
+    second_remnants = _payload_remnants(files)
+    _record_check(
+        output,
+        checks,
         CheckResult(
             "managed-technical-payload-deletion",
-            deleted.returncode == 0 and not remnants,
+            deleted.returncode == 0 and not first_remnants and not second_remnants,
             "DBOS delete plus closed-database checkpoint/VACUUM removed the synthetic payload.",
-            {"remainingFiles": remnants},
-        )
+            {
+                "firstClosedScan": first_remnants,
+                "secondClosedScan": second_remnants,
+            },
+        ),
     )
 
-    version = _scenario_dir(output, "10-version")
+    version = _scenario_dir(output, "10-version", executor_template)
     process = _start_pending(
         version,
         "start-version",
@@ -832,7 +980,9 @@ def run_probe(output: Path) -> GateReport:
         workflow_id="version-workflow-1",
         answer="version-answer",
     )
-    checks.append(
+    _record_check(
+        output,
+        checks,
         CheckResult(
             "workflow-code-version-routing",
             view.get("status") == "PENDING"
@@ -841,10 +991,10 @@ def run_probe(output: Path) -> GateReport:
             and finished.returncode == 0,
             "The v2 process left the open v1 workflow visible and unreplayed; v1 completed it.",
             view,
-        )
+        ),
     )
 
-    status = GateStatus.POSITIVE if all(check.passed for check in checks) else GateStatus.NEGATIVE
+    status = gate_status(checks, EXPECTED_CHECKS)
     report = GateReport(
         gate="durable-execution",
         status=status,
@@ -854,6 +1004,7 @@ def run_probe(output: Path) -> GateReport:
             "sqlite": sqlite3.sqlite_version,
             "dbos": importlib.metadata.version("dbos"),
             "platform": sys.platform,
+            "probeSha256": sha256_file(Path(__file__)),
         },
         commands=(
             "fixed-python -m tools.technical_baseline.durable_execution_probe "
@@ -877,6 +1028,144 @@ def run_probe(output: Path) -> GateReport:
     return report
 
 
+def run_targeted_failed_probe(output: Path) -> GateReport:
+    """Repeat only scenarios 9 and 10 after their diagnosed stand defects."""
+
+    if sqlite3.sqlite_version_info < (3, 51, 3):
+        raise RuntimeError(f"SQLite {sqlite3.sqlite_version} is below the fixed WAL baseline")
+    if importlib.metadata.version("dbos") != "3.0.0":
+        raise RuntimeError("the durable execution probe requires exact DBOS 3.0.0")
+    output = new_scratch_output(output)
+    checks: list[CheckResult] = []
+    readiness = output / "00-readiness"
+    readiness.mkdir()
+    _init_core(readiness)
+    ready = _run_child(readiness, "ready", timeout=120, version="v1")
+    ready_view = _json_stdout(ready)
+    readiness_ok = (
+        ready.returncode == 0
+        and int(ready_view.get("migrationVersion", 0)) >= 114
+        and int(ready_view.get("dbosTableCount", 0)) > 0
+    )
+    readiness_check = CheckResult(
+        "executor-readiness",
+        readiness_ok,
+        "DBOS launched to completion before the targeted scenarios.",
+        ready_view,
+        conclusion=(CheckConclusion.PASSED if readiness_ok else CheckConclusion.SETUP_FAILURE),
+    )
+    _record_check(output, checks, readiness_check)
+    if not readiness_ok:
+        raise RuntimeError(f"DBOS readiness failed: {ready_view!r}; stderr={ready.stderr!r}")
+    executor_template = readiness / "executor.sqlite3"
+
+    deletion = _scenario_dir(output, "09-deletion", executor_template)
+    deleted = _run_child(
+        deletion,
+        "payload-delete",
+        version="v1",
+        workflow_id="payload-workflow-1",
+    )
+    _vacuum(deletion / "core.sqlite3")
+    _vacuum(deletion / "executor.sqlite3")
+    files = list(deletion.glob("*.sqlite3*")) + list(deletion.glob("*.log"))
+    first_remnants = _payload_remnants(files)
+    time.sleep(0.25)
+    second_remnants = _payload_remnants(files)
+    _record_check(
+        output,
+        checks,
+        CheckResult(
+            "managed-technical-payload-deletion",
+            deleted.returncode == 0 and not first_remnants and not second_remnants,
+            "A closed checkpoint, secure VACUUM and two stable byte scans removed the payload.",
+            {
+                "deleteExitCode": deleted.returncode,
+                "firstClosedScan": first_remnants,
+                "secondClosedScan": second_remnants,
+            },
+        ),
+    )
+
+    version = _scenario_dir(output, "10-version", executor_template)
+    process = _start_pending(
+        version,
+        "start-version",
+        version="v1",
+        workflow_id="version-workflow-1",
+        wait_id="version-wait-1",
+    )
+    _observe_then_interrupt(
+        version,
+        process,
+        "SELECT state FROM waits WHERE wait_id='version-wait-1'",
+        "interrupted-version-v1",
+    )
+    inspected = _run_child(
+        version,
+        "inspect-version",
+        version="v2",
+        workflow_id="version-workflow-1",
+    )
+    view = _json_stdout(inspected)
+    finished = _run_child(
+        version,
+        "recover-wait",
+        version="v1",
+        workflow_id="version-workflow-1",
+        answer="version-answer",
+    )
+    _record_check(
+        output,
+        checks,
+        CheckResult(
+            "workflow-code-version-routing",
+            inspected.returncode == 0
+            and view.get("status") == "PENDING"
+            and view.get("applicationVersion") == "v1"
+            and view.get("runningVersion") == "v2"
+            and finished.returncode == 0,
+            "The v2 process inspected but did not replay the open v1 workflow; v1 completed it.",
+            {
+                **view,
+                "inspectExitCode": inspected.returncode,
+                "completionExitCode": finished.returncode,
+            },
+        ),
+    )
+
+    expected = frozenset(
+        {
+            "executor-readiness",
+            "managed-technical-payload-deletion",
+            "workflow-code-version-routing",
+        }
+    )
+    report = GateReport(
+        gate="durable-execution-targeted-9-10",
+        status=gate_status(checks, expected),
+        checks=tuple(checks),
+        versions={
+            "python": sys.version.split()[0],
+            "sqlite": sqlite3.sqlite_version,
+            "dbos": importlib.metadata.version("dbos"),
+            "platform": sys.platform,
+            "probeSha256": sha256_file(Path(__file__)),
+        },
+        commands=(
+            "fixed-python -m tools.technical_baseline.durable_execution_probe "
+            "--targeted-failed --output _scratch/<new>",
+        ),
+        untested=("scenarios 1-8 were not repeated; use the preserved full-run evidence",),
+        notes=(
+            "This targeted repeat followed the full run's diagnosed scenario 9 and 10 "
+            "stand failures.",
+        ),
+    )
+    report.write(output / "durable-execution-targeted.json")
+    return report
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path)
@@ -893,6 +1182,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--epoch", type=int, default=1)
     parser.add_argument("--effect-id", default="effect-1")
     parser.add_argument("--resource-id", default="resource-1")
+    parser.add_argument("--targeted-failed", action="store_true")
     return parser
 
 
@@ -905,32 +1195,70 @@ def main(argv: list[str] | None = None) -> int:
     if args.output is None:
         raise SystemExit("--output is required")
     try:
-        report = run_probe(args.output)
-    except (TimeoutError, subprocess.TimeoutExpired) as error:
+        report = (
+            run_targeted_failed_probe(args.output)
+            if args.targeted_failed
+            else run_probe(args.output)
+        )
+    except Exception as error:  # pragma: no cover - exercised only by the live probe
+        output = args.output.resolve()
+        checks = _load_recorded_checks(output) if output.exists() else []
+        readiness_passed = any(
+            check.name == "executor-readiness" and check.passed for check in checks
+        )
+        conclusion = (
+            CheckConclusion.INSUFFICIENT_OBSERVATION
+            if readiness_passed and isinstance(error, (TimeoutError, subprocess.TimeoutExpired))
+            else CheckConclusion.SETUP_FAILURE
+        )
+        completion = CheckResult(
+            "probe-completion",
+            False,
+            f"The live stand stopped before all scenarios completed: {error!r}",
+            {
+                "errorType": type(error).__name__,
+                "completedScenarios": [check.name for check in checks],
+            },
+            conclusion=conclusion,
+        )
+        if output.exists():
+            _record_check(output, checks, completion)
+        else:
+            checks.append(completion)
+        expected = (
+            frozenset(
+                {
+                    "executor-readiness",
+                    "managed-technical-payload-deletion",
+                    "workflow-code-version-routing",
+                }
+            )
+            if args.targeted_failed
+            else EXPECTED_CHECKS
+        )
         report = GateReport(
             gate="durable-execution",
-            status=GateStatus.INCONCLUSIVE,
-            checks=(
-                CheckResult(
-                    "probe-completion",
-                    False,
-                    f"The bounded live probe did not complete: {error!r}",
-                ),
-            ),
+            status=gate_status(checks, expected),
+            checks=tuple(checks),
             versions={
                 "python": sys.version.split()[0],
                 "sqlite": sqlite3.sqlite_version,
                 "dbos": importlib.metadata.version("dbos"),
                 "platform": sys.platform,
+                "probeSha256": sha256_file(Path(__file__)),
             },
             commands=(
                 "fixed-python -m tools.technical_baseline.durable_execution_probe "
                 "--output _scratch/<new>",
             ),
-            untested=("remaining live scenarios after the bounded setup failure",),
-            notes=("A targeted repeat is required by the Stage 1 protocol before retrying.",),
+            untested=("remaining live scenarios after the bounded stand failure",),
+            notes=(
+                "Completed scenario results were durably appended before later work began.",
+                "Setup failure and insufficient observation are not DBOS contract violations.",
+            ),
         )
-        report.write(args.output.resolve() / "durable-execution.json")
+        if output.exists():
+            report.write(output / "durable-execution.json")
     print(json.dumps({"gate": report.gate, "status": report.status}, ensure_ascii=False))
     return 0 if report.status == GateStatus.POSITIVE else 1
 

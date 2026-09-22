@@ -1,0 +1,166 @@
+{
+  "recordedAt": "2026-09-22",
+  "scope": "Core v0.1 Stage 1 continuation; localhost synthetic evidence only",
+  "initialResultsCommit": "705c336",
+  "codeIdentity": {
+    "tools/technical_baseline/common.py": "D9EDC84C91EAD6C8A8D4D5BFDA3357EF736AD0CAF9E022425804FE49555B0D98",
+    "tools/technical_baseline/pi_integration_probe.py": "4B6A731F05604C27E074C7E618D0F8921D03D5A51CC84C90E8F0B83788FC8CA9",
+    "tools/technical_baseline/pi_probe_extension.ts": "B81EC8A012FD360267EEB0BCE7E8D4E45A288EEC057BD132763F2A9CF311F24A",
+    "tools/technical_baseline/durable_execution_probe.py": "5D6AC7C66D86458F9685A415EA456CA7E80E24569D02DD19E51353BB14643608",
+    "tests/tools/test_technical_baseline.py": "BAA59C9C786E237442DA3A7AB0D19953C933EC958B1D7890A0EA609B657AF308"
+  },
+  "pi": {
+    "result": "positive",
+    "scopeLimit": "Published Pi 0.87.0, one localhost OpenAI-completions custom-provider path; no real provider, auth, account, billing or model call",
+    "environment": {
+      "node": "22.19.0",
+      "package": "@earendil-works/pi-coding-agent@0.87.0",
+      "packageIntegrity": "sha512-S9JJVGHya/h0e0M+zwPTB6RkPe7PmLLqfBUTssFYW5mxAti6oZEILn4jvaUImENRC3U9RwXAB6H4gw8xj2J0GQ==",
+      "isolatedHome": true,
+      "environmentAllowlist": [
+        "COMSPEC",
+        "PATH",
+        "PATHEXT",
+        "SYSTEMROOT",
+        "WINDIR"
+      ]
+    },
+    "attempts": [
+      {
+        "kind": "full",
+        "path": "_scratch/pi-continuation-20260922-full-a",
+        "rawResult": "inconclusive",
+        "cause": "stand reader split JSONL on U+2028",
+        "reportSha256": "C04553534B9E32B125497F979B5E235542AFCC51AF4B7B70F9B7EE2BD4C88049"
+      },
+      {
+        "kind": "targeted-repeat-1",
+        "path": "_scratch/pi-continuation-20260922-target-b",
+        "rawResult": "inconclusive",
+        "cause": "same strict-LF reader defect, isolated by persisted evidence",
+        "reportSha256": "E576AF27D5959F9C70C5752DAA6D5B8E8DF1C0F92EAA5598159C656FA65D6274"
+      },
+      {
+        "kind": "targeted-repeat-2",
+        "path": "_scratch/pi-continuation-20260922-target-c",
+        "rawResult": "negative from two evaluator defects",
+        "reviewedResult": "positive",
+        "rawReportSha256": "6D8BEDF2B9FD385DD5BF4D5EAA2136E5D7EE61B4AE5BE464C472E9ABBE01629B",
+        "reanalysisReportSha256": "EC021FD189F98C1CACB41CD17E93F9801C77B6CC54826DC96ABC9D81CCC94FC6",
+        "extensionEvidenceSha256": "7BF4981E4BD71022A189057236F7A29DD4DF84105A67C68E69AD271CE1AF02DF",
+        "resourceLedgerSha256": "B63EA2BF7E88829230D97BEA2E77906EAECE004B20A957114062F376D938214D",
+        "providerEvidenceSha256": "2696B5DEB5A8C14F14FE37A8F67B6A8F5C575683271AE7617075BE9273EB2790",
+        "rpcEvidenceSha256": "F751180F6CF4C9142561B3A6301C52C630415452887C39DA9364DBE8458493D2"
+      }
+    ],
+    "observations": {
+      "checksPassed": 8,
+      "httpInvocations": 16,
+      "uniqueInvocationIds": 16,
+      "manualCompactionTokensBefore": 3757,
+      "manualCompactionUsageTokens": 2872,
+      "mandatoryInputDeliveredAfterCompaction": true,
+      "overflowSequencePurposes": [
+        "content",
+        "compaction-summary",
+        "overflow-retry"
+      ],
+      "overflowDistinctIdentities": true,
+      "mandatoryInputDeliveredAfterOverflow": true,
+      "preNetworkPersistenceFailureHttpRequests": 0,
+      "duplicateUiResponsesContinuations": 1,
+      "payloadHookMissingFor": [
+        "manual compaction streamSimple",
+        "overflow compaction streamSimple"
+      ],
+      "transportWrapperObservedThoseFinalRequests": true
+    }
+  },
+  "dbos": {
+    "result": "inconclusive",
+    "environment": {
+      "python": "3.13.7",
+      "sqlite": "3.53.3",
+      "fts5": true,
+      "dbos": "3.0.0",
+      "initialMigrationVersion": 114,
+      "systemDatabaseJournalMode": "delete"
+    },
+    "fullRun": {
+      "path": "_scratch/dbos-continuation-20260922-full-a",
+      "reportSha256": "1E4940424BC0226551EFACED20F4166CB98C12E82CC3DE32D89EC2E9222CE85D",
+      "scenarioJournalSha256": "EA341BE7854598E047FDAA674EE66A2DAB0142AA8EEDE288425F15172BB04845",
+      "readiness": "passed",
+      "scenarios1Through8": "passed",
+      "scenario9": "raw byte scan found core.sqlite3; later closed inspection found no sentinel, empty payload table and zero freelist",
+      "scenario10": "stand called string property as a function after DBOS status lookup"
+    },
+    "targetedRepeats": [
+      {
+        "path": "_scratch/dbos-continuation-20260922-target-b",
+        "result": "setup-failure",
+        "error": "OperationalError('database is locked') before scenario result",
+        "reportSha256": "B1BD024A72D6B09EE4BC63DB2C59A26F64C2C3F756FBDC24C08199C7CCCA43DB"
+      },
+      {
+        "path": "_scratch/dbos-continuation-20260922-target-c",
+        "result": "setup-failure",
+        "error": "OperationalError('database is locked') before scenario result",
+        "reportSha256": "C80DCF24DE727588A87D549229776D3270C5C18BC992D71D5B4CAE7A4E29CE2B"
+      }
+    ],
+    "reviewedScenarios": {
+      "1-crash-before-domain-commit": "passed",
+      "2-domain-commit-checkpoint-lost": "passed",
+      "3-outbox-enqueue-retry": "passed",
+      "4-durable-wait-duplicate-answer": "passed",
+      "5-stale-executor-fencing": "passed",
+      "6-current-grant-after-replay": "passed",
+      "7-external-effect-response-lost": "passed",
+      "8-interrupted-call-reserve": "passed",
+      "9-managed-technical-payload-deletion": "inconclusive",
+      "10-workflow-code-version-routing": "passed by preserved logs and DB inspection"
+    },
+    "scenario10Evidence": {
+      "v2LogSha256": "1A31B828330D022CEC2D578795A3E4B77E7FA94E69B6BBDA8CDC5D044F0BFE38",
+      "v2Observation": "No workflows to recover from application version v2",
+      "v1CompletionLogSha256": "06B14797364825B9BC5263748D87124E7E0274A06B958C914E5EEB2F9BA5AFAA",
+      "v1Observation": "Recovering 1 workflows from application version v1",
+      "finalWorkflowStatus": "SUCCESS",
+      "finalWorkflowApplicationVersion": "v1",
+      "recoveryAttempts": 2,
+      "registeredApplicationVersions": [
+        "v1",
+        "v2"
+      ]
+    },
+    "mechanicsAssessment": {
+      "providedByDbos": [
+        "workflow checkpoint and startup recovery",
+        "stable workflow identity and queue deduplication",
+        "durable notification and continuation recovery",
+        "application-version-scoped recovery"
+      ],
+      "providedByDomainFixture": [
+        "versioned receipts and idempotent mutation",
+        "outbox state",
+        "attempt epoch fencing",
+        "current Grant recheck",
+        "external idempotency/reconciliation policy",
+        "resource reserve and unknown-effect policy",
+        "managed payload sanitation"
+      ],
+      "duplicatedDbosReplayLedger": false,
+      "remainingBlocker": "stable managed-payload sanitation observation on the Windows SQLite fixture"
+    }
+  },
+  "negativeControls": [
+    "duplicate Pi invocation identity",
+    "Pi request digest mismatch",
+    "missing required input after compaction",
+    "reused overflow retry identity",
+    "DBOS stale write accepted",
+    "managed payload bytes retained",
+    "JSONL U+2028 treated as a frame boundary"
+  ]
+}

@@ -2,6 +2,8 @@ import { closeSync, existsSync, fsyncSync, openSync, readFileSync, writeSync } f
 import { createHash, randomUUID } from "node:crypto";
 import { createProvider, openAICompletionsApi } from "@earendil-works/pi-ai";
 
+type InvocationPurpose = "content" | "compaction-summary" | "overflow-retry";
+
 function appendDurable(path: string, value: unknown): void {
 	const fd = openSync(path, "a");
 	try {
@@ -16,33 +18,95 @@ function digest(body: string): string {
 	return createHash("sha256").update(Buffer.from(body, "utf8")).digest("hex");
 }
 
+function compactUsage(value: any): unknown {
+	if (!value || typeof value !== "object") return null;
+	return {
+		input: value.input ?? value.promptTokens ?? 0,
+		output: value.output ?? value.completionTokens ?? 0,
+		cacheRead: value.cacheRead ?? 0,
+		cacheWrite: value.cacheWrite ?? 0,
+		totalTokens: value.totalTokens ?? value.total_tokens ?? 0,
+	};
+}
+
 export default function (pi: any): void {
 	const evidencePath = process.env.ZARATUSTRA_PROBE_EXTENSION_LOG;
+	const resourcePath = process.env.ZARATUSTRA_PROBE_RESOURCE_LOG;
 	const waitPath = process.env.ZARATUSTRA_PROBE_WAIT_LOG;
 	const failPath = process.env.ZARATUSTRA_PROBE_FAIL_PERSIST;
 	const baseUrl = process.env.ZARATUSTRA_PROBE_PROVIDER_BASE_URL;
-	if (!evidencePath || !waitPath || !failPath || !baseUrl) {
+	if (!evidencePath || !resourcePath || !waitPath || !failPath || !baseUrl) {
 		throw new Error("missing Pi integration probe environment");
 	}
 
+	let nextPurpose: InvocationPurpose = "content";
+	let pendingPayloadSha256: string | null = null;
+	let compactionInvocationId: string | null = null;
+	let turnInvocationId: string | null = null;
+	let turnInvocationPurpose: InvocationPurpose | null = null;
 	const transport = openAICompletionsApi();
 	const guardedFetch = async (input: any, init?: any): Promise<Response> => {
 		const body = typeof init?.body === "string" ? init.body : String(init?.body ?? "");
 		const invocationId = randomUUID();
+		const purpose = nextPurpose;
+		nextPurpose = "content";
 		if (existsSync(failPath)) {
 			throw new Error("probe persistence unavailable before transport");
 		}
+		const bodySha256 = digest(body);
+		let reserveUnits = 256;
+		try {
+			const payload = JSON.parse(body);
+			reserveUnits = Number(payload.max_tokens ?? payload.max_completion_tokens ?? 256);
+		} catch {
+			// The final serialized bytes remain evidence if a future adapter changes shape.
+		}
+		appendDurable(resourcePath, {
+			type: "resource_reserved",
+			invocationId,
+			purpose,
+			reservedUnits: reserveUnits,
+			bodySha256,
+		});
 		const observation = {
 			type: "transport_ready",
 			invocationId,
-			bodySha256: digest(body),
+			purpose,
+			bodySha256,
+			payloadHookSha256: pendingPayloadSha256,
 			body,
 		};
 		appendDurable(evidencePath, observation);
+		pendingPayloadSha256 = null;
+		if (purpose === "compaction-summary") compactionInvocationId = invocationId;
+		else {
+			turnInvocationId = invocationId;
+			turnInvocationPurpose = purpose;
+		}
 		const headers = new Headers(init?.headers ?? {});
 		headers.set("x-zara-invocation-id", invocationId);
 		headers.set("x-zara-body-sha256", observation.bodySha256);
-		return fetch(input, { ...init, headers });
+		headers.set("x-zara-purpose", purpose);
+		try {
+			const response = await fetch(input, { ...init, headers });
+			appendDurable(resourcePath, {
+				type: "transport_outcome",
+				invocationId,
+				purpose,
+				outcome: "http-response",
+				status: response.status,
+			});
+			return response;
+		} catch (error) {
+			appendDurable(resourcePath, {
+				type: "transport_outcome",
+				invocationId,
+				purpose,
+				outcome: "unknown",
+				error: String(error),
+			});
+			throw error;
+		}
 	};
 
 	const guardedTransport = {
@@ -88,7 +152,7 @@ export default function (pi: any): void {
 					reasoning: false,
 					input: ["text"],
 					cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-					contextWindow: 2048,
+					contextWindow: 16384,
 					maxTokens: 256,
 				},
 			],
@@ -97,10 +161,73 @@ export default function (pi: any): void {
 	);
 
 	pi.on("before_provider_request", (event: any) => {
-		appendDurable(evidencePath, { type: "payload_hook", payload: event.payload });
+		pendingPayloadSha256 = digest(JSON.stringify(event.payload));
+		appendDurable(evidencePath, {
+			type: "payload_hook",
+			payloadSha256: pendingPayloadSha256,
+		});
 	});
 	pi.on("after_provider_response", (event: any) => {
 		appendDurable(evidencePath, { type: "provider_response", status: event.status });
+	});
+	pi.on("session_before_compact", (event: any) => {
+		nextPurpose = "compaction-summary";
+		appendDurable(evidencePath, {
+			type: "session_before_compact",
+			reason: event.reason,
+			willRetry: event.willRetry,
+			tokensBefore: event.preparation?.tokensBefore,
+			firstKeptEntryId: event.preparation?.firstKeptEntryId,
+		});
+	});
+	pi.on("session_compact", (event: any) => {
+		appendDurable(evidencePath, {
+			type: "session_compact",
+			reason: event.reason,
+			willRetry: event.willRetry,
+			invocationId: compactionInvocationId,
+			entryId: event.compactionEntry?.id,
+			usage: compactUsage(event.compactionEntry?.usage),
+		});
+		appendDurable(resourcePath, {
+			type: "resource_accounted",
+			invocationId: compactionInvocationId,
+			purpose: "compaction-summary",
+			usage: compactUsage(event.compactionEntry?.usage),
+		});
+		nextPurpose = event.willRetry ? "overflow-retry" : "content";
+		compactionInvocationId = null;
+	});
+	pi.on("session_compact_failed", (event: any) => {
+		appendDurable(evidencePath, {
+			type: "session_compact_failed",
+			reason: event.reason,
+			willRetry: event.willRetry,
+			aborted: event.aborted,
+			errorMessage: event.errorMessage,
+			invocationId: compactionInvocationId,
+		});
+		nextPurpose = "content";
+		compactionInvocationId = null;
+	});
+	pi.on("turn_end", (event: any) => {
+		const usage = compactUsage(event.message?.usage);
+		appendDurable(evidencePath, {
+			type: "turn_end",
+			turnIndex: event.turnIndex,
+			outcome: event.outcome,
+			invocationId: turnInvocationId,
+			usage,
+		});
+		appendDurable(resourcePath, {
+			type: "resource_accounted",
+			invocationId: turnInvocationId,
+			purpose: turnInvocationPurpose,
+			usage,
+			outcome: event.outcome,
+		});
+		turnInvocationId = null;
+		turnInvocationPurpose = null;
 	});
 
 	async function ask(ctx: any, resumed: boolean): Promise<void> {

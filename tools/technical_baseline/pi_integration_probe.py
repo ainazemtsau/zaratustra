@@ -16,7 +16,17 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, cast
 
-from .common import CheckResult, GateReport, GateStatus, append_jsonl, new_scratch_output
+from .common import (
+    CheckConclusion,
+    CheckResult,
+    GateReport,
+    GateStatus,
+    append_jsonl,
+    gate_status,
+    new_scratch_output,
+    read_jsonl,
+    sha256_file,
+)
 
 SAFETY_CHECKS = frozenset(
     {
@@ -28,6 +38,7 @@ SAFETY_CHECKS = frozenset(
     }
 )
 EXPECTED_CHECKS = SAFETY_CHECKS | {
+    "request-identity-resource-accounting",
     "compaction-summary-context",
     "overflow-recovery-identities",
 }
@@ -46,7 +57,21 @@ def _message_text(payload: dict[str, Any]) -> str:
     return json.dumps(payload.get("messages", []), ensure_ascii=False)
 
 
-def _sse(handler: BaseHTTPRequestHandler, text: str, *, delay: bool = False) -> None:
+def _sse(
+    handler: BaseHTTPRequestHandler,
+    text: str,
+    record: dict[str, Any],
+    *,
+    delay: bool = False,
+) -> None:
+    prompt_tokens = max(1, len(json.dumps(record["payload"], ensure_ascii=False)) // 4)
+    completion_tokens = max(1, len(text) // 4)
+    usage = {
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "total_tokens": prompt_tokens + completion_tokens,
+    }
+    record["responseUsage"] = usage
     handler.send_response(200)
     handler.send_header("content-type", "text/event-stream")
     handler.end_headers()
@@ -65,6 +90,12 @@ def _sse(handler: BaseHTTPRequestHandler, text: str, *, delay: bool = False) -> 
             "id": "probe",
             "object": "chat.completion.chunk",
             "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+        },
+        {
+            "id": "probe",
+            "object": "chat.completion.chunk",
+            "choices": [],
+            "usage": usage,
         },
     ]
     for index, chunk in enumerate(chunks):
@@ -93,6 +124,7 @@ class ProviderHandler(BaseHTTPRequestHandler):
             "invocationId": self.headers.get("x-zara-invocation-id"),
             "claimedSha256": self.headers.get("x-zara-body-sha256"),
             "bodySha256": digest,
+            "purpose": self.headers.get("x-zara-purpose"),
             "payload": payload,
         }
         state.requests.append(record)
@@ -109,10 +141,12 @@ class ProviderHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(response)
             return
-        if "summarize" in text.lower() or "summary" in text.lower():
-            _sse(self, "CURRENT_OBLIGATION_OMEGA remains required")
+        if record["purpose"] == "compaction-summary":
+            _sse(self, "CURRENT_OBLIGATION_OMEGA remains required", record)
+            append_jsonl(state.log_path, {"type": "response", **record})
             return
-        _sse(self, "probe-ok", delay="SLOW_MAIN" in text)
+        _sse(self, "probe-ok", record, delay="SLOW_MAIN" in text)
+        append_jsonl(state.log_path, {"type": "response", **record})
 
     def log_message(self, _format: str, *_args: object) -> None:
         return
@@ -187,12 +221,7 @@ class RpcClient:
 
 
 def _gate_status(checks: list[CheckResult]) -> GateStatus:
-    if any(not check.passed and check.name in SAFETY_CHECKS for check in checks):
-        return GateStatus.NEGATIVE
-    observed = {check.name for check in checks}
-    if observed == EXPECTED_CHECKS and all(check.passed for check in checks):
-        return GateStatus.POSITIVE
-    return GateStatus.INCONCLUSIVE
+    return gate_status(checks, frozenset(EXPECTED_CHECKS))
 
 
 def _settings(config_dir: Path) -> None:
@@ -201,7 +230,7 @@ def _settings(config_dir: Path) -> None:
         "cacheWarming": "off",
         "enableInstallTelemetry": False,
         "defaultProjectTrust": "never",
-        "compaction": {"enabled": True, "reserveTokens": 256, "keepRecentTokens": 512},
+        "compaction": {"enabled": True, "reserveTokens": 1024, "keepRecentTokens": 512},
         "retry": {
             "enabled": False,
             "maxRetries": 0,
@@ -262,11 +291,207 @@ def _env(output: Path, base_url: str) -> dict[str, str]:
             "USERPROFILE": str(isolated_home),
             "ZARATUSTRA_PROBE_PROVIDER_BASE_URL": base_url,
             "ZARATUSTRA_PROBE_EXTENSION_LOG": str(output / "extension.jsonl"),
+            "ZARATUSTRA_PROBE_RESOURCE_LOG": str(output / "resource-ledger.jsonl"),
             "ZARATUSTRA_PROBE_WAIT_LOG": str(output / "waits.jsonl"),
             "ZARATUSTRA_PROBE_FAIL_PERSIST": str(output / "fail-persist"),
         }
     )
     return env
+
+
+def _positive_usage(value: object) -> bool:
+    if not isinstance(value, dict):
+        return False
+    return int(value.get("input", 0)) + int(value.get("output", 0)) > 0
+
+
+def _assess_invocations(
+    extension_records: list[dict[str, Any]],
+    provider_requests: list[dict[str, Any]],
+    resource_records: list[dict[str, Any]],
+) -> tuple[bool, dict[str, Any]]:
+    """Join the hook, transport, server and resource evidence by invocation identity."""
+
+    transports = [row for row in extension_records if row.get("type") == "transport_ready"]
+    invocation_ids = [str(row.get("invocationId")) for row in transports]
+    reservations = {
+        str(row.get("invocationId")): row
+        for row in resource_records
+        if row.get("type") == "resource_reserved"
+    }
+    outcomes = {
+        str(row.get("invocationId")): row
+        for row in resource_records
+        if row.get("type") == "transport_outcome"
+    }
+    accounting = {
+        str(row.get("invocationId")): row
+        for row in resource_records
+        if row.get("type") == "resource_accounted" and row.get("invocationId")
+    }
+    server = {str(row.get("invocationId")): row for row in provider_requests}
+    problems: list[str] = []
+    hook_missing: list[str] = []
+    if len(invocation_ids) != len(set(invocation_ids)):
+        problems.append("duplicate invocation identity")
+    if len(transports) != len(provider_requests):
+        problems.append("transport/server request count differs")
+    for transport in transports:
+        invocation_id = str(transport.get("invocationId"))
+        request = server.get(invocation_id)
+        if request is None:
+            problems.append(f"{invocation_id}: no server observation")
+            continue
+        body_sha256 = transport.get("bodySha256")
+        hook_sha256 = transport.get("payloadHookSha256")
+        if body_sha256 != request.get("bodySha256") or body_sha256 != request.get("claimedSha256"):
+            problems.append(f"{invocation_id}: serialized request digest mismatch")
+        if hook_sha256 is None:
+            hook_missing.append(str(transport.get("purpose")))
+            if transport.get("purpose") != "compaction-summary":
+                problems.append(f"{invocation_id}: content call bypassed payload hook")
+        elif body_sha256 != hook_sha256:
+            problems.append(f"{invocation_id}: payload hook digest mismatch")
+        reservation = reservations.get(invocation_id)
+        if reservation is None or int(reservation.get("reservedUnits", 0)) <= 0:
+            problems.append(f"{invocation_id}: no positive pre-network reserve")
+        outcome = outcomes.get(invocation_id)
+        if outcome is None:
+            problems.append(f"{invocation_id}: no transport outcome")
+        elif int(outcome.get("status", 0)) == 200:
+            account = accounting.get(invocation_id)
+            if account is None or not _positive_usage(account.get("usage")):
+                problems.append(f"{invocation_id}: successful call lacks usage accounting")
+            response_usage = request.get("responseUsage")
+            if (
+                not isinstance(response_usage, dict)
+                or int(response_usage.get("total_tokens", 0)) <= 0
+            ):
+                problems.append(f"{invocation_id}: provider returned no measurable usage")
+    return not problems, {
+        "invocationCount": len(invocation_ids),
+        "uniqueInvocationCount": len(set(invocation_ids)),
+        "purposes": [row.get("purpose") for row in transports],
+        "payloadHookMissingPurposes": hook_missing,
+        "problems": problems,
+    }
+
+
+def _assess_compaction(
+    extension_records: list[dict[str, Any]],
+    provider_requests: list[dict[str, Any]],
+    compact_response: dict[str, Any],
+) -> tuple[bool, dict[str, Any]]:
+    started = [
+        row
+        for row in extension_records
+        if row.get("type") == "session_before_compact" and row.get("reason") == "manual"
+    ]
+    completed = [
+        row
+        for row in extension_records
+        if row.get("type") == "session_compact" and row.get("reason") == "manual"
+    ]
+    compaction_id = completed[-1].get("invocationId") if completed else None
+    summary_indexes = [
+        index
+        for index, request in enumerate(provider_requests)
+        if request.get("invocationId") == compaction_id
+        and request.get("purpose") == "compaction-summary"
+    ]
+    following = provider_requests[summary_indexes[-1] + 1 :] if summary_indexes else []
+    delivered = [
+        request
+        for request in following
+        if request.get("purpose") == "content"
+        and "AFTER_COMPACTION" in _message_text(request["payload"])
+    ]
+    obligation_delivered = bool(
+        delivered and "CURRENT_OBLIGATION_OMEGA" in _message_text(delivered[0]["payload"])
+    )
+    response_data = compact_response.get("data")
+    data: dict[str, Any] = response_data if isinstance(response_data, dict) else {}
+    passed = (
+        compact_response.get("success") is True
+        and len(started) == 1
+        and len(completed) == 1
+        and bool(compaction_id)
+        and len(summary_indexes) == 1
+        and int(started[0].get("tokensBefore") or 0) > 0
+        and _positive_usage(data.get("usage"))
+        and obligation_delivered
+    )
+    return passed, {
+        "lifecycleStartCount": len(started),
+        "lifecycleCompletionCount": len(completed),
+        "reason": completed[-1].get("reason") if completed else None,
+        "summaryInvocationId": compaction_id,
+        "tokensBefore": started[0].get("tokensBefore") if started else None,
+        "usage": data.get("usage"),
+        "obligationDelivered": obligation_delivered,
+    }
+
+
+def _assess_overflow(
+    extension_records: list[dict[str, Any]],
+    provider_requests: list[dict[str, Any]],
+) -> tuple[bool, dict[str, Any]]:
+    started = [
+        row
+        for row in extension_records
+        if row.get("type") == "session_before_compact" and row.get("reason") == "overflow"
+    ]
+    completed = [
+        row
+        for row in extension_records
+        if row.get("type") == "session_compact" and row.get("reason") == "overflow"
+    ]
+    summary_id = completed[-1].get("invocationId") if completed else None
+    summary_indexes = [
+        index
+        for index, request in enumerate(provider_requests)
+        if request.get("invocationId") == summary_id
+        and request.get("purpose") == "compaction-summary"
+    ]
+    summary = [provider_requests[index] for index in summary_indexes]
+    before_summary = provider_requests[: summary_indexes[0]] if summary_indexes else []
+    after_summary = provider_requests[summary_indexes[-1] + 1 :] if summary_indexes else []
+    initial_candidates = [
+        request
+        for request in before_summary
+        if request.get("purpose") == "content"
+        and "FORCE_OVERFLOW" in _message_text(request["payload"])
+    ]
+    initial = initial_candidates[-1:]
+    retried = [
+        request
+        for request in after_summary
+        if request.get("purpose") == "overflow-retry"
+        and "FORCE_OVERFLOW" in _message_text(request["payload"])
+    ]
+    identities = [request.get("invocationId") for request in [*initial, *summary, *retried]]
+    obligation_delivered = bool(
+        retried and "CURRENT_OBLIGATION_OMEGA" in _message_text(retried[0]["payload"])
+    )
+    passed = (
+        len(started) == 1
+        and started[0].get("willRetry") is True
+        and len(completed) == 1
+        and completed[0].get("willRetry") is True
+        and len(initial) == 1
+        and len(summary) == 1
+        and len(retried) == 1
+        and len(identities) == len(set(identities))
+        and obligation_delivered
+    )
+    return passed, {
+        "lifecycleStartCount": len(started),
+        "lifecycleCompletionCount": len(completed),
+        "willRetry": completed[-1].get("willRetry") if completed else None,
+        "invocationIds": identities,
+        "purposes": [request.get("purpose") for request in [*initial, *summary, *retried]],
+        "obligationDelivered": obligation_delivered,
+    }
 
 
 def run_probe(*, node: Path, pi_cli: Path, output: Path, package_integrity: str) -> GateReport:
@@ -329,45 +554,47 @@ def run_probe(*, node: Path, pi_cli: Path, output: Path, package_integrity: str)
             )
         )
 
+        client.send({"id": "auto-off", "type": "set_auto_compaction", "enabled": False})
+        auto_off = client.wait_for(lambda event: event.get("id") == "auto-off")
+        if auto_off.get("success") is not True:
+            raise RuntimeError(f"could not disable threshold compaction: {auto_off!r}")
+        for index in range(5):
+            marker = "CURRENT_OBLIGATION_OMEGA" if index == 0 else f"SEED_{index}"
+            seed = f"{marker} " + (f"bounded-seed-{index} " * 160)
+            prompt_id = f"compact-seed-{index}"
+            client.send({"id": prompt_id, "type": "prompt", "message": seed})
+            client.wait_for(lambda event, value=prompt_id: event.get("id") == value)
+            client.wait_for(lambda event: event.get("type") == "agent_settled", timeout=20)
+
         client.send({"id": "compact", "type": "compact"})
-        compact_response = client.wait_for(lambda event: event.get("id") == "compact", timeout=20)
+        compact_response = client.wait_for(lambda event: event.get("id") == "compact", timeout=45)
         client.send({"id": "after-compact", "type": "prompt", "message": "AFTER_COMPACTION"})
         client.wait_for(lambda event: event.get("id") == "after-compact")
         client.wait_for(lambda event: event.get("type") == "agent_settled", timeout=20)
-        compact_requests = [
-            request
-            for request in state.requests
-            if "summar" in _message_text(request["payload"]).lower()
-        ]
-        checks.append(
-            CheckResult(
-                "compaction-summary-context",
-                compact_response.get("success") is True
-                and bool(compact_requests)
-                and "CURRENT_OBLIGATION_OMEGA" in _message_text(state.requests[-1]["payload"]),
-                "Compaction used a separate provider request and its summary reached the "
-                "next turn.",
-                {"summaryRequests": len(compact_requests)},
-            )
-        )
+
+        for index in range(3):
+            prompt_id = f"overflow-seed-{index}"
+            seed = f"OVERFLOW_HISTORY_{index} " + (f"bounded-overflow-{index} " * 120)
+            client.send({"id": prompt_id, "type": "prompt", "message": seed})
+            client.wait_for(lambda event, value=prompt_id: event.get("id") == value)
+            client.wait_for(lambda event: event.get("type") == "agent_settled", timeout=20)
+        client.send({"id": "auto-on", "type": "set_auto_compaction", "enabled": True})
+        auto_on = client.wait_for(lambda event: event.get("id") == "auto-on")
+        if auto_on.get("success") is not True:
+            raise RuntimeError(f"could not enable overflow recovery: {auto_on!r}")
 
         before_overflow = len(state.requests)
         client.send({"id": "overflow", "type": "prompt", "message": "FORCE_OVERFLOW"})
-        client.wait_for(lambda event: event.get("id") == "overflow")
-        client.wait_for(lambda event: event.get("type") == "agent_settled", timeout=30)
-        overflow_requests = state.requests[before_overflow:]
-        checks.append(
-            CheckResult(
-                "overflow-recovery-identities",
-                state.overflow_sent and len(overflow_requests) >= 3,
-                "Overflow, its compaction summary, and retried turn were distinct HTTP "
-                "invocations.",
-                {
-                    "requestCount": len(overflow_requests),
-                    "invocationIds": [request["invocationId"] for request in overflow_requests],
-                },
-            )
+        overflow_accepted = client.wait_for(lambda event: event.get("id") == "overflow")
+        overflow_settled = client.wait_for(
+            lambda event: event.get("type") == "agent_settled", timeout=45
         )
+        if (
+            overflow_accepted.get("success") is not True
+            or overflow_settled.get("type") != "agent_settled"
+            or len(state.requests) <= before_overflow
+        ):
+            raise RuntimeError("overflow prompt did not reach a settled observed attempt")
 
         before_question = len(state.requests)
         client.send({"id": "slow", "type": "prompt", "message": "SLOW_MAIN"})
@@ -418,8 +645,53 @@ def run_probe(*, node: Path, pi_cli: Path, output: Path, package_integrity: str)
                 "redisplayed after restart.",
             )
         )
+
+        stderr_parts.append(client.stop())
+        extension_records = read_jsonl(output / "extension.jsonl")
+        resource_records = read_jsonl(output / "resource-ledger.jsonl")
+        invocations_ok, invocation_evidence = _assess_invocations(
+            extension_records, state.requests, resource_records
+        )
+        checks.append(
+            CheckResult(
+                "request-identity-resource-accounting",
+                invocations_ok,
+                "Every observed HTTP request joined to one persisted final payload, one "
+                "pre-network reserve and a terminal transport/accounting record.",
+                invocation_evidence,
+            )
+        )
+        compaction_ok, compaction_evidence = _assess_compaction(
+            extension_records, state.requests, compact_response
+        )
+        checks.append(
+            CheckResult(
+                "compaction-summary-context",
+                compaction_ok,
+                "Pi emitted manual compaction lifecycle events around a separately identified "
+                "service generation, then delivered the current obligation in the next turn.",
+                compaction_evidence,
+            )
+        )
+        overflow_ok, overflow_evidence = _assess_overflow(extension_records, state.requests)
+        checks.append(
+            CheckResult(
+                "overflow-recovery-identities",
+                state.overflow_sent and overflow_ok,
+                "Pi identified an overflow, generated a lifecycle-linked summary and retried "
+                "once with distinct invocation identities and the current obligation.",
+                overflow_evidence,
+            )
+        )
     except Exception as error:  # pragma: no cover - only reached by live probe failures
-        checks.append(CheckResult("probe-completion", False, f"live probe failed: {error!r}"))
+        checks.append(
+            CheckResult(
+                "probe-completion",
+                False,
+                f"live probe lacked a bounded observation: {error!r}",
+                conclusion=CheckConclusion.INSUFFICIENT_OBSERVATION,
+            )
+        )
     finally:
         stderr_parts.append(client.stop())
         server.shutdown()
@@ -435,6 +707,8 @@ def run_probe(*, node: Path, pi_cli: Path, output: Path, package_integrity: str)
             "pi": "0.87.0",
             "node": subprocess.check_output([node, "--version"], text=True).strip(),
             "packageIntegrity": package_integrity,
+            "probeSha256": sha256_file(Path(__file__)),
+            "extensionSha256": sha256_file(Path(__file__).with_name("pi_probe_extension.ts")),
         },
         commands=(
             "python -m tools.technical_baseline.pi_integration_probe "
@@ -449,25 +723,124 @@ def run_probe(*, node: Path, pi_cli: Path, output: Path, package_integrity: str)
             "Startup network, telemetry, agent retry, provider retry and cache warming were "
             "disabled.",
             "Only the localhost OpenAI-completions Provider path was exercised.",
+            "The allowlisted environment used an isolated HOME, APPDATA, LOCALAPPDATA, TEMP "
+            "and Pi configuration/session directory.",
         ),
     )
     report.write(output / "pi-integration.json")
     return report
 
 
+def reanalyze_probe_output(output: Path) -> GateReport:
+    """Re-evaluate an immutable live run without starting Pi or issuing HTTP requests."""
+
+    original = json.loads((output / "pi-integration.json").read_text(encoding="utf-8"))
+    checks = [
+        CheckResult(
+            name=str(row["name"]),
+            passed=bool(row["passed"]),
+            observation=str(row["observation"]),
+            evidence=dict(row.get("evidence", {})),
+            conclusion=CheckConclusion(str(row["conclusion"])),
+        )
+        for row in original["checks"]
+        if row["name"] in SAFETY_CHECKS
+    ]
+    extension_records = read_jsonl(output / "extension.jsonl")
+    resource_records = read_jsonl(output / "resource-ledger.jsonl")
+    provider_records = read_jsonl(output / "provider.jsonl")
+    response_usage = {
+        str(row.get("invocationId")): row.get("responseUsage")
+        for row in provider_records
+        if row.get("type") == "response"
+    }
+    provider_requests = []
+    for row in provider_records:
+        if row.get("type") == "response":
+            continue
+        request = dict(row)
+        request["responseUsage"] = response_usage.get(str(row.get("invocationId")))
+        provider_requests.append(request)
+    rpc_records = read_jsonl(output / "rpc-stdout.jsonl")
+    compact_response = next(row for row in rpc_records if row.get("id") == "compact")
+
+    invocations_ok, invocation_evidence = _assess_invocations(
+        extension_records, provider_requests, resource_records
+    )
+    checks.append(
+        CheckResult(
+            "request-identity-resource-accounting",
+            invocations_ok,
+            "Offline join confirmed one persisted final payload, pre-network reserve and "
+            "terminal transport/accounting record per observed HTTP request.",
+            invocation_evidence,
+        )
+    )
+    compaction_ok, compaction_evidence = _assess_compaction(
+        extension_records, provider_requests, compact_response
+    )
+    checks.append(
+        CheckResult(
+            "compaction-summary-context",
+            compaction_ok,
+            "Offline lifecycle join confirmed the manual service generation and delivery of "
+            "the current obligation in the next content turn.",
+            compaction_evidence,
+        )
+    )
+    overflow_ok, overflow_evidence = _assess_overflow(extension_records, provider_requests)
+    checks.append(
+        CheckResult(
+            "overflow-recovery-identities",
+            overflow_ok,
+            "Offline lifecycle join confirmed one overflow, one service generation and one "
+            "distinct retry carrying the current obligation.",
+            overflow_evidence,
+        )
+    )
+    versions = {str(key): str(value) for key, value in original["versions"].items()}
+    versions["reanalysisProbeSha256"] = sha256_file(Path(__file__))
+    report = GateReport(
+        gate="pi-integration",
+        status=_gate_status(checks),
+        checks=tuple(checks),
+        versions=versions,
+        commands=tuple(original["commands"])
+        + ("python -m tools.technical_baseline.pi_integration_probe --reanalyze <run>",),
+        untested=tuple(original["untested"]),
+        notes=tuple(original["notes"])
+        + (
+            "This report reanalyzes persisted live evidence and performs no Pi or HTTP run.",
+            "Pi 0.87.0 did not emit before_provider_request for the two compaction "
+            "streamSimple calls; the Provider transport wrapper still persisted and matched "
+            "their final bytes, identities, reserves, responses and usage.",
+        ),
+    )
+    report.write(output / "pi-reanalysis.json")
+    return report
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--node", type=Path, required=True)
-    parser.add_argument("--pi-cli", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--package-integrity", required=True)
+    parser.add_argument("--node", type=Path)
+    parser.add_argument("--pi-cli", type=Path)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--package-integrity")
+    parser.add_argument("--reanalyze", type=Path)
     args = parser.parse_args(argv)
-    report = run_probe(
-        node=args.node,
-        pi_cli=args.pi_cli,
-        output=args.output,
-        package_integrity=args.package_integrity,
-    )
+    if args.reanalyze is not None:
+        report = reanalyze_probe_output(args.reanalyze.resolve())
+    else:
+        if None in (args.node, args.pi_cli, args.output, args.package_integrity):
+            raise SystemExit(
+                "a live run requires --node, --pi-cli, --output and --package-integrity"
+            )
+        report = run_probe(
+            node=cast(Path, args.node),
+            pi_cli=cast(Path, args.pi_cli),
+            output=cast(Path, args.output),
+            package_integrity=cast(str, args.package_integrity),
+        )
     print(json.dumps({"gate": report.gate, "status": report.status}, ensure_ascii=False))
     return 0 if report.status == GateStatus.POSITIVE else 1
 

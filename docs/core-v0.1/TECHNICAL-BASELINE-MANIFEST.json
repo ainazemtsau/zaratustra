@@ -6,7 +6,8 @@
   },
   "repository": {
     "baseCommit": "9913786eacb9c95ce103e29a21fa1e89dbdbd070",
-    "branch": "codex/core-v0.1"
+    "branch": "codex/core-v0.1",
+    "initialResultsCommit": "705c336"
   },
   "host": {
     "windows": "10.0.26200",
@@ -51,7 +52,47 @@
     ]
   },
   "outcomes": {
-    "piIntegration": "inconclusive",
+    "piIntegration": "positive",
     "durableExecution": "inconclusive"
+  },
+  "continuation": {
+    "evidence": "docs/core-v0.1/STAGE1-CONTINUATION-EVIDENCE.json",
+    "codeIdentity": {
+      "commonSha256": "D9EDC84C91EAD6C8A8D4D5BFDA3357EF736AD0CAF9E022425804FE49555B0D98",
+      "piProbeSha256": "4B6A731F05604C27E074C7E618D0F8921D03D5A51CC84C90E8F0B83788FC8CA9",
+      "piExtensionSha256": "B81EC8A012FD360267EEB0BCE7E8D4E45A288EEC057BD132763F2A9CF311F24A",
+      "dbosProbeSha256": "5D6AC7C66D86458F9685A415EA456CA7E80E24569D02DD19E51353BB14643608",
+      "testsSha256": "BAA59C9C786E237442DA3A7AB0D19953C933EC958B1D7890A0EA609B657AF308"
+    },
+    "attempts": {
+      "pi": {
+        "full": 1,
+        "targeted": 2,
+        "finalEvidenceRun": "_scratch/pi-continuation-20260922-target-c",
+        "finalEvaluation": "offline reanalysis of immutable live evidence"
+      },
+      "dbos": {
+        "full": 1,
+        "targeted": 2,
+        "fullEvidenceRun": "_scratch/dbos-continuation-20260922-full-a",
+        "remainingScenario": 9
+      }
+    },
+    "commands": {
+      "piLive": "uv run --locked python -m tools.technical_baseline.pi_integration_probe --node <node.exe> --pi-cli <cli.js> --output <new-scratch-dir> --package-integrity <integrity>",
+      "piOffline": "uv run --locked python -m tools.technical_baseline.pi_integration_probe --reanalyze <completed-run>",
+      "dbosFull": "<fixed-python> -m tools.technical_baseline.durable_execution_probe --output <new-scratch-dir>",
+      "dbosTargeted": "<fixed-python> -m tools.technical_baseline.durable_execution_probe --targeted-failed --output <new-scratch-dir>"
+    },
+    "verification": {
+      "command": "uv run --locked python -m tools.check --deliver",
+      "result": "passed",
+      "formattedFiles": 156,
+      "mypySourceFiles": 134,
+      "importContracts": 19,
+      "testsPassed": 450,
+      "sourceDistributionBuilt": true,
+      "wheelBuilt": true
+    }
   }
 }

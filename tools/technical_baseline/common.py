@@ -21,6 +21,20 @@ class GateStatus(StrEnum):
     INCONCLUSIVE = "inconclusive"
 
 
+class CheckConclusion(StrEnum):
+    """Why one check passed or failed.
+
+    A contract violation is evidence for a negative gate.  Setup failures and
+    insufficient observations leave the gate inconclusive instead of silently
+    turning missing evidence into either success or product failure.
+    """
+
+    PASSED = "passed"
+    CONTRACT_VIOLATION = "contract-violation"
+    INSUFFICIENT_OBSERVATION = "insufficient-observation"
+    SETUP_FAILURE = "setup-failure"
+
+
 @dataclass(frozen=True)
 class CheckResult:
     """One directly observed gate check."""
@@ -29,6 +43,17 @@ class CheckResult:
     passed: bool
     observation: str
     evidence: dict[str, Any] = field(default_factory=dict)
+    conclusion: CheckConclusion | None = None
+
+    def __post_init__(self) -> None:
+        conclusion = self.conclusion
+        if conclusion is None:
+            conclusion = (
+                CheckConclusion.PASSED if self.passed else CheckConclusion.CONTRACT_VIOLATION
+            )
+            object.__setattr__(self, "conclusion", conclusion)
+        if self.passed != (conclusion is CheckConclusion.PASSED):
+            raise ValueError("passed must agree with conclusion")
 
 
 @dataclass(frozen=True)
@@ -67,6 +92,25 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def sha256_file(path: Path) -> str:
+    return sha256_bytes(path.read_bytes())
+
+
+def gate_status(checks: list[CheckResult], expected_checks: frozenset[str]) -> GateStatus:
+    """Classify a bounded gate without conflating defects and missing evidence."""
+
+    if any(check.conclusion is CheckConclusion.CONTRACT_VIOLATION for check in checks):
+        return GateStatus.NEGATIVE
+    observed = [check.name for check in checks]
+    if (
+        len(observed) == len(expected_checks)
+        and set(observed) == expected_checks
+        and all(check.conclusion is CheckConclusion.PASSED for check in checks)
+    ):
+        return GateStatus.POSITIVE
+    return GateStatus.INCONCLUSIVE
+
+
 def append_jsonl(path: Path, value: dict[str, Any]) -> None:
     """Append one LF-framed evidence record."""
 
@@ -79,7 +123,9 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
     records: list[dict[str, Any]] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in path.read_text(encoding="utf-8").split("\n"):
+        if not line:
+            continue
         value = json.loads(line)
         if not isinstance(value, dict):
             raise TypeError(f"expected JSON object in {path}")

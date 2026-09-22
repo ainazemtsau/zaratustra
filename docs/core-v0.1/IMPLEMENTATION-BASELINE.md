@@ -38,6 +38,15 @@ secrets, contact paid model services, modify user data, or write old `.zara`
 workspaces. A published-artifact run may be followed by at most one targeted
 rerun for an inconclusive setup or source-build discrepancy.
 
+## Continuation authority — September 22, 2026
+
+After the initial Stage 1 result was recorded in local commit `705c336`, the owner
+authorized one new full run of each corrected stand and up to two targeted repeats
+after a diagnosed error. This continuation did not authorize production dependencies,
+Stage 2 implementation, a Pi fork, a custom dispatcher, real provider credentials or
+non-localhost traffic. The initial attempt limit above remains a historical statement
+about the earlier completed work; it was not used to limit or relabel the continuation.
+
 ## Preserved engineering rules
 
 Python/uv, Pydantic, package boundaries, PROBA, `tools.check`, STOP/STEER,
