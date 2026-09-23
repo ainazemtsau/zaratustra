@@ -6,6 +6,7 @@ import argparse
 import getpass
 import json
 import os
+import queue
 import secrets
 import shutil
 import subprocess
@@ -31,6 +32,7 @@ from zaratustra.foundation import (
     complete_deletions,
     inspect_space,
     managed_pi_session_lock,
+    read_assigned_control,
     read_execution,
     read_space,
     read_technical_deletion_targets,
@@ -276,7 +278,37 @@ def _rpc_line(process: subprocess.Popen[bytes]) -> dict[str, Any]:
     return result
 
 
-def _rpc_prompt(process: subprocess.Popen[bytes], message: str) -> None:
+def _rpc_line_with_stop(
+    process: subprocess.Popen[bytes], stop_requested: threading.Event
+) -> dict[str, Any]:
+    """Keep the host responsive even if a child cannot be stopped or observed."""
+
+    pending: queue.Queue[dict[str, Any] | Exception] = queue.Queue(maxsize=1)
+
+    def read_one() -> None:
+        try:
+            pending.put(_rpc_line(process))
+        except Exception as error:
+            pending.put(error)
+
+    threading.Thread(target=read_one, daemon=True).start()
+    while True:
+        if stop_requested.is_set():
+            raise FoundationError("rpc_stop_requested", "Core closed this assigned Pi turn")
+        try:
+            result = pending.get(timeout=0.25)
+        except queue.Empty:
+            continue
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+
+def _rpc_prompt(
+    process: subprocess.Popen[bytes], message: str, stop_requested: threading.Event
+) -> None:
+    if stop_requested.is_set():
+        raise FoundationError("rpc_stop_requested", "Core closed this assigned Pi turn")
     if process.stdin is None or process.poll() is not None:
         raise FoundationError("rpc_stopped", "Pi RPC is not running")
     request_id = secrets.token_hex(16)
@@ -285,7 +317,7 @@ def _rpc_prompt(process: subprocess.Popen[bytes], message: str) -> None:
     process.stdin.flush()
     accepted = False
     while True:
-        event = _rpc_line(process)
+        event = _rpc_line_with_stop(process, stop_requested)
         if event.get("type") == "extension_error":
             raise FoundationError("rpc_extension", "Pi extension rejected the assigned turn")
         if event.get("type") == "response" and event.get("id") == request_id:
@@ -296,6 +328,90 @@ def _rpc_prompt(process: subprocess.Popen[bytes], message: str) -> None:
             if not accepted:
                 raise FoundationError("rpc_transport", "Pi settled before prompt acceptance")
             return
+
+
+def _control_stop_requested(
+    config: AssignedConfig, authority: LocalAuthority, work_id: UUID, attempt_id: UUID
+) -> bool:
+    try:
+        return not read_assigned_control(config.space, work_id, attempt_id, authority)
+    except FoundationError:
+        # Lost runner rights or an unavailable Core gate stop the child safely.
+        return True
+
+
+def _rpc_stop_commands(process: subprocess.Popen[bytes]) -> None:
+    if process.stdin is None or process.poll() is not None:
+        return
+    for kind in ("clear_queue", "abort"):
+        try:
+            process.stdin.write(
+                (json.dumps({"id": secrets.token_hex(16), "type": kind}) + "\n").encode("utf-8")
+            )
+            process.stdin.flush()
+        except (OSError, ValueError):
+            return
+
+
+def _terminate_pi(process: subprocess.Popen[bytes]) -> bool:
+    """Return true only after observing exit; a refused stop remains unknown."""
+
+    try:
+        if process.poll() is not None:
+            return True
+    except OSError:
+        pass
+    for action in (process.terminate, process.kill):
+        try:
+            action()
+        except OSError:
+            pass
+        try:
+            process.wait(timeout=2)
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        return True
+    try:
+        return process.poll() is not None
+    except OSError:
+        return False
+
+
+def _watch_core_stop(
+    config: AssignedConfig,
+    authority: LocalAuthority,
+    work_id: UUID,
+    attempt_id: UUID,
+    process: subprocess.Popen[bytes],
+    finished: threading.Event,
+    stop_requested: threading.Event,
+    stop_lock: threading.Lock,
+) -> None:
+    """Observe only this claimed Attempt and wake its DBOS wait on a Core stop."""
+
+    while not finished.wait(0.5):
+        if not _control_stop_requested(config, authority, work_id, attempt_id):
+            continue
+        stop_requested.set()
+        _rpc_stop_commands(process)
+        with stop_lock:
+            _terminate_pi(process)
+        client = None
+        try:
+            client = _client(config.space)
+            signal_id = uuid5(attempt_id, "rpc-stop-signal")
+            client.send(
+                _workflow_id(attempt_id),
+                str(signal_id),
+                topic="answer",
+                idempotency_key=str(signal_id),
+            )
+        except Exception as error:
+            print(f"Assigned stop wake failed for {attempt_id}: {error}", file=sys.stderr)
+        finally:
+            if client is not None:
+                client.destroy()
+        return
 
 
 def _current_snapshot(
@@ -441,6 +557,10 @@ def _execute_under_lock(
     server: BridgeServer | None = None
     thread: threading.Thread | None = None
     process: subprocess.Popen[bytes] | None = None
+    monitor: threading.Thread | None = None
+    monitor_done = threading.Event()
+    stop_requested = threading.Event()
+    stop_lock = threading.Lock()
     observed = False
     try:
         with managed_pi_session_lock(config.space):
@@ -547,6 +667,22 @@ def _execute_under_lock(
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
             )
+            monitor = threading.Thread(
+                target=_watch_core_stop,
+                args=(
+                    config,
+                    authority,
+                    work_id,
+                    attempt_id,
+                    process,
+                    monitor_done,
+                    stop_requested,
+                    stop_lock,
+                ),
+                daemon=True,
+            )
+            monitor.start()
+            _current_snapshot(config, authority, work_id, attempt_id, epoch, generation)
             first = (
                 "Perform the assigned Core Work using the exact context supplied by Zaratustra. "
                 "Return only one JSON object. If a condition is unknown, return "
@@ -554,13 +690,23 @@ def _execute_under_lock(
                 '"question":"one exact question","remainder":"what remains"}. '
                 'Otherwise return {"zara":"final","text":"the result"}. Do not call tools.'
             )
-            _rpc_prompt(process, first)
+            _rpc_prompt(process, first, stop_requested)
             current = _current_snapshot(config, authority, work_id, attempt_id, epoch, generation)
             open_waits = [
                 x for x in current.waits if x.attempt_id == attempt_id and x.status == "open"
             ]
             if open_waits:
-                signal = DBOS.recv("answer", timeout_seconds=86400)
+                while True:
+                    if stop_requested.is_set():
+                        raise FoundationError(
+                            "rpc_stop_requested", "Core closed this assigned Pi wait"
+                        )
+                    current = _current_snapshot(
+                        config, authority, work_id, attempt_id, epoch, generation
+                    )
+                    signal = DBOS.recv("answer", timeout_seconds=30)
+                    if signal is not None:
+                        break
                 current = _current_snapshot(
                     config, authority, work_id, attempt_id, epoch, generation
                 )
@@ -582,6 +728,7 @@ def _execute_under_lock(
                     "and partial Artifact. "
                     "Use the addressed answer in Core context. Return only "
                     '{"zara":"final","text":"the final result"}. Do not call tools.',
+                    stop_requested,
                 )
                 current = _current_snapshot(
                     config, authority, work_id, attempt_id, epoch, generation
@@ -590,17 +737,12 @@ def _execute_under_lock(
                 raise FoundationError("rpc_result", "Pi RPC did not publish the declared Artifact")
             return "proposed"
     finally:
+        monitor_done.set()
         if process is not None:
-            if process.poll() is None:
-                try:
-                    process.terminate()
-                    process.wait(timeout=10)
-                except (OSError, subprocess.TimeoutExpired):
-                    observed = False
-                else:
-                    observed = True
-            else:
-                observed = True
+            with stop_lock:
+                observed = _terminate_pi(process)
+        if monitor is not None:
+            monitor.join(timeout=5)
         if server is not None:
             server.shutdown()
             server.server_close()

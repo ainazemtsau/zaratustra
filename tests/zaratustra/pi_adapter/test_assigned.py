@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import io
+import json
 import pickle
 import shutil
 import sqlite3
+import subprocess
 import threading
 from pathlib import Path
 from typing import cast
@@ -15,6 +18,7 @@ from dbos import DBOS, DBOSClient
 
 from tests.zaratustra.foundation.test_continuation import ready
 from zaratustra.foundation import (
+    ALL_ACTIONS,
     AssignAttemptRequest,
     ClaimAttemptLaunchRequest,
     CreateGrantRequest,
@@ -40,6 +44,7 @@ from zaratustra.foundation import (
     managed_pi_lock,
     managed_pi_session_lock,
     read_artifact,
+    read_assigned_control,
     read_execution,
     restore_backup,
 )
@@ -49,6 +54,10 @@ from zaratustra.pi_adapter.assigned import (
     WORKFLOW_NAME,
     AssignedConfig,
     _purge_technical_data,
+    _record_stop,
+    _rpc_line_with_stop,
+    _terminate_pi,
+    _watch_core_stop,
     complete_assigned_deletions,
     deliver_outbox,
     resolve_assigned_work,
@@ -568,3 +577,199 @@ def test_incompatible_pi_package_refuses_before_dbos_launch(tmp_path: Path) -> N
         run_assigned(config, owner, attempt_id)
     assert not (root / ".zara-core" / "executor.sqlite3").exists()
     assert read_execution(root, work_id, owner).assignments[0].status == "assigned"
+
+
+def test_refused_child_termination_records_unknown(tmp_path: Path) -> None:
+    root, workspace, _, work_id, attempt_id, session_id = assigned(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    config = AssignedConfig(
+        space=root,
+        workspace=workspace,
+        pi_cli=tmp_path / "unused-pi.js",
+        pi_runtime=tmp_path / "unused-runtime",
+        node="node",
+        provider_profile="local-completions",
+        provider_base_url="http://127.0.0.1:9/v1",
+        provider_id="synthetic",
+        model_id="synthetic",
+        context_window=4096,
+        max_tokens=512,
+        reserve_units=10,
+        limit_units=100,
+    )
+
+    class RefusingChild:
+        def poll(self) -> None:
+            return None
+
+        def terminate(self) -> None:
+            raise OSError("synthetic termination refusal")
+
+        def kill(self) -> None:
+            raise OSError("synthetic kill refusal")
+
+        def wait(self, *, timeout: float) -> None:
+            raise subprocess.TimeoutExpired("synthetic-pi", timeout)
+
+    observed = _terminate_pi(cast(subprocess.Popen[bytes], RefusingChild()))
+    assert not observed
+    _record_stop(config, owner, work_id, attempt_id, session_id, observed=observed)
+    state = read_execution(root, work_id, owner)
+    assert state.assignments[0].status == "unknown"
+    assert state.attempts[0].status == "active"
+    assert state.work.state.status == "proposed"
+
+
+def test_active_rpc_read_is_interruptible_when_stop_is_requested() -> None:
+    release = threading.Event()
+
+    class SilentOutput:
+        def readline(self, _limit: int) -> bytes:
+            release.wait()
+            return b""
+
+    class SilentChild:
+        stdout = SilentOutput()
+
+    stop = threading.Event()
+    stop.set()
+    try:
+        with pytest.raises(FoundationError, match="rpc_stop_requested"):
+            _rpc_line_with_stop(cast(subprocess.Popen[bytes], SilentChild()), stop)
+    finally:
+        release.set()
+
+
+def test_control_read_follows_stop_and_current_runner_rights(tmp_path: Path) -> None:
+    root, _, space_id, work_id, attempt_id, session_id = assigned(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    grant_id = uuid4()
+    apply_operation(
+        root,
+        CreateGrantRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            grant_id=grant_id,
+            state=GrantState(grantee="runner", actions=tuple(ALL_ACTIONS)),
+        ),
+        owner,
+    )
+    runner = authorize_local(root, actor="runner", source_ref="synthetic-runner")
+    assert read_assigned_control(root, work_id, attempt_id, runner)
+    apply_operation(
+        root,
+        RevokeGrantRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            grant_id=grant_id,
+            expected_revision=1,
+        ),
+        owner,
+    )
+    with pytest.raises(FoundationError, match="permission_denied"):
+        read_assigned_control(root, work_id, attempt_id, runner)
+    assert read_assigned_control(root, work_id, attempt_id, owner)
+    apply_operation(
+        root,
+        RequestAttemptStopRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            attempt_id=attempt_id,
+            work_id=work_id,
+            session_id=session_id,
+            expected_assignment_revision=1,
+            reason="Stop this fictional assigned child",
+        ),
+        owner,
+    )
+    assert not read_assigned_control(root, work_id, attempt_id, owner)
+
+
+def test_stop_monitor_terminates_before_failed_dbos_wake(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, workspace, space_id, work_id, attempt_id, session_id = assigned(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    apply_operation(
+        root,
+        RequestAttemptStopRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            attempt_id=attempt_id,
+            work_id=work_id,
+            session_id=session_id,
+            expected_assignment_revision=1,
+            reason="Stop this fictional child before a failed technical wake",
+        ),
+        owner,
+    )
+    config = AssignedConfig(
+        space=root,
+        workspace=workspace,
+        pi_cli=tmp_path / "unused-pi.js",
+        pi_runtime=tmp_path / "unused-runtime",
+        node="node",
+        provider_profile="local-completions",
+        provider_base_url="http://127.0.0.1:9/v1",
+        provider_id="synthetic",
+        model_id="synthetic",
+        context_window=4096,
+        max_tokens=512,
+        reserve_units=10,
+        limit_units=100,
+    )
+
+    class Child:
+        def __init__(self) -> None:
+            self.stdin = io.BytesIO()
+            self.terminated = False
+
+        def poll(self) -> int | None:
+            return 1 if self.terminated else None
+
+        def terminate(self) -> None:
+            self.terminated = True
+
+        def kill(self) -> None:
+            self.terminated = True
+
+        def wait(self, *, timeout: float) -> int:
+            assert self.terminated
+            return 1
+
+    child = Child()
+
+    class FailedWake:
+        def __init__(self) -> None:
+            self.called = False
+            self.destroyed = False
+
+        def send(self, *args: object, **kwargs: object) -> None:
+            assert child.terminated
+            self.called = True
+            raise OSError("synthetic DBOS wake failure")
+
+        def destroy(self) -> None:
+            self.destroyed = True
+
+    wake = FailedWake()
+    monkeypatch.setattr("zaratustra.pi_adapter.assigned._client", lambda _space: wake)
+    stop = threading.Event()
+    _watch_core_stop(
+        config,
+        owner,
+        work_id,
+        attempt_id,
+        cast(subprocess.Popen[bytes], child),
+        threading.Event(),
+        stop,
+        threading.Lock(),
+    )
+    commands = [json.loads(raw)["type"] for raw in child.stdin.getvalue().splitlines()]
+    assert stop.is_set() and child.terminated
+    assert commands == ["clear_queue", "abort"]
+    assert wake.called and wake.destroyed

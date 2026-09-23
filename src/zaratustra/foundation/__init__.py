@@ -1,6 +1,7 @@
 """Independent Core v0.1 domain foundation public surface."""
 
 from .execution import (
+    read_assigned_control,
     read_execution,
     read_execution_events,
     upgrade_continuation_space,
@@ -188,6 +189,7 @@ __all__ = [
     "inspect_recovery",
     "inspect_space",
     "read_activity",
+    "read_assigned_control",
     "read_execution",
     "read_execution_events",
     "read_artifact",

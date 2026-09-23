@@ -822,6 +822,39 @@ def apply_continuation_change(
     return result, targets
 
 
+def read_assigned_control(
+    path: Path, work_id: UUID, attempt_id: UUID, authority: LocalAuthority
+) -> bool:
+    """Read one claimed Attempt's current stop gate without loading Work payload."""
+
+    with space_connection(path) as (connection, info):
+        _local_space(authority, info)
+        if info.schema_version < 4 or info.recovery_state != "active":
+            raise FoundationError("unsupported_schema", "Assigned control needs active schema 4")
+        for action in ("record.read", "work.execute", "model.invoke"):
+            _authorize(
+                connection,
+                actor=authority.actor,
+                action=action,
+                epoch=info.execution_epoch,
+                resource_type="work",
+                resource_id=work_id,
+            )
+        row = connection.execute(
+            "SELECT assignment.status, attempt.status, attempt.execution_epoch "
+            "FROM execution_assignments AS assignment "
+            "JOIN execution_attempts AS attempt ON attempt.attempt_id = assignment.attempt_id "
+            "WHERE assignment.work_id = ? AND assignment.attempt_id = ?",
+            (str(work_id), str(attempt_id)),
+        ).fetchone()
+        return bool(
+            row is not None
+            and row[0] in ("assigned", "waiting", "ready")
+            and row[1] == "active"
+            and row[2] == info.execution_epoch
+        )
+
+
 def read_execution(path: Path, work_id: UUID, authority: LocalAuthority) -> ExecutionSnapshot:
     """Read the current Work, exact bytes, execution ledger and remaining reserve."""
 
