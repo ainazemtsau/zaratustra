@@ -13,9 +13,11 @@ from zaratustra.foundation import (
     AdmitInvocationRequest,
     ArtifactRef,
     CreateArtifactRequest,
+    CreateGrantRequest,
     DeleteWorkRequest,
     FinishInvocationRequest,
     FoundationError,
+    GrantState,
     LinkedOutput,
     LinkWorkOutputRequest,
     PrepareInvocationRequest,
@@ -236,3 +238,73 @@ def test_managed_pi_history_is_retired_with_content_deletion(tmp_path: Path) -> 
     assert not copied.exists()
     assert history.joinpath("owner.txt").is_file()
     assert unrelated.read_text(encoding="utf-8") == "keep this"
+
+
+def test_accept_retires_active_attempt_after_restart(tmp_path: Path) -> None:
+    root, working, space_id, _, work_id, _, owner = ready(tmp_path)
+    bridge = Bridge(root, owner, working, limit_units=100)
+    session_id = uuid4()
+    bridge.connect(session_id)
+    bridge.select(session_id, read_work(root, work_id, owner).state.activity_id, work_id)
+    attempt_id = UUID(
+        cast(str, bridge.start_attempt(session_id, interrupt_previous=False)["attempt_id"])
+    )
+    result_id = uuid4()
+    apply_operation(
+        root,
+        CreateArtifactRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor=owner.actor,
+            artifact_id=result_id,
+            media_type="text/plain",
+            content=b"Synthetic result",
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        LinkWorkOutputRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor=owner.actor,
+            work_id=work_id,
+            expected_revision=1,
+            output=LinkedOutput(
+                slot="summary", artifact=ArtifactRef(artifact_id=result_id, revision=1)
+            ),
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        CreateGrantRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor=owner.actor,
+            grant_id=uuid4(),
+            state=GrantState(
+                grantee="synthetic-acceptor",
+                actions=("space.inspect", "record.read", "work.accept"),
+            ),
+        ),
+        owner,
+    )
+    acceptor = authorize_local(root, actor="synthetic-acceptor", source_ref="local-acceptor")
+    acceptor_bridge = Bridge(root, acceptor, working, limit_units=100)
+    fresh_session = uuid4()
+    acceptor_bridge.connect(fresh_session)
+    acceptor_bridge.select(
+        fresh_session, read_work(root, work_id, owner).state.activity_id, work_id
+    )
+    preview = acceptor_bridge.accept_preview(fresh_session)
+    acceptor_bridge.accept(
+        fresh_session, UUID(cast(str, preview["nonce"])), "Reviewed synthetic result"
+    )
+    current = read_execution(root, work_id, owner)
+    assert current.work.state.status == "succeeded"
+    assert current.attempts[-1].attempt_id == attempt_id
+    assert current.attempts[-1].status == "interrupted"
+    assert current.held_units == 0
+    acceptor_rights = read_execution(root, work_id, acceptor).work_rights
+    assert "work.accept" in acceptor_rights and "work.execute" not in acceptor_rights

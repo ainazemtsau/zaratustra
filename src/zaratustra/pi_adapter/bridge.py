@@ -295,6 +295,9 @@ class Bridge:
             preview = self.accept_previews.pop(nonce, None)
         if preview is None or preview[0] != selected.work_id:
             raise FoundationError("confirmation_required", "No current local acceptance preview")
+        current = read_execution(self.path, selected.work_id, self.authority)
+        if current.work.revision != preview[1]:
+            raise FoundationError("stale_work", "Work changed after acceptance preview")
         request = AcceptWorkRequest(
             operation_id=preview[2],
             space_id=self.authority.space_id,

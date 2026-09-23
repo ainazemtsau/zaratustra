@@ -68,6 +68,14 @@ the selected Work. Text from a model cannot establish actor, grant or acceptance
    execution. The host and maintenance use the same local lock, so an active Pi
    cannot recreate files while they are being purged.
 
+Preselecting a proposed Work with an already linked output reads the saved
+result without creating an empty Attempt. If the user explicitly accepts
+while an Attempt is active, Core interrupts that Attempt atomically with the
+exact acceptance receipt under `work.accept`; no separate `work.execute` grant
+is needed. Any admitted or sent calls retain their unknown reserve. This
+releases the exclusive resource without treating a new Pi session as a new
+model run.
+
 The supported transport profiles are `codex-sse` and a configurable local
 OpenAI-completions HTTP/SSE profile for tests or explicitly chosen providers.
 Model, provider, working directory, resource limit, reserve and Pi tool

@@ -208,7 +208,8 @@ export default function (pi: any): void {
       });
       selection = { activity_id: process.env.ZARA_INITIAL_ACTIVITY_ID,
                     work_id: process.env.ZARA_INITIAL_WORK_ID };
-      if (current.work.state.status === "proposed" && !current.attempts.some((x: any) => x.status === "active")) {
+      if (current.work.state.status === "proposed" && !current.work.state.linked_outputs.length &&
+          !current.attempts.some((x: any) => x.status === "active")) {
         const started = await request("/v1/start-attempt", { interrupt_previous: false });
         attemptId = started.attempt_id;
       }

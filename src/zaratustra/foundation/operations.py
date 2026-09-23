@@ -834,6 +834,34 @@ def _apply_subject_change(
                 grants=grants,
                 decisions=decisions,
             )
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 3:  # type: ignore[attr-defined]
+            active_attempts = connection.execute(  # type: ignore[attr-defined]
+                "SELECT attempt_id FROM execution_attempts WHERE work_id = ? AND status = 'active'",
+                (str(request.work_id),),
+            ).fetchall()
+            if active_attempts:
+                connection.execute(  # type: ignore[attr-defined]
+                    "UPDATE execution_invocations SET status = 'unknown', "
+                    "revision = revision + 1, updated_at = ? WHERE work_id = ? "
+                    "AND status IN ('admitted', 'sent') AND attempt_id IN "
+                    "(SELECT attempt_id FROM execution_attempts WHERE work_id = ? "
+                    "AND status = 'active')",
+                    (now, str(request.work_id), str(request.work_id)),
+                )
+                connection.execute(  # type: ignore[attr-defined]
+                    "UPDATE execution_attempts SET status = 'interrupted', "
+                    "revision = revision + 1, updated_at = ? "
+                    "WHERE work_id = ? AND status = 'active'",
+                    (now, str(request.work_id)),
+                )
+                connection.executemany(  # type: ignore[attr-defined]
+                    "INSERT INTO execution_events(operation_id, work_id, attempt_id, "
+                    "kind, created_at) VALUES (?, ?, ?, 'accept_work_interrupt_attempt', ?)",
+                    (
+                        (str(request.operation_id), str(request.work_id), row[0], now)
+                        for row in active_attempts
+                    ),
+                )
         next_state = state.model_copy(
             update={
                 "status": "succeeded",

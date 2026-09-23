@@ -1,3 +1,54 @@
+# Core v0.1 Stage 4 restart and acceptance correction
+
+## outcome
+
+The owner's synthetic manual test confirmed the saved Artifact, current rights
+and 953 units in a fresh Pi session. That session also exposed an unwanted
+empty active Attempt on a proposed Work with a linked output. The adapter now
+opens that Work for reading without starting an Attempt. Explicit acceptance
+retires any active Attempt in the same Core transaction under `work.accept`.
+The owner's Work
+remains `proposed`; no acceptance was performed by engineering.
+
+## evidence
+
+The fresh status showed the same Work@2, output Artifact, one answered
+`openai-codex/gpt-5.6-luna` SSE invocation, 953 committed units and zero held.
+It also showed a second active Attempt with no invocations. That exact empty
+synthetic Attempt was interrupted through the public Core operation; the Work,
+output, invocation count and accounting remained intact. Focused regression
+checks cover acceptance with an active Attempt by an actor without
+`work.execute` and its retirement. The full
+`tools.check --deliver` passed: 487 tests, 21 import contracts, strict typing,
+hygiene and source/wheel build.
+
+## assumptions
+
+An already linked proposed result is available for review after restart.
+Starting another Attempt for revision remains an explicit `/zara-work` action.
+
+## cuts
+
+The ordinary Pi model loop and provider admission boundary are unchanged.
+No next-stage executor or DBOS work was started.
+
+## cost
+
+The owner sent one additional subscribed Codex request against the synthetic
+note: 953 reported units, zero held after its answer. Engineering sent no
+model request in this follow-up. Total real subscribed sends across Stage 4
+are now three; no paid API was used.
+
+## manual-acceptance
+
+The synthetic result is ready for the owner's own review and optional explicit
+`/zara-accept`. Engineering did not accept it. After acceptance, inspect
+`/zara-status` for `succeeded`, a basis and no active Attempt.
+
+## next
+
+solmax
+
 # Core v0.1 Stage 4 correction
 
 ## outcome
