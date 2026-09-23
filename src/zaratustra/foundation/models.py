@@ -313,6 +313,59 @@ class StopAttemptRequest(OperationRequest):
     outcome: Literal["completed", "interrupted"]
 
 
+class AssignAttemptRequest(OperationRequest):
+    kind: Literal["assign_attempt"] = "assign_attempt"
+    attempt_id: UUID
+    work_id: UUID
+    expected_work_revision: int = Field(ge=1)
+    resource_id: UUID
+    expected_resource_revision: int = Field(ge=1)
+    session_id: UUID
+    previous_attempt_id: UUID | None = None
+    executor_version: str = Field(min_length=1, max_length=200)
+
+
+class OpenWaitRequest(OperationRequest):
+    kind: Literal["open_wait"] = "open_wait"
+    wait_id: UUID
+    attempt_id: UUID
+    work_id: UUID
+    session_id: UUID
+    expected_assignment_revision: int = Field(ge=1)
+    question: str = Field(min_length=1, max_length=8192)
+    expected_actor: str = Field(min_length=1, max_length=200)
+    remainder: str = Field(min_length=1, max_length=8192)
+    partial_refs: tuple[ArtifactRef, ...] = ()
+
+
+class AnswerWaitRequest(OperationRequest):
+    kind: Literal["answer_wait"] = "answer_wait"
+    wait_id: UUID
+    attempt_id: UUID
+    work_id: UUID
+    session_id: UUID
+    expected_wait_revision: int = Field(ge=1)
+    answer: str = Field(min_length=1, max_length=8192)
+
+
+class RequestAttemptStopRequest(OperationRequest):
+    kind: Literal["request_attempt_stop"] = "request_attempt_stop"
+    attempt_id: UUID
+    work_id: UUID
+    session_id: UUID
+    expected_assignment_revision: int = Field(ge=1)
+    reason: str = Field(min_length=1, max_length=4096)
+
+
+class RecordAttemptStopRequest(OperationRequest):
+    kind: Literal["record_attempt_stop"] = "record_attempt_stop"
+    attempt_id: UUID
+    work_id: UUID
+    session_id: UUID
+    expected_assignment_revision: int = Field(ge=1)
+    outcome: Literal["stopped", "unknown"]
+
+
 class PrepareInvocationRequest(OperationRequest):
     kind: Literal["prepare_invocation"] = "prepare_invocation"
     invocation_id: UUID
@@ -383,6 +436,11 @@ DomainRequest = Annotated[
     | ReviseResourceRequest
     | StartAttemptRequest
     | StopAttemptRequest
+    | AssignAttemptRequest
+    | OpenWaitRequest
+    | AnswerWaitRequest
+    | RequestAttemptStopRequest
+    | RecordAttemptStopRequest
     | PrepareInvocationRequest
     | AdmitInvocationRequest
     | SendInvocationRequest
@@ -396,7 +454,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3]
+    schema_version: Literal[1, 2, 3, 4]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -495,6 +553,42 @@ class InvocationRecord(ContractModel):
     http_status: int | None = None
 
 
+class AssignmentRecord(ContractModel):
+    attempt_id: UUID
+    work_id: UUID
+    revision: int = Field(ge=1)
+    executor_version: str
+    status: Literal[
+        "assigned", "waiting", "ready", "stop_requested", "stopped", "unknown", "interrupted"
+    ]
+    stop_reason: str | None = None
+
+
+class WaitRecord(ContractModel):
+    wait_id: UUID
+    attempt_id: UUID
+    work_id: UUID
+    revision: int = Field(ge=1)
+    status: Literal["open", "answered", "closed", "purged"]
+    question: str | None
+    expected_actor: str
+    remainder: str | None
+    partial_refs: tuple[ArtifactRef, ...]
+    answer: str | None
+    answer_source: str | None
+
+
+class OutboxRecord(ContractModel):
+    outbox_id: UUID
+    attempt_id: UUID
+    work_id: UUID
+    wait_id: UUID | None
+    execution_epoch: int = Field(ge=1)
+    generation: int = Field(ge=1)
+    kind: Literal["launch", "resume"]
+    status: Literal["pending", "cancelled"]
+
+
 class ExecutionSnapshot(ContractModel):
     space_id: UUID
     execution_epoch: int = Field(ge=1)
@@ -505,6 +599,9 @@ class ExecutionSnapshot(ContractModel):
     resources: tuple[ResourceRevision, ...]
     attempts: tuple[AttemptRecord, ...]
     invocations: tuple[InvocationRecord, ...]
+    assignments: tuple[AssignmentRecord, ...] = ()
+    waits: tuple[WaitRecord, ...] = ()
+    outbox: tuple[OutboxRecord, ...] = ()
     work_rights: tuple[Action, ...]
     limit_units: int | None = None
     committed_units: int = Field(ge=0)
@@ -535,7 +632,7 @@ class SpaceInspection(ContractModel):
 class BackupManifest(ContractModel):
     backup_id: UUID
     space_id: UUID
-    schema_version: Literal[1, 2, 3]
+    schema_version: Literal[1, 2, 3, 4]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime
@@ -559,7 +656,10 @@ class DeletionStatus(ContractModel):
 __all__ = [
     "ALL_ACTIONS",
     "AcceptWorkRequest",
+    "AnswerWaitRequest",
     "AdmitInvocationRequest",
+    "AssignAttemptRequest",
+    "AssignmentRecord",
     "Action",
     "ActivityRevision",
     "ActivityState",
@@ -587,6 +687,8 @@ __all__ = [
     "GrantState",
     "InvocationRecord",
     "OperationReceipt",
+    "OpenWaitRequest",
+    "OutboxRecord",
     "OperationAuditEntry",
     "PrepareInvocationRequest",
     "PublishAttemptOutputRequest",
@@ -595,6 +697,8 @@ __all__ = [
     "ProvenanceRef",
     "RecordSummary",
     "RecoverRequest",
+    "RecordAttemptStopRequest",
+    "RequestAttemptStopRequest",
     "ResourceState",
     "ResourceRevision",
     "ReviseActivityRequest",
@@ -607,6 +711,7 @@ __all__ = [
     "SendInvocationRequest",
     "StartAttemptRequest",
     "StopAttemptRequest",
+    "WaitRecord",
     "WorkAcceptance",
     "WorkRevision",
     "WorkState",

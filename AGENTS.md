@@ -14,8 +14,11 @@
   owner accepted the complete Stage 4 at
   `afa367c10ad949b1610810d4f2e6f106c1a7b7cc`, separately from accepting
   one synthetic Work; see `docs/core-v0.1/STAGE4-ACCEPTANCE.md`. The current
-  Stage 5 request authorizes planning, documentation and a local commit only;
-  it does not authorize production integration or real model calls.
+  owner then authorized only Stage 5 pass 1 on
+  `e29bc0450ce4ee6c67e5e28859c8e410a82f1771`: Core-owned durable
+  assignment, wait/answer/remainder, stop state and outbox with maintenance,
+  documentation, full local check and commit. Pi RPC, DBOS, a dispatcher and
+  real model calls remain outside this pass.
 
 ## Commands (run from this repository)
 - Prepare: `uv sync --locked`
@@ -41,8 +44,9 @@ Stage 4 adds an ordinary interactive Pi path through `zaratustra.pi_adapter`,
 schema 3 resource/Attempt/invocation records, observable provider sends, exact
 output publication and separate Work acceptance. The owner accepted Stage 4 at
 `afa367c10ad949b1610810d4f2e6f106c1a7b7cc`; see
-`docs/core-v0.1/STAGE4-ACCEPTANCE.md` and `STAGE4-IMPLEMENTATION.md`. Stage 5 is
-only a plan for an independently assigned Pi RPC Attempt and durable continuation.
+`docs/core-v0.1/STAGE4-ACCEPTANCE.md` and `STAGE4-IMPLEMENTATION.md`. Stage 5
+pass 1 adds explicit schema 4 and Core-owned durable continuation without a runner;
+see `docs/core-v0.1/STAGE5-IMPLEMENTATION.md`.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,
@@ -119,8 +123,8 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
 
 ## Constitution
 - Keep the accepted Core v0.1 functional composition and completed Stage 1–4
-  evidence. Stage 4 is owner-accepted; the current Stage 5 pass is documentation
-  only. Preserve earlier Works/CALLs as history, not current scope.
+  evidence. Stage 4 is owner-accepted; only Stage 5 pass 1 is currently
+  authorized. Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.
 - No real personal data, remote publication, paid service or new external rights without authorization.

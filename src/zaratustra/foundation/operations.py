@@ -21,8 +21,10 @@ from .models import (
     ActivityRevision,
     ActivityState,
     AdmitInvocationRequest,
+    AnswerWaitRequest,
     ArtifactRef,
     ArtifactRevision,
+    AssignAttemptRequest,
     BackupInfo,
     BootstrapRequest,
     CreateActivityRequest,
@@ -41,13 +43,16 @@ from .models import (
     GrantState,
     LinkedOutput,
     LinkWorkOutputRequest,
+    OpenWaitRequest,
     OperationAuditEntry,
     OperationReceipt,
     PrepareInvocationRequest,
     ProvenanceRef,
     PublishAttemptOutputRequest,
+    RecordAttemptStopRequest,
     RecordSummary,
     RecoverRequest,
+    RequestAttemptStopRequest,
     ReviseActivityRequest,
     ReviseArtifactRequest,
     ReviseDecisionRequest,
@@ -423,6 +428,21 @@ def _write_root(
             "updated_at = ? WHERE status = 'active'",
             (now,),
         )
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 4:  # type: ignore[attr-defined]
+            connection.execute(  # type: ignore[attr-defined]
+                "UPDATE execution_waits SET status = 'closed', revision = revision + 1, "
+                "updated_at = ? WHERE status = 'open'",
+                (now,),
+            )
+            connection.execute(  # type: ignore[attr-defined]
+                "UPDATE execution_assignments SET status = 'interrupted', "
+                "revision = revision + 1, updated_at = ? "
+                "WHERE status IN ('assigned', 'waiting', 'ready', 'stop_requested')",
+                (now,),
+            )
+            connection.execute(  # type: ignore[attr-defined]
+                "UPDATE execution_outbox SET status = 'cancelled' WHERE status = 'pending'"
+            )
     return [
         {"record_id": str(request.decision_id), "revision": 1},
         {"record_id": str(request.grant_id), "revision": 1},
@@ -432,8 +452,20 @@ def _write_root(
 def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]:
     if isinstance(request, (CreateResourceRequest, ReviseResourceRequest)):
         return "resource.write", "work", request.work_id
-    if isinstance(request, (StartAttemptRequest, StopAttemptRequest)):
+    if isinstance(
+        request,
+        (
+            StartAttemptRequest,
+            StopAttemptRequest,
+            AssignAttemptRequest,
+            OpenWaitRequest,
+            RequestAttemptStopRequest,
+            RecordAttemptStopRequest,
+        ),
+    ):
         return "work.execute", "work", request.work_id
+    if isinstance(request, AnswerWaitRequest):
+        return "work.write", "work", request.work_id
     if isinstance(
         request,
         (
@@ -646,6 +678,12 @@ def _subject_delete(
             "UPDATE operations SET fingerprint = 'DELETED' WHERE operation_id = ?",
             ((saved_id,) for saved_id in execution_operations),
         )
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 4:  # type: ignore[attr-defined]
+            connection.execute("DELETE FROM execution_outbox WHERE work_id = ?", (str(record_id),))  # type: ignore[attr-defined]
+            connection.execute("DELETE FROM execution_waits WHERE work_id = ?", (str(record_id),))  # type: ignore[attr-defined]
+            connection.execute(  # type: ignore[attr-defined]
+                "DELETE FROM execution_assignments WHERE work_id = ?", (str(record_id),)
+            )
         connection.execute("DELETE FROM execution_events WHERE work_id = ?", (str(record_id),))  # type: ignore[attr-defined]
         connection.execute("DELETE FROM execution_invocations WHERE work_id = ?", (str(record_id),))  # type: ignore[attr-defined]
         connection.execute("DELETE FROM execution_attempts WHERE work_id = ?", (str(record_id),))  # type: ignore[attr-defined]
@@ -862,6 +900,25 @@ def _apply_subject_change(
                         for row in active_attempts
                     ),
                 )
+                if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 4:  # type: ignore[attr-defined]
+                    connection.execute(  # type: ignore[attr-defined]
+                        "UPDATE execution_waits SET status = 'closed', "
+                        "revision = revision + 1, updated_at = ? "
+                        "WHERE work_id = ? AND status = 'open'",
+                        (now, str(request.work_id)),
+                    )
+                    connection.execute(  # type: ignore[attr-defined]
+                        "UPDATE execution_assignments SET status = 'interrupted', "
+                        "revision = revision + 1, updated_at = ? "
+                        "WHERE work_id = ? AND status IN "
+                        "('assigned', 'waiting', 'ready', 'stop_requested')",
+                        (now, str(request.work_id)),
+                    )
+                    connection.execute(  # type: ignore[attr-defined]
+                        "UPDATE execution_outbox SET status = 'cancelled' "
+                        "WHERE work_id = ? AND status = 'pending'",
+                        (str(request.work_id),),
+                    )
         next_state = state.model_copy(
             update={
                 "status": "succeeded",
@@ -915,8 +972,10 @@ def _apply_change(
     if isinstance(request, PublishAttemptOutputRequest):
         from .execution import _check_attempt_basis, _event, _work
 
-        if int(connection.execute("PRAGMA user_version").fetchone()[0]) != 3:  # type: ignore[attr-defined]
-            raise FoundationError("unsupported_schema", "Attempt publication requires schema 3")
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 3:  # type: ignore[attr-defined]
+            raise FoundationError(
+                "unsupported_schema", "Attempt publication requires execution schema"
+            )
         _check_attempt_basis(
             connection,
             request.attempt_id,
@@ -994,6 +1053,7 @@ def _apply_change(
             CreateResourceRequest,
             ReviseResourceRequest,
             StartAttemptRequest,
+            AssignAttemptRequest,
             StopAttemptRequest,
             PrepareInvocationRequest,
             AdmitInvocationRequest,
@@ -1003,9 +1063,34 @@ def _apply_change(
     ):
         from .execution import apply_execution_change
 
-        if int(connection.execute("PRAGMA user_version").fetchone()[0]) != 3:  # type: ignore[attr-defined]
-            raise FoundationError("unsupported_schema", "Interactive execution requires schema 3")
+        schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])  # type: ignore[attr-defined]
+        if schema_version < 3 or (isinstance(request, AssignAttemptRequest) and schema_version < 4):
+            raise FoundationError(
+                "unsupported_schema", "Execution operation needs its explicit schema"
+            )
         return apply_execution_change(connection, request, now=now, epoch=epoch)
+    if isinstance(
+        request,
+        (
+            OpenWaitRequest,
+            AnswerWaitRequest,
+            RequestAttemptStopRequest,
+            RecordAttemptStopRequest,
+        ),
+    ):
+        from .execution import apply_continuation_change
+
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 4:  # type: ignore[attr-defined]
+            raise FoundationError("unsupported_schema", "Continuation requires schema 4")
+        return apply_continuation_change(
+            connection,
+            request,
+            now=now,
+            epoch=epoch,
+            authority_source=authority.source_ref,
+            grants=grants,
+            decisions=decisions,
+        )
     if isinstance(
         request,
         (
@@ -1113,6 +1198,65 @@ def _apply_change(
                 "WHERE json_extract(j.value, '$.artifact_id') = ?)",
                 (str(request.artifact_id),),
             )
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 4:  # type: ignore[attr-defined]
+            affected_attempts = [
+                row[0]
+                for row in connection.execute(  # type: ignore[attr-defined]
+                    "SELECT DISTINCT a.attempt_id FROM execution_attempts a "
+                    "JOIN json_each(a.input_refs_json) j "
+                    "WHERE json_extract(j.value, '$.artifact_id') = ? "
+                    "UNION SELECT DISTINCT w.attempt_id FROM execution_waits w "
+                    "JOIN json_each(w.partial_refs_json) j "
+                    "WHERE json_extract(j.value, '$.artifact_id') = ?",
+                    (str(request.artifact_id), str(request.artifact_id)),
+                ).fetchall()
+            ]
+            for attempt_id in affected_attempts:
+                content_operations = [
+                    row[0]
+                    for row in connection.execute(  # type: ignore[attr-defined]
+                        "SELECT operation_id FROM execution_events WHERE attempt_id = ? "
+                        "AND kind IN ('open_wait', 'answer_wait', 'request_attempt_stop')",
+                        (attempt_id,),
+                    ).fetchall()
+                ]
+                connection.executemany(  # type: ignore[attr-defined]
+                    "DELETE FROM receipts WHERE operation_id = ?",
+                    ((operation_id,) for operation_id in content_operations),
+                )
+                connection.executemany(  # type: ignore[attr-defined]
+                    "UPDATE operations SET fingerprint = 'DELETED' WHERE operation_id = ?",
+                    ((operation_id,) for operation_id in content_operations),
+                )
+                connection.execute(  # type: ignore[attr-defined]
+                    "UPDATE execution_waits SET status = 'purged', question = NULL, "
+                    "remainder = NULL, answer = NULL, answer_source = NULL, "
+                    "expected_actor = 'unavailable', partial_refs_json = '[]', "
+                    "revision = revision + 1, updated_at = ? WHERE attempt_id = ?",
+                    (now, attempt_id),
+                )
+                connection.execute(  # type: ignore[attr-defined]
+                    "UPDATE execution_assignments SET status = 'interrupted', "
+                    "stop_reason = NULL, revision = revision + 1, updated_at = ? "
+                    "WHERE attempt_id = ? AND status NOT IN ('stopped', 'interrupted')",
+                    (now, attempt_id),
+                )
+                connection.execute(  # type: ignore[attr-defined]
+                    "UPDATE execution_outbox SET status = 'cancelled' WHERE attempt_id = ?",
+                    (attempt_id,),
+                )
+                connection.execute(  # type: ignore[attr-defined]
+                    "UPDATE execution_invocations SET status = 'unknown', "
+                    "revision = revision + 1, updated_at = ? "
+                    "WHERE attempt_id = ? AND status IN ('admitted', 'sent')",
+                    (now, attempt_id),
+                )
+                connection.execute(  # type: ignore[attr-defined]
+                    "UPDATE execution_attempts SET status = 'interrupted', "
+                    "revision = revision + 1, updated_at = ? "
+                    "WHERE attempt_id = ? AND status = 'active'",
+                    (now, attempt_id),
+                )
         connection.execute(  # type: ignore[attr-defined]
             "INSERT INTO deletion_jobs(operation_id, record_id, status, created_at) "
             "VALUES (?, ?, 'pending', ?)",
@@ -1289,6 +1433,15 @@ def apply_operation(path: Path, request: DomainRequest, authority: Authority) ->
                 resource_type=resource_type,
                 resource_id=resource_id,
             )
+            if isinstance(request, AnswerWaitRequest):
+                receipt_grants, receipt_decisions = _authorize(
+                    connection,
+                    actor=request.actor,
+                    action="receipt.read",
+                    epoch=info.execution_epoch,
+                )
+                grants.extend(receipt_grants)
+                decisions.extend(receipt_decisions)
 
         state_revision = info.state_revision + 1
         updated = connection.execute(

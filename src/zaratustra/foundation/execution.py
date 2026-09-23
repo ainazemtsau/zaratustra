@@ -5,19 +5,26 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4, uuid5
 
 from .models import (
     Action,
     AdmitInvocationRequest,
+    AnswerWaitRequest,
     ArtifactRef,
+    AssignAttemptRequest,
+    AssignmentRecord,
     AttemptRecord,
     CreateResourceRequest,
     ExecutionSnapshot,
     FinishInvocationRequest,
     InvocationRecord,
+    OpenWaitRequest,
+    OutboxRecord,
     PrepareInvocationRequest,
     PublishAttemptOutputRequest,
+    RecordAttemptStopRequest,
+    RequestAttemptStopRequest,
     ResourceRevision,
     ResourceState,
     ReviseResourceRequest,
@@ -25,17 +32,22 @@ from .models import (
     SpaceInfo,
     StartAttemptRequest,
     StopAttemptRequest,
+    WaitRecord,
     WorkState,
 )
 from .operations import (
     LocalAuthority,
     _authorize,
+    _authorize_artifact_ref,
     _local_space,
     read_activity,
     read_artifact,
     read_work,
 )
 from .storage import (
+    CONTINUATION_SCHEMA_NAME,
+    CONTINUATION_SCHEMA_SHA256,
+    CONTINUATION_SCHEMA_STATEMENTS,
     EXECUTION_SCHEMA_NAME,
     EXECUTION_SCHEMA_SHA256,
     EXECUTION_SCHEMA_STATEMENTS,
@@ -50,6 +62,7 @@ type ExecutionRequest = (
     CreateResourceRequest
     | ReviseResourceRequest
     | StartAttemptRequest
+    | AssignAttemptRequest
     | StopAttemptRequest
     | PrepareInvocationRequest
     | AdmitInvocationRequest
@@ -57,11 +70,14 @@ type ExecutionRequest = (
     | FinishInvocationRequest
     | PublishAttemptOutputRequest
 )
+type ContinuationRequest = (
+    OpenWaitRequest | AnswerWaitRequest | RequestAttemptStopRequest | RecordAttemptStopRequest
+)
 
 
 def _event(
     connection: object,
-    request: ExecutionRequest,
+    request: ExecutionRequest | ContinuationRequest,
     work_id: UUID,
     now: str,
     *,
@@ -174,6 +190,7 @@ def _check_attempt_basis(
     epoch: int,
     *,
     actor: str,
+    allowed_assignment_statuses: tuple[str, ...] = ("assigned", "ready"),
 ) -> ResourceState:
     _no_pending_deletion(connection)
     work_revision, resource_id, resource_revision, generation = _attempt(
@@ -191,6 +208,13 @@ def _check_attempt_basis(
     ).fetchone()
     if owner != (str(attempt_id),):
         raise FoundationError("stale_attempt", "Attempt generation lost ownership")
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 4:  # type: ignore[attr-defined]
+        assignment = connection.execute(  # type: ignore[attr-defined]
+            "SELECT status FROM execution_assignments WHERE attempt_id = ?",
+            (str(attempt_id),),
+        ).fetchone()
+        if assignment is not None and assignment[0] not in allowed_assignment_statuses:
+            raise FoundationError("attempt_not_ready", "Assigned Attempt cannot send a new effect")
     return resource
 
 
@@ -283,7 +307,7 @@ def apply_execution_change(
         )
         target_id = request.resource_id
         result = {"resource_id": str(target_id), "revision": revision}
-    elif isinstance(request, StartAttemptRequest):
+    elif isinstance(request, (StartAttemptRequest, AssignAttemptRequest)):
         _no_pending_deletion(connection)
         revision, work_state = _work(connection, request.work_id)
         if revision != request.expected_work_revision:
@@ -292,6 +316,11 @@ def apply_execution_change(
         resource = _available_resource(
             connection, request.resource_id, request.work_id, request.expected_resource_revision
         )
+        if connection.execute(  # type: ignore[attr-defined]
+            "SELECT 1 FROM execution_attempts WHERE attempt_id = ?",
+            (str(request.attempt_id),),
+        ).fetchone():
+            raise FoundationError("record_exists", "Attempt id is already used")
         prior = connection.execute(  # type: ignore[attr-defined]
             "SELECT attempt_id, generation, status FROM execution_attempts "
             "WHERE work_id = ? ORDER BY generation DESC LIMIT 1",
@@ -334,9 +363,43 @@ def apply_execution_change(
                 now,
             ),
         )
+        if isinstance(request, AssignAttemptRequest):
+            connection.execute(  # type: ignore[attr-defined]
+                "INSERT INTO execution_assignments(attempt_id, work_id, revision, "
+                "executor_version, status, created_at, updated_at) "
+                "VALUES (?, ?, 1, ?, 'assigned', ?, ?)",
+                (
+                    str(request.attempt_id),
+                    str(request.work_id),
+                    request.executor_version,
+                    now,
+                    now,
+                ),
+            )
+            connection.execute(  # type: ignore[attr-defined]
+                "INSERT INTO execution_outbox(outbox_id, attempt_id, work_id, wait_id, "
+                "execution_epoch, generation, kind, status, created_at) "
+                "VALUES (?, ?, ?, NULL, ?, ?, 'launch', 'pending', ?)",
+                (
+                    str(uuid5(request.attempt_id, "launch")),
+                    str(request.attempt_id),
+                    str(request.work_id),
+                    epoch,
+                    generation,
+                    now,
+                ),
+            )
         work_id, target_id = request.work_id, request.attempt_id
         result = {"attempt_id": str(target_id), "generation": generation, "revision": 1}
     elif isinstance(request, StopAttemptRequest):
+        if (
+            int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 4  # type: ignore[attr-defined]
+            and connection.execute(  # type: ignore[attr-defined]
+                "SELECT 1 FROM execution_assignments WHERE attempt_id = ?",
+                (str(request.attempt_id),),
+            ).fetchone()
+        ):
+            raise FoundationError("assigned_attempt", "Use addressed stop for assigned Attempt")
         _attempt(connection, request.attempt_id, request.work_id, request.session_id, epoch)
         connection.execute(  # type: ignore[attr-defined]
             "UPDATE execution_invocations SET status = 'unknown', revision = revision + 1, "
@@ -495,6 +558,248 @@ def upgrade_execution_space(path: Path, authority: LocalAuthority) -> SpaceInfo:
     return read_space(path)
 
 
+def upgrade_continuation_space(path: Path, authority: LocalAuthority) -> SpaceInfo:
+    """Explicit additive schema 3 to 4 upgrade; ordinary reads never upgrade."""
+
+    with space_connection(path, writable=True) as (connection, info):
+        _local_space(authority, info)
+        if info.recovery_state != "active" or info.schema_version < 3:
+            raise FoundationError("unsupported_schema", "Upgrade execution before continuation")
+        _authorize(
+            connection,
+            actor=authority.actor,
+            action="maintenance.backup",
+            epoch=info.execution_epoch,
+        )
+        if info.schema_version == 3:
+            for statement in CONTINUATION_SCHEMA_STATEMENTS:
+                connection.execute(statement)
+            now = utc_now().isoformat()
+            connection.execute(
+                "INSERT INTO schema_migrations(version, name, sha256, applied_at) "
+                "VALUES (4, ?, ?, ?)",
+                (CONTINUATION_SCHEMA_NAME, CONTINUATION_SCHEMA_SHA256, now),
+            )
+            connection.execute("PRAGMA user_version = 4")
+            connection.execute(
+                "UPDATE spaces SET state_revision = state_revision + 1 WHERE singleton = 1"
+            )
+            connection.execute(
+                "INSERT INTO maintenance_events(event_id, kind, occurred_at, detail_json) "
+                "VALUES (?, 'schema_upgrade', ?, ?)",
+                (str(uuid4()), now, canonical_json({"from": 3, "to": 4})),
+            )
+    return read_space(path)
+
+
+def _assignment(
+    connection: object,
+    attempt_id: UUID,
+    work_id: UUID,
+    session_id: UUID,
+    epoch: int,
+    *,
+    active: bool = True,
+) -> tuple[int, str, int]:
+    _, _, _, generation = _attempt(
+        connection, attempt_id, work_id, session_id, epoch, active=active
+    )
+    row = connection.execute(  # type: ignore[attr-defined]
+        "SELECT revision, status FROM execution_assignments WHERE attempt_id = ? AND work_id = ?",
+        (str(attempt_id), str(work_id)),
+    ).fetchone()
+    if row is None:
+        raise FoundationError("stale_attempt", "Attempt has no durable assignment")
+    return int(row[0]), str(row[1]), generation
+
+
+def apply_continuation_change(
+    connection: object,
+    request: ContinuationRequest,
+    *,
+    now: str,
+    epoch: int,
+    authority_source: str,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> tuple[dict[str, object], list[dict[str, object]]]:
+    """Apply one addressed continuation change inside the receipt transaction."""
+
+    if isinstance(request, OpenWaitRequest):
+        _check_attempt_basis(
+            connection,
+            request.attempt_id,
+            request.work_id,
+            request.session_id,
+            epoch,
+            actor=request.actor,
+        )
+        revision, status, _ = _assignment(
+            connection, request.attempt_id, request.work_id, request.session_id, epoch
+        )
+        if revision != request.expected_assignment_revision or status not in ("assigned", "ready"):
+            raise FoundationError("stale_assignment", "Assignment changed or cannot ask")
+        if connection.execute(  # type: ignore[attr-defined]
+            "SELECT 1 FROM execution_waits WHERE wait_id = ?",
+            (str(request.wait_id),),
+        ).fetchone():
+            raise FoundationError("record_exists", "Wait id is already used")
+        if connection.execute(  # type: ignore[attr-defined]
+            "SELECT 1 FROM execution_waits WHERE attempt_id = ? AND status = 'open'",
+            (str(request.attempt_id),),
+        ).fetchone():
+            raise FoundationError("wait_open", "This Attempt already has an open wait")
+        for reference in request.partial_refs:
+            _authorize_artifact_ref(
+                connection,
+                reference,
+                actor=request.actor,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+            )
+        connection.execute(  # type: ignore[attr-defined]
+            "INSERT INTO execution_waits(wait_id, attempt_id, work_id, revision, status, "
+            "question, expected_actor, remainder, partial_refs_json, created_at, updated_at) "
+            "VALUES (?, ?, ?, 1, 'open', ?, ?, ?, ?, ?, ?)",
+            (
+                str(request.wait_id),
+                str(request.attempt_id),
+                str(request.work_id),
+                request.question.encode("utf-8"),
+                request.expected_actor,
+                request.remainder.encode("utf-8"),
+                canonical_json([ref.model_dump(mode="json") for ref in request.partial_refs]),
+                now,
+                now,
+            ),
+        )
+        connection.execute(  # type: ignore[attr-defined]
+            "UPDATE execution_assignments SET revision = revision + 1, "
+            "status = 'waiting', updated_at = ? WHERE attempt_id = ?",
+            (now, str(request.attempt_id)),
+        )
+        result = {"wait_id": str(request.wait_id), "status": "open", "revision": 1}
+        targets = [{"record_id": str(request.wait_id), "revision": 1}]
+    elif isinstance(request, AnswerWaitRequest):
+        _check_attempt_basis(
+            connection,
+            request.attempt_id,
+            request.work_id,
+            request.session_id,
+            epoch,
+            actor=request.actor,
+            allowed_assignment_statuses=("waiting",),
+        )
+        _, assignment_status, generation = _assignment(
+            connection, request.attempt_id, request.work_id, request.session_id, epoch
+        )
+        row = connection.execute(  # type: ignore[attr-defined]
+            "SELECT revision, status, expected_actor FROM execution_waits "
+            "WHERE wait_id = ? AND attempt_id = ? AND work_id = ?",
+            (str(request.wait_id), str(request.attempt_id), str(request.work_id)),
+        ).fetchone()
+        if row is None or int(row[0]) != request.expected_wait_revision or row[1] != "open":
+            raise FoundationError("stale_wait", "Wait changed or is closed")
+        if assignment_status != "waiting" or row[2] != request.actor:
+            raise FoundationError("permission_denied", "Answer is not from the expected actor")
+        connection.execute(  # type: ignore[attr-defined]
+            "UPDATE execution_waits SET revision = revision + 1, status = 'answered', "
+            "answer = ?, answer_source = ?, updated_at = ? WHERE wait_id = ?",
+            (request.answer.encode("utf-8"), authority_source, now, str(request.wait_id)),
+        )
+        connection.execute(  # type: ignore[attr-defined]
+            "UPDATE execution_assignments SET revision = revision + 1, "
+            "status = 'ready', updated_at = ? WHERE attempt_id = ?",
+            (now, str(request.attempt_id)),
+        )
+        outbox_id = uuid5(request.wait_id, "answer-continuation")
+        connection.execute(  # type: ignore[attr-defined]
+            "INSERT INTO execution_outbox(outbox_id, attempt_id, work_id, wait_id, "
+            "execution_epoch, generation, kind, status, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, 'resume', 'pending', ?)",
+            (
+                str(outbox_id),
+                str(request.attempt_id),
+                str(request.work_id),
+                str(request.wait_id),
+                epoch,
+                generation,
+                now,
+            ),
+        )
+        result = {
+            "wait_id": str(request.wait_id),
+            "status": "answered",
+            "outbox_id": str(outbox_id),
+        }
+        targets = [
+            {"record_id": str(request.wait_id), "revision": request.expected_wait_revision + 1},
+            {"record_id": str(outbox_id), "revision": 1},
+        ]
+    elif isinstance(request, RequestAttemptStopRequest):
+        revision, status, _ = _assignment(
+            connection, request.attempt_id, request.work_id, request.session_id, epoch
+        )
+        if revision != request.expected_assignment_revision or status not in (
+            "assigned",
+            "waiting",
+            "ready",
+        ):
+            raise FoundationError("stale_assignment", "Assignment changed or is stopping")
+        connection.execute(  # type: ignore[attr-defined]
+            "UPDATE execution_assignments SET revision = revision + 1, "
+            "status = 'stop_requested', stop_reason = ?, updated_at = ? WHERE attempt_id = ?",
+            (request.reason.encode("utf-8"), now, str(request.attempt_id)),
+        )
+        connection.execute(  # type: ignore[attr-defined]
+            "UPDATE execution_outbox SET status = 'cancelled' "
+            "WHERE attempt_id = ? AND status = 'pending'",
+            (str(request.attempt_id),),
+        )
+        result = {"attempt_id": str(request.attempt_id), "status": "stop_requested"}
+        targets = [{"record_id": str(request.attempt_id), "revision": revision + 1}]
+    else:
+        assert isinstance(request, RecordAttemptStopRequest)
+        revision, status, _ = _assignment(
+            connection, request.attempt_id, request.work_id, request.session_id, epoch
+        )
+        if revision != request.expected_assignment_revision or status not in (
+            "stop_requested",
+            "unknown",
+        ):
+            raise FoundationError("stale_assignment", "No matching stop request")
+        if status == "unknown" and request.outcome != "stopped":
+            raise FoundationError(
+                "stale_assignment", "Unknown stop can only be resolved as stopped"
+            )
+        connection.execute(  # type: ignore[attr-defined]
+            "UPDATE execution_assignments SET revision = revision + 1, status = ?, "
+            "updated_at = ? WHERE attempt_id = ?",
+            (request.outcome, now, str(request.attempt_id)),
+        )
+        if request.outcome == "stopped":
+            connection.execute(  # type: ignore[attr-defined]
+                "UPDATE execution_waits SET status = 'closed', revision = revision + 1, "
+                "updated_at = ? WHERE attempt_id = ? AND status = 'open'",
+                (now, str(request.attempt_id)),
+            )
+            connection.execute(  # type: ignore[attr-defined]
+                "UPDATE execution_invocations SET status = 'unknown', revision = revision + 1, "
+                "updated_at = ? WHERE attempt_id = ? AND status IN ('admitted', 'sent')",
+                (now, str(request.attempt_id)),
+            )
+            connection.execute(  # type: ignore[attr-defined]
+                "UPDATE execution_attempts SET status = 'interrupted', revision = revision + 1, "
+                "updated_at = ? WHERE attempt_id = ? AND status = 'active'",
+                (now, str(request.attempt_id)),
+            )
+        result = {"attempt_id": str(request.attempt_id), "status": request.outcome}
+        targets = [{"record_id": str(request.attempt_id), "revision": revision + 1}]
+    _event(connection, request, request.work_id, now, attempt_id=request.attempt_id)
+    return result, targets
+
+
 def read_execution(path: Path, work_id: UUID, authority: LocalAuthority) -> ExecutionSnapshot:
     """Read the current Work, exact bytes, execution ledger and remaining reserve."""
 
@@ -512,9 +817,9 @@ def read_execution(path: Path, work_id: UUID, authority: LocalAuthority) -> Exec
     )
     with space_connection(path) as (connection, info):
         _local_space(authority, info)
-        if info.schema_version != 3 or info.recovery_state != "active":
+        if info.schema_version < 3 or info.recovery_state != "active":
             raise FoundationError(
-                "unsupported_schema", "Execution snapshot requires active schema 3"
+                "unsupported_schema", "Execution snapshot requires active execution schema"
             )
         _authorize(
             connection,
@@ -608,6 +913,69 @@ def read_execution(path: Path, work_id: UUID, authority: LocalAuthority) -> Exec
             )
             for row in invocation_rows
         )
+        assignments: tuple[AssignmentRecord, ...] = ()
+        waits: tuple[WaitRecord, ...] = ()
+        outbox: tuple[OutboxRecord, ...] = ()
+        if info.schema_version >= 4:
+            assignment_rows = connection.execute(
+                "SELECT attempt_id, revision, executor_version, status, stop_reason "
+                "FROM execution_assignments WHERE work_id = ? ORDER BY created_at, attempt_id",
+                (str(work_id),),
+            ).fetchall()
+            assignments = tuple(
+                AssignmentRecord(
+                    attempt_id=UUID(row[0]),
+                    work_id=work_id,
+                    revision=row[1],
+                    executor_version=row[2],
+                    status=row[3],
+                    stop_reason=bytes(row[4]).decode("utf-8") if row[4] is not None else None,
+                )
+                for row in assignment_rows
+            )
+            wait_rows = connection.execute(
+                "SELECT wait_id, attempt_id, revision, status, question, expected_actor, "
+                "remainder, partial_refs_json, answer, answer_source "
+                "FROM execution_waits WHERE work_id = ? ORDER BY created_at, wait_id",
+                (str(work_id),),
+            ).fetchall()
+            waits = tuple(
+                WaitRecord(
+                    wait_id=UUID(row[0]),
+                    attempt_id=UUID(row[1]),
+                    work_id=work_id,
+                    revision=row[2],
+                    status=row[3],
+                    question=bytes(row[4]).decode("utf-8") if row[4] is not None else None,
+                    expected_actor=row[5],
+                    remainder=bytes(row[6]).decode("utf-8") if row[6] is not None else None,
+                    partial_refs=tuple(
+                        ArtifactRef.model_validate(item) for item in json.loads(row[7])
+                    ),
+                    answer=bytes(row[8]).decode("utf-8") if row[8] is not None else None,
+                    answer_source=row[9],
+                )
+                for row in wait_rows
+            )
+            outbox_rows = connection.execute(
+                "SELECT outbox_id, attempt_id, wait_id, execution_epoch, generation, "
+                "kind, status FROM execution_outbox WHERE work_id = ? "
+                "ORDER BY created_at, outbox_id",
+                (str(work_id),),
+            ).fetchall()
+            outbox = tuple(
+                OutboxRecord(
+                    outbox_id=UUID(row[0]),
+                    attempt_id=UUID(row[1]),
+                    work_id=work_id,
+                    wait_id=UUID(row[2]) if row[2] else None,
+                    execution_epoch=row[3],
+                    generation=row[4],
+                    kind=row[5],
+                    status=row[6],
+                )
+                for row in outbox_rows
+            )
         committed, held = _used_units(connection, work_id)
         limit = min(
             (
@@ -627,6 +995,9 @@ def read_execution(path: Path, work_id: UUID, authority: LocalAuthority) -> Exec
             resources=resources,
             attempts=attempts,
             invocations=invocations,
+            assignments=assignments,
+            waits=waits,
+            outbox=outbox,
             work_rights=tuple(current_rights),
             limit_units=limit,
             committed_units=committed,
@@ -645,8 +1016,8 @@ def read_execution_events(
     read_work(path, work_id, authority)
     with space_connection(path) as (connection, info):
         _local_space(authority, info)
-        if info.schema_version != 3:
-            raise FoundationError("unsupported_schema", "Events require schema 3")
+        if info.schema_version < 3:
+            raise FoundationError("unsupported_schema", "Events require execution schema")
         rows = connection.execute(
             "SELECT sequence, operation_id, attempt_id, invocation_id, kind, created_at "
             "FROM execution_events WHERE work_id = ? AND sequence > ? "

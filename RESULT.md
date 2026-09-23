@@ -1,3 +1,64 @@
+# Core v0.1 Stage 5 pass 1 — durable subject continuation
+
+## outcome
+
+The owner approved pass 1 of `docs/core-v0.1/STAGE5-PLAN.md` from exact commit
+`e29bc0450ce4ee6c67e5e28859c8e410a82f1771`. An explicit additive schema 4
+now stores addressed independent Attempt assignments, questions/answers,
+remainders, stop state and pending/cancelled outbox entries in the independent
+foundation. They use the existing operation/audit/receipt transaction and current
+rights. No Pi RPC, DBOS runner or dispatcher was introduced. The accepted
+interactive Stage 4 bridge and direct execution API also admit schema 4, while
+schema 3 spaces remain readable and usable without automatic upgrade.
+
+## evidence
+
+`docs/core-v0.1/STAGE5-IMPLEMENTATION.md` records the public surface and
+maintenance boundary. Seven focused synthetic tests pass. One test reopens the
+space in a new Python process, reads the durable question and remainder, saves
+the answer and proves one `resume` outbox entry; exact replay does not create a
+second. The others exercise explicit upgrade and Stage 4 bridge compatibility,
+replay rights, revoked answer rights, stop/unknown reserve, stale Attempt fencing,
+backup/quarantine/epoch and Work/Artifact deletion. The full
+`uv run --locked python -m tools.check --deliver` passed with the verified SQLite
+runtime: 181 format-clean files, clean Ruff, strict mypy on 155 source files,
+21 kept import contracts, 495 passed tests, source/wheel build and report
+structure. Independent review identified that a responder could create an
+answer without the `receipt.read` right needed to replay its receipt after a
+lost acknowledgement. Admission now requires this current right; a focused
+test covers refusal without it and exact retry with it. This check is
+engineering evidence, not owner acceptance.
+
+## assumptions
+
+The first pass records a pinned future executor version but never starts that
+executor. An assignment and launch outbox item are durable intentions, not proof
+of a live Pi child or external effect. The current Work stays `proposed` until
+separate acceptance; actual `ready/running/waiting` Work transitions require
+the next pass with observable process outcomes.
+
+## cuts
+
+No real model call, personal data, Pi RPC, DBOS production dependency, custom
+dispatcher, old `.zara` migration, Direction OS change or
+`C:\projects\zaratustra` change. Outbox delivery, live process ownership and
+two-database maintenance remain for separately authorized later passes.
+
+## cost
+
+Local source, synthetic tests and documentation only; zero model/service calls
+and zero paid cost.
+
+## manual-acceptance
+
+The owner authorized implementation and local delivery of pass 1. Focused and
+full engineering checks are evidence, not owner acceptance of the completed
+pass. The earlier Stage 4 owner acceptance remains separate.
+
+## next
+
+solmax
+
 # Core v0.1 Stage 5 plan and Stage 4 owner acceptance
 
 ## outcome

@@ -9,8 +9,9 @@ legacy `zaratustra.core` package or higher product surfaces. Its public contract
 backup/restore and deletion sanitation. `operations.py` owns the authorized
 additive schema 2 upgrade, the sole domain mutation path after space creation,
 and current Decision/Grant checks. `execution.py` owns the explicit schema 3
-upgrade, resource/Attempt/invocation state and addressed execution reads. `models.py` owns
-frozen wire/domain values and must not become an unvalidated JSON bag.
+upgrade, resource/Attempt/invocation state, the explicit schema 4 continuation
+upgrade and addressed execution reads. `models.py` owns frozen wire/domain values
+and must not become an unvalidated JSON bag.
 
 Artifact bytes exist once in `managed_content`; Activity/Work prose lives in
 `subject_content`. Revisions, audit and receipts may
@@ -22,6 +23,11 @@ independent of a Work outcome. Restore stays quarantined until a
 fresh trusted-local recovery operation establishes the new epoch.
 
 The foundation stores Work execution records but never imports Pi or runs a model.
+Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,
+stop state and pending/cancelled outbox records in the same operation/receipt path.
+The Work remains proposed until its exact result is separately accepted. Recovery
+closes old-epoch waits and cancels old outbox; unknown stop retains the resource.
+Deletion purges these managed rows and payload in affected backups/live SQLite.
 No DBOS, scheduler, dispatcher, memory or Sleep dependency belongs here.
 Stage/check numbers stay in documentation and tests, not product module names.
 

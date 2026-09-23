@@ -347,6 +347,68 @@ EXECUTION_SCHEMA_SHA256 = (
     .hexdigest()
     .upper()
 )
+CONTINUATION_SCHEMA_NAME = "core-v0.1-durable-continuation-4"
+CONTINUATION_SCHEMA_STATEMENTS = (
+    """
+    CREATE TABLE execution_assignments (
+        attempt_id TEXT PRIMARY KEY,
+        work_id TEXT NOT NULL,
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        executor_version TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN
+            ('assigned', 'waiting', 'ready', 'stop_requested',
+             'stopped', 'unknown', 'interrupted')),
+        stop_reason BLOB,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (attempt_id) REFERENCES execution_attempts(attempt_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE execution_waits (
+        wait_id TEXT PRIMARY KEY,
+        attempt_id TEXT NOT NULL,
+        work_id TEXT NOT NULL,
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        status TEXT NOT NULL CHECK (status IN ('open', 'answered', 'closed', 'purged')),
+        question BLOB,
+        expected_actor TEXT NOT NULL,
+        remainder BLOB,
+        partial_refs_json TEXT NOT NULL,
+        answer BLOB,
+        answer_source TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (attempt_id) REFERENCES execution_attempts(attempt_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE execution_outbox (
+        outbox_id TEXT PRIMARY KEY,
+        attempt_id TEXT NOT NULL,
+        work_id TEXT NOT NULL,
+        wait_id TEXT,
+        execution_epoch INTEGER NOT NULL,
+        generation INTEGER NOT NULL,
+        kind TEXT NOT NULL CHECK (kind IN ('launch', 'resume')),
+        status TEXT NOT NULL CHECK (status IN ('pending', 'cancelled')),
+        created_at TEXT NOT NULL,
+        UNIQUE (wait_id, kind),
+        FOREIGN KEY (attempt_id) REFERENCES execution_attempts(attempt_id),
+        FOREIGN KEY (wait_id) REFERENCES execution_waits(wait_id)
+    ) STRICT
+    """,
+    "CREATE INDEX assignment_work ON execution_assignments(work_id)",
+    "CREATE INDEX wait_work ON execution_waits(work_id, status)",
+    "CREATE INDEX outbox_work ON execution_outbox(work_id, status)",
+)
+CONTINUATION_SCHEMA_SHA256 = (
+    hashlib.sha256(
+        "\n".join(statement.strip() for statement in CONTINUATION_SCHEMA_STATEMENTS).encode()
+    )
+    .hexdigest()
+    .upper()
+)
 
 
 def utc_now() -> datetime:
@@ -438,7 +500,7 @@ def _begin(connection: sqlite3.Connection, *, writable: bool) -> None:
 def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> SpaceInfo:
     application_id = int(connection.execute("PRAGMA application_id").fetchone()[0])
     schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
-    if application_id != APPLICATION_ID or schema_version not in (1, 2, 3):
+    if application_id != APPLICATION_ID or schema_version not in (1, 2, 3, 4):
         raise FoundationError(
             "unsupported_schema",
             f"Unsupported application/schema identity: {application_id}/{schema_version}",
@@ -454,6 +516,8 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         expected.append((2, SUBJECT_SCHEMA_NAME, SUBJECT_SCHEMA_SHA256))
     if schema_version >= 3:
         expected.append((3, EXECUTION_SCHEMA_NAME, EXECUTION_SCHEMA_SHA256))
+    if schema_version >= 4:
+        expected.append((4, CONTINUATION_SCHEMA_NAME, CONTINUATION_SCHEMA_SHA256))
     if migration != expected:
         raise FoundationError("unsupported_schema", "Schema history does not match installed code")
     rows = connection.execute(
@@ -467,7 +531,7 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         database=database,
         space_id=UUID(space_id),
         created_at=datetime.fromisoformat(created_at),
-        schema_version=cast(Literal[1, 2, 3], schema_version),
+        schema_version=cast(Literal[1, 2, 3, 4], schema_version),
         state_revision=state_revision,
         execution_epoch=execution_epoch,
         recovery_state=recovery_state,
@@ -707,6 +771,9 @@ def sanitize_database(path: Path) -> None:
 
 __all__ = [
     "BACKUP_DIRECTORY",
+    "CONTINUATION_SCHEMA_NAME",
+    "CONTINUATION_SCHEMA_SHA256",
+    "CONTINUATION_SCHEMA_STATEMENTS",
     "DATABASE_NAME",
     "FoundationError",
     "SCHEMA_SHA256",

@@ -72,8 +72,10 @@ class Bridge:
             or space.execution_epoch != self.authority.execution_epoch
         ):
             raise FoundationError("stale_epoch", "Bridge authority no longer matches this space")
-        if space.schema_version != 3 or space.recovery_state != "active":
-            raise FoundationError("unsupported_schema", "Interactive Pi needs active schema 3")
+        if space.schema_version not in (3, 4) or space.recovery_state != "active":
+            raise FoundationError(
+                "unsupported_schema", "Interactive Pi needs active execution schema"
+            )
         overview = inspect_space(self.path, self.authority)
         if overview.pending_deletions:
             raise FoundationError("deletion_pending", "Complete Core deletion before opening Pi")
