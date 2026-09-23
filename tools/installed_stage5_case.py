@@ -310,7 +310,13 @@ def wait_for_question(data: dict[str, str], provider: Provider) -> WaitRecord:
     owner = authorize_local(root, actor="owner", source_ref="installed-synthetic-console")
     deadline = time.monotonic() + 40
     while time.monotonic() < deadline:
-        state = read_execution(root, UUID(data["work_id"]), owner)
+        try:
+            state = read_execution(root, UUID(data["work_id"]), owner)
+        except FoundationError as error:
+            if error.code != "storage" or "database is locked" not in str(error):
+                raise
+            time.sleep(0.1)
+            continue
         waits = [item for item in state.waits if item.status == "open"]
         if waits and len(provider.digests) == 1:
             return waits[0]

@@ -1,4 +1,79 @@
-# Core v0.1 Stage 5 pass 3 — Core / DBOS / ordinary Pi RPC faults
+# Core v0.1 Stage 5 pass 3 — independent review corrections
+
+## outcome
+
+The two remaining findings at HEAD `0a34f5a` were reproduced and fixed within
+the authorized third pass. A stopped or revoked assigned Attempt now interrupts
+the live ordinary Pi RPC while waiting or reading an active turn. Core records
+`stopped` only after observed child exit; an uncertain transmitted model request
+remains `unknown` with its reserve and exclusive resource. A new outside-checkout
+wheel probe exercises installed Core → DBOS → ordinary Pi. Pass 3 awaits owner
+acceptance. Stage 5 and Work are not accepted; pass 4 was not started.
+
+## evidence
+
+`docs/core-v0.1/STAGE5-IMPLEMENTATION.md` gives the per-scenario observation
+and proof limit. Before the fix, `_scratch/stage5-pass3-stop-repro-a/evidence.json`
+showed `stop_requested` with both host and Pi still live five seconds later;
+only an artificial DBOS answer woke the waiter. The old installed probe covered
+only schema-1 CLI. The corrected `_scratch/stage5-pass3-stop-c/report.json`
+shows waiting stop → `stopped`, child exited, one HTTP and preserved
+question/remainder/partial text; active stop → child exited but `unknown`, one
+transmitted HTTP and 1000 held units; revoked runner → child exited, owner
+separately reconciled `stopped`. Exact stop replay kept one receipt. Four new
+focused regressions cover control rights, active read, failed child stop and
+ordering before DBOS wake.
+
+`_scratch/stage5-pass3-faults-n/report.json` passed the seven earlier
+crash/replay groups again: checkpoint restart, post-claim crash, live host death
+with late output rejection, host overlap, incompatible version, revoked resume,
+and lost HTTP response. Two earlier repetitions hit concurrent SQLite errors;
+the monitor now uses a narrow Core read transaction. The installed wheel trace
+`_scratch/stage5-pass3-installed-clean/report.json` confirms `python -I`
+outside checkout, package/DBOS/extension modules under temp `site-packages`,
+ordinary Pi 0.87.0 and DBOS 3.0.0, two addressed answered HTTP turns, exact
+output, 280 committed/zero held units, Work `proposed`, one duplicate-answer
+receipt, and post-claim restart `unknown` without another HTTP. Wheel SHA-256:
+`5cd865231a30c6bf0cfec483c8d807dede7a677be6af513b6a8b440a88a46963`.
+
+The final full `uv run --locked python -m tools.check --deliver` passed:
+188 files formatted, Ruff clean, mypy clean across 162 source files,
+21 import contracts, 516 tests in 289.15 seconds, sdist and wheel built.
+
+## assumptions
+
+The control monitor observes one claimed Attempt and current Core rights. It
+can stop a child whose host is live; a dead host's orphaned Pi identity and
+provider-side effect remain unknown. A revoked runner cannot record a stop;
+the owner must make a current-rights, address-specific reconciliation after
+observing process exit. The installed probe uses pinned SQLite 3.53.3 and
+localhost synthetic HTTP/SSE.
+
+## cuts
+
+The observations cover concrete Windows schedules, not every crash
+interleaving or a real provider's processing after a lost response. Earlier
+fault repetitions saw SQLite lock/I/O transients; one passing rerun does not
+prove those impossible. The installed probe confirms the shipped composition,
+not all recovery windows. No real model call, personal data, mutating tool,
+two-SQLite global maintenance of pass 4, dispatcher, or change to
+`C:\projects\zaratustra` was made.
+
+## cost
+
+Synthetic localhost HTTP only; zero paid or real model calls. Reused Core
+operation/receipt, DBOS queue/wait and ordinary Pi RPC.
+
+## manual-acceptance
+
+The owner accepted passes 1 and 2 separately. The third pass and Stage 5 as a
+whole still await separate decisions; synthetic Work remains `proposed`.
+
+## next
+
+solmax
+
+# Historical Core v0.1 Stage 5 pass 3 — initial fault pass
 
 ## outcome
 
