@@ -1,3 +1,78 @@
+# Core v0.1 Stage 5 pass 3 — Core / DBOS / ordinary Pi RPC faults
+
+## outcome
+
+The owner accepted Stage 5 pass 2 at
+`b0b923bfb4c4b42e448b2a5a61dcc39dd3937c3e` separately; the exact record
+is `docs/core-v0.1/STAGE5-PASS2-ACCEPTANCE.md`. The authorized pass 3 tested
+the real local Core → pinned DBOS 3.0.0 → ordinary Pi 0.87.0 RPC composition
+under synthetic crash/replay, lost-response, revocation, late-result, resource
+and version cases. A Core launch claim now fences recovery before a child can
+start. Unknown provider outcome retains reserve and exclusive resource.
+An incompatible Pi package refuses before DBOS launch. This is engineering
+completion for owner review, not acceptance of pass 3 or all Stage 5.
+
+## evidence
+
+`docs/core-v0.1/STAGE5-IMPLEMENTATION.md` records the working plan, changes,
+per-scenario observed outcome and proof limit. The reproducible machine trace
+is `_scratch/stage5-pass3-faults-j/report.json` with host logs. Its checkpoint
+restart yielded one Work with two answered HTTP invocations and one answer
+receipt; post-claim crash yielded `unknown` and zero HTTP; live host death
+left one HTTP, saved answer/remainder and rejected the late output; dropped
+HTTP response left one `unknown` invocation, 1000 held units and no second
+send on restart. Conflict on the same directory was refused while an
+independent directory was assignable. Revocation before resume sent no second
+HTTP. A second host entered while the first Pi was live and waiting;
+the first model turn was not duplicated and one addressed answer produced one
+continuation. Both incompatible executor assignment and mismatched Pi package
+refused before provider use. `_scratch/stage5-pass3-baseline-live/report.json` retained
+the ordinary two-HTTP positive path and managed deletion/restore checks.
+
+The full `uv run --locked python -m tools.check --deliver` passed: 185 files
+formatted, Ruff clean, mypy clean across 159 source files, 21 import contracts
+kept, 512 tests passed in 239.94 seconds, and sdist/wheel builds succeeded.
+The installed `uv run --locked python -m tools.probe_install` passed outside
+the checkout with wheel SHA-256
+`1d355aaf6de15c31c535c5fdb8e4c09d139e54d7d687419aa8ca0d4a88622632`.
+
+## assumptions
+
+The test uses one Windows host, one pinned DBOS application version, ordinary
+upstream Pi RPC and a local HTTP/SSE fixture. The Core claim receipt uses a
+stable Attempt operation id and a fresh nonce on each actual DBOS workflow
+entry. An earlier claim is treated conservatively as unknown even if the
+host died before the child existed. Unknown is resolved only by a later
+addressed observation or owner action.
+
+## cuts
+
+The probe does not prove every crash interleaving, liveness of an orphaned
+Pi after host death, a real provider's processing outcome, credentials, paid
+model use, mutating tools, or upgrade of a live binary. When the runner Grant
+is revoked, its technical stop cannot be recorded under that revoked
+identity: assignment stays `ready`, its resource stays held, and a trusted
+owner action is required. The two-SQLite global maintenance boundary belongs
+to separately authorized pass 4 and was not begun. The outside-checkout probe
+checks installed base CLI behavior, not Pi/DBOS recovery.
+
+## cost
+
+Seven synthetic localhost model HTTP requests in the final fault probe; zero
+real model or paid calls. No real personal data, old workspace, Direction OS,
+remote publication, or `C:\projects\zaratustra` was changed. The code
+reuses Core operation/receipt, DBOS queue/wait and ordinary Pi RPC surfaces;
+no dispatcher or model loop was added.
+
+## manual-acceptance
+
+The owner accepted passes 1 and 2 separately. Pass 3 awaits owner review;
+Stage 5 as a whole and every synthetic Work remain unaccepted.
+
+## next
+
+solmax
+
 # Core v0.1 Stage 5 pass 2 — independent review corrections
 
 ## outcome

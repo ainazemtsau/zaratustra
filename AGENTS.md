@@ -16,10 +16,11 @@
   one synthetic Work; see `docs/core-v0.1/STAGE4-ACCEPTANCE.md`. The current
   owner accepted Stage 5 pass 1 at
   `03a3887f7d50aa1dccf8c761ce5bc933a57f86c9`; see
-  `docs/core-v0.1/STAGE5-PASS1-ACCEPTANCE.md`. The owner separately authorized
-  pass 2 on September 23, 2026: one assigned ordinary Pi RPC through pinned
-  DBOS 3.0.0, synthetic localhost verification, maintenance, full local check
-  and commit. This does not accept pass 2 or all of Stage 5.
+  `docs/core-v0.1/STAGE5-PASS1-ACCEPTANCE.md`. The owner accepted pass 2 at
+  `b0b923bfb4c4b42e448b2a5a61dcc39dd3937c3e`; see
+  `docs/core-v0.1/STAGE5-PASS2-ACCEPTANCE.md`. Pass 3 is separately authorized
+  within `STAGE5-PLAN.md` for the Core/DBOS/ordinary Pi RPC fault matrix.
+  This does not accept all of Stage 5 or authorize pass 4.
 
 ## Commands (run from this repository)
 - Prepare: `uv sync --locked`
@@ -125,8 +126,8 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
 
 ## Constitution
 - Keep the accepted Core v0.1 functional composition and completed Stage 1–4
-  evidence. Stage 4 and Stage 5 pass 1 are owner-accepted; Stage 5 pass 2 is
-  authorized but awaits owner review. Preserve earlier Works/CALLs as history,
+  evidence. Stage 4 and Stage 5 passes 1–2 are owner-accepted; Stage 5 pass 3
+  is authorized but awaits owner review. Preserve earlier Works/CALLs as history,
   not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.

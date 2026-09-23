@@ -8,7 +8,7 @@ import sqlite3
 import threading
 from pathlib import Path
 from typing import cast
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4, uuid5
 
 import pytest
 from dbos import DBOS, DBOSClient
@@ -16,6 +16,7 @@ from dbos import DBOS, DBOSClient
 from tests.zaratustra.foundation.test_continuation import ready
 from zaratustra.foundation import (
     AssignAttemptRequest,
+    ClaimAttemptLaunchRequest,
     CreateGrantRequest,
     CreateResourceRequest,
     CreateWorkRequest,
@@ -46,10 +47,12 @@ from zaratustra.pi_adapter import Bridge
 from zaratustra.pi_adapter.assigned import (
     EXECUTOR_VERSION,
     WORKFLOW_NAME,
+    AssignedConfig,
     _purge_technical_data,
     complete_assigned_deletions,
     deliver_outbox,
     resolve_assigned_work,
+    run_assigned,
 )
 
 
@@ -507,3 +510,61 @@ def test_assigned_refusal_survives_dbos_exception_serialization() -> None:
     assert isinstance(restored, FoundationError)
     assert restored.code == "rpc_extension"
     assert str(restored) == str(original)
+
+
+def test_launch_claim_is_exact_and_rejects_a_second_process(tmp_path: Path) -> None:
+    root, _, space_id, work_id, attempt_id, session_id = assigned(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    claim_id = uuid5(attempt_id, "rpc-launch-claim")
+    first = ClaimAttemptLaunchRequest(
+        operation_id=claim_id,
+        space_id=space_id,
+        actor="owner",
+        attempt_id=attempt_id,
+        work_id=work_id,
+        session_id=session_id,
+        expected_assignment_revision=1,
+        claim_nonce=uuid4(),
+    )
+    receipt = apply_operation(root, first, owner)
+    assert receipt.result["launch_claimed"] is True
+    assert apply_operation(root, first, owner) == receipt
+    with pytest.raises(FoundationError, match="operation_conflict"):
+        apply_operation(root, first.model_copy(update={"claim_nonce": uuid4()}), owner)
+    snapshot = read_execution(root, work_id, owner)
+    assert snapshot.assignments[0].status == "assigned"
+    assert snapshot.attempts[0].status == "active"
+
+
+def test_incompatible_pi_package_refuses_before_dbos_launch(tmp_path: Path) -> None:
+    root, workspace, _, work_id, attempt_id, _ = assigned(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    runtime = tmp_path / "runtime"
+    package = runtime / "node_modules" / "@earendil-works" / "pi-coding-agent"
+    cli = package / "dist" / "bundle" / "cli.js"
+    cli.parent.mkdir(parents=True)
+    cli.write_text("synthetic", encoding="utf-8")
+    (package / "package.json").write_text(
+        '{"name":"@earendil-works/pi-coding-agent","version":"0.88.0"}',
+        encoding="utf-8",
+    )
+    config = AssignedConfig(
+        space=root,
+        workspace=workspace,
+        pi_cli=cli,
+        pi_runtime=runtime,
+        node="node",
+        provider_profile="local-completions",
+        provider_base_url="http://127.0.0.1:9/v1",
+        provider_id="synthetic",
+        model_id="synthetic",
+        context_window=4096,
+        max_tokens=512,
+        reserve_units=10,
+        limit_units=100,
+        offline=True,
+    )
+    with pytest.raises(FoundationError, match="pi_version"):
+        run_assigned(config, owner, attempt_id)
+    assert not (root / ".zara-core" / "executor.sqlite3").exists()
+    assert read_execution(root, work_id, owner).assignments[0].status == "assigned"

@@ -325,6 +325,15 @@ class AssignAttemptRequest(OperationRequest):
     executor_version: str = Field(min_length=1, max_length=200)
 
 
+class ClaimAttemptLaunchRequest(OperationRequest):
+    kind: Literal["claim_attempt_launch"] = "claim_attempt_launch"
+    attempt_id: UUID
+    work_id: UUID
+    session_id: UUID
+    expected_assignment_revision: int = Field(ge=1)
+    claim_nonce: UUID
+
+
 class OpenWaitRequest(OperationRequest):
     kind: Literal["open_wait"] = "open_wait"
     wait_id: UUID
@@ -437,6 +446,7 @@ DomainRequest = Annotated[
     | StartAttemptRequest
     | StopAttemptRequest
     | AssignAttemptRequest
+    | ClaimAttemptLaunchRequest
     | OpenWaitRequest
     | AnswerWaitRequest
     | RequestAttemptStopRequest
@@ -661,6 +671,7 @@ __all__ = [
     "AnswerWaitRequest",
     "AdmitInvocationRequest",
     "AssignAttemptRequest",
+    "ClaimAttemptLaunchRequest",
     "AssignmentRecord",
     "Action",
     "ActivityRevision",

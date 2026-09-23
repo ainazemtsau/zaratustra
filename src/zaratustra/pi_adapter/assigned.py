@@ -20,6 +20,7 @@ from uuid import UUID, uuid4, uuid5
 
 from zaratustra.foundation import (
     AssignAttemptRequest,
+    ClaimAttemptLaunchRequest,
     DeletionStatus,
     FoundationError,
     LocalAuthority,
@@ -41,6 +42,7 @@ if TYPE_CHECKING:
     from dbos import DBOSClient
 
 EXECUTOR_VERSION = "zara-pi-rpc-dbos-3.0.0-v1"
+PI_VERSION = "0.87.0"
 QUEUE_NAME = "zara-assigned-rpc"
 WORKFLOW_NAME = "zara-assigned-work-v1"
 MAX_RPC_LINE = 16 * 1024 * 1024
@@ -337,6 +339,13 @@ def _record_stop(
     assignment = next((x for x in snapshot.assignments if x.attempt_id == attempt_id), None)
     if assignment is None or assignment.status in ("stopped", "unknown", "interrupted"):
         return
+    # A stopped child does not establish the outcome of a request already sent.
+    # Keep the resource fenced until that external outcome is reconciled.
+    if any(
+        invocation.attempt_id == attempt_id and invocation.status in ("admitted", "sent", "unknown")
+        for invocation in snapshot.invocations
+    ):
+        observed = False
     if assignment.status != "stop_requested":
         apply_operation(
             config.space,
@@ -401,6 +410,32 @@ def _execute_under_lock(
         raise FoundationError(
             "resource_unavailable", "Assigned resource differs from RPC workspace"
         )
+    # This Core receipt is committed before Pi can start. A DBOS replay has a fresh
+    # nonce and therefore cannot mistake a previous launch for its own work.
+    try:
+        apply_operation(
+            config.space,
+            ClaimAttemptLaunchRequest(
+                operation_id=uuid5(attempt_id, "rpc-launch-claim"),
+                space_id=authority.space_id,
+                actor=authority.actor,
+                attempt_id=attempt_id,
+                work_id=work_id,
+                session_id=attempt.session_id,
+                expected_assignment_revision=next(
+                    x.revision for x in snapshot.assignments if x.attempt_id == attempt_id
+                ),
+                claim_nonce=uuid4(),
+            ),
+            authority,
+        )
+    except FoundationError as error:
+        if error.code in ("operation_conflict", "history_unavailable"):
+            _record_stop(config, authority, work_id, attempt_id, attempt.session_id, observed=False)
+            raise FoundationError(
+                "process_outcome_unknown", "Earlier Pi RPC launch cannot be replayed safely"
+            ) from error
+        raise
     extension = Path(str(files("zaratustra.pi_adapter").joinpath("extension.ts")))
     installed = config.pi_runtime / f"zaratustra-assigned-{attempt_id}.ts"
     server: BridgeServer | None = None
@@ -572,10 +607,14 @@ def _execute_under_lock(
         if thread is not None:
             thread.join(timeout=5)
         installed.unlink(missing_ok=True)
-        if process is not None:
-            _record_stop(
-                config, authority, work_id, attempt_id, attempt.session_id, observed=observed
-            )
+        _record_stop(
+            config,
+            authority,
+            work_id,
+            attempt_id,
+            attempt.session_id,
+            observed=observed or process is None,
+        )
 
 
 def resolve_assigned_work(space: Path, authority: LocalAuthority, attempt_id: UUID) -> UUID:
@@ -612,8 +651,22 @@ def run_assigned(config: AssignedConfig, authority: LocalAuthority, attempt_id: 
             "workspace": config.workspace.resolve(),
         }
     )
-    if not config.pi_cli.is_file() or not (config.pi_runtime / "node_modules").is_dir():
+    package_root = config.pi_runtime / "node_modules" / "@earendil-works" / "pi-coding-agent"
+    package_file = package_root / "package.json"
+    expected_cli = package_root / "dist" / "bundle" / "cli.js"
+    if not package_file.is_file() or not expected_cli.is_file():
         raise FoundationError("rpc_runtime", "Pinned ordinary Pi runtime is unavailable")
+    try:
+        package = json.loads(package_file.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        raise FoundationError("pi_version", "Pi package metadata is unreadable") from error
+    if (
+        not isinstance(package, dict)
+        or package.get("name") != "@earendil-works/pi-coding-agent"
+        or package.get("version") != PI_VERSION
+        or config.pi_cli.resolve() != expected_cli.resolve()
+    ):
+        raise FoundationError("pi_version", "Assigned Pi RPC requires pinned Pi 0.87.0")
     if config.provider_profile not in ("local-completions", "codex-sse"):
         raise FoundationError("rpc_profile", "Pi provider transport profile is unsupported")
     parsed = urlsplit(config.provider_base_url)

@@ -15,6 +15,7 @@ from .models import (
     AssignAttemptRequest,
     AssignmentRecord,
     AttemptRecord,
+    ClaimAttemptLaunchRequest,
     CreateResourceRequest,
     ExecutionSnapshot,
     FinishInvocationRequest,
@@ -71,7 +72,11 @@ type ExecutionRequest = (
     | PublishAttemptOutputRequest
 )
 type ContinuationRequest = (
-    OpenWaitRequest | AnswerWaitRequest | RequestAttemptStopRequest | RecordAttemptStopRequest
+    ClaimAttemptLaunchRequest
+    | OpenWaitRequest
+    | AnswerWaitRequest
+    | RequestAttemptStopRequest
+    | RecordAttemptStopRequest
 )
 
 
@@ -625,7 +630,24 @@ def apply_continuation_change(
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
     """Apply one addressed continuation change inside the receipt transaction."""
 
-    if isinstance(request, OpenWaitRequest):
+    if isinstance(request, ClaimAttemptLaunchRequest):
+        _check_attempt_basis(
+            connection,
+            request.attempt_id,
+            request.work_id,
+            request.session_id,
+            epoch,
+            actor=request.actor,
+            allowed_assignment_statuses=("assigned",),
+        )
+        revision, status, _ = _assignment(
+            connection, request.attempt_id, request.work_id, request.session_id, epoch
+        )
+        if revision != request.expected_assignment_revision or status != "assigned":
+            raise FoundationError("stale_assignment", "Assignment changed before launch")
+        result = {"attempt_id": str(request.attempt_id), "launch_claimed": True}
+        targets = [{"record_id": str(request.attempt_id), "revision": revision}]
+    elif isinstance(request, OpenWaitRequest):
         _check_attempt_basis(
             connection,
             request.attempt_id,

@@ -470,9 +470,10 @@ def layout(path: Path) -> tuple[Path, Path, Path]:
 def _configure(connection: sqlite3.Connection, *, writable: bool) -> None:
     connection.execute("PRAGMA foreign_keys = ON")
     connection.execute(f"PRAGMA busy_timeout = {BUSY_TIMEOUT_MS}")
-    connection.execute("PRAGMA secure_delete = ON")
-    connection.execute("PRAGMA synchronous = FULL")
-    if not writable:
+    if writable:
+        connection.execute("PRAGMA secure_delete = ON")
+        connection.execute("PRAGMA synchronous = FULL")
+    else:
         connection.execute("PRAGMA query_only = ON")
 
 

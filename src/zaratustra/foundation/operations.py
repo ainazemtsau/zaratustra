@@ -28,6 +28,7 @@ from .models import (
     AssignAttemptRequest,
     BackupInfo,
     BootstrapRequest,
+    ClaimAttemptLaunchRequest,
     CreateActivityRequest,
     CreateArtifactRequest,
     CreateDecisionRequest,
@@ -479,6 +480,7 @@ def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]
             StartAttemptRequest,
             StopAttemptRequest,
             AssignAttemptRequest,
+            ClaimAttemptLaunchRequest,
             OpenWaitRequest,
             RequestAttemptStopRequest,
             RecordAttemptStopRequest,
@@ -1137,6 +1139,7 @@ def _apply_change(
     if isinstance(
         request,
         (
+            ClaimAttemptLaunchRequest,
             OpenWaitRequest,
             AnswerWaitRequest,
             RequestAttemptStopRequest,
