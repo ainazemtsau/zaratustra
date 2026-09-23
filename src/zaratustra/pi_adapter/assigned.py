@@ -32,6 +32,7 @@ from zaratustra.foundation import (
     managed_pi_session_lock,
     read_execution,
     read_space,
+    read_technical_deletion_targets,
 )
 
 from .bridge import Bridge, BridgeServer
@@ -180,22 +181,9 @@ def _purge_technical_data(
     import sqlite3
 
     root = space.resolve() / ".zara-core"
-    target_work_ids: set[str] = set()
-    overview = inspect_space(space, authority)
-    deleted = set(deleted_ids)
-    for item in overview.records:
-        if item.kind != "work":
-            continue
-        if item.record_id in deleted:
-            target_work_ids.add(str(item.record_id))
-            continue
-        if item.status == "deleted":
-            continue
-        snapshot = read_execution(space, item.record_id, authority)
-        if any(ref.artifact_id in deleted for ref in snapshot.work.unavailable_refs) or any(
-            assignment.status == "interrupted" for assignment in snapshot.assignments
-        ):
-            target_work_ids.add(str(item.record_id))
+    targets = read_technical_deletion_targets(space, authority, deleted_ids)
+    target_work_ids = {str(work_id) for work_id in targets.work_ids}
+    target_attempt_ids = {str(attempt_id) for attempt_id in targets.attempt_ids}
     executor = root / "executor.sqlite3"
     if executor.is_file():
         client = _client(space)
@@ -206,26 +194,34 @@ def _purge_technical_data(
                 load_input=False,
                 load_output=False,
             )
-            if target_work_ids and any(workflow.attributes is None for workflow in workflows):
+            if (target_work_ids or target_attempt_ids) and any(
+                workflow.attributes is None for workflow in workflows
+            ):
                 raise FoundationError("technical_state", "DBOS workflow has no deletion address")
             affected = [
                 workflow
                 for workflow in workflows
                 if workflow.attributes is not None
-                and workflow.attributes.get("work_id") in target_work_ids
+                and (
+                    workflow.attributes.get("work_id") in target_work_ids
+                    or workflow.attributes.get("attempt_id") in target_attempt_ids
+                )
             ]
+            home_attempt_ids = set(target_attempt_ids)
+            for workflow in affected:
+                attempt = str(workflow.attributes.get("attempt_id")) if workflow.attributes else ""
+                try:
+                    UUID(attempt)
+                except ValueError as error:
+                    raise FoundationError(
+                        "technical_state", "DBOS Attempt address is invalid"
+                    ) from error
+                home_attempt_ids.add(attempt)
             if affected:
                 client.delete_workflows([workflow.workflow_id for workflow in affected])
         finally:
             client.destroy()
-        for workflow in affected:
-            attempt = str(workflow.attributes.get("attempt_id")) if workflow.attributes else ""
-            try:
-                UUID(attempt)
-            except ValueError as error:
-                raise FoundationError(
-                    "technical_state", "DBOS Attempt address is invalid"
-                ) from error
+        for attempt in home_attempt_ids:
             _remove_managed_tree(root / "pi-rpc-home" / attempt)
         with sqlite3.connect(executor) as connection:
             connection.execute("VACUUM")
@@ -582,6 +578,28 @@ def _execute_under_lock(
             )
 
 
+def resolve_assigned_work(space: Path, authority: LocalAuthority, attempt_id: UUID) -> UUID:
+    """Resolve a live Attempt without opening unrelated deleted Work payloads."""
+
+    overview = inspect_space(space, authority)
+    work_id = next(
+        (
+            item.record_id
+            for item in overview.records
+            if item.kind == "work"
+            and item.status != "deleted"
+            and any(
+                x.attempt_id == attempt_id
+                for x in read_execution(space, item.record_id, authority).attempts
+            )
+        ),
+        None,
+    )
+    if work_id is None:
+        raise FoundationError("stale_attempt", "Assigned Attempt or its Work is unavailable")
+    return work_id
+
+
 def run_assigned(config: AssignedConfig, authority: LocalAuthority, attempt_id: UUID) -> str:
     """Start DBOS, relay one committed launch and wait for its addressed workflow."""
 
@@ -613,21 +631,7 @@ def run_assigned(config: AssignedConfig, authority: LocalAuthority, attempt_id: 
         raise FoundationError("rpc_profile", "Local Provider needs model and context bounds")
     if any(tool not in {"read", "grep", "find", "ls"} for tool in config.pi_tools):
         raise FoundationError("rpc_tools", "Assigned RPC admits only read-only Pi tools")
-    overview = inspect_space(config.space, authority)
-    work_id = next(
-        (
-            item.record_id
-            for item in overview.records
-            if item.kind == "work"
-            and any(
-                x.attempt_id == attempt_id
-                for x in read_execution(config.space, item.record_id, authority).attempts
-            )
-        ),
-        None,
-    )
-    if work_id is None:
-        raise FoundationError("stale_attempt", "Assigned Attempt is unavailable")
+    work_id = resolve_assigned_work(config.space, authority, attempt_id)
     snapshot = read_execution(config.space, work_id, authority)
     assignment = next(x for x in snapshot.assignments if x.attempt_id == attempt_id)
     if assignment.executor_version != EXECUTOR_VERSION:

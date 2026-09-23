@@ -39,7 +39,11 @@ class FoundationError(Exception):
 
     def __init__(self, code: str, detail: str) -> None:
         self.code = code
+        self.detail = detail
         super().__init__(f"{code}: {detail}")
+
+    def __reduce__(self) -> tuple[type[FoundationError], tuple[str, str]]:
+        return type(self), (self.code, self.detail)
 
 
 SCHEMA_STATEMENTS = (

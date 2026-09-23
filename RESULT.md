@@ -1,3 +1,82 @@
+# Core v0.1 Stage 5 pass 2 — independent review corrections
+
+## outcome
+
+At reviewed HEAD `c5ec9de25a4f8b1782c1bbe8fc073e647468dc6b`, four
+reproducible pass-2 defects were reported and independently reproduced in a
+fresh temporary synthetic space. Current `maintenance.delete` admission now
+precedes technical cleanup; one captured batch controls Core jobs, DBOS/Pi
+targets and contaminated backups; Artifact/Work deletion preserves payload-free
+Attempt addresses before erasing their references; and a deleted unrelated Work
+no longer blocks a live assigned Attempt. A related technical backup gap found
+during this correction was closed: no new DBOS/Pi backup can copy payload while
+any Core deletion is pending. This is engineering completion for owner review,
+not acceptance of pass 2 or Stage 5.
+
+## evidence
+
+The independent `READONLY-REVIEW.md`, `review_probes.py` and `evidence.json`
+were read from the owner-specified temporary directory. A fresh copy of that
+script in a new empty temporary directory reproduced all four original
+failures, including one unauthorized DBOS workflow/home removal, a second Work
+finalized without technical cleanup, retained partial payload from a stopped
+assignment and a live launch blocked by an unrelated tombstone.
+
+Behavioral regressions now cover missing and revoked maintenance Grants,
+interleaved deletion B staying pending until its own cleanup, the stopped
+partial Artifact with unrelated DBOS/Pi data retained, and a live assigned
+Attempt resolved past a deleted Work. The technical backup test first failed
+against the implementation, then passed after a pre-backup pending check. The
+accepted Stage 2 interleaved-backup test still passes. The synthetic localhost
+Pi RPC replay in `_scratch/stage5-pass2-correction-live/report.json` passed:
+one HTTP before the saved question, none for the parallel interactive display,
+one after the addressed answer, zero HTTP for the pre-send denial, final Work
+`proposed`, observed assignment `stopped`, and clean managed deletion/restore.
+The original reviewer script was copied again into a new empty temp after the
+fixes. Its denied call left one workflow and Pi copy intact; B stayed pending
+until the next run; the stopped partial left no workflow or managed payload.
+The valid Attempt reached Pi RPC past the unrelated tombstone. Its deliberately
+unavailable localhost provider produced `rpc_extension`. That run revealed a
+DBOS error deserialization failure, now fixed by making `FoundationError`
+round-trip with its original code and text; a regression covers the same
+serialization. The final full `uv run --locked python -m tools.check --deliver`
+passed: 184 files formatted, Ruff clean, mypy clean across 158 source files,
+21 import contracts kept, 510 tests passed in 293.59 seconds, and source/wheel
+builds succeeded.
+
+## assumptions
+
+Only one exact set of pending operation ids and contaminated backup ids is
+selected under the maintenance lock. Core operations may still arrive after
+the snapshot; they remain pending. The payload-free address entries use the
+existing schema-4 Core maintenance-event table and are removed when their
+jobs complete. DBOS remains a technical queue and workflow store.
+
+## cuts
+
+The pass-3 crash, restart, unknown-process, late-result and version matrix is
+still unverified and was not begun. Pending schema-4 deletions written by the
+earlier implementation without a preserved technical address fail closed as
+`technical_state` when DBOS cleanup is required. No real provider, paid model,
+credentials, personal data, old `.zara` migration, Direction OS or
+`C:\projects\zaratustra` was used.
+
+## cost
+
+Two localhost synthetic model HTTP requests in the live replay; zero real
+model or paid API calls. Changes reuse the existing Core operation, maintenance
+event, DBOS Client and Pi RPC surfaces, plus behavioral regression tests.
+
+## manual-acceptance
+
+The owner accepted Stage 5 pass 1 separately. Pass 2 remains unaccepted and
+awaits review of this correction. No synthetic Work was accepted. Stage 5 is
+not declared complete.
+
+## next
+
+solmax
+
 # Core v0.1 Stage 5 pass 2 — one assigned ordinary Pi RPC
 
 ## outcome

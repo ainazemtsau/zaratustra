@@ -112,6 +112,22 @@ class RecoveryAuthority:
     established_at: datetime
 
 
+@dataclass(frozen=True)
+class TechnicalDeletionTargets:
+    """Payload-free DBOS addresses captured by the exact pending Core deletions."""
+
+    work_ids: tuple[UUID, ...]
+    attempt_ids: tuple[UUID, ...]
+
+
+@dataclass(frozen=True)
+class _DeletionBatch:
+    record_ids: tuple[UUID, ...]
+    artifact_jobs: tuple[str, ...]
+    subject_jobs: tuple[str, ...]
+    contaminated_backups: tuple[UUID, ...]
+
+
 type Authority = LocalAuthority | RecoveryAuthority
 REQUEST_ADAPTER: TypeAdapter[DomainRequest] = TypeAdapter(DomainRequest)
 
@@ -669,6 +685,24 @@ def _subject_delete(
         "DELETE FROM subject_content WHERE record_id = ?", (str(record_id),)
     )
     if kind == "work" and int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 3:  # type: ignore[attr-defined]
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 4:  # type: ignore[attr-defined]
+            assigned_addresses = [
+                {"work_id": row[0], "attempt_id": row[1]}
+                for row in connection.execute(  # type: ignore[attr-defined]
+                    "SELECT work_id, attempt_id FROM execution_assignments "
+                    "WHERE work_id = ? ORDER BY attempt_id",
+                    (str(record_id),),
+                ).fetchall()
+            ]
+            connection.execute(  # type: ignore[attr-defined]
+                "INSERT INTO maintenance_events(event_id, kind, occurred_at, detail_json) "
+                "VALUES (?, 'technical_deletion_targets', ?, ?)",
+                (
+                    str(operation_id),
+                    now,
+                    canonical_json({"work_id": str(record_id), "assigned": assigned_addresses}),
+                ),
+            )
         execution_operations = [
             row[0]
             for row in connection.execute(  # type: ignore[attr-defined]
@@ -1242,6 +1276,41 @@ def _apply_change(
                     (str(request.artifact_id), str(request.artifact_id)),
                 ).fetchall()
             ]
+            published_attempts = [
+                row[0]
+                for row in connection.execute(  # type: ignore[attr-defined]
+                    "SELECT DISTINCT e.attempt_id FROM execution_events e "
+                    "JOIN record_revisions r ON r.operation_id = e.operation_id "
+                    "WHERE r.record_id = ? AND e.kind = 'publish_attempt_output' "
+                    "AND e.attempt_id IS NOT NULL",
+                    (str(request.artifact_id),),
+                ).fetchall()
+            ]
+            assigned_addresses = (
+                [
+                    {"work_id": row[0], "attempt_id": row[1]}
+                    for row in connection.execute(  # type: ignore[attr-defined]
+                        "SELECT work_id, attempt_id FROM execution_assignments "
+                        "WHERE attempt_id IN ("
+                        + ",".join("?" for _ in set(affected_attempts + published_attempts))
+                        + ") ORDER BY work_id, attempt_id",
+                        tuple(sorted(set(affected_attempts + published_attempts))),
+                    ).fetchall()
+                ]
+                if affected_attempts or published_attempts
+                else []
+            )
+            connection.execute(  # type: ignore[attr-defined]
+                "INSERT INTO maintenance_events(event_id, kind, occurred_at, detail_json) "
+                "VALUES (?, 'technical_deletion_targets', ?, ?)",
+                (
+                    str(request.operation_id),
+                    now,
+                    canonical_json(
+                        {"artifact_id": str(request.artifact_id), "assigned": assigned_addresses}
+                    ),
+                ),
+            )
             for attempt_id in affected_attempts:
                 content_operations = [
                     row[0]
@@ -1908,6 +1977,20 @@ def _create_backup_locked(path: Path, backup_id: UUID, authority: LocalAuthority
                 action="maintenance.backup",
                 epoch=info.execution_epoch,
             )
+            if info.schema_version >= 4 and any(
+                (info.root / ".zara-core" / name).exists()
+                for name in (EXECUTOR_DATABASE_NAME, RPC_HOME_DIRECTORY)
+            ):
+                pending = connection.execute(
+                    "SELECT 1 FROM deletion_jobs WHERE status = 'pending' "
+                    "UNION ALL SELECT 1 FROM subject_deletion_jobs "
+                    "WHERE status = 'pending' LIMIT 1"
+                ).fetchone()
+                if pending is not None:
+                    raise FoundationError(
+                        "deletion_pending",
+                        "Complete managed DBOS/Pi deletion before creating a backup",
+                    )
             connection.execute(
                 "INSERT INTO backup_inventory(backup_id, package_name, created_at, "
                 "state_revision, status) VALUES (?, ?, ?, ?, 'planned')",
@@ -2011,6 +2094,85 @@ def _subject_deletion_count(connection: object, schema_version: int, status: str
     )
 
 
+def _preserved_attempt_ids(
+    connection: object, operation_id: str, record_id: str, record_key: str
+) -> set[UUID]:
+    row = connection.execute(  # type: ignore[attr-defined]
+        "SELECT detail_json FROM maintenance_events "
+        "WHERE event_id = ? AND kind = 'technical_deletion_targets'",
+        (operation_id,),
+    ).fetchone()
+    if row is None:
+        raise FoundationError("technical_state", "Deletion has no preserved cleanup address")
+    try:
+        detail = json.loads(row[0])
+        if not isinstance(detail, dict) or detail.get(record_key) != record_id:
+            raise ValueError("Cleanup address differs from deletion job")
+        addresses = detail["assigned"]
+        if not isinstance(addresses, list):
+            raise ValueError("Assigned cleanup addresses are not a list")
+        attempts: set[UUID] = set()
+        for address in addresses:
+            if not isinstance(address, dict) or address.get("work_id") is None:
+                raise ValueError("Assigned cleanup address is not an object")
+            UUID(address["work_id"])
+            attempts.add(UUID(address["attempt_id"]))
+        return attempts
+    except (KeyError, TypeError, ValueError) as error:
+        raise FoundationError("technical_state", "Deletion cleanup address is invalid") from error
+
+
+def read_technical_deletion_targets(
+    path: Path, authority: LocalAuthority, deleted_ids: tuple[UUID, ...]
+) -> TechnicalDeletionTargets:
+    """Resolve only pending deletion addresses before their Core jobs are finalized."""
+
+    selected = set(deleted_ids)
+    seen: set[UUID] = set()
+    work_ids: set[UUID] = set()
+    attempt_ids: set[UUID] = set()
+    with space_connection(path) as (connection, info):
+        _local_space(authority, info)
+        _authorize(
+            connection,
+            actor=authority.actor,
+            action="maintenance.delete",
+            epoch=info.execution_epoch,
+        )
+        for operation_id, record_id in connection.execute(
+            "SELECT operation_id, record_id FROM deletion_jobs WHERE status = 'pending'"
+        ).fetchall():
+            artifact_id = UUID(record_id)
+            if artifact_id not in selected:
+                continue
+            seen.add(artifact_id)
+            if info.schema_version < 4:
+                continue
+            attempt_ids.update(
+                _preserved_attempt_ids(connection, operation_id, record_id, "artifact_id")
+            )
+        if info.schema_version >= 2:
+            for operation_id, record_id in connection.execute(
+                "SELECT operation_id, record_id FROM subject_deletion_jobs WHERE status = 'pending'"
+            ).fetchall():
+                subject_id = UUID(record_id)
+                if subject_id not in selected:
+                    continue
+                seen.add(subject_id)
+                kind = connection.execute(
+                    "SELECT kind FROM subject_records WHERE record_id = ?", (record_id,)
+                ).fetchone()
+                if kind is not None and kind[0] == "work":
+                    work_ids.add(subject_id)
+                    if info.schema_version >= 4:
+                        attempt_ids.update(
+                            _preserved_attempt_ids(connection, operation_id, record_id, "work_id")
+                        )
+    if seen != selected:
+        raise FoundationError("technical_state", "Deletion batch no longer matches pending jobs")
+    return TechnicalDeletionTargets(tuple(sorted(work_ids)), tuple(sorted(attempt_ids)))
+
+
 def complete_deletions(
     path: Path,
     authority: LocalAuthority,
@@ -2024,15 +2186,36 @@ def complete_deletions(
     with managed_pi_lock(path):
         with space_connection(path) as (connection, info):
             _local_space(authority, info)
-            pending_rows = connection.execute(
-                "SELECT record_id FROM deletion_jobs WHERE status = 'pending'"
-                + (
-                    " UNION SELECT record_id FROM subject_deletion_jobs WHERE status = 'pending'"
-                    if info.schema_version >= 2
-                    else ""
-                )
+            _authorize(
+                connection,
+                actor=authority.actor,
+                action="maintenance.delete",
+                epoch=info.execution_epoch,
+            )
+            artifact_rows = connection.execute(
+                "SELECT operation_id, record_id FROM deletion_jobs "
+                "WHERE status = 'pending' ORDER BY operation_id"
             ).fetchall()
-        pending_ids = tuple(UUID(row[0]) for row in pending_rows)
+            subject_rows = (
+                connection.execute(
+                    "SELECT operation_id, record_id FROM subject_deletion_jobs "
+                    "WHERE status = 'pending' ORDER BY operation_id"
+                ).fetchall()
+                if info.schema_version >= 2
+                else []
+            )
+            batch = _DeletionBatch(
+                record_ids=tuple(sorted({UUID(row[1]) for row in artifact_rows + subject_rows})),
+                artifact_jobs=tuple(row[0] for row in artifact_rows),
+                subject_jobs=tuple(row[0] for row in subject_rows),
+                contaminated_backups=tuple(
+                    UUID(row[0])
+                    for row in connection.execute(
+                        "SELECT backup_id FROM backup_inventory "
+                        "WHERE status = 'contaminated' ORDER BY backup_id"
+                    ).fetchall()
+                ),
+            )
         technical_root = layout(path)[0] / ".zara-core"
         managed_technical = any(
             (technical_root / name).exists()
@@ -2043,53 +2226,25 @@ def complete_deletions(
                 RESTORED_RPC_HOME_DIRECTORY,
             )
         )
-        if pending_ids and managed_technical and technical_cleanup is None:
+        if batch.record_ids and managed_technical and technical_cleanup is None:
             raise FoundationError(
                 "technical_cleanup_required",
                 "Managed DBOS state needs the assigned executor cleanup adapter",
             )
-        if pending_ids and technical_cleanup is not None:
-            technical_cleanup(path, authority, pending_ids)
-        return _complete_deletions_locked(path, authority)
+        if batch.record_ids and technical_cleanup is not None:
+            technical_cleanup(path, authority, batch.record_ids)
+        return _complete_deletions_locked(path, authority, batch)
 
 
-def _complete_deletions_locked(path: Path, authority: LocalAuthority) -> DeletionStatus:
+def _complete_deletions_locked(
+    path: Path, authority: LocalAuthority, batch: _DeletionBatch
+) -> DeletionStatus:
     from .history import purge_managed_pi_sessions
 
     root, _, backups = layout(path)
-    with space_connection(root, writable=True) as (connection, info):
-        _local_space(authority, info)
-        _authorize(
-            connection,
-            actor=authority.actor,
-            action="maintenance.delete",
-            epoch=info.execution_epoch,
-        )
-        pending_jobs = [
-            str(row[0])
-            for row in connection.execute(
-                "SELECT operation_id FROM deletion_jobs WHERE status = 'pending' "
-                "ORDER BY operation_id"
-            ).fetchall()
-        ]
-        subject_jobs = (
-            [
-                str(row[0])
-                for row in connection.execute(
-                    "SELECT operation_id FROM subject_deletion_jobs WHERE status = 'pending' "
-                    "ORDER BY operation_id"
-                ).fetchall()
-            ]
-            if info.schema_version >= 2
-            else []
-        )
-        contaminated = [
-            UUID(row[0])
-            for row in connection.execute(
-                "SELECT backup_id FROM backup_inventory WHERE status = 'contaminated' "
-                "ORDER BY backup_id"
-            ).fetchall()
-        ]
+    pending_jobs = batch.artifact_jobs
+    subject_jobs = batch.subject_jobs
+    contaminated = batch.contaminated_backups
     if not pending_jobs and not subject_jobs and not contaminated:
         sanitize_database(root)
         with space_connection(root) as (connection, current):
@@ -2157,12 +2312,22 @@ def _complete_deletions_locked(path: Path, authority: LocalAuthority) -> Deletio
                 "WHERE operation_id = ? AND status = 'pending'",
                 (completed_at.isoformat(), operation_id),
             )
+            connection.execute(
+                "DELETE FROM maintenance_events WHERE event_id = ? "
+                "AND kind = 'technical_deletion_targets'",
+                (operation_id,),
+            )
         if info.schema_version >= 2:
             for operation_id in subject_jobs:
                 connection.execute(
                     "UPDATE subject_deletion_jobs SET status = 'complete', completed_at = ? "
                     "WHERE operation_id = ? AND status = 'pending'",
                     (completed_at.isoformat(), operation_id),
+                )
+                connection.execute(
+                    "DELETE FROM maintenance_events WHERE event_id = ? "
+                    "AND kind = 'technical_deletion_targets'",
+                    (operation_id,),
                 )
     sanitize_database(root)
     with space_connection(root) as (connection, current):
@@ -2212,6 +2377,7 @@ __all__ = [
     "read_work",
     "read_receipt",
     "read_space",
+    "read_technical_deletion_targets",
     "restore_backup",
     "upgrade_space",
 ]
