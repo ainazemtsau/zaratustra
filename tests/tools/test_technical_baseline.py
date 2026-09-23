@@ -287,7 +287,7 @@ def test_dbos_payload_scan_detects_artificial_deletion_defect(tmp_path: Path) ->
     assert _payload_remnants([database]) == [database.name]
 
 
-def test_dbos_vacuum_consumes_checkpoint_before_journal_switch(tmp_path: Path) -> None:
+def test_dbos_vacuum_sanitizes_closed_wal_without_changing_mode(tmp_path: Path) -> None:
     database = tmp_path / "synthetic.sqlite3"
     connection = sqlite3.connect(database)
     try:
@@ -302,9 +302,10 @@ def test_dbos_vacuum_consumes_checkpoint_before_journal_switch(tmp_path: Path) -
     finally:
         connection.close()
 
-    _vacuum(database)
+    sanitation = _vacuum(database)
 
     assert _payload_remnants([database]) == []
+    assert sanitation == {"journalMode": "wal", "freelist": 0, "integrity": "ok"}
     connection = sqlite3.connect(database)
     try:
         assert connection.execute("PRAGMA journal_mode").fetchone() == ("wal",)

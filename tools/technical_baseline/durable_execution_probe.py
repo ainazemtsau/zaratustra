@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
 import importlib.metadata
 import json
 import os
@@ -12,10 +13,13 @@ import subprocess
 import sys
 import time
 from collections.abc import Callable
+from contextlib import closing
+from ctypes import wintypes
 from pathlib import Path
 from typing import Any
 
 from .common import (
+    SCRATCH,
     CheckConclusion,
     CheckResult,
     GateReport,
@@ -57,7 +61,7 @@ def _connect(path: Path) -> sqlite3.Connection:
 
 
 def _init_core(base: Path) -> None:
-    with _connect(base / "core.sqlite3") as connection:
+    with closing(_connect(base / "core.sqlite3")) as connection, connection:
         connection.executescript(
             """
             CREATE TABLE IF NOT EXISTS receipts(
@@ -107,13 +111,13 @@ def _init_core(base: Path) -> None:
 
 
 def _query_one(base: Path, statement: str, values: tuple[object, ...] = ()) -> Any:
-    with _connect(base / "core.sqlite3") as connection:
+    with closing(_connect(base / "core.sqlite3")) as connection, connection:
         row = connection.execute(statement, values).fetchone()
     return row
 
 
 def _write(base: Path, callback: Callable[[sqlite3.Connection], Any]) -> Any:
-    with _connect(base / "core.sqlite3") as connection:
+    with closing(_connect(base / "core.sqlite3")) as connection, connection:
         connection.execute("BEGIN IMMEDIATE")
         result = callback(connection)
         connection.commit()
@@ -481,6 +485,9 @@ def _child(args: argparse.Namespace) -> int:
                 SENTINEL,
             )
             handle.get_result()
+            payload_before_delete = _query_one(
+                base, "SELECT body FROM managed_payloads WHERE payload_id='payload-1'"
+            )
             dbos.delete_workflow(args.workflow_id)
             _write(
                 base,
@@ -488,7 +495,12 @@ def _child(args: argparse.Namespace) -> int:
                     "DELETE FROM managed_payloads WHERE payload_id='payload-1'"
                 ),
             )
-            print(json.dumps({"deleted": True}), flush=True)
+            print(
+                json.dumps(
+                    {"deleted": True, "payloadWasPresent": payload_before_delete == (SENTINEL,)}
+                ),
+                flush=True,
+            )
         else:
             raise ValueError(f"unknown child action: {args.action}")
         return 0
@@ -577,8 +589,10 @@ def _observe_then_interrupt(
 
 
 def _backup_database(source: Path, destination: Path) -> None:
-    with sqlite3.connect(f"file:{source.resolve().as_posix()}?mode=ro", uri=True) as source_db:
-        with sqlite3.connect(destination) as destination_db:
+    with closing(
+        sqlite3.connect(f"file:{source.resolve().as_posix()}?mode=ro", uri=True)
+    ) as source_db:
+        with closing(sqlite3.connect(destination)) as destination_db:
             source_db.backup(destination_db)
 
 
@@ -634,21 +648,67 @@ def _fencing_contract(
     )
 
 
-def _vacuum(path: Path) -> None:
-    connection = sqlite3.connect(path)
+def _vacuum(path: Path) -> dict[str, object]:
+    """Sanitize after child exit, keeping each database's existing journal mode."""
+
+    stage = "connect"
     try:
-        connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
-        connection.execute("PRAGMA journal_mode=DELETE").fetchone()
-        connection.execute("PRAGMA secure_delete=ON").fetchone()
-        connection.execute("VACUUM")
-        connection.execute("PRAGMA journal_mode=WAL").fetchone()
-        connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
-    finally:
-        connection.close()
+        with closing(sqlite3.connect(path, timeout=30)) as connection:
+            connection.execute("PRAGMA busy_timeout=30000")
+            stage = "read-journal-mode"
+            mode = str(connection.execute("PRAGMA journal_mode").fetchone()[0])
+            if mode == "wal":
+                stage = "checkpoint-before-vacuum"
+                checkpoint = connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+                if checkpoint is None or checkpoint[0] != 0:
+                    raise RuntimeError(
+                        f"{path.name}: busy checkpoint before VACUUM: {checkpoint!r}"
+                    )
+            stage = "secure-delete"
+            connection.execute("PRAGMA secure_delete=ON")
+            stage = "vacuum"
+            connection.execute("VACUUM")
+            if mode == "wal":
+                stage = "checkpoint-after-vacuum"
+                checkpoint = connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+                if checkpoint is None or checkpoint[0] != 0:
+                    raise RuntimeError(f"{path.name}: busy checkpoint after VACUUM: {checkpoint!r}")
+            stage = "inspect"
+            freelist = int(connection.execute("PRAGMA freelist_count").fetchone()[0])
+            integrity = str(connection.execute("PRAGMA integrity_check").fetchone()[0])
+        return {"journalMode": mode, "freelist": freelist, "integrity": integrity}
+    except sqlite3.OperationalError as error:
+        raise RuntimeError(f"{path.name}: {stage}: {error}") from error
 
 
 def _payload_remnants(files: list[Path], payload: bytes = SENTINEL.encode()) -> list[str]:
     return [path.name for path in files if payload in path.read_bytes()]
+
+
+def _exclusive_windows_open(path: Path) -> str:
+    """Prove no other process retains a Windows handle to this managed file."""
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    create_file = kernel32.CreateFileW
+    create_file.argtypes = (
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+    )
+    create_file.restype = ctypes.c_void_p
+    handle = create_file(str(path), 0x80000000, 0, None, 3, 0x80, None)
+    if handle == ctypes.c_void_p(-1).value:
+        return f"winerror:{ctypes.get_last_error()}"
+    close_handle = kernel32.CloseHandle
+    close_handle.argtypes = (ctypes.c_void_p,)
+    close_handle.restype = wintypes.BOOL
+    if not close_handle(handle):
+        return f"close-winerror:{ctypes.get_last_error()}"
+    return "closed"
 
 
 def run_probe(output: Path) -> GateReport:
@@ -1028,6 +1088,94 @@ def run_probe(output: Path) -> GateReport:
     return report
 
 
+def run_scenario9_windows_probe(output: Path, executor_template: Path) -> GateReport:
+    """One new scenario 9 run from preserved, migrated synthetic DBOS state."""
+
+    if sys.platform != "win32" or sys.version_info[:3] != (3, 13, 7):
+        raise RuntimeError("scenario 9 requires the pinned Windows Python 3.13.7")
+    if sqlite3.sqlite_version != "3.53.3":
+        raise RuntimeError("scenario 9 requires exact SQLite 3.53.3")
+    if importlib.metadata.version("dbos") != "3.0.0":
+        raise RuntimeError("scenario 9 requires exact DBOS 3.0.0")
+    template = executor_template.resolve()
+    if template.name != "executor.sqlite3" or not template.is_relative_to(SCRATCH):
+        raise ValueError("executor template must be a preserved scratch executor.sqlite3")
+    with closing(sqlite3.connect(f"file:{template.as_posix()}?mode=ro", uri=True)) as source:
+        migration = source.execute("SELECT MAX(version) FROM dbos_migrations").fetchone()
+        if migration is None or migration[0] != 114:
+            raise RuntimeError(f"unexpected DBOS template migration: {migration!r}")
+
+    output = new_scratch_output(output)
+    deletion = _scenario_dir(output, "09-deletion", template)
+    deleted = _run_child(
+        deletion,
+        "payload-delete",
+        version="v1",
+        workflow_id="payload-workflow-1",
+    )
+    managed = [deletion / "core.sqlite3", deletion / "executor.sqlite3"]
+    handles_before = {path.name: _exclusive_windows_open(path) for path in managed}
+    if any(state != "closed" for state in handles_before.values()):
+        raise RuntimeError(f"open handle after child exit: {handles_before!r}")
+    sanitation = {path.name: _vacuum(path) for path in managed}
+    handles_after = {path.name: _exclusive_windows_open(path) for path in managed}
+    files = sorted(deletion.glob("*.sqlite3*")) + sorted(deletion.glob("*.log"))
+    first_remnants = _payload_remnants(files)
+    time.sleep(0.25)
+    second_remnants = _payload_remnants(files)
+    payload_count = _query_one(deletion, "SELECT COUNT(*) FROM managed_payloads")[0]
+    evidence = {
+        "templateMigration": migration[0],
+        "deleteExitCode": deleted.returncode,
+        "deleteResponse": _json_stdout(deleted),
+        "handlesAfterChild": handles_before,
+        "sanitation": sanitation,
+        "handlesAfterSanitation": handles_after,
+        "managedPayloadRows": payload_count,
+        "scannedFiles": [path.name for path in files],
+        "firstClosedScan": first_remnants,
+        "secondClosedScan": second_remnants,
+    }
+    passed = (
+        deleted.returncode == 0
+        and evidence["deleteResponse"] == {"deleted": True, "payloadWasPresent": True}
+        and payload_count == 0
+        and all(state == "closed" for state in handles_after.values())
+        and all(item["integrity"] == "ok" and item["freelist"] == 0 for item in sanitation.values())
+        and not first_remnants
+        and not second_remnants
+    )
+    check = CheckResult(
+        "managed-technical-payload-deletion",
+        passed,
+        "Child exited, all managed SQLite handles closed, secure VACUUM completed, "
+        "and two stable byte scans inspected the managed technical files.",
+        evidence,
+    )
+    _record_check(output, [], check)
+    report = GateReport(
+        gate="durable-execution-scenario9-windows",
+        status=gate_status([check], frozenset({check.name})),
+        checks=(check,),
+        versions={
+            "python": sys.version.split()[0],
+            "sqlite": sqlite3.sqlite_version,
+            "dbos": importlib.metadata.version("dbos"),
+            "platform": sys.platform,
+            "probeSha256": sha256_file(Path(__file__)),
+        },
+        commands=(
+            "fixed-python -m tools.technical_baseline.durable_execution_probe "
+            "--scenario9-only --executor-template <preserved-readiness-db> "
+            "--output _scratch/<new>",
+        ),
+        untested=("scenarios 1-8 and 10 were not rerun", "no production dependency"),
+        notes=("The template is a copy of the prior synthetic DBOS migration 114 state.",),
+    )
+    report.write(output / "durable-execution-scenario9.json")
+    return report
+
+
 def run_targeted_failed_probe(output: Path) -> GateReport:
     """Repeat only scenarios 9 and 10 after their diagnosed stand defects."""
 
@@ -1183,6 +1331,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--effect-id", default="effect-1")
     parser.add_argument("--resource-id", default="resource-1")
     parser.add_argument("--targeted-failed", action="store_true")
+    parser.add_argument("--scenario9-only", action="store_true")
+    parser.add_argument("--executor-template", type=Path)
     return parser
 
 
@@ -1195,11 +1345,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.output is None:
         raise SystemExit("--output is required")
     try:
-        report = (
-            run_targeted_failed_probe(args.output)
-            if args.targeted_failed
-            else run_probe(args.output)
-        )
+        if args.scenario9_only:
+            if args.targeted_failed or args.executor_template is None:
+                raise ValueError("--scenario9-only requires --executor-template alone")
+            report = run_scenario9_windows_probe(args.output, args.executor_template)
+        elif args.targeted_failed:
+            report = run_targeted_failed_probe(args.output)
+        else:
+            report = run_probe(args.output)
     except Exception as error:  # pragma: no cover - exercised only by the live probe
         output = args.output.resolve()
         checks = _load_recorded_checks(output) if output.exists() else []

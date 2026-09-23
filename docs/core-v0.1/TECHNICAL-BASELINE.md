@@ -1,5 +1,20 @@
 # Core v0.1 technical baseline
 
+## Narrow Stage 4 continuation — September 23, 2026
+
+After the historical continuation below, the owner authorized one new run of
+**scenario 9 only**. The pinned Python 3.13.7 / SQLite 3.53.3 / DBOS 3.0.0 Windows
+fixture used the preserved migrated executor template. The repaired development
+stand explicitly closed SQLite handles, verified exclusive Windows opens after the
+DBOS child exited, retained each database's journal mode during secure VACUUM, and
+checked two stable scans. Scenario 9 passed: the payload existed before deletion,
+then no managed payload row or sentinel bytes remained in the closed live databases
+or log. Both databases reported integrity `ok` and zero freelist pages. The exact
+machine report is `STAGE4-DBOS-SCENARIO9-EVIDENCE.json`; the implementation plan and
+limitations are in `STAGE4-PLAN.md`. No targeted repeat or other scenario rerun was
+made. The old inconclusive reports below remain accurate for their own attempts.
+This result does not install a production DBOS runner or authorize real model calls.
+
 ## Continuation result — September 22, 2026
 
 The owner-authorized continuation leaves the two independent gates in different

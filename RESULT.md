@@ -1,4 +1,68 @@
-# Core v0.1 Stage 3 Activity/Work
+# Core v0.1 Stage 4 plan and scenario 9 check
+
+## outcome
+
+The owner accepted Stage 3 at `fa4c1773b0b4a8b75a03702be1e524cf8d5ea7a9`.
+`docs/core-v0.1/STAGE4-PLAN.md` defines the first ordinary-Pi-to-independent-Core
+user path and its implementation boundary. One new development-only Windows run
+of DBOS scenario 9 was positive. No production Pi/DBOS integration or real model
+call was started.
+
+## evidence
+
+The source specification SHA-256 matches
+`1DDCBF9DBFD58426781F61A67A170D3CE85FCD2BA27B17549773ED3356F9428D`.
+The single scenario 9 run used pinned Python 3.13.7, SQLite 3.53.3, DBOS 3.0.0
+and the preserved synthetic executor migration 114. Its ignored output is
+`_scratch/dbos-scenario9-windows-20260923-a`; the tracked report is
+`docs/core-v0.1/STAGE4-DBOS-SCENARIO9-EVIDENCE.json` with SHA-256
+`3404D652208A9AC7C2FC255F012D70BF435A290302E7B775DCA7766EE5DE6315`.
+The payload was present before deletion. DBOS child exit/delete succeeded;
+exclusive Windows opens succeeded before and after sanitation; both databases
+reported integrity `ok` and zero freelist; managed payload rows were zero and
+two closed-file scans found no sentinel. No targeted repeat or other scenario run
+was made. The full `uv run --locked python -m tools.check --deliver` passed:
+170 formatted files, clean Ruff, strict mypy on 146 source files, 20 import
+contracts, 479 tests, source/wheel build and report structure. The report's
+probe hash identifies the executed pre-formatting bytes; only formatting and
+import order changed in the final stand file afterward.
+
+## assumptions
+
+The previous `database is locked` is consistent with stand code that committed
+SQLite transactions without explicitly closing connections, followed by an
+exclusive journal-mode switch. The old reports did not capture the precise
+blocking handle or SQL stage, so that historical attribution is not claimed as
+proven. The repaired stand closes connections explicitly and reports the stage
+of any future SQLite lock. Stage 4's first user scenario is an interactive Pi
+path; standalone durable RPC execution is a separate DBOS-dependent boundary.
+
+## cuts
+
+The check covers a single synthetic Windows fixture and managed live SQLite/log
+files. It does not prove production runner integration, crash during sanitation,
+unmanaged copies, SSD-level erasure or a real provider. No old `.zara`, personal
+data, model account, provider call, custom dispatcher or `C:\projects\zaratustra`
+change was used. The full accepted Core composition remains in scope beyond the
+first scenario.
+
+## cost
+
+One new scenario 9 run, no repeat, no external service cost. Changes are a
+development-only stand repair, its focused test, a tracked machine report,
+Stage 4 plan and this report.
+
+## manual-acceptance
+
+The owner accepted Stage 3 and authorized this planning/check/commit pass.
+The positive technical check does not constitute owner acceptance of a future
+production Stage 4 implementation or selection of a real provider/resource.
+
+## next
+
+solmax
+
+# Historical Stage 3 result
 
 ## outcome
 

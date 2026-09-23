@@ -3,15 +3,16 @@
 ## Current product authority — Core v0.1
 - The current product basis is `docs/core-v0.1/IMPLEMENTATION-BASELINE.md`, the
   owner-approved Core v0.1 implementation plan recorded there,
-  `docs/core-v0.1/STAGE3-PLAN.md`, this AGENTS.md, and `validation.config`.
+  `docs/core-v0.1/STAGE4-PLAN.md`, this AGENTS.md, and `validation.config`.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
 - Stage 1 stopped after recording the G07-1 DBOS and G08-1 Pi technical outcomes.
   Stage 2 delivered the independent domain foundation and was accepted by the
-  owner at commit `62a173c7d9a875e6709bf2e0dbe0d8d7e7fa31df`. The September
-  23 Stage 3 request authorizes only the minimal persisted Activity/Work contract
-  described in `docs/core-v0.1/STAGE3-PLAN.md`. It does not authorize Pi,
-  DBOS-dependent or custom execution, memory, Sleep or real owner data.
+  owner at commit `62a173c7d9a875e6709bf2e0dbe0d8d7e7fa31df`. The owner
+  accepted Stage 3 at `fa4c1773b0b4a8b75a03702be1e524cf8d5ea7a9`. The
+  current request authorizes a Stage 4 plan, one new development-only DBOS
+  scenario 9 run and local commit; it does not authorize production integration
+  or real model calls.
 
 ## Commands (run from this repository)
 - Prepare: `uv sync --locked`
@@ -108,10 +109,9 @@ Work 2 installed/migration proof: `uv run --locked python -m tools.probe_records
 CI/CD, GitHub Actions and push notifications are excluded requirements until the owner separately asks. Do not configure them or block setup/delivery on their absence, even if a generic checklist requires them. The owner authorized public GitHub hosting and integration into main on September 11–12, 2026; local checks stay required. That authorization does not grant access to user workspaces or authorize paid services. The original automation boundary remains docs/setup/OWNER-DECISION-20260907.md, owner-ack:solmax-zaratustra-local-setup-no-automation-20260907.
 
 ## Constitution
-- Keep the accepted Core v0.1 functional composition and completed Stage 1/2
-  evidence. Implement only the separately authorized Stage 3 Activity/Work
-  persistence and explicit acceptance, then stop at its boundary. Preserve
-  earlier Works/CALLs as history, not current scope.
+- Keep the accepted Core v0.1 functional composition and completed Stage 1–3
+  evidence. The current Stage 4 pass is a plan and narrow development-only DBOS
+  check. Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.
 - No real personal data, remote publication, paid service or new external rights without authorization.

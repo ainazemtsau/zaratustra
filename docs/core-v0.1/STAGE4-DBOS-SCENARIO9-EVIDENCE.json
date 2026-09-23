@@ -1,0 +1,65 @@
+{
+  "gate": "durable-execution-scenario9-windows",
+  "status": "positive",
+  "checks": [
+    {
+      "name": "managed-technical-payload-deletion",
+      "passed": true,
+      "observation": "Child exited, all managed SQLite handles closed, secure VACUUM completed, and two stable byte scans inspected the managed technical files.",
+      "evidence": {
+        "templateMigration": 114,
+        "deleteExitCode": 0,
+        "deleteResponse": {
+          "deleted": true,
+          "payloadWasPresent": true
+        },
+        "handlesAfterChild": {
+          "core.sqlite3": "closed",
+          "executor.sqlite3": "closed"
+        },
+        "sanitation": {
+          "core.sqlite3": {
+            "journalMode": "wal",
+            "freelist": 0,
+            "integrity": "ok"
+          },
+          "executor.sqlite3": {
+            "journalMode": "delete",
+            "freelist": 0,
+            "integrity": "ok"
+          }
+        },
+        "handlesAfterSanitation": {
+          "core.sqlite3": "closed",
+          "executor.sqlite3": "closed"
+        },
+        "managedPayloadRows": 0,
+        "scannedFiles": [
+          "core.sqlite3",
+          "executor.sqlite3",
+          "payload-delete-1790133469666921700.log"
+        ],
+        "firstClosedScan": [],
+        "secondClosedScan": []
+      },
+      "conclusion": "passed"
+    }
+  ],
+  "versions": {
+    "python": "3.13.7",
+    "sqlite": "3.53.3",
+    "dbos": "3.0.0",
+    "platform": "win32",
+    "probeSha256": "f55465b8c3d04e5c3416d46296023235c766ad1f7c63471ab7d85a1d0a0dc3ce"
+  },
+  "commands": [
+    "fixed-python -m tools.technical_baseline.durable_execution_probe --scenario9-only --executor-template <preserved-readiness-db> --output _scratch/<new>"
+  ],
+  "untested": [
+    "scenarios 1-8 and 10 were not rerun",
+    "no production dependency"
+  ],
+  "notes": [
+    "The template is a copy of the prior synthetic DBOS migration 114 state."
+  ]
+}
