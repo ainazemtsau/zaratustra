@@ -98,6 +98,16 @@ checkpoints/truncates WAL, runs `VACUUM` under `secure_delete=ON`, records compl
 and checkpoints again. Audit retains permitted identities/outcome references but no
 payload, payload digest or recoverable receipt intent.
 
+Each cleanup run owns an exact initial batch of pending deletion operation ids and
+contaminated backup ids. Physical removal and final status changes apply only to that
+batch; broad status-based finalization is forbidden. Work committed concurrently is
+left `pending`/`contaminated` for the next run, and the returned pending/completed
+counts are reread after sanitation. `live_store_sanitized` is false and
+`completed_at` is absent while any such work remains. If a run is interrupted after
+package removal but before status finalization, the same ids remain retryable. If it
+is interrupted after finalization but before the final checkpoint/VACUUM, a no-work
+retry still performs real sanitation before reporting success.
+
 The claim is limited to files managed by this stage: the live core database and its
 WAL/SHM plus registered completed backup packages. SSD remapping, OS snapshots,
 unregistered copies and external systems are outside it and are not called erased.
@@ -130,6 +140,13 @@ concurrent exact duplicate, terminal deletion, backup tamper refusal, quarantine
 restore/fresh recovery, deterministic backup/delete interleaving and closed-store
 deletion from live SQLite/WAL and managed backups. Publication tests pause both after
 rename/before inventory commit and after commit/before return.
+
+The September 23 corrective continuation adds a deterministic two-Artifact
+interleaving at the cleanup/finalization boundary. The first run must finish only its
+captured Artifact/backup, report the concurrent job as pending, and leave its package
+contaminated; the second run must remove that package and finish the job. Two injected
+interruptions prove retry after physical removal/before finalization and after
+finalization/before the last sanitation pass.
 
 This stage deliberately has no Activity/Work runtime, Attempts, scheduler,
 dispatcher, outbox, Pi integration, DBOS dependency, memory, Sleep or developer

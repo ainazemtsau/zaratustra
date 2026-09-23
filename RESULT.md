@@ -18,7 +18,8 @@ recovery; terminal logical deletion; and physical cleanup of managed live and ba
 payloads. No successor Activity/Work execution layer was admitted.
 
 Implementation commits are `9df390a` (foundation), `f5159fb` (terminal deletion and
-backup/delete race closure), and `8a62bdd` (crash-consistent backup publication).
+backup/delete race closure), `8a62bdd` (crash-consistent backup publication), and
+`e3fd379` (exact-batch concurrent deletion cleanup).
 
 ## evidence
 
@@ -43,17 +44,19 @@ receipt recovery, a verified backup, quarantine-only restore, epoch rotation fro
 to 2, fresh recovery and exact restored bytes. It made no model, provider, network or
 old-workspace call.
 
-Twenty focused foundation tests pass. They cover new/reopened spaces, unsupported
+Twenty-three focused foundation tests pass. They cover new/reopened spaces, unsupported
 runtime/schema refusal, exact binary/text revisions, provenance, replay/conflict,
 stale writes, current Decision/Grant behavior, atomic rollback, response recovery,
 concurrency, tamper refusal, quarantine/recovery, terminal deletion, backup/delete
 interleaving and both backup publication crash windows. In particular, a renamed
 package remains non-restorable before inventory commit and becomes verifiably
-complete immediately after commit.
+complete immediately after commit. The corrective deletion tests reproduce the
+confirmed cleanup/finalization race, require concurrent work to remain pending for a
+second run, and prove retry after interruptions on both sides of status finalization.
 
 The final full `uv run --locked python -m tools.check --deliver` run passed: 168
 files were format-clean, Ruff was clean, strict mypy passed across 144 source files,
-all 20 import contracts were kept, all 470 tests passed, source and wheel artifacts
+all 20 import contracts were kept, all 473 tests passed, source and wheel artifacts
 built, and delivery-report structure passed. Wheel inspection confirms the
 foundation package is installed while development tools remain excluded.
 
@@ -64,6 +67,14 @@ window. Commits `f5159fb` and `8a62bdd` fixed them with deterministic regression
 tests. Final bounded re-review found no Critical or Important issue and returned
 ready. This review is engineering evidence, not owner acceptance or a Direction G5
 artifact.
+
+On September 23 the owner supplied a deterministic reproducer for a later-confirmed
+race in `complete_deletions`: a broad final status update could mark a concurrently
+created deletion job and contaminated backup complete/purged without removing that
+backup. The reproducer passed on `09122dd` with the defect present. Commit `e3fd379`
+replaces broad finalization with exact captured ids, rereads actual remaining work,
+and keeps concurrent work retryable. The original defect assertions no longer hold;
+the second cleanup now removes the concurrently contaminated package.
 
 ## assumptions
 
