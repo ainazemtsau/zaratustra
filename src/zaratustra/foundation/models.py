@@ -11,6 +11,9 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, JsonValue, mod
 
 type Action = Literal[
     "artifact.write",
+    "activity.write",
+    "work.write",
+    "work.accept",
     "decision.write",
     "grant.write",
     "record.read",
@@ -19,10 +22,13 @@ type Action = Literal[
     "maintenance.backup",
     "maintenance.delete",
 ]
-type RecordKind = Literal["artifact", "decision", "grant"]
+type RecordKind = Literal["artifact", "decision", "grant", "activity", "work"]
 
 ALL_ACTIONS: tuple[Action, ...] = (
     "artifact.write",
+    "activity.write",
+    "work.write",
+    "work.accept",
     "decision.write",
     "grant.write",
     "record.read",
@@ -68,14 +74,66 @@ class DecisionState(ContractModel):
 class GrantState(ContractModel):
     grantee: str = Field(min_length=1, max_length=200)
     actions: tuple[Action, ...] = Field(min_length=1)
-    resource_type: Literal["space", "artifact"] = "space"
+    resource_type: Literal["space", "artifact", "activity", "work"] = "space"
     resource_id: UUID | None = None
     status: Literal["active", "revoked"] = "active"
 
     @model_validator(mode="after")
     def scope_is_exact(self) -> GrantState:
-        if (self.resource_type == "artifact") != (self.resource_id is not None):
-            raise ValueError("Artifact grants require one resource_id; space grants do not")
+        if (self.resource_type == "space") == (self.resource_id is not None):
+            raise ValueError("Scoped grants require one resource_id; space grants do not")
+        return self
+
+
+class ArtifactRef(ContractModel):
+    artifact_id: UUID
+    revision: int = Field(ge=1)
+
+
+class ActivityState(ContractModel):
+    title: str = Field(min_length=1, max_length=200)
+    goal: str = Field(min_length=1, max_length=4096)
+    status: Literal["ongoing", "paused", "completed"] = "ongoing"
+
+
+class OutputContract(ContractModel):
+    slot: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+    media_type: str = Field(min_length=1, max_length=200)
+
+
+class LinkedOutput(ContractModel):
+    slot: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+    artifact: ArtifactRef
+
+
+class WorkAcceptance(ContractModel):
+    operation_id: UUID
+    basis: str = Field(min_length=1, max_length=4096)
+    authority_source: str = Field(min_length=1, max_length=2048)
+    accepted_at: AwareDatetime
+
+
+class WorkState(ContractModel):
+    activity_id: UUID
+    goal: str = Field(min_length=1, max_length=4096)
+    inputs: tuple[ArtifactRef, ...] = ()
+    constraints: tuple[str, ...] = ()
+    expected_outputs: tuple[OutputContract, ...] = Field(min_length=1)
+    method: Literal["none"] = "none"
+    status: Literal["proposed", "succeeded"] = "proposed"
+    linked_outputs: tuple[LinkedOutput, ...] = ()
+    acceptance: WorkAcceptance | None = None
+
+    @model_validator(mode="after")
+    def valid_slots(self) -> WorkState:
+        expected = [item.slot for item in self.expected_outputs]
+        linked = [item.slot for item in self.linked_outputs]
+        if len(expected) != len(set(expected)) or len(linked) != len(set(linked)):
+            raise ValueError("Output slots must be unique")
+        if not set(linked).issubset(expected):
+            raise ValueError("Linked output has no declared slot")
+        if (self.status == "succeeded") != (self.acceptance is not None):
+            raise ValueError("Succeeded Work requires acceptance and only succeeded Work has it")
         return self
 
 
@@ -146,6 +204,57 @@ class RevokeGrantRequest(OperationRequest):
     expected_revision: int = Field(ge=1)
 
 
+class CreateActivityRequest(OperationRequest):
+    kind: Literal["create_activity"] = "create_activity"
+    activity_id: UUID
+    state: ActivityState
+
+
+class ReviseActivityRequest(OperationRequest):
+    kind: Literal["revise_activity"] = "revise_activity"
+    activity_id: UUID
+    expected_revision: int = Field(ge=1)
+    state: ActivityState
+
+
+class DeleteActivityRequest(OperationRequest):
+    kind: Literal["delete_activity"] = "delete_activity"
+    activity_id: UUID
+    expected_revision: int = Field(ge=1)
+
+
+class CreateWorkRequest(OperationRequest):
+    kind: Literal["create_work"] = "create_work"
+    work_id: UUID
+    state: WorkState
+
+    @model_validator(mode="after")
+    def new_work_is_unaccepted(self) -> CreateWorkRequest:
+        if self.state.status != "proposed" or self.state.linked_outputs:
+            raise ValueError("New Work starts proposed with no linked output")
+        return self
+
+
+class LinkWorkOutputRequest(OperationRequest):
+    kind: Literal["link_work_output"] = "link_work_output"
+    work_id: UUID
+    expected_revision: int = Field(ge=1)
+    output: LinkedOutput
+
+
+class AcceptWorkRequest(OperationRequest):
+    kind: Literal["accept_work"] = "accept_work"
+    work_id: UUID
+    expected_revision: int = Field(ge=1)
+    basis: str = Field(min_length=1, max_length=4096)
+
+
+class DeleteWorkRequest(OperationRequest):
+    kind: Literal["delete_work"] = "delete_work"
+    work_id: UUID
+    expected_revision: int = Field(ge=1)
+
+
 DomainRequest = Annotated[
     BootstrapRequest
     | RecoverRequest
@@ -155,7 +264,14 @@ DomainRequest = Annotated[
     | CreateDecisionRequest
     | ReviseDecisionRequest
     | CreateGrantRequest
-    | RevokeGrantRequest,
+    | RevokeGrantRequest
+    | CreateActivityRequest
+    | ReviseActivityRequest
+    | DeleteActivityRequest
+    | CreateWorkRequest
+    | LinkWorkOutputRequest
+    | AcceptWorkRequest
+    | DeleteWorkRequest,
     Field(discriminator="kind"),
 ]
 
@@ -165,7 +281,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1]
+    schema_version: Literal[1, 2]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -181,6 +297,19 @@ class OperationReceipt(ContractModel):
     result: dict[str, JsonValue]
 
 
+class AuditReference(ContractModel):
+    record_id: UUID
+    revision: int = Field(ge=1)
+
+
+class OperationAuditEntry(ContractModel):
+    operation_id: UUID
+    authority_source: str
+    target_refs: tuple[AuditReference, ...]
+    grant_refs: tuple[AuditReference, ...]
+    decision_refs: tuple[AuditReference, ...]
+
+
 class ArtifactRevision(ContractModel):
     artifact_id: UUID
     revision: int = Field(ge=1)
@@ -192,6 +321,25 @@ class ArtifactRevision(ContractModel):
     content_sha256: str | None
     status: Literal["active", "deleted"]
     provenance: tuple[ProvenanceRef, ...]
+
+
+class ActivityRevision(ContractModel):
+    activity_id: UUID
+    revision: int = Field(ge=1)
+    operation_id: UUID
+    created_at: AwareDatetime
+    actor: str
+    state: ActivityState
+
+
+class WorkRevision(ContractModel):
+    work_id: UUID
+    revision: int = Field(ge=1)
+    operation_id: UUID
+    created_at: AwareDatetime
+    actor: str
+    state: WorkState
+    unavailable_refs: tuple[ArtifactRef, ...] = ()
 
 
 class RecordSummary(ContractModel):
@@ -217,7 +365,7 @@ class SpaceInspection(ContractModel):
 class BackupManifest(ContractModel):
     backup_id: UUID
     space_id: UUID
-    schema_version: Literal[1]
+    schema_version: Literal[1, 2]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime
@@ -240,26 +388,43 @@ class DeletionStatus(ContractModel):
 
 __all__ = [
     "ALL_ACTIONS",
+    "AcceptWorkRequest",
     "Action",
+    "ActivityRevision",
+    "ActivityState",
+    "AuditReference",
     "ArtifactRevision",
+    "ArtifactRef",
     "BackupInfo",
     "BackupManifest",
     "BootstrapRequest",
+    "CreateActivityRequest",
     "CreateArtifactRequest",
     "CreateDecisionRequest",
     "CreateGrantRequest",
+    "CreateWorkRequest",
     "DecisionState",
+    "DeleteActivityRequest",
     "DeleteArtifactRequest",
+    "DeleteWorkRequest",
     "DeletionStatus",
     "DomainRequest",
     "GrantState",
     "OperationReceipt",
+    "OperationAuditEntry",
+    "OutputContract",
+    "LinkedOutput",
     "ProvenanceRef",
     "RecordSummary",
     "RecoverRequest",
+    "ReviseActivityRequest",
     "ReviseArtifactRequest",
     "ReviseDecisionRequest",
     "RevokeGrantRequest",
     "SpaceInfo",
     "SpaceInspection",
+    "WorkAcceptance",
+    "WorkRevision",
+    "WorkState",
+    "LinkWorkOutputRequest",
 ]

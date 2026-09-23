@@ -7,6 +7,9 @@ Standalone probe CLIs require NEW directories inside this checkout's _scratch;
 pytest supplies isolated paths. Never clean old trials or use the owner's data.
 probe_foundation uses only the public independent foundation on synthetic data and an
 explicitly supplied verified SQLite 3.53.3 DLL; it creates no Activity or user data.
+probe_stage3 creates only a synthetic Activity, Work and Artifacts in a NEW ignored
+scratch directory, then reads their exact state in a second process. It does not
+connect a model, provider or old workspace.
 Read STOP/STEER before mutations. T5/T6 checks are assigned to fresh Claude Code
 by the owner; authoring/formatting source is not a native or behavioral PASS.
 probe_overview reuses the T5 pair run, then reads one shared overview over both

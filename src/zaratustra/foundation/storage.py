@@ -10,7 +10,7 @@ from collections.abc import Iterator
 from contextlib import closing, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, cast
 from uuid import UUID, uuid4
 
 from .models import BackupInfo, BackupManifest, SpaceInfo
@@ -190,6 +190,74 @@ SCHEMA_SHA256 = (
     .hexdigest()
     .upper()
 )
+SUBJECT_SCHEMA_NAME = "core-v0.1-activity-work-2"
+SUBJECT_SCHEMA_STATEMENTS = (
+    """
+    CREATE TABLE subject_records (
+        record_id TEXT PRIMARY KEY,
+        kind TEXT NOT NULL CHECK (kind IN ('activity', 'work')),
+        parent_id TEXT,
+        current_revision INTEGER NOT NULL CHECK (current_revision >= 1),
+        status TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        CHECK ((kind = 'activity' AND parent_id IS NULL)
+            OR (kind = 'work' AND parent_id IS NOT NULL)),
+        FOREIGN KEY (parent_id) REFERENCES subject_records(record_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE subject_revisions (
+        record_id TEXT NOT NULL,
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        operation_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        actor TEXT NOT NULL,
+        status TEXT NOT NULL,
+        PRIMARY KEY (record_id, revision),
+        FOREIGN KEY (record_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE subject_content (
+        record_id TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        payload BLOB NOT NULL,
+        sha256 TEXT NOT NULL,
+        PRIMARY KEY (record_id, revision),
+        FOREIGN KEY (record_id, revision)
+            REFERENCES subject_revisions(record_id, revision) ON DELETE CASCADE
+    ) STRICT
+    """,
+    """
+    CREATE TABLE backup_subjects (
+        backup_id TEXT NOT NULL,
+        record_id TEXT NOT NULL,
+        PRIMARY KEY (backup_id, record_id),
+        FOREIGN KEY (backup_id) REFERENCES backup_inventory(backup_id),
+        FOREIGN KEY (record_id) REFERENCES subject_records(record_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE subject_deletion_jobs (
+        operation_id TEXT PRIMARY KEY,
+        record_id TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('pending', 'complete')),
+        created_at TEXT NOT NULL,
+        completed_at TEXT,
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id),
+        FOREIGN KEY (record_id) REFERENCES subject_records(record_id)
+    ) STRICT
+    """,
+    "CREATE INDEX subject_records_kind ON subject_records(kind, record_id)",
+    "CREATE INDEX subject_revisions_operation ON subject_revisions(operation_id)",
+)
+SUBJECT_SCHEMA_SHA256 = (
+    hashlib.sha256("\n".join(statement.strip() for statement in SUBJECT_SCHEMA_STATEMENTS).encode())
+    .hexdigest()
+    .upper()
+)
 
 
 def utc_now() -> datetime:
@@ -281,7 +349,7 @@ def _begin(connection: sqlite3.Connection, *, writable: bool) -> None:
 def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> SpaceInfo:
     application_id = int(connection.execute("PRAGMA application_id").fetchone()[0])
     schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
-    if application_id != APPLICATION_ID or schema_version != SCHEMA_VERSION:
+    if application_id != APPLICATION_ID or schema_version not in (1, 2):
         raise FoundationError(
             "unsupported_schema",
             f"Unsupported application/schema identity: {application_id}/{schema_version}",
@@ -292,7 +360,10 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
     migration = connection.execute(
         "SELECT version, name, sha256 FROM schema_migrations ORDER BY version"
     ).fetchall()
-    if migration != [(SCHEMA_VERSION, SCHEMA_NAME, SCHEMA_SHA256)]:
+    expected = [(SCHEMA_VERSION, SCHEMA_NAME, SCHEMA_SHA256)]
+    if schema_version == 2:
+        expected.append((2, SUBJECT_SCHEMA_NAME, SUBJECT_SCHEMA_SHA256))
+    if migration != expected:
         raise FoundationError("unsupported_schema", "Schema history does not match installed code")
     rows = connection.execute(
         "SELECT space_id, created_at, state_revision, execution_epoch, recovery_state FROM spaces"
@@ -305,7 +376,7 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         database=database,
         space_id=UUID(space_id),
         created_at=datetime.fromisoformat(created_at),
-        schema_version=1,
+        schema_version=cast(Literal[1, 2], schema_version),
         state_revision=state_revision,
         execution_epoch=execution_epoch,
         recovery_state=recovery_state,
@@ -408,7 +479,7 @@ def backup_database(source: Path, backup_id: UUID, created_at: datetime) -> Back
         manifest = BackupManifest(
             backup_id=backup_id,
             space_id=info.space_id,
-            schema_version=1,
+            schema_version=info.schema_version,
             state_revision=info.state_revision,
             execution_epoch=info.execution_epoch,
             created_at=created_at,
@@ -466,7 +537,7 @@ def load_backup(package: Path) -> BackupInfo:
             ).fetchone()
             if (
                 application != APPLICATION_ID
-                or version != SCHEMA_VERSION
+                or version != manifest.schema_version
                 or row is None
                 or UUID(row[0]) != manifest.space_id
                 or int(row[1]) != manifest.state_revision
@@ -549,6 +620,9 @@ __all__ = [
     "FoundationError",
     "SCHEMA_SHA256",
     "SCHEMA_VERSION",
+    "SUBJECT_SCHEMA_NAME",
+    "SUBJECT_SCHEMA_SHA256",
+    "SUBJECT_SCHEMA_STATEMENTS",
     "STATE_DIRECTORY",
     "backup_database",
     "canonical_json",

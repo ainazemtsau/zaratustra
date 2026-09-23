@@ -10,36 +10,53 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import cast
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from pydantic import JsonValue, TypeAdapter, ValidationError
 
 from .models import (
     ALL_ACTIONS,
+    AcceptWorkRequest,
     Action,
+    ActivityRevision,
+    ActivityState,
+    ArtifactRef,
     ArtifactRevision,
     BackupInfo,
     BootstrapRequest,
+    CreateActivityRequest,
     CreateArtifactRequest,
     CreateDecisionRequest,
     CreateGrantRequest,
+    CreateWorkRequest,
     DecisionState,
+    DeleteActivityRequest,
     DeleteArtifactRequest,
+    DeleteWorkRequest,
     DeletionStatus,
     DomainRequest,
     GrantState,
+    LinkWorkOutputRequest,
+    OperationAuditEntry,
     OperationReceipt,
     ProvenanceRef,
     RecordSummary,
     RecoverRequest,
+    ReviseActivityRequest,
     ReviseArtifactRequest,
     ReviseDecisionRequest,
     RevokeGrantRequest,
     SpaceInfo,
     SpaceInspection,
+    WorkAcceptance,
+    WorkRevision,
+    WorkState,
 )
 from .storage import (
     DATABASE_NAME,
+    SUBJECT_SCHEMA_NAME,
+    SUBJECT_SCHEMA_SHA256,
+    SUBJECT_SCHEMA_STATEMENTS,
     FoundationError,
     backup_database,
     canonical_json,
@@ -148,6 +165,7 @@ def _authorize(
     actor: str,
     action: Action,
     epoch: int,
+    resource_type: str = "space",
     resource_id: UUID | None = None,
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     decisions: list[dict[str, object]] = []
@@ -172,7 +190,9 @@ def _authorize(
             continue
         if grant_state.grantee != actor or action not in grant_state.actions:
             continue
-        scoped = grant_state.resource_type == "space" or grant_state.resource_id == resource_id
+        scoped = grant_state.resource_type == "space" or (
+            grant_state.resource_type == resource_type and grant_state.resource_id == resource_id
+        )
         if scoped:
             grants.append({"record_id": record_id, "revision": revision})
     if not grants:
@@ -215,6 +235,13 @@ def _expect_absent(connection: object, record_id: UUID) -> None:
     ).fetchone()
     if row is not None:
         raise FoundationError("record_exists", f"Record already exists: {record_id}")
+    version = int(connection.execute("PRAGMA user_version").fetchone()[0])  # type: ignore[attr-defined]
+    if version == 2:
+        row = connection.execute(  # type: ignore[attr-defined]
+            "SELECT 1 FROM subject_records WHERE record_id = ?", (str(record_id),)
+        ).fetchone()
+        if row is not None:
+            raise FoundationError("record_exists", f"Record already exists: {record_id}")
 
 
 def _expect_revision(
@@ -377,14 +404,411 @@ def _write_root(
     ]
 
 
-def _operation_action(request: DomainRequest) -> tuple[Action, UUID | None]:
+def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]:
     if isinstance(request, (CreateArtifactRequest, ReviseArtifactRequest, DeleteArtifactRequest)):
-        return "artifact.write", request.artifact_id
+        return "artifact.write", "artifact", request.artifact_id
     if isinstance(request, (CreateDecisionRequest, ReviseDecisionRequest)):
-        return "decision.write", None
+        return "decision.write", "space", None
     if isinstance(request, (CreateGrantRequest, RevokeGrantRequest)):
-        return "grant.write", None
+        return "grant.write", "space", None
+    if isinstance(request, CreateActivityRequest):
+        return "activity.write", "space", None
+    if isinstance(request, (ReviseActivityRequest, DeleteActivityRequest)):
+        return "activity.write", "activity", request.activity_id
+    if isinstance(request, CreateWorkRequest):
+        return "work.write", "activity", request.state.activity_id
+    if isinstance(request, (LinkWorkOutputRequest, DeleteWorkRequest)):
+        return "work.write", "work", request.work_id
+    if isinstance(request, AcceptWorkRequest):
+        return "work.accept", "work", request.work_id
     raise FoundationError("invalid_request", f"No ordinary action for {request.kind}")
+
+
+def _subject_current(connection: object, record_id: UUID, kind: str) -> tuple[int, str, str | None]:
+    row = connection.execute(  # type: ignore[attr-defined]
+        "SELECT current_revision, status, parent_id FROM subject_records "
+        "WHERE record_id = ? AND kind = ?",
+        (str(record_id), kind),
+    ).fetchone()
+    if row is None:
+        raise FoundationError("not_found", f"No {kind} record {record_id}")
+    return int(row[0]), str(row[1]), str(row[2]) if row[2] else None
+
+
+def _subject_state(connection: object, record_id: UUID, revision: int) -> dict[str, object]:
+    row = connection.execute(  # type: ignore[attr-defined]
+        "SELECT c.payload, c.sha256 FROM subject_revisions r LEFT JOIN subject_content c "
+        "ON c.record_id = r.record_id AND c.revision = r.revision "
+        "WHERE r.record_id = ? AND r.revision = ?",
+        (str(record_id), revision),
+    ).fetchone()
+    if row is None:
+        raise FoundationError("not_found", f"No exact subject revision {record_id}@{revision}")
+    if row[0] is None:
+        raise FoundationError("content_unavailable", f"Subject content is unavailable: {record_id}")
+    payload = bytes(row[0])
+    if hashlib.sha256(payload).hexdigest().upper() != row[1]:
+        raise FoundationError("corrupt_space", f"Subject content digest mismatch: {record_id}")
+    return cast(dict[str, object], json.loads(payload))
+
+
+def _subject_expect(connection: object, record_id: UUID, kind: str, expected: int) -> None:
+    revision, status, _ = _subject_current(connection, record_id, kind)
+    if revision != expected:
+        raise FoundationError(
+            "stale_revision", f"Expected {record_id}@{expected}; current revision is {revision}"
+        )
+    if status == "deleted":
+        raise FoundationError("content_unavailable", f"{kind.title()} {record_id} was deleted")
+
+
+def _write_subject(
+    connection: object,
+    *,
+    record_id: UUID,
+    kind: str,
+    parent_id: UUID | None,
+    operation_id: UUID,
+    actor: str,
+    now: str,
+    status: str,
+    state: ActivityState | WorkState,
+    revision: int,
+) -> None:
+    if revision == 1:
+        _expect_absent(connection, record_id)
+        connection.execute(  # type: ignore[attr-defined]
+            "INSERT INTO subject_records(record_id, kind, parent_id, current_revision, "
+            "status, created_at, updated_at) VALUES (?, ?, ?, 1, ?, ?, ?)",
+            (str(record_id), kind, str(parent_id) if parent_id else None, status, now, now),
+        )
+    else:
+        connection.execute(  # type: ignore[attr-defined]
+            "UPDATE subject_records SET current_revision = ?, status = ?, updated_at = ? "
+            "WHERE record_id = ?",
+            (revision, status, now, str(record_id)),
+        )
+    connection.execute(  # type: ignore[attr-defined]
+        "INSERT INTO subject_revisions(record_id, revision, operation_id, created_at, "
+        "actor, status) VALUES (?, ?, ?, ?, ?, ?)",
+        (str(record_id), revision, str(operation_id), now, actor, status),
+    )
+    payload = canonical_json(state.model_dump(mode="json")).encode("utf-8")
+    connection.execute(  # type: ignore[attr-defined]
+        "INSERT INTO subject_content(record_id, revision, payload, sha256) VALUES (?, ?, ?, ?)",
+        (str(record_id), revision, payload, hashlib.sha256(payload).hexdigest().upper()),
+    )
+
+
+def _artifact_reference(
+    connection: object,
+    reference: ArtifactRef,
+    *,
+    media_type: str | None = None,
+) -> None:
+    row = connection.execute(  # type: ignore[attr-defined]
+        "SELECT r.status, c.media_type FROM records r "
+        "JOIN managed_content c ON c.record_id = r.record_id "
+        "WHERE r.record_id = ? AND r.kind = 'artifact' AND c.revision = ?",
+        (str(reference.artifact_id), reference.revision),
+    ).fetchone()
+    if row is None or row[0] != "active":
+        raise FoundationError(
+            "content_unavailable",
+            f"Artifact {reference.artifact_id}@{reference.revision} is unavailable",
+        )
+    if media_type is not None and row[1] != media_type:
+        raise FoundationError("output_mismatch", "Artifact media type differs from output contract")
+
+
+def _authorize_artifact_ref(
+    connection: object,
+    reference: ArtifactRef,
+    *,
+    actor: str,
+    epoch: int,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+    media_type: str | None = None,
+) -> None:
+    extra_grants, extra_decisions = _authorize(
+        connection,
+        actor=actor,
+        action="record.read",
+        epoch=epoch,
+        resource_type="artifact",
+        resource_id=reference.artifact_id,
+    )
+    grants.extend(reference for reference in extra_grants if reference not in grants)
+    decisions.extend(reference for reference in extra_decisions if reference not in decisions)
+    _artifact_reference(connection, reference, media_type=media_type)
+
+
+def _subject_delete(
+    connection: object,
+    *,
+    record_id: UUID,
+    kind: str,
+    expected_revision: int,
+    operation_id: UUID,
+    actor: str,
+    now: str,
+) -> tuple[dict[str, object], list[dict[str, object]]]:
+    _subject_expect(connection, record_id, kind, expected_revision)
+    if kind == "activity":
+        active_work = connection.execute(  # type: ignore[attr-defined]
+            "SELECT 1 FROM subject_records WHERE kind = 'work' AND parent_id = ? "
+            "AND status != 'deleted' LIMIT 1",
+            (str(record_id),),
+        ).fetchone()
+        if active_work is not None:
+            raise FoundationError("dependent_work", "Delete the Activity's Works first")
+    prior_operations = [
+        row[0]
+        for row in connection.execute(  # type: ignore[attr-defined]
+            "SELECT operation_id FROM subject_revisions WHERE record_id = ?",
+            (str(record_id),),
+        ).fetchall()
+    ]
+    connection.executemany(  # type: ignore[attr-defined]
+        "DELETE FROM receipts WHERE operation_id = ?",
+        ((prior_id,) for prior_id in prior_operations),
+    )
+    connection.executemany(  # type: ignore[attr-defined]
+        "UPDATE operations SET fingerprint = 'DELETED' WHERE operation_id = ?",
+        ((prior_id,) for prior_id in prior_operations),
+    )
+    revision = expected_revision + 1
+    connection.execute(  # type: ignore[attr-defined]
+        "UPDATE subject_records SET current_revision = ?, status = 'deleted', "
+        "updated_at = ? WHERE record_id = ?",
+        (revision, now, str(record_id)),
+    )
+    connection.execute(  # type: ignore[attr-defined]
+        "INSERT INTO subject_revisions(record_id, revision, operation_id, created_at, "
+        "actor, status) VALUES (?, ?, ?, ?, ?, 'deleted')",
+        (str(record_id), revision, str(operation_id), now, actor),
+    )
+    connection.execute(  # type: ignore[attr-defined]
+        "DELETE FROM subject_content WHERE record_id = ?", (str(record_id),)
+    )
+    connection.execute(  # type: ignore[attr-defined]
+        "INSERT INTO subject_deletion_jobs(operation_id, record_id, status, created_at) "
+        "VALUES (?, ?, 'pending', ?)",
+        (str(operation_id), str(record_id), now),
+    )
+    connection.execute(  # type: ignore[attr-defined]
+        "UPDATE backup_inventory SET status = 'contaminated' "
+        "WHERE status IN ('planned', 'failed') OR (status = 'complete' AND backup_id IN "
+        "(SELECT backup_id FROM backup_subjects WHERE record_id = ?))",
+        (str(record_id),),
+    )
+    return (
+        {"record_id": str(record_id), "revision": revision, "content": "unavailable"},
+        [{"record_id": str(record_id), "revision": revision}],
+    )
+
+
+def _apply_subject_change(
+    connection: object,
+    request: (
+        CreateActivityRequest
+        | ReviseActivityRequest
+        | DeleteActivityRequest
+        | CreateWorkRequest
+        | LinkWorkOutputRequest
+        | AcceptWorkRequest
+        | DeleteWorkRequest
+    ),
+    *,
+    now: str,
+    epoch: int,
+    authority: LocalAuthority,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> tuple[dict[str, object], list[dict[str, object]]]:
+    if isinstance(request, CreateActivityRequest):
+        _write_subject(
+            connection,
+            record_id=request.activity_id,
+            kind="activity",
+            parent_id=None,
+            operation_id=request.operation_id,
+            actor=request.actor,
+            now=now,
+            status=request.state.status,
+            state=request.state,
+            revision=1,
+        )
+        return {"record_id": str(request.activity_id), "revision": 1}, [
+            {"record_id": str(request.activity_id), "revision": 1}
+        ]
+    if isinstance(request, ReviseActivityRequest):
+        _subject_expect(connection, request.activity_id, "activity", request.expected_revision)
+        if request.state.status == "completed":
+            active = connection.execute(  # type: ignore[attr-defined]
+                "SELECT 1 FROM subject_records WHERE parent_id = ? AND kind = 'work' "
+                "AND status NOT IN ('succeeded', 'deleted') LIMIT 1",
+                (str(request.activity_id),),
+            ).fetchone()
+            if active is not None:
+                raise FoundationError("dependent_work", "Activity still has open Work")
+        revision = request.expected_revision + 1
+        _write_subject(
+            connection,
+            record_id=request.activity_id,
+            kind="activity",
+            parent_id=None,
+            operation_id=request.operation_id,
+            actor=request.actor,
+            now=now,
+            status=request.state.status,
+            state=request.state,
+            revision=revision,
+        )
+        return {"record_id": str(request.activity_id), "revision": revision}, [
+            {"record_id": str(request.activity_id), "revision": revision}
+        ]
+    if isinstance(request, DeleteActivityRequest):
+        return _subject_delete(
+            connection,
+            record_id=request.activity_id,
+            kind="activity",
+            expected_revision=request.expected_revision,
+            operation_id=request.operation_id,
+            actor=request.actor,
+            now=now,
+        )
+    if isinstance(request, CreateWorkRequest):
+        activity_revision, activity_status, _ = _subject_current(
+            connection, request.state.activity_id, "activity"
+        )
+        if activity_status != "ongoing":
+            raise FoundationError("activity_not_ongoing", "Work needs an ongoing Activity")
+        _subject_state(connection, request.state.activity_id, activity_revision)
+        for reference in request.state.inputs:
+            _authorize_artifact_ref(
+                connection,
+                reference,
+                actor=request.actor,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+            )
+        _write_subject(
+            connection,
+            record_id=request.work_id,
+            kind="work",
+            parent_id=request.state.activity_id,
+            operation_id=request.operation_id,
+            actor=request.actor,
+            now=now,
+            status="proposed",
+            state=request.state,
+            revision=1,
+        )
+        return {"record_id": str(request.work_id), "revision": 1}, [
+            {"record_id": str(request.work_id), "revision": 1},
+            {"record_id": str(request.state.activity_id), "revision": activity_revision},
+        ]
+    if isinstance(request, DeleteWorkRequest):
+        return _subject_delete(
+            connection,
+            record_id=request.work_id,
+            kind="work",
+            expected_revision=request.expected_revision,
+            operation_id=request.operation_id,
+            actor=request.actor,
+            now=now,
+        )
+    _subject_expect(connection, request.work_id, "work", request.expected_revision)
+    state = WorkState.model_validate(
+        _subject_state(connection, request.work_id, request.expected_revision)
+    )
+    if state.status != "proposed":
+        raise FoundationError("work_closed", "Accepted Work cannot be changed")
+    if isinstance(request, LinkWorkOutputRequest):
+        contract = next(
+            (item for item in state.expected_outputs if item.slot == request.output.slot), None
+        )
+        if contract is None:
+            raise FoundationError("output_mismatch", "No declared output slot")
+        _authorize_artifact_ref(
+            connection,
+            request.output.artifact,
+            actor=request.actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+            media_type=contract.media_type,
+        )
+        linked = tuple(
+            item for item in state.linked_outputs if item.slot != request.output.slot
+        ) + (request.output,)
+        next_state = state.model_copy(update={"linked_outputs": linked})
+    else:
+        assert isinstance(request, AcceptWorkRequest)
+        declared = {item.slot: item.media_type for item in state.expected_outputs}
+        linked_by_slot = {item.slot: item.artifact for item in state.linked_outputs}
+        if set(declared) != set(linked_by_slot):
+            raise FoundationError("output_incomplete", "Every declared output must be linked")
+        for slot, reference in linked_by_slot.items():
+            _authorize_artifact_ref(
+                connection,
+                reference,
+                actor=request.actor,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+                media_type=declared[slot],
+            )
+        for reference in state.inputs:
+            _authorize_artifact_ref(
+                connection,
+                reference,
+                actor=request.actor,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+            )
+        next_state = state.model_copy(
+            update={
+                "status": "succeeded",
+                "acceptance": WorkAcceptance(
+                    operation_id=request.operation_id,
+                    basis=request.basis,
+                    authority_source=authority.source_ref,
+                    accepted_at=datetime.fromisoformat(now),
+                ),
+            }
+        )
+    revision = request.expected_revision + 1
+    _write_subject(
+        connection,
+        record_id=request.work_id,
+        kind="work",
+        parent_id=state.activity_id,
+        operation_id=request.operation_id,
+        actor=request.actor,
+        now=now,
+        status=next_state.status,
+        state=next_state,
+        revision=revision,
+    )
+    targets: list[dict[str, object]] = [{"record_id": str(request.work_id), "revision": revision}]
+    references = (
+        (request.output.artifact,)
+        if isinstance(request, LinkWorkOutputRequest)
+        else state.inputs + tuple(item.artifact for item in state.linked_outputs)
+    )
+    targets.extend(
+        {"record_id": str(reference.artifact_id), "revision": reference.revision}
+        for reference in references
+    )
+    return (
+        {"record_id": str(request.work_id), "revision": revision, "status": next_state.status},
+        targets,
+    )
 
 
 def _apply_change(
@@ -393,7 +817,33 @@ def _apply_change(
     *,
     now: str,
     epoch: int,
+    authority: LocalAuthority,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
+    if isinstance(
+        request,
+        (
+            CreateActivityRequest,
+            ReviseActivityRequest,
+            DeleteActivityRequest,
+            CreateWorkRequest,
+            LinkWorkOutputRequest,
+            AcceptWorkRequest,
+            DeleteWorkRequest,
+        ),
+    ):
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) != 2:  # type: ignore[attr-defined]
+            raise FoundationError("unsupported_schema", "Activity/Work requires schema 2")
+        return _apply_subject_change(
+            connection,
+            request,
+            now=now,
+            epoch=epoch,
+            authority=authority,
+            grants=grants,
+            decisions=decisions,
+        )
     if isinstance(request, CreateArtifactRequest):
         _expect_absent(connection, request.artifact_id)
         _write_artifact(connection, request, now, 1)
@@ -587,6 +1037,12 @@ def apply_operation(path: Path, request: DomainRequest, authority: Authority) ->
             (str(request.operation_id),),
         ).fetchone()
         if prior_operation is not None:
+            _authorize(
+                connection,
+                actor=request.actor,
+                action="receipt.read",
+                epoch=info.execution_epoch,
+            )
             raise FoundationError(
                 "history_unavailable",
                 "Operation history was retained without the deleted intent/receipt",
@@ -615,12 +1071,13 @@ def apply_operation(path: Path, request: DomainRequest, authority: Authority) ->
                 raise FoundationError(
                     "permission_denied", "Ordinary operations require active space"
                 )
-            action, resource_id = _operation_action(request)
+            action, resource_type, resource_id = _operation_action(request)
             grants, decisions = _authorize(
                 connection,
                 actor=request.actor,
                 action=action,
                 epoch=info.execution_epoch,
+                resource_type=resource_type,
                 resource_id=resource_id,
             )
 
@@ -658,7 +1115,13 @@ def apply_operation(path: Path, request: DomainRequest, authority: Authority) ->
             }
         else:
             result, targets = _apply_change(
-                connection, request, now=now_text, epoch=info.execution_epoch
+                connection,
+                request,
+                now=now_text,
+                epoch=info.execution_epoch,
+                authority=cast(LocalAuthority, authority),
+                grants=grants,
+                decisions=decisions,
             )
 
         connection.execute(
@@ -701,6 +1164,37 @@ def read_receipt(path: Path, operation_id: UUID, authority: LocalAuthority) -> O
         return _receipt_from_row(saved[1])
 
 
+def read_operation_audit(
+    path: Path, operation_id: UUID, authority: LocalAuthority
+) -> OperationAuditEntry:
+    """Read the exact content-free authorization and target references."""
+
+    with space_connection(path) as (connection, info):
+        _local_space(authority, info)
+        if info.recovery_state != "active":
+            raise FoundationError("permission_denied", "Quarantined spaces disclose no audit")
+        _authorize(
+            connection,
+            actor=authority.actor,
+            action="receipt.read",
+            epoch=info.execution_epoch,
+        )
+        row = connection.execute(
+            "SELECT authority_source, target_refs_json, grant_refs_json, "
+            "decision_refs_json FROM operation_audit WHERE operation_id = ?",
+            (str(operation_id),),
+        ).fetchone()
+        if row is None:
+            raise FoundationError("not_found", f"No audit for operation {operation_id}")
+        return OperationAuditEntry(
+            operation_id=operation_id,
+            authority_source=row[0],
+            target_refs=json.loads(row[1]),
+            grant_refs=json.loads(row[2]),
+            decision_refs=json.loads(row[3]),
+        )
+
+
 def _provenance(connection: object, record_id: UUID, revision: int) -> tuple[ProvenanceRef, ...]:
     rows = connection.execute(  # type: ignore[attr-defined]
         "SELECT relation, source_record_id, source_revision, external_ref "
@@ -736,6 +1230,7 @@ def read_artifact(
             actor=authority.actor,
             action="record.read",
             epoch=info.execution_epoch,
+            resource_type="artifact",
             resource_id=artifact_id,
         )
         if revision is None:
@@ -771,6 +1266,135 @@ def read_artifact(
         )
 
 
+def upgrade_space(path: Path, authority: LocalAuthority) -> SpaceInfo:
+    """Explicit additive schema upgrade; an old space remains usable before it."""
+
+    with space_connection(path, writable=True) as (connection, info):
+        _local_space(authority, info)
+        if info.recovery_state != "active":
+            raise FoundationError("permission_denied", "Quarantined spaces cannot upgrade")
+        _authorize(
+            connection,
+            actor=authority.actor,
+            action="maintenance.backup",
+            epoch=info.execution_epoch,
+        )
+        if info.schema_version == 1:
+            for statement in SUBJECT_SCHEMA_STATEMENTS:
+                connection.execute(statement)
+            now = utc_now().isoformat()
+            connection.execute(
+                "INSERT INTO schema_migrations(version, name, sha256, applied_at) "
+                "VALUES (2, ?, ?, ?)",
+                (SUBJECT_SCHEMA_NAME, SUBJECT_SCHEMA_SHA256, now),
+            )
+            connection.execute("PRAGMA user_version = 2")
+            connection.execute(
+                "UPDATE spaces SET state_revision = state_revision + 1 WHERE singleton = 1"
+            )
+            connection.execute(
+                "INSERT INTO maintenance_events(event_id, kind, occurred_at, detail_json) "
+                "VALUES (?, 'schema_upgrade', ?, ?)",
+                (str(uuid4()), now, canonical_json({"from": 1, "to": 2})),
+            )
+    return read_space(path)
+
+
+def _read_subject(
+    path: Path,
+    record_id: UUID,
+    kind: str,
+    authority: LocalAuthority,
+    revision: int | None,
+) -> tuple[int, UUID, datetime, str, dict[str, object], tuple[ArtifactRef, ...]]:
+    with space_connection(path) as (connection, info):
+        _local_space(authority, info)
+        if info.recovery_state != "active" or info.schema_version != 2:
+            raise FoundationError(
+                "permission_denied", "Subject records require an active schema 2 space"
+            )
+        _authorize(
+            connection,
+            actor=authority.actor,
+            action="record.read",
+            epoch=info.execution_epoch,
+            resource_type=kind,
+            resource_id=record_id,
+        )
+        current, status, _ = _subject_current(connection, record_id, kind)
+        if status == "deleted":
+            raise FoundationError("content_unavailable", f"{kind.title()} {record_id} was deleted")
+        selected = current if revision is None else revision
+        row = connection.execute(
+            "SELECT operation_id, created_at, actor FROM subject_revisions "
+            "WHERE record_id = ? AND revision = ?",
+            (str(record_id), selected),
+        ).fetchone()
+        if row is None:
+            raise FoundationError("not_found", f"No exact subject revision {record_id}@{selected}")
+        body = _subject_state(connection, record_id, selected)
+        unavailable: list[ArtifactRef] = []
+        if kind == "work":
+            state = WorkState.model_validate(body)
+            references = list(state.inputs) + [output.artifact for output in state.linked_outputs]
+            for reference in references:
+                try:
+                    _artifact_reference(connection, reference)
+                except FoundationError as error:
+                    if error.code != "content_unavailable":
+                        raise
+                    unavailable.append(reference)
+        return (
+            selected,
+            UUID(row[0]),
+            datetime.fromisoformat(row[1]),
+            str(row[2]),
+            body,
+            tuple(unavailable),
+        )
+
+
+def read_activity(
+    path: Path,
+    activity_id: UUID,
+    authority: LocalAuthority,
+    *,
+    revision: int | None = None,
+) -> ActivityRevision:
+    selected, operation_id, created_at, actor, body, _ = _read_subject(
+        path, activity_id, "activity", authority, revision
+    )
+    return ActivityRevision(
+        activity_id=activity_id,
+        revision=selected,
+        operation_id=operation_id,
+        created_at=created_at,
+        actor=actor,
+        state=ActivityState.model_validate(body),
+    )
+
+
+def read_work(
+    path: Path,
+    work_id: UUID,
+    authority: LocalAuthority,
+    *,
+    revision: int | None = None,
+) -> WorkRevision:
+    selected, operation_id, created_at, actor, body, unavailable = _read_subject(
+        path, work_id, "work", authority, revision
+    )
+    return WorkRevision(
+        work_id=work_id,
+        revision=selected,
+        operation_id=operation_id,
+        created_at=created_at,
+        actor=actor,
+        state=WorkState.model_validate(body),
+        unavailable_refs=unavailable,
+    )
+
+
 def inspect_space(path: Path, authority: LocalAuthority) -> SpaceInspection:
     """Return bounded metadata only; this does not disclose managed payload."""
 
@@ -799,6 +1423,22 @@ def inspect_space(path: Path, authority: LocalAuthority) -> SpaceInspection:
             )
             for row in rows
         )
+        if info.schema_version == 2:
+            subject_rows = connection.execute(
+                "SELECT record_id, kind, current_revision, status, created_at, updated_at "
+                "FROM subject_records ORDER BY kind, record_id"
+            ).fetchall()
+            records += tuple(
+                RecordSummary(
+                    record_id=UUID(row[0]),
+                    kind=row[1],
+                    current_revision=row[2],
+                    status=row[3],
+                    created_at=datetime.fromisoformat(row[4]),
+                    updated_at=datetime.fromisoformat(row[5]),
+                )
+                for row in subject_rows
+            )
         operation_count = int(connection.execute("SELECT count(*) FROM operations").fetchone()[0])
         audit_count = int(connection.execute("SELECT count(*) FROM operation_audit").fetchone()[0])
         receipt_count = int(connection.execute("SELECT count(*) FROM receipts").fetchone()[0])
@@ -807,6 +1447,12 @@ def inspect_space(path: Path, authority: LocalAuthority) -> SpaceInspection:
                 "SELECT count(*) FROM deletion_jobs WHERE status = 'pending'"
             ).fetchone()[0]
         )
+        if info.schema_version == 2:
+            pending += int(
+                connection.execute(
+                    "SELECT count(*) FROM subject_deletion_jobs WHERE status = 'pending'"
+                ).fetchone()[0]
+            )
         complete_backups = int(
             connection.execute(
                 "SELECT count(*) FROM backup_inventory WHERE status = 'complete'"
@@ -876,6 +1522,16 @@ def create_backup(path: Path, backup_id: UUID, authority: LocalAuthority) -> Bac
                     "SELECT DISTINCT record_id FROM managed_content ORDER BY record_id"
                 ).fetchall()
             ]
+            subject_ids = (
+                [
+                    row[0]
+                    for row in snapshot.execute(
+                        "SELECT DISTINCT record_id FROM subject_content ORDER BY record_id"
+                    ).fetchall()
+                ]
+                if prepared.manifest.schema_version == 2
+                else []
+            )
         with space_connection(path, writable=True) as (connection, info):
             _local_space(authority, info)
             _authorize(
@@ -896,6 +1552,11 @@ def create_backup(path: Path, backup_id: UUID, authority: LocalAuthority) -> Bac
                 "INSERT INTO backup_records(backup_id, record_id) VALUES (?, ?)",
                 ((str(backup_id), record_id) for record_id in record_ids),
             )
+            if info.schema_version == 2:
+                connection.executemany(
+                    "INSERT INTO backup_subjects(backup_id, record_id) VALUES (?, ?)",
+                    ((str(backup_id), record_id) for record_id in subject_ids),
+                )
             prepared.package.rename(final_package)
             updated = connection.execute(
                 "UPDATE backup_inventory SET state_revision = ?, database_sha256 = ?, "
@@ -937,6 +1598,16 @@ def restore_backup(package: Path, destination: Path, authority: RecoveryAuthorit
     return restore_database(package, destination)
 
 
+def _subject_deletion_count(connection: object, schema_version: int, status: str) -> int:
+    if schema_version != 2:
+        return 0
+    return int(
+        connection.execute(  # type: ignore[attr-defined]
+            "SELECT count(*) FROM subject_deletion_jobs WHERE status = ?", (status,)
+        ).fetchone()[0]
+    )
+
+
 def complete_deletions(path: Path, authority: LocalAuthority) -> DeletionStatus:
     """Purge affected managed backups, then close/checkpoint/VACUUM the live store."""
 
@@ -956,6 +1627,17 @@ def complete_deletions(path: Path, authority: LocalAuthority) -> DeletionStatus:
                 "ORDER BY operation_id"
             ).fetchall()
         ]
+        subject_jobs = (
+            [
+                str(row[0])
+                for row in connection.execute(
+                    "SELECT operation_id FROM subject_deletion_jobs WHERE status = 'pending' "
+                    "ORDER BY operation_id"
+                ).fetchall()
+            ]
+            if info.schema_version == 2
+            else []
+        )
         contaminated = [
             UUID(row[0])
             for row in connection.execute(
@@ -963,19 +1645,21 @@ def complete_deletions(path: Path, authority: LocalAuthority) -> DeletionStatus:
                 "ORDER BY backup_id"
             ).fetchall()
         ]
-    if not pending_jobs and not contaminated:
+    if not pending_jobs and not subject_jobs and not contaminated:
         sanitize_database(root)
-        with space_connection(root) as (connection, _):
+        with space_connection(root) as (connection, current):
             pending = int(
                 connection.execute(
                     "SELECT count(*) FROM deletion_jobs WHERE status = 'pending'"
                 ).fetchone()[0]
             )
+            pending += _subject_deletion_count(connection, current.schema_version, "pending")
             complete = int(
                 connection.execute(
                     "SELECT count(*) FROM deletion_jobs WHERE status = 'complete'"
                 ).fetchone()[0]
             )
+            complete += _subject_deletion_count(connection, current.schema_version, "complete")
             remaining_backups = int(
                 connection.execute(
                     "SELECT count(*) FROM backup_inventory WHERE status = 'contaminated'"
@@ -1025,18 +1709,27 @@ def complete_deletions(path: Path, authority: LocalAuthority) -> DeletionStatus:
                 "WHERE operation_id = ? AND status = 'pending'",
                 (completed_at.isoformat(), operation_id),
             )
+        if info.schema_version == 2:
+            for operation_id in subject_jobs:
+                connection.execute(
+                    "UPDATE subject_deletion_jobs SET status = 'complete', completed_at = ? "
+                    "WHERE operation_id = ? AND status = 'pending'",
+                    (completed_at.isoformat(), operation_id),
+                )
     sanitize_database(root)
-    with space_connection(root) as (connection, _):
+    with space_connection(root) as (connection, current):
         pending = int(
             connection.execute(
                 "SELECT count(*) FROM deletion_jobs WHERE status = 'pending'"
             ).fetchone()[0]
         )
+        pending += _subject_deletion_count(connection, current.schema_version, "pending")
         completed = int(
             connection.execute(
                 "SELECT count(*) FROM deletion_jobs WHERE status = 'complete'"
             ).fetchone()[0]
         )
+        completed += _subject_deletion_count(connection, current.schema_version, "complete")
         remaining_backups = int(
             connection.execute(
                 "SELECT count(*) FROM backup_inventory WHERE status = 'contaminated'"
@@ -1066,7 +1759,11 @@ __all__ = [
     "inspect_recovery",
     "inspect_space",
     "read_artifact",
+    "read_activity",
+    "read_operation_audit",
+    "read_work",
     "read_receipt",
     "read_space",
     "restore_backup",
+    "upgrade_space",
 ]
