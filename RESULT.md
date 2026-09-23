@@ -36,6 +36,15 @@ The installed `uv run --locked python -m tools.probe_install` passed outside
 the checkout with wheel SHA-256
 `1d355aaf6de15c31c535c5fdb8e4c09d139e54d7d687419aa8ca0d4a88622632`.
 
+Повторная проверка на том же коммите
+`cec0040423d3627397b107c1206fe1edbc4c6a9c` сохранила новую локальную
+трассу `_scratch/stage5-pass3-faults-k/report.json`. Все семь групп
+наблюдений совпали с предыдущей трассой после исключения случайных UUID
+квитанции и независимой Attempt. Повторный полный `tools.check --deliver`
+прошёл: 512 tests за 252.47s, 21 import contracts, Ruff/mypy и обе сборки.
+Повторный outside-checkout `tools.probe_install` прошёл с тем же SHA-256 wheel;
+он по-прежнему доказывает только установленную базовую CLI/упаковку.
+
 ## assumptions
 
 The test uses one Windows host, one pinned DBOS application version, ordinary
