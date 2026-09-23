@@ -1,3 +1,60 @@
+# Core v0.1 Stage 5 plan and Stage 4 owner acceptance
+
+## outcome
+
+The owner explicitly accepted the whole Stage 4 implementation at
+`afa367c10ad949b1610810d4f2e6f106c1a7b7cc`, independently of the earlier
+acceptance of one synthetic Work. `docs/core-v0.1/STAGE4-ACCEPTANCE.md` records
+the exact words and scope. `docs/core-v0.1/STAGE5-PLAN.md` defines the next
+minimal path: a separately assigned ordinary Pi RPC Attempt with a durable
+question/answer, Core-owned state, DBOS-backed technical continuation subject
+to an explicit backend decision, and recovery/maintenance gates. Stage 5 was
+not implemented or executed in this planning pass.
+
+## evidence
+
+The specification SHA-256 was rechecked as
+`1DDCBF9DBFD58426781F61A67A170D3CE85FCD2BA27B17549773ED3356F9428D`.
+The Stage 4 HEAD was verified as
+`afa367c10ad949b1610810d4f2e6f106c1a7b7cc` on `codex/core-v0.1`.
+The plan was compared with the implementation/technical baselines, Stage 4
+plan and implementation, scenario 9 machine report, RESULT history, and the
+current public `foundation`/`pi_adapter` surfaces. `git diff --check` passed;
+all referenced local files exist. The full
+`uv run --locked python -m tools.check --deliver` passed with an isolated uv
+cache and the previously verified SQLite runtime: 180 format-clean files,
+clean Ruff, strict mypy on 154 files, 21 import contracts, 488 tests, source
+and wheel build, and report structure. The default and reused uv caches were
+inaccessible in this sandbox; the isolated cache resolved that setup error.
+
+## assumptions
+
+The first Stage 5 scenario uses one existing method-less Work and a fictional
+read-only resource. DBOS 3.0.0 is the recommended conditional integration
+candidate after its positive synthetic scenario 9; production suitability
+still needs the real composition checks and an owner decision.
+
+## cuts
+
+No production code, DBOS production dependency, independent execution,
+model call, personal data, old `.zara` migration, Direction OS edit, or
+`C:\projects\zaratustra` edit is part of this pass. The full accepted Core
+composition remains future work as detailed in the plan.
+
+## cost
+
+Documentation and local checks only; zero model/service calls and no paid cost.
+
+## manual-acceptance
+
+Stage 4 is accepted by the owner's explicit words; the synthetic Work was
+accepted separately. This planning pass does not accept Stage 5 or approve its
+production backend, model, resource or real data.
+
+## next
+
+solmax
+
 # Core v0.1 Stage 4 proposed-output regeneration correction
 
 ## outcome

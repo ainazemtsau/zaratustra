@@ -3,16 +3,19 @@
 ## Current product authority — Core v0.1
 - The current product basis is `docs/core-v0.1/IMPLEMENTATION-BASELINE.md`, the
   owner-approved Core v0.1 implementation plan recorded there,
-  `docs/core-v0.1/STAGE4-PLAN.md`, this AGENTS.md, and `validation.config`.
+  `docs/core-v0.1/STAGE4-PLAN.md`, `docs/core-v0.1/STAGE5-PLAN.md`, this AGENTS.md,
+  and `validation.config`. Stage 5 is a plan until separately authorized.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
 - Stage 1 stopped after recording the G07-1 DBOS and G08-1 Pi technical outcomes.
   Stage 2 delivered the independent domain foundation and was accepted by the
   owner at commit `62a173c7d9a875e6709bf2e0dbe0d8d7e7fa31df`. The owner
   accepted Stage 3 at `fa4c1773b0b4a8b75a03702be1e524cf8d5ea7a9`. The
-  current request authorizes a Stage 4 plan, one new development-only DBOS
-  scenario 9 run and local commit; it does not authorize production integration
-  or real model calls.
+  owner accepted the complete Stage 4 at
+  `afa367c10ad949b1610810d4f2e6f106c1a7b7cc`, separately from accepting
+  one synthetic Work; see `docs/core-v0.1/STAGE4-ACCEPTANCE.md`. The current
+  Stage 5 request authorizes planning, documentation and a local commit only;
+  it does not authorize production integration or real model calls.
 
 ## Commands (run from this repository)
 - Prepare: `uv sync --locked`
@@ -34,6 +37,12 @@ Stage 3 adds an explicit additive schema 2 upgrade, typed Activity/Work revision
 separate write/accept rights, exact Artifact inputs and output slots, and a manual
 acceptance operation. See `docs/core-v0.1/STAGE3-IMPLEMENTATION.md` and
 `tools.probe_stage3`. A succeeded Work does not complete its Activity.
+Stage 4 adds an ordinary interactive Pi path through `zaratustra.pi_adapter`,
+schema 3 resource/Attempt/invocation records, observable provider sends, exact
+output publication and separate Work acceptance. The owner accepted Stage 4 at
+`afa367c10ad949b1610810d4f2e6f106c1a7b7cc`; see
+`docs/core-v0.1/STAGE4-ACCEPTANCE.md` and `STAGE4-IMPLEMENTATION.md`. Stage 5 is
+only a plan for an independently assigned Pi RPC Attempt and durable continuation.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,
@@ -109,9 +118,9 @@ Work 2 installed/migration proof: `uv run --locked python -m tools.probe_records
 CI/CD, GitHub Actions and push notifications are excluded requirements until the owner separately asks. Do not configure them or block setup/delivery on their absence, even if a generic checklist requires them. The owner authorized public GitHub hosting and integration into main on September 11–12, 2026; local checks stay required. That authorization does not grant access to user workspaces or authorize paid services. The original automation boundary remains docs/setup/OWNER-DECISION-20260907.md, owner-ack:solmax-zaratustra-local-setup-no-automation-20260907.
 
 ## Constitution
-- Keep the accepted Core v0.1 functional composition and completed Stage 1–3
-  evidence. The current Stage 4 pass is a plan and narrow development-only DBOS
-  check. Preserve earlier Works/CALLs as history, not current scope.
+- Keep the accepted Core v0.1 functional composition and completed Stage 1–4
+  evidence. Stage 4 is owner-accepted; the current Stage 5 pass is documentation
+  only. Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.
 - No real personal data, remote publication, paid service or new external rights without authorization.
