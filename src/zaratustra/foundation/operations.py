@@ -9,6 +9,7 @@ from collections.abc import Callable
 from contextlib import closing
 from dataclasses import dataclass
 from datetime import datetime
+from importlib.metadata import version
 from pathlib import Path
 from typing import cast
 from uuid import UUID, uuid4, uuid5
@@ -65,6 +66,7 @@ from .models import (
     SpaceInspection,
     StartAttemptRequest,
     StopAttemptRequest,
+    TechnicalVersions,
     WorkAcceptance,
     WorkRevision,
     WorkState,
@@ -81,12 +83,14 @@ from .storage import (
     FoundationError,
     backup_database,
     canonical_json,
+    file_sha256,
     initialize_space,
     layout,
     load_backup,
     read_space,
     restore_database,
     sanitize_database,
+    snapshot_connection,
     space_connection,
     utc_now,
 )
@@ -1958,14 +1962,25 @@ def inspect_recovery(path: Path, authority: RecoveryAuthority) -> dict[str, obje
     }
 
 
-def create_backup(path: Path, backup_id: UUID, authority: LocalAuthority) -> BackupInfo:
+def create_backup(
+    path: Path,
+    backup_id: UUID,
+    authority: LocalAuthority,
+    *,
+    technical_versions: TechnicalVersions | None = None,
+) -> BackupInfo:
     from .history import managed_pi_lock
 
     with managed_pi_lock(path):
-        return _create_backup_locked(path, backup_id, authority)
+        return _create_backup_locked(path, backup_id, authority, technical_versions)
 
 
-def _create_backup_locked(path: Path, backup_id: UUID, authority: LocalAuthority) -> BackupInfo:
+def _create_backup_locked(
+    path: Path,
+    backup_id: UUID,
+    authority: LocalAuthority,
+    technical_versions: TechnicalVersions | None,
+) -> BackupInfo:
     created_at = utc_now()
     prepared: BackupInfo | None = None
     final_package: Path | None = None
@@ -2000,11 +2015,37 @@ def _create_backup_locked(path: Path, backup_id: UUID, authority: LocalAuthority
                 (str(backup_id), str(backup_id), created_at.isoformat(), info.state_revision),
             )
         prepared = backup_database(path, backup_id, created_at)
-        final_package = prepared.package.parent / str(backup_id)
-        snapshot_database = prepared.package / DATABASE_NAME
         import sqlite3
 
-        with closing(sqlite3.connect(snapshot_database)) as snapshot:
+        technical_present = bool(
+            prepared.manifest.executor_sha256 or prepared.manifest.pi_rpc_home_files
+        )
+        if technical_present and technical_versions is None:
+            raise FoundationError(
+                "maintenance_boundary",
+                "Technical backup needs verified DBOS/Pi runtime versions",
+            )
+        if technical_versions is not None and not prepared.manifest.executor_sha256:
+            raise FoundationError(
+                "maintenance_boundary", "Technical version claim has no DBOS snapshot"
+            )
+        manifest = prepared.manifest.model_copy(
+            update={
+                "format_version": 2,
+                "sqlite_version": sqlite3.sqlite_version,
+                "core_version": version("zaratustra"),
+                "maintenance_boundary": "exclusive-managed",
+                "technical_versions": technical_versions,
+            }
+        )
+        (prepared.package / "manifest.json").write_text(
+            manifest.model_dump_json(indent=2), encoding="utf-8", newline="\n"
+        )
+        prepared = BackupInfo(manifest=manifest, package=prepared.package)
+        final_package = prepared.package.parent / str(backup_id)
+        snapshot_database = prepared.package / DATABASE_NAME
+
+        with closing(snapshot_connection(snapshot_database)) as snapshot:
             record_ids = [
                 row[0]
                 for row in snapshot.execute(
@@ -2048,8 +2089,8 @@ def _create_backup_locked(path: Path, backup_id: UUID, authority: LocalAuthority
                 )
             prepared.package.rename(final_package)
             updated = connection.execute(
-                "UPDATE backup_inventory SET state_revision = ?, database_sha256 = ?, "
-                "status = 'complete' WHERE backup_id = ? AND status = 'planned'",
+                "UPDATE backup_inventory SET state_revision = ?, database_sha256 = ? "
+                "WHERE backup_id = ? AND status = 'planned'",
                 (
                     prepared.manifest.state_revision,
                     prepared.manifest.database_sha256,
@@ -2058,6 +2099,36 @@ def _create_backup_locked(path: Path, backup_id: UUID, authority: LocalAuthority
             )
             if updated.rowcount != 1:
                 raise FoundationError("backup_invalidated", "Backup inventory changed")
+        marker = final_package / ".complete.partial"
+        marker.write_text(
+            canonical_json({"manifest_sha256": file_sha256(final_package / "manifest.json")})
+            + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
+        marker.replace(final_package / "complete.json")
+        with space_connection(path, writable=True) as (connection, info):
+            _local_space(authority, info)
+            _authorize(
+                connection,
+                actor=authority.actor,
+                action="maintenance.backup",
+                epoch=info.execution_epoch,
+            )
+            updated = connection.execute(
+                "UPDATE backup_inventory SET status = 'complete' "
+                "WHERE backup_id = ? AND status = 'planned' "
+                "AND state_revision = ? AND database_sha256 = ?",
+                (
+                    str(backup_id),
+                    prepared.manifest.state_revision,
+                    prepared.manifest.database_sha256,
+                ),
+            )
+            if updated.rowcount != 1:
+                raise FoundationError(
+                    "backup_invalidated", "Backup inventory changed before publication"
+                )
         return load_backup(final_package)
     except BaseException as error:
         for package in (

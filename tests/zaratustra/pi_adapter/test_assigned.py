@@ -9,6 +9,7 @@ import shutil
 import sqlite3
 import subprocess
 import threading
+from contextlib import closing
 from pathlib import Path
 from typing import cast
 from uuid import UUID, uuid4, uuid5
@@ -19,6 +20,7 @@ from dbos import DBOS, DBOSClient
 from tests.zaratustra.foundation.test_continuation import ready
 from zaratustra.foundation import (
     ALL_ACTIONS,
+    AdmitInvocationRequest,
     AssignAttemptRequest,
     ClaimAttemptLaunchRequest,
     CreateGrantRequest,
@@ -26,14 +28,18 @@ from zaratustra.foundation import (
     CreateWorkRequest,
     DeleteArtifactRequest,
     DeleteWorkRequest,
+    FinishInvocationRequest,
     FoundationError,
     GrantState,
     LocalAuthority,
     OutputContract,
+    PrepareInvocationRequest,
     RecordAttemptStopRequest,
+    RecoverRequest,
     RequestAttemptStopRequest,
     ResourceState,
     RevokeGrantRequest,
+    SendInvocationRequest,
     WorkState,
     apply_operation,
     authorize_local,
@@ -59,6 +65,7 @@ from zaratustra.pi_adapter.assigned import (
     _terminate_pi,
     _watch_core_stop,
     complete_assigned_deletions,
+    create_assigned_backup,
     deliver_outbox,
     resolve_assigned_work,
     run_assigned,
@@ -140,6 +147,238 @@ def test_concurrent_pi_locks_exclude_deletion_maintenance(tmp_path: Path) -> Non
         assert root.is_dir()
 
 
+def test_assigned_launch_delivery_and_backup_share_maintenance_boundary(
+    tmp_path: Path, dbos_template: Path
+) -> None:
+    root, workspace, _, _, attempt_id, _ = _managed_space(tmp_path, dbos_template)
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    config = AssignedConfig(
+        space=root,
+        workspace=workspace,
+        pi_cli=tmp_path / "unused-pi.js",
+        pi_runtime=tmp_path / "unused-runtime",
+        node="node",
+        provider_profile="local-completions",
+        provider_base_url="http://127.0.0.1:9/v1",
+        provider_id="synthetic",
+        model_id="synthetic",
+        context_window=4096,
+        max_tokens=512,
+        reserve_units=10,
+        limit_units=100,
+    )
+    with managed_pi_lock(root):
+        with pytest.raises(FoundationError, match="history_busy"):
+            deliver_outbox(root, owner)
+        with pytest.raises(FoundationError, match="history_busy"):
+            run_assigned(config, owner, attempt_id)
+    with managed_pi_session_lock(root):
+        with pytest.raises(FoundationError, match="history_busy"):
+            create_assigned_backup(root, uuid4(), owner)
+    with pytest.raises(FoundationError, match="maintenance_boundary"):
+        create_backup(root, uuid4(), owner)
+    assert inspect_space(root, owner).completed_backups == 0
+    backup = create_assigned_backup(root, uuid4(), owner)
+    assert backup.manifest.format_version == 2
+    assert backup.manifest.technical_versions is not None
+    assert backup.manifest.technical_versions.executor == EXECUTOR_VERSION
+
+
+def test_dbos_writer_blocks_backup_without_publishing_partial_package(
+    tmp_path: Path, dbos_template: Path
+) -> None:
+    root, _, _, _, attempt_id, _ = _managed_space(tmp_path, dbos_template)
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    copy = _managed_copy(root, attempt_id, "Synthetic retained data")
+    database = root / ".zara-core" / "executor.sqlite3"
+    with closing(sqlite3.connect(database, timeout=0.1)) as writer:
+        writer.execute("BEGIN IMMEDIATE")
+        with pytest.raises(FoundationError) as refused:
+            create_assigned_backup(root, uuid4(), owner)
+        assert refused.value.code == "maintenance_busy"
+        writer.rollback()
+    assert copy.read_text(encoding="utf-8") == "Synthetic retained data"
+    assert inspect_space(root, owner).completed_backups == 0
+    assert create_assigned_backup(root, uuid4(), owner).package.is_dir()
+
+
+def test_dbos_writer_blocks_deletion_before_technical_payload_is_removed(
+    tmp_path: Path, dbos_template: Path
+) -> None:
+    root, _, space_id, work_id, attempt_id, _ = _managed_space(tmp_path, dbos_template)
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    deliver_outbox(root, owner)
+    copy = _managed_copy(root, attempt_id, "Synthetic retained data")
+    _delete_work(root, space_id, work_id)
+    database = root / ".zara-core" / "executor.sqlite3"
+    with closing(sqlite3.connect(database, timeout=0.1)) as writer:
+        writer.execute("BEGIN IMMEDIATE")
+        with pytest.raises(FoundationError) as refused:
+            complete_assigned_deletions(root, owner)
+        assert refused.value.code == "maintenance_busy"
+        writer.rollback()
+    assert copy.read_text(encoding="utf-8") == "Synthetic retained data"
+    assert inspect_space(root, owner).pending_deletions == 1
+    assert len(_workflows(root)) == 1
+    assert complete_assigned_deletions(root, owner).live_store_sanitized
+    assert not copy.exists()
+
+
+def test_composite_restore_preserves_question_usage_and_unknown(
+    tmp_path: Path, dbos_template: Path
+) -> None:
+    root, workspace, space_id, work_id, attempt_id, session_id = _managed_space(
+        tmp_path, dbos_template
+    )
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    invocation_id = uuid4()
+    apply_operation(
+        root,
+        PrepareInvocationRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            purpose="content",
+            provider="local",
+            model="synthetic",
+            transport="http-sse",
+            request_sha256="A" * 64,
+            request_bytes=12,
+            reserve_units=20,
+            invocation_id=invocation_id,
+            attempt_id=attempt_id,
+            work_id=work_id,
+            session_id=session_id,
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        AdmitInvocationRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            invocation_id=invocation_id,
+            attempt_id=attempt_id,
+            work_id=work_id,
+            session_id=session_id,
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        SendInvocationRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            invocation_id=invocation_id,
+            attempt_id=attempt_id,
+            work_id=work_id,
+            session_id=session_id,
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        FinishInvocationRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            outcome="answered",
+            usage_units=7,
+            http_status=200,
+            invocation_id=invocation_id,
+            attempt_id=attempt_id,
+            work_id=work_id,
+            session_id=session_id,
+        ),
+        owner,
+    )
+    rpc = Bridge(
+        root, owner, workspace, 100, assigned_attempt_id=attempt_id, assigned_session_id=session_id
+    )
+    rpc.connect(session_id)
+    rpc.select(session_id, read_execution(root, work_id, owner).activity.activity_id, work_id)
+    rpc.open_wait(session_id, attempt_id, uuid4(), "Synthetic partial", "Which code?", "Add code")
+    waiting = read_execution(root, work_id, owner)
+    apply_operation(
+        root,
+        RequestAttemptStopRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=work_id,
+            attempt_id=attempt_id,
+            session_id=session_id,
+            expected_assignment_revision=waiting.assignments[0].revision,
+            reason="Synthetic process outcome is uncertain",
+        ),
+        owner,
+    )
+    stopped = read_execution(root, work_id, owner)
+    apply_operation(
+        root,
+        RecordAttemptStopRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=work_id,
+            attempt_id=attempt_id,
+            session_id=session_id,
+            expected_assignment_revision=stopped.assignments[0].revision,
+            outcome="unknown",
+        ),
+        owner,
+    )
+    backup = create_assigned_backup(root, uuid4(), owner)
+    destination = tmp_path / "restored"
+    destination.mkdir()
+    recovery = authorize_recovery(actor="owner", source_ref="synthetic-recovery")
+    restored = restore_backup(backup.package, destination, recovery)
+    assert restored.recovery_state == "quarantined" and restored.execution_epoch == 2
+    with pytest.raises(FoundationError, match="permission_denied"):
+        read_execution(destination, work_id, owner)
+    apply_operation(
+        destination,
+        RecoverRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            decision_id=uuid4(),
+            grant_id=uuid4(),
+        ),
+        recovery,
+    )
+    new_owner = authorize_local(destination, actor="owner", source_ref="synthetic-new-epoch")
+    snapshot = read_execution(destination, work_id, new_owner)
+    assert snapshot.assignments[0].status == "unknown"
+    assert snapshot.waits[0].question == "Which code?"
+    assert snapshot.waits[0].remainder == "Add code"
+    assert snapshot.committed_units == 7 and snapshot.held_units == 0
+    assert snapshot.invocations[0].status == "answered"
+    assert not (destination / ".zara-core" / "executor.sqlite3").exists()
+    assert (destination / ".zara-core" / "executor-restored.sqlite3").is_file()
+    resource = snapshot.resources[0]
+    with pytest.raises(FoundationError, match="resource_busy"):
+        apply_operation(
+            destination,
+            AssignAttemptRequest(
+                operation_id=uuid4(),
+                space_id=space_id,
+                actor="owner",
+                attempt_id=uuid4(),
+                work_id=work_id,
+                expected_work_revision=snapshot.work.revision,
+                resource_id=resource.resource_id,
+                expected_resource_revision=resource.revision,
+                session_id=uuid4(),
+                previous_attempt_id=attempt_id,
+                executor_version=EXECUTOR_VERSION,
+            ),
+            new_owner,
+        )
+
+
 def test_technical_backup_is_hashed_restored_inert_and_blocks_bare_cleanup(tmp_path: Path) -> None:
     root, _, space_id, work_id, _, _ = assigned(tmp_path)
     authority = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
@@ -151,7 +390,7 @@ def test_technical_backup_is_hashed_restored_inert_and_blocks_bare_cleanup(tmp_p
     home = state / "pi-rpc-home" / str(uuid4())
     home.mkdir(parents=True)
     (home / "synthetic.txt").write_text("fictional\n", encoding="utf-8", newline="\n")
-    backup = create_backup(root, uuid4(), authority)
+    backup = create_assigned_backup(root, uuid4(), authority)
     assert backup.manifest.executor_sha256 is not None
     assert len(backup.manifest.pi_rpc_home_files) == 1
     restored_root = tmp_path / "restored"
@@ -311,7 +550,7 @@ def test_denied_maintenance_leaves_dbos_home_backup_and_job_untouched(
     owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
     deliver_outbox(root, owner)
     copy = _managed_copy(root, attempt_id, "Synthetic private payload")
-    backup = create_backup(root, uuid4(), owner)
+    backup = create_assigned_backup(root, uuid4(), owner)
     grant_id = uuid4()
     apply_operation(
         root,
@@ -359,13 +598,13 @@ def test_technical_backup_waits_for_pending_deletion_cleanup(
     copy = _managed_copy(root, attempt_id, "Synthetic deleted payload")
     _delete_work(root, space_id, work_id)
     with pytest.raises(FoundationError, match="deletion_pending"):
-        create_backup(root, uuid4(), owner)
+        create_assigned_backup(root, uuid4(), owner)
     inspection = inspect_space(root, owner)
     assert copy.is_file() and inspection.pending_deletions == 1
     assert inspection.completed_backups == 0
     assert complete_assigned_deletions(root, owner).live_store_sanitized
     assert not copy.exists()
-    assert create_backup(root, uuid4(), owner).package.is_dir()
+    assert create_assigned_backup(root, uuid4(), owner).package.is_dir()
 
 
 def test_later_work_deletion_remains_pending_until_its_own_technical_cleanup(

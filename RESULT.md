@@ -1,3 +1,69 @@
+# Core v0.1 Stage 5 pass 4 — shared maintenance boundary
+
+## outcome
+
+The owner accepted pass 3 at exact commit
+`8a34c09f342059e4cedc1011e81b83a4272fd289` separately; the record is
+`docs/core-v0.1/STAGE5-PASS3-ACCEPTANCE.md`. The authorized fourth pass now
+holds one managed maintenance boundary around DBOS delivery/host, active Pi,
+backup and deletion. The format-2 backup records both SQLite snapshots, managed
+Pi files, hashes, versions and an end-of-publication marker. Restore remains
+quarantined in a new epoch; `unknown` retains exclusive resource ownership.
+This is engineering delivery for owner review, not acceptance of all Stage 5.
+
+## evidence
+
+`docs/core-v0.1/STAGE5-IMPLEMENTATION.md` records the exact changes,
+observations and proof limits. Focused tests covered active lock refusal, DBOS
+writer refusal with payload retained, incomplete package refusal after inventory
+commit, a killed pre-marker backup followed by a successful new run, restored
+question/remainder/usage/unknown and old ownership fencing.
+`_scratch/stage5-pass4-rpc-a/report.json` passed the ordinary localhost Pi RPC,
+technical backup, quarantine restore and managed deletion. The seven crash and
+replay groups passed twice in `_scratch/stage5-pass4-faults-a/report.json` and
+`_scratch/stage5-pass4-faults-b/report.json`. Stop cases passed in
+`_scratch/stage5-pass4-stop-a/report.json`, preserving active transmitted HTTP
+as `unknown` with 1000 held units. The installed wheel probe in
+`_scratch/stage5-pass4-installed-e/report.json` verified Core/DBOS/extension
+imports from outside checkout, technical backup, epoch 2 restore, deletion of a
+managed backup and restored `unknown` with `resource_busy`. Wheel SHA-256:
+`c064f48f993c443e74472f19075bb8b98d687691a8be3a10a081dd8d10a80b60`.
+The final full `uv run --locked python -m tools.check --deliver` passed:
+188 files formatted, Ruff clean, mypy clean across 162 source files,
+21 import contracts kept, 523 tests passed in 270.62 seconds, and sdist/wheel
+built.
+
+## assumptions
+
+All product-managed assigned and interactive Pi paths use the shared lock.
+Direct third-party DBOS SQLite writes outside this lock are not coordinated;
+the bounded SQLite writer/checkpoint probe refuses an already busy database.
+The installed probe uses pinned SQLite 3.53.3, DBOS 3.0.0, ordinary Pi 0.87.0
+and localhost synthetic HTTP/SSE.
+
+## cuts
+
+The older fault runs `l/m` recorded `disk I/O error`/`database is locked`, but
+their saved host logs do not identify a unique parent-side stack. The two new
+passing runs and handle/lock fixes do not prove every Windows interleaving.
+External copies, provider retention, OS snapshots, real credentials, paid model
+calls and mutating tools were not exercised. A copied technical format-1 backup
+without the new common boundary is refused. No next stage or migration began.
+
+## cost
+
+Synthetic localhost only; zero paid or real model calls. Reused Core operation,
+SQLite Backup API, existing DBOS queue/wait/Client and ordinary Pi RPC.
+
+## manual-acceptance
+
+The owner accepted Stage 5 passes 1–3 separately. Pass 4 and Stage 5 as a whole
+await separate owner decisions. The synthetic Work remains `proposed`.
+
+## next
+
+solmax
+
 # Core v0.1 Stage 5 pass 3 — independent review corrections
 
 ## outcome

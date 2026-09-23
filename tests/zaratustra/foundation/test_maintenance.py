@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import subprocess
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
@@ -279,6 +281,133 @@ def test_backup_publication_is_honest_on_both_sides_of_inventory_commit(
     assert precommit.value.code == "invalid_backup"
     assert verified.manifest.backup_id == backup_id
     assert completed == verified
+    assert inspect_space(root, owner).completed_backups == 1
+
+
+def test_committed_inventory_without_final_marker_cannot_restore(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, _, owner = ready_space(tmp_path)
+    backup_id = uuid4()
+    before_marker = Event()
+    finish_marker = Event()
+    original_replace = Path.replace
+
+    def pause_marker(source: Path, target: Path) -> Path:
+        if source.name == ".complete.partial":
+            before_marker.set()
+            assert finish_marker.wait(timeout=10)
+        return original_replace(source, target)
+
+    monkeypatch.setattr(Path, "replace", pause_marker)
+    package = root / ".zara-core" / "backups" / str(backup_id)
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(create_backup, root, backup_id, owner)
+        assert before_marker.wait(timeout=10)
+        assert inspect_space(root, owner).completed_backups == 0
+        with pytest.raises(FoundationError) as incomplete:
+            load_backup_package(package)
+        finish_marker.set()
+        completed = future.result(timeout=10)
+    assert incomplete.value.code == "invalid_backup"
+    assert completed.package == package
+    assert load_backup_package(package).manifest.format_version == 2
+    assert inspect_space(root, owner).completed_backups == 1
+
+
+def test_deletion_between_marker_and_inventory_completion_invalidates_backup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, space_id, owner = ready_space(tmp_path)
+    artifact_id = uuid4()
+    apply_operation(
+        root,
+        CreateArtifactRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            artifact_id=artifact_id,
+            media_type="text/plain",
+            content=b"Synthetic private payload",
+        ),
+        owner,
+    )
+    backup_id = uuid4()
+    marker_written = Event()
+    finish = Event()
+    original_replace = Path.replace
+
+    def pause_after_marker(source: Path, target: Path) -> Path:
+        result = original_replace(source, target)
+        if source.name == ".complete.partial":
+            marker_written.set()
+            assert finish.wait(timeout=10)
+        return result
+
+    monkeypatch.setattr(Path, "replace", pause_after_marker)
+    package = root / ".zara-core" / "backups" / str(backup_id)
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(create_backup, root, backup_id, owner)
+        assert marker_written.wait(timeout=10)
+        assert inspect_space(root, owner).completed_backups == 0
+        apply_operation(
+            root,
+            DeleteArtifactRequest(
+                operation_id=uuid4(),
+                space_id=space_id,
+                actor="owner",
+                artifact_id=artifact_id,
+                expected_revision=1,
+            ),
+            owner,
+        )
+        finish.set()
+        with pytest.raises(FoundationError) as invalidated:
+            future.result(timeout=10)
+    assert invalidated.value.code == "backup_invalidated"
+    assert not package.exists()
+    assert inspect_space(root, owner).completed_backups == 0
+
+
+def test_killed_backup_is_unusable_and_new_run_publishes_only_new_package(
+    tmp_path: Path,
+) -> None:
+    root, _, owner = ready_space(tmp_path)
+    interrupted_id = uuid4()
+    script = """
+import os
+import sys
+from pathlib import Path
+from uuid import UUID
+from zaratustra.foundation import authorize_local, create_backup
+
+root = Path(sys.argv[1])
+original_replace = Path.replace
+def die_before_marker(path, target):
+    if path.name == '.complete.partial':
+        os._exit(77)
+    return original_replace(path, target)
+Path.replace = die_before_marker
+owner = authorize_local(root, actor='owner', source_ref='synthetic-interrupted-backup')
+create_backup(root, UUID(sys.argv[2]), owner)
+"""
+    killed = subprocess.run(
+        [sys.executable, "-c", script, str(root), str(interrupted_id)],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    assert killed.returncode == 77
+    interrupted = root / ".zara-core" / "backups" / str(interrupted_id)
+    assert interrupted.is_dir() and not (interrupted / "complete.json").exists()
+    assert inspect_space(root, owner).completed_backups == 0
+    with pytest.raises(FoundationError, match="invalid_backup"):
+        load_backup_package(interrupted)
+    new = create_backup(root, uuid4(), owner)
+    assert new.package != interrupted
+    assert load_backup_package(new.package).manifest.format_version == 2
     assert inspect_space(root, owner).completed_backups == 1
 
 

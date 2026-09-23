@@ -41,15 +41,19 @@ from zaratustra.foundation import (  # noqa: E402
     CreateArtifactRequest,
     CreateResourceRequest,
     CreateWorkRequest,
+    DeleteWorkRequest,
     FoundationError,
     OutputContract,
+    RecoverRequest,
     ResourceState,
     WaitRecord,
     WorkState,
     apply_operation,
     authorize_local,
+    authorize_recovery,
     initialize_space,
     read_execution,
+    restore_backup,
     upgrade_continuation_space,
     upgrade_execution_space,
     upgrade_space,
@@ -58,6 +62,8 @@ from zaratustra.pi_adapter import Bridge  # noqa: E402
 from zaratustra.pi_adapter.assigned import (  # noqa: E402
     EXECUTOR_VERSION,
     AssignedConfig,
+    complete_assigned_deletions,
+    create_assigned_backup,
     deliver_outbox,
     run_assigned,
 )
@@ -484,6 +490,52 @@ def run(base: Path, venv: Path, checkout: Path, runtime: Path) -> dict[str, obje
         assert len(provider.digests) == 2
         assert state.committed_units == 280 and state.held_units == 0
         assert state.assignments[0].status == "stopped"
+        backup = create_assigned_backup(root, uuid4(), owner)
+        assert backup.manifest.format_version == 2
+        assert backup.manifest.technical_versions is not None
+        assert backup.manifest.technical_versions.dbos == "3.0.0"
+        assert backup.manifest.pi_rpc_home_files
+        assert (backup.package / "complete.json").is_file()
+        restored_root = normal_dir / "restored-space"
+        restored_root.mkdir()
+        recovery = authorize_recovery(actor="owner", source_ref="installed-synthetic-recovery")
+        restored_info = restore_backup(backup.package, restored_root, recovery)
+        assert restored_info.recovery_state == "quarantined"
+        assert restored_info.execution_epoch == 2
+        assert not (restored_root / ".zara-core" / "executor.sqlite3").exists()
+        assert (restored_root / ".zara-core" / "executor-restored.sqlite3").is_file()
+        apply_operation(
+            restored_root,
+            RecoverRequest(
+                operation_id=uuid4(),
+                space_id=owner.space_id,
+                actor="owner",
+                decision_id=uuid4(),
+                grant_id=uuid4(),
+            ),
+            recovery,
+        )
+        restored_owner = authorize_local(
+            restored_root, actor="owner", source_ref="installed-synthetic-new-epoch"
+        )
+        restored_state = read_execution(restored_root, UUID(normal["work_id"]), restored_owner)
+        assert restored_state.waits[0].question == wait.question
+        assert restored_state.waits[0].remainder == wait.remainder
+        assert restored_state.committed_units == 280
+        assert all(item.status == "cancelled" for item in restored_state.outbox)
+        apply_operation(
+            root,
+            DeleteWorkRequest(
+                operation_id=uuid4(),
+                space_id=owner.space_id,
+                actor="owner",
+                work_id=UUID(normal["work_id"]),
+                expected_revision=state.work.revision,
+            ),
+            owner,
+        )
+        deletion = complete_assigned_deletions(root, owner)
+        assert deletion.live_store_sanitized and not backup.package.exists()
 
         unknown_dir = base / "unknown"
         unknown_dir.mkdir()
@@ -517,6 +569,39 @@ def run(base: Path, venv: Path, checkout: Path, runtime: Path) -> dict[str, obje
         assert unknown_state.assignments[0].status == "unknown"
         assert len(provider.digests) == 2
         assert conflict_on_same_resource(unknown) == "resource_busy"
+        unknown_backup = create_assigned_backup(unknown_root, uuid4(), unknown_owner)
+        unknown_restored = unknown_dir / "restored-space"
+        unknown_restored.mkdir()
+        unknown_recovery = authorize_recovery(
+            actor="owner", source_ref="installed-synthetic-unknown-recovery"
+        )
+        assert (
+            restore_backup(
+                unknown_backup.package, unknown_restored, unknown_recovery
+            ).recovery_state
+            == "quarantined"
+        )
+        apply_operation(
+            unknown_restored,
+            RecoverRequest(
+                operation_id=uuid4(),
+                space_id=unknown_owner.space_id,
+                actor="owner",
+                decision_id=uuid4(),
+                grant_id=uuid4(),
+            ),
+            unknown_recovery,
+        )
+        unknown_restored_owner = authorize_local(
+            unknown_restored, actor="owner", source_ref="installed-synthetic-unknown-epoch"
+        )
+        unknown_restored_state = read_execution(
+            unknown_restored, UUID(unknown["work_id"]), unknown_restored_owner
+        )
+        assert unknown_restored_state.assignments[0].status == "unknown"
+        assert conflict_on_same_resource({**unknown, "space": str(unknown_restored)}) == (
+            "resource_busy"
+        )
         return {
             "python_package": str(package),
             "dbos_module": str(dbos_path),
@@ -543,6 +628,17 @@ def run(base: Path, venv: Path, checkout: Path, runtime: Path) -> dict[str, obje
                 "provider_calls_after": len(provider.digests),
                 "assignment": unknown_state.assignments[0].status,
                 "conflicting_assignment": "resource_busy",
+            },
+            "maintenance": {
+                "manifest_format": backup.manifest.format_version,
+                "executor_sha256": backup.manifest.executor_sha256,
+                "pi_files": len(backup.manifest.pi_rpc_home_files),
+                "restored_epoch": restored_state.execution_epoch,
+                "restored_remainder": restored_state.waits[0].remainder,
+                "deletion_sanitized": deletion.live_store_sanitized,
+                "managed_backup_removed": not backup.package.exists(),
+                "unknown_restored": unknown_restored_state.assignments[0].status,
+                "old_resource_blocked": True,
             },
         }
     finally:

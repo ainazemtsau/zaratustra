@@ -639,8 +639,16 @@ class SpaceInspection(ContractModel):
     contaminated_backups: int = Field(ge=0)
 
 
+class TechnicalVersions(ContractModel):
+    executor: str = Field(min_length=1)
+    dbos: str = Field(min_length=1)
+    pi: str = Field(min_length=1)
+    bridge_protocol: int = Field(ge=1)
+
+
 class BackupManifest(ContractModel):
     backup_id: UUID
+    format_version: Literal[1, 2] = 1
     space_id: UUID
     schema_version: Literal[1, 2, 3, 4]
     state_revision: int = Field(ge=0)
@@ -648,6 +656,10 @@ class BackupManifest(ContractModel):
     created_at: AwareDatetime
     database_file: Literal["core.sqlite3"] = "core.sqlite3"
     database_sha256: str = Field(pattern=r"^[0-9A-F]{64}$")
+    sqlite_version: str | None = None
+    core_version: str | None = None
+    maintenance_boundary: Literal["exclusive-managed"] | None = None
+    technical_versions: TechnicalVersions | None = None
     executor_sha256: str | None = Field(default=None, pattern=r"^[0-9A-F]{64}$")
     pi_rpc_home_files: dict[str, str] = Field(default_factory=dict)
 
@@ -682,6 +694,7 @@ __all__ = [
     "ArtifactRef",
     "BackupInfo",
     "BackupManifest",
+    "TechnicalVersions",
     "BootstrapRequest",
     "CreateActivityRequest",
     "CreateArtifactRequest",

@@ -337,12 +337,31 @@ def apply_execution_change(
             prior[2] == "active" or request.previous_attempt_id != UUID(prior[0])
         ):
             raise FoundationError("stale_attempt", "Prior Attempt is active or not linked exactly")
+        assigned_schema = int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 4  # type: ignore[attr-defined]
+        if prior is not None and assigned_schema:
+            previous_assignment = connection.execute(  # type: ignore[attr-defined]
+                "SELECT status FROM execution_assignments WHERE attempt_id = ?",
+                (prior[0],),
+            ).fetchone()
+            if previous_assignment == ("unknown",):
+                raise FoundationError(
+                    "resource_busy", "Unknown assigned Attempt still owns the resource"
+                )
+        busy_query = (
+            "SELECT 1 FROM execution_attempts a JOIN execution_resources r "
+            "ON r.resource_id = a.resource_id "
+            "LEFT JOIN execution_assignments s ON s.attempt_id = a.attempt_id "
+            "WHERE (a.status = 'active' OR s.status = 'unknown') "
+            "AND r.resource_id != ? AND json_extract(r.state_json, '$.root') = ? LIMIT 1"
+            if assigned_schema
+            else "SELECT 1 FROM execution_attempts a JOIN execution_resources r "
+            "ON r.resource_id = a.resource_id WHERE a.status = 'active' "
+            "AND r.resource_id != ? AND json_extract(r.state_json, '$.root') = ? LIMIT 1"
+        )
         if (
             resource.mode == "exclusive"
             and connection.execute(  # type: ignore[attr-defined]
-                "SELECT 1 FROM execution_attempts a JOIN execution_resources r "
-                "ON r.resource_id = a.resource_id WHERE a.status = 'active' "
-                "AND r.resource_id != ? AND json_extract(r.state_json, '$.root') = ? LIMIT 1",
+                busy_query,
                 (str(request.resource_id), str(resource.root)),
             ).fetchone()
         ):

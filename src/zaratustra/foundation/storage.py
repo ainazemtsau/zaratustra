@@ -489,6 +489,16 @@ def _connect(database: Path, *, writable: bool) -> sqlite3.Connection:
     return connection
 
 
+def snapshot_connection(database: Path) -> sqlite3.Connection:
+    """Inspect a closed backup image without creating WAL sidecars in its package."""
+
+    connection = sqlite3.connect(
+        database.as_uri() + "?mode=ro&immutable=1", uri=True, autocommit=True
+    )
+    _configure(connection, writable=False)
+    return connection
+
+
 def _begin(connection: sqlite3.Connection, *, writable: bool) -> None:
     statement = "BEGIN IMMEDIATE" if writable else "BEGIN"
     for attempt in range(BUSY_ATTEMPTS):
@@ -645,9 +655,23 @@ def backup_database(source: Path, backup_id: UUID, created_at: datetime) -> Back
         executor_digest: str | None = None
         if executor.is_file():
             executor_copy = partial / EXECUTOR_DATABASE_NAME
-            with closing(sqlite3.connect(executor)) as origin:
-                with closing(sqlite3.connect(executor_copy, autocommit=True)) as target:
-                    origin.backup(target)
+            try:
+                with closing(sqlite3.connect(executor, timeout=0.25)) as origin:
+                    origin.execute("BEGIN IMMEDIATE")
+                    origin.rollback()
+                    checkpoint = origin.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+                    if checkpoint is None or int(checkpoint[0]) != 0:
+                        raise FoundationError(
+                            "maintenance_busy", "DBOS SQLite checkpoint remained blocked"
+                        )
+                    if origin.execute("PRAGMA integrity_check").fetchone() != ("ok",):
+                        raise FoundationError("technical_state", "DBOS SQLite integrity failed")
+                    with closing(sqlite3.connect(executor_copy, autocommit=True)) as target:
+                        origin.backup(target)
+            except sqlite3.OperationalError as error:
+                raise FoundationError(
+                    "maintenance_busy", f"DBOS SQLite cannot be closed for backup: {error}"
+                ) from error
             executor_digest = file_sha256(executor_copy)
         home = root / STATE_DIRECTORY / RPC_HOME_DIRECTORY
         _plain(home)
@@ -699,6 +723,38 @@ def load_backup(package: Path) -> BackupInfo:
         raise FoundationError("invalid_backup", f"Invalid backup manifest: {error}") from error
     if package.name != str(manifest.backup_id):
         raise FoundationError("invalid_backup", "Backup package was not published")
+    technical_present = bool(manifest.executor_sha256 or manifest.pi_rpc_home_files)
+    if manifest.format_version == 2:
+        complete = package / "complete.json"
+        if not complete.is_file() or complete.is_symlink():
+            raise FoundationError("invalid_backup", "Backup publication is incomplete")
+        try:
+            marker = json.loads(complete.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as error:
+            raise FoundationError(
+                "invalid_backup", "Backup completion marker is invalid"
+            ) from error
+        if marker != {"manifest_sha256": file_sha256(manifest_path)}:
+            raise FoundationError("invalid_backup", "Backup manifest was not completed")
+        if (
+            not manifest.sqlite_version
+            or not manifest.core_version
+            or (manifest.maintenance_boundary != "exclusive-managed")
+        ):
+            raise FoundationError("invalid_backup", "Backup has no common maintenance boundary")
+        if technical_present != (manifest.technical_versions is not None):
+            raise FoundationError("invalid_backup", "Backup technical versions are incomplete")
+        expected = {"manifest.json", "complete.json", DATABASE_NAME}
+        if manifest.executor_sha256 is not None:
+            expected.add(EXECUTOR_DATABASE_NAME)
+        if manifest.pi_rpc_home_files:
+            expected.add(RPC_HOME_DIRECTORY)
+        if {entry.name for entry in package.iterdir()} != expected:
+            raise FoundationError("invalid_backup", "Backup file inventory differs from manifest")
+    elif technical_present:
+        raise FoundationError(
+            "invalid_backup", "Legacy technical backup has no verified common boundary"
+        )
     managed_database = package.parent.parent / DATABASE_NAME
     if (
         package.parent.name == BACKUP_DIRECTORY
@@ -747,7 +803,7 @@ def load_backup(package: Path) -> BackupInfo:
             or file_sha256(home.joinpath(*parts)) != digest
         ):
             raise FoundationError("invalid_backup", "Backup Pi RPC file is invalid")
-    with closing(_connect(database, writable=False)) as connection:
+    with closing(snapshot_connection(database)) as connection:
         _begin(connection, writable=False)
         try:
             application = int(connection.execute("PRAGMA application_id").fetchone()[0])
@@ -870,6 +926,7 @@ __all__ = [
     "read_space",
     "restore_database",
     "sanitize_database",
+    "snapshot_connection",
     "space_connection",
     "utc_now",
 ]

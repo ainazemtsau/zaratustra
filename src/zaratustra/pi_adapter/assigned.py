@@ -12,7 +12,9 @@ import shutil
 import subprocess
 import sys
 import threading
+from contextlib import closing
 from dataclasses import dataclass
+from importlib.metadata import version
 from importlib.resources import files
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -21,15 +23,18 @@ from uuid import UUID, uuid4, uuid5
 
 from zaratustra.foundation import (
     AssignAttemptRequest,
+    BackupInfo,
     ClaimAttemptLaunchRequest,
     DeletionStatus,
     FoundationError,
     LocalAuthority,
     RecordAttemptStopRequest,
     RequestAttemptStopRequest,
+    TechnicalVersions,
     apply_operation,
     authorize_local,
     complete_deletions,
+    create_backup,
     inspect_space,
     managed_pi_session_lock,
     read_assigned_control,
@@ -38,7 +43,7 @@ from zaratustra.foundation import (
     read_technical_deletion_targets,
 )
 
-from .bridge import Bridge, BridgeServer
+from .bridge import PROTOCOL_VERSION, Bridge, BridgeServer
 
 if TYPE_CHECKING:
     from dbos import DBOSClient
@@ -98,6 +103,14 @@ def deliver_outbox(
     space: Path, authority: LocalAuthority, outbox_id: UUID | None = None
 ) -> tuple[UUID, ...]:
     """Relay committed Core ids to DBOS; DBOS owns queue, wait and duplicate delivery."""
+
+    with managed_pi_session_lock(space):
+        return _deliver_outbox_locked(space, authority, outbox_id)
+
+
+def _deliver_outbox_locked(
+    space: Path, authority: LocalAuthority, outbox_id: UUID | None
+) -> tuple[UUID, ...]:
 
     delivered: list[UUID] = []
     overview = inspect_space(space, authority)
@@ -190,6 +203,19 @@ def _purge_technical_data(
     target_attempt_ids = {str(attempt_id) for attempt_id in targets.attempt_ids}
     executor = root / "executor.sqlite3"
     if executor.is_file():
+        try:
+            with closing(sqlite3.connect(executor, timeout=0.25)) as connection:
+                connection.execute("BEGIN IMMEDIATE")
+                connection.rollback()
+                checkpoint = connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+                if checkpoint is None or int(checkpoint[0]) != 0:
+                    raise FoundationError("maintenance_busy", "DBOS SQLite checkpoint is blocked")
+                if connection.execute("PRAGMA integrity_check").fetchone() != ("ok",):
+                    raise FoundationError("technical_state", "DBOS SQLite integrity failed")
+        except sqlite3.OperationalError as error:
+            raise FoundationError(
+                "maintenance_busy", f"DBOS SQLite cannot be closed for deletion: {error}"
+            ) from error
         client = _client(space)
         try:
             workflows = client.list_workflows(
@@ -225,12 +251,17 @@ def _purge_technical_data(
                 client.delete_workflows([workflow.workflow_id for workflow in affected])
         finally:
             client.destroy()
-        for attempt in home_attempt_ids:
-            _remove_managed_tree(root / "pi-rpc-home" / attempt)
-        with sqlite3.connect(executor) as connection:
+        with closing(sqlite3.connect(executor, timeout=0.25)) as connection:
+            checkpoint = connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+            if checkpoint is None or int(checkpoint[0]) != 0:
+                raise FoundationError(
+                    "maintenance_busy", "DBOS SQLite cleanup checkpoint is blocked"
+                )
             connection.execute("VACUUM")
             if connection.execute("PRAGMA integrity_check").fetchone() != ("ok",):
                 raise FoundationError("technical_state", "DBOS database integrity failed")
+        for attempt in home_attempt_ids:
+            _remove_managed_tree(root / "pi-rpc-home" / attempt)
     elif (root / "pi-rpc-home").exists():
         raise FoundationError("technical_state", "Pi RPC home has no DBOS deletion index")
     restored = root / "executor-restored.sqlite3"
@@ -245,6 +276,24 @@ def complete_assigned_deletions(space: Path, authority: LocalAuthority) -> Delet
     """Complete Core deletion and its managed DBOS/Pi payload cleanup under one lock."""
 
     return complete_deletions(space, authority, technical_cleanup=_purge_technical_data)
+
+
+def create_assigned_backup(space: Path, backup_id: UUID, authority: LocalAuthority) -> BackupInfo:
+    """Snapshot the managed Core/DBOS/Pi composition with its pinned runtime versions."""
+
+    executor = space.resolve() / ".zara-core" / "executor.sqlite3"
+    technical_versions = None
+    if executor.exists():
+        actual_dbos = version("dbos")
+        if actual_dbos != "3.0.0":
+            raise FoundationError("dbos_version", "Assigned backup requires DBOS 3.0.0")
+        technical_versions = TechnicalVersions(
+            executor=EXECUTOR_VERSION,
+            dbos=actual_dbos,
+            pi=PI_VERSION,
+            bridge_protocol=PROTOCOL_VERSION,
+        )
+    return create_backup(space, backup_id, authority, technical_versions=technical_versions)
 
 
 def maintenance_main(argv: list[str] | None = None) -> int:
@@ -784,6 +833,14 @@ def resolve_assigned_work(space: Path, authority: LocalAuthority, attempt_id: UU
 def run_assigned(config: AssignedConfig, authority: LocalAuthority, attempt_id: UUID) -> str:
     """Start DBOS, relay one committed launch and wait for its addressed workflow."""
 
+    with managed_pi_session_lock(config.space):
+        return _run_assigned_locked(config, authority, attempt_id)
+
+
+def _run_assigned_locked(
+    config: AssignedConfig, authority: LocalAuthority, attempt_id: UUID
+) -> str:
+
     from dbos import DBOS
 
     config = AssignedConfig(
@@ -844,8 +901,8 @@ def run_assigned(config: AssignedConfig, authority: LocalAuthority, attempt_id: 
         return _execute(config, authority, UUID(work), UUID(attempt), epoch, generation)
 
     DBOS.launch()
-    DBOS.register_queue(QUEUE_NAME, worker_concurrency=4)
     try:
+        DBOS.register_queue(QUEUE_NAME, worker_concurrency=4)
         deliver_outbox(config.space, authority)
         return str(DBOS.retrieve_workflow(_workflow_id(attempt_id)).get_result())
     finally:

@@ -30,7 +30,6 @@ from zaratustra.foundation import (
     authorize_local,
     authorize_recovery,
     complete_deletions,
-    create_backup,
     managed_pi_session_lock,
     managed_pi_sessions,
     read_artifact,
@@ -43,6 +42,7 @@ from zaratustra.pi_adapter.assigned import (
     EXECUTOR_VERSION,
     AssignedConfig,
     complete_assigned_deletions,
+    create_assigned_backup,
     deliver_outbox,
     run_assigned,
 )
@@ -421,7 +421,7 @@ def run(output: Path, pi_cli: Path, pi_runtime: Path) -> dict[str, object]:
         assert len(provider.digests) == calls_before_denial
         assert len(denied.invocations) == 1 and denied.invocations[0].status == "prepared"
         assert not denied.outputs and denied.work.state.status == "proposed"
-        backup = create_backup(root, uuid4(), authority)
+        backup = create_assigned_backup(root, uuid4(), authority)
         assert backup.manifest.executor_sha256 is not None
         assert backup.manifest.pi_rpc_home_files
         restored_root = output / "restored-space"
