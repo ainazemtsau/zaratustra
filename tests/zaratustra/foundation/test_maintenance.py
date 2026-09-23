@@ -35,6 +35,8 @@ from zaratustra.foundation.storage import (
 from zaratustra.foundation.storage import (
     load_backup as load_backup_package,
 )
+from zaratustra.foundation.storage import sanitize_database as sanitize_database_store
+from zaratustra.foundation.storage import space_connection
 
 
 def ready_space(tmp_path: Path) -> tuple[Path, UUID, LocalAuthority]:
@@ -278,3 +280,170 @@ def test_backup_publication_is_honest_on_both_sides_of_inventory_commit(
     assert verified.manifest.backup_id == backup_id
     assert completed == verified
     assert inspect_space(root, owner).completed_backups == 1
+
+
+def test_deletion_cleanup_leaves_interleaved_work_for_the_next_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, space_id, owner = ready_space(tmp_path)
+    artifact_a = uuid4()
+    artifact_b = uuid4()
+    for artifact_id, content in (
+        (artifact_a, b"first deletion"),
+        (artifact_b, b"second concurrent deletion"),
+    ):
+        apply_operation(
+            root,
+            CreateArtifactRequest(
+                operation_id=uuid4(),
+                space_id=space_id,
+                actor="owner",
+                artifact_id=artifact_id,
+                media_type="text/plain",
+                content=content,
+            ),
+            owner,
+        )
+    backup_a = create_backup(root, uuid4(), owner)
+    apply_operation(
+        root,
+        DeleteArtifactRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            artifact_id=artifact_a,
+            expected_revision=1,
+        ),
+        owner,
+    )
+    backup_b = create_backup(root, uuid4(), owner)
+    original_sanitize = sanitize_database_store
+    interleaved = False
+
+    def interleave_second_delete(path: Path) -> None:
+        nonlocal interleaved
+        if not interleaved:
+            interleaved = True
+            apply_operation(
+                root,
+                DeleteArtifactRequest(
+                    operation_id=uuid4(),
+                    space_id=space_id,
+                    actor="owner",
+                    artifact_id=artifact_b,
+                    expected_revision=1,
+                ),
+                owner,
+            )
+        original_sanitize(path)
+
+    monkeypatch.setattr(operation_module, "sanitize_database", interleave_second_delete)
+    first = complete_deletions(root, owner)
+    monkeypatch.setattr(operation_module, "sanitize_database", original_sanitize)
+
+    with space_connection(root) as (connection, _):
+        backup_b_status = connection.execute(
+            "SELECT status FROM backup_inventory WHERE backup_id = ?",
+            (str(backup_b.manifest.backup_id),),
+        ).fetchone()[0]
+        job_statuses = connection.execute(
+            "SELECT record_id, status FROM deletion_jobs ORDER BY record_id"
+        ).fetchall()
+    backup_b_exists_before_second = backup_b.package.exists()
+
+    second = complete_deletions(root, owner)
+
+    assert not backup_a.package.exists()
+    assert backup_b_exists_before_second
+    assert backup_b_status == "contaminated"
+    assert sorted(job_statuses) == sorted(
+        [(str(artifact_a), "complete"), (str(artifact_b), "pending")]
+    )
+    assert first.pending_jobs == 1
+    assert first.completed_jobs == 1
+    assert first.purged_backups == 1
+    assert not first.live_store_sanitized
+    assert first.completed_at is None
+    assert second.pending_jobs == 0
+    assert second.completed_jobs == 2
+    assert second.purged_backups == 1
+    assert second.live_store_sanitized
+    assert second.completed_at is not None
+    assert not backup_b.package.exists()
+
+
+@pytest.mark.parametrize(
+    ("failure_call", "interrupted_job", "interrupted_backup", "recovered_purges"),
+    [
+        (1, "pending", "contaminated", 1),
+        (2, "complete", "purged", 0),
+    ],
+)
+def test_deletion_cleanup_recovers_after_interruption(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    failure_call: int,
+    interrupted_job: str,
+    interrupted_backup: str,
+    recovered_purges: int,
+) -> None:
+    root, space_id, owner = ready_space(tmp_path)
+    artifact_id = uuid4()
+    apply_operation(
+        root,
+        CreateArtifactRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            artifact_id=artifact_id,
+            media_type="text/plain",
+            content=b"interrupted cleanup",
+        ),
+        owner,
+    )
+    backup = create_backup(root, uuid4(), owner)
+    apply_operation(
+        root,
+        DeleteArtifactRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            artifact_id=artifact_id,
+            expected_revision=1,
+        ),
+        owner,
+    )
+    original_sanitize = sanitize_database_store
+    calls = 0
+
+    def interrupt_sanitize(path: Path) -> None:
+        nonlocal calls
+        calls += 1
+        if calls == failure_call:
+            raise FoundationError("injected_interruption", "deterministic cleanup boundary")
+        original_sanitize(path)
+
+    monkeypatch.setattr(operation_module, "sanitize_database", interrupt_sanitize)
+    with pytest.raises(FoundationError) as interrupted:
+        complete_deletions(root, owner)
+    monkeypatch.setattr(operation_module, "sanitize_database", original_sanitize)
+
+    with space_connection(root) as (connection, _):
+        job_status = connection.execute(
+            "SELECT status FROM deletion_jobs WHERE record_id = ?", (str(artifact_id),)
+        ).fetchone()[0]
+        backup_status = connection.execute(
+            "SELECT status FROM backup_inventory WHERE backup_id = ?",
+            (str(backup.manifest.backup_id),),
+        ).fetchone()[0]
+    recovered = complete_deletions(root, owner)
+
+    assert interrupted.value.code == "injected_interruption"
+    assert not backup.package.exists()
+    assert job_status == interrupted_job
+    assert backup_status == interrupted_backup
+    assert recovered.pending_jobs == 0
+    assert recovered.completed_jobs == 1
+    assert recovered.purged_backups == recovered_purges
+    assert recovered.live_store_sanitized
+    assert recovered.completed_at is not None

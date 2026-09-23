@@ -949,34 +949,47 @@ def complete_deletions(path: Path, authority: LocalAuthority) -> DeletionStatus:
             action="maintenance.delete",
             epoch=info.execution_epoch,
         )
-        pending = int(
-            connection.execute(
-                "SELECT count(*) FROM deletion_jobs WHERE status = 'pending'"
-            ).fetchone()[0]
-        )
+        pending_jobs = [
+            str(row[0])
+            for row in connection.execute(
+                "SELECT operation_id FROM deletion_jobs WHERE status = 'pending' "
+                "ORDER BY operation_id"
+            ).fetchall()
+        ]
         contaminated = [
             UUID(row[0])
             for row in connection.execute(
-                "SELECT backup_id FROM backup_inventory WHERE status = 'contaminated'"
+                "SELECT backup_id FROM backup_inventory WHERE status = 'contaminated' "
+                "ORDER BY backup_id"
             ).fetchall()
         ]
-    if pending == 0:
-        complete = 0
+    if not pending_jobs and not contaminated:
+        sanitize_database(root)
         with space_connection(root) as (connection, _):
+            pending = int(
+                connection.execute(
+                    "SELECT count(*) FROM deletion_jobs WHERE status = 'pending'"
+                ).fetchone()[0]
+            )
             complete = int(
                 connection.execute(
                     "SELECT count(*) FROM deletion_jobs WHERE status = 'complete'"
                 ).fetchone()[0]
             )
+            remaining_backups = int(
+                connection.execute(
+                    "SELECT count(*) FROM backup_inventory WHERE status = 'contaminated'"
+                ).fetchone()[0]
+            )
+        finished = pending == 0 and remaining_backups == 0
         return DeletionStatus(
-            pending_jobs=0,
+            pending_jobs=pending,
             completed_jobs=complete,
             purged_backups=0,
-            live_store_sanitized=True,
-            completed_at=utc_now(),
+            live_store_sanitized=finished,
+            completed_at=utc_now() if finished else None,
         )
 
-    purged = 0
     for backup_id in contaminated:
         packages = (
             (backups / f".{backup_id}.partial").resolve(),
@@ -987,10 +1000,10 @@ def complete_deletions(path: Path, authority: LocalAuthority) -> DeletionStatus:
                 raise FoundationError("layout", "Backup inventory escaped managed directory")
             if package.exists():
                 shutil.rmtree(package)
-        purged += 1
 
     sanitize_database(root)
     completed_at = utc_now()
+    purged = 0
     with space_connection(root, writable=True) as (connection, info):
         _local_space(authority, info)
         _authorize(
@@ -999,27 +1012,43 @@ def complete_deletions(path: Path, authority: LocalAuthority) -> DeletionStatus:
             action="maintenance.delete",
             epoch=info.execution_epoch,
         )
-        connection.execute(
-            "UPDATE backup_inventory SET status = 'purged', database_sha256 = NULL "
-            "WHERE status = 'contaminated'"
-        )
-        connection.execute(
-            "UPDATE deletion_jobs SET status = 'complete', completed_at = ? "
-            "WHERE status = 'pending'",
-            (completed_at.isoformat(),),
+        for backup_id in contaminated:
+            updated = connection.execute(
+                "UPDATE backup_inventory SET status = 'purged', database_sha256 = NULL "
+                "WHERE backup_id = ? AND status = 'contaminated'",
+                (str(backup_id),),
+            )
+            purged += updated.rowcount
+        for operation_id in pending_jobs:
+            connection.execute(
+                "UPDATE deletion_jobs SET status = 'complete', completed_at = ? "
+                "WHERE operation_id = ? AND status = 'pending'",
+                (completed_at.isoformat(), operation_id),
+            )
+    sanitize_database(root)
+    with space_connection(root) as (connection, _):
+        pending = int(
+            connection.execute(
+                "SELECT count(*) FROM deletion_jobs WHERE status = 'pending'"
+            ).fetchone()[0]
         )
         completed = int(
             connection.execute(
                 "SELECT count(*) FROM deletion_jobs WHERE status = 'complete'"
             ).fetchone()[0]
         )
-    sanitize_database(root)
+        remaining_backups = int(
+            connection.execute(
+                "SELECT count(*) FROM backup_inventory WHERE status = 'contaminated'"
+            ).fetchone()[0]
+        )
+    finished = pending == 0 and remaining_backups == 0
     return DeletionStatus(
-        pending_jobs=0,
+        pending_jobs=pending,
         completed_jobs=completed,
         purged_backups=purged,
-        live_store_sanitized=True,
-        completed_at=completed_at,
+        live_store_sanitized=finished,
+        completed_at=completed_at if finished else None,
     )
 
 
