@@ -638,6 +638,8 @@ class BackupManifest(ContractModel):
     created_at: AwareDatetime
     database_file: Literal["core.sqlite3"] = "core.sqlite3"
     database_sha256: str = Field(pattern=r"^[0-9A-F]{64}$")
+    executor_sha256: str | None = Field(default=None, pattern=r"^[0-9A-F]{64}$")
+    pi_rpc_home_files: dict[str, str] = Field(default_factory=dict)
 
 
 class BackupInfo(ContractModel):

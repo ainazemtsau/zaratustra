@@ -4,11 +4,16 @@ version = "0.17.0"
 description = "Zaratustra local workspace and transactional mutation protocol"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-dependencies = ["pydantic>=2,<3"]
+dependencies = [
+    "dbos==3.0.0",
+    "pydantic>=2,<3",
+]
 
 [project.scripts]
 zara = "zaratustra.cli:main"
 zara-agent = "zaratustra.trusted_chat.agent:main"
+zara-rpc = "zaratustra.pi_adapter.assigned:main"
+zara-rpc-maintain = "zaratustra.pi_adapter.assigned:maintenance_main"
 
 [build-system]
 requires = ["uv_build==0.8.22"]

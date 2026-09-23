@@ -6,6 +6,7 @@ import json
 import secrets
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -18,10 +19,15 @@ from pydantic import TypeAdapter, ValidationError
 
 from zaratustra.foundation import (
     AcceptWorkRequest,
+    AnswerWaitRequest,
+    ArtifactRef,
+    CreateArtifactRequest,
     CreateResourceRequest,
     DomainRequest,
     FoundationError,
     LocalAuthority,
+    OpenWaitRequest,
+    ProvenanceRef,
     PublishAttemptOutputRequest,
     ResourceState,
     StartAttemptRequest,
@@ -51,7 +57,15 @@ class Bridge:
     """One trusted local process and one selected Core space."""
 
     def __init__(
-        self, path: Path, authority: LocalAuthority, workspace: Path, limit_units: int
+        self,
+        path: Path,
+        authority: LocalAuthority,
+        workspace: Path,
+        limit_units: int,
+        *,
+        assigned_attempt_id: UUID | None = None,
+        assigned_session_id: UUID | None = None,
+        deliver_answer: Callable[[UUID], object] | None = None,
     ) -> None:
         self.path = path.resolve()
         self.authority = authority
@@ -59,6 +73,11 @@ class Bridge:
         if not self.workspace.is_dir() or limit_units < 1:
             raise FoundationError("resource_unavailable", "Choose an existing directory and limit")
         self.limit_units = limit_units
+        if (assigned_attempt_id is None) != (assigned_session_id is None):
+            raise FoundationError("invalid_request", "Assigned attempt and session must be paired")
+        self.assigned_attempt_id = assigned_attempt_id
+        self.assigned_session_id = assigned_session_id
+        self.deliver_answer = deliver_answer
         self.token = secrets.token_urlsafe(48)
         self.sessions: dict[UUID, Selection | None] = {}
         self.accept_previews: dict[UUID, tuple[UUID, int, UUID]] = {}
@@ -66,6 +85,8 @@ class Bridge:
         self.lock = threading.Lock()
 
     def connect(self, session_id: UUID) -> dict[str, object]:
+        if self.assigned_session_id is not None and session_id != self.assigned_session_id:
+            raise FoundationError("unknown_session", "RPC session differs from assignment")
         space = read_space(self.path)
         if (
             space.space_id != self.authority.space_id
@@ -128,6 +149,11 @@ class Bridge:
         if work.state.activity_id != activity.activity_id:
             raise FoundationError("wrong_work", "Work is not in the selected Activity")
         snapshot = read_execution(self.path, work_id, self.authority)
+        if self.assigned_attempt_id is not None and not any(
+            item.attempt_id == self.assigned_attempt_id and item.status == "active"
+            for item in snapshot.attempts
+        ):
+            raise FoundationError("stale_attempt", "Assigned RPC cannot select this Work")
         resource = next(
             (
                 item
@@ -197,6 +223,18 @@ class Bridge:
             )
         if getattr(request, "work_id", None) != selected.work_id:
             raise FoundationError("wrong_work", "Operation does not address the selected Work")
+        if self.assigned_attempt_id is not None:
+            if (
+                request.kind
+                not in (
+                    "prepare_invocation",
+                    "admit_invocation",
+                    "send_invocation",
+                    "finish_invocation",
+                )
+                or getattr(request, "attempt_id", None) != self.assigned_attempt_id
+            ):
+                raise FoundationError("permission_denied", "RPC bridge is bound to one Attempt")
         if getattr(request, "session_id", session_id) != session_id:
             raise FoundationError("unknown_session", "Operation session does not match Pi")
         if request.actor != self.authority.actor or request.space_id != self.authority.space_id:
@@ -207,6 +245,8 @@ class Bridge:
         return receipt.model_dump(mode="json")
 
     def start_attempt(self, session_id: UUID, *, interrupt_previous: bool) -> dict[str, object]:
+        if self.assigned_attempt_id is not None:
+            raise FoundationError("permission_denied", "Assigned RPC already has an Attempt")
         selected = self._selection(session_id)
         snapshot = read_execution(self.path, selected.work_id, self.authority)
         resource = next(
@@ -255,6 +295,8 @@ class Bridge:
         self, session_id: UUID, attempt_id: UUID, slot: str, media_type: str, content: str
     ) -> dict[str, object]:
         selected = self._selection(session_id)
+        if self.assigned_attempt_id is not None and attempt_id != self.assigned_attempt_id:
+            raise FoundationError("permission_denied", "RPC cannot publish another Attempt")
         data = content.encode("utf-8")
         if not data or len(data) > 8 * 1024 * 1024:
             raise FoundationError("invalid_request", "Result is empty or too large")
@@ -271,6 +313,96 @@ class Bridge:
         )
         receipt = apply_operation(self.path, publication, self.authority)
         return {"publication": receipt.model_dump(mode="json")}
+
+    def open_wait(
+        self,
+        session_id: UUID,
+        attempt_id: UUID,
+        wait_id: UUID,
+        partial: str,
+        question: str,
+        remainder: str,
+    ) -> dict[str, object]:
+        selected = self._selection(session_id)
+        if self.assigned_attempt_id != attempt_id or self.assigned_session_id != session_id:
+            raise FoundationError("permission_denied", "Only the assigned RPC can open its wait")
+        data = partial.encode("utf-8")
+        if not data or len(data) > 8 * 1024 * 1024:
+            raise FoundationError("invalid_request", "Partial result is empty or too large")
+        artifact_id = uuid5(wait_id, "partial-artifact")
+        artifact = CreateArtifactRequest(
+            operation_id=uuid5(wait_id, "partial-create"),
+            space_id=self.authority.space_id,
+            actor=self.authority.actor,
+            artifact_id=artifact_id,
+            media_type="text/plain",
+            content=data,
+            provenance=(
+                ProvenanceRef(relation="pi-rpc-partial", external_ref=f"attempt:{attempt_id}"),
+            ),
+        )
+        created = apply_operation(self.path, artifact, self.authority)
+        snapshot = read_execution(self.path, selected.work_id, self.authority)
+        assignment = next(
+            (item for item in snapshot.assignments if item.attempt_id == attempt_id), None
+        )
+        if assignment is None:
+            raise FoundationError("stale_attempt", "Assignment is unavailable")
+        request = OpenWaitRequest(
+            operation_id=uuid5(wait_id, "open"),
+            space_id=self.authority.space_id,
+            actor=self.authority.actor,
+            wait_id=wait_id,
+            attempt_id=attempt_id,
+            work_id=selected.work_id,
+            session_id=session_id,
+            expected_assignment_revision=assignment.revision,
+            question=question,
+            expected_actor=self.authority.actor,
+            remainder=remainder,
+            partial_refs=(ArtifactRef(artifact_id=artifact_id, revision=1),),
+        )
+        opened = apply_operation(self.path, request, self.authority)
+        return {
+            "partial": created.model_dump(mode="json"),
+            "wait": opened.model_dump(mode="json"),
+        }
+
+    def answer_wait(self, session_id: UUID, wait_id: UUID, answer: str) -> dict[str, object]:
+        selected = self._selection(session_id)
+        if self.assigned_attempt_id is not None:
+            raise FoundationError("permission_denied", "RPC cannot answer its own question")
+        snapshot = read_execution(self.path, selected.work_id, self.authority)
+        wait = next((item for item in snapshot.waits if item.wait_id == wait_id), None)
+        if wait is None:
+            raise FoundationError("stale_wait", "Question is unavailable")
+        operation_id = uuid5(wait_id, "addressed-answer")
+        if wait.status == "answered":
+            if wait.answer != answer:
+                raise FoundationError("stale_wait", "Question already has another answer")
+            receipt = read_receipt(self.path, operation_id, self.authority)
+        else:
+            attempt = next(
+                (item for item in snapshot.attempts if item.attempt_id == wait.attempt_id), None
+            )
+            if attempt is None:
+                raise FoundationError("stale_attempt", "Question has no current Attempt")
+            request = AnswerWaitRequest(
+                operation_id=operation_id,
+                space_id=self.authority.space_id,
+                actor=self.authority.actor,
+                wait_id=wait_id,
+                attempt_id=wait.attempt_id,
+                work_id=selected.work_id,
+                session_id=attempt.session_id,
+                expected_wait_revision=wait.revision,
+                answer=answer,
+            )
+            receipt = apply_operation(self.path, request, self.authority)
+        outbox_id = UUID(str(receipt.result["outbox_id"]))
+        if self.deliver_answer is not None:
+            self.deliver_answer(outbox_id)
+        return receipt.model_dump(mode="json")
 
     def accept_preview(self, session_id: UUID) -> dict[str, object]:
         selected = self._selection(session_id)
@@ -399,6 +531,17 @@ class BridgeHandler(BaseHTTPRequestHandler):
                     str(body["media_type"]),
                     str(body["content"]),
                 )
+            elif post and path.path == "/v1/wait":
+                result = bridge.open_wait(
+                    session_id,
+                    UUID(body["attempt_id"]),
+                    UUID(body["wait_id"]),
+                    str(body["partial"]),
+                    str(body["question"]),
+                    str(body["remainder"]),
+                )
+            elif post and path.path == "/v1/answer":
+                result = bridge.answer_wait(session_id, UUID(body["wait_id"]), str(body["answer"]))
             elif post and path.path == "/v1/accept-preview":
                 result = bridge.accept_preview(session_id)
             elif post and path.path == "/v1/accept":

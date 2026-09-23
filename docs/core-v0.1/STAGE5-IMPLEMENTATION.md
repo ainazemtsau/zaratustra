@@ -111,4 +111,107 @@ uv run --locked python -m pytest tests/zaratustra/foundation/test_continuation.p
 Pi RPC или DBOS. Полная проверка delivery и её фактический результат записаны
 отдельно в `RESULT.md`; focused run сам по себе не служит полным gate.
 
+## Проход 2 — отдельный обычный Pi RPC через DBOS
+
+Владелец принял проход 1 на `03a3887f7d50aa1dccf8c761ce5bc933a57f86c9`
+отдельно от готовности Stage 5; точная запись — `STAGE5-PASS1-ACCEPTANCE.md`.
+По новому разрешению установлен точный `dbos==3.0.0`. Код прохода 2 не добавляет
+предметный dispatcher: `zaratustra.pi_adapter.assigned` передаёт только
+закоммиченные адреса Core outbox в DBOS queue и `send`. DBOS workflow имеет
+устойчивый id от `Attempt`, закреплённую версию
+`zara-pi-rpc-dbos-3.0.0-v1`, получает Work/Attempt/epoch/generation без prose,
+prompt и ответа. Повтор `launch` использует тот же workflow id и deduplication
+id; повтор `resume` использует idempotency key от outbox id. При старте
+доставщик сканирует ещё актуальные pending записи Core. Путь интерактивного
+ответа доставляет конкретный `resume` после предметного commit. DBOS хранит
+техническую очередь, ожидание через `recv` и восстановление; предметное
+решение, права, ревизии, вопрос и результат остаются в Core.
+
+Отдельный обычный Pi `0.87.0` запускается как `--mode rpc` с LF JSONL,
+`--no-session` и тем же расширением Provider HTTP/SSE, которое обслуживает
+Stage 4. В режиме назначения расширение привязывает сессию к точной Attempt,
+не открывает новую и не может через bridge применить операцию другой Attempt.
+Первый ответ RPC может содержать строго типизированный для адаптера JSON
+`wait` с частичным текстом, вопросом и остатком. Адаптер создаёт частичный
+Artifact и открывает адресное ожидание Core. Интерактивные `/zara-status` и
+`/zara-answer` читают и отвечают на сохранённое ожидание без модельного
+вызова; выбор назначенного Work больше не прерывает его Attempt. После
+DBOS-сигнала исполнитель заново проверяет Core epoch, generation, Grant и
+ответ перед вторым prompt. `final` публикуется существующей операцией Stage 4
+как точный Artifact/Work output. Work остаётся `proposed`; только отдельный
+`AcceptWorkRequest` принимает его. В обычном исходе host завершает и наблюдает
+процесс, затем пишет `stop_requested → stopped`; при ненаблюдаемой остановке
+пишет `unknown`, и прежняя Core семантика удерживает эксклюзивный ресурс.
+Текущая schema 4 помечает закрытую назначенную Attempt `interrupted` даже после
+публикации результата; это техническое закрытие, не утверждение о качестве Work.
+
+Каждый реальный HTTP/SSE send проходит `prepare → admit` с резервом,
+`send` и фактическим SHA-256 тела перед `fetch`; завершение фиксирует usage или
+`unknown` с удержанным резервом. В управляемом Pi-профиле отключены его
+внутренние retry; compaction/overflow всё равно идут через тот же Provider
+wrapper. Профиль/provider/model/лимиты остаются параметрами назначения и
+запуска. Проверен только localhost `local-completions`; код не закрепляет
+localhost/offline как свойство продукта. Первый назначенный маршрут допускает
+без инструментов либо явные read-only `read/grep/find/ls`. Долговечный
+контракт изменяющих внешних эффектов ещё не реализован.
+
+### Управляемые копии
+
+- DBOS SQLite живёт в выбранном `.zara-core/executor.sqlite3`; Pi RPC запускается
+  без JSONL-сессии, а его изолированный home живёт в `.zara-core/pi-rpc-home`.
+  В нём также фиксируются выключенные retry и локальная конфигурация Pi.
+- Backup под исключающим maintenance lock копирует Core и DBOS через SQLite
+  Backup API, копирует файлы Pi home и проверяет SHA-256 каждого файла по
+  расширенному manifest. Карантинный restore повышает Core epoch и помещает
+  техническую копию в `executor-restored.sqlite3` и `pi-rpc-home-restored`:
+  старая очередь не запускается автоматически. `RecoverRequest` по-прежнему
+  закрывает старые Attempt/outbox и требует свежую локальную authority.
+- Одновременные Pi-сессии получают совместимые session locks; удаление и
+  backup требуют исключающего lock. `complete_deletions` отказывает с
+  `technical_cleanup_required`, если новые технические файлы есть, а адаптер
+  не представлен. `complete_assigned_deletions` через DBOS Client удаляет
+  адресованные затронутые workflows, очищает их Pi home, санирует закрытую
+  DBOS SQLite и удаляет инертные восстановленные технические архивы. При
+  утерянном DBOS индексе точечная очистка отказывает как `technical_state`.
+  Существующая Core санация затем удаляет затронутые backup packages и Pi
+  histories. В installed интерфейсе доступен `zara-rpc-maintain --space` с
+  локальным подтверждением и текущим правом обслуживания.
+
+### Проверенная трасса и предел
+
+`tools.probe_stage5_rpc` создаёт новый каталог в `_scratch`, разовый
+фиктивный Work, локальный SSE provider и две обычные Pi RPC-сессии. В
+`_scratch/stage5-rpc-live-f/report.json` записан последний целевой проход:
+назначенная Pi отправила один наблюдаемый HTTP и сохранила вопрос/частичный
+Artifact; второй Pi через настоящее расширение показал вопрос без HTTP;
+повтор enqueue не дал второго исполнения; адресный ответ и его дубль привели
+к одному продолжению и ещё одному HTTP. Оба invocation digest совпали с
+телами HTTP, их usage учтён, итоговый Work остался `proposed`, процесс
+наблюдён как остановленный. Отдельная Attempt с исчерпанным до send лимитом
+создала одну `prepared` запись и ноль HTTP. Backup включил DBOS и три
+управляемых Pi-файла; восстановление получило epoch 2 с инертной DBOS-копией.
+Удаление Work убрало workflow через DBOS API, Pi home и затронутый backup;
+аналогичное удаление в восстановленной эпохе убрало инертные архивы.
+
+Для повторения нужен установленный upstream Pi `0.87.0`, проверенный SQLite
+`3.53.3` и новый каталог; команда использует только localhost fixture:
+
+```powershell
+$env:UV_CACHE_DIR = Join-Path (Get-Location) '_scratch\stage5-plan-uv-cache'
+$env:ZARATUSTRA_SQLITE_DLL = Join-Path (Get-Location) '_scratch\stage4-interactive-20260923-a\sqlite\sqlite3.dll'
+$env:PYTHONPATH = Join-Path (Get-Location) 'tools\sqlite_bootstrap'
+uv run --locked python -m tools.probe_stage5_rpc --output _scratch\stage5-rpc-new --pi-cli '_scratch\stage4-pi-runtime\node_modules\@earendil-works\pi-coding-agent\dist\bundle\cli.js' --pi-runtime '_scratch\stage4-pi-runtime'
+```
+
+Сценарий не проверяет аварийную матрицу прохода 3: смерть host между Core
+commit/DBOS checkpoint и запуском ребёнка, потерю HTTP-ответа, перезапуск
+DBOS/Pi при живом/неизвестном процессе, отзыв Grant во время хода, поздний
+результат, конкуренцию ресурсов, несовместимую версию и неостановимый ребёнок.
+Не проверены реальный provider/auth, платный вызов, изменяющий инструмент,
+согласованность горячего backup двух БД при независимой активности DBOS и
+внешние копии. Положительный проход 2 не утверждает пригодность DBOS/SQLite
+для всей системы. Установленный outside-checkout probe и полная аварийная
+матрица остаются отдельным проходом 3; общая композиция обслуживания —
+предметом прохода 4. Владелец должен отдельно проверить этот результат.
+
 END_OF_FILE

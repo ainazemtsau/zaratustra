@@ -10,6 +10,8 @@ const reserveUnits = Number(process.env.ZARA_RESERVE_UNITS);
 const profile = process.env.ZARA_PROVIDER_PROFILE ?? "codex-sse";
 const localProviderId = process.env.ZARA_LOCAL_PROVIDER_ID;
 const localModelId = process.env.ZARA_LOCAL_MODEL_ID;
+const assignedAttemptId = process.env.ZARA_ASSIGNED_ATTEMPT_ID;
+const assignedSessionId = process.env.ZARA_ASSIGNED_SESSION_ID;
 
 function digest(body: Uint8Array): string {
   return createHash("sha256").update(body).digest("hex").toUpperCase();
@@ -38,7 +40,7 @@ export default function (pi: any): void {
   if (!endpoint || !token || !allowedOrigin || !providerBaseUrl || !Number.isSafeInteger(reserveUnits) || reserveUnits < 1) {
     throw new Error("Zaratustra bridge requires endpoint, token, origin and positive reserve");
   }
-  const sessionId = randomUUID();
+  const sessionId = assignedSessionId ?? randomUUID();
   let connection: any = null;
   let selection: any = null;
   let attemptId: string | null = null;
@@ -208,7 +210,12 @@ export default function (pi: any): void {
       });
       selection = { activity_id: process.env.ZARA_INITIAL_ACTIVITY_ID,
                     work_id: process.env.ZARA_INITIAL_WORK_ID };
-      if (current.work.state.status === "proposed" && !current.work.state.linked_outputs.length &&
+      if (assignedAttemptId) {
+        if (!current.attempts.some((x: any) => x.attempt_id === assignedAttemptId && x.status === "active")) {
+          throw new Error("Assigned Attempt is unavailable");
+        }
+        attemptId = assignedAttemptId;
+      } else if (current.work.state.status === "proposed" && !current.work.state.linked_outputs.length &&
           !current.attempts.some((x: any) => x.status === "active")) {
         const started = await request("/v1/start-attempt", { interrupt_previous: false });
         attemptId = started.attempt_id;
@@ -235,6 +242,10 @@ export default function (pi: any): void {
       if (!work) return;
       const current = await request("/v1/select", { activity_id: activity.record_id, work_id: work.record_id });
       selection = { activity_id: activity.record_id, work_id: work.record_id };
+      if (current.assignments.some((x: any) => ["assigned", "waiting", "ready", "stop_requested", "unknown"].includes(x.status))) {
+        ctx.ui.notify("Assigned Work loaded from Core. Use /zara-status and /zara-answer for its saved question.", "info");
+        return;
+      }
       if (current.work.state.status === "succeeded") {
         ctx.ui.notify("Accepted Work loaded from Core. Use /zara-status to inspect its result.", "info");
         return;
@@ -258,6 +269,26 @@ export default function (pi: any): void {
     handler: async (_args: string, ctx: any) => {
       const current = selection ? await snapshot() : await request("/v1/connect", {});
       ctx.ui.notify(JSON.stringify(current, null, 2), "info");
+    },
+  });
+
+  pi.registerCommand("zara-answer", {
+    description: "Answer one saved, addressed Core question without a model call",
+    handler: async (_args: string, ctx: any) => {
+      if (!selection || assignedAttemptId) throw new Error("Select an assigned Work in interactive Pi");
+      const current = await snapshot();
+      const open = current.waits.filter((x: any) => x.status === "open");
+      if (!open.length) { ctx.ui.notify("No open question for this Work.", "info"); return; }
+      const labels = open.map((x: any) => `${x.question} [${x.wait_id}]`);
+      const label = await ctx.ui.select("Saved Core question", labels);
+      const chosen = open[labels.indexOf(label)];
+      if (!chosen) return;
+      const answer = await ctx.ui.input("Addressed answer", chosen.question);
+      if (!answer?.trim()) return;
+      const yes = await ctx.ui.confirm("Answer this exact question?", `${chosen.question}\nAnswer: ${answer}`);
+      if (!yes) return;
+      const receipt = await request("/v1/answer", { wait_id: chosen.wait_id, answer });
+      ctx.ui.notify(`Answer saved in Core receipt ${receipt.operation_id}.`, "info");
     },
   });
 
@@ -298,6 +329,7 @@ export default function (pi: any): void {
       work_id: current.work.work_id, work_revision: current.work.revision,
       work: current.work.state, attempt_id: attemptId,
       inputs: current.inputs.map(render), saved_outputs: current.outputs.map(render),
+      waits: current.waits.map((item: any) => ({ ...item })),
       cost: { committed_units: current.committed_units, held_units: current.held_units,
               remaining_units: current.remaining_units },
     };
@@ -336,6 +368,24 @@ export default function (pi: any): void {
       }
     }
     if (!attemptId || !selection || lastOutcome !== "completed" || !lastAnswer.trim()) return;
+    if (assignedAttemptId) {
+      let result: any;
+      try { result = JSON.parse(lastAnswer); }
+      catch { throw new Error("Assigned RPC must return one JSON result or wait"); }
+      if (result?.zara === "wait" && typeof result.partial === "string" &&
+          typeof result.question === "string" && typeof result.remainder === "string") {
+        await request("/v1/wait", {
+          attempt_id: attemptId, wait_id: randomUUID(), partial: result.partial,
+          question: result.question, remainder: result.remainder,
+        });
+        contextReady = false;
+        return;
+      }
+      if (result?.zara !== "final" || typeof result.text !== "string" || !result.text.trim()) {
+        throw new Error("Assigned RPC result has no valid final text");
+      }
+      lastAnswer = result.text;
+    }
     const current = await snapshot();
     const slots = current.work.state.expected_outputs;
     if (slots.length !== 1 || !slots[0].media_type.startsWith("text/")) {
@@ -346,8 +396,10 @@ export default function (pi: any): void {
       attempt_id: attemptId, slot: slots[0].slot,
       media_type: slots[0].media_type, content: lastAnswer,
     });
-    await operation({ kind: "stop_attempt", attempt_id: attemptId, work_id: selection.work_id,
-                      session_id: sessionId, outcome: "completed" });
+    if (!assignedAttemptId) {
+      await operation({ kind: "stop_attempt", attempt_id: attemptId, work_id: selection.work_id,
+                        session_id: sessionId, outcome: "completed" });
+    }
     ctx.ui.notify(`Result saved as Artifact; Work remains proposed. Receipt ${published.publication.operation_id}.`, "info");
     attemptId = null;
     contextReady = false;

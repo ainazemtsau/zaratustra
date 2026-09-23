@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+from collections.abc import Callable
 from contextlib import closing
 from dataclasses import dataclass
 from datetime import datetime
@@ -69,6 +70,10 @@ from .models import (
 )
 from .storage import (
     DATABASE_NAME,
+    EXECUTOR_DATABASE_NAME,
+    RESTORED_EXECUTOR_NAME,
+    RESTORED_RPC_HOME_DIRECTORY,
+    RPC_HOME_DIRECTORY,
     SUBJECT_SCHEMA_NAME,
     SUBJECT_SCHEMA_SHA256,
     SUBJECT_SCHEMA_STATEMENTS,
@@ -1882,6 +1887,13 @@ def inspect_recovery(path: Path, authority: RecoveryAuthority) -> dict[str, obje
 
 
 def create_backup(path: Path, backup_id: UUID, authority: LocalAuthority) -> BackupInfo:
+    from .history import managed_pi_lock
+
+    with managed_pi_lock(path):
+        return _create_backup_locked(path, backup_id, authority)
+
+
+def _create_backup_locked(path: Path, backup_id: UUID, authority: LocalAuthority) -> BackupInfo:
     created_at = utc_now()
     prepared: BackupInfo | None = None
     final_package: Path | None = None
@@ -1999,12 +2011,45 @@ def _subject_deletion_count(connection: object, schema_version: int, status: str
     )
 
 
-def complete_deletions(path: Path, authority: LocalAuthority) -> DeletionStatus:
+def complete_deletions(
+    path: Path,
+    authority: LocalAuthority,
+    *,
+    technical_cleanup: Callable[[Path, LocalAuthority, tuple[UUID, ...]], None] | None = None,
+) -> DeletionStatus:
     """Purge affected managed backups, then close/checkpoint/VACUUM the live store."""
 
     from .history import managed_pi_lock
 
     with managed_pi_lock(path):
+        with space_connection(path) as (connection, info):
+            _local_space(authority, info)
+            pending_rows = connection.execute(
+                "SELECT record_id FROM deletion_jobs WHERE status = 'pending'"
+                + (
+                    " UNION SELECT record_id FROM subject_deletion_jobs WHERE status = 'pending'"
+                    if info.schema_version >= 2
+                    else ""
+                )
+            ).fetchall()
+        pending_ids = tuple(UUID(row[0]) for row in pending_rows)
+        technical_root = layout(path)[0] / ".zara-core"
+        managed_technical = any(
+            (technical_root / name).exists()
+            for name in (
+                EXECUTOR_DATABASE_NAME,
+                RESTORED_EXECUTOR_NAME,
+                RPC_HOME_DIRECTORY,
+                RESTORED_RPC_HOME_DIRECTORY,
+            )
+        )
+        if pending_ids and managed_technical and technical_cleanup is None:
+            raise FoundationError(
+                "technical_cleanup_required",
+                "Managed DBOS state needs the assigned executor cleanup adapter",
+            )
+        if pending_ids and technical_cleanup is not None:
+            technical_cleanup(path, authority, pending_ids)
         return _complete_deletions_locked(path, authority)
 
 

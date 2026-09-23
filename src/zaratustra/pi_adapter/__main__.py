@@ -21,7 +21,7 @@ from zaratustra.foundation import (
     authorize_local,
     initialize_space,
     inspect_space,
-    managed_pi_lock,
+    managed_pi_session_lock,
     managed_pi_sessions,
     read_space,
     upgrade_execution_space,
@@ -128,11 +128,16 @@ def main(argv: list[str] | None = None) -> int:
     if input("Type CONNECT to use these paths and local identity: ").strip() != "CONNECT":
         return 1
     authority = _prepare_space(space, actor, create=args.new_space)
-    with managed_pi_lock(space):
+    with managed_pi_session_lock(space):
         if inspect_space(space, authority).pending_deletions:
             parser.error("Complete pending Core deletions before opening Pi")
         session_dir = managed_pi_sessions(space, authority.space_id, create=True)
         bridge = Bridge(space, authority, workspace, args.limit_units)
+        executor_store = space / ".zara-core" / "executor.sqlite3"
+        if executor_store.is_file():
+            from .assigned import deliver_outbox
+
+            bridge.deliver_answer = lambda outbox_id: deliver_outbox(space, authority, outbox_id)
         server = BridgeServer(bridge)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()

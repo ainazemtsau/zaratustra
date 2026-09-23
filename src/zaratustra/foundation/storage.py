@@ -9,7 +9,7 @@ import time
 from collections.abc import Iterator
 from contextlib import closing, contextmanager
 from datetime import UTC, datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, Literal, cast
 from uuid import UUID, uuid4
 
@@ -25,6 +25,10 @@ SCHEMA_VERSION = 1
 SCHEMA_NAME = "core-v0.1-foundation-1"
 STATE_DIRECTORY = ".zara-core"
 DATABASE_NAME = "core.sqlite3"
+EXECUTOR_DATABASE_NAME = "executor.sqlite3"
+RESTORED_EXECUTOR_NAME = "executor-restored.sqlite3"
+RPC_HOME_DIRECTORY = "pi-rpc-home"
+RESTORED_RPC_HOME_DIRECTORY = "pi-rpc-home-restored"
 BACKUP_DIRECTORY = "backups"
 BUSY_TIMEOUT_MS = 250
 BUSY_ATTEMPTS = 3
@@ -631,6 +635,32 @@ def backup_database(source: Path, backup_id: UUID, created_at: datetime) -> Back
             with closing(sqlite3.connect(backup_database_path, autocommit=True)) as target:
                 source_connection.backup(target)
         digest = file_sha256(backup_database_path)
+        executor = root / STATE_DIRECTORY / EXECUTOR_DATABASE_NAME
+        _plain(executor)
+        executor_digest: str | None = None
+        if executor.is_file():
+            executor_copy = partial / EXECUTOR_DATABASE_NAME
+            with closing(sqlite3.connect(executor)) as origin:
+                with closing(sqlite3.connect(executor_copy, autocommit=True)) as target:
+                    origin.backup(target)
+            executor_digest = file_sha256(executor_copy)
+        home = root / STATE_DIRECTORY / RPC_HOME_DIRECTORY
+        _plain(home)
+        home_files: dict[str, str] = {}
+        if home.exists():
+            if not home.is_dir():
+                raise FoundationError("layout", "Managed Pi RPC home is not a directory")
+            for entry in sorted(home.rglob("*")):
+                _plain(entry)
+                if entry.is_dir():
+                    continue
+                if not entry.is_file():
+                    raise FoundationError("layout", "Unsupported Pi RPC home entry")
+                relative = entry.relative_to(home).as_posix()
+                copy = partial / RPC_HOME_DIRECTORY / relative
+                copy.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(entry, copy)
+                home_files[relative] = file_sha256(copy)
         manifest = BackupManifest(
             backup_id=backup_id,
             space_id=info.space_id,
@@ -639,6 +669,8 @@ def backup_database(source: Path, backup_id: UUID, created_at: datetime) -> Back
             execution_epoch=info.execution_epoch,
             created_at=created_at,
             database_sha256=digest,
+            executor_sha256=executor_digest,
+            pi_rpc_home_files=home_files,
         )
         (partial / "manifest.json").write_text(
             manifest.model_dump_json(indent=2), encoding="utf-8", newline="\n"
@@ -682,6 +714,34 @@ def load_backup(package: Path) -> BackupInfo:
             raise FoundationError("invalid_backup", "Managed backup is not current and complete")
     if file_sha256(database) != manifest.database_sha256:
         raise FoundationError("invalid_backup", "Backup database hash mismatch")
+    executor = package / EXECUTOR_DATABASE_NAME
+    if executor.is_file() != (manifest.executor_sha256 is not None):
+        raise FoundationError("invalid_backup", "Backup executor inventory mismatch")
+    if manifest.executor_sha256 is not None and file_sha256(executor) != manifest.executor_sha256:
+        raise FoundationError("invalid_backup", "Backup executor hash mismatch")
+    home = package / RPC_HOME_DIRECTORY
+    actual_home: set[str] = set()
+    if home.exists():
+        _plain(home)
+        if not home.is_dir():
+            raise FoundationError("invalid_backup", "Backup Pi RPC home is invalid")
+        for entry in home.rglob("*"):
+            _plain(entry)
+            if entry.is_file():
+                actual_home.add(entry.relative_to(home).as_posix())
+            elif not entry.is_dir():
+                raise FoundationError("invalid_backup", "Unsupported Pi RPC backup entry")
+    if actual_home != set(manifest.pi_rpc_home_files):
+        raise FoundationError("invalid_backup", "Backup Pi RPC file inventory mismatch")
+    for relative, digest in manifest.pi_rpc_home_files.items():
+        parts = PurePosixPath(relative).parts
+        if (
+            not parts
+            or any(part in (".", "..") or ":" in part for part in parts)
+            or PureWindowsPath(relative).as_posix() != relative
+            or file_sha256(home.joinpath(*parts)) != digest
+        ):
+            raise FoundationError("invalid_backup", "Backup Pi RPC file is invalid")
     with closing(_connect(database, writable=False)) as connection:
         _begin(connection, writable=False)
         try:
@@ -719,6 +779,16 @@ def restore_database(package: Path, destination: Path) -> SpaceInfo:
         state.mkdir()
         backups.mkdir()
         shutil.copy2(backup.package / DATABASE_NAME, database)
+        if backup.manifest.executor_sha256 is not None:
+            shutil.copy2(
+                backup.package / EXECUTOR_DATABASE_NAME,
+                state / RESTORED_EXECUTOR_NAME,
+            )
+        if backup.manifest.pi_rpc_home_files:
+            shutil.copytree(
+                backup.package / RPC_HOME_DIRECTORY,
+                state / RESTORED_RPC_HOME_DIRECTORY,
+            )
         with closing(_connect(database, writable=True)) as connection:
             _begin(connection, writable=True)
             now = utc_now().isoformat()
@@ -775,6 +845,10 @@ __all__ = [
     "CONTINUATION_SCHEMA_SHA256",
     "CONTINUATION_SCHEMA_STATEMENTS",
     "DATABASE_NAME",
+    "EXECUTOR_DATABASE_NAME",
+    "RESTORED_EXECUTOR_NAME",
+    "RPC_HOME_DIRECTORY",
+    "RESTORED_RPC_HOME_DIRECTORY",
     "FoundationError",
     "SCHEMA_SHA256",
     "SCHEMA_VERSION",

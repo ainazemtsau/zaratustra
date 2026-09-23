@@ -28,7 +28,10 @@ stop state and pending/cancelled outbox records in the same operation/receipt pa
 The Work remains proposed until its exact result is separately accepted. Recovery
 closes old-epoch waits and cancels old outbox; unknown stop retains the resource.
 Deletion purges these managed rows and payload in affected backups/live SQLite.
-No DBOS, scheduler, dispatcher, memory or Sleep dependency belongs here.
+Schema 4 backup may also carry a checked DBOS SQLite snapshot and managed Pi RPC
+home; restore keeps them inert in the new epoch. Core requires a technical cleanup
+adapter before completing deletion when such data exists. The package still does
+not import DBOS, Pi, a scheduler, dispatcher, memory or Sleep.
 Stage/check numbers stay in documentation and tests, not product module names.
 
 END_OF_FILE: src/zaratustra/foundation/AGENTS.md

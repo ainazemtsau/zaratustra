@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 import os
+import secrets
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -13,6 +14,7 @@ from .storage import STATE_DIRECTORY, FoundationError, layout
 
 HISTORY_DIRECTORY = "pi-sessions"
 HISTORY_MARKER = "owner.txt"
+LOCK_BYTES = 4096
 
 
 def _check_plain(path: Path) -> None:
@@ -47,14 +49,14 @@ def managed_pi_lock(path: Path) -> Iterator[None]:
             import msvcrt
 
             try:
-                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, LOCK_BYTES)
             except OSError as error:
                 raise FoundationError("history_busy", "Pi owns this Core space") from error
             try:
                 yield
             finally:
                 handle.seek(0)
-                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, LOCK_BYTES)
         else:
             fcntl = importlib.import_module("fcntl")
             try:
@@ -65,6 +67,46 @@ def managed_pi_lock(path: Path) -> Iterator[None]:
                 yield
             finally:
                 fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+@contextmanager
+def managed_pi_session_lock(path: Path) -> Iterator[None]:
+    """Allow concurrent Pi sessions while still excluding deletion maintenance."""
+
+    root, _, _ = layout(path)
+    marker = root / STATE_DIRECTORY / "pi-owner.lock"
+    _check_plain(marker)
+    try:
+        opened = marker.open("a+b")
+    except OSError as error:
+        raise FoundationError("history_busy", "Cannot open managed Pi lock") from error
+    with opened as handle:
+        if os.name == "nt":
+            import msvcrt
+
+            for _ in range(LOCK_BYTES - 1):
+                position = secrets.randbelow(LOCK_BYTES - 1) + 1
+                handle.seek(position)
+                try:
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                except OSError:
+                    continue
+                try:
+                    yield
+                finally:
+                    handle.seek(position)
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+                return
+            raise FoundationError("history_busy", "Pi lock is held by maintenance")
+        fcntl = importlib.import_module("fcntl")
+        try:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_SH | fcntl.LOCK_NB)
+        except OSError as error:
+            raise FoundationError("history_busy", "Pi lock is held by maintenance") from error
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
 
 def managed_pi_sessions(path: Path, space_id: UUID, *, create: bool = False) -> Path:

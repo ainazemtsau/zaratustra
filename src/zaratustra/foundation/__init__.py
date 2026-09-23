@@ -6,7 +6,7 @@ from .execution import (
     upgrade_continuation_space,
     upgrade_execution_space,
 )
-from .history import managed_pi_lock, managed_pi_sessions
+from .history import managed_pi_lock, managed_pi_session_lock, managed_pi_sessions
 from .models import (
     ALL_ACTIONS,
     AcceptWorkRequest,
@@ -139,6 +139,7 @@ __all__ = [
     "InvocationRecord",
     "LocalAuthority",
     "managed_pi_lock",
+    "managed_pi_session_lock",
     "managed_pi_sessions",
     "OperationReceipt",
     "OpenWaitRequest",

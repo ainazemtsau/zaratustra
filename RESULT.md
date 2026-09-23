@@ -1,3 +1,87 @@
+# Core v0.1 Stage 5 pass 2 — one assigned ordinary Pi RPC
+
+## outcome
+
+The owner accepted Stage 5 pass 1 at
+`03a3887f7d50aa1dccf8c761ce5bc933a57f86c9` with the words
+“Ну, если можно принимать, то я принимаю”. That acceptance is recorded
+separately in `docs/core-v0.1/STAGE5-PASS1-ACCEPTANCE.md`; it is not acceptance
+of all Stage 5. The owner then authorized pass 2. This pass connects one
+Core-assigned Work and committed outbox to pinned DBOS 3.0.0 queue/wait/send
+and a separate ordinary upstream Pi 0.87.0 RPC. The interactive Pi remains
+available for another conversation and can display/answer the saved question.
+Core remains the sole subject original. The Work result is an exact Artifact
+and stays `proposed` for separate acceptance. No custom dispatcher was added.
+
+## evidence
+
+The source specification still has SHA-256
+`1DDCBF9DBFD58426781F61A67A170D3CE85FCD2BA27B17549773ED3356F9428D`.
+`docs/core-v0.1/STAGE5-IMPLEMENTATION.md` records the implemented boundary.
+The real Pi RPC/localhost SSE trace in ignored
+`_scratch/stage5-rpc-live-f/report.json` observed one model HTTP before the
+question and one after its addressed answer. A second ordinary Pi RPC displayed
+the Core question without a model HTTP. Repeated DBOS enqueue and repeated
+answer caused no extra provider send. Both HTTP body digests matched Core
+invocations; 280 reported units were committed with zero held. The final
+Artifact was exact, Work stayed proposed and the child exit was observed
+before Core recorded `stopped`. A separate over-budget assigned Attempt kept
+one `prepared` invocation and sent zero HTTP. Its expected DBOS workflow error
+is not counted as a successful Work.
+
+The trace also verified a hashed Core+DBOS+Pi-home backup, quarantine restore
+with epoch 2 and inert old executor archive, targeted DBOS workflow deletion
+through its Client API, removal of the affected Pi home and backup, Core/DBOS
+SQLite integrity after sanitation, and deletion of restored technical archives.
+Core-only deletion explicitly refused when the DBOS cleanup adapter was absent.
+Focused Core/bridge/assigned regression tests passed (21 tests). The full
+`uv run --locked python -m tools.check --deliver` passed: 184 files formatted,
+Ruff clean, mypy clean across 158 source files, 21 import contracts kept,
+503 tests passed in 285.34 seconds, and source/wheel builds succeeded.
+
+## assumptions
+
+DBOS carries addresses, queue state and wake signals; Work prose, answer and
+result remain in Core and the controlled Pi process. The synthetic provider
+uses ordinary HTTP/SSE with the Stage 4 guarded Provider wrapper. `stopped`
+is written only after observing process exit; an unobserved stop writes
+`unknown` and retains the Core resource. The tested backup is cold with no
+active Pi process. SQLite is the selected local single-host DBOS backend for
+this limited composition, not a whole-system suitability decision.
+
+## cuts
+
+The pass 3 crash matrix remains unverified: host death around Core commit,
+DBOS checkpoint and child launch, HTTP response loss, DBOS/Pi restart,
+mid-turn Grant revocation, late result, competing resources, unkillable child,
+and incompatible workflow version. The pass 4 coordinated hot-maintenance
+matrix and outside-checkout probe remain outstanding. A real provider/auth,
+paid model, modifying tool, personal data, old `.zara` migration, Direction OS
+or `C:\projects\zaratustra` was not used. The tested localhost/offline profile
+is a verification choice; provider/model/limits are configurable. Assigned
+tools currently admit none or explicitly selected read-only Pi tools until
+durable modifying-effect control is implemented.
+
+## cost
+
+Two synthetic localhost model HTTP requests and one pre-send refusal with
+zero HTTP. Zero real model calls, paid API calls or user credentials.
+The installed addition is pinned DBOS 3.0.0, a bounded Pi RPC client/bridge,
+technical backup/deletion coverage, one probe and focused tests.
+
+## manual-acceptance
+
+The owner already accepted pass 1, independently of this result. Engineering
+evidence for pass 2 awaits the owner's review; no Work in the synthetic trace
+was accepted. Reproduce with the command in `STAGE5-IMPLEMENTATION.md`, inspect
+the Core Artifact, invocation ledger, question/answer/outbox, backup/restore
+and deletion report, then decide whether to accept pass 2. This result does
+not declare Stage 5 complete.
+
+## next
+
+solmax
+
 # Core v0.1 Stage 5 pass 1 — deletion and acceptance corrections
 
 ## outcome

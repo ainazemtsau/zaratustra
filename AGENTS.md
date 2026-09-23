@@ -4,7 +4,7 @@
 - The current product basis is `docs/core-v0.1/IMPLEMENTATION-BASELINE.md`, the
   owner-approved Core v0.1 implementation plan recorded there,
   `docs/core-v0.1/STAGE4-PLAN.md`, `docs/core-v0.1/STAGE5-PLAN.md`, this AGENTS.md,
-  and `validation.config`. Stage 5 is a plan until separately authorized.
+  and `validation.config`. Stage 5 work proceeds only by separately authorized passes.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
 - Stage 1 stopped after recording the G07-1 DBOS and G08-1 Pi technical outcomes.
@@ -14,11 +14,12 @@
   owner accepted the complete Stage 4 at
   `afa367c10ad949b1610810d4f2e6f106c1a7b7cc`, separately from accepting
   one synthetic Work; see `docs/core-v0.1/STAGE4-ACCEPTANCE.md`. The current
-  owner then authorized only Stage 5 pass 1 on
-  `e29bc0450ce4ee6c67e5e28859c8e410a82f1771`: Core-owned durable
-  assignment, wait/answer/remainder, stop state and outbox with maintenance,
-  documentation, full local check and commit. Pi RPC, DBOS, a dispatcher and
-  real model calls remain outside this pass.
+  owner accepted Stage 5 pass 1 at
+  `03a3887f7d50aa1dccf8c761ce5bc933a57f86c9`; see
+  `docs/core-v0.1/STAGE5-PASS1-ACCEPTANCE.md`. The owner separately authorized
+  pass 2 on September 23, 2026: one assigned ordinary Pi RPC through pinned
+  DBOS 3.0.0, synthetic localhost verification, maintenance, full local check
+  and commit. This does not accept pass 2 or all of Stage 5.
 
 ## Commands (run from this repository)
 - Prepare: `uv sync --locked`
@@ -45,8 +46,9 @@ schema 3 resource/Attempt/invocation records, observable provider sends, exact
 output publication and separate Work acceptance. The owner accepted Stage 4 at
 `afa367c10ad949b1610810d4f2e6f106c1a7b7cc`; see
 `docs/core-v0.1/STAGE4-ACCEPTANCE.md` and `STAGE4-IMPLEMENTATION.md`. Stage 5
-pass 1 adds explicit schema 4 and Core-owned durable continuation without a runner;
-see `docs/core-v0.1/STAGE5-IMPLEMENTATION.md`.
+  pass 1 adds explicit schema 4 and Core-owned durable continuation; pass 2
+  connects one assigned ordinary Pi RPC through DBOS queue/wait. See
+  `docs/core-v0.1/STAGE5-IMPLEMENTATION.md`.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,
@@ -123,8 +125,9 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
 
 ## Constitution
 - Keep the accepted Core v0.1 functional composition and completed Stage 1–4
-  evidence. Stage 4 is owner-accepted; only Stage 5 pass 1 is currently
-  authorized. Preserve earlier Works/CALLs as history, not current scope.
+  evidence. Stage 4 and Stage 5 pass 1 are owner-accepted; Stage 5 pass 2 is
+  authorized but awaits owner review. Preserve earlier Works/CALLs as history,
+  not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.
 - No real personal data, remote publication, paid service or new external rights without authorization.
