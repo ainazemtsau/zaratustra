@@ -66,6 +66,12 @@ forbidden_modules = ["zaratustra.cli", "zaratustra.entry", "zaratustra.intake", 
 name = "Core v0.1 foundation is independent of legacy product surfaces"
 type = "forbidden"
 source_modules = ["zaratustra.foundation"]
+forbidden_modules = ["zaratustra.core", "zaratustra.cli", "zaratustra.entry", "zaratustra.intake", "zaratustra.local", "zaratustra.first_use", "zaratustra.onboarding", "zaratustra.process_creation", "zaratustra.process_change", "zaratustra.process_packs", "zaratustra.trusted_chat", "zaratustra.pi_adapter", "tests", "tools"]
+
+[[tool.importlinter.contracts]]
+name = "Pi adapter uses Core foundation, not legacy product surfaces"
+type = "forbidden"
+source_modules = ["zaratustra.pi_adapter"]
 forbidden_modules = ["zaratustra.core", "zaratustra.cli", "zaratustra.entry", "zaratustra.intake", "zaratustra.local", "zaratustra.first_use", "zaratustra.onboarding", "zaratustra.process_creation", "zaratustra.process_change", "zaratustra.process_packs", "zaratustra.trusted_chat", "tests", "tools"]
 
 [[tool.importlinter.contracts]]

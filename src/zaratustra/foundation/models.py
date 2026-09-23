@@ -14,6 +14,9 @@ type Action = Literal[
     "activity.write",
     "work.write",
     "work.accept",
+    "work.execute",
+    "resource.write",
+    "model.invoke",
     "decision.write",
     "grant.write",
     "record.read",
@@ -29,6 +32,9 @@ ALL_ACTIONS: tuple[Action, ...] = (
     "activity.write",
     "work.write",
     "work.accept",
+    "work.execute",
+    "resource.write",
+    "model.invoke",
     "decision.write",
     "grant.write",
     "record.read",
@@ -255,6 +261,96 @@ class DeleteWorkRequest(OperationRequest):
     expected_revision: int = Field(ge=1)
 
 
+class ResourceState(ContractModel):
+    label: str = Field(min_length=1, max_length=200)
+    root: Path
+    mode: Literal["exclusive", "shared"] = "exclusive"
+    limit_units: int = Field(ge=1)
+    status: Literal["active", "revoked"] = "active"
+
+
+class CreateResourceRequest(OperationRequest):
+    kind: Literal["create_resource"] = "create_resource"
+    resource_id: UUID
+    work_id: UUID
+    state: ResourceState
+
+
+class ReviseResourceRequest(OperationRequest):
+    kind: Literal["revise_resource"] = "revise_resource"
+    resource_id: UUID
+    work_id: UUID
+    expected_revision: int = Field(ge=1)
+    state: ResourceState
+
+
+class StartAttemptRequest(OperationRequest):
+    kind: Literal["start_attempt"] = "start_attempt"
+    attempt_id: UUID
+    work_id: UUID
+    expected_work_revision: int = Field(ge=1)
+    resource_id: UUID
+    expected_resource_revision: int = Field(ge=1)
+    session_id: UUID
+    previous_attempt_id: UUID | None = None
+
+
+class StopAttemptRequest(OperationRequest):
+    kind: Literal["stop_attempt"] = "stop_attempt"
+    attempt_id: UUID
+    work_id: UUID
+    session_id: UUID
+    outcome: Literal["completed", "interrupted"]
+
+
+class PrepareInvocationRequest(OperationRequest):
+    kind: Literal["prepare_invocation"] = "prepare_invocation"
+    invocation_id: UUID
+    attempt_id: UUID
+    work_id: UUID
+    session_id: UUID
+    purpose: Literal["content", "compaction-summary", "overflow-retry", "other"]
+    provider: str = Field(min_length=1, max_length=200)
+    model: str = Field(min_length=1, max_length=200)
+    transport: str = Field(min_length=1, max_length=80)
+    request_sha256: str = Field(pattern=r"^[0-9a-fA-F]{64}$")
+    request_bytes: int = Field(ge=1)
+    reserve_units: int = Field(ge=1)
+
+
+class AdmitInvocationRequest(OperationRequest):
+    kind: Literal["admit_invocation"] = "admit_invocation"
+    invocation_id: UUID
+    attempt_id: UUID
+    work_id: UUID
+    session_id: UUID
+
+
+class SendInvocationRequest(OperationRequest):
+    kind: Literal["send_invocation"] = "send_invocation"
+    invocation_id: UUID
+    attempt_id: UUID
+    work_id: UUID
+    session_id: UUID
+
+
+class FinishInvocationRequest(OperationRequest):
+    kind: Literal["finish_invocation"] = "finish_invocation"
+    invocation_id: UUID
+    attempt_id: UUID
+    work_id: UUID
+    session_id: UUID
+    outcome: Literal["answered", "unknown"]
+    usage_units: int | None = Field(default=None, ge=0)
+    http_status: int | None = Field(default=None, ge=100, le=599)
+
+    @model_validator(mode="after")
+    def usage_matches_outcome(self) -> FinishInvocationRequest:
+        if (self.outcome == "answered") != (self.usage_units is not None):
+            raise ValueError("Answered calls require usage; unknown calls retain reserve")
+        return self
+
+
 DomainRequest = Annotated[
     BootstrapRequest
     | RecoverRequest
@@ -271,7 +367,15 @@ DomainRequest = Annotated[
     | CreateWorkRequest
     | LinkWorkOutputRequest
     | AcceptWorkRequest
-    | DeleteWorkRequest,
+    | DeleteWorkRequest
+    | CreateResourceRequest
+    | ReviseResourceRequest
+    | StartAttemptRequest
+    | StopAttemptRequest
+    | PrepareInvocationRequest
+    | AdmitInvocationRequest
+    | SendInvocationRequest
+    | FinishInvocationRequest,
     Field(discriminator="kind"),
 ]
 
@@ -281,7 +385,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2]
+    schema_version: Literal[1, 2, 3]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -342,6 +446,61 @@ class WorkRevision(ContractModel):
     unavailable_refs: tuple[ArtifactRef, ...] = ()
 
 
+class ResourceRevision(ContractModel):
+    resource_id: UUID
+    work_id: UUID
+    revision: int = Field(ge=1)
+    state: ResourceState
+
+
+class AttemptRecord(ContractModel):
+    attempt_id: UUID
+    revision: int = Field(ge=1)
+    work_id: UUID
+    work_revision: int = Field(ge=1)
+    resource_id: UUID
+    resource_revision: int = Field(ge=1)
+    session_id: UUID
+    previous_attempt_id: UUID | None
+    execution_epoch: int = Field(ge=1)
+    generation: int = Field(ge=1)
+    input_refs: tuple[ArtifactRef, ...]
+    status: Literal["active", "completed", "interrupted"]
+
+
+class InvocationRecord(ContractModel):
+    invocation_id: UUID
+    revision: int = Field(ge=1)
+    attempt_id: UUID
+    purpose: str
+    provider: str
+    model: str
+    transport: str
+    request_sha256: str | None
+    request_bytes: int = Field(ge=1)
+    reserve_units: int = Field(ge=1)
+    usage_units: int | None = Field(default=None, ge=0)
+    status: Literal["prepared", "admitted", "sent", "answered", "unknown"]
+    http_status: int | None = None
+
+
+class ExecutionSnapshot(ContractModel):
+    space_id: UUID
+    execution_epoch: int = Field(ge=1)
+    activity: ActivityRevision
+    work: WorkRevision
+    inputs: tuple[ArtifactRevision, ...]
+    outputs: tuple[ArtifactRevision, ...]
+    resources: tuple[ResourceRevision, ...]
+    attempts: tuple[AttemptRecord, ...]
+    invocations: tuple[InvocationRecord, ...]
+    work_rights: tuple[Action, ...]
+    limit_units: int | None = None
+    committed_units: int = Field(ge=0)
+    held_units: int = Field(ge=0)
+    remaining_units: int | None = None
+
+
 class RecordSummary(ContractModel):
     record_id: UUID
     kind: RecordKind
@@ -365,7 +524,7 @@ class SpaceInspection(ContractModel):
 class BackupManifest(ContractModel):
     backup_id: UUID
     space_id: UUID
-    schema_version: Literal[1, 2]
+    schema_version: Literal[1, 2, 3]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime
@@ -389,9 +548,11 @@ class DeletionStatus(ContractModel):
 __all__ = [
     "ALL_ACTIONS",
     "AcceptWorkRequest",
+    "AdmitInvocationRequest",
     "Action",
     "ActivityRevision",
     "ActivityState",
+    "AttemptRecord",
     "AuditReference",
     "ArtifactRevision",
     "ArtifactRef",
@@ -403,26 +564,37 @@ __all__ = [
     "CreateDecisionRequest",
     "CreateGrantRequest",
     "CreateWorkRequest",
+    "CreateResourceRequest",
     "DecisionState",
     "DeleteActivityRequest",
     "DeleteArtifactRequest",
     "DeleteWorkRequest",
     "DeletionStatus",
+    "FinishInvocationRequest",
     "DomainRequest",
+    "ExecutionSnapshot",
     "GrantState",
+    "InvocationRecord",
     "OperationReceipt",
     "OperationAuditEntry",
+    "PrepareInvocationRequest",
     "OutputContract",
     "LinkedOutput",
     "ProvenanceRef",
     "RecordSummary",
     "RecoverRequest",
+    "ResourceState",
+    "ResourceRevision",
     "ReviseActivityRequest",
     "ReviseArtifactRequest",
     "ReviseDecisionRequest",
+    "ReviseResourceRequest",
     "RevokeGrantRequest",
     "SpaceInfo",
     "SpaceInspection",
+    "SendInvocationRequest",
+    "StartAttemptRequest",
+    "StopAttemptRequest",
     "WorkAcceptance",
     "WorkRevision",
     "WorkState",

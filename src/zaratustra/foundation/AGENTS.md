@@ -8,7 +8,8 @@ legacy `zaratustra.core` package or higher product surfaces. Its public contract
 `storage.py` owns the `.zara-core` layout, schema definitions, checked connections,
 backup/restore and deletion sanitation. `operations.py` owns the authorized
 additive schema 2 upgrade, the sole domain mutation path after space creation,
-and current Decision/Grant checks. `models.py` owns
+and current Decision/Grant checks. `execution.py` owns the explicit schema 3
+upgrade, resource/Attempt/invocation state and addressed execution reads. `models.py` owns
 frozen wire/domain values and must not become an unvalidated JSON bag.
 
 Artifact bytes exist once in `managed_content`; Activity/Work prose lives in
@@ -20,8 +21,8 @@ is a separate authorized operation after exact output checks; Activity remains
 independent of a Work outcome. Restore stays quarantined until a
 fresh trusted-local recovery operation establishes the new epoch.
 
-No Pi, DBOS, scheduler, dispatcher, Work execution, memory or Sleep dependency
-belongs here. Stage/check numbers stay in documentation and tests, not product module
-names.
+The foundation stores Work execution records but never imports Pi or runs a model.
+No DBOS, scheduler, dispatcher, memory or Sleep dependency belongs here.
+Stage/check numbers stay in documentation and tests, not product module names.
 
 END_OF_FILE: src/zaratustra/foundation/AGENTS.md

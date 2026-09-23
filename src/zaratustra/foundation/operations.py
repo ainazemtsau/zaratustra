@@ -20,6 +20,7 @@ from .models import (
     Action,
     ActivityRevision,
     ActivityState,
+    AdmitInvocationRequest,
     ArtifactRef,
     ArtifactRevision,
     BackupInfo,
@@ -28,6 +29,7 @@ from .models import (
     CreateArtifactRequest,
     CreateDecisionRequest,
     CreateGrantRequest,
+    CreateResourceRequest,
     CreateWorkRequest,
     DecisionState,
     DeleteActivityRequest,
@@ -35,19 +37,25 @@ from .models import (
     DeleteWorkRequest,
     DeletionStatus,
     DomainRequest,
+    FinishInvocationRequest,
     GrantState,
     LinkWorkOutputRequest,
     OperationAuditEntry,
     OperationReceipt,
+    PrepareInvocationRequest,
     ProvenanceRef,
     RecordSummary,
     RecoverRequest,
     ReviseActivityRequest,
     ReviseArtifactRequest,
     ReviseDecisionRequest,
+    ReviseResourceRequest,
     RevokeGrantRequest,
+    SendInvocationRequest,
     SpaceInfo,
     SpaceInspection,
+    StartAttemptRequest,
+    StopAttemptRequest,
     WorkAcceptance,
     WorkRevision,
     WorkState,
@@ -398,6 +406,21 @@ def _write_root(
         status=grant.status,
         body={"epoch": epoch, "state": grant.model_dump(mode="json")},
     )
+    if (
+        isinstance(request, RecoverRequest)
+        and int(connection.execute("PRAGMA user_version").fetchone()[0])  # type: ignore[attr-defined]
+        >= 3
+    ):
+        connection.execute(  # type: ignore[attr-defined]
+            "UPDATE execution_invocations SET status = 'unknown', revision = revision + 1, "
+            "updated_at = ? WHERE status IN ('admitted', 'sent')",
+            (now,),
+        )
+        connection.execute(  # type: ignore[attr-defined]
+            "UPDATE execution_attempts SET status = 'interrupted', revision = revision + 1, "
+            "updated_at = ? WHERE status = 'active'",
+            (now,),
+        )
     return [
         {"record_id": str(request.decision_id), "revision": 1},
         {"record_id": str(request.grant_id), "revision": 1},
@@ -405,6 +428,20 @@ def _write_root(
 
 
 def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]:
+    if isinstance(request, (CreateResourceRequest, ReviseResourceRequest)):
+        return "resource.write", "work", request.work_id
+    if isinstance(request, (StartAttemptRequest, StopAttemptRequest)):
+        return "work.execute", "work", request.work_id
+    if isinstance(
+        request,
+        (
+            PrepareInvocationRequest,
+            AdmitInvocationRequest,
+            SendInvocationRequest,
+            FinishInvocationRequest,
+        ),
+    ):
+        return "model.invoke", "work", request.work_id
     if isinstance(request, (CreateArtifactRequest, ReviseArtifactRequest, DeleteArtifactRequest)):
         return "artifact.write", "artifact", request.artifact_id
     if isinstance(request, (CreateDecisionRequest, ReviseDecisionRequest)):
@@ -592,6 +629,30 @@ def _subject_delete(
     connection.execute(  # type: ignore[attr-defined]
         "DELETE FROM subject_content WHERE record_id = ?", (str(record_id),)
     )
+    if kind == "work" and int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 3:  # type: ignore[attr-defined]
+        execution_operations = [
+            row[0]
+            for row in connection.execute(  # type: ignore[attr-defined]
+                "SELECT operation_id FROM execution_events WHERE work_id = ?", (str(record_id),)
+            ).fetchall()
+        ]
+        connection.executemany(  # type: ignore[attr-defined]
+            "DELETE FROM receipts WHERE operation_id = ?",
+            ((saved_id,) for saved_id in execution_operations),
+        )
+        connection.executemany(  # type: ignore[attr-defined]
+            "UPDATE operations SET fingerprint = 'DELETED' WHERE operation_id = ?",
+            ((saved_id,) for saved_id in execution_operations),
+        )
+        connection.execute("DELETE FROM execution_events WHERE work_id = ?", (str(record_id),))  # type: ignore[attr-defined]
+        connection.execute("DELETE FROM execution_invocations WHERE work_id = ?", (str(record_id),))  # type: ignore[attr-defined]
+        connection.execute("DELETE FROM execution_attempts WHERE work_id = ?", (str(record_id),))  # type: ignore[attr-defined]
+        connection.execute(  # type: ignore[attr-defined]
+            "DELETE FROM execution_resource_revisions WHERE resource_id IN "
+            "(SELECT resource_id FROM execution_resources WHERE work_id = ?)",
+            (str(record_id),),
+        )
+        connection.execute("DELETE FROM execution_resources WHERE work_id = ?", (str(record_id),))  # type: ignore[attr-defined]
     connection.execute(  # type: ignore[attr-defined]
         "INSERT INTO subject_deletion_jobs(operation_id, record_id, status, created_at) "
         "VALUES (?, ?, 'pending', ?)",
@@ -824,6 +885,24 @@ def _apply_change(
     if isinstance(
         request,
         (
+            CreateResourceRequest,
+            ReviseResourceRequest,
+            StartAttemptRequest,
+            StopAttemptRequest,
+            PrepareInvocationRequest,
+            AdmitInvocationRequest,
+            SendInvocationRequest,
+            FinishInvocationRequest,
+        ),
+    ):
+        from .execution import apply_execution_change
+
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) != 3:  # type: ignore[attr-defined]
+            raise FoundationError("unsupported_schema", "Interactive execution requires schema 3")
+        return apply_execution_change(connection, request, now=now, epoch=epoch)
+    if isinstance(
+        request,
+        (
             CreateActivityRequest,
             ReviseActivityRequest,
             DeleteActivityRequest,
@@ -833,7 +912,7 @@ def _apply_change(
             DeleteWorkRequest,
         ),
     ):
-        if int(connection.execute("PRAGMA user_version").fetchone()[0]) != 2:  # type: ignore[attr-defined]
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 2:  # type: ignore[attr-defined]
             raise FoundationError("unsupported_schema", "Activity/Work requires schema 2")
         return _apply_subject_change(
             connection,
@@ -904,6 +983,30 @@ def _apply_change(
         connection.execute(  # type: ignore[attr-defined]
             "DELETE FROM managed_content WHERE record_id = ?", (str(request.artifact_id),)
         )
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 3:  # type: ignore[attr-defined]
+            affected = connection.execute(  # type: ignore[attr-defined]
+                "SELECT e.operation_id FROM execution_events e "
+                "JOIN execution_invocations i ON i.invocation_id = e.invocation_id "
+                "JOIN execution_attempts a ON a.attempt_id = i.attempt_id "
+                "JOIN json_each(a.input_refs_json) j "
+                "WHERE e.kind = 'prepare_invocation' "
+                "AND json_extract(j.value, '$.artifact_id') = ?",
+                (str(request.artifact_id),),
+            ).fetchall()
+            connection.executemany(  # type: ignore[attr-defined]
+                "DELETE FROM receipts WHERE operation_id = ?", affected
+            )
+            connection.executemany(  # type: ignore[attr-defined]
+                "UPDATE operations SET fingerprint = 'DELETED' WHERE operation_id = ?",
+                affected,
+            )
+            connection.execute(  # type: ignore[attr-defined]
+                "UPDATE execution_invocations SET request_sha256 = NULL "
+                "WHERE attempt_id IN (SELECT a.attempt_id FROM execution_attempts a "
+                "JOIN json_each(a.input_refs_json) j "
+                "WHERE json_extract(j.value, '$.artifact_id') = ?)",
+                (str(request.artifact_id),),
+            )
         connection.execute(  # type: ignore[attr-defined]
             "INSERT INTO deletion_jobs(operation_id, record_id, status, created_at) "
             "VALUES (?, ?, 'pending', ?)",
@@ -1309,7 +1412,7 @@ def _read_subject(
 ) -> tuple[int, UUID, datetime, str, dict[str, object], tuple[ArtifactRef, ...]]:
     with space_connection(path) as (connection, info):
         _local_space(authority, info)
-        if info.recovery_state != "active" or info.schema_version != 2:
+        if info.recovery_state != "active" or info.schema_version < 2:
             raise FoundationError(
                 "permission_denied", "Subject records require an active schema 2 space"
             )
@@ -1423,7 +1526,7 @@ def inspect_space(path: Path, authority: LocalAuthority) -> SpaceInspection:
             )
             for row in rows
         )
-        if info.schema_version == 2:
+        if info.schema_version >= 2:
             subject_rows = connection.execute(
                 "SELECT record_id, kind, current_revision, status, created_at, updated_at "
                 "FROM subject_records ORDER BY kind, record_id"
@@ -1447,7 +1550,7 @@ def inspect_space(path: Path, authority: LocalAuthority) -> SpaceInspection:
                 "SELECT count(*) FROM deletion_jobs WHERE status = 'pending'"
             ).fetchone()[0]
         )
-        if info.schema_version == 2:
+        if info.schema_version >= 2:
             pending += int(
                 connection.execute(
                     "SELECT count(*) FROM subject_deletion_jobs WHERE status = 'pending'"
@@ -1529,7 +1632,7 @@ def create_backup(path: Path, backup_id: UUID, authority: LocalAuthority) -> Bac
                         "SELECT DISTINCT record_id FROM subject_content ORDER BY record_id"
                     ).fetchall()
                 ]
-                if prepared.manifest.schema_version == 2
+                if prepared.manifest.schema_version >= 2
                 else []
             )
         with space_connection(path, writable=True) as (connection, info):
@@ -1552,7 +1655,7 @@ def create_backup(path: Path, backup_id: UUID, authority: LocalAuthority) -> Bac
                 "INSERT INTO backup_records(backup_id, record_id) VALUES (?, ?)",
                 ((str(backup_id), record_id) for record_id in record_ids),
             )
-            if info.schema_version == 2:
+            if info.schema_version >= 2:
                 connection.executemany(
                     "INSERT INTO backup_subjects(backup_id, record_id) VALUES (?, ?)",
                     ((str(backup_id), record_id) for record_id in subject_ids),
@@ -1599,7 +1702,7 @@ def restore_backup(package: Path, destination: Path, authority: RecoveryAuthorit
 
 
 def _subject_deletion_count(connection: object, schema_version: int, status: str) -> int:
-    if schema_version != 2:
+    if schema_version < 2:
         return 0
     return int(
         connection.execute(  # type: ignore[attr-defined]
@@ -1635,7 +1738,7 @@ def complete_deletions(path: Path, authority: LocalAuthority) -> DeletionStatus:
                     "ORDER BY operation_id"
                 ).fetchall()
             ]
-            if info.schema_version == 2
+            if info.schema_version >= 2
             else []
         )
         contaminated = [
@@ -1709,7 +1812,7 @@ def complete_deletions(path: Path, authority: LocalAuthority) -> DeletionStatus:
                 "WHERE operation_id = ? AND status = 'pending'",
                 (completed_at.isoformat(), operation_id),
             )
-        if info.schema_version == 2:
+        if info.schema_version >= 2:
             for operation_id in subject_jobs:
                 connection.execute(
                     "UPDATE subject_deletion_jobs SET status = 'complete', completed_at = ? "

@@ -258,6 +258,95 @@ SUBJECT_SCHEMA_SHA256 = (
     .hexdigest()
     .upper()
 )
+EXECUTION_SCHEMA_NAME = "core-v0.1-interactive-execution-3"
+EXECUTION_SCHEMA_STATEMENTS = (
+    """
+    CREATE TABLE execution_resources (
+        resource_id TEXT PRIMARY KEY,
+        work_id TEXT NOT NULL,
+        current_revision INTEGER NOT NULL CHECK (current_revision >= 1),
+        status TEXT NOT NULL CHECK (status IN ('active', 'revoked')),
+        state_json TEXT NOT NULL,
+        FOREIGN KEY (work_id) REFERENCES subject_records(record_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE execution_resource_revisions (
+        resource_id TEXT NOT NULL,
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        operation_id TEXT NOT NULL,
+        state_json TEXT NOT NULL,
+        PRIMARY KEY (resource_id, revision),
+        FOREIGN KEY (resource_id) REFERENCES execution_resources(resource_id),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE execution_attempts (
+        attempt_id TEXT PRIMARY KEY,
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        work_id TEXT NOT NULL,
+        work_revision INTEGER NOT NULL,
+        resource_id TEXT NOT NULL,
+        resource_revision INTEGER NOT NULL,
+        session_id TEXT NOT NULL,
+        previous_attempt_id TEXT,
+        execution_epoch INTEGER NOT NULL,
+        generation INTEGER NOT NULL CHECK (generation >= 1),
+        input_refs_json TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('active', 'completed', 'interrupted')),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE (work_id, generation),
+        FOREIGN KEY (work_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (resource_id) REFERENCES execution_resources(resource_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE execution_invocations (
+        invocation_id TEXT PRIMARY KEY,
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        attempt_id TEXT NOT NULL,
+        work_id TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        purpose TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        model TEXT NOT NULL,
+        transport TEXT NOT NULL,
+        request_sha256 TEXT,
+        request_bytes INTEGER NOT NULL CHECK (request_bytes >= 1),
+        reserve_units INTEGER NOT NULL CHECK (reserve_units >= 1),
+        usage_units INTEGER CHECK (usage_units >= 0),
+        status TEXT NOT NULL CHECK (status IN
+            ('prepared', 'admitted', 'sent', 'answered', 'unknown')),
+        http_status INTEGER,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (attempt_id) REFERENCES execution_attempts(attempt_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE execution_events (
+        sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+        operation_id TEXT NOT NULL,
+        work_id TEXT NOT NULL,
+        attempt_id TEXT,
+        invocation_id TEXT,
+        kind TEXT NOT NULL,
+        created_at TEXT NOT NULL
+    ) STRICT
+    """,
+    "CREATE INDEX execution_attempt_work ON execution_attempts(work_id, generation)",
+    "CREATE INDEX execution_invocation_work ON execution_invocations(work_id, status)",
+    "CREATE INDEX execution_event_work ON execution_events(work_id, sequence)",
+)
+EXECUTION_SCHEMA_SHA256 = (
+    hashlib.sha256(
+        "\n".join(statement.strip() for statement in EXECUTION_SCHEMA_STATEMENTS).encode()
+    )
+    .hexdigest()
+    .upper()
+)
 
 
 def utc_now() -> datetime:
@@ -349,7 +438,7 @@ def _begin(connection: sqlite3.Connection, *, writable: bool) -> None:
 def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> SpaceInfo:
     application_id = int(connection.execute("PRAGMA application_id").fetchone()[0])
     schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
-    if application_id != APPLICATION_ID or schema_version not in (1, 2):
+    if application_id != APPLICATION_ID or schema_version not in (1, 2, 3):
         raise FoundationError(
             "unsupported_schema",
             f"Unsupported application/schema identity: {application_id}/{schema_version}",
@@ -361,8 +450,10 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         "SELECT version, name, sha256 FROM schema_migrations ORDER BY version"
     ).fetchall()
     expected = [(SCHEMA_VERSION, SCHEMA_NAME, SCHEMA_SHA256)]
-    if schema_version == 2:
+    if schema_version >= 2:
         expected.append((2, SUBJECT_SCHEMA_NAME, SUBJECT_SCHEMA_SHA256))
+    if schema_version >= 3:
+        expected.append((3, EXECUTION_SCHEMA_NAME, EXECUTION_SCHEMA_SHA256))
     if migration != expected:
         raise FoundationError("unsupported_schema", "Schema history does not match installed code")
     rows = connection.execute(
@@ -376,7 +467,7 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         database=database,
         space_id=UUID(space_id),
         created_at=datetime.fromisoformat(created_at),
-        schema_version=cast(Literal[1, 2], schema_version),
+        schema_version=cast(Literal[1, 2, 3], schema_version),
         state_revision=state_revision,
         execution_epoch=execution_epoch,
         recovery_state=recovery_state,

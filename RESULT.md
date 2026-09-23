@@ -1,4 +1,91 @@
-# Core v0.1 Stage 4 plan and scenario 9 check
+# Core v0.1 Stage 4 interactive Pi implementation
+
+## outcome
+
+The owner accepted preparatory commit `adc725866bd8c3a7f1fc73e6f5c836febc0652a1`
+and authorized the interactive Stage 4 path on `codex/core-v0.1` in
+`C:\my_global_workflow\core-v0-1\zaratustra`. Ordinary upstream Pi 0.87.0 now
+connects to independent Core through the installed Zaratustra extension and
+loopback bridge. A selected Work receives exact current inputs, a persistent
+Attempt and pre-send model reserve. A completed answer becomes an Artifact and
+separately linked Work output. Work remains `proposed` until explicit acceptance.
+No standalone RPC executor, production DBOS or dispatcher was added.
+
+## evidence
+
+The source specification still has SHA-256
+`1DDCBF9DBFD58426781F61A67A170D3CE85FCD2BA27B17549773ED3356F9428D`.
+`docs/core-v0.1/STAGE4-IMPLEMENTATION.md` describes the implemented boundary.
+Focused tests cover current execution/model rights, stale inputs before send,
+unknown reserve after a fresh session, explicit acceptance, and deletion.
+The synthetic localhost Pi run used `/zara-work` to choose Activity/Work, matched
+the SHA-256 of the final provider HTTP body to Core's pre-send invocation,
+saved an answered result and left Work `proposed`. A separate `/zara-accept`
+input and confirmation changed it to `succeeded` with a recorded basis. A
+budget-refused run persisted `prepared` and sent zero provider HTTP requests.
+The wheel includes `pi_adapter/extension.ts`.
+
+The first subscribed Pi request used provider `openai-codex`, model
+`gpt-5.6-luna`, SSE transport and low reasoning. Pi reported an invalidated
+authentication token after send; Core kept that invocation `unknown` with its
+8,000-unit reserve. The owner completed Pi's standard ChatGPT Plus/Pro (Codex)
+login. A second subscribed request through the same provider/model/transport
+answered the synthetic text with 868 reported tokens. Core saved `The note is
+fictional.` as an exact Artifact and Work link. A fresh local authority read
+the same `proposed` result, current Work rights and 868 committed / zero held
+units from SQLite.
+Only fictional scratch workspaces and the subscribed Codex path were used.
+
+The final full `uv run --locked python -m tools.check --deliver` passed:
+178 formatted files, clean Ruff, strict mypy on 152 files, 21 import contracts,
+484 tests, source/wheel build and report structure. The final check includes
+the current-rights snapshot and Pi's no-tools default.
+
+## assumptions
+
+The actor is established from an explicitly confirmed local console and OS
+account, then bound to space id and execution epoch. The Codex Provider is forced
+to SSE because Pi's default WebSocket path is not observable through the
+available final-request `fetch` hook. A positive Pi auth readiness check can
+still precede a server-side token rejection. Token units are the provider's
+reported usage; a response above its reserve is still charged and prevents
+further admission at an exhausted limit.
+
+## cuts
+
+Automatic publication covers one text output slot. Multi-slot and non-text
+outputs need an explicit future output path. Unknown model outcomes retain
+reserve and are not auto-refunded. This stage does not implement a standalone
+RPC executor, DBOS connection, automatic resumption, provider-side data
+retention, or Core-managed deletion of Pi's external session JSONL. It does not
+read real user documents or modify `C:\projects\zaratustra`.
+
+## cost
+
+Two actual subscribed model HTTP sends out of the owner's ten-call trial cap:
+one rejected after send with unknown usage and 8,000 units held in its separate
+scratch Core space; one answered with 868 reported tokens and zero held in its
+own scratch Core space. No service or retry calls were sent in the real trial.
+Local synthetic provider runs are outside the actual model-call count. No paid
+API key or paid API endpoint was used. Model/provider/budget paths and rights
+remain configurable product inputs; trial values are not hard coded.
+
+## manual-acceptance
+
+In a fresh space authorized for the local console actor, choose a Work through
+`/zara-work`, run one synthetic or otherwise authorized text summary, then
+reopen Pi and inspect `/zara-status`. Check the saved exact Artifact, output
+link, current rights, reserve and `proposed` Work. Use `/zara-accept` only after
+reviewing the text, enter a basis and confirm the displayed Work revision and
+output. Confirm `succeeded`, its receipt and an `ongoing` Activity. The
+subscribed trial Work remains `proposed`; engineering evidence does not accept
+that result or the Stage 4 implementation on the owner's behalf.
+
+## next
+
+solmax
+
+# Historical Core v0.1 Stage 4 plan and scenario 9 check
 
 ## outcome
 
