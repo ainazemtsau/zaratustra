@@ -17,6 +17,7 @@ from .models import (
     FinishInvocationRequest,
     InvocationRecord,
     PrepareInvocationRequest,
+    PublishAttemptOutputRequest,
     ResourceRevision,
     ResourceState,
     ReviseResourceRequest,
@@ -54,6 +55,7 @@ type ExecutionRequest = (
     | AdmitInvocationRequest
     | SendInvocationRequest
     | FinishInvocationRequest
+    | PublishAttemptOutputRequest
 )
 
 
@@ -173,6 +175,7 @@ def _check_attempt_basis(
     *,
     actor: str,
 ) -> ResourceState:
+    _no_pending_deletion(connection)
     work_revision, resource_id, resource_revision, generation = _attempt(
         connection, attempt_id, work_id, session_id, epoch
     )
@@ -189,6 +192,15 @@ def _check_attempt_basis(
     if owner != (str(attempt_id),):
         raise FoundationError("stale_attempt", "Attempt generation lost ownership")
     return resource
+
+
+def _no_pending_deletion(connection: object) -> None:
+    pending = connection.execute(  # type: ignore[attr-defined]
+        "SELECT 1 FROM deletion_jobs WHERE status = 'pending' "
+        "UNION ALL SELECT 1 FROM subject_deletion_jobs WHERE status = 'pending' LIMIT 1"
+    ).fetchone()
+    if pending is not None:
+        raise FoundationError("deletion_pending", "Finish managed deletion before model execution")
 
 
 def _used_units(connection: object, work_id: UUID) -> tuple[int, int]:
@@ -272,6 +284,7 @@ def apply_execution_change(
         target_id = request.resource_id
         result = {"resource_id": str(target_id), "revision": revision}
     elif isinstance(request, StartAttemptRequest):
+        _no_pending_deletion(connection)
         revision, work_state = _work(connection, request.work_id)
         if revision != request.expected_work_revision:
             raise FoundationError("stale_work", "Work revision changed")

@@ -4,14 +4,11 @@ from __future__ import annotations
 
 import argparse
 import getpass
-import importlib
 import os
 import shutil
 import subprocess
 import sys
 import threading
-from collections.abc import Iterator
-from contextlib import contextmanager
 from importlib.resources import files
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -23,47 +20,15 @@ from zaratustra.foundation import (
     apply_operation,
     authorize_local,
     initialize_space,
+    inspect_space,
+    managed_pi_lock,
+    managed_pi_sessions,
     read_space,
     upgrade_execution_space,
     upgrade_space,
 )
 
 from .bridge import Bridge, BridgeServer
-
-
-@contextmanager
-def _owner_lock(space: Path) -> Iterator[None]:
-    marker = space / ".zara-core" / "pi-owner.lock"
-    with marker.open("a+b") as handle:
-        handle.seek(0)
-        if not handle.read(1):
-            handle.seek(0)
-            handle.write(bytes([0]))
-            handle.flush()
-        handle.seek(0)
-        if os.name == "nt":
-            import msvcrt
-
-            try:
-                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
-            except OSError as error:
-                raise RuntimeError("Another Pi bridge owns this Core space") from error
-            try:
-                yield
-            finally:
-                handle.seek(0)
-                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
-        else:
-            fcntl = importlib.import_module("fcntl")
-
-            try:
-                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except OSError as error:
-                raise RuntimeError("Another Pi bridge owns this Core space") from error
-            try:
-                yield
-            finally:
-                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
 
 def _prepare_space(path: Path, actor: str, *, create: bool) -> LocalAuthority:
@@ -126,6 +91,9 @@ def main(argv: list[str] | None = None) -> int:
     workspace = args.workspace.expanduser().resolve()
     pi_cli = args.pi_cli.expanduser().resolve()
     runtime = args.pi_runtime.expanduser().resolve()
+    expected_sessions = space / ".zara-core" / "pi-sessions"
+    if args.session_dir and args.session_dir.expanduser().resolve() != expected_sessions:
+        parser.error(f"Pi sessions must use the managed Core directory: {expected_sessions}")
     if not workspace.is_dir() or not pi_cli.is_file() or not (runtime / "node_modules").is_dir():
         parser.error("Workspace, Pi CLI or Pi runtime is unavailable")
     if args.limit_units < 1 or args.reserve_units < 1:
@@ -160,7 +128,10 @@ def main(argv: list[str] | None = None) -> int:
     if input("Type CONNECT to use these paths and local identity: ").strip() != "CONNECT":
         return 1
     authority = _prepare_space(space, actor, create=args.new_space)
-    with _owner_lock(space):
+    with managed_pi_lock(space):
+        if inspect_space(space, authority).pending_deletions:
+            parser.error("Complete pending Core deletions before opening Pi")
+        session_dir = managed_pi_sessions(space, authority.space_id, create=True)
         bridge = Bridge(space, authority, workspace, args.limit_units)
         server = BridgeServer(bridge)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -186,6 +157,8 @@ def main(argv: list[str] | None = None) -> int:
         command = [
             args.node,
             str(pi_cli),
+            "--provider",
+            "openai-codex" if args.provider_profile == "codex-sse" else args.local_provider_id,
             "--extension",
             str(installed),
             "--no-extensions",
@@ -199,8 +172,7 @@ def main(argv: list[str] | None = None) -> int:
             command.extend(["--tools", args.pi_tools])
         else:
             command.append("--no-tools")
-        if args.session_dir:
-            command.extend(["--session-dir", str(args.session_dir.resolve())])
+        command.extend(["--session-dir", str(session_dir)])
         try:
             return subprocess.run(command, cwd=workspace, env=environment, check=False).returncode
         finally:

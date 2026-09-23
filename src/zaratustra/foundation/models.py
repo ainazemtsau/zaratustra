@@ -248,6 +248,16 @@ class LinkWorkOutputRequest(OperationRequest):
     output: LinkedOutput
 
 
+class PublishAttemptOutputRequest(OperationRequest):
+    kind: Literal["publish_attempt_output"] = "publish_attempt_output"
+    attempt_id: UUID
+    work_id: UUID
+    session_id: UUID
+    slot: str = Field(min_length=1, max_length=200)
+    media_type: str = Field(min_length=1, max_length=200)
+    content: bytes = Field(min_length=1, max_length=8 * 1024 * 1024)
+
+
 class AcceptWorkRequest(OperationRequest):
     kind: Literal["accept_work"] = "accept_work"
     work_id: UUID
@@ -366,6 +376,7 @@ DomainRequest = Annotated[
     | DeleteActivityRequest
     | CreateWorkRequest
     | LinkWorkOutputRequest
+    | PublishAttemptOutputRequest
     | AcceptWorkRequest
     | DeleteWorkRequest
     | CreateResourceRequest
@@ -578,6 +589,7 @@ __all__ = [
     "OperationReceipt",
     "OperationAuditEntry",
     "PrepareInvocationRequest",
+    "PublishAttemptOutputRequest",
     "OutputContract",
     "LinkedOutput",
     "ProvenanceRef",

@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import cast
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4, uuid5
 
 from pydantic import JsonValue, TypeAdapter, ValidationError
 
@@ -39,11 +39,13 @@ from .models import (
     DomainRequest,
     FinishInvocationRequest,
     GrantState,
+    LinkedOutput,
     LinkWorkOutputRequest,
     OperationAuditEntry,
     OperationReceipt,
     PrepareInvocationRequest,
     ProvenanceRef,
+    PublishAttemptOutputRequest,
     RecordSummary,
     RecoverRequest,
     ReviseActivityRequest,
@@ -454,7 +456,7 @@ def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]
         return "activity.write", "activity", request.activity_id
     if isinstance(request, CreateWorkRequest):
         return "work.write", "activity", request.state.activity_id
-    if isinstance(request, (LinkWorkOutputRequest, DeleteWorkRequest)):
+    if isinstance(request, (LinkWorkOutputRequest, PublishAttemptOutputRequest, DeleteWorkRequest)):
         return "work.write", "work", request.work_id
     if isinstance(request, AcceptWorkRequest):
         return "work.accept", "work", request.work_id
@@ -882,6 +884,85 @@ def _apply_change(
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
+    if isinstance(request, PublishAttemptOutputRequest):
+        from .execution import _check_attempt_basis, _event, _work
+
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) != 3:  # type: ignore[attr-defined]
+            raise FoundationError("unsupported_schema", "Attempt publication requires schema 3")
+        _check_attempt_basis(
+            connection,
+            request.attempt_id,
+            request.work_id,
+            request.session_id,
+            epoch,
+            actor=request.actor,
+        )
+        answered = connection.execute(  # type: ignore[attr-defined]
+            "SELECT 1 FROM execution_invocations WHERE attempt_id = ? "
+            "AND status = 'answered' LIMIT 1",
+            (str(request.attempt_id),),
+        ).fetchone()
+        if answered is None:
+            raise FoundationError("no_answer", "No answered model invocation belongs to Attempt")
+        revision, state = _work(connection, request.work_id)
+        declared = {item.slot: item.media_type for item in state.expected_outputs}
+        if declared.get(request.slot) != request.media_type:
+            raise FoundationError("wrong_output", "Slot or media type is not declared by Work")
+        if any(item.slot == request.slot for item in state.linked_outputs):
+            raise FoundationError("stale_work", "Output slot was linked after Attempt started")
+        artifact_id = uuid5(request.attempt_id, f"artifact:{request.slot}")
+        artifact_grants, artifact_decisions = _authorize(
+            connection,
+            actor=request.actor,
+            action="artifact.write",
+            epoch=epoch,
+            resource_type="artifact",
+            resource_id=artifact_id,
+        )
+        grants.extend(artifact_grants)
+        decisions.extend(artifact_decisions)
+        _expect_absent(connection, artifact_id)
+        artifact = CreateArtifactRequest(
+            operation_id=request.operation_id,
+            space_id=request.space_id,
+            actor=request.actor,
+            artifact_id=artifact_id,
+            media_type=request.media_type,
+            content=request.content,
+            provenance=(
+                ProvenanceRef(
+                    relation="produced_by_attempt", external_ref=f"attempt:{request.attempt_id}"
+                ),
+            ),
+        )
+        _write_artifact(connection, artifact, now, 1)
+        linked = (
+            *state.linked_outputs,
+            LinkedOutput(
+                slot=request.slot, artifact=ArtifactRef(artifact_id=artifact_id, revision=1)
+            ),
+        )
+        _write_subject(
+            connection,
+            record_id=request.work_id,
+            kind="work",
+            parent_id=state.activity_id,
+            operation_id=request.operation_id,
+            actor=request.actor,
+            now=now,
+            status=state.status,
+            state=state.model_copy(update={"linked_outputs": linked}),
+            revision=revision + 1,
+        )
+        _event(connection, request, request.work_id, now, attempt_id=request.attempt_id)
+        return {
+            "artifact_id": str(artifact_id),
+            "work_id": str(request.work_id),
+            "revision": revision + 1,
+        }, [
+            {"record_id": str(artifact_id), "revision": 1},
+            {"record_id": str(request.work_id), "revision": revision + 1},
+        ]
     if isinstance(
         request,
         (
@@ -1714,6 +1795,15 @@ def _subject_deletion_count(connection: object, schema_version: int, status: str
 def complete_deletions(path: Path, authority: LocalAuthority) -> DeletionStatus:
     """Purge affected managed backups, then close/checkpoint/VACUUM the live store."""
 
+    from .history import managed_pi_lock
+
+    with managed_pi_lock(path):
+        return _complete_deletions_locked(path, authority)
+
+
+def _complete_deletions_locked(path: Path, authority: LocalAuthority) -> DeletionStatus:
+    from .history import purge_managed_pi_sessions
+
     root, _, backups = layout(path)
     with space_connection(root, writable=True) as (connection, info):
         _local_space(authority, info)
@@ -1776,6 +1866,9 @@ def complete_deletions(path: Path, authority: LocalAuthority) -> DeletionStatus:
             live_store_sanitized=finished,
             completed_at=utc_now() if finished else None,
         )
+
+    if pending_jobs or subject_jobs:
+        purge_managed_pi_sessions(root, authority.space_id)
 
     for backup_id in contaminated:
         packages = (

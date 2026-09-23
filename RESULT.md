@@ -1,3 +1,73 @@
+# Core v0.1 Stage 4 correction
+
+## outcome
+
+Three reproduced Stage 4 defects are corrected in the local interactive path.
+An unsupported Pi provider now stops before HTTP while a Work is selected.
+Attempt publication checks its basis and links its Artifact in one Core
+transaction, preserving a newer output. Adapter-created Pi session histories
+are now managed in the selected Core space and retired during deletion
+maintenance. The Work's successful result still requires a separate explicit
+acceptance. No DBOS or independent RPC executor was added.
+
+## evidence
+
+Before editing, synthetic reproductions showed one unreserved HTTP request
+after Pi switched to a second localhost provider; a late Attempt replaced a
+different Work@2 output; and a Pi JSONL copy retained `fictional note` after
+Work deletion. After the changes, the same ordinary Pi `set_model` switch made
+zero provider requests and exposed no Core input. Focused tests prove a late
+Attempt gets `stale_work`, leaves Work@2 and its exact bytes intact, creates no
+late Artifact, and preserves exact publication replay. A synthetic managed
+Pi JSONL file is removed by `complete_deletions`; maintenance refuses to run
+while Pi owns the space. A supported localhost Pi run still made one observed
+and admitted call, saved the output, and left Work proposed before its
+synthetic-only acceptance step. The manual setup helper created a fresh
+proposed synthetic Work in ignored `_scratch`.
+
+The full `uv run --locked python -m tools.check --deliver` passed after the
+core fixes. The final run checked 180 formatted files, clean Ruff, strict
+mypy on 154 files, 21 import contracts, 486 tests, source/wheel build and
+report structure.
+
+## assumptions
+
+The host has exclusive local ownership of the Core space while Pi runs.
+Every host-created session is stored below `<space>/.zara-core/pi-sessions`;
+deletion retires all such sessions because one transcript may mix material
+from several Works. The same lock prevents concurrent Pi writes and cleanup.
+Provider coverage is the ordinary Pi provider stream path used by this adapter.
+
+## cuts
+
+Historical Pi sessions created before this correction in arbitrary directories
+cannot be discovered from Core because their paths were never recorded. They
+need separate operator review and removal. Provider-side copies, manually
+exported chats and filesystem snapshots are outside local Core maintenance.
+Automatic publication remains limited to one textual output slot. No new
+model/provider allowlist or fixed product budget was introduced.
+
+## cost
+
+Zero real model calls and zero paid API calls in this correction. All model
+transport checks used synthetic localhost providers. The prior Stage 4 trial
+spent two subscribed Codex sends: one unknown with 8,000 units reserved in
+its separate scratch space, and one answered with 868 reported tokens.
+
+## manual-acceptance
+
+The exact PowerShell setup and launch commands are in
+`docs/core-v0.1/STAGE4-IMPLEMENTATION.md`. They create a new synthetic space,
+working directory, input Artifact, Activity and proposed Work inside ignored
+`_scratch`, then start ordinary Pi. Review `/zara-status` before and after a
+fresh Pi session. Check the linked Artifact, rights, current reserve and
+proposed status. Only the owner may invoke `/zara-accept` for the reviewed
+result; this correction has not accepted the owner's Work.
+
+## next
+
+solmax
+
 # Core v0.1 Stage 4 interactive Pi implementation
 
 ## outcome

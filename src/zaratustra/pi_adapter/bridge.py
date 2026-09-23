@@ -18,15 +18,11 @@ from pydantic import TypeAdapter, ValidationError
 
 from zaratustra.foundation import (
     AcceptWorkRequest,
-    ArtifactRef,
-    CreateArtifactRequest,
     CreateResourceRequest,
     DomainRequest,
     FoundationError,
-    LinkedOutput,
-    LinkWorkOutputRequest,
     LocalAuthority,
-    ProvenanceRef,
+    PublishAttemptOutputRequest,
     ResourceState,
     StartAttemptRequest,
     StopAttemptRequest,
@@ -79,6 +75,8 @@ class Bridge:
         if space.schema_version != 3 or space.recovery_state != "active":
             raise FoundationError("unsupported_schema", "Interactive Pi needs active schema 3")
         overview = inspect_space(self.path, self.authority)
+        if overview.pending_deletions:
+            raise FoundationError("deletion_pending", "Complete Core deletion before opening Pi")
         choices = []
         for item in overview.records:
             if item.status == "deleted":
@@ -255,60 +253,22 @@ class Bridge:
         self, session_id: UUID, attempt_id: UUID, slot: str, media_type: str, content: str
     ) -> dict[str, object]:
         selected = self._selection(session_id)
-        snapshot = read_execution(self.path, selected.work_id, self.authority)
-        attempt = next((item for item in snapshot.attempts if item.attempt_id == attempt_id), None)
-        if attempt is None or attempt.session_id != session_id or attempt.status != "active":
-            raise FoundationError("stale_attempt", "Only the active selected Attempt may publish")
-        if not any(
-            item.attempt_id == attempt_id and item.status == "answered"
-            for item in snapshot.invocations
-        ):
-            raise FoundationError("no_answer", "No answered model invocation belongs to Attempt")
-        outputs = {item.slot: item.media_type for item in snapshot.work.state.expected_outputs}
-        if outputs.get(slot) != media_type:
-            raise FoundationError("wrong_output", "Slot or media type is not declared by Work")
         data = content.encode("utf-8")
         if not data or len(data) > 8 * 1024 * 1024:
             raise FoundationError("invalid_request", "Result is empty or too large")
-        artifact_id = uuid5(attempt_id, f"artifact:{slot}")
-        create = CreateArtifactRequest(
+        publication = PublishAttemptOutputRequest(
             operation_id=uuid5(attempt_id, f"publish:{slot}"),
             space_id=self.authority.space_id,
             actor=self.authority.actor,
-            artifact_id=artifact_id,
+            attempt_id=attempt_id,
+            work_id=selected.work_id,
+            session_id=session_id,
+            slot=slot,
             media_type=media_type,
             content=data,
-            provenance=(
-                ProvenanceRef(relation="produced_by_attempt", external_ref=f"attempt:{attempt_id}"),
-            ),
         )
-        artifact_receipt = apply_operation(self.path, create, self.authority)
-        current = read_work(self.path, selected.work_id, self.authority)
-        link_id = uuid5(attempt_id, f"link:{slot}")
-        try:
-            link_receipt = read_receipt(self.path, link_id, self.authority)
-            return {
-                "artifact": artifact_receipt.model_dump(mode="json"),
-                "link": link_receipt.model_dump(mode="json"),
-            }
-        except FoundationError as error:
-            if error.code != "not_found":
-                raise
-        link = LinkWorkOutputRequest(
-            operation_id=link_id,
-            space_id=self.authority.space_id,
-            actor=self.authority.actor,
-            work_id=selected.work_id,
-            expected_revision=current.revision,
-            output=LinkedOutput(
-                slot=slot, artifact=ArtifactRef(artifact_id=artifact_id, revision=1)
-            ),
-        )
-        link_receipt = apply_operation(self.path, link, self.authority)
-        return {
-            "artifact": artifact_receipt.model_dump(mode="json"),
-            "link": link_receipt.model_dump(mode="json"),
-        }
+        receipt = apply_operation(self.path, publication, self.authority)
+        return {"publication": receipt.model_dump(mode="json")}
 
     def accept_preview(self, session_id: UUID) -> dict[str, object]:
         selected = self._selection(session_id)

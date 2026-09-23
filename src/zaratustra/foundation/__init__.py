@@ -1,6 +1,7 @@
 """Independent Core v0.1 domain foundation public surface."""
 
 from .execution import read_execution, read_execution_events, upgrade_execution_space
+from .history import managed_pi_lock, managed_pi_sessions
 from .models import (
     ALL_ACTIONS,
     AcceptWorkRequest,
@@ -38,6 +39,7 @@ from .models import (
     OutputContract,
     PrepareInvocationRequest,
     ProvenanceRef,
+    PublishAttemptOutputRequest,
     RecordSummary,
     RecoverRequest,
     ResourceRevision,
@@ -120,10 +122,13 @@ __all__ = [
     "GrantState",
     "InvocationRecord",
     "LocalAuthority",
+    "managed_pi_lock",
+    "managed_pi_sessions",
     "OperationReceipt",
     "OperationAuditEntry",
     "OutputContract",
     "PrepareInvocationRequest",
+    "PublishAttemptOutputRequest",
     "LinkedOutput",
     "ProvenanceRef",
     "RecordSummary",

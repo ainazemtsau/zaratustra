@@ -154,6 +154,31 @@ export default function (pi: any): void {
       }) : null;
   const base = codex ?? local;
   if (!base) throw new Error("Selected provider transport profile is unavailable");
+  const observedProvider = base.id;
+  const guardedStreams = new Map<string, any>();
+
+  function guardOtherProviders(ctx: any): void {
+    const seen = new Set<string>();
+    for (const model of ctx.modelRegistry.getAll()) {
+      const id = model.provider;
+      if (id === observedProvider || seen.has(id)) continue;
+      seen.add(id);
+      const original = ctx.modelRegistry.getProvider(id);
+      if (!original) throw new Error(`Provider ${id} cannot be guarded`);
+      if (original.stream === guardedStreams.get(id)) continue;
+      const guard = (method: "stream" | "streamSimple") => (...args: any[]) => {
+        if (selection) throw new Error(`Provider ${id} has no admitted transport profile; no HTTP was sent`);
+        return original[method](...args);
+      };
+      const stream = guard("stream");
+      pi.registerProvider({
+        ...original,
+        stream,
+        ...(typeof original.streamSimple === "function" ? { streamSimple: guard("streamSimple") } : {}),
+      });
+      guardedStreams.set(id, stream);
+    }
+  }
   pi.registerProvider({
     ...base,
     stream(model: any, context: any, options: any = {}) {
@@ -175,6 +200,7 @@ export default function (pi: any): void {
     attemptId = null;
     contextReady = false;
     connection = await request("/v1/connect", {});
+    guardOtherProviders(ctx);
     if (process.env.ZARA_INITIAL_ACTIVITY_ID && process.env.ZARA_INITIAL_WORK_ID) {
       const current = await request("/v1/select", {
         activity_id: process.env.ZARA_INITIAL_ACTIVITY_ID,
@@ -189,6 +215,9 @@ export default function (pi: any): void {
     }
     ctx.ui.notify(`Zaratustra Core ${connection.space_id} epoch ${connection.execution_epoch}. Use /zara-work.`, "info");
   });
+
+  pi.on("model_select", (_event: any, ctx: any) => { guardOtherProviders(ctx); });
+  pi.on("before_provider_request", (_event: any, ctx: any) => { guardOtherProviders(ctx); });
 
   pi.registerCommand("zara-work", {
     description: "Choose a Core Activity and Work, then start a bound Attempt",
@@ -318,7 +347,7 @@ export default function (pi: any): void {
     });
     await operation({ kind: "stop_attempt", attempt_id: attemptId, work_id: selection.work_id,
                       session_id: sessionId, outcome: "completed" });
-    ctx.ui.notify(`Result saved as Artifact; Work remains proposed. Link receipt ${published.link.operation_id}.`, "info");
+    ctx.ui.notify(`Result saved as Artifact; Work remains proposed. Receipt ${published.publication.operation_id}.`, "info");
     attemptId = null;
     contextReady = false;
   });

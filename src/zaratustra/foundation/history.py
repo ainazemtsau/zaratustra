@@ -1,0 +1,117 @@
+"""Managed Pi session history inside one Core space."""
+
+from __future__ import annotations
+
+import importlib
+import os
+from collections.abc import Iterator
+from contextlib import contextmanager
+from pathlib import Path
+from uuid import UUID
+
+from .storage import STATE_DIRECTORY, FoundationError, layout
+
+HISTORY_DIRECTORY = "pi-sessions"
+HISTORY_MARKER = "owner.txt"
+
+
+def _check_plain(path: Path) -> None:
+    if path.is_symlink() or path.is_junction():
+        raise FoundationError(
+            "history_layout", f"Managed Pi history must not contain links: {path}"
+        )
+
+
+@contextmanager
+def managed_pi_lock(path: Path) -> Iterator[None]:
+    """Keep Pi writes and Core deletion maintenance mutually exclusive."""
+
+    root, _, _ = layout(path)
+    marker = root / STATE_DIRECTORY / "pi-owner.lock"
+    _check_plain(marker)
+    try:
+        opened = marker.open("a+b")
+    except OSError as error:
+        raise FoundationError("history_busy", "Pi owns this Core space") from error
+    with opened as handle:
+        try:
+            handle.seek(0)
+            if not handle.read(1):
+                handle.seek(0)
+                handle.write(bytes([0]))
+                handle.flush()
+        except OSError as error:
+            raise FoundationError("history_busy", "Pi owns this Core space") from error
+        handle.seek(0)
+        if os.name == "nt":
+            import msvcrt
+
+            try:
+                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+            except OSError as error:
+                raise FoundationError("history_busy", "Pi owns this Core space") from error
+            try:
+                yield
+            finally:
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            fcntl = importlib.import_module("fcntl")
+            try:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError as error:
+                raise FoundationError("history_busy", "Pi owns this Core space") from error
+            try:
+                yield
+            finally:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+def managed_pi_sessions(path: Path, space_id: UUID, *, create: bool = False) -> Path:
+    """Resolve and validate the adapter-owned Pi JSONL directory."""
+
+    root, _, _ = layout(path)
+    directory = root / STATE_DIRECTORY / HISTORY_DIRECTORY
+    _check_plain(directory)
+    if create:
+        directory.mkdir(exist_ok=True)
+    if not directory.exists():
+        return directory
+    if not directory.is_dir():
+        raise FoundationError("history_layout", "Pi history path is not a directory")
+    marker = directory / HISTORY_MARKER
+    _check_plain(marker)
+    expected = f"zaratustra-core:{space_id}\n"
+    if create and not marker.exists() and not any(directory.iterdir()):
+        marker.write_text(expected, encoding="utf-8", newline="\n")
+    if not marker.is_file() or marker.read_text(encoding="utf-8") != expected:
+        raise FoundationError("history_layout", "Pi history does not belong to this Core space")
+    return directory
+
+
+def purge_managed_pi_sessions(path: Path, space_id: UUID) -> None:
+    """Retire every adapter-created session after any Core content deletion."""
+
+    directory = managed_pi_sessions(path, space_id)
+    if not directory.exists():
+        return
+    files: list[Path] = []
+    folders: list[Path] = []
+    pending = [directory]
+    while pending:
+        current = pending.pop()
+        for entry in current.iterdir():
+            _check_plain(entry)
+            if entry == directory / HISTORY_MARKER:
+                continue
+            if entry.is_dir():
+                pending.append(entry)
+                folders.append(entry)
+            elif entry.is_file():
+                files.append(entry)
+            else:
+                raise FoundationError("history_layout", f"Unsupported Pi history entry: {entry}")
+    for entry in files:
+        entry.unlink()
+    for entry in sorted(folders, key=lambda value: len(value.parts), reverse=True):
+        entry.rmdir()
