@@ -878,6 +878,23 @@ def _apply_subject_change(
                 (str(request.work_id),),
             ).fetchall()
             if active_attempts:
+                schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])  # type: ignore[attr-defined]
+                assigned_ids = (
+                    {
+                        row[0]
+                        for row in connection.execute(  # type: ignore[attr-defined]
+                            "SELECT a.attempt_id FROM execution_attempts a "
+                            "JOIN execution_assignments s ON s.attempt_id = a.attempt_id "
+                            "WHERE a.work_id = ? AND a.status = 'active'",
+                            (str(request.work_id),),
+                        ).fetchall()
+                    }
+                    if schema_version >= 4
+                    else set()
+                )
+                interactive_attempts = [
+                    row for row in active_attempts if row[0] not in assigned_ids
+                ]
                 connection.execute(  # type: ignore[attr-defined]
                     "UPDATE execution_invocations SET status = 'unknown', "
                     "revision = revision + 1, updated_at = ? WHERE work_id = ? "
@@ -886,21 +903,21 @@ def _apply_subject_change(
                     "AND status = 'active')",
                     (now, str(request.work_id), str(request.work_id)),
                 )
-                connection.execute(  # type: ignore[attr-defined]
+                connection.executemany(  # type: ignore[attr-defined]
                     "UPDATE execution_attempts SET status = 'interrupted', "
                     "revision = revision + 1, updated_at = ? "
-                    "WHERE work_id = ? AND status = 'active'",
-                    (now, str(request.work_id)),
+                    "WHERE attempt_id = ? AND status = 'active'",
+                    ((now, row[0]) for row in interactive_attempts),
                 )
                 connection.executemany(  # type: ignore[attr-defined]
                     "INSERT INTO execution_events(operation_id, work_id, attempt_id, "
                     "kind, created_at) VALUES (?, ?, ?, 'accept_work_interrupt_attempt', ?)",
                     (
                         (str(request.operation_id), str(request.work_id), row[0], now)
-                        for row in active_attempts
+                        for row in interactive_attempts
                     ),
                 )
-                if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 4:  # type: ignore[attr-defined]
+                if schema_version >= 4:
                     connection.execute(  # type: ignore[attr-defined]
                         "UPDATE execution_waits SET status = 'closed', "
                         "revision = revision + 1, updated_at = ? "
@@ -908,16 +925,25 @@ def _apply_subject_change(
                         (now, str(request.work_id)),
                     )
                     connection.execute(  # type: ignore[attr-defined]
-                        "UPDATE execution_assignments SET status = 'interrupted', "
+                        "UPDATE execution_assignments SET status = 'stop_requested', "
                         "revision = revision + 1, updated_at = ? "
                         "WHERE work_id = ? AND status IN "
-                        "('assigned', 'waiting', 'ready', 'stop_requested')",
+                        "('assigned', 'waiting', 'ready') AND attempt_id IN "
+                        "(SELECT attempt_id FROM execution_attempts WHERE status = 'active')",
                         (now, str(request.work_id)),
                     )
                     connection.execute(  # type: ignore[attr-defined]
                         "UPDATE execution_outbox SET status = 'cancelled' "
                         "WHERE work_id = ? AND status = 'pending'",
                         (str(request.work_id),),
+                    )
+                    connection.executemany(  # type: ignore[attr-defined]
+                        "INSERT INTO execution_events(operation_id, work_id, attempt_id, "
+                        "kind, created_at) VALUES (?, ?, ?, 'accept_work_hold_assignment', ?)",
+                        (
+                            (str(request.operation_id), str(request.work_id), attempt_id, now)
+                            for attempt_id in sorted(assigned_ids)
+                        ),
                     )
         next_state = state.model_copy(
             update={
@@ -1236,9 +1262,12 @@ def _apply_change(
                     (now, attempt_id),
                 )
                 connection.execute(  # type: ignore[attr-defined]
-                    "UPDATE execution_assignments SET status = 'interrupted', "
+                    "UPDATE execution_assignments SET "
+                    "status = CASE WHEN status IN ('stopped', 'interrupted') "
+                    "THEN status ELSE 'interrupted' END, "
                     "stop_reason = NULL, revision = revision + 1, updated_at = ? "
-                    "WHERE attempt_id = ? AND status NOT IN ('stopped', 'interrupted')",
+                    "WHERE attempt_id = ? AND "
+                    "(status NOT IN ('stopped', 'interrupted') OR stop_reason IS NOT NULL)",
                     (now, attempt_id),
                 )
                 connection.execute(  # type: ignore[attr-defined]

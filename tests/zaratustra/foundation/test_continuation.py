@@ -11,6 +11,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from zaratustra.foundation import (
+    AcceptWorkRequest,
     ActivityState,
     AdmitInvocationRequest,
     AnswerWaitRequest,
@@ -26,6 +27,8 @@ from zaratustra.foundation import (
     DeleteWorkRequest,
     FoundationError,
     GrantState,
+    LinkedOutput,
+    LinkWorkOutputRequest,
     OpenWaitRequest,
     OutputContract,
     PrepareInvocationRequest,
@@ -47,6 +50,7 @@ from zaratustra.foundation import (
     read_execution,
     read_receipt,
     read_space,
+    read_work,
     restore_backup,
     upgrade_continuation_space,
     upgrade_execution_space,
@@ -714,3 +718,349 @@ def test_artifact_deletion_purges_dependent_wait_content(tmp_path: Path) -> None
     database = root / ".zara-core" / "core.sqlite3"
     assert question.question.encode("utf-8") not in database.read_bytes()
     assert question.remainder.encode("utf-8") not in database.read_bytes()
+
+
+@pytest.mark.parametrize("terminal_status", ["stopped", "interrupted"])
+def test_artifact_deletion_purges_terminal_stop_reason_and_backups(
+    tmp_path: Path, terminal_status: str
+) -> None:
+    root, _, space_id, artifact_id, work_id, resource_id = ready(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="trusted-fictional-console")
+    attempt_id, session_id, _ = assign(root, space_id, work_id, resource_id)
+    question = ask(root, space_id, artifact_id, work_id, attempt_id, session_id)
+    reason = "Fictional stop refers to fictional input only"
+    stop_request = RequestAttemptStopRequest(
+        operation_id=uuid4(),
+        space_id=space_id,
+        actor="owner",
+        attempt_id=attempt_id,
+        work_id=work_id,
+        session_id=session_id,
+        expected_assignment_revision=2,
+        reason=reason,
+    )
+    apply_operation(root, stop_request, owner)
+    if terminal_status == "stopped":
+        apply_operation(
+            root,
+            RecordAttemptStopRequest(
+                operation_id=uuid4(),
+                space_id=space_id,
+                actor="owner",
+                attempt_id=attempt_id,
+                work_id=work_id,
+                session_id=session_id,
+                expected_assignment_revision=3,
+                outcome="stopped",
+            ),
+            owner,
+        )
+    else:
+        source_backup = create_backup(root, uuid4(), owner)
+        restored_root = tmp_path / "restored"
+        restored_root.mkdir()
+        recovery = authorize_recovery(actor="owner", source_ref="fresh-recovery-console")
+        restore_backup(source_backup.package, restored_root, recovery)
+        apply_operation(
+            restored_root,
+            RecoverRequest(
+                operation_id=uuid4(),
+                space_id=space_id,
+                actor="owner",
+                decision_id=uuid4(),
+                grant_id=uuid4(),
+            ),
+            recovery,
+        )
+        root = restored_root
+        owner = authorize_local(root, actor="owner", source_ref="fresh-recovery-console")
+    assert read_execution(root, work_id, owner).assignments[0].status == terminal_status
+    assert read_execution(root, work_id, owner).assignments[0].stop_reason == reason
+    affected_backup = create_backup(root, uuid4(), owner)
+    apply_operation(
+        root,
+        DeleteArtifactRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            artifact_id=artifact_id,
+            expected_revision=1,
+        ),
+        owner,
+    )
+    current = read_execution(root, work_id, owner)
+    assert current.assignments[0].status == terminal_status
+    assert current.assignments[0].stop_reason is None
+    assert current.waits[0].status == "purged" and current.waits[0].question is None
+    with pytest.raises(FoundationError):
+        read_receipt(root, stop_request.operation_id, owner)
+    with pytest.raises(FoundationError, match="history_unavailable"):
+        apply_operation(root, stop_request, owner)
+    deletion = complete_deletions(root, owner)
+    assert deletion.live_store_sanitized and deletion.purged_backups >= 1
+    assert not affected_backup.package.exists()
+    database = root / ".zara-core" / "core.sqlite3"
+    assert reason.encode("utf-8") not in database.read_bytes()
+    assert question.question.encode("utf-8") not in database.read_bytes()
+
+
+def test_accept_work_keeps_unknown_assignment_until_stopped(tmp_path: Path) -> None:
+    root, workspace, space_id, artifact_id, work_id, resource_id = ready(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="trusted-fictional-console")
+    attempt_id, session_id, _ = assign(root, space_id, work_id, resource_id)
+    output_id = uuid4()
+    apply_operation(
+        root,
+        CreateArtifactRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            artifact_id=output_id,
+            media_type="text/plain",
+            content=b"Reviewed fictional output",
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        LinkWorkOutputRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=work_id,
+            expected_revision=1,
+            output=LinkedOutput(
+                slot="summary", artifact=ArtifactRef(artifact_id=output_id, revision=1)
+            ),
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        RequestAttemptStopRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            attempt_id=attempt_id,
+            work_id=work_id,
+            session_id=session_id,
+            expected_assignment_revision=1,
+            reason="Fictional process outcome pending",
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        RecordAttemptStopRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            attempt_id=attempt_id,
+            work_id=work_id,
+            session_id=session_id,
+            expected_assignment_revision=2,
+            outcome="unknown",
+        ),
+        owner,
+    )
+    next_work_id, next_resource_id = uuid4(), uuid4()
+    current = read_work(root, work_id, owner)
+    apply_operation(
+        root,
+        CreateWorkRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=next_work_id,
+            state=WorkState(
+                activity_id=current.state.activity_id,
+                goal="Independent fictional work",
+                inputs=(ArtifactRef(artifact_id=artifact_id, revision=1),),
+                expected_outputs=(OutputContract(slot="summary", media_type="text/plain"),),
+            ),
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        CreateResourceRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=next_work_id,
+            resource_id=next_resource_id,
+            state=ResourceState(label="Same exclusive directory", root=workspace, limit_units=100),
+        ),
+        owner,
+    )
+    next_attempt = AssignAttemptRequest(
+        operation_id=uuid4(),
+        space_id=space_id,
+        actor="owner",
+        attempt_id=uuid4(),
+        work_id=next_work_id,
+        expected_work_revision=1,
+        resource_id=next_resource_id,
+        expected_resource_revision=1,
+        session_id=uuid4(),
+        executor_version="synthetic-pi-rpc-contract-1",
+    )
+    with pytest.raises(FoundationError, match="resource_busy"):
+        apply_operation(root, next_attempt, owner)
+    apply_operation(
+        root,
+        AcceptWorkRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=work_id,
+            expected_revision=2,
+            basis="Accept fictional output without claiming process stopped",
+        ),
+        owner,
+    )
+    after_accept = read_execution(root, work_id, owner)
+    assert after_accept.work.state.status == "succeeded"
+    assert after_accept.assignments[0].status == "unknown"
+    assert after_accept.attempts[0].status == "active"
+    assert all(item.status == "cancelled" for item in after_accept.outbox)
+    with pytest.raises(FoundationError, match="resource_busy"):
+        apply_operation(root, next_attempt, owner)
+    apply_operation(
+        root,
+        RecordAttemptStopRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            attempt_id=attempt_id,
+            work_id=work_id,
+            session_id=session_id,
+            expected_assignment_revision=3,
+            outcome="stopped",
+        ),
+        owner,
+    )
+    after_stop = read_execution(root, work_id, owner)
+    assert after_stop.assignments[0].status == "stopped"
+    assert after_stop.attempts[0].status == "interrupted"
+    assert apply_operation(root, next_attempt, owner).result["attempt_id"] == str(
+        next_attempt.attempt_id
+    )
+
+
+def test_accept_work_requests_stop_for_assigned_attempt(tmp_path: Path) -> None:
+    root, _, space_id, _, work_id, resource_id = ready(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="trusted-fictional-console")
+    attempt_id, session_id, _ = assign(root, space_id, work_id, resource_id)
+    output_id = uuid4()
+    apply_operation(
+        root,
+        CreateArtifactRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            artifact_id=output_id,
+            media_type="text/plain",
+            content=b"Independent fictional result",
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        LinkWorkOutputRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=work_id,
+            expected_revision=1,
+            output=LinkedOutput(
+                slot="summary", artifact=ArtifactRef(artifact_id=output_id, revision=1)
+            ),
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        AcceptWorkRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=work_id,
+            expected_revision=2,
+            basis="Independent fictional result accepted",
+        ),
+        owner,
+    )
+    after_accept = read_execution(root, work_id, owner)
+    assert after_accept.assignments[0].status == "stop_requested"
+    assert after_accept.attempts[0].status == "active"
+    assert all(item.status == "cancelled" for item in after_accept.outbox)
+    apply_operation(
+        root,
+        RecordAttemptStopRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            attempt_id=attempt_id,
+            work_id=work_id,
+            session_id=session_id,
+            expected_assignment_revision=2,
+            outcome="stopped",
+        ),
+        owner,
+    )
+    assert read_execution(root, work_id, owner).attempts[0].status == "interrupted"
+
+
+def test_schema4_accept_work_keeps_interactive_stage4_interrupt(tmp_path: Path) -> None:
+    root, workspace, space_id, _, work_id, _ = ready(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="trusted-fictional-console")
+    session_id = uuid4()
+    bridge = Bridge(root, owner, workspace, 100)
+    bridge.connect(session_id)
+    activity_id = read_work(root, work_id, owner).state.activity_id
+    bridge.select(session_id, activity_id, work_id)
+    started = bridge.start_attempt(session_id, interrupt_previous=False)
+    output_id = uuid4()
+    apply_operation(
+        root,
+        CreateArtifactRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            artifact_id=output_id,
+            media_type="text/plain",
+            content=b"Interactive fictional result",
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        LinkWorkOutputRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=work_id,
+            expected_revision=1,
+            output=LinkedOutput(
+                slot="summary", artifact=ArtifactRef(artifact_id=output_id, revision=1)
+            ),
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        AcceptWorkRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=work_id,
+            expected_revision=2,
+            basis="Interactive fictional result accepted",
+        ),
+        owner,
+    )
+    after = read_execution(root, work_id, owner)
+    assert after.attempts[0].attempt_id == UUID(str(started["attempt_id"]))
+    assert after.attempts[0].status == "interrupted"
+    assert after.assignments == ()

@@ -1,3 +1,60 @@
+# Core v0.1 Stage 5 pass 1 — deletion and acceptance corrections
+
+## outcome
+
+The owner requested two corrections within the already authorized first pass,
+starting from `d04c87534a279e4e666075c8e663edf62dce4f47`. Deleting a dependent
+Artifact now clears `stop_reason` from every affected assignment, including
+`stopped` and `interrupted`, while retaining its known status. Accepting Work
+does not assert that an independently assigned executor has stopped. An
+`unknown` assignment and its active Attempt retain the exclusive resource;
+addressed `RecordAttemptStopRequest(stopped)` remains available after acceptance
+and releases it. Acceptance closes pending delivery and requests stop for other
+active assignments. The interactive Stage 4 acceptance path still interrupts
+its non-assigned Attempt.
+
+## evidence
+
+Both supplied synthetic probes were reproduced on the clean base before editing:
+the stopped assignment exposed `stop_reason` after `complete_deletions`, and
+acceptance released a resource despite `unknown` and prevented later stop
+confirmation. New regressions failed on those exact assertions before the fix.
+Twelve focused synthetic tests now pass. They cover both terminal statuses,
+receipt replay removal, API and closed SQLite bytes after deletion, purging an
+affected managed backup, the `unknown → resource_busy → accept → resource_busy
+→ stopped → assign` sequence, stop requested by acceptance, and unchanged
+interactive Stage 4 acceptance. Full
+`uv run --locked python -m tools.check --deliver` passed: 181 formatted files,
+clean Ruff, mypy on 155 source files, 21 kept import contracts, 500 tests,
+source/wheel build and report structure. `git diff --check` passed.
+
+## assumptions
+
+An accepted Work result is distinct from proof that its assigned process died.
+With no Pi RPC in this pass, `RecordAttemptStopRequest(stopped)` is a trusted
+subject assertion; a real process outcome gate remains for a later pass.
+
+## cuts
+
+No Pi RPC, DBOS dependency, dispatcher, real model call, personal data, old
+`.zara` migration, Direction OS edit or `C:\projects\zaratustra` edit. No Stage 5
+second-pass work was started.
+
+## cost
+
+Local synthetic tests and documentation only; zero model/service calls and
+zero paid cost.
+
+## manual-acceptance
+
+The owner authorized the corrective implementation and local commit. The
+engineering checks do not constitute owner acceptance of Stage 5 pass 1.
+Stage 4 acceptance remains recorded separately.
+
+## next
+
+solmax
+
 # Core v0.1 Stage 5 pass 1 — durable subject continuation
 
 ## outcome
