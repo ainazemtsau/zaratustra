@@ -47,9 +47,13 @@ the selected Work. Text from a model cannot establish actor, grant or acceptance
    outcomes remain `unknown` and hold the full reserve. A successful single
    textual Work output becomes a new Artifact and Work output link in one Core
    transaction. That transaction checks the Attempt's exact Work revision,
-   current inputs, resource, session, epoch, generation and answered invocation;
-   a later Work link prevents the old Attempt from publishing. An exact replay
-   returns the same receipt. Work remains `proposed`. `/zara-accept` shows the
+   current inputs, resource, session, epoch, generation and answered invocation.
+   A newly started Attempt on the current proposed Work revision may replace an
+   occupied output slot: the earlier Artifact and exact Work revision remain
+   readable, while the new Work revision has exactly one link for that slot.
+   Any Work change after Attempt start rejects late publication before writing
+   the Artifact or link. An exact replay returns the original receipt even after
+   later revisions. Work remains `proposed`. `/zara-accept` shows the
    exact current Work revision,
    outputs and requested basis, asks for an explicit UI confirmation, then uses
    a separate `work.accept` Grant and Core receipt to set `succeeded`.
@@ -120,6 +124,16 @@ refuses to complete while Pi owns the space. A supported localhost provider
 still made one observed call, saved an Artifact and linked output, and left
 the Work proposed before the synthetic acceptance step. These checks used no
 real model calls.
+
+
+The later regeneration correction was reproduced before its fix: Attempt 1
+published to Work@2 and completed; Attempt 2 started at Work@2, recorded an
+answered synthetic invocation, then received `stale_work` solely because the
+slot was occupied. The corrected transaction replaces that slot at Work@3,
+retains both exact Artifact payloads and Work@2, preserves exact replay of
+both publications, and leaves Work proposed until explicit acceptance. Focused
+checks also retain the competing-link refusal and deletion behavior; the
+accepted Work cannot start a new Attempt. No model service was contacted.
 
 ## Manual acceptance
 

@@ -936,8 +936,6 @@ def _apply_change(
         declared = {item.slot: item.media_type for item in state.expected_outputs}
         if declared.get(request.slot) != request.media_type:
             raise FoundationError("wrong_output", "Slot or media type is not declared by Work")
-        if any(item.slot == request.slot for item in state.linked_outputs):
-            raise FoundationError("stale_work", "Output slot was linked after Attempt started")
         artifact_id = uuid5(request.attempt_id, f"artifact:{request.slot}")
         artifact_grants, artifact_decisions = _authorize(
             connection,
@@ -964,8 +962,7 @@ def _apply_change(
             ),
         )
         _write_artifact(connection, artifact, now, 1)
-        linked = (
-            *state.linked_outputs,
+        linked = tuple(item for item in state.linked_outputs if item.slot != request.slot) + (
             LinkedOutput(
                 slot=request.slot, artifact=ArtifactRef(artifact_id=artifact_id, revision=1)
             ),

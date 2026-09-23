@@ -1,3 +1,56 @@
+# Core v0.1 Stage 4 proposed-output regeneration correction
+
+## outcome
+
+A new explicitly started Attempt on the current revision of a proposed Work
+can replace an occupied output slot after an answered invocation. Core still
+checks the exact Attempt basis and writes the Artifact and Work link in one
+transaction. Earlier Artifacts and Work revisions remain readable. A Work
+changed after Attempt start rejects late publication; `succeeded` remains
+closed to new Attempts.
+
+## evidence
+
+The new synthetic regression failed before the fix at the unconditional
+occupied-slot `stale_work` check. After the fix, it published a second answer
+at Work@3, retained Work@2 and both exact Artifact payloads, kept one link for
+the slot, replayed both publications exactly and explicitly accepted only the
+new revision. The existing competing-link, deletion and acceptance checks
+also passed in the focused 15-test run. The first full delivery run
+reported 487 passed and one unrelated intermittent catalog concurrency failure
+(`test_relocation_preserves_concurrently_added_independent_row`); that test
+passed alone. The repeated full `tools.check --deliver` passed: 488 tests,
+180 format-clean files, clean Ruff, strict mypy on 154 files, 21 import
+contracts, source/wheel build and report structure.
+
+## assumptions
+
+A revised result requires an explicit new Attempt begun at the current
+`proposed` Work revision. Operation replay uses the saved receipt before any
+current-state validation, so a prior successful publication remains replayable.
+
+## cuts
+
+The correction changes only interactive Stage 4 publication. It adds no
+executor, DBOS integration or model/provider contract.
+
+## cost
+
+Synthetic local tests only; zero real model calls and zero paid API calls in
+this correction. The earlier owner-run synthetic Work used 953 reported units,
+zero held after its answered call.
+
+## manual-acceptance
+
+The owner already accepted the earlier synthetic Work: revision 3 is
+`succeeded`, with its explicit basis, original Artifact, 953 committed units,
+zero held and no active Attempt. This does not constitute owner acceptance of
+the full Stage 4 implementation. No repeat acceptance is requested.
+
+## next
+
+solmax
+
 # Core v0.1 Stage 4 restart and acceptance correction
 
 ## outcome

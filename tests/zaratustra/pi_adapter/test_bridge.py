@@ -22,6 +22,7 @@ from zaratustra.foundation import (
     LinkWorkOutputRequest,
     PrepareInvocationRequest,
     SendInvocationRequest,
+    StopAttemptRequest,
     apply_operation,
     authorize_local,
     complete_deletions,
@@ -108,6 +109,109 @@ def test_publish_accept_and_fresh_read(tmp_path: Path) -> None:
     assert state.work.state.acceptance.authority_source.startswith("pi-ui-confirm:")
     assert state.outputs[0].content == b"Fictional note summary."
     assert state.committed_units == 9 and state.held_units == 0
+
+
+def test_new_attempt_replaces_proposed_output_with_exact_history(tmp_path: Path) -> None:
+    root, working, space_id, _, work_id, _, owner = ready(tmp_path)
+    bridge = Bridge(root, owner, working, limit_units=100)
+    activity_id = read_work(root, work_id, owner).state.activity_id
+
+    def answered_attempt(session_id: UUID, attempt_id: UUID) -> None:
+        fields: InvocationFields = dict(
+            invocation_id=uuid4(), attempt_id=attempt_id, work_id=work_id, session_id=session_id
+        )
+        for request in (
+            PrepareInvocationRequest(
+                operation_id=uuid4(),
+                space_id=space_id,
+                actor=owner.actor,
+                purpose="content",
+                provider="local",
+                model="synthetic",
+                transport="http-sse",
+                request_sha256="B" * 64,
+                request_bytes=10,
+                reserve_units=30,
+                **fields,
+            ),
+            AdmitInvocationRequest(
+                operation_id=uuid4(), space_id=space_id, actor=owner.actor, **fields
+            ),
+            SendInvocationRequest(
+                operation_id=uuid4(), space_id=space_id, actor=owner.actor, **fields
+            ),
+            FinishInvocationRequest(
+                operation_id=uuid4(),
+                space_id=space_id,
+                actor=owner.actor,
+                outcome="answered",
+                usage_units=9,
+                **fields,
+            ),
+        ):
+            bridge.operation(session_id, request.model_dump(mode="json"))
+
+    first_session = uuid4()
+    bridge.connect(first_session)
+    bridge.select(first_session, activity_id, work_id)
+    first_attempt = UUID(
+        cast(str, bridge.start_attempt(first_session, interrupt_previous=False)["attempt_id"])
+    )
+    answered_attempt(first_session, first_attempt)
+    first = bridge.publish(first_session, first_attempt, "summary", "text/plain", "First answer")
+    bridge.operation(
+        first_session,
+        StopAttemptRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor=owner.actor,
+            attempt_id=first_attempt,
+            work_id=work_id,
+            session_id=first_session,
+            outcome="completed",
+        ).model_dump(mode="json"),
+    )
+    proposed = read_work(root, work_id, owner, revision=2)
+    assert proposed.state.status == "proposed"
+    assert len(proposed.state.linked_outputs) == 1
+
+    second_session = uuid4()
+    bridge.connect(second_session)
+    bridge.select(second_session, activity_id, work_id)
+    second_attempt = UUID(
+        cast(str, bridge.start_attempt(second_session, interrupt_previous=False)["attempt_id"])
+    )
+    answered_attempt(second_session, second_attempt)
+    second = bridge.publish(
+        second_session, second_attempt, "summary", "text/plain", "Revised answer"
+    )
+    assert second != first
+    current = read_work(root, work_id, owner)
+    assert current.revision == 3 and current.state.status == "proposed"
+    assert len(current.state.linked_outputs) == 1
+    first_artifact = proposed.state.linked_outputs[0].artifact.artifact_id
+    second_artifact = current.state.linked_outputs[0].artifact.artifact_id
+    assert first_artifact != second_artifact
+    assert read_artifact(root, first_artifact, owner).content == b"First answer"
+    assert read_artifact(root, second_artifact, owner).content == b"Revised answer"
+    assert read_work(root, work_id, owner, revision=2) == proposed
+    assert (
+        bridge.publish(second_session, second_attempt, "summary", "text/plain", "Revised answer")
+        == second
+    )
+    assert (
+        bridge.publish(first_session, first_attempt, "summary", "text/plain", "First answer")
+        == first
+    )
+    assert read_work(root, work_id, owner) == current
+
+    preview = bridge.accept_preview(second_session)
+    bridge.accept(second_session, UUID(cast(str, preview["nonce"])), "Reviewed revised answer")
+    accepted = read_work(root, work_id, owner)
+    assert accepted.revision == 4 and accepted.state.status == "succeeded"
+    assert accepted.state.linked_outputs == current.state.linked_outputs
+    with pytest.raises(FoundationError, match="work_closed"):
+        bridge.start_attempt(second_session, interrupt_previous=False)
 
 
 def test_work_deletion_purges_execution(tmp_path: Path) -> None:
