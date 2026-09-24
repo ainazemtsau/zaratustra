@@ -1,3 +1,72 @@
+# Core v0.1 Stage 6 pass 1 — sequential sanitation correction
+
+## outcome
+
+Corrected the independent review's sequential deletion defect from exact HEAD
+`6e7a5f62f6e64bb295425940907afe9b17986224` on `codex/core-v0.1`.
+Sanitized plans now retain validated content-free dependency addresses, so a
+later Artifact deletion can retire copied bases and receipts without erasing
+independent confirmations or the parent's declared obligations. This report
+records engineering evidence only, not owner acceptance of Stage 6 pass 1.
+
+## evidence
+
+The unchanged `additional_review.py` was copied and run before edits in new
+TEMP `C:\Users\Anton\AppData\Local\Temp\zaratustra-stage6-sequential-repro-0a056f2efb0f4d2a9f607f0526aa12f0`.
+After A deletion its independent B confirmation remained satisfied, as
+expected. After X deletion its basis and receipt remained readable, replay
+returned the old receipt, and the unique marker remained in closed SQLite and
+a new managed backup. The old backup was purged; the control without A deletion
+passed. All content was synthetic; no HTTP calls occurred.
+
+The new `test_sequential_deletion_keeps_dependency_addresses_after_restart`
+uses three declared obligations, independent B and C, two plan revisions and
+a fresh `-S` process between A and X deletion. It checks exact unavailable plan
+and confirmation history, an `open` affected obligation, intact independent
+confirmation and replay, removed affected receipt, refused affected replay,
+old backup removal, closed live SQLite and clean new backup. The existing
+composition regressions also pass. Full
+`uv run --locked python -m tools.check --deliver` passed: 190 files formatted,
+Ruff clean, mypy clean across 164 source files, 21 import contracts kept, 537
+tests passed in 291.35 seconds, and sdist/wheel built.
+
+The independent script was then copied to a second new TEMP, with only its
+installed-wheel path updated to the newly built local wheel:
+`C:\Users\Anton\AppData\Local\Temp\zaratustra-stage6-sequential-fixed-4c52d792a8cf45dda8ed03672114cb88`.
+Its 54 packaged Python files matched the current source and installed copy;
+isolated import loaded SQLite 3.53.3 without sitecustomize or preload. Wheel
+SHA-256 was `A27044E8D31624A04A22B1514461E22790EAC2DCC27C6B2DD67902A3CBEEAF65`.
+After sequential deletion the script reported `open`, no copied marker basis,
+`not_found` for the old receipt, `history_unavailable` for replay, old backup
+removed, and no marker in closed live SQLite or the new backup.
+
+## assumptions
+
+The retained index contains only role IDs, fixed dependency edges and Artifact
+UUIDs captured at sanitation. Public exact plan reads remain
+`content_unavailable`. Older already sanitized payloads without the index
+cannot recover their lost graph and use conservative obligation sanitation.
+No schema 5 migration was introduced.
+
+## cuts
+
+No Stage 6 pass 2, Pi/DBOS extension, real model call, modifying external tool
+or legacy migration. `C:\projects\zaratustra` was not modified.
+
+## cost
+
+No paid service or external model call. The reproduction and tests use local
+synthetic data, the existing exact SQLite DLL and new TEMP directories.
+
+## manual-acceptance
+
+The owner authorized these corrections, full checks and a local commit.
+Passing checks does not record acceptance of Stage 6 pass 1.
+
+## next
+
+solmax
+
 # Core v0.1 Stage 6 pass 1 — independent-review corrections
 
 ## outcome

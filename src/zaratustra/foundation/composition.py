@@ -7,7 +7,10 @@ import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
+from typing import Literal
 from uuid import UUID, uuid4
+
+from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
 from .models import (
     AcceptWorkRequest,
@@ -50,6 +53,46 @@ from .storage import (
 )
 
 REDACTED_DEPENDENCY = b'{"content":"unavailable"}'
+
+
+class _PlanDependencies(BaseModel):
+    """Content-free addresses retained when an exact plan is no longer readable."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    roles: tuple[str, ...]
+    edges: dict[str, tuple[str, ...]]
+    global_artifacts: tuple[UUID, ...]
+    role_artifacts: dict[str, tuple[UUID, ...]]
+
+    @model_validator(mode="after")
+    def valid_roles(self) -> _PlanDependencies:
+        roles = set(self.roles)
+        if (
+            len(roles) != len(self.roles)
+            or set(self.edges) != roles
+            or set(self.role_artifacts) != roles
+            or any(not set(dependencies).issubset(roles) for dependencies in self.edges.values())
+        ):
+            raise ValueError("Sanitized plan dependency roles are inconsistent")
+        return self
+
+
+class _SanitizedPlan(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    content: Literal["unavailable"] = "unavailable"
+    dependencies: _PlanDependencies | None = None
+
+
+def _sanitized_plan(payload: bytes) -> _SanitizedPlan | None:
+    decoded = json.loads(payload)
+    if not isinstance(decoded, dict) or decoded.get("content") != "unavailable":
+        return None
+    try:
+        return _SanitizedPlan.model_validate(decoded)
+    except ValidationError as error:
+        raise FoundationError("corrupt_space", "Sanitized plan index is invalid") from error
 
 
 def method_checksum(definition: MethodDefinition) -> str:
@@ -120,7 +163,7 @@ def _plan(
     ).fetchone()
     if row is None:
         raise FoundationError("plan_unavailable", "Exact Work plan revision is unavailable")
-    if bytes(row[1]) == REDACTED_DEPENDENCY:
+    if _sanitized_plan(bytes(row[1])) is not None:
         raise FoundationError("content_unavailable", "Exact Work plan revision was sanitized")
     return PlanRevision(
         parent_work_id=parent_id,
@@ -1137,15 +1180,19 @@ def sanitize_deleted_dependency(
 
     affected_operations: set[str] = set()
     current_plans: dict[str, WorkPlan | None] = {}
+    current_indexes: dict[str, _PlanDependencies | None] = {}
     plan_rows = connection.execute(
         "SELECT parent_id, revision, payload, operation_id "
         "FROM work_plan_revisions ORDER BY parent_id, revision"
     ).fetchall()
     for parent_id, revision, payload, source_operation in plan_rows:
-        if bytes(payload) == REDACTED_DEPENDENCY:
+        sanitized = _sanitized_plan(bytes(payload))
+        if sanitized is not None:
             current_plans[parent_id] = None
+            current_indexes[parent_id] = sanitized.dependencies
             continue
-        current_plans[parent_id] = WorkPlan.model_validate_json(bytes(payload))
+        parsed_plan = WorkPlan.model_validate_json(bytes(payload))
+        current_plans[parent_id] = parsed_plan
         plan = json.loads(bytes(payload))
         contains_child = child_id is not None and any(
             child["work_id"] == str(child_id) for child in plan["children"]
@@ -1157,9 +1204,12 @@ def sanitize_deleted_dependency(
             continue
         backup_parents.add(parent_id)
         affected_operations.add(source_operation)
+        retained = _SanitizedPlan(
+            dependencies=_plan_dependencies(connection, parent_id, parsed_plan)
+        )
         connection.execute(
             "UPDATE work_plan_revisions SET payload = ? WHERE parent_id = ? AND revision = ?",
-            (REDACTED_DEPENDENCY, parent_id, revision),
+            (retained.model_dump_json().encode("utf-8"), parent_id, revision),
         )
 
     if artifact_id is not None:
@@ -1167,6 +1217,14 @@ def sanitize_deleted_dependency(
             if plan is not None:
                 seed_roles.setdefault(parent_id, set()).update(
                     _artifact_dependent_roles(connection, parent_id, plan, artifact_id)
+                )
+            elif (index := current_indexes.get(parent_id)) is not None:
+                seed_roles.setdefault(parent_id, set()).update(
+                    _indexed_artifact_roles(index, artifact_id)
+                )
+            else:
+                seed_roles.setdefault(parent_id, set()).update(
+                    _legacy_plan_roles(connection, parent_id)
                 )
 
     # A confirmed basis can quote its child's work or an Artifact used by the
@@ -1187,15 +1245,25 @@ def sanitize_deleted_dependency(
     for parent_id, roles in seed_roles.items():
         plan = current_plans.get(parent_id)
         if plan is None:
-            affected_roles[parent_id] = None
-            continue
+            index = current_indexes.get(parent_id)
+            if index is None:
+                affected_roles[parent_id] = None
+                continue
+            edges = index.edges
+        else:
+            edges = {
+                child.role: tuple(
+                    leaf.role for leaf in _conditions(child.readiness) if leaf.role is not None
+                )
+                for child in plan.children
+            }
         changed = True
         while changed:
             previous = len(roles)
             roles.update(
-                child.role
-                for child in plan.children
-                if any(leaf.role in roles for leaf in _conditions(child.readiness))
+                role
+                for role, dependencies in edges.items()
+                if any(dependency in roles for dependency in dependencies)
             )
             changed = len(roles) != previous
         affected_roles[parent_id] = roles
@@ -1274,46 +1342,71 @@ def _contains_artifact_ref(value: object, artifact_id: str) -> bool:
 def _artifact_dependent_roles(
     connection: sqlite3.Connection, parent_id: str, plan: WorkPlan, artifact_id: UUID
 ) -> set[str]:
-    target = str(artifact_id)
-    parent_state = connection.execute(
+    return _indexed_artifact_roles(_plan_dependencies(connection, parent_id, plan), artifact_id)
+
+
+def _artifact_ids(value: object) -> set[UUID]:
+    if isinstance(value, dict):
+        found = {UUID(value["artifact_id"])} if "artifact_id" in value else set()
+        for member in value.values():
+            found.update(_artifact_ids(member))
+        return found
+    if isinstance(value, list):
+        return {artifact_id for member in value for artifact_id in _artifact_ids(member)}
+    return set()
+
+
+def _current_subject_artifacts(connection: sqlite3.Connection, subject_id: str) -> set[UUID]:
+    row = connection.execute(
         "SELECT payload FROM subject_content WHERE record_id = ? AND revision = "
         "(SELECT current_revision FROM subject_records WHERE record_id = ?)",
-        (parent_id, parent_id),
+        (subject_id, subject_id),
     ).fetchone()
-    if (
-        any(item.artifact.artifact_id == artifact_id for item in plan.named_inputs)
-        or any(reference.artifact_id == artifact_id for reference in plan.basis)
-        or (
-            plan.completion is not None
-            and _contains_artifact_ref(plan.completion.model_dump(mode="json"), target)
-        )
-        or (
-            parent_state is not None
-            and _contains_artifact_ref(json.loads(bytes(parent_state[0])), target)
-        )
-    ):
-        return {child.role for child in plan.children}
+    return _artifact_ids(json.loads(bytes(row[0]))) if row is not None else set()
 
-    roles: set[str] = set()
+
+def _plan_dependencies(
+    connection: sqlite3.Connection, parent_id: str, plan: WorkPlan
+) -> _PlanDependencies:
+    global_artifacts = {item.artifact.artifact_id for item in plan.named_inputs}
+    global_artifacts.update(reference.artifact_id for reference in plan.basis)
+    if plan.completion is not None:
+        global_artifacts.update(_artifact_ids(plan.completion.model_dump(mode="json")))
+    global_artifacts.update(_current_subject_artifacts(connection, parent_id))
+    edges: dict[str, tuple[str, ...]] = {}
+    role_artifacts: dict[str, tuple[UUID, ...]] = {}
     for child in plan.children:
-        child_state = connection.execute(
-            "SELECT payload FROM subject_content WHERE record_id = ? AND revision = "
-            "(SELECT current_revision FROM subject_records WHERE record_id = ?)",
-            (str(child.work_id), str(child.work_id)),
-        ).fetchone()
-        if (
-            _contains_artifact_ref(child.state.model_dump(mode="json"), target)
-            or (
-                child.readiness is not None
-                and _contains_artifact_ref(child.readiness.model_dump(mode="json"), target)
-            )
-            or (
-                child_state is not None
-                and _contains_artifact_ref(json.loads(bytes(child_state[0])), target)
-            )
-        ):
-            roles.add(child.role)
-    return roles
+        edges[child.role] = tuple(
+            sorted({leaf.role for leaf in _conditions(child.readiness) if leaf.role is not None})
+        )
+        references = _artifact_ids(child.state.model_dump(mode="json"))
+        if child.readiness is not None:
+            references.update(_artifact_ids(child.readiness.model_dump(mode="json")))
+        references.update(_current_subject_artifacts(connection, str(child.work_id)))
+        role_artifacts[child.role] = tuple(sorted(references))
+    return _PlanDependencies(
+        roles=tuple(child.role for child in plan.children),
+        edges=edges,
+        global_artifacts=tuple(sorted(global_artifacts)),
+        role_artifacts=role_artifacts,
+    )
+
+
+def _indexed_artifact_roles(index: _PlanDependencies, artifact_id: UUID) -> set[str]:
+    if artifact_id in index.global_artifacts:
+        return set(index.roles)
+    return {role for role, references in index.role_artifacts.items() if artifact_id in references}
+
+
+def _legacy_plan_roles(connection: sqlite3.Connection, parent_id: str) -> set[str]:
+    """Old redacted plans lack an index; preserve deletion safety conservatively."""
+
+    return {
+        role
+        for (role,) in connection.execute(
+            "SELECT role FROM work_plan_children WHERE parent_id = ?", (parent_id,)
+        ).fetchall()
+    }
 
 
 def read_method_version(

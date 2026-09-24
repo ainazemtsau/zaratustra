@@ -36,7 +36,10 @@ affected exact historical revision is addressable but returns
 `content_unavailable`; a lost confirmation reopens its obligation. A parent
 whose current plan was sanitized cannot continue under that plan. Parent and
 Method deletion sanitize all new content through the existing maintenance
-boundary. See
+boundary. Sanitized plan payload retains only validated structural role edges
+and Artifact addresses so a later deletion can still find dependent bases after
+restart. Pre-index sanitized plans use conservative obligation sanitation.
+See
 `docs/core-v0.1/STAGE6-PASS1-IMPLEMENTATION.md`.
 
 The foundation stores Work execution records but never imports Pi or runs a model.

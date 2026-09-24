@@ -104,6 +104,19 @@ replayable receipts/fingerprints, and affected managed backups are contaminated.
 `complete_deletions` then purges old packages and sanitizes the closed live
 SQLite file; a newly created backup contains only sanitized state.
 
+Sequential deletion needs durable dependency addresses after a plan becomes
+unreadable. The sanitized plan payload therefore retains a validated index of
+role identifiers, fixed readiness edges and exact Artifact UUID references
+from the plan and current Work states. It contains no Work goals, plan rationale,
+confirmation basis or Artifact bytes. Public plan reads still return
+`content_unavailable`. A later child or Artifact deletion follows this index
+through dependent roles, retires their confirmation history and receipts, and
+reopens only affected obligations. Independent confirmations remain exact.
+The index survives process restart and managed backup. The schema 5 definition
+is unchanged. An older sanitized plan without the index cannot recover its lost
+edges; later deletion conservatively retires its confirmed obligations rather
+than claiming missing dependencies are absent.
+
 ## Reproduction and limits
 
 `tests/zaratustra/foundation/test_composition.py` exercises A → B, two
@@ -115,7 +128,9 @@ The correction regressions also exercise a fresh `-S` process with the configure
 DLL, partial child and Artifact deletion through public Core operations,
 unaffected exact history, reopened obligations, blocked replay, closed SQLite,
 old backup purge, a clean new backup and retention of an independent role's
-confirmation. Run
+confirmation. The sequential deletion regression uses three obligations,
+two plan revisions, a process restart between deletions, and checks the
+dependent and independent confirmations separately. Run
 `uv run --locked python -m tools.check --deliver` with the project's verified
 `ZARATUSTRA_SQLITE_DLL` set as described in
 [STAGE5-IMPLEMENTATION.md](STAGE5-IMPLEMENTATION.md).
