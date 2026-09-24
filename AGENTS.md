@@ -4,7 +4,9 @@
 - The current product basis is `docs/core-v0.1/IMPLEMENTATION-BASELINE.md`, the
   owner-approved Core v0.1 implementation plan recorded there,
   `docs/core-v0.1/STAGE4-PLAN.md`, `docs/core-v0.1/STAGE5-PLAN.md`, this AGENTS.md,
-  and `validation.config`. Stage 5 work proceeds only by separately authorized passes.
+  and `validation.config`. Stage 5 is owner-accepted at
+  `245e7288c08eb4d49c84edd89f01e746a45c37a5`; Stage 6 is authorized
+  for planning only.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
 - Stage 1 stopped after recording the G07-1 DBOS and G08-1 Pi technical outcomes.
@@ -20,8 +22,10 @@
   `b0b923bfb4c4b42e448b2a5a61dcc39dd3937c3e`; see
   `docs/core-v0.1/STAGE5-PASS2-ACCEPTANCE.md`. The owner accepted pass 3 at
   `8a34c09f342059e4cedc1011e81b83a4272fd289`;
-  see `docs/core-v0.1/STAGE5-PASS3-ACCEPTANCE.md`. Pass 4 is separately
-  authorized within `STAGE5-PLAN.md`; Stage 5 as a whole is not accepted.
+  see `docs/core-v0.1/STAGE5-PASS3-ACCEPTANCE.md`. The owner accepted pass 4 and
+  the complete Stage 5 at `245e7288c08eb4d49c84edd89f01e746a45c37a5`;
+  see `docs/core-v0.1/STAGE5-ACCEPTANCE.md`. This is separate from accepting
+  the synthetic Stage 5 Work.
 
 ## Commands (run from this repository)
 - Prepare: `uv sync --locked`
@@ -48,9 +52,10 @@ schema 3 resource/Attempt/invocation records, observable provider sends, exact
 output publication and separate Work acceptance. The owner accepted Stage 4 at
 `afa367c10ad949b1610810d4f2e6f106c1a7b7cc`; see
 `docs/core-v0.1/STAGE4-ACCEPTANCE.md` and `STAGE4-IMPLEMENTATION.md`. Stage 5
-  pass 1 adds explicit schema 4 and Core-owned durable continuation; pass 2
-  connects one assigned ordinary Pi RPC through DBOS queue/wait. See
-  `docs/core-v0.1/STAGE5-IMPLEMENTATION.md`.
+adds explicit schema 4 and Core-owned durable continuation, one assigned ordinary
+Pi RPC through DBOS queue/wait, recovery and stop fencing, and shared maintenance
+for Core/DBOS/Pi. See `docs/core-v0.1/STAGE5-IMPLEMENTATION.md` and
+`STAGE5-ACCEPTANCE.md`.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,
@@ -126,10 +131,9 @@ Work 2 installed/migration proof: `uv run --locked python -m tools.probe_records
 CI/CD, GitHub Actions and push notifications are excluded requirements until the owner separately asks. Do not configure them or block setup/delivery on their absence, even if a generic checklist requires them. The owner authorized public GitHub hosting and integration into main on September 11–12, 2026; local checks stay required. That authorization does not grant access to user workspaces or authorize paid services. The original automation boundary remains docs/setup/OWNER-DECISION-20260907.md, owner-ack:solmax-zaratustra-local-setup-no-automation-20260907.
 
 ## Constitution
-- Keep the accepted Core v0.1 functional composition and completed Stage 1–4
-  evidence. Stage 4 and Stage 5 passes 1–3 are owner-accepted; pass 4 is
-  authorized for engineering. Preserve earlier Works/CALLs as history,
-  not current scope.
+- Keep the accepted Core v0.1 functional composition and completed Stage 1–5
+  evidence. Stage 5 is owner-accepted at the exact commit above; Stage 6 has
+  planning authority only. Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.
 - No real personal data, remote publication, paid service or new external rights without authorization.
