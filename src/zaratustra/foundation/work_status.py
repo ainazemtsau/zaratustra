@@ -506,6 +506,23 @@ def _obligation_progress(
     return tuple(latest[key] for key in sorted(latest))
 
 
+def _branch_reviews(
+    plan: WorkPlan,
+    children: tuple[ChildProgress, ...],
+    obligations: tuple[ObligationProgress, ...],
+) -> list[StatusReason]:
+    """Closed branches that the current plan or an open obligation still refers to."""
+
+    planned = {child.role for child in plan.children}
+    needed = {item.role for item in obligations if item.status == "open"}
+    return [
+        StatusReason(code="branch_review", role=child.role, record_id=child.work_id)
+        for child in children
+        if child.status.status in CLOSED_OUTCOMES
+        and (child.role in planned or child.role in needed)
+    ]
+
+
 def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkState) -> WorkStatus:
     assert isinstance(state.method, MethodRef)
     try:
@@ -517,27 +534,35 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
             status="blocked",
             reasons=(StatusReason(code=error.code, record_id=work_id),),
         )
-    # A stale prerequisite blocks the parent under this plan whatever its children do.
-    stale = _parent_gaps(connection, plan.plan, state, definition)
-    if stale:
-        return WorkStatus(work_id=work_id, status="blocked", reasons=tuple(stale))
     children = _children(connection, work_id)
     obligations = _obligation_progress(connection, work_id)
     phases: tuple[tuple[WorkLifecycle, str], ...] = (
         ("waiting", "child_waiting"),
         ("running", "child_running"),
     )
-    for phase, code in phases:
-        active = [child for child in children if child.status.status == phase]
-        if active:
-            return WorkStatus(
-                work_id=work_id,
-                status=phase,
-                reasons=tuple(
-                    StatusReason(code=code, role=child.role, record_id=child.work_id)
-                    for child in active
-                ),
-            )
+    # Every active branch and every closed branch under review keeps its own address,
+    # whatever the phase: there is no global pipeline failure and no cascade.
+    active = [
+        StatusReason(code=code, role=child.role, record_id=child.work_id)
+        for phase, code in phases
+        for child in children
+        if child.status.status == phase
+    ]
+    reviews = _branch_reviews(plan.plan, children, obligations)
+    # A stale prerequisite blocks the parent under this plan whatever its children do; a
+    # branch closed for good is reviewed instead (its dependents read dependency_closed).
+    stale = [
+        gap
+        for gap in _parent_gaps(connection, plan.plan, state, definition)
+        if gap.code != "dependency_closed"
+    ]
+    if stale:
+        return WorkStatus(
+            work_id=work_id, status="blocked", reasons=tuple(stale + active + reviews)
+        )
+    for phase, _code in phases:
+        if any(child.status.status == phase for child in children):
+            return WorkStatus(work_id=work_id, status=phase, reasons=tuple(active + reviews))
     declared = {item.key for item in definition.obligations}
     satisfied = {item.key for item in obligations if item.status == "satisfied"}
     all_children = bool(children) and all(child.status.status == "succeeded" for child in children)
@@ -550,18 +575,18 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
                 connection, work_id, state, actor=None, epoch=0, grants=[], decisions=[]
             )
         except FoundationError as error:
-            if error.code not in ("dependency_open", "output_mismatch"):
+            if error.code not in ("dependency_open", "output_mismatch", "dependency_closed"):
                 return WorkStatus(
                     work_id=work_id,
                     status="blocked",
-                    reasons=(StatusReason(code=error.code, record_id=work_id),),
+                    reasons=(StatusReason(code=error.code, record_id=work_id), *reviews),
                 )
             refusal = error.code
         else:
             return WorkStatus(
                 work_id=work_id,
                 status="ready",
-                reasons=(StatusReason(code="acceptance_pending", record_id=work_id),),
+                reasons=(StatusReason(code="acceptance_pending", record_id=work_id), *reviews),
             )
     succeeded = {child.role for child in children if child.status.status == "succeeded"}
     next_steps = [
@@ -579,8 +604,9 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
         if item.status == "open" and item.role in succeeded
     ]
     next_steps += _pending_links(connection, plan.plan, state)
-    if next_steps:
-        return WorkStatus(work_id=work_id, status="ready", reasons=tuple(next_steps))
+    if next_steps or reviews:
+        # A failed branch makes the parent ready for review when nothing waits or runs.
+        return WorkStatus(work_id=work_id, status="ready", reasons=tuple(next_steps + reviews))
     return WorkStatus(
         work_id=work_id,
         status="blocked",

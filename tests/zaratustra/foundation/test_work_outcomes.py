@@ -758,11 +758,11 @@ def test_closed_child_blocks_dependents_and_parent_waits_for_open_children(tmp_p
     assert [(item.code, item.role, item.record_id) for item in status.reasons] == [
         ("dependency_closed", "a", a)
     ]
-    # Under this plan the parent can no longer complete: a blocker, not open progress.
+    # Part 3.2: the failed branch is reviewed by address, not a global parent failure.
     parent_status = read_work_status(root, parent, owner)
-    assert parent_status.status == "blocked"
-    assert [(item.code, item.role) for item in parent_status.reasons] == [
-        ("dependency_closed", "a")
+    assert parent_status.status == "ready"
+    assert [(item.code, item.role, item.record_id) for item in parent_status.reasons] == [
+        ("branch_review", "a", a)
     ]
     with pytest.raises(FoundationError, match="open_children") as waiting:
         apply_operation(root, _close(root, space, owner, parent, "failed", "Too early"), owner)

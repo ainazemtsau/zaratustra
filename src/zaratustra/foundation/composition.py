@@ -442,6 +442,24 @@ def _require_succeeded(role: str, work_id: UUID, status: str, open_detail: str) 
         raise FoundationError("dependency_open", open_detail)
 
 
+def _require_open_branch(
+    connection: sqlite3.Connection, plan: WorkPlan, role: str, need: str
+) -> None:
+    """Integration that needs a branch closed without acceptance refuses for good.
+
+    Only this branch is refused; independent branches go on and nothing is cancelled.
+    """
+
+    child = next((item for item in plan.children if item.role == role), None)
+    if child is None:
+        return
+    _, status, _ = _subject_current(connection, child.work_id, "work")
+    if status in CLOSED_OUTCOMES:
+        raise FoundationError(
+            "dependency_closed", f"{need} needs child {role} ({child.work_id}), which is {status}"
+        )
+
+
 def _accepted_output(
     connection: sqlite3.Connection,
     plan: WorkPlan,
@@ -1363,9 +1381,16 @@ def check_composite_action(
             decisions=decisions,
         )
         return
-    _parent_current(
+    _definition, plan = _parent_current(
         connection, work_id, state, actor=actor, epoch=epoch, grants=grants, decisions=decisions
     )
+    if isinstance(request, LinkWorkOutputRequest):
+        bound = next(
+            (item for item in plan.plan.output_bindings if item.parent_slot == request.output.slot),
+            None,
+        )
+        if bound is not None:
+            _require_open_branch(connection, plan.plan, bound.role, f"Output {bound.parent_slot}")
 
 
 def _parent_current(
@@ -1435,9 +1460,14 @@ def check_parent_acceptance(
         connection, work_id, state, actor=actor, epoch=epoch, grants=grants, decisions=decisions
     )
     instances = _obligations(connection, work_id, definition)
-    for instance in instances:
-        if instance.status != "satisfied" or instance.evidence is None:
-            raise FoundationError("obligation_open", f"Obligation {instance.key} is open")
+    unmet = [item for item in instances if item.status != "satisfied" or item.evidence is None]
+    for instance in unmet:
+        # A closed branch can never satisfy its obligation: name it before open ones.
+        _require_open_branch(
+            connection, plan.plan, instance.definition.role, f"Obligation {instance.key}"
+        )
+    if unmet:
+        raise FoundationError("obligation_open", f"Obligation {unmet[0].key} is open")
     linked = {item.slot: item.artifact for item in state.linked_outputs}
     for output_binding in plan.plan.output_bindings:
         actual_output = _accepted_output(

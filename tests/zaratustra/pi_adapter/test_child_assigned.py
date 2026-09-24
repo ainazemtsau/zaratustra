@@ -15,7 +15,10 @@ import pytest
 from dbos import DBOS, DBOSClient
 
 import zaratustra.pi_adapter.assigned as assigned_module
+from tests.zaratustra.foundation.test_child_execution import _stop
 from tests.zaratustra.foundation.test_composition import _apply, _result, _seed, _sqlite_contains
+from tests.zaratustra.foundation.test_parallel_branches import _issue as _issue_branch
+from tests.zaratustra.foundation.test_parallel_branches import _pipeline
 from zaratustra.foundation import (
     AssignAttemptRequest,
     CreateDecisionRequest,
@@ -290,6 +293,58 @@ def test_duplicate_delivery_issues_one_child_workflow_and_cleanup_is_addressed(
         assert connection.execute("SELECT count(*) FROM execution_plan_pins").fetchone() == (0,)
     assert not _sqlite_contains(root / ".zara-core", marker)
     assert read_obligation(root, parent, "checked", owner).status == "open"
+
+
+def test_parallel_children_get_one_workflow_each_and_addressed_cleanup(
+    tmp_path: Path, child_dbos_template: Path
+) -> None:
+    branches = _pipeline(tmp_path)
+    root, space, owner, parent, works = branches
+    attempts: dict[str, tuple[UUID, UUID]] = {}
+    for role in ("a1", "a2"):
+        _issue_branch(branches, role)
+        _resource(root, space, owner, works[role], f"workspace-{role}")
+        attempts[role] = _assign(root, space, owner, works[role])
+    shutil.copyfile(child_dbos_template, root / ".zara-core" / "executor.sqlite3")
+    first = deliver_outbox(root, owner)
+    second = deliver_outbox(root, owner)
+    # Redelivery never launches a node twice: one workflow per Attempt, whatever its neighbour.
+    assert first == second and len(first) == 2
+    expected = [
+        {"work_id": str(works[role]), "attempt_id": str(attempts[role][0])} for role in ("a1", "a2")
+    ]
+    assert sorted(_workflows(root), key=str) == sorted(expected, key=str)
+    markers: dict[str, str] = {}
+    for role in ("a1", "a2"):
+        home = root / ".zara-core" / "pi-rpc-home" / str(attempts[role][0])
+        home.mkdir(parents=True)
+        markers[role] = f"synthetic managed {role} copy {uuid4()}"
+        (home / "copy.txt").write_text(markers[role], encoding="utf-8", newline="\n")
+
+    _stop(root, space, owner, works["a2"], *attempts["a2"])
+    apply_operation(
+        root,
+        DeleteWorkRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            work_id=works["a2"],
+            expected_revision=read_work(root, works["a2"], owner).revision,
+        ),
+        owner,
+    )
+    deleted = complete_assigned_deletions(root, owner)
+    assert deleted.live_store_sanitized and deleted.pending_jobs == 0
+    assert _workflows(root) == [expected[0]]
+    assert not (root / ".zara-core" / "pi-rpc-home" / str(attempts["a2"][0])).exists()
+    assert (root / ".zara-core" / "pi-rpc-home" / str(attempts["a1"][0])).is_dir()
+    assert not _sqlite_contains(root / ".zara-core", markers["a2"])
+    with closing(sqlite3.connect(root / ".zara-core" / "core.sqlite3")) as connection:
+        assert connection.execute(
+            "SELECT work_id, attempt_id FROM execution_plan_pins"
+        ).fetchall() == [(str(works["a1"]), str(attempts["a1"][0]))]
+    for key in ("a1_checked", "a2_checked", "i_final"):
+        assert read_obligation(root, parent, key, owner).status == "open"
 
 
 def test_subject_refusal_before_launch_stops_child_without_pi_or_http(
