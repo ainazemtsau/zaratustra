@@ -72,8 +72,14 @@ contaminated) that structurally depends on the deleted Artifact or child Work: t
 Work's own revisions, its own plan history and children, or its parent's plan history
 (global, own and upstream role addresses, upstream children), read through the
 retained index once sanitized. Outcomes, audit, obligations and independent bases
-stay. Schemas 2-6 never store a retired basis; the explicit 6 to 7 upgrade retires
-those whose dependencies were already deleted and then needs `maintenance.delete`.
+stay. Schemas 2-6 never store a retired basis: a deletion that would need one is
+refused with addressed `upgrade_required` before any change (`require_outcome_upgrade`
+in the shared gate); nothing upgrades implicitly. A basis an earlier deletion left
+there (dependency deleted after the outcome was recorded) is withheld from Work reads
+without rewriting, its replay/receipt answer `upgrade_required`, and
+`complete_deletions` changes nothing and reports `retained_bases` with
+`upgrade_required = 7`. The explicit 6 to 7 upgrade retires exactly those and then
+needs `maintenance.delete`. Quotes without a stored structural link are not covered.
 See `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.1.md`.
 
 The foundation stores Work execution records but never imports Pi or runs a model.

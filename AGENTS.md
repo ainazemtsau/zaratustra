@@ -17,7 +17,8 @@
   `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.1.md`. Two defects reproduced by
   the independent review of `e2d5b90` are corrected there, and the owner
   authorized the narrow outcome-basis sanitation fix after the review of
-  `a7226f8`. It is not an accepted release, schema 7 acceptance or pass 3
+  `a7226f8` and the upgrade-first order for schemas 2–6 after the review of
+  `f13ffa8`. It is not an accepted release, schema 7 acceptance or pass 3
   acceptance. Parts 3.2–3.10, the
   separate composite-parent execution slice, pass 4, real model calls and
   development migration are not authorized.
