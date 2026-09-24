@@ -286,7 +286,9 @@ class WorkAcceptance(ContractModel):
     """Separate acceptance of a Work's exact result.
 
     ``basis`` is ``None`` only in schema 7 and later, after deletion of something the
-    basis structurally depends on; older schemas never store that representation.
+    basis structurally depends on; older schemas never store that representation. A read
+    of schemas 2-6 withholds (``None``) a basis that an earlier deletion left in place
+    until the explicit upgrade to 7 retires it; the stored bytes are not rewritten.
     """
 
     operation_id: UUID
@@ -1058,6 +1060,18 @@ class DeletionStatus(ContractModel):
     purged_backups: int = Field(ge=0)
     live_store_sanitized: bool
     completed_at: datetime | None = None
+    # Schemas 2-6: Works whose outcome basis an earlier deletion left in place. Only the
+    # explicit upgrade named here can retire it; until then nothing is reported complete.
+    retained_bases: tuple[UUID, ...] = ()
+    upgrade_required: Literal[7] | None = None
+
+    @model_validator(mode="after")
+    def honest_completion(self) -> DeletionStatus:
+        if self.retained_bases and (self.live_store_sanitized or self.upgrade_required is None):
+            raise ValueError("Retained outcome bases need the explicit upgrade")
+        if self.completed_at is not None and not self.live_store_sanitized:
+            raise ValueError("Only a sanitized live store has a completion time")
+        return self
 
 
 __all__ = [

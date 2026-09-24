@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from tests.zaratustra.foundation.test_composition import _delete_after_upgrade
 from zaratustra.foundation import (
     ALL_ACTIONS,
     AcceptWorkRequest,
@@ -571,18 +572,17 @@ def test_schema2_backup_restores_quarantined_and_deleted_result_is_unavailable(
     new_owner = authorize_local(destination, actor="owner", source_ref="restored-synthetic")
     assert read_work(destination, work_id, new_owner).state.status == "succeeded"
     assert read_activity(destination, activity_id, new_owner).state.status == "ongoing"
-    apply_operation(
+    # The acceptance basis depends on the result: schema 2 needs the explicit upgrade first.
+    _delete_after_upgrade(
         root,
-        DeleteArtifactRequest(
-            operation_id=uuid4(),
-            space_id=space_id,
-            actor="owner",
-            artifact_id=result_id,
-            expected_revision=1,
-        ),
+        space_id,
         owner,
+        DeleteArtifactRequest,
+        artifact_id=result_id,
+        expected_revision=1,
     )
     current = read_work(root, work_id, owner)
     assert current.state.status == "succeeded"
+    assert current.state.acceptance is not None and current.state.acceptance.basis is None
     assert current.unavailable_refs == (ArtifactRef(artifact_id=result_id, revision=1),)
     assert complete_deletions(root, owner).live_store_sanitized

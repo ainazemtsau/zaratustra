@@ -1717,6 +1717,13 @@ def sanitize_deleted_dependency(
         return
     if (child_id is None) == (artifact_id is None):
         raise ValueError("Exactly one deleted dependency is required")
+    # Schema 7 retires dependent outcome bases in this transaction; schemas 5-6 reach
+    # here only when none depends on the deleted subject (``require_outcome_upgrade``).
+    dependent_bases = (
+        dependent_outcome_bases(connection, artifact_id=artifact_id, work_id=child_id)
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7
+        else []
+    )
     backup_parents: set[str] = set()
     seed_roles: dict[str, set[str]] = {}
     if child_id is not None:
@@ -1861,19 +1868,8 @@ def sanitize_deleted_dependency(
                 ),
             )
 
-    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7:
-        # Outcome bases retire in this same transaction; older schemas keep their format.
-        plans: dict[str, list[_PlanDependencies | None]] = {}
-        for work_id in _held_outcome_bases(connection):
-            if child_id is not None and work_id == str(child_id):
-                continue  # Its whole content is deleted with it.
-            found = _outcome_dependencies(connection, work_id, plans)
-            if (
-                found.unbounded
-                or (artifact_id is not None and artifact_id in found.artifacts)
-                or (child_id is not None and str(child_id) in found.works)
-            ):
-                _retire_outcome_basis(connection, work_id, affected_operations, backup_parents)
+    for work_id in dependent_bases:
+        _retire_outcome_basis(connection, work_id, affected_operations, backup_parents)
 
     _retire_history(connection, affected_operations, backup_parents)
 
@@ -1909,23 +1905,30 @@ class _OutcomeDependencies(NamedTuple):
     unbounded: bool
 
 
-def _held_outcome_bases(connection: sqlite3.Connection) -> list[str]:
-    """Works whose acceptance or closure still holds its basis text."""
+def _held_outcome_bases(
+    connection: sqlite3.Connection, work_id: str | None = None
+) -> dict[str, int]:
+    """Works whose acceptance or closure still holds its basis text.
+
+    Each maps to the space state revision of the operation that recorded the outcome.
+    """
 
     statuses = ("succeeded", *CLOSED_OUTCOMES)
-    held: set[str] = set()
-    for record_id, payload in connection.execute(
-        "SELECT c.record_id, c.payload FROM subject_content c "
+    held: dict[str, int] = {}
+    for record_id, payload, state_revision in connection.execute(
+        "SELECT c.record_id, c.payload, o.state_revision FROM subject_content c "
         "JOIN subject_revisions v ON v.record_id = c.record_id AND v.revision = c.revision "
         "JOIN subject_records s ON s.record_id = c.record_id "
-        f"WHERE s.kind = 'work' AND v.status IN ({', '.join('?' for _ in statuses)})",
-        statuses,
+        "JOIN operations o ON o.operation_id = v.operation_id "
+        f"WHERE s.kind = 'work' AND v.status IN ({', '.join('?' for _ in statuses)}) "
+        "AND (? IS NULL OR c.record_id = ?)",
+        (*statuses, work_id, work_id),
     ).fetchall():
         state = WorkState.model_validate_json(bytes(payload))
         outcome = state.acceptance or state.closure
         if outcome is not None and outcome.basis is not None:
-            held.add(record_id)
-    return sorted(held)
+            held[record_id] = min(int(state_revision), held.get(record_id, int(state_revision)))
+    return dict(sorted(held.items()))
 
 
 def _plan_history(
@@ -2003,12 +2006,14 @@ def _outcome_dependencies(
     parent's plan: its global addresses, those of its own and upstream roles, and the
     upstream children with their revisions. Plan revisions are read from the retained
     index once sanitized. A reference absent from the Work state does not make the basis
-    independent.
+    independent. Before schema 5 there are no plans: only the Work's own revisions count.
     """
 
     artifacts = _subject_artifacts(connection, work_id)
     works: set[str] = set()
     unbounded = False
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 5:
+        return _OutcomeDependencies(frozenset(artifacts), frozenset(works), unbounded)
     own = _plan_history(connection, work_id, plans)
     for index in own:
         if index is None:
@@ -2083,35 +2088,152 @@ def _retire_outcome_basis(
         subjects.add(work_id)
 
 
-def retire_bases_of_deleted_dependencies(connection: sqlite3.Connection) -> list[str]:
-    """Retire outcome bases whose dependencies were deleted before schema 7 existed.
+def dependent_outcome_bases(
+    connection: sqlite3.Connection,
+    *,
+    artifact_id: UUID | None = None,
+    work_id: UUID | None = None,
+) -> list[str]:
+    """Held outcome bases that structurally depend on one Artifact or Work being deleted."""
 
-    Older schemas cannot represent a retired basis, so the explicit upgrade to 7 finishes
-    those earlier deletions; ``complete_deletions`` then purges backups and compacts.
-    Returns the addresses of the Works whose basis was retired.
+    plans: dict[str, list[_PlanDependencies | None]] = {}
+    dependent: list[str] = []
+    for held in _held_outcome_bases(connection):
+        if work_id is not None and held == str(work_id):
+            continue  # Its whole content is deleted with it.
+        found = _outcome_dependencies(connection, held, plans)
+        if (
+            found.unbounded
+            or (artifact_id is not None and artifact_id in found.artifacts)
+            or (work_id is not None and str(work_id) in found.works)
+        ):
+            dependent.append(held)
+    return dependent
+
+
+def require_outcome_upgrade(
+    connection: sqlite3.Connection,
+    *,
+    artifact_id: UUID | None = None,
+    work_id: UUID | None = None,
+) -> None:
+    """Schemas 2-6 cannot retire a basis, so such a deletion waits for the explicit upgrade.
+
+    Called before the deleting operation changes anything; the schema is never upgraded
+    implicitly. A subject that is already gone is left to the ordinary exact checks.
     """
 
-    deleted_artifacts = {
-        UUID(row[0])
-        for row in connection.execute(
-            "SELECT record_id FROM records WHERE kind = 'artifact' AND status = 'deleted'"
+    if artifact_id is not None:
+        row = connection.execute(
+            "SELECT status FROM records WHERE record_id = ? AND kind = 'artifact'",
+            (str(artifact_id),),
+        ).fetchone()
+        target = f"Artifact {artifact_id}"
+    else:
+        row = connection.execute(
+            "SELECT status FROM subject_records WHERE record_id = ? AND kind = 'work'",
+            (str(work_id),),
+        ).fetchone()
+        target = f"Work {work_id}"
+    if row is None or row[0] == "deleted":
+        return
+    dependent = dependent_outcome_bases(connection, artifact_id=artifact_id, work_id=work_id)
+    if dependent:
+        raise FoundationError(
+            "upgrade_required",
+            f"Deleting {target} needs the explicit schema 7 upgrade first: it would retire "
+            f"the outcome basis of {', '.join(f'Work {item}' for item in dependent)}",
+        )
+
+
+def _deleted_subjects(connection: sqlite3.Connection) -> tuple[dict[UUID, int], dict[str, int]]:
+    """State revision of every Artifact and Work deletion; its revision row stays."""
+
+    artifacts = {
+        UUID(record_id): int(state_revision)
+        for record_id, state_revision in connection.execute(
+            "SELECT v.record_id, o.state_revision FROM record_revisions v "
+            "JOIN records r ON r.record_id = v.record_id "
+            "JOIN operations o ON o.operation_id = v.operation_id "
+            "WHERE r.kind = 'artifact' AND v.status = 'deleted'"
         ).fetchall()
     }
-    deleted_works = {
-        row[0]
-        for row in connection.execute(
-            "SELECT record_id FROM subject_records WHERE kind = 'work' AND status = 'deleted'"
+    works = {
+        record_id: int(state_revision)
+        for record_id, state_revision in connection.execute(
+            "SELECT v.record_id, o.state_revision FROM subject_revisions v "
+            "JOIN subject_records s ON s.record_id = v.record_id "
+            "JOIN operations o ON o.operation_id = v.operation_id "
+            "WHERE s.kind = 'work' AND v.status = 'deleted'"
         ).fetchall()
     }
+    return artifacts, works
+
+
+def _retained_bases(connection: sqlite3.Connection, work_id: str | None = None) -> list[str]:
+    """Held bases with a structural dependency deleted after the outcome was recorded.
+
+    Schema 7 retires such a basis in the deleting transaction. Code before this rule left
+    it on schemas 2-6, so only the explicit upgrade to 7 can retire it. A basis recorded
+    after the deletion was written without the deleted content and stays, as in schema 7.
+    """
+
+    deleted_artifacts, deleted_works = _deleted_subjects(connection)
     if not deleted_artifacts and not deleted_works:
         return []
     plans: dict[str, list[_PlanDependencies | None]] = {}
+    retained: list[str] = []
+    for held, recorded in _held_outcome_bases(connection, work_id).items():
+        later_artifacts = {item for item, at in deleted_artifacts.items() if at > recorded}
+        later_works = {item for item, at in deleted_works.items() if at > recorded}
+        if not later_artifacts and not later_works:
+            continue
+        found = _outcome_dependencies(connection, held, plans)
+        if found.unbounded or found.artifacts & later_artifacts or found.works & later_works:
+            retained.append(held)
+    return retained
+
+
+def retained_outcome_bases(connection: sqlite3.Connection) -> tuple[UUID, ...]:
+    """Addresses of Works whose basis still holds text an earlier deletion needed gone."""
+
+    return tuple(UUID(work_id) for work_id in _retained_bases(connection))
+
+
+def outcome_basis_retained(connection: sqlite3.Connection, work_id: UUID) -> bool:
+    """Whether reads of this Work must withhold its basis until the explicit upgrade."""
+
+    return bool(_retained_bases(connection, str(work_id)))
+
+
+def retained_outcome_operation(connection: sqlite3.Connection, operation_id: UUID) -> UUID | None:
+    """The Work whose retained basis this recording operation carries, if any."""
+
+    statuses = ("succeeded", *CLOSED_OUTCOMES)
+    row = connection.execute(
+        "SELECT v.record_id FROM subject_revisions v "
+        "JOIN subject_records s ON s.record_id = v.record_id "
+        "WHERE v.operation_id = ? AND s.kind = 'work' "
+        f"AND v.status IN ({', '.join('?' for _ in statuses)})",
+        (str(operation_id), *statuses),
+    ).fetchone()
+    if row is None or not _retained_bases(connection, row[0]):
+        return None
+    return UUID(row[0])
+
+
+def retire_bases_of_deleted_dependencies(connection: sqlite3.Connection) -> list[str]:
+    """Retire outcome bases that earlier deletions on schemas 2-6 had to leave in place.
+
+    Older schemas cannot represent a retired basis, so the explicit upgrade to 7 finishes
+    those earlier deletions exactly as schema 7 would have at the time; ``complete_deletions``
+    then purges backups and compacts. Returns the addresses of the retired Works.
+    """
+
     operations: set[str] = set()
     subjects: set[str] = set()
-    for work_id in _held_outcome_bases(connection):
-        found = _outcome_dependencies(connection, work_id, plans)
-        if found.unbounded or found.artifacts & deleted_artifacts or found.works & deleted_works:
-            _retire_outcome_basis(connection, work_id, operations, subjects)
+    for work_id in _retained_bases(connection):
+        _retire_outcome_basis(connection, work_id, operations, subjects)
     _retire_history(connection, operations, subjects)
     return sorted(subjects)
 

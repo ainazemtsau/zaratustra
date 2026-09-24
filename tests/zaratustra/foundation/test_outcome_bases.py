@@ -1,4 +1,7 @@
-"""Deletion retires the bases of Work outcomes that structurally depend on it, without a model."""
+"""Deletion retires the bases of Work outcomes that structurally depend on it, without a model.
+
+Schemas 2-6 cannot retire a basis: such a deletion waits for the explicit upgrade to 7.
+"""
 
 from __future__ import annotations
 
@@ -12,6 +15,7 @@ import pytest
 from tests.zaratustra.foundation.test_composition import _apply, _seed, _sqlite_contains
 from zaratustra.foundation import (
     AcceptWorkRequest,
+    Action,
     ActivityState,
     ArtifactRef,
     BootstrapRequest,
@@ -40,6 +44,7 @@ from zaratustra.foundation import (
     complete_deletions,
     create_backup,
     initialize_space,
+    read_artifact,
     read_obligation,
     read_operation_audit,
     read_receipt,
@@ -59,7 +64,7 @@ type Outcome = tuple[CloseWorkRequest | AcceptWorkRequest, OperationReceipt]
 
 
 def _space(
-    tmp_path: Path,
+    tmp_path: Path, *, schema: int = 7
 ) -> tuple[
     Path,
     UUID,
@@ -71,8 +76,85 @@ def _space(
 ]:
     root, space, owner, activity, _source, _ref, parent, a, b, plan, create = _seed(tmp_path)
     assert upgrade_child_execution_space(root, owner).schema_version == 6
-    assert upgrade_plan_revision_space(root, owner).schema_version == 7
+    if schema == 7:
+        assert upgrade_plan_revision_space(root, owner).schema_version == 7
     return root, space, owner, activity, (parent, a, b), plan, create
+
+
+def _schema_two(tmp_path: Path) -> tuple[Path, UUID, LocalAuthority, UUID]:
+    root = tmp_path / "space"
+    root.mkdir()
+    info = initialize_space(root)
+    owner = authorize_local(root, actor="owner", source_ref="fictional-trusted-console")
+    space = info.space_id
+    _apply(root, space, owner, BootstrapRequest, decision_id=uuid4(), grant_id=uuid4())
+    assert upgrade_space(root, owner).schema_version == 2
+    activity = uuid4()
+    _apply(
+        root,
+        space,
+        owner,
+        CreateActivityRequest,
+        activity_id=activity,
+        state=ActivityState(title="Synthetic", goal="Synthetic acceptance"),
+    )
+    return root, space, owner, activity
+
+
+def _grantee(
+    root: Path, space: UUID, owner: LocalAuthority, actor: str, *actions: Action
+) -> LocalAuthority:
+    _apply(
+        root,
+        space,
+        owner,
+        CreateGrantRequest,
+        grant_id=uuid4(),
+        state=GrantState(grantee=actor, actions=actions),
+    )
+    return authorize_local(root, actor=actor, source_ref=f"fictional-{actor}")
+
+
+def _earlier_deletion(
+    monkeypatch: pytest.MonkeyPatch,
+    root: Path,
+    space: UUID,
+    owner: LocalAuthority,
+    request_type: type[DeleteArtifactRequest | DeleteWorkRequest],
+    **fields: object,
+) -> None:
+    """Code before the upgrade-first rule deleted on schemas 2-6 and kept dependent bases.
+
+    That code had no gate to replace, hence ``raising=False``; a missed patch here would
+    only make the deletion refuse with ``upgrade_required``.
+    """
+
+    with monkeypatch.context() as earlier_code:
+        earlier_code.setattr(
+            "zaratustra.foundation.composition.require_outcome_upgrade",
+            lambda *_args, **_kwargs: None,
+            raising=False,
+        )
+        _apply(root, space, owner, request_type, **fields)
+
+
+def _assert_withheld(root: Path, owner: LocalAuthority, work: UUID, outcome: Outcome) -> None:
+    """Schemas 2-6: the outcome and its addresses stay, the basis and its receipt do not."""
+
+    request, receipt = outcome
+    state = read_work(root, work, owner).state
+    assert state.status == "succeeded" and state.acceptance is not None
+    assert state.acceptance.operation_id == request.operation_id
+    assert state.acceptance.basis is None
+    assert read_work_status(root, work, owner).status == "succeeded"
+    with pytest.raises(FoundationError, match="upgrade_required"):
+        apply_operation(root, request, owner)
+    with pytest.raises(FoundationError, match="upgrade_required"):
+        read_receipt(root, request.operation_id, owner)
+    audit = read_operation_audit(root, request.operation_id, owner)
+    assert (work, receipt.result["revision"]) in [
+        (item.record_id, item.revision) for item in audit.target_refs
+    ]
 
 
 def _artifact(root: Path, space: UUID, owner: LocalAuthority, content: bytes) -> UUID:
@@ -161,9 +243,15 @@ def _close(
 
 
 def _accept(
-    root: Path, space: UUID, owner: LocalAuthority, work: UUID, slot: str, basis: str
+    root: Path,
+    space: UUID,
+    owner: LocalAuthority,
+    work: UUID,
+    slot: str,
+    basis: str,
+    content: bytes = b"neutral synthetic output",
 ) -> Outcome:
-    output = _artifact(root, space, owner, b"neutral synthetic output")
+    output = _artifact(root, space, owner, content)
     linked = _apply(
         root,
         space,
@@ -507,63 +595,228 @@ def test_sequential_deletions_follow_the_sanitized_plan_index_after_restart(
     _assert_clean(root, owner, tuple(markers.values()), None)
 
 
-def test_older_schema_keeps_its_format_until_the_explicit_upgrade(tmp_path: Path) -> None:
-    root = tmp_path / "space"
-    root.mkdir()
-    info = initialize_space(root)
-    owner = authorize_local(root, actor="owner", source_ref="fictional-trusted-console")
-    space = info.space_id
-    _apply(root, space, owner, BootstrapRequest, decision_id=uuid4(), grant_id=uuid4())
-    assert upgrade_space(root, owner).schema_version == 2
-    activity = uuid4()
-    _apply(
-        root,
-        space,
-        owner,
-        CreateActivityRequest,
-        activity_id=activity,
-        state=ActivityState(title="Synthetic", goal="Synthetic acceptance"),
-    )
+_OLDER_UPGRADES = (
+    (upgrade_execution_space, 3),
+    (upgrade_continuation_space, 4),
+    (upgrade_composition_space, 5),
+    (upgrade_child_execution_space, 6),
+)
+
+
+def test_older_schema_refuses_a_dependent_deletion_until_the_explicit_upgrade(
+    tmp_path: Path,
+) -> None:
+    root, space, owner, activity = _schema_two(tmp_path)
     marker = f"synthetic schema two input {uuid4()}"
+    kept = f"synthetic schema two independent {uuid4()}"
+    x = _artifact(root, space, owner, marker.encode())
+    y = _artifact(root, space, owner, b"synthetic other input")
+    unused = _artifact(root, space, owner, b"synthetic unused material")
+    work, outcome = _plain_accepted(root, space, owner, activity, x, f"Input X said: {marker}")
+    other, other_outcome = _plain_accepted(root, space, owner, activity, y, kept)
+    first_backup = create_backup(root, uuid4(), owner)
+
+    # A deletion that no outcome basis depends on still completes on schema 2.
+    _apply(root, space, owner, DeleteArtifactRequest, artifact_id=unused, expected_revision=1)
+    assert complete_deletions(root, owner).live_store_sanitized
+    assert not first_backup.package.exists()
+    second_backup = create_backup(root, uuid4(), owner)
+
+    request = DeleteArtifactRequest(
+        operation_id=uuid4(), space_id=space, actor="owner", artifact_id=x, expected_revision=1
+    )
+    reader = _grantee(root, space, owner, "reader", "record.read")
+    before = read_space(root)
+    with pytest.raises(FoundationError, match="permission_denied"):
+        apply_operation(root, request.model_copy(update={"actor": "reader"}), reader)
+    # Only an actor with the delete right learns which outcome bases depend on X.
+    with pytest.raises(FoundationError, match="upgrade_required") as refusal:
+        apply_operation(root, request, owner)
+    assert f"Artifact {x}" in refusal.value.detail and f"Work {work}" in refusal.value.detail
+    assert str(other) not in refusal.value.detail
+    # Refused before any change; nothing is upgraded implicitly.
+    assert read_space(root) == before
+    assert read_artifact(root, x, owner).content == marker.encode()
+    _assert_kept(root, owner, work, outcome, f"Input X said: {marker}")
+    assert complete_deletions(root, owner).live_store_sanitized
+    assert second_backup.package.exists()
+
+    for upgrade, version in _OLDER_UPGRADES:
+        assert upgrade(root, owner).schema_version == version
+    assert upgrade_plan_revision_space(root, owner).schema_version == 7
+    # The same request now applies once: the refusal recorded nothing.
+    apply_operation(root, request, owner)
+    _assert_retired(root, owner, work, outcome)
+    _assert_kept(root, owner, other, other_outcome, kept)
+    assert complete_deletions(root, owner).live_store_sanitized
+    assert not second_backup.package.exists()
+    _assert_clean(root, owner, (marker,), kept)
+    assert _restarted_bases(root, owner, (work, other)) == ["None", repr(kept)]
+
+
+def test_earlier_deletion_is_withheld_and_reported_until_the_explicit_upgrade(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, space, owner, activity = _schema_two(tmp_path)
+    marker = f"synthetic earlier deletion {uuid4()}"
     kept = f"synthetic schema two independent {uuid4()}"
     x = _artifact(root, space, owner, marker.encode())
     y = _artifact(root, space, owner, b"synthetic other input")
     work, outcome = _plain_accepted(root, space, owner, activity, x, f"Input X said: {marker}")
     other, other_outcome = _plain_accepted(root, space, owner, activity, y, kept)
-    _apply(root, space, owner, DeleteArtifactRequest, artifact_id=x, expected_revision=1)
-    assert complete_deletions(root, owner).live_store_sanitized
+    old_backup = create_backup(root, uuid4(), owner)
+    _earlier_deletion(
+        monkeypatch, root, space, owner, DeleteArtifactRequest, artifact_id=x, expected_revision=1
+    )
+    later_backup = create_backup(root, uuid4(), owner)
+    before = read_space(root)
 
-    # Schema 2 has no sanitized acceptance format; reads never migrate the space.
-    assert read_space(root).schema_version == 2
-    assert _basis(root, owner, work) == f"Input X said: {marker}"
-    assert apply_operation(root, outcome[0], owner) == outcome[1]
-    backup = create_backup(root, uuid4(), owner)
+    # Reads withhold the known deleted text and never migrate or rewrite the space.
+    _assert_withheld(root, owner, work, outcome)
+    _assert_kept(root, owner, other, other_outcome, kept)
+    assert _restarted_bases(root, owner, (work, other)) == ["None", repr(kept)]
+    assert read_space(root) == before
 
-    for upgrade, version in (
-        (upgrade_execution_space, 3),
-        (upgrade_continuation_space, 4),
-        (upgrade_composition_space, 5),
-        (upgrade_child_execution_space, 6),
-    ):
+    # Maintenance names the retained copy and the upgrade instead of reporting completion.
+    status = complete_deletions(root, owner)
+    assert not status.live_store_sanitized and status.completed_at is None
+    assert status.retained_bases == (work,) and status.upgrade_required == 7
+    assert status.pending_jobs == 1 and status.purged_backups == 0
+    assert old_backup.package.exists() and later_backup.package.exists()
+    assert _sqlite_contains(root / ".zara-core", marker)
+    assert read_space(root) == before
+
+    for upgrade, version in _OLDER_UPGRADES:
         assert upgrade(root, owner).schema_version == version
-    # Retiring bases finishes earlier deletions, so the upgrade also needs the delete right.
+        assert complete_deletions(root, owner).retained_bases == (work,)
+        _assert_withheld(root, owner, work, outcome)
+    # Retiring the basis finishes the earlier deletion: the upgrade needs the delete right.
+    maintainer = _grantee(root, space, owner, "maintainer", "maintenance.backup")
+    with pytest.raises(FoundationError, match="permission_denied"):
+        upgrade_plan_revision_space(root, maintainer)
+    assert read_space(root).schema_version == 6
+    assert upgrade_plan_revision_space(root, owner).schema_version == 7
+    _assert_retired(root, owner, work, outcome)
+    _assert_kept(root, owner, other, other_outcome, kept)
+    status = complete_deletions(root, owner)
+    assert status.live_store_sanitized and status.completed_at is not None
+    assert status.retained_bases == () and status.upgrade_required is None
+    assert not old_backup.package.exists() and not later_backup.package.exists()
+    _assert_clean(root, owner, (marker,), kept)
+
+
+def test_schema_six_composite_needs_the_upgrade_for_its_dependent_bases(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, space, owner, _activity, _seed_works, plan, create = _space(tmp_path, schema=6)
+    marker = f"synthetic child result {uuid4()}"
+    kept = f"synthetic independent sibling {uuid4()}"
+    parent, roles = _composite(root, owner, create, plan, c_inputs=())
+    outcomes: dict[str, Outcome] = {}
+    for role, slot, basis, content in (
+        ("a", "checked", f"A found: {marker}", marker.encode()),
+        ("b", "final", f"B used: {marker}", b"synthetic final output"),
+        ("c", "extra", kept, b"synthetic extra output"),
+    ):
+        _apply(
+            root,
+            space,
+            owner,
+            IssueChildWorkRequest,
+            parent_work_id=parent,
+            work_id=roles[role],
+            expected_plan_revision=1,
+            expected_work_revision=1,
+        )
+        outcomes[role] = _accept(root, space, owner, roles[role], slot, basis, content)
+    result = read_work(root, roles["a"], owner).state.linked_outputs[0].artifact.artifact_id
+    old_backup = create_backup(root, uuid4(), owner)
+    before = read_space(root)
+
+    # A's own basis goes with A, but downstream B quotes A's work: explicit upgrade first.
+    a_revision = read_work(root, roles["a"], owner).revision
+    for request_type, fields, dependent in (
+        (DeleteWorkRequest, {"work_id": roles["a"], "expected_revision": a_revision}, {"b"}),
+        (DeleteArtifactRequest, {"artifact_id": result, "expected_revision": 1}, {"a", "b"}),
+    ):
+        with pytest.raises(FoundationError, match="upgrade_required") as refusal:
+            _apply(root, space, owner, request_type, **fields)
+        named = refusal.value.detail.split("outcome basis of ")[1]
+        assert {role for role, work in roles.items() if f"Work {work}" in named} == dependent
+    assert read_space(root) == before
+
+    _earlier_deletion(
+        monkeypatch,
+        root,
+        space,
+        owner,
+        DeleteArtifactRequest,
+        artifact_id=result,
+        expected_revision=1,
+    )
+    for role in ("a", "b"):
+        _assert_withheld(root, owner, roles[role], outcomes[role])
+    _assert_kept(root, owner, roles["c"], outcomes["c"], kept)
+    status = complete_deletions(root, owner)
+    assert not status.live_store_sanitized and status.upgrade_required == 7
+    assert set(status.retained_bases) == {roles["a"], roles["b"]}
+    assert old_backup.package.exists()
+
+    assert upgrade_plan_revision_space(root, owner).schema_version == 7
+    # The upgrade retires both bases; B stays succeeded, its acceptance is not cancelled.
+    for role in ("a", "b"):
+        _assert_retired(root, owner, roles[role], outcomes[role])
+    _assert_kept(root, owner, roles["c"], outcomes["c"], kept)
+    assert read_work_status(root, roles["b"], owner).status == "succeeded"
+    assert complete_deletions(root, owner).live_store_sanitized
+    assert not old_backup.package.exists()
+    _assert_clean(root, owner, (marker,), kept)
+    assert _restarted_bases(root, owner, (roles["a"], roles["b"], roles["c"])) == [
+        "None",
+        "None",
+        repr(kept),
+    ]
+
+
+def test_basis_recorded_after_a_deletion_is_neither_withheld_nor_retired(tmp_path: Path) -> None:
+    root, space, owner, _activity, _seed_works, plan, create = _space(tmp_path, schema=6)
+    x = _artifact(root, space, owner, b"synthetic dropped plan basis")
+    parent, roles = _composite(
+        root, owner, create, plan, basis=(ArtifactRef(artifact_id=x, revision=1),)
+    )
     _apply(
         root,
         space,
         owner,
-        CreateGrantRequest,
-        grant_id=uuid4(),
-        state=GrantState(grantee="maintainer", actions=("maintenance.backup",)),
+        ReviseWorkPlanRequest,
+        work_id=parent,
+        expected_plan_revision=1,
+        plan=read_work_plan(root, parent, owner).plan.model_copy(
+            update={"basis": plan.basis, "rationale": "X dropped"}
+        ),
     )
-    maintainer = authorize_local(root, actor="maintainer", source_ref="fictional-maintainer")
-    with pytest.raises(FoundationError, match="permission_denied"):
-        upgrade_plan_revision_space(root, maintainer)
-    assert read_space(root).schema_version == 6
-    assert _basis(root, owner, work) == f"Input X said: {marker}"
-    assert upgrade_plan_revision_space(root, owner).schema_version == 7
-    # The explicit upgrade to 7 retires bases whose dependencies were deleted before it.
-    _assert_retired(root, owner, work, outcome)
-    _assert_kept(root, owner, other, other_outcome, kept)
+    # No basis is held yet, so schema 6 deletes X without the upgrade.
+    _apply(root, space, owner, DeleteArtifactRequest, artifact_id=x, expected_revision=1)
     assert complete_deletions(root, owner).live_store_sanitized
-    assert not backup.package.exists()
-    _assert_clean(root, owner, (marker,), kept)
+    _apply(
+        root,
+        space,
+        owner,
+        IssueChildWorkRequest,
+        parent_work_id=parent,
+        work_id=roles["a"],
+        expected_plan_revision=2,
+        expected_work_revision=1,
+    )
+    basis = f"Checked under the revised plan {uuid4()}"
+    outcome = _accept(root, space, owner, roles["a"], "checked", basis)
+
+    # Written after X was gone, the basis could not copy it: schema 7 keeps it too.
+    _assert_kept(root, owner, roles["a"], outcome, basis)
+    status = complete_deletions(root, owner)
+    assert status.live_store_sanitized and status.retained_bases == ()
+    # Nothing to retire, so the upgrade needs no delete right.
+    maintainer = _grantee(root, space, owner, "maintainer", "maintenance.backup")
+    assert upgrade_plan_revision_space(root, maintainer).schema_version == 7
+    _assert_kept(root, owner, roles["a"], outcome, basis)
+    assert complete_deletions(root, owner).live_store_sanitized

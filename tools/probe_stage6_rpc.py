@@ -81,6 +81,7 @@ from zaratustra.foundation import (
     upgrade_composition_space,
     upgrade_continuation_space,
     upgrade_execution_space,
+    upgrade_plan_revision_space,
     upgrade_space,
 )
 from zaratustra.pi_adapter import Bridge, BridgeServer
@@ -1123,7 +1124,7 @@ def run(output: Path, pi_runtime: Path) -> dict[str, object]:
         report["deletion"] = _delete_sequence(
             root, owner, data, after_a, after_b, wait_record, markers, backup.package, refused
         )
-        restored_deleted = _delete_restored(restored_root, restored_owner, a, parent)
+        restored_deleted = _delete_restored(restored_root, restored_owner, a, b, parent)
         report["restored_deletion"] = restored_deleted
         report["http_total"] = len(provider.digests)
         report["status"] = "passed"
@@ -1138,6 +1139,37 @@ def _delete(root: Path, owner: LocalAuthority, request_type: type[Any], **fields
     _apply(root, owner, request_type, **fields)
 
 
+def _upgrade_first(
+    root: Path,
+    owner: LocalAuthority,
+    works: dict[str, UUID],
+    request_type: type[Any],
+    **fields: Any,
+) -> dict[str, object]:
+    """Schema 6 refuses, unchanged, a deletion that would retire outcome bases; upgrade to 7."""
+
+    before = read_space(root)
+    try:
+        _delete(root, owner, request_type, **fields)
+    except FoundationError as error:
+        code, named = error.code, error.detail.split("outcome basis of ")[-1]
+    else:
+        raise AssertionError("Schema 6 deleted a dependency of a held outcome basis")
+    unchanged = read_space(root) == before
+    return {
+        "schema_before": before.schema_version,
+        "refusal": code,
+        "dependent_bases": sorted(name for name, work in works.items() if str(work) in named),
+        "unchanged": unchanged,
+        "upgraded_to": upgrade_plan_revision_space(root, owner).schema_version,
+    }
+
+
+def _basis(root: Path, owner: LocalAuthority, work: UUID) -> object:
+    acceptance = read_work(root, work, owner).state.acceptance
+    return None if acceptance is None else acceptance.basis
+
+
 def _delete_sequence(
     root: Path,
     owner: LocalAuthority,
@@ -1150,12 +1182,22 @@ def _delete_sequence(
     refused: dict[str, Any],
 ) -> dict[str, object]:
     parent, a, b = cast(UUID, data["parent"]), cast(UUID, data["a"]), cast(UUID, data["b"])
+    works = {"parent": parent, "a": a, "b": b}
     steps: dict[str, object] = {}
     a_output = after_a.outputs[0].artifact_id
+    steps["upgrade_first"] = _upgrade_first(
+        root, owner, works, DeleteArtifactRequest, artifact_id=a_output, expected_revision=1
+    )
     _delete(root, owner, DeleteArtifactRequest, artifact_id=a_output, expected_revision=1)
     status = complete_assigned_deletions(root, owner)
     steps["a_output_artifact"] = {
         "sanitized": status.live_store_sanitized,
+        "retired_bases": sorted(
+            name for name, work in works.items() if _basis(root, owner, work) is None
+        ),
+        "statuses": {
+            name: read_work_status(root, work, owner).status for name, work in works.items()
+        },
         "old_backup_removed": not old_backup.exists(),
         "workflows": _workflows(root),
         "pi_homes": sorted(
@@ -1174,10 +1216,11 @@ def _delete_sequence(
             "-c",
             "import sys, json; from pathlib import Path; from uuid import UUID; "
             "from zaratustra.foundation import authorize_local, read_obligation, "
-            "read_work_status; p=Path(sys.argv[1]); o=authorize_local(p, actor='owner', "
-            "source_ref='restart'); print(json.dumps({"
+            "read_work, read_work_status; p=Path(sys.argv[1]); o=authorize_local(p, "
+            "actor='owner', source_ref='restart'); print(json.dumps({"
             "'checked': read_obligation(p, UUID(sys.argv[2]), 'checked', o).status, "
-            "'b': read_work_status(p, UUID(sys.argv[3]), o).status}))",
+            "'b': read_work_status(p, UUID(sys.argv[3]), o).status, "
+            "'b_basis': read_work(p, UUID(sys.argv[3]), o).state.acceptance.basis}))",
             str(root),
             str(parent),
             str(b),
@@ -1258,17 +1301,21 @@ def _delete_sequence(
 
 
 def _delete_restored(
-    restored_root: Path, owner: LocalAuthority, a: UUID, parent: UUID
+    restored_root: Path, owner: LocalAuthority, a: UUID, b: UUID, parent: UUID
 ) -> dict[str, object]:
-    _delete(
-        restored_root,
-        owner,
-        DeleteWorkRequest,
-        work_id=a,
-        expected_revision=read_work(restored_root, a, owner).revision,
+    works = {"parent": parent, "a": a, "b": b}
+    revision = read_work(restored_root, a, owner).revision
+    upgrade = _upgrade_first(
+        restored_root, owner, works, DeleteWorkRequest, work_id=a, expected_revision=revision
     )
+    _delete(restored_root, owner, DeleteWorkRequest, work_id=a, expected_revision=revision)
     status = complete_assigned_deletions(restored_root, owner)
     return {
+        "upgrade_first": upgrade,
+        "retired_bases": sorted(
+            name for name in ("parent", "b") if _basis(restored_root, owner, works[name]) is None
+        ),
+        "b_status": read_work_status(restored_root, b, owner).status,
         "sanitized": status.live_store_sanitized,
         "inert_executor_removed": not (
             restored_root / ".zara-core" / "executor-restored.sqlite3"

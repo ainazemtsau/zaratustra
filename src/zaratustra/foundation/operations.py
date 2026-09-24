@@ -1619,6 +1619,7 @@ def apply_operation(path: Path, request: DomainRequest, authority: Authority) ->
                 action="receipt.read",
                 epoch=info.execution_epoch,
             )
+            _refuse_retained_outcome(connection, info.schema_version, request.operation_id)
             saved_fingerprint, raw = saved
             if saved_fingerprint != request_fingerprint:
                 raise FoundationError(
@@ -1718,6 +1719,19 @@ def apply_operation(path: Path, request: DomainRequest, authority: Authority) ->
                     grants=grants,
                     decisions=decisions,
                 )
+            if 2 <= info.schema_version < 7 and isinstance(
+                request, (DeleteArtifactRequest, DeleteWorkRequest)
+            ):
+                from .composition import require_outcome_upgrade
+
+                # Refused before any change: these schemas cannot retire an outcome basis.
+                require_outcome_upgrade(
+                    connection,
+                    artifact_id=(
+                        request.artifact_id if isinstance(request, DeleteArtifactRequest) else None
+                    ),
+                    work_id=request.work_id if isinstance(request, DeleteWorkRequest) else None,
+                )
 
         state_revision = info.state_revision + 1
         updated = connection.execute(
@@ -1799,7 +1813,24 @@ def read_receipt(path: Path, operation_id: UUID, authority: LocalAuthority) -> O
         saved = _saved_receipt(connection, operation_id)
         if saved is None:
             raise FoundationError("not_found", f"No receipt for operation {operation_id}")
+        _refuse_retained_outcome(connection, info.schema_version, operation_id)
         return _receipt_from_row(saved[1])
+
+
+def _refuse_retained_outcome(connection: object, schema_version: int, operation_id: UUID) -> None:
+    """A receipt must not confirm an outcome basis that an earlier deletion needed gone."""
+
+    if not 2 <= schema_version < 7:
+        return
+    from .composition import retained_outcome_operation
+
+    work_id = retained_outcome_operation(cast(sqlite3.Connection, connection), operation_id)
+    if work_id is not None:
+        raise FoundationError(
+            "upgrade_required",
+            f"Outcome basis of Work {work_id} depends on deleted content; "
+            "the explicit schema 7 upgrade retires it together with this receipt",
+        )
 
 
 def read_operation_audit(
@@ -1974,6 +2005,14 @@ def _read_subject(
         unavailable: list[ArtifactRef] = []
         if kind == "work":
             state = WorkState.model_validate(body)
+            outcome = state.acceptance or state.closure
+            if outcome is not None and outcome.basis is not None and info.schema_version < 7:
+                from .composition import outcome_basis_retained
+
+                if outcome_basis_retained(connection, record_id):
+                    # Withheld, not rewritten: reading never migrates this older schema.
+                    field = "acceptance" if state.acceptance is not None else "closure"
+                    body = body | {field: cast(dict[str, object], body[field]) | {"basis": None}}
             references = list(state.inputs) + [output.artifact for output in state.linked_outputs]
             if state.closure is not None:
                 # A stale outcome keeps only premise addresses; deleted ones read unavailable.
@@ -2350,6 +2389,32 @@ def _subject_deletion_count(connection: object, schema_version: int, status: str
     )
 
 
+def _deletion_counts(connection: object, schema_version: int) -> tuple[int, int, int]:
+    """Pending and complete deletion jobs of every kind, and contaminated backups."""
+
+    counts: list[int] = []
+    for status in ("pending", "complete"):
+        count = int(
+            connection.execute(  # type: ignore[attr-defined]
+                "SELECT count(*) FROM deletion_jobs WHERE status = ?", (status,)
+            ).fetchone()[0]
+        )
+        count += _subject_deletion_count(connection, schema_version, status)
+        if schema_version >= 5:
+            count += int(
+                connection.execute(  # type: ignore[attr-defined]
+                    "SELECT count(*) FROM method_deletion_jobs WHERE status = ?", (status,)
+                ).fetchone()[0]
+            )
+        counts.append(count)
+    contaminated = int(
+        connection.execute(  # type: ignore[attr-defined]
+            "SELECT count(*) FROM backup_inventory WHERE status = 'contaminated'"
+        ).fetchone()[0]
+    )
+    return counts[0], counts[1], contaminated
+
+
 def _preserved_attempt_ids(
     connection: object, operation_id: str, record_id: str, record_key: str
 ) -> set[UUID]:
@@ -2448,6 +2513,22 @@ def complete_deletions(
                 action="maintenance.delete",
                 epoch=info.execution_epoch,
             )
+            if 2 <= info.schema_version < 7:
+                from .composition import retained_outcome_bases
+
+                retained = retained_outcome_bases(connection)
+                if retained:
+                    # An earlier deletion left dependent basis text that only schema 7
+                    # can retire: report that and change nothing, never full sanitation.
+                    pending, complete, _ = _deletion_counts(connection, info.schema_version)
+                    return DeletionStatus(
+                        pending_jobs=pending,
+                        completed_jobs=complete,
+                        purged_backups=0,
+                        live_store_sanitized=False,
+                        retained_bases=retained,
+                        upgrade_required=7,
+                    )
             artifact_rows = connection.execute(
                 "SELECT operation_id, record_id FROM deletion_jobs "
                 "WHERE status = 'pending' ORDER BY operation_id"
@@ -2514,34 +2595,8 @@ def _complete_deletions_locked(
     if not pending_jobs and not subject_jobs and not method_jobs and not contaminated:
         sanitize_database(root)
         with space_connection(root) as (connection, current):
-            pending = int(
-                connection.execute(
-                    "SELECT count(*) FROM deletion_jobs WHERE status = 'pending'"
-                ).fetchone()[0]
-            )
-            pending += _subject_deletion_count(connection, current.schema_version, "pending")
-            if current.schema_version >= 5:
-                pending += int(
-                    connection.execute(
-                        "SELECT count(*) FROM method_deletion_jobs WHERE status = 'pending'"
-                    ).fetchone()[0]
-                )
-            complete = int(
-                connection.execute(
-                    "SELECT count(*) FROM deletion_jobs WHERE status = 'complete'"
-                ).fetchone()[0]
-            )
-            complete += _subject_deletion_count(connection, current.schema_version, "complete")
-            if current.schema_version >= 5:
-                complete += int(
-                    connection.execute(
-                        "SELECT count(*) FROM method_deletion_jobs WHERE status = 'complete'"
-                    ).fetchone()[0]
-                )
-            remaining_backups = int(
-                connection.execute(
-                    "SELECT count(*) FROM backup_inventory WHERE status = 'contaminated'"
-                ).fetchone()[0]
+            pending, complete, remaining_backups = _deletion_counts(
+                connection, current.schema_version
             )
         finished = pending == 0 and remaining_backups == 0
         return DeletionStatus(
@@ -2616,35 +2671,7 @@ def _complete_deletions_locked(
                 )
     sanitize_database(root)
     with space_connection(root) as (connection, current):
-        pending = int(
-            connection.execute(
-                "SELECT count(*) FROM deletion_jobs WHERE status = 'pending'"
-            ).fetchone()[0]
-        )
-        pending += _subject_deletion_count(connection, current.schema_version, "pending")
-        if current.schema_version >= 5:
-            pending += int(
-                connection.execute(
-                    "SELECT count(*) FROM method_deletion_jobs WHERE status = 'pending'"
-                ).fetchone()[0]
-            )
-        completed = int(
-            connection.execute(
-                "SELECT count(*) FROM deletion_jobs WHERE status = 'complete'"
-            ).fetchone()[0]
-        )
-        completed += _subject_deletion_count(connection, current.schema_version, "complete")
-        if current.schema_version >= 5:
-            completed += int(
-                connection.execute(
-                    "SELECT count(*) FROM method_deletion_jobs WHERE status = 'complete'"
-                ).fetchone()[0]
-            )
-        remaining_backups = int(
-            connection.execute(
-                "SELECT count(*) FROM backup_inventory WHERE status = 'contaminated'"
-            ).fetchone()[0]
-        )
+        pending, completed, remaining_backups = _deletion_counts(connection, current.schema_version)
     finished = pending == 0 and remaining_backups == 0
     return DeletionStatus(
         pending_jobs=pending,

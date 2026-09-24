@@ -12,7 +12,13 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from tests.zaratustra.foundation.test_composition import _apply, _result, _seed, _sqlite_contains
+from tests.zaratustra.foundation.test_composition import (
+    _apply,
+    _delete_after_upgrade,
+    _result,
+    _seed,
+    _sqlite_contains,
+)
 from zaratustra.foundation import (
     AcceptWorkRequest,
     AdmitInvocationRequest,
@@ -888,7 +894,8 @@ def test_sequential_sanitation_keeps_child_addresses_until_child_deletion(
         remainder=marker,
     )
     old_backup = create_backup(root, uuid4(), owner)
-    _apply(
+    # A's acceptance basis depends on its output: schema 6 needs the explicit upgrade first.
+    _delete_after_upgrade(
         root,
         space,
         owner,
@@ -940,3 +947,5 @@ def test_sequential_sanitation_keeps_child_addresses_until_child_deletion(
         assert connection.execute("SELECT count(*) FROM execution_plan_pins").fetchone() == (0,)
     assert read_obligation(root, parent, "final", owner).status == "open"
     assert read_work_status(root, a, owner).status == "succeeded"
+    acceptance = read_work(root, a, owner).state.acceptance
+    assert acceptance is not None and acceptance.basis is None

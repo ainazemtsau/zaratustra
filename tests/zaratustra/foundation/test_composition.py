@@ -63,9 +63,11 @@ from zaratustra.foundation import (
     read_work,
     read_work_plan,
     restore_backup,
+    upgrade_child_execution_space,
     upgrade_composition_space,
     upgrade_continuation_space,
     upgrade_execution_space,
+    upgrade_plan_revision_space,
     upgrade_space,
 )
 
@@ -120,6 +122,30 @@ def _apply(
     root: Path, space: UUID, owner: LocalAuthority, request_type: type[Any], **fields: object
 ) -> OperationReceipt:
     request = request_type(operation_id=uuid4(), space_id=space, actor="owner", **fields)
+    return apply_operation(root, request, owner)
+
+
+def _delete_after_upgrade(
+    root: Path, space: UUID, owner: LocalAuthority, request_type: type[Any], **fields: object
+) -> OperationReceipt:
+    """Schemas 2-6 refuse, unchanged, a deletion that would retire an outcome basis."""
+
+    request = request_type(operation_id=uuid4(), space_id=space, actor="owner", **fields)
+    before = read_space(root)
+    assert before.schema_version < 7
+    with pytest.raises(FoundationError, match="upgrade_required"):
+        apply_operation(root, request, owner)
+    assert read_space(root) == before
+    for upgrade, version in (
+        (upgrade_execution_space, 3),
+        (upgrade_continuation_space, 4),
+        (upgrade_composition_space, 5),
+        (upgrade_child_execution_space, 6),
+        (upgrade_plan_revision_space, 7),
+    ):
+        if before.schema_version < version:
+            assert upgrade(root, owner).schema_version == version
+    # The refused operation left no trace: the same request now applies once.
     return apply_operation(root, request, owner)
 
 
@@ -455,7 +481,8 @@ def test_deleted_artifact_reopens_obligation_and_sanitizes_basis(tmp_path: Path)
     )
     old_backup = create_backup(root, uuid4(), owner)
 
-    _apply(
+    # A's acceptance basis depends on its output: schema 5 needs the explicit upgrade first.
+    _delete_after_upgrade(
         root,
         space,
         owner,
@@ -544,7 +571,7 @@ def test_deleted_artifact_preserves_independent_confirmation(tmp_path: Path) -> 
             basis=basis,
         )
     old_backup = create_backup(root, uuid4(), owner)
-    _apply(
+    _delete_after_upgrade(
         root,
         space,
         owner,
@@ -722,7 +749,8 @@ def test_sequential_deletion_keeps_dependency_addresses_after_restart(tmp_path: 
     assert restarted.returncode == 0, restarted.stderr
 
     old_backup = create_backup(root, uuid4(), owner)
-    _apply(
+    # B's acceptance basis depends on its input; the first deletion needed no upgrade.
+    _delete_after_upgrade(
         root,
         space,
         owner,
