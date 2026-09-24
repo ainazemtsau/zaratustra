@@ -84,13 +84,38 @@ affected backups contaminated, and creates a pending sanitation job.
 `complete_deletions` purges contaminated packages, checkpoints and sanitizes
 the live store, and finalizes exact captured jobs.
 
+The package initializer admits the configured exact SQLite DLL before importing
+submodules that load `sqlite3`. This applies to an ordinary fresh process and an
+installed wheel, without development `sitecustomize` or manual preload.
+
+Partial deletion also sanitizes dependent content in schema 5. Deleting a child
+Work retires every plan revision that embeds its state. Deleting an Artifact
+retires plan revisions with its structured reference. A confirmation whose
+evidence or plan dependency was deleted loses its copied basis and evidence;
+the declared obligation remains and its current status becomes `open` in a new
+revision. The dependency check follows fixed readiness roles, including
+descendants; an independent confirmed role keeps its exact evidence and history.
+A sanitized historical revision returns `content_unavailable` at its
+exact address; it is never returned with substituted prose. A sanitized current
+plan likewise refuses dependent actions and parent acceptance. The parent Work
+and its Method requirements remain, but this first pass has no repair operation
+for a plan whose current revision was sanitized. Retired operations lose their
+replayable receipts/fingerprints, and affected managed backups are contaminated.
+`complete_deletions` then purges old packages and sanitizes the closed live
+SQLite file; a newly created backup contains only sanitized state.
+
 ## Reproduction and limits
 
 `tests/zaratustra/foundation/test_composition.py` exercises A → B, two
 obligations, one pre-execution plan revision, separate child and parent
 acceptance, restart in a second process, early B, missing child, cycle,
 stale plan/Artifact, revoked Grant, replay/conflict, transaction rollback,
-Method deletion refusal, backup, quarantine restore and sanitation. Run
+Method deletion refusal, backup, quarantine restore and sanitation.
+The correction regressions also exercise a fresh `-S` process with the configured
+DLL, partial child and Artifact deletion through public Core operations,
+unaffected exact history, reopened obligations, blocked replay, closed SQLite,
+old backup purge, a clean new backup and retention of an independent role's
+confirmation. Run
 `uv run --locked python -m tools.check --deliver` with the project's verified
 `ZARATUSTRA_SQLITE_DLL` set as described in
 [STAGE5-IMPLEMENTATION.md](STAGE5-IMPLEMENTATION.md).

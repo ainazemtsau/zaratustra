@@ -1,5 +1,11 @@
 """Independent Core v0.1 domain foundation public surface."""
 
+# The configured Windows DLL must be admitted before any package submodule imports sqlite3.
+# ruff: noqa: E402
+from .runtime import ensure_sqlite_runtime
+
+ensure_sqlite_runtime()
+
 from .composition import (
     method_checksum,
     read_method_version,

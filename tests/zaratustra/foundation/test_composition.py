@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
+import sysconfig
 from pathlib import Path
 from typing import Any, cast
 from uuid import UUID, uuid4
@@ -21,6 +23,7 @@ from zaratustra.foundation import (
     CreateCompositeWorkRequest,
     CreateGrantRequest,
     CreateMethodVersionRequest,
+    DeleteArtifactRequest,
     DeleteMethodVersionRequest,
     DeleteWorkRequest,
     FoundationError,
@@ -65,6 +68,48 @@ from zaratustra.foundation import (
     upgrade_execution_space,
     upgrade_space,
 )
+
+
+def _sqlite_contains(root: Path, marker: str) -> bool:
+    return any(marker.encode("utf-8") in path.read_bytes() for path in root.rglob("*.sqlite3"))
+
+
+def test_fresh_import_admits_configured_sqlite_before_submodules(tmp_path: Path) -> None:
+    repository = Path(__file__).resolve().parents[3]
+    env = {
+        key: value
+        for key, value in os.environ.items()
+        if key.upper()
+        in {
+            "PATH",
+            "PATHEXT",
+            "SYSTEMROOT",
+            "WINDIR",
+            "COMSPEC",
+            "TEMP",
+            "TMP",
+            "ZARATUSTRA_SQLITE_DLL",
+        }
+    }
+    env["PYTHONPATH"] = os.pathsep.join((str(repository / "src"), sysconfig.get_paths()["purelib"]))
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-S",
+            "-B",
+            "-c",
+            "import sys; assert 'sqlite3' not in sys.modules; "
+            "import zaratustra.foundation; import sqlite3; print(sqlite3.sqlite_version)",
+        ],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "3.53.3"
 
 
 def _apply(
@@ -273,6 +318,307 @@ def _revised(
     assert read_work_plan(root, parent, owner, revision=1).plan.rationale == plan.rationale
     assert read_work_plan(root, parent, owner).revision == 2
     return updated
+
+
+def test_deleted_child_sanitizes_all_plan_revisions_and_backups(tmp_path: Path) -> None:
+    root, space, owner, _activity, _source, _ref, _parent, _a, _b, plan, create = _seed(tmp_path)
+    marker = f"synthetic child deletion {uuid4()}"
+    parent, a, b = uuid4(), uuid4(), uuid4()
+    child_a = plan.children[0].model_copy(
+        update={"work_id": a, "state": plan.children[0].state.model_copy(update={"goal": marker})}
+    )
+    child_b = plan.children[1].model_copy(update={"work_id": b})
+    revised_plan = plan.model_copy(update={"children": (child_a, child_b)})
+    request = create.model_copy(
+        update={"operation_id": uuid4(), "work_id": parent, "plan": revised_plan}
+    )
+    apply_operation(root, request, owner)
+    _revised(root, space, owner, parent, revised_plan)
+    _apply(
+        root,
+        space,
+        owner,
+        IssueChildWorkRequest,
+        parent_work_id=parent,
+        work_id=a,
+        expected_plan_revision=2,
+        expected_work_revision=1,
+    )
+    evidence = _result(root, space, owner, a, "checked", b"synthetic checked output")
+    confirmation = ConfirmObligationRequest(
+        operation_id=uuid4(),
+        space_id=space,
+        actor="owner",
+        work_id=parent,
+        key="checked",
+        expected_plan_revision=2,
+        expected_obligation_revision=1,
+        evidence=evidence,
+        basis=marker,
+    )
+    apply_operation(root, confirmation, owner)
+    assert (
+        read_receipt(root, confirmation.operation_id, owner).operation_id
+        == confirmation.operation_id
+    )
+    old_backup = create_backup(root, uuid4(), owner)
+
+    _apply(
+        root,
+        space,
+        owner,
+        DeleteWorkRequest,
+        work_id=a,
+        expected_revision=read_work(root, a, owner).revision,
+    )
+    deleted = complete_deletions(root, owner)
+    assert deleted.live_store_sanitized and deleted.pending_jobs == 0
+    assert not old_backup.package.exists()
+    with pytest.raises(FoundationError, match="content_unavailable"):
+        read_work(root, a, owner)
+    for revision in (None, 1, 2):
+        with pytest.raises(FoundationError, match="content_unavailable"):
+            read_work_plan(root, parent, owner, revision=revision)
+    assert read_work(root, parent, owner).state.status == "proposed"
+    assert read_obligation(root, parent, "checked", owner, revision=1).status == "open"
+    with pytest.raises(FoundationError, match="content_unavailable"):
+        read_obligation(root, parent, "checked", owner, revision=2)
+    assert read_obligation(root, parent, "checked", owner).status == "open"
+    assert read_obligation(root, parent, "final", owner).status == "open"
+    with pytest.raises(FoundationError, match="history_unavailable"):
+        apply_operation(root, request, owner)
+    with pytest.raises(FoundationError, match="not_found"):
+        read_receipt(root, confirmation.operation_id, owner)
+    with pytest.raises(FoundationError, match="history_unavailable"):
+        apply_operation(root, confirmation, owner)
+    assert not _sqlite_contains(root / ".zara-core", marker)
+    new_backup = create_backup(root, uuid4(), owner)
+    assert not _sqlite_contains(new_backup.package, marker)
+
+
+def test_deleted_artifact_reopens_obligation_and_sanitizes_basis(tmp_path: Path) -> None:
+    root, space, owner, _activity, _source, _ref, parent, a, b, _plan, _create = _seed(tmp_path)
+    marker = f"synthetic evidence deletion {uuid4()}"
+    _apply(
+        root,
+        space,
+        owner,
+        IssueChildWorkRequest,
+        parent_work_id=parent,
+        work_id=a,
+        expected_plan_revision=1,
+        expected_work_revision=1,
+    )
+    evidence = _result(root, space, owner, a, "checked", marker.encode("utf-8"))
+    confirmation = ConfirmObligationRequest(
+        operation_id=uuid4(),
+        space_id=space,
+        actor="owner",
+        work_id=parent,
+        key="checked",
+        expected_plan_revision=1,
+        expected_obligation_revision=1,
+        evidence=evidence,
+        basis=marker,
+    )
+    apply_operation(root, confirmation, owner)
+    assert (
+        read_receipt(root, confirmation.operation_id, owner).operation_id
+        == confirmation.operation_id
+    )
+    _apply(
+        root,
+        space,
+        owner,
+        IssueChildWorkRequest,
+        parent_work_id=parent,
+        work_id=b,
+        expected_plan_revision=1,
+        expected_work_revision=1,
+    )
+    final_evidence = _result(root, space, owner, b, "final", b"synthetic final output")
+    _apply(
+        root,
+        space,
+        owner,
+        ConfirmObligationRequest,
+        work_id=parent,
+        key="final",
+        expected_plan_revision=1,
+        expected_obligation_revision=1,
+        evidence=final_evidence,
+        basis=marker,
+    )
+    old_backup = create_backup(root, uuid4(), owner)
+
+    _apply(
+        root,
+        space,
+        owner,
+        DeleteArtifactRequest,
+        artifact_id=evidence.artifact_id,
+        expected_revision=1,
+    )
+    deleted = complete_deletions(root, owner)
+    assert deleted.live_store_sanitized and deleted.pending_jobs == 0
+    assert not old_backup.package.exists()
+    assert read_work_plan(root, parent, owner).revision == 1
+    assert read_obligation(root, parent, "checked", owner, revision=1).status == "open"
+    with pytest.raises(FoundationError, match="content_unavailable"):
+        read_obligation(root, parent, "checked", owner, revision=2)
+    current = read_obligation(root, parent, "checked", owner)
+    assert current.revision == 3 and current.status == "open"
+    assert current.evidence is None and current.basis is None
+    with pytest.raises(FoundationError, match="content_unavailable"):
+        read_obligation(root, parent, "final", owner, revision=2)
+    assert read_obligation(root, parent, "final", owner).status == "open"
+    with pytest.raises(FoundationError, match="history_unavailable"):
+        apply_operation(root, confirmation, owner)
+    with pytest.raises(FoundationError, match="not_found"):
+        read_receipt(root, confirmation.operation_id, owner)
+    with pytest.raises(FoundationError, match="obligation_open"):
+        _apply(
+            root,
+            space,
+            owner,
+            AcceptWorkRequest,
+            work_id=parent,
+            expected_revision=1,
+            basis="Cannot accept missing evidence",
+        )
+    assert not _sqlite_contains(root / ".zara-core", marker)
+    new_backup = create_backup(root, uuid4(), owner)
+    assert not _sqlite_contains(new_backup.package, marker)
+
+
+def test_deleted_artifact_preserves_independent_confirmation(tmp_path: Path) -> None:
+    root, space, owner, _activity, _source, _ref, _parent, _a, _b, plan, create = _seed(tmp_path)
+    marker = f"synthetic independent evidence deletion {uuid4()}"
+    parent, a, b = uuid4(), uuid4(), uuid4()
+    independent_plan = plan.model_copy(
+        update={
+            "children": (
+                plan.children[0].model_copy(update={"work_id": a}),
+                plan.children[1].model_copy(update={"work_id": b, "readiness": None}),
+            ),
+        }
+    )
+    apply_operation(
+        root,
+        create.model_copy(
+            update={"operation_id": uuid4(), "work_id": parent, "plan": independent_plan}
+        ),
+        owner,
+    )
+    for child in (a, b):
+        _apply(
+            root,
+            space,
+            owner,
+            IssueChildWorkRequest,
+            parent_work_id=parent,
+            work_id=child,
+            expected_plan_revision=1,
+            expected_work_revision=1,
+        )
+    checked = _result(root, space, owner, a, "checked", marker.encode("utf-8"))
+    final = _result(root, space, owner, b, "final", b"independent output")
+    for key, evidence, basis in (
+        ("checked", checked, marker),
+        ("final", final, "independent confirmation"),
+    ):
+        _apply(
+            root,
+            space,
+            owner,
+            ConfirmObligationRequest,
+            work_id=parent,
+            key=key,
+            expected_plan_revision=1,
+            expected_obligation_revision=1,
+            evidence=evidence,
+            basis=basis,
+        )
+    old_backup = create_backup(root, uuid4(), owner)
+    _apply(
+        root,
+        space,
+        owner,
+        DeleteArtifactRequest,
+        artifact_id=checked.artifact_id,
+        expected_revision=1,
+    )
+    assert complete_deletions(root, owner).live_store_sanitized
+    assert not old_backup.package.exists()
+    assert read_obligation(root, parent, "checked", owner).status == "open"
+    retained = read_obligation(root, parent, "final", owner)
+    assert retained.revision == 2 and retained.status == "satisfied"
+    assert retained.basis == "independent confirmation"
+    assert read_obligation(root, parent, "final", owner, revision=2) == retained
+    assert not _sqlite_contains(root / ".zara-core", marker)
+    clean_backup = create_backup(root, uuid4(), owner)
+    assert not _sqlite_contains(clean_backup.package, marker)
+    _apply(
+        root,
+        space,
+        owner,
+        DeleteWorkRequest,
+        work_id=a,
+        expected_revision=read_work(root, a, owner).revision,
+    )
+    assert complete_deletions(root, owner).live_store_sanitized
+    assert not clean_backup.package.exists()
+    assert read_obligation(root, parent, "final", owner) == retained
+
+
+def test_deleted_artifact_sanitizes_only_dependent_plan_revisions(tmp_path: Path) -> None:
+    root, space, owner, _activity, _source, _ref, parent, _a, _b, plan, _create = _seed(tmp_path)
+    marker = f"synthetic plan basis deletion {uuid4()}"
+    basis_id = uuid4()
+    _apply(
+        root,
+        space,
+        owner,
+        CreateArtifactRequest,
+        artifact_id=basis_id,
+        media_type="text/plain",
+        content=marker.encode("utf-8"),
+    )
+    dependent = plan.model_copy(
+        update={
+            "basis": plan.basis + (ArtifactRef(artifact_id=basis_id, revision=1),),
+            "rationale": marker,
+        }
+    )
+    revision = ReviseWorkPlanRequest(
+        operation_id=uuid4(),
+        space_id=space,
+        actor="owner",
+        work_id=parent,
+        expected_plan_revision=1,
+        plan=dependent,
+    )
+    apply_operation(root, revision, owner)
+    old_backup = create_backup(root, uuid4(), owner)
+    _apply(
+        root,
+        space,
+        owner,
+        DeleteArtifactRequest,
+        artifact_id=basis_id,
+        expected_revision=1,
+    )
+    deleted = complete_deletions(root, owner)
+    assert deleted.live_store_sanitized and not old_backup.package.exists()
+    assert read_work_plan(root, parent, owner, revision=1).plan == plan
+    for number in (None, 2):
+        with pytest.raises(FoundationError, match="content_unavailable"):
+            read_work_plan(root, parent, owner, revision=number)
+    assert read_obligation(root, parent, "checked", owner).status == "open"
+    with pytest.raises(FoundationError, match="history_unavailable"):
+        apply_operation(root, revision, owner)
+    assert not _sqlite_contains(root / ".zara-core", marker)
+    assert not _sqlite_contains(create_backup(root, uuid4(), owner).package, marker)
 
 
 def test_two_children_obligations_replay_and_restart(tmp_path: Path) -> None:

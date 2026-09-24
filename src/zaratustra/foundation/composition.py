@@ -49,6 +49,8 @@ from .storage import (
     utc_now,
 )
 
+REDACTED_DEPENDENCY = b'{"content":"unavailable"}'
+
 
 def method_checksum(definition: MethodDefinition) -> str:
     return (
@@ -118,6 +120,8 @@ def _plan(
     ).fetchone()
     if row is None:
         raise FoundationError("plan_unavailable", "Exact Work plan revision is unavailable")
+    if bytes(row[1]) == REDACTED_DEPENDENCY:
+        raise FoundationError("content_unavailable", "Exact Work plan revision was sanitized")
     return PlanRevision(
         parent_work_id=parent_id,
         revision=row[0],
@@ -431,7 +435,10 @@ def _obligations(
     ).fetchall()
     current: dict[str, ObligationRevision] = {}
     for key, _revision, payload in rows:
-        current.setdefault(key, ObligationRevision.model_validate_json(bytes(payload)))
+        if key not in current:
+            if bytes(payload) == REDACTED_DEPENDENCY:
+                raise FoundationError("content_unavailable", "Current obligation was sanitized")
+            current[key] = ObligationRevision.model_validate_json(bytes(payload))
     expected = {item.key: item for item in definition.obligations}
     if set(current) != set(expected) or any(
         current[key].definition != item for key, item in expected.items()
@@ -1104,6 +1111,211 @@ def prepare_work_deletion(connection: sqlite3.Connection, work_id: UUID) -> None
     connection.execute("DELETE FROM work_plan_children WHERE parent_id = ?", (str(work_id),))
 
 
+def sanitize_deleted_dependency(
+    connection: sqlite3.Connection,
+    *,
+    operation_id: UUID,
+    now: str,
+    child_id: UUID | None = None,
+    artifact_id: UUID | None = None,
+) -> None:
+    """Remove exact plan/confirmation copies before a referenced subject disappears."""
+
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 5:
+        return
+    if (child_id is None) == (artifact_id is None):
+        raise ValueError("Exactly one deleted dependency is required")
+    backup_parents: set[str] = set()
+    seed_roles: dict[str, set[str]] = {}
+    if child_id is not None:
+        row = connection.execute(
+            "SELECT parent_id, role FROM work_plan_children WHERE child_id = ?",
+            (str(child_id),),
+        ).fetchone()
+        if row is not None:
+            seed_roles.setdefault(row[0], set()).add(row[1])
+
+    affected_operations: set[str] = set()
+    current_plans: dict[str, WorkPlan | None] = {}
+    plan_rows = connection.execute(
+        "SELECT parent_id, revision, payload, operation_id "
+        "FROM work_plan_revisions ORDER BY parent_id, revision"
+    ).fetchall()
+    for parent_id, revision, payload, source_operation in plan_rows:
+        if bytes(payload) == REDACTED_DEPENDENCY:
+            current_plans[parent_id] = None
+            continue
+        current_plans[parent_id] = WorkPlan.model_validate_json(bytes(payload))
+        plan = json.loads(bytes(payload))
+        contains_child = child_id is not None and any(
+            child["work_id"] == str(child_id) for child in plan["children"]
+        )
+        contains_artifact = artifact_id is not None and _contains_artifact_ref(
+            plan, str(artifact_id)
+        )
+        if not contains_child and not contains_artifact:
+            continue
+        backup_parents.add(parent_id)
+        affected_operations.add(source_operation)
+        connection.execute(
+            "UPDATE work_plan_revisions SET payload = ? WHERE parent_id = ? AND revision = ?",
+            (REDACTED_DEPENDENCY, parent_id, revision),
+        )
+
+    if artifact_id is not None:
+        for parent_id, plan in current_plans.items():
+            if plan is not None:
+                seed_roles.setdefault(parent_id, set()).update(
+                    _artifact_dependent_roles(connection, parent_id, plan, artifact_id)
+                )
+
+    # A confirmed basis can quote its child's work or an Artifact used by the
+    # plan. Retire such confirmations without removing the Method requirement.
+    obligation_rows = connection.execute(
+        "SELECT parent_id, key, revision, payload, operation_id "
+        "FROM work_obligation_revisions ORDER BY parent_id, key, revision"
+    ).fetchall()
+    if artifact_id is not None:
+        for parent_id, _key, _revision, payload, _source_operation in obligation_rows:
+            if bytes(payload) == REDACTED_DEPENDENCY:
+                continue
+            instance = ObligationRevision.model_validate_json(bytes(payload))
+            if instance.evidence is not None and instance.evidence.artifact_id == artifact_id:
+                seed_roles.setdefault(parent_id, set()).add(instance.definition.role)
+
+    affected_roles: dict[str, set[str] | None] = {}
+    for parent_id, roles in seed_roles.items():
+        plan = current_plans.get(parent_id)
+        if plan is None:
+            affected_roles[parent_id] = None
+            continue
+        changed = True
+        while changed:
+            previous = len(roles)
+            roles.update(
+                child.role
+                for child in plan.children
+                if any(leaf.role in roles for leaf in _conditions(child.readiness))
+            )
+            changed = len(roles) != previous
+        affected_roles[parent_id] = roles
+    for parent_id, key, revision, payload, source_operation in obligation_rows:
+        if bytes(payload) == REDACTED_DEPENDENCY:
+            continue
+        instance = ObligationRevision.model_validate_json(bytes(payload))
+        dependent_roles_for_key = affected_roles.get(parent_id, set())
+        dependent = (
+            dependent_roles_for_key is None or instance.definition.role in dependent_roles_for_key
+        )
+        if not dependent or (instance.evidence is None and instance.basis is None):
+            continue
+        backup_parents.add(parent_id)
+        affected_operations.add(source_operation)
+        connection.execute(
+            "UPDATE work_obligation_revisions SET payload = ? "
+            "WHERE parent_id = ? AND key = ? AND revision = ?",
+            (REDACTED_DEPENDENCY, parent_id, key, revision),
+        )
+        latest = connection.execute(
+            "SELECT max(revision) FROM work_obligation_revisions WHERE parent_id = ? AND key = ?",
+            (parent_id, key),
+        ).fetchone()[0]
+        if revision == latest:
+            reopened = instance.model_copy(
+                update={
+                    "revision": revision + 1,
+                    "status": "open",
+                    "evidence": None,
+                    "basis": None,
+                    "operation_id": operation_id,
+                    "created_at": datetime.fromisoformat(now),
+                }
+            )
+            connection.execute(
+                "INSERT INTO work_obligation_revisions(parent_id, key, revision, payload, "
+                "operation_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    parent_id,
+                    key,
+                    reopened.revision,
+                    reopened.model_dump_json().encode("utf-8"),
+                    str(operation_id),
+                    now,
+                ),
+            )
+
+    connection.executemany(
+        "DELETE FROM receipts WHERE operation_id = ?",
+        ((source_operation,) for source_operation in affected_operations),
+    )
+    connection.executemany(
+        "UPDATE operations SET fingerprint = 'DELETED' WHERE operation_id = ?",
+        ((source_operation,) for source_operation in affected_operations),
+    )
+    for parent_id in backup_parents:
+        connection.execute(
+            "UPDATE backup_inventory SET status = 'contaminated' "
+            "WHERE status IN ('planned', 'failed') OR (status = 'complete' AND backup_id IN "
+            "(SELECT backup_id FROM backup_subjects WHERE record_id = ?))",
+            (parent_id,),
+        )
+
+
+def _contains_artifact_ref(value: object, artifact_id: str) -> bool:
+    if isinstance(value, dict):
+        return value.get("artifact_id") == artifact_id or any(
+            _contains_artifact_ref(item, artifact_id) for item in value.values()
+        )
+    if isinstance(value, list):
+        return any(_contains_artifact_ref(item, artifact_id) for item in value)
+    return False
+
+
+def _artifact_dependent_roles(
+    connection: sqlite3.Connection, parent_id: str, plan: WorkPlan, artifact_id: UUID
+) -> set[str]:
+    target = str(artifact_id)
+    parent_state = connection.execute(
+        "SELECT payload FROM subject_content WHERE record_id = ? AND revision = "
+        "(SELECT current_revision FROM subject_records WHERE record_id = ?)",
+        (parent_id, parent_id),
+    ).fetchone()
+    if (
+        any(item.artifact.artifact_id == artifact_id for item in plan.named_inputs)
+        or any(reference.artifact_id == artifact_id for reference in plan.basis)
+        or (
+            plan.completion is not None
+            and _contains_artifact_ref(plan.completion.model_dump(mode="json"), target)
+        )
+        or (
+            parent_state is not None
+            and _contains_artifact_ref(json.loads(bytes(parent_state[0])), target)
+        )
+    ):
+        return {child.role for child in plan.children}
+
+    roles: set[str] = set()
+    for child in plan.children:
+        child_state = connection.execute(
+            "SELECT payload FROM subject_content WHERE record_id = ? AND revision = "
+            "(SELECT current_revision FROM subject_records WHERE record_id = ?)",
+            (str(child.work_id), str(child.work_id)),
+        ).fetchone()
+        if (
+            _contains_artifact_ref(child.state.model_dump(mode="json"), target)
+            or (
+                child.readiness is not None
+                and _contains_artifact_ref(child.readiness.model_dump(mode="json"), target)
+            )
+            or (
+                child_state is not None
+                and _contains_artifact_ref(json.loads(bytes(child_state[0])), target)
+            )
+        ):
+            roles.add(child.role)
+    return roles
+
+
 def read_method_version(
     path: Path,
     ref: MethodRef,
@@ -1188,4 +1400,6 @@ def read_obligation(
         ).fetchone()
         if row is None:
             raise FoundationError("not_found", "Exact obligation revision is unavailable")
+        if bytes(row[0]) == REDACTED_DEPENDENCY:
+            raise FoundationError("content_unavailable", "Exact obligation revision was sanitized")
         return ObligationRevision.model_validate_json(bytes(row[0]))

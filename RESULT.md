@@ -1,3 +1,72 @@
+# Core v0.1 Stage 6 pass 1 — independent-review corrections
+
+## outcome
+
+Corrected two independently reproduced Stage 6 pass-1 defects on
+`codex/core-v0.1` from exact HEAD `4920341899bc887b2ee165a169bde2a4b4c575eb`.
+Normal Core import now admits the configured SQLite DLL before `sqlite3` loads.
+Partial child Work and Artifact deletion now sanitize their dependent schema 5
+content, historical copies, confirmations, receipts and managed backups while
+retaining the parent's declared obligations. This is an engineering correction
+for owner review, not acceptance of Stage 6 pass 1.
+
+## evidence
+
+The unchanged independent `review_stage6.py` was copied and run in new TEMP
+`C:\Users\Anton\AppData\Local\Temp\zaratustra-stage6-repro-808b33d0fa5d4ff18060a8ec2b49834b`.
+Before correction it reproduced the failing normal import (candidate SQLite
+3.50.4), child goal in both plan revisions and a new backup, and Artifact
+confirmation basis in the live store and new backup. The control baseline
+imported SQLite 3.53.3; all probes used fictional local content and zero HTTP.
+
+After correction, `tests/zaratustra/foundation/test_composition.py` covers the
+fresh process without sitecustomize, both partial deletions through public Core
+operations, exact unaffected history, addressably unavailable sanitized
+history, reopened obligations, blocked dependent actions, receipt removal,
+blocked replay, an independent confirmed role retained, closed SQLite bytes,
+old backup purge and clean new backup.
+The installed `dist/zaratustra-0.17.0-py3-none-any.whl` was installed with its
+dependencies into new TEMP
+`C:\Users\Anton\AppData\Local\Temp\zaratustra-stage6-final-wheel-efaf153d62bb4823bf8eb45b98cb8e9c`.
+An isolated `-I -B` process, with only the normal configured DLL and no
+sitecustomize or preload, imported Core from that wheel's `site-packages` and
+reported SQLite 3.53.3. The final wheel SHA-256 was
+`B7541142C3FBD194A24912500FDFA80C8262B28EC3AE861D91DE484F48C6B438`.
+Full `uv run --locked python -m tools.check --deliver`
+passed: 190 files formatted, Ruff and mypy clean, 21 import contracts kept,
+536 tests passed in 267.93 seconds, and sdist/wheel built.
+
+## assumptions
+
+The repository specification remains the permanent copy with SHA-256
+`1DDCBF9DBFD58426781F61A67A170D3CE85FCD2BA27B17549773ED3356F9428D`.
+When a plan revision contains a terminally deleted dependency, its exact
+address remains but a read returns `content_unavailable`; Core does not invent
+a replacement historical meaning. A lost confirmation creates a new `open`
+obligation revision. See
+`docs/core-v0.1/STAGE6-PASS1-IMPLEMENTATION.md`.
+
+## cuts
+
+A parent whose current plan was sanitized cannot continue under that plan in
+pass 1; no repair operation is added. No Stage 6 pass 2, Pi/DBOS composition,
+real model call, modifying external tool or legacy migration was started.
+`C:\projects\zaratustra` was not modified.
+
+## cost
+
+No paid service or external model call. Only the existing local SQLite DLL,
+uv cache, synthetic data and new disposable TEMP workspaces were used.
+
+## manual-acceptance
+
+The owner's instruction authorized correction, checks and a local commit.
+Neither passing checks nor this report records owner acceptance of Stage 6.
+
+## next
+
+solmax
+
 # Core v0.1 Stage 6 pass 1 — engineering delivery
 
 ## outcome

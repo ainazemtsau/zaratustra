@@ -4,7 +4,8 @@ This package is the independent Core v0.1 subject foundation. It never imports t
 legacy `zaratustra.core` package or higher product surfaces. Its public contract is
 `__init__.py`; internal modules share only explicit typed models.
 
-`runtime.py` admits the exact supported SQLite build before stdlib `sqlite3` loads.
+`runtime.py` admits the exact supported SQLite build before stdlib `sqlite3` loads;
+the public package initializer calls it before importing any Core submodule.
 `storage.py` owns the `.zara-core` layout, schema definitions, checked connections,
 backup/restore and deletion sanitation. `operations.py` owns the authorized
 additive schema 2 upgrade, the sole domain mutation path after space creation,
@@ -29,8 +30,13 @@ model-free coordination. The shared `apply_operation` gate checks composite
 child readiness and parent acceptance before old Work/Attempt routes; composite
 Stage 4/5 execution routes refuse explicitly until a later authorized pass.
 Method use requires current Decision/Grant authority. Child deletion preserves
-the parent obligation; parent and Method deletion sanitize all new content
-through the existing maintenance boundary. See
+the parent obligation while sanitizing dependent plan revisions and confirmation
+bases. Artifact deletion also sanitizes dependent plans and confirmations. An
+affected exact historical revision is addressable but returns
+`content_unavailable`; a lost confirmation reopens its obligation. A parent
+whose current plan was sanitized cannot continue under that plan. Parent and
+Method deletion sanitize all new content through the existing maintenance
+boundary. See
 `docs/core-v0.1/STAGE6-PASS1-IMPLEMENTATION.md`.
 
 The foundation stores Work execution records but never imports Pi or runs a model.

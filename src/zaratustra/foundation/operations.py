@@ -672,9 +672,15 @@ def _subject_delete(
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
     _subject_expect(connection, record_id, kind, expected_revision)
     if kind == "work" and int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 5:  # type: ignore[attr-defined]
-        from .composition import prepare_work_deletion
+        from .composition import prepare_work_deletion, sanitize_deleted_dependency
 
         prepare_work_deletion(cast(sqlite3.Connection, connection), record_id)
+        sanitize_deleted_dependency(
+            cast(sqlite3.Connection, connection),
+            child_id=record_id,
+            operation_id=operation_id,
+            now=now,
+        )
     if kind == "activity":
         active_work = connection.execute(  # type: ignore[attr-defined]
             "SELECT 1 FROM subject_records WHERE kind = 'work' AND parent_id = ? "
@@ -1262,6 +1268,15 @@ def _apply_change(
             request.expected_revision,
             required_status="active",
         )
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 5:  # type: ignore[attr-defined]
+            from .composition import sanitize_deleted_dependency
+
+            sanitize_deleted_dependency(
+                cast(sqlite3.Connection, connection),
+                artifact_id=request.artifact_id,
+                operation_id=request.operation_id,
+                now=now,
+            )
         prior_operations = [
             row[0]
             for row in connection.execute(  # type: ignore[attr-defined]
