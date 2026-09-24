@@ -1,3 +1,61 @@
+# Core v0.1 Stage 5 pass 4 — restored unknown stop correction
+
+## outcome
+
+The independent review of `371738507cd12f93d3fbbafec635fc657fdd19e3`
+was reproduced in a new temp directory. A current recovery owner can now
+confirm that the exact restored `unknown` Pi assignment stopped, then create
+a linked new Attempt. The old Attempt and authority stay fenced; an unknown
+model invocation and its reserve remain unknown and held. This is a pass-4
+correction for owner review, not owner acceptance of pass 4 or Stage 5.
+
+## evidence
+
+The unchanged review reproduction in
+`C:\Users\Anton\AppData\Local\Temp\zaratustra-pass4-repro-7fdf3e842b234c219faa1058e7d1f965`
+returned `stale_attempt` for restored stop confirmation and `resource_busy`
+for a linked Attempt before the fix; its evidence is also in
+`_scratch/stage5-pass4-correction-repro-evidence.json`. The focused regression
+now passes with
+current owner and revoked-right checks, exact revision, audit, receipt, replay,
+held reserve and late old-Attempt denials. The Core/Pi regression subset passed
+33 tests. The installed outside-checkout wheel trial in
+`_scratch/stage5-pass4-correction-installed-a/report.json` passed with Core,
+DBOS and Pi imports from temporary `site-packages`, restored `unknown`, old
+authority refusal, confirmed `stopped`, linked next Attempt and no extra HTTP.
+The final `uv run --locked python -m tools.check --deliver` passed: 188 files
+formatted, Ruff clean, mypy clean across 162 source files, 21 import
+contracts kept, 524 tests passed in 230.53 seconds, sdist and wheel built.
+
+## assumptions
+
+The trusted local adapter establishes the fresh recovery owner; Core checks
+the latest Recover actor and current `work.execute` Grant. Stop confirmation
+means observed Pi termination. It does not decide the external model outcome.
+The trial uses synthetic records and localhost provider.
+
+## cuts
+
+The external outcome and 20-unit reserve in the focused reproduction remain
+unknown and held after Pi stop confirmation. No real provider outcome was
+reconciled. The previous pass-4 limits on arbitrary third-party SQLite writes,
+external copies and untested interleavings remain. No next stage or migration
+began; `C:\projects\zaratustra` was not changed.
+
+## cost
+
+Zero paid or real model calls. Reused the existing Core operation, current
+Grant evaluation, audit/receipt transaction and installed Core/DBOS/Pi trial.
+
+## manual-acceptance
+
+The owner accepted passes 1–3 separately. Pass 4 and Stage 5 as a whole still
+await owner decisions. The synthetic Work remains `proposed`.
+
+## next
+
+solmax
+
 # Core v0.1 Stage 5 pass 4 — shared maintenance boundary
 
 ## outcome

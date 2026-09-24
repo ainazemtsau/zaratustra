@@ -476,4 +476,41 @@ space. Скопированный наружу пакет, provider retention, O
 `unknown` не преобразуется в `stopped` ради обслуживания. Весь Stage 5 и
 синтетический Work остаются на отдельной приёмке владельца.
 
+### Адресное исправление после независимой проверки прохода 4
+
+Независимая проверка HEAD `371738507cd12f93d3fbbafec635fc657fdd19e3`
+обнаружила пробел после backup → quarantine restore → Recover: старое
+`unknown` назначение справедливо держало ресурс, но подтверждение его остановки
+текущим владельцем возвращало `stale_attempt`. Приложенный синтетический
+сценарий повторён без изменения источника в новом системном temp
+`zaratustra-pass4-repro-7fdf3e842b234c219faa1058e7d1f965`:
+`stale_attempt` для `RecordAttemptStopRequest(stopped)` и `resource_busy` для
+новой связанной Attempt. Копия evidence сохранена в
+`_scratch/stage5-pass4-correction-repro-evidence.json`. До restore тот же
+адресный переход работал.
+
+`RecordAttemptStopRequest(stopped)` теперь допускает ровно одну дополнительную
+ветвь: назначение той же Attempt/Work/сессии должно оставаться `unknown`, сама
+Attempt — `interrupted` и из прежней эпохи, а actor — владелец последнего
+Recover с актуальным `work.execute`. Ревизия назначения проверяется в той же
+транзакции. Запрос с другим исходом, поздние launch/model действия старой
+Attempt и старая authority сохраняют отказ. Подтверждение переводит только
+назначение в `stopped`; неизвестный исход модельного вызова и его резерв не
+разрешаются. Audit и receipt создаются обычным Core механизмом атомарно с
+изменением; точный replay возвращает ту же квитанцию, иной смысл с тем же id
+получает `operation_conflict`.
+
+Регрессия `test_restored_unknown_stop_needs_current_owner_and_keeps_model_reserve`
+проверяет полный цикл, запрет нового назначения до подтверждения, неверную
+сессию и ревизию, старую authority, делегата, отзыв `work.execute` у владельца,
+новый текущий Grant, audit/receipt/replay, удержанные 20 единиц, запрет поздних
+claim/send старой Attempt и новую связанную Attempt. Расширенный установленный
+probe `_scratch/stage5-pass4-correction-installed-a/report.json` подтвердил
+переход `unknown → stopped` после restore, отказ старой authority и новую
+связанную Attempt без третьего HTTP. Состояние старого внешнего вызова всё ещё
+требует отдельной сверки; запись остановки Pi его исходом не является.
+Финальный `uv run --locked python -m tools.check --deliver` прошёл: 188 файлов
+отформатированы, Ruff и mypy чистые по 162 source files, 21 import contract,
+524 теста за 230.53 секунды, sdist и wheel собраны.
+
 END_OF_FILE

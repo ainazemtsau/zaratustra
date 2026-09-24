@@ -18,6 +18,7 @@ from zaratustra.foundation import (
     ArtifactRef,
     AssignAttemptRequest,
     BootstrapRequest,
+    ClaimAttemptLaunchRequest,
     CreateActivityRequest,
     CreateArtifactRequest,
     CreateGrantRequest,
@@ -25,6 +26,7 @@ from zaratustra.foundation import (
     CreateWorkRequest,
     DeleteArtifactRequest,
     DeleteWorkRequest,
+    FinishInvocationRequest,
     FoundationError,
     GrantState,
     LinkedOutput,
@@ -48,6 +50,7 @@ from zaratustra.foundation import (
     initialize_space,
     inspect_recovery,
     read_execution,
+    read_operation_audit,
     read_receipt,
     read_space,
     read_work,
@@ -689,6 +692,288 @@ def test_backup_quarantine_epoch_and_managed_deletion(tmp_path: Path) -> None:
     assert question.question.encode("utf-8") not in database.read_bytes()
     assert question.remainder.encode("utf-8") not in database.read_bytes()
     assert b"Fictional recovery answer" not in database.read_bytes()
+
+
+def test_restored_unknown_stop_needs_current_owner_and_keeps_model_reserve(
+    tmp_path: Path,
+) -> None:
+    root, _, space_id, _, work_id, resource_id = ready(tmp_path)
+    old_owner = authorize_local(root, actor="owner", source_ref="old-fictional-console")
+    attempt_id, session_id, _ = assign(root, space_id, work_id, resource_id)
+    invocation_id = uuid4()
+    apply_operation(
+        root,
+        PrepareInvocationRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=work_id,
+            attempt_id=attempt_id,
+            session_id=session_id,
+            invocation_id=invocation_id,
+            purpose="content",
+            provider="synthetic",
+            model="synthetic",
+            transport="http-sse",
+            request_sha256="A" * 64,
+            request_bytes=12,
+            reserve_units=20,
+        ),
+        old_owner,
+    )
+    apply_operation(
+        root,
+        AdmitInvocationRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=work_id,
+            attempt_id=attempt_id,
+            session_id=session_id,
+            invocation_id=invocation_id,
+        ),
+        old_owner,
+    )
+    apply_operation(
+        root,
+        SendInvocationRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=work_id,
+            attempt_id=attempt_id,
+            session_id=session_id,
+            invocation_id=invocation_id,
+        ),
+        old_owner,
+    )
+    apply_operation(
+        root,
+        FinishInvocationRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=work_id,
+            attempt_id=attempt_id,
+            session_id=session_id,
+            invocation_id=invocation_id,
+            outcome="unknown",
+        ),
+        old_owner,
+    )
+    apply_operation(
+        root,
+        RequestAttemptStopRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=work_id,
+            attempt_id=attempt_id,
+            session_id=session_id,
+            expected_assignment_revision=1,
+            reason="Synthetic process outcome unknown",
+        ),
+        old_owner,
+    )
+    apply_operation(
+        root,
+        RecordAttemptStopRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            work_id=work_id,
+            attempt_id=attempt_id,
+            session_id=session_id,
+            expected_assignment_revision=2,
+            outcome="unknown",
+        ),
+        old_owner,
+    )
+    backup = create_backup(root, uuid4(), old_owner)
+    destination = tmp_path / "restored-unknown"
+    destination.mkdir()
+    recovery = authorize_recovery(actor="owner", source_ref="fresh-fictional-recovery")
+    assert restore_backup(backup.package, destination, recovery).recovery_state == "quarantined"
+    recover = RecoverRequest(
+        operation_id=uuid4(),
+        space_id=space_id,
+        actor="owner",
+        decision_id=uuid4(),
+        grant_id=uuid4(),
+    )
+    apply_operation(destination, recover, recovery)
+    owner = authorize_local(destination, actor="owner", source_ref="fresh-fictional-owner")
+    before = read_execution(destination, work_id, owner)
+    assert before.execution_epoch == 2
+    assert before.assignments[0].status == "unknown"
+    assert before.attempts[0].status == "interrupted"
+    assert before.invocations[0].status == "unknown" and before.held_units == 20
+    confirmation = RecordAttemptStopRequest(
+        operation_id=uuid4(),
+        space_id=space_id,
+        actor="owner",
+        work_id=work_id,
+        attempt_id=attempt_id,
+        session_id=session_id,
+        expected_assignment_revision=3,
+        outcome="stopped",
+    )
+    with pytest.raises(FoundationError, match="resource_busy"):
+        assign(destination, space_id, work_id, resource_id, previous=attempt_id)
+    with pytest.raises(FoundationError, match="permission_denied"):
+        apply_operation(destination, confirmation, old_owner)
+    with pytest.raises(FoundationError, match="stale_assignment"):
+        apply_operation(
+            destination,
+            confirmation.model_copy(
+                update={"operation_id": uuid4(), "expected_assignment_revision": 2}
+            ),
+            owner,
+        )
+    with pytest.raises(FoundationError, match="stale_attempt"):
+        apply_operation(
+            destination,
+            confirmation.model_copy(update={"operation_id": uuid4(), "session_id": uuid4()}),
+            owner,
+        )
+    with pytest.raises(FoundationError, match="stale_attempt"):
+        apply_operation(
+            destination,
+            confirmation.model_copy(update={"operation_id": uuid4(), "outcome": "unknown"}),
+            owner,
+        )
+    delegate_grant = uuid4()
+    apply_operation(
+        destination,
+        CreateGrantRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            grant_id=delegate_grant,
+            state=GrantState(grantee="delegate", actions=("work.execute",)),
+        ),
+        owner,
+    )
+    delegate = authorize_local(destination, actor="delegate", source_ref="fictional-delegate")
+    delegate_stop = confirmation.model_copy(update={"operation_id": uuid4(), "actor": "delegate"})
+    with pytest.raises(FoundationError, match="permission_denied"):
+        apply_operation(destination, delegate_stop, delegate)
+    apply_operation(
+        destination,
+        RevokeGrantRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            grant_id=delegate_grant,
+            expected_revision=1,
+        ),
+        owner,
+    )
+    with pytest.raises(FoundationError, match="No current Grant"):
+        apply_operation(destination, delegate_stop, delegate)
+    retained_grant = uuid4()
+    apply_operation(
+        destination,
+        CreateGrantRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            grant_id=retained_grant,
+            state=GrantState(
+                grantee="owner", actions=("grant.write", "record.read", "receipt.read")
+            ),
+        ),
+        owner,
+    )
+    apply_operation(
+        destination,
+        RevokeGrantRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            grant_id=recover.grant_id,
+            expected_revision=1,
+        ),
+        owner,
+    )
+    with pytest.raises(FoundationError, match="No current Grant"):
+        apply_operation(destination, confirmation, owner)
+    stop_grant = uuid4()
+    apply_operation(
+        destination,
+        CreateGrantRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor="owner",
+            grant_id=stop_grant,
+            state=GrantState(grantee="owner", actions=("work.execute", "model.invoke")),
+        ),
+        owner,
+    )
+    receipt = apply_operation(destination, confirmation, owner)
+    assert receipt.result == {"attempt_id": str(attempt_id), "status": "stopped"}
+    assert read_receipt(destination, confirmation.operation_id, owner) == receipt
+    audit = read_operation_audit(destination, confirmation.operation_id, owner)
+    assert audit.authority_source == owner.source_ref
+    assert any(
+        reference.record_id == stop_grant and reference.revision == 1
+        for reference in audit.grant_refs
+    )
+    assert len(audit.target_refs) == 1
+    assert audit.target_refs[0].record_id == attempt_id and audit.target_refs[0].revision == 4
+    assert apply_operation(destination, confirmation, owner) == receipt
+    with pytest.raises(FoundationError, match="operation_conflict"):
+        apply_operation(
+            destination,
+            confirmation.model_copy(update={"outcome": "unknown"}),
+            owner,
+        )
+    stopped = read_execution(destination, work_id, owner)
+    assert stopped.assignments[0].status == "stopped"
+    assert stopped.attempts[0].status == "interrupted"
+    assert stopped.invocations[0].status == "unknown" and stopped.held_units == 20
+    new_attempt_id, _, _ = assign(destination, space_id, work_id, resource_id, previous=attempt_id)
+    after = read_execution(destination, work_id, owner)
+    assert after.attempts[-1].attempt_id == new_attempt_id
+    assert after.held_units == 20 and after.invocations[0].status == "unknown"
+    with pytest.raises(FoundationError, match="stale_attempt"):
+        apply_operation(
+            destination,
+            confirmation.model_copy(
+                update={"operation_id": uuid4(), "expected_assignment_revision": 4}
+            ),
+            owner,
+        )
+    with pytest.raises(FoundationError, match="stale_attempt"):
+        apply_operation(
+            destination,
+            ClaimAttemptLaunchRequest(
+                operation_id=uuid4(),
+                space_id=space_id,
+                actor="owner",
+                work_id=work_id,
+                attempt_id=attempt_id,
+                session_id=session_id,
+                expected_assignment_revision=4,
+                claim_nonce=uuid4(),
+            ),
+            owner,
+        )
+    with pytest.raises(FoundationError, match="stale_attempt"):
+        apply_operation(
+            destination,
+            SendInvocationRequest(
+                operation_id=uuid4(),
+                space_id=space_id,
+                actor="owner",
+                work_id=work_id,
+                attempt_id=attempt_id,
+                session_id=session_id,
+                invocation_id=invocation_id,
+            ),
+            owner,
+        )
+    assert apply_operation(destination, confirmation, owner) == receipt
 
 
 def test_artifact_deletion_purges_dependent_wait_content(tmp_path: Path) -> None:

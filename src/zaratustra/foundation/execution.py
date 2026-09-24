@@ -637,6 +637,34 @@ def _assignment(
     return int(row[0]), str(row[1]), generation
 
 
+def _restored_unknown_stop_assignment(
+    connection: object,
+    request: RecordAttemptStopRequest,
+    epoch: int,
+) -> tuple[int, str, int]:
+    """Let the current recovery owner confirm only an old unknown stop."""
+
+    row = connection.execute(  # type: ignore[attr-defined]
+        "SELECT s.revision, s.status, a.generation, a.status, a.execution_epoch, "
+        "a.session_id FROM execution_assignments s JOIN execution_attempts a "
+        "ON a.attempt_id = s.attempt_id AND a.work_id = s.work_id "
+        "WHERE s.attempt_id = ? AND s.work_id = ?",
+        (str(request.attempt_id), str(request.work_id)),
+    ).fetchone()
+    if row is None or row[5] != str(request.session_id):
+        raise FoundationError("stale_attempt", "Attempt is not owned by this session")
+    if int(row[4]) >= epoch or row[3] != "interrupted" or row[1] != "unknown":
+        raise FoundationError("stale_attempt", "Attempt is not a restored unknown stop")
+    recovery = connection.execute(  # type: ignore[attr-defined]
+        "SELECT actor FROM operations WHERE kind = 'recover' ORDER BY state_revision DESC LIMIT 1"
+    ).fetchone()
+    if recovery is None or recovery[0] != request.actor:
+        raise FoundationError(
+            "permission_denied", "Only the current recovery owner can confirm stop"
+        )
+    return int(row[0]), str(row[1]), int(row[2])
+
+
 def apply_continuation_change(
     connection: object,
     request: ContinuationRequest,
@@ -802,9 +830,22 @@ def apply_continuation_change(
         targets = [{"record_id": str(request.attempt_id), "revision": revision + 1}]
     else:
         assert isinstance(request, RecordAttemptStopRequest)
-        revision, status, _ = _assignment(
-            connection, request.attempt_id, request.work_id, request.session_id, epoch
-        )
+        if request.outcome == "stopped":
+            attempt = connection.execute(  # type: ignore[attr-defined]
+                "SELECT execution_epoch FROM execution_attempts WHERE attempt_id = ? "
+                "AND work_id = ?",
+                (str(request.attempt_id), str(request.work_id)),
+            ).fetchone()
+            if attempt is not None and int(attempt[0]) < epoch:
+                revision, status, _ = _restored_unknown_stop_assignment(connection, request, epoch)
+            else:
+                revision, status, _ = _assignment(
+                    connection, request.attempt_id, request.work_id, request.session_id, epoch
+                )
+        else:
+            revision, status, _ = _assignment(
+                connection, request.attempt_id, request.work_id, request.session_id, epoch
+            )
         if revision != request.expected_assignment_revision or status not in (
             "stop_requested",
             "unknown",

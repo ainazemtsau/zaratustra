@@ -44,6 +44,7 @@ from zaratustra.foundation import (  # noqa: E402
     DeleteWorkRequest,
     FoundationError,
     OutputContract,
+    RecordAttemptStopRequest,
     RecoverRequest,
     ResourceState,
     WaitRecord,
@@ -602,6 +603,54 @@ def run(base: Path, venv: Path, checkout: Path, runtime: Path) -> dict[str, obje
         assert conflict_on_same_resource({**unknown, "space": str(unknown_restored)}) == (
             "resource_busy"
         )
+        stop = RecordAttemptStopRequest(
+            operation_id=uuid4(),
+            space_id=unknown_restored_owner.space_id,
+            actor="owner",
+            work_id=UUID(unknown["work_id"]),
+            attempt_id=attempt,
+            session_id=UUID(unknown["session_id"]),
+            expected_assignment_revision=unknown_restored_state.assignments[0].revision,
+            outcome="stopped",
+        )
+        try:
+            apply_operation(unknown_restored, stop, unknown_owner)
+        except FoundationError as error:
+            assert error.code == "permission_denied"
+        else:
+            raise AssertionError("Old authority confirmed a restored stop")
+        stop_receipt = apply_operation(unknown_restored, stop, unknown_restored_owner)
+        assert apply_operation(unknown_restored, stop, unknown_restored_owner) == stop_receipt
+        stopped_state = read_execution(
+            unknown_restored, UUID(unknown["work_id"]), unknown_restored_owner
+        )
+        assert stopped_state.assignments[0].status == "stopped"
+        assert stopped_state.attempts[0].status == "interrupted"
+        assert stopped_state.held_units == unknown_restored_state.held_units
+        next_attempt = uuid4()
+        apply_operation(
+            unknown_restored,
+            AssignAttemptRequest(
+                operation_id=uuid4(),
+                space_id=unknown_restored_owner.space_id,
+                actor="owner",
+                attempt_id=next_attempt,
+                work_id=UUID(unknown["work_id"]),
+                expected_work_revision=stopped_state.work.revision,
+                resource_id=UUID(unknown["resource_id"]),
+                expected_resource_revision=1,
+                session_id=uuid4(),
+                previous_attempt_id=attempt,
+                executor_version=EXECUTOR_VERSION,
+            ),
+            unknown_restored_owner,
+        )
+        linked_state = read_execution(
+            unknown_restored, UUID(unknown["work_id"]), unknown_restored_owner
+        )
+        assert linked_state.attempts[-1].attempt_id == next_attempt
+        assert linked_state.held_units == unknown_restored_state.held_units
+        assert len(provider.digests) == 2
         return {
             "python_package": str(package),
             "dbos_module": str(dbos_path),
@@ -639,6 +688,9 @@ def run(base: Path, venv: Path, checkout: Path, runtime: Path) -> dict[str, obje
                 "managed_backup_removed": not backup.package.exists(),
                 "unknown_restored": unknown_restored_state.assignments[0].status,
                 "old_resource_blocked": True,
+                "unknown_confirmed_stop": stopped_state.assignments[0].status,
+                "linked_attempt_after_stop": str(next_attempt),
+                "old_authority_denied": True,
             },
         }
     finally:
