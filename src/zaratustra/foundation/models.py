@@ -7,7 +7,16 @@ from pathlib import Path
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, JsonValue, model_validator
+from pydantic import (
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Discriminator,
+    Field,
+    JsonValue,
+    Tag,
+    model_validator,
+)
 
 type Action = Literal[
     "artifact.write",
@@ -81,6 +90,40 @@ class DecisionState(ContractModel):
     status: Literal["active", "revoked"] = "active"
 
 
+# A structural name or value; Core compares it exactly and never interprets prose.
+Identifier = Annotated[str, Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")]
+
+
+class DecisionScope(ContractModel):
+    """The exact Work or Activity a choice covers; scopes overlap and form no tree."""
+
+    kind: Literal["work", "activity"]
+    record_id: UUID
+
+
+class ChoiceState(ContractModel):
+    """A named value with an explicit scope. It is never an access rule."""
+
+    variant: Literal["choice"] = "choice"
+    statement: str = Field(min_length=1, max_length=4096)
+    name: Identifier
+    value: Identifier
+    scope: DecisionScope
+    status: Literal["active", "revoked"] = "active"
+
+
+def _decision_variant(value: object) -> str:
+    variant = value.get("variant") if isinstance(value, dict) else getattr(value, "variant", None)
+    return "choice" if variant == "choice" else "rule"
+
+
+# An access rule keeps its earlier canonical form; only a choice names its variant.
+DecisionBody = Annotated[
+    Annotated[DecisionState, Tag("rule")] | Annotated[ChoiceState, Tag("choice")],
+    Discriminator(_decision_variant),
+]
+
+
 class GrantState(ContractModel):
     grantee: str = Field(min_length=1, max_length=200)
     actions: tuple[Action, ...] = Field(min_length=1)
@@ -132,13 +175,29 @@ class CapabilityRequirement(ContractModel):
     source_ref: str = Field(min_length=1, max_length=2048)
 
 
+class ChoiceApplicability(ContractModel):
+    """Which values of one named choice make an obligation active or inactive."""
+
+    kind: Literal["choice"] = "choice"
+    choice: Identifier
+    active: tuple[Identifier, ...] = ()
+    inactive: tuple[Identifier, ...] = ()
+
+    @model_validator(mode="after")
+    def exact_values(self) -> ChoiceApplicability:
+        values = self.active + self.inactive
+        if not values or len(values) != len(set(values)):
+            raise ValueError("Applicability values must be unique and name at least one value")
+        return self
+
+
 class MethodObligation(ContractModel):
     key: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
     source: str = Field(min_length=1, max_length=2048)
     role: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
     slot: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
     media_type: str = Field(min_length=1, max_length=200)
-    applicability: Literal["always"] = "always"
+    applicability: Literal["always"] | ChoiceApplicability = "always"
 
 
 class MethodDefinition(ContractModel):
@@ -167,7 +226,13 @@ class MethodDefinition(ContractModel):
 
 class PlanCondition(ContractModel):
     kind: Literal[
-        "accepted_output", "work_succeeded", "artifact_current", "decision_active", "all", "any"
+        "accepted_output",
+        "work_succeeded",
+        "artifact_current",
+        "decision_active",
+        "decision_value",
+        "all",
+        "any",
     ]
     role: str | None = None
     slot: str | None = None
@@ -176,6 +241,9 @@ class PlanCondition(ContractModel):
     decision_id: UUID | None = None
     decision_revision: int | None = Field(default=None, ge=1)
     members: tuple[PlanCondition, ...] = ()
+    # Only a decision_value leaf names a choice; absent from earlier canonical plans.
+    name: Identifier | None = Field(default=None, exclude_if=lambda value: value is None)
+    value: Identifier | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
     def exact_shape(self) -> PlanCondition:
@@ -187,11 +255,22 @@ class PlanCondition(ContractModel):
             self.decision_id,
             self.decision_revision,
         )
+        named = (self.name, self.value)
         if self.kind in ("all", "any"):
-            if not self.members or any(value is not None for value in fields):
+            if not self.members or any(value is not None for value in fields + named):
                 raise ValueError("all/any require fixed members and no leaf fields")
         elif self.members:
             raise ValueError("Leaf condition cannot have members")
+        elif self.kind != "decision_value" and any(value is not None for value in named):
+            raise ValueError("Only decision_value names a choice and its value")
+        elif self.kind == "decision_value" and (
+            self.decision_id is None
+            or self.decision_revision is None
+            or self.name is None
+            or self.value is None
+            or any(value is not None for value in fields[:4])
+        ):
+            raise ValueError("decision_value needs exact Decision revision, choice name and value")
         elif self.kind == "accepted_output" and (
             not self.role
             or not self.slot
@@ -269,17 +348,43 @@ class PlanRevision(ContractModel):
     actor: str
 
 
+class DecisionRef(ContractModel):
+    decision_id: UUID
+    revision: int = Field(ge=1)
+
+
 class ObligationRevision(ContractModel):
+    """One exact revision of a materialized obligation.
+
+    Applicability and execution are separate fields. A conditional obligation starts
+    ``unresolved``; an addressed choice (``choice``) resolves it ``active`` or
+    ``inactive``, and execution starts ``open`` again with each resolution. ``basis`` is
+    the text of the operation that recorded this revision.
+    """
+
     parent_work_id: UUID
     key: str
     revision: int = Field(ge=1)
     definition: MethodObligation
-    applicability: Literal["active"] = "active"
+    applicability: Literal["active", "inactive", "unresolved"] = "active"
     status: Literal["open", "satisfied"]
     evidence: ArtifactRef | None = None
     basis: str | None = None
     operation_id: UUID
     created_at: AwareDatetime
+    # Absent from canonical JSON while empty, so earlier payloads stay byte-identical.
+    choice: DecisionRef | None = Field(default=None, exclude_if=lambda value: value is None)
+
+    @model_validator(mode="after")
+    def applicability_matches_definition(self) -> ObligationRevision:
+        if self.definition.applicability == "always":
+            if self.applicability != "active" or self.choice is not None:
+                raise ValueError("An unconditional obligation is always active")
+        elif (self.applicability == "unresolved") != (self.choice is None):
+            raise ValueError("A conditional obligation is resolved only by an addressed choice")
+        if self.applicability != "active" and (self.status != "open" or self.evidence is not None):
+            raise ValueError("Only an active obligation is executed")
+        return self
 
 
 class WorkAcceptance(ContractModel):
@@ -299,11 +404,6 @@ class WorkAcceptance(ContractModel):
 
 type ClosedOutcome = Literal["failed", "cancelled", "stale"]
 CLOSED_OUTCOMES: tuple[ClosedOutcome, ...] = ("failed", "cancelled", "stale")
-
-
-class DecisionRef(ContractModel):
-    decision_id: UUID
-    revision: int = Field(ge=1)
 
 
 class WorkClosure(ContractModel):
@@ -408,14 +508,14 @@ class DeleteArtifactRequest(OperationRequest):
 class CreateDecisionRequest(OperationRequest):
     kind: Literal["create_decision"] = "create_decision"
     decision_id: UUID
-    state: DecisionState
+    state: DecisionBody
 
 
 class ReviseDecisionRequest(OperationRequest):
     kind: Literal["revise_decision"] = "revise_decision"
     decision_id: UUID
     expected_revision: int = Field(ge=1)
-    state: DecisionState
+    state: DecisionBody
 
 
 class CreateGrantRequest(OperationRequest):
@@ -518,6 +618,18 @@ class ConfirmObligationRequest(OperationRequest):
     expected_plan_revision: int = Field(ge=1)
     expected_obligation_revision: int = Field(ge=1)
     evidence: ArtifactRef
+    basis: str = Field(min_length=1, max_length=4096)
+
+
+class ResolveObligationApplicabilityRequest(OperationRequest):
+    """Resolve one conditional obligation of a composite parent by an exact choice."""
+
+    kind: Literal["resolve_obligation_applicability"] = "resolve_obligation_applicability"
+    work_id: UUID
+    key: str = Field(min_length=1, max_length=80)
+    expected_plan_revision: int = Field(ge=1)
+    expected_obligation_revision: int = Field(ge=1)
+    choice: DecisionRef
     basis: str = Field(min_length=1, max_length=4096)
 
 
@@ -746,6 +858,7 @@ DomainRequest = Annotated[
     | ReviseWorkPlanRequest
     | IssueChildWorkRequest
     | ConfirmObligationRequest
+    | ResolveObligationApplicabilityRequest
     | LinkWorkOutputRequest
     | PublishAttemptOutputRequest
     | AcceptWorkRequest
@@ -814,6 +927,17 @@ class ArtifactRevision(ContractModel):
     content_sha256: str | None
     status: Literal["active", "deleted"]
     provenance: tuple[ProvenanceRef, ...]
+
+
+class DecisionRevision(ContractModel):
+    """One exact Decision revision: an access rule or an addressed choice."""
+
+    decision_id: UUID
+    revision: int = Field(ge=1)
+    operation_id: UUID
+    created_at: AwareDatetime
+    actor: str
+    state: DecisionBody
 
 
 class ActivityRevision(ContractModel):
@@ -929,6 +1053,9 @@ class StatusReason(ContractModel):
     role: str | None = None
     record_id: UUID | None = None
     revision: int | None = Field(default=None, ge=1)
+    # Obligation key and choice name of an applicability reason; absent otherwise.
+    key: str | None = Field(default=None, exclude_if=lambda value: value is None)
+    name: str | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class WorkStatus(ContractModel):
@@ -960,12 +1087,16 @@ class ChildProgress(ContractModel):
 
 
 class ObligationProgress(ContractModel):
+    """Recorded execution with derived applicability: a resolution whose exact choice
+    is no longer current reads ``applicability_stale`` until it is resolved again."""
+
     key: str
     revision: int = Field(ge=1)
     role: str
-    applicability: Literal["active"] = "active"
+    applicability: Literal["active", "inactive", "unresolved", "applicability_stale"] = "active"
     status: Literal["open", "satisfied"]
     evidence: ArtifactRef | None = None
+    choice: DecisionRef | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class CompositionView(ContractModel):
@@ -1075,6 +1206,13 @@ class DeletionStatus(ContractModel):
 
 
 __all__ = [
+    "ChoiceApplicability",
+    "ChoiceState",
+    "DecisionBody",
+    "DecisionRevision",
+    "DecisionScope",
+    "Identifier",
+    "ResolveObligationApplicabilityRequest",
     "CLOSED_OUTCOMES",
     "ClosedOutcome",
     "CloseWorkRequest",

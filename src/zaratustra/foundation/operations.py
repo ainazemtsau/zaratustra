@@ -30,6 +30,7 @@ from .models import (
     AssignAttemptRequest,
     BackupInfo,
     BootstrapRequest,
+    ChoiceState,
     ClaimAttemptLaunchRequest,
     CloseWorkRequest,
     ConfirmObligationRequest,
@@ -41,6 +42,8 @@ from .models import (
     CreateMethodVersionRequest,
     CreateResourceRequest,
     CreateWorkRequest,
+    DecisionBody,
+    DecisionRevision,
     DecisionState,
     DeleteActivityRequest,
     DeleteArtifactRequest,
@@ -63,6 +66,7 @@ from .models import (
     RecordSummary,
     RecoverRequest,
     RequestAttemptStopRequest,
+    ResolveObligationApplicabilityRequest,
     ReviseActivityRequest,
     ReviseArtifactRequest,
     ReviseDecisionRequest,
@@ -145,6 +149,7 @@ class _DeletionBatch:
 
 type Authority = LocalAuthority | RecoveryAuthority
 REQUEST_ADAPTER: TypeAdapter[DomainRequest] = TypeAdapter(DomainRequest)
+DECISION_ADAPTER: TypeAdapter[DecisionState | ChoiceState] = TypeAdapter(DecisionBody)
 
 
 def authorize_local(path: Path, *, actor: str, source_ref: str) -> LocalAuthority:
@@ -210,6 +215,13 @@ def _current_bodies(connection: object, kind: str) -> list[tuple[str, int, str]]
     return cast(list[tuple[str, int, str]], rows)
 
 
+def _decision_body(raw: str | bytes) -> DecisionState | ChoiceState:
+    try:
+        return DECISION_ADAPTER.validate_json(raw)
+    except ValidationError as error:
+        raise FoundationError("corrupt_space", f"Invalid Decision revision: {error}") from error
+
+
 def _authorize(
     connection: object,
     *,
@@ -221,7 +233,10 @@ def _authorize(
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     decisions: list[dict[str, object]] = []
     for record_id, revision, raw in _current_bodies(connection, "decision"):
-        decision_state = DecisionState.model_validate_json(raw)
+        decision_state = _decision_body(raw)
+        if isinstance(decision_state, ChoiceState):
+            # A choice is a named subject value; access stays with require_grant/deny rules.
+            continue
         if decision_state.status != "active" or action not in decision_state.actions:
             continue
         if "*" not in decision_state.subjects and actor not in decision_state.subjects:
@@ -410,6 +425,11 @@ def _write_artifact(
         )
 
 
+def _choice_schema(connection: object) -> None:
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 7:  # type: ignore[attr-defined]
+        raise FoundationError("unsupported_schema", "Addressed choices need explicit schema 7")
+
+
 def _root_decision() -> DecisionState:
     return DecisionState(
         statement="Every controlled foundation action requires a current matching Grant.",
@@ -496,6 +516,8 @@ def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]
         return "work.execute", "work", request.work_id
     if isinstance(request, ConfirmObligationRequest):
         return "work.accept", "work", request.work_id
+    if isinstance(request, ResolveObligationApplicabilityRequest):
+        return "work.write", "work", request.work_id
     if isinstance(request, (CreateResourceRequest, ReviseResourceRequest)):
         return "resource.write", "work", request.work_id
     if isinstance(
@@ -1133,6 +1155,7 @@ def _apply_change(
             ReviseWorkPlanRequest,
             IssueChildWorkRequest,
             ConfirmObligationRequest,
+            ResolveObligationApplicabilityRequest,
         ),
     ):
         from .composition import apply_composition_change
@@ -1515,7 +1538,22 @@ def _apply_change(
             "deletion": "pending",
         }, [{"record_id": str(request.artifact_id), "revision": revision}]
     if isinstance(request, CreateDecisionRequest):
+        if isinstance(request.state, ChoiceState):
+            _choice_schema(connection)
         _expect_absent(connection, request.decision_id)
+        if isinstance(request.state, ChoiceState):
+            scope = connection.execute(  # type: ignore[attr-defined]
+                "SELECT status FROM subject_records WHERE record_id = ? AND kind = ?",
+                (str(request.state.scope.record_id), request.state.scope.kind),
+            ).fetchone()
+            if scope is None:
+                raise FoundationError(
+                    "not_found", f"No {request.state.scope.kind} {request.state.scope.record_id}"
+                )
+            if scope[0] == "deleted":
+                raise FoundationError(
+                    "content_unavailable", "A choice cannot cover deleted content"
+                )
         _insert_record(
             connection,
             record_id=request.decision_id,
@@ -1530,7 +1568,28 @@ def _apply_change(
             {"record_id": str(request.decision_id), "revision": 1}
         ]
     if isinstance(request, ReviseDecisionRequest):
+        if isinstance(request.state, ChoiceState):
+            _choice_schema(connection)
         _expect_revision(connection, request.decision_id, "decision", request.expected_revision)
+        row = connection.execute(  # type: ignore[attr-defined]
+            "SELECT body_json FROM record_revisions WHERE record_id = ? AND revision = ?",
+            (str(request.decision_id), request.expected_revision),
+        ).fetchone()
+        if row is None:
+            raise FoundationError("corrupt_space", "Current Decision revision is missing")
+        previous_decision = _decision_body(row[0])
+        if type(previous_decision) is not type(request.state):
+            # Revising a rule into a choice would silently drop an access rule, and back.
+            raise FoundationError("invalid_request", "A Decision keeps its variant")
+        if isinstance(request.state, ChoiceState):
+            assert isinstance(previous_decision, ChoiceState)
+            if (previous_decision.name, previous_decision.scope) != (
+                request.state.name,
+                request.state.scope,
+            ):
+                raise FoundationError(
+                    "invalid_request", "A choice keeps its name and scope; create another choice"
+                )
         revision = request.expected_revision + 1
         _insert_record(
             connection,
@@ -1932,6 +1991,44 @@ def read_artifact(
             content_sha256=row[6],
             status=row[3],
             provenance=_provenance(connection, artifact_id, selected),
+        )
+
+
+def read_decision(
+    path: Path,
+    decision_id: UUID,
+    authority: LocalAuthority,
+    *,
+    revision: int | None = None,
+) -> DecisionRevision:
+    """Read the current or one exact Decision revision (rule or choice); never falls forward."""
+
+    with space_connection(path) as (connection, info):
+        _local_space(authority, info)
+        if info.recovery_state != "active":
+            raise FoundationError("permission_denied", "Quarantined spaces disclose no records")
+        _authorize(
+            connection,
+            actor=authority.actor,
+            action="record.read",
+            epoch=info.execution_epoch,
+        )
+        current, _, _ = _current_revision(connection, decision_id, "decision")
+        selected = current if revision is None else revision
+        row = connection.execute(
+            "SELECT operation_id, created_at, actor, body_json FROM record_revisions "
+            "WHERE record_id = ? AND revision = ?",
+            (str(decision_id), selected),
+        ).fetchone()
+        if row is None:
+            raise FoundationError("not_found", f"No exact revision {decision_id}@{selected}")
+        return DecisionRevision(
+            decision_id=decision_id,
+            revision=selected,
+            operation_id=UUID(row[0]),
+            created_at=datetime.fromisoformat(row[1]),
+            actor=row[2],
+            state=_decision_body(row[3]),
         )
 
 

@@ -12,6 +12,15 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
+from .choices import (
+    check_choice_leaf,
+    choice_holds,
+    obligation_applicability,
+    require_applicable,
+    require_consistent_resolutions,
+    resolve_applicability,
+    validate_choice_leaf,
+)
 from .models import (
     CLOSED_OUTCOMES,
     AcceptWorkRequest,
@@ -19,6 +28,7 @@ from .models import (
     AnswerWaitRequest,
     ArtifactRef,
     AssignAttemptRequest,
+    ChoiceApplicability,
     ClaimAttemptLaunchRequest,
     CloseWorkRequest,
     ConfirmObligationRequest,
@@ -41,6 +51,7 @@ from .models import (
     PublishAttemptOutputRequest,
     RecordAttemptStopRequest,
     RequestAttemptStopRequest,
+    ResolveObligationApplicabilityRequest,
     ReviseResourceRequest,
     ReviseWorkPlanRequest,
     SendInvocationRequest,
@@ -377,6 +388,25 @@ def _conditions(condition: PlanCondition | None) -> tuple[PlanCondition, ...]:
     )
 
 
+def _schema(connection: sqlite3.Connection) -> int:
+    return int(connection.execute("PRAGMA user_version").fetchone()[0])
+
+
+def _validate_choice_leaves(connection: sqlite3.Connection, plan: WorkPlan) -> None:
+    """decision_value leaves are a schema 7 payload and name an exact existing choice."""
+
+    leaves = [
+        leaf
+        for condition in [child.readiness for child in plan.children] + [plan.completion]
+        for leaf in _conditions(condition)
+        if leaf.kind == "decision_value"
+    ]
+    if leaves and _schema(connection) < 7:
+        raise FoundationError("unsupported_schema", "decision_value conditions need schema 7")
+    for leaf in leaves:
+        validate_choice_leaf(connection, leaf)
+
+
 def _validate_plan(plan: WorkPlan, definition: MethodDefinition, activity_id: UUID) -> None:
     roles = {child.role: child for child in plan.children}
     for child in plan.children:
@@ -512,11 +542,14 @@ def _evaluate(
     plan: WorkPlan,
     condition: PlanCondition | None,
     *,
+    work_id: UUID,
     actor: str | None,
     epoch: int,
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
 ) -> tuple[ArtifactRef, ...]:
+    """Evaluate the readiness or completion condition of ``work_id`` under ``plan``."""
+
     if condition is None:
         return ()
     if condition.kind in ("all", "any"):
@@ -528,6 +561,7 @@ def _evaluate(
                     connection,
                     plan,
                     member,
+                    work_id=work_id,
                     actor=actor,
                     epoch=epoch,
                     grants=grants,
@@ -597,7 +631,7 @@ def _evaluate(
             decisions=decisions,
         )
         return (condition.artifact,)
-    assert condition.kind == "decision_active"
+    assert condition.kind in ("decision_active", "decision_value")
     assert condition.decision_id and condition.decision_revision
     if actor is not None:
         extra_grants, extra_decisions = _authorize(
@@ -610,6 +644,10 @@ def _evaluate(
         )
         grants.extend(extra_grants)
         decisions.extend(extra_decisions)
+    if condition.kind == "decision_value":
+        # The choices that apply to this Work are recomputed in every reading transaction.
+        check_choice_leaf(connection, work_id, condition)
+        return ()
     row = connection.execute(
         "SELECT r.current_revision, v.body_json FROM records r JOIN record_revisions v "
         "ON v.record_id = r.record_id AND v.revision = r.current_revision "
@@ -660,6 +698,7 @@ def apply_composition_change(
         | ReviseWorkPlanRequest
         | IssueChildWorkRequest
         | ConfirmObligationRequest
+        | ResolveObligationApplicabilityRequest
     ),
     *,
     now: str,
@@ -667,7 +706,17 @@ def apply_composition_change(
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
+    if isinstance(request, ResolveObligationApplicabilityRequest):
+        return _resolve_obligation(
+            connection, request, now=now, epoch=epoch, grants=grants, decisions=decisions
+        )
     if isinstance(request, CreateMethodVersionRequest):
+        if _schema(connection) < 7 and any(
+            item.applicability != "always" for item in request.definition.obligations
+        ):
+            raise FoundationError(
+                "unsupported_schema", "Conditional obligations need explicit schema 7"
+            )
         if connection.execute(
             "SELECT 1 FROM method_versions WHERE method_id = ? AND version = ?",
             (str(request.method_id), request.version),
@@ -761,6 +810,7 @@ def apply_composition_change(
         if tuple(request.state.expected_outputs) != definition.named_outputs:
             raise FoundationError("method_mismatch", "Parent outputs differ from pinned Method")
         _validate_plan(request.plan, definition, request.state.activity_id)
+        _validate_choice_leaves(connection, request.plan)
         declared_inputs = {item.slot: item.media_type for item in definition.named_inputs}
         actual_inputs = {item.slot: item.artifact for item in request.plan.named_inputs}
         if set(declared_inputs) != set(actual_inputs) or set(actual_inputs.values()) != set(
@@ -844,6 +894,8 @@ def apply_composition_change(
                 key=obligation.key,
                 revision=1,
                 definition=obligation,
+                # A conditional obligation is neither applicable nor inapplicable yet.
+                applicability="active" if obligation.applicability == "always" else "unresolved",
                 status="open",
                 operation_id=request.operation_id,
                 created_at=datetime.fromisoformat(now),
@@ -905,6 +957,7 @@ def apply_composition_change(
             )
         added = tuple(child for role, child in proposed.items() if role not in existing)
         _validate_plan(request.plan, definition, parent.activity_id)
+        _validate_choice_leaves(connection, request.plan)
         for reference in request.plan.basis:
             _current_artifact(
                 connection,
@@ -991,6 +1044,7 @@ def apply_composition_change(
             connection,
             plan.plan,
             node.readiness,
+            work_id=request.work_id,
             actor=request.actor,
             epoch=epoch,
             grants=grants,
@@ -1068,6 +1122,8 @@ def apply_composition_change(
         raise FoundationError("stale_obligation", "Obligation already changed")
     if parent.status != "proposed":
         raise FoundationError("work_closed", f"Parent Work is {parent.status}")
+    # Only a validly active obligation is executed; its choices are recomputed here.
+    require_applicable(connection, selected_instance, f"Confirmation of {request.key}")
     actual = _accepted_output(
         connection,
         plan.plan,
@@ -1111,6 +1167,101 @@ def apply_composition_change(
     }, [
         {"record_id": str(request.work_id), "revision": plan.revision},
         {"record_id": str(request.evidence.artifact_id), "revision": request.evidence.revision},
+    ]
+
+
+def _resolve_obligation(
+    connection: sqlite3.Connection,
+    request: ResolveObligationApplicabilityRequest,
+    *,
+    now: str,
+    epoch: int,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> tuple[dict[str, object], list[dict[str, object]]]:
+    """Record applicability of one conditional obligation from one exact choice.
+
+    The result is a new instance revision, ``active``/``open`` or ``inactive``, with the
+    choice address. Applicability never switches silently: a valid resolution stays until
+    its exact choice is revised or revoked, and then only a new resolution replaces it.
+    """
+
+    if _schema(connection) < 7:
+        raise FoundationError("unsupported_schema", "Obligation applicability needs schema 7")
+    _rev, parent, definition = _parent(connection, request.work_id)
+    _method_use(
+        connection,
+        parent,
+        actor=request.actor,
+        epoch=epoch,
+        grants=grants,
+        decisions=decisions,
+    )
+    plan = _plan(connection, request.work_id)
+    if plan.revision != request.expected_plan_revision:
+        raise FoundationError("stale_plan", "Plan revision changed")
+    for reference in plan.plan.basis + parent.inputs:
+        _current_artifact(
+            connection,
+            reference,
+            actor=request.actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
+    instances = {item.key: item for item in _obligations(connection, request.work_id, definition)}
+    selected = instances.get(request.key)
+    if selected is None:
+        raise FoundationError("not_found", "Method does not declare this obligation")
+    if selected.revision != request.expected_obligation_revision:
+        raise FoundationError("stale_obligation", "Obligation already changed")
+    if parent.status != "proposed":
+        raise FoundationError("work_closed", f"Parent Work is {parent.status}")
+    condition = selected.definition.applicability
+    if not isinstance(condition, ChoiceApplicability):
+        raise FoundationError(
+            "unconditional_obligation", f"Obligation {request.key} applies always"
+        )
+    if selected.choice is not None and choice_holds(connection, selected.choice):
+        raise FoundationError(
+            "applicability_resolved",
+            f"Obligation {request.key} is {selected.applicability} by Decision "
+            f"{selected.choice.decision_id}@{selected.choice.revision}",
+        )
+    applicability = resolve_applicability(connection, request.work_id, condition, request.choice)
+    next_instance = ObligationRevision(
+        parent_work_id=request.work_id,
+        key=request.key,
+        revision=selected.revision + 1,
+        definition=selected.definition,
+        applicability=applicability,
+        status="open",
+        basis=request.basis,
+        operation_id=request.operation_id,
+        created_at=datetime.fromisoformat(now),
+        choice=request.choice,
+    )
+    connection.execute(
+        "INSERT INTO work_obligation_revisions(parent_id, key, revision, payload, operation_id, "
+        "created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        (
+            str(request.work_id),
+            request.key,
+            next_instance.revision,
+            next_instance.model_dump_json().encode("utf-8"),
+            str(request.operation_id),
+            now,
+        ),
+    )
+    return {
+        "work_id": str(request.work_id),
+        "key": request.key,
+        "revision": next_instance.revision,
+        "applicability": applicability,
+        "choice": request.choice.model_dump(mode="json"),
+    }, [
+        {"record_id": str(request.work_id), "revision": plan.revision},
+        {"record_id": str(request.choice.decision_id), "revision": request.choice.revision},
     ]
 
 
@@ -1199,6 +1350,7 @@ def check_child_plan(
         connection,
         plan.plan,
         node.readiness,
+        work_id=work_id,
         actor=actor,
         epoch=epoch,
         grants=grants,
@@ -1381,7 +1533,7 @@ def check_composite_action(
             decisions=decisions,
         )
         return
-    _definition, plan = _parent_current(
+    definition, plan = _parent_current(
         connection, work_id, state, actor=actor, epoch=epoch, grants=grants, decisions=decisions
     )
     if isinstance(request, LinkWorkOutputRequest):
@@ -1391,6 +1543,12 @@ def check_composite_action(
         )
         if bound is not None:
             _require_open_branch(connection, plan.plan, bound.role, f"Output {bound.parent_slot}")
+        # A later opposite choice blocks integration relying on a recorded resolution.
+        require_consistent_resolutions(
+            connection,
+            _obligations(connection, work_id, definition),
+            f"Output {request.output.slot}",
+        )
 
 
 def _parent_current(
@@ -1460,12 +1618,31 @@ def check_parent_acceptance(
         connection, work_id, state, actor=actor, epoch=epoch, grants=grants, decisions=decisions
     )
     instances = _obligations(connection, work_id, definition)
-    unmet = [item for item in instances if item.status != "satisfied" or item.evidence is None]
+    applicability = {item.key: obligation_applicability(connection, item) for item in instances}
+    for instance in instances:
+        # A formal conflict of applicable choices is never settled by time or scope.
+        conflicting = applicability[instance.key][1]
+        if conflicting:
+            raise FoundationError(
+                "decision_conflict",
+                f"Choices for obligation {instance.key} disagree: "
+                + ", ".join(f"Decision {item.decision_id}@{item.revision}" for item in conflicting),
+            )
+    for instance in instances:
+        if applicability[instance.key][0] == "applicability_stale":
+            raise FoundationError(
+                "stale_basis", f"Applicability of obligation {instance.key} needs a new resolution"
+            )
+    active = [item for item in instances if applicability[item.key][0] == "active"]
+    unmet = [item for item in active if item.status != "satisfied" or item.evidence is None]
     for instance in unmet:
         # A closed branch can never satisfy its obligation: name it before open ones.
         _require_open_branch(
             connection, plan.plan, instance.definition.role, f"Obligation {instance.key}"
         )
+    unresolved = [item.key for item in instances if applicability[item.key][0] == "unresolved"]
+    if unresolved:
+        raise FoundationError("obligation_unresolved", f"Obligation {unresolved[0]} is unresolved")
     if unmet:
         raise FoundationError("obligation_open", f"Obligation {unmet[0].key} is open")
     linked = {item.slot: item.artifact for item in state.linked_outputs}
@@ -1489,12 +1666,14 @@ def check_parent_acceptance(
         connection,
         plan.plan,
         plan.plan.completion,
+        work_id=work_id,
         actor=actor,
         epoch=epoch,
         grants=grants,
         decisions=decisions,
     )
-    for instance in instances:
+    # An inactive obligation needs no result: only active ones name exact evidence.
+    for instance in active:
         actual = _accepted_output(
             connection,
             plan.plan,
@@ -1585,7 +1764,11 @@ def _premises(
         for leaf in _conditions(condition):
             if leaf.kind == "artifact_current" and leaf.artifact is not None:
                 artifacts.add(leaf.artifact)
-            elif leaf.kind == "decision_active" and leaf.decision_id and leaf.decision_revision:
+            elif (
+                leaf.kind in ("decision_active", "decision_value")
+                and leaf.decision_id
+                and leaf.decision_revision
+            ):
                 decision_refs.add(
                     DecisionRef(decision_id=leaf.decision_id, revision=leaf.decision_revision)
                 )

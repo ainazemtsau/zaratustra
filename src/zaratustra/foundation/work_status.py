@@ -10,6 +10,7 @@ import sqlite3
 from pathlib import Path
 from uuid import UUID
 
+from .choices import choice_leaf_conflict, obligation_applicability
 from .composition import (
     REDACTED_DEPENDENCY,
     _accepted_output,
@@ -27,9 +28,11 @@ from .models import (
     CLOSED_OUTCOMES,
     ArtifactRef,
     ChildProgress,
+    ChoiceApplicability,
     ClosedOutcome,
     CompositionView,
-    MethodDefinition,
+    DecisionRef,
+    MethodObligation,
     MethodRef,
     ObligationProgress,
     ObligationRevision,
@@ -59,19 +62,24 @@ def _schema(connection: sqlite3.Connection) -> int:
 
 
 def _unmet(
-    connection: sqlite3.Connection, plan: WorkPlan, condition: PlanCondition | None
+    connection: sqlite3.Connection,
+    plan: WorkPlan,
+    condition: PlanCondition | None,
+    work_id: UUID,
 ) -> list[StatusReason]:
-    """Structural readiness gaps; current rights stay with the acting operation."""
+    """Structural gaps of the condition of ``work_id``; rights stay with the operation."""
 
     if condition is None:
         return []
     if condition.kind == "all":
-        return [gap for member in condition.members for gap in _unmet(connection, plan, member)]
+        return [
+            gap for member in condition.members for gap in _unmet(connection, plan, member, work_id)
+        ]
     if condition.kind == "any":
         gaps: list[StatusReason] = []
         possible: list[StatusReason] = []
         for member in condition.members:
-            found = _unmet(connection, plan, member)
+            found = _unmet(connection, plan, member, work_id)
             if not found:
                 return []
             gaps.extend(found)
@@ -80,8 +88,28 @@ def _unmet(
         # A member that may still become true hides alternatives closed for good.
         return possible or gaps
     try:
-        _evaluate(connection, plan, condition, actor=None, epoch=0, grants=[], decisions=[])
+        _evaluate(
+            connection,
+            plan,
+            condition,
+            work_id=work_id,
+            actor=None,
+            epoch=0,
+            grants=[],
+            decisions=[],
+        )
     except FoundationError as error:
+        if condition.kind == "decision_value" and error.code == "decision_conflict":
+            # Every choice in the formal conflict keeps its own address.
+            return [
+                StatusReason(
+                    code=error.code,
+                    record_id=reference.decision_id,
+                    revision=reference.revision,
+                    name=condition.name,
+                )
+                for reference in choice_leaf_conflict(connection, work_id, condition)
+            ]
         if condition.role is not None:
             child = next((item for item in plan.children if item.role == condition.role), None)
             return [
@@ -104,20 +132,24 @@ def _unmet(
                 code=error.code,
                 record_id=condition.decision_id,
                 revision=condition.decision_revision,
+                name=condition.name,
             )
         ]
     return []
 
 
 def _condition_gaps(
-    connection: sqlite3.Connection, plan: WorkPlan, condition: PlanCondition | None
+    connection: sqlite3.Connection,
+    plan: WorkPlan,
+    condition: PlanCondition | None,
+    work_id: UUID,
 ) -> tuple[list[StatusReason], list[StatusReason]]:
     """Split unmet leaves into open progress and prerequisites Core refuses now."""
 
     if condition is None:
         return [], []
     if condition.kind in ("all", "any"):
-        parts = [_condition_gaps(connection, plan, member) for member in condition.members]
+        parts = [_condition_gaps(connection, plan, member, work_id) for member in condition.members]
         if condition.kind == "all":
             return (
                 [gap for pending, _ in parts for gap in pending],
@@ -130,7 +162,7 @@ def _condition_gaps(
         if open_members:
             return [gap for pending in open_members for gap in pending], []
         return [], [gap for _, blocking in parts for gap in blocking]
-    gaps = _unmet(connection, plan, condition)
+    gaps = _unmet(connection, plan, condition, work_id)
     return (
         [gap for gap in gaps if gap.code == "dependency_open"],
         [gap for gap in gaps if gap.code != "dependency_open"],
@@ -157,11 +189,16 @@ def _artifact_gaps(
 
 def _parent_gaps(
     connection: sqlite3.Connection,
+    work_id: UUID,
     plan: WorkPlan,
     state: WorkState,
-    definition: MethodDefinition,
+    obligations: tuple[MethodObligation, ...],
 ) -> list[StatusReason]:
-    """Parent prerequisites that Core acceptance refuses now, each with its address."""
+    """Parent prerequisites that Core acceptance refuses now, each with its address.
+
+    ``obligations`` are the declared obligations that may still need a result; a validly
+    inactive one needs none.
+    """
 
     gaps = _artifact_gaps(
         connection,
@@ -182,11 +219,11 @@ def _parent_gaps(
             PlanCondition(
                 kind="accepted_output", role=item.role, slot=item.slot, media_type=item.media_type
             )
-            for item in definition.obligations
+            for item in obligations
         ]
     )
     for condition in required:
-        gaps.extend(_condition_gaps(connection, plan, condition)[1])
+        gaps.extend(_condition_gaps(connection, plan, condition, work_id)[1])
     return list(dict.fromkeys(gaps))
 
 
@@ -270,7 +307,7 @@ def _child_gaps(
         ]
     # Core issue and every child effect require these exact Artifacts to stay current.
     artifact_gaps = _artifact_gaps(connection, plan.plan.basis + parent.inputs + state.inputs)
-    dependency_gaps = artifact_gaps + _unmet(connection, plan.plan, node.readiness)
+    dependency_gaps = artifact_gaps + _unmet(connection, plan.plan, node.readiness, work_id)
     if issued is None:
         return dependency_gaps
     try:
@@ -484,10 +521,12 @@ def _children(connection: sqlite3.Connection, parent_id: UUID) -> tuple[ChildPro
     return tuple(progress)
 
 
-def _obligation_progress(
+def _obligation_states(
     connection: sqlite3.Connection, parent_id: UUID
-) -> tuple[ObligationProgress, ...]:
-    latest: dict[str, ObligationProgress] = {}
+) -> tuple[tuple[ObligationProgress, tuple[DecisionRef, ...]], ...]:
+    """Latest instance of each obligation with derived applicability and any conflict."""
+
+    latest: dict[str, tuple[ObligationProgress, tuple[DecisionRef, ...]]] = {}
     for key, _revision, payload in connection.execute(
         "SELECT key, revision, payload FROM work_obligation_revisions WHERE parent_id = ? "
         "ORDER BY key, revision DESC",
@@ -496,14 +535,26 @@ def _obligation_progress(
         if key in latest or bytes(payload) == REDACTED_DEPENDENCY:
             continue
         instance = ObligationRevision.model_validate_json(bytes(payload))
-        latest[key] = ObligationProgress(
-            key=instance.key,
-            revision=instance.revision,
-            role=instance.definition.role,
-            status=instance.status,
-            evidence=instance.evidence,
+        applicability, conflicting = obligation_applicability(connection, instance)
+        latest[key] = (
+            ObligationProgress(
+                key=instance.key,
+                revision=instance.revision,
+                role=instance.definition.role,
+                applicability=applicability,
+                status=instance.status,
+                evidence=instance.evidence,
+                choice=instance.choice,
+            ),
+            conflicting,
         )
     return tuple(latest[key] for key in sorted(latest))
+
+
+def _obligation_progress(
+    connection: sqlite3.Connection, parent_id: UUID
+) -> tuple[ObligationProgress, ...]:
+    return tuple(progress for progress, _ in _obligation_states(connection, parent_id))
 
 
 def _branch_reviews(
@@ -514,7 +565,12 @@ def _branch_reviews(
     """Closed branches that the current plan or an open obligation still refers to."""
 
     planned = {child.role for child in plan.children}
-    needed = {item.role for item in obligations if item.status == "open"}
+    # A validly inactive obligation needs no result from its role.
+    needed = {
+        item.role
+        for item in obligations
+        if item.status == "open" and item.applicability != "inactive"
+    }
     return [
         StatusReason(code="branch_review", role=child.role, record_id=child.work_id)
         for child in children
@@ -535,7 +591,14 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
             reasons=(StatusReason(code=error.code, record_id=work_id),),
         )
     children = _children(connection, work_id)
-    obligations = _obligation_progress(connection, work_id)
+    states = _obligation_states(connection, work_id)
+    obligations = tuple(progress for progress, _ in states)
+    applicability = {item.key: item.applicability for item in obligations}
+    names = {
+        item.key: item.applicability.choice
+        for item in definition.obligations
+        if isinstance(item.applicability, ChoiceApplicability)
+    }
     phases: tuple[tuple[WorkLifecycle, str], ...] = (
         ("waiting", "child_waiting"),
         ("running", "child_running"),
@@ -549,13 +612,34 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
         if child.status.status == phase
     ]
     reviews = _branch_reviews(plan.plan, children, obligations)
+    # A formal conflict of applicable choices names every address; it is settled only
+    # by revising or revoking a choice, never by scope or time.
+    conflicts = [
+        StatusReason(
+            code="decision_conflict",
+            key=progress.key,
+            name=names.get(progress.key),
+            record_id=reference.decision_id,
+            revision=reference.revision,
+        )
+        for progress, conflicting in states
+        for reference in conflicting
+    ]
     # A stale prerequisite blocks the parent under this plan whatever its children do; a
     # branch closed for good is reviewed instead (its dependents read dependency_closed).
     stale = [
         gap
-        for gap in _parent_gaps(connection, plan.plan, state, definition)
+        for gap in _parent_gaps(
+            connection,
+            work_id,
+            plan.plan,
+            state,
+            tuple(
+                item for item in definition.obligations if applicability.get(item.key) != "inactive"
+            ),
+        )
         if gap.code != "dependency_closed"
-    ]
+    ] + conflicts
     if stale:
         return WorkStatus(
             work_id=work_id, status="blocked", reasons=tuple(stale + active + reviews)
@@ -564,13 +648,19 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
         if any(child.status.status == phase for child in children):
             return WorkStatus(work_id=work_id, status=phase, reasons=tuple(active + reviews))
     declared = {item.key for item in definition.obligations}
-    satisfied = {item.key for item in obligations if item.status == "satisfied"}
+    settled = {
+        item.key
+        for item in obligations
+        if item.applicability == "inactive"
+        or (item.applicability == "active" and item.status == "satisfied")
+    }
     refusal: str | None = None
-    if satisfied == declared:
+    if settled == declared:
         # Acceptance is pending exactly when Core's own acceptance rules hold structurally:
-        # every declared obligation (none may be declared), exact bound outputs and the
-        # completion, which may need only some children (any). Other children need not
-        # have succeeded. The separate acceptance operation still checks current rights.
+        # every declared obligation (none may be declared) is satisfied or validly inactive,
+        # exact bound outputs and the completion, which may need only some children (any).
+        # Other children need not have succeeded. The separate acceptance operation still
+        # checks current rights.
         try:
             check_parent_acceptance(
                 connection, work_id, state, actor=None, epoch=0, grants=[], decisions=[]
@@ -602,8 +692,30 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
     ] + [
         StatusReason(code="confirmation_pending", role=item.role, record_id=work_id)
         for item in obligations
-        if item.status == "open" and item.role in succeeded
+        if item.applicability == "active" and item.status == "open" and item.role in succeeded
     ]
+    # Resolving applicability is the next step of an unresolved or stale obligation.
+    for item in obligations:
+        if item.applicability == "unresolved":
+            next_steps.append(
+                StatusReason(
+                    code="applicability_pending",
+                    key=item.key,
+                    name=names.get(item.key),
+                    record_id=work_id,
+                )
+            )
+        elif item.applicability == "applicability_stale":
+            assert item.choice is not None
+            next_steps.append(
+                StatusReason(
+                    code="applicability_stale",
+                    key=item.key,
+                    name=names.get(item.key),
+                    record_id=item.choice.decision_id,
+                    revision=item.choice.revision,
+                )
+            )
     next_steps += _pending_links(connection, plan.plan, state)
     if next_steps or reviews:
         # A failed branch makes the parent ready for review when nothing waits or runs.
