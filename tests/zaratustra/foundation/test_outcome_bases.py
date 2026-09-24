@@ -811,7 +811,8 @@ def test_basis_recorded_after_a_deletion_is_neither_withheld_nor_retired(tmp_pat
     basis = f"Checked under the revised plan {uuid4()}"
     outcome = _accept(root, space, owner, roles["a"], "checked", basis)
 
-    # Written after X was gone, the basis could not copy it: schema 7 keeps it too.
+    # Recorded after X's deletion, so the order keeps it, as schema 7 does. The order
+    # decides only this retrospective sanitation; it does not prove the text holds no copy.
     _assert_kept(root, owner, roles["a"], outcome, basis)
     status = complete_deletions(root, owner)
     assert status.live_store_sanitized and status.retained_bases == ()

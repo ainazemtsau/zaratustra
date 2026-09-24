@@ -2174,8 +2174,10 @@ def _retained_bases(connection: sqlite3.Connection, work_id: str | None = None) 
     """Held bases with a structural dependency deleted after the outcome was recorded.
 
     Schema 7 retires such a basis in the deleting transaction. Code before this rule left
-    it on schemas 2-6, so only the explicit upgrade to 7 can retire it. A basis recorded
-    after the deletion was written without the deleted content and stays, as in schema 7.
+    it on schemas 2-6, so only the explicit upgrade to 7 can retire it. The recorded order
+    of the two operations decides only this retrospective sanitation: a basis recorded
+    after the deletion stays, as schema 7 keeps it. The order does not prove that its text
+    holds no copy of the deleted content; such a quote is an uncovered case.
     """
 
     deleted_artifacts, deleted_works = _deleted_subjects(connection)
