@@ -66,10 +66,15 @@ that held at their exact address (retained `record_revisions` metadata, never
 deleted bytes) and then changed; Core never assigns it. A composite parent closes
 only after every child is closed; there is no cascade. A closed child makes
 dependent leaves `dependency_closed`; `any` is closed only when every member is.
-Deleting an Artifact named by a closed Work revision (input, linked output or
-premise) retires that closure's basis (`basis = null`) and receipt in
-`sanitize_deleted_dependency`; the outcome and addresses stay. See
-`docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.1.md`.
+At schema 7, `sanitize_deleted_dependency` also retires every WorkAcceptance or
+WorkClosure basis (`basis = null`, receipt out of replay, holding backups
+contaminated) that structurally depends on the deleted Artifact or child Work: the
+Work's own revisions, its own plan history and children, or its parent's plan history
+(global, own and upstream role addresses, upstream children), read through the
+retained index once sanitized. Outcomes, audit, obligations and independent bases
+stay. Schemas 2-6 never store a retired basis; the explicit 6 to 7 upgrade retires
+those whose dependencies were already deleted and then needs `maintenance.delete`.
+See `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.1.md`.
 
 The foundation stores Work execution records but never imports Pi or runs a model.
 Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,
