@@ -8,9 +8,13 @@
   Stage 5 is owner-accepted at `245e7288c08eb4d49c84edd89f01e746a45c37a5`.
   The owner accepted Stage 6 pass 1 at
   `29d887d41f1639dc6ddb354a2039603cb1a30d94`; see
-  `docs/core-v0.1/STAGE6-PASS1-ACCEPTANCE.md`. On 2026-09-24 the owner
-  authorized only Stage 6 pass 2 implementation from that commit; passes 3–4,
-  real model calls and development migration are not authorized.
+  `docs/core-v0.1/STAGE6-PASS1-ACCEPTANCE.md`. The owner accepted Stage 6
+  pass 2 at `d33b676c57b8319cb4a4d2527f64d41fe800c154`; see
+  `docs/core-v0.1/STAGE6-PASS2-ACCEPTANCE.md`. On 2026-09-24 the owner
+  authorized only a detailed pass 3 plan, now
+  `docs/core-v0.1/STAGE6-PASS3-PLAN.md`, and said not to start its
+  implementation. Pass 3 implementation, pass 4, real model calls and
+  development migration are not authorized.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
 - Stage 1 stopped after recording the G07-1 DBOS and G08-1 Pi technical outcomes.
@@ -65,7 +69,9 @@ materialized obligations, child issue and separate parent acceptance; see
 `STAGE6-PASS1-IMPLEMENTATION.md`. Pass 2 adds explicit schema 6 child Attempt plan
 pins, runs an issued child through the same assigned Pi RPC with Core rechecks
 before every effect, and derives proposed/ready/running/waiting/blocked/succeeded
-from Core records; see `STAGE6-PASS2-IMPLEMENTATION.md`.
+from Core records; see `STAGE6-PASS2-IMPLEMENTATION.md`. Pass 2 is owner-accepted
+at `d33b676`. `STAGE6-PASS3-PLAN.md` proposes pass 3 in parts 3.1–3.10; none is
+implemented.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,
@@ -142,9 +148,9 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
 
 ## Constitution
 - Keep the accepted Core v0.1 functional composition and completed Stage 1–5
-  evidence. Stage 5 and Stage 6 pass 1 are owner-accepted at the exact commits
-  above; Stage 6 pass 2 is an owner-authorized implementation candidate, not
-  owner acceptance of Stage 6.
+  evidence. Stage 5 and Stage 6 passes 1–2 are owner-accepted at the exact
+  commits above; this is not owner acceptance of Stage 6. Stage 6 pass 3 has
+  planning authority only.
   Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.
