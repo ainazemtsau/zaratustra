@@ -15,6 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_SQLITE_SHA256 = "79FD9EC89DBA3F8BD64529A2CA8E9DDE6AE6EDC486C55A1D3F1CE77975A8375C"
+ISOLATED_UTF8 = ("-I", "-X", "utf8")
 
 
 def _command(*parts: str, cwd: Path) -> None:
@@ -133,7 +134,6 @@ def main() -> int:
             environment = dict(os.environ)
             for name in ("PYTHONPATH", "PYTHONHOME", "VIRTUAL_ENV"):
                 environment.pop(name, None)
-            environment["PYTHONIOENCODING"] = "utf-8"
             if sqlite_source is not None:
                 copy = base / "sqlite3.dll"
                 shutil.copyfile(sqlite_source, copy)
@@ -141,7 +141,8 @@ def main() -> int:
             trial = subprocess.run(
                 [
                     str(python),
-                    "-I",
+                    # -I ignores PYTHONIOENCODING; UTF-8 mode is the child's explicit encoding.
+                    *ISOLATED_UTF8,
                     str(script),
                     "--output",
                     str(working / "trial"),

@@ -31,7 +31,7 @@ schema 6; чтение старой схемы её не меняет. Schema 6 
 | Запрос/запись остановки и исхода вызова | Доступны без проверки плана: остановка и учёт уже отправленного вызова не должны ждать актуального плана. `unknown` и удержание резерва/ресурса остаются правилами Stage 5. |
 | Ресурс ребёнка | Создание и ревизия разрешены; это настройка, не эффект. |
 | Интерактивная Stage 4 Attempt, исполнение родителя | По-прежнему `unsupported_composite_execution`. Schema 5 без явного upgrade также отказывает дочернему исполнению. |
-| `LinkWorkOutputRequest`, `AcceptWorkRequest` | Прежний прямой путь первого прохода; принятие результата остаётся отдельной операцией. |
+| `LinkWorkOutputRequest`, `AcceptWorkRequest` | Прежний прямой путь первого прохода; принятие результата остаётся отдельной операцией. Правила принятия родителя собраны в `check_parent_acceptance` без изменения порядка проверок и прав; тот же код без actor задаёт производное `acceptance_pending`. |
 
 Путь `method="none"` и прежние ревизии не меняются: ни закрепления, ни поля
 `plan` в его квитанциях нет.
@@ -47,18 +47,33 @@ schema 6; чтение старой схемы её не меняет. Schema 6 
 | Состояние | Когда |
 |---|---|
 | `succeeded` | Работа отдельно принята. |
-| `blocked` | Назначение `unknown` (исход внешнего вызова не установлен, ресурс удержан); не выполнено условие готовности, текущий вход/основание, выдача в текущем плане или закрепление Attempt; план или вход недоступны после удаления. Причины адресные (`dependency_open`, `stale_basis`, `stale_plan`, `content_unavailable`, `outcome_unknown`, …). |
+| `blocked` | Назначение `unknown` (исход внешнего вызова не установлен, ресурс удержан); не выполнено условие готовности, текущий вход/основание, выдача в текущем плане или закрепление Attempt; план или вход недоступны после удаления. У родителя — устаревшие основание, вход, связанный выход, лист условия завершения (Artifact или Decision) либо результат ребёнка для привязки или обязательства. Причины адресные: Artifact/Decision с ревизией или Work роли (`dependency_open`, `stale_basis`, `stale_plan`, `content_unavailable`, `outcome_unknown`, …). |
 | `waiting` | У действующей Attempt открыт адресный вопрос; указан `wait_id`. |
 | `running` | Launch claim зафиксирован, либо после ответа той же Attempt записан новый эффект; интерактивная Stage 4 Attempt активна; остановка запрошена, но её исход ещё не записан (`stop_requested`: попытка идёт, ресурс удержан, новые эффекты отклоняются). |
-| `ready` | Можно запускать: выдан и готов, назначен до claim (`launch_pending`), либо ответ сделал продолжение готовым (`continuation_ready`). |
+| `ready` | Можно запускать: выдан и готов, назначен до claim (`launch_pending`), либо ответ сделал продолжение готовым (`continuation_ready`). У родителя — доступен следующий шаг, в том числе `output_link_pending` с адресом точного принятого результата ребёнка для слота, или `acceptance_pending`, только если структурные правила принятия Core выполнены. |
 | `proposed` | Ребёнок ещё не выдан, но его условие выполнено (`issue_pending`), либо результат опубликован и ждёт отдельного принятия (`result_proposed`). |
 
-Состояние родителя выводится из детей и обязательств: `waiting`/`running`, если
-такова хотя бы одна ветвь; `ready`, если доступен следующий шаг (выдача,
-запуск, принятие результата ребёнка, подтверждение обязательства или принятие
-родителя); иначе `blocked`. `CompositionView` содержит только адреса,
-закрепления, состояния детей и обязательств. `failed/cancelled/stale` не
-вводятся: они относятся к проходу 3.
+Состояние родителя выводится по тем же правилам Core, что и его операции:
+
+1. Устаревшая предпосылка даёт `blocked` с адресом раньше состояний детей. Такими
+   предпосылками считаются основание, входы, связанные выходы, листы условия
+   завершения, а также результаты детей для привязок выхода и обязательств.
+   Их Core отклоняет при принятии (`stale_basis`, `content_unavailable`, …).
+   Ещё не выполненный лист (`dependency_open`) предпосылку не блокирует.
+   Условие `any` блокирует, только если ни один его член уже не может выполниться.
+2. `waiting`/`running`, если такова хотя бы одна ветвь.
+3. `ready:acceptance_pending`, только если проходит `check_parent_acceptance`:
+   те же правила, что и в `AcceptWorkRequest`, но без actor. Права `work.accept`
+   и `method.use` по-прежнему проверяет сама операция принятия, а принятие
+   остаётся отдельной операцией.
+4. Иначе `ready`, если доступен следующий шаг: выдача, запуск, принятие
+   ребёнка, подтверждение обязательства или связь выхода (`output_link_pending`).
+5. Иначе `blocked`.
+
+Невыданный ребёнок получает адресные причины из тех же проверок, что и
+`IssueChildWorkRequest`: текущие основание, входы родителя и собственные входы
+ребёнка. `CompositionView` содержит только адреса, закрепления, состояния детей
+и обязательств. `failed/cancelled/stale` не вводятся: они относятся к проходу 3.
 
 ## Pi-адаптер
 
@@ -103,9 +118,34 @@ schema 6; чтение старой схемы её не меняет. Schema 6 
 устаревшего закрепления использует явную fault injection в SQLite, поскольку в
 этом проходе публичной ревизии плана после выдачи нет.
 
+Две регрессии проверяют родителя после принятия A и B, подтверждения
+обязательств и связи выхода:
+
+- `test_parent_blocks_when_its_input_revision_changes`: повышена ревизия
+  входного Artifact.
+- `test_parent_blocks_when_its_completion_decision_is_revoked`: отозван Decision
+  из условия завершения.
+
+В обоих случаях `read_work_status` и `read_execution(...).status` дают `blocked`
+с единственной причиной `stale_basis`, адресованной этому Artifact/Decision
+ревизии 1. `AcceptWorkRequest` отклоняется `stale_basis`, и Work остаётся
+`proposed`. До связи выхода родитель показывает `output_link_pending`, а
+преждевременное принятие отклоняется `output_mismatch`.
+`test_unissued_child_and_parent_show_the_issue_refusal_address` меняет вход до
+выдачи: невыданный ребёнок и родитель — `blocked` с `stale_basis` на этом
+Artifact, и выдача отклоняется тем же кодом.
+
 Живой сценарий `tools.probe_stage6_rpc` использует обычный Pi 0.87.0 RPC, DBOS
 3.0.0 и localhost SSE provider. `tools.probe_install_stage6` собирает wheel,
-ставит его в новый venv вне checkout и запускает тот же файл через `python -I`.
+ставит его в новый venv вне checkout и запускает тот же файл изолированно.
+
+Каждый изолированный дочерний Python (reopen, перезапуск между удалениями и
+внешний процесс установленного wheel) запускается как `python -I -X utf8`.
+`-I` игнорирует `PYTHONIOENCODING`, а на Windows вывод в pipe иначе кодируется
+ANSI code page, и JSON с кириллицей падает с `UnicodeEncodeError`. Родитель
+декодирует stdout как UTF-8. `tests/tools/test_probe_stage6_rpc.py` проверяет,
+что с флагами обоих probe изолированный дочерний процесс возвращает точный
+не-ASCII JSON.
 
 ```powershell
 $env:UV_CACHE_DIR = Join-Path (Get-Location) '_scratch\stage5-plan-uv-cache'
@@ -126,12 +166,21 @@ uv run --locked python -m tools.probe_install_stage6 --output _scratch\stage6-pa
 Проверка выполнена в облачном Linux-контейнере, а не в рабочем дереве владельца
 на Windows. Точный Python 3.13.7 с SQLite 3.53.3 и FTS5 взят из conda-forge
 (`python-3.13.7-h2b335a9_100_cp313`, `libsqlite-3.53.3-h0c1763c_0`); на Linux
-Core допускает runtime по версии и FTS5, без Windows DLL. Отчёты по итоговому
-исходному коду: `_scratch/stage6-pass2-rpc-c/report.json` (checkout) и
-`_scratch/stage6-pass2-installed-c/report.json` (wheel SHA-256
-`E486981A25DD9E1D34619BD6D4311FE7A3F7EC0435688CF8744ED76747B31A24`, новый venv
-в `/tmp` вне checkout; сценарий и повторное открытие загрузили Core, DBOS и
-расширение из `site-packages` этого venv).
+Core допускает runtime по версии и FTS5, без Windows DLL.
+
+Отчёты по итоговому исходному коду после исправлений ревью:
+- `_scratch/stage6-pass2-rpc-d/report.json` — checkout.
+- `_scratch/stage6-pass2-installed-d/report.json` — wheel SHA-256
+  `9FE6E3A6268D3AEBDDD495BB657EF1BE6C3ACA27A73778D5339812536EFE2D91`, новый venv
+  в `/tmp` вне checkout. Сценарий и повторное открытие загрузили Core, DBOS и
+  расширение из `site-packages` этого venv.
+- `_scratch/stage6-pass2-cp1252-after/report.json` и
+  `_scratch/stage6-pass2-cp1252-installed/report.json` — те же сценарии под
+  собранной локалью `en_US.CP1252`.
+
+Файл probe из `961e203` под той же локалью упал в `_reopen_in_new_process` с
+`UnicodeEncodeError` (`_scratch/stage6-pass2-cp1252-before.log`).
+Предыдущие прогоны `-c` относятся к `961e203`.
 
 - План v1 → v2 до запуска, запрос со старой ревизией — `stale_plan`, Method v1
   закреплён. Ранний B: выдача `dependency_open`, назначение `child_not_issued`,
@@ -151,9 +200,10 @@ Core допускает runtime по версии и FTS5, без Windows DLL. �
   digest каждого вызова совпал с телом HTTP.
 - Отдельное принятие A через bridge сделало B `proposed:issue_pending`; выдача
   B вставила точный Artifact результата A во входы B. B прошёл Pi RPC одним HTTP
-  и был отдельно принят. Преждевременное принятие родителя — `obligation_open`;
-  после двух подтверждений и связи выхода родитель `succeeded`, повтор — прежняя
-  квитанция, Activity `ongoing`.
+  и был отдельно принят. Преждевременное принятие родителя — `obligation_open`.
+  После двух подтверждений родитель показал `ready:output_link_pending`; после
+  связи выхода принят, `succeeded`, повтор — прежняя квитанция, Activity
+  `ongoing`.
 - Независимый составной ребёнок C с изменённым Decision после назначения:
   `run_assigned` → `stale_basis`, 0 HTTP, 0 invocations, назначение `stopped`,
   Attempt `interrupted`, Pi home не создан, состояние `blocked`.
@@ -173,13 +223,46 @@ Core допускает runtime по версии и FTS5, без Windows DLL. �
 
 ## Пределы
 
-Не проверялись: запуск на Windows в этом проходе, ревизия плана во время
-исполнения, переход версии Method, waiver и inactive/unresolved, несколько
-параллельных детей, вложенный составной Work, исходы failed/cancelled/stale,
-аварийная матрица commit/checkpoint/смерти Pi и отзыв права во время хода для
-составного ребёнка, реальный provider, изменяющие инструменты. Интеграцию
-отдельной Attempt родителя этот проход не вводит: выход родителя по-прежнему
-связывается с точным принятым результатом ребёнка. Удаление управляемых копий не
-охватывает внешние копии, OS snapshots и provider retention.
+Не проверялись:
+- ревизия плана во время исполнения и переход версии Method;
+- waiver и inactive/unresolved;
+- несколько параллельных детей и вложенный составной Work;
+- исходы failed/cancelled/stale;
+- аварийная матрица commit/checkpoint/смерти Pi и отзыв права во время хода
+  для составного ребёнка;
+- реальный provider и изменяющие инструменты.
+
+Интеграцию отдельной Attempt родителя этот проход не вводит: выход родителя
+по-прежнему связывается с точным принятым результатом ребёнка. Удаление
+управляемых копий не охватывает внешние копии, OS snapshots и provider
+retention. Независимая Windows-проверка владельца на
+`961e203e0aadf836bf6031b47427fae5fc9bf08c` прошла `tools.check --deliver`
+(546 тестов, 21 контракт, типы, сборка; SHA-256 wheel совпал). Оба Windows-probe
+прошли полностью только с диагностическим `-X utf8`, который теперь внесён в
+probe. Исправления этого раунда на Windows ещё не проверялись.
+
+## Ограничения Linux-проверок
+
+Gates не ослаблены: `tools/check.py`, `validation.config` и существующие тесты
+не менялись ради Linux. Сами ограничения:
+
+- `tools.check --deliver` на Linux проходит hygiene, структуру отчёта и Ruff, а
+  затем останавливается на mypy: 35 ошибок, все про атрибуты, существующие
+  только на Windows (`msvcrt.locking`/`LK_*`, `ctypes.WinDLL`/`get_last_error`).
+  Они находятся в 11 файлах, не изменённых с `29d887d`. Остальные шаги
+  выполняются отдельно; `mypy --platform win32` чист. Обязательный полный
+  прогон — Windows.
+- `test_import_refuses_unfixed_sqlite_runtime_in_a_fresh_process` на Linux
+  падает. Тест ожидает неподдерживаемый встроенный SQLite, а conda-forge Python
+  уже содержит точный 3.53.3. `29d887d` и `961e203` падают так же.
+- В Linux-локалях C/POSIX Python и так работает в UTF-8 mode, поэтому
+  `tests/tools/test_probe_stage6_rpc.py` здесь не различает отсутствие флага;
+  различает Windows. На Linux дефект воспроизведён вручную: локаль
+  `en_US.CP1252` собрана glibc `localedef` и подключена через `LOCPATH`.
+- Хук `.githooks/pre-commit` вызывает `#!/usr/bin/env python`; в контейнере это
+  системный Python 3.11, который не разбирает синтаксис 3.13. Hygiene-хук
+  запускался с Python 3.13.7 в `PATH`.
+- Pi runtime в игнорируемом `_scratch` дополнен верхнеуровневым
+  `@earendil-works/pi-ai@0.87.0` (см. выше).
 
 END_OF_FILE

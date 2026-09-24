@@ -44,6 +44,7 @@ from zaratustra.foundation import (
     RecoverRequest,
     RequestAttemptStopRequest,
     ResourceState,
+    ReviseArtifactRequest,
     ReviseDecisionRequest,
     SendInvocationRequest,
     StartAttemptRequest,
@@ -669,8 +670,22 @@ def test_parent_state_follows_obligations_and_acceptance(tmp_path: Path) -> None
             evidence=evidence,
             basis="Synthetic confirmation",
         )
-    ready = read_work_status(root, parent, owner)
-    assert ready.status == "ready" and _codes(ready) == ["acceptance_pending"]
+    # Core acceptance still needs the exact bound child result in the parent slot.
+    link = read_work_status(root, parent, owner)
+    assert link.status == "ready"
+    assert [(item.code, item.role, item.record_id, item.revision) for item in link.reasons] == [
+        ("output_link_pending", "b", b_output.artifact_id, b_output.revision)
+    ]
+    with pytest.raises(FoundationError, match="output_mismatch"):
+        _apply(
+            root,
+            space,
+            owner,
+            AcceptWorkRequest,
+            work_id=parent,
+            expected_revision=1,
+            basis="Premature synthetic parent acceptance",
+        )
     _apply(
         root,
         space,
@@ -680,6 +695,8 @@ def test_parent_state_follows_obligations_and_acceptance(tmp_path: Path) -> None
         expected_revision=1,
         output=LinkedOutput(slot="final", artifact=b_output),
     )
+    ready = read_work_status(root, parent, owner)
+    assert ready.status == "ready" and _codes(ready) == ["acceptance_pending"]
     _apply(
         root,
         space,
@@ -691,6 +708,157 @@ def test_parent_state_follows_obligations_and_acceptance(tmp_path: Path) -> None
     )
     assert read_work_status(root, parent, owner).status == "succeeded"
     assert read_activity(root, activity, owner).state.status == "ongoing"
+
+
+def _confirmed_parent(
+    root: Path, space: UUID, owner: LocalAuthority, parent: UUID, a: UUID, b: UUID
+) -> None:
+    _issue(root, space, owner, parent, a)
+    a_output = _result(root, space, owner, a, "checked", b"synthetic checked")
+    _issue(root, space, owner, parent, b)
+    b_output = _result(root, space, owner, b, "final", b"synthetic final")
+    for key, evidence in (("checked", a_output), ("final", b_output)):
+        _apply(
+            root,
+            space,
+            owner,
+            ConfirmObligationRequest,
+            work_id=parent,
+            key=key,
+            expected_plan_revision=1,
+            expected_obligation_revision=1,
+            evidence=evidence,
+            basis="Synthetic confirmation",
+        )
+    _apply(
+        root,
+        space,
+        owner,
+        LinkWorkOutputRequest,
+        work_id=parent,
+        expected_revision=1,
+        output=LinkedOutput(slot="final", artifact=b_output),
+    )
+    assert _codes(read_work_status(root, parent, owner)) == ["acceptance_pending"]
+
+
+def _assert_parent_blocked(
+    root: Path, space: UUID, owner: LocalAuthority, parent: UUID, record: UUID
+) -> None:
+    for status in (
+        read_work_status(root, parent, owner),
+        read_execution(root, parent, owner).status,
+    ):
+        assert status is not None and status.status == "blocked"
+        assert [(item.code, item.record_id, item.revision) for item in status.reasons] == [
+            ("stale_basis", record, 1)
+        ]
+    with pytest.raises(FoundationError, match="stale_basis"):
+        _apply(
+            root,
+            space,
+            owner,
+            AcceptWorkRequest,
+            work_id=parent,
+            expected_revision=2,
+            basis="Synthetic acceptance over a stale prerequisite",
+        )
+    assert read_work(root, parent, owner).state.status == "proposed"
+
+
+def test_parent_blocks_when_its_input_revision_changes(tmp_path: Path) -> None:
+    root, space, owner, _activity, source, _ref, parent, a, b, _plan, _create = _seed(tmp_path)
+    assert upgrade_child_execution_space(root, owner).schema_version == 6
+    _confirmed_parent(root, space, owner, parent, a, b)
+    _apply(
+        root,
+        space,
+        owner,
+        ReviseArtifactRequest,
+        artifact_id=source,
+        expected_revision=1,
+        media_type="text/plain",
+        content=b"synthetic source revised",
+    )
+    _assert_parent_blocked(root, space, owner, parent, source)
+
+
+def test_unissued_child_and_parent_show_the_issue_refusal_address(tmp_path: Path) -> None:
+    root, space, owner, _activity, source, _ref, parent, a, _b, _plan, _create = _seed(tmp_path)
+    assert upgrade_child_execution_space(root, owner).schema_version == 6
+    _apply(
+        root,
+        space,
+        owner,
+        ReviseArtifactRequest,
+        artifact_id=source,
+        expected_revision=1,
+        media_type="text/plain",
+        content=b"synthetic source revised before issue",
+    )
+    for work in (a, parent):
+        status = read_work_status(root, work, owner)
+        assert status.status == "blocked"
+        assert [(item.code, item.record_id, item.revision) for item in status.reasons] == [
+            ("stale_basis", source, 1)
+        ]
+    with pytest.raises(FoundationError, match="stale_basis"):
+        _issue(root, space, owner, parent, a)
+
+
+def test_parent_blocks_when_its_completion_decision_is_revoked(tmp_path: Path) -> None:
+    root, space, owner, _activity, _source, _ref, _parent, _a, _b, plan, create = _seed(tmp_path)
+    assert upgrade_child_execution_space(root, owner).schema_version == 6
+    decision = uuid4()
+    decision_state = DecisionState(
+        statement="Synthetic completion decision",
+        effect="require_grant",
+        actions=("space.inspect",),
+        subjects=("synthetic-nobody",),
+    )
+    _apply(root, space, owner, CreateDecisionRequest, decision_id=decision, state=decision_state)
+    parent, a, b = uuid4(), uuid4(), uuid4()
+    assert plan.completion is not None
+    apply_operation(
+        root,
+        create.model_copy(
+            update={
+                "operation_id": uuid4(),
+                "work_id": parent,
+                "plan": plan.model_copy(
+                    update={
+                        "children": (
+                            plan.children[0].model_copy(update={"work_id": a}),
+                            plan.children[1].model_copy(update={"work_id": b}),
+                        ),
+                        "completion": PlanCondition(
+                            kind="all",
+                            members=(
+                                plan.completion,
+                                PlanCondition(
+                                    kind="decision_active",
+                                    decision_id=decision,
+                                    decision_revision=1,
+                                ),
+                            ),
+                        ),
+                    }
+                ),
+            }
+        ),
+        owner,
+    )
+    _confirmed_parent(root, space, owner, parent, a, b)
+    _apply(
+        root,
+        space,
+        owner,
+        ReviseDecisionRequest,
+        decision_id=decision,
+        expected_revision=1,
+        state=decision_state.model_copy(update={"status": "revoked"}),
+    )
+    _assert_parent_blocked(root, space, owner, parent, decision)
 
 
 def test_sequential_sanitation_keeps_child_addresses_until_child_deletion(

@@ -1,3 +1,155 @@
+# Core v0.1 Stage 6 pass 2 — review corrections
+
+## outcome
+
+Fixed both findings from the owner's independent Windows review of
+`961e203e0aadf836bf6031b47427fae5fc9bf08c` on `claude/magical-einstein-4l2fax`.
+This is an engineering correction for owner review, not acceptance of pass 2 or
+of Stage 6. Passes 3–4 were not started.
+
+1. **Parent readiness.** The parent's derived readiness now follows Core's own
+   acceptance rules.
+   - The parent `AcceptWorkRequest` checks moved from the shared gate into
+     `check_parent_acceptance`, with the same order and the same Decision/Grant
+     checks.
+   - `read_work_status` and `read_execution(...).status` call the same function
+     without an actor.
+   - `ready:acceptance_pending` therefore appears only when Core would accept
+     structurally. Acceptance stays a separate operation, and the operation
+     still checks the actor's current rights.
+   - A stale prerequisite blocks the parent with its address: basis, input,
+     linked output, a completion leaf (Artifact or Decision), or a child result
+     needed for an output binding or obligation.
+   - Before the output is linked, the parent reads `ready:output_link_pending`,
+     with the exact accepted child result as the address.
+   - In the same defect class, an unissued child now gets its reasons from the
+     checks `IssueChildWorkRequest` makes, including the child's own inputs.
+2. **Probe child encoding.** Every isolated Python child in the Stage 6 probes
+   now starts as `-I -X utf8`: the reopen process, the restart between
+   deletions, and the outer installed-wheel process. `-I` ignores
+   `PYTHONIOENCODING`, so the ineffective variable was removed from
+   `probe_install_stage6`.
+
+## evidence
+
+Owner's independent Windows review of `961e203`, as reported:
+- `tools.check --deliver` passed with 546 tests, 21 contracts, types and build,
+  and the wheel SHA-256 matched.
+- Both Windows probes passed fully only with a diagnostic `-X utf8` at both levels.
+
+The two new regressions in `tests/zaratustra/foundation/test_child_execution.py`
+first failed on the `961e203` code: the parent stayed
+`ready:acceptance_pending`.
+- `test_parent_blocks_when_its_input_revision_changes`
+- `test_parent_blocks_when_its_completion_decision_is_revoked`
+
+After the fix, both `read_work_status` and `read_execution(...).status` return
+`blocked` with exactly one reason, `stale_basis`, addressed to that
+Artifact/Decision at revision 1. `AcceptWorkRequest` refuses with
+`stale_basis`, and the parent stays `proposed`. The existing parent-state test
+now shows `output_link_pending` before linking, and premature acceptance is
+refused with `output_mismatch`.
+
+`test_unissued_child_and_parent_show_the_issue_refusal_address` revises the
+input before issue. Both the unissued child and the parent then read `blocked`
+with `stale_basis` at that Artifact revision 1. Issue refuses with the same
+code; before this fix the child's derived reason was `stale_input`.
+
+New `tests/tools/test_probe_stage6_rpc.py` (2 tests) runs an isolated child
+with each probe's flags and requires exact non-ASCII JSON back.
+
+On Linux the encoding defect was reproduced with an `en_US.CP1252` locale built
+by glibc `localedef` and selected through `LOCPATH`/`LC_ALL`.
+- The unchanged `961e203` probe failed in `_reopen_in_new_process` with
+  `UnicodeEncodeError: 'charmap' codec can't encode characters`
+  (`_scratch/stage6-pass2-cp1252-before.log`).
+- Under the same locale, the fixed probe passed
+  (`_scratch/stage6-pass2-cp1252-after/report.json`).
+- So did the installed-wheel probe (`_scratch/stage6-pass2-cp1252-installed/report.json`).
+
+Default-locale runs on the final source also passed:
+- `_scratch/stage6-pass2-rpc-d/report.json` (checkout);
+- `_scratch/stage6-pass2-installed-d/report.json` (wheel SHA-256
+  `9FE6E3A6268D3AEBDDD495BB657EF1BE6C3ACA27A73778D5339812536EFE2D91`, new venv
+  in `/tmp` outside the checkout; Core, DBOS, the extension and the reopened
+  process all loaded from that venv).
+
+Each passing run made 3 HTTP requests. In each:
+- the subject refusal was `stale_basis` with 0 HTTP;
+- a redelivered launch left one workflow;
+- a duplicate answer returned the same receipt;
+- the interactive Pi status made 0 HTTP;
+- the technical copies contained no text markers;
+- backup/restore reached schema 6 in epoch 2;
+- reopen showed the parent and both children `succeeded`.
+
+The timeline now shows the parent as `ready:output_link_pending` after the
+obligations are confirmed and before its output is linked.
+
+`uv run --locked python -m tools.check --deliver` passed hygiene, report
+structure, Ruff format (196 files) and Ruff lint. It then stopped at mypy on
+Linux (see the limitations below). The remaining steps ran individually
+through `uv run --locked`:
+- `mypy --platform win32 src tools tests`: no issues in 170 source files;
+- `lint-imports --no-cache`: 21 contracts kept, 0 broken;
+- `pytest tests -q`: 550 passed and 1 failed in 114.07 seconds;
+- `uv build --no-sources`: sdist and wheel built.
+
+The 551 tests are 546 plus the 5 new ones. The single failure is the Linux-only
+SQLite test listed below.
+
+### Linux check limitations (pre-existing; gates unchanged)
+
+`tools/check.py`, `validation.config`, REVIEW.md and the existing tests were
+not changed for Linux.
+- `tools.check --deliver` stops at mypy on Linux. There are 35 errors, all
+  Windows-only attributes (`msvcrt.locking`/`LK_*`, `ctypes.WinDLL`/
+  `get_last_error`), in 11 files unchanged since `29d887d`. The remaining
+  steps run individually, and `mypy --platform win32` is clean.
+- `test_import_refuses_unfixed_sqlite_runtime_in_a_fresh_process` fails here
+  because conda-forge Python already ships the exact SQLite 3.53.3. It fails
+  the same way on `29d887d` and `961e203`.
+- A C/POSIX locale already implies UTF-8 mode, so the new encoding test cannot
+  catch a missing flag on Linux. On Windows it can. The CP1252 reproduction
+  above is manual evidence.
+- `.githooks/pre-commit` starts `#!/usr/bin/env python`, which is the
+  container's Python 3.11. That version cannot parse the repository's 3.13
+  syntax, so the hygiene hook ran with Python 3.13.7 first in `PATH`.
+- The ignored `_scratch/stage4-pi-runtime` needs a top-level
+  `@earendil-works/pi-ai@0.87.0`.
+
+## assumptions
+
+A completion `any` blocks the parent only when none of its members can still
+become true. `dependency_open` counts as open progress, not a stale
+prerequisite. Blocking reasons use Core's own codes (`stale_basis`,
+`content_unavailable`, …). They are addressed to the Artifact or Decision with
+its revision, or to the role's Work. The parent reports a stale prerequisite
+before its child phases, because under this plan no child activity can make
+the parent acceptable. `-X utf8` is the child's explicit encoding. The parent
+already decodes with `encoding="utf-8"`.
+
+## cuts
+
+No acceptance and no passes 3–4. No real model call, development migration or
+new dispatcher. No change to `tools/check.py`, `validation.config` or
+REVIEW.md. The corrections were not run on Windows here; the owner will repeat
+the Windows check.
+
+## cost
+
+No paid service or external model call. The provider is a synthetic localhost
+fixture. The CP1252 locale was generated locally in the scratchpad.
+
+## manual-acceptance
+
+Owner review and acceptance are still required. Passing checks does not record
+acceptance of Stage 6 pass 2.
+
+## next
+
+solmax
+
 # Core v0.1 Stage 6 pass 2 — composite child Work on the Stage 5 Attempt
 
 ## outcome

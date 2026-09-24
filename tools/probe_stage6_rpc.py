@@ -95,6 +95,9 @@ from zaratustra.pi_adapter.assigned import (
 
 ACTOR = "owner"
 PI_ENVIRONMENT = {"PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP"}
+# An isolated child ignores PYTHONIOENCODING; on Windows its piped stdout would use the
+# ANSI code page. UTF-8 mode keeps each non-ASCII JSON line exact for the parent.
+ISOLATED_UTF8 = ("-I", "-X", "utf8")
 
 
 class Markers:
@@ -426,7 +429,13 @@ def reopen(data: dict[str, str]) -> dict[str, object]:
 
 def _reopen_in_new_process(data: dict[str, str]) -> dict[str, object]:
     result = subprocess.run(
-        [sys.executable, "-I", str(Path(__file__).resolve()), "--reopen", json.dumps(data)],
+        [
+            sys.executable,
+            *ISOLATED_UTF8,
+            str(Path(__file__).resolve()),
+            "--reopen",
+            json.dumps(data),
+        ],
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -1161,7 +1170,7 @@ def _delete_sequence(
     restarted = subprocess.run(
         [
             sys.executable,
-            "-I",
+            *ISOLATED_UTF8,
             "-c",
             "import sys, json; from pathlib import Path; from uuid import UUID; "
             "from zaratustra.foundation import authorize_local, read_obligation, "

@@ -1241,6 +1241,17 @@ def check_composite_action(
         )
     if assigned_child and isinstance(request, _ATTEMPT_OUTCOMES + _RESOURCE_SETUP):
         return
+    if binding is None and isinstance(request, AcceptWorkRequest):
+        check_parent_acceptance(
+            connection,
+            work_id,
+            state,
+            actor=actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
+        return
     if direct:
         references = tuple(item.artifact for item in state.linked_outputs)
         if isinstance(request, LinkWorkOutputRequest):
@@ -1270,7 +1281,25 @@ def check_composite_action(
             decisions=decisions,
         )
         return
-    if isinstance(state.method, MethodRef):
+    _parent_current(
+        connection, work_id, state, actor=actor, epoch=epoch, grants=grants, decisions=decisions
+    )
+
+
+def _parent_current(
+    connection: sqlite3.Connection,
+    work_id: UUID,
+    state: WorkState,
+    *,
+    actor: str | None,
+    epoch: int,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> tuple[MethodDefinition, PlanRevision]:
+    """Current Method, plan, obligations and exact basis/inputs of a composite parent."""
+
+    assert isinstance(state.method, MethodRef)
+    if actor is not None:
         _method_use(
             connection,
             state,
@@ -1279,75 +1308,94 @@ def check_composite_action(
             grants=grants,
             decisions=decisions,
         )
-        definition = _method(connection, state.method)
-        plan = _plan(connection, work_id)
-        _obligations(connection, work_id, definition)
-        for ref in plan.plan.basis + state.inputs:
-            _current_artifact(
-                connection,
-                ref,
-                actor=actor,
-                epoch=epoch,
-                grants=grants,
-                decisions=decisions,
-            )
-    if isinstance(request, AcceptWorkRequest):
-        assert isinstance(state.method, MethodRef)
-        definition = _method(connection, state.method)
-        plan = _plan(connection, work_id)
-        instances = _obligations(connection, work_id, definition)
-        for ref in plan.plan.basis:
-            _current_artifact(
-                connection,
-                ref,
-                actor=actor,
-                epoch=epoch,
-                grants=grants,
-                decisions=decisions,
-            )
-        for instance in instances:
-            if instance.status != "satisfied" or instance.evidence is None:
-                raise FoundationError("obligation_open", f"Obligation {instance.key} is open")
-        linked = {item.slot: item.artifact for item in state.linked_outputs}
-        for output_binding in plan.plan.output_bindings:
-            actual_output = _accepted_output(
-                connection,
-                plan.plan,
-                output_binding.role,
-                output_binding.child_slot,
-                output_binding.media_type,
-                actor=actor,
-                epoch=epoch,
-                grants=grants,
-                decisions=decisions,
-            )
-            if linked.get(output_binding.parent_slot) != actual_output:
-                raise FoundationError(
-                    "output_mismatch", "Parent output is not exact bound child result"
-                )
-        _evaluate(
+    definition = _method(connection, state.method)
+    plan = _plan(connection, work_id)
+    _obligations(connection, work_id, definition)
+    for ref in plan.plan.basis + state.inputs:
+        _current_artifact(
             connection,
-            plan.plan,
-            plan.plan.completion,
+            ref,
             actor=actor,
             epoch=epoch,
             grants=grants,
             decisions=decisions,
         )
-        for instance in instances:
-            actual = _accepted_output(
-                connection,
-                plan.plan,
-                instance.definition.role,
-                instance.definition.slot,
-                instance.definition.media_type,
-                actor=actor,
-                epoch=epoch,
-                grants=grants,
-                decisions=decisions,
+    return definition, plan
+
+
+def check_parent_acceptance(
+    connection: sqlite3.Connection,
+    work_id: UUID,
+    state: WorkState,
+    *,
+    actor: str | None,
+    epoch: int,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> None:
+    """Core rules for accepting a composite parent.
+
+    A missing actor asks only the structural question for derived state reads; the
+    acceptance operation passes its actor, so its current rights are checked here and
+    in the ordinary Work route.
+    """
+
+    for item in state.linked_outputs:
+        _current_artifact(
+            connection,
+            item.artifact,
+            actor=actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
+    definition, plan = _parent_current(
+        connection, work_id, state, actor=actor, epoch=epoch, grants=grants, decisions=decisions
+    )
+    instances = _obligations(connection, work_id, definition)
+    for instance in instances:
+        if instance.status != "satisfied" or instance.evidence is None:
+            raise FoundationError("obligation_open", f"Obligation {instance.key} is open")
+    linked = {item.slot: item.artifact for item in state.linked_outputs}
+    for output_binding in plan.plan.output_bindings:
+        actual_output = _accepted_output(
+            connection,
+            plan.plan,
+            output_binding.role,
+            output_binding.child_slot,
+            output_binding.media_type,
+            actor=actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
+        if linked.get(output_binding.parent_slot) != actual_output:
+            raise FoundationError(
+                "output_mismatch", "Parent output is not exact bound child result"
             )
-            if actual != instance.evidence:
-                raise FoundationError("stale_obligation", "Obligation evidence changed")
+    _evaluate(
+        connection,
+        plan.plan,
+        plan.plan.completion,
+        actor=actor,
+        epoch=epoch,
+        grants=grants,
+        decisions=decisions,
+    )
+    for instance in instances:
+        actual = _accepted_output(
+            connection,
+            plan.plan,
+            instance.definition.role,
+            instance.definition.slot,
+            instance.definition.media_type,
+            actor=actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
+        if actual != instance.evidence:
+            raise FoundationError("stale_obligation", "Obligation evidence changed")
 
 
 def prepare_work_deletion(connection: sqlite3.Connection, work_id: UUID) -> None:
