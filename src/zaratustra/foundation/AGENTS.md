@@ -109,8 +109,12 @@ address, never ordered by scope or time. A conditional obligation
 address, and only when the instance is unresolved or its choice no longer holds. The
 recorded revision is never rewritten: a revised or revoked choice reads
 `applicability_stale` and acceptance refuses `stale_basis`. The `decision_value` leaf
-closes on another exact value. Issue, child effects, confirmation, a parent output link,
-acceptance and `work_status` recompute the applicable choices in their own transaction.
+closes on another exact value. A formal conflict keeps its code and addresses through
+`all`/`any`: `any` refuses `decision_conflict` when every other member is closed for
+good, `all` names it unless a member is closed; true alternatives and plain
+`dependency_open`/`dependency_closed` are unchanged. Issue, child effects, confirmation,
+a parent output link, acceptance and `work_status` recompute the applicable choices in
+their own transaction.
 Everything new is refused below schema 7 and absent from earlier canonical JSON. See
 `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.3.md`.
 

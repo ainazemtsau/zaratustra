@@ -27,11 +27,13 @@
   checkpoint 3.2 with one open observation for the pass 4 failure matrix (a
   first checkout Pi-probe run failed with `database is locked`; cause not
   established, not fixed) and authorized only part 3.3, followed by a stop for
-  review; part 3.3 is implemented as a development checkpoint, see
-  `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.3.md`. None of this is an accepted
-  release, schema 7 acceptance or pass 3 acceptance. Parts 3.4–3.10, the
-  separate composite-parent execution slice, pass 4, real model calls and
-  development migration are not authorized.
+  review; part 3.3 is implemented as a development checkpoint, with one review
+  correction after Codex's Windows check of `05e089e` (a formal conflict keeps
+  its code through composite conditions; the 3.3 technical review is not
+  closed), see `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.3.md`. None of this
+  is an accepted release, schema 7 acceptance or pass 3 acceptance. Parts
+  3.4–3.10, the separate composite-parent execution slice, pass 4, real model
+  calls and development migration are not authorized.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
 - Stage 1 stopped after recording the G07-1 DBOS and G08-1 Pi technical outcomes.

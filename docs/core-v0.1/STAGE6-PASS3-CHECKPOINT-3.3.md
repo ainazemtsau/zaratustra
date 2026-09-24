@@ -40,6 +40,36 @@
 прежних `records`/`record_revisions`, применимость — в прежних ревизиях обязательств
 (`work_obligation_revisions`). Новый модуль Core — `zaratustra.foundation.choices`.
 
+**Исправление по review Windows-проверки `05e089e`.** Владелец передал результат
+независимой Windows-проверки, которую выполнил Codex на
+`05e089ed47a3a7ec6bac556c017f2762c97984b2`:
+
+- полный `tools.check --deliver` — PASS, 598 тестов;
+- Stage 6 Pi-probe из checkout и из установленного wheel — PASS, по 3 HTTP.
+
+Техническая проверка 3.3 при этом не закрыта. Владелец поручил исправить одно замечание
+P2: в `_evaluate` (`composition.py`, строки 582–588) `any` превращал `decision_conflict` в
+`dependency_open`. Переданное воспроизведение через публичный Core:
+
+1. schema 7, выбор D@1 уровня Activity: `art_review = required`;
+2. готовность ребёнка `art` — `any(decision_value(D@1, art_review, required),
+   decision_value(D@1, art_review, not_required))`;
+3. выбор E@1 уровня родительского Work: `art_review = not_required`;
+4. `read_work_status` и `read_execution.status`, в том числе в новом процессе,
+   показывают `blocked:decision_conflict` с обоими адресами, а `IssueChildWorkRequest`
+   отказывает `dependency_open`; пространство не меняется;
+5. после отзыва E выдача проходит.
+
+Одна альтернатива окончательно ложна, другая заблокирована формальным конфликтом. Здесь
+сценарий воспроизведён тем же порядком шагов скриптом вне репозитория: на `05e089e` —
+ровно так, с исправлением — выдача отказывает `decision_conflict` с адресами D@1 и E@1,
+пространство не меняется, после отзыва E выдача проходит. Исправление — `29e53cc`
+(правило — в разделе «Лист `decision_value`» ниже). Приёмка не записывается, часть 3.4 не
+начата.
+
+Прежнее открытое наблюдение `database is locked` (контрольная точка 3.2) остаётся
+открытым: успешные текущие прогоны probe не доказывают его исправления.
+
 ## Контракт
 
 ### Выбор — вариант Decision
@@ -112,6 +142,23 @@
 - Лист служит условием готовности, завершения и выбора ветки. Он перепроверяется при
   выдаче узла, перед каждым эффектом назначенного ребёнка (gate прохода 2) и при принятии
   родителя (условие завершения).
+- Формальный конфликт сохраняет код и адреса через составные условия, в том числе
+  вложенные (исправление `29e53cc`). Отказ несёт адреса каждого конфликтующего члена.
+  Конфликт снимается только пересмотром или отзывом выбора, а не ходом работы:
+
+  | Условие без выполненного члена | Отказ операции |
+  |---|---|
+  | `all` с закрытым членом | `dependency_closed`, как прежде: конъюнкция окончательно ложна |
+  | `all` без закрытых, с конфликтом | `decision_conflict`, даже если другой член ещё открыт |
+  | `all` без закрытых и без конфликта | первый отказ, как прежде |
+  | `any` с членом, который ещё может стать истинным (не закрыт и не в конфликте) | `dependency_open`, как прежде |
+  | `any`, где кроме конфликта все члены закрыты | `decision_conflict` |
+  | `any`, где закрыты все члены | `dependency_closed`, как прежде |
+
+  Выполненная альтернатива `any` по-прежнему выполняет условие, даже если другая
+  заблокирована конфликтом. Для условий без конфликта результат прежний. Производное
+  состояние уже называло эти причины и не менялось: если операция отказывает
+  `decision_conflict`, чтения называют тот же конфликт с теми же адресами.
 - Как и `decision_active`, лист — точная предпосылка своего Work: после пересмотра или
   отзыва его Decision `close_work` с исходом `stale` может его назвать.
 
@@ -208,6 +255,13 @@ Decision через объединение «правило или выбор».
 отказывает `corrupt_space`, а не необработанной ошибкой проверки. Ревизия правила в
 правило не меняется.
 
+Исправление `29e53cc` меняет отказ составного условия только при формальном конфликте,
+который появился в 3.3. Правило 3.1 для операции над `any` («`dependency_closed`, только
+если закрыты все его члены; иначе, как прежде, `dependency_open`») получило одно
+исключение: если кроме конфликта все члены закрыты, отказ — `decision_conflict`. В `all`
+конфликт называется раньше первого отказа, но после закрытого члена. Для условий без
+конфликта результат прежний; тесты проходов 1–2 и 3.1–3.2 проходят без изменений.
+
 ## Обслуживание данных
 
 - **Выборы** — обычные ревизии Decision в `records`/`record_revisions`:
@@ -236,7 +290,8 @@ Decision через объединение «правило или выбор».
 
 ## Воспроизведение
 
-`tests/zaratustra/foundation/test_applicability.py`, 13 тестов без модели на schema 7.
+`tests/zaratustra/foundation/test_applicability.py`, 15 тестов без модели на schema 7
+(13 — `a52ee22`, 2 — исправление `29e53cc`).
 Method: `checked` (роль A) и `final` (роль B) безусловные; `art_review` (роль `art`, слот
 `reviewed`) зависит от выбора `art_review`: `required` → `active`, `not_required` →
 `inactive`. План: A; B после принятого выхода A; `art`. Выход родителя связан с B, условие
@@ -289,6 +344,28 @@ Method: `checked` (роль A) и `final` (роль B) безусловные; `
   отказывает `dependency_closed` с адресом, `art` — `blocked:dependency_closed`. Узел
   `skip` с `not_required` выдаётся. `art_review` решён `inactive` через Activity, родитель
   принят без `art`.
+- `test_formal_conflict_keeps_its_code_through_composite_conditions` — переданный
+  сценарий и вложенные условия. Выбор D@1 уровня Activity `required`, узлы на листах
+  `decision_value` по D@1, отменённый ребёнок `dropped`, затем выбор E@1 уровня Work
+  `not_required`.
+  - Производное состояние (`read_work_status`, `read_execution`, новый процесс) у `art`
+    (переданный `any`), у `all(этот any, выполненный лист)` и у `any(этот any, закрытый
+    dropped)` — `blocked:decision_conflict` ровно с адресами D@1 и E@1. Выдача каждого из
+    них отказывает `decision_conflict` с обоими адресами, ревизия пространства не
+    меняется.
+  - `all(открытый A, лист в конфликте)` — причины `dependency_open(a)` и оба адреса,
+    выдача отказывает `decision_conflict`.
+  - Прежняя семантика: `all(закрытый dropped, лист в конфликте)` — `dependency_closed`;
+    `any(лист в конфликте, открытый A)` — `dependency_open`; `any(лист в конфликте,
+    выполненный лист)` выдаётся.
+  - После отзыва E три узла выдаются и читаются `ready`; у `all(открытый A, лист)`
+    остаётся только `dependency_open(a)`.
+- `test_formal_conflict_in_a_nested_completion_refuses_acceptance` — путь принятия.
+  Условие завершения `any(dropped, all(B, decision_value(tone@1, formal)))`, выбор Activity
+  `tone = formal`, `dropped` отменён: родитель `ready` с `acceptance_pending` и
+  `branch_review(dropped)`. Выбор Work `tone = casual`: принятие отказывает
+  `decision_conflict` с обоими адресами без записей. Родитель — `blocked` с обоими
+  адресами и `branch_review(dropped)` во всех трёх чтениях. После отзыва родитель принят.
 - `test_unsupported_applicability_and_condition_kinds_fail_validation`
   - Ошибки проверки схемы: неподдержанный вид применимости, пересечение и пустые
     значения, неверное имя; неподдержанный вид условия, лист без имени или значения,
@@ -338,9 +415,21 @@ Method: `checked` (роль A) и `final` (роль B) безусловные; `
 Исходники восстановлены побайтно. На снимке `c554cf8` (`git archive`) модуль тестов
 падает уже при сборке: публичного контракта 3.3 там нет.
 
-Код и тесты — `a52ee22`. Проверки ниже шли на коде `a52ee22`: `tools.check --deliver` и
-probe — на чистом дереве, остальные — с теми же Python-файлами и ещё не закоммиченными
-правками Markdown. Итоговый коммит с этим документом меняет только Markdown-файлы. Среди них
+Два теста исправления падают на снимке `05e089e` тем же файлом тестов: выдача `art` и
+принятие через вложенное условие завершения отказывают `dependency_open` вместо
+`decision_conflict`; остальные 13 проходят и там. Каждое из четырёх правил старшинства
+проверено временной поломкой, после которой падает хотя бы один тест:
+
+- `all` снова берёт первый отказ;
+- конфликт в `all` важнее закрытого члена;
+- конфликт в `any` важнее члена, который ещё может стать истинным;
+- `any` снова превращает конфликт в `dependency_open`.
+
+Исходники восстановлены побайтно.
+
+Код и тесты 3.3 — `a52ee22`, исправление — `29e53cc`. Проверки ниже шли на коде `29e53cc`:
+`tools.check --deliver` и probe — на чистом дереве, полный pytest — с теми же
+Python-файлами. Итоговый коммит с этим документом меняет только Markdown-файлы. Среди них
 `src/zaratustra/foundation/AGENTS.md`, который входит в wheel, поэтому SHA-256 wheel
 итогового коммита отличается от проверенного; Python-код и тесты совпадают.
 
@@ -350,8 +439,12 @@ probe — на чистом дереве, остальные — с теми ж�
 связь, а не доказательство выпуска. Обязательный полный gate — независимый
 Windows-прогон, результат которого передаёт владелец.
 
-- `pytest tests -q` на `a52ee22`, conda-forge Python 3.13.7 с SQLite 3.53.3 и FTS5: 597
-  прошли, 1 упал. Это 585 тестов `c554cf8` и 13 новых. Единственное падение — ожидаемое на
+- Воспроизведение переданного сценария тем же скриптом через публичный Core: на
+  `05e089e` все три чтения — `blocked:decision_conflict` с адресами D@1 и E@1, выдача
+  отказывает `dependency_open`, пространство не меняется, после отзыва E выдача проходит.
+  На `29e53cc` выдача отказывает `decision_conflict` с обоими адресами, остальное прежнее.
+- `pytest tests -q` на `29e53cc`, conda-forge Python 3.13.7 с SQLite 3.53.3 и FTS5: 599
+  прошли, 1 упал. Это 598 тестов `05e089e` и 2 новых. Единственное падение — ожидаемое на
   Linux `test_import_refuses_unfixed_sqlite_runtime_in_a_fresh_process`.
 - `uv run --locked mypy --platform win32 src tools tests` — ошибок нет (175 файлов).
 - `uv run --locked lint-imports --no-cache` — 21 контракт сохранён, 0 нарушено.
@@ -363,18 +456,16 @@ Windows-прогон, результат которого передаёт вл�
   localhost-провайдером — `passed`:
   - `tools.probe_stage6_rpc` (checkout) — 3 HTTP;
   - `tools.probe_install_stage6` — wheel SHA-256
-    `4C4C62D739010F7ED3C70265CE73A59E8E37B90D119D3C975CE4ED0A0BCB3871` в новом venv вне
-    checkout, `source_commit` `a52ee22`, `source_tree_dirty: false`, 3 HTTP;
+    `849C43E559B7CDF25B3A23F8E07D66FB488350FD28090E5AC504A5B0F24E2EF4` в новом venv вне
+    checkout, `source_commit` `29e53cc`, `source_tree_dirty: false`, 3 HTTP;
   - `tools.probe_stage5_rpc` — 2 вызова провайдера, отказ до отправки без HTTP, restore в
-    эпоху 2, санация при удалении. Первый запуск был без обязательного аргумента
-    `--pi-cli` и остановился на разборе аргументов, ничего не выполнив; повтор с ним
-    прошёл.
-- Отчёты Stage 6 совпадают с прогонами 3.2 на `6dd83e3` с точностью до id, времени,
-  маркеров и выборочного переходного состояния `running:stop_requested`. Наблюдатель
-  фиксирует его не в каждом прогоне: здесь его не было в прогоне из checkout, но было в
-  установленном.
-- Отчёты — `_scratch/stage6-pass3-33-rpc`, `_scratch/stage6-pass3-33-installed`,
-  `_scratch/stage6-pass3-33-stage5` (игнорируются git).
+    эпоху 2, санация при удалении.
+- Отчёты совпадают с прогонами на `a52ee22` с точностью до id, времени, маркеров и
+  выборочного переходного состояния `running:stop_requested`. Наблюдатель фиксирует его
+  не в каждом прогоне: здесь его не было в установленном прогоне, а на `a52ee22` было.
+- Отчёты — `_scratch/stage6-pass3-33fix-*`; прогон на `a52ee22` — в
+  `_scratch/stage6-pass3-33-*` (игнорируются git). Тогда же первый запуск Stage 5 probe
+  был без обязательного `--pi-cli` и остановился на разборе аргументов; повтор прошёл.
 
 Команды для Windows-проверки — те же, что в `STAGE6-PASS2-IMPLEMENTATION.md`, с новыми
 каталогами вывода:
@@ -384,8 +475,8 @@ $env:UV_CACHE_DIR = Join-Path (Get-Location) '_scratch\stage5-plan-uv-cache'
 $env:ZARATUSTRA_SQLITE_DLL = Join-Path (Get-Location) '_scratch\stage4-interactive-20260923-a\sqlite\sqlite3.dll'
 $env:PYTHONPATH = Join-Path (Get-Location) 'tools\sqlite_bootstrap'
 uv run --locked python -m tools.check --deliver
-uv run --locked python -m tools.probe_stage6_rpc --output _scratch\stage6-pass3-33-rpc --pi-runtime '_scratch\stage4-pi-runtime'
-uv run --locked python -m tools.probe_install_stage6 --output _scratch\stage6-pass3-33-installed --pi-runtime '_scratch\stage4-pi-runtime' --sqlite-dll $env:ZARATUSTRA_SQLITE_DLL
+uv run --locked python -m tools.probe_stage6_rpc --output _scratch\stage6-pass3-33fix-rpc --pi-runtime '_scratch\stage4-pi-runtime'
+uv run --locked python -m tools.probe_install_stage6 --output _scratch\stage6-pass3-33fix-installed --pi-runtime '_scratch\stage4-pi-runtime' --sqlite-dll $env:ZARATUSTRA_SQLITE_DLL
 ```
 
 ## Пределы
@@ -403,6 +494,12 @@ uv run --locked python -m tools.probe_install_stage6 --output _scratch\stage6-pa
   подтверждаются. Связь выхода проверяет только решённые обязательства.
 - Лист `decision_value` может указывать выбор, область которого не охватывает Work. Его
   конфликт считается по применимым к Work выборам вместе с этим выбором.
+- Родственный случай до 3.3 не менялся. `any(лист stale_basis, закрытый член)` читается
+  `blocked:stale_basis`, а операция отказывает `dependency_open`. Здесь это воспроизведено
+  на `05e089e`: ребёнок с `any(artifact_current(X@1), work_succeeded(dropped))` после
+  ревизии X и отмены `dropped`. Так требует правило 3.1 «иначе, как прежде,
+  `dependency_open`»; менять его — решение владельца. Расхождение возникает, только когда
+  ни одна альтернатива не выполнена и ни один член не открыт.
 - Применимость Method целиком остаётся `always`. Общая семантика конфликтов правил
   доступа — вне прохода 3.
 - Не начаты части 3.4–3.10, отдельный срез исполнения родителя и обязательства в том же
