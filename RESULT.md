@@ -1,3 +1,164 @@
+# Core v0.1 Stage 6 pass 2 — composite child Work on the Stage 5 Attempt
+
+## outcome
+
+Implemented only Stage 6 pass 2, from exact commit
+`29d887d41f1639dc6ddb354a2039603cb1a30d94`, which the owner accepted as
+Stage 6 pass 1. That acceptance is recorded separately in
+`docs/core-v0.1/STAGE6-PASS1-ACCEPTANCE.md`, the short working plan is
+`docs/core-v0.1/STAGE6-PASS2-WORKING-PLAN.md`, and the implementation is
+described in `docs/core-v0.1/STAGE6-PASS2-IMPLEMENTATION.md`.
+
+An issued composite child Work now runs through the existing Stage 5 assigned
+Attempt (Core outbox, DBOS queue and ordinary Pi RPC); no dispatcher was added.
+Explicit additive schema 6 (`upgrade_child_execution_space`) adds
+`execution_plan_pins`: assignment pins the exact parent, role, plan revision
+and Method id/version/checksum as addresses. The shared `apply_operation` gate
+checks the current plan, issue, dependencies, exact inputs and `method.use`
+Decision/Grant authority at assignment. Before every Attempt effect (launch
+claim, wait/answer, invocation prepare/admit/send, publish) it also checks the
+pin. Stop and sent-call outcome records stay available. Work
+`proposed/ready/running/waiting/blocked/succeeded` is derived from the same Core
+records in the reading transaction (`read_work_status`,
+`ExecutionSnapshot.status/composition`); no second status field and no copy of
+the plan exists. Result acceptance remains a separate operation.
+An `unknown` outcome keeps the resource held and reads `blocked:outcome_unknown`.
+Interactive Pi context and `/zara-status` show current Core state, plan
+address and pinned versions. This is an engineering candidate for owner
+review, not acceptance of Stage 6 or of the synthetic Work.
+
+## evidence
+
+The session ran in a cloud Linux container, not in the owner's Windows checkout.
+Its clone started on `main`. The designated session branch
+`claude/magical-einstein-4l2fax` was set to `origin/codex/core-v0.1` =
+`29d887d41f1639dc6ddb354a2039603cb1a30d94`, and the tree was clean. The
+specification SHA-256 matched `1DDCBF9DBFD58426781F61A67A170D3CE85FCD2BA27B17549773ED3356F9428D`.
+Python 3.13.7 with SQLite 3.53.3/FTS5 came from conda-forge
+(`python-3.13.7-h2b335a9_100_cp313`, `libsqlite-3.53.3-h0c1763c_0`). Other
+components: Node v22.22.2, Pi 0.87.0 and DBOS 3.0.0.
+
+New `tests/zaratustra/foundation/test_child_execution.py` (6 tests) covers:
+- the explicit schema 6 upgrade, with unchanged old routes;
+- pins and the child state transitions, including B unblocked only after A's separate acceptance;
+- stale-pin and lost-Decision refusals of effects while stop/finish stay available;
+- quarantine restore keeping pins, and deletion removing them;
+- parent state;
+- sequential sanitation across a fresh process.
+
+New `tests/zaratustra/pi_adapter/test_child_assigned.py` (3 tests) covers:
+- bridge state and one addressed answer;
+- duplicate launch delivery creating one DBOS workflow;
+- a subject refusal before launch, with no Pi process and no invocation.
+
+`tools.probe_stage6_rpc` ran a synthetic localhost SSE provider through ordinary
+Pi 0.87.0 RPC. Checkout report: `_scratch/stage6-pass2-rpc-c/report.json`, status
+`passed`, 3 HTTP in total.
+- Early B was refused with `dependency_open`/`child_not_issued`, with 0 Attempts, 0 outbox and 0 HTTP.
+- A's issue and assignment replays returned the same receipts; `already_issued`/`stale_attempt` refused the duplicates.
+- A redelivered launch left one workflow.
+- A separate ordinary Pi showed `waiting`, the question, `Plan …@2`, role and Method with 0 HTTP.
+- A duplicate answer returned the same receipt.
+- A's result became B's exact input only after A's separate acceptance.
+- Premature parent acceptance was refused with `obligation_open`; after confirmations the parent is `succeeded` and the Activity is `ongoing`.
+- An independent child whose Decision changed after assignment was refused with `stale_basis`: 0 HTTP, 0 invocations, assignment `stopped`, no Pi home.
+- A new `python -I` process read the same results, plan, pins and receipts.
+- DBOS/Pi technical copies contain no plan or result text.
+- Backup format 2 schema 6 restored into epoch 2.
+- Sequential deletion left no markers, kept the independent child and refused the shared Method with `method_in_use`.
+
+`tools.probe_install_stage6` built the wheel (SHA-256
+`E486981A25DD9E1D34619BD6D4311FE7A3F7EC0435688CF8744ED76747B31A24`) and installed it into a new venv in `/tmp`,
+outside the checkout. It ran the same scenario there with `python -I`. Core,
+DBOS, the extension and the reopened process all loaded from that venv. Report:
+`_scratch/stage6-pass2-installed-c/report.json`, status `passed`, 3 HTTP.
+The Stage 5 path was rechecked with `tools.probe_stage5_rpc` on the final source.
+Report: `_scratch/stage5-linux-check-c/report.json`, status `passed`.
+- 1 provider call before the answer and 2 in total.
+- A parallel Pi showed the question without a model call.
+- The pre-send denial made 0 HTTP calls.
+- Work `proposed`, assignment `stopped`.
+- Restore into epoch 2, deletion sanitized, restored archive deleted.
+
+Stage 4 interactive bridge regressions (`tests/zaratustra/pi_adapter/test_bridge.py`)
+and Stage 5 assigned regressions (`test_assigned.py`) pass unchanged.
+
+`uv run --locked python -m tools.check --deliver` passed hygiene, report
+structure, Ruff format and Ruff lint. It then stopped at mypy on Linux with 35
+errors, all Windows-only attributes (`msvcrt.locking`/`LK_*`,
+`ctypes.WinDLL`/`get_last_error`). They are in 11 files byte-identical to
+`29d887d`. The remaining steps ran through `uv run --locked` individually:
+- `mypy --platform win32 src tools tests`: no issues in 169 source files;
+- `lint-imports --no-cache`: 21 contracts kept, 0 broken;
+- `pytest tests -q`: 545 passed and 1 failed in 114.41 seconds;
+- `uv build --no-sources`: built `zaratustra-0.17.0.tar.gz` and `zaratustra-0.17.0-py3-none-any.whl`.
+
+The only failing test is `test_import_refuses_unfixed_sqlite_runtime_in_a_fresh_process`.
+It expects the interpreter's own SQLite to be unsupported. That holds on
+Windows, but this conda-forge Python already ships the exact SQLite 3.53.3, so
+import is correctly admitted. A detached worktree of `29d887d` failed the same
+test in the same way, and `runtime.py` and the test are unchanged. The 546
+tests are pass 1's 537 plus the 9 new ones.
+
+## assumptions
+
+`WorkState.status` still stores only the subject outcome `proposed/succeeded`.
+Lifecycle is derived. The window between a stop request and the recorded stop
+reads `running:stop_requested`: the Attempt still holds its resource and new
+effects are refused. A subject refusal of a composite child's launch claim
+comes before any Pi process or HTTP, so the adapter records an observed stop.
+Technical refusals (`busy`, `storage`, maintenance, corrupt space, pending
+deletion) leave the assignment for maintenance. Parent execution and
+interactive Stage 4 Attempts on composite Work are still refused with
+`unsupported_composite_execution`. The parent's outputs still link to exact
+accepted child results. The stale-pin regression uses explicit SQLite fault
+injection because this pass has no public plan revision after issue. On Linux,
+Core admits the runtime by version and FTS5 (existing `runtime.py`), without the
+Windows DLL. Pi 0.87.0 ships `npm-shrinkwrap.json`, so the extension's
+`@earendil-works/pi-ai@0.87.0` import was installed at top level in the ignored
+`_scratch/stage4-pi-runtime`. That is environment, not product.
+
+## cuts
+
+Not started: real model calls, development migration, passes 3–4 and a new
+dispatcher. Not implemented:
+- plan revision during execution;
+- Method version transition;
+- waiver, inactive and unresolved;
+- parallel children and nested composite Work;
+- `failed/cancelled/stale` outcomes.
+
+Not verified for composite children:
+- the commit/checkpoint/Pi-death crash matrix;
+- rights revocation during a running turn (the Stage 5 stop monitor rechecks the same Core control every 0.5 s);
+- real providers and modifying tools.
+
+Not run on Windows. `tools.check --deliver` could not complete on Linux because
+of the mypy platform difference above. `C:\projects\zaratustra` and
+`C:\my_global_workflow\core-v0-1\zaratustra` do not exist in this container.
+Trial writes stayed in the session clone, its ignored `_scratch`, the
+scratchpad and disposable `/tmp` trial venvs; package managers used their
+normal caches.
+
+## cost
+
+No paid service and no external model call. The provider was a synthetic
+localhost fixture (3 HTTP per scenario). Network use was limited to installing
+pinned environment packages: conda-forge Python/SQLite, the locked PyPI set
+through uv, and npm `@earendil-works/pi-ai@0.87.0`.
+
+## manual-acceptance
+
+The owner authorized only the pass-2 implementation, checks and a local commit.
+Nothing here records acceptance of Stage 6 pass 2, of Stage 6 or of the
+synthetic Work. Owner review should repeat `tools.check --deliver` and both
+probes on Windows with the configured SQLite DLL (commands in
+`docs/core-v0.1/STAGE6-PASS2-IMPLEMENTATION.md`).
+
+## next
+
+solmax
+
 # Core v0.1 Stage 6 pass 1 — sequential sanitation correction
 
 ## outcome

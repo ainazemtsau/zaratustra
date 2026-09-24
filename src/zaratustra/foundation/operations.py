@@ -759,6 +759,10 @@ def _subject_delete(
             )
         connection.execute("DELETE FROM execution_events WHERE work_id = ?", (str(record_id),))  # type: ignore[attr-defined]
         connection.execute("DELETE FROM execution_invocations WHERE work_id = ?", (str(record_id),))  # type: ignore[attr-defined]
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 6:  # type: ignore[attr-defined]
+            connection.execute(  # type: ignore[attr-defined]
+                "DELETE FROM execution_plan_pins WHERE work_id = ?", (str(record_id),)
+            )
         connection.execute("DELETE FROM execution_attempts WHERE work_id = ?", (str(record_id),))  # type: ignore[attr-defined]
         connection.execute(  # type: ignore[attr-defined]
             "DELETE FROM execution_resource_revisions WHERE resource_id IN "
@@ -1194,7 +1198,17 @@ def _apply_change(
             raise FoundationError(
                 "unsupported_schema", "Execution operation needs its explicit schema"
             )
-        return apply_execution_change(connection, request, now=now, epoch=epoch)
+        result, targets = apply_execution_change(connection, request, now=now, epoch=epoch)
+        if isinstance(request, AssignAttemptRequest) and schema_version >= 6:
+            from .composition import pin_child_attempt
+
+            plan = pin_child_attempt(cast(sqlite3.Connection, connection), request, now)
+            if plan is not None:
+                result = {**result, "plan": plan}
+                targets = targets + [
+                    {"record_id": plan["parent_work_id"], "revision": plan["plan_revision"]}
+                ]
+        return result, targets
     if isinstance(
         request,
         (

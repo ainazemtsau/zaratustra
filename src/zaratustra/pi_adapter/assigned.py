@@ -53,6 +53,10 @@ PI_VERSION = "0.87.0"
 QUEUE_NAME = "zara-assigned-rpc"
 WORKFLOW_NAME = "zara-assigned-work-v1"
 MAX_RPC_LINE = 16 * 1024 * 1024
+# Storage or maintenance contention is not a subject refusal of the assigned child.
+TECHNICAL_REFUSALS = frozenset(
+    {"busy", "storage", "history_busy", "maintenance_busy", "corrupt_space", "deletion_pending"}
+)
 
 
 @dataclass(frozen=True)
@@ -76,8 +80,8 @@ class AssignedConfig:
 
 def executor_database(space: Path) -> Path:
     info = read_space(space)
-    if info.schema_version != 4 or info.recovery_state != "active":
-        raise FoundationError("unsupported_schema", "Assigned RPC needs active schema 4")
+    if info.schema_version < 4 or info.recovery_state != "active":
+        raise FoundationError("unsupported_schema", "Assigned RPC needs active schema 4 or later")
     return space.resolve() / ".zara-core" / "executor.sqlite3"
 
 
@@ -470,6 +474,8 @@ def _current_snapshot(
     attempt_id: UUID,
     epoch: int,
     generation: int,
+    *,
+    check_plan: bool = True,
 ) -> Any:
     snapshot = read_execution(config.space, work_id, authority)
     attempt = next((x for x in snapshot.attempts if x.attempt_id == attempt_id), None)
@@ -487,6 +493,15 @@ def _current_snapshot(
     ):
         raise FoundationError(
             "stale_attempt", "Assigned Work no longer has current execution authority"
+        )
+    # A child re-reads its pinned plan, dependencies and Method use from Core each time.
+    if (
+        check_plan
+        and snapshot.composition is not None
+        and not read_assigned_control(config.space, work_id, attempt_id, authority)
+    ):
+        raise FoundationError(
+            "stale_plan", "Composite child no longer matches its current plan and dependencies"
         )
     return snapshot
 
@@ -567,7 +582,10 @@ def _execute_under_lock(
 ) -> str:
     from dbos import DBOS
 
-    snapshot = _current_snapshot(config, authority, work_id, attempt_id, epoch, generation)
+    # The launch claim below is the Core gate for a child's plan, pin and dependencies.
+    snapshot = _current_snapshot(
+        config, authority, work_id, attempt_id, epoch, generation, check_plan=False
+    )
     attempt = next(x for x in snapshot.attempts if x.attempt_id == attempt_id)
     if attempt.resource_id not in {
         x.resource_id for x in snapshot.resources if x.state.root == config.workspace.resolve()
@@ -600,6 +618,15 @@ def _execute_under_lock(
             raise FoundationError(
                 "process_outcome_unknown", "Earlier Pi RPC launch cannot be replayed safely"
             ) from error
+        if snapshot.composition is not None and error.code not in TECHNICAL_REFUSALS:
+            # A subject refusal came before any Pi process or HTTP send; close the
+            # child assignment as observed stopped so its resource is not held.
+            try:
+                _record_stop(
+                    config, authority, work_id, attempt_id, attempt.session_id, observed=True
+                )
+            except FoundationError:
+                pass
         raise
     extension = Path(str(files("zaratustra.pi_adapter").joinpath("extension.ts")))
     installed = config.pi_runtime / f"zaratustra-assigned-{attempt_id}.ts"

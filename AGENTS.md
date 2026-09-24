@@ -3,11 +3,14 @@
 ## Current product authority — Core v0.1
 - The current product basis is `docs/core-v0.1/IMPLEMENTATION-BASELINE.md`, the
   owner-approved Core v0.1 implementation plan recorded there,
-  `docs/core-v0.1/STAGE4-PLAN.md`, `docs/core-v0.1/STAGE5-PLAN.md`, this AGENTS.md,
-  and `validation.config`. Stage 5 is owner-accepted at
-  `245e7288c08eb4d49c84edd89f01e746a45c37a5`. The owner authorized
-  only Stage 6 pass 1 implementation on 2026-09-24 from
-  `3ca96c8719a68acb6250d56731b457f0e12c4f6a`; no later pass is authorized.
+  `docs/core-v0.1/STAGE4-PLAN.md`, `docs/core-v0.1/STAGE5-PLAN.md`,
+  `docs/core-v0.1/STAGE6-PLAN.md`, this AGENTS.md, and `validation.config`.
+  Stage 5 is owner-accepted at `245e7288c08eb4d49c84edd89f01e746a45c37a5`.
+  The owner accepted Stage 6 pass 1 at
+  `29d887d41f1639dc6ddb354a2039603cb1a30d94`; see
+  `docs/core-v0.1/STAGE6-PASS1-ACCEPTANCE.md`. On 2026-09-24 the owner
+  authorized only Stage 6 pass 2 implementation from that commit; passes 3–4,
+  real model calls and development migration are not authorized.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
 - Stage 1 stopped after recording the G07-1 DBOS and G08-1 Pi technical outcomes.
@@ -57,6 +60,12 @@ adds explicit schema 4 and Core-owned durable continuation, one assigned ordinar
 Pi RPC through DBOS queue/wait, recovery and stop fencing, and shared maintenance
 for Core/DBOS/Pi. See `docs/core-v0.1/STAGE5-IMPLEMENTATION.md` and
 `STAGE5-ACCEPTANCE.md`.
+Stage 6 pass 1 adds explicit schema 5 Method versions, composite Work plans,
+materialized obligations, child issue and separate parent acceptance; see
+`STAGE6-PASS1-IMPLEMENTATION.md`. Pass 2 adds explicit schema 6 child Attempt plan
+pins, runs an issued child through the same assigned Pi RPC with Core rechecks
+before every effect, and derives proposed/ready/running/waiting/blocked/succeeded
+from Core records; see `STAGE6-PASS2-IMPLEMENTATION.md`.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,
@@ -133,8 +142,9 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
 
 ## Constitution
 - Keep the accepted Core v0.1 functional composition and completed Stage 1–5
-  evidence. Stage 5 is owner-accepted at the exact commit above; Stage 6 has
-  an owner-authorized pass 1 implementation candidate, not owner acceptance.
+  evidence. Stage 5 and Stage 6 pass 1 are owner-accepted at the exact commits
+  above; Stage 6 pass 2 is an owner-authorized implementation candidate, not
+  owner acceptance of Stage 6.
   Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.

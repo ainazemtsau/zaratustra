@@ -704,7 +704,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3, 4, 5]
+    schema_version: Literal[1, 2, 3, 4, 5, 6]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -839,6 +839,69 @@ class OutboxRecord(ContractModel):
     status: Literal["pending", "cancelled"]
 
 
+type WorkLifecycle = Literal["proposed", "ready", "running", "waiting", "blocked", "succeeded"]
+
+
+class StatusReason(ContractModel):
+    """One addressed cause of a derived Work state; never a copy of Work content."""
+
+    code: str = Field(min_length=1, max_length=80)
+    role: str | None = None
+    record_id: UUID | None = None
+    revision: int | None = Field(default=None, ge=1)
+
+
+class WorkStatus(ContractModel):
+    """Current Work state derived from Core issue, plan, Attempt and wait records."""
+
+    work_id: UUID
+    status: WorkLifecycle
+    reasons: tuple[StatusReason, ...] = ()
+    attempt_id: UUID | None = None
+    wait_id: UUID | None = None
+
+
+class PlanPin(ContractModel):
+    """Exact plan and Method address fixed when a child Attempt was assigned."""
+
+    attempt_id: UUID
+    work_id: UUID
+    parent_work_id: UUID
+    role: str
+    plan_revision: int = Field(ge=1)
+    method: MethodRef
+
+
+class ChildProgress(ContractModel):
+    role: str
+    work_id: UUID
+    issued_plan_revision: int | None = None
+    status: WorkStatus
+
+
+class ObligationProgress(ContractModel):
+    key: str
+    revision: int = Field(ge=1)
+    role: str
+    applicability: Literal["active"] = "active"
+    status: Literal["open", "satisfied"]
+    evidence: ArtifactRef | None = None
+
+
+class CompositionView(ContractModel):
+    """Addresses and states of one composite Work; plan content stays in its revision."""
+
+    parent_work_id: UUID
+    method: MethodRef
+    plan_revision: int = Field(ge=1)
+    plan_available: bool
+    role: str | None = None
+    issued_plan_revision: int | None = None
+    pins: tuple[PlanPin, ...] = ()
+    children: tuple[ChildProgress, ...] = ()
+    obligations: tuple[ObligationProgress, ...] = ()
+
+
 class ExecutionSnapshot(ContractModel):
     space_id: UUID
     execution_epoch: int = Field(ge=1)
@@ -857,6 +920,8 @@ class ExecutionSnapshot(ContractModel):
     committed_units: int = Field(ge=0)
     held_units: int = Field(ge=0)
     remaining_units: int | None = None
+    status: WorkStatus | None = None
+    composition: CompositionView | None = None
 
 
 class RecordSummary(ContractModel):
@@ -890,7 +955,7 @@ class BackupManifest(ContractModel):
     backup_id: UUID
     format_version: Literal[1, 2] = 1
     space_id: UUID
-    schema_version: Literal[1, 2, 3, 4, 5]
+    schema_version: Literal[1, 2, 3, 4, 5, 6]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime
@@ -918,6 +983,13 @@ class DeletionStatus(ContractModel):
 
 
 __all__ = [
+    "ChildProgress",
+    "CompositionView",
+    "ObligationProgress",
+    "PlanPin",
+    "StatusReason",
+    "WorkLifecycle",
+    "WorkStatus",
     "PlanOutputBinding",
     "CapabilityRequirement",
     "NamedInput",

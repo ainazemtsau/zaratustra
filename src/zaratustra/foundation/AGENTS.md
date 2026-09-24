@@ -27,8 +27,8 @@ Schema 5 is an explicit additive upgrade for immutable Method versions, exact
 composite Work plan revisions, child ownership/issue, materialized obligations,
 and Method deletion jobs. `composition.py` owns these records and direct
 model-free coordination. The shared `apply_operation` gate checks composite
-child readiness and parent acceptance before old Work/Attempt routes; composite
-Stage 4/5 execution routes refuse explicitly until a later authorized pass.
+child readiness and parent acceptance before old Work/Attempt routes; in schema 5
+composite Stage 4/5 execution routes refuse explicitly.
 Method use requires current Decision/Grant authority. Child deletion preserves
 the parent obligation while sanitizing dependent plan revisions and confirmation
 bases. Artifact deletion also sanitizes dependent plans and confirmations. An
@@ -41,6 +41,16 @@ and Artifact addresses so a later deletion can still find dependent bases after
 restart. Pre-index sanitized plans use conservative obligation sanitation.
 See
 `docs/core-v0.1/STAGE6-PASS1-IMPLEMENTATION.md`.
+
+Schema 6 is an explicit additive upgrade for exact child Attempt plan pins
+(parent, role, plan revision and Method id/version/checksum). An assigned child
+Attempt rechecks its pin, current issue, dependencies, exact inputs and
+`method.use` in the shared gate before every effect; stop and sent-call outcome
+records stay available. Parent execution and interactive composite Attempts stay
+unconnected. `work_status.py` derives proposed/ready/running/waiting/blocked/
+succeeded from the same Core records in the reading transaction; never store a
+second editable status or copy plan content into pins, outbox or technical
+payload. See `docs/core-v0.1/STAGE6-PASS2-IMPLEMENTATION.md`.
 
 The foundation stores Work execution records but never imports Pi or runs a model.
 Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,

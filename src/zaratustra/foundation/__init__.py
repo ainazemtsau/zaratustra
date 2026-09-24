@@ -11,6 +11,7 @@ from .composition import (
     read_method_version,
     read_obligation,
     read_work_plan,
+    upgrade_child_execution_space,
     upgrade_composition_space,
 )
 from .execution import (
@@ -39,7 +40,9 @@ from .models import (
     BackupManifest,
     BootstrapRequest,
     CapabilityRequirement,
+    ChildProgress,
     ClaimAttemptLaunchRequest,
+    CompositionView,
     ConfirmObligationRequest,
     CreateActivityRequest,
     CreateArtifactRequest,
@@ -68,6 +71,7 @@ from .models import (
     MethodRef,
     MethodVersion,
     NamedInput,
+    ObligationProgress,
     ObligationRevision,
     OpenWaitRequest,
     OperationAuditEntry,
@@ -77,6 +81,7 @@ from .models import (
     PlanChild,
     PlanCondition,
     PlanOutputBinding,
+    PlanPin,
     PlanRevision,
     PrepareInvocationRequest,
     ProvenanceRef,
@@ -97,13 +102,16 @@ from .models import (
     SpaceInfo,
     SpaceInspection,
     StartAttemptRequest,
+    StatusReason,
     StopAttemptRequest,
     TechnicalVersions,
     WaitRecord,
     WorkAcceptance,
+    WorkLifecycle,
     WorkPlan,
     WorkRevision,
     WorkState,
+    WorkStatus,
 )
 from .operations import (
     FoundationError,
@@ -135,8 +143,18 @@ from .runtime import (
     SQLITE_DLL_ENV,
     RuntimeConfigurationError,
 )
+from .work_status import read_work_status
 
 __all__ = [
+    "ChildProgress",
+    "CompositionView",
+    "ObligationProgress",
+    "PlanPin",
+    "StatusReason",
+    "WorkLifecycle",
+    "WorkStatus",
+    "read_work_status",
+    "upgrade_child_execution_space",
     "PlanOutputBinding",
     "CapabilityRequirement",
     "NamedInput",

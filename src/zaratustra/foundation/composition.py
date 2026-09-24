@@ -14,26 +14,42 @@ from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
 from .models import (
     AcceptWorkRequest,
+    AdmitInvocationRequest,
+    AnswerWaitRequest,
     ArtifactRef,
+    AssignAttemptRequest,
+    ClaimAttemptLaunchRequest,
     ConfirmObligationRequest,
     CreateCompositeWorkRequest,
     CreateMethodVersionRequest,
+    CreateResourceRequest,
     DeleteMethodVersionRequest,
+    FinishInvocationRequest,
     IssueChildWorkRequest,
     LinkWorkOutputRequest,
     MethodDefinition,
     MethodRef,
     MethodVersion,
     ObligationRevision,
+    OpenWaitRequest,
     PlanCondition,
     PlanRevision,
+    PrepareInvocationRequest,
+    PublishAttemptOutputRequest,
+    RecordAttemptStopRequest,
+    RequestAttemptStopRequest,
+    ReviseResourceRequest,
     ReviseWorkPlanRequest,
+    SendInvocationRequest,
     SpaceInfo,
+    StartAttemptRequest,
+    StopAttemptRequest,
     WorkPlan,
     WorkState,
 )
 from .operations import (
     LocalAuthority,
+    _artifact_reference,
     _authorize,
     _authorize_artifact_ref,
     _local_space,
@@ -42,6 +58,9 @@ from .operations import (
     _write_subject,
 )
 from .storage import (
+    CHILD_EXECUTION_SCHEMA_NAME,
+    CHILD_EXECUTION_SCHEMA_SHA256,
+    CHILD_EXECUTION_SCHEMA_STATEMENTS,
     COMPOSITION_SCHEMA_NAME,
     COMPOSITION_SCHEMA_SHA256,
     COMPOSITION_SCHEMA_STATEMENTS,
@@ -53,6 +72,20 @@ from .storage import (
 )
 
 REDACTED_DEPENDENCY = b'{"content":"unavailable"}'
+# Effects of one assigned child Attempt; each rechecks the current plan and its pin.
+ATTEMPT_EFFECTS = (
+    ClaimAttemptLaunchRequest,
+    OpenWaitRequest,
+    AnswerWaitRequest,
+    PrepareInvocationRequest,
+    AdmitInvocationRequest,
+    SendInvocationRequest,
+    PublishAttemptOutputRequest,
+)
+# Stopping and recording an already sent call must stay possible under a stale plan.
+_ATTEMPT_OUTCOMES = (RequestAttemptStopRequest, RecordAttemptStopRequest, FinishInvocationRequest)
+_RESOURCE_SETUP = (CreateResourceRequest, ReviseResourceRequest)
+_INTERACTIVE_ATTEMPTS = (StartAttemptRequest, StopAttemptRequest)
 
 
 class _PlanDependencies(BaseModel):
@@ -139,6 +172,42 @@ def upgrade_composition_space(path: Path, authority: LocalAuthority) -> SpaceInf
     return read_space(path)
 
 
+def upgrade_child_execution_space(path: Path, authority: LocalAuthority) -> SpaceInfo:
+    """Explicit schema 5 to 6 upgrade for exact child Attempt plan pins."""
+
+    with space_connection(path, writable=True) as (connection, info):
+        _local_space(authority, info)
+        if info.recovery_state != "active" or info.schema_version < 5:
+            raise FoundationError(
+                "unsupported_schema", "Child execution upgrade requires active schema 5"
+            )
+        _authorize(
+            connection,
+            actor=authority.actor,
+            action="maintenance.backup",
+            epoch=info.execution_epoch,
+        )
+        if info.schema_version == 5:
+            for statement in CHILD_EXECUTION_SCHEMA_STATEMENTS:
+                connection.execute(statement)
+            now = utc_now().isoformat()
+            connection.execute(
+                "INSERT INTO schema_migrations(version, name, sha256, applied_at) "
+                "VALUES (6, ?, ?, ?)",
+                (CHILD_EXECUTION_SCHEMA_NAME, CHILD_EXECUTION_SCHEMA_SHA256, now),
+            )
+            connection.execute("PRAGMA user_version = 6")
+            connection.execute(
+                "UPDATE spaces SET state_revision = state_revision + 1 WHERE singleton = 1"
+            )
+            connection.execute(
+                "INSERT INTO maintenance_events(event_id, kind, occurred_at, detail_json) "
+                "VALUES (?, 'schema_upgrade', ?, ?)",
+                (str(uuid4()), now, canonical_json({"from": 5, "to": 6})),
+            )
+    return read_space(path)
+
+
 def _method(connection: sqlite3.Connection, ref: MethodRef) -> MethodDefinition:
     row = connection.execute(
         "SELECT checksum, status, payload FROM method_versions WHERE method_id = ? AND version = ?",
@@ -212,21 +281,25 @@ def _current_artifact(
     connection: sqlite3.Connection,
     reference: ArtifactRef,
     *,
-    actor: str,
+    actor: str | None,
     epoch: int,
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
     media_type: str | None = None,
 ) -> None:
-    _authorize_artifact_ref(
-        connection,
-        reference,
-        actor=actor,
-        epoch=epoch,
-        grants=grants,
-        decisions=decisions,
-        media_type=media_type,
-    )
+    # A missing actor asks only the structural question used by derived state reads.
+    if actor is None:
+        _artifact_reference(connection, reference, media_type=media_type)
+    else:
+        _authorize_artifact_ref(
+            connection,
+            reference,
+            actor=actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+            media_type=media_type,
+        )
     row = connection.execute(
         "SELECT current_revision, status FROM records WHERE record_id = ? AND kind = 'artifact'",
         (str(reference.artifact_id),),
@@ -312,7 +385,7 @@ def _accepted_output(
     slot: str,
     media_type: str,
     *,
-    actor: str,
+    actor: str | None,
     epoch: int,
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
@@ -330,16 +403,17 @@ def _accepted_output(
     output = next((item.artifact for item in state.linked_outputs if item.slot == slot), None)
     if output is None:
         raise FoundationError("dependency_open", "Accepted child has no required output")
-    extra_grants, extra_decisions = _authorize(
-        connection,
-        actor=actor,
-        action="record.read",
-        epoch=epoch,
-        resource_type="work",
-        resource_id=child.work_id,
-    )
-    grants.extend(extra_grants)
-    decisions.extend(extra_decisions)
+    if actor is not None:
+        extra_grants, extra_decisions = _authorize(
+            connection,
+            actor=actor,
+            action="record.read",
+            epoch=epoch,
+            resource_type="work",
+            resource_id=child.work_id,
+        )
+        grants.extend(extra_grants)
+        decisions.extend(extra_decisions)
     _current_artifact(
         connection,
         output,
@@ -357,7 +431,7 @@ def _evaluate(
     plan: WorkPlan,
     condition: PlanCondition | None,
     *,
-    actor: str,
+    actor: str | None,
     epoch: int,
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
@@ -414,16 +488,17 @@ def _evaluate(
         child = next((item for item in plan.children if item.role == condition.role), None)
         if child is None:
             raise FoundationError("dependency_open", "Required child has not been planned")
-        extra_grants, extra_decisions = _authorize(
-            connection,
-            actor=actor,
-            action="record.read",
-            epoch=epoch,
-            resource_type="work",
-            resource_id=child.work_id,
-        )
-        grants.extend(extra_grants)
-        decisions.extend(extra_decisions)
+        if actor is not None:
+            extra_grants, extra_decisions = _authorize(
+                connection,
+                actor=actor,
+                action="record.read",
+                epoch=epoch,
+                resource_type="work",
+                resource_id=child.work_id,
+            )
+            grants.extend(extra_grants)
+            decisions.extend(extra_decisions)
         _, status, _ = _subject_current(connection, child.work_id, "work")
         if status != "succeeded":
             raise FoundationError("dependency_open", "Required child is not accepted")
@@ -441,16 +516,17 @@ def _evaluate(
         return (condition.artifact,)
     assert condition.kind == "decision_active"
     assert condition.decision_id and condition.decision_revision
-    extra_grants, extra_decisions = _authorize(
-        connection,
-        actor=actor,
-        action="record.read",
-        epoch=epoch,
-        resource_type="space",
-        resource_id=None,
-    )
-    grants.extend(extra_grants)
-    decisions.extend(extra_decisions)
+    if actor is not None:
+        extra_grants, extra_decisions = _authorize(
+            connection,
+            actor=actor,
+            action="record.read",
+            epoch=epoch,
+            resource_type="space",
+            resource_id=None,
+        )
+        grants.extend(extra_grants)
+        decisions.extend(extra_decisions)
     row = connection.execute(
         "SELECT r.current_revision, v.body_json FROM records r JOIN record_revisions v "
         "ON v.record_id = r.record_id AND v.revision = r.current_revision "
@@ -955,6 +1031,182 @@ def apply_composition_change(
     ]
 
 
+def child_binding(
+    connection: sqlite3.Connection, work_id: UUID
+) -> tuple[UUID, int | None, str] | None:
+    """Return the parent, issued plan revision and role of one planned child Work."""
+
+    row = connection.execute(
+        "SELECT parent_id, issued_plan_revision, role FROM work_plan_children WHERE child_id = ?",
+        (str(work_id),),
+    ).fetchone()
+    return None if row is None else (UUID(row[0]), row[1], str(row[2]))
+
+
+def _pinned_plan(
+    connection: sqlite3.Connection,
+    attempt_id: UUID,
+    work_id: UUID,
+    expected: tuple[UUID, str, int, MethodRef],
+) -> None:
+    row = connection.execute(
+        "SELECT parent_id, role, plan_revision, method_id, method_version, method_checksum "
+        "FROM execution_plan_pins WHERE attempt_id = ? AND work_id = ?",
+        (str(attempt_id), str(work_id)),
+    ).fetchone()
+    parent_id, role, plan_revision, method = expected
+    current = (
+        str(parent_id),
+        role,
+        plan_revision,
+        str(method.method_id),
+        method.version,
+        method.checksum,
+    )
+    if row is None or tuple(row) != current:
+        # An older generation never applies its effect or result to another plan.
+        raise FoundationError(
+            "stale_plan", "Attempt is not pinned to the current plan revision and Method"
+        )
+
+
+def check_child_plan(
+    connection: sqlite3.Connection,
+    work_id: UUID,
+    binding: tuple[UUID, int | None, str],
+    state: WorkState,
+    *,
+    attempt_id: UUID | None,
+    actor: str | None,
+    epoch: int,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> tuple[PlanRevision, MethodRef]:
+    """Recheck current issue, dependencies, exact inputs and an optional Attempt pin."""
+
+    parent_id, issued, _role = binding
+    plan = _plan(connection, parent_id)
+    _p_rev, parent, definition = _parent(connection, parent_id)
+    assert isinstance(parent.method, MethodRef)
+    if actor is not None:
+        _method_use(
+            connection,
+            parent,
+            actor=actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
+    _obligations(connection, parent_id, definition)
+    if issued != plan.revision or parent.status != "proposed":
+        raise FoundationError("child_not_issued", "Child lacks current plan issuance")
+    node = next((child for child in plan.plan.children if child.work_id == work_id), None)
+    if node is None:
+        raise FoundationError("child_not_issued", "Child is not in the current plan")
+    for ref in plan.plan.basis + parent.inputs + state.inputs:
+        _current_artifact(
+            connection,
+            ref,
+            actor=actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
+    refs = _evaluate(
+        connection,
+        plan.plan,
+        node.readiness,
+        actor=actor,
+        epoch=epoch,
+        grants=grants,
+        decisions=decisions,
+    )
+    if not set(refs).issubset(state.inputs):
+        raise FoundationError("stale_input", "Child is missing exact dependency input")
+    if attempt_id is not None:
+        _pinned_plan(
+            connection, attempt_id, work_id, (parent_id, node.role, plan.revision, parent.method)
+        )
+    return plan, parent.method
+
+
+def pin_child_attempt(
+    connection: sqlite3.Connection, request: AssignAttemptRequest, now: str
+) -> dict[str, object] | None:
+    """Record the exact plan and Method address of a newly assigned child Attempt."""
+
+    binding = child_binding(connection, request.work_id)
+    if binding is None:
+        return None
+    parent_id, _issued, role = binding
+    plan = _plan(connection, parent_id)
+    _p_rev, parent, _definition = _parent(connection, parent_id)
+    assert isinstance(parent.method, MethodRef)
+    connection.execute(
+        "INSERT INTO execution_plan_pins(attempt_id, work_id, parent_id, role, plan_revision, "
+        "method_id, method_version, method_checksum, operation_id, created_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            str(request.attempt_id),
+            str(request.work_id),
+            str(parent_id),
+            role,
+            plan.revision,
+            str(parent.method.method_id),
+            parent.method.version,
+            parent.method.checksum,
+            str(request.operation_id),
+            now,
+        ),
+    )
+    return {
+        "parent_work_id": str(parent_id),
+        "role": role,
+        "plan_revision": plan.revision,
+        "method": parent.method.model_dump(mode="json"),
+    }
+
+
+def composite_execution_ready(
+    connection: sqlite3.Connection, work_id: UUID, attempt_id: UUID, *, actor: str, epoch: int
+) -> bool:
+    """Control-read form of the child gate; a parent or old schema stays unconnected."""
+
+    schema = int(connection.execute("PRAGMA user_version").fetchone()[0])
+    if schema < 5:
+        return True
+    binding = child_binding(connection, work_id)
+    if binding is None:
+        if connection.execute(
+            "SELECT 1 FROM work_plan_revisions WHERE parent_id = ? LIMIT 1", (str(work_id),)
+        ).fetchone():
+            raise FoundationError(
+                "unsupported_composite_execution", "Composite parent execution is not connected"
+            )
+        return True
+    if schema < 6:
+        raise FoundationError(
+            "unsupported_composite_execution", "Assigned child execution needs schema 6"
+        )
+    try:
+        revision, _status, _ = _subject_current(connection, work_id, "work")
+        state = WorkState.model_validate(_subject_state(connection, work_id, revision))
+        check_child_plan(
+            connection,
+            work_id,
+            binding,
+            state,
+            attempt_id=attempt_id,
+            actor=actor,
+            epoch=epoch,
+            grants=[],
+            decisions=[],
+        )
+    except FoundationError:
+        return False
+    return True
+
+
 def check_composite_action(
     connection: sqlite3.Connection,
     request: object,
@@ -964,7 +1216,7 @@ def check_composite_action(
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
 ) -> None:
-    """Shared Core gate for old paths and the direct model-free path."""
+    """Shared Core gate for old paths, the direct path and assigned child Attempts."""
 
     work_id = getattr(request, "work_id", None)
     if not isinstance(work_id, UUID):
@@ -972,67 +1224,51 @@ def check_composite_action(
     schema = int(connection.execute("PRAGMA user_version").fetchone()[0])
     if schema < 5:
         return
-    binding = connection.execute(
-        "SELECT parent_id, issued_plan_revision FROM work_plan_children WHERE child_id = ?",
-        (str(work_id),),
-    ).fetchone()
+    binding = child_binding(connection, work_id)
     revision, status, _ = _subject_current(connection, work_id, "work")
     state = WorkState.model_validate(_subject_state(connection, work_id, revision))
     if binding is None and state.method == "none":
         return
     direct = isinstance(request, (LinkWorkOutputRequest, AcceptWorkRequest))
-    if not direct:
+    assigned_child = (
+        binding is not None and schema >= 6 and not isinstance(request, _INTERACTIVE_ATTEMPTS)
+    )
+    if not direct and not assigned_child:
         raise FoundationError(
-            "unsupported_composite_execution", "Composite Work execution is not connected in pass 1"
+            "unsupported_composite_execution",
+            "Composite parent and interactive execution are not connected; "
+            "an assigned child Attempt needs explicit schema 6",
         )
-    references = tuple(item.artifact for item in state.linked_outputs)
-    if isinstance(request, LinkWorkOutputRequest):
-        references += (request.output.artifact,)
-    for reference in references:
-        _current_artifact(
-            connection,
-            reference,
-            actor=actor,
-            epoch=epoch,
-            grants=grants,
-            decisions=decisions,
-        )
-    if binding is not None:
-        parent_id = UUID(binding[0])
-        plan = _plan(connection, parent_id)
-        _p_rev, parent, definition = _parent(connection, parent_id)
-        _method_use(
-            connection,
-            parent,
-            actor=actor,
-            epoch=epoch,
-            grants=grants,
-            decisions=decisions,
-        )
-        _obligations(connection, parent_id, definition)
-        if binding[1] != plan.revision or parent.status != "proposed":
-            raise FoundationError("child_not_issued", "Child lacks current plan issuance")
-        node = next(child for child in plan.plan.children if child.work_id == work_id)
-        for ref in plan.plan.basis + parent.inputs + state.inputs:
+    if assigned_child and isinstance(request, _ATTEMPT_OUTCOMES + _RESOURCE_SETUP):
+        return
+    if direct:
+        references = tuple(item.artifact for item in state.linked_outputs)
+        if isinstance(request, LinkWorkOutputRequest):
+            references += (request.output.artifact,)
+        for reference in references:
             _current_artifact(
                 connection,
-                ref,
+                reference,
                 actor=actor,
                 epoch=epoch,
                 grants=grants,
                 decisions=decisions,
             )
-        refs = _evaluate(
+    if binding is not None:
+        attempt_id = getattr(request, "attempt_id", None)
+        check_child_plan(
             connection,
-            plan.plan,
-            node.readiness,
+            work_id,
+            binding,
+            state,
+            attempt_id=attempt_id
+            if isinstance(request, ATTEMPT_EFFECTS) and isinstance(attempt_id, UUID)
+            else None,
             actor=actor,
             epoch=epoch,
             grants=grants,
             decisions=decisions,
         )
-        if not set(refs).issubset(state.inputs):
-            raise FoundationError("stale_input", "Child is missing exact dependency input")
         return
     if isinstance(state.method, MethodRef):
         _method_use(
@@ -1073,19 +1309,19 @@ def check_composite_action(
             if instance.status != "satisfied" or instance.evidence is None:
                 raise FoundationError("obligation_open", f"Obligation {instance.key} is open")
         linked = {item.slot: item.artifact for item in state.linked_outputs}
-        for binding in plan.plan.output_bindings:
+        for output_binding in plan.plan.output_bindings:
             actual_output = _accepted_output(
                 connection,
                 plan.plan,
-                binding.role,
-                binding.child_slot,
-                binding.media_type,
+                output_binding.role,
+                output_binding.child_slot,
+                output_binding.media_type,
                 actor=actor,
                 epoch=epoch,
                 grants=grants,
                 decisions=decisions,
             )
-            if linked.get(binding.parent_slot) != actual_output:
+            if linked.get(output_binding.parent_slot) != actual_output:
                 raise FoundationError(
                     "output_mismatch", "Parent output is not exact bound child result"
                 )

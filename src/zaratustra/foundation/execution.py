@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from uuid import UUID, uuid4, uuid5
 
+from .composition import composite_execution_ready
 from .models import (
     Action,
     AdmitInvocationRequest,
@@ -58,6 +59,7 @@ from .storage import (
     space_connection,
     utc_now,
 )
+from .work_status import composition_view, work_status
 
 type ExecutionRequest = (
     CreateResourceRequest
@@ -900,18 +902,10 @@ def read_assigned_control(
                 resource_type="work",
                 resource_id=work_id,
             )
-        if info.schema_version >= 5 and (
-            connection.execute(
-                "SELECT 1 FROM work_plan_children WHERE child_id = ?", (str(work_id),)
-            ).fetchone()
-            or connection.execute(
-                "SELECT 1 FROM work_plan_revisions WHERE parent_id = ? LIMIT 1",
-                (str(work_id),),
-            ).fetchone()
+        if not composite_execution_ready(
+            connection, work_id, attempt_id, actor=authority.actor, epoch=info.execution_epoch
         ):
-            raise FoundationError(
-                "unsupported_composite_execution", "Assigned composite execution is not connected"
-            )
+            return False
         row = connection.execute(
             "SELECT assignment.status, attempt.status, attempt.execution_epoch "
             "FROM execution_assignments AS assignment "
@@ -1104,6 +1098,8 @@ def read_execution(path: Path, work_id: UUID, authority: LocalAuthority) -> Exec
                 for row in outbox_rows
             )
         committed, held = _used_units(connection, work_id)
+        status = work_status(connection, work_id)
+        composition = composition_view(connection, work_id)
         limit = min(
             (
                 resource.state.limit_units
@@ -1130,6 +1126,8 @@ def read_execution(path: Path, work_id: UUID, authority: LocalAuthority) -> Exec
             committed_units=committed,
             held_units=held,
             remaining_units=None if limit is None else limit - committed - held,
+            status=status,
+            composition=composition,
         )
 
 

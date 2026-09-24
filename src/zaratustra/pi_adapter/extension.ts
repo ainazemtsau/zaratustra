@@ -24,6 +24,23 @@ function bytes(body: unknown): Uint8Array {
   throw new Error("Zaratustra cannot observe the final HTTP request body");
 }
 
+function lifecycle(current: any): string {
+  const status = current?.status;
+  if (!status) return "";
+  const reasons = (status.reasons ?? [])
+    .map((item: any) => [item.code, item.role].filter(Boolean).join(":")).join(", ");
+  let line = `Work ${status.work_id}: ${status.status}${reasons ? ` (${reasons})` : ""}`;
+  const plan = current.composition;
+  if (plan) {
+    line += `\nPlan ${plan.parent_work_id}@${plan.plan_revision}` +
+      `${plan.plan_available ? "" : " (content unavailable)"}` +
+      `${plan.role ? `; role ${plan.role}` : ""}; Method ${plan.method.method_id}@${plan.method.version}`;
+    for (const child of plan.children ?? []) line += `\n  child ${child.role}: ${child.status.status}`;
+    for (const item of plan.obligations ?? []) line += `\n  obligation ${item.key}: ${item.status}`;
+  }
+  return `${line}\n`;
+}
+
 function usageUnits(usage: any): number | null {
   if (!usage || typeof usage !== "object") return null;
   const total = Number(usage.totalTokens ?? usage.total_tokens);
@@ -215,7 +232,8 @@ export default function (pi: any): void {
           throw new Error("Assigned Attempt is unavailable");
         }
         attemptId = assignedAttemptId;
-      } else if (current.work.state.status === "proposed" && !current.work.state.linked_outputs.length &&
+      } else if (!current.composition && current.work.state.status === "proposed" &&
+          !current.work.state.linked_outputs.length &&
           !current.attempts.some((x: any) => x.status === "active")) {
         const started = await request("/v1/start-attempt", { interrupt_previous: false });
         attemptId = started.attempt_id;
@@ -250,6 +268,11 @@ export default function (pi: any): void {
         ctx.ui.notify("Accepted Work loaded from Core. Use /zara-status to inspect its result.", "info");
         return;
       }
+      if (current.composition) {
+        ctx.ui.notify(`${lifecycle(current)}Composite Work runs only through a Core-assigned Attempt. ` +
+          "Use /zara-status to read its current Core state.", "info");
+        return;
+      }
       const prior = current.attempts.at(-1);
       let interrupt = false;
       if (prior?.status === "active") {
@@ -268,7 +291,7 @@ export default function (pi: any): void {
     description: "Read the saved Core result, basis, rights and model reserve",
     handler: async (_args: string, ctx: any) => {
       const current = selection ? await snapshot() : await request("/v1/connect", {});
-      ctx.ui.notify(JSON.stringify(current, null, 2), "info");
+      ctx.ui.notify(`${lifecycle(current)}${JSON.stringify(current, null, 2)}`, "info");
     },
   });
 
@@ -332,6 +355,8 @@ export default function (pi: any): void {
       waits: current.waits.map((item: any) => ({ ...item })),
       cost: { committed_units: current.committed_units, held_units: current.held_units,
               remaining_units: current.remaining_units },
+      // Addresses and pinned versions only; the plan itself stays in its Core revision.
+      status: current.status ?? null, composition: current.composition ?? null,
     };
     contextReady = true;
     return { message: { customType: "zaratustra-context", content: JSON.stringify(context), display: false } };

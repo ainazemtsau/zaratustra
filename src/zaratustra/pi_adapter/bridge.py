@@ -40,6 +40,7 @@ from zaratustra.foundation import (
     read_receipt,
     read_space,
     read_work,
+    read_work_status,
 )
 
 PROTOCOL_VERSION = 1
@@ -93,7 +94,7 @@ class Bridge:
             or space.execution_epoch != self.authority.execution_epoch
         ):
             raise FoundationError("stale_epoch", "Bridge authority no longer matches this space")
-        if space.schema_version not in (3, 4) or space.recovery_state != "active":
+        if space.schema_version < 3 or space.recovery_state != "active":
             raise FoundationError(
                 "unsupported_schema", "Interactive Pi needs active execution schema"
             )
@@ -115,11 +116,13 @@ class Bridge:
             elif item.kind == "work":
                 try:
                     work_detail = read_work(self.path, item.record_id, self.authority)
+                    lifecycle = read_work_status(self.path, item.record_id, self.authority)
                     choices.append(
                         {
                             **item.model_dump(mode="json"),
                             "label": work_detail.state.goal,
                             "activity_id": str(work_detail.state.activity_id),
+                            "lifecycle": lifecycle.status,
                         }
                     )
                 except FoundationError:
@@ -162,7 +165,8 @@ class Bridge:
             ),
             None,
         )
-        if resource is None and work.state.status == "proposed":
+        # A composite parent or child runs only through a Core-assigned Attempt.
+        if resource is None and work.state.status == "proposed" and snapshot.composition is None:
             resource_id = uuid5(
                 self.authority.space_id, f"resource:{work_id}:{self.workspace.as_posix()}"
             )

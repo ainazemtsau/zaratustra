@@ -1,0 +1,385 @@
+"""Composite child Work on the assigned bridge, DBOS delivery and managed cleanup."""
+
+from __future__ import annotations
+
+import shutil
+import sqlite3
+import subprocess
+from contextlib import closing
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any, cast
+from uuid import UUID, uuid4
+
+import pytest
+from dbos import DBOS, DBOSClient
+
+import zaratustra.pi_adapter.assigned as assigned_module
+from tests.zaratustra.foundation.test_composition import _apply, _result, _seed, _sqlite_contains
+from zaratustra.foundation import (
+    AssignAttemptRequest,
+    CreateDecisionRequest,
+    CreateResourceRequest,
+    DecisionState,
+    DeleteWorkRequest,
+    FoundationError,
+    IssueChildWorkRequest,
+    LocalAuthority,
+    PlanCondition,
+    ResourceState,
+    ReviseDecisionRequest,
+    apply_operation,
+    read_execution,
+    read_obligation,
+    read_work,
+    read_work_status,
+    upgrade_child_execution_space,
+)
+from zaratustra.pi_adapter import Bridge
+from zaratustra.pi_adapter.assigned import (
+    EXECUTOR_VERSION,
+    PI_VERSION,
+    WORKFLOW_NAME,
+    AssignedConfig,
+    complete_assigned_deletions,
+    deliver_outbox,
+    run_assigned,
+)
+
+
+@pytest.fixture(scope="module")
+def child_dbos_template(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    database = tmp_path_factory.mktemp("child-dbos") / "executor.sqlite3"
+    DBOS(
+        config={
+            "name": "zaratustra-assigned-rpc",
+            "system_database_url": f"sqlite:///{database.resolve().as_posix()}",
+            "application_version": EXECUTOR_VERSION,
+        }
+    )
+    DBOS.launch()
+    DBOS.destroy(destroy_registry=True, workflow_completion_timeout_sec=1)
+    with sqlite3.connect(database) as connection:
+        connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchall()
+    return database
+
+
+def _workflows(root: Path) -> list[dict[str, object]]:
+    client = DBOSClient(
+        system_database_url=(
+            f"sqlite:///{(root / '.zara-core' / 'executor.sqlite3').resolve().as_posix()}"
+        ),
+        application_name="zaratustra-assigned-rpc",
+        retry_connection_errors=False,
+    )
+    try:
+        return [
+            dict(workflow.attributes or {})
+            for workflow in client.list_workflows(
+                name=WORKFLOW_NAME,
+                application_name="zaratustra-assigned-rpc",
+                load_input=False,
+                load_output=False,
+            )
+        ]
+    finally:
+        client.destroy()
+
+
+def _resource(root: Path, space: UUID, owner: LocalAuthority, work: UUID, name: str) -> Path:
+    directory = root.parent / name
+    directory.mkdir(exist_ok=True)
+    _apply(
+        root,
+        space,
+        owner,
+        CreateResourceRequest,
+        resource_id=uuid4(),
+        work_id=work,
+        state=ResourceState(label=name, root=directory, limit_units=100),
+    )
+    return directory
+
+
+def _assign(root: Path, space: UUID, owner: LocalAuthority, work: UUID) -> tuple[UUID, UUID]:
+    snapshot = read_execution(root, work, owner)
+    attempt, session = uuid4(), uuid4()
+    apply_operation(
+        root,
+        AssignAttemptRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            attempt_id=attempt,
+            work_id=work,
+            expected_work_revision=snapshot.work.revision,
+            resource_id=snapshot.resources[0].resource_id,
+            expected_resource_revision=1,
+            session_id=session,
+            executor_version=EXECUTOR_VERSION,
+        ),
+        owner,
+    )
+    return attempt, session
+
+
+def _issue(root: Path, space: UUID, owner: LocalAuthority, parent: UUID, child: UUID) -> None:
+    _apply(
+        root,
+        space,
+        owner,
+        IssueChildWorkRequest,
+        parent_work_id=parent,
+        work_id=child,
+        expected_plan_revision=1,
+        expected_work_revision=1,
+    )
+
+
+def _config(root: Path, workspace: Path, runtime: Path) -> AssignedConfig:
+    package = runtime / "node_modules" / "@earendil-works" / "pi-coding-agent"
+    cli = package / "dist" / "bundle" / "cli.js"
+    cli.parent.mkdir(parents=True, exist_ok=True)
+    cli.write_text("synthetic", encoding="utf-8")
+    (package / "package.json").write_text(
+        '{"name":"@earendil-works/pi-coding-agent","version":"' + PI_VERSION + '"}',
+        encoding="utf-8",
+    )
+    return AssignedConfig(
+        space=root,
+        workspace=workspace,
+        pi_cli=cli,
+        pi_runtime=runtime,
+        node="node",
+        provider_profile="local-completions",
+        provider_base_url="http://127.0.0.1:9/v1",
+        provider_id="synthetic",
+        model_id="synthetic",
+        context_window=4096,
+        max_tokens=512,
+        reserve_units=10,
+        limit_units=100,
+        offline=True,
+    )
+
+
+def test_bridges_show_child_state_and_carry_one_addressed_answer(tmp_path: Path) -> None:
+    root, space, owner, activity, _source, _ref, parent, a, b, _plan, _create = _seed(tmp_path)
+    assert upgrade_child_execution_space(root, owner).schema_version == 6
+    workspace = _resource(root, space, owner, a, "workspace-a")
+    interactive = Bridge(root, owner, workspace, 100)
+    session = uuid4()
+    records = cast(list[dict[str, Any]], interactive.connect(session)["records"])
+    lifecycle = {row["record_id"]: row.get("lifecycle") for row in records if row["kind"] == "work"}
+    assert lifecycle == {str(parent): "ready", str(a): "proposed", str(b): "blocked"}
+    parent_view = interactive.select(session, activity, parent)
+    assert parent_view["resources"] == []
+    blocked = interactive.select(session, activity, b)
+    assert blocked["resources"] == []
+    assert cast(dict[str, Any], blocked["status"])["status"] == "blocked"
+
+    _issue(root, space, owner, parent, a)
+    attempt, rpc_session = _assign(root, space, owner, a)
+    rpc = Bridge(
+        root,
+        owner,
+        workspace,
+        100,
+        assigned_attempt_id=attempt,
+        assigned_session_id=rpc_session,
+    )
+    rpc.connect(rpc_session)
+    rpc.select(rpc_session, activity, a)
+    wait_id = uuid4()
+    rpc.open_wait(rpc_session, attempt, wait_id, "Synthetic partial", "Which line?", "Finish")
+    interactive.select(session, activity, a)
+    shown = interactive.snapshot(session)
+    assert cast(dict[str, Any], shown["status"])["status"] == "waiting"
+    assert cast(dict[str, Any], shown["status"])["wait_id"] == str(wait_id)
+    composition = cast(dict[str, Any], shown["composition"])
+    assert composition["parent_work_id"] == str(parent) and composition["role"] == "a"
+    assert [pin["attempt_id"] for pin in composition["pins"]] == [str(attempt)]
+    assert cast(list[dict[str, Any]], shown["waits"])[0]["question"] == "Which line?"
+    first = interactive.answer_wait(session, wait_id, "The first line")
+    assert interactive.answer_wait(session, wait_id, "The first line") == first
+    assert read_work_status(root, a, owner).status == "ready"
+
+    invocation = uuid4()
+    common = {
+        "protocol_version": 1,
+        "space_id": str(space),
+        "actor": "owner",
+        "invocation_id": str(invocation),
+        "attempt_id": str(attempt),
+        "work_id": str(a),
+        "session_id": str(rpc_session),
+    }
+    rpc.operation(
+        rpc_session,
+        {
+            **common,
+            "operation_id": str(uuid4()),
+            "kind": "prepare_invocation",
+            "purpose": "content",
+            "provider": "synthetic",
+            "model": "synthetic",
+            "transport": "http-sse",
+            "request_sha256": "B" * 64,
+            "request_bytes": 12,
+            "reserve_units": 10,
+        },
+    )
+    for kind in ("admit_invocation", "send_invocation"):
+        rpc.operation(rpc_session, {**common, "operation_id": str(uuid4()), "kind": kind})
+    rpc.operation(
+        rpc_session,
+        {
+            **common,
+            "operation_id": str(uuid4()),
+            "kind": "finish_invocation",
+            "outcome": "answered",
+            "usage_units": 4,
+        },
+    )
+    rpc.publish(rpc_session, attempt, "checked", "text/plain", "Synthetic checked result")
+    assert read_work_status(root, a, owner).status == "running"
+    preview = interactive.accept_preview(session)
+    accepted = interactive.accept(session, UUID(str(preview["nonce"])), "Checked synthetic line")
+    assert accepted["result"] == {
+        "record_id": str(a),
+        "revision": read_work(root, a, owner).revision,
+        "status": "succeeded",
+    }
+    assert read_work_status(root, a, owner).status == "succeeded"
+    assert read_work_status(root, b, owner).status == "proposed"
+
+
+def test_duplicate_delivery_issues_one_child_workflow_and_cleanup_is_addressed(
+    tmp_path: Path, child_dbos_template: Path
+) -> None:
+    root, space, owner, _activity, _source, _ref, parent, a, _b, _plan, _create = _seed(tmp_path)
+    assert upgrade_child_execution_space(root, owner).schema_version == 6
+    _resource(root, space, owner, a, "workspace-a")
+    _issue(root, space, owner, parent, a)
+    attempt, _session = _assign(root, space, owner, a)
+    shutil.copyfile(child_dbos_template, root / ".zara-core" / "executor.sqlite3")
+    first = deliver_outbox(root, owner)
+    second = deliver_outbox(root, owner)
+    assert first == second and len(first) == 1
+    assert _workflows(root) == [{"work_id": str(a), "attempt_id": str(attempt)}]
+    home = root / ".zara-core" / "pi-rpc-home" / str(attempt)
+    home.mkdir(parents=True)
+    marker = f"synthetic managed child copy {uuid4()}"
+    (home / "copy.txt").write_text(marker, encoding="utf-8", newline="\n")
+    snapshot = read_execution(root, a, owner)
+    apply_operation(
+        root,
+        DeleteWorkRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            work_id=a,
+            expected_revision=snapshot.work.revision,
+        ),
+        owner,
+    )
+    deleted = complete_assigned_deletions(root, owner)
+    assert deleted.live_store_sanitized and deleted.pending_jobs == 0
+    assert _workflows(root) == [] and not home.exists()
+    with closing(sqlite3.connect(root / ".zara-core" / "core.sqlite3")) as connection:
+        assert connection.execute("SELECT count(*) FROM execution_plan_pins").fetchone() == (0,)
+    assert not _sqlite_contains(root / ".zara-core", marker)
+    assert read_obligation(root, parent, "checked", owner).status == "open"
+
+
+def test_subject_refusal_before_launch_stops_child_without_pi_or_http(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, space, owner, _activity, _source, _ref, _parent, _a, _b, plan, create = _seed(tmp_path)
+    assert upgrade_child_execution_space(root, owner).schema_version == 6
+    decision = uuid4()
+    _apply(
+        root,
+        space,
+        owner,
+        CreateDecisionRequest,
+        decision_id=decision,
+        state=DecisionState(
+            statement="Synthetic branch decision",
+            effect="require_grant",
+            actions=("space.inspect",),
+            subjects=("synthetic-nobody",),
+        ),
+    )
+    first = plan.children[0].model_copy(update={"work_id": uuid4()})
+    gated = plan.children[1].model_copy(
+        update={
+            "work_id": uuid4(),
+            "readiness": PlanCondition(
+                kind="all",
+                members=(
+                    PlanCondition(
+                        kind="accepted_output", role="a", slot="checked", media_type="text/plain"
+                    ),
+                    PlanCondition(
+                        kind="decision_active", decision_id=decision, decision_revision=1
+                    ),
+                ),
+            ),
+        }
+    )
+    parent = uuid4()
+    apply_operation(
+        root,
+        create.model_copy(
+            update={
+                "operation_id": uuid4(),
+                "work_id": parent,
+                "plan": plan.model_copy(update={"children": (first, gated)}),
+            }
+        ),
+        owner,
+    )
+    _issue(root, space, owner, parent, first.work_id)
+    _result(root, space, owner, first.work_id, "checked", b"synthetic checked source")
+    _issue(root, space, owner, parent, gated.work_id)
+    workspace = _resource(root, space, owner, gated.work_id, "workspace-gated")
+    attempt, _session = _assign(root, space, owner, gated.work_id)
+    _apply(
+        root,
+        space,
+        owner,
+        ReviseDecisionRequest,
+        decision_id=decision,
+        expected_revision=1,
+        state=DecisionState(
+            statement="Synthetic branch decision changed",
+            effect="require_grant",
+            actions=("space.inspect",),
+            subjects=("synthetic-nobody",),
+        ),
+    )
+
+    def no_process(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("A refused child must not start Pi")
+
+    monkeypatch.setattr(
+        assigned_module,
+        "subprocess",
+        SimpleNamespace(
+            Popen=no_process,
+            PIPE=subprocess.PIPE,
+            DEVNULL=subprocess.DEVNULL,
+            TimeoutExpired=subprocess.TimeoutExpired,
+        ),
+    )
+    with pytest.raises(FoundationError) as refused:
+        run_assigned(_config(root, workspace, tmp_path / "runtime"), owner, attempt)
+    assert refused.value.code == "stale_basis"
+    after = read_execution(root, gated.work_id, owner)
+    assert after.assignments[0].status == "stopped"
+    assert after.attempts[0].status == "interrupted"
+    assert after.invocations == () and after.outputs == ()
+    assert [item.status for item in after.outbox] == ["cancelled"]
+    status = read_work_status(root, gated.work_id, owner)
+    assert status.status == "blocked" and status.reasons[0].code == "stale_basis"
