@@ -61,10 +61,14 @@ its DDL grows by part and is frozen only at the pass release, so checkpoint spac
 are disposable. `close_work` records failed/cancelled/stale as one `WorkClosure`
 inside the Work revision (absent from canonical JSON while empty) under
 `work.accept`, plus `method.use` for composite members. It holds execution exactly
-like acceptance (`_hold_work_execution`). `stale` names only verified changed
-premises of that Work; Core never assigns it. A composite parent closes only after
-every child is closed; there is no cascade. A closed child makes dependent leaves
-`dependency_closed`; `any` is closed only when every member is. See
+like acceptance (`_hold_work_execution`). `stale` names only premises of that Work
+that held at their exact address (retained `record_revisions` metadata, never
+deleted bytes) and then changed; Core never assigns it. A composite parent closes
+only after every child is closed; there is no cascade. A closed child makes
+dependent leaves `dependency_closed`; `any` is closed only when every member is.
+Deleting an Artifact named by a closed Work revision (input, linked output or
+premise) retires that closure's basis (`basis = null`) and receipt in
+`sanitize_deleted_dependency`; the outcome and addresses stay. See
 `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.1.md`.
 
 The foundation stores Work execution records but never imports Pi or runs a model.

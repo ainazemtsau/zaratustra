@@ -14,8 +14,9 @@
   approved decisions on the pass 3 plan, `docs/core-v0.1/STAGE6-PASS3-PLAN.md`,
   and authorized only its part 3.1, followed by a stop for technical review.
   Part 3.1 is implemented as a development checkpoint; see
-  `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.1.md`. It is not an accepted
-  release, schema 7 acceptance or pass 3 acceptance. Parts 3.2–3.10, the
+  `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.1.md`. Two defects reproduced by
+  the independent review of `e2d5b90` are corrected there. It is not an
+  accepted release, schema 7 acceptance or pass 3 acceptance. Parts 3.2–3.10, the
   separate composite-parent execution slice, pass 4, real model calls and
   development migration are not authorized.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
