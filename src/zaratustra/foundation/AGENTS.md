@@ -97,6 +97,23 @@ confirmation, a parent output link bound to it, parent acceptance) refuses
 `dependency_closed` with its address; nothing is cancelled. See
 `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.2.md`.
 
+Part 3.3 adds no DDL. `choices.py` owns addressed choices: a Decision variant
+(`ChoiceState`: name, value, one Work or Activity scope) written by the existing
+Decision operations under `decision.write`. `_authorize` skips choices, so access stays
+with `require_grant`/`deny` rules; a revision keeps the variant, name and scope. The
+choices that apply to a Work are the current active ones covering it, a composite Work
+above it or its Activity; differing values are a formal `decision_conflict` naming every
+address, never ordered by scope or time. A conditional obligation
+(`ChoiceApplicability`) materializes `unresolved`; `resolve_obligation_applicability`
+(`work.write` + `method.use`) records `active`/`open` or `inactive` with the exact choice
+address, and only when the instance is unresolved or its choice no longer holds. The
+recorded revision is never rewritten: a revised or revoked choice reads
+`applicability_stale` and acceptance refuses `stale_basis`. The `decision_value` leaf
+closes on another exact value. Issue, child effects, confirmation, a parent output link,
+acceptance and `work_status` recompute the applicable choices in their own transaction.
+Everything new is refused below schema 7 and absent from earlier canonical JSON. See
+`docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.3.md`.
+
 The foundation stores Work execution records but never imports Pi or runs a model.
 Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,
 stop state and pending/cancelled outbox records in the same operation/receipt path.
