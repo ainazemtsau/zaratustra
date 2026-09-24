@@ -18,10 +18,13 @@
   the independent review of `e2d5b90` are corrected there, and the owner
   authorized the narrow outcome-basis sanitation fix after the review of
   `a7226f8` and the upgrade-first order for schemas 2–6 after the review of
-  `f13ffa8`. It is not an accepted release, schema 7 acceptance or pass 3
-  acceptance. Parts 3.2–3.10, the
-  separate composite-parent execution slice, pass 4, real model calls and
-  development migration are not authorized.
+  `f13ffa8`. On Codex's independent Windows check of `d07ffa5` the owner
+  closed the technical review of checkpoint 3.1 and authorized only part 3.2,
+  followed by a stop for review; part 3.2 is implemented as a development
+  checkpoint, see `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.2.md`. None of this
+  is an accepted release, schema 7 acceptance or pass 3 acceptance. Parts
+  3.3–3.10, the separate composite-parent execution slice, pass 4, real model
+  calls and development migration are not authorized.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
 - Stage 1 stopped after recording the G07-1 DBOS and G08-1 Pi technical outcomes.
@@ -79,8 +82,10 @@ before every effect, and derives proposed/ready/running/waiting/blocked/succeede
 from Core records; see `STAGE6-PASS2-IMPLEMENTATION.md`. Pass 2 is owner-accepted
 at `d33b676`. `STAGE6-PASS3-PLAN.md` divides pass 3 into parts 3.1–3.10. Checkpoint
 3.1 adds explicit schema 7 and the subject Work outcomes failed/cancelled/stale
-through `close_work`; see `STAGE6-PASS3-CHECKPOINT-3.1.md`. Parts 3.2–3.10 are not
-implemented.
+through `close_work`; see `STAGE6-PASS3-CHECKPOINT-3.1.md`. Checkpoint 3.2 runs
+independent children at once, keeps an exclusive root single, names active and closed
+branches by address (`branch_review`) and refuses integration needing a closed branch;
+see `STAGE6-PASS3-CHECKPOINT-3.2.md`. Parts 3.3–3.10 are not implemented.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,
@@ -159,7 +164,8 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
 - Keep the accepted Core v0.1 functional composition and completed Stage 1–5
   evidence. Stage 5 and Stage 6 passes 1–2 are owner-accepted at the exact
   commits above; this is not owner acceptance of Stage 6. Stage 6 pass 3 is
-  authorized only through checkpoint 3.1, which awaits technical review.
+  authorized only through part 3.2: the checkpoint 3.1 technical review is
+  closed and checkpoint 3.2 awaits review.
   Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.

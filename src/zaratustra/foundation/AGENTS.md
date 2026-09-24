@@ -79,8 +79,20 @@ there (dependency deleted after the outcome was recorded) is withheld from Work 
 without rewriting, its replay/receipt answer `upgrade_required`, and
 `complete_deletions` changes nothing and reports `retained_bases` with
 `upgrade_required = 7`. The explicit 6 to 7 upgrade retires exactly those and then
-needs `maintenance.delete`. Quotes without a stored structural link are not covered.
-See `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.1.md`.
+needs `maintenance.delete`. That order decides only retrospective sanitation; it does
+not prove a later basis holds no copy. Quotes without a stored structural link are not
+covered. See `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.1.md`.
+
+Part 3.2 adds no records. Independent children of one parent run at once, each through
+its own Attempt and resource; an exclusive root stays single until a stop is recorded
+(the unchanged Stage 5 `resource_busy` rule). `work_status` keeps the pass 2 phase order
+but names every active branch and every closed branch that the current plan or an open
+obligation refers to (`branch_review`), each with role and Work address; with nothing
+waiting or running a failed branch makes the parent `ready` for review, and a stale
+prerequisite still blocks it first. Integration that needs a closed branch (issue,
+confirmation, a parent output link bound to it, parent acceptance) refuses
+`dependency_closed` with its address; nothing is cancelled. See
+`docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.2.md`.
 
 The foundation stores Work execution records but never imports Pi or runs a model.
 Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,
