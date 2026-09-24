@@ -418,6 +418,82 @@ CONTINUATION_SCHEMA_SHA256 = (
     .upper()
 )
 
+COMPOSITION_SCHEMA_NAME = "core-v0.1-composite-work-5"
+COMPOSITION_SCHEMA_STATEMENTS = (
+    """
+    CREATE TABLE method_versions (
+        method_id TEXT NOT NULL,
+        version INTEGER NOT NULL CHECK (version >= 1),
+        checksum TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('active', 'deleted')),
+        payload BLOB,
+        operation_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        actor TEXT NOT NULL,
+        PRIMARY KEY (method_id, version),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE work_plan_revisions (
+        parent_id TEXT NOT NULL,
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        payload BLOB NOT NULL,
+        operation_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        actor TEXT NOT NULL,
+        PRIMARY KEY (parent_id, revision),
+        FOREIGN KEY (parent_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE work_plan_children (
+        child_id TEXT PRIMARY KEY,
+        parent_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        issued_plan_revision INTEGER,
+        issue_operation_id TEXT,
+        UNIQUE (parent_id, role),
+        FOREIGN KEY (parent_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (child_id) REFERENCES subject_records(record_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE work_obligation_revisions (
+        parent_id TEXT NOT NULL,
+        key TEXT NOT NULL,
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        payload BLOB NOT NULL,
+        operation_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (parent_id, key, revision),
+        FOREIGN KEY (parent_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE method_deletion_jobs (
+        operation_id TEXT PRIMARY KEY,
+        method_id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('pending', 'complete')),
+        created_at TEXT NOT NULL,
+        completed_at TEXT,
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    "CREATE INDEX work_plan_children_parent ON work_plan_children(parent_id)",
+    "CREATE INDEX work_obligation_parent ON work_obligation_revisions(parent_id, key)",
+)
+COMPOSITION_SCHEMA_SHA256 = (
+    hashlib.sha256(
+        "\n".join(statement.strip() for statement in COMPOSITION_SCHEMA_STATEMENTS).encode()
+    )
+    .hexdigest()
+    .upper()
+)
+
 
 def utc_now() -> datetime:
     return datetime.now(UTC)
@@ -519,7 +595,7 @@ def _begin(connection: sqlite3.Connection, *, writable: bool) -> None:
 def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> SpaceInfo:
     application_id = int(connection.execute("PRAGMA application_id").fetchone()[0])
     schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
-    if application_id != APPLICATION_ID or schema_version not in (1, 2, 3, 4):
+    if application_id != APPLICATION_ID or schema_version not in (1, 2, 3, 4, 5):
         raise FoundationError(
             "unsupported_schema",
             f"Unsupported application/schema identity: {application_id}/{schema_version}",
@@ -537,6 +613,8 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         expected.append((3, EXECUTION_SCHEMA_NAME, EXECUTION_SCHEMA_SHA256))
     if schema_version >= 4:
         expected.append((4, CONTINUATION_SCHEMA_NAME, CONTINUATION_SCHEMA_SHA256))
+    if schema_version >= 5:
+        expected.append((5, COMPOSITION_SCHEMA_NAME, COMPOSITION_SCHEMA_SHA256))
     if migration != expected:
         raise FoundationError("unsupported_schema", "Schema history does not match installed code")
     rows = connection.execute(
@@ -550,7 +628,7 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         database=database,
         space_id=UUID(space_id),
         created_at=datetime.fromisoformat(created_at),
-        schema_version=cast(Literal[1, 2, 3, 4], schema_version),
+        schema_version=cast(Literal[1, 2, 3, 4, 5], schema_version),
         state_revision=state_revision,
         execution_epoch=execution_epoch,
         recovery_state=recovery_state,

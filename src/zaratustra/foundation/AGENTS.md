@@ -22,6 +22,17 @@ is a separate authorized operation after exact output checks; Activity remains
 independent of a Work outcome. Restore stays quarantined until a
 fresh trusted-local recovery operation establishes the new epoch.
 
+Schema 5 is an explicit additive upgrade for immutable Method versions, exact
+composite Work plan revisions, child ownership/issue, materialized obligations,
+and Method deletion jobs. `composition.py` owns these records and direct
+model-free coordination. The shared `apply_operation` gate checks composite
+child readiness and parent acceptance before old Work/Attempt routes; composite
+Stage 4/5 execution routes refuse explicitly until a later authorized pass.
+Method use requires current Decision/Grant authority. Child deletion preserves
+the parent obligation; parent and Method deletion sanitize all new content
+through the existing maintenance boundary. See
+`docs/core-v0.1/STAGE6-PASS1-IMPLEMENTATION.md`.
+
 The foundation stores Work execution records but never imports Pi or runs a model.
 Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,
 stop state and pending/cancelled outbox records in the same operation/receipt path.

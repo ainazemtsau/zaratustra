@@ -13,6 +13,8 @@ type Action = Literal[
     "artifact.write",
     "activity.write",
     "work.write",
+    "method.write",
+    "method.use",
     "work.accept",
     "work.execute",
     "resource.write",
@@ -25,12 +27,14 @@ type Action = Literal[
     "maintenance.backup",
     "maintenance.delete",
 ]
-type RecordKind = Literal["artifact", "decision", "grant", "activity", "work"]
+type RecordKind = Literal["artifact", "decision", "grant", "activity", "work", "method"]
 
 ALL_ACTIONS: tuple[Action, ...] = (
     "artifact.write",
     "activity.write",
     "work.write",
+    "method.write",
+    "method.use",
     "work.accept",
     "work.execute",
     "resource.write",
@@ -112,6 +116,172 @@ class LinkedOutput(ContractModel):
     artifact: ArtifactRef
 
 
+class MethodRef(ContractModel):
+    method_id: UUID
+    version: int = Field(ge=1)
+    checksum: str = Field(pattern=r"^[0-9A-F]{64}$")
+
+
+class NamedInput(ContractModel):
+    slot: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+    artifact: ArtifactRef
+
+
+class CapabilityRequirement(ContractModel):
+    name: str = Field(min_length=1, max_length=200)
+    source_ref: str = Field(min_length=1, max_length=2048)
+
+
+class MethodObligation(ContractModel):
+    key: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+    source: str = Field(min_length=1, max_length=2048)
+    role: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+    slot: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+    media_type: str = Field(min_length=1, max_length=200)
+    applicability: Literal["always"] = "always"
+
+
+class MethodDefinition(ContractModel):
+    instruction: str = Field(min_length=1, max_length=32768)
+    applicability: Literal["always"] = "always"
+    named_inputs: tuple[OutputContract, ...] = ()
+    named_outputs: tuple[OutputContract, ...] = Field(min_length=1)
+    obligations: tuple[MethodObligation, ...] = ()
+    role_methods: tuple[tuple[str, MethodRef], ...] = ()
+    required_capabilities: tuple[CapabilityRequirement, ...] = ()
+    source_ref: str = Field(min_length=1, max_length=2048)
+
+    @model_validator(mode="after")
+    def unique_contract(self) -> MethodDefinition:
+        for values in (
+            [item.slot for item in self.named_inputs],
+            [item.slot for item in self.named_outputs],
+            [item.key for item in self.obligations],
+            [role for role, _ in self.role_methods],
+            [item.name for item in self.required_capabilities],
+        ):
+            if len(values) != len(set(values)):
+                raise ValueError("Method contract keys must be unique")
+        return self
+
+
+class PlanCondition(ContractModel):
+    kind: Literal[
+        "accepted_output", "work_succeeded", "artifact_current", "decision_active", "all", "any"
+    ]
+    role: str | None = None
+    slot: str | None = None
+    media_type: str | None = None
+    artifact: ArtifactRef | None = None
+    decision_id: UUID | None = None
+    decision_revision: int | None = Field(default=None, ge=1)
+    members: tuple[PlanCondition, ...] = ()
+
+    @model_validator(mode="after")
+    def exact_shape(self) -> PlanCondition:
+        fields = (
+            self.role,
+            self.slot,
+            self.media_type,
+            self.artifact,
+            self.decision_id,
+            self.decision_revision,
+        )
+        if self.kind in ("all", "any"):
+            if not self.members or any(value is not None for value in fields):
+                raise ValueError("all/any require fixed members and no leaf fields")
+        elif self.members:
+            raise ValueError("Leaf condition cannot have members")
+        elif self.kind == "accepted_output" and (
+            not self.role
+            or not self.slot
+            or not self.media_type
+            or any(value is not None for value in fields[3:])
+        ):
+            raise ValueError("accepted_output needs exact role, slot and type")
+        elif self.kind == "work_succeeded" and (
+            not self.role or any(value is not None for value in fields[1:])
+        ):
+            raise ValueError("work_succeeded needs only role")
+        elif self.kind == "artifact_current" and (
+            self.artifact is None or any(value is not None for value in fields[:3] + fields[4:])
+        ):
+            raise ValueError("artifact_current needs one exact Artifact")
+        elif self.kind == "decision_active" and (
+            self.decision_id is None
+            or self.decision_revision is None
+            or any(value is not None for value in fields[:4])
+        ):
+            raise ValueError("decision_active needs exact Decision revision")
+        return self
+
+
+class PlanOutputBinding(ContractModel):
+    parent_slot: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+    role: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+    child_slot: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+    media_type: str = Field(min_length=1, max_length=200)
+
+
+class PlanChild(ContractModel):
+    role: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+    work_id: UUID
+    state: WorkState
+    readiness: PlanCondition | None = None
+
+
+class WorkPlan(ContractModel):
+    named_inputs: tuple[NamedInput, ...] = ()
+    output_bindings: tuple[PlanOutputBinding, ...] = ()
+    children: tuple[PlanChild, ...] = Field(min_length=1)
+    completion: PlanCondition | None = None
+    basis: tuple[ArtifactRef, ...] = ()
+    rationale: str = Field(min_length=1, max_length=4096)
+    source_ref: str = Field(min_length=1, max_length=2048)
+
+    @model_validator(mode="after")
+    def unique_children(self) -> WorkPlan:
+        for values in (
+            [item.slot for item in self.named_inputs],
+            [item.parent_slot for item in self.output_bindings],
+            [child.role for child in self.children],
+            [child.work_id for child in self.children],
+        ):
+            if len(values) != len(set(values)):
+                raise ValueError("Plan child roles and ids must be unique")
+        return self
+
+
+class MethodVersion(ContractModel):
+    reference: MethodRef
+    definition: MethodDefinition
+    operation_id: UUID
+    created_at: AwareDatetime
+    actor: str
+
+
+class PlanRevision(ContractModel):
+    parent_work_id: UUID
+    revision: int = Field(ge=1)
+    plan: WorkPlan
+    operation_id: UUID
+    created_at: AwareDatetime
+    actor: str
+
+
+class ObligationRevision(ContractModel):
+    parent_work_id: UUID
+    key: str
+    revision: int = Field(ge=1)
+    definition: MethodObligation
+    applicability: Literal["active"] = "active"
+    status: Literal["open", "satisfied"]
+    evidence: ArtifactRef | None = None
+    basis: str | None = None
+    operation_id: UUID
+    created_at: AwareDatetime
+
+
 class WorkAcceptance(ContractModel):
     operation_id: UUID
     basis: str = Field(min_length=1, max_length=4096)
@@ -125,7 +295,7 @@ class WorkState(ContractModel):
     inputs: tuple[ArtifactRef, ...] = ()
     constraints: tuple[str, ...] = ()
     expected_outputs: tuple[OutputContract, ...] = Field(min_length=1)
-    method: Literal["none"] = "none"
+    method: Literal["none"] | MethodRef = "none"
     status: Literal["proposed", "succeeded"] = "proposed"
     linked_outputs: tuple[LinkedOutput, ...] = ()
     acceptance: WorkAcceptance | None = None
@@ -141,6 +311,10 @@ class WorkState(ContractModel):
         if (self.status == "succeeded") != (self.acceptance is not None):
             raise ValueError("Succeeded Work requires acceptance and only succeeded Work has it")
         return self
+
+
+PlanChild.model_rebuild()
+WorkPlan.model_rebuild()
 
 
 class OperationRequest(ContractModel):
@@ -236,9 +410,69 @@ class CreateWorkRequest(OperationRequest):
 
     @model_validator(mode="after")
     def new_work_is_unaccepted(self) -> CreateWorkRequest:
-        if self.state.status != "proposed" or self.state.linked_outputs:
+        if (
+            self.state.status != "proposed"
+            or self.state.linked_outputs
+            or self.state.method != "none"
+        ):
             raise ValueError("New Work starts proposed with no linked output")
         return self
+
+
+class CreateMethodVersionRequest(OperationRequest):
+    kind: Literal["create_method_version"] = "create_method_version"
+    method_id: UUID
+    version: int = Field(ge=1)
+    definition: MethodDefinition
+
+
+class DeleteMethodVersionRequest(OperationRequest):
+    kind: Literal["delete_method_version"] = "delete_method_version"
+    method_id: UUID
+    version: int = Field(ge=1)
+    checksum: str = Field(pattern=r"^[0-9A-F]{64}$")
+
+
+class CreateCompositeWorkRequest(OperationRequest):
+    kind: Literal["create_composite_work"] = "create_composite_work"
+    work_id: UUID
+    state: WorkState
+    plan: WorkPlan
+
+    @model_validator(mode="after")
+    def initial_state(self) -> CreateCompositeWorkRequest:
+        if (
+            self.state.method == "none"
+            or self.state.status != "proposed"
+            or self.state.linked_outputs
+        ):
+            raise ValueError("Composite Work needs a Method and starts unaccepted")
+        return self
+
+
+class ReviseWorkPlanRequest(OperationRequest):
+    kind: Literal["revise_work_plan"] = "revise_work_plan"
+    work_id: UUID
+    expected_plan_revision: int = Field(ge=1)
+    plan: WorkPlan
+
+
+class IssueChildWorkRequest(OperationRequest):
+    kind: Literal["issue_child_work"] = "issue_child_work"
+    parent_work_id: UUID
+    work_id: UUID
+    expected_plan_revision: int = Field(ge=1)
+    expected_work_revision: int = Field(ge=1)
+
+
+class ConfirmObligationRequest(OperationRequest):
+    kind: Literal["confirm_obligation"] = "confirm_obligation"
+    work_id: UUID
+    key: str = Field(min_length=1, max_length=80)
+    expected_plan_revision: int = Field(ge=1)
+    expected_obligation_revision: int = Field(ge=1)
+    evidence: ArtifactRef
+    basis: str = Field(min_length=1, max_length=4096)
 
 
 class LinkWorkOutputRequest(OperationRequest):
@@ -437,6 +671,12 @@ DomainRequest = Annotated[
     | ReviseActivityRequest
     | DeleteActivityRequest
     | CreateWorkRequest
+    | CreateMethodVersionRequest
+    | DeleteMethodVersionRequest
+    | CreateCompositeWorkRequest
+    | ReviseWorkPlanRequest
+    | IssueChildWorkRequest
+    | ConfirmObligationRequest
     | LinkWorkOutputRequest
     | PublishAttemptOutputRequest
     | AcceptWorkRequest
@@ -464,7 +704,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3, 4]
+    schema_version: Literal[1, 2, 3, 4, 5]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -650,7 +890,7 @@ class BackupManifest(ContractModel):
     backup_id: UUID
     format_version: Literal[1, 2] = 1
     space_id: UUID
-    schema_version: Literal[1, 2, 3, 4]
+    schema_version: Literal[1, 2, 3, 4, 5]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime
@@ -678,6 +918,24 @@ class DeletionStatus(ContractModel):
 
 
 __all__ = [
+    "PlanOutputBinding",
+    "CapabilityRequirement",
+    "NamedInput",
+    "WorkPlan",
+    "ReviseWorkPlanRequest",
+    "PlanRevision",
+    "PlanCondition",
+    "PlanChild",
+    "ObligationRevision",
+    "MethodVersion",
+    "MethodRef",
+    "MethodObligation",
+    "MethodDefinition",
+    "IssueChildWorkRequest",
+    "DeleteMethodVersionRequest",
+    "CreateMethodVersionRequest",
+    "CreateCompositeWorkRequest",
+    "ConfirmObligationRequest",
     "ALL_ACTIONS",
     "AcceptWorkRequest",
     "AnswerWaitRequest",

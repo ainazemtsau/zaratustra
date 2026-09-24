@@ -1,3 +1,64 @@
+# Core v0.1 Stage 6 pass 1 — engineering delivery
+
+## outcome
+
+Implemented the owner-authorized first model-independent Stage 6 pass on
+`codex/core-v0.1` from exact HEAD `3ca96c8719a68acb6250d56731b457f0e12c4f6a`.
+The candidate provides schema 5 Method versions, composite Work plans, atomic
+obligations, dependent child issue, exact evidence confirmation and separate
+parent acceptance. It is ready for owner review; this report does not record
+owner acceptance of Stage 6 or a synthetic Work.
+
+## evidence
+
+The repository specification SHA-256 is
+`1DDCBF9DBFD58426781F61A67A170D3CE85FCD2BA27B17549773ED3356F9428D`.
+The branch and starting HEAD matched the request. The implementation and
+public API are described in
+`docs/core-v0.1/STAGE6-PASS1-IMPLEMENTATION.md`. The model-free
+`tests/zaratustra/foundation/test_composition.py` passes seven scenarios,
+including restart in another process, early B refusal without Attempt/outbox,
+cycle, missing child with persistent obligation, stale plan/Artifact,
+revoked Grant, version pin, exact parent output, replay/conflict, atomic
+rollback, backup, quarantine restore, child/parent/Method deletion and
+sanitation. The final `uv run --locked python -m tools.check --deliver`
+passed with the exact SQLite 3.53.3 runtime: 190 files formatted, Ruff clean,
+mypy clean across 164 source files, 21 import contracts kept, 531 tests passed
+in 251.24 seconds, and sdist/wheel built. The report structure gate passed.
+
+## assumptions
+
+The first pass uses a direct Core `IssueChildWorkRequest` to represent subject
+issue. It creates no external Attempt. A parent result is bound to an exact
+accepted child output in this pass. Method `always` applicability is the
+only supported applicability value; unsupported structural conditions are
+rejected. Trusted local authority is established outside model/request text.
+The existing exact SQLite 3.53.3 DLL was selected only for local checks.
+
+## cuts
+
+No Stage 6 pass 2–4 implementation, Pi/DBOS composition, real model call,
+modifying external tool, legacy `.zara` migration, waiver, running-plan
+revision, nested composite Work, Method transition, or Activity completion.
+`C:\projects\zaratustra` was not modified.
+
+## cost
+
+No paid service or external model call. The changes use the existing SQLite,
+Pydantic, uv and test tooling; only synthetic local test data and managed
+temporary workspaces were used.
+
+## manual-acceptance
+
+The owner's request authorized implementation, local checks and a local
+commit for pass 1. Automated success and this report are engineering evidence,
+not owner acceptance. Owner review is required before treating Stage 6 pass 1
+as accepted or starting a later pass.
+
+## next
+
+solmax
+
 # Core v0.1 — приёмка Stage 5 и план Stage 6
 
 ## outcome

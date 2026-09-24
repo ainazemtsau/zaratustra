@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+import sqlite3
 from collections.abc import Callable
 from contextlib import closing
 from dataclasses import dataclass
@@ -30,20 +31,25 @@ from .models import (
     BackupInfo,
     BootstrapRequest,
     ClaimAttemptLaunchRequest,
+    ConfirmObligationRequest,
     CreateActivityRequest,
     CreateArtifactRequest,
+    CreateCompositeWorkRequest,
     CreateDecisionRequest,
     CreateGrantRequest,
+    CreateMethodVersionRequest,
     CreateResourceRequest,
     CreateWorkRequest,
     DecisionState,
     DeleteActivityRequest,
     DeleteArtifactRequest,
+    DeleteMethodVersionRequest,
     DeleteWorkRequest,
     DeletionStatus,
     DomainRequest,
     FinishInvocationRequest,
     GrantState,
+    IssueChildWorkRequest,
     LinkedOutput,
     LinkWorkOutputRequest,
     OpenWaitRequest,
@@ -60,6 +66,7 @@ from .models import (
     ReviseArtifactRequest,
     ReviseDecisionRequest,
     ReviseResourceRequest,
+    ReviseWorkPlanRequest,
     RevokeGrantRequest,
     SendInvocationRequest,
     SpaceInfo,
@@ -130,6 +137,7 @@ class _DeletionBatch:
     record_ids: tuple[UUID, ...]
     artifact_jobs: tuple[str, ...]
     subject_jobs: tuple[str, ...]
+    method_jobs: tuple[str, ...]
     contaminated_backups: tuple[UUID, ...]
 
 
@@ -476,6 +484,16 @@ def _write_root(
 
 
 def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]:
+    if isinstance(request, (CreateMethodVersionRequest, DeleteMethodVersionRequest)):
+        return "method.write", "space", None
+    if isinstance(request, CreateCompositeWorkRequest):
+        return "work.write", "activity", request.state.activity_id
+    if isinstance(request, ReviseWorkPlanRequest):
+        return "work.write", "work", request.work_id
+    if isinstance(request, IssueChildWorkRequest):
+        return "work.execute", "work", request.work_id
+    if isinstance(request, ConfirmObligationRequest):
+        return "work.accept", "work", request.work_id
     if isinstance(request, (CreateResourceRequest, ReviseResourceRequest)):
         return "resource.write", "work", request.work_id
     if isinstance(
@@ -653,6 +671,10 @@ def _subject_delete(
     now: str,
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
     _subject_expect(connection, record_id, kind, expected_revision)
+    if kind == "work" and int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 5:  # type: ignore[attr-defined]
+        from .composition import prepare_work_deletion
+
+        prepare_work_deletion(cast(sqlite3.Connection, connection), record_id)
     if kind == "activity":
         active_work = connection.execute(  # type: ignore[attr-defined]
             "SELECT 1 FROM subject_records WHERE kind = 'work' AND parent_id = ? "
@@ -826,6 +848,10 @@ def _apply_subject_change(
             now=now,
         )
     if isinstance(request, CreateWorkRequest):
+        if request.state.method != "none":
+            raise FoundationError(
+                "invalid_request", "Pinned Method needs atomic composite creation"
+            )
         activity_revision, activity_status, _ = _subject_current(
             connection, request.state.activity_id, "activity"
         )
@@ -1040,6 +1066,29 @@ def _apply_change(
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
+    if isinstance(
+        request,
+        (
+            CreateMethodVersionRequest,
+            DeleteMethodVersionRequest,
+            CreateCompositeWorkRequest,
+            ReviseWorkPlanRequest,
+            IssueChildWorkRequest,
+            ConfirmObligationRequest,
+        ),
+    ):
+        from .composition import apply_composition_change
+
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 5:  # type: ignore[attr-defined]
+            raise FoundationError("unsupported_schema", "Composition needs explicit schema 5")
+        return apply_composition_change(
+            cast(sqlite3.Connection, connection),
+            request,
+            now=now,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
     if isinstance(request, PublishAttemptOutputRequest):
         from .execution import _check_attempt_basis, _event, _work
 
@@ -1552,6 +1601,41 @@ def apply_operation(path: Path, request: DomainRequest, authority: Authority) ->
                 )
                 grants.extend(receipt_grants)
                 decisions.extend(receipt_decisions)
+            if (
+                isinstance(
+                    request,
+                    (
+                        LinkWorkOutputRequest,
+                        AcceptWorkRequest,
+                        PublishAttemptOutputRequest,
+                        CreateResourceRequest,
+                        ReviseResourceRequest,
+                        StartAttemptRequest,
+                        StopAttemptRequest,
+                        AssignAttemptRequest,
+                        ClaimAttemptLaunchRequest,
+                        OpenWaitRequest,
+                        AnswerWaitRequest,
+                        RequestAttemptStopRequest,
+                        RecordAttemptStopRequest,
+                        PrepareInvocationRequest,
+                        AdmitInvocationRequest,
+                        SendInvocationRequest,
+                        FinishInvocationRequest,
+                    ),
+                )
+                and info.schema_version >= 5
+            ):
+                from .composition import check_composite_action
+
+                check_composite_action(
+                    connection,
+                    request,
+                    actor=request.actor,
+                    epoch=info.execution_epoch,
+                    grants=grants,
+                    decisions=decisions,
+                )
 
         state_revision = info.state_revision + 1
         updated = connection.execute(
@@ -1925,6 +2009,12 @@ def inspect_space(path: Path, authority: LocalAuthority) -> SpaceInspection:
                     "SELECT count(*) FROM subject_deletion_jobs WHERE status = 'pending'"
                 ).fetchone()[0]
             )
+        if info.schema_version >= 5:
+            pending += int(
+                connection.execute(
+                    "SELECT count(*) FROM method_deletion_jobs WHERE status = 'pending'"
+                ).fetchone()[0]
+            )
         complete_backups = int(
             connection.execute(
                 "SELECT count(*) FROM backup_inventory WHERE status = 'complete'"
@@ -1995,6 +2085,13 @@ def _create_backup_locked(
                 action="maintenance.backup",
                 epoch=info.execution_epoch,
             )
+            if (
+                info.schema_version >= 5
+                and connection.execute(
+                    "SELECT 1 FROM method_deletion_jobs WHERE status = 'pending' LIMIT 1"
+                ).fetchone()
+            ):
+                raise FoundationError("deletion_pending", "Complete Method deletion before backup")
             if info.schema_version >= 4 and any(
                 (info.root / ".zara-core" / name).exists()
                 for name in (EXECUTOR_DATABASE_NAME, RPC_HOME_DIRECTORY)
@@ -2278,10 +2375,19 @@ def complete_deletions(
                 if info.schema_version >= 2
                 else []
             )
+            method_rows = (
+                connection.execute(
+                    "SELECT operation_id FROM method_deletion_jobs "
+                    "WHERE status = 'pending' ORDER BY operation_id"
+                ).fetchall()
+                if info.schema_version >= 5
+                else []
+            )
             batch = _DeletionBatch(
                 record_ids=tuple(sorted({UUID(row[1]) for row in artifact_rows + subject_rows})),
                 artifact_jobs=tuple(row[0] for row in artifact_rows),
                 subject_jobs=tuple(row[0] for row in subject_rows),
+                method_jobs=tuple(row[0] for row in method_rows),
                 contaminated_backups=tuple(
                     UUID(row[0])
                     for row in connection.execute(
@@ -2318,8 +2424,9 @@ def _complete_deletions_locked(
     root, _, backups = layout(path)
     pending_jobs = batch.artifact_jobs
     subject_jobs = batch.subject_jobs
+    method_jobs = batch.method_jobs
     contaminated = batch.contaminated_backups
-    if not pending_jobs and not subject_jobs and not contaminated:
+    if not pending_jobs and not subject_jobs and not method_jobs and not contaminated:
         sanitize_database(root)
         with space_connection(root) as (connection, current):
             pending = int(
@@ -2328,12 +2435,24 @@ def _complete_deletions_locked(
                 ).fetchone()[0]
             )
             pending += _subject_deletion_count(connection, current.schema_version, "pending")
+            if current.schema_version >= 5:
+                pending += int(
+                    connection.execute(
+                        "SELECT count(*) FROM method_deletion_jobs WHERE status = 'pending'"
+                    ).fetchone()[0]
+                )
             complete = int(
                 connection.execute(
                     "SELECT count(*) FROM deletion_jobs WHERE status = 'complete'"
                 ).fetchone()[0]
             )
             complete += _subject_deletion_count(connection, current.schema_version, "complete")
+            if current.schema_version >= 5:
+                complete += int(
+                    connection.execute(
+                        "SELECT count(*) FROM method_deletion_jobs WHERE status = 'complete'"
+                    ).fetchone()[0]
+                )
             remaining_backups = int(
                 connection.execute(
                     "SELECT count(*) FROM backup_inventory WHERE status = 'contaminated'"
@@ -2403,6 +2522,13 @@ def _complete_deletions_locked(
                     "AND kind = 'technical_deletion_targets'",
                     (operation_id,),
                 )
+        if info.schema_version >= 5:
+            for operation_id in method_jobs:
+                connection.execute(
+                    "UPDATE method_deletion_jobs SET status = 'complete', completed_at = ? "
+                    "WHERE operation_id = ? AND status = 'pending'",
+                    (completed_at.isoformat(), operation_id),
+                )
     sanitize_database(root)
     with space_connection(root) as (connection, current):
         pending = int(
@@ -2411,12 +2537,24 @@ def _complete_deletions_locked(
             ).fetchone()[0]
         )
         pending += _subject_deletion_count(connection, current.schema_version, "pending")
+        if current.schema_version >= 5:
+            pending += int(
+                connection.execute(
+                    "SELECT count(*) FROM method_deletion_jobs WHERE status = 'pending'"
+                ).fetchone()[0]
+            )
         completed = int(
             connection.execute(
                 "SELECT count(*) FROM deletion_jobs WHERE status = 'complete'"
             ).fetchone()[0]
         )
         completed += _subject_deletion_count(connection, current.schema_version, "complete")
+        if current.schema_version >= 5:
+            completed += int(
+                connection.execute(
+                    "SELECT count(*) FROM method_deletion_jobs WHERE status = 'complete'"
+                ).fetchone()[0]
+            )
         remaining_backups = int(
             connection.execute(
                 "SELECT count(*) FROM backup_inventory WHERE status = 'contaminated'"

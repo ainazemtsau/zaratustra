@@ -900,6 +900,18 @@ def read_assigned_control(
                 resource_type="work",
                 resource_id=work_id,
             )
+        if info.schema_version >= 5 and (
+            connection.execute(
+                "SELECT 1 FROM work_plan_children WHERE child_id = ?", (str(work_id),)
+            ).fetchone()
+            or connection.execute(
+                "SELECT 1 FROM work_plan_revisions WHERE parent_id = ? LIMIT 1",
+                (str(work_id),),
+            ).fetchone()
+        ):
+            raise FoundationError(
+                "unsupported_composite_execution", "Assigned composite execution is not connected"
+            )
         row = connection.execute(
             "SELECT assignment.status, attempt.status, attempt.execution_epoch "
             "FROM execution_assignments AS assignment "

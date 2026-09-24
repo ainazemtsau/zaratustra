@@ -5,8 +5,9 @@
   owner-approved Core v0.1 implementation plan recorded there,
   `docs/core-v0.1/STAGE4-PLAN.md`, `docs/core-v0.1/STAGE5-PLAN.md`, this AGENTS.md,
   and `validation.config`. Stage 5 is owner-accepted at
-  `245e7288c08eb4d49c84edd89f01e746a45c37a5`; Stage 6 is authorized
-  for planning only.
+  `245e7288c08eb4d49c84edd89f01e746a45c37a5`. The owner authorized
+  only Stage 6 pass 1 implementation on 2026-09-24 from
+  `3ca96c8719a68acb6250d56731b457f0e12c4f6a`; no later pass is authorized.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
 - Stage 1 stopped after recording the G07-1 DBOS and G08-1 Pi technical outcomes.
@@ -133,7 +134,8 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
 ## Constitution
 - Keep the accepted Core v0.1 functional composition and completed Stage 1–5
   evidence. Stage 5 is owner-accepted at the exact commit above; Stage 6 has
-  planning authority only. Preserve earlier Works/CALLs as history, not current scope.
+  an owner-authorized pass 1 implementation candidate, not owner acceptance.
+  Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.
 - No real personal data, remote publication, paid service or new external rights without authorization.
