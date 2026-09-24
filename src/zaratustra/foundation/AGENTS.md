@@ -48,12 +48,24 @@ Attempt rechecks its pin, current issue, dependencies, exact inputs and
 `method.use` in the shared gate before every effect; stop and sent-call outcome
 records stay available. Parent execution and interactive composite Attempts stay
 unconnected. `work_status.py` derives proposed/ready/running/waiting/blocked/
-succeeded from the same Core records in the reading transaction; never store a
+succeeded (and reads recorded schema 7 outcomes) from the same Core records in the
+reading transaction; never store a
 second editable status or copy plan content into pins, outbox or technical
 payload. Derived readiness asks the same Core issue/acceptance rules without an
 actor (`check_parent_acceptance`); a stale prerequisite reads `blocked` with its
 address, while the operation still checks current rights. See
 `docs/core-v0.1/STAGE6-PASS2-IMPLEMENTATION.md`.
+
+Schema 7 is one explicit upgrade (`upgrade_plan_revision_space`) for all of pass 3;
+its DDL grows by part and is frozen only at the pass release, so checkpoint spaces
+are disposable. `close_work` records failed/cancelled/stale as one `WorkClosure`
+inside the Work revision (absent from canonical JSON while empty) under
+`work.accept`, plus `method.use` for composite members. It holds execution exactly
+like acceptance (`_hold_work_execution`). `stale` names only verified changed
+premises of that Work; Core never assigns it. A composite parent closes only after
+every child is closed; there is no cascade. A closed child makes dependent leaves
+`dependency_closed`; `any` is closed only when every member is. See
+`docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.1.md`.
 
 The foundation stores Work execution records but never imports Pi or runs a model.
 Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,
