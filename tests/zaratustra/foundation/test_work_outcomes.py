@@ -956,6 +956,240 @@ def test_outcomes_survive_restore_and_are_deleted_with_their_work(tmp_path: Path
     assert not _sqlite_contains(fresh.package, marker)
     with pytest.raises(FoundationError, match="content_unavailable"):
         read_work(root, work, owner)
+    # B named the plan basis source@1 and A's input is source@1: both bases depended on it.
+    for child in (b, a):
+        closure = read_work(root, child, owner).state.closure
+        assert closure is not None and closure.basis is None
     assert read_work(root, b, owner).state.status == "stale"
     assert read_work(root, a, owner).state.status == "cancelled"
     assert read_work(root, parent, owner).state.status == "proposed"
+
+
+def _artifact(root: Path, space: UUID, owner: LocalAuthority, *contents: bytes) -> UUID:
+    """One Artifact whose revisions 1..n hold the given synthetic contents."""
+
+    artifact = uuid4()
+    _apply(
+        root,
+        space,
+        owner,
+        CreateArtifactRequest,
+        artifact_id=artifact,
+        media_type="text/plain",
+        content=contents[0],
+    )
+    for revision, content in enumerate(contents[1:], start=1):
+        _apply(
+            root,
+            space,
+            owner,
+            ReviseArtifactRequest,
+            artifact_id=artifact,
+            expected_revision=revision,
+            media_type="text/plain",
+            content=content,
+        )
+    return artifact
+
+
+def test_deleted_artifact_sanitizes_only_dependent_closure_bases(tmp_path: Path) -> None:
+    root, space, owner, activity, _source, _parent, _a, _b = _schema7(tmp_path)
+    marker = f"synthetic premise quote {uuid4()}"
+    input_marker = f"synthetic input quote {uuid4()}"
+    kept = f"synthetic independent basis {uuid4()}"
+    x = _artifact(root, space, owner, b"synthetic draft", marker.encode(), b"synthetic plain")
+    x_v2, x_v3 = ArtifactRef(artifact_id=x, revision=2), ArtifactRef(artifact_id=x, revision=3)
+    y = _artifact(root, space, owner, b"synthetic other", b"synthetic other revised")
+    y_v1 = ArtifactRef(artifact_id=y, revision=1)
+    stale = _plain(root, space, owner, activity, x_v2)
+    failed = _plain(root, space, owner, activity, x_v3)
+    independent_stale = _plain(root, space, owner, activity, y_v1)
+    independent_failed = _plain(root, space, owner, activity)
+    dependent = [
+        _close(root, space, owner, stale, "stale", f"X@2 said: {marker}", premises=(x_v2,)),
+        _close(root, space, owner, failed, "failed", f"X@3 lacked: {input_marker}"),
+    ]
+    independent = [
+        _close(root, space, owner, independent_stale, "stale", kept, premises=(y_v1,)),
+        _close(root, space, owner, independent_failed, "failed", kept),
+    ]
+    receipts = [apply_operation(root, request, owner) for request in dependent + independent]
+    old_backup = create_backup(root, uuid4(), owner)
+
+    _apply(root, space, owner, DeleteArtifactRequest, artifact_id=x, expected_revision=3)
+    assert complete_deletions(root, owner).live_store_sanitized
+    assert not old_backup.package.exists()
+
+    for work, request, address in ((stale, dependent[0], x_v2), (failed, dependent[1], x_v3)):
+        revision = read_work(root, work, owner)
+        closure = revision.state.closure
+        # The terminal outcome stays; the deleted basis is never returned as available.
+        assert revision.state.status == request.outcome and closure is not None
+        assert closure.outcome == request.outcome and closure.basis is None
+        assert closure.premises == request.premises and address in revision.unavailable_refs
+        assert read_work_status(root, work, owner).status == request.outcome
+        assert read_work(root, work, owner, revision=1).state.status == "proposed"
+        with pytest.raises(FoundationError, match="history_unavailable"):
+            apply_operation(root, request, owner)
+        with pytest.raises(FoundationError, match="not_found"):
+            read_receipt(root, request.operation_id, owner)
+        with pytest.raises(FoundationError, match="work_closed"):
+            apply_operation(root, _close(root, space, owner, work, "cancelled", "Again"), owner)
+    for work, request, receipt in zip(
+        (independent_stale, independent_failed), independent, receipts[2:], strict=True
+    ):
+        closure = read_work(root, work, owner).state.closure
+        assert closure is not None and closure.basis == kept
+        assert apply_operation(root, request, owner) == receipt
+
+    for text in (marker, input_marker):
+        assert not _sqlite_contains(root / ".zara-core", text)
+    assert _sqlite_contains(root / ".zara-core", kept)
+    fresh = create_backup(root, uuid4(), owner)
+    assert not _sqlite_contains(fresh.package, marker)
+    assert not _sqlite_contains(fresh.package, input_marker)
+    assert _sqlite_contains(fresh.package, kept)
+    restarted = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import sys; from pathlib import Path; from uuid import UUID; "
+            "from zaratustra.foundation import authorize_local, read_work; "
+            "p=Path(sys.argv[1]); o=authorize_local(p, actor='owner', source_ref='restart'); "
+            "w=read_work(p, UUID(sys.argv[2]), o).state; "
+            "print(w.status, w.closure.outcome, w.closure.basis is None)",
+            str(root),
+            str(stale),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    assert restarted.returncode == 0, restarted.stderr
+    assert restarted.stdout.split() == ["stale", "stale", "True"]
+
+
+def test_stale_refuses_premise_addresses_that_never_existed(tmp_path: Path) -> None:
+    root, space, owner, _activity, source, _ref, _parent, _a, _b, plan, create = _seed(tmp_path)
+    assert upgrade_child_execution_space(root, owner).schema_version == 6
+    assert upgrade_plan_revision_space(root, owner).schema_version == 7
+    never_revision = ArtifactRef(artifact_id=source, revision=999)
+    never_artifact = ArtifactRef(artifact_id=uuid4(), revision=1)
+    never_decision = DecisionRef(decision_id=uuid4(), revision=1)
+    revoked = uuid4()
+    _apply(
+        root,
+        space,
+        owner,
+        CreateDecisionRequest,
+        decision_id=revoked,
+        state=DecisionState(
+            statement="Synthetic decision recorded as revoked",
+            effect="require_grant",
+            actions=("space.inspect",),
+            subjects=("synthetic-nobody",),
+            status="revoked",
+        ),
+    )
+    never_active = DecisionRef(decision_id=revoked, revision=1)
+    parent, a, b = uuid4(), uuid4(), uuid4()
+    first, second = plan.children
+    readiness = PlanCondition(
+        kind="any",
+        members=(
+            PlanCondition(
+                kind="artifact_current", artifact=ArtifactRef(artifact_id=source, revision=1)
+            ),
+            PlanCondition(kind="artifact_current", artifact=never_revision),
+            PlanCondition(kind="artifact_current", artifact=never_artifact),
+            PlanCondition(
+                kind="decision_active",
+                decision_id=never_decision.decision_id,
+                decision_revision=never_decision.revision,
+            ),
+            PlanCondition(
+                kind="decision_active",
+                decision_id=never_active.decision_id,
+                decision_revision=never_active.revision,
+            ),
+        ),
+    )
+    apply_operation(
+        root,
+        create.model_copy(
+            update={
+                "operation_id": uuid4(),
+                "work_id": parent,
+                "plan": plan.model_copy(
+                    update={
+                        "children": (
+                            first.model_copy(update={"work_id": a}),
+                            second.model_copy(update={"work_id": b, "readiness": readiness}),
+                        )
+                    }
+                ),
+            }
+        ),
+        owner,
+    )
+    attempt, session, _resource_id = _waiting_child(root, space, owner, parent, b, "workspace-b")
+    _apply(
+        root,
+        space,
+        owner,
+        OpenWaitRequest,
+        wait_id=uuid4(),
+        attempt_id=attempt,
+        work_id=b,
+        session_id=session,
+        expected_assignment_revision=_assignment_revision(root, owner, b, attempt),
+        question="Which synthetic line is authoritative?",
+        expected_actor="owner",
+        remainder="Finish the synthetic summary",
+    )
+    before = read_execution(root, b, owner)
+    for premises, decision_premises in (
+        ((never_revision,), ()),
+        ((never_artifact,), ()),
+        ((), (never_decision,)),
+        ((), (never_active,)),
+    ):
+        with pytest.raises(FoundationError, match="premise_unknown"):
+            apply_operation(
+                root,
+                _close(
+                    root,
+                    space,
+                    owner,
+                    b,
+                    "stale",
+                    "Named premise never held",
+                    premises=premises,
+                    decision_premises=decision_premises,
+                ),
+                owner,
+            )
+    after = read_execution(root, b, owner)
+    # A refused outcome changes neither the Work nor its execution.
+    assert after.work == before.work and after.work.state.status == "proposed"
+    assert after.assignments == before.assignments and after.waits == before.waits
+    assert after.outbox == before.outbox and after.invocations == before.invocations
+    assert after.status == before.status and after.status is not None
+    assert after.status.status == "waiting"
+
+
+def test_stale_accepts_a_deleted_known_premise(tmp_path: Path) -> None:
+    root, space, owner, activity, _source, _parent, _a, _b = _schema7(tmp_path)
+    z = _artifact(root, space, owner, b"synthetic premise")
+    z_v1 = ArtifactRef(artifact_id=z, revision=1)
+    work = _plain(root, space, owner, activity, z_v1)
+    _apply(root, space, owner, DeleteArtifactRequest, artifact_id=z, expected_revision=1)
+    assert complete_deletions(root, owner).live_store_sanitized
+    # Retained revision metadata proves Z@1 existed; its content is not restored.
+    apply_operation(
+        root, _close(root, space, owner, work, "stale", "Premise deleted", premises=(z_v1,)), owner
+    )
+    closed = read_work(root, work, owner)
+    assert closed.state.status == "stale" and closed.state.closure is not None
+    assert closed.state.closure.premises == (z_v1,) and z_v1 in closed.unavailable_refs

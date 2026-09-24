@@ -1567,6 +1567,23 @@ def _premises(
     return artifacts, decision_refs
 
 
+def _held_revision(
+    connection: sqlite3.Connection, record_id: UUID, revision: int, kind: str
+) -> bool:
+    """Whether retained revision metadata shows this exact address as held.
+
+    An Artifact revision held content; a Decision revision was active. Deleted content
+    keeps this metadata, so the check never restores or reads the removed bytes.
+    """
+
+    row = connection.execute(
+        "SELECT v.status FROM record_revisions v JOIN records r ON r.record_id = v.record_id "
+        "WHERE v.record_id = ? AND v.revision = ? AND r.kind = ?",
+        (str(record_id), revision, kind),
+    ).fetchone()
+    return row is not None and row[0] == "active"
+
+
 def verify_changed_premises(
     connection: sqlite3.Connection,
     request: CloseWorkRequest,
@@ -1576,7 +1593,7 @@ def verify_changed_premises(
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
 ) -> None:
-    """A stale outcome names only this Work's own premises, each verifiably not current."""
+    """A stale outcome names only this Work's own premises that held and then changed."""
 
     artifacts, decision_refs = _premises(connection, request.work_id, state)
     for reference in request.premises:
@@ -1593,6 +1610,9 @@ def verify_changed_premises(
         )
         _extend_unique(grants, extra_grants)
         _extend_unique(decisions, extra_decisions)
+        if not _held_revision(connection, reference.artifact_id, reference.revision, "artifact"):
+            # An address that never held content cannot have changed since.
+            raise FoundationError("premise_unknown", f"{address} never held content")
         row = connection.execute(
             "SELECT current_revision, status FROM records "
             "WHERE record_id = ? AND kind = 'artifact'",
@@ -1614,6 +1634,8 @@ def verify_changed_premises(
         )
         _extend_unique(grants, extra_grants)
         _extend_unique(decisions, extra_decisions)
+        if not _held_revision(connection, decision.decision_id, decision.revision, "decision"):
+            raise FoundationError("premise_unknown", f"{address} was never recorded as active")
         row = connection.execute(
             "SELECT r.current_revision, v.body_json FROM records r JOIN record_revisions v "
             "ON v.record_id = r.record_id AND v.revision = r.current_revision "
@@ -1826,6 +1848,15 @@ def sanitize_deleted_dependency(
                 ),
             )
 
+    if (
+        artifact_id is not None
+        and int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7
+    ):
+        # Closed Works are backup subjects of their own; their bases retire like confirmations.
+        _retire_dependent_closure_bases(
+            connection, artifact_id, affected_operations, backup_parents
+        )
+
     connection.executemany(
         "DELETE FROM receipts WHERE operation_id = ?",
         ((source_operation,) for source_operation in affected_operations),
@@ -1841,6 +1872,45 @@ def sanitize_deleted_dependency(
             "(SELECT backup_id FROM backup_subjects WHERE record_id = ?))",
             (parent_id,),
         )
+
+
+def _retire_dependent_closure_bases(
+    connection: sqlite3.Connection,
+    artifact_id: UUID,
+    affected_operations: set[str],
+    backup_subjects: set[str],
+) -> None:
+    """Drop the basis of every closure whose Work revision names the deleted Artifact.
+
+    The revision's Artifact addresses (inputs, linked outputs, stale premises) are its
+    dependency addresses, as for any Work state. The outcome and addresses stay; the text
+    that may quote the deleted content goes, and the closing receipt leaves replay.
+    """
+
+    closed = ", ".join("?" for _ in CLOSED_OUTCOMES)
+    rows = connection.execute(
+        "SELECT c.record_id, c.revision, c.payload FROM subject_content c "
+        "JOIN subject_revisions v ON v.record_id = c.record_id AND v.revision = c.revision "
+        "JOIN subject_records s ON s.record_id = c.record_id "
+        f"WHERE s.kind = 'work' AND v.status IN ({closed})",
+        CLOSED_OUTCOMES,
+    ).fetchall()
+    for record_id, revision, payload in rows:
+        state = WorkState.model_validate_json(bytes(payload))
+        closure = state.closure
+        if closure is None or closure.basis is None:
+            continue
+        if artifact_id not in _artifact_ids(json.loads(bytes(payload))):
+            continue
+        retained = state.model_copy(update={"closure": closure.model_copy(update={"basis": None})})
+        body = canonical_json(retained.model_dump(mode="json")).encode("utf-8")
+        connection.execute(
+            "UPDATE subject_content SET payload = ?, sha256 = ? "
+            "WHERE record_id = ? AND revision = ?",
+            (body, hashlib.sha256(body).hexdigest().upper(), record_id, revision),
+        )
+        affected_operations.add(str(closure.operation_id))
+        backup_subjects.add(record_id)
 
 
 def _contains_artifact_ref(value: object, artifact_id: str) -> bool:
