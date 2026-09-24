@@ -13,6 +13,7 @@ from .composition import (
     read_work_plan,
     upgrade_child_execution_space,
     upgrade_composition_space,
+    upgrade_plan_revision_space,
 )
 from .execution import (
     read_assigned_control,
@@ -24,6 +25,7 @@ from .execution import (
 from .history import managed_pi_lock, managed_pi_session_lock, managed_pi_sessions
 from .models import (
     ALL_ACTIONS,
+    CLOSED_OUTCOMES,
     AcceptWorkRequest,
     Action,
     ActivityRevision,
@@ -42,6 +44,8 @@ from .models import (
     CapabilityRequirement,
     ChildProgress,
     ClaimAttemptLaunchRequest,
+    ClosedOutcome,
+    CloseWorkRequest,
     CompositionView,
     ConfirmObligationRequest,
     CreateActivityRequest,
@@ -52,6 +56,7 @@ from .models import (
     CreateMethodVersionRequest,
     CreateResourceRequest,
     CreateWorkRequest,
+    DecisionRef,
     DecisionState,
     DeleteActivityRequest,
     DeleteArtifactRequest,
@@ -107,6 +112,7 @@ from .models import (
     TechnicalVersions,
     WaitRecord,
     WorkAcceptance,
+    WorkClosure,
     WorkLifecycle,
     WorkPlan,
     WorkRevision,
@@ -146,6 +152,12 @@ from .runtime import (
 from .work_status import read_work_status
 
 __all__ = [
+    "CLOSED_OUTCOMES",
+    "ClosedOutcome",
+    "CloseWorkRequest",
+    "DecisionRef",
+    "WorkClosure",
+    "upgrade_plan_revision_space",
     "ChildProgress",
     "CompositionView",
     "ObligationProgress",

@@ -525,6 +525,19 @@ CHILD_EXECUTION_SCHEMA_SHA256 = (
     .upper()
 )
 
+# Schema 7 fences the new subject outcomes stored in Work revisions from older code.
+# Later pass-3 parts add their tables here; the DDL is frozen only when pass 3 is released.
+PLAN_REVISION_SCHEMA_NAME = "core-v0.1-plan-revision-7"
+PLAN_REVISION_SCHEMA_STATEMENTS: tuple[str, ...] = ()
+PLAN_REVISION_SCHEMA_SHA256 = (
+    hashlib.sha256(
+        "\n".join(statement.strip() for statement in PLAN_REVISION_SCHEMA_STATEMENTS).encode()
+    )
+    .hexdigest()
+    .upper()
+)
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7)
+
 
 def utc_now() -> datetime:
     return datetime.now(UTC)
@@ -626,7 +639,7 @@ def _begin(connection: sqlite3.Connection, *, writable: bool) -> None:
 def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> SpaceInfo:
     application_id = int(connection.execute("PRAGMA application_id").fetchone()[0])
     schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
-    if application_id != APPLICATION_ID or schema_version not in (1, 2, 3, 4, 5, 6):
+    if application_id != APPLICATION_ID or schema_version not in SUPPORTED_SCHEMA_VERSIONS:
         raise FoundationError(
             "unsupported_schema",
             f"Unsupported application/schema identity: {application_id}/{schema_version}",
@@ -648,6 +661,8 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         expected.append((5, COMPOSITION_SCHEMA_NAME, COMPOSITION_SCHEMA_SHA256))
     if schema_version >= 6:
         expected.append((6, CHILD_EXECUTION_SCHEMA_NAME, CHILD_EXECUTION_SCHEMA_SHA256))
+    if schema_version >= 7:
+        expected.append((7, PLAN_REVISION_SCHEMA_NAME, PLAN_REVISION_SCHEMA_SHA256))
     if migration != expected:
         raise FoundationError("unsupported_schema", "Schema history does not match installed code")
     rows = connection.execute(
@@ -661,7 +676,7 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         database=database,
         space_id=UUID(space_id),
         created_at=datetime.fromisoformat(created_at),
-        schema_version=cast(Literal[1, 2, 3, 4, 5, 6], schema_version),
+        schema_version=cast(Literal[1, 2, 3, 4, 5, 6, 7], schema_version),
         state_revision=state_revision,
         execution_epoch=execution_epoch,
         recovery_state=recovery_state,
@@ -1025,8 +1040,12 @@ __all__ = [
     "RPC_HOME_DIRECTORY",
     "RESTORED_RPC_HOME_DIRECTORY",
     "FoundationError",
+    "PLAN_REVISION_SCHEMA_NAME",
+    "PLAN_REVISION_SCHEMA_SHA256",
+    "PLAN_REVISION_SCHEMA_STATEMENTS",
     "SCHEMA_SHA256",
     "SCHEMA_VERSION",
+    "SUPPORTED_SCHEMA_VERSIONS",
     "SUBJECT_SCHEMA_NAME",
     "SUBJECT_SCHEMA_SHA256",
     "SUBJECT_SCHEMA_STATEMENTS",

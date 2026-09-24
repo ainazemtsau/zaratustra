@@ -117,7 +117,9 @@ def _work(connection: object, work_id: UUID) -> tuple[int, WorkState]:
         raise FoundationError("not_found", "Named Work is unavailable")
     state = WorkState.model_validate_json(bytes(row[2]))
     if state.status != "proposed":
-        raise FoundationError("work_closed", "Accepted Work cannot receive a new execution")
+        raise FoundationError(
+            "work_closed", f"{state.status.title()} Work cannot receive a new execution"
+        )
     return int(row[0]), state
 
 

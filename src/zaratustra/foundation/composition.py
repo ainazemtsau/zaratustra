@@ -13,16 +13,19 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
 from .models import (
+    CLOSED_OUTCOMES,
     AcceptWorkRequest,
     AdmitInvocationRequest,
     AnswerWaitRequest,
     ArtifactRef,
     AssignAttemptRequest,
     ClaimAttemptLaunchRequest,
+    CloseWorkRequest,
     ConfirmObligationRequest,
     CreateCompositeWorkRequest,
     CreateMethodVersionRequest,
     CreateResourceRequest,
+    DecisionRef,
     DeleteMethodVersionRequest,
     FinishInvocationRequest,
     IssueChildWorkRequest,
@@ -64,6 +67,9 @@ from .storage import (
     COMPOSITION_SCHEMA_NAME,
     COMPOSITION_SCHEMA_SHA256,
     COMPOSITION_SCHEMA_STATEMENTS,
+    PLAN_REVISION_SCHEMA_NAME,
+    PLAN_REVISION_SCHEMA_SHA256,
+    PLAN_REVISION_SCHEMA_STATEMENTS,
     FoundationError,
     canonical_json,
     read_space,
@@ -204,6 +210,42 @@ def upgrade_child_execution_space(path: Path, authority: LocalAuthority) -> Spac
                 "INSERT INTO maintenance_events(event_id, kind, occurred_at, detail_json) "
                 "VALUES (?, 'schema_upgrade', ?, ?)",
                 (str(uuid4()), now, canonical_json({"from": 5, "to": 6})),
+            )
+    return read_space(path)
+
+
+def upgrade_plan_revision_space(path: Path, authority: LocalAuthority) -> SpaceInfo:
+    """Explicit schema 6 to 7 upgrade; older code never meets the new Work outcomes."""
+
+    with space_connection(path, writable=True) as (connection, info):
+        _local_space(authority, info)
+        if info.recovery_state != "active" or info.schema_version < 6:
+            raise FoundationError(
+                "unsupported_schema", "Plan revision upgrade requires active schema 6"
+            )
+        _authorize(
+            connection,
+            actor=authority.actor,
+            action="maintenance.backup",
+            epoch=info.execution_epoch,
+        )
+        if info.schema_version == 6:
+            for statement in PLAN_REVISION_SCHEMA_STATEMENTS:
+                connection.execute(statement)
+            now = utc_now().isoformat()
+            connection.execute(
+                "INSERT INTO schema_migrations(version, name, sha256, applied_at) "
+                "VALUES (7, ?, ?, ?)",
+                (PLAN_REVISION_SCHEMA_NAME, PLAN_REVISION_SCHEMA_SHA256, now),
+            )
+            connection.execute("PRAGMA user_version = 7")
+            connection.execute(
+                "UPDATE spaces SET state_revision = state_revision + 1 WHERE singleton = 1"
+            )
+            connection.execute(
+                "INSERT INTO maintenance_events(event_id, kind, occurred_at, detail_json) "
+                "VALUES (?, 'schema_upgrade', ?, ?)",
+                (str(uuid4()), now, canonical_json({"from": 6, "to": 7})),
             )
     return read_space(path)
 
@@ -378,6 +420,15 @@ def _validate_plan(plan: WorkPlan, definition: MethodDefinition, activity_id: UU
         visit(role)
 
 
+def _require_succeeded(role: str, work_id: UUID, status: str, open_detail: str) -> None:
+    """A child closed without acceptance can never satisfy its leaf under this plan."""
+
+    if status in CLOSED_OUTCOMES:
+        raise FoundationError("dependency_closed", f"Child {role} ({work_id}) is {status}")
+    if status != "succeeded":
+        raise FoundationError("dependency_open", open_detail)
+
+
 def _accepted_output(
     connection: sqlite3.Connection,
     plan: WorkPlan,
@@ -394,8 +445,7 @@ def _accepted_output(
     if child is None:
         raise FoundationError("dependency_open", f"Required child role {role} has not been planned")
     current, status, _ = _subject_current(connection, child.work_id, "work")
-    if status != "succeeded":
-        raise FoundationError("dependency_open", f"Child {role} is not accepted")
+    _require_succeeded(role, child.work_id, status, f"Child {role} is not accepted")
     state = WorkState.model_validate(_subject_state(connection, child.work_id, current))
     declared = {item.slot: item.media_type for item in state.expected_outputs}
     if declared.get(slot) != media_type:
@@ -439,24 +489,11 @@ def _evaluate(
     if condition is None:
         return ()
     if condition.kind in ("all", "any"):
-        if condition.kind == "all":
-            return tuple(
-                ref
-                for member in condition.members
-                for ref in _evaluate(
-                    connection,
-                    plan,
-                    member,
-                    actor=actor,
-                    epoch=epoch,
-                    grants=grants,
-                    decisions=decisions,
-                )
-            )
+        references: list[ArtifactRef] = []
         errors: list[FoundationError] = []
         for member in condition.members:
             try:
-                return _evaluate(
+                found = _evaluate(
                     connection,
                     plan,
                     member,
@@ -467,7 +504,23 @@ def _evaluate(
                 )
             except FoundationError as error:
                 errors.append(error)
-        raise FoundationError("dependency_open", f"No any member is ready: {errors[0].detail}")
+                continue
+            if condition.kind == "any":
+                return found
+            references.extend(found)
+        closed = [error for error in errors if error.code == "dependency_closed"]
+        if condition.kind == "all":
+            if errors:
+                # One member closed for good makes the whole conjunction unreachable.
+                raise (closed or errors)[0]
+            return tuple(references)
+        still_open = [error for error in errors if error.code != "dependency_closed"]
+        if not still_open:
+            # No member can become true under this plan any more.
+            raise FoundationError(
+                "dependency_closed", f"No any member can become true: {errors[0].detail}"
+            )
+        raise FoundationError("dependency_open", f"No any member is ready: {still_open[0].detail}")
     if condition.kind == "accepted_output":
         assert condition.role and condition.slot and condition.media_type
         return (
@@ -500,8 +553,7 @@ def _evaluate(
             grants.extend(extra_grants)
             decisions.extend(extra_decisions)
         _, status, _ = _subject_current(connection, child.work_id, "work")
-        if status != "succeeded":
-            raise FoundationError("dependency_open", "Required child is not accepted")
+        _require_succeeded(condition.role, child.work_id, status, "Required child is not accepted")
         return ()
     if condition.kind == "artifact_current":
         assert condition.artifact
@@ -800,7 +852,7 @@ def apply_composition_change(
                 "unsupported_plan_change", "Named Method inputs are pinned before execution"
             )
         if parent.status != "proposed":
-            raise FoundationError("work_closed", "Parent Work is accepted")
+            raise FoundationError("work_closed", f"Parent Work is {parent.status}")
         if parent.linked_outputs:
             raise FoundationError("plan_started", "Parent already has a linked output")
         if connection.execute(
@@ -879,7 +931,7 @@ def apply_composition_change(
         if plan.revision != request.expected_plan_revision:
             raise FoundationError("stale_plan", "Plan revision changed")
         if parent.status != "proposed":
-            raise FoundationError("work_closed", "Parent Work is accepted")
+            raise FoundationError("work_closed", f"Parent Work is {parent.status}")
         node = next((c for c in plan.plan.children if c.work_id == request.work_id), None)
         if node is None:
             raise FoundationError("wrong_work", "Child is not in current plan")
@@ -894,7 +946,7 @@ def apply_composition_change(
         if child_revision != request.expected_work_revision:
             raise FoundationError("stale_work", "Child Work revision changed")
         if status != "proposed":
-            raise FoundationError("work_closed", "Child Work cannot be issued")
+            raise FoundationError("work_closed", f"Child Work is {status} and cannot be issued")
         for reference in plan.plan.basis + parent.inputs:
             _current_artifact(
                 connection,
@@ -984,7 +1036,7 @@ def apply_composition_change(
     ):
         raise FoundationError("stale_obligation", "Obligation already changed")
     if parent.status != "proposed":
-        raise FoundationError("work_closed", "Parent Work is accepted")
+        raise FoundationError("work_closed", f"Parent Work is {parent.status}")
     actual = _accepted_output(
         connection,
         plan.plan,
@@ -1224,10 +1276,27 @@ def check_composite_action(
     schema = int(connection.execute("PRAGMA user_version").fetchone()[0])
     if schema < 5:
         return
+    if isinstance(request, CloseWorkRequest) and schema < 7:
+        raise FoundationError("unsupported_schema", "Work outcomes need explicit schema 7")
     binding = child_binding(connection, work_id)
     revision, status, _ = _subject_current(connection, work_id, "work")
     state = WorkState.model_validate(_subject_state(connection, work_id, revision))
     if binding is None and state.method == "none":
+        return
+    if state.status in CLOSED_OUTCOMES and not isinstance(request, _ATTEMPT_OUTCOMES):
+        # Stopping and recording a sent call stay possible; nothing else changes it.
+        raise FoundationError("work_closed", f"Work is closed as {state.status}")
+    if isinstance(request, CloseWorkRequest):
+        check_work_close(
+            connection,
+            work_id,
+            state,
+            binding,
+            actor=actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
         return
     direct = isinstance(request, (LinkWorkOutputRequest, AcceptWorkRequest))
     assigned_child = (
@@ -1396,6 +1465,167 @@ def check_parent_acceptance(
         )
         if actual != instance.evidence:
             raise FoundationError("stale_obligation", "Obligation evidence changed")
+
+
+def _readable_plan(connection: sqlite3.Connection, parent_id: UUID) -> PlanRevision | None:
+    """Current plan revision, or ``None`` when its content was sanitized."""
+
+    try:
+        return _plan(connection, parent_id)
+    except FoundationError as error:
+        if error.code != "content_unavailable":
+            raise
+        return None
+
+
+def _extend_unique(target: list[dict[str, object]], values: list[dict[str, object]]) -> None:
+    target.extend(value for value in values if value not in target)
+
+
+def check_work_close(
+    connection: sqlite3.Connection,
+    work_id: UUID,
+    state: WorkState,
+    binding: tuple[UUID, int | None, str] | None,
+    *,
+    actor: str,
+    epoch: int,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> None:
+    """Shared gate of a composite Work outcome: membership, Method use and open children.
+
+    Readiness is not required: a Work may fail, be cancelled or turn stale before it ran.
+    """
+
+    if binding is not None:
+        parent_id = binding[0]
+        parent_revision, _status, _ = _subject_current(connection, parent_id, "work")
+        parent = WorkState.model_validate(_subject_state(connection, parent_id, parent_revision))
+        _method_use(
+            connection, parent, actor=actor, epoch=epoch, grants=grants, decisions=decisions
+        )
+        plan = _readable_plan(connection, parent_id)
+        # A sanitized plan keeps its membership record; closing stays possible.
+        if plan is not None and all(child.work_id != work_id for child in plan.plan.children):
+            raise FoundationError("wrong_work", "Child is not in its parent's current plan")
+    if isinstance(state.method, MethodRef):
+        if binding is None:
+            _method_use(
+                connection, state, actor=actor, epoch=epoch, grants=grants, decisions=decisions
+            )
+        open_children = [
+            f"{role}:{child_id}"
+            for role, child_id in connection.execute(
+                "SELECT p.role, p.child_id FROM work_plan_children p JOIN subject_records s "
+                "ON s.record_id = p.child_id WHERE p.parent_id = ? AND s.status = 'proposed' "
+                "ORDER BY p.role",
+                (str(work_id),),
+            ).fetchall()
+        ]
+        if open_children:
+            # No cascade: every open child gets its own explicit outcome first.
+            raise FoundationError(
+                "open_children", "Finish or close child Works first: " + ", ".join(open_children)
+            )
+
+
+def _premises(
+    connection: sqlite3.Connection, work_id: UUID, state: WorkState
+) -> tuple[set[ArtifactRef], set[DecisionRef]]:
+    """Exact premises of one Work: inputs, plan basis and exact condition leaves."""
+
+    artifacts = set(state.inputs)
+    decision_refs: set[DecisionRef] = set()
+
+    def add_leaves(condition: PlanCondition | None) -> None:
+        for leaf in _conditions(condition):
+            if leaf.kind == "artifact_current" and leaf.artifact is not None:
+                artifacts.add(leaf.artifact)
+            elif leaf.kind == "decision_active" and leaf.decision_id and leaf.decision_revision:
+                decision_refs.add(
+                    DecisionRef(decision_id=leaf.decision_id, revision=leaf.decision_revision)
+                )
+
+    binding = child_binding(connection, work_id)
+    if binding is not None:
+        parent_id = binding[0]
+        parent_revision, _status, _ = _subject_current(connection, parent_id, "work")
+        parent = WorkState.model_validate(_subject_state(connection, parent_id, parent_revision))
+        artifacts.update(parent.inputs)
+        plan = _readable_plan(connection, parent_id)
+        if plan is not None:
+            artifacts.update(plan.plan.basis)
+            node = next((item for item in plan.plan.children if item.work_id == work_id), None)
+            if node is not None:
+                add_leaves(node.readiness)
+    if isinstance(state.method, MethodRef):
+        own_plan = _readable_plan(connection, work_id)
+        if own_plan is not None:
+            artifacts.update(own_plan.plan.basis)
+            add_leaves(own_plan.plan.completion)
+    return artifacts, decision_refs
+
+
+def verify_changed_premises(
+    connection: sqlite3.Connection,
+    request: CloseWorkRequest,
+    state: WorkState,
+    *,
+    epoch: int,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> None:
+    """A stale outcome names only this Work's own premises, each verifiably not current."""
+
+    artifacts, decision_refs = _premises(connection, request.work_id, state)
+    for reference in request.premises:
+        address = f"Artifact {reference.artifact_id}@{reference.revision}"
+        if reference not in artifacts:
+            raise FoundationError("premise_mismatch", f"{address} is not a premise of this Work")
+        extra_grants, extra_decisions = _authorize(
+            connection,
+            actor=request.actor,
+            action="record.read",
+            epoch=epoch,
+            resource_type="artifact",
+            resource_id=reference.artifact_id,
+        )
+        _extend_unique(grants, extra_grants)
+        _extend_unique(decisions, extra_decisions)
+        row = connection.execute(
+            "SELECT current_revision, status FROM records "
+            "WHERE record_id = ? AND kind = 'artifact'",
+            (str(reference.artifact_id),),
+        ).fetchone()
+        if row is not None and row[1] == "active" and int(row[0]) == reference.revision:
+            raise FoundationError("premise_current", f"{address} is still current")
+    for decision in request.decision_premises:
+        address = f"Decision {decision.decision_id}@{decision.revision}"
+        if decision not in decision_refs:
+            raise FoundationError("premise_mismatch", f"{address} is not a premise of this Work")
+        extra_grants, extra_decisions = _authorize(
+            connection,
+            actor=request.actor,
+            action="record.read",
+            epoch=epoch,
+            resource_type="space",
+            resource_id=None,
+        )
+        _extend_unique(grants, extra_grants)
+        _extend_unique(decisions, extra_decisions)
+        row = connection.execute(
+            "SELECT r.current_revision, v.body_json FROM records r JOIN record_revisions v "
+            "ON v.record_id = r.record_id AND v.revision = r.current_revision "
+            "WHERE r.record_id = ? AND r.kind = 'decision'",
+            (str(decision.decision_id),),
+        ).fetchone()
+        if (
+            row is not None
+            and int(row[0]) == decision.revision
+            and json.loads(row[1])["status"] == "active"
+        ):
+            raise FoundationError("premise_current", f"{address} is still active and current")
 
 
 def prepare_work_deletion(connection: sqlite3.Connection, work_id: UUID) -> None:

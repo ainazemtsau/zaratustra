@@ -24,8 +24,10 @@ from .composition import (
     child_binding,
 )
 from .models import (
+    CLOSED_OUTCOMES,
     ArtifactRef,
     ChildProgress,
+    ClosedOutcome,
     CompositionView,
     MethodDefinition,
     MethodRef,
@@ -67,12 +69,16 @@ def _unmet(
         return [gap for member in condition.members for gap in _unmet(connection, plan, member)]
     if condition.kind == "any":
         gaps: list[StatusReason] = []
+        possible: list[StatusReason] = []
         for member in condition.members:
             found = _unmet(connection, plan, member)
             if not found:
                 return []
             gaps.extend(found)
-        return gaps
+            if all(gap.code != "dependency_closed" for gap in found):
+                possible.extend(found)
+        # A member that may still become true hides alternatives closed for good.
+        return possible or gaps
     try:
         _evaluate(connection, plan, condition, actor=None, epoch=0, grants=[], decisions=[])
     except FoundationError as error:
@@ -297,6 +303,8 @@ def work_status(connection: sqlite3.Connection, work_id: UUID) -> WorkStatus:
     state = WorkState.model_validate(_subject_state(connection, work_id, revision))
     if state.status == "succeeded":
         return WorkStatus(work_id=work_id, status="succeeded")
+    if state.status in CLOSED_OUTCOMES:
+        return _closed_status(connection, work_id, state.status, schema)
     binding = child_binding(connection, work_id) if schema >= 5 else None
     if binding is None and isinstance(state.method, MethodRef):
         return _parent_status(connection, work_id, state)
@@ -367,6 +375,33 @@ def work_status(connection: sqlite3.Connection, work_id: UUID) -> WorkStatus:
             reasons=(StatusReason(code="issue_pending", role=binding[2], record_id=binding[0]),),
         )
     return WorkStatus(work_id=work_id, status="ready")
+
+
+def _closed_status(
+    connection: sqlite3.Connection, work_id: UUID, outcome: ClosedOutcome, schema: int
+) -> WorkStatus:
+    """A recorded outcome plus what its last Attempt still holds; never a technical claim."""
+
+    if schema < 4:
+        return WorkStatus(work_id=work_id, status=outcome)
+    row = connection.execute(
+        "SELECT a.attempt_id, a.status, s.status FROM execution_attempts a "
+        "LEFT JOIN execution_assignments s ON s.attempt_id = a.attempt_id "
+        "WHERE a.work_id = ? ORDER BY a.generation DESC LIMIT 1",
+        (str(work_id),),
+    ).fetchone()
+    if row is None:
+        return WorkStatus(work_id=work_id, status=outcome)
+    attempt_id = UUID(row[0])
+    if row[1] == "active" and row[2] == "stop_requested":
+        # The stop is requested; its observed outcome is not recorded yet.
+        reason = StatusReason(code="stop_requested", record_id=attempt_id)
+    elif row[2] == "unknown":
+        # A sent call's result is unknown; the reserve and the resource stay held.
+        reason = StatusReason(code="outcome_unknown", record_id=attempt_id)
+    else:
+        return WorkStatus(work_id=work_id, status=outcome, attempt_id=attempt_id)
+    return WorkStatus(work_id=work_id, status=outcome, reasons=(reason,), attempt_id=attempt_id)
 
 
 def _attempt_phase(

@@ -289,6 +289,33 @@ class WorkAcceptance(ContractModel):
     accepted_at: AwareDatetime
 
 
+type ClosedOutcome = Literal["failed", "cancelled", "stale"]
+CLOSED_OUTCOMES: tuple[ClosedOutcome, ...] = ("failed", "cancelled", "stale")
+
+
+class DecisionRef(ContractModel):
+    decision_id: UUID
+    revision: int = Field(ge=1)
+
+
+class WorkClosure(ContractModel):
+    """Subject outcome of a Work that ended without acceptance; never a technical status."""
+
+    outcome: ClosedOutcome
+    operation_id: UUID
+    basis: str = Field(min_length=1, max_length=4096)
+    authority_source: str = Field(min_length=1, max_length=2048)
+    closed_at: AwareDatetime
+    premises: tuple[ArtifactRef, ...] = ()
+    decision_premises: tuple[DecisionRef, ...] = ()
+
+    @model_validator(mode="after")
+    def premises_name_stale_only(self) -> WorkClosure:
+        if (self.outcome == "stale") != bool(self.premises or self.decision_premises):
+            raise ValueError("Only a stale outcome names its changed premises, and it must")
+        return self
+
+
 class WorkState(ContractModel):
     activity_id: UUID
     goal: str = Field(min_length=1, max_length=4096)
@@ -296,9 +323,11 @@ class WorkState(ContractModel):
     constraints: tuple[str, ...] = ()
     expected_outputs: tuple[OutputContract, ...] = Field(min_length=1)
     method: Literal["none"] | MethodRef = "none"
-    status: Literal["proposed", "succeeded"] = "proposed"
+    status: Literal["proposed", "succeeded", "failed", "cancelled", "stale"] = "proposed"
     linked_outputs: tuple[LinkedOutput, ...] = ()
     acceptance: WorkAcceptance | None = None
+    # Absent from canonical JSON while empty, so earlier payloads and fingerprints hold.
+    closure: WorkClosure | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
     def valid_slots(self) -> WorkState:
@@ -310,6 +339,11 @@ class WorkState(ContractModel):
             raise ValueError("Linked output has no declared slot")
         if (self.status == "succeeded") != (self.acceptance is not None):
             raise ValueError("Succeeded Work requires acceptance and only succeeded Work has it")
+        closed = self.status in CLOSED_OUTCOMES
+        if closed != (self.closure is not None) or (
+            self.closure is not None and self.closure.outcome != self.status
+        ):
+            raise ValueError("A closed outcome requires its own closure record")
         return self
 
 
@@ -499,6 +533,29 @@ class AcceptWorkRequest(OperationRequest):
     basis: str = Field(min_length=1, max_length=4096)
 
 
+class CloseWorkRequest(OperationRequest):
+    """Record a Work outcome other than acceptance; ``stale`` names its changed premises."""
+
+    kind: Literal["close_work"] = "close_work"
+    work_id: UUID
+    expected_revision: int = Field(ge=1)
+    outcome: ClosedOutcome
+    basis: str = Field(min_length=1, max_length=4096)
+    premises: tuple[ArtifactRef, ...] = ()
+    decision_premises: tuple[DecisionRef, ...] = ()
+
+    @model_validator(mode="after")
+    def premises_name_stale_only(self) -> CloseWorkRequest:
+        named = self.premises + self.decision_premises
+        if (self.outcome == "stale") != bool(named):
+            raise ValueError("Only a stale outcome names its changed premises, and it must")
+        if len(set(self.premises)) != len(self.premises) or len(set(self.decision_premises)) != len(
+            self.decision_premises
+        ):
+            raise ValueError("Changed premises must be unique")
+        return self
+
+
 class DeleteWorkRequest(OperationRequest):
     kind: Literal["delete_work"] = "delete_work"
     work_id: UUID
@@ -680,6 +737,7 @@ DomainRequest = Annotated[
     | LinkWorkOutputRequest
     | PublishAttemptOutputRequest
     | AcceptWorkRequest
+    | CloseWorkRequest
     | DeleteWorkRequest
     | CreateResourceRequest
     | ReviseResourceRequest
@@ -704,7 +762,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3, 4, 5, 6]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -839,7 +897,17 @@ class OutboxRecord(ContractModel):
     status: Literal["pending", "cancelled"]
 
 
-type WorkLifecycle = Literal["proposed", "ready", "running", "waiting", "blocked", "succeeded"]
+type WorkLifecycle = Literal[
+    "proposed",
+    "ready",
+    "running",
+    "waiting",
+    "blocked",
+    "succeeded",
+    "failed",
+    "cancelled",
+    "stale",
+]
 
 
 class StatusReason(ContractModel):
@@ -955,7 +1023,7 @@ class BackupManifest(ContractModel):
     backup_id: UUID
     format_version: Literal[1, 2] = 1
     space_id: UUID
-    schema_version: Literal[1, 2, 3, 4, 5, 6]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime
@@ -983,6 +1051,11 @@ class DeletionStatus(ContractModel):
 
 
 __all__ = [
+    "CLOSED_OUTCOMES",
+    "ClosedOutcome",
+    "CloseWorkRequest",
+    "DecisionRef",
+    "WorkClosure",
     "ChildProgress",
     "CompositionView",
     "ObligationProgress",

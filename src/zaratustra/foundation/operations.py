@@ -31,6 +31,7 @@ from .models import (
     BackupInfo,
     BootstrapRequest,
     ClaimAttemptLaunchRequest,
+    CloseWorkRequest,
     ConfirmObligationRequest,
     CreateActivityRequest,
     CreateArtifactRequest,
@@ -75,6 +76,7 @@ from .models import (
     StopAttemptRequest,
     TechnicalVersions,
     WorkAcceptance,
+    WorkClosure,
     WorkRevision,
     WorkState,
 )
@@ -535,7 +537,7 @@ def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]
         return "work.write", "activity", request.state.activity_id
     if isinstance(request, (LinkWorkOutputRequest, PublishAttemptOutputRequest, DeleteWorkRequest)):
         return "work.write", "work", request.work_id
-    if isinstance(request, AcceptWorkRequest):
+    if isinstance(request, (AcceptWorkRequest, CloseWorkRequest)):
         return "work.accept", "work", request.work_id
     raise FoundationError("invalid_request", f"No ordinary action for {request.kind}")
 
@@ -787,6 +789,91 @@ def _subject_delete(
     )
 
 
+def _hold_work_execution(
+    connection: object, work_id: UUID, operation_id: UUID, now: str, cause: str
+) -> None:
+    """Stop new effects of every active Attempt once a Work reaches a subject outcome.
+
+    Interactive Attempts are interrupted; assigned ones only get a stop request, so the
+    stop itself stays an observed outcome. Admitted or sent calls become unknown and keep
+    their reserve; nothing here claims that an external effect did not happen.
+    """
+
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 3:  # type: ignore[attr-defined]
+        return
+    active_attempts = connection.execute(  # type: ignore[attr-defined]
+        "SELECT attempt_id FROM execution_attempts WHERE work_id = ? AND status = 'active'",
+        (str(work_id),),
+    ).fetchall()
+    if not active_attempts:
+        return
+    schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])  # type: ignore[attr-defined]
+    assigned_ids = (
+        {
+            row[0]
+            for row in connection.execute(  # type: ignore[attr-defined]
+                "SELECT a.attempt_id FROM execution_attempts a "
+                "JOIN execution_assignments s ON s.attempt_id = a.attempt_id "
+                "WHERE a.work_id = ? AND a.status = 'active'",
+                (str(work_id),),
+            ).fetchall()
+        }
+        if schema_version >= 4
+        else set()
+    )
+    interactive_attempts = [row for row in active_attempts if row[0] not in assigned_ids]
+    connection.execute(  # type: ignore[attr-defined]
+        "UPDATE execution_invocations SET status = 'unknown', "
+        "revision = revision + 1, updated_at = ? WHERE work_id = ? "
+        "AND status IN ('admitted', 'sent') AND attempt_id IN "
+        "(SELECT attempt_id FROM execution_attempts WHERE work_id = ? "
+        "AND status = 'active')",
+        (now, str(work_id), str(work_id)),
+    )
+    connection.executemany(  # type: ignore[attr-defined]
+        "UPDATE execution_attempts SET status = 'interrupted', "
+        "revision = revision + 1, updated_at = ? "
+        "WHERE attempt_id = ? AND status = 'active'",
+        ((now, row[0]) for row in interactive_attempts),
+    )
+    connection.executemany(  # type: ignore[attr-defined]
+        "INSERT INTO execution_events(operation_id, work_id, attempt_id, "
+        "kind, created_at) VALUES (?, ?, ?, ?, ?)",
+        (
+            (str(operation_id), str(work_id), row[0], f"{cause}_interrupt_attempt", now)
+            for row in interactive_attempts
+        ),
+    )
+    if schema_version >= 4:
+        connection.execute(  # type: ignore[attr-defined]
+            "UPDATE execution_waits SET status = 'closed', "
+            "revision = revision + 1, updated_at = ? "
+            "WHERE work_id = ? AND status = 'open'",
+            (now, str(work_id)),
+        )
+        connection.execute(  # type: ignore[attr-defined]
+            "UPDATE execution_assignments SET status = 'stop_requested', "
+            "revision = revision + 1, updated_at = ? "
+            "WHERE work_id = ? AND status IN "
+            "('assigned', 'waiting', 'ready') AND attempt_id IN "
+            "(SELECT attempt_id FROM execution_attempts WHERE status = 'active')",
+            (now, str(work_id)),
+        )
+        connection.execute(  # type: ignore[attr-defined]
+            "UPDATE execution_outbox SET status = 'cancelled' "
+            "WHERE work_id = ? AND status = 'pending'",
+            (str(work_id),),
+        )
+        connection.executemany(  # type: ignore[attr-defined]
+            "INSERT INTO execution_events(operation_id, work_id, attempt_id, "
+            "kind, created_at) VALUES (?, ?, ?, ?, ?)",
+            (
+                (str(operation_id), str(work_id), attempt_id, f"{cause}_hold_assignment", now)
+                for attempt_id in sorted(assigned_ids)
+            ),
+        )
+
+
 def _apply_subject_change(
     connection: object,
     request: (
@@ -796,6 +883,7 @@ def _apply_subject_change(
         | CreateWorkRequest
         | LinkWorkOutputRequest
         | AcceptWorkRequest
+        | CloseWorkRequest
         | DeleteWorkRequest
     ),
     *,
@@ -826,7 +914,8 @@ def _apply_subject_change(
         if request.state.status == "completed":
             active = connection.execute(  # type: ignore[attr-defined]
                 "SELECT 1 FROM subject_records WHERE parent_id = ? AND kind = 'work' "
-                "AND status NOT IN ('succeeded', 'deleted') LIMIT 1",
+                "AND status NOT IN ('succeeded', 'failed', 'cancelled', 'stale', 'deleted') "
+                "LIMIT 1",
                 (str(request.activity_id),),
             ).fetchone()
             if active is not None:
@@ -908,7 +997,7 @@ def _apply_subject_change(
         _subject_state(connection, request.work_id, request.expected_revision)
     )
     if state.status != "proposed":
-        raise FoundationError("work_closed", "Accepted Work cannot be changed")
+        raise FoundationError("work_closed", f"Work is already {state.status}")
     if isinstance(request, LinkWorkOutputRequest):
         contract = next(
             (item for item in state.expected_outputs if item.slot == request.output.slot), None
@@ -928,6 +1017,31 @@ def _apply_subject_change(
             item for item in state.linked_outputs if item.slot != request.output.slot
         ) + (request.output,)
         next_state = state.model_copy(update={"linked_outputs": linked})
+    elif isinstance(request, CloseWorkRequest):
+        if request.outcome == "stale":
+            from .composition import verify_changed_premises
+
+            verify_changed_premises(
+                cast(sqlite3.Connection, connection),
+                request,
+                state,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+            )
+        _hold_work_execution(connection, request.work_id, request.operation_id, now, "close_work")
+        closure = WorkClosure(
+            outcome=request.outcome,
+            operation_id=request.operation_id,
+            basis=request.basis,
+            authority_source=authority.source_ref,
+            closed_at=datetime.fromisoformat(now),
+            premises=request.premises,
+            decision_premises=request.decision_premises,
+        )
+        next_state = WorkState.model_validate(
+            state.model_dump(mode="python") | {"status": request.outcome, "closure": closure}
+        )
     else:
         assert isinstance(request, AcceptWorkRequest)
         declared = {item.slot: item.media_type for item in state.expected_outputs}
@@ -953,79 +1067,7 @@ def _apply_subject_change(
                 grants=grants,
                 decisions=decisions,
             )
-        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 3:  # type: ignore[attr-defined]
-            active_attempts = connection.execute(  # type: ignore[attr-defined]
-                "SELECT attempt_id FROM execution_attempts WHERE work_id = ? AND status = 'active'",
-                (str(request.work_id),),
-            ).fetchall()
-            if active_attempts:
-                schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])  # type: ignore[attr-defined]
-                assigned_ids = (
-                    {
-                        row[0]
-                        for row in connection.execute(  # type: ignore[attr-defined]
-                            "SELECT a.attempt_id FROM execution_attempts a "
-                            "JOIN execution_assignments s ON s.attempt_id = a.attempt_id "
-                            "WHERE a.work_id = ? AND a.status = 'active'",
-                            (str(request.work_id),),
-                        ).fetchall()
-                    }
-                    if schema_version >= 4
-                    else set()
-                )
-                interactive_attempts = [
-                    row for row in active_attempts if row[0] not in assigned_ids
-                ]
-                connection.execute(  # type: ignore[attr-defined]
-                    "UPDATE execution_invocations SET status = 'unknown', "
-                    "revision = revision + 1, updated_at = ? WHERE work_id = ? "
-                    "AND status IN ('admitted', 'sent') AND attempt_id IN "
-                    "(SELECT attempt_id FROM execution_attempts WHERE work_id = ? "
-                    "AND status = 'active')",
-                    (now, str(request.work_id), str(request.work_id)),
-                )
-                connection.executemany(  # type: ignore[attr-defined]
-                    "UPDATE execution_attempts SET status = 'interrupted', "
-                    "revision = revision + 1, updated_at = ? "
-                    "WHERE attempt_id = ? AND status = 'active'",
-                    ((now, row[0]) for row in interactive_attempts),
-                )
-                connection.executemany(  # type: ignore[attr-defined]
-                    "INSERT INTO execution_events(operation_id, work_id, attempt_id, "
-                    "kind, created_at) VALUES (?, ?, ?, 'accept_work_interrupt_attempt', ?)",
-                    (
-                        (str(request.operation_id), str(request.work_id), row[0], now)
-                        for row in interactive_attempts
-                    ),
-                )
-                if schema_version >= 4:
-                    connection.execute(  # type: ignore[attr-defined]
-                        "UPDATE execution_waits SET status = 'closed', "
-                        "revision = revision + 1, updated_at = ? "
-                        "WHERE work_id = ? AND status = 'open'",
-                        (now, str(request.work_id)),
-                    )
-                    connection.execute(  # type: ignore[attr-defined]
-                        "UPDATE execution_assignments SET status = 'stop_requested', "
-                        "revision = revision + 1, updated_at = ? "
-                        "WHERE work_id = ? AND status IN "
-                        "('assigned', 'waiting', 'ready') AND attempt_id IN "
-                        "(SELECT attempt_id FROM execution_attempts WHERE status = 'active')",
-                        (now, str(request.work_id)),
-                    )
-                    connection.execute(  # type: ignore[attr-defined]
-                        "UPDATE execution_outbox SET status = 'cancelled' "
-                        "WHERE work_id = ? AND status = 'pending'",
-                        (str(request.work_id),),
-                    )
-                    connection.executemany(  # type: ignore[attr-defined]
-                        "INSERT INTO execution_events(operation_id, work_id, attempt_id, "
-                        "kind, created_at) VALUES (?, ?, ?, 'accept_work_hold_assignment', ?)",
-                        (
-                            (str(request.operation_id), str(request.work_id), attempt_id, now)
-                            for attempt_id in sorted(assigned_ids)
-                        ),
-                    )
+        _hold_work_execution(connection, request.work_id, request.operation_id, now, "accept_work")
         next_state = state.model_copy(
             update={
                 "status": "succeeded",
@@ -1051,15 +1093,21 @@ def _apply_subject_change(
         revision=revision,
     )
     targets: list[dict[str, object]] = [{"record_id": str(request.work_id), "revision": revision}]
-    references = (
-        (request.output.artifact,)
-        if isinstance(request, LinkWorkOutputRequest)
-        else state.inputs + tuple(item.artifact for item in state.linked_outputs)
-    )
+    if isinstance(request, LinkWorkOutputRequest):
+        references: tuple[ArtifactRef, ...] = (request.output.artifact,)
+    elif isinstance(request, CloseWorkRequest):
+        references = request.premises
+    else:
+        references = state.inputs + tuple(item.artifact for item in state.linked_outputs)
     targets.extend(
         {"record_id": str(reference.artifact_id), "revision": reference.revision}
         for reference in references
     )
+    if isinstance(request, CloseWorkRequest):
+        targets.extend(
+            {"record_id": str(decision.decision_id), "revision": decision.revision}
+            for decision in request.decision_premises
+        )
     return (
         {"record_id": str(request.work_id), "revision": revision, "status": next_state.status},
         targets,
@@ -1241,11 +1289,15 @@ def _apply_change(
             CreateWorkRequest,
             LinkWorkOutputRequest,
             AcceptWorkRequest,
+            CloseWorkRequest,
             DeleteWorkRequest,
         ),
     ):
-        if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 2:  # type: ignore[attr-defined]
+        schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])  # type: ignore[attr-defined]
+        if schema_version < 2:
             raise FoundationError("unsupported_schema", "Activity/Work requires schema 2")
+        if isinstance(request, CloseWorkRequest) and schema_version < 7:
+            raise FoundationError("unsupported_schema", "Work outcomes need explicit schema 7")
         return _apply_subject_change(
             connection,
             request,
@@ -1636,6 +1688,7 @@ def apply_operation(path: Path, request: DomainRequest, authority: Authority) ->
                     (
                         LinkWorkOutputRequest,
                         AcceptWorkRequest,
+                        CloseWorkRequest,
                         PublishAttemptOutputRequest,
                         CreateResourceRequest,
                         ReviseResourceRequest,
@@ -1922,6 +1975,9 @@ def _read_subject(
         if kind == "work":
             state = WorkState.model_validate(body)
             references = list(state.inputs) + [output.artifact for output in state.linked_outputs]
+            if state.closure is not None:
+                # A stale outcome keeps only premise addresses; deleted ones read unavailable.
+                references = list(dict.fromkeys(references + list(state.closure.premises)))
             for reference in references:
                 try:
                     _artifact_reference(connection, reference)
