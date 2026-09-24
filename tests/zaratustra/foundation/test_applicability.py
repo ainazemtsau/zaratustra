@@ -157,12 +157,12 @@ def _child(
     )
 
 
-def _value(choice: DecisionRef, value: str) -> PlanCondition:
+def _value(choice: DecisionRef, value: str, *, name: str = ART) -> PlanCondition:
     return PlanCondition(
         kind="decision_value",
         decision_id=choice.decision_id,
         decision_revision=choice.revision,
-        name=ART,
+        name=name,
         value=value,
     )
 
@@ -187,6 +187,7 @@ def _composite_request(
     *,
     art_readiness: PlanCondition | None = None,
     extra: tuple[PlanChild, ...] = (),
+    completion: PlanCondition | None = None,
 ) -> CreateCompositeWorkRequest:
     activity, source = setup.activity, setup.source
     accepted_a = PlanCondition(
@@ -217,7 +218,8 @@ def _composite_request(
                 _child(activity, "art", "reviewed", readiness=art_readiness),
                 *extra,
             ),
-            completion=PlanCondition(
+            completion=completion
+            or PlanCondition(
                 kind="all",
                 members=(
                     PlanCondition(kind="work_succeeded", role="a"),
@@ -236,8 +238,11 @@ def _composite(
     *,
     art_readiness: PlanCondition | None = None,
     extra: tuple[PlanChild, ...] = (),
+    completion: PlanCondition | None = None,
 ) -> Case:
-    request = _composite_request(setup, _method(setup), art_readiness=art_readiness, extra=extra)
+    request = _composite_request(
+        setup, _method(setup), art_readiness=art_readiness, extra=extra, completion=completion
+    )
     apply_operation(setup.root, request, setup.owner)
     return Case(
         setup.root,
@@ -391,6 +396,22 @@ def _link_request(case: Case, artifact: ArtifactRef) -> LinkWorkOutputRequest:
     )
 
 
+def _cancel(case: Case, role: str) -> None:
+    apply_operation(
+        case.root,
+        CloseWorkRequest(
+            operation_id=uuid4(),
+            space_id=case.space,
+            actor="owner",
+            work_id=case.works[role],
+            expected_revision=read_work(case.root, case.works[role], case.owner).revision,
+            outcome="cancelled",
+            basis=f"Synthetic {role} is not needed",
+        ),
+        case.owner,
+    )
+
+
 def _complete_ab(case: Case) -> ArtifactRef:
     """Run A and B, confirm their obligations and return B's exact result."""
 
@@ -423,12 +444,14 @@ def _applicability_stale(choice: DecisionRef) -> StatusReason:
     )
 
 
-def _conflict(*choices: DecisionRef, key: str | None = ART) -> tuple[StatusReason, ...]:
+def _conflict(
+    *choices: DecisionRef, key: str | None = ART, name: str = ART
+) -> tuple[StatusReason, ...]:
     return tuple(
         StatusReason(
             code="decision_conflict",
             key=key,
-            name=ART,
+            name=name,
             record_id=choice.decision_id,
             revision=choice.revision,
         )
@@ -759,6 +782,121 @@ def test_decision_value_leaf_closes_on_another_exact_value(tmp_path: Path) -> No
     assert _resolve(case, general).result["applicability"] == "inactive"
     apply_operation(root, _link_request(case, _complete_ab(case)), owner)
     assert read_work_status(root, parent, owner).reasons == _acceptance_pending(case)
+    apply_operation(root, _accept_request(case), owner)
+    assert read_work_status(root, parent, owner).status == "succeeded"
+
+
+def test_formal_conflict_keeps_its_code_through_composite_conditions(tmp_path: Path) -> None:
+    setup = _space(tmp_path)
+    required = _choose(setup, "required", _activity_scope(setup))
+    # One alternative is closed for good by its exact value; the other holds unless a
+    # covering choice disagrees with it.
+    either = PlanCondition(
+        kind="any", members=(_value(required, "required"), _value(required, "not_required"))
+    )
+    source = PlanCondition(kind="artifact_current", artifact=setup.source)
+    a_done = PlanCondition(kind="work_succeeded", role="a")
+    dropped_done = PlanCondition(kind="work_succeeded", role="dropped")
+
+    def node(role: str, *members: PlanCondition, kind: Literal["all", "any"]) -> PlanChild:
+        readiness = PlanCondition(kind=kind, members=members)
+        return _child(setup.activity, role, "note", readiness=readiness)
+
+    case = _composite(
+        setup,
+        art_readiness=either,
+        extra=(
+            node("nested_all", either, source, kind="all"),
+            node("nested_any", either, dropped_done, kind="any"),
+            node("behind_open", a_done, _value(required, "required"), kind="all"),
+            node("behind_closed", dropped_done, _value(required, "required"), kind="all"),
+            node("open_alternative", _value(required, "required"), a_done, kind="any"),
+            node("true_alternative", _value(required, "required"), source, kind="any"),
+            _child(setup.activity, "dropped", "note"),
+        ),
+    )
+    root, _space_id, owner, _activity, _parent, works = case
+    _cancel(case, "dropped")
+    opposite = _choose(case, "not_required", _work_scope(case))
+
+    conflicted = _conflict(required, opposite, key=None)
+    waiting_for_a = StatusReason(code="dependency_open", role="a", record_id=works["a"])
+    dropped = StatusReason(code="dependency_closed", role="dropped", record_id=works["dropped"])
+    derived = {
+        "art": conflicted,
+        "nested_all": conflicted,
+        "nested_any": conflicted,
+        "behind_open": (waiting_for_a, *conflicted),
+        "behind_closed": (dropped, *conflicted),
+        "open_alternative": (*conflicted, waiting_for_a),
+    }
+    for role, reasons in derived.items():
+        status = read_work_status(root, works[role], owner)
+        assert (status.status, status.reasons) == ("blocked", reasons)
+        assert read_execution(root, works[role], owner).status == status
+    checked = {role: works[role] for role in derived}
+    assert _statuses_in_new_process(case, checked) == _statuses(case, checked)
+
+    # The operation names the same addressed conflict through every composite, even
+    # behind an open member of all, and writes nothing.
+    for role in ("art", "nested_all", "nested_any", "behind_open"):
+        refused = _refused(case, "decision_conflict", _issue_request(case, role))
+        assert str(required.decision_id) in refused.detail
+        assert str(opposite.decision_id) in refused.detail
+    # A closed member keeps all closed for good; an alternative that may still become true
+    # by progress keeps dependency_open; an alternative that holds is not blocked by the
+    # conflict of another one.
+    _refused(case, "dependency_closed", _issue_request(case, "behind_closed"))
+    _refused(case, "dependency_open", _issue_request(case, "open_alternative"))
+    _issue(case, "true_alternative")
+    assert read_work_status(root, works["true_alternative"], owner).status == "ready"
+
+    _revoke(case, opposite)
+    for role in ("art", "nested_all", "nested_any"):
+        _issue(case, role)
+        assert read_work_status(root, works[role], owner).status == "ready"
+    # With the conflict lifted, the open member of all is the only gap again.
+    _refused(case, "dependency_open", _issue_request(case, "behind_open"))
+    assert read_work_status(root, works["behind_open"], owner).reasons == (waiting_for_a,)
+
+
+def test_formal_conflict_in_a_nested_completion_refuses_acceptance(tmp_path: Path) -> None:
+    setup = _space(tmp_path)
+    formal = _choose(setup, "formal", _activity_scope(setup), name="tone")
+    completion = PlanCondition(
+        kind="any",
+        members=(
+            PlanCondition(kind="work_succeeded", role="dropped"),
+            PlanCondition(
+                kind="all",
+                members=(
+                    PlanCondition(kind="work_succeeded", role="b"),
+                    _value(formal, "formal", name="tone"),
+                ),
+            ),
+        ),
+    )
+    case = _composite(
+        setup, extra=(_child(setup.activity, "dropped", "note"),), completion=completion
+    )
+    root, _space_id, owner, _activity, parent, works = case
+    _resolve(case, _choose(case, "not_required", _work_scope(case)))
+    apply_operation(root, _link_request(case, _complete_ab(case)), owner)
+    _cancel(case, "dropped")
+    review = StatusReason(code="branch_review", role="dropped", record_id=works["dropped"])
+    assert read_work_status(root, parent, owner).reasons == (*_acceptance_pending(case), review)
+
+    casual = _choose(case, "casual", _work_scope(case), name="tone")
+    refused = _refused(case, "decision_conflict", _accept_request(case))
+    assert str(formal.decision_id) in refused.detail
+    assert str(casual.decision_id) in refused.detail
+    blocked = read_work_status(root, parent, owner)
+    assert blocked.status == "blocked"
+    assert blocked.reasons == (*_conflict(formal, casual, key=None, name="tone"), review)
+    assert read_execution(root, parent, owner).status == blocked
+    assert _statuses_in_new_process(case, {"parent": parent}) == _statuses(case, {"parent": parent})
+
+    _revoke(case, casual)
     apply_operation(root, _accept_request(case), owner)
     assert read_work_status(root, parent, owner).status == "succeeded"
 

@@ -573,19 +573,36 @@ def _evaluate(
             if condition.kind == "any":
                 return found
             references.extend(found)
-        closed = [error for error in errors if error.code == "dependency_closed"]
-        if condition.kind == "all":
-            if errors:
-                # One member closed for good makes the whole conjunction unreachable.
-                raise (closed or errors)[0]
+        if not errors:
             return tuple(references)
-        still_open = [error for error in errors if error.code != "dependency_closed"]
-        if not still_open:
-            # No member can become true under this plan any more.
+        closed = [error for error in errors if error.code == "dependency_closed"]
+        # A formal conflict is lifted only by revising or revoking a choice, never by
+        # progress: it keeps its code and every address through each enclosing condition.
+        conflicts = [error for error in errors if error.code == "decision_conflict"]
+        conflict = FoundationError(
+            "decision_conflict", "; ".join(dict.fromkeys(error.detail for error in conflicts))
+        )
+        if condition.kind == "all":
+            if closed:
+                # One member closed for good makes the whole conjunction unreachable.
+                raise closed[0]
+            raise conflict if conflicts else errors[0]
+        still_open = [
+            error
+            for error in errors
+            if error.code not in ("dependency_closed", "decision_conflict")
+        ]
+        if still_open:
             raise FoundationError(
-                "dependency_closed", f"No any member can become true: {errors[0].detail}"
+                "dependency_open", f"No any member is ready: {still_open[0].detail}"
             )
-        raise FoundationError("dependency_open", f"No any member is ready: {still_open[0].detail}")
+        if conflicts:
+            # Every other alternative is closed for good; only the conflict holds it.
+            raise conflict
+        # No member can become true under this plan any more.
+        raise FoundationError(
+            "dependency_closed", f"No any member can become true: {errors[0].detail}"
+        )
     if condition.kind == "accepted_output":
         assert condition.role and condition.slot and condition.media_type
         return (
