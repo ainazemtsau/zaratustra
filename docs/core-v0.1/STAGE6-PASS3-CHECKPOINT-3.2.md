@@ -24,6 +24,32 @@
 нет. Новых видов записей и DDL нет: schema 7 по-прежнему `core-v0.1-plan-revision-7` с
 SHA-256 пустого набора `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`.
 
+**Исправление готовности по Windows-проверке `4b65fed`.** Владелец передал результат
+независимой Windows-проверки, которую выполнил Codex на
+`4b65fedaa58a89d051da2fbecdab3f7986d29ae7`:
+
+- `tools.check --deliver` — PASS: 582 теста, 21 контракт;
+- Stage 6 probe из checkout и из установленного wheel — PASS, по 3 синтетических
+  localhost HTTP.
+
+Перед закрытием 3.2 владелец поручил исправить одно расхождение готовности и передал
+его воспроизведение через публичный Core:
+
+- Method с `obligations=()`, независимые A1 и A2, условие завершения `any(A1, A2)`;
+- выход родителя привязан к A1;
+- A2 явно закрыт как `failed`;
+- A1 выдан, его результат отдельно принят и связан с родителем.
+
+`read_work_status` и `read_execution` показывали только `ready:branch_review(a2)`, в
+том числе в новом процессе, хотя `AcceptWorkRequest` родителя выполнялся.
+
+Причина: без объявленных обязательств производное состояние спрашивало правила принятия
+только после успеха всех детей. Для `any` это лишнее условие. Дефект унаследован: на
+`d07ffa5` тот же сценарий читался `blocked:obligation_open`, а принятие тоже проходило.
+Оба прочтения воспроизведены здесь тем же сценарием (скрипт вне репозитория) на
+`4b65fed` и на снимке `d07ffa5`. Исправление — `6dd83e3`; приёмка не записывается,
+часть 3.3 не начата.
+
 ## Контракт
 
 ### Независимые дети и исключительный ресурс
@@ -61,6 +87,14 @@ failed» нет.
 | `ready` | следующие шаги прохода 2, затем `branch_review` |
 | `ready` для разбора | только `branch_review`: закрытая ветвь, а ничто не ждёт, не исполняется и не готово |
 
+`acceptance_pending` показывается ровно тогда, когда выполнены структурные правила самой
+операции принятия (`check_parent_acceptance` без субъекта): каждое объявленное
+обязательство выполнено (их может не быть), выходы связаны с точными принятыми
+результатами, условие завершения истинно — например, `any` через одну успешную ветвь.
+Успех остальных детей для этого не нужен. Проверка идёт после устаревших предпосылок и
+фаз `waiting`/`running`, поэтому они по-прежнему важнее. Само принятие остаётся отдельной
+операцией и проверяет текущие права субъекта.
+
 Закрытая ветвь, нужная условию завершения, обязательству или привязке выхода, больше не
 делает родителя `blocked:dependency_closed`: она разбирается по адресу, а её зависимые
 читаются `blocked:dependency_closed` со своим адресом. Исход закрытой ветви читается в
@@ -95,6 +129,14 @@ failed» нет.
    `dependency_closed` (только schema 7: закрытые дети есть только там).
 4. Принятие родителя с невыполненным обязательством закрытой ветви отказывает
    `dependency_closed` с её адресом вместо `obligation_open` (только schema 7).
+5. Исправление `6dd83e3`: у родителя без объявленных обязательств ожидаемое принятие
+   больше не требует успеха всех детей. Производное состояние спрашивает правила
+   принятия, как только выполнены все объявленные обязательства (их может не быть).
+   Раньше, со времён производного состояния прохода 2, такой родитель при выполнимых
+   правилах читался без `acceptance_pending`. Расхождение видно только когда правила принятия выполняются до
+   успеха всех детей, например при условии `any`. Родитель с обязательствами не меняется.
+   Если в итоговом `blocked` у такого родителя нет заблокированных детей, причиной теперь
+   называется фактический отказ принятия, а не `obligation_open`.
 
 ## Обслуживание данных
 
@@ -113,7 +155,7 @@ failed» нет.
 
 ## Воспроизведение
 
-`tests/zaratustra/foundation/test_parallel_branches.py`, 6 тестов без модели на schema 7.
+`tests/zaratustra/foundation/test_parallel_branches.py`, 9 тестов без модели на schema 7.
 План `_pipeline`: A1 ∥ A2, C рядом, D после A1, интеграционный I после `all(A1, A2)`;
 выход родителя связан с I; обязательства на A1, A2 и I.
 
@@ -140,6 +182,22 @@ failed» нет.
 - `test_any_completion_stays_reachable_through_the_other_branch` — условие завершения
   `any(A1, A2)`, выход связан с A1. После `failed` у A2 родитель принимается через A1;
   до принятия — `ready` с `acceptance_pending` и `branch_review(a2)`.
+- `test_any_completion_without_obligations_reads_acceptance_pending` — переданное
+  воспроизведение: Method с `obligations=()`, `any(A1, A2)`, выход связан с A1, A2
+  `failed`, результат A1 принят.
+  - До связи выхода: `ready` с `output_link_pending(a1)` и `branch_review(a2)`,
+    принятие отказывает `output_mismatch`.
+  - После связи: `read_work_status`, `read_execution` и новый процесс показывают
+    `ready` с `acceptance_pending` и `branch_review(a2)`.
+  - Субъект только с `record.read` получает `permission_denied`, родитель остаётся
+    `proposed`; принятие владельцем проходит.
+- `test_pending_acceptance_stays_behind_active_branches` — тот же план, но A2 исполняется:
+  хотя правила принятия уже выполнены, родитель `running` с `child_running(a2)`, затем
+  `waiting` с `child_waiting(a2)`. После `failed` у A2 — `ready` с `acceptance_pending`
+  и `branch_review(a2)`.
+- `test_any_completion_without_a_surviving_branch_is_not_pending` — A1 `cancelled`, A2
+  `failed`: `ready` только с `branch_review(a1)` и `branch_review(a2)`, принятие
+  отказывает `dependency_closed`, родитель остаётся `proposed`.
 - `test_output_bound_to_a_closed_branch_cannot_be_linked_or_accepted` — выход связан с A2,
   A2 `cancelled`. Связь выхода с результатом A1 и с посторонним Artifact отказывает
   `dependency_closed` с адресом A2, родитель не меняется; принятие отказывает; родитель
@@ -166,11 +224,16 @@ Pi RPC home и маркер; workflow, home и закрепление A1 и об
 Тесты backup/restore, удаления ветви и доставки в Pi-адаптере проходят и там: они
 закрепляют уже существовавшее поведение для параллельных детей.
 
-Запись проверки 3.1 и уточнение комментариев — `ee3bf6c`; код и тесты 3.2 — `ec38910`.
-Проверки ниже запускались на чистом дереве `ec38910`. Итоговый коммит с этим документом
-меняет только Markdown-файлы. Среди них `src/zaratustra/foundation/AGENTS.md`, который
-входит в wheel, поэтому SHA-256 wheel итогового коммита отличается от проверенного;
-Python-код и тесты совпадают.
+Из трёх тестов исправления готовности два падают на `4b65fed`: после связи выхода
+родитель читался только `ready:branch_review(a2)`. Третий (нет выжившей ветви —
+ожидаемого принятия нет) проходит и там и защищает от ложного `acceptance_pending`.
+
+Запись проверки 3.1 и уточнение комментариев — `ee3bf6c`; код и тесты 3.2 — `ec38910`;
+документы — `4b65fed`; исправление готовности — `6dd83e3`. Проверки ниже запускались на
+чистом дереве `6dd83e3`. Итоговый коммит с этим документом меняет только
+Markdown-файлы. Среди них `src/zaratustra/foundation/AGENTS.md`, который входит в wheel,
+поэтому SHA-256 wheel итогового коммита отличается от проверенного; Python-код и тесты
+совпадают.
 
 ## Проверки в Linux-контейнере
 
@@ -178,8 +241,13 @@ Python-код и тесты совпадают.
 связь, а не доказательство выпуска. Обязательный полный gate — независимый
 Windows-прогон, результат которого передаёт владелец.
 
-- `pytest tests -q` на `ec38910`, conda-forge Python 3.13.7 с SQLite 3.53.3 и FTS5: 581
-  прошли, 1 упал. Это 575 тестов `d07ffa5` и 7 новых. Единственное падение — ожидаемое на
+- Воспроизведение переданного сценария тем же скриптом через публичный Core: на
+  `4b65fed` `read_work_status`, `read_execution` и новый процесс — `ready` только с
+  `branch_review(a2)`; на снимке `d07ffa5` — `blocked:obligation_open`; принятие
+  родителя в обоих случаях `succeeded`. На `6dd83e3` все три чтения — `ready` с
+  `acceptance_pending` и `branch_review(a2)`, принятие `succeeded`.
+- `pytest tests -q` на `6dd83e3`, conda-forge Python 3.13.7 с SQLite 3.53.3 и FTS5: 584
+  прошли, 1 упал. Это 582 теста `4b65fed` и 3 новых. Единственное падение — ожидаемое на
   Linux `test_import_refuses_unfixed_sqlite_runtime_in_a_fresh_process`.
 - `uv run --locked mypy --platform win32 src tools tests` — ошибок нет (173 файла).
 - `uv run --locked lint-imports --no-cache` — 21 контракт сохранён, 0 нарушено.
@@ -191,15 +259,16 @@ Windows-прогон, результат которого передаёт вл�
   localhost-провайдером — `passed`:
   - `tools.probe_stage6_rpc` (checkout) — 3 HTTP;
   - `tools.probe_install_stage6` — wheel SHA-256
-    `87A36E245BB94BEC99698CE914C089BB5A265D2DC5A8DB5B5F4ACEF8849C9D55` в новом venv вне
-    checkout, `source_commit` `ec38910`, `source_tree_dirty: false`, 3 HTTP;
+    `74DE9DC5204E06CCFCB4C1BDC890B5E8430969B53C21D968F84C58DF1E39F0E3` в новом venv вне
+    checkout, `source_commit` `6dd83e3`, `source_tree_dirty: false`, 3 HTTP;
   - `tools.probe_stage5_rpc` — 2 вызова провайдера, отказ до отправки без HTTP,
     restore в эпоху 2, санация при удалении.
-- Отчёт Stage 6 совпадает с прошлым прогоном с точностью до id, времени, маркеров и
+- Отчёт Stage 6 совпадает с прогоном на `ec38910` с точностью до id, времени, маркеров и
   одного выборочного промежуточного состояния: переходное `running:stop_requested` у B
   фиксируется наблюдателем не в каждом прогоне (его не было и в прогоне на коде 3.1).
-- Отчёты — `_scratch/stage6-pass3-32-rpc`, `_scratch/stage6-pass3-32-installed`,
-  `_scratch/stage6-pass3-32-stage5` (игнорируются git).
+- Отчёты — `_scratch/stage6-pass3-32fix-rpc`, `_scratch/stage6-pass3-32fix-installed`,
+  `_scratch/stage6-pass3-32fix-stage5` (игнорируются git); прогон на `ec38910` — в
+  `_scratch/stage6-pass3-32-*`.
 
 Команды для Windows-проверки — те же, что в `STAGE6-PASS2-IMPLEMENTATION.md`, с новыми
 каталогами вывода:
@@ -209,8 +278,8 @@ $env:UV_CACHE_DIR = Join-Path (Get-Location) '_scratch\stage5-plan-uv-cache'
 $env:ZARATUSTRA_SQLITE_DLL = Join-Path (Get-Location) '_scratch\stage4-interactive-20260923-a\sqlite\sqlite3.dll'
 $env:PYTHONPATH = Join-Path (Get-Location) 'tools\sqlite_bootstrap'
 uv run --locked python -m tools.check --deliver
-uv run --locked python -m tools.probe_stage6_rpc --output _scratch\stage6-pass3-32-rpc --pi-runtime '_scratch\stage4-pi-runtime'
-uv run --locked python -m tools.probe_install_stage6 --output _scratch\stage6-pass3-32-installed --pi-runtime '_scratch\stage4-pi-runtime' --sqlite-dll $env:ZARATUSTRA_SQLITE_DLL
+uv run --locked python -m tools.probe_stage6_rpc --output _scratch\stage6-pass3-32fix-rpc --pi-runtime '_scratch\stage4-pi-runtime'
+uv run --locked python -m tools.probe_install_stage6 --output _scratch\stage6-pass3-32fix-installed --pi-runtime '_scratch\stage4-pi-runtime' --sqlite-dll $env:ZARATUSTRA_SQLITE_DLL
 ```
 
 ## Пределы

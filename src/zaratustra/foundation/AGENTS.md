@@ -89,7 +89,10 @@ its own Attempt and resource; an exclusive root stays single until a stop is rec
 but names every active branch and every closed branch that the current plan or an open
 obligation refers to (`branch_review`), each with role and Work address; with nothing
 waiting or running a failed branch makes the parent `ready` for review, and a stale
-prerequisite still blocks it first. Integration that needs a closed branch (issue,
+prerequisite still blocks it first. `acceptance_pending` appears exactly when the
+structural rules of the acceptance operation hold (every declared obligation, possibly
+none; exact bound outputs; the completion, such as `any`), not only after every child
+succeeded; acceptance itself stays separate and rights-checked. Integration that needs a closed branch (issue,
 confirmation, a parent output link bound to it, parent acceptance) refuses
 `dependency_closed` with its address; nothing is cancelled. See
 `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.2.md`.

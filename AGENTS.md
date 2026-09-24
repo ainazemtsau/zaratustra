@@ -21,7 +21,8 @@
   `f13ffa8`. On Codex's independent Windows check of `d07ffa5` the owner
   closed the technical review of checkpoint 3.1 and authorized only part 3.2,
   followed by a stop for review; part 3.2 is implemented as a development
-  checkpoint, see `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.2.md`. None of this
+  checkpoint, with one readiness correction after Codex's Windows check of
+  `4b65fed`, see `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.2.md`. None of this
   is an accepted release, schema 7 acceptance or pass 3 acceptance. Parts
   3.3–3.10, the separate composite-parent execution slice, pass 4, real model
   calls and development migration are not authorized.
