@@ -35,9 +35,11 @@ from zaratustra.foundation import (
     ConfirmObligationRequest,
     CreateArtifactRequest,
     CreateCompositeWorkRequest,
+    CreateGrantRequest,
     CreateMethodVersionRequest,
     DeleteWorkRequest,
     FoundationError,
+    GrantState,
     IssueChildWorkRequest,
     LinkedOutput,
     LinkWorkOutputRequest,
@@ -492,7 +494,9 @@ def test_failed_branch_is_reviewed_while_independent_branches_go_on(tmp_path: Pa
     ]
 
 
-def _two_branches(tmp_path: Path, bound: str) -> Branches:
+def _two_branches(
+    tmp_path: Path, bound: str, obligations: tuple[tuple[str, str], ...] = (("a1", "checked"),)
+) -> Branches:
     def children(activity: UUID, source: ArtifactRef) -> tuple[PlanChild, ...]:
         return (
             _child(activity, "a1", "checked", inputs=(source,)),
@@ -504,7 +508,20 @@ def _two_branches(tmp_path: Path, bound: str) -> Branches:
         children,
         bound=(bound, "checked"),
         completion=PlanCondition(kind="any", members=(_succeeded("a1"), _succeeded("a2"))),
-        obligations=(("a1", "checked"),),
+        obligations=obligations,
+    )
+
+
+def _link_parent(branches: Branches, artifact: ArtifactRef) -> None:
+    root, space, owner, parent, _works = branches
+    _apply(
+        root,
+        space,
+        owner,
+        LinkWorkOutputRequest,
+        work_id=parent,
+        expected_revision=read_work(root, parent, owner).revision,
+        output=LinkedOutput(slot="final", artifact=artifact),
     )
 
 
@@ -537,6 +554,101 @@ def test_any_completion_stays_reachable_through_the_other_branch(tmp_path: Path)
     _accept_parent(branches)
     assert read_work_status(root, parent, owner).status == "succeeded"
     assert read_work(root, works["a2"], owner).state.status == "failed"
+
+
+def test_any_completion_without_obligations_reads_acceptance_pending(tmp_path: Path) -> None:
+    branches = _two_branches(tmp_path, "a1", obligations=())
+    root, space, owner, parent, works = branches
+    apply_operation(root, _close(root, space, owner, works["a2"], "failed", "Not usable"), owner)
+    _issue(branches, "a1")
+    result = _result(root, space, owner, works["a1"], "checked", b"synthetic surviving check")
+    # Until the exact output is linked Core's acceptance rules refuse: nothing is pending.
+    unlinked = read_work_status(root, parent, owner)
+    assert unlinked.status == "ready"
+    assert _reasons(unlinked) == [
+        ("output_link_pending", "a1", result.artifact_id),
+        ("branch_review", "a2", works["a2"]),
+    ]
+    with pytest.raises(FoundationError, match="output_mismatch"):
+        _accept_parent(branches)
+
+    _link_parent(branches, result)
+    # any(A1, A2) holds through A1 and no obligation is declared: the same rules the
+    # acceptance operation applies hold, and the failed branch stays under review.
+    expected = [("acceptance_pending", None, parent), ("branch_review", "a2", works["a2"])]
+    pending = read_work_status(root, parent, owner)
+    assert pending.status == "ready" and _reasons(pending) == expected
+    execution = read_execution(root, parent, owner).status
+    assert execution is not None and _as_json(execution) == _as_json(pending)
+    assert _states_in_new_process(root, {"parent": parent}) == {"parent": _as_json(pending)}
+
+    # The derived state grants nothing: acceptance stays separate and rights-checked.
+    _apply(
+        root,
+        space,
+        owner,
+        CreateGrantRequest,
+        grant_id=uuid4(),
+        state=GrantState(grantee="reader", actions=("record.read",)),
+    )
+    reader = authorize_local(root, actor="reader", source_ref="fictional-reader")
+    with pytest.raises(FoundationError, match="permission_denied"):
+        apply_operation(
+            root,
+            AcceptWorkRequest(
+                operation_id=uuid4(),
+                space_id=space,
+                actor="reader",
+                work_id=parent,
+                expected_revision=read_work(root, parent, owner).revision,
+                basis="A reader cannot accept",
+            ),
+            reader,
+        )
+    assert read_work(root, parent, owner).state.status == "proposed"
+    _accept_parent(branches)
+    assert read_work_status(root, parent, owner).status == "succeeded"
+
+
+def test_pending_acceptance_stays_behind_active_branches(tmp_path: Path) -> None:
+    branches = _two_branches(tmp_path, "a1", obligations=())
+    root, space, owner, parent, works = branches
+    a2_attempt, a2_session, _a2_resource = _running(branches, "a2", "workspace-a2")
+    _issue(branches, "a1")
+    _link_parent(
+        branches, _result(root, space, owner, works["a1"], "checked", b"synthetic surviving check")
+    )
+    # Core would accept the parent already; the pass 2 phase order still comes first.
+    running = read_work_status(root, parent, owner)
+    assert running.status == "running"
+    assert _reasons(running) == [("child_running", "a2", works["a2"])]
+    _ask(branches, "a2", a2_attempt, a2_session, "Which synthetic line counts?")
+    waiting = read_work_status(root, parent, owner)
+    assert waiting.status == "waiting"
+    assert _reasons(waiting) == [("child_waiting", "a2", works["a2"])]
+    apply_operation(root, _close(root, space, owner, works["a2"], "failed", "Not needed"), owner)
+    pending = read_work_status(root, parent, owner)
+    assert pending.status == "ready"
+    assert _reasons(pending) == [
+        ("acceptance_pending", None, parent),
+        ("branch_review", "a2", works["a2"]),
+    ]
+
+
+def test_any_completion_without_a_surviving_branch_is_not_pending(tmp_path: Path) -> None:
+    branches = _two_branches(tmp_path, "a1", obligations=())
+    root, space, owner, parent, works = branches
+    apply_operation(root, _close(root, space, owner, works["a1"], "cancelled", "Dropped"), owner)
+    apply_operation(root, _close(root, space, owner, works["a2"], "failed", "Not usable"), owner)
+    status = read_work_status(root, parent, owner)
+    assert status.status == "ready"
+    assert _reasons(status) == [
+        ("branch_review", "a1", works["a1"]),
+        ("branch_review", "a2", works["a2"]),
+    ]
+    with pytest.raises(FoundationError, match="dependency_closed"):
+        _accept_parent(branches)
+    assert read_work(root, parent, owner).state.status == "proposed"
 
 
 def test_output_bound_to_a_closed_branch_cannot_be_linked_or_accepted(tmp_path: Path) -> None:

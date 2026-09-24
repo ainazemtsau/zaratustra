@@ -565,11 +565,12 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
             return WorkStatus(work_id=work_id, status=phase, reasons=tuple(active + reviews))
     declared = {item.key for item in definition.obligations}
     satisfied = {item.key for item in obligations if item.status == "satisfied"}
-    all_children = bool(children) and all(child.status.status == "succeeded" for child in children)
     refusal: str | None = None
-    if (declared and satisfied == declared) or (not declared and all_children):
-        # Acceptance is pending only when Core's own acceptance rules hold structurally;
-        # the separate acceptance operation still checks the actor's current rights.
+    if satisfied == declared:
+        # Acceptance is pending exactly when Core's own acceptance rules hold structurally:
+        # every declared obligation (none may be declared), exact bound outputs and the
+        # completion, which may need only some children (any). Other children need not
+        # have succeeded. The separate acceptance operation still checks current rights.
         try:
             check_parent_acceptance(
                 connection, work_id, state, actor=None, epoch=0, grants=[], decisions=[]
