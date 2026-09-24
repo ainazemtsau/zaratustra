@@ -7,7 +7,7 @@ import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
+from typing import Literal, NamedTuple
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
@@ -239,13 +239,26 @@ def upgrade_plan_revision_space(path: Path, authority: LocalAuthority) -> SpaceI
                 (PLAN_REVISION_SCHEMA_NAME, PLAN_REVISION_SCHEMA_SHA256, now),
             )
             connection.execute("PRAGMA user_version = 7")
+            retired = retire_bases_of_deleted_dependencies(connection)
+            if retired:
+                # Finishing earlier deletions is a deletion effect, not only a schema step.
+                _authorize(
+                    connection,
+                    actor=authority.actor,
+                    action="maintenance.delete",
+                    epoch=info.execution_epoch,
+                )
             connection.execute(
                 "UPDATE spaces SET state_revision = state_revision + 1 WHERE singleton = 1"
             )
             connection.execute(
                 "INSERT INTO maintenance_events(event_id, kind, occurred_at, detail_json) "
                 "VALUES (?, 'schema_upgrade', ?, ?)",
-                (str(uuid4()), now, canonical_json({"from": 6, "to": 7})),
+                (
+                    str(uuid4()),
+                    now,
+                    canonical_json({"from": 6, "to": 7, "retired_outcome_bases": retired}),
+                ),
             )
     return read_space(path)
 
@@ -1848,69 +1861,259 @@ def sanitize_deleted_dependency(
                 ),
             )
 
-    if (
-        artifact_id is not None
-        and int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7
-    ):
-        # Closed Works are backup subjects of their own; their bases retire like confirmations.
-        _retire_dependent_closure_bases(
-            connection, artifact_id, affected_operations, backup_parents
-        )
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7:
+        # Outcome bases retire in this same transaction; older schemas keep their format.
+        plans: dict[str, list[_PlanDependencies | None]] = {}
+        for work_id in _held_outcome_bases(connection):
+            if child_id is not None and work_id == str(child_id):
+                continue  # Its whole content is deleted with it.
+            found = _outcome_dependencies(connection, work_id, plans)
+            if (
+                found.unbounded
+                or (artifact_id is not None and artifact_id in found.artifacts)
+                or (child_id is not None and str(child_id) in found.works)
+            ):
+                _retire_outcome_basis(connection, work_id, affected_operations, backup_parents)
+
+    _retire_history(connection, affected_operations, backup_parents)
+
+
+def _retire_history(
+    connection: sqlite3.Connection, operations: set[str], subjects: set[str]
+) -> None:
+    """Retired operations lose receipt and fingerprint; managed backups holding them go."""
 
     connection.executemany(
         "DELETE FROM receipts WHERE operation_id = ?",
-        ((source_operation,) for source_operation in affected_operations),
+        ((source_operation,) for source_operation in operations),
     )
     connection.executemany(
         "UPDATE operations SET fingerprint = 'DELETED' WHERE operation_id = ?",
-        ((source_operation,) for source_operation in affected_operations),
+        ((source_operation,) for source_operation in operations),
     )
-    for parent_id in backup_parents:
+    for subject_id in subjects:
         connection.execute(
             "UPDATE backup_inventory SET status = 'contaminated' "
             "WHERE status IN ('planned', 'failed') OR (status = 'complete' AND backup_id IN "
             "(SELECT backup_id FROM backup_subjects WHERE record_id = ?))",
-            (parent_id,),
+            (subject_id,),
         )
 
 
-def _retire_dependent_closure_bases(
-    connection: sqlite3.Connection,
-    artifact_id: UUID,
-    affected_operations: set[str],
-    backup_subjects: set[str],
-) -> None:
-    """Drop the basis of every closure whose Work revision names the deleted Artifact.
+class _OutcomeDependencies(NamedTuple):
+    """Known structural dependencies of one Work's outcome basis."""
 
-    The revision's Artifact addresses (inputs, linked outputs, stale premises) are its
-    dependency addresses, as for any Work state. The outcome and addresses stay; the text
-    that may quote the deleted content goes, and the closing receipt leaves replay.
-    """
+    artifacts: frozenset[UUID]
+    works: frozenset[str]
+    # A pre-index sanitized plan hides its addresses: every deletion counts.
+    unbounded: bool
 
-    closed = ", ".join("?" for _ in CLOSED_OUTCOMES)
-    rows = connection.execute(
-        "SELECT c.record_id, c.revision, c.payload FROM subject_content c "
+
+def _held_outcome_bases(connection: sqlite3.Connection) -> list[str]:
+    """Works whose acceptance or closure still holds its basis text."""
+
+    statuses = ("succeeded", *CLOSED_OUTCOMES)
+    held: set[str] = set()
+    for record_id, payload in connection.execute(
+        "SELECT c.record_id, c.payload FROM subject_content c "
         "JOIN subject_revisions v ON v.record_id = c.record_id AND v.revision = c.revision "
         "JOIN subject_records s ON s.record_id = c.record_id "
-        f"WHERE s.kind = 'work' AND v.status IN ({closed})",
-        CLOSED_OUTCOMES,
-    ).fetchall()
-    for record_id, revision, payload in rows:
+        f"WHERE s.kind = 'work' AND v.status IN ({', '.join('?' for _ in statuses)})",
+        statuses,
+    ).fetchall():
         state = WorkState.model_validate_json(bytes(payload))
-        closure = state.closure
-        if closure is None or closure.basis is None:
+        outcome = state.acceptance or state.closure
+        if outcome is not None and outcome.basis is not None:
+            held.add(record_id)
+    return sorted(held)
+
+
+def _plan_history(
+    connection: sqlite3.Connection,
+    parent_id: str,
+    plans: dict[str, list[_PlanDependencies | None]],
+) -> list[_PlanDependencies | None]:
+    """Dependency addresses of every plan revision, read from the index once sanitized."""
+
+    if parent_id not in plans:
+        history: list[_PlanDependencies | None] = []
+        for (payload,) in connection.execute(
+            "SELECT payload FROM work_plan_revisions WHERE parent_id = ? ORDER BY revision",
+            (parent_id,),
+        ).fetchall():
+            sanitized = _sanitized_plan(bytes(payload))
+            if sanitized is None:
+                plan = WorkPlan.model_validate_json(bytes(payload))
+                history.append(_plan_dependencies(connection, parent_id, plan))
+            else:
+                history.append(sanitized.dependencies)
+        plans[parent_id] = history
+    return plans[parent_id]
+
+
+def _upstream_roles(edges: dict[str, tuple[str, ...]], role: str) -> set[str]:
+    """The role and every role its readiness depends on, transitively."""
+
+    found = {role}
+    pending = [role]
+    while pending:
+        for source in edges.get(pending.pop(), ()):
+            if source not in found:
+                found.add(source)
+                pending.append(source)
+    return found
+
+
+def _evidence_artifacts(
+    connection: sqlite3.Connection, parent_id: str, roles: set[str] | None
+) -> set[UUID]:
+    found: set[UUID] = set()
+    for (payload,) in connection.execute(
+        "SELECT payload FROM work_obligation_revisions WHERE parent_id = ?", (parent_id,)
+    ).fetchall():
+        if bytes(payload) == REDACTED_DEPENDENCY:
             continue
-        if artifact_id not in _artifact_ids(json.loads(bytes(payload))):
+        instance = ObligationRevision.model_validate_json(bytes(payload))
+        if instance.evidence is not None and (roles is None or instance.definition.role in roles):
+            found.add(instance.evidence.artifact_id)
+    return found
+
+
+def _subject_artifacts(connection: sqlite3.Connection, record_id: str) -> set[UUID]:
+    """Artifact addresses in every remaining revision of one subject record."""
+
+    found: set[UUID] = set()
+    for (payload,) in connection.execute(
+        "SELECT payload FROM subject_content WHERE record_id = ?", (record_id,)
+    ).fetchall():
+        found.update(_artifact_ids(json.loads(bytes(payload))))
+    return found
+
+
+def _outcome_dependencies(
+    connection: sqlite3.Connection,
+    work_id: str,
+    plans: dict[str, list[_PlanDependencies | None]],
+) -> _OutcomeDependencies:
+    """Everything an outcome basis of this Work may quote, by structure and history.
+
+    Every revision of the Work itself (inputs, linked outputs, premises). A composite
+    parent also depends on every revision of its own plan, all its children with their
+    revisions and confirmation evidence. A child depends on every revision of its
+    parent's plan: its global addresses, those of its own and upstream roles, and the
+    upstream children with their revisions. Plan revisions are read from the retained
+    index once sanitized. A reference absent from the Work state does not make the basis
+    independent.
+    """
+
+    artifacts = _subject_artifacts(connection, work_id)
+    works: set[str] = set()
+    unbounded = False
+    own = _plan_history(connection, work_id, plans)
+    for index in own:
+        if index is None:
+            unbounded = True
             continue
-        retained = state.model_copy(update={"closure": closure.model_copy(update={"basis": None})})
+        artifacts.update(index.global_artifacts)
+        for references in index.role_artifacts.values():
+            artifacts.update(references)
+    if own:
+        for (child,) in connection.execute(
+            "SELECT child_id FROM work_plan_children WHERE parent_id = ?", (work_id,)
+        ).fetchall():
+            works.add(child)
+            artifacts.update(_subject_artifacts(connection, child))
+        artifacts.update(_evidence_artifacts(connection, work_id, None))
+    membership = connection.execute(
+        "SELECT parent_id, role FROM work_plan_children WHERE child_id = ?", (work_id,)
+    ).fetchone()
+    if membership is not None:
+        parent_id, role = membership
+        artifacts.update(_subject_artifacts(connection, parent_id))
+        upstream = {role}
+        for index in _plan_history(connection, parent_id, plans):
+            if index is None:
+                unbounded = True
+                continue
+            if role not in index.roles:
+                continue
+            lineage = _upstream_roles(index.edges, role)
+            upstream |= lineage
+            artifacts.update(index.global_artifacts)
+            for member in lineage:
+                artifacts.update(index.role_artifacts.get(member, ()))
+        for child, member in connection.execute(
+            "SELECT child_id, role FROM work_plan_children WHERE parent_id = ?", (parent_id,)
+        ).fetchall():
+            if member in upstream and child != work_id:
+                works.add(child)
+                artifacts.update(_subject_artifacts(connection, child))
+        artifacts.update(_evidence_artifacts(connection, parent_id, upstream))
+    return _OutcomeDependencies(frozenset(artifacts), frozenset(works), unbounded)
+
+
+def _retire_outcome_basis(
+    connection: sqlite3.Connection, work_id: str, operations: set[str], subjects: set[str]
+) -> None:
+    """Drop the basis text of every outcome revision; outcome and addresses stay."""
+
+    for revision, payload in connection.execute(
+        "SELECT revision, payload FROM subject_content WHERE record_id = ?", (work_id,)
+    ).fetchall():
+        state = WorkState.model_validate_json(bytes(payload))
+        if state.acceptance is not None and state.acceptance.basis is not None:
+            operation = state.acceptance.operation_id
+            retained = state.model_copy(
+                update={"acceptance": state.acceptance.model_copy(update={"basis": None})}
+            )
+        elif state.closure is not None and state.closure.basis is not None:
+            operation = state.closure.operation_id
+            retained = state.model_copy(
+                update={"closure": state.closure.model_copy(update={"basis": None})}
+            )
+        else:
+            continue
         body = canonical_json(retained.model_dump(mode="json")).encode("utf-8")
         connection.execute(
             "UPDATE subject_content SET payload = ?, sha256 = ? "
             "WHERE record_id = ? AND revision = ?",
-            (body, hashlib.sha256(body).hexdigest().upper(), record_id, revision),
+            (body, hashlib.sha256(body).hexdigest().upper(), work_id, revision),
         )
-        affected_operations.add(str(closure.operation_id))
-        backup_subjects.add(record_id)
+        operations.add(str(operation))
+        subjects.add(work_id)
+
+
+def retire_bases_of_deleted_dependencies(connection: sqlite3.Connection) -> list[str]:
+    """Retire outcome bases whose dependencies were deleted before schema 7 existed.
+
+    Older schemas cannot represent a retired basis, so the explicit upgrade to 7 finishes
+    those earlier deletions; ``complete_deletions`` then purges backups and compacts.
+    Returns the addresses of the Works whose basis was retired.
+    """
+
+    deleted_artifacts = {
+        UUID(row[0])
+        for row in connection.execute(
+            "SELECT record_id FROM records WHERE kind = 'artifact' AND status = 'deleted'"
+        ).fetchall()
+    }
+    deleted_works = {
+        row[0]
+        for row in connection.execute(
+            "SELECT record_id FROM subject_records WHERE kind = 'work' AND status = 'deleted'"
+        ).fetchall()
+    }
+    if not deleted_artifacts and not deleted_works:
+        return []
+    plans: dict[str, list[_PlanDependencies | None]] = {}
+    operations: set[str] = set()
+    subjects: set[str] = set()
+    for work_id in _held_outcome_bases(connection):
+        found = _outcome_dependencies(connection, work_id, plans)
+        if found.unbounded or found.artifacts & deleted_artifacts or found.works & deleted_works:
+            _retire_outcome_basis(connection, work_id, operations, subjects)
+    _retire_history(connection, operations, subjects)
+    return sorted(subjects)
 
 
 def _contains_artifact_ref(value: object, artifact_id: str) -> bool:

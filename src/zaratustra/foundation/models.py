@@ -283,8 +283,14 @@ class ObligationRevision(ContractModel):
 
 
 class WorkAcceptance(ContractModel):
+    """Separate acceptance of a Work's exact result.
+
+    ``basis`` is ``None`` only in schema 7 and later, after deletion of something the
+    basis structurally depends on; older schemas never store that representation.
+    """
+
     operation_id: UUID
-    basis: str = Field(min_length=1, max_length=4096)
+    basis: str | None = Field(min_length=1, max_length=4096)
     authority_source: str = Field(min_length=1, max_length=2048)
     accepted_at: AwareDatetime
 
@@ -301,8 +307,8 @@ class DecisionRef(ContractModel):
 class WorkClosure(ContractModel):
     """Subject outcome of a Work that ended without acceptance; never a technical status.
 
-    ``basis`` is ``None`` only after deletion of an Artifact that the closed Work revision
-    names; the outcome and addresses stay, the possibly quoting text does not.
+    ``basis`` is ``None`` only after deletion of something the basis structurally depends
+    on (see ``WorkAcceptance``); the outcome and addresses stay, the text does not.
     """
 
     outcome: ClosedOutcome
