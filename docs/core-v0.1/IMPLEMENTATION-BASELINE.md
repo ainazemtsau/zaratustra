@@ -6,7 +6,9 @@ This baseline records the owner's September 22, 2026 instruction to implement
 the approved engineering plan for the new Zaratustra Core v0.1. The source
 specification is:
 
-- `C:\Users\Anton\Downloads\Zaratustra_Core_Specification_v0.1.md`
+- Canonical repository copy: [Zaratustra_Core_Specification_v0.1.md](Zaratustra_Core_Specification_v0.1.md).
+  All stages read this copy; preserve its exact bytes.
+- Original import path: `C:\Users\Anton\Downloads\Zaratustra_Core_Specification_v0.1.md`
 - SHA-256: `1DDCBF9DBFD58426781F61A67A170D3CE85FCD2BA27B17549773ED3356F9428D`
 
 The new product starts with empty domain state. Existing `.zara` workspaces and
