@@ -39,6 +39,7 @@ from .models import (
     ObligationProgress,
     ObligationRevision,
     PlanCondition,
+    PlanNode,
     PlanPin,
     PlanTransfer,
     StatusReason,
@@ -912,6 +913,47 @@ def _work_state(connection: sqlite3.Connection, work_id: UUID) -> WorkState | No
     return WorkState.model_validate(_subject_state(connection, work_id, revision))
 
 
+def _plan_nodes(
+    connection: sqlite3.Connection, parent_id: UUID, revision: int
+) -> tuple[PlanNode, ...]:
+    if _schema(connection) < 7 or revision < 2:
+        return ()
+    return tuple(
+        PlanNode(
+            role=row[0],
+            decision=row[1],
+            work_id=UUID(row[2]),
+            replaced_work_id=UUID(row[3]) if row[3] else None,
+            issue_carried=bool(row[4]),
+            closed_revision=row[5],
+        )
+        for row in connection.execute(
+            "SELECT role, decision, work_id, replaced_work_id, issue_carried, closed_revision "
+            "FROM work_plan_nodes WHERE parent_id = ? AND plan_revision = ? ORDER BY role",
+            (str(parent_id), revision),
+        ).fetchall()
+    )
+
+
+def _own_composition(
+    connection: sqlite3.Connection, work_id: UUID, state: WorkState
+) -> CompositionView | None:
+    address = _plan_address(connection, work_id)
+    if not isinstance(state.method, MethodRef) or address is None:
+        return None
+    children, departed = _children(connection, work_id)
+    return CompositionView(
+        parent_work_id=work_id,
+        method=state.method,
+        plan_revision=address[0],
+        plan_available=address[1],
+        children=children,
+        obligations=_obligation_progress(connection, work_id, state.method),
+        departed=departed,
+        nodes=_plan_nodes(connection, work_id, address[0]),
+    )
+
+
 def composition_view(connection: sqlite3.Connection, work_id: UUID) -> CompositionView | None:
     """Addresses and derived states of a composite parent or one of its children."""
 
@@ -924,6 +966,7 @@ def composition_view(connection: sqlite3.Connection, work_id: UUID) -> Compositi
         address = _plan_address(connection, parent_id)
         if parent is None or not isinstance(parent.method, MethodRef) or address is None:
             return None
+        own_state = _work_state(connection, work_id)
         return CompositionView(
             parent_work_id=parent_id,
             method=parent.method,
@@ -933,21 +976,13 @@ def composition_view(connection: sqlite3.Connection, work_id: UUID) -> Compositi
             issued_plan_revision=issued,
             pins=_pins(connection, work_id),
             transfers=_transfers(connection, work_id),
+            nodes=_plan_nodes(connection, parent_id, address[0]),
+            nested=(
+                _own_composition(connection, work_id, own_state) if own_state is not None else None
+            ),
         )
     state = _work_state(connection, work_id)
-    address = _plan_address(connection, work_id)
-    if state is None or not isinstance(state.method, MethodRef) or address is None:
-        return None
-    children, departed = _children(connection, work_id)
-    return CompositionView(
-        parent_work_id=work_id,
-        method=state.method,
-        plan_revision=address[0],
-        plan_available=address[1],
-        children=children,
-        obligations=_obligation_progress(connection, work_id, state.method),
-        departed=departed,
-    )
+    return None if state is None else _own_composition(connection, work_id, state)
 
 
 def read_work_status(path: Path, work_id: UUID, authority: LocalAuthority) -> WorkStatus:

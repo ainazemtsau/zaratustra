@@ -57,11 +57,14 @@
   `docs/core-v0.1/STAGE6-PASS3-REVIEW-3.8.md`. From that commit the owner
   authorized only part 3.9, nested composite Work and exact role Methods;
   its development checkpoint is
-  `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.9.md` and awaits one technical
-  review. This is not schema 7, pass 3 or Stage 6 acceptance. Part 3.10,
-  the separate composite-parent execution slice, pass 4, real model calls and
-  development migration are not authorized. The installed Pi-probe's
-  `database is locked` observation remains open without an established cause.
+  `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.9.md`. The owner closed only its
+  technical review on `73fffa7afb7bdfcc815938a132ab73d3955115e0`; see
+  `docs/core-v0.1/STAGE6-PASS3-REVIEW-3.9.md`. Only part 3.10 is authorized:
+  Pi visibility and a live synthetic localhost trace, documented in
+  `docs/core-v0.1/STAGE6-PASS3-IMPLEMENTATION.md`. This is not schema 7,
+  pass 3 or Stage 6 acceptance. The separate composite-parent execution
+  slice, pass 4, real model calls and development migration are not authorized.
+  `database is locked` and `rpc_transport` remain open observations.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
 - Stage 1 stopped after recording the G07-1 DBOS and G08-1 Pi technical outcomes.
@@ -228,8 +231,8 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
 - Keep the accepted Core v0.1 functional composition and completed Stage 1–5
   evidence. Stage 5 and Stage 6 passes 1–2 are owner-accepted at the exact
   commits above; this is not owner acceptance of Stage 6. Stage 6 pass 3 is
-  authorized only through part 3.7: the technical reviews of checkpoints 3.1–3.3
-  and of the 3.4–3.5 package are closed and the 3.6–3.7 package awaits overall review.
+  authorized through part 3.10 only. Technical reviews through 3.9 are closed
+  separately; part 3.10 awaits one overall technical review.
   Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.

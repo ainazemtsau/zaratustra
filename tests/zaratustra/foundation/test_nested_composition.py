@@ -294,6 +294,18 @@ def test_nested_method_pin_issue_and_full_acceptance(tmp_path: Path) -> None:
     case = _nested(tmp_path)
     _refused(case.parent, "method_mismatch", _add_nested(case, method=case.n3))
     apply_operation(case.setup.root, _add_nested(case), case.setup.owner)
+    visible = read_execution(case.setup.root, case.node.parent, case.setup.owner).composition
+    assert visible is not None and visible.nested is not None
+    assert visible.method.version == 1 and visible.plan_revision == 2
+    assert visible.nested.method == case.n2 and visible.nested.plan_revision == 1
+    assert [(item.role, item.work_id) for item in visible.nested.children] == [
+        ("g", case.nested_child.work_id)
+    ]
+    assert [(item.key, item.status) for item in visible.nested.obligations] == [("g_final", "open")]
+    assert [(item.role, item.decision) for item in visible.nodes] == [
+        ("anchor", "keep"),
+        ("review", "add"),
+    ]
     assert (
         read_obligation(case.setup.root, case.node.parent, "g_final", case.setup.owner).revision
         == 1

@@ -39,6 +39,7 @@ from zaratustra.foundation import (
     managed_pi_session_lock,
     read_assigned_control,
     read_execution,
+    read_execution_events,
     read_space,
     read_technical_deletion_targets,
 )
@@ -51,6 +52,36 @@ if TYPE_CHECKING:
 EXECUTOR_VERSION = "zara-pi-rpc-dbos-3.0.0-v1"
 PI_VERSION = "0.87.0"
 QUEUE_NAME = "zara-assigned-rpc"
+
+
+def _attempt_queue(attempt_id: UUID) -> str:
+    """Keep concurrent runners from claiming another Attempt's workspace."""
+
+    return f"{QUEUE_NAME}-{attempt_id}"
+
+
+def _attempt_app_version(attempt_id: UUID) -> str:
+    """DBOS recovery belongs to the runner with this exact workspace binding."""
+
+    return f"{EXECUTOR_VERSION}-{attempt_id}"
+
+
+def _existing_workflow(client: DBOSClient, attempt_id: UUID) -> Any | None:
+    return next(
+        (
+            item
+            for item in client.list_workflows(
+                name=WORKFLOW_NAME,
+                application_name="zaratustra-assigned-rpc",
+                load_input=False,
+                load_output=False,
+            )
+            if item.workflow_id == _workflow_id(attempt_id)
+        ),
+        None,
+    )
+
+
 WORKFLOW_NAME = "zara-assigned-work-v1"
 MAX_RPC_LINE = 16 * 1024 * 1024
 # Storage or maintenance contention is not a subject refusal of the assigned child.
@@ -150,12 +181,21 @@ def _deliver_outbox_locked(
                 ):
                     continue
                 if entry.kind == "launch":
+                    existing = _existing_workflow(client, entry.attempt_id)
                     client.enqueue(
                         {
                             "workflow_name": WORKFLOW_NAME,
-                            "queue_name": QUEUE_NAME,
+                            "queue_name": (
+                                existing.queue_name
+                                if existing
+                                else _attempt_queue(entry.attempt_id)
+                            ),
                             "workflow_id": _workflow_id(entry.attempt_id),
-                            "app_version": EXECUTOR_VERSION,
+                            "app_version": (
+                                existing.app_version
+                                if existing
+                                else _attempt_app_version(entry.attempt_id)
+                            ),
                             "deduplication_id": str(entry.outbox_id),
                             "duplication_policy": "return-existing",
                             "attributes": {
@@ -912,14 +952,45 @@ def _run_assigned_locked(
         raise FoundationError("rpc_tools", "Assigned RPC admits only read-only Pi tools")
     work_id = resolve_assigned_work(config.space, authority, attempt_id)
     snapshot = read_execution(config.space, work_id, authority)
+    attempt = next(x for x in snapshot.attempts if x.attempt_id == attempt_id)
     assignment = next(x for x in snapshot.assignments if x.attempt_id == attempt_id)
     if assignment.executor_version != EXECUTOR_VERSION:
         raise FoundationError("executor_version", "Assigned executor version is not installed")
+    if assignment.status == "stop_requested" and any(
+        item.attempt_id == attempt_id and item.kind == "launch" and item.status == "cancelled"
+        for item in snapshot.outbox
+    ):
+        # The plan closed this Attempt before its launch outbox was delivered. There
+        # is no DBOS workflow to retrieve; observe the absent Pi process locally.
+        cursor = 0
+        claimed = False
+        while rows := read_execution_events(config.space, work_id, cursor, authority):
+            if any(
+                row["kind"] == "claim_attempt_launch" and row["attempt_id"] == str(attempt_id)
+                for row in rows
+            ):
+                claimed = True
+                break
+            cursor = int(str(rows[-1]["sequence"]))
+        if not claimed:
+            _record_stop(config, authority, work_id, attempt_id, attempt.session_id, observed=True)
+            raise FoundationError("stale_plan", "Core fenced the Attempt before Pi launched")
+    existing = None
+    if executor_database(config.space).is_file():
+        client = _client(config.space)
+        try:
+            existing = _existing_workflow(client, attempt_id)
+        finally:
+            client.destroy()
+    application_version = existing.app_version if existing else _attempt_app_version(attempt_id)
+    if application_version not in (EXECUTOR_VERSION, _attempt_app_version(attempt_id)):
+        raise FoundationError("executor_version", "DBOS workflow has an unexpected version")
+    queue_name = existing.queue_name if existing else _attempt_queue(attempt_id)
     DBOS(
         config={
             "name": "zaratustra-assigned-rpc",
             "system_database_url": _database_url(executor_database(config.space)),
-            "application_version": EXECUTOR_VERSION,
+            "application_version": application_version,
         }
     )
 
@@ -929,7 +1000,7 @@ def _run_assigned_locked(
 
     DBOS.launch()
     try:
-        DBOS.register_queue(QUEUE_NAME, worker_concurrency=4)
+        DBOS.register_queue(queue_name, worker_concurrency=1)
         deliver_outbox(config.space, authority)
         return str(DBOS.retrieve_workflow(_workflow_id(attempt_id)).get_result())
     finally:

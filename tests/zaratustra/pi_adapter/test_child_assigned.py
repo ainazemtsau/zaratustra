@@ -318,6 +318,29 @@ def test_parallel_children_get_one_workflow_each_and_addressed_cleanup(
         {"work_id": str(works[role]), "attempt_id": str(attempts[role][0])} for role in ("a1", "a2")
     ]
     assert sorted(_workflows(root), key=str) == sorted(expected, key=str)
+    client = DBOSClient(
+        system_database_url=(
+            f"sqlite:///{(root / '.zara-core' / 'executor.sqlite3').resolve().as_posix()}"
+        ),
+        application_name="zaratustra-assigned-rpc",
+        retry_connection_errors=False,
+    )
+    try:
+        routed = client.list_workflows(
+            name=WORKFLOW_NAME,
+            application_name="zaratustra-assigned-rpc",
+            load_input=False,
+            load_output=False,
+        )
+        assert {(item.app_version, item.queue_name) for item in routed} == {
+            (
+                f"{EXECUTOR_VERSION}-{attempts[role][0]}",
+                f"zara-assigned-rpc-{attempts[role][0]}",
+            )
+            for role in ("a1", "a2")
+        }
+    finally:
+        client.destroy()
     markers: dict[str, str] = {}
     for role in ("a1", "a2"):
         home = root / ".zara-core" / "pi-rpc-home" / str(attempts[role][0])

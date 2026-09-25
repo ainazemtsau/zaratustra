@@ -218,7 +218,12 @@ these addresses by exact role, including unknown pre-index descendants, so a lat
 deletion after restart can still retire dependent plan, outcome and recheck bases.
 Each ancestor plan is considered only where its exact role filler matches;
 independent replacements keep their own evidence, receipts and replay. The 3.9
-technical review remains open; part 3.10 is not started.
+technical review closed on exact `73fffa7afb7bdfcc815938a132ab73d3955115e0`
+without schema 7, pass 3 or Stage 6 acceptance. Part 3.10 adds address-only
+current plan decisions and the immediate owned plan of a nested composite
+Work to `CompositionView`; neither view copies plan text. See
+`docs/core-v0.1/STAGE6-PASS3-REVIEW-3.9.md` and
+`docs/core-v0.1/STAGE6-PASS3-IMPLEMENTATION.md`.
 
 The foundation stores Work execution records but never imports Pi or runs a model.
 Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,

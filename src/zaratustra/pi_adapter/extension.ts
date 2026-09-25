@@ -28,16 +28,44 @@ function lifecycle(current: any): string {
   const status = current?.status;
   if (!status) return "";
   const reasons = (status.reasons ?? [])
-    .map((item: any) => [item.code, item.role].filter(Boolean).join(":")).join(", ");
+    .map((item: any) => [item.code, item.role, item.key,
+      item.record_id ? `${item.record_id}${item.revision ? `@${item.revision}` : ""}` : null,
+      item.premise ? `${item.premise.kind}:${item.premise.record_id}@${item.premise.revision}` +
+        `→${item.premise.current ?? "unavailable"}` : null].filter(Boolean).join(":"))
+    .join(", ");
   let line = `Work ${status.work_id}: ${status.status}${reasons ? ` (${reasons})` : ""}`;
-  const plan = current.composition;
-  if (plan) {
-    line += `\nPlan ${plan.parent_work_id}@${plan.plan_revision}` +
+  function renderPlan(plan: any, indent: string): void {
+    line += `\n${indent}Plan ${plan.parent_work_id}@${plan.plan_revision}` +
       `${plan.plan_available ? "" : " (content unavailable)"}` +
-      `${plan.role ? `; role ${plan.role}` : ""}; Method ${plan.method.method_id}@${plan.method.version}`;
-    for (const child of plan.children ?? []) line += `\n  child ${child.role}: ${child.status.status}`;
-    for (const item of plan.obligations ?? []) line += `\n  obligation ${item.key}: ${item.status}`;
+      `${plan.role ? `; role ${plan.role}; issued@${plan.issued_plan_revision ?? "pending"}` : ""}` +
+      `; Method ${plan.method.method_id}@${plan.method.version}`;
+    for (const child of plan.children ?? []) {
+      line += `\n${indent}  child ${child.role}: ${child.status.status} [${child.work_id}]` +
+        `${child.issued_plan_revision ? ` issued@${child.issued_plan_revision}` : ""}` +
+        `${child.revalidation ? ` revalidated@${child.revalidation}` : ""}`;
+    }
+    for (const child of plan.departed ?? [])
+      line += `\n${indent}  departed ${child.role} ${child.work_id}: ${child.status.status}`;
+    for (const item of plan.obligations ?? []) {
+      line += `\n${indent}  obligation ${item.key}@${item.revision} (${item.role}):` +
+        ` ${item.applicability}/${item.status}` +
+        `${item.choice ? ` choice ${item.choice.decision_id}@${item.choice.revision}` : ""}` +
+        `${item.exception ? ` exception ${item.exception.decision_id}@${item.exception.revision}` : ""}` +
+        `${item.reopened ? ` reopened ${item.reopened}` : ""}`;
+    }
+    for (const node of plan.nodes ?? [])
+      line += `\n${indent}  node ${node.role}: ${node.decision} ${node.work_id}` +
+        `${node.replaced_work_id ? ` replaces ${node.replaced_work_id}` : ""}`;
+    for (const pin of plan.pins ?? [])
+      line += `\n${indent}  pin ${pin.attempt_id}: plan@${pin.plan_revision};` +
+        ` Method ${pin.method.method_id}@${pin.method.version}`;
+    for (const transfer of plan.transfers ?? [])
+      line += `\n${indent}  transfer ${transfer.attempt_id}:` +
+        ` plan@${transfer.from_plan_revision}→${transfer.plan_revision};` +
+        ` Method ${transfer.method.method_id}@${transfer.method.version}`;
+    if (plan.nested) renderPlan(plan.nested, `${indent}  nested `);
   }
+  if (current.composition) renderPlan(current.composition, "");
   return `${line}\n`;
 }
 

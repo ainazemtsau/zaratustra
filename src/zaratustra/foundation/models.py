@@ -1465,6 +1465,12 @@ class CompositionView(ContractModel):
     # Absent while empty, so reads of plans without active revisions stay unchanged.
     departed: tuple[ChildProgress, ...] = Field(default=(), exclude_if=lambda value: not value)
     transfers: tuple[PlanTransfer, ...] = Field(default=(), exclude_if=lambda value: not value)
+    # Address-only decisions of the current revision. The plan text remains in its
+    # separately authorized revision, even when the node is nested.
+    nodes: tuple[PlanNode, ...] = Field(default=(), exclude_if=lambda value: not value)
+    # A child can itself own a composite plan. Keep both its parent binding and its
+    # own immediate children visible without recursively copying plan contents.
+    nested: CompositionView | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class ExecutionSnapshot(ContractModel):

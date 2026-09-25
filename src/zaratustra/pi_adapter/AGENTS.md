@@ -20,3 +20,9 @@ and effect gate decide plan, pin and dependency admission. A subject refusal
 before launch records an observed stop without starting Pi; technical refusals
 leave the assignment for maintenance. Pi context and `/zara-status` carry Core
 state, plan addresses and pinned versions, never a copy of the plan.
+Part 3.10 shows addressed status reasons, Choice/Exception applicability,
+revalidation, node decisions, pins/transfers and immediate nested children.
+New DBOS workflows have Attempt-specific queues and app versions so another
+runner cannot recover them under the wrong workspace. Repeated delivery keeps
+the recorded route. A cancelled launch with no claim is an observed prelaunch
+stop without Pi or HTTP.

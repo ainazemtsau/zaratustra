@@ -26,6 +26,10 @@ both exact external fixtures. probe_process_t3_install proves product imports co
 from the wheel before the harness explicitly exposes those development fixtures.
 probe_stage6_rpc imports only the standard library and installed zaratustra, so the
 same file runs from checkout and from probe_install_stage6's wheel venv outside it.
+probe_stage6_pass3 is the development-only schema 7 functional trace through
+ordinary localhost Pi/DBOS. It reuses synthetic helpers from probe_stage6_rpc,
+counts HTTP at each step and checks restart, backup/restore and deletion. The
+unchanged Stage 5, Stage 6 and installed-wheel probes remain separate regressions.
 Start isolated children as `-I -X utf8`: -I ignores PYTHONIOENCODING on Windows pipes.
 Its provider is a localhost synthetic fixture; it never contacts a real model.
 probe_public_onboarding_t1 builds and installs the current wheel, migrates only an
