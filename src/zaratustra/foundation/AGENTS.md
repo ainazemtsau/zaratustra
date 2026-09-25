@@ -165,7 +165,7 @@ wait `stale_wait`; stop and sent-call outcomes stay open. The retained plan inde
 Work of each role (`role_works`, schema 7 only), so deletion seeds, outcome and recheck
 dependencies follow the Work that filled a role in each revision. Deleting a child takes
 its transfers with its pins; deleting the parent removes members and decisions. The
-pending P1/P2 review correction also sanitizes a plan revision when a node decision
+3.6–3.7 review correction also sanitizes a plan revision when a node decision
 addresses the departing Work: its rationale may quote that Work, so the revision
 operation loses replay while the address-only node history stays. Obligation evidence
 and child outcome bases follow the then-current role filler and plan revision; deleting
@@ -173,6 +173,22 @@ old evidence leaves a replacement's independent confirmation, basis and replay i
 Child outcome and recheck bases also depend on a historical plan revision that named
 that same Work before it was issued; an issue revision is not a history cutoff. See
 `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.6-3.7.md`.
+
+Part 3.8 records an exact Method binding for every schema 7 plan revision in
+`work_plan_methods`. `revise_active_plan` alone changes the Method of a started
+composite Work: it checks `method.use` for the target, the parent input/output
+contract, every old obligation mapping, and the current node decisions before
+writing the parent Work revision and plan N+1 together. `work_obligation_transitions`
+keeps address-only mappings and retirement Decisions; all old keys get a retired
+revision, including keys reused by v2, while every v2 requirement gets a new
+instance. Carried evidence is rechecked against the current accepted child output;
+applicability and waiver have their own exact conditions. Kept Attempts transfer
+only after the current pin and node recheck under the target Method. Active or
+unknown Attempt pins/transfers hold their old Method against deletion. Historical
+plan Method bindings remain readable by address after deleting the old definition.
+Copied obligation bases retain their source revision for deletion sanitation;
+deleting the parent removes both new tables. See
+`docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.8.md`.
 
 The foundation stores Work execution records but never imports Pi or runs a model.
 Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,

@@ -6,7 +6,12 @@ from .runtime import ensure_sqlite_runtime
 
 ensure_sqlite_runtime()
 
-from .active_plan import read_plan_nodes, read_role_history
+from .active_plan import (
+    read_method_transition,
+    read_plan_method,
+    read_plan_nodes,
+    read_role_history,
+)
 from .composition import (
     method_checksum,
     read_method_version,
@@ -80,10 +85,12 @@ from .models import (
     MethodDefinition,
     MethodObligation,
     MethodRef,
+    MethodTransition,
     MethodVersion,
     NamedInput,
     NodeClosure,
     NodeDecisionKind,
+    ObligationMapping,
     ObligationProgress,
     ObligationRevision,
     ObligationTarget,
@@ -180,10 +187,14 @@ __all__ = [
     "PlanNode",
     "PlanNodeDecision",
     "PlanNodes",
+    "MethodTransition",
+    "ObligationMapping",
     "PlanTransfer",
     "ReviseActivePlanRequest",
     "RoleFilling",
     "read_plan_nodes",
+    "read_plan_method",
+    "read_method_transition",
     "read_role_history",
     "ExceptionState",
     "ObligationTarget",

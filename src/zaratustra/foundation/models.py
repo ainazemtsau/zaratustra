@@ -420,7 +420,7 @@ class ObligationRevision(ContractModel):
     revision: int = Field(ge=1)
     definition: MethodObligation
     applicability: Literal["active", "inactive", "unresolved"] = "active"
-    status: Literal["open", "satisfied", "waived"]
+    status: Literal["open", "satisfied", "waived", "retired"]
     evidence: ArtifactRef | None = None
     basis: str | None = None
     operation_id: UUID
@@ -433,9 +433,30 @@ class ObligationRevision(ContractModel):
     reopened: Literal["node_replaced"] | None = Field(
         default=None, exclude_if=lambda value: value is None
     )
+    transitioned_to: str | None = Field(default=None, exclude_if=lambda value: value is None)
+    retired_by: DecisionRef | None = Field(default=None, exclude_if=lambda value: value is None)
+    carried_from_key: str | None = Field(default=None, exclude_if=lambda value: value is None)
+    carried_from_revision: int | None = Field(
+        default=None, ge=1, exclude_if=lambda value: value is None
+    )
 
     @model_validator(mode="after")
     def applicability_matches_definition(self) -> ObligationRevision:
+        if (self.carried_from_key is None) != (self.carried_from_revision is None):
+            raise ValueError("A carried obligation names an exact source revision")
+        if self.status == "retired":
+            if (
+                (self.transitioned_to is None) == (self.retired_by is None)
+                or self.evidence is not None
+                or self.basis is not None
+                or self.exception is not None
+                or self.reopened is not None
+                or self.carried_from_key is not None
+            ):
+                raise ValueError("A retired obligation names its successor or exception only")
+            return self
+        if self.transitioned_to is not None or self.retired_by is not None:
+            raise ValueError("Only a retired obligation names a transition")
         if self.definition.applicability == "always":
             if self.applicability != "active" or self.choice is not None:
                 raise ValueError("An unconditional obligation is always active")
@@ -820,6 +841,26 @@ class PlanNodeDecision(ContractModel):
         return self
 
 
+class ObligationMapping(ContractModel):
+    """Explicit disposition of one old Method requirement during a version change."""
+
+    source_key: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+    action: Literal["carry", "retire"]
+    target_key: str | None = Field(default=None, exclude_if=lambda value: value is None)
+    exception: DecisionRef | None = Field(default=None, exclude_if=lambda value: value is None)
+
+
+class MethodTransition(ContractModel):
+    """Address-only record of the exact Method change for one plan revision."""
+
+    parent_work_id: UUID
+    plan_revision: int = Field(ge=2)
+    from_method: MethodRef
+    to_method: MethodRef
+    mappings: tuple[ObligationMapping, ...]
+    operation_id: UUID
+
+
 class ReviseActivePlanRequest(OperationRequest):
     """Revise the plan of a started composite Work with an explicit decision per node.
 
@@ -834,6 +875,10 @@ class ReviseActivePlanRequest(OperationRequest):
     expected_work_revision: int = Field(ge=1)
     plan: WorkPlan
     nodes: tuple[PlanNodeDecision, ...] = Field(min_length=1)
+    target_method: MethodRef | None = Field(default=None, exclude_if=lambda value: value is None)
+    obligation_mapping: tuple[ObligationMapping, ...] = Field(
+        default=(), exclude_if=lambda value: not value
+    )
 
     @model_validator(mode="after")
     def one_decision_per_role(self) -> ReviseActivePlanRequest:
@@ -843,6 +888,8 @@ class ReviseActivePlanRequest(OperationRequest):
         ]
         if len(roles) != len(set(roles)) or len(works) != len(set(works)):
             raise ValueError("Each role and each Work has one node decision")
+        if self.target_method is None and self.obligation_mapping:
+            raise ValueError("Obligation mapping needs an exact target Method")
         return self
 
 
@@ -1500,6 +1547,8 @@ __all__ = [
     "PlanNode",
     "PlanNodeDecision",
     "PlanNodes",
+    "ObligationMapping",
+    "MethodTransition",
     "PlanTransfer",
     "ReviseActivePlanRequest",
     "RoleFilling",

@@ -592,14 +592,20 @@ def _obligation_states(
     """Latest instance of each obligation with derived applicability, waiver and conflict."""
 
     latest: dict[str, tuple[ObligationProgress, tuple[DecisionRef, ...]]] = {}
+    seen: set[str] = set()
     for key, _revision, payload in connection.execute(
         "SELECT key, revision, payload FROM work_obligation_revisions WHERE parent_id = ? "
         "ORDER BY key, revision DESC",
         (str(parent_id),),
     ).fetchall():
-        if key in latest or bytes(payload) == REDACTED_DEPENDENCY:
+        if key in seen:
+            continue
+        seen.add(key)
+        if bytes(payload) == REDACTED_DEPENDENCY:
             continue
         instance = ObligationRevision.model_validate_json(bytes(payload))
+        if instance.status == "retired":
+            continue
         applicability, conflicting = obligation_applicability(connection, instance)
         waiver_stale = instance.status == "waived" and not waiver_holds(
             connection, instance, method

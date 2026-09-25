@@ -254,6 +254,23 @@ def upgrade_plan_revision_space(path: Path, authority: LocalAuthority) -> SpaceI
         if info.schema_version == 6:
             for statement in PLAN_REVISION_SCHEMA_STATEMENTS:
                 connection.execute(statement)
+            # Before schema 7, a Work cannot change Method. Bind each existing plan
+            # revision to that exact version so later transitions have complete history.
+            for parent_id, plan_revision, source_operation in connection.execute(
+                "SELECT parent_id, revision, operation_id FROM work_plan_revisions"
+            ).fetchall():
+                current, _status, _ = _subject_current(connection, UUID(parent_id), "work")
+                state = WorkState.model_validate(
+                    _subject_state(connection, UUID(parent_id), current)
+                )
+                assert isinstance(state.method, MethodRef)
+                _record_plan_method(
+                    connection,
+                    UUID(parent_id),
+                    int(plan_revision),
+                    state.method,
+                    UUID(source_operation),
+                )
             now = utc_now().isoformat()
             connection.execute(
                 "INSERT INTO schema_migrations(version, name, sha256, applied_at) "
@@ -296,6 +313,27 @@ def _method(connection: sqlite3.Connection, ref: MethodRef) -> MethodDefinition:
     if row[0] != ref.checksum or method_checksum(definition) != ref.checksum:
         raise FoundationError("method_mismatch", "Pinned Method definition differs")
     return definition
+
+
+def _record_plan_method(
+    connection: sqlite3.Connection,
+    parent_id: UUID,
+    plan_revision: int,
+    method: MethodRef,
+    operation_id: UUID,
+) -> None:
+    connection.execute(
+        "INSERT INTO work_plan_methods(parent_id, plan_revision, method_id, "
+        "method_version, method_checksum, operation_id) VALUES (?, ?, ?, ?, ?, ?)",
+        (
+            str(parent_id),
+            plan_revision,
+            str(method.method_id),
+            method.version,
+            method.checksum,
+            str(operation_id),
+        ),
+    )
 
 
 def _plan(
@@ -725,8 +763,21 @@ def _obligations(
                 raise FoundationError("content_unavailable", "Current obligation was sanitized")
             current[key] = ObligationRevision.model_validate_json(bytes(payload))
     expected = {item.key: item for item in definition.obligations}
-    if set(current) != set(expected) or any(
-        current[key].definition != item for key, item in expected.items()
+    retired = set(current) - set(expected)
+    if (
+        not set(expected).issubset(current)
+        or any(current[key].status != "retired" for key in retired)
+        or any(current[key].status == "retired" for key in expected if key in current)
+        or any(
+            connection.execute(
+                "SELECT 1 FROM work_obligation_transitions WHERE parent_id = ? "
+                "AND source_key = ? LIMIT 1",
+                (str(parent_id), key),
+            ).fetchone()
+            is None
+            for key in retired
+        )
+        or any(current[key].definition != item for key, item in expected.items())
     ):
         raise FoundationError(
             "incomplete_materialization", "Declared Method obligations differ from stored instances"
@@ -819,6 +870,28 @@ def apply_composition_change(
                 raise FoundationError(
                     "method_in_use", "Delete dependent Work before Method version"
                 )
+        if _schema(connection) >= 6:
+            pinned = connection.execute(
+                "SELECT 1 FROM execution_plan_pins p JOIN execution_attempts a "
+                "ON a.attempt_id = p.attempt_id LEFT JOIN execution_assignments s "
+                "ON s.attempt_id = a.attempt_id WHERE p.method_id = ? "
+                "AND p.method_version = ? AND p.method_checksum = ? "
+                "AND (a.status = 'active' OR s.status = 'unknown') LIMIT 1",
+                (str(ref.method_id), ref.version, ref.checksum),
+            ).fetchone()
+            if pinned is not None:
+                raise FoundationError("method_in_use", "Active Attempt still pins Method")
+        if _schema(connection) >= 7:
+            transferred = connection.execute(
+                "SELECT 1 FROM execution_plan_transfers t JOIN execution_attempts a "
+                "ON a.attempt_id = t.attempt_id LEFT JOIN execution_assignments s "
+                "ON s.attempt_id = a.attempt_id WHERE t.method_id = ? "
+                "AND t.method_version = ? AND t.method_checksum = ? "
+                "AND (a.status = 'active' OR s.status = 'unknown') LIMIT 1",
+                (str(ref.method_id), ref.version, ref.checksum),
+            ).fetchone()
+            if transferred is not None:
+                raise FoundationError("method_in_use", "Active Attempt still transfers Method")
         row = connection.execute(
             "SELECT operation_id FROM method_versions WHERE method_id = ? AND version = ?",
             (str(request.method_id), request.version),
@@ -945,6 +1018,11 @@ def apply_composition_change(
                 request.actor,
             ),
         )
+        if _schema(connection) >= 7:
+            assert isinstance(request.state.method, MethodRef)
+            _record_plan_method(
+                connection, request.work_id, 1, request.state.method, request.operation_id
+            )
         for obligation in definition.obligations:
             instance = ObligationRevision(
                 parent_work_id=request.work_id,
@@ -1070,6 +1148,11 @@ def apply_composition_change(
                 request.actor,
             ),
         )
+        if _schema(connection) >= 7:
+            assert isinstance(parent.method, MethodRef)
+            _record_plan_method(
+                connection, request.work_id, next_revision, parent.method, request.operation_id
+            )
         return {"work_id": str(request.work_id), "plan_revision": next_revision}, targets
     if isinstance(request, IssueChildWorkRequest):
         _rev, parent, definition = _parent(connection, request.parent_work_id)
@@ -1908,6 +1991,20 @@ def _parent_current(
         )
     definition = _method(connection, state.method)
     plan = _plan(connection, work_id)
+    if _schema(connection) >= 7:
+        binding = connection.execute(
+            "SELECT method_id, method_version, method_checksum FROM work_plan_methods "
+            "WHERE parent_id = ? AND plan_revision = ?",
+            (str(work_id), plan.revision),
+        ).fetchone()
+        if binding != (
+            str(state.method.method_id),
+            state.method.version,
+            state.method.checksum,
+        ):
+            raise FoundationError(
+                "incomplete_materialization", "Current plan and Work Method differ"
+            )
     _obligations(connection, work_id, definition)
     for ref in plan.plan.basis + state.inputs:
         _current_artifact(
@@ -2282,6 +2379,10 @@ def prepare_work_deletion(connection: sqlite3.Connection, work_id: UUID) -> None
             ).fetchall()
         ]
         connection.execute("DELETE FROM result_revalidations WHERE parent_id = ?", (str(work_id),))
+        connection.execute(
+            "DELETE FROM work_obligation_transitions WHERE parent_id = ?", (str(work_id),)
+        )
+        connection.execute("DELETE FROM work_plan_methods WHERE parent_id = ?", (str(work_id),))
         connection.execute("DELETE FROM work_plan_nodes WHERE parent_id = ?", (str(work_id),))
         connection.execute("DELETE FROM work_plan_members WHERE parent_id = ?", (str(work_id),))
     connection.executemany(
@@ -2420,6 +2521,61 @@ def _recorded_evidence_roles(
         )
         changed = len(roles) != previous_count
     return roles
+
+
+def _copied_obligation_depends(
+    connection: sqlite3.Connection,
+    parent_id: str,
+    source_key: str,
+    source_revision: int,
+    role: str,
+    plans: dict[str, list[_PlanDependencies | None]],
+    *,
+    artifact_id: UUID | None,
+    child_id: UUID | None,
+    seen: set[tuple[str, int]] | None = None,
+) -> bool:
+    """A copied basis retains every structural dependency of its exact source."""
+
+    visited = set() if seen is None else seen
+    address = (source_key, source_revision)
+    if address in visited:
+        return True
+    visited.add(address)
+    row = connection.execute(
+        "SELECT payload, operation_id FROM work_obligation_revisions "
+        "WHERE parent_id = ? AND key = ? AND revision = ?",
+        (parent_id, source_key, source_revision),
+    ).fetchone()
+    if row is None or bytes(row[0]) == REDACTED_DEPENDENCY:
+        return True
+    source = ObligationRevision.model_validate_json(bytes(row[0]))
+    roles = _recorded_plan_roles(
+        connection,
+        parent_id,
+        row[1],
+        plans,
+        artifact_id=artifact_id,
+        child_id=child_id,
+    )
+    if roles is None or role in roles:
+        return True
+    if artifact_id is not None and source.evidence is not None:
+        if source.evidence.artifact_id == artifact_id:
+            return True
+    if source.carried_from_key is not None and source.carried_from_revision is not None:
+        return _copied_obligation_depends(
+            connection,
+            parent_id,
+            source.carried_from_key,
+            source.carried_from_revision,
+            role,
+            plans,
+            artifact_id=artifact_id,
+            child_id=child_id,
+            seen=visited,
+        )
+    return False
 
 
 def sanitize_deleted_dependency(
@@ -2623,6 +2779,24 @@ def sanitize_deleted_dependency(
                 or evidence_roles is None
                 or instance.definition.role in recorded_roles
                 or instance.definition.role in evidence_roles
+                or (
+                    instance.carried_from_key is not None
+                    and instance.carried_from_revision is not None
+                    and _copied_obligation_depends(
+                        connection,
+                        parent_id,
+                        instance.carried_from_key,
+                        instance.carried_from_revision,
+                        instance.definition.role,
+                        recorded_plans,
+                        artifact_id=artifact_id,
+                        child_id=(
+                            child_id
+                            if membership is not None and str(membership[0]) == parent_id
+                            else None
+                        ),
+                    )
+                )
             )
         else:
             dependent_roles_for_key = affected_roles.get(parent_id, set())
@@ -3235,13 +3409,16 @@ def read_method_version(
             action="record.read",
             epoch=info.execution_epoch,
         )
-        definition = _method(connection, ref)
         row = connection.execute(
-            "SELECT operation_id, created_at, actor FROM method_versions "
+            "SELECT operation_id, created_at, actor, status FROM method_versions "
             "WHERE method_id = ? AND version = ?",
             (str(ref.method_id), ref.version),
         ).fetchone()
-        assert row is not None
+        if row is None:
+            raise FoundationError("method_unavailable", "Exact Method version is unavailable")
+        if row[3] == "deleted":
+            raise FoundationError("content_unavailable", "Exact Method version was deleted")
+        definition = _method(connection, ref)
         return MethodVersion(
             reference=ref,
             definition=definition,

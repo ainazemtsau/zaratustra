@@ -43,18 +43,17 @@
   plan revision, then transfer and fencing of running Attempts, with maintenance of the
   new data), followed by a stop for one overall review; the package is implemented as a
   development checkpoint, see `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.6-3.7.md`.
-  Codex's Windows review of candidate `939c27d` found two deletion-sanitization
-  defects. Their P1/P2 correction is in one follow-up package awaiting that same
-  overall review; the installed Pi-probe's first `database is locked` failure
-  remains unexplained despite a successful repeat.
-  The independent review of `26a7da4` confirmed those corrections and found one
-  further P1 regression: child outcome and recheck bases must retain structural
-  dependencies from a plan revision naming that same Work before issue. Its
-  correction belongs to the same open 3.6–3.7 review; see the checkpoint.
-  None of this is an accepted release, schema 7 acceptance or pass 3 acceptance.
-  Parts 3.8–3.10,
-  the separate composite-parent execution slice, pass 4, real model calls and
-  development migration are not authorized.
+  The owner closed technical review of the complete 3.6–3.7 package at
+  `98a61f20bf0eec06fa3e9e1501b35f0bb31b6ecc`, separately from acceptance;
+  see `docs/core-v0.1/STAGE6-PASS3-REVIEW-3.6-3.7.md`. The owner authorized
+  part 3.8 from that commit: exact Method transition through an active plan
+  revision, obligation mapping, evidence recheck, Attempt transfer/fencing and
+  data maintenance. Its development checkpoint is
+  `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.8.md`; it awaits one technical
+  review. This is not schema 7, pass 3 or Stage 6 acceptance. Part 3.9, the
+  separate composite-parent execution slice, pass 4, real model calls and
+  development migration are not authorized. The installed Pi-probe's
+  `database is locked` observation remains open without an established cause.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
 - Stage 1 stopped after recording the G07-1 DBOS and G08-1 Pi technical outcomes.
@@ -134,10 +133,12 @@ obligation whose evidence Work left the role reopens (`node_replaced`), and addr
 schema 7 tables keep members, node decisions and role history (`read_plan_nodes`,
 `read_role_history`). An active Attempt of a kept node continues through an explicit
 transfer (`execution_plan_transfers`); every other Attempt is fenced (`stale_plan`, a late
-answer to a closed wait `stale_wait`); see `STAGE6-PASS3-CHECKPOINT-3.6-3.7.md`. Parts
-3.8–3.10 are not implemented. The pending review correction sanitizes plan text
-addressing a departed Work and keeps replacement evidence and outcome bases
-independent of the former role filler.
+answer to a closed wait `stale_wait`); see `STAGE6-PASS3-CHECKPOINT-3.6-3.7.md`.
+The closed review correction sanitizes plan text addressing a departed Work and
+keeps replacement evidence and outcome bases independent of the former role
+filler. Part 3.8 adds exact Method transition via the active plan revision,
+obligation mapping, evidence recheck, Attempt transfer/fencing and maintenance;
+see `STAGE6-PASS3-CHECKPOINT-3.8.md`. Parts 3.9–3.10 are not implemented.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,

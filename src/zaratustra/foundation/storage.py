@@ -600,9 +600,41 @@ PLAN_REVISION_SCHEMA_STATEMENTS: tuple[str, ...] = (
         FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
     ) STRICT
     """,
+    # Part 3.8: every plan revision has one exact Method; a transition keeps only
+    # addresses of the old requirements, their successors and retiring exceptions.
+    """
+    CREATE TABLE work_plan_methods (
+        parent_id TEXT NOT NULL,
+        plan_revision INTEGER NOT NULL CHECK (plan_revision >= 1),
+        method_id TEXT NOT NULL,
+        method_version INTEGER NOT NULL CHECK (method_version >= 1),
+        method_checksum TEXT NOT NULL,
+        operation_id TEXT NOT NULL,
+        PRIMARY KEY (parent_id, plan_revision),
+        FOREIGN KEY (parent_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE work_obligation_transitions (
+        parent_id TEXT NOT NULL,
+        plan_revision INTEGER NOT NULL CHECK (plan_revision >= 2),
+        source_key TEXT NOT NULL,
+        source_revision INTEGER NOT NULL CHECK (source_revision >= 1),
+        action TEXT NOT NULL CHECK (action IN ('carry', 'retire')),
+        target_key TEXT,
+        exception_id TEXT,
+        exception_revision INTEGER,
+        operation_id TEXT NOT NULL,
+        PRIMARY KEY (parent_id, plan_revision, source_key),
+        FOREIGN KEY (parent_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
     "CREATE INDEX work_plan_member_parent ON work_plan_members(parent_id)",
     "CREATE INDEX work_plan_node_work ON work_plan_nodes(work_id)",
     "CREATE INDEX plan_transfer_work ON execution_plan_transfers(work_id)",
+    "CREATE INDEX work_plan_method_version ON work_plan_methods(method_id, method_version)",
 )
 PLAN_REVISION_SCHEMA_SHA256 = (
     hashlib.sha256(
