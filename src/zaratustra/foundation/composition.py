@@ -2345,13 +2345,80 @@ def _recorded_plan_roles(
         }
     changed = True
     while changed:
-        previous = len(roles)
+        previous_count = len(roles)
         roles.update(
             role
             for role, dependencies in index.edges.items()
             if any(dependency in roles for dependency in dependencies)
         )
-        changed = len(roles) != previous
+        changed = len(roles) != previous_count
+    return roles
+
+
+def _plan_index_at_state_revision(
+    connection: sqlite3.Connection,
+    parent_id: str,
+    state_revision: int,
+    plans: dict[str, list[_PlanDependencies | None]],
+) -> _PlanDependencies | None:
+    row = connection.execute(
+        "SELECT max(p.revision) FROM work_plan_revisions p JOIN operations o "
+        "ON o.operation_id = p.operation_id WHERE p.parent_id = ? "
+        "AND o.state_revision <= ?",
+        (parent_id, state_revision),
+    ).fetchone()
+    if row is None or row[0] is None:
+        return None
+    return _plan_history(connection, parent_id, plans)[int(row[0]) - 1]
+
+
+def _recorded_evidence_roles(
+    connection: sqlite3.Connection,
+    parent_id: str,
+    state_revision: int,
+    artifact_id: UUID,
+    obligation_rows: list[tuple[str, str, int, bytes, str, int]],
+    plans: dict[str, list[_PlanDependencies | None]],
+) -> set[str] | None:
+    """Roles whose *then-current* evidence was the deleted Artifact.
+
+    A former role filler may have confirmed X while its replacement later confirmed Y.
+    The old X must not seed the replacement's confirmation or downstream bases.
+    """
+
+    index = _plan_index_at_state_revision(connection, parent_id, state_revision, plans)
+    if index is None:
+        return None
+    fillers = _revision_role_works(connection, parent_id, index)
+    latest: dict[str, tuple[bytes, int]] = {}
+    for row_parent, key, _revision, payload, _operation, recorded_at in obligation_rows:
+        if row_parent == parent_id and recorded_at <= state_revision:
+            previous = latest.get(key)
+            if previous is None or recorded_at >= previous[1]:
+                latest[key] = (bytes(payload), recorded_at)
+    roles: set[str] = set()
+    for payload, recorded_at in latest.values():
+        if payload == REDACTED_DEPENDENCY:
+            continue
+        instance = ObligationRevision.model_validate_json(payload)
+        if instance.evidence is None or instance.evidence.artifact_id != artifact_id:
+            continue
+        evidence_index = _plan_index_at_state_revision(connection, parent_id, recorded_at, plans)
+        if evidence_index is None:
+            return None
+        role = instance.definition.role
+        evidence_filler = _revision_role_works(connection, parent_id, evidence_index).get(role)
+        if evidence_filler is not None and fillers.get(role) == evidence_filler:
+            roles.add(role)
+    changed = True
+    while changed:
+        previous_count = len(roles)
+        roles.update(
+            role
+            for role, dependencies in index.edges.items()
+            if any(dependency in roles for dependency in dependencies)
+        )
+        changed = len(roles) != previous_count
     return roles
 
 
@@ -2395,6 +2462,21 @@ def sanitize_deleted_dependency(
     affected_operations: set[str] = set()
     current_plans: dict[str, WorkPlan | None] = {}
     current_indexes: dict[str, _PlanDependencies | None] = {}
+    # The next plan revision can quote a departing node in its rationale. That node is
+    # absent from ``children`` but is still addressed by its recorded decision.
+    decision_work_revisions = (
+        {
+            (str(parent), int(revision))
+            for parent, revision in connection.execute(
+                "SELECT parent_id, plan_revision FROM work_plan_nodes "
+                "WHERE work_id = ? OR replaced_work_id = ?",
+                (str(child_id), str(child_id)),
+            ).fetchall()
+        }
+        if child_id is not None
+        and int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7
+        else set()
+    )
     plan_rows = connection.execute(
         "SELECT parent_id, revision, payload, operation_id "
         "FROM work_plan_revisions ORDER BY parent_id, revision"
@@ -2408,8 +2490,9 @@ def sanitize_deleted_dependency(
         parsed_plan = WorkPlan.model_validate_json(bytes(payload))
         current_plans[parent_id] = parsed_plan
         plan = json.loads(bytes(payload))
-        contains_child = child_id is not None and any(
-            child["work_id"] == str(child_id) for child in plan["children"]
+        contains_child = child_id is not None and (
+            any(child["work_id"] == str(child_id) for child in plan["children"])
+            or (parent_id, int(revision)) in decision_work_revisions
         )
         contains_artifact = artifact_id is not None and _contains_artifact_ref(
             plan, str(artifact_id)
@@ -2459,11 +2542,15 @@ def sanitize_deleted_dependency(
     # A confirmed basis can quote its child's work or an Artifact used by the
     # plan. Retire such confirmations without removing the Method requirement.
     obligation_rows = connection.execute(
-        "SELECT parent_id, key, revision, payload, operation_id "
-        "FROM work_obligation_revisions ORDER BY parent_id, key, revision"
+        "SELECT r.parent_id, r.key, r.revision, r.payload, r.operation_id, o.state_revision "
+        "FROM work_obligation_revisions r JOIN operations o ON o.operation_id = r.operation_id "
+        "ORDER BY r.parent_id, r.key, r.revision"
     ).fetchall()
-    if artifact_id is not None:
-        for parent_id, _key, _revision, payload, _source_operation in obligation_rows:
+    schema_seven = int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7
+    if artifact_id is not None and not schema_seven:
+        # Preserve the schema 5-6 conservative role closure. Schema 7 can resolve
+        # historical evidence against the Work filling the role in each revision.
+        for parent_id, _key, _revision, payload, _source_operation, _recorded_at in obligation_rows:
             if bytes(payload) == REDACTED_DEPENDENCY:
                 continue
             instance = ObligationRevision.model_validate_json(bytes(payload))
@@ -2497,17 +2584,13 @@ def sanitize_deleted_dependency(
             changed = len(roles) != previous
         affected_roles[parent_id] = roles
     recorded_plans: dict[str, list[_PlanDependencies | None]] = {}
-    for parent_id, key, revision, payload, source_operation in obligation_rows:
+    for parent_id, key, revision, payload, source_operation, recorded_at in obligation_rows:
         if bytes(payload) == REDACTED_DEPENDENCY:
             continue
         instance = ObligationRevision.model_validate_json(bytes(payload))
         if instance.evidence is None and instance.basis is None:
             continue
-        dependent_roles_for_key = affected_roles.get(parent_id, set())
-        dependent = (
-            dependent_roles_for_key is None or instance.definition.role in dependent_roles_for_key
-        )
-        if not dependent and int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7:
+        if schema_seven:
             recorded_roles = _recorded_plan_roles(
                 connection,
                 parent_id,
@@ -2518,7 +2601,35 @@ def sanitize_deleted_dependency(
                     child_id if membership is not None and str(membership[0]) == parent_id else None
                 ),
             )
-            dependent = recorded_roles is None or instance.definition.role in recorded_roles
+            evidence_roles = (
+                _recorded_evidence_roles(
+                    connection,
+                    parent_id,
+                    int(recorded_at),
+                    artifact_id,
+                    obligation_rows,
+                    recorded_plans,
+                )
+                if artifact_id is not None
+                else set()
+            )
+            dependent = (
+                (
+                    artifact_id is not None
+                    and instance.evidence is not None
+                    and instance.evidence.artifact_id == artifact_id
+                )
+                or recorded_roles is None
+                or evidence_roles is None
+                or instance.definition.role in recorded_roles
+                or instance.definition.role in evidence_roles
+            )
+        else:
+            dependent_roles_for_key = affected_roles.get(parent_id, set())
+            dependent = (
+                dependent_roles_for_key is None
+                or instance.definition.role in dependent_roles_for_key
+            )
         if not dependent:
             continue
         backup_parents.add(parent_id)
@@ -2683,6 +2794,38 @@ def _evidence_artifacts(
     return found
 
 
+def _evidence_artifacts_for_fillers(
+    connection: sqlite3.Connection,
+    parent_id: str,
+    role_fillers: dict[str, set[str]],
+    plans: dict[str, list[_PlanDependencies | None]],
+) -> set[UUID]:
+    """Evidence of the Works that filled relevant roles, at its recorded plan revision."""
+
+    found: set[UUID] = set()
+    for payload, recorded_at in connection.execute(
+        "SELECT r.payload, o.state_revision FROM work_obligation_revisions r "
+        "JOIN operations o ON o.operation_id = r.operation_id WHERE r.parent_id = ?",
+        (parent_id,),
+    ).fetchall():
+        if bytes(payload) == REDACTED_DEPENDENCY:
+            continue
+        instance = ObligationRevision.model_validate_json(bytes(payload))
+        if instance.evidence is None or instance.definition.role not in role_fillers:
+            continue
+        index = _plan_index_at_state_revision(connection, parent_id, int(recorded_at), plans)
+        if index is None:
+            # A pre-index sanitized plan cannot prove this evidence independent.
+            found.add(instance.evidence.artifact_id)
+            continue
+        evidence_work = _revision_role_works(connection, parent_id, index).get(
+            instance.definition.role
+        )
+        if evidence_work in role_fillers[instance.definition.role]:
+            found.add(instance.evidence.artifact_id)
+    return found
+
+
 def _subject_artifacts(connection: sqlite3.Connection, record_id: str) -> set[UUID]:
     """Artifact addresses in every remaining revision of one subject record."""
 
@@ -2732,9 +2875,19 @@ def _outcome_dependencies(
     if membership is not None:
         parent_id, role = str(membership[0]), membership[1]
         artifacts.update(_subject_artifacts(connection, parent_id))
-        upstream = {role}
+        original = original_issue(connection, UUID(work_id))
+        first_issue = (
+            original[1]
+            if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7
+            and original is not None
+            and original[1] is not None
+            else 1
+        )
+        role_fillers: dict[str, set[str]] = {}
         upstream_works: set[str] = set()
-        for index in _plan_history(connection, parent_id, plans):
+        for revision, index in enumerate(_plan_history(connection, parent_id, plans), start=1):
+            if revision < first_issue:
+                continue
             if index is None:
                 unbounded = True
                 continue
@@ -2744,16 +2897,18 @@ def _outcome_dependencies(
             if role not in index.roles or fillers.get(role, work_id) != work_id:
                 continue
             lineage = _upstream_roles(index.edges, role)
-            upstream |= lineage
             artifacts.update(index.global_artifacts)
             for member in lineage:
                 artifacts.update(index.role_artifacts.get(member, ()))
                 if member in fillers:
                     upstream_works.add(fillers[member])
+                    role_fillers.setdefault(member, set()).add(fillers[member])
         for child in sorted(upstream_works - {work_id}):
             works.add(child)
             artifacts.update(_subject_artifacts(connection, child))
-        artifacts.update(_evidence_artifacts(connection, parent_id, upstream))
+        artifacts.update(
+            _evidence_artifacts_for_fillers(connection, parent_id, role_fillers, plans)
+        )
     return _OutcomeDependencies(frozenset(artifacts), frozenset(works), unbounded)
 
 

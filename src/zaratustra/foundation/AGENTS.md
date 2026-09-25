@@ -164,7 +164,12 @@ child's pinned Attempt refuses `stale_plan` before `work_closed`, a late answer 
 wait `stale_wait`; stop and sent-call outcomes stay open. The retained plan index names the
 Work of each role (`role_works`, schema 7 only), so deletion seeds, outcome and recheck
 dependencies follow the Work that filled a role in each revision. Deleting a child takes
-its transfers with its pins; deleting the parent removes members and decisions. See
+its transfers with its pins; deleting the parent removes members and decisions. The
+pending P1/P2 review correction also sanitizes a plan revision when a node decision
+addresses the departing Work: its rationale may quote that Work, so the revision
+operation loses replay while the address-only node history stays. Obligation evidence
+and child outcome bases follow the then-current role filler and plan revision; deleting
+old evidence leaves a replacement's independent confirmation, basis and replay intact. See
 `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.6-3.7.md`.
 
 The foundation stores Work execution records but never imports Pi or runs a model.

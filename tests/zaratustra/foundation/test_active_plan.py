@@ -1012,7 +1012,8 @@ def test_revision_history_survives_restore_and_node_deletion_is_independent(
     assert replacement is not None and replacement.basis == "Checked synthetic output"
     with pytest.raises(FoundationError, match="content_unavailable"):
         read_work_plan(root, parent, owner, revision=1)
-    assert read_work_plan(root, parent, owner, revision=2).plan.children == (a2, b)
+    with pytest.raises(FoundationError, match="content_unavailable"):
+        read_work_plan(root, parent, owner, revision=2)
     assert read_plan_nodes(root, parent, owner).nodes[0] == PlanNode(
         role="a", decision="replace", work_id=a2.work_id, replaced_work_id=a.work_id
     )
@@ -1022,8 +1023,12 @@ def test_revision_history_survives_restore_and_node_deletion_is_independent(
     )
     assert not _sqlite_contains(root / ".zara-core", marker)
     assert _sqlite_contains(root / ".zara-core", kept)
-    # The revision holds only addresses of the deleted node: its receipt stays exact.
-    assert apply_operation(root, request, owner) == receipt
+    # The revision rationale may quote the addressed departed node. Its operation intent
+    # and receipt are retired with the sanitized plan, while node addresses remain.
+    with pytest.raises(FoundationError, match="history_unavailable"):
+        apply_operation(root, request, owner)
+    with pytest.raises(FoundationError, match="not_found"):
+        read_receipt(root, receipt.operation_id, owner)
     assert receipt.result["reopened"] == ["checked"]
     fresh_backup = create_backup(root, uuid4(), owner)
     assert not _sqlite_contains(fresh_backup.package, marker)

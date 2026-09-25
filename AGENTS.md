@@ -43,6 +43,10 @@
   plan revision, then transfer and fencing of running Attempts, with maintenance of the
   new data), followed by a stop for one overall review; the package is implemented as a
   development checkpoint, see `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.6-3.7.md`.
+  Codex's Windows review of candidate `939c27d` found two deletion-sanitization
+  defects. Their P1/P2 correction is in one follow-up package awaiting that same
+  overall review; the installed Pi-probe's first `database is locked` failure
+  remains unexplained despite a successful repeat.
   None of this is an accepted release, schema 7 acceptance or pass 3 acceptance.
   Parts 3.8–3.10,
   the separate composite-parent execution slice, pass 4, real model calls and
@@ -127,7 +131,9 @@ schema 7 tables keep members, node decisions and role history (`read_plan_nodes`
 `read_role_history`). An active Attempt of a kept node continues through an explicit
 transfer (`execution_plan_transfers`); every other Attempt is fenced (`stale_plan`, a late
 answer to a closed wait `stale_wait`); see `STAGE6-PASS3-CHECKPOINT-3.6-3.7.md`. Parts
-3.8–3.10 are not implemented.
+3.8–3.10 are not implemented. The pending review correction sanitizes plan text
+addressing a departed Work and keeps replacement evidence and outcome bases
+independent of the former role filler.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,
