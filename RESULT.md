@@ -34,6 +34,16 @@ Artifact; старый backup очищен. Финальный отчёт:
 собственного сеанса прошёл: **676 тестов**, строгие типы, Ruff, **21**
 импортный контракт, sdist и wheel. Это не результат независимого review.
 Подробности реализации и границ: `docs/core-v0.1/STAGE6-PASS3-IMPLEMENTATION.md`.
+На чистом точном кодовом коммите
+`a80c2531b2a8e861706c3fd6af283badb55920c2` неизменённый
+`tools.probe_install_stage6` прошёл вне checkout с **3 синтетическими HTTP**,
+Python 3.13.7 и SQLite 3.53.3; `source_tree_dirty=false`, wheel SHA-256
+`654F0CCCC62BB90E8A3A6825448DB52F4E6638EFB59D01B7E4304AE9C010CAAB`.
+Отчёт: `_scratch/probe-install-stage6-pass3-clean/report.json`.
+Это проверка совместимого установленного Stage 6 сценария; новая schema 7
+трасса запускалась в checkout. Последние добавления атрибуции wheel —
+документальные изменения после чистого кодового коммита; код и тесты не
+менялись и полный gate не приписывается этому документальному коммиту.
 
 ## assumptions
 
