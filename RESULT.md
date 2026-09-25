@@ -1,3 +1,67 @@
+# Core v0.1 Stage 6, проход 3 — восстановление адресного PENDING workflow
+
+## outcome
+
+Исправлен один P1 части 3.10: runner восстанавливает свой уже адресованный
+PENDING DBOS workflow, записанный прежней версией с executor ID `local`.
+Workflow ID и Core launch claim сохраняют границу replay. Пакет передаётся
+на одно техническое review; приёмка schema 7, прохода 3 и Stage 6 не записана.
+
+## evidence
+
+Независимый Codex review точного `8130b1ba2b2344284d523cf420a2327610aa133e`
+закрыл прежние два замечания и подтвердил Windows gate (**678 тестов**),
+schema 7 трассу (**4 HTTP**) и установленный wheel (**3 HTTP**). Он обнаружил
+P1: адресный PENDING workflow старого executor `local` не подхватывается
+новым UUID executor. Отчёт:
+`C:/Users/Anton/AppData/Local/Temp/zaratustra-stage6-3.10-fix-review-8130b1b-1790347475489/READONLY-REVIEW.md`.
+До правки этот внешний сценарий повторён точно: старый runner завершился
+до claim с кодом 90; новый оставался в ожидании 15 секунд без вопроса/HTTP,
+а старый контроль восстановился на тех же данных с **2 HTTP**.
+
+После правки межверсионный живой probe через обычные DBOS/Pi дал до claim
+SUCCESS на том же ID с **2 HTTP**, а повторный запуск — **0 новых HTTP**.
+После уже записанного claim восстановление вернуло `process_outcome_unknown`,
+Core assignment `unknown`, **0 новых HTTP**. Прежний внешний сценарий двух
+legacy соседей сохранил A2 в `ENQUEUED` после A1 и затем выполнил обоих с
+**2 HTTP**. Сохранённый fault probe текущего маршрута прошёл, включая
+unknown и отсутствие повтора потерянной HTTP-отправки. Затронутые тесты:
+**29 passed**; две новые регрессии создают PENDING/local через DBOS без
+правки SQLite. Поддерживаемая schema 7 трасса прошла с **4 HTTP**.
+
+Собственный полный Windows `tools.check --deliver`: **680 тестов**,
+214 файлов format-clean, строгий mypy для 188 файлов, Ruff, **21** импортный
+контракт, sdist и wheel; лог `_scratch/fix-pending-deliver.log`.
+Техническая запись: `docs/core-v0.1/STAGE6-PASS3-IMPLEMENTATION.md`.
+Установленный wheel будет атрибутирован после чистого кодового коммита.
+
+## assumptions
+
+DBOS resume меняет только выбранный PENDING/local workflow адресной версии
+на очередь его Attempt. Прежний общий маршрут по-прежнему изолирован.
+Записанный Core launch claim не разрешает повторный Pi/HTTP.
+
+## cuts
+
+Следующий срез, исполнение составного родителя, проход 4, реальные модели,
+миграция, PR и приёмка не начаты. `database is locked` и `rpc_transport`
+остаются отдельными открытыми наблюдениями.
+
+## cost
+
+Только локальные одноразовые synthetic spaces, localhost HTTP, тесты и сборка.
+Платных вызовов и новых внешних прав нет.
+
+## manual-acceptance
+
+Владелец разрешил исправление и один общий review, не приёмку.
+
+## next
+
+solmax
+
+---
+
 # Core v0.1 Stage 6, проход 3 — исправление review части 3.10
 
 ## outcome

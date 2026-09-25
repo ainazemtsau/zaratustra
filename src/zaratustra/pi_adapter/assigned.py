@@ -980,15 +980,23 @@ def _run_assigned_locked(
         client = _client(config.space)
         try:
             existing = _existing_workflow(client, attempt_id)
-            if (
-                existing is not None
-                and existing.app_version == EXECUTOR_VERSION
-                and existing.status in {"ENQUEUED", "PENDING"}
+            if existing is not None and (
+                (
+                    existing.app_version == EXECUTOR_VERSION
+                    and existing.status in {"ENQUEUED", "PENDING"}
+                )
+                or (
+                    existing.app_version == _attempt_app_version(attempt_id)
+                    and existing.status == "PENDING"
+                    and existing.executor_id == "local"
+                )
             ):
-                # Old releases used one queue and one application version for every
-                # assigned Work. Move only this unfinished workflow to its addressed
-                # queue before starting a worker; keep its ID, inputs and version.
-                # The stable workflow ID remains the launch deduplication address.
+                # The shared legacy route needs an addressed queue. The first
+                # addressed route also used DBOS's default executor ID "local";
+                # startup recovery under this Attempt's ID cannot see its PENDING
+                # record. Re-enqueue only this unfinished workflow through DBOS's
+                # public resume, keeping its ID, inputs, steps and app version.
+                # Core's launch claim still decides whether replay is safe.
                 client.resume_workflow(
                     _workflow_id(attempt_id), queue_name=_attempt_queue(attempt_id)
                 )

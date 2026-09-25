@@ -8,6 +8,7 @@ import pickle
 import shutil
 import sqlite3
 import subprocess
+import sys
 import threading
 from contextlib import closing
 from pathlib import Path
@@ -17,6 +18,7 @@ from uuid import UUID, uuid4, uuid5
 import pytest
 from dbos import DBOS, DBOSClient
 
+import zaratustra.pi_adapter.assigned as assigned_module
 from tests.zaratustra.foundation.test_continuation import ready
 from zaratustra.foundation import (
     ALL_ACTIONS,
@@ -57,6 +59,7 @@ from zaratustra.foundation import (
 from zaratustra.pi_adapter import Bridge
 from zaratustra.pi_adapter.assigned import (
     EXECUTOR_VERSION,
+    PI_VERSION,
     WORKFLOW_NAME,
     AssignedConfig,
     _purge_technical_data,
@@ -442,6 +445,188 @@ def _managed_space(
     root, workspace, space_id, work_id, attempt_id, session_id = assigned(tmp_path)
     shutil.copyfile(dbos_template, root / ".zara-core" / "executor.sqlite3")
     return root, workspace, space_id, work_id, attempt_id, session_id
+
+
+def _pending_local_route(root: Path, work_id: UUID, attempt_id: UUID, owner: LocalAuthority) -> str:
+    """Create the predecessor's addressed PENDING/local DBOS record without SQL edits."""
+
+    entry = read_execution(root, work_id, owner).outbox[0]
+    database = root / ".zara-core" / "executor.sqlite3"
+    workflow_id = f"zara-{uuid5(attempt_id, 'launch')}"
+    route = f"zara-assigned-rpc-{attempt_id}"
+    source = """
+import os
+import sys
+import time
+from dbos import DBOS, DBOSClient
+
+url, version, route, workflow_id, work_id, attempt_id, outbox_id, epoch, generation = sys.argv[1:]
+DBOS(config={"name": "zaratustra-assigned-rpc", "system_database_url": url,
+             "application_version": version, "executor_id": "local"})
+@DBOS.workflow(name="zara-assigned-work-v1")
+def crash_before_claim(*_args):
+    os._exit(90)
+DBOS.listen_queues([route])
+DBOS.launch()
+DBOS.register_queue(route, worker_concurrency=1)
+client = DBOSClient(system_database_url=url, application_name="zaratustra-assigned-rpc",
+                    retry_connection_errors=False)
+client.enqueue({"workflow_name": "zara-assigned-work-v1", "queue_name": route,
+                "workflow_id": workflow_id, "app_version": version,
+                "deduplication_id": outbox_id, "duplication_policy": "return-existing",
+                "attributes": {"work_id": work_id, "attempt_id": attempt_id}},
+               work_id, attempt_id, int(epoch), int(generation))
+client.destroy()
+time.sleep(20)
+raise SystemExit(1)
+"""
+    created = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            source,
+            f"sqlite:///{database.resolve().as_posix()}",
+            f"{EXECUTOR_VERSION}-{attempt_id}",
+            route,
+            workflow_id,
+            str(work_id),
+            str(attempt_id),
+            str(entry.outbox_id),
+            str(entry.execution_epoch),
+            str(entry.generation),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+        check=False,
+    )
+    assert created.returncode == 90, created.stderr
+    client = DBOSClient(
+        system_database_url=f"sqlite:///{database.resolve().as_posix()}",
+        application_name="zaratustra-assigned-rpc",
+        retry_connection_errors=False,
+    )
+    try:
+        records = client.list_workflows(workflow_ids=[workflow_id], load_output=False)
+        assert len(records) == 1
+        assert records[0].status == "PENDING" and records[0].executor_id == "local"
+        assert records[0].queue_name == route
+    finally:
+        client.destroy()
+    return workflow_id
+
+
+def _valid_assigned_config(root: Path, workspace: Path, runtime: Path) -> AssignedConfig:
+    package = runtime / "node_modules" / "@earendil-works" / "pi-coding-agent"
+    cli = package / "dist" / "bundle" / "cli.js"
+    cli.parent.mkdir(parents=True)
+    cli.write_text("synthetic", encoding="utf-8")
+    (package / "package.json").write_text(
+        '{"name":"@earendil-works/pi-coding-agent","version":"' + PI_VERSION + '"}',
+        encoding="utf-8",
+    )
+    return AssignedConfig(
+        space=root,
+        workspace=workspace,
+        pi_cli=cli,
+        pi_runtime=runtime,
+        node="node",
+        provider_profile="local-completions",
+        provider_base_url="http://127.0.0.1:9/v1",
+        provider_id="synthetic",
+        model_id="synthetic",
+        context_window=4096,
+        max_tokens=512,
+        reserve_units=10,
+        limit_units=100,
+        offline=True,
+    )
+
+
+@pytest.mark.parametrize("claimed", [False, True])
+def test_pending_local_addressed_workflow_recovers_at_core_claim_boundary(
+    tmp_path: Path,
+    dbos_template: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    claimed: bool,
+) -> None:
+    root, workspace, space_id, work_id, attempt_id, session_id = _managed_space(
+        tmp_path, dbos_template
+    )
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    workflow_id = _pending_local_route(root, work_id, attempt_id, owner)
+    config = _valid_assigned_config(root, workspace, tmp_path / "runtime")
+    executed: list[UUID] = []
+    if claimed:
+        assignment = read_execution(root, work_id, owner).assignments[0]
+        apply_operation(
+            root,
+            ClaimAttemptLaunchRequest(
+                operation_id=uuid5(attempt_id, "rpc-launch-claim"),
+                space_id=space_id,
+                actor="owner",
+                attempt_id=attempt_id,
+                work_id=work_id,
+                session_id=session_id,
+                expected_assignment_revision=assignment.revision,
+                claim_nonce=uuid4(),
+            ),
+            owner,
+        )
+
+        def no_pi(*_args: object, **_kwargs: object) -> None:
+            raise AssertionError("A recorded claim must not launch Pi again")
+
+        monkeypatch.setattr(assigned_module, "BridgeServer", no_pi)
+        with pytest.raises(FoundationError) as refused:
+            run_assigned(config, owner, attempt_id)
+        assert refused.value.code == "process_outcome_unknown"
+        state = read_execution(root, work_id, owner)
+        assert state.assignments[0].status == "unknown" and state.outputs == ()
+        assert state.invocations == () and executed == []
+        with pytest.raises(FoundationError) as replay:
+            run_assigned(config, owner, attempt_id)
+        assert replay.value.code == "process_outcome_unknown"
+        assert read_execution(root, work_id, owner).assignments[0].status == "unknown"
+    else:
+
+        def execute(
+            selected: AssignedConfig,
+            _authority: LocalAuthority,
+            selected_work: UUID,
+            selected_attempt: UUID,
+            _epoch: int,
+            _generation: int,
+        ) -> str:
+            assert selected.workspace == workspace.resolve()
+            assert selected_work == work_id and selected_attempt == attempt_id
+            executed.append(selected_attempt)
+            return "proposed"
+
+        monkeypatch.setattr(assigned_module, "_execute", execute)
+        assert run_assigned(config, owner, attempt_id) == "proposed"
+        assert run_assigned(config, owner, attempt_id) == "proposed"
+        assert executed == [attempt_id]
+        assert deliver_outbox(root, owner) == (
+            read_execution(root, work_id, owner).outbox[0].outbox_id,
+        )
+
+    client = DBOSClient(
+        system_database_url=(
+            f"sqlite:///{(root / '.zara-core' / 'executor.sqlite3').resolve().as_posix()}"
+        ),
+        application_name="zaratustra-assigned-rpc",
+        retry_connection_errors=False,
+    )
+    try:
+        records = client.list_workflows(workflow_ids=[workflow_id], load_output=True)
+        assert len(records) == 1 and records[0].workflow_id == workflow_id
+        assert records[0].executor_id == str(attempt_id)
+        assert records[0].status == ("ERROR" if claimed else "SUCCESS")
+        assert len(client.list_workflows(load_output=False)) == 1
+    finally:
+        client.destroy()
 
 
 def _workflows(root: Path) -> list[dict[str, object]]:

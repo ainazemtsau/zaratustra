@@ -27,5 +27,8 @@ runner cannot recover them under the wrong workspace. Repeated delivery keeps
 the recorded workflow ID. A legacy shared-route workflow is moved by public
 DBOS resume to its Attempt-specific queue before its runner starts; that runner
 listens only to the selected queue and has an Attempt-specific executor ID.
+An already addressed PENDING workflow recorded by the earlier local executor
+is resumed by its own runner through the same public DBOS operation. Core's
+committed launch claim still makes a second execution unknown without new HTTP.
 An unrelated legacy workflow stays queued for its own runner. A cancelled launch
 with no claim is an observed prelaunch stop without Pi or HTTP.
