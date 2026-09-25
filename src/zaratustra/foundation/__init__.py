@@ -73,6 +73,7 @@ from .models import (
     DeleteMethodVersionRequest,
     DeleteWorkRequest,
     DeletionStatus,
+    DescendantClosure,
     DomainRequest,
     ExceptionState,
     ExecutionSnapshot,
@@ -183,6 +184,7 @@ from .work_status import read_work_status
 
 __all__ = [
     "NodeClosure",
+    "DescendantClosure",
     "NodeDecisionKind",
     "PlanNode",
     "PlanNodeDecision",

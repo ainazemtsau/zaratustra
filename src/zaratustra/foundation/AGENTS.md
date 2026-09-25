@@ -198,6 +198,21 @@ plan; a retired revision belongs to the preceding binding named by its transitio
 The exact key, revision, status and Decision remain readable, while independent
 later Method instances stay intact.
 
+Part 3.9 uses existing schema 7 records for nested composite Works. An `add` or
+`replace` node in `revise_active_plan` may carry `nested_plan`; the new Work,
+initial plain children, plan, Method binding and obligations are one transaction.
+`role_methods` pins an exact role Method when declared; otherwise the new
+`PlanChild.state.method` records the chosen exact version before issue. Issue,
+execution and integration check the full issued ancestor chain and `method.use`
+at each level; closure retains the explicit 3.1 outcome path. A nested composite
+Work has no own Attempt; its acceptance applies its
+own completion and obligations plus current parent membership. A departing
+nested node must explicitly list every unfinished descendant with its own Work
+revision and immediate parent's plan revision; closures run deepest first,
+atomically. Address-only membership finds nested descendants during historical
+plan and outcome sanitation; delete Works bottom-up. See
+`docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.9.md`.
+
 The foundation stores Work execution records but never imports Pi or runs a model.
 Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,
 stop state and pending/cancelled outbox records in the same operation/receipt path.

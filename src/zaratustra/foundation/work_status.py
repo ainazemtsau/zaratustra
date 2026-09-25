@@ -354,7 +354,11 @@ def work_status(connection: sqlite3.Connection, work_id: UUID) -> WorkStatus:
     if state.status in CLOSED_OUTCOMES:
         return _closed_status(connection, work_id, state.status, schema)
     binding = child_binding(connection, work_id) if schema >= 5 else None
-    if binding is None and isinstance(state.method, MethodRef):
+    if isinstance(state.method, MethodRef):
+        if binding is not None:
+            gaps = _child_gaps(connection, work_id, binding, state, None)
+            if gaps:
+                return WorkStatus(work_id=work_id, status="blocked", reasons=tuple(gaps))
         return _parent_status(connection, work_id, state)
     attempt_id: UUID | None = None
     active = False

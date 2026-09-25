@@ -812,6 +812,16 @@ class NodeClosure(ContractModel):
         return self
 
 
+class DescendantClosure(ContractModel):
+    """Explicit closure of one unfinished node below a departing composite node."""
+
+    parent_work_id: UUID
+    expected_plan_revision: int = Field(ge=1)
+    role: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+    work_id: UUID
+    closure: NodeClosure
+
+
 class PlanNodeDecision(ContractModel):
     """Explicit decision for one node of the current plan revision or one new node.
 
@@ -826,6 +836,10 @@ class PlanNodeDecision(ContractModel):
     work_id: UUID
     replacement: UUID | None = None
     closure: NodeClosure | None = None
+    nested_plan: WorkPlan | None = Field(default=None, exclude_if=lambda value: value is None)
+    descendants: tuple[DescendantClosure, ...] = Field(
+        default=(), exclude_if=lambda value: not value
+    )
 
     @model_validator(mode="after")
     def decision_shape(self) -> PlanNodeDecision:
@@ -835,6 +849,10 @@ class PlanNodeDecision(ContractModel):
             raise ValueError("A replacement is another Work")
         if self.decision in ("keep", "release", "add") and self.closure is not None:
             raise ValueError("Only a node that leaves the plan unfinished gets an outcome")
+        if self.nested_plan is not None and self.decision not in ("add", "replace"):
+            raise ValueError("Only a new node can provide its initial nested plan")
+        if self.descendants and self.decision not in ("replace", "cancel", "stale"):
+            raise ValueError("Only a departing node can close descendants")
         outcome = {"cancel": "cancelled", "stale": "stale"}.get(self.decision)
         if outcome is not None and (self.closure is None or self.closure.outcome != outcome):
             raise ValueError("cancel and stale name the matching outcome of the node")
@@ -1543,6 +1561,7 @@ class DeletionStatus(ContractModel):
 
 __all__ = [
     "NodeClosure",
+    "DescendantClosure",
     "NodeDecisionKind",
     "PlanNode",
     "PlanNodeDecision",

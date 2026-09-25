@@ -49,13 +49,17 @@
   part 3.8 from that commit: exact Method transition through an active plan
   revision, obligation mapping, evidence recheck, Attempt transfer/fencing and
   data maintenance. Its development checkpoint is
-  `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.8.md`; it awaits one technical
-  review. Codex's independent Windows review of `907a739` found three defects
-  in active versus retired obligations, deletion of copied Method source text,
-  and inherited origin of a new confirmation; their correction remains in
-  part 3.8 and awaits that same review. This is not schema 7, pass 3 or Stage 6
-  acceptance. Part 3.9, the
-  separate composite-parent execution slice, pass 4, real model calls and
+  `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.8.md`. Codex's independent Windows
+  review of `907a739` found three defects in active versus retired obligations,
+  deletion of copied Method source text, and inherited origin of a new
+  confirmation; all were corrected in part 3.8. Technical review 3.8 closed
+  separately on `512fcd37accce339b487d006420e3e3ce2deec4f`; see
+  `docs/core-v0.1/STAGE6-PASS3-REVIEW-3.8.md`. From that commit the owner
+  authorized only part 3.9, nested composite Work and exact role Methods;
+  its development checkpoint is
+  `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.9.md` and awaits one technical
+  review. This is not schema 7, pass 3 or Stage 6 acceptance. Part 3.10,
+  the separate composite-parent execution slice, pass 4, real model calls and
   development migration are not authorized. The installed Pi-probe's
   `database is locked` observation remains open without an established cause.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are

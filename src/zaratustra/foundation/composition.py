@@ -457,11 +457,18 @@ def _validate_choice_leaves(connection: sqlite3.Connection, plan: WorkPlan) -> N
         validate_choice_leaf(connection, leaf)
 
 
-def _validate_plan(plan: WorkPlan, definition: MethodDefinition, activity_id: UUID) -> None:
+def _validate_plan(
+    plan: WorkPlan, definition: MethodDefinition, activity_id: UUID, *, allow_nested: bool = False
+) -> None:
     roles = {child.role: child for child in plan.children}
+    declared_methods = dict(definition.role_methods)
     for child in plan.children:
-        if child.state.activity_id != activity_id or child.state.method != "none":
+        if child.state.activity_id != activity_id or (
+            not allow_nested and child.state.method != "none"
+        ):
             raise FoundationError("invalid_plan", "Child must be a plain Work in parent Activity")
+        if child.role in declared_methods and (child.state.method != declared_methods[child.role]):
+            raise FoundationError("method_mismatch", f"Role {child.role} pins another Method")
         if child.state.status != "proposed" or child.state.linked_outputs:
             raise FoundationError("invalid_plan", "Child must start without a result")
         for leaf in _conditions(child.readiness):
@@ -873,6 +880,54 @@ def apply_composition_change(
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
+    if isinstance(
+        request,
+        (
+            ReviseWorkPlanRequest,
+            ConfirmObligationRequest,
+            ResolveObligationApplicabilityRequest,
+            WaiveObligationRequest,
+        ),
+    ):
+        binding = child_binding(connection, request.work_id)
+        if binding is not None:
+            revision, _status, _ = _subject_current(connection, request.work_id, "work")
+            state = WorkState.model_validate(_subject_state(connection, request.work_id, revision))
+            check_child_plan(
+                connection,
+                request.work_id,
+                binding,
+                state,
+                attempt_id=None,
+                actor=request.actor,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+            )
+    if isinstance(request, RevalidateResultRequest):
+        # A recheck exists precisely because this Work's held premise may have changed.
+        # Recheck its *ancestors*, while revalidation validates this Work's own change.
+        binding = child_binding(connection, request.work_id)
+        ancestor_id = binding[0] if binding is not None else None
+        ancestor_binding = (
+            child_binding(connection, ancestor_id) if ancestor_id is not None else None
+        )
+        if ancestor_id is not None and ancestor_binding is not None:
+            revision, _status, _ = _subject_current(connection, ancestor_id, "work")
+            ancestor = WorkState.model_validate(_subject_state(connection, ancestor_id, revision))
+            if ancestor.status != "proposed":
+                raise FoundationError("work_closed", f"Ancestor Work {ancestor_id} is closed")
+            check_child_plan(
+                connection,
+                ancestor_id,
+                ancestor_binding,
+                ancestor,
+                attempt_id=None,
+                actor=request.actor,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+            )
     if isinstance(request, RevalidateResultRequest):
         from .revalidation import revalidate_result
 
@@ -1003,10 +1058,8 @@ def apply_composition_change(
             grants=grants,
             decisions=decisions,
         )
-        if definition.required_capabilities or definition.role_methods:
-            raise FoundationError(
-                "unsupported_condition", "Method capabilities or role Methods are not connected"
-            )
+        if definition.required_capabilities:
+            raise FoundationError("unsupported_condition", "Method capabilities are not connected")
         if tuple(request.state.expected_outputs) != definition.named_outputs:
             raise FoundationError("method_mismatch", "Parent outputs differ from pinned Method")
         _validate_plan(request.plan, definition, request.state.activity_id)
@@ -1226,6 +1279,19 @@ def apply_composition_change(
         return {"work_id": str(request.work_id), "plan_revision": next_revision}, targets
     if isinstance(request, IssueChildWorkRequest):
         _rev, parent, definition = _parent(connection, request.parent_work_id)
+        parent_binding = child_binding(connection, request.parent_work_id)
+        if parent_binding is not None:
+            check_child_plan(
+                connection,
+                request.parent_work_id,
+                parent_binding,
+                parent,
+                attempt_id=None,
+                actor=request.actor,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+            )
         _method_use(
             connection,
             parent,
@@ -1764,6 +1830,19 @@ def check_child_plan(
     parent_id, issued, _role = binding
     plan = _plan(connection, parent_id)
     _p_rev, parent, definition = _parent(connection, parent_id)
+    ancestor = child_binding(connection, parent_id)
+    if ancestor is not None:
+        check_child_plan(
+            connection,
+            parent_id,
+            ancestor,
+            parent,
+            attempt_id=None,
+            actor=actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
     assert isinstance(parent.method, MethodRef)
     if actor is not None:
         _method_use(
@@ -1775,8 +1854,12 @@ def check_child_plan(
             decisions=decisions,
         )
     _obligations(connection, parent_id, definition)
-    if issued != plan.revision or parent.status != "proposed":
-        raise FoundationError("child_not_issued", "Child lacks current plan issuance")
+    if parent.status != "proposed":
+        raise FoundationError("work_closed", f"Ancestor Work {parent_id} is {parent.status}")
+    if issued != plan.revision:
+        raise FoundationError(
+            "child_not_issued", f"Child lacks current plan issuance under {parent_id}"
+        )
     node = next((child for child in plan.plan.children if child.work_id == work_id), None)
     if node is None:
         raise FoundationError("child_not_issued", "Child is not in the current plan")
@@ -1853,6 +1936,12 @@ def composite_execution_ready(
     schema = int(connection.execute("PRAGMA user_version").fetchone()[0])
     if schema < 5:
         return True
+    if connection.execute(
+        "SELECT 1 FROM work_plan_revisions WHERE parent_id = ? LIMIT 1", (str(work_id),)
+    ).fetchone():
+        raise FoundationError(
+            "unsupported_composite_execution", "Composite Work has no own Attempt"
+        )
     binding = child_binding(connection, work_id)
     if binding is None:
         if connection.execute(
@@ -1927,6 +2016,17 @@ def check_composite_action(
         )
         return
     direct = isinstance(request, (LinkWorkOutputRequest, AcceptWorkRequest))
+    if (
+        binding is not None
+        and isinstance(state.method, MethodRef)
+        and not isinstance(
+            request,
+            (LinkWorkOutputRequest, AcceptWorkRequest, CloseWorkRequest) + _ATTEMPT_OUTCOMES,
+        )
+    ):
+        raise FoundationError(
+            "unsupported_composite_execution", "Nested composite Work has no own Attempt"
+        )
     assigned_child = (
         binding is not None and schema >= 6 and not isinstance(request, _INTERACTIVE_ATTEMPTS)
     )
@@ -1938,7 +2038,7 @@ def check_composite_action(
         )
     if assigned_child and isinstance(request, _ATTEMPT_OUTCOMES + _RESOURCE_SETUP):
         return
-    if binding is None and isinstance(request, AcceptWorkRequest):
+    if isinstance(request, AcceptWorkRequest) and isinstance(state.method, MethodRef):
         check_parent_acceptance(
             connection,
             work_id,
@@ -1977,7 +2077,8 @@ def check_composite_action(
             grants=grants,
             decisions=decisions,
         )
-        return
+        if not (isinstance(request, LinkWorkOutputRequest) and isinstance(state.method, MethodRef)):
+            return
     definition, plan = _parent_current(
         connection, work_id, state, actor=actor, epoch=epoch, grants=grants, decisions=decisions
     )
@@ -2239,6 +2340,8 @@ def check_work_close(
         parent_id = binding[0]
         parent_revision, _status, _ = _subject_current(connection, parent_id, "work")
         parent = WorkState.model_validate(_subject_state(connection, parent_id, parent_revision))
+        if parent.status != "proposed":
+            raise FoundationError("work_closed", f"Ancestor Work {parent_id} is {parent.status}")
         _method_use(
             connection, parent, actor=actor, epoch=epoch, grants=grants, decisions=decisions
         )
@@ -2246,6 +2349,25 @@ def check_work_close(
         # A sanitized plan keeps its membership record; closing stays possible.
         if plan is not None and all(child.work_id != work_id for child in plan.plan.children):
             raise FoundationError("wrong_work", "Child is not in its parent's current plan")
+        ancestor_id = parent_id
+        while (ancestor_binding := child_binding(connection, ancestor_id)) is not None:
+            ancestor_id = ancestor_binding[0]
+            _ancestor_revision, _ancestor_status, _ = _subject_current(
+                connection, ancestor_id, "work"
+            )
+            ancestor = WorkState.model_validate(
+                _subject_state(connection, ancestor_id, _ancestor_revision)
+            )
+            if ancestor.status != "proposed":
+                raise FoundationError("work_closed", f"Ancestor Work {ancestor_id} is closed")
+            _method_use(
+                connection,
+                ancestor,
+                actor=actor,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+            )
     if isinstance(state.method, MethodRef):
         if binding is None:
             _method_use(
@@ -2471,6 +2593,26 @@ def prepare_work_deletion(connection: sqlite3.Connection, work_id: UUID) -> None
     connection.execute("DELETE FROM work_plan_children WHERE parent_id = ?", (str(work_id),))
 
 
+def _descendant_works(connection: sqlite3.Connection, ancestor_id: str) -> set[str]:
+    """Address-only membership closure, including departed role fillers."""
+
+    found: set[str] = set()
+    pending = [ancestor_id]
+    while pending:
+        parent_id = pending.pop()
+        for child_id, _role in _member_rows(connection, parent_id):
+            if child_id not in found:
+                found.add(child_id)
+                pending.append(child_id)
+    return found
+
+
+def _contains_descendant(
+    connection: sqlite3.Connection, ancestor_id: str, departing_id: str
+) -> bool:
+    return ancestor_id == departing_id or departing_id in _descendant_works(connection, ancestor_id)
+
+
 def _recorded_plan_roles(
     connection: sqlite3.Connection,
     parent_id: str,
@@ -2516,7 +2658,7 @@ def _recorded_plan_roles(
         roles = {
             role
             for role, work in _revision_role_works(connection, parent_id, index).items()
-            if child_id is not None and work == str(child_id)
+            if child_id is not None and _contains_descendant(connection, work, str(child_id))
         }
     changed = True
     while changed:
@@ -2721,7 +2863,10 @@ def sanitize_deleted_dependency(
         current_plans[parent_id] = parsed_plan
         plan = json.loads(bytes(payload))
         contains_child = child_id is not None and (
-            any(child["work_id"] == str(child_id) for child in plan["children"])
+            any(
+                _contains_descendant(connection, child["work_id"], str(child_id))
+                for child in plan["children"]
+            )
             or (parent_id, int(revision)) in decision_work_revisions
         )
         contains_artifact = artifact_id is not None and _contains_artifact_ref(
@@ -2827,9 +2972,7 @@ def sanitize_deleted_dependency(
                 source_operation,
                 recorded_plans,
                 artifact_id=artifact_id,
-                child_id=(
-                    child_id if membership is not None and str(membership[0]) == parent_id else None
-                ),
+                child_id=child_id,
             )
             evidence_roles = (
                 _recorded_evidence_roles(
@@ -2864,11 +3007,7 @@ def sanitize_deleted_dependency(
                         instance.definition.role,
                         recorded_plans,
                         artifact_id=artifact_id,
-                        child_id=(
-                            child_id
-                            if membership is not None and str(membership[0]) == parent_id
-                            else None
-                        ),
+                        child_id=child_id,
                     )
                 )
             )
@@ -3119,6 +3258,7 @@ def _outcome_dependencies(
     if own:
         for child, _role in _member_rows(connection, work_id):
             works.add(child)
+            works.update(_descendant_works(connection, child))
             artifacts.update(_subject_artifacts(connection, child))
         artifacts.update(_evidence_artifacts(connection, work_id, None))
     membership = plan_membership(connection, UUID(work_id))

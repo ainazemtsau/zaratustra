@@ -34,6 +34,7 @@ from .composition import (
     _record_plan_method,
     _validate_choice_leaves,
     _validate_plan,
+    check_child_plan,
     check_work_close,
     child_binding,
     revision_role_works,
@@ -53,6 +54,7 @@ from .models import (
     PlanNodes,
     ReviseActivePlanRequest,
     RoleFilling,
+    WorkPlan,
     WorkState,
 )
 from .operations import (
@@ -258,6 +260,106 @@ def _close_node(
     return revision + 1
 
 
+def _close_descendants(
+    connection: sqlite3.Connection,
+    request: ReviseActivePlanRequest,
+    item: PlanNodeDecision,
+    node: PlanChild,
+    *,
+    now: str,
+    epoch: int,
+    authority_source: str,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    """Match every unfinished descendant, then close deepest nodes before their parents."""
+
+    if not isinstance(node.state.method, MethodRef):
+        if item.descendants:
+            raise FoundationError("mapping_invalid", "Plain Work has no descendants")
+        return []
+    found: dict[UUID, tuple[int, UUID, int, PlanChild, int, WorkState]] = {}
+
+    def visit(parent_id: UUID, depth: int) -> None:
+        plan = _plan(connection, parent_id)
+        for child in plan.plan.children:
+            revision, status, _ = _subject_current(connection, child.work_id, "work")
+            if status != "proposed":
+                continue
+            state = WorkState.model_validate(_subject_state(connection, child.work_id, revision))
+            found[child.work_id] = (depth, parent_id, plan.revision, child, revision, state)
+            if isinstance(state.method, MethodRef):
+                visit(child.work_id, depth + 1)
+
+    visit(node.work_id, 1)
+    mapped = {entry.work_id: entry for entry in item.descendants}
+    if len(mapped) != len(item.descendants):
+        raise FoundationError("mapping_invalid", "A descendant is listed more than once")
+    if set(mapped) - set(found):
+        raise FoundationError("mapping_invalid", "Foreign or already finished descendant")
+    missing = sorted(set(found) - set(mapped), key=str)
+    if missing:
+        names = ", ".join(f"{found[work][3].role}:{work}" for work in missing)
+        raise FoundationError("open_children", "Name every unfinished descendant: " + names)
+    targets: list[dict[str, object]] = []
+    for work_id, (depth, parent_id, plan_revision, child, revision, state) in sorted(
+        found.items(), key=lambda entry: -entry[1][0]
+    ):
+        _ = depth
+        entry = mapped[work_id]
+        if entry.parent_work_id != parent_id or entry.role != child.role:
+            raise FoundationError(
+                "mapping_invalid", f"Descendant {work_id} has another parent or role"
+            )
+        if entry.expected_plan_revision != plan_revision:
+            raise FoundationError("stale_plan", f"Plan of descendant {work_id} changed")
+        # Every ancestor of the departing subtree needs current Method use authority.
+        ancestor_id = parent_id
+        while ancestor_id != request.work_id:
+            _rev, ancestor, _definition = _parent(connection, ancestor_id)
+            _method_use(
+                connection,
+                ancestor,
+                actor=request.actor,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+            )
+            binding = child_binding(connection, ancestor_id)
+            if binding is None:
+                raise FoundationError("mapping_invalid", f"Descendant {work_id} left its subtree")
+            ancestor_id = binding[0]
+        closure_item = PlanNodeDecision(
+            role=child.role,
+            decision="cancel" if entry.closure.outcome == "cancelled" else "stale",
+            work_id=work_id,
+            closure=entry.closure,
+        )
+        new_revision = _close_node(
+            connection,
+            request,
+            closure_item,
+            child,
+            revision,
+            state,
+            now=now,
+            epoch=epoch,
+            authority_source=authority_source,
+            grants=grants,
+            decisions=decisions,
+        )
+        targets.append({"record_id": str(work_id), "revision": new_revision})
+        targets.extend(
+            {"record_id": str(reference.artifact_id), "revision": reference.revision}
+            for reference in entry.closure.premises
+        )
+        targets.extend(
+            {"record_id": str(reference.decision_id), "revision": reference.revision}
+            for reference in entry.closure.decision_premises
+        )
+    return targets
+
+
 def _recheck_kept(
     connection: sqlite3.Connection,
     request: ReviseActivePlanRequest,
@@ -304,6 +406,102 @@ def _recheck_kept(
         raise FoundationError("stale_input", "Kept node is missing an exact dependency input")
 
 
+def _create_nested_plan(
+    connection: sqlite3.Connection,
+    request: ReviseActivePlanRequest,
+    node: PlanChild,
+    plan: WorkPlan,
+    *,
+    now: str,
+    epoch: int,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    """Materialize a new composite node and its initial plain children in this transaction."""
+
+    state = node.state
+    assert isinstance(state.method, MethodRef)
+    definition = _method(connection, state.method)
+    if definition.required_capabilities:
+        raise FoundationError("unsupported_condition", "Method capabilities are not connected")
+    _method_use(
+        connection, state, actor=request.actor, epoch=epoch, grants=grants, decisions=decisions
+    )
+    if state.expected_outputs != definition.named_outputs:
+        raise FoundationError("method_mismatch", "Nested Work outputs differ from pinned Method")
+    _validate_plan(plan, definition, state.activity_id)
+    _validate_choice_leaves(connection, plan)
+    inputs = {item.slot: item.artifact for item in plan.named_inputs}
+    declared = {item.slot: item.media_type for item in definition.named_inputs}
+    if set(inputs) != set(declared) or set(inputs.values()) != set(state.inputs):
+        raise FoundationError("method_mismatch", "Nested Method inputs do not match Work")
+    if node.work_id in {child.work_id for child in plan.children}:
+        raise FoundationError("invalid_plan", "Nested Work cannot be its own child")
+    for reference in state.inputs + plan.basis:
+        _current_artifact(
+            connection,
+            reference,
+            actor=request.actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
+    targets: list[dict[str, object]] = []
+    for child in plan.children:
+        _write_subject(
+            connection,
+            record_id=child.work_id,
+            kind="work",
+            parent_id=state.activity_id,
+            operation_id=request.operation_id,
+            actor=request.actor,
+            now=now,
+            status="proposed",
+            state=child.state,
+            revision=1,
+        )
+        connection.execute(
+            "INSERT INTO work_plan_children(child_id, parent_id, role) VALUES (?, ?, ?)",
+            (str(child.work_id), str(node.work_id), child.role),
+        )
+        targets.append({"record_id": str(child.work_id), "revision": 1})
+    connection.execute(
+        "INSERT INTO work_plan_revisions(parent_id, revision, payload, operation_id, "
+        "created_at, actor) VALUES (?, 1, ?, ?, ?, ?)",
+        (
+            str(node.work_id),
+            plan.model_dump_json().encode("utf-8"),
+            str(request.operation_id),
+            now,
+            request.actor,
+        ),
+    )
+    _record_plan_method(connection, node.work_id, 1, state.method, request.operation_id)
+    for obligation in definition.obligations:
+        instance = ObligationRevision(
+            parent_work_id=node.work_id,
+            key=obligation.key,
+            revision=1,
+            definition=obligation,
+            applicability="active" if obligation.applicability == "always" else "unresolved",
+            status="open",
+            operation_id=request.operation_id,
+            created_at=datetime.fromisoformat(now),
+        )
+        connection.execute(
+            "INSERT INTO work_obligation_revisions(parent_id, key, revision, payload, "
+            "operation_id, created_at) VALUES (?, ?, 1, ?, ?, ?)",
+            (
+                str(node.work_id),
+                obligation.key,
+                instance.model_dump_json().encode("utf-8"),
+                str(request.operation_id),
+                now,
+            ),
+        )
+    return targets
+
+
 def _prepare_method_transition(
     connection: sqlite3.Connection,
     request: ReviseActivePlanRequest,
@@ -330,10 +528,8 @@ def _prepare_method_transition(
         or parent.expected_outputs != definition.named_outputs
     ):
         raise FoundationError("method_incompatible", "Named Method inputs or outputs changed")
-    if definition.role_methods or definition.required_capabilities:
-        raise FoundationError(
-            "unsupported_condition", "Role Methods and capabilities belong to later work"
-        )
+    if definition.required_capabilities:
+        raise FoundationError("unsupported_condition", "Method capabilities are not connected")
     _method_use(
         connection,
         parent.model_copy(update={"method": target}),
@@ -622,6 +818,19 @@ def revise_active_plan(
 
     parent_revision, _status, _ = _subject_current(connection, request.work_id, "work")
     _rev, parent, definition = _parent(connection, request.work_id)
+    parent_binding = child_binding(connection, request.work_id)
+    if parent_binding is not None:
+        check_child_plan(
+            connection,
+            request.work_id,
+            parent_binding,
+            parent,
+            attempt_id=None,
+            actor=request.actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
     if parent_revision != request.expected_work_revision:
         raise FoundationError("stale_work", "Parent Work revision changed")
     _method_use(
@@ -651,7 +860,7 @@ def revise_active_plan(
         raise FoundationError(
             "unsupported_plan_change", "Named Method inputs stay pinned for the whole Work"
         )
-    _validate_plan(request.plan, effective_definition, parent.activity_id)
+    _validate_plan(request.plan, effective_definition, parent.activity_id, allow_nested=True)
     _validate_choice_leaves(connection, request.plan)
     for reference in request.plan.basis + parent.inputs:
         _current_artifact(
@@ -669,6 +878,15 @@ def revise_active_plan(
         item.role: _require_valid_decision(connection, item, old, new, current.revision)
         for item in request.nodes
     }
+    for item in request.nodes:
+        if item.decision not in ("add", "replace"):
+            continue
+        fresh_node = new[item.role]
+        nested = isinstance(fresh_node.state.method, MethodRef)
+        if nested != (item.nested_plan is not None):
+            raise FoundationError(
+                "invalid_plan", "A new composite node needs exactly one initial nested plan"
+            )
     for item in request.nodes:
         fresh = item.replacement if item.decision == "replace" else item.work_id
         if (
@@ -688,7 +906,23 @@ def revise_active_plan(
     closed: dict[str, int] = {}
     for item in request.nodes:
         known = nodes[item.role]
-        if item.closure is None or known is None:
+        if known is None:
+            continue
+        if item.decision in ("replace", "cancel", "stale"):
+            targets.extend(
+                _close_descendants(
+                    connection,
+                    request,
+                    item,
+                    old[item.role],
+                    now=now,
+                    epoch=epoch,
+                    authority_source=authority_source,
+                    grants=grants,
+                    decisions=decisions,
+                )
+            )
+        if item.closure is None:
             continue
         closed[item.role] = _close_node(
             connection,
@@ -734,6 +968,19 @@ def revise_active_plan(
             (str(fresh_node.work_id), str(request.work_id), item.role, next_revision),
         )
         targets.append({"record_id": str(fresh_node.work_id), "revision": 1})
+        if item.nested_plan is not None:
+            targets.extend(
+                _create_nested_plan(
+                    connection,
+                    request,
+                    fresh_node,
+                    item.nested_plan,
+                    now=now,
+                    epoch=epoch,
+                    grants=grants,
+                    decisions=decisions,
+                )
+            )
     connection.execute(
         "INSERT INTO work_plan_revisions(parent_id, revision, payload, operation_id, "
         "created_at, actor) VALUES (?, ?, ?, ?, ?, ?)",
