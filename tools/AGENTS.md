@@ -30,6 +30,10 @@ probe_stage6_pass3 is the development-only schema 7 functional trace through
 ordinary localhost Pi/DBOS. It reuses synthetic helpers from probe_stage6_rpc,
 counts HTTP at each step and checks restart, backup/restore and deletion. The
 unchanged Stage 5, Stage 6 and installed-wheel probes remain separate regressions.
+`probe_stage6_rpc --parent-execution` runs schema 8 A/B/P through the same
+localhost Pi/DBOS path, counting three HTTP and checking own confirmation,
+Pi visibility, inert restore and sequential deletion. `probe_install_stage6
+--parent-execution` runs that mode from a wheel in an outside-checkout venv.
 Start isolated children as `-I -X utf8`: -I ignores PYTHONIOENCODING on Windows pipes.
 Its provider is a localhost synthetic fixture; it never contacts a real model.
 probe_public_onboarding_t1 builds and installs the current wheel, migrates only an

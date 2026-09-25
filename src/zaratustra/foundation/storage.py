@@ -643,7 +643,54 @@ PLAN_REVISION_SCHEMA_SHA256 = (
     .hexdigest()
     .upper()
 )
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7)
+
+PARENT_EXECUTION_SCHEMA_NAME = "core-v0.1-parent-execution-8"
+PARENT_EXECUTION_SCHEMA_STATEMENTS: tuple[str, ...] = (
+    """
+    CREATE TABLE execution_parent_pins (
+        attempt_id TEXT PRIMARY KEY,
+        work_id TEXT NOT NULL,
+        plan_revision INTEGER NOT NULL CHECK (plan_revision >= 1),
+        method_id TEXT NOT NULL,
+        method_version INTEGER NOT NULL CHECK (method_version >= 1),
+        method_checksum TEXT NOT NULL,
+        operation_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (attempt_id) REFERENCES execution_attempts(attempt_id),
+        FOREIGN KEY (work_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE parent_output_proofs (
+        artifact_id TEXT PRIMARY KEY,
+        artifact_revision INTEGER NOT NULL CHECK (artifact_revision >= 1),
+        work_id TEXT NOT NULL,
+        slot TEXT NOT NULL,
+        attempt_id TEXT NOT NULL,
+        plan_revision INTEGER NOT NULL CHECK (plan_revision >= 1),
+        method_id TEXT NOT NULL,
+        method_version INTEGER NOT NULL CHECK (method_version >= 1),
+        method_checksum TEXT NOT NULL,
+        operation_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (artifact_id) REFERENCES records(record_id),
+        FOREIGN KEY (work_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (attempt_id) REFERENCES execution_attempts(attempt_id),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    "CREATE INDEX parent_pin_work ON execution_parent_pins(work_id)",
+    "CREATE INDEX parent_proof_work ON parent_output_proofs(work_id, slot)",
+)
+PARENT_EXECUTION_SCHEMA_SHA256 = (
+    hashlib.sha256(
+        "\n".join(statement.strip() for statement in PARENT_EXECUTION_SCHEMA_STATEMENTS).encode()
+    )
+    .hexdigest()
+    .upper()
+)
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8)
 
 
 def utc_now() -> datetime:
@@ -770,6 +817,8 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         expected.append((6, CHILD_EXECUTION_SCHEMA_NAME, CHILD_EXECUTION_SCHEMA_SHA256))
     if schema_version >= 7:
         expected.append((7, PLAN_REVISION_SCHEMA_NAME, PLAN_REVISION_SCHEMA_SHA256))
+    if schema_version >= 8:
+        expected.append((8, PARENT_EXECUTION_SCHEMA_NAME, PARENT_EXECUTION_SCHEMA_SHA256))
     if migration != expected:
         raise FoundationError("unsupported_schema", "Schema history does not match installed code")
     rows = connection.execute(
@@ -783,7 +832,7 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         database=database,
         space_id=UUID(space_id),
         created_at=datetime.fromisoformat(created_at),
-        schema_version=cast(Literal[1, 2, 3, 4, 5, 6, 7], schema_version),
+        schema_version=cast(Literal[1, 2, 3, 4, 5, 6, 7, 8], schema_version),
         state_revision=state_revision,
         execution_epoch=execution_epoch,
         recovery_state=recovery_state,
@@ -1150,6 +1199,9 @@ __all__ = [
     "PLAN_REVISION_SCHEMA_NAME",
     "PLAN_REVISION_SCHEMA_SHA256",
     "PLAN_REVISION_SCHEMA_STATEMENTS",
+    "PARENT_EXECUTION_SCHEMA_NAME",
+    "PARENT_EXECUTION_SCHEMA_SHA256",
+    "PARENT_EXECUTION_SCHEMA_STATEMENTS",
     "SCHEMA_SHA256",
     "SCHEMA_VERSION",
     "SUPPORTED_SCHEMA_VERSIONS",

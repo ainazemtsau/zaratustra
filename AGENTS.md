@@ -157,8 +157,9 @@ see `STAGE6-PASS3-CHECKPOINT-3.8.md`. Part 3.9 is implemented as a development
 checkpoint, with technical review closed at `73fffa7`; see
 `STAGE6-PASS3-REVIEW-3.9.md`. Part 3.10 is implemented, with technical review
 closed at `4c9c8ec`; see `STAGE6-PASS3-IMPLEMENTATION.md` and
-`STAGE6-PASS3-REVIEW-3.10.md`. The separate parent-execution slice remains a
-plan only.
+`STAGE6-PASS3-REVIEW-3.10.md`. The separate parent-execution slice has owner
+authorization for implementation and one technical review; see
+`STAGE6-PARENT-EXECUTION-PLAN.md`.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,
@@ -239,7 +240,8 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
   commits above; this is not owner acceptance of Stage 6. Stage 6 pass 3 is
   implemented through part 3.10. Its technical reviews are closed separately;
   schema 7, pass 3 and Stage 6 remain unaccepted. The separate
-  parent-execution slice is authorized for planning only.
+  parent-execution slice is authorized for implementation and awaits its own
+  technical review, separately from owner acceptance.
   Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.

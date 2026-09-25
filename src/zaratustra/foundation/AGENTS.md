@@ -205,7 +205,7 @@ initial plain children, plan, Method binding and obligations are one transaction
 `PlanChild.state.method` records the chosen exact version before issue. Issue,
 execution and integration check the full issued ancestor chain and `method.use`
 at each level; closure retains the explicit 3.1 outcome path. A nested composite
-Work has no own Attempt; its acceptance applies its
+Work has no own Attempt before schema 8; its acceptance applies its
 own completion and obligations plus current parent membership. A departing
 nested node must explicitly list every unfinished descendant with its own Work
 revision and immediate parent's plan revision; closures run deepest first,
@@ -226,6 +226,21 @@ addressed obligation, applicability and waiver states; `nested` holds the child'
 own distinct plan and obligations. Neither view copies plan text. See
 `docs/core-v0.1/STAGE6-PASS3-REVIEW-3.9.md` and
 `docs/core-v0.1/STAGE6-PASS3-IMPLEMENTATION.md`.
+
+Schema 8 is a separate explicit additive upgrade for a composite Work's own
+assigned Attempt. `execution_parent_pins` records its own exact plan revision and
+Method, while `parent_output_proofs` records the producing Attempt, pin and exact
+Artifact. A plan declares an own output by Work and slot, not by Attempt; another
+valid Attempt of that Work can publish a replacement without a plan revision, but
+the old confirmation reopens and cannot silently attach to the new result.
+`MethodObligation.role` is absent only for the schema 8 own-result variant.
+The ordinary assigned Core gate checks the full issued ancestor chain, Method use,
+current inputs/basis and both pins for a nested parent. Plan or Method revision
+fences its Attempt; a sent call remains unknown with resource/reserve held.
+`CompositionView.own_pins` and derived Work status expose addresses and own phase.
+Exact history, backup format 2/schema 8, inert restore and dependent deletion use
+the existing maintenance path. Schema 7 payloads and DDL remain byte compatible.
+See `docs/core-v0.1/STAGE6-PARENT-EXECUTION-IMPLEMENTATION.md`.
 
 The foundation stores Work execution records but never imports Pi or runs a model.
 Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,

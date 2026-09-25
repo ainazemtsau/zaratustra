@@ -32,6 +32,7 @@ from .composition import (
     _pinned_plan,
     _plan,
     _record_plan_method,
+    _schema,
     _validate_choice_leaves,
     _validate_plan,
     check_child_plan,
@@ -60,6 +61,7 @@ from .models import (
 from .operations import (
     LocalAuthority,
     _authorize,
+    _hold_work_execution,
     _local_space,
     _subject_current,
     _subject_state,
@@ -443,7 +445,7 @@ def _create_nested_plan(
     )
     if state.expected_outputs != definition.named_outputs:
         raise FoundationError("method_mismatch", "Nested Work outputs differ from pinned Method")
-    _validate_plan(plan, definition, state.activity_id)
+    _validate_plan(plan, definition, state.activity_id, schema=_schema(connection))
     _validate_choice_leaves(connection, plan)
     inputs = {item.slot: item.artifact for item in plan.named_inputs}
     declared = {item.slot: item.media_type for item in definition.named_inputs}
@@ -671,6 +673,7 @@ def _materialize_method_transition(
                 "revision": source.revision + 1,
                 "status": "retired",
                 "evidence": None,
+                "parent_result": None,
                 "basis": None,
                 "exception": None,
                 "reopened": None,
@@ -705,10 +708,14 @@ def _materialize_method_transition(
                 applicability = standing
                 choice = carried_source.choice
                 basis = carried_source.basis
+                if carried_source.status == "satisfied" and target.role is None:
+                    # The new plan fences the own Attempt; never carry its text or proof.
+                    basis = None
                 if (
                     applicability == "active"
                     and carried_source.status == "satisfied"
                     and carried_source.evidence
+                    and target.role is not None
                 ):
                     try:
                         actual = _accepted_output(
@@ -884,7 +891,13 @@ def revise_active_plan(
         raise FoundationError(
             "unsupported_plan_change", "Named Method inputs stay pinned for the whole Work"
         )
-    _validate_plan(request.plan, effective_definition, parent.activity_id, allow_nested=True)
+    _validate_plan(
+        request.plan,
+        effective_definition,
+        parent.activity_id,
+        schema=_schema(connection),
+        allow_nested=True,
+    )
     _validate_choice_leaves(connection, request.plan)
     for reference in request.plan.basis + parent.inputs:
         _current_artifact(
@@ -1020,6 +1033,10 @@ def revise_active_plan(
     _record_plan_method(
         connection, request.work_id, next_revision, effective_method, request.operation_id
     )
+    if _schema(connection) >= 8:
+        _hold_work_execution(
+            connection, request.work_id, request.operation_id, now, "revise_parent_plan"
+        )
 
     carried: set[str] = set()
     transfers: list[dict[str, object]] = []
@@ -1143,22 +1160,27 @@ def revise_active_plan(
     else:
         for instance in instances:
             role = instance.definition.role
-            before, after = old.get(role), new.get(role)
-            if instance.status != "satisfied" or before is None:
+            if instance.status != "satisfied":
                 continue
-            if after is not None and after.work_id == before.work_id:
-                continue
+            if role is None:
+                reason = "stale_plan"
+            else:
+                before, after = old.get(role), new.get(role)
+                if before is None or (after is not None and after.work_id == before.work_id):
+                    continue
+                reason = "node_replaced"
             # The evidence belongs to a Work that no longer fills the role in this revision.
             reopened_instance = instance.model_copy(
                 update={
                     "revision": instance.revision + 1,
                     "status": "open",
                     "evidence": None,
+                    "parent_result": None,
                     "basis": None,
                     "operation_id": request.operation_id,
                     "created_at": datetime.fromisoformat(now),
                     "exception": None,
-                    "reopened": "node_replaced",
+                    "reopened": reason,
                     "carried_from_key": None,
                     "carried_from_revision": None,
                 }

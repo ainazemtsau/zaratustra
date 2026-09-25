@@ -47,7 +47,7 @@ function lifecycle(current: any): string {
     for (const child of plan.departed ?? [])
       line += `\n${indent}  departed ${child.role} ${child.work_id}: ${child.status.status}`;
     for (const item of plan.obligations ?? []) {
-      line += `\n${indent}  obligation ${item.key}@${item.revision} (${item.role}):` +
+      line += `\n${indent}  obligation ${item.key}@${item.revision} (${item.role ?? "own Work"}):` +
         ` ${item.applicability}/${item.status}` +
         `${item.choice ? ` choice ${item.choice.decision_id}@${item.choice.revision}` : ""}` +
         `${item.exception ? ` exception ${item.exception.decision_id}@${item.exception.revision}` : ""}` +
@@ -58,6 +58,9 @@ function lifecycle(current: any): string {
         `${node.replaced_work_id ? ` replaces ${node.replaced_work_id}` : ""}`;
     for (const pin of plan.pins ?? [])
       line += `\n${indent}  pin ${pin.attempt_id}: plan@${pin.plan_revision};` +
+        ` Method ${pin.method.method_id}@${pin.method.version}`;
+    for (const pin of plan.own_pins ?? [])
+      line += `\n${indent}  own Attempt ${pin.attempt_id}: plan@${pin.plan_revision};` +
         ` Method ${pin.method.method_id}@${pin.method.version}`;
     for (const transfer of plan.transfers ?? [])
       line += `\n${indent}  transfer ${transfer.attempt_id}:` +

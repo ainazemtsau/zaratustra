@@ -53,6 +53,7 @@ from zaratustra.foundation import (
     NamedInput,
     OperationReceipt,
     OutputContract,
+    ParentOutputSlot,
     PlanChild,
     PlanCondition,
     PlanOutputBinding,
@@ -71,6 +72,7 @@ from zaratustra.foundation import (
     read_activity,
     read_execution,
     read_obligation,
+    read_parent_output_proof,
     read_receipt,
     read_space,
     read_work,
@@ -81,6 +83,7 @@ from zaratustra.foundation import (
     upgrade_composition_space,
     upgrade_continuation_space,
     upgrade_execution_space,
+    upgrade_parent_execution_space,
     upgrade_plan_revision_space,
     upgrade_space,
 )
@@ -1329,18 +1332,284 @@ def _delete_restored(
     }
 
 
+def run_parent_execution(output: Path, pi_runtime: Path) -> dict[str, object]:
+    """Three real assigned Pi/DBOS runs against a fictional localhost provider."""
+
+    output = output.resolve()
+    output.mkdir(parents=True, exist_ok=False)
+    marker = f"fictional-parent-own-{uuid4().hex[:12]}"
+    answers = ("fictional A", "fictional B", marker)
+    provider = SyntheticProvider(
+        tuple(json.dumps({"zara": "final", "text": answer}) for answer in answers)
+    )
+    server = threading.Thread(target=provider.serve_forever, daemon=True)
+    server.start()
+    steps: list[dict[str, object]] = []
+    try:
+        data = _space(output)
+        root, owner = cast(Path, data["root"]), cast(LocalAuthority, data["owner"])
+        assert upgrade_plan_revision_space(root, owner).schema_version == 7
+        assert upgrade_parent_execution_space(root, owner).schema_version == 8
+        activity, source = cast(UUID, data["activity"]), cast(UUID, data["source"])
+        source_ref = ArtifactRef(artifact_id=source, revision=1)
+        p, a, b, method_id = (uuid4() for _ in range(4))
+        own_output = OutputContract(slot="final", media_type="text/plain")
+        method_receipt = _apply(
+            root,
+            owner,
+            CreateMethodVersionRequest,
+            method_id=method_id,
+            version=1,
+            definition=MethodDefinition(
+                instruction="Synthesize two fictional checked results",
+                named_inputs=(OutputContract(slot="source", media_type="text/plain"),),
+                named_outputs=(own_output,),
+                obligations=(
+                    MethodObligation(
+                        key="summary_checked",
+                        source="Review own fictional summary",
+                        slot="final",
+                        media_type="text/plain",
+                    ),
+                ),
+                source_ref="fictional-own-method",
+            ),
+        )
+        method = MethodRef(
+            method_id=method_id, version=1, checksum=str(method_receipt.result["checksum"])
+        )
+        plan = WorkPlan(
+            named_inputs=(NamedInput(slot="source", artifact=source_ref),),
+            parent_outputs=(ParentOutputSlot(slot="final", media_type="text/plain"),),
+            children=(
+                PlanChild(
+                    role="a",
+                    work_id=a,
+                    state=WorkState(
+                        activity_id=activity,
+                        goal="Fictional A",
+                        expected_outputs=(OutputContract(slot="result", media_type="text/plain"),),
+                    ),
+                ),
+                PlanChild(
+                    role="b",
+                    work_id=b,
+                    state=WorkState(
+                        activity_id=activity,
+                        goal="Fictional B",
+                        expected_outputs=(OutputContract(slot="result", media_type="text/plain"),),
+                    ),
+                ),
+            ),
+            completion=PlanCondition(
+                kind="all",
+                members=(
+                    PlanCondition(kind="work_succeeded", role="a"),
+                    PlanCondition(kind="work_succeeded", role="b"),
+                ),
+            ),
+            basis=(source_ref,),
+            rationale="Fictional own parent result",
+            source_ref="fictional-own-plan",
+        )
+        _apply(
+            root,
+            owner,
+            CreateCompositeWorkRequest,
+            work_id=p,
+            state=WorkState(
+                activity_id=activity,
+                goal="Fictional parent",
+                method=method,
+                inputs=(source_ref,),
+                expected_outputs=(own_output,),
+            ),
+            plan=plan,
+        )
+        package = pi_runtime.resolve() / "node_modules" / "@earendil-works" / "pi-coding-agent"
+        workspaces = {name: output / f"workspace-{name}" for name in ("a", "b", "p")}
+        for name, work in (("a", a), ("b", b), ("p", p)):
+            workspaces[name].mkdir(exist_ok=True)
+            _apply(
+                root,
+                owner,
+                CreateResourceRequest,
+                resource_id=uuid4(),
+                work_id=work,
+                state=ResourceState(
+                    label=f"Fictional {name}", root=workspaces[name], limit_units=10000
+                ),
+            )
+
+        def config(name: str) -> AssignedConfig:
+            return AssignedConfig(
+                space=root,
+                workspace=workspaces[name],
+                pi_cli=package / "dist" / "bundle" / "cli.js",
+                pi_runtime=pi_runtime.resolve(),
+                node="node",
+                provider_profile="local-completions",
+                provider_base_url=f"http://127.0.0.1:{provider.server_port}/v1",
+                provider_id="zara-synthetic",
+                model_id="synthetic-model",
+                context_window=4096,
+                max_tokens=512,
+                reserve_units=1000,
+                limit_units=10000,
+                offline=True,
+            )
+
+        artifacts: dict[str, ArtifactRef] = {}
+        runs: dict[str, object] = {}
+        for number, (name, work) in enumerate((("a", a), ("b", b), ("p", p)), 1):
+            if name != "p":
+                apply_operation(root, _issue(root, owner, p, work, 1), owner)
+            assignment = _assign(root, owner, work)
+            apply_operation(root, assignment, owner)
+            runs[name] = run_assigned(config(name), owner, assignment.attempt_id)
+            snapshot = read_execution(root, work, owner)
+            output_record = snapshot.outputs[-1]
+            artifacts[name] = ArtifactRef(
+                artifact_id=output_record.artifact_id, revision=output_record.revision
+            )
+            assert len(provider.digests) == number, (name, provider.digests)
+            steps.append({"step": f"{name} assigned result", "http": len(provider.digests)})
+            if name != "p":
+                _apply(
+                    root,
+                    owner,
+                    AcceptWorkRequest,
+                    work_id=work,
+                    expected_revision=read_work(root, work, owner).revision,
+                    basis=f"Fictional {name} accepted",
+                )
+        own = artifacts["p"]
+        proof = read_parent_output_proof(root, own.artifact_id, owner)
+        assert proof.attempt_id == assignment.attempt_id and proof.plan_revision == 1
+        _apply(
+            root,
+            owner,
+            ConfirmObligationRequest,
+            work_id=p,
+            key="summary_checked",
+            expected_plan_revision=1,
+            expected_obligation_revision=1,
+            evidence=own,
+            basis=f"Checked {marker}",
+        )
+        _apply(
+            root,
+            owner,
+            AcceptWorkRequest,
+            work_id=p,
+            expected_revision=read_work(root, p, owner).revision,
+            basis=f"Accepted {marker}",
+        )
+        assert read_work_status(root, p, owner).status == "succeeded"
+        visible = status_via_pi(
+            root,
+            workspaces["p"],
+            owner,
+            config("p"),
+            activity,
+            p,
+            ("succeeded", "summary_checked", "own Attempt", "Method"),
+        )
+        assert len(provider.digests) == 3
+        steps.append({"step": "confirm, accept and Pi status", "http": len(provider.digests)})
+        prior = create_assigned_backup(root, uuid4(), owner)
+        assert prior.manifest.schema_version == 8
+        restored_root = output / "restored"
+        restored_root.mkdir()
+        restored = restore_backup(
+            prior.package,
+            restored_root,
+            authorize_recovery(actor=ACTOR, source_ref="fictional-parent-restore"),
+        )
+        assert restored.schema_version == 8 and restored.execution_epoch == 2
+        recovery = authorize_recovery(actor=ACTOR, source_ref="fictional-parent-recovery")
+        apply_operation(
+            restored_root,
+            RecoverRequest(
+                operation_id=uuid4(),
+                space_id=owner.space_id,
+                actor=ACTOR,
+                decision_id=uuid4(),
+                grant_id=uuid4(),
+            ),
+            recovery,
+        )
+        restored_owner = authorize_local(
+            restored_root, actor=ACTOR, source_ref="fictional-restored-read"
+        )
+        assert (
+            read_parent_output_proof(restored_root, own.artifact_id, restored_owner).attempt_id
+            == assignment.attempt_id
+        )
+        assert read_work_status(restored_root, p, restored_owner).status == "succeeded"
+        steps.append({"step": "backup and inert restore", "http": len(provider.digests)})
+        for name, work in (("a", a), ("b", b), ("p", p)):
+            _apply(
+                root,
+                owner,
+                DeleteWorkRequest,
+                work_id=work,
+                expected_revision=read_work(root, work, owner).revision,
+            )
+            _apply(
+                root,
+                owner,
+                DeleteArtifactRequest,
+                artifact_id=artifacts[name].artifact_id,
+                expected_revision=1,
+            )
+            deletion = complete_assigned_deletions(root, owner)
+            assert deletion.pending_jobs == 0 and deletion.live_store_sanitized
+            steps.append({"step": f"delete {name}", "http": len(provider.digests)})
+        assert not prior.package.exists()
+        clean = create_assigned_backup(root, uuid4(), owner)
+        assert not _contains(root / ".zara-core", marker)
+        assert not _contains(clean.package, marker)
+        assert len(provider.digests) == 3
+        import dbos
+
+        return {
+            "status": "passed",
+            "schema": 8,
+            "http_steps": steps,
+            "http_total": len(provider.digests),
+            "runs": runs,
+            "own_attempt": str(proof.attempt_id),
+            "pi_status": visible.splitlines()[:10],
+            "foundation_module": str(Path(foundation.__file__).resolve()),
+            "dbos_module": str(Path(dbos.__file__).resolve()),
+            "extension_resource": str(
+                Path(str(files("zaratustra.pi_adapter").joinpath("extension.ts"))).resolve()
+            ),
+        }
+    finally:
+        provider.shutdown()
+        provider.server_close()
+        server.join(timeout=5)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--pi-runtime", type=Path)
     parser.add_argument("--reopen")
+    parser.add_argument("--parent-execution", action="store_true")
     args = parser.parse_args()
     if args.reopen is not None:
         print(json.dumps(reopen(json.loads(args.reopen)), ensure_ascii=False))
         return 0
     if args.output is None or args.pi_runtime is None:
         parser.error("Supply --output and --pi-runtime")
-    report = run(args.output, args.pi_runtime)
+    report = (
+        run_parent_execution(args.output, args.pi_runtime)
+        if args.parent_execution
+        else run(args.output, args.pi_runtime)
+    )
     (args.output / "report.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n"
     )

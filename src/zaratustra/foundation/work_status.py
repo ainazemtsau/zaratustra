@@ -14,12 +14,14 @@ from .choices import choice_leaf_conflict, obligation_applicability
 from .composition import (
     REDACTED_DEPENDENCY,
     _accepted_output,
+    _accepted_parent_output,
     _current_artifact,
     _evaluate,
     _member_rows,
     _method,
     _parent,
     _plan,
+    _require_parent_pin_current,
     _sanitized_plan,
     check_child_plan,
     check_parent_acceptance,
@@ -38,6 +40,7 @@ from .models import (
     MethodRef,
     ObligationProgress,
     ObligationRevision,
+    ParentPlanPin,
     PlanCondition,
     PlanNode,
     PlanPin,
@@ -232,6 +235,7 @@ def _parent_gaps(
                 kind="accepted_output", role=item.role, slot=item.slot, media_type=item.media_type
             )
             for item in obligations
+            if item.role is not None
         ]
     )
     for condition in required:
@@ -710,6 +714,46 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
         for child in children
         if child.status.status == phase
     ]
+    own_phase: WorkStatus | None = None
+    if _schema(connection) >= 8:
+        own = connection.execute(
+            "SELECT a.attempt_id, a.status, s.status FROM execution_attempts a "
+            "LEFT JOIN execution_assignments s ON s.attempt_id = a.attempt_id "
+            "WHERE a.work_id = ? ORDER BY a.generation DESC LIMIT 1",
+            (str(work_id),),
+        ).fetchone()
+        if own is not None:
+            own_id = UUID(own[0])
+            if own[2] == "unknown":
+                own_phase = WorkStatus(
+                    work_id=work_id,
+                    status="blocked",
+                    attempt_id=own_id,
+                    reasons=(StatusReason(code="outcome_unknown", record_id=own_id),),
+                )
+            elif own[1] == "active" and own[2] == "stop_requested":
+                own_phase = WorkStatus(
+                    work_id=work_id,
+                    status="running",
+                    attempt_id=own_id,
+                    reasons=(StatusReason(code="stop_requested", record_id=own_id),),
+                )
+            elif own[1] == "active":
+                try:
+                    _require_parent_pin_current(connection, own_id, work_id)
+                except FoundationError as error:
+                    own_phase = WorkStatus(
+                        work_id=work_id,
+                        status="blocked",
+                        attempt_id=own_id,
+                        reasons=(StatusReason(code=error.code, record_id=own_id),),
+                    )
+                else:
+                    own_phase = _attempt_phase(connection, work_id, own_id, own[2])
+    if own_phase is not None and own_phase.status in ("waiting", "running"):
+        active.append(
+            StatusReason(code=f"parent_{own_phase.status}", record_id=own_phase.attempt_id)
+        )
     reviews = _branch_reviews(plan.plan, children, obligations, departed)
     # A formal conflict of applicable choices names every address; it is settled only
     # by revising or revoking a choice, never by scope or time.
@@ -741,13 +785,33 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
         )
         if gap.code != "dependency_closed"
     ] + conflicts
+    if own_phase is not None and own_phase.status == "blocked":
+        stale.extend(own_phase.reasons)
     if stale:
         return WorkStatus(
-            work_id=work_id, status="blocked", reasons=tuple(stale + active + reviews)
+            work_id=work_id,
+            status="blocked",
+            reasons=tuple(stale + active + reviews),
+            attempt_id=own_phase.attempt_id if own_phase is not None else None,
+        )
+    if own_phase is not None and own_phase.status == "waiting":
+        return WorkStatus(
+            work_id=work_id,
+            status="waiting",
+            reasons=tuple(active + reviews),
+            attempt_id=own_phase.attempt_id,
+            wait_id=own_phase.wait_id,
         )
     for phase, _code in phases:
         if any(child.status.status == phase for child in children):
             return WorkStatus(work_id=work_id, status=phase, reasons=tuple(active + reviews))
+    if own_phase is not None and own_phase.status == "running":
+        return WorkStatus(
+            work_id=work_id,
+            status="running",
+            reasons=tuple(active + reviews),
+            attempt_id=own_phase.attempt_id,
+        )
     declared = {item.key for item in definition.obligations}
     settled = {
         item.key
@@ -767,7 +831,12 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
                 connection, work_id, state, actor=None, epoch=0, grants=[], decisions=[]
             )
         except FoundationError as error:
-            if error.code not in ("dependency_open", "output_mismatch", "dependency_closed"):
+            if error.code not in (
+                "dependency_open",
+                "output_mismatch",
+                "dependency_closed",
+                "stale_plan",
+            ):
                 return WorkStatus(
                     work_id=work_id,
                     status="blocked",
@@ -799,8 +868,37 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
         for item in obligations
         if item.applicability == "active"
         and item.status in ("open", "waiver_stale")
-        and item.role in succeeded
+        and (
+            item.role in succeeded
+            or (
+                item.role is None
+                and any(
+                    output.slot == need.slot
+                    for output in state.linked_outputs
+                    for need in definition.obligations
+                    if need.key == item.key
+                )
+            )
+        )
     ]
+    if own_phase is not None and own_phase.status == "ready":
+        next_steps.append(StatusReason(code="parent_attempt_ready", record_id=own_phase.attempt_id))
+    for output in plan.plan.parent_outputs:
+        try:
+            _accepted_parent_output(
+                connection,
+                work_id,
+                state,
+                plan.plan,
+                output.slot,
+                output.media_type,
+                actor=None,
+                epoch=0,
+                grants=[],
+                decisions=[],
+            )
+        except FoundationError:
+            next_steps.append(StatusReason(code="parent_output_pending", record_id=work_id))
     # A waiver whose exact exception no longer holds needs a result or a new exception.
     for item in obligations:
         if item.status == "waiver_stale":
@@ -838,7 +936,12 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
     next_steps += _pending_links(connection, plan.plan, state)
     if next_steps or reviews:
         # A failed branch makes the parent ready for review when nothing waits or runs.
-        return WorkStatus(work_id=work_id, status="ready", reasons=tuple(next_steps + reviews))
+        return WorkStatus(
+            work_id=work_id,
+            status="ready",
+            reasons=tuple(next_steps + reviews),
+            attempt_id=(own_phase.attempt_id if own_phase is not None else None),
+        )
     return WorkStatus(
         work_id=work_id,
         status="blocked",
@@ -877,6 +980,26 @@ def _pins(connection: sqlite3.Connection, work_id: UUID) -> tuple[PlanPin, ...]:
         for row in connection.execute(
             "SELECT attempt_id, parent_id, role, plan_revision, method_id, method_version, "
             "method_checksum FROM execution_plan_pins WHERE work_id = ? "
+            "ORDER BY created_at, attempt_id",
+            (str(work_id),),
+        ).fetchall()
+    )
+
+
+def _own_pins(connection: sqlite3.Connection, work_id: UUID) -> tuple[ParentPlanPin, ...]:
+    if _schema(connection) < 8:
+        return ()
+    return tuple(
+        ParentPlanPin(
+            attempt_id=UUID(row[0]),
+            work_id=work_id,
+            plan_revision=int(row[1]),
+            method=MethodRef(method_id=UUID(row[2]), version=int(row[3]), checksum=row[4]),
+            operation_id=UUID(row[5]),
+        )
+        for row in connection.execute(
+            "SELECT attempt_id, plan_revision, method_id, method_version, method_checksum, "
+            "operation_id FROM execution_parent_pins WHERE work_id = ? "
             "ORDER BY created_at, attempt_id",
             (str(work_id),),
         ).fetchall()
@@ -947,6 +1070,7 @@ def _own_composition(
         method=state.method,
         plan_revision=address[0],
         plan_available=address[1],
+        own_pins=_own_pins(connection, work_id),
         children=children,
         obligations=_obligation_progress(connection, work_id, state.method),
         departed=departed,

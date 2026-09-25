@@ -46,6 +46,9 @@ from .models import (
     ObligationRevision,
     ObligationTarget,
     OpenWaitRequest,
+    ParentOutputProof,
+    ParentPlanPin,
+    ParentResultEvidence,
     PlanCondition,
     PlanRevision,
     PrepareInvocationRequest,
@@ -70,6 +73,7 @@ from .operations import (
     _artifact_reference,
     _authorize,
     _authorize_artifact_ref,
+    _hold_work_execution,
     _local_space,
     _subject_current,
     _subject_state,
@@ -82,6 +86,9 @@ from .storage import (
     COMPOSITION_SCHEMA_NAME,
     COMPOSITION_SCHEMA_SHA256,
     COMPOSITION_SCHEMA_STATEMENTS,
+    PARENT_EXECUTION_SCHEMA_NAME,
+    PARENT_EXECUTION_SCHEMA_SHA256,
+    PARENT_EXECUTION_SCHEMA_STATEMENTS,
     PLAN_REVISION_SCHEMA_NAME,
     PLAN_REVISION_SCHEMA_SHA256,
     PLAN_REVISION_SCHEMA_STATEMENTS,
@@ -307,6 +314,42 @@ def upgrade_plan_revision_space(path: Path, authority: LocalAuthority) -> SpaceI
     return read_space(path)
 
 
+def upgrade_parent_execution_space(path: Path, authority: LocalAuthority) -> SpaceInfo:
+    """Explicit additive schema 7 to 8 upgrade; reads never upgrade a space."""
+
+    with space_connection(path, writable=True) as (connection, info):
+        _local_space(authority, info)
+        if info.recovery_state != "active" or info.schema_version < 7:
+            raise FoundationError(
+                "unsupported_schema", "Parent execution upgrade requires active schema 7"
+            )
+        _authorize(
+            connection,
+            actor=authority.actor,
+            action="maintenance.backup",
+            epoch=info.execution_epoch,
+        )
+        if info.schema_version == 7:
+            for statement in PARENT_EXECUTION_SCHEMA_STATEMENTS:
+                connection.execute(statement)
+            now = utc_now().isoformat()
+            connection.execute(
+                "INSERT INTO schema_migrations(version, name, sha256, applied_at) "
+                "VALUES (8, ?, ?, ?)",
+                (PARENT_EXECUTION_SCHEMA_NAME, PARENT_EXECUTION_SCHEMA_SHA256, now),
+            )
+            connection.execute("PRAGMA user_version = 8")
+            connection.execute(
+                "UPDATE spaces SET state_revision = state_revision + 1 WHERE singleton = 1"
+            )
+            connection.execute(
+                "INSERT INTO maintenance_events(event_id, kind, occurred_at, detail_json) "
+                "VALUES (?, 'schema_upgrade', ?, ?)",
+                (str(uuid4()), now, canonical_json({"from": 7, "to": 8})),
+            )
+    return read_space(path)
+
+
 def _method(connection: sqlite3.Connection, ref: MethodRef) -> MethodDefinition:
     row = connection.execute(
         "SELECT checksum, status, payload FROM method_versions WHERE method_id = ? AND version = ?",
@@ -462,8 +505,17 @@ def _validate_choice_leaves(connection: sqlite3.Connection, plan: WorkPlan) -> N
 
 
 def _validate_plan(
-    plan: WorkPlan, definition: MethodDefinition, activity_id: UUID, *, allow_nested: bool = False
+    plan: WorkPlan,
+    definition: MethodDefinition,
+    activity_id: UUID,
+    *,
+    schema: int,
+    allow_nested: bool = False,
 ) -> None:
+    if schema < 8 and (
+        plan.parent_outputs or any(item.role is None for item in definition.obligations)
+    ):
+        raise FoundationError("unsupported_schema", "Own parent results need explicit schema 8")
     roles = {child.role: child for child in plan.children}
     declared_methods = dict(definition.role_methods)
     for child in plan.children:
@@ -482,8 +534,11 @@ def _validate_plan(
                 raise FoundationError("dependency_cycle", "Child depends on itself")
     declared_outputs = {item.slot: item.media_type for item in definition.named_outputs}
     bindings = {item.parent_slot: item for item in plan.output_bindings}
-    if set(bindings) != set(declared_outputs):
-        raise FoundationError("invalid_plan", "Every parent output needs an exact child binding")
+    own_outputs = {item.slot: item.media_type for item in plan.parent_outputs}
+    if set(bindings) | set(own_outputs) != set(declared_outputs):
+        raise FoundationError("invalid_plan", "Every parent output needs one exact producer")
+    if any(own_outputs[slot] != declared_outputs[slot] for slot in own_outputs):
+        raise FoundationError("invalid_plan", "Parent-produced output has wrong type")
     for slot, binding in bindings.items():
         if binding.media_type != declared_outputs[slot]:
             raise FoundationError("invalid_plan", "Parent output binding has wrong type")
@@ -494,6 +549,12 @@ def _validate_plan(
         ):
             raise FoundationError("invalid_plan", "Bound child output slot/type differs")
     for obligation in definition.obligations:
+        if obligation.role is None:
+            if own_outputs.get(obligation.slot) != obligation.media_type:
+                raise FoundationError(
+                    "invalid_plan", "Roleless obligation needs a parent-produced output"
+                )
+            continue
         obligation_child = roles.get(obligation.role)
         if obligation_child is None:
             continue
@@ -947,6 +1008,12 @@ def apply_composition_change(
             connection, request, now=now, epoch=epoch, grants=grants, decisions=decisions
         )
     if isinstance(request, CreateMethodVersionRequest):
+        if _schema(connection) < 8 and any(
+            item.role is None for item in request.definition.obligations
+        ):
+            raise FoundationError(
+                "unsupported_schema", "Roleless obligations need explicit schema 8"
+            )
         if _schema(connection) < 7 and any(
             item.applicability != "always" for item in request.definition.obligations
         ):
@@ -1021,6 +1088,17 @@ def apply_composition_change(
             if transferred is not None:
                 raise FoundationError("method_in_use", "Active Attempt still transfers Method")
             _sanitize_deleted_method_sources(connection, ref)
+        if _schema(connection) >= 8:
+            pinned_parent = connection.execute(
+                "SELECT 1 FROM execution_parent_pins p JOIN execution_attempts a "
+                "ON a.attempt_id = p.attempt_id LEFT JOIN execution_assignments s "
+                "ON s.attempt_id = a.attempt_id WHERE p.method_id = ? "
+                "AND p.method_version = ? AND p.method_checksum = ? "
+                "AND (a.status = 'active' OR s.status = 'unknown') LIMIT 1",
+                (str(ref.method_id), ref.version, ref.checksum),
+            ).fetchone()
+            if pinned_parent is not None:
+                raise FoundationError("method_in_use", "Active parent Attempt still pins Method")
         row = connection.execute(
             "SELECT operation_id FROM method_versions WHERE method_id = ? AND version = ?",
             (str(request.method_id), request.version),
@@ -1066,7 +1144,9 @@ def apply_composition_change(
             raise FoundationError("unsupported_condition", "Method capabilities are not connected")
         if tuple(request.state.expected_outputs) != definition.named_outputs:
             raise FoundationError("method_mismatch", "Parent outputs differ from pinned Method")
-        _validate_plan(request.plan, definition, request.state.activity_id)
+        _validate_plan(
+            request.plan, definition, request.state.activity_id, schema=_schema(connection)
+        )
         _validate_choice_leaves(connection, request.plan)
         declared_inputs = {item.slot: item.media_type for item in definition.named_inputs}
         actual_inputs = {item.slot: item.artifact for item in request.plan.named_inputs}
@@ -1232,7 +1312,7 @@ def apply_composition_change(
                 "unsupported_plan_change",
                 "A role filled before is filled again only through revise_active_plan",
             )
-        _validate_plan(request.plan, definition, parent.activity_id)
+        _validate_plan(request.plan, definition, parent.activity_id, schema=_schema(connection))
         _validate_choice_leaves(connection, request.plan)
         for reference in request.plan.basis:
             _current_artifact(
@@ -1279,6 +1359,10 @@ def apply_composition_change(
             assert isinstance(parent.method, MethodRef)
             _record_plan_method(
                 connection, request.work_id, next_revision, parent.method, request.operation_id
+            )
+        if _schema(connection) >= 8:
+            _hold_work_execution(
+                connection, request.work_id, request.operation_id, now, "revise_parent_plan"
             )
         return {"work_id": str(request.work_id), "plan_revision": next_revision}, targets
     if isinstance(request, IssueChildWorkRequest):
@@ -1411,17 +1495,37 @@ def apply_composition_change(
         raise FoundationError("work_closed", f"Parent Work is {parent.status}")
     # Only a validly active obligation is executed; its choices are recomputed here.
     require_applicable(connection, selected_instance, f"Confirmation of {request.key}")
-    actual = _accepted_output(
-        connection,
-        plan.plan,
-        selected_instance.definition.role,
-        selected_instance.definition.slot,
-        selected_instance.definition.media_type,
-        actor=request.actor,
-        epoch=epoch,
-        grants=grants,
-        decisions=decisions,
-    )
+    parent_result: ParentResultEvidence | None = None
+    if selected_instance.definition.role is None:
+        actual, proof = _accepted_parent_output(
+            connection,
+            request.work_id,
+            parent,
+            plan.plan,
+            selected_instance.definition.slot,
+            selected_instance.definition.media_type,
+            actor=request.actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
+        parent_result = ParentResultEvidence(
+            attempt_id=proof.attempt_id,
+            plan_revision=proof.plan_revision,
+            method=proof.method,
+        )
+    else:
+        actual = _accepted_output(
+            connection,
+            plan.plan,
+            selected_instance.definition.role,
+            selected_instance.definition.slot,
+            selected_instance.definition.media_type,
+            actor=request.actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
     if request.evidence != actual:
         raise FoundationError("evidence_mismatch", "Evidence does not name exact accepted output")
     next_instance = selected_instance.model_copy(
@@ -1429,6 +1533,7 @@ def apply_composition_change(
             "revision": selected_instance.revision + 1,
             "status": "satisfied",
             "evidence": request.evidence,
+            "parent_result": parent_result,
             "basis": request.basis,
             "operation_id": request.operation_id,
             "created_at": datetime.fromisoformat(now),
@@ -1898,81 +2003,298 @@ def check_child_plan(
 def pin_child_attempt(
     connection: sqlite3.Connection, request: AssignAttemptRequest, now: str
 ) -> dict[str, object] | None:
-    """Record the exact plan and Method address of a newly assigned child Attempt."""
+    """Pin the parent's own plan and, for a nested Work, its ancestor's plan."""
 
     binding = child_binding(connection, request.work_id)
-    if binding is None:
-        return None
-    parent_id, _issued, role = binding
-    plan = _plan(connection, parent_id)
-    _p_rev, parent, _definition = _parent(connection, parent_id)
-    assert isinstance(parent.method, MethodRef)
+    result: dict[str, object] | None = None
+    if binding is not None:
+        parent_id, _issued, role = binding
+        plan = _plan(connection, parent_id)
+        _p_rev, parent, _definition = _parent(connection, parent_id)
+        assert isinstance(parent.method, MethodRef)
+        connection.execute(
+            "INSERT INTO execution_plan_pins(attempt_id, work_id, parent_id, role, "
+            "plan_revision, method_id, method_version, method_checksum, operation_id, "
+            "created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                str(request.attempt_id),
+                str(request.work_id),
+                str(parent_id),
+                role,
+                plan.revision,
+                str(parent.method.method_id),
+                parent.method.version,
+                parent.method.checksum,
+                str(request.operation_id),
+                now,
+            ),
+        )
+        result = {
+            "parent_work_id": str(parent_id),
+            "role": role,
+            "plan_revision": plan.revision,
+            "method": parent.method.model_dump(mode="json"),
+        }
+    if (
+        _schema(connection) >= 8
+        and connection.execute(
+            "SELECT 1 FROM work_plan_revisions WHERE parent_id = ? LIMIT 1",
+            (str(request.work_id),),
+        ).fetchone()
+    ):
+        own_plan = _plan(connection, request.work_id)
+        _revision, own_state, _definition = _parent(connection, request.work_id)
+        assert isinstance(own_state.method, MethodRef)
+        connection.execute(
+            "INSERT INTO execution_parent_pins(attempt_id, work_id, plan_revision, "
+            "method_id, method_version, method_checksum, operation_id, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                str(request.attempt_id),
+                str(request.work_id),
+                own_plan.revision,
+                str(own_state.method.method_id),
+                own_state.method.version,
+                own_state.method.checksum,
+                str(request.operation_id),
+                now,
+            ),
+        )
+        own = {
+            "work_id": str(request.work_id),
+            "plan_revision": own_plan.revision,
+            "method": own_state.method.model_dump(mode="json"),
+        }
+        return {**result, "own_plan": own} if result is not None else {"own_plan": own}
+    return result
+
+
+def _parent_pin(connection: sqlite3.Connection, attempt_id: UUID, work_id: UUID) -> ParentPlanPin:
+    if _schema(connection) < 8:
+        raise FoundationError("unsupported_schema", "Parent pins need schema 8")
+    row = connection.execute(
+        "SELECT plan_revision, method_id, method_version, method_checksum, operation_id "
+        "FROM execution_parent_pins WHERE attempt_id = ? AND work_id = ?",
+        (str(attempt_id), str(work_id)),
+    ).fetchone()
+    if row is None:
+        raise FoundationError("stale_plan", "Attempt has no own parent-plan pin")
+    return ParentPlanPin(
+        attempt_id=attempt_id,
+        work_id=work_id,
+        plan_revision=int(row[0]),
+        method=MethodRef(method_id=UUID(row[1]), version=int(row[2]), checksum=row[3]),
+        operation_id=UUID(row[4]),
+    )
+
+
+def _require_parent_pin_current(
+    connection: sqlite3.Connection, attempt_id: UUID, work_id: UUID
+) -> ParentPlanPin:
+    pin = _parent_pin(connection, attempt_id, work_id)
+    current, _status, _ = _subject_current(connection, work_id, "work")
+    state = WorkState.model_validate(_subject_state(connection, work_id, current))
+    revision = connection.execute(
+        "SELECT max(revision) FROM work_plan_revisions WHERE parent_id = ?", (str(work_id),)
+    ).fetchone()[0]
+    if revision != pin.plan_revision or state.method != pin.method:
+        raise FoundationError("stale_plan", "Own Attempt is fenced by plan or Method revision")
+    return pin
+
+
+def _parent_output_proof(
+    connection: sqlite3.Connection, work_id: UUID, slot: str, artifact: ArtifactRef
+) -> ParentOutputProof:
+    row = connection.execute(
+        "SELECT artifact_revision, attempt_id, plan_revision, method_id, method_version, "
+        "method_checksum, operation_id FROM parent_output_proofs "
+        "WHERE artifact_id = ? AND work_id = ? AND slot = ?",
+        (str(artifact.artifact_id), str(work_id), slot),
+    ).fetchone()
+    if row is None or int(row[0]) != artifact.revision:
+        raise FoundationError("evidence_mismatch", "No exact own Attempt publication exists")
+    proof = ParentOutputProof(
+        work_id=work_id,
+        slot=slot,
+        artifact=artifact,
+        attempt_id=UUID(row[1]),
+        plan_revision=int(row[2]),
+        method=MethodRef(method_id=UUID(row[3]), version=int(row[4]), checksum=row[5]),
+        operation_id=UUID(row[6]),
+    )
+    pin = _require_parent_pin_current(connection, proof.attempt_id, work_id)
+    if pin.plan_revision != proof.plan_revision or pin.method != proof.method:
+        raise FoundationError("stale_plan", "Publication no longer matches its own pin")
+    latest = connection.execute(
+        "SELECT attempt_id FROM execution_attempts WHERE work_id = ? "
+        "ORDER BY generation DESC LIMIT 1",
+        (str(work_id),),
+    ).fetchone()
+    if latest is None or latest[0] != str(proof.attempt_id):
+        raise FoundationError("stale_attempt", "Own output belongs to a superseded Attempt")
+    return proof
+
+
+def _accepted_parent_output(
+    connection: sqlite3.Connection,
+    work_id: UUID,
+    state: WorkState,
+    plan: WorkPlan,
+    slot: str,
+    media_type: str,
+    *,
+    actor: str | None,
+    epoch: int,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> tuple[ArtifactRef, ParentOutputProof]:
+    declared = next((item for item in plan.parent_outputs if item.slot == slot), None)
+    if declared is None or declared.media_type != media_type:
+        raise FoundationError("wrong_output", "Plan does not declare this own output slot/type")
+    artifact = next((item.artifact for item in state.linked_outputs if item.slot == slot), None)
+    if artifact is None:
+        raise FoundationError("dependency_open", "Parent has no current own output")
+    _current_artifact(
+        connection,
+        artifact,
+        actor=actor,
+        epoch=epoch,
+        grants=grants,
+        decisions=decisions,
+        media_type=media_type,
+    )
+    return artifact, _parent_output_proof(connection, work_id, slot, artifact)
+
+
+def record_parent_publication(
+    connection: sqlite3.Connection,
+    request: PublishAttemptOutputRequest,
+    artifact: ArtifactRef,
+    now: str,
+) -> list[dict[str, object]]:
+    """Keep the producer pin and reopen confirmations of an older own result."""
+
+    if (
+        _schema(connection) < 8
+        or connection.execute(
+            "SELECT 1 FROM work_plan_revisions WHERE parent_id = ? LIMIT 1",
+            (str(request.work_id),),
+        ).fetchone()
+        is None
+    ):
+        return []
+    pin = _require_parent_pin_current(connection, request.attempt_id, request.work_id)
     connection.execute(
-        "INSERT INTO execution_plan_pins(attempt_id, work_id, parent_id, role, plan_revision, "
-        "method_id, method_version, method_checksum, operation_id, created_at) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO parent_output_proofs(artifact_id, artifact_revision, work_id, slot, "
+        "attempt_id, plan_revision, method_id, method_version, method_checksum, "
+        "operation_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
-            str(request.attempt_id),
+            str(artifact.artifact_id),
+            artifact.revision,
             str(request.work_id),
-            str(parent_id),
-            role,
-            plan.revision,
-            str(parent.method.method_id),
-            parent.method.version,
-            parent.method.checksum,
+            request.slot,
+            str(request.attempt_id),
+            pin.plan_revision,
+            str(pin.method.method_id),
+            pin.method.version,
+            pin.method.checksum,
             str(request.operation_id),
             now,
         ),
     )
-    return {
-        "parent_work_id": str(parent_id),
-        "role": role,
-        "plan_revision": plan.revision,
-        "method": parent.method.model_dump(mode="json"),
-    }
+    _rev, _state, definition = _parent(connection, request.work_id)
+    targets: list[dict[str, object]] = []
+    for instance in _obligations(connection, request.work_id, definition):
+        if (
+            instance.definition.role is not None
+            or instance.definition.slot != request.slot
+            or instance.status != "satisfied"
+            or instance.evidence == artifact
+        ):
+            continue
+        reopened = instance.model_copy(
+            update={
+                "revision": instance.revision + 1,
+                "status": "open",
+                "evidence": None,
+                "parent_result": None,
+                "basis": None,
+                "operation_id": request.operation_id,
+                "created_at": datetime.fromisoformat(now),
+                "reopened": "parent_attempt_replaced",
+                "carried_from_key": None,
+                "carried_from_revision": None,
+            }
+        )
+        connection.execute(
+            "INSERT INTO work_obligation_revisions(parent_id, key, revision, payload, "
+            "operation_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                str(request.work_id),
+                instance.key,
+                reopened.revision,
+                reopened.model_dump_json().encode("utf-8"),
+                str(request.operation_id),
+                now,
+            ),
+        )
+        targets.append({"record_id": str(request.work_id), "revision": reopened.revision})
+    return targets
 
 
 def composite_execution_ready(
     connection: sqlite3.Connection, work_id: UUID, attempt_id: UUID, *, actor: str, epoch: int
 ) -> bool:
-    """Control-read form of the child gate; a parent or old schema stays unconnected."""
+    """Control-read form of the same assigned child/parent effect gate."""
 
     schema = int(connection.execute("PRAGMA user_version").fetchone()[0])
     if schema < 5:
         return True
-    if connection.execute(
-        "SELECT 1 FROM work_plan_revisions WHERE parent_id = ? LIMIT 1", (str(work_id),)
-    ).fetchone():
+    owns_plan = (
+        connection.execute(
+            "SELECT 1 FROM work_plan_revisions WHERE parent_id = ? LIMIT 1", (str(work_id),)
+        ).fetchone()
+        is not None
+    )
+    if owns_plan and schema < 8:
         raise FoundationError(
             "unsupported_composite_execution", "Composite Work has no own Attempt"
         )
     binding = child_binding(connection, work_id)
-    if binding is None:
-        if connection.execute(
-            "SELECT 1 FROM work_plan_revisions WHERE parent_id = ? LIMIT 1", (str(work_id),)
-        ).fetchone():
-            raise FoundationError(
-                "unsupported_composite_execution", "Composite parent execution is not connected"
-            )
+    if binding is None and not owns_plan:
         return True
-    if schema < 6:
+    if binding is not None and schema < 6:
         raise FoundationError(
             "unsupported_composite_execution", "Assigned child execution needs schema 6"
         )
     try:
         revision, _status, _ = _subject_current(connection, work_id, "work")
         state = WorkState.model_validate(_subject_state(connection, work_id, revision))
-        check_child_plan(
-            connection,
-            work_id,
-            binding,
-            state,
-            attempt_id=attempt_id,
-            actor=actor,
-            epoch=epoch,
-            grants=[],
-            decisions=[],
-        )
+        if binding is not None:
+            check_child_plan(
+                connection,
+                work_id,
+                binding,
+                state,
+                attempt_id=attempt_id,
+                actor=actor,
+                epoch=epoch,
+                grants=[],
+                decisions=[],
+            )
+        if owns_plan:
+            _require_parent_pin_current(connection, attempt_id, work_id)
+            if state.status != "proposed":
+                return False
+            _parent_current(
+                connection,
+                work_id,
+                state,
+                actor=actor,
+                epoch=epoch,
+                grants=[],
+                decisions=[],
+            )
     except FoundationError:
         return False
     return True
@@ -2002,8 +2324,11 @@ def check_composite_action(
     state = WorkState.model_validate(_subject_state(connection, work_id, revision))
     if binding is None and state.method == "none":
         return
+    owns_plan = isinstance(state.method, MethodRef)
     if schema >= 7 and binding is not None and isinstance(request, ATTEMPT_EFFECTS):
         _require_unfenced_effect(connection, request, work_id, binding)
+    if schema >= 8 and owns_plan and isinstance(request, ATTEMPT_EFFECTS):
+        _require_unfenced_parent_effect(connection, request, work_id)
     if state.status in CLOSED_OUTCOMES and not isinstance(request, _ATTEMPT_OUTCOMES):
         # Stopping and recording a sent call stay possible; nothing else changes it.
         raise FoundationError("work_closed", f"Work is closed as {state.status}")
@@ -2023,6 +2348,7 @@ def check_composite_action(
     if (
         binding is not None
         and isinstance(state.method, MethodRef)
+        and schema < 8
         and not isinstance(
             request,
             (LinkWorkOutputRequest, AcceptWorkRequest, CloseWorkRequest) + _ATTEMPT_OUTCOMES,
@@ -2034,13 +2360,16 @@ def check_composite_action(
     assigned_child = (
         binding is not None and schema >= 6 and not isinstance(request, _INTERACTIVE_ATTEMPTS)
     )
-    if not direct and not assigned_child:
+    assigned_parent = owns_plan and schema >= 8 and not isinstance(request, _INTERACTIVE_ATTEMPTS)
+    if not direct and not assigned_child and not assigned_parent:
         raise FoundationError(
             "unsupported_composite_execution",
             "Composite parent and interactive execution are not connected; "
             "an assigned child Attempt needs explicit schema 6",
         )
-    if assigned_child and isinstance(request, _ATTEMPT_OUTCOMES + _RESOURCE_SETUP):
+    if (assigned_child or assigned_parent) and isinstance(
+        request, _ATTEMPT_OUTCOMES + _RESOURCE_SETUP
+    ):
         return
     if isinstance(request, AcceptWorkRequest) and isinstance(state.method, MethodRef):
         if binding is not None:
@@ -2093,12 +2422,21 @@ def check_composite_action(
             grants=grants,
             decisions=decisions,
         )
-        if not (isinstance(request, LinkWorkOutputRequest) and isinstance(state.method, MethodRef)):
+        if not owns_plan:
             return
     definition, plan = _parent_current(
         connection, work_id, state, actor=actor, epoch=epoch, grants=grants, decisions=decisions
     )
+    if assigned_parent and isinstance(request, ATTEMPT_EFFECTS):
+        attempt_id = getattr(request, "attempt_id", None)
+        if isinstance(attempt_id, UUID):
+            _require_parent_pin_current(connection, attempt_id, work_id)
+    if isinstance(request, PublishAttemptOutputRequest):
+        if request.slot not in {item.slot for item in plan.plan.parent_outputs}:
+            raise FoundationError("wrong_output", "Plan does not assign this slot to its Work")
     if isinstance(request, LinkWorkOutputRequest):
+        if request.output.slot in {item.slot for item in plan.plan.parent_outputs}:
+            raise FoundationError("wrong_output", "Own output needs its producing Attempt")
         bound = next(
             (item for item in plan.plan.output_bindings if item.parent_slot == request.output.slot),
             None,
@@ -2116,6 +2454,29 @@ def check_composite_action(
             _obligations(connection, work_id, definition),
             f"Output {request.output.slot}",
         )
+
+
+def _require_unfenced_parent_effect(
+    connection: sqlite3.Connection, request: object, work_id: UUID
+) -> None:
+    attempt_id = getattr(request, "attempt_id", None)
+    if not isinstance(attempt_id, UUID):
+        return
+    row = connection.execute(
+        "SELECT 1 FROM execution_parent_pins WHERE attempt_id = ? AND work_id = ?",
+        (str(attempt_id), str(work_id)),
+    ).fetchone()
+    if row is None:
+        return
+    if isinstance(request, AnswerWaitRequest):
+        wait = connection.execute(
+            "SELECT status FROM execution_waits WHERE wait_id = ? AND attempt_id = ? "
+            "AND work_id = ?",
+            (str(request.wait_id), str(attempt_id), str(work_id)),
+        ).fetchone()
+        if wait is not None and wait[0] == "closed":
+            raise FoundationError("stale_wait", "Wait changed or is closed")
+    _require_parent_pin_current(connection, attempt_id, work_id)
 
 
 def _require_unfenced_effect(
@@ -2269,9 +2630,10 @@ def check_parent_acceptance(
     ]
     for instance in unmet:
         # A closed branch can never satisfy its obligation: name it before open ones.
-        _require_open_branch(
-            connection, plan.plan, instance.definition.role, f"Obligation {instance.key}"
-        )
+        if instance.definition.role is not None:
+            _require_open_branch(
+                connection, plan.plan, instance.definition.role, f"Obligation {instance.key}"
+            )
     unresolved = [item.key for item in instances if applicability[item.key][0] == "unresolved"]
     if unresolved:
         raise FoundationError("obligation_unresolved", f"Obligation {unresolved[0]} is unresolved")
@@ -2294,6 +2656,21 @@ def check_parent_acceptance(
             raise FoundationError(
                 "output_mismatch", "Parent output is not exact bound child result"
             )
+    for own in plan.plan.parent_outputs:
+        actual_output, _proof = _accepted_parent_output(
+            connection,
+            work_id,
+            state,
+            plan.plan,
+            own.slot,
+            own.media_type,
+            actor=actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
+        if linked.get(own.slot) != actual_output:
+            raise FoundationError("output_mismatch", "Parent own output changed")
     _evaluate(
         connection,
         plan.plan,
@@ -2306,19 +2683,40 @@ def check_parent_acceptance(
     )
     # An inactive or waived obligation needs no result: only satisfied ones name evidence.
     for instance in (item for item in active if item.status == "satisfied"):
-        actual = _accepted_output(
-            connection,
-            plan.plan,
-            instance.definition.role,
-            instance.definition.slot,
-            instance.definition.media_type,
-            actor=actor,
-            epoch=epoch,
-            grants=grants,
-            decisions=decisions,
-        )
-        if actual != instance.evidence:
-            raise FoundationError("stale_obligation", "Obligation evidence changed")
+        if instance.definition.role is None:
+            actual, proof = _accepted_parent_output(
+                connection,
+                work_id,
+                state,
+                plan.plan,
+                instance.definition.slot,
+                instance.definition.media_type,
+                actor=actor,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+            )
+            expected = ParentResultEvidence(
+                attempt_id=proof.attempt_id,
+                plan_revision=proof.plan_revision,
+                method=proof.method,
+            )
+            if actual != instance.evidence or instance.parent_result != expected:
+                raise FoundationError("stale_obligation", "Own Attempt evidence changed")
+        else:
+            actual = _accepted_output(
+                connection,
+                plan.plan,
+                instance.definition.role,
+                instance.definition.slot,
+                instance.definition.media_type,
+                actor=actor,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+            )
+            if actual != instance.evidence:
+                raise FoundationError("stale_obligation", "Obligation evidence changed")
 
 
 def _readable_plan(connection: sqlite3.Connection, parent_id: UUID) -> PlanRevision | None:
@@ -2745,6 +3143,8 @@ def _recorded_evidence_roles(
         if evidence_index is None:
             return None
         role = instance.definition.role
+        if role is None:
+            continue
         evidence_filler = _revision_role_works(connection, parent_id, evidence_index).get(role)
         if evidence_filler is not None and fillers.get(role) == evidence_filler:
             roles.add(role)
@@ -2765,7 +3165,7 @@ def _copied_obligation_depends(
     parent_id: str,
     source_key: str,
     source_revision: int,
-    role: str,
+    role: str | None,
     plans: dict[str, list[_PlanDependencies | None]],
     *,
     artifact_id: UUID | None,
@@ -2795,7 +3195,7 @@ def _copied_obligation_depends(
         artifact_id=artifact_id,
         child_id=child_id,
     )
-    if roles is None or role in roles:
+    if roles is None or (bool(roles) if role is None else role in roles):
         return True
     if artifact_id is not None and source.evidence is not None:
         if source.evidence.artifact_id == artifact_id:
@@ -2954,7 +3354,11 @@ def sanitize_deleted_dependency(
             if bytes(payload) == REDACTED_DEPENDENCY:
                 continue
             instance = ObligationRevision.model_validate_json(bytes(payload))
-            if instance.evidence is not None and instance.evidence.artifact_id == artifact_id:
+            if (
+                instance.definition.role is not None
+                and instance.evidence is not None
+                and instance.evidence.artifact_id == artifact_id
+            ):
                 seed_roles.setdefault(parent_id, set()).add(instance.definition.role)
 
     affected_roles: dict[str, set[str] | None] = {}
@@ -3021,6 +3425,7 @@ def sanitize_deleted_dependency(
                 or evidence_roles is None
                 or instance.definition.role in recorded_roles
                 or instance.definition.role in evidence_roles
+                or (instance.definition.role is None and bool(recorded_roles))
                 or (
                     instance.carried_from_key is not None
                     and instance.carried_from_revision is not None
@@ -3062,6 +3467,7 @@ def sanitize_deleted_dependency(
                     "revision": revision + 1,
                     "status": "open",
                     "evidence": None,
+                    "parent_result": None,
                     "basis": None,
                     "operation_id": operation_id,
                     "created_at": datetime.fromisoformat(now),
@@ -3800,3 +4206,60 @@ def read_obligation(
         if bytes(row[0]) == REDACTED_DEPENDENCY:
             raise FoundationError("content_unavailable", "Exact obligation revision was sanitized")
         return ObligationRevision.model_validate_json(bytes(row[0]))
+
+
+def read_parent_plan_pin(
+    path: Path, work_id: UUID, attempt_id: UUID, authority: LocalAuthority
+) -> ParentPlanPin:
+    """Read the exact own-plan pin, including a historical fenced Attempt."""
+
+    with space_connection(path) as (connection, info):
+        _local_space(authority, info)
+        if info.schema_version < 8 or info.recovery_state != "active":
+            raise FoundationError("unsupported_schema", "Parent pins need active schema 8")
+        _authorize(
+            connection,
+            actor=authority.actor,
+            action="record.read",
+            epoch=info.execution_epoch,
+            resource_type="work",
+            resource_id=work_id,
+        )
+        return _parent_pin(connection, attempt_id, work_id)
+
+
+def read_parent_output_proof(
+    path: Path, artifact_id: UUID, authority: LocalAuthority
+) -> ParentOutputProof:
+    """Read one exact publication address without making old evidence current."""
+
+    with space_connection(path) as (connection, info):
+        _local_space(authority, info)
+        if info.schema_version < 8 or info.recovery_state != "active":
+            raise FoundationError("unsupported_schema", "Parent proofs need active schema 8")
+        row = connection.execute(
+            "SELECT artifact_revision, work_id, slot, attempt_id, plan_revision, method_id, "
+            "method_version, method_checksum, operation_id FROM parent_output_proofs "
+            "WHERE artifact_id = ?",
+            (str(artifact_id),),
+        ).fetchone()
+        if row is None:
+            raise FoundationError("not_found", "Parent publication proof is unavailable")
+        work_id = UUID(row[1])
+        _authorize(
+            connection,
+            actor=authority.actor,
+            action="record.read",
+            epoch=info.execution_epoch,
+            resource_type="work",
+            resource_id=work_id,
+        )
+        return ParentOutputProof(
+            work_id=work_id,
+            slot=row[2],
+            artifact=ArtifactRef(artifact_id=artifact_id, revision=int(row[0])),
+            attempt_id=UUID(row[3]),
+            plan_revision=int(row[4]),
+            method=MethodRef(method_id=UUID(row[5]), version=int(row[6]), checksum=row[7]),
+            operation_id=UUID(row[8]),
+        )

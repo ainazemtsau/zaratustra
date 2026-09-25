@@ -805,6 +805,13 @@ def _subject_delete(
             connection.execute(  # type: ignore[attr-defined]
                 "DELETE FROM execution_plan_transfers WHERE work_id = ?", (str(record_id),)
             )
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 8:  # type: ignore[attr-defined]
+            connection.execute(  # type: ignore[attr-defined]
+                "DELETE FROM parent_output_proofs WHERE work_id = ?", (str(record_id),)
+            )
+            connection.execute(  # type: ignore[attr-defined]
+                "DELETE FROM execution_parent_pins WHERE work_id = ?", (str(record_id),)
+            )
         if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 6:  # type: ignore[attr-defined]
             connection.execute(  # type: ignore[attr-defined]
                 "DELETE FROM execution_plan_pins WHERE work_id = ?", (str(record_id),)
@@ -1326,6 +1333,16 @@ def _apply_change(
             state=state.model_copy(update={"linked_outputs": linked}),
             revision=revision + 1,
         )
+        proof_targets: list[dict[str, object]] = []
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 8:  # type: ignore[attr-defined]
+            from .composition import record_parent_publication
+
+            proof_targets = record_parent_publication(
+                cast(sqlite3.Connection, connection),
+                request,
+                ArtifactRef(artifact_id=artifact_id, revision=1),
+                now,
+            )
         _event(connection, request, request.work_id, now, attempt_id=request.attempt_id)
         return {
             "artifact_id": str(artifact_id),
@@ -1334,7 +1351,7 @@ def _apply_change(
         }, [
             {"record_id": str(artifact_id), "revision": 1},
             {"record_id": str(request.work_id), "revision": revision + 1},
-        ]
+        ] + proof_targets
     if isinstance(
         request,
         (
@@ -1363,9 +1380,13 @@ def _apply_change(
             plan = pin_child_attempt(cast(sqlite3.Connection, connection), request, now)
             if plan is not None:
                 result = {**result, "plan": plan}
-                targets = targets + [
-                    {"record_id": plan["parent_work_id"], "revision": plan["plan_revision"]}
-                ]
+                if "parent_work_id" in plan:
+                    targets.append(
+                        {"record_id": plan["parent_work_id"], "revision": plan["plan_revision"]}
+                    )
+                own = plan.get("own_plan")
+                if isinstance(own, dict):
+                    targets.append({"record_id": own["work_id"], "revision": own["plan_revision"]})
         return result, targets
     if isinstance(
         request,

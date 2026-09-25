@@ -32,3 +32,7 @@ is resumed by its own runner through the same public DBOS operation. Core's
 committed launch claim still makes a second execution unknown without new HTTP.
 An unrelated legacy workflow stays queued for its own runner. A cancelled launch
 with no claim is an observed prelaunch stop without Pi or HTTP.
+Schema 8 lets the same assigned path run a root or nested composite Work's own
+Attempt. Its Core plan pin and output proof are visible by address in the assigned
+context and `/zara-status`, with roleless obligations labelled as own Work.
+No plan text, confirmation basis or new authority is copied into DBOS or Pi status.

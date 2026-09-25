@@ -226,7 +226,14 @@ class ChoiceApplicability(ContractModel):
 class MethodObligation(ContractModel):
     key: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
     source: str = Field(min_length=1, max_length=2048)
-    role: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+    # Absent only for the schema 8 obligation proved in this composite Work.
+    role: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=80,
+        pattern=r"^[a-z][a-z0-9_-]*$",
+        exclude_if=lambda value: value is None,
+    )
     slot: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
     media_type: str = Field(min_length=1, max_length=200)
     applicability: Literal["always"] | ChoiceApplicability = "always"
@@ -334,6 +341,13 @@ class PlanOutputBinding(ContractModel):
     media_type: str = Field(min_length=1, max_length=200)
 
 
+class ParentOutputSlot(ContractModel):
+    """A plan declares its Work as producer; the publishing Attempt is evidence."""
+
+    slot: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+    media_type: str = Field(min_length=1, max_length=200)
+
+
 class PlanChild(ContractModel):
     role: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
     work_id: UUID
@@ -344,6 +358,9 @@ class PlanChild(ContractModel):
 class WorkPlan(ContractModel):
     named_inputs: tuple[NamedInput, ...] = ()
     output_bindings: tuple[PlanOutputBinding, ...] = ()
+    parent_outputs: tuple[ParentOutputSlot, ...] = Field(
+        default=(), exclude_if=lambda value: not value
+    )
     children: tuple[PlanChild, ...] = Field(min_length=1)
     completion: PlanCondition | None = None
     basis: tuple[ArtifactRef, ...] = ()
@@ -354,7 +371,8 @@ class WorkPlan(ContractModel):
     def unique_children(self) -> WorkPlan:
         for values in (
             [item.slot for item in self.named_inputs],
-            [item.parent_slot for item in self.output_bindings],
+            [item.parent_slot for item in self.output_bindings]
+            + [item.slot for item in self.parent_outputs],
             [child.role for child in self.children],
             [child.work_id for child in self.children],
         ):
@@ -404,6 +422,14 @@ class PremiseChange(ContractModel):
         return self
 
 
+class ParentResultEvidence(ContractModel):
+    """The exact own Attempt and pin that published an obligation's result."""
+
+    attempt_id: UUID
+    plan_revision: int = Field(ge=1)
+    method: MethodRef
+
+
 class ObligationRevision(ContractModel):
     """One exact revision of a materialized obligation.
 
@@ -422,6 +448,9 @@ class ObligationRevision(ContractModel):
     applicability: Literal["active", "inactive", "unresolved"] = "active"
     status: Literal["open", "satisfied", "waived", "retired"]
     evidence: ArtifactRef | None = None
+    parent_result: ParentResultEvidence | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     basis: str | None = None
     operation_id: UUID
     created_at: AwareDatetime
@@ -430,7 +459,7 @@ class ObligationRevision(ContractModel):
     exception: DecisionRef | None = Field(default=None, exclude_if=lambda value: value is None)
     # A plan revision reopened this execution: its evidence belongs to a Work that no longer
     # fills the role.
-    reopened: Literal["node_replaced"] | None = Field(
+    reopened: Literal["node_replaced", "parent_attempt_replaced", "stale_plan"] | None = Field(
         default=None, exclude_if=lambda value: value is None
     )
     transitioned_to: str | None = Field(default=None, exclude_if=lambda value: value is None)
@@ -448,6 +477,7 @@ class ObligationRevision(ContractModel):
             if (
                 (self.transitioned_to is None) == (self.retired_by is None)
                 or self.evidence is not None
+                or self.parent_result is not None
                 or self.basis is not None
                 or self.exception is not None
                 or self.reopened is not None
@@ -470,6 +500,16 @@ class ObligationRevision(ContractModel):
             raise ValueError("Only a waived obligation names its exception, and no evidence")
         if self.reopened is not None and (self.status != "open" or self.basis is not None):
             raise ValueError("A reopened obligation is open and carries no basis")
+        if self.parent_result is not None and (
+            self.definition.role is not None or self.status != "satisfied" or self.evidence is None
+        ):
+            raise ValueError("Own Attempt evidence belongs only to a satisfied roleless need")
+        if (
+            self.definition.role is None
+            and self.status == "satisfied"
+            and self.parent_result is None
+        ):
+            raise ValueError("A roleless satisfied obligation needs its own Attempt evidence")
         return self
 
 
@@ -1168,7 +1208,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -1362,6 +1402,24 @@ class PlanPin(ContractModel):
     method: MethodRef
 
 
+class ParentPlanPin(ContractModel):
+    attempt_id: UUID
+    work_id: UUID
+    plan_revision: int = Field(ge=1)
+    method: MethodRef
+    operation_id: UUID
+
+
+class ParentOutputProof(ContractModel):
+    work_id: UUID
+    slot: str
+    artifact: ArtifactRef
+    attempt_id: UUID
+    plan_revision: int = Field(ge=1)
+    method: MethodRef
+    operation_id: UUID
+
+
 class ChildProgress(ContractModel):
     role: str
     work_id: UUID
@@ -1381,13 +1439,13 @@ class ObligationProgress(ContractModel):
 
     key: str
     revision: int = Field(ge=1)
-    role: str
+    role: str | None = Field(default=None, exclude_if=lambda value: value is None)
     applicability: Literal["active", "inactive", "unresolved", "applicability_stale"] = "active"
     status: Literal["open", "satisfied", "waived", "waiver_stale"]
     evidence: ArtifactRef | None = None
     choice: DecisionRef | None = Field(default=None, exclude_if=lambda value: value is None)
     exception: DecisionRef | None = Field(default=None, exclude_if=lambda value: value is None)
-    reopened: Literal["node_replaced"] | None = Field(
+    reopened: Literal["node_replaced", "parent_attempt_replaced", "stale_plan"] | None = Field(
         default=None, exclude_if=lambda value: value is None
     )
 
@@ -1460,6 +1518,7 @@ class CompositionView(ContractModel):
     role: str | None = None
     issued_plan_revision: int | None = None
     pins: tuple[PlanPin, ...] = ()
+    own_pins: tuple[ParentPlanPin, ...] = Field(default=(), exclude_if=lambda value: not value)
     children: tuple[ChildProgress, ...] = ()
     obligations: tuple[ObligationProgress, ...] = ()
     # Absent while empty, so reads of plans without active revisions stay unchanged.
@@ -1526,7 +1585,7 @@ class BackupManifest(ContractModel):
     backup_id: UUID
     format_version: Literal[1, 2] = 1
     space_id: UUID
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime

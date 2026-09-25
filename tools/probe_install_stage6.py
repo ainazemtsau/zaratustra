@@ -44,6 +44,7 @@ def main() -> int:
         help="Interpreter for the new venv; defaults to uv-managed 3.13.7",
     )
     parser.add_argument("--sqlite-dll", type=Path, help="Pinned SQLite DLL; required on Windows")
+    parser.add_argument("--parent-execution", action="store_true")
     args = parser.parse_args()
     for name in ("STOP", "STEER.md"):
         if (ROOT / name).exists():
@@ -148,6 +149,7 @@ def main() -> int:
                     str(working / "trial"),
                     "--pi-runtime",
                     str(runtime),
+                    *(["--parent-execution"] if args.parent_execution else []),
                 ],
                 cwd=working,
                 env=environment,
@@ -167,10 +169,15 @@ def main() -> int:
             site = venv.resolve()
             modules = {
                 "foundation": trial_report["foundation_module"],
-                "dbos": trial_report["dbos_module"],
                 "extension": trial_report["extension_resource"],
-                "reopened_foundation": trial_report["reopen"]["module"],
             }
+            if args.parent_execution:
+                if trial_report["schema"] != 8 or trial_report["http_total"] != 3:
+                    raise RuntimeError("Installed parent execution did not complete three HTTP")
+                modules["dbos"] = trial_report["dbos_module"]
+            else:
+                modules["dbos"] = trial_report["dbos_module"]
+                modules["reopened_foundation"] = trial_report["reopen"]["module"]
             if not all(_inside(value, site) for value in modules.values()):
                 raise RuntimeError(f"Installed trial imported code outside the venv: {modules}")
             report.update(
