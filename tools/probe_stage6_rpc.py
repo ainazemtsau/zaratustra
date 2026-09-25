@@ -1571,6 +1571,8 @@ def run_parent_execution(output: Path, pi_runtime: Path) -> dict[str, object]:
         assert not _contains(root / ".zara-core", marker)
         assert not _contains(clean.package, marker)
         assert len(provider.digests) == 3
+        import sqlite3
+
         import dbos
 
         return {
@@ -1581,6 +1583,8 @@ def run_parent_execution(output: Path, pi_runtime: Path) -> dict[str, object]:
             "runs": runs,
             "own_attempt": str(proof.attempt_id),
             "pi_status": visible.splitlines()[:10],
+            "python": sys.version,
+            "sqlite": sqlite3.sqlite_version,
             "foundation_module": str(Path(foundation.__file__).resolve()),
             "dbos_module": str(Path(dbos.__file__).resolve()),
             "extension_resource": str(
