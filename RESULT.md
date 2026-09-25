@@ -30,7 +30,13 @@
 контракт, sdist и wheel. Журнал: `_scratch/fix-3.10-deliver.log`.
 
 Техническая запись: `docs/core-v0.1/STAGE6-PASS3-IMPLEMENTATION.md`.
-Установленный wheel будет атрибутирован отдельно после чистого кодового commit.
+Установленный wheel проверен вне checkout с точного чистого кодового коммита
+`224f00c5694707379262ecdf264d7563b16768ca`: `source_tree_dirty=false`,
+Python 3.13.7, SQLite 3.53.3, **3 синтетических HTTP**. Wheel SHA-256:
+`53CADB8063B693D25CAA6DB14899818C6D8EA875C7EBF6B153C5E8D663025BF3`;
+отчёт `_scratch/fix-3.10-installed-224f00c/report.json`. Это совместимый
+установленный Stage 6 сценарий, не новая schema 7 трасса. Атрибуция wheel —
+последующее документальное изменение после полного gate кодового коммита.
 
 ## assumptions
 
