@@ -59,11 +59,15 @@
   its development checkpoint is
   `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.9.md`. The owner closed only its
   technical review on `73fffa7afb7bdfcc815938a132ab73d3955115e0`; see
-  `docs/core-v0.1/STAGE6-PASS3-REVIEW-3.9.md`. Only part 3.10 is authorized:
-  Pi visibility and a live synthetic localhost trace, documented in
-  `docs/core-v0.1/STAGE6-PASS3-IMPLEMENTATION.md`. This is not schema 7,
-  pass 3 or Stage 6 acceptance. The separate composite-parent execution
-  slice, pass 4, real model calls and development migration are not authorized.
+  `docs/core-v0.1/STAGE6-PASS3-REVIEW-3.9.md`. Part 3.10 adds Pi visibility
+  and a live synthetic localhost trace, documented in
+  `docs/core-v0.1/STAGE6-PASS3-IMPLEMENTATION.md`. The owner closed its
+  technical review separately on `4c9c8ece607bb58602c2573b9b23e8f60134470c`;
+  see `docs/core-v0.1/STAGE6-PASS3-REVIEW-3.10.md`. This is not schema 7,
+  pass 3 or Stage 6 acceptance. Only a working plan for the separate
+  composite-parent execution slice is authorized; see
+  `docs/core-v0.1/STAGE6-PARENT-EXECUTION-PLAN.md`. Its implementation,
+  pass 4, real model calls and development migration are not authorized.
   `database is locked` and `rpc_transport` remain open observations.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
@@ -150,9 +154,11 @@ keeps replacement evidence and outcome bases independent of the former role
 filler. Part 3.8 adds exact Method transition via the active plan revision,
 obligation mapping, evidence recheck, Attempt transfer/fencing and maintenance;
 see `STAGE6-PASS3-CHECKPOINT-3.8.md`. Part 3.9 is implemented as a development
-checkpoint with an open technical review;
-the independent P1 finding and correction are recorded in
-`STAGE6-PASS3-REVIEW-3.9-OPEN.md`. Part 3.10 is not started.
+checkpoint, with technical review closed at `73fffa7`; see
+`STAGE6-PASS3-REVIEW-3.9.md`. Part 3.10 is implemented, with technical review
+closed at `4c9c8ec`; see `STAGE6-PASS3-IMPLEMENTATION.md` and
+`STAGE6-PASS3-REVIEW-3.10.md`. The separate parent-execution slice remains a
+plan only.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,
@@ -231,8 +237,9 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
 - Keep the accepted Core v0.1 functional composition and completed Stage 1–5
   evidence. Stage 5 and Stage 6 passes 1–2 are owner-accepted at the exact
   commits above; this is not owner acceptance of Stage 6. Stage 6 pass 3 is
-  authorized through part 3.10 only. Technical reviews through 3.9 are closed
-  separately; part 3.10 awaits one overall technical review.
+  implemented through part 3.10. Its technical reviews are closed separately;
+  schema 7, pass 3 and Stage 6 remain unaccepted. The separate
+  parent-execution slice is authorized for planning only.
   Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.
