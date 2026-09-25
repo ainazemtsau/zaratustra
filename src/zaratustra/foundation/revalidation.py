@@ -24,8 +24,10 @@ from .composition import (
     _current_artifact,
     _method_use,
     _obligations,
+    _outcome_dependencies,
     _parent,
     _plan,
+    _PlanDependencies,
     _require_succeeded,
     child_binding,
 )
@@ -394,41 +396,75 @@ def revalidate_result(
     }, targets
 
 
-def retire_revalidation_bases(
+def dependent_revalidations(
     connection: sqlite3.Connection,
     *,
-    child_id: UUID | None,
-    artifact_id: UUID | None,
-    operations: set[str],
-    subjects: set[str],
-) -> None:
-    """Deleting the child, one of its outputs or a named premise removes a recheck basis.
+    artifact_id: UUID | None = None,
+    work_id: UUID | None = None,
+) -> list[tuple[str, str, int]]:
+    """Recheck records whose basis structurally depends on an Artifact or Work being deleted.
 
-    The addresses stay; such a record no longer permits integration, and its receipt
-    leaves replay with the caller's history retirement.
+    A basis may quote anything the rechecked result rests on, changed or not: the child
+    and its outputs, every input and readiness leaf, the parent's inputs and plan history
+    with its basis, and upstream children. These are the known structural dependencies of
+    the child's outcome (``_outcome_dependencies``, read through the retained index once a
+    plan is sanitized) together with the record's own addresses. Called before the deleting
+    transaction changes anything; a quote without a stored structural link is not covered.
     """
 
-    for parent_id, child, revision, payload, operation_id in connection.execute(
-        "SELECT parent_id, child_id, revision, payload, operation_id FROM result_revalidations"
+    plans: dict[str, list[_PlanDependencies | None]] = {}
+    dependent: list[tuple[str, str, int]] = []
+    for parent_id, child, revision, payload in connection.execute(
+        "SELECT parent_id, child_id, revision, payload FROM result_revalidations "
+        "ORDER BY parent_id, child_id, revision"
     ).fetchall():
         record = ResultRevalidation.model_validate_json(bytes(payload))
         if record.basis is None:
             continue
+        if work_id is not None and child == str(work_id):
+            dependent.append((parent_id, child, revision))
+            continue
+        found = _outcome_dependencies(connection, child, plans)
         named = {item.record_id for item in record.premises if item.kind == "artifact"} | {
             item.artifact.artifact_id for item in record.outputs
         }
-        if not (
-            (child_id is not None and child == str(child_id))
-            or (artifact_id is not None and artifact_id in named)
+        if (
+            found.unbounded
+            or (artifact_id is not None and artifact_id in found.artifacts | named)
+            or (work_id is not None and str(work_id) in found.works)
         ):
-            continue
-        retained = record.model_copy(update={"basis": None})
+            dependent.append((parent_id, child, revision))
+    return dependent
+
+
+def retire_revalidation_bases(
+    connection: sqlite3.Connection,
+    records: list[tuple[str, str, int]],
+    *,
+    operations: set[str],
+    subjects: set[str],
+) -> None:
+    """Remove the basis of each dependent recheck; addresses, audit and outcomes stay.
+
+    Such a record no longer permits integration. Its receipt leaves replay and managed
+    backups holding its parent are contaminated with the caller's history retirement.
+    """
+
+    for parent_id, child, revision in records:
+        row = connection.execute(
+            "SELECT payload, operation_id FROM result_revalidations "
+            "WHERE parent_id = ? AND child_id = ? AND revision = ?",
+            (parent_id, child, revision),
+        ).fetchone()
+        retained = ResultRevalidation.model_validate_json(bytes(row[0])).model_copy(
+            update={"basis": None}
+        )
         connection.execute(
             "UPDATE result_revalidations SET payload = ? "
             "WHERE parent_id = ? AND child_id = ? AND revision = ?",
             (retained.model_dump_json().encode("utf-8"), parent_id, child, revision),
         )
-        operations.add(operation_id)
+        operations.add(str(row[1]))
         subjects.add(parent_id)
 
 
@@ -467,6 +503,7 @@ def read_revalidation(
 
 
 __all__ = [
+    "dependent_revalidations",
     "premise_changes",
     "premise_reasons",
     "read_revalidation",

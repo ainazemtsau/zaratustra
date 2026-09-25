@@ -23,6 +23,7 @@ from tests.zaratustra.foundation.test_applicability import (
     _activity_scope,
     _child,
     _choose,
+    _composite,
     _confirm,
     _confirm_request,
     _definition,
@@ -32,6 +33,7 @@ from tests.zaratustra.foundation.test_applicability import (
     _method,
     _refused,
     _resolve,
+    _resolve_request,
     _revise_choice,
     _revoke,
     _space,
@@ -52,6 +54,7 @@ from zaratustra.foundation import (
     CreateGrantRequest,
     DecisionRef,
     DecisionState,
+    DeleteArtifactRequest,
     DeleteWorkRequest,
     DomainRequest,
     ExceptionState,
@@ -66,6 +69,7 @@ from zaratustra.foundation import (
     PlanOutputBinding,
     RecoverRequest,
     ReviseDecisionRequest,
+    ReviseWorkPlanRequest,
     StatusReason,
     WaivedObligation,
     WaiveObligationRequest,
@@ -81,6 +85,7 @@ from zaratustra.foundation import (
     read_execution,
     read_obligation,
     read_operation_audit,
+    read_receipt,
     read_space,
     read_work,
     read_work_plan,
@@ -798,3 +803,85 @@ def test_waiver_history_survives_restore_and_deletion_takes_the_waiver_off(
         assert not _sqlite_contains(root / ".zara-core", text)
     # There is no Decision deletion operation: the exception stays an ordinary record.
     assert read_decision(root, exception.decision_id, owner).revision == 1
+
+
+def test_bases_recorded_under_an_earlier_plan_revision_go_with_its_dependency(
+    tmp_path: Path,
+) -> None:
+    """Found while rechecking the package after the Codex review of c11d54f.
+
+    A resolution or waiver may be recorded before the first issue, and the plan may still
+    change afterwards. Its basis stays structurally linked to the plan revision under
+    which it was recorded, even when the current revision no longer names that Artifact.
+    """
+
+    setup = _space(tmp_path)
+    marker = f"synthetic earlier plan link {uuid4()}"
+    linked = uuid4()
+    _apply(
+        setup.root,
+        setup.space,
+        setup.owner,
+        CreateArtifactRequest,
+        artifact_id=linked,
+        media_type="text/plain",
+        content=f"synthetic Y {marker}".encode(),
+    )
+    link = ArtifactRef(artifact_id=linked, revision=1)
+    case = _composite(setup, art_readiness=PlanCondition(kind="artifact_current", artifact=link))
+    root, space, owner, _activity, parent, _works = case
+    required = _choose(case, "required", _work_scope(case))
+    resolved = apply_operation(
+        root, _resolve_request(case, required, basis=f"Resolved on {marker}"), owner
+    )
+    exception = _except(case, ART)
+    request = _waive_request(case, exception, key=ART, basis=f"Waived on {marker}")
+    waived = apply_operation(root, request, owner)
+    # Before any issue the plan may still change: revision 2 no longer names Y.
+    current = read_work_plan(root, parent, owner)
+    _apply(
+        root,
+        space,
+        owner,
+        ReviseWorkPlanRequest,
+        work_id=parent,
+        expected_plan_revision=1,
+        plan=current.plan.model_copy(
+            update={
+                "children": tuple(
+                    child.model_copy(update={"readiness": None}) if child.role == "art" else child
+                    for child in current.plan.children
+                ),
+                "rationale": "The review no longer waits for Y",
+            }
+        ),
+    )
+    independent = [read_obligation(root, parent, key, owner) for key in ("checked", "final")]
+    backup = create_backup(root, uuid4(), owner)
+
+    _apply(root, space, owner, DeleteArtifactRequest, artifact_id=linked, expected_revision=1)
+    assert complete_deletions(root, owner).live_store_sanitized
+    assert not backup.package.exists()
+    latest = read_obligation(root, parent, ART, owner)
+    assert (latest.revision, latest.status, latest.exception, latest.basis) == (
+        4,
+        "open",
+        None,
+        None,
+    )
+    assert (latest.applicability, latest.choice) == ("active", required)
+    for revision in (2, 3):
+        with pytest.raises(FoundationError, match="content_unavailable"):
+            read_obligation(root, parent, ART, owner, revision=revision)
+    for receipt, replay in ((resolved, None), (waived, request)):
+        if replay is not None:
+            with pytest.raises(FoundationError, match="history_unavailable"):
+                apply_operation(root, replay, owner)
+        with pytest.raises(FoundationError, match="not_found"):
+            read_receipt(root, receipt.operation_id, owner)
+    assert [
+        read_obligation(root, parent, key, owner) for key in ("checked", "final")
+    ] == independent
+    assert not _sqlite_contains(root / ".zara-core", marker)
+    assert not _sqlite_contains(create_backup(root, uuid4(), owner).package, marker)
+    assert _statuses_in_new_process(case, {"parent": parent}) == _statuses(case, {"parent": parent})

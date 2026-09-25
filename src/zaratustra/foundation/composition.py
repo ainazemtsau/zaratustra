@@ -108,6 +108,8 @@ ATTEMPT_EFFECTS = (
 _ATTEMPT_OUTCOMES = (RequestAttemptStopRequest, RecordAttemptStopRequest, FinishInvocationRequest)
 _RESOURCE_SETUP = (CreateResourceRequest, ReviseResourceRequest)
 _INTERACTIVE_ATTEMPTS = (StartAttemptRequest, StopAttemptRequest)
+# Refusals no progress lifts, in the order a composite condition names them.
+_BLOCKING_CODES = ("decision_conflict", "premise_changed")
 
 
 class _PlanDependencies(BaseModel):
@@ -586,29 +588,32 @@ def _evaluate(
         if not errors:
             return tuple(references)
         closed = [error for error in errors if error.code == "dependency_closed"]
-        # A formal conflict is lifted only by revising or revoking a choice, never by
-        # progress: it keeps its code and every address through each enclosing condition.
-        conflicts = [error for error in errors if error.code == "decision_conflict"]
-        conflict = FoundationError(
-            "decision_conflict", "; ".join(dict.fromkeys(error.detail for error in conflicts))
-        )
+        # A formal conflict and a changed premise of an accepted result are lifted only by
+        # an explicit act (a revised or revoked choice, a recheck), never by progress: each
+        # keeps its code and every address through each enclosing condition, the conflict
+        # first.
+        blocking = [
+            FoundationError(code, "; ".join(dict.fromkeys(error.detail for error in matching)))
+            for code in _BLOCKING_CODES
+            if (matching := [error for error in errors if error.code == code])
+        ]
         if condition.kind == "all":
             if closed:
                 # One member closed for good makes the whole conjunction unreachable.
                 raise closed[0]
-            raise conflict if conflicts else errors[0]
+            raise blocking[0] if blocking else errors[0]
         still_open = [
             error
             for error in errors
-            if error.code not in ("dependency_closed", "decision_conflict")
+            if error.code != "dependency_closed" and error.code not in _BLOCKING_CODES
         ]
         if still_open:
             raise FoundationError(
                 "dependency_open", f"No any member is ready: {still_open[0].detail}"
             )
-        if conflicts:
-            # Every other alternative is closed for good; only the conflict holds it.
-            raise conflict
+        if blocking:
+            # Every other alternative is closed for good; only an explicit act lifts it.
+            raise blocking[0]
         # No member can become true under this plan any more.
         raise FoundationError(
             "dependency_closed", f"No any member can become true: {errors[0].detail}"
@@ -2101,6 +2106,61 @@ def prepare_work_deletion(connection: sqlite3.Connection, work_id: UUID) -> None
     connection.execute("DELETE FROM work_plan_children WHERE parent_id = ?", (str(work_id),))
 
 
+def _recorded_plan_roles(
+    connection: sqlite3.Connection,
+    parent_id: str,
+    recorded_by: str,
+    plans: dict[str, list[_PlanDependencies | None]],
+    *,
+    artifact_id: UUID | None,
+    child_role: str | None,
+) -> set[str] | None:
+    """Roles that depended on a deleted subject under the plan revision current when one
+    obligation revision was recorded, with their dependents; ``None`` when unknown.
+
+    A resolution or waiver may be recorded before the first issue, and a later plan
+    revision may no longer name that subject. Its basis stays linked to the revision under
+    which it was recorded, read through the retained index once sanitized.
+    """
+
+    recorded = connection.execute(
+        "SELECT state_revision FROM operations WHERE operation_id = ?", (recorded_by,)
+    ).fetchone()
+    stamps = [
+        row[0]
+        for row in connection.execute(
+            "SELECT o.state_revision FROM work_plan_revisions p LEFT JOIN operations o "
+            "ON o.operation_id = p.operation_id WHERE p.parent_id = ? ORDER BY p.revision",
+            (parent_id,),
+        ).fetchall()
+    ]
+    positions = [
+        position
+        for position, stamp in enumerate(stamps)
+        if recorded is not None and stamp is not None and int(stamp) <= int(recorded[0])
+    ]
+    if not positions:
+        return set()
+    index = _plan_history(connection, parent_id, plans)[positions[-1]]
+    if index is None:
+        return None
+    roles = (
+        _indexed_artifact_roles(index, artifact_id)
+        if artifact_id is not None
+        else ({child_role} if child_role is not None else set())
+    )
+    changed = True
+    while changed:
+        previous = len(roles)
+        roles.update(
+            role
+            for role, dependencies in index.edges.items()
+            if any(dependency in roles for dependency in dependencies)
+        )
+        changed = len(roles) != previous
+    return roles
+
+
 def sanitize_deleted_dependency(
     connection: sqlite3.Connection,
     *,
@@ -2109,7 +2169,11 @@ def sanitize_deleted_dependency(
     child_id: UUID | None = None,
     artifact_id: UUID | None = None,
 ) -> None:
-    """Remove exact plan/confirmation copies before a referenced subject disappears."""
+    """Remove exact plan/confirmation copies before a referenced subject disappears.
+
+    An obligation revision depends on the subject through its role under the current plan
+    and, at schema 7, under the plan revision current when it was recorded.
+    """
 
     if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 5:
         return
@@ -2122,8 +2186,17 @@ def sanitize_deleted_dependency(
         if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7
         else []
     )
+    dependent_rechecks: list[tuple[str, str, int]] = []
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7:
+        from .revalidation import dependent_revalidations
+
+        # Found by the same structural dependencies before any plan is sanitized below.
+        dependent_rechecks = dependent_revalidations(
+            connection, artifact_id=artifact_id, work_id=child_id
+        )
     backup_parents: set[str] = set()
     seed_roles: dict[str, set[str]] = {}
+    child_roles: dict[str, str] = {}
     if child_id is not None:
         row = connection.execute(
             "SELECT parent_id, role FROM work_plan_children WHERE child_id = ?",
@@ -2131,6 +2204,7 @@ def sanitize_deleted_dependency(
         ).fetchone()
         if row is not None:
             seed_roles.setdefault(row[0], set()).add(row[1])
+            child_roles[row[0]] = row[1]
 
     affected_operations: set[str] = set()
     current_plans: dict[str, WorkPlan | None] = {}
@@ -2221,15 +2295,28 @@ def sanitize_deleted_dependency(
             )
             changed = len(roles) != previous
         affected_roles[parent_id] = roles
+    recorded_plans: dict[str, list[_PlanDependencies | None]] = {}
     for parent_id, key, revision, payload, source_operation in obligation_rows:
         if bytes(payload) == REDACTED_DEPENDENCY:
             continue
         instance = ObligationRevision.model_validate_json(bytes(payload))
+        if instance.evidence is None and instance.basis is None:
+            continue
         dependent_roles_for_key = affected_roles.get(parent_id, set())
         dependent = (
             dependent_roles_for_key is None or instance.definition.role in dependent_roles_for_key
         )
-        if not dependent or (instance.evidence is None and instance.basis is None):
+        if not dependent and int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7:
+            recorded_roles = _recorded_plan_roles(
+                connection,
+                parent_id,
+                source_operation,
+                recorded_plans,
+                artifact_id=artifact_id,
+                child_role=child_roles.get(parent_id),
+            )
+            dependent = recorded_roles is None or instance.definition.role in recorded_roles
+        if not dependent:
             continue
         backup_parents.add(parent_id)
         affected_operations.add(source_operation)
@@ -2271,13 +2358,12 @@ def sanitize_deleted_dependency(
     for work_id in dependent_bases:
         _retire_outcome_basis(connection, work_id, affected_operations, backup_parents)
 
-    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7:
+    if dependent_rechecks:
         from .revalidation import retire_revalidation_bases
 
         retire_revalidation_bases(
             connection,
-            child_id=child_id,
-            artifact_id=artifact_id,
+            dependent_rechecks,
             operations=affected_operations,
             subjects=backup_parents,
         )
