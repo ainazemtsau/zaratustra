@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 import sqlite3
 import subprocess
@@ -9,12 +10,14 @@ from contextlib import closing
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4, uuid5
 
 import pytest
 from dbos import DBOS, DBOSClient
 
 import zaratustra.pi_adapter.assigned as assigned_module
+from tests.zaratustra.foundation import test_applicability as applicability
+from tests.zaratustra.foundation import test_waivers as waivers
 from tests.zaratustra.foundation.test_active_plan import _keep, _replace, _revision_request
 from tests.zaratustra.foundation.test_child_execution import _stop
 from tests.zaratustra.foundation.test_composition import _apply, _result, _seed, _sqlite_contains
@@ -372,6 +375,120 @@ def test_parallel_children_get_one_workflow_each_and_addressed_cleanup(
         ).fetchall() == [(str(works["a1"]), str(attempts["a1"][0]))]
     for key in ("a1_checked", "a2_checked", "i_final"):
         assert read_obligation(root, parent, key, owner).status == "open"
+
+
+def test_legacy_shared_queue_moves_only_the_selected_attempt(
+    tmp_path: Path, child_dbos_template: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    branches = _pipeline(tmp_path)
+    root, space, owner, _parent, works = branches
+    attempts: dict[str, UUID] = {}
+    workspaces: dict[UUID, Path] = {}
+    for role in ("a2", "a1"):
+        _issue_branch(branches, role)
+        workspaces[works[role]] = _resource(root, space, owner, works[role], f"workspace-{role}")
+        attempts[role] = _assign(root, space, owner, works[role])[0]
+    shutil.copyfile(child_dbos_template, root / ".zara-core" / "executor.sqlite3")
+    client = DBOSClient(
+        system_database_url=(
+            f"sqlite:///{(root / '.zara-core' / 'executor.sqlite3').resolve().as_posix()}"
+        ),
+        application_name="zaratustra-assigned-rpc",
+        retry_connection_errors=False,
+    )
+    ids = {role: f"zara-{uuid5(attempts[role], 'launch')}" for role in attempts}
+    try:
+        for role in ("a2", "a1"):
+            entry = read_execution(root, works[role], owner).outbox[0]
+            client.enqueue(
+                {
+                    "workflow_name": WORKFLOW_NAME,
+                    "queue_name": "zara-assigned-rpc",
+                    "workflow_id": ids[role],
+                    "app_version": EXECUTOR_VERSION,
+                    "deduplication_id": str(entry.outbox_id),
+                    "duplication_policy": "return-existing",
+                    "attributes": {"work_id": str(works[role]), "attempt_id": str(attempts[role])},
+                },
+                str(works[role]),
+                str(attempts[role]),
+                entry.execution_epoch,
+                entry.generation,
+            )
+    finally:
+        client.destroy()
+
+    executed: list[UUID] = []
+
+    def execute(
+        config: AssignedConfig,
+        _authority: LocalAuthority,
+        work_id: UUID,
+        _attempt_id: UUID,
+        _epoch: int,
+        _generation: int,
+    ) -> str:
+        assert config.workspace == workspaces[work_id]
+        executed.append(work_id)
+        return "proposed"
+
+    monkeypatch.setattr(assigned_module, "_execute", execute)
+
+    def statuses() -> dict[str, str]:
+        check = DBOSClient(
+            system_database_url=(
+                f"sqlite:///{(root / '.zara-core' / 'executor.sqlite3').resolve().as_posix()}"
+            ),
+            application_name="zaratustra-assigned-rpc",
+            retry_connection_errors=False,
+        )
+        try:
+            return {
+                item.workflow_id: item.status
+                for item in check.list_workflows(name=WORKFLOW_NAME, load_output=False)
+            }
+        finally:
+            check.destroy()
+
+    configs = {
+        role: _config(root, workspaces[works[role]], tmp_path / "runtime") for role in attempts
+    }
+    assert run_assigned(configs["a1"], owner, attempts["a1"]) == "proposed"
+    assert statuses() == {ids["a1"]: "SUCCESS", ids["a2"]: "ENQUEUED"}
+    assert executed == [works["a1"]]
+    assert run_assigned(configs["a2"], owner, attempts["a2"]) == "proposed"
+    assert statuses() == {ids["a1"]: "SUCCESS", ids["a2"]: "SUCCESS"}
+    assert run_assigned(configs["a2"], owner, attempts["a2"]) == "proposed"
+    assert len(deliver_outbox(root, owner)) == 2
+    assert statuses() == {ids["a1"]: "SUCCESS", ids["a2"]: "SUCCESS"}
+    assert executed == [works["a1"], works["a2"]]
+
+
+def test_assigned_child_context_carries_addressed_parent_obligations(tmp_path: Path) -> None:
+    setup = applicability._space(tmp_path)
+    case = waivers._case(setup)
+    choice = applicability._choose(case, "not_required", applicability._work_scope(case))
+    applicability._resolve(case, choice)
+    exception = waivers._except(case)
+    apply_operation(root := case.root, waivers._waive_request(case, exception), case.owner)
+    applicability._issue(case, "a")
+    workspace = _resource(root, case.space, case.owner, case.works["a"], "workspace-a")
+    attempt, session = _assign(root, case.space, case.owner, case.works["a"])
+    bridge = Bridge(
+        root, case.owner, workspace, 100, assigned_attempt_id=attempt, assigned_session_id=session
+    )
+    bridge.connect(session)
+    bridge.select(session, case.activity, case.works["a"])
+    context = bridge.snapshot(session)
+    composition = cast(dict[str, Any], context["composition"])
+    assert composition["role"] == "a" and composition["parent_work_id"] == str(case.parent)
+    obligations = {item["key"]: item for item in composition["obligations"]}
+    assert obligations["checked"]["status"] == "waived"
+    assert obligations["checked"]["exception"]["decision_id"] == str(exception.decision_id)
+    assert obligations["art_review"]["applicability"] == "inactive"
+    assert obligations["art_review"]["choice"]["decision_id"] == str(choice.decision_id)
+    assert case.parent != case.works["a"]
+    assert "Synthetic plan whose check may be waived" not in json.dumps(composition)
 
 
 def test_subject_refusal_before_launch_stops_child_without_pi_or_http(

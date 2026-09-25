@@ -980,17 +980,30 @@ def _run_assigned_locked(
         client = _client(config.space)
         try:
             existing = _existing_workflow(client, attempt_id)
+            if (
+                existing is not None
+                and existing.app_version == EXECUTOR_VERSION
+                and existing.status in {"ENQUEUED", "PENDING"}
+            ):
+                # Old releases used one queue and one application version for every
+                # assigned Work. Move only this unfinished workflow to its addressed
+                # queue before starting a worker; keep its ID, inputs and version.
+                # The stable workflow ID remains the launch deduplication address.
+                client.resume_workflow(
+                    _workflow_id(attempt_id), queue_name=_attempt_queue(attempt_id)
+                )
         finally:
             client.destroy()
     application_version = existing.app_version if existing else _attempt_app_version(attempt_id)
     if application_version not in (EXECUTOR_VERSION, _attempt_app_version(attempt_id)):
         raise FoundationError("executor_version", "DBOS workflow has an unexpected version")
-    queue_name = existing.queue_name if existing else _attempt_queue(attempt_id)
+    queue_name = _attempt_queue(attempt_id)
     DBOS(
         config={
             "name": "zaratustra-assigned-rpc",
             "system_database_url": _database_url(executor_database(config.space)),
             "application_version": application_version,
+            "executor_id": str(attempt_id),
         }
     )
 
@@ -998,6 +1011,9 @@ def _run_assigned_locked(
     def assigned_work(work: str, attempt: str, epoch: int, generation: int) -> str:
         return _execute(config, authority, UUID(work), UUID(attempt), epoch, generation)
 
+    # DBOS otherwise listens to every persisted queue, including the shared legacy
+    # queue. Its startup recovery must also have a distinct executor identity.
+    DBOS.listen_queues([queue_name])
     DBOS.launch()
     try:
         DBOS.register_queue(queue_name, worker_concurrency=1)

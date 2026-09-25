@@ -221,7 +221,9 @@ independent replacements keep their own evidence, receipts and replay. The 3.9
 technical review closed on exact `73fffa7afb7bdfcc815938a132ab73d3955115e0`
 without schema 7, pass 3 or Stage 6 acceptance. Part 3.10 adds address-only
 current plan decisions and the immediate owned plan of a nested composite
-Work to `CompositionView`; neither view copies plan text. See
+Work to `CompositionView`. A child's view includes its immediate parent's
+addressed obligation, applicability and waiver states; `nested` holds the child's
+own distinct plan and obligations. Neither view copies plan text. See
 `docs/core-v0.1/STAGE6-PASS3-REVIEW-3.9.md` and
 `docs/core-v0.1/STAGE6-PASS3-IMPLEMENTATION.md`.
 

@@ -297,6 +297,7 @@ def test_nested_method_pin_issue_and_full_acceptance(tmp_path: Path) -> None:
     visible = read_execution(case.setup.root, case.node.parent, case.setup.owner).composition
     assert visible is not None and visible.nested is not None
     assert visible.method.version == 1 and visible.plan_revision == 2
+    assert [(item.key, item.status) for item in visible.obligations] == [("reviewed", "open")]
     assert visible.nested.method == case.n2 and visible.nested.plan_revision == 1
     assert [(item.role, item.work_id) for item in visible.nested.children] == [
         ("g", case.nested_child.work_id)
@@ -313,6 +314,13 @@ def test_nested_method_pin_issue_and_full_acceptance(tmp_path: Path) -> None:
     _refused(case.node, "child_not_issued", _issue_request(case.node, "g"))
     _issue(case.parent, "review")
     _issue(case.node, "g")
+    grandchild = read_execution(case.setup.root, case.nested_child.work_id, case.setup.owner)
+    assert grandchild.composition is not None
+    assert grandchild.composition.parent_work_id == case.node.parent
+    assert [(item.key, item.status) for item in grandchild.composition.obligations] == [
+        ("g_final", "open")
+    ]
+    assert grandchild.composition.nested is None
     _refused(
         case.node,
         "unsupported_composite_execution",

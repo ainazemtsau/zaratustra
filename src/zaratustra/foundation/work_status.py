@@ -976,6 +976,7 @@ def composition_view(connection: sqlite3.Connection, work_id: UUID) -> Compositi
             issued_plan_revision=issued,
             pins=_pins(connection, work_id),
             transfers=_transfers(connection, work_id),
+            obligations=_obligation_progress(connection, parent_id, parent.method),
             nodes=_plan_nodes(connection, parent_id, address[0]),
             nested=(
                 _own_composition(connection, work_id, own_state) if own_state is not None else None
