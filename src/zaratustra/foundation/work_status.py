@@ -45,7 +45,9 @@ from .models import (
     WorkStatus,
 )
 from .operations import LocalAuthority, _authorize, _local_space, _subject_current, _subject_state
+from .revalidation import premise_reasons, revalidation_in_force
 from .storage import FoundationError, space_connection
+from .waivers import waiver_holds
 
 # Recorded Attempt effects that show the same Attempt continued after an answer.
 _CONTINUATION_EFFECTS = (
@@ -112,6 +114,12 @@ def _unmet(
             ]
         if condition.role is not None:
             child = next((item for item in plan.children if item.role == condition.role), None)
+            if error.code == "premise_changed" and child is not None:
+                # Each changed premise of the accepted result keeps its held and current
+                # revision.
+                found = premise_reasons(connection, child.work_id, condition.role)
+                if found:
+                    return found
             return [
                 StatusReason(
                     code=error.code,
@@ -339,7 +347,7 @@ def work_status(connection: sqlite3.Connection, work_id: UUID) -> WorkStatus:
         raise FoundationError("content_unavailable", f"Work {work_id} was deleted")
     state = WorkState.model_validate(_subject_state(connection, work_id, revision))
     if state.status == "succeeded":
-        return WorkStatus(work_id=work_id, status="succeeded")
+        return _succeeded_status(connection, work_id, state, schema)
     if state.status in CLOSED_OUTCOMES:
         return _closed_status(connection, work_id, state.status, schema)
     binding = child_binding(connection, work_id) if schema >= 5 else None
@@ -412,6 +420,34 @@ def work_status(connection: sqlite3.Connection, work_id: UUID) -> WorkStatus:
             reasons=(StatusReason(code="issue_pending", role=binding[2], record_id=binding[0]),),
         )
     return WorkStatus(work_id=work_id, status="ready")
+
+
+def _succeeded_status(
+    connection: sqlite3.Connection, work_id: UUID, state: WorkState, schema: int
+) -> WorkStatus:
+    """An accepted result stays succeeded; its reasons name what integration must know.
+
+    A parent accepted under exceptions keeps naming each waived requirement. A child
+    result whose premise changed names each change while its parent is still open.
+    """
+
+    assert state.acceptance is not None
+    reasons = [
+        StatusReason(
+            code="waived",
+            key=item.key,
+            record_id=item.exception.decision_id,
+            revision=item.exception.revision,
+        )
+        for item in state.acceptance.waived
+    ]
+    binding = child_binding(connection, work_id) if schema >= 7 else None
+    if binding is not None and _subject_current(connection, binding[0], "work")[1] == "proposed":
+        try:
+            reasons += premise_reasons(connection, work_id, binding[2])
+        except FoundationError:
+            pass  # An unreadable issue plan is reported by the parent and by integration.
+    return WorkStatus(work_id=work_id, status="succeeded", reasons=tuple(reasons))
 
 
 def _closed_status(
@@ -516,15 +552,25 @@ def _children(connection: sqlite3.Connection, parent_id: UUID) -> tuple[ChildPro
                 reasons=(StatusReason(code=error.code, role=role, record_id=child),),
             )
         progress.append(
-            ChildProgress(role=role, work_id=child, issued_plan_revision=issued, status=status)
+            ChildProgress(
+                role=role,
+                work_id=child,
+                issued_plan_revision=issued,
+                status=status,
+                revalidation=(
+                    revalidation_in_force(connection, child)
+                    if status.status == "succeeded" and _schema(connection) >= 7
+                    else None
+                ),
+            )
         )
     return tuple(progress)
 
 
 def _obligation_states(
-    connection: sqlite3.Connection, parent_id: UUID
+    connection: sqlite3.Connection, parent_id: UUID, method: MethodRef
 ) -> tuple[tuple[ObligationProgress, tuple[DecisionRef, ...]], ...]:
-    """Latest instance of each obligation with derived applicability and any conflict."""
+    """Latest instance of each obligation with derived applicability, waiver and conflict."""
 
     latest: dict[str, tuple[ObligationProgress, tuple[DecisionRef, ...]]] = {}
     for key, _revision, payload in connection.execute(
@@ -536,15 +582,19 @@ def _obligation_states(
             continue
         instance = ObligationRevision.model_validate_json(bytes(payload))
         applicability, conflicting = obligation_applicability(connection, instance)
+        waiver_stale = instance.status == "waived" and not waiver_holds(
+            connection, instance, method
+        )
         latest[key] = (
             ObligationProgress(
                 key=instance.key,
                 revision=instance.revision,
                 role=instance.definition.role,
                 applicability=applicability,
-                status=instance.status,
+                status="waiver_stale" if waiver_stale else instance.status,
                 evidence=instance.evidence,
                 choice=instance.choice,
+                exception=instance.exception,
             ),
             conflicting,
         )
@@ -552,9 +602,9 @@ def _obligation_states(
 
 
 def _obligation_progress(
-    connection: sqlite3.Connection, parent_id: UUID
+    connection: sqlite3.Connection, parent_id: UUID, method: MethodRef
 ) -> tuple[ObligationProgress, ...]:
-    return tuple(progress for progress, _ in _obligation_states(connection, parent_id))
+    return tuple(progress for progress, _ in _obligation_states(connection, parent_id, method))
 
 
 def _branch_reviews(
@@ -565,11 +615,11 @@ def _branch_reviews(
     """Closed branches that the current plan or an open obligation still refers to."""
 
     planned = {child.role for child in plan.children}
-    # A validly inactive obligation needs no result from its role.
+    # A validly inactive or waived obligation needs no result from its role.
     needed = {
         item.role
         for item in obligations
-        if item.status == "open" and item.applicability != "inactive"
+        if item.status in ("open", "waiver_stale") and item.applicability != "inactive"
     }
     return [
         StatusReason(code="branch_review", role=child.role, record_id=child.work_id)
@@ -591,9 +641,21 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
             reasons=(StatusReason(code=error.code, record_id=work_id),),
         )
     children = _children(connection, work_id)
-    states = _obligation_states(connection, work_id)
+    states = _obligation_states(connection, work_id, state.method)
     obligations = tuple(progress for progress, _ in states)
     applicability = {item.key: item.applicability for item in obligations}
+    execution = {item.key: item.status for item in obligations}
+    # A requirement taken off by an exact exception is shown, never counted as a result.
+    waived = [
+        StatusReason(
+            code="waived",
+            key=item.key,
+            record_id=item.exception.decision_id,
+            revision=item.exception.revision,
+        )
+        for item in obligations
+        if item.status == "waived" and item.exception is not None
+    ]
     names = {
         item.key: item.applicability.choice
         for item in definition.obligations
@@ -635,7 +697,9 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
             plan.plan,
             state,
             tuple(
-                item for item in definition.obligations if applicability.get(item.key) != "inactive"
+                item
+                for item in definition.obligations
+                if applicability.get(item.key) != "inactive" and execution.get(item.key) != "waived"
             ),
         )
         if gap.code != "dependency_closed"
@@ -652,15 +716,15 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
         item.key
         for item in obligations
         if item.applicability == "inactive"
-        or (item.applicability == "active" and item.status == "satisfied")
+        or (item.applicability == "active" and item.status in ("satisfied", "waived"))
     }
     refusal: str | None = None
     if settled == declared:
         # Acceptance is pending exactly when Core's own acceptance rules hold structurally:
-        # every declared obligation (none may be declared) is satisfied or validly inactive,
-        # exact bound outputs and the completion, which may need only some children (any).
-        # Other children need not have succeeded. The separate acceptance operation still
-        # checks current rights.
+        # every declared obligation (none may be declared) is satisfied, validly waived or
+        # validly inactive, exact bound outputs and the completion, which may need only some
+        # children (any). Other children need not have succeeded. The separate acceptance
+        # operation still checks current rights.
         try:
             check_parent_acceptance(
                 connection, work_id, state, actor=None, epoch=0, grants=[], decisions=[]
@@ -677,7 +741,11 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
             return WorkStatus(
                 work_id=work_id,
                 status="ready",
-                reasons=(StatusReason(code="acceptance_pending", record_id=work_id), *reviews),
+                reasons=(
+                    StatusReason(code="acceptance_pending", record_id=work_id),
+                    *waived,
+                    *reviews,
+                ),
             )
     succeeded = {child.role for child in children if child.status.status == "succeeded"}
     next_steps = [
@@ -692,8 +760,22 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
     ] + [
         StatusReason(code="confirmation_pending", role=item.role, record_id=work_id)
         for item in obligations
-        if item.applicability == "active" and item.status == "open" and item.role in succeeded
+        if item.applicability == "active"
+        and item.status in ("open", "waiver_stale")
+        and item.role in succeeded
     ]
+    # A waiver whose exact exception no longer holds needs a result or a new exception.
+    for item in obligations:
+        if item.status == "waiver_stale":
+            assert item.exception is not None
+            next_steps.append(
+                StatusReason(
+                    code="waiver_stale",
+                    key=item.key,
+                    record_id=item.exception.decision_id,
+                    revision=item.exception.revision,
+                )
+            )
     # Resolving applicability is the next step of an unresolved or stale obligation.
     for item in obligations:
         if item.applicability == "unresolved":
@@ -802,7 +884,7 @@ def composition_view(connection: sqlite3.Connection, work_id: UUID) -> Compositi
         plan_revision=address[0],
         plan_available=address[1],
         children=_children(connection, work_id),
-        obligations=_obligation_progress(connection, work_id),
+        obligations=_obligation_progress(connection, work_id, state.method),
     )
 
 

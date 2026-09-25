@@ -112,18 +112,6 @@ class ChoiceState(ContractModel):
     status: Literal["active", "revoked"] = "active"
 
 
-def _decision_variant(value: object) -> str:
-    variant = value.get("variant") if isinstance(value, dict) else getattr(value, "variant", None)
-    return "choice" if variant == "choice" else "rule"
-
-
-# An access rule keeps its earlier canonical form; only a choice names its variant.
-DecisionBody = Annotated[
-    Annotated[DecisionState, Tag("rule")] | Annotated[ChoiceState, Tag("choice")],
-    Discriminator(_decision_variant),
-]
-
-
 class GrantState(ContractModel):
     grantee: str = Field(min_length=1, max_length=200)
     actions: tuple[Action, ...] = Field(min_length=1)
@@ -163,6 +151,50 @@ class MethodRef(ContractModel):
     method_id: UUID
     version: int = Field(ge=1)
     checksum: str = Field(pattern=r"^[0-9A-F]{64}$")
+
+
+class ObligationTarget(ContractModel):
+    """Exactly one requirement: a composite parent Work and one obligation key."""
+
+    work_id: UUID
+    key: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+
+
+class ExceptionState(ContractModel):
+    """A permitted deviation from exactly one requirement within explicit limits.
+
+    ``target`` names the requirement, ``methods`` the exact Method versions within which
+    the exception holds and ``statement`` the case and the reason. It is never an access
+    rule and never a fulfilment: a waived obligation keeps this address and is shown
+    apart from satisfied ones.
+    """
+
+    variant: Literal["exception"] = "exception"
+    statement: str = Field(min_length=1, max_length=4096)
+    target: ObligationTarget
+    methods: tuple[MethodRef, ...] = Field(min_length=1)
+    status: Literal["active", "revoked"] = "active"
+
+    @model_validator(mode="after")
+    def unique_limits(self) -> ExceptionState:
+        versions = [(item.method_id, item.version) for item in self.methods]
+        if len(versions) != len(set(versions)):
+            raise ValueError("Exception limits name each Method version once")
+        return self
+
+
+def _decision_variant(value: object) -> str:
+    variant = value.get("variant") if isinstance(value, dict) else getattr(value, "variant", None)
+    return str(variant) if variant in ("choice", "exception") else "rule"
+
+
+# An access rule keeps its earlier canonical form; only the other variants name themselves.
+DecisionBody = Annotated[
+    Annotated[DecisionState, Tag("rule")]
+    | Annotated[ChoiceState, Tag("choice")]
+    | Annotated[ExceptionState, Tag("exception")],
+    Discriminator(_decision_variant),
+]
 
 
 class NamedInput(ContractModel):
@@ -353,13 +385,34 @@ class DecisionRef(ContractModel):
     revision: int = Field(ge=1)
 
 
+class PremiseChange(ContractModel):
+    """One premise of an accepted child result: the held revision and the current one.
+
+    ``current`` is ``None`` when the premise is no longer available; such a premise can
+    never be rechecked, only left by an outcome or a plan revision.
+    """
+
+    kind: Literal["artifact", "decision"]
+    record_id: UUID
+    revision: int = Field(ge=1)
+    current: int | None = Field(default=None, ge=1)
+
+    @model_validator(mode="after")
+    def names_a_change(self) -> PremiseChange:
+        if self.current == self.revision:
+            raise ValueError("A changed premise names another current revision")
+        return self
+
+
 class ObligationRevision(ContractModel):
     """One exact revision of a materialized obligation.
 
     Applicability and execution are separate fields. A conditional obligation starts
     ``unresolved``; an addressed choice (``choice``) resolves it ``active`` or
-    ``inactive``, and execution starts ``open`` again with each resolution. ``basis`` is
-    the text of the operation that recorded this revision.
+    ``inactive``, and execution starts ``open`` again with each resolution. An active
+    obligation is executed ``satisfied`` with exact evidence or ``waived`` by an
+    addressed exception (``exception``), never both. ``basis`` is the text of the
+    operation that recorded this revision.
     """
 
     parent_work_id: UUID
@@ -367,13 +420,14 @@ class ObligationRevision(ContractModel):
     revision: int = Field(ge=1)
     definition: MethodObligation
     applicability: Literal["active", "inactive", "unresolved"] = "active"
-    status: Literal["open", "satisfied"]
+    status: Literal["open", "satisfied", "waived"]
     evidence: ArtifactRef | None = None
     basis: str | None = None
     operation_id: UUID
     created_at: AwareDatetime
     # Absent from canonical JSON while empty, so earlier payloads stay byte-identical.
     choice: DecisionRef | None = Field(default=None, exclude_if=lambda value: value is None)
+    exception: DecisionRef | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
     def applicability_matches_definition(self) -> ObligationRevision:
@@ -384,7 +438,38 @@ class ObligationRevision(ContractModel):
             raise ValueError("A conditional obligation is resolved only by an addressed choice")
         if self.applicability != "active" and (self.status != "open" or self.evidence is not None):
             raise ValueError("Only an active obligation is executed")
+        if (self.status == "waived") != (self.exception is not None) or (
+            self.status == "waived" and self.evidence is not None
+        ):
+            raise ValueError("Only a waived obligation names its exception, and no evidence")
         return self
+
+
+class WaivedObligation(ContractModel):
+    """A requirement taken off by an exact exception; it is not a result."""
+
+    key: str
+    exception: DecisionRef
+
+
+class ResultRevalidation(ContractModel):
+    """Explicit recheck that an accepted child result holds under its changed premises.
+
+    It permits integration of that exact result only while every named current revision
+    stays current. ``basis`` is ``None`` after deletion of the child, one of its outputs
+    or a named premise; the addresses stay and the record permits nothing any more.
+    """
+
+    parent_work_id: UUID
+    role: str
+    work_id: UUID
+    revision: int = Field(ge=1)
+    plan_revision: int = Field(ge=1)
+    outputs: tuple[LinkedOutput, ...] = Field(min_length=1)
+    premises: tuple[PremiseChange, ...] = Field(min_length=1)
+    basis: str | None = Field(min_length=1, max_length=4096)
+    operation_id: UUID
+    created_at: AwareDatetime
 
 
 class WorkAcceptance(ContractModel):
@@ -394,12 +479,15 @@ class WorkAcceptance(ContractModel):
     basis structurally depends on; older schemas never store that representation. A read
     of schemas 2-6 withholds (``None``) a basis that an earlier deletion left in place
     until the explicit upgrade to 7 retires it; the stored bytes are not rewritten.
+    ``waived`` names every requirement of a composite parent accepted under an exception.
     """
 
     operation_id: UUID
     basis: str | None = Field(min_length=1, max_length=4096)
     authority_source: str = Field(min_length=1, max_length=2048)
     accepted_at: AwareDatetime
+    # Absent from canonical JSON while empty, so earlier acceptances stay byte-identical.
+    waived: tuple[WaivedObligation, ...] = Field(default=(), exclude_if=lambda value: not value)
 
 
 type ClosedOutcome = Literal["failed", "cancelled", "stale"]
@@ -633,6 +721,45 @@ class ResolveObligationApplicabilityRequest(OperationRequest):
     basis: str = Field(min_length=1, max_length=4096)
 
 
+class WaiveObligationRequest(OperationRequest):
+    """Take one active obligation of a composite parent off by an exact exception."""
+
+    kind: Literal["waive_obligation"] = "waive_obligation"
+    work_id: UUID
+    key: str = Field(min_length=1, max_length=80)
+    expected_plan_revision: int = Field(ge=1)
+    expected_obligation_revision: int = Field(ge=1)
+    exception: DecisionRef
+    basis: str = Field(min_length=1, max_length=4096)
+
+
+class RevalidateResultRequest(OperationRequest):
+    """Recheck one accepted child result against exactly its changed premises.
+
+    ``work_id`` is the child filling ``role`` of ``parent_work_id``; ``outputs`` are its
+    exact linked outputs and each premise names its held and its current revision.
+    """
+
+    kind: Literal["revalidate_result"] = "revalidate_result"
+    parent_work_id: UUID
+    role: str = Field(min_length=1, max_length=80)
+    work_id: UUID
+    outputs: tuple[LinkedOutput, ...] = Field(min_length=1)
+    expected_plan_revision: int = Field(ge=1)
+    premises: tuple[PremiseChange, ...] = Field(min_length=1)
+    basis: str = Field(min_length=1, max_length=4096)
+
+    @model_validator(mode="after")
+    def exact_pairs(self) -> RevalidateResultRequest:
+        addresses = [(item.kind, item.record_id) for item in self.premises]
+        slots = [item.slot for item in self.outputs]
+        if len(addresses) != len(set(addresses)) or len(slots) != len(set(slots)):
+            raise ValueError("Each premise and output is named once")
+        if any(item.current is None for item in self.premises):
+            raise ValueError("Each changed premise names its current revision")
+        return self
+
+
 class LinkWorkOutputRequest(OperationRequest):
     kind: Literal["link_work_output"] = "link_work_output"
     work_id: UUID
@@ -859,6 +986,8 @@ DomainRequest = Annotated[
     | IssueChildWorkRequest
     | ConfirmObligationRequest
     | ResolveObligationApplicabilityRequest
+    | WaiveObligationRequest
+    | RevalidateResultRequest
     | LinkWorkOutputRequest
     | PublishAttemptOutputRequest
     | AcceptWorkRequest
@@ -930,7 +1059,7 @@ class ArtifactRevision(ContractModel):
 
 
 class DecisionRevision(ContractModel):
-    """One exact Decision revision: an access rule or an addressed choice."""
+    """One exact Decision revision: an access rule, an addressed choice or exception."""
 
     decision_id: UUID
     revision: int = Field(ge=1)
@@ -1056,6 +1185,8 @@ class StatusReason(ContractModel):
     # Obligation key and choice name of an applicability reason; absent otherwise.
     key: str | None = Field(default=None, exclude_if=lambda value: value is None)
     name: str | None = Field(default=None, exclude_if=lambda value: value is None)
+    # The held and current revision of a changed premise of an accepted child result.
+    premise: PremiseChange | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class WorkStatus(ContractModel):
@@ -1084,19 +1215,26 @@ class ChildProgress(ContractModel):
     work_id: UUID
     issued_plan_revision: int | None = None
     status: WorkStatus
+    # Revision of the recheck that currently lets this accepted result integrate.
+    revalidation: int | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class ObligationProgress(ContractModel):
-    """Recorded execution with derived applicability: a resolution whose exact choice
-    is no longer current reads ``applicability_stale`` until it is resolved again."""
+    """Recorded execution with derived applicability and waiver.
+
+    A resolution whose exact choice is no longer current reads ``applicability_stale``
+    until it is resolved again; a waiver whose exact exception no longer holds reads
+    ``waiver_stale`` until the obligation is confirmed or waived again.
+    """
 
     key: str
     revision: int = Field(ge=1)
     role: str
     applicability: Literal["active", "inactive", "unresolved", "applicability_stale"] = "active"
-    status: Literal["open", "satisfied"]
+    status: Literal["open", "satisfied", "waived", "waiver_stale"]
     evidence: ArtifactRef | None = None
     choice: DecisionRef | None = Field(default=None, exclude_if=lambda value: value is None)
+    exception: DecisionRef | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class CompositionView(ContractModel):
@@ -1206,6 +1344,13 @@ class DeletionStatus(ContractModel):
 
 
 __all__ = [
+    "ExceptionState",
+    "ObligationTarget",
+    "PremiseChange",
+    "ResultRevalidation",
+    "RevalidateResultRequest",
+    "WaivedObligation",
+    "WaiveObligationRequest",
     "ChoiceApplicability",
     "ChoiceState",
     "DecisionBody",

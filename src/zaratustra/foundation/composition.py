@@ -44,6 +44,7 @@ from .models import (
     MethodRef,
     MethodVersion,
     ObligationRevision,
+    ObligationTarget,
     OpenWaitRequest,
     PlanCondition,
     PlanRevision,
@@ -52,12 +53,15 @@ from .models import (
     RecordAttemptStopRequest,
     RequestAttemptStopRequest,
     ResolveObligationApplicabilityRequest,
+    RevalidateResultRequest,
     ReviseResourceRequest,
     ReviseWorkPlanRequest,
     SendInvocationRequest,
     SpaceInfo,
     StartAttemptRequest,
     StopAttemptRequest,
+    WaivedObligation,
+    WaiveObligationRequest,
     WorkPlan,
     WorkState,
 )
@@ -87,6 +91,7 @@ from .storage import (
     space_connection,
     utc_now,
 )
+from .waivers import open_for_execution, require_exception, waiver_holds
 
 REDACTED_DEPENDENCY = b'{"content":"unavailable"}'
 # Effects of one assigned child Attempt; each rechecks the current plan and its pin.
@@ -534,6 +539,11 @@ def _accepted_output(
         decisions=decisions,
         media_type=media_type,
     )
+    if _schema(connection) >= 7:
+        from .revalidation import require_current_result
+
+        # The result integrates only while its own premises hold or are rechecked.
+        require_current_result(connection, child.work_id, state, role)
     return output
 
 
@@ -634,8 +644,17 @@ def _evaluate(
             )
             grants.extend(extra_grants)
             decisions.extend(extra_decisions)
-        _, status, _ = _subject_current(connection, child.work_id, "work")
+        current, status, _ = _subject_current(connection, child.work_id, "work")
         _require_succeeded(condition.role, child.work_id, status, "Required child is not accepted")
+        if _schema(connection) >= 7:
+            from .revalidation import require_current_result
+
+            require_current_result(
+                connection,
+                child.work_id,
+                WorkState.model_validate(_subject_state(connection, child.work_id, current)),
+                condition.role,
+            )
         return ()
     if condition.kind == "artifact_current":
         assert condition.artifact
@@ -716,6 +735,8 @@ def apply_composition_change(
         | IssueChildWorkRequest
         | ConfirmObligationRequest
         | ResolveObligationApplicabilityRequest
+        | WaiveObligationRequest
+        | RevalidateResultRequest
     ),
     *,
     now: str,
@@ -723,8 +744,18 @@ def apply_composition_change(
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
+    if isinstance(request, RevalidateResultRequest):
+        from .revalidation import revalidate_result
+
+        return revalidate_result(
+            connection, request, now=now, epoch=epoch, grants=grants, decisions=decisions
+        )
     if isinstance(request, ResolveObligationApplicabilityRequest):
         return _resolve_obligation(
+            connection, request, now=now, epoch=epoch, grants=grants, decisions=decisions
+        )
+    if isinstance(request, WaiveObligationRequest):
+        return _waive_obligation(
             connection, request, now=now, epoch=epoch, grants=grants, decisions=decisions
         )
     if isinstance(request, CreateMethodVersionRequest):
@@ -1132,9 +1163,10 @@ def apply_composition_change(
     selected_instance = instances.get(request.key)
     if selected_instance is None:
         raise FoundationError("not_found", "Method does not declare this obligation")
-    if (
-        selected_instance.revision != request.expected_obligation_revision
-        or selected_instance.status != "open"
+    assert isinstance(parent.method, MethodRef)
+    # An open instance, or a waived one whose exception no longer holds, is executed next.
+    if selected_instance.revision != request.expected_obligation_revision or not (
+        open_for_execution(connection, selected_instance, parent.method)
     ):
         raise FoundationError("stale_obligation", "Obligation already changed")
     if parent.status != "proposed":
@@ -1162,6 +1194,7 @@ def apply_composition_change(
             "basis": request.basis,
             "operation_id": request.operation_id,
             "created_at": datetime.fromisoformat(now),
+            "exception": None,
         }
     )
     connection.execute(
@@ -1280,6 +1313,115 @@ def _resolve_obligation(
         {"record_id": str(request.work_id), "revision": plan.revision},
         {"record_id": str(request.choice.decision_id), "revision": request.choice.revision},
     ]
+
+
+def _waive_obligation(
+    connection: sqlite3.Connection,
+    request: WaiveObligationRequest,
+    *,
+    now: str,
+    epoch: int,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> tuple[dict[str, object], list[dict[str, object]]]:
+    """Take one active obligation off by an exact exception within its limits.
+
+    The waiver is a new instance revision kept apart from ``satisfied``, with the
+    exception address and no evidence: it is not a result. It holds only while that exact
+    exception revision is current and active.
+    """
+
+    if _schema(connection) < 7:
+        raise FoundationError("unsupported_schema", "Waivers need explicit schema 7")
+    _rev, parent, definition = _parent(connection, request.work_id)
+    _method_use(
+        connection,
+        parent,
+        actor=request.actor,
+        epoch=epoch,
+        grants=grants,
+        decisions=decisions,
+    )
+    plan = _plan(connection, request.work_id)
+    if plan.revision != request.expected_plan_revision:
+        raise FoundationError("stale_plan", "Plan revision changed")
+    for reference in plan.plan.basis + parent.inputs:
+        _current_artifact(
+            connection,
+            reference,
+            actor=request.actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
+    instances = {item.key: item for item in _obligations(connection, request.work_id, definition)}
+    selected = instances.get(request.key)
+    if selected is None:
+        raise FoundationError("not_found", "Method does not declare this obligation")
+    assert isinstance(parent.method, MethodRef)
+    if selected.revision != request.expected_obligation_revision or not open_for_execution(
+        connection, selected, parent.method
+    ):
+        raise FoundationError("stale_obligation", "Obligation already changed")
+    if parent.status != "proposed":
+        raise FoundationError("work_closed", f"Parent Work is {parent.status}")
+    # Only a validly active obligation is waived; its choices are recomputed here.
+    require_applicable(connection, selected, f"Waiver of {request.key}")
+    require_exception(
+        connection,
+        request.exception,
+        ObligationTarget(work_id=request.work_id, key=request.key),
+        parent.method,
+    )
+    next_instance = ObligationRevision.model_validate(
+        selected.model_dump(mode="python")
+        | {
+            "revision": selected.revision + 1,
+            "status": "waived",
+            "evidence": None,
+            "basis": request.basis,
+            "operation_id": request.operation_id,
+            "created_at": datetime.fromisoformat(now),
+            "exception": request.exception,
+        }
+    )
+    connection.execute(
+        "INSERT INTO work_obligation_revisions(parent_id, key, revision, payload, operation_id, "
+        "created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        (
+            str(request.work_id),
+            request.key,
+            next_instance.revision,
+            next_instance.model_dump_json().encode("utf-8"),
+            str(request.operation_id),
+            now,
+        ),
+    )
+    return {
+        "work_id": str(request.work_id),
+        "key": request.key,
+        "revision": next_instance.revision,
+        "status": "waived",
+        "exception": request.exception.model_dump(mode="json"),
+    }, [
+        {"record_id": str(request.work_id), "revision": plan.revision},
+        {"record_id": str(request.exception.decision_id), "revision": request.exception.revision},
+    ]
+
+
+def waived_obligations(
+    connection: sqlite3.Connection, work_id: UUID, state: WorkState
+) -> tuple[WaivedObligation, ...]:
+    """Requirements of a composite parent taken off by exceptions, for its acceptance."""
+
+    if _schema(connection) < 7 or not isinstance(state.method, MethodRef):
+        return ()
+    definition = _method(connection, state.method)
+    return tuple(
+        WaivedObligation(key=instance.key, exception=instance.exception)
+        for instance in _obligations(connection, work_id, definition)
+        if instance.status == "waived" and instance.exception is not None
+    )
 
 
 def child_binding(
@@ -1560,6 +1702,11 @@ def check_composite_action(
         )
         if bound is not None:
             _require_open_branch(connection, plan.plan, bound.role, f"Output {bound.parent_slot}")
+            if _schema(connection) >= 7:
+                from .revalidation import require_role_result
+
+                # Linking integrates the bound accepted result: its premises must hold.
+                require_role_result(connection, plan.plan, bound.role)
         # A later opposite choice blocks integration relying on a recorded resolution.
         require_consistent_resolutions(
             connection,
@@ -1650,8 +1797,19 @@ def check_parent_acceptance(
             raise FoundationError(
                 "stale_basis", f"Applicability of obligation {instance.key} needs a new resolution"
             )
+    assert isinstance(state.method, MethodRef)
     active = [item for item in instances if applicability[item.key][0] == "active"]
-    unmet = [item for item in active if item.status != "satisfied" or item.evidence is None]
+    for instance in active:
+        # A waiver rests on its exact exception revision, rechecked in this transaction.
+        if instance.status == "waived" and not waiver_holds(connection, instance, state.method):
+            raise FoundationError(
+                "stale_basis", f"Waiver of obligation {instance.key} needs its exception again"
+            )
+    unmet = [
+        item
+        for item in active
+        if item.status != "waived" and (item.status != "satisfied" or item.evidence is None)
+    ]
     for instance in unmet:
         # A closed branch can never satisfy its obligation: name it before open ones.
         _require_open_branch(
@@ -1689,8 +1847,8 @@ def check_parent_acceptance(
         grants=grants,
         decisions=decisions,
     )
-    # An inactive obligation needs no result: only active ones name exact evidence.
-    for instance in active:
+    # An inactive or waived obligation needs no result: only satisfied ones name evidence.
+    for instance in (item for item in active if item.status == "satisfied"):
         actual = _accepted_output(
             connection,
             plan.plan,
@@ -1921,6 +2079,16 @@ def prepare_work_deletion(connection: sqlite3.Connection, work_id: UUID) -> None
             (str(work_id), str(work_id), str(work_id)),
         ).fetchall()
     ]
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7:
+        # Result rechecks belong to the parent and go with it.
+        operation_ids += [
+            row[0]
+            for row in connection.execute(
+                "SELECT operation_id FROM result_revalidations WHERE parent_id = ?",
+                (str(work_id),),
+            ).fetchall()
+        ]
+        connection.execute("DELETE FROM result_revalidations WHERE parent_id = ?", (str(work_id),))
     connection.executemany(
         "DELETE FROM receipts WHERE operation_id = ?", ((op,) for op in operation_ids)
     )
@@ -2075,6 +2243,7 @@ def sanitize_deleted_dependency(
             (parent_id, key),
         ).fetchone()[0]
         if revision == latest:
+            # Execution reopens and a waiver is taken off; addressed applicability stays.
             reopened = instance.model_copy(
                 update={
                     "revision": revision + 1,
@@ -2083,6 +2252,7 @@ def sanitize_deleted_dependency(
                     "basis": None,
                     "operation_id": operation_id,
                     "created_at": datetime.fromisoformat(now),
+                    "exception": None,
                 }
             )
             connection.execute(
@@ -2100,6 +2270,17 @@ def sanitize_deleted_dependency(
 
     for work_id in dependent_bases:
         _retire_outcome_basis(connection, work_id, affected_operations, backup_parents)
+
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7:
+        from .revalidation import retire_revalidation_bases
+
+        retire_revalidation_bases(
+            connection,
+            child_id=child_id,
+            artifact_id=artifact_id,
+            operations=affected_operations,
+            subjects=backup_parents,
+        )
 
     _retire_history(connection, affected_operations, backup_parents)
 

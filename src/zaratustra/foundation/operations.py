@@ -51,6 +51,7 @@ from .models import (
     DeleteWorkRequest,
     DeletionStatus,
     DomainRequest,
+    ExceptionState,
     FinishInvocationRequest,
     GrantState,
     IssueChildWorkRequest,
@@ -67,6 +68,7 @@ from .models import (
     RecoverRequest,
     RequestAttemptStopRequest,
     ResolveObligationApplicabilityRequest,
+    RevalidateResultRequest,
     ReviseActivityRequest,
     ReviseArtifactRequest,
     ReviseDecisionRequest,
@@ -79,6 +81,8 @@ from .models import (
     StartAttemptRequest,
     StopAttemptRequest,
     TechnicalVersions,
+    WaivedObligation,
+    WaiveObligationRequest,
     WorkAcceptance,
     WorkClosure,
     WorkRevision,
@@ -149,7 +153,9 @@ class _DeletionBatch:
 
 type Authority = LocalAuthority | RecoveryAuthority
 REQUEST_ADAPTER: TypeAdapter[DomainRequest] = TypeAdapter(DomainRequest)
-DECISION_ADAPTER: TypeAdapter[DecisionState | ChoiceState] = TypeAdapter(DecisionBody)
+DECISION_ADAPTER: TypeAdapter[DecisionState | ChoiceState | ExceptionState] = TypeAdapter(
+    DecisionBody
+)
 
 
 def authorize_local(path: Path, *, actor: str, source_ref: str) -> LocalAuthority:
@@ -215,7 +221,7 @@ def _current_bodies(connection: object, kind: str) -> list[tuple[str, int, str]]
     return cast(list[tuple[str, int, str]], rows)
 
 
-def _decision_body(raw: str | bytes) -> DecisionState | ChoiceState:
+def _decision_body(raw: str | bytes) -> DecisionState | ChoiceState | ExceptionState:
     try:
         return DECISION_ADAPTER.validate_json(raw)
     except ValidationError as error:
@@ -234,8 +240,8 @@ def _authorize(
     decisions: list[dict[str, object]] = []
     for record_id, revision, raw in _current_bodies(connection, "decision"):
         decision_state = _decision_body(raw)
-        if isinstance(decision_state, ChoiceState):
-            # A choice is a named subject value; access stays with require_grant/deny rules.
+        if not isinstance(decision_state, DecisionState):
+            # Choices and exceptions are subject values; access stays with the rules.
             continue
         if decision_state.status != "active" or action not in decision_state.actions:
             continue
@@ -425,9 +431,11 @@ def _write_artifact(
         )
 
 
-def _choice_schema(connection: object) -> None:
+def _variant_schema(connection: object) -> None:
     if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 7:  # type: ignore[attr-defined]
-        raise FoundationError("unsupported_schema", "Addressed choices need explicit schema 7")
+        raise FoundationError(
+            "unsupported_schema", "Addressed choices and exceptions need explicit schema 7"
+        )
 
 
 def _root_decision() -> DecisionState:
@@ -518,6 +526,10 @@ def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]
         return "work.accept", "work", request.work_id
     if isinstance(request, ResolveObligationApplicabilityRequest):
         return "work.write", "work", request.work_id
+    if isinstance(request, WaiveObligationRequest):
+        return "work.accept", "work", request.work_id
+    if isinstance(request, RevalidateResultRequest):
+        return "work.accept", "work", request.parent_work_id
     if isinstance(request, (CreateResourceRequest, ReviseResourceRequest)):
         return "resource.write", "work", request.work_id
     if isinstance(
@@ -1090,6 +1102,14 @@ def _apply_subject_change(
                 decisions=decisions,
             )
         _hold_work_execution(connection, request.work_id, request.operation_id, now, "accept_work")
+        waived: tuple[WaivedObligation, ...] = ()
+        if state.method != "none":
+            from .composition import waived_obligations
+
+            # A composite parent names every requirement it is accepted without.
+            waived = waived_obligations(
+                cast(sqlite3.Connection, connection), request.work_id, state
+            )
         next_state = state.model_copy(
             update={
                 "status": "succeeded",
@@ -1098,6 +1118,7 @@ def _apply_subject_change(
                     basis=request.basis,
                     authority_source=authority.source_ref,
                     accepted_at=datetime.fromisoformat(now),
+                    waived=waived,
                 ),
             }
         )
@@ -1130,10 +1151,19 @@ def _apply_subject_change(
             {"record_id": str(decision.decision_id), "revision": decision.revision}
             for decision in request.decision_premises
         )
-    return (
-        {"record_id": str(request.work_id), "revision": revision, "status": next_state.status},
-        targets,
-    )
+    result: dict[str, object] = {
+        "record_id": str(request.work_id),
+        "revision": revision,
+        "status": next_state.status,
+    }
+    if next_state.acceptance is not None and next_state.acceptance.waived:
+        # Accepted under exceptions: the result names each waived requirement by address.
+        result["waived"] = [item.model_dump(mode="json") for item in next_state.acceptance.waived]
+        targets.extend(
+            {"record_id": str(item.exception.decision_id), "revision": item.exception.revision}
+            for item in next_state.acceptance.waived
+        )
+    return result, targets
 
 
 def _apply_change(
@@ -1156,6 +1186,8 @@ def _apply_change(
             IssueChildWorkRequest,
             ConfirmObligationRequest,
             ResolveObligationApplicabilityRequest,
+            WaiveObligationRequest,
+            RevalidateResultRequest,
         ),
     ):
         from .composition import apply_composition_change
@@ -1538,21 +1570,28 @@ def _apply_change(
             "deletion": "pending",
         }, [{"record_id": str(request.artifact_id), "revision": revision}]
     if isinstance(request, CreateDecisionRequest):
-        if isinstance(request.state, ChoiceState):
-            _choice_schema(connection)
+        if not isinstance(request.state, DecisionState):
+            _variant_schema(connection)
         _expect_absent(connection, request.decision_id)
-        if isinstance(request.state, ChoiceState):
-            scope = connection.execute(  # type: ignore[attr-defined]
+        if not isinstance(request.state, DecisionState):
+            # A choice covers and an exception targets one exact existing subject.
+            kind, subject_id = (
+                (request.state.scope.kind, request.state.scope.record_id)
+                if isinstance(request.state, ChoiceState)
+                else ("work", request.state.target.work_id)
+            )
+            subject = connection.execute(  # type: ignore[attr-defined]
                 "SELECT status FROM subject_records WHERE record_id = ? AND kind = ?",
-                (str(request.state.scope.record_id), request.state.scope.kind),
+                (str(subject_id), kind),
             ).fetchone()
-            if scope is None:
+            if subject is None:
+                raise FoundationError("not_found", f"No {kind} {subject_id}")
+            if subject[0] == "deleted":
                 raise FoundationError(
-                    "not_found", f"No {request.state.scope.kind} {request.state.scope.record_id}"
-                )
-            if scope[0] == "deleted":
-                raise FoundationError(
-                    "content_unavailable", "A choice cannot cover deleted content"
+                    "content_unavailable",
+                    "A choice cannot cover deleted content"
+                    if isinstance(request.state, ChoiceState)
+                    else "An exception cannot target deleted content",
                 )
         _insert_record(
             connection,
@@ -1568,8 +1607,8 @@ def _apply_change(
             {"record_id": str(request.decision_id), "revision": 1}
         ]
     if isinstance(request, ReviseDecisionRequest):
-        if isinstance(request.state, ChoiceState):
-            _choice_schema(connection)
+        if not isinstance(request.state, DecisionState):
+            _variant_schema(connection)
         _expect_revision(connection, request.decision_id, "decision", request.expected_revision)
         row = connection.execute(  # type: ignore[attr-defined]
             "SELECT body_json FROM record_revisions WHERE record_id = ? AND revision = ?",
@@ -1589,6 +1628,13 @@ def _apply_change(
             ):
                 raise FoundationError(
                     "invalid_request", "A choice keeps its name and scope; create another choice"
+                )
+        if isinstance(request.state, ExceptionState):
+            assert isinstance(previous_decision, ExceptionState)
+            if previous_decision.target != request.state.target:
+                raise FoundationError(
+                    "invalid_request",
+                    "An exception keeps its target requirement; create another exception",
                 )
         revision = request.expected_revision + 1
         _insert_record(
@@ -2001,7 +2047,7 @@ def read_decision(
     *,
     revision: int | None = None,
 ) -> DecisionRevision:
-    """Read the current or one exact Decision revision (rule or choice); never falls forward."""
+    """Read the current or one exact Decision revision of any variant; never falls forward."""
 
     with space_connection(path) as (connection, info):
         _local_space(authority, info)

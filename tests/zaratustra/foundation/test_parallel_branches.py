@@ -475,6 +475,8 @@ def test_failed_branch_is_reviewed_while_independent_branches_go_on(tmp_path: Pa
     }
 
     # A stale prerequisite still blocks the parent first; the review keeps its address.
+    # Part 3.5 (intended change 1 of the pass 3 plan): A1 was accepted on that source, so
+    # its confirmed result no longer integrates without a recheck and is named as well.
     source = read_work(root, parent, owner).state.inputs[0]
     _apply(
         root,
@@ -490,6 +492,7 @@ def test_failed_branch_is_reviewed_while_independent_branches_go_on(tmp_path: Pa
     assert blocked.status == "blocked"
     assert _reasons(blocked) == [
         ("stale_basis", None, source.artifact_id),
+        ("premise_changed", "a1", works["a1"]),
         ("branch_review", "a2", works["a2"]),
     ]
 

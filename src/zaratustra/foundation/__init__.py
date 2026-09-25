@@ -68,6 +68,7 @@ from .models import (
     DeleteWorkRequest,
     DeletionStatus,
     DomainRequest,
+    ExceptionState,
     ExecutionSnapshot,
     FinishInvocationRequest,
     GrantState,
@@ -82,6 +83,7 @@ from .models import (
     NamedInput,
     ObligationProgress,
     ObligationRevision,
+    ObligationTarget,
     OpenWaitRequest,
     OperationAuditEntry,
     OperationReceipt,
@@ -92,6 +94,7 @@ from .models import (
     PlanOutputBinding,
     PlanPin,
     PlanRevision,
+    PremiseChange,
     PrepareInvocationRequest,
     ProvenanceRef,
     PublishAttemptOutputRequest,
@@ -102,6 +105,8 @@ from .models import (
     ResolveObligationApplicabilityRequest,
     ResourceRevision,
     ResourceState,
+    ResultRevalidation,
+    RevalidateResultRequest,
     ReviseActivityRequest,
     ReviseArtifactRequest,
     ReviseDecisionRequest,
@@ -116,6 +121,8 @@ from .models import (
     StopAttemptRequest,
     TechnicalVersions,
     WaitRecord,
+    WaivedObligation,
+    WaiveObligationRequest,
     WorkAcceptance,
     WorkClosure,
     WorkLifecycle,
@@ -149,6 +156,7 @@ from .operations import (
     restore_backup,
     upgrade_space,
 )
+from .revalidation import read_revalidation
 from .runtime import (
     EXPECTED_SQLITE_VERSION,
     EXPECTED_WINDOWS_DLL_SHA256,
@@ -158,6 +166,14 @@ from .runtime import (
 from .work_status import read_work_status
 
 __all__ = [
+    "ExceptionState",
+    "ObligationTarget",
+    "PremiseChange",
+    "ResultRevalidation",
+    "RevalidateResultRequest",
+    "WaivedObligation",
+    "WaiveObligationRequest",
+    "read_revalidation",
     "ChoiceApplicability",
     "ChoiceState",
     "DecisionRevision",

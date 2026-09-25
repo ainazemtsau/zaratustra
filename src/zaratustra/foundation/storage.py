@@ -528,7 +528,24 @@ CHILD_EXECUTION_SCHEMA_SHA256 = (
 # Schema 7 fences the new subject outcomes stored in Work revisions from older code.
 # Later pass-3 parts add their tables here; the DDL is frozen only when pass 3 is released.
 PLAN_REVISION_SCHEMA_NAME = "core-v0.1-plan-revision-7"
-PLAN_REVISION_SCHEMA_STATEMENTS: tuple[str, ...] = ()
+PLAN_REVISION_SCHEMA_STATEMENTS: tuple[str, ...] = (
+    """
+    CREATE TABLE result_revalidations (
+        parent_id TEXT NOT NULL,
+        child_id TEXT NOT NULL,
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        role TEXT NOT NULL,
+        payload BLOB NOT NULL,
+        operation_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (parent_id, child_id, revision),
+        FOREIGN KEY (parent_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (child_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    "CREATE INDEX result_revalidation_child ON result_revalidations(child_id)",
+)
 PLAN_REVISION_SCHEMA_SHA256 = (
     hashlib.sha256(
         "\n".join(statement.strip() for statement in PLAN_REVISION_SCHEMA_STATEMENTS).encode()
