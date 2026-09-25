@@ -125,6 +125,9 @@ class _PlanDependencies(BaseModel):
     # Schema 7: the Work filling each role in this revision (role history). Absent from
     # earlier indexes, where every role had its one original member.
     role_works: dict[str, UUID] | None = Field(default=None, exclude_if=lambda value: value is None)
+    # A descendant with a pre-index redacted plan has unknown Artifact addresses.
+    # Keep that uncertainty with its exact role across later deletions and restarts.
+    unbounded_roles: tuple[str, ...] = Field(default=(), exclude_if=lambda value: not value)
 
     @model_validator(mode="after")
     def valid_roles(self) -> _PlanDependencies:
@@ -134,6 +137,7 @@ class _PlanDependencies(BaseModel):
             or set(self.edges) != roles
             or set(self.role_artifacts) != roles
             or (self.role_works is not None and set(self.role_works) != roles)
+            or not set(self.unbounded_roles).issubset(roles)
             or any(not set(dependencies).issubset(roles) for dependencies in self.edges.values())
         ):
             raise ValueError("Sanitized plan dependency roles are inconsistent")
@@ -2850,10 +2854,14 @@ def sanitize_deleted_dependency(
         else set()
     )
     plan_rows = connection.execute(
-        "SELECT parent_id, revision, payload, operation_id "
-        "FROM work_plan_revisions ORDER BY parent_id, revision"
+        "SELECT p.parent_id, p.revision, p.payload, p.operation_id, o.state_revision "
+        "FROM work_plan_revisions p JOIN operations o ON o.operation_id = p.operation_id "
+        "ORDER BY p.parent_id, p.revision"
     ).fetchall()
-    for parent_id, revision, payload, source_operation in plan_rows:
+    saved_plans: dict[str, list[tuple[bytes, int]]] = {}
+    for parent_id, _revision, payload, _source_operation, recorded_at in plan_rows:
+        saved_plans.setdefault(parent_id, []).append((bytes(payload), int(recorded_at)))
+    for parent_id, revision, payload, source_operation, recorded_at in plan_rows:
         sanitized = _sanitized_plan(bytes(payload))
         if sanitized is not None:
             current_plans[parent_id] = None
@@ -2869,8 +2877,8 @@ def sanitize_deleted_dependency(
             )
             or (parent_id, int(revision)) in decision_work_revisions
         )
-        contains_artifact = artifact_id is not None and _contains_artifact_ref(
-            plan, str(artifact_id)
+        contains_artifact = artifact_id is not None and _plan_text_contains_artifact(
+            parsed_plan, artifact_id, int(recorded_at), saved_plans
         )
         if not contains_child and not contains_artifact:
             continue
@@ -3226,6 +3234,37 @@ def _subject_artifacts(connection: sqlite3.Connection, record_id: str) -> set[UU
     return found
 
 
+def _subtree_artifacts(
+    connection: sqlite3.Connection,
+    work_id: str,
+    plans: dict[str, list[_PlanDependencies | None]],
+) -> tuple[set[UUID], bool]:
+    """Artifact addresses of a Work and its saved descendant membership tree.
+
+    A parent plan names an exact child Work, while that child's own inputs, plan
+    history, confirmations and further descendants may be the source of its text.
+    The same closure is used while writing a retained plan index and while checking
+    an outcome, so a first deletion cannot erase a later deletion's addresses.
+    """
+
+    found = _subject_artifacts(connection, work_id)
+    unbounded = False
+    for index in _plan_history(connection, work_id, plans):
+        if index is None:
+            unbounded = True
+            continue
+        found.update(index.global_artifacts)
+        for references in index.role_artifacts.values():
+            found.update(references)
+        unbounded |= bool(index.unbounded_roles)
+    found.update(_evidence_artifacts(connection, work_id, None))
+    for child, _role in _member_rows(connection, work_id):
+        child_artifacts, child_unbounded = _subtree_artifacts(connection, child, plans)
+        found.update(child_artifacts)
+        unbounded |= child_unbounded
+    return found, unbounded
+
+
 def _outcome_dependencies(
     connection: sqlite3.Connection,
     work_id: str,
@@ -3234,12 +3273,13 @@ def _outcome_dependencies(
     """Everything an outcome basis of this Work may quote, by structure and history.
 
     Every revision of the Work itself (inputs, linked outputs, premises). A composite
-    parent also depends on every revision of its own plan, all its children with their
-    revisions and confirmation evidence. A child depends on every revision of its
-    parent's plan: its global addresses, those of its own and upstream roles, and the
-    upstream children with their revisions. Plan revisions are read from the retained
-    index once sanitized. A reference absent from the Work state does not make the basis
-    independent. Before schema 5 there are no plans: only the Work's own revisions count.
+    parent also depends on every revision of its own plan, all descendants with their
+    revisions, nested plans and confirmation evidence. At each ancestor, a child depends
+    on plan revisions that named that exact Work as the role filler: their global
+    addresses, its own and upstream roles, and upstream subtrees. Plan revisions are
+    read from the retained index once sanitized. A reference absent from the Work state
+    does not make the basis independent. Before schema 5 there are no plans: only the
+    Work's own revisions count.
     """
 
     artifacts = _subject_artifacts(connection, work_id)
@@ -3255,14 +3295,18 @@ def _outcome_dependencies(
         artifacts.update(index.global_artifacts)
         for references in index.role_artifacts.values():
             artifacts.update(references)
+        unbounded |= bool(index.unbounded_roles)
     if own:
         for child, _role in _member_rows(connection, work_id):
             works.add(child)
             works.update(_descendant_works(connection, child))
-            artifacts.update(_subject_artifacts(connection, child))
+            child_artifacts, child_unbounded = _subtree_artifacts(connection, child, plans)
+            artifacts.update(child_artifacts)
+            unbounded |= child_unbounded
         artifacts.update(_evidence_artifacts(connection, work_id, None))
-    membership = plan_membership(connection, UUID(work_id))
-    if membership is not None:
+    member_id = work_id
+    membership = plan_membership(connection, UUID(member_id))
+    while membership is not None:
         parent_id, role = str(membership[0]), membership[1]
         artifacts.update(_subject_artifacts(connection, parent_id))
         role_fillers: dict[str, set[str]] = {}
@@ -3275,21 +3319,27 @@ def _outcome_dependencies(
             # such revision, but never a revision filled by another Work in the role.
             # Role history also names the Works of upstream roles in that revision.
             fillers = _revision_role_works(connection, parent_id, index)
-            if role not in index.roles or fillers.get(role, work_id) != work_id:
+            if role not in index.roles or fillers.get(role, member_id) != member_id:
                 continue
             lineage = _upstream_roles(index.edges, role)
             artifacts.update(index.global_artifacts)
             for member in lineage:
                 artifacts.update(index.role_artifacts.get(member, ()))
+                unbounded |= member in index.unbounded_roles
                 if member in fillers:
                     upstream_works.add(fillers[member])
                     role_fillers.setdefault(member, set()).add(fillers[member])
-        for child in sorted(upstream_works - {work_id}):
+        for child in sorted(upstream_works - {member_id}):
             works.add(child)
-            artifacts.update(_subject_artifacts(connection, child))
+            works.update(_descendant_works(connection, child))
+            child_artifacts, child_unbounded = _subtree_artifacts(connection, child, plans)
+            artifacts.update(child_artifacts)
+            unbounded |= child_unbounded
         artifacts.update(
             _evidence_artifacts_for_fillers(connection, parent_id, role_fillers, plans)
         )
+        member_id = parent_id
+        membership = plan_membership(connection, UUID(member_id))
     return _OutcomeDependencies(frozenset(artifacts), frozenset(works), unbounded)
 
 
@@ -3476,16 +3526,6 @@ def retire_bases_of_deleted_dependencies(connection: sqlite3.Connection) -> list
     return sorted(subjects)
 
 
-def _contains_artifact_ref(value: object, artifact_id: str) -> bool:
-    if isinstance(value, dict):
-        return value.get("artifact_id") == artifact_id or any(
-            _contains_artifact_ref(item, artifact_id) for item in value.values()
-        )
-    if isinstance(value, list):
-        return any(_contains_artifact_ref(item, artifact_id) for item in value)
-    return False
-
-
 def _artifact_dependent_roles(
     connection: sqlite3.Connection, parent_id: str, plan: WorkPlan, artifact_id: UUID
 ) -> set[str]:
@@ -3501,6 +3541,38 @@ def _artifact_ids(value: object) -> set[UUID]:
     if isinstance(value, list):
         return {artifact_id for member in value for artifact_id in _artifact_ids(member)}
     return set()
+
+
+def _plan_text_contains_artifact(
+    plan: WorkPlan,
+    artifact_id: UUID,
+    recorded_at: int,
+    saved_plans: dict[str, list[tuple[bytes, int]]],
+) -> bool:
+    """A plan may quote nested plan text already present when it was recorded.
+
+    Later child outputs and confirmations can affect outcome and confirmation bases,
+    but could not have been copied into this earlier plan revision. Read the saved
+    nested plan payloads from before this deletion starts, including same-operation
+    nested creation, rather than the descendant's current state.
+    """
+
+    if artifact_id in _artifact_ids(plan.model_dump(mode="json")):
+        return True
+    for child in plan.children:
+        for payload, nested_at in saved_plans.get(str(child.work_id), ()):
+            if nested_at > recorded_at:
+                continue
+            sanitized = _sanitized_plan(payload)
+            if sanitized is not None:
+                index = sanitized.dependencies
+                if index is None or _indexed_artifact_roles(index, artifact_id):
+                    return True
+            elif _plan_text_contains_artifact(
+                WorkPlan.model_validate_json(payload), artifact_id, recorded_at, saved_plans
+            ):
+                return True
+    return False
 
 
 def _current_subject_artifacts(connection: sqlite3.Connection, subject_id: str) -> set[UUID]:
@@ -3522,6 +3594,8 @@ def _plan_dependencies(
     global_artifacts.update(_current_subject_artifacts(connection, parent_id))
     edges: dict[str, tuple[str, ...]] = {}
     role_artifacts: dict[str, tuple[UUID, ...]] = {}
+    unbounded_roles: set[str] = set()
+    histories: dict[str, list[_PlanDependencies | None]] = {}
     for child in plan.children:
         edges[child.role] = tuple(
             sorted({leaf.role for leaf in _conditions(child.readiness) if leaf.role is not None})
@@ -3530,12 +3604,19 @@ def _plan_dependencies(
         if child.readiness is not None:
             references.update(_artifact_ids(child.readiness.model_dump(mode="json")))
         references.update(_current_subject_artifacts(connection, str(child.work_id)))
+        descendant_artifacts, unbounded = _subtree_artifacts(
+            connection, str(child.work_id), histories
+        )
+        references.update(descendant_artifacts)
+        if unbounded:
+            unbounded_roles.add(child.role)
         role_artifacts[child.role] = tuple(sorted(references))
     return _PlanDependencies(
         roles=tuple(child.role for child in plan.children),
         edges=edges,
         global_artifacts=tuple(sorted(global_artifacts)),
         role_artifacts=role_artifacts,
+        unbounded_roles=tuple(sorted(unbounded_roles)),
         # Earlier schemas keep their exact sanitized payload bytes.
         role_works=(
             {child.role: child.work_id for child in plan.children}
@@ -3601,7 +3682,9 @@ def current_role_works(connection: sqlite3.Connection, parent_id: UUID) -> dict[
 def _indexed_artifact_roles(index: _PlanDependencies, artifact_id: UUID) -> set[str]:
     if artifact_id in index.global_artifacts:
         return set(index.roles)
-    return {role for role, references in index.role_artifacts.items() if artifact_id in references}
+    return set(index.unbounded_roles) | {
+        role for role, references in index.role_artifacts.items() if artifact_id in references
+    }
 
 
 def _legacy_plan_roles(connection: sqlite3.Connection, parent_id: str) -> set[str]:

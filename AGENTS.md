@@ -146,7 +146,10 @@ The closed review correction sanitizes plan text addressing a departed Work and
 keeps replacement evidence and outcome bases independent of the former role
 filler. Part 3.8 adds exact Method transition via the active plan revision,
 obligation mapping, evidence recheck, Attempt transfer/fencing and maintenance;
-see `STAGE6-PASS3-CHECKPOINT-3.8.md`. Parts 3.9–3.10 are not implemented.
+see `STAGE6-PASS3-CHECKPOINT-3.8.md`. Part 3.9 is implemented as a development
+checkpoint with an open technical review;
+the independent P1 finding and correction are recorded in
+`STAGE6-PASS3-REVIEW-3.9-OPEN.md`. Part 3.10 is not started.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,

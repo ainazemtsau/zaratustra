@@ -212,6 +212,13 @@ revision and immediate parent's plan revision; closures run deepest first,
 atomically. Address-only membership finds nested descendants during historical
 plan and outcome sanitation; delete Works bottom-up. See
 `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.9.md`.
+The open 3.9 review correction follows Artifact addresses through saved descendant
+Works, their plan histories and confirmation evidence. The retained plan index keeps
+these addresses by exact role, including unknown pre-index descendants, so a later
+deletion after restart can still retire dependent plan, outcome and recheck bases.
+Each ancestor plan is considered only where its exact role filler matches;
+independent replacements keep their own evidence, receipts and replay. The 3.9
+technical review remains open; part 3.10 is not started.
 
 The foundation stores Work execution records but never imports Pi or runs a model.
 Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,
