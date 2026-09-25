@@ -13,8 +13,20 @@
 синтетическая трасса обычного Pi/DBOS выполнила A/B/P с **3 HTTP** по шагам
 1/2/3; дальнейшие подтверждение, принятие, статус Pi, backup/restore и
 удаления не отправляли HTTP. Доказательство собственной Attempt видно по адресу.
-Полный Windows gate, регрессионные probes и установленный wheel будут указаны
-после итогового выполнения. Независимого review этого среза пока нет.
+Собственный полный Windows `tools.check --deliver` прошёл: **687 тестов**,
+215 файлов format-clean, mypy для 189 файлов, Ruff, **21** импортный контракт,
+sdist и wheel. Журнал `_scratch/parent-execution-deliver.log`.
+Сохранённые отдельные probes прошли: Stage 5 — **2 HTTP**, Stage 6 — **3 HTTP**,
+schema 7/pass 3 — **4 HTTP**.
+Установленный wheel точного чистого кодового SHA
+`3d6adcce5ab4c561a1c4204d341e72d32272d3f5` прошёл вне checkout:
+`source_tree_dirty=false`, Python 3.13.7, SQLite 3.53.3, **3 HTTP**;
+SHA-256 wheel
+`C4CB44C45C6CAC1D3AB4D32F553EADD812E5F4D6AA3805FB89464D9D51C71C75`.
+Отчёт `_scratch/parent-installed-3d6adcc/report.json`. Первая установка
+`8dfeeb7` выполнила сценарий на 3 HTTP, но её отчётная обёртка завершилась
+`KeyError: python`; метаданные отчёта исправлены в `3d6adcc`.
+Это проверки реализации; независимого review этого среза пока нет.
 Техническая запись:
 `docs/core-v0.1/STAGE6-PARENT-EXECUTION-IMPLEMENTATION.md`.
 

@@ -46,9 +46,30 @@ localhost probe через обычный Pi/DBOS дал **3 HTTP**: после 
 P — 3; подтверждение, принятие, Pi status, backup/restore и удаления — 0
 дополнительных. Это проверки реализации, не независимого reviewer.
 
-Полный Windows `tools.check --deliver`, регрессионные probes и wheel точного
-чистого кодового коммита будут вписаны после выполнения. Технический review
-среза остаётся открытым до независимой проверки.
+Первый полный Windows `tools.check --deliver` на кодовом пакете — **PASS**:
+**687 тестов**, 215 файлов format-clean, строгий mypy для 189 файлов, Ruff,
+**21** импортный контракт, sdist и wheel. Журнал:
+`_scratch/parent-execution-deliver.log`. Предварительные попытки gate
+остановились на формате нового теста и двух `None`-проверках mypy; после
+исправления полный gate прошёл. Это собственный прогон реализации.
+
+Сохранённые probes на отдельных одноразовых spaces также прошли: Stage 5 —
+**2 HTTP**, Stage 6 — **3 HTTP**, schema 7/pass 3 — **4 HTTP**. Отчёты:
+`_scratch/parent-regression-stage5`, `_scratch/parent-regression-stage6`,
+`_scratch/parent-regression-pass3`.
+
+Установленный wheel проверен вне checkout из точного чистого кодового коммита
+`3d6adcce5ab4c561a1c4204d341e72d32272d3f5`:
+`source_tree_dirty=false`, Python 3.13.7, SQLite 3.53.3, **3 HTTP**,
+`outside_checkout=true`, wheel SHA-256
+`C4CB44C45C6CAC1D3AB4D32F553EADD812E5F4D6AA3805FB89464D9D51C71C75`.
+Отчёт: `_scratch/parent-installed-3d6adcc/report.json`.
+Первая установленная попытка того же сценария на `8dfeeb7` выполнила 3 HTTP,
+но обёртка не завершила отчёт из-за отсутствовавших полей `python` и
+`sqlite`; отчётная правка вошла в `3d6adcc`. Это не независимое review.
+
+Повторный полный gate на окончательном документальном пакете указан в `RESULT.md`.
+Технический review среза остаётся открытым до независимой проверки.
 
 ## Границы
 
