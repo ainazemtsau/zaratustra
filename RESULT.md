@@ -33,7 +33,13 @@ unknown и отсутствие повтора потерянной HTTP-отп�
 214 файлов format-clean, строгий mypy для 188 файлов, Ruff, **21** импортный
 контракт, sdist и wheel; лог `_scratch/fix-pending-deliver.log`.
 Техническая запись: `docs/core-v0.1/STAGE6-PASS3-IMPLEMENTATION.md`.
-Установленный wheel будет атрибутирован после чистого кодового коммита.
+Установленный wheel проверен вне checkout с точного чистого кодового коммита
+`89b5d03f3f01e77f6bb74d3ab09b59dc22f1f510`: `source_tree_dirty=false`,
+Python 3.13.7, SQLite 3.53.3, **3 синтетических HTTP**, wheel SHA-256
+`2AE24862739BCC3B0262574FD15E0E3CBCBCDD395216C8F7C1987BAFAEDE297B`.
+Отчёт: `_scratch/fix-pending-installed-89b5d03/report.json`. Это проверка
+совместимого Stage 6, не всей новой schema 7 трассы. Атрибуция wheel —
+последующее документальное изменение после полного gate кодового коммита.
 
 ## assumptions
 
