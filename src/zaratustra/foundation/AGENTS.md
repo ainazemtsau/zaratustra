@@ -148,6 +148,25 @@ upstream children) or its own addresses, found before the deleting transaction c
 anything; deleting the parent removes the records. See
 `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.4-3.5.md`.
 
+Parts 3.6–3.7: `active_plan.py` owns `revise_active_plan` and the exact reads
+`read_plan_nodes`/`read_role_history`. A started plan gets revision N+1 only with an
+explicit decision for every node of N and every new node (keep, replace, cancel, stale,
+release, add), under `work.write` + `method.use`; a node leaving unfinished is closed as
+`close_work` records it (`work.accept` on it, the 3.1 hold). The schema 5 row per role is
+never rewritten: Works joining through a revision are members in `work_plan_members`,
+each revision's decisions are addresses in `work_plan_nodes`, and the effective issue of a
+child is its issue revision or the last revision a `keep` carried it into, only after the
+node's rights, inputs and readiness were rechecked under N+1 (`child_binding`). An
+obligation whose evidence belongs to a Work that left the role reopens `node_replaced`.
+An active Attempt of a kept node continues through `execution_plan_transfers`; the pin
+check accepts its pin or a transfer into the current revision. Any other effect of a
+child's pinned Attempt refuses `stale_plan` before `work_closed`, a late answer to a closed
+wait `stale_wait`; stop and sent-call outcomes stay open. The retained plan index names the
+Work of each role (`role_works`, schema 7 only), so deletion seeds, outcome and recheck
+dependencies follow the Work that filled a role in each revision. Deleting a child takes
+its transfers with its pins; deleting the parent removes members and decisions. See
+`docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.6-3.7.md`.
+
 The foundation stores Work execution records but never imports Pi or runs a model.
 Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,
 stop state and pending/cancelled outbox records in the same operation/receipt path.

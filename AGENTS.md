@@ -38,8 +38,13 @@
   correction after Codex's Windows check of `c11d54f` (recheck and waiver bases
   retired by structural dependency; `premise_changed` keeps its code through
   composite conditions), see `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.4-3.5.md`.
+  On Codex's Windows check of `0af7034` the owner closed the technical review of the
+  3.4–3.5 package and authorized one package: parts 3.6 and 3.7 in sequence (active
+  plan revision, then transfer and fencing of running Attempts, with maintenance of the
+  new data), followed by a stop for one overall review; the package is implemented as a
+  development checkpoint, see `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.6-3.7.md`.
   None of this is an accepted release, schema 7 acceptance or pass 3 acceptance.
-  Parts 3.6–3.10,
+  Parts 3.8–3.10,
   the separate composite-parent execution slice, pass 4, real model calls and
   development migration are not authorized.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
@@ -113,8 +118,16 @@ Method versions, never an access rule) and `waive_obligation` (`waived` apart fr
 accepted child result whose own inputs or readiness leaves changed, lifted only by an
 exact `revalidate_result` stored in the new schema 7 table `result_revalidations`, kept
 through composite conditions like a formal conflict; recheck bases go with any known
-structural dependency; see `STAGE6-PASS3-CHECKPOINT-3.4-3.5.md`. Parts 3.6–3.10 are not
-implemented.
+structural dependency; see `STAGE6-PASS3-CHECKPOINT-3.4-3.5.md`. Checkpoint 3.6–3.7 adds
+`revise_active_plan` (`zaratustra.foundation.active_plan`): a started plan gets revision
+N+1 only with an explicit decision per node (keep/replace/cancel/stale/release/add); a
+kept issued node carries its issue after a recheck, leaving nodes get their outcome, an
+obligation whose evidence Work left the role reopens (`node_replaced`), and address-only
+schema 7 tables keep members, node decisions and role history (`read_plan_nodes`,
+`read_role_history`). An active Attempt of a kept node continues through an explicit
+transfer (`execution_plan_transfers`); every other Attempt is fenced (`stale_plan`, a late
+answer to a closed wait `stale_wait`); see `STAGE6-PASS3-CHECKPOINT-3.6-3.7.md`. Parts
+3.8–3.10 are not implemented.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,
@@ -193,8 +206,8 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
 - Keep the accepted Core v0.1 functional composition and completed Stage 1–5
   evidence. Stage 5 and Stage 6 passes 1–2 are owner-accepted at the exact
   commits above; this is not owner acceptance of Stage 6. Stage 6 pass 3 is
-  authorized only through part 3.5: the technical reviews of checkpoints 3.1–3.3
-  are closed and the 3.4–3.5 package awaits overall review.
+  authorized only through part 3.7: the technical reviews of checkpoints 3.1–3.3
+  and of the 3.4–3.5 package are closed and the 3.6–3.7 package awaits overall review.
   Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.
