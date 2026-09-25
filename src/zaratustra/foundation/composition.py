@@ -94,6 +94,7 @@ from .storage import (
 from .waivers import open_for_execution, require_exception, waiver_holds
 
 REDACTED_DEPENDENCY = b'{"content":"unavailable"}'
+REDACTED_METHOD_SOURCE = "[content unavailable: deleted Method version]"
 # Effects of one assigned child Attempt; each rechecks the current plan and its pin.
 ATTEMPT_EFFECTS = (
     ClaimAttemptLaunchRequest,
@@ -750,6 +751,8 @@ def _obligations(
     connection: sqlite3.Connection,
     parent_id: UUID,
     definition: MethodDefinition,
+    *,
+    include_retired: bool = False,
 ) -> tuple[ObligationRevision, ...]:
     rows = connection.execute(
         "SELECT key, revision, payload FROM work_obligation_revisions WHERE parent_id = ? "
@@ -782,7 +785,73 @@ def _obligations(
         raise FoundationError(
             "incomplete_materialization", "Declared Method obligations differ from stored instances"
         )
-    return tuple(current[key] for key in sorted(current))
+    keys = current if include_retired else expected
+    return tuple(current[key] for key in sorted(keys))
+
+
+def _sanitize_deleted_method_sources(connection: sqlite3.Connection, ref: MethodRef) -> None:
+    """Remove the exact old Method's source text copied into obligation revisions.
+
+    The plan binding at the recording operation owns an ordinary instance. A retired
+    instance is written by the transition operation but still owns its *source* Method,
+    named by the transition row and the preceding plan binding. These addresses keep
+    later Method versions and a reused key independent of the deleted definition.
+    """
+
+    expected = (str(ref.method_id), ref.version, ref.checksum)
+    parents = [
+        row[0]
+        for row in connection.execute(
+            "SELECT DISTINCT parent_id FROM work_plan_methods WHERE method_id = ? "
+            "AND method_version = ? AND method_checksum = ?",
+            expected,
+        ).fetchall()
+    ]
+    for parent_id in parents:
+        revisions = connection.execute(
+            "SELECT r.key, r.revision, r.payload, r.operation_id, o.state_revision "
+            "FROM work_obligation_revisions r JOIN operations o "
+            "ON o.operation_id = r.operation_id WHERE r.parent_id = ?",
+            (parent_id,),
+        ).fetchall()
+        for key, revision, payload, operation_id, state_revision in revisions:
+            if bytes(payload) == REDACTED_DEPENDENCY:
+                continue
+            instance = ObligationRevision.model_validate_json(bytes(payload))
+            owner = None
+            if instance.status == "retired":
+                owner = connection.execute(
+                    "SELECT m.method_id, m.method_version, m.method_checksum "
+                    "FROM work_obligation_transitions t JOIN work_plan_methods m "
+                    "ON m.parent_id = t.parent_id AND m.plan_revision = t.plan_revision - 1 "
+                    "WHERE t.parent_id = ? AND t.source_key = ? AND t.source_revision = ? "
+                    "AND t.operation_id = ?",
+                    (parent_id, key, revision - 1, operation_id),
+                ).fetchone()
+            if owner is None:
+                owner = connection.execute(
+                    "SELECT m.method_id, m.method_version, m.method_checksum "
+                    "FROM work_plan_methods m JOIN work_plan_revisions p "
+                    "ON p.parent_id = m.parent_id AND p.revision = m.plan_revision "
+                    "JOIN operations o ON o.operation_id = p.operation_id "
+                    "WHERE m.parent_id = ? AND o.state_revision <= ? "
+                    "ORDER BY m.plan_revision DESC LIMIT 1",
+                    (parent_id, state_revision),
+                ).fetchone()
+            if owner is None or tuple(owner) != expected:
+                continue
+            scrubbed = instance.model_copy(
+                update={
+                    "definition": instance.definition.model_copy(
+                        update={"source": REDACTED_METHOD_SOURCE}
+                    )
+                }
+            )
+            connection.execute(
+                "UPDATE work_obligation_revisions SET payload = ? "
+                "WHERE parent_id = ? AND key = ? AND revision = ?",
+                (scrubbed.model_dump_json().encode("utf-8"), parent_id, key, revision),
+            )
 
 
 def apply_composition_change(
@@ -892,6 +961,7 @@ def apply_composition_change(
             ).fetchone()
             if transferred is not None:
                 raise FoundationError("method_in_use", "Active Attempt still transfers Method")
+            _sanitize_deleted_method_sources(connection, ref)
         row = connection.execute(
             "SELECT operation_id FROM method_versions WHERE method_id = ? AND version = ?",
             (str(request.method_id), request.version),
@@ -1294,6 +1364,8 @@ def apply_composition_change(
             "created_at": datetime.fromisoformat(now),
             "exception": None,
             "reopened": None,
+            "carried_from_key": None,
+            "carried_from_revision": None,
         }
     )
     connection.execute(
@@ -1483,6 +1555,8 @@ def _waive_obligation(
             "created_at": datetime.fromisoformat(now),
             "exception": request.exception,
             "reopened": None,
+            "carried_from_key": None,
+            "carried_from_revision": None,
         }
     )
     connection.execute(
@@ -2829,6 +2903,8 @@ def sanitize_deleted_dependency(
                     "created_at": datetime.fromisoformat(now),
                     "exception": None,
                     "reopened": None,
+                    "carried_from_key": None,
+                    "carried_from_revision": None,
                 }
             )
             connection.execute(

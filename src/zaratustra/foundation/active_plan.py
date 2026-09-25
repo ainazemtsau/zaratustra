@@ -633,7 +633,7 @@ def revise_active_plan(
     if parent.status != "proposed":
         raise FoundationError("work_closed", f"Parent Work is {parent.status}")
     assert isinstance(parent.method, MethodRef)
-    instances = _obligations(connection, request.work_id, definition)
+    instances = _obligations(connection, request.work_id, definition, include_retired=True)
     current_instances = tuple(
         item for item in instances if item.key in {need.key for need in definition.obligations}
     )
@@ -888,6 +888,8 @@ def revise_active_plan(
                     "created_at": datetime.fromisoformat(now),
                     "exception": None,
                     "reopened": "node_replaced",
+                    "carried_from_key": None,
+                    "carried_from_revision": None,
                 }
             )
             connection.execute(

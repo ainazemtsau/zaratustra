@@ -189,6 +189,14 @@ plan Method bindings remain readable by address after deleting the old definitio
 Copied obligation bases retain their source revision for deletion sanitation;
 deleting the parent removes both new tables. See
 `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.8.md`.
+The 3.8 review correction validates all obligation heads but returns only the
+current Method's instances to operations and acceptance. `read_obligation` still
+reads exact retired revisions. A new confirmation or waiver and any reopening
+that discards a copied basis clear its `carried_from_*` address. Deleting a Method
+redacts its `MethodObligation.source` copies by the Method bound to the recording
+plan; a retired revision belongs to the preceding binding named by its transition.
+The exact key, revision, status and Decision remain readable, while independent
+later Method instances stay intact.
 
 The foundation stores Work execution records but never imports Pi or runs a model.
 Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,

@@ -50,7 +50,11 @@
   revision, obligation mapping, evidence recheck, Attempt transfer/fencing and
   data maintenance. Its development checkpoint is
   `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.8.md`; it awaits one technical
-  review. This is not schema 7, pass 3 or Stage 6 acceptance. Part 3.9, the
+  review. Codex's independent Windows review of `907a739` found three defects
+  in active versus retired obligations, deletion of copied Method source text,
+  and inherited origin of a new confirmation; their correction remains in
+  part 3.8 and awaits that same review. This is not schema 7, pass 3 or Stage 6
+  acceptance. Part 3.9, the
   separate composite-parent execution slice, pass 4, real model calls and
   development migration are not authorized. The installed Pi-probe's
   `database is locked` observation remains open without an established cause.
