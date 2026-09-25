@@ -34,9 +34,12 @@
   `d251604` the owner closed the technical review of checkpoint 3.3 (the
   `stale_basis`-inside-`any` discrepancy stays a known question, not fixed) and
   authorized one package: parts 3.4 and 3.5 in sequence, followed by a stop for
-  overall review; the package is implemented as a development checkpoint, see
-  `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.4-3.5.md`. None of this is an
-  accepted release, schema 7 acceptance or pass 3 acceptance. Parts 3.6–3.10,
+  overall review; the package is implemented as a development checkpoint, with one
+  correction after Codex's Windows check of `c11d54f` (recheck and waiver bases
+  retired by structural dependency; `premise_changed` keeps its code through
+  composite conditions), see `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.4-3.5.md`.
+  None of this is an accepted release, schema 7 acceptance or pass 3 acceptance.
+  Parts 3.6–3.10,
   the separate composite-parent execution slice, pass 4, real model calls and
   development migration are not authorized.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
@@ -108,8 +111,10 @@ dependent operation and derived state; see `STAGE6-PASS3-CHECKPOINT-3.3.md`. Che
 Method versions, never an access rule) and `waive_obligation` (`waived` apart from
 `satisfied`, rechecked and named at acceptance), and at schema 7 `premise_changed` for an
 accepted child result whose own inputs or readiness leaves changed, lifted only by an
-exact `revalidate_result` stored in the new schema 7 table `result_revalidations`; see
-`STAGE6-PASS3-CHECKPOINT-3.4-3.5.md`. Parts 3.6–3.10 are not implemented.
+exact `revalidate_result` stored in the new schema 7 table `result_revalidations`, kept
+through composite conditions like a formal conflict; recheck bases go with any known
+structural dependency; see `STAGE6-PASS3-CHECKPOINT-3.4-3.5.md`. Parts 3.6–3.10 are not
+implemented.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,

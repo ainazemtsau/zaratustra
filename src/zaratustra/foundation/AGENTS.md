@@ -128,7 +128,9 @@ with the exception address and no evidence. A waiver is not a result and opens n
 dependency. Acceptance refuses a waiver whose exception no longer holds (`stale_basis`),
 and names waived requirements in its result and `WorkAcceptance.waived`; reads show
 `waived`/`waiver_stale`. Deleting a dependency of the role takes a waiver off (execution
-`open`) while addressed applicability stays.
+`open`) while addressed applicability stays. At schema 7 an obligation revision depends on
+the deleted subject through its role under the current plan and under the plan revision
+current when it was recorded (a resolution or waiver may precede a plan revision).
 
 Part 3.5: `revalidation.py` owns `premise_changed`. At schema 7 an accepted child result
 whose own premises changed (exact inputs of its accepted revision, Artifact/Decision
@@ -137,9 +139,13 @@ integration (dependent leaves and effects, confirmation, a bound parent output l
 parent acceptance) refuses `premise_changed` with held and current revisions until
 `revalidate_result` (`work.accept` + `method.use`) names exactly those changes. Rechecks
 live in the schema 7 table `result_revalidations` and permit integration only while the
-named revisions stay current. Composite conditions keep their earlier precedence for this
-code. Deleting the child, its output or a named premise retires the recheck basis;
-deleting the parent removes the records. See
+named revisions stay current. Like a formal conflict, `premise_changed` keeps its code
+through composite conditions while it blocks (`_BLOCKING_CODES`: the conflict first); a
+true `any` alternative passes and `stale_basis` keeps its earlier semantics. A recheck
+basis goes with any known structural dependency of the child's outcome
+(`_outcome_dependencies`: its revisions, its parent's plan history with basis and inputs,
+upstream children) or its own addresses, found before the deleting transaction changes
+anything; deleting the parent removes the records. See
 `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.4-3.5.md`.
 
 The foundation stores Work execution records but never imports Pi or runs a model.
