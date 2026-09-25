@@ -29,11 +29,16 @@
   established, not fixed) and authorized only part 3.3, followed by a stop for
   review; part 3.3 is implemented as a development checkpoint, with one review
   correction after Codex's Windows check of `05e089e` (a formal conflict keeps
-  its code through composite conditions; the 3.3 technical review is not
-  closed), see `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.3.md`. None of this
-  is an accepted release, schema 7 acceptance or pass 3 acceptance. Parts
-  3.4–3.10, the separate composite-parent execution slice, pass 4, real model
-  calls and development migration are not authorized.
+  its code through composite conditions), see
+  `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.3.md`. On Codex's Windows check of
+  `d251604` the owner closed the technical review of checkpoint 3.3 (the
+  `stale_basis`-inside-`any` discrepancy stays a known question, not fixed) and
+  authorized one package: parts 3.4 and 3.5 in sequence, followed by a stop for
+  overall review; the package is implemented as a development checkpoint, see
+  `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.4-3.5.md`. None of this is an
+  accepted release, schema 7 acceptance or pass 3 acceptance. Parts 3.6–3.10,
+  the separate composite-parent execution slice, pass 4, real model calls and
+  development migration are not authorized.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
 - Stage 1 stopped after recording the G07-1 DBOS and G08-1 Pi technical outcomes.
@@ -98,8 +103,13 @@ see `STAGE6-PASS3-CHECKPOINT-3.2.md`. Checkpoint 3.3 adds addressed Decision cho
 (named value and one Work/Activity scope, never an access rule), obligations applicable
 by a choice (`unresolved` until `resolve_obligation_applicability`), `decision_value`
 leaves and formal `decision_conflict` of overlapping scopes, rechecked by every
-dependent operation and derived state; see `STAGE6-PASS3-CHECKPOINT-3.3.md`. Parts
-3.4–3.10 are not implemented.
+dependent operation and derived state; see `STAGE6-PASS3-CHECKPOINT-3.3.md`. Checkpoint
+3.4–3.5 adds an addressed exception (a Decision variant naming one requirement and exact
+Method versions, never an access rule) and `waive_obligation` (`waived` apart from
+`satisfied`, rechecked and named at acceptance), and at schema 7 `premise_changed` for an
+accepted child result whose own inputs or readiness leaves changed, lifted only by an
+exact `revalidate_result` stored in the new schema 7 table `result_revalidations`; see
+`STAGE6-PASS3-CHECKPOINT-3.4-3.5.md`. Parts 3.6–3.10 are not implemented.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,
@@ -178,8 +188,8 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
 - Keep the accepted Core v0.1 functional composition and completed Stage 1–5
   evidence. Stage 5 and Stage 6 passes 1–2 are owner-accepted at the exact
   commits above; this is not owner acceptance of Stage 6. Stage 6 pass 3 is
-  authorized only through part 3.3: the technical reviews of checkpoints 3.1
-  and 3.2 are closed and checkpoint 3.3 awaits review.
+  authorized only through part 3.5: the technical reviews of checkpoints 3.1–3.3
+  are closed and the 3.4–3.5 package awaits overall review.
   Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.

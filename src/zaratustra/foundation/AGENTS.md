@@ -118,6 +118,30 @@ their own transaction.
 Everything new is refused below schema 7 and absent from earlier canonical JSON. See
 `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.3.md`.
 
+Part 3.4: `waivers.py` owns addressed exceptions, a third Decision variant
+(`ExceptionState`: one target requirement, parent Work and obligation key, and the exact
+Method versions it covers) written under `decision.write`; `_authorize` skips every
+variant but rules, and a revision keeps the variant and target. `waive_obligation`
+(`work.accept` + `method.use`) needs an `active/open` instance (or one whose waiver went
+stale) and an exact current exception whose target and limits match; it records `waived`
+with the exception address and no evidence. A waiver is not a result and opens no
+dependency. Acceptance refuses a waiver whose exception no longer holds (`stale_basis`),
+and names waived requirements in its result and `WorkAcceptance.waived`; reads show
+`waived`/`waiver_stale`. Deleting a dependency of the role takes a waiver off (execution
+`open`) while addressed applicability stays.
+
+Part 3.5: `revalidation.py` owns `premise_changed`. At schema 7 an accepted child result
+whose own premises changed (exact inputs of its accepted revision, Artifact/Decision
+leaves of its readiness in the issuing plan revision) stays succeeded, but every
+integration (dependent leaves and effects, confirmation, a bound parent output link,
+parent acceptance) refuses `premise_changed` with held and current revisions until
+`revalidate_result` (`work.accept` + `method.use`) names exactly those changes. Rechecks
+live in the schema 7 table `result_revalidations` and permit integration only while the
+named revisions stay current. Composite conditions keep their earlier precedence for this
+code. Deleting the child, its output or a named premise retires the recheck basis;
+deleting the parent removes the records. See
+`docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.4-3.5.md`.
+
 The foundation stores Work execution records but never imports Pi or runs a model.
 Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,
 stop state and pending/cancelled outbox records in the same operation/receipt path.
