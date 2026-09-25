@@ -2043,6 +2043,18 @@ def check_composite_action(
     if assigned_child and isinstance(request, _ATTEMPT_OUTCOMES + _RESOURCE_SETUP):
         return
     if isinstance(request, AcceptWorkRequest) and isinstance(state.method, MethodRef):
+        if binding is not None:
+            check_child_plan(
+                connection,
+                work_id,
+                binding,
+                state,
+                attempt_id=None,
+                actor=actor,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+            )
         check_parent_acceptance(
             connection,
             work_id,
@@ -2334,6 +2346,7 @@ def check_work_close(
     epoch: int,
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
+    permitted_succeeded_ancestors: frozenset[UUID] = frozenset(),
 ) -> None:
     """Shared gate of a composite Work outcome: membership, Method use and open children.
 
@@ -2344,7 +2357,9 @@ def check_work_close(
         parent_id = binding[0]
         parent_revision, _status, _ = _subject_current(connection, parent_id, "work")
         parent = WorkState.model_validate(_subject_state(connection, parent_id, parent_revision))
-        if parent.status != "proposed":
+        if parent.status != "proposed" and not (
+            parent.status == "succeeded" and parent_id in permitted_succeeded_ancestors
+        ):
             raise FoundationError("work_closed", f"Ancestor Work {parent_id} is {parent.status}")
         _method_use(
             connection, parent, actor=actor, epoch=epoch, grants=grants, decisions=decisions
@@ -2362,7 +2377,9 @@ def check_work_close(
             ancestor = WorkState.model_validate(
                 _subject_state(connection, ancestor_id, _ancestor_revision)
             )
-            if ancestor.status != "proposed":
+            if ancestor.status != "proposed" and not (
+                ancestor.status == "succeeded" and ancestor_id in permitted_succeeded_ancestors
+            ):
                 raise FoundationError("work_closed", f"Ancestor Work {ancestor_id} is closed")
             _method_use(
                 connection,

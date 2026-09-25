@@ -28,11 +28,13 @@ from tests.zaratustra.foundation.test_child_execution import (
     _invocation,
     _resource,
 )
-from tests.zaratustra.foundation.test_composition import _apply, _sqlite_contains
+from tests.zaratustra.foundation.test_composition import _apply, _result, _sqlite_contains
 from zaratustra.foundation import (
     AcceptWorkRequest,
     AnswerWaitRequest,
+    ArtifactRef,
     AssignAttemptRequest,
+    CloseWorkRequest,
     CreateArtifactRequest,
     CreateCompositeWorkRequest,
     CreateGrantRequest,
@@ -48,6 +50,7 @@ from zaratustra.foundation import (
     MethodRef,
     NamedInput,
     NodeClosure,
+    ObligationMapping,
     OpenWaitRequest,
     OutputContract,
     PlanChild,
@@ -57,6 +60,7 @@ from zaratustra.foundation import (
     PrepareInvocationRequest,
     RecordAttemptStopRequest,
     ReviseActivePlanRequest,
+    ReviseArtifactRequest,
     WorkPlan,
     WorkState,
     apply_operation,
@@ -64,6 +68,7 @@ from zaratustra.foundation import (
     complete_deletions,
     create_backup,
     read_execution,
+    read_method_version,
     read_obligation,
     read_work,
     read_work_plan,
@@ -323,8 +328,6 @@ def test_nested_method_pin_issue_and_full_acceptance(tmp_path: Path) -> None:
         media_type="text/plain",
         content=b"nested independent result",
     )
-    from zaratustra.foundation import ArtifactRef
-
     result = ArtifactRef(artifact_id=y, revision=1)
     _apply(
         case.setup.root,
@@ -705,3 +708,376 @@ def test_departing_nested_node_requires_explicit_grandchild_closure(tmp_path: Pa
             replacement_resource,
         )
     _issue(case.parent, "anchor")
+
+
+def test_nested_acceptance_rechecks_current_ancestor_inputs(tmp_path: Path) -> None:
+    case = _nested(tmp_path)
+    root, space, owner = case.setup.root, case.setup.space, case.setup.owner
+    apply_operation(root, _add_nested(case), owner)
+    _issue(case.parent, "review")
+    _issue(case.node, "g")
+    result = _result(root, space, owner, case.nested_child.work_id, "final", b"Independent Y")
+    _confirm(case.node, "g_final", result)
+    apply_operation(root, _link_request(case.node, result), owner)
+    assert read_work_status(root, case.node.parent, owner).status == "ready"
+
+    _apply(
+        root,
+        space,
+        owner,
+        ReviseArtifactRequest,
+        artifact_id=case.setup.source.artifact_id,
+        expected_revision=1,
+        media_type="text/plain",
+        content=b"Changed root prerequisite",
+    )
+    status = read_work_status(root, case.node.parent, owner)
+    assert status.status == "blocked"
+    assert any(reason.code == "stale_basis" for reason in status.reasons)
+    _refused(case.node, "stale_basis", _accept_request(case.node))
+    assert read_work(root, case.node.parent, owner).state.status == "proposed"
+
+    fresh = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-X",
+            "utf8",
+            "-c",
+            "from pathlib import Path; from uuid import UUID; import sys; "
+            "from zaratustra.foundation import authorize_local, read_work, read_work_status; "
+            "p=Path(sys.argv[1]); w=UUID(sys.argv[2]); "
+            "a=authorize_local(p,actor='owner',source_ref='restart'); "
+            "assert read_work(p,w,a).state.status == 'proposed'; "
+            "assert read_work_status(p,w,a).status == 'blocked'",
+            str(root),
+            str(case.node.parent),
+        ],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    assert fresh.returncode == 0, fresh.stderr
+
+
+@pytest.mark.parametrize("running_spare", [False, True])
+def test_departing_nested_node_closes_open_child_below_succeeded_composite(
+    tmp_path: Path, running_spare: bool
+) -> None:
+    case = _nested(tmp_path)
+    root, space, owner = case.setup.root, case.setup.space, case.setup.owner
+    apply_operation(root, _add_nested(case), owner)
+    _issue(case.parent, "review")
+    old = case.nested_child
+    middle = old.model_copy(
+        update={
+            "work_id": uuid4(),
+            "state": old.state.model_copy(update={"method": case.n2, "goal": "Intermediate H"}),
+        }
+    )
+    required = old.model_copy(
+        update={"work_id": uuid4(), "state": old.state.model_copy(update={"goal": "Required L"})}
+    )
+    spare = old.model_copy(
+        update={
+            "role": "spare",
+            "work_id": uuid4(),
+            "state": old.state.model_copy(update={"goal": "Optional S"}),
+        }
+    )
+    middle_plan = case.nested_plan.model_copy(update={"children": (required, spare)})
+    nested_plan = case.nested_plan.model_copy(update={"children": (middle,)})
+    apply_operation(
+        root,
+        ReviseActivePlanRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            work_id=case.node.parent,
+            expected_work_revision=read_work(root, case.node.parent, owner).revision,
+            expected_plan_revision=1,
+            plan=nested_plan,
+            nodes=(
+                PlanNodeDecision(
+                    role="g",
+                    decision="replace",
+                    work_id=old.work_id,
+                    replacement=middle.work_id,
+                    closure=NodeClosure(
+                        expected_revision=1, outcome="cancelled", basis="Replace plain child"
+                    ),
+                    nested_plan=middle_plan,
+                ),
+            ),
+        ),
+        owner,
+    )
+    nested_case = case.node._replace(works={"g": middle.work_id})
+    middle_case = Case(
+        root,
+        space,
+        owner,
+        case.setup.activity,
+        middle.work_id,
+        {
+            "g": required.work_id,
+            "spare": spare.work_id,
+        },
+    )
+    _issue(nested_case, "g")
+    _issue(middle_case, "g")
+    _issue(middle_case, "spare")
+    result = _result(root, space, owner, required.work_id, "final", b"Required result")
+    attempt = invocation = None
+    if running_spare:
+        resource = _resource(root, space, owner, spare.work_id, "optional-spare-resource")
+        attempt, session, _request, _receipt = _assign(root, space, owner, spare.work_id, resource)
+        _claim(root, space, owner, spare.work_id, attempt, session)
+        invocation = _invocation(root, space, owner, spare.work_id, attempt, session, finish=False)
+    _confirm(middle_case, "g_final", result)
+    apply_operation(root, _link_request(middle_case, result), owner)
+    acceptance = _accept_request(middle_case)
+    accepted = apply_operation(root, acceptance, owner)
+    assert read_work(root, middle.work_id, owner).state.status == "succeeded"
+    assert read_work(root, spare.work_id, owner).state.status == "proposed"
+
+    replacement = case.next_plan.children[1].model_copy(update={"work_id": uuid4()})
+    fresh = old.model_copy(update={"work_id": uuid4()})
+    parent_plan = case.next_plan.model_copy(update={"children": (case.anchor, replacement)})
+
+    def request(descendants: tuple[DescendantClosure, ...]) -> ReviseActivePlanRequest:
+        return ReviseActivePlanRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            work_id=case.parent.parent,
+            expected_work_revision=read_work(root, case.parent.parent, owner).revision,
+            expected_plan_revision=read_work_plan(root, case.parent.parent, owner).revision,
+            plan=parent_plan,
+            nodes=(
+                PlanNodeDecision(role="anchor", decision="keep", work_id=case.anchor.work_id),
+                PlanNodeDecision(
+                    role="review",
+                    decision="replace",
+                    work_id=case.node.parent,
+                    replacement=replacement.work_id,
+                    closure=NodeClosure(
+                        expected_revision=read_work(root, case.node.parent, owner).revision,
+                        outcome="cancelled",
+                        basis="Replace N",
+                    ),
+                    nested_plan=case.nested_plan.model_copy(update={"children": (fresh,)}),
+                    descendants=descendants,
+                ),
+            ),
+        )
+
+    _refused(case.parent, "open_children", request(()))
+    _refused(
+        case.parent,
+        "work_closed",
+        CloseWorkRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            work_id=spare.work_id,
+            expected_revision=read_work(root, spare.work_id, owner).revision,
+            outcome="cancelled",
+            basis="Direct close below accepted H",
+        ),
+    )
+    close = DescendantClosure(
+        parent_work_id=middle.work_id,
+        expected_plan_revision=read_work_plan(root, middle.work_id, owner).revision,
+        role="spare",
+        work_id=spare.work_id,
+        closure=NodeClosure(
+            expected_revision=read_work(root, spare.work_id, owner).revision,
+            outcome="cancelled",
+            basis="Explicitly stop optional S",
+        ),
+    )
+    apply_operation(root, request((close,)), owner)
+    assert read_work(root, case.node.parent, owner).state.status == "cancelled"
+    assert read_work(root, spare.work_id, owner).state.status == "cancelled"
+    middle_state = read_work(root, middle.work_id, owner).state
+    assert middle_state.status == "succeeded"
+    assert middle_state.acceptance is not None and middle_state.acceptance.basis is not None
+    assert apply_operation(root, acceptance, owner) == accepted
+    assert read_work(root, required.work_id, owner).state.status == "succeeded"
+    assert read_work(root, case.anchor.work_id, owner).state.status == "proposed"
+    assert read_work(root, replacement.work_id, owner).state.status == "proposed"
+    if running_spare:
+        assert attempt is not None and invocation is not None
+        execution = read_execution(root, spare.work_id, owner)
+        assert next(a for a in execution.assignments if a.attempt_id == attempt).status == (
+            "stop_requested"
+        )
+        assert next(i for i in execution.invocations if i.invocation_id == invocation).status == (
+            "unknown"
+        )
+        assert execution.held_units == 5
+
+
+def test_nested_method_input_media_type_matches_direct_creation(tmp_path: Path) -> None:
+    case = _nested(tmp_path)
+    root, space, owner = case.setup.root, case.setup.space, case.setup.owner
+    nested_definition = read_method_version(root, case.n2, owner).definition.model_copy(
+        update={"named_inputs": (OutputContract(slot="document", media_type="application/json"),)}
+    )
+    nested_method = _method(case.setup, uuid4(), 1, nested_definition)
+    new_node = case.next_plan.children[1].model_copy(
+        update={
+            "state": case.next_plan.children[1].state.model_copy(
+                update={"method": nested_method, "inputs": (case.setup.source,)}
+            )
+        }
+    )
+    nested_plan = case.nested_plan.model_copy(
+        update={"named_inputs": (NamedInput(slot="document", artifact=case.setup.source),)}
+    )
+    parent_method = read_work(root, case.parent.parent, owner).state.method
+    assert isinstance(parent_method, MethodRef)
+    parent_definition = read_method_version(root, parent_method, owner).definition.model_copy(
+        update={"role_methods": (("review", nested_method),)}
+    )
+    parent_v2 = _method(case.setup, parent_method.method_id, 2, parent_definition)
+    case = case._replace(
+        next_plan=case.next_plan.model_copy(update={"children": (case.anchor, new_node)}),
+        nested_plan=nested_plan,
+    )
+
+    def add() -> ReviseActivePlanRequest:
+        return _add_nested(case).model_copy(
+            update={
+                "target_method": parent_v2,
+                "obligation_mapping": (
+                    ObligationMapping(source_key="reviewed", action="carry", target_key="reviewed"),
+                ),
+            }
+        )
+
+    _refused(case.parent, "output_mismatch", add())
+    assert read_work_plan(root, case.parent.parent, owner).revision == 1
+    json_id = uuid4()
+    _apply(
+        root,
+        space,
+        owner,
+        CreateArtifactRequest,
+        artifact_id=json_id,
+        media_type="application/json",
+        content=b"{}",
+    )
+    document = ArtifactRef(artifact_id=json_id, revision=1)
+    valid_node = new_node.model_copy(
+        update={"state": new_node.state.model_copy(update={"inputs": (document,)})}
+    )
+    valid_plan = nested_plan.model_copy(
+        update={"named_inputs": (NamedInput(slot="document", artifact=document),)}
+    )
+    case = case._replace(
+        next_plan=case.next_plan.model_copy(update={"children": (case.anchor, valid_node)}),
+        nested_plan=valid_plan,
+    )
+    apply_operation(root, add(), owner)
+    assert read_work(root, valid_node.work_id, owner).state.inputs == (document,)
+    assert read_work_plan(root, valid_node.work_id, owner).plan.named_inputs == (
+        NamedInput(slot="document", artifact=document),
+    )
+
+
+def test_replacement_nested_method_input_media_type(tmp_path: Path) -> None:
+    case = _nested(tmp_path)
+    root, space, owner = case.setup.root, case.setup.space, case.setup.owner
+    apply_operation(root, _add_nested(case), owner)
+    nested_definition = read_method_version(root, case.n2, owner).definition.model_copy(
+        update={"named_inputs": (OutputContract(slot="document", media_type="application/json"),)}
+    )
+    nested_method = _method(case.setup, uuid4(), 1, nested_definition)
+    parent_method = read_work(root, case.parent.parent, owner).state.method
+    assert isinstance(parent_method, MethodRef)
+    parent_definition = read_method_version(root, parent_method, owner).definition.model_copy(
+        update={"role_methods": (("review", nested_method),)}
+    )
+    parent_v2 = _method(case.setup, parent_method.method_id, 2, parent_definition)
+    replacement = case.next_plan.children[1].model_copy(
+        update={
+            "work_id": uuid4(),
+            "state": case.next_plan.children[1].state.model_copy(
+                update={"method": nested_method, "inputs": (case.setup.source,)}
+            ),
+        }
+    )
+    nested_plan = case.nested_plan.model_copy(
+        update={
+            "children": (case.nested_child.model_copy(update={"work_id": uuid4()}),),
+            "named_inputs": (NamedInput(slot="document", artifact=case.setup.source),),
+        }
+    )
+    descendant = DescendantClosure(
+        parent_work_id=case.node.parent,
+        expected_plan_revision=1,
+        role="g",
+        work_id=case.nested_child.work_id,
+        closure=NodeClosure(expected_revision=1, outcome="cancelled", basis="Replace N"),
+    )
+
+    def replace(node: PlanChild, plan: WorkPlan) -> ReviseActivePlanRequest:
+        return ReviseActivePlanRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            work_id=case.parent.parent,
+            expected_work_revision=read_work(root, case.parent.parent, owner).revision,
+            expected_plan_revision=read_work_plan(root, case.parent.parent, owner).revision,
+            plan=case.next_plan.model_copy(update={"children": (case.anchor, node)}),
+            nodes=(
+                PlanNodeDecision(role="anchor", decision="keep", work_id=case.anchor.work_id),
+                PlanNodeDecision(
+                    role="review",
+                    decision="replace",
+                    work_id=case.node.parent,
+                    replacement=node.work_id,
+                    closure=NodeClosure(
+                        expected_revision=read_work(root, case.node.parent, owner).revision,
+                        outcome="cancelled",
+                        basis="Replace N",
+                    ),
+                    nested_plan=plan,
+                    descendants=(descendant,),
+                ),
+            ),
+            target_method=parent_v2,
+            obligation_mapping=(
+                ObligationMapping(source_key="reviewed", action="carry", target_key="reviewed"),
+            ),
+        )
+
+    _refused(case.parent, "output_mismatch", replace(replacement, nested_plan))
+    assert read_work(root, case.node.parent, owner).state.status == "proposed"
+    assert read_work(root, case.nested_child.work_id, owner).state.status == "proposed"
+
+    json_id = uuid4()
+    _apply(
+        root,
+        space,
+        owner,
+        CreateArtifactRequest,
+        artifact_id=json_id,
+        media_type="application/json",
+        content=b"{}",
+    )
+    document = ArtifactRef(artifact_id=json_id, revision=1)
+    valid = replacement.model_copy(
+        update={"state": replacement.state.model_copy(update={"inputs": (document,)})}
+    )
+    valid_plan = nested_plan.model_copy(
+        update={"named_inputs": (NamedInput(slot="document", artifact=document),)}
+    )
+    apply_operation(root, replace(valid, valid_plan), owner)
+    assert read_work(root, case.node.parent, owner).state.status == "cancelled"
+    assert read_work(root, case.nested_child.work_id, owner).state.status == "cancelled"
+    assert read_work(root, valid.work_id, owner).state.inputs == (document,)

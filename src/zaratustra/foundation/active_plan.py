@@ -190,6 +190,7 @@ def _close_node(
     authority_source: str,
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
+    permitted_succeeded_ancestors: frozenset[UUID] = frozenset(),
 ) -> int:
     """Record the outcome of an unfinished node leaving the plan, as ``close_work`` does."""
 
@@ -219,6 +220,7 @@ def _close_node(
         epoch=epoch,
         grants=grants,
         decisions=decisions,
+        permitted_succeeded_ancestors=permitted_succeeded_ancestors,
     )
     if closure.outcome == "stale":
         verify_premises_changed(
@@ -279,15 +281,19 @@ def _close_descendants(
             raise FoundationError("mapping_invalid", "Plain Work has no descendants")
         return []
     found: dict[UUID, tuple[int, UUID, int, PlanChild, int, WorkState]] = {}
+    succeeded_ancestors: set[UUID] = set()
 
     def visit(parent_id: UUID, depth: int) -> None:
         plan = _plan(connection, parent_id)
         for child in plan.plan.children:
             revision, status, _ = _subject_current(connection, child.work_id, "work")
-            if status != "proposed":
+            if status == "deleted":
                 continue
             state = WorkState.model_validate(_subject_state(connection, child.work_id, revision))
-            found[child.work_id] = (depth, parent_id, plan.revision, child, revision, state)
+            if status == "proposed":
+                found[child.work_id] = (depth, parent_id, plan.revision, child, revision, state)
+            elif status == "succeeded" and isinstance(state.method, MethodRef):
+                succeeded_ancestors.add(child.work_id)
             if isinstance(state.method, MethodRef):
                 visit(child.work_id, depth + 1)
 
@@ -347,6 +353,7 @@ def _close_descendants(
             authority_source=authority_source,
             grants=grants,
             decisions=decisions,
+            permitted_succeeded_ancestors=frozenset(succeeded_ancestors),
         )
         targets.append({"record_id": str(work_id), "revision": new_revision})
         targets.extend(
@@ -437,7 +444,17 @@ def _create_nested_plan(
         raise FoundationError("method_mismatch", "Nested Method inputs do not match Work")
     if node.work_id in {child.work_id for child in plan.children}:
         raise FoundationError("invalid_plan", "Nested Work cannot be its own child")
-    for reference in state.inputs + plan.basis:
+    for slot, reference in inputs.items():
+        _current_artifact(
+            connection,
+            reference,
+            actor=request.actor,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+            media_type=declared[slot],
+        )
+    for reference in plan.basis:
         _current_artifact(
             connection,
             reference,
