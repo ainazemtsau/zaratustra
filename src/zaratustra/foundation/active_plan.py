@@ -282,6 +282,13 @@ def _close_descendants(
         return []
     found: dict[UUID, tuple[int, UUID, int, PlanChild, int, WorkState]] = {}
     succeeded_ancestors: set[UUID] = set()
+    root_revision, root_status, _ = _subject_current(connection, node.work_id, "work")
+    if root_status == "succeeded":
+        root_state = WorkState.model_validate(
+            _subject_state(connection, node.work_id, root_revision)
+        )
+        if isinstance(root_state.method, MethodRef):
+            succeeded_ancestors.add(node.work_id)
 
     def visit(parent_id: UUID, depth: int) -> None:
         plan = _plan(connection, parent_id)

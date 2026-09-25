@@ -140,5 +140,71 @@ Final implementation-session Windows `uv run --locked python -m tools.check
 213 format-clean files, Ruff clean, mypy clean on 187 files, 21 import
 contracts kept, sdist and wheel built, and report structure passed. The full
 gate log is in ignored `_scratch/final-3-9-followup-deliver.log`. This is the
-implementation session's check. Independent review of this new package has
-not yet occurred.
+implementation session's check. Its subsequent independent review follows.
+
+## Independent review of `d0a117c`: one remaining P2
+
+A separate Codex review of exact clean commit
+`d0a117cf4cc59713ff96bdb6db6e82de2022897a` confirmed all three
+preceding corrections and the earlier nested sanitation case. The reviewer
+independently ran the complete Windows `tools.check --deliver`: **PASS**,
+674 tests, types on 187 files, Ruff, 21 import contracts, sdist and wheel.
+The reviewer also installed a wheel from that exact clean commit outside the
+checkout and passed the Stage 6 compatibility trial with 3 synthetic HTTP
+calls. This is independent evidence, separate from the implementation
+session's 674-test run and pre-commit installed probe. The read-only report,
+script and evidence are at
+`C:\Users\Anton\AppData\Local\Temp\zaratustra-stage6-3.9-final-review-d0a117c-1790336242591\READONLY-REVIEW.md`.
+
+The remaining P2 occurs when the *replaced node itself* is a succeeded
+composite H: P → N → H, with accepted required L and open optional S.
+Replacing H in N's plan without S correctly refuses `open_children`, but an
+exact `DescendantClosure` for S refused `work_closed` on H. The reviewer
+reproduced this with S idle and with an assigned, claimed Attempt and sent
+synthetic invocation. Both refusals were atomic. This case was also present
+on `63f64eb`; no partial commit or new data loss was observed.
+
+The implementation session repeated both exact scripts on unchanged
+`d0a117c` before editing. After the narrow correction, the same scripts
+report atomic `open_children` on omission and a committed replacement with
+exact S closure. H/L retain `succeeded`; S becomes `cancelled`. With an active
+Attempt, assignment becomes `stop_requested`, the sent invocation becomes
+`unknown`, the outbox is cancelled and held units remain 5. Reports are in
+ignored `_scratch/repro-3-9-root-*` and `_scratch/verify-3-9-root-*`.
+
+`_close_descendants` now checks the departing composite root's actual
+current Work state and includes it in the local set of succeeded ancestors
+only when it is already `succeeded`. The direct closed-ancestor gate remains
+unchanged. Two new public-Core regression variants cover idle and active S,
+omission, stale plan/Work revisions, permission denial, direct `work_closed`,
+exact replay, preserved H/L receipts and the independent neighbor. The
+focused nested-composition and nested-deletion run passed 16 tests; focused
+Ruff and mypy passed. Final full-gate and probe results for this correction
+are recorded below. Review remains OPEN and no acceptance is recorded.
+
+Implementation-session probes on the narrow P2 correction passed:
+
+- Checkout `tools.probe_stage6_rpc`: 3 synthetic localhost HTTP calls,
+  report status `passed`, SQLite 3.53.3.
+- Checkout `tools.probe_stage5_rpc`: 2 synthetic provider calls, report status
+  `passed`, sanitized deletion.
+- Installed `tools.probe_install_stage6`: outside checkout, isolated Python,
+  SQLite 3.53.3, trial status `passed` with 3 synthetic HTTP calls. The
+  report records source HEAD `d0a117c` and `source_tree_dirty=true`, because
+  the correction had not yet been committed. Built wheel SHA-256 is
+  `255B4B123B63AA5A7349D16DEA34BA48B581D02CA7A4452422522CB16D971DED`.
+  This is author evidence, distinct from the reviewer's installed trial of
+  the previous clean `d0a117c` wheel.
+
+No real model calls were made. `database is locked` and `rpc_transport`
+remain separate open observations; these passing trials do not establish
+their causes or fixes.
+
+Final implementation-session Windows `uv run --locked python -m tools.check
+--deliver` on the narrow P2 package: **PASS**, 676 tests in 438.21 seconds,
+213 format-clean files, Ruff clean, mypy clean on 187 files, 21 import
+contracts kept, sdist and wheel built, report structure passed. The complete
+log remains in ignored `_scratch/final-3-9-root-p2-deliver.log`. This is the
+implementation session's result; the 674-test gate and clean installed wheel
+of `d0a117c` above belong to the independent reviewer. The new correction
+awaits its own review.

@@ -70,6 +70,7 @@ from zaratustra.foundation import (
     read_execution,
     read_method_version,
     read_obligation,
+    read_receipt,
     read_work,
     read_work_plan,
     read_work_status,
@@ -1081,3 +1082,185 @@ def test_replacement_nested_method_input_media_type(tmp_path: Path) -> None:
     assert read_work(root, case.node.parent, owner).state.status == "cancelled"
     assert read_work(root, case.nested_child.work_id, owner).state.status == "cancelled"
     assert read_work(root, valid.work_id, owner).state.inputs == (document,)
+
+
+@pytest.mark.parametrize("running_spare", [False, True])
+def test_replace_succeeded_composite_root_closes_its_open_optional_child(
+    tmp_path: Path, running_spare: bool
+) -> None:
+    case = _nested(tmp_path)
+    root, space, owner = case.setup.root, case.setup.space, case.setup.owner
+    apply_operation(root, _add_nested(case), owner)
+    _issue(case.parent, "review")
+    old = case.nested_child
+    middle = old.model_copy(
+        update={
+            "work_id": uuid4(),
+            "state": old.state.model_copy(update={"method": case.n2, "goal": "Accepted H"}),
+        }
+    )
+    required = old.model_copy(
+        update={"work_id": uuid4(), "state": old.state.model_copy(update={"goal": "Required L"})}
+    )
+    spare = old.model_copy(
+        update={
+            "role": "spare",
+            "work_id": uuid4(),
+            "state": old.state.model_copy(update={"goal": "Optional S"}),
+        }
+    )
+    middle_plan = case.nested_plan.model_copy(update={"children": (required, spare)})
+    nested_plan = case.nested_plan.model_copy(update={"children": (middle,)})
+    apply_operation(
+        root,
+        ReviseActivePlanRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            work_id=case.node.parent,
+            expected_work_revision=read_work(root, case.node.parent, owner).revision,
+            expected_plan_revision=1,
+            plan=nested_plan,
+            nodes=(
+                PlanNodeDecision(
+                    role="g",
+                    decision="replace",
+                    work_id=old.work_id,
+                    replacement=middle.work_id,
+                    closure=NodeClosure(
+                        expected_revision=1, outcome="cancelled", basis="Replace old G"
+                    ),
+                    nested_plan=middle_plan,
+                ),
+            ),
+        ),
+        owner,
+    )
+    nested_case = case.node._replace(works={"g": middle.work_id})
+    middle_case = Case(
+        root,
+        space,
+        owner,
+        case.setup.activity,
+        middle.work_id,
+        {"g": required.work_id, "spare": spare.work_id},
+    )
+    _issue(nested_case, "g")
+    _issue(middle_case, "g")
+    _issue(middle_case, "spare")
+    result = _result(root, space, owner, required.work_id, "final", b"Required L result")
+    leaf_acceptance = read_work(root, required.work_id, owner).state.acceptance
+    assert leaf_acceptance is not None
+    leaf_receipt = read_receipt(root, leaf_acceptance.operation_id, owner)
+    attempt = invocation = None
+    if running_spare:
+        resource = _resource(root, space, owner, spare.work_id, "replaced-root-resource")
+        attempt, session, _request, _receipt = _assign(root, space, owner, spare.work_id, resource)
+        _claim(root, space, owner, spare.work_id, attempt, session)
+        invocation = _invocation(root, space, owner, spare.work_id, attempt, session, finish=False)
+    _confirm(middle_case, "g_final", result)
+    apply_operation(root, _link_request(middle_case, result), owner)
+    middle_acceptance = _accept_request(middle_case)
+    middle_receipt = apply_operation(root, middle_acceptance, owner)
+    assert read_work(root, middle.work_id, owner).state.status == "succeeded"
+    assert read_work(root, spare.work_id, owner).state.status == "proposed"
+
+    replacement = middle.model_copy(update={"work_id": uuid4()})
+    fresh = old.model_copy(update={"work_id": uuid4()})
+    next_plan = nested_plan.model_copy(update={"children": (replacement,)})
+
+    def request(descendants: tuple[DescendantClosure, ...]) -> ReviseActivePlanRequest:
+        return ReviseActivePlanRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            work_id=case.node.parent,
+            expected_work_revision=read_work(root, case.node.parent, owner).revision,
+            expected_plan_revision=read_work_plan(root, case.node.parent, owner).revision,
+            plan=next_plan,
+            nodes=(
+                PlanNodeDecision(
+                    role="g",
+                    decision="replace",
+                    work_id=middle.work_id,
+                    replacement=replacement.work_id,
+                    nested_plan=case.nested_plan.model_copy(update={"children": (fresh,)}),
+                    descendants=descendants,
+                ),
+            ),
+        )
+
+    _refused(case.node, "open_children", request(()))
+    _refused(
+        case.node,
+        "work_closed",
+        CloseWorkRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            work_id=spare.work_id,
+            expected_revision=read_work(root, spare.work_id, owner).revision,
+            outcome="cancelled",
+            basis="Direct action below accepted H",
+        ),
+    )
+    closure = DescendantClosure(
+        parent_work_id=middle.work_id,
+        expected_plan_revision=read_work_plan(root, middle.work_id, owner).revision,
+        role="spare",
+        work_id=spare.work_id,
+        closure=NodeClosure(
+            expected_revision=read_work(root, spare.work_id, owner).revision,
+            outcome="cancelled",
+            basis="Explicitly stop S under replaced H",
+        ),
+    )
+    _refused(
+        case.node,
+        "stale_plan",
+        request((closure.model_copy(update={"expected_plan_revision": 99}),)),
+    )
+    _refused(
+        case.node,
+        "stale_work",
+        request(
+            (
+                closure.model_copy(
+                    update={"closure": closure.closure.model_copy(update={"expected_revision": 1})}
+                ),
+            )
+        ),
+    )
+    _apply(
+        root,
+        space,
+        owner,
+        CreateGrantRequest,
+        grant_id=uuid4(),
+        state=GrantState(grantee="worker", actions=("work.write", "method.use", "record.read")),
+    )
+    worker = authorize_local(root, actor="worker", source_ref="synthetic-worker")
+    denied = request((closure,)).model_copy(update={"operation_id": uuid4(), "actor": "worker"})
+    _refused(case.node._replace(owner=worker), "permission_denied", denied)
+    committed = request((closure,))
+    receipt = apply_operation(root, committed, owner)
+    assert apply_operation(root, committed, owner) == receipt
+    assert read_work(root, case.node.parent, owner).state.status == "proposed"
+    assert read_work(root, middle.work_id, owner).state.status == "succeeded"
+    assert read_work(root, required.work_id, owner).state.status == "succeeded"
+    assert read_work(root, spare.work_id, owner).state.status == "cancelled"
+    assert read_work(root, replacement.work_id, owner).state.status == "proposed"
+    assert read_work(root, case.anchor.work_id, owner).state.status == "proposed"
+    assert apply_operation(root, middle_acceptance, owner) == middle_receipt
+    assert read_receipt(root, middle_acceptance.operation_id, owner) == middle_receipt
+    assert read_receipt(root, leaf_acceptance.operation_id, owner) == leaf_receipt
+    if running_spare:
+        assert attempt is not None and invocation is not None
+        execution = read_execution(root, spare.work_id, owner)
+        assert next(a for a in execution.assignments if a.attempt_id == attempt).status == (
+            "stop_requested"
+        )
+        assert next(i for i in execution.invocations if i.invocation_id == invocation).status == (
+            "unknown"
+        )
+        assert execution.held_units == 5
