@@ -47,6 +47,10 @@
   defects. Their P1/P2 correction is in one follow-up package awaiting that same
   overall review; the installed Pi-probe's first `database is locked` failure
   remains unexplained despite a successful repeat.
+  The independent review of `26a7da4` confirmed those corrections and found one
+  further P1 regression: child outcome and recheck bases must retain structural
+  dependencies from a plan revision naming that same Work before issue. Its
+  correction belongs to the same open 3.6–3.7 review; see the checkpoint.
   None of this is an accepted release, schema 7 acceptance or pass 3 acceptance.
   Parts 3.8–3.10,
   the separate composite-parent execution slice, pass 4, real model calls and

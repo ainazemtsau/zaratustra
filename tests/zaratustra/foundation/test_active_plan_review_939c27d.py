@@ -1,4 +1,4 @@
-"""Regressions from Codex's Windows review of the 3.6–3.7 candidate."""
+"""Regressions from the Windows reviews of the 3.6–3.7 package."""
 
 from __future__ import annotations
 
@@ -25,12 +25,22 @@ from tests.zaratustra.foundation.test_applicability import (
     _space,
 )
 from tests.zaratustra.foundation.test_composition import _apply, _result, _sqlite_contains
+from tests.zaratustra.foundation.test_revalidation import _changed, _recheck_request
 from zaratustra.foundation import (
+    AcceptWorkRequest,
+    ArtifactRef,
+    CloseWorkRequest,
+    CreateArtifactRequest,
     CreateCompositeWorkRequest,
     DeleteArtifactRequest,
     DeleteWorkRequest,
+    DomainRequest,
     FoundationError,
+    LinkedOutput,
+    LinkWorkOutputRequest,
     PlanCondition,
+    ReviseArtifactRequest,
+    ReviseWorkPlanRequest,
     RoleFilling,
     apply_operation,
     complete_deletions,
@@ -38,6 +48,7 @@ from zaratustra.foundation import (
     read_obligation,
     read_plan_nodes,
     read_receipt,
+    read_revalidation,
     read_role_history,
     read_work,
     read_work_plan,
@@ -267,6 +278,205 @@ def test_deleting_old_artifact_preserves_replacement_evidence_and_replay(tmp_pat
             str(a2.work_id),
             str(new_confirmation.operation_id),
         ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    assert restarted.returncode == 0, restarted.stderr
+
+
+def _pre_issue_plan_basis(
+    tmp_path: Path, *, with_input: bool
+) -> tuple[Case, ArtifactRef, ArtifactRef | None, str]:
+    """One Work A is named in plan 1 with X, then issued under plan 2 without X."""
+
+    setup = _space(tmp_path)
+    root, space, owner = setup.root, setup.space, setup.owner
+    marker = f"historical-plan-X-{uuid4()}"
+    x = ArtifactRef(artifact_id=uuid4(), revision=1)
+    _apply(
+        root,
+        space,
+        owner,
+        CreateArtifactRequest,
+        artifact_id=x.artifact_id,
+        media_type="text/plain",
+        content=marker.encode("utf-8"),
+    )
+    z = ArtifactRef(artifact_id=uuid4(), revision=1) if with_input else None
+    if z is not None:
+        _apply(
+            root,
+            space,
+            owner,
+            CreateArtifactRequest,
+            artifact_id=z.artifact_id,
+            media_type="text/plain",
+            content=b"independent input Z",
+        )
+    template = read_work_plan(root, setup.seeded, owner).plan
+    old_a, old_b = template.children
+    a = old_a.model_copy(
+        update={
+            "work_id": uuid4(),
+            "state": old_a.state.model_copy(
+                update={"inputs": old_a.state.inputs + ((z,) if z is not None else ())}
+            ),
+        }
+    )
+    b = old_b.model_copy(update={"work_id": uuid4()})
+    plan1 = template.model_copy(
+        update={"children": (a, b), "basis": template.basis + (x,), "rationale": "Plan 1"}
+    )
+    parent = uuid4()
+    apply_operation(
+        root,
+        CreateCompositeWorkRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            work_id=parent,
+            state=read_work(root, setup.seeded, owner).state,
+            plan=plan1,
+        ),
+        owner,
+    )
+    plan2 = plan1.model_copy(update={"basis": template.basis, "rationale": "Plan 2"})
+    apply_operation(
+        root,
+        ReviseWorkPlanRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            work_id=parent,
+            expected_plan_revision=1,
+            plan=plan2,
+        ),
+        owner,
+    )
+    case = Case(root, space, owner, setup.activity, parent, {"a": a.work_id, "b": b.work_id})
+    assert x in read_work_plan(root, parent, owner, revision=1).plan.basis
+    assert read_work_plan(root, parent, owner).revision == 2
+    assert x not in read_work_plan(root, parent, owner).plan.basis
+    assert [node.work_id for node in read_work_plan(root, parent, owner).plan.children] == [
+        a.work_id,
+        b.work_id,
+    ]
+    _issue(case, "a")
+    return case, x, z, marker
+
+
+@pytest.mark.parametrize("outcome", ["accepted", "failed", "revalidated"])
+def test_pre_issue_plan_basis_retires_later_outcome_text(tmp_path: Path, outcome: str) -> None:
+    case, x, z, marker = _pre_issue_plan_basis(tmp_path, with_input=outcome == "revalidated")
+    root, space, owner, parent, a = case.root, case.space, case.owner, case.parent, case.works["a"]
+    basis = f"Independent outcome quotes historical X: {marker}"
+    request: DomainRequest
+    if outcome == "failed":
+        request = CloseWorkRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            work_id=a,
+            expected_revision=read_work(root, a, owner).revision,
+            outcome="failed",
+            basis=basis,
+        )
+    else:
+        result = ArtifactRef(artifact_id=uuid4(), revision=1)
+        _apply(
+            root,
+            space,
+            owner,
+            CreateArtifactRequest,
+            artifact_id=result.artifact_id,
+            media_type="text/plain",
+            content=b"neutral result",
+        )
+        _apply(
+            root,
+            space,
+            owner,
+            LinkWorkOutputRequest,
+            work_id=a,
+            expected_revision=read_work(root, a, owner).revision,
+            output=LinkedOutput(slot="checked", artifact=result),
+        )
+        accepted = AcceptWorkRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            work_id=a,
+            expected_revision=read_work(root, a, owner).revision,
+            basis=basis if outcome == "accepted" else "Neutral acceptance",
+        )
+        apply_operation(root, accepted, owner)
+        if outcome == "accepted":
+            request = accepted
+        else:
+            assert z is not None
+            _apply(
+                root,
+                space,
+                owner,
+                ReviseArtifactRequest,
+                artifact_id=z.artifact_id,
+                expected_revision=1,
+                media_type="text/plain",
+                content=b"changed Z",
+            )
+            request = _recheck_request(case, (_changed(z.artifact_id, 1, 2),), basis=basis)
+    receipt = (
+        apply_operation(root, request, owner)
+        if outcome != "accepted"
+        else read_receipt(root, request.operation_id, owner)
+    )
+    old_backup = create_backup(root, uuid4(), owner)
+    _apply(
+        root, space, owner, DeleteArtifactRequest, artifact_id=x.artifact_id, expected_revision=1
+    )
+    completed = complete_deletions(root, owner)
+    assert completed.live_store_sanitized and completed.pending_jobs == 0
+    assert not old_backup.package.exists()
+    assert read_work(root, a, owner).state.status == (
+        "failed" if outcome == "failed" else "succeeded"
+    )
+    if outcome == "revalidated":
+        assert read_revalidation(root, parent, a, owner).basis is None
+        assert read_work(root, a, owner).state.acceptance is not None
+        # The earlier acceptance is structurally dependent on plan 1 as well.
+        assert read_work(root, a, owner).state.acceptance.basis is None  # type: ignore[union-attr]
+    elif outcome == "accepted":
+        assert read_work(root, a, owner).state.acceptance is not None
+        assert read_work(root, a, owner).state.acceptance.basis is None  # type: ignore[union-attr]
+    else:
+        assert read_work(root, a, owner).state.closure is not None
+        assert read_work(root, a, owner).state.closure.basis is None  # type: ignore[union-attr]
+    with pytest.raises(FoundationError, match="history_unavailable"):
+        apply_operation(root, request, owner)
+    with pytest.raises(FoundationError, match="not_found"):
+        read_receipt(root, receipt.operation_id, owner)
+    assert not _sqlite_contains(root / ".zara-core", marker)
+    assert not _sqlite_contains(create_backup(root, uuid4(), owner).package, marker)
+    code = """
+import sys
+from pathlib import Path
+from uuid import UUID
+from zaratustra.foundation import authorize_local, read_revalidation, read_work
+p = Path(sys.argv[1])
+owner = authorize_local(p, actor="owner", source_ref="restart")
+parent, a, mode = UUID(sys.argv[2]), UUID(sys.argv[3]), sys.argv[4]
+state = read_work(p, a, owner).state
+if mode == "revalidated":
+    assert read_revalidation(p, parent, a, owner).basis is None
+elif mode == "accepted":
+    assert state.acceptance is not None and state.acceptance.basis is None
+else:
+    assert state.closure is not None and state.closure.basis is None
+"""
+    restarted = subprocess.run(
+        [sys.executable, "-c", code, str(root), str(parent), str(a), outcome],
         capture_output=True,
         text=True,
         encoding="utf-8",

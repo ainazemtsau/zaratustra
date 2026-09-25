@@ -2875,24 +2875,15 @@ def _outcome_dependencies(
     if membership is not None:
         parent_id, role = str(membership[0]), membership[1]
         artifacts.update(_subject_artifacts(connection, parent_id))
-        original = original_issue(connection, UUID(work_id))
-        first_issue = (
-            original[1]
-            if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7
-            and original is not None
-            and original[1] is not None
-            else 1
-        )
         role_fillers: dict[str, set[str]] = {}
         upstream_works: set[str] = set()
-        for revision, index in enumerate(_plan_history(connection, parent_id, plans), start=1):
-            if revision < first_issue:
-                continue
+        for index in _plan_history(connection, parent_id, plans):
             if index is None:
                 unbounded = True
                 continue
-            # Only revisions in which this Work filled its role; role history names the
-            # Works of its upstream roles there.
+            # A plan may name this Work and a basis before it is issued. Include every
+            # such revision, but never a revision filled by another Work in the role.
+            # Role history also names the Works of upstream roles in that revision.
             fillers = _revision_role_works(connection, parent_id, index)
             if role not in index.roles or fillers.get(role, work_id) != work_id:
                 continue

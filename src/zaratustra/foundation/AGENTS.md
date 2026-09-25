@@ -169,7 +169,9 @@ pending P1/P2 review correction also sanitizes a plan revision when a node decis
 addresses the departing Work: its rationale may quote that Work, so the revision
 operation loses replay while the address-only node history stays. Obligation evidence
 and child outcome bases follow the then-current role filler and plan revision; deleting
-old evidence leaves a replacement's independent confirmation, basis and replay intact. See
+old evidence leaves a replacement's independent confirmation, basis and replay intact.
+Child outcome and recheck bases also depend on a historical plan revision that named
+that same Work before it was issued; an issue revision is not a history cutoff. See
 `docs/core-v0.1/STAGE6-PASS3-CHECKPOINT-3.6-3.7.md`.
 
 The foundation stores Work execution records but never imports Pi or runs a model.
