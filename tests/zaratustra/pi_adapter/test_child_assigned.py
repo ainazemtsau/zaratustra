@@ -15,10 +15,13 @@ import pytest
 from dbos import DBOS, DBOSClient
 
 import zaratustra.pi_adapter.assigned as assigned_module
+from tests.zaratustra.foundation.test_active_plan import _keep, _replace, _revision_request
 from tests.zaratustra.foundation.test_child_execution import _stop
 from tests.zaratustra.foundation.test_composition import _apply, _result, _seed, _sqlite_contains
 from tests.zaratustra.foundation.test_parallel_branches import _issue as _issue_branch
 from tests.zaratustra.foundation.test_parallel_branches import _pipeline
+from tests.zaratustra.foundation.test_plan_transfers import _case as _transfer_case
+from tests.zaratustra.foundation.test_plan_transfers import _pair, _replaced_a
 from zaratustra.foundation import (
     AssignAttemptRequest,
     CreateDecisionRequest,
@@ -32,6 +35,7 @@ from zaratustra.foundation import (
     ResourceState,
     ReviseDecisionRequest,
     apply_operation,
+    read_assigned_control,
     read_execution,
     read_obligation,
     read_work,
@@ -438,3 +442,110 @@ def test_subject_refusal_before_launch_stops_child_without_pi_or_http(
     assert [item.status for item in after.outbox] == ["cancelled"]
     status = read_work_status(root, gated.work_id, owner)
     assert status.status == "blocked" and status.reasons[0].code == "stale_basis"
+
+
+def test_fenced_child_stops_at_its_next_check_while_the_kept_child_continues(
+    tmp_path: Path, child_dbos_template: Path
+) -> None:
+    branches = _pair(tmp_path)
+    root, space, owner, parent, works = branches
+    attempts: dict[str, tuple[UUID, UUID]] = {}
+    workspaces: dict[str, Path] = {}
+    for role in ("a", "b"):
+        _issue_branch(branches, role)
+        workspaces[role] = _resource(root, space, owner, works[role], f"workspace-{role}")
+        attempts[role] = _assign(root, space, owner, works[role])
+    shutil.copyfile(child_dbos_template, root / ".zara-core" / "executor.sqlite3")
+    assert len(deliver_outbox(root, owner)) == 2
+    revised, a, a2, b = _replaced_a(branches)
+    case = _transfer_case(branches)
+    apply_operation(
+        root,
+        _revision_request(case, revised, (_replace(case, a, a2, outcome="cancelled"), _keep(b))),
+        owner,
+    )
+    configs = {role: _config(root, workspaces[role], tmp_path / "runtime") for role in ("a", "b")}
+    # The kept child's control read passes through its transfer; the fenced one stops.
+    assert read_assigned_control(root, b.work_id, attempts["b"][0], owner)
+    assert not assigned_module._control_stop_requested(
+        configs["b"], owner, b.work_id, attempts["b"][0]
+    )
+    assert assigned_module._control_stop_requested(configs["a"], owner, a.work_id, attempts["a"][0])
+    snapshot = read_execution(root, b.work_id, owner)
+    generation = snapshot.attempts[0].generation
+    kept = assigned_module._current_snapshot(
+        configs["b"], owner, b.work_id, attempts["b"][0], snapshot.execution_epoch, generation
+    )
+    assert kept.composition is not None and kept.composition.transfers
+    with pytest.raises(FoundationError):
+        assigned_module._current_snapshot(
+            configs["a"], owner, a.work_id, attempts["a"][0], snapshot.execution_epoch, generation
+        )
+    # On the assigned bridge a fenced child's next call is refused before any HTTP send.
+    rpc = Bridge(
+        root,
+        owner,
+        workspaces["a"],
+        100,
+        assigned_attempt_id=attempts["a"][0],
+        assigned_session_id=attempts["a"][1],
+    )
+    rpc.connect(attempts["a"][1])
+    rpc.select(
+        attempts["a"][1], read_execution(root, a.work_id, owner).activity.activity_id, a.work_id
+    )
+    with pytest.raises(FoundationError, match="stale_plan"):
+        rpc.operation(
+            attempts["a"][1],
+            {
+                "protocol_version": 1,
+                "operation_id": str(uuid4()),
+                "space_id": str(space),
+                "actor": "owner",
+                "kind": "prepare_invocation",
+                "invocation_id": str(uuid4()),
+                "attempt_id": str(attempts["a"][0]),
+                "work_id": str(a.work_id),
+                "session_id": str(attempts["a"][1]),
+                "purpose": "content",
+                "provider": "synthetic",
+                "model": "synthetic",
+                "transport": "http-sse",
+                "request_sha256": "D" * 64,
+                "request_bytes": 12,
+                "reserve_units": 10,
+            },
+        )
+    assert read_execution(root, a.work_id, owner).invocations == ()
+
+    # Technical copies of both Attempts go by address with their child Works.
+    markers: dict[str, str] = {}
+    for role in ("a", "b"):
+        home = root / ".zara-core" / "pi-rpc-home" / str(attempts[role][0])
+        home.mkdir(parents=True)
+        markers[role] = f"synthetic managed {role} copy {uuid4()}"
+        (home / "copy.txt").write_text(markers[role], encoding="utf-8", newline="\n")
+    for role, work in (("a", a.work_id), ("b", b.work_id)):
+        _stop(root, space, owner, work, *attempts[role])
+        apply_operation(
+            root,
+            DeleteWorkRequest(
+                operation_id=uuid4(),
+                space_id=space,
+                actor="owner",
+                work_id=work,
+                expected_revision=read_work(root, work, owner).revision,
+            ),
+            owner,
+        )
+    deleted = complete_assigned_deletions(root, owner)
+    assert deleted.live_store_sanitized and deleted.pending_jobs == 0
+    assert _workflows(root) == []
+    for role in ("a", "b"):
+        assert not (root / ".zara-core" / "pi-rpc-home" / str(attempts[role][0])).exists()
+        assert not _sqlite_contains(root / ".zara-core", markers[role])
+    with closing(sqlite3.connect(root / ".zara-core" / "core.sqlite3")) as connection:
+        assert connection.execute("SELECT count(*) FROM execution_plan_transfers").fetchone() == (
+            0,
+        )
+    assert read_obligation(root, parent, "b_checked", owner).status == "open"

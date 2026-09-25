@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Literal, NamedTuple
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from .choices import (
     check_choice_leaf,
@@ -121,6 +121,9 @@ class _PlanDependencies(BaseModel):
     edges: dict[str, tuple[str, ...]]
     global_artifacts: tuple[UUID, ...]
     role_artifacts: dict[str, tuple[UUID, ...]]
+    # Schema 7: the Work filling each role in this revision (role history). Absent from
+    # earlier indexes, where every role had its one original member.
+    role_works: dict[str, UUID] | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
     def valid_roles(self) -> _PlanDependencies:
@@ -129,6 +132,7 @@ class _PlanDependencies(BaseModel):
             len(roles) != len(self.roles)
             or set(self.edges) != roles
             or set(self.role_artifacts) != roles
+            or (self.role_works is not None and set(self.role_works) != roles)
             or any(not set(dependencies).issubset(roles) for dependencies in self.edges.values())
         ):
             raise ValueError("Sanitized plan dependency roles are inconsistent")
@@ -995,7 +999,14 @@ def apply_composition_change(
             "SELECT 1 FROM work_plan_children WHERE parent_id = ? "
             "AND issued_plan_revision IS NOT NULL LIMIT 1",
             (str(request.work_id),),
-        ).fetchone():
+        ).fetchone() or (
+            _schema(connection) >= 7
+            and connection.execute(
+                "SELECT 1 FROM work_plan_members WHERE parent_id = ? "
+                "AND issued_plan_revision IS NOT NULL LIMIT 1",
+                (str(request.work_id),),
+            ).fetchone()
+        ):
             raise FoundationError("plan_started", "Plan may change only before issuing any child")
         existing = {child.role: child for child in current.plan.children}
         proposed = {child.role: child for child in request.plan.children}
@@ -1009,6 +1020,13 @@ def apply_composition_change(
                 "unsupported_plan_change", "Existing child identity and state are pinned"
             )
         added = tuple(child for role, child in proposed.items() if role not in existing)
+        filled_before = {role for _child, role in _member_rows(connection, str(request.work_id))}
+        if any(child.role in filled_before for child in added):
+            # A role that left the plan is filled again only by an explicit node decision.
+            raise FoundationError(
+                "unsupported_plan_change",
+                "A role filled before is filled again only through revise_active_plan",
+            )
         _validate_plan(request.plan, definition, parent.activity_id)
         _validate_choice_leaves(connection, request.plan)
         for reference in request.plan.basis:
@@ -1072,12 +1090,8 @@ def apply_composition_change(
         node = next((c for c in plan.plan.children if c.work_id == request.work_id), None)
         if node is None:
             raise FoundationError("wrong_work", "Child is not in current plan")
-        issued = connection.execute(
-            "SELECT issued_plan_revision FROM work_plan_children "
-            "WHERE child_id = ? AND parent_id = ?",
-            (str(request.work_id), str(request.parent_work_id)),
-        ).fetchone()
-        if issued is None or issued[0] is not None:
+        issued = original_issue(connection, request.work_id)
+        if issued is None or issued[0] != request.parent_work_id or issued[1] is not None:
             raise FoundationError("already_issued", "Child was already issued or is unavailable")
         child_revision, status, _ = _subject_current(connection, request.work_id, "work")
         if child_revision != request.expected_work_revision:
@@ -1128,11 +1142,7 @@ def apply_composition_change(
             state=state.model_copy(update={"inputs": inputs}),
             revision=child_revision + 1,
         )
-        connection.execute(
-            "UPDATE work_plan_children SET issued_plan_revision = ?, issue_operation_id = ? "
-            "WHERE child_id = ?",
-            (plan.revision, str(request.operation_id), str(request.work_id)),
-        )
+        _record_issue(connection, request.work_id, plan.revision, request.operation_id)
         return {
             "work_id": str(request.work_id),
             "revision": child_revision + 1,
@@ -1200,6 +1210,7 @@ def apply_composition_change(
             "operation_id": request.operation_id,
             "created_at": datetime.fromisoformat(now),
             "exception": None,
+            "reopened": None,
         }
     )
     connection.execute(
@@ -1388,6 +1399,7 @@ def _waive_obligation(
             "operation_id": request.operation_id,
             "created_at": datetime.fromisoformat(now),
             "exception": request.exception,
+            "reopened": None,
         }
     )
     connection.execute(
@@ -1429,16 +1441,93 @@ def waived_obligations(
     )
 
 
-def child_binding(
+def _member_rows(connection: sqlite3.Connection, parent_id: str) -> list[tuple[str, str]]:
+    """Every Work that ever filled a role of this parent, with its role.
+
+    The schema 5 row keeps the original member of each role; at schema 7 Works that fill a
+    role through an active plan revision are members in their own table.
+    """
+
+    rows = [
+        (str(child), str(role))
+        for child, role in connection.execute(
+            "SELECT child_id, role FROM work_plan_children WHERE parent_id = ? ORDER BY role",
+            (parent_id,),
+        ).fetchall()
+    ]
+    if _schema(connection) >= 7:
+        rows += [
+            (str(child), str(role))
+            for child, role in connection.execute(
+                "SELECT child_id, role FROM work_plan_members WHERE parent_id = ? "
+                "ORDER BY plan_revision, role",
+                (parent_id,),
+            ).fetchall()
+        ]
+    return rows
+
+
+def original_issue(
     connection: sqlite3.Connection, work_id: UUID
 ) -> tuple[UUID, int | None, str] | None:
-    """Return the parent, issued plan revision and role of one planned child Work."""
+    """Parent, the plan revision that issued the child (if any) and its role."""
 
     row = connection.execute(
         "SELECT parent_id, issued_plan_revision, role FROM work_plan_children WHERE child_id = ?",
         (str(work_id),),
     ).fetchone()
+    if row is None and _schema(connection) >= 7:
+        row = connection.execute(
+            "SELECT parent_id, issued_plan_revision, role FROM work_plan_members "
+            "WHERE child_id = ?",
+            (str(work_id),),
+        ).fetchone()
     return None if row is None else (UUID(row[0]), row[1], str(row[2]))
+
+
+def plan_membership(connection: sqlite3.Connection, work_id: UUID) -> tuple[UUID, str] | None:
+    """Parent and role of one child Work; a Work fills one role of one parent for good."""
+
+    found = original_issue(connection, work_id)
+    return None if found is None else (found[0], found[2])
+
+
+def _record_issue(
+    connection: sqlite3.Connection, work_id: UUID, revision: int, operation_id: UUID
+) -> None:
+    for table in ("work_plan_children", "work_plan_members"):
+        if table == "work_plan_members" and _schema(connection) < 7:
+            return
+        updated = connection.execute(
+            f"UPDATE {table} SET issued_plan_revision = ?, issue_operation_id = ? "
+            "WHERE child_id = ?",
+            (revision, str(operation_id), str(work_id)),
+        )
+        if updated.rowcount:
+            return
+
+
+def child_binding(
+    connection: sqlite3.Connection, work_id: UUID
+) -> tuple[UUID, int | None, str] | None:
+    """Return the parent, the plan revision holding its issue and the role of a child.
+
+    The issue is held by the revision that issued the child and, at schema 7, by every later
+    revision that kept the node and carried its issue; a node that left the plan holds none
+    in later revisions.
+    """
+
+    binding = original_issue(connection, work_id)
+    if binding is None or binding[1] is None or _schema(connection) < 7:
+        return binding
+    carried = connection.execute(
+        "SELECT max(plan_revision) FROM work_plan_nodes WHERE parent_id = ? AND work_id = ? "
+        "AND decision = 'keep' AND issue_carried = 1",
+        (str(binding[0]), str(work_id)),
+    ).fetchone()[0]
+    if carried is not None and int(carried) > binding[1]:
+        return binding[0], int(carried), binding[2]
+    return binding
 
 
 def _pinned_plan(
@@ -1461,11 +1550,44 @@ def _pinned_plan(
         method.version,
         method.checksum,
     )
-    if row is None or tuple(row) != current:
-        # An older generation never applies its effect or result to another plan.
-        raise FoundationError(
-            "stale_plan", "Attempt is not pinned to the current plan revision and Method"
+    if row is not None and tuple(row) == current:
+        return
+    if _schema(connection) >= 7:
+        # A kept node's Attempt continues through its explicit transfer; the pin stays.
+        transfer = connection.execute(
+            "SELECT parent_id, role, plan_revision, method_id, method_version, method_checksum "
+            "FROM execution_plan_transfers WHERE attempt_id = ? AND work_id = ? "
+            "AND plan_revision = ?",
+            (str(attempt_id), str(work_id), plan_revision),
+        ).fetchone()
+        if transfer is not None and tuple(transfer) == current:
+            return
+    # An older generation never applies its effect or result to another plan.
+    raise FoundationError(
+        "stale_plan",
+        "Attempt is not pinned to or transferred into the current plan revision and Method",
+    )
+
+
+def _attempt_pin_current(
+    connection: sqlite3.Connection, attempt_id: UUID, work_id: UUID, parent_id: UUID, role: str
+) -> bool:
+    """Whether the Attempt is pinned to, or transferred into, its parent's current plan."""
+
+    revision = connection.execute(
+        "SELECT max(revision) FROM work_plan_revisions WHERE parent_id = ?", (str(parent_id),)
+    ).fetchone()[0]
+    current, _status, _ = _subject_current(connection, parent_id, "work")
+    parent = WorkState.model_validate(_subject_state(connection, parent_id, current))
+    if revision is None or not isinstance(parent.method, MethodRef):
+        return False
+    try:
+        _pinned_plan(
+            connection, attempt_id, work_id, (parent_id, role, int(revision), parent.method)
         )
+    except FoundationError:
+        return False
+    return True
 
 
 def check_child_plan(
@@ -1630,6 +1752,8 @@ def check_composite_action(
     state = WorkState.model_validate(_subject_state(connection, work_id, revision))
     if binding is None and state.method == "none":
         return
+    if schema >= 7 and binding is not None and isinstance(request, ATTEMPT_EFFECTS):
+        _require_unfenced_effect(connection, request, work_id, binding)
     if state.status in CLOSED_OUTCOMES and not isinstance(request, _ATTEMPT_OUTCOMES):
         # Stopping and recording a sent call stay possible; nothing else changes it.
         raise FoundationError("work_closed", f"Work is closed as {state.status}")
@@ -1717,6 +1841,46 @@ def check_composite_action(
             connection,
             _obligations(connection, work_id, definition),
             f"Output {request.output.slot}",
+        )
+
+
+def _require_unfenced_effect(
+    connection: sqlite3.Connection,
+    request: object,
+    work_id: UUID,
+    binding: tuple[UUID, int | None, str],
+) -> None:
+    """A fenced Attempt names its own cause before any later state of its Work.
+
+    A late answer to a closed wait keeps the separate outcome ``stale_wait``. Any other
+    effect of an Attempt neither pinned to nor transferred into the current plan revision
+    refuses ``stale_plan``, also when the plan revision closed its node in the same
+    transaction; stopping and recording a sent call's outcome stay possible.
+    """
+
+    attempt_id = getattr(request, "attempt_id", None)
+    if not isinstance(attempt_id, UUID) or (
+        connection.execute(
+            "SELECT 1 FROM execution_plan_pins WHERE attempt_id = ? AND work_id = ?",
+            (str(attempt_id), str(work_id)),
+        ).fetchone()
+        is None
+    ):
+        # Not an assigned Attempt of this child: the ordinary checks name the cause.
+        return
+    if isinstance(request, AnswerWaitRequest):
+        wait = connection.execute(
+            "SELECT status FROM execution_waits WHERE wait_id = ? AND attempt_id = ? "
+            "AND work_id = ?",
+            (str(request.wait_id), str(attempt_id), str(work_id)),
+        ).fetchone()
+        if wait is not None and wait[0] == "closed":
+            raise FoundationError("stale_wait", "Wait changed or is closed")
+    if not _attempt_pin_current(connection, attempt_id, work_id, binding[0], binding[2]):
+        raise FoundationError(
+            "stale_plan",
+            f"Attempt {attempt_id} is not pinned to or transferred into the current plan "
+            "revision and Method",
         )
 
 
@@ -1916,15 +2080,11 @@ def check_work_close(
             _method_use(
                 connection, state, actor=actor, epoch=epoch, grants=grants, decisions=decisions
             )
-        open_children = [
+        open_children = sorted(
             f"{role}:{child_id}"
-            for role, child_id in connection.execute(
-                "SELECT p.role, p.child_id FROM work_plan_children p JOIN subject_records s "
-                "ON s.record_id = p.child_id WHERE p.parent_id = ? AND s.status = 'proposed' "
-                "ORDER BY p.role",
-                (str(work_id),),
-            ).fetchall()
-        ]
+            for child_id, role in _member_rows(connection, str(work_id))
+            if _subject_current(connection, UUID(child_id), "work")[1] == "proposed"
+        )
         if open_children:
             # No cascade: every open child gets its own explicit outcome first.
             raise FoundationError(
@@ -2001,14 +2161,41 @@ def verify_changed_premises(
 ) -> None:
     """A stale outcome names only this Work's own premises that held and then changed."""
 
-    artifacts, decision_refs = _premises(connection, request.work_id, state)
-    for reference in request.premises:
+    verify_premises_changed(
+        connection,
+        request.work_id,
+        state,
+        request.premises,
+        request.decision_premises,
+        actor=request.actor,
+        epoch=epoch,
+        grants=grants,
+        decisions=decisions,
+    )
+
+
+def verify_premises_changed(
+    connection: sqlite3.Connection,
+    work_id: UUID,
+    state: WorkState,
+    premises: tuple[ArtifactRef, ...],
+    decision_premises: tuple[DecisionRef, ...],
+    *,
+    actor: str,
+    epoch: int,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> None:
+    """Each named premise of the Work held at its exact address and is no longer current."""
+
+    artifacts, decision_refs = _premises(connection, work_id, state)
+    for reference in premises:
         address = f"Artifact {reference.artifact_id}@{reference.revision}"
         if reference not in artifacts:
             raise FoundationError("premise_mismatch", f"{address} is not a premise of this Work")
         extra_grants, extra_decisions = _authorize(
             connection,
-            actor=request.actor,
+            actor=actor,
             action="record.read",
             epoch=epoch,
             resource_type="artifact",
@@ -2026,13 +2213,13 @@ def verify_changed_premises(
         ).fetchone()
         if row is not None and row[1] == "active" and int(row[0]) == reference.revision:
             raise FoundationError("premise_current", f"{address} is still current")
-    for decision in request.decision_premises:
+    for decision in decision_premises:
         address = f"Decision {decision.decision_id}@{decision.revision}"
         if decision not in decision_refs:
             raise FoundationError("premise_mismatch", f"{address} is not a premise of this Work")
         extra_grants, extra_decisions = _authorize(
             connection,
-            actor=request.actor,
+            actor=actor,
             action="record.read",
             epoch=epoch,
             resource_type="space",
@@ -2068,9 +2255,7 @@ def prepare_work_deletion(connection: sqlite3.Connection, work_id: UUID) -> None
         is None
     ):
         return
-    for (child_id,) in connection.execute(
-        "SELECT child_id FROM work_plan_children WHERE parent_id = ?", (str(work_id),)
-    ).fetchall():
+    for child_id, _role in _member_rows(connection, str(work_id)):
         _, status, _ = _subject_current(connection, UUID(child_id), "work")
         if status != "deleted":
             raise FoundationError("dependent_work", "Delete child Works before parent")
@@ -2085,15 +2270,20 @@ def prepare_work_deletion(connection: sqlite3.Connection, work_id: UUID) -> None
         ).fetchall()
     ]
     if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7:
-        # Result rechecks belong to the parent and go with it.
+        # Result rechecks, members joined by active revisions and node decisions belong to
+        # the parent and go with it.
         operation_ids += [
             row[0]
             for row in connection.execute(
-                "SELECT operation_id FROM result_revalidations WHERE parent_id = ?",
-                (str(work_id),),
+                "SELECT operation_id FROM result_revalidations WHERE parent_id = ? "
+                "UNION SELECT issue_operation_id FROM work_plan_members WHERE parent_id = ? "
+                "AND issue_operation_id IS NOT NULL",
+                (str(work_id), str(work_id)),
             ).fetchall()
         ]
         connection.execute("DELETE FROM result_revalidations WHERE parent_id = ?", (str(work_id),))
+        connection.execute("DELETE FROM work_plan_nodes WHERE parent_id = ?", (str(work_id),))
+        connection.execute("DELETE FROM work_plan_members WHERE parent_id = ?", (str(work_id),))
     connection.executemany(
         "DELETE FROM receipts WHERE operation_id = ?", ((op,) for op in operation_ids)
     )
@@ -2113,14 +2303,15 @@ def _recorded_plan_roles(
     plans: dict[str, list[_PlanDependencies | None]],
     *,
     artifact_id: UUID | None,
-    child_role: str | None,
+    child_id: UUID | None,
 ) -> set[str] | None:
     """Roles that depended on a deleted subject under the plan revision current when one
     obligation revision was recorded, with their dependents; ``None`` when unknown.
 
     A resolution or waiver may be recorded before the first issue, and a later plan
     revision may no longer name that subject. Its basis stays linked to the revision under
-    which it was recorded, read through the retained index once sanitized.
+    which it was recorded, read through the retained index once sanitized. A deleted child
+    seeds only the role it filled in that revision.
     """
 
     recorded = connection.execute(
@@ -2144,11 +2335,14 @@ def _recorded_plan_roles(
     index = _plan_history(connection, parent_id, plans)[positions[-1]]
     if index is None:
         return None
-    roles = (
-        _indexed_artifact_roles(index, artifact_id)
-        if artifact_id is not None
-        else ({child_role} if child_role is not None else set())
-    )
+    if artifact_id is not None:
+        roles = _indexed_artifact_roles(index, artifact_id)
+    else:
+        roles = {
+            role
+            for role, work in _revision_role_works(connection, parent_id, index).items()
+            if child_id is not None and work == str(child_id)
+        }
     changed = True
     while changed:
         previous = len(roles)
@@ -2196,15 +2390,7 @@ def sanitize_deleted_dependency(
         )
     backup_parents: set[str] = set()
     seed_roles: dict[str, set[str]] = {}
-    child_roles: dict[str, str] = {}
-    if child_id is not None:
-        row = connection.execute(
-            "SELECT parent_id, role FROM work_plan_children WHERE child_id = ?",
-            (str(child_id),),
-        ).fetchone()
-        if row is not None:
-            seed_roles.setdefault(row[0], set()).add(row[1])
-            child_roles[row[0]] = row[1]
+    membership = plan_membership(connection, child_id) if child_id is not None else None
 
     affected_operations: set[str] = set()
     current_plans: dict[str, WorkPlan | None] = {}
@@ -2240,6 +2426,21 @@ def sanitize_deleted_dependency(
             (retained.model_dump_json().encode("utf-8"), parent_id, revision),
         )
 
+    if membership is not None:
+        # A deleted child seeds its role under the current plan only while it fills it.
+        parent_key, role = str(membership[0]), membership[1]
+        current_plan = current_plans.get(parent_key)
+        current_index = current_indexes.get(parent_key)
+        if current_plan is not None:
+            fills = any(
+                child.role == role and child.work_id == child_id for child in current_plan.children
+            )
+        else:
+            fills = current_index is None or _revision_role_works(
+                connection, parent_key, current_index
+            ).get(role) == str(child_id)
+        if fills:
+            seed_roles.setdefault(parent_key, set()).add(role)
     if artifact_id is not None:
         for parent_id, plan in current_plans.items():
             if plan is not None:
@@ -2313,7 +2514,9 @@ def sanitize_deleted_dependency(
                 source_operation,
                 recorded_plans,
                 artifact_id=artifact_id,
-                child_role=child_roles.get(parent_id),
+                child_id=(
+                    child_id if membership is not None and str(membership[0]) == parent_id else None
+                ),
             )
             dependent = recorded_roles is None or instance.definition.role in recorded_roles
         if not dependent:
@@ -2340,6 +2543,7 @@ def sanitize_deleted_dependency(
                     "operation_id": operation_id,
                     "created_at": datetime.fromisoformat(now),
                     "exception": None,
+                    "reopened": None,
                 }
             )
             connection.execute(
@@ -2520,36 +2724,35 @@ def _outcome_dependencies(
         for references in index.role_artifacts.values():
             artifacts.update(references)
     if own:
-        for (child,) in connection.execute(
-            "SELECT child_id FROM work_plan_children WHERE parent_id = ?", (work_id,)
-        ).fetchall():
+        for child, _role in _member_rows(connection, work_id):
             works.add(child)
             artifacts.update(_subject_artifacts(connection, child))
         artifacts.update(_evidence_artifacts(connection, work_id, None))
-    membership = connection.execute(
-        "SELECT parent_id, role FROM work_plan_children WHERE child_id = ?", (work_id,)
-    ).fetchone()
+    membership = plan_membership(connection, UUID(work_id))
     if membership is not None:
-        parent_id, role = membership
+        parent_id, role = str(membership[0]), membership[1]
         artifacts.update(_subject_artifacts(connection, parent_id))
         upstream = {role}
+        upstream_works: set[str] = set()
         for index in _plan_history(connection, parent_id, plans):
             if index is None:
                 unbounded = True
                 continue
-            if role not in index.roles:
+            # Only revisions in which this Work filled its role; role history names the
+            # Works of its upstream roles there.
+            fillers = _revision_role_works(connection, parent_id, index)
+            if role not in index.roles or fillers.get(role, work_id) != work_id:
                 continue
             lineage = _upstream_roles(index.edges, role)
             upstream |= lineage
             artifacts.update(index.global_artifacts)
             for member in lineage:
                 artifacts.update(index.role_artifacts.get(member, ()))
-        for child, member in connection.execute(
-            "SELECT child_id, role FROM work_plan_children WHERE parent_id = ?", (parent_id,)
-        ).fetchall():
-            if member in upstream and child != work_id:
-                works.add(child)
-                artifacts.update(_subject_artifacts(connection, child))
+                if member in fillers:
+                    upstream_works.add(fillers[member])
+        for child in sorted(upstream_works - {work_id}):
+            works.add(child)
+            artifacts.update(_subject_artifacts(connection, child))
         artifacts.update(_evidence_artifacts(connection, parent_id, upstream))
     return _OutcomeDependencies(frozenset(artifacts), frozenset(works), unbounded)
 
@@ -2797,7 +3000,66 @@ def _plan_dependencies(
         edges=edges,
         global_artifacts=tuple(sorted(global_artifacts)),
         role_artifacts=role_artifacts,
+        # Earlier schemas keep their exact sanitized payload bytes.
+        role_works=(
+            {child.role: child.work_id for child in plan.children}
+            if _schema(connection) >= 7
+            else None
+        ),
     )
+
+
+def _revision_role_works(
+    connection: sqlite3.Connection, parent_id: str, index: _PlanDependencies
+) -> dict[str, str]:
+    """The Work filling each role of one plan revision, read from its index.
+
+    An index written before role history names no Works; then every role still had its
+    one original member, which a later revision never rewrites.
+    """
+
+    if index.role_works is not None:
+        return {role: str(work) for role, work in index.role_works.items()}
+    originals = _original_members(connection, parent_id)
+    return {role: originals[role] for role in index.roles if role in originals}
+
+
+def _original_members(connection: sqlite3.Connection, parent_id: str) -> dict[str, str]:
+    return {
+        str(role): str(child)
+        for child, role in connection.execute(
+            "SELECT child_id, role FROM work_plan_children WHERE parent_id = ?", (parent_id,)
+        ).fetchall()
+    }
+
+
+def revision_role_works(
+    connection: sqlite3.Connection, parent_id: UUID, payload: bytes
+) -> dict[str, str]:
+    """Role to Work of one stored plan revision: its content, retained index or members.
+
+    A redacted plan from before the index names no roles; before role history every role
+    had its one original member.
+    """
+
+    sanitized = _sanitized_plan(payload)
+    if sanitized is None:
+        plan = WorkPlan.model_validate_json(payload)
+        return {child.role: str(child.work_id) for child in plan.children}
+    if sanitized.dependencies is None:
+        return _original_members(connection, str(parent_id))
+    return _revision_role_works(connection, str(parent_id), sanitized.dependencies)
+
+
+def current_role_works(connection: sqlite3.Connection, parent_id: UUID) -> dict[str, str]:
+    """Role to Work of the parent's current plan revision; empty without a plan."""
+
+    row = connection.execute(
+        "SELECT payload FROM work_plan_revisions WHERE parent_id = ? "
+        "ORDER BY revision DESC LIMIT 1",
+        (str(parent_id),),
+    ).fetchone()
+    return {} if row is None else revision_role_works(connection, parent_id, bytes(row[0]))
 
 
 def _indexed_artifact_roles(index: _PlanDependencies, artifact_id: UUID) -> set[str]:
@@ -2809,12 +3071,7 @@ def _indexed_artifact_roles(index: _PlanDependencies, artifact_id: UUID) -> set[
 def _legacy_plan_roles(connection: sqlite3.Connection, parent_id: str) -> set[str]:
     """Old redacted plans lack an index; preserve deletion safety conservatively."""
 
-    return {
-        role
-        for (role,) in connection.execute(
-            "SELECT role FROM work_plan_children WHERE parent_id = ?", (parent_id,)
-        ).fetchall()
-    }
+    return {role for _child, role in _member_rows(connection, parent_id)}
 
 
 def read_method_version(

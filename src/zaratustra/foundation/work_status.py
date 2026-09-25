@@ -16,6 +16,7 @@ from .composition import (
     _accepted_output,
     _current_artifact,
     _evaluate,
+    _member_rows,
     _method,
     _parent,
     _plan,
@@ -23,6 +24,7 @@ from .composition import (
     check_child_plan,
     check_parent_acceptance,
     child_binding,
+    current_role_works,
 )
 from .models import (
     CLOSED_OUTCOMES,
@@ -38,6 +40,7 @@ from .models import (
     ObligationRevision,
     PlanCondition,
     PlanPin,
+    PlanTransfer,
     StatusReason,
     WorkLifecycle,
     WorkPlan,
@@ -442,7 +445,12 @@ def _succeeded_status(
         for item in state.acceptance.waived
     ]
     binding = child_binding(connection, work_id) if schema >= 7 else None
-    if binding is not None and _subject_current(connection, binding[0], "work")[1] == "proposed":
+    if (
+        binding is not None
+        and _subject_current(connection, binding[0], "work")[1] == "proposed"
+        # A result that left the plan is no longer integrated there.
+        and current_role_works(connection, binding[0]).get(binding[2]) == str(work_id)
+    ):
         try:
             reasons += premise_reasons(connection, work_id, binding[2])
         except FoundationError:
@@ -535,36 +543,47 @@ def _attempt_phase(
     )
 
 
-def _children(connection: sqlite3.Connection, parent_id: UUID) -> tuple[ChildProgress, ...]:
-    progress: list[ChildProgress] = []
-    for role, child_id, issued in connection.execute(
-        "SELECT role, child_id, issued_plan_revision FROM work_plan_children "
-        "WHERE parent_id = ? ORDER BY role",
-        (str(parent_id),),
-    ).fetchall():
-        child = UUID(child_id)
-        try:
-            status = work_status(connection, child)
-        except FoundationError as error:
-            status = WorkStatus(
-                work_id=child,
-                status="blocked",
-                reasons=(StatusReason(code=error.code, role=role, record_id=child),),
-            )
-        progress.append(
-            ChildProgress(
-                role=role,
-                work_id=child,
-                issued_plan_revision=issued,
-                status=status,
-                revalidation=(
-                    revalidation_in_force(connection, child)
-                    if status.status == "succeeded" and _schema(connection) >= 7
-                    else None
-                ),
-            )
+def _progress(connection: sqlite3.Connection, role: str, child: UUID) -> ChildProgress:
+    try:
+        status = work_status(connection, child)
+    except FoundationError as error:
+        status = WorkStatus(
+            work_id=child,
+            status="blocked",
+            reasons=(StatusReason(code=error.code, role=role, record_id=child),),
         )
-    return tuple(progress)
+    binding = child_binding(connection, child)
+    return ChildProgress(
+        role=role,
+        work_id=child,
+        issued_plan_revision=None if binding is None else binding[1],
+        status=status,
+        revalidation=(
+            revalidation_in_force(connection, child)
+            if status.status == "succeeded" and _schema(connection) >= 7
+            else None
+        ),
+    )
+
+
+def _children(
+    connection: sqlite3.Connection, parent_id: UUID
+) -> tuple[tuple[ChildProgress, ...], tuple[ChildProgress, ...]]:
+    """Nodes of the current plan revision, then Works that left the plan (role history)."""
+
+    current = current_role_works(connection, parent_id)
+    members = _member_rows(connection, str(parent_id))
+    if not current:
+        current = {role: child for child, role in members}
+    filling = set(current.values())
+    return (
+        tuple(_progress(connection, role, UUID(current[role])) for role in sorted(current)),
+        tuple(
+            _progress(connection, role, UUID(child))
+            for child, role in members
+            if child not in filling
+        ),
+    )
 
 
 def _obligation_states(
@@ -595,6 +614,7 @@ def _obligation_states(
                 evidence=instance.evidence,
                 choice=instance.choice,
                 exception=instance.exception,
+                reopened=instance.reopened,
             ),
             conflicting,
         )
@@ -611,8 +631,13 @@ def _branch_reviews(
     plan: WorkPlan,
     children: tuple[ChildProgress, ...],
     obligations: tuple[ObligationProgress, ...],
+    departed: tuple[ChildProgress, ...] = (),
 ) -> list[StatusReason]:
-    """Closed branches that the current plan or an open obligation still refers to."""
+    """Closed branches that the current plan or an open obligation still refers to.
+
+    A role that left the plan is still referred to by its open obligation: its last Work
+    is the branch under review until a new node fills the role or a waiver takes it off.
+    """
 
     planned = {child.role for child in plan.children}
     # A validly inactive or waived obligation needs no result from its role.
@@ -621,9 +646,10 @@ def _branch_reviews(
         for item in obligations
         if item.status in ("open", "waiver_stale") and item.applicability != "inactive"
     }
+    last_departed = {child.role: child for child in departed if child.role not in planned}
     return [
         StatusReason(code="branch_review", role=child.role, record_id=child.work_id)
-        for child in children
+        for child in children + tuple(last_departed.values())
         if child.status.status in CLOSED_OUTCOMES
         and (child.role in planned or child.role in needed)
     ]
@@ -640,7 +666,7 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
             status="blocked",
             reasons=(StatusReason(code=error.code, record_id=work_id),),
         )
-    children = _children(connection, work_id)
+    children, departed = _children(connection, work_id)
     states = _obligation_states(connection, work_id, state.method)
     obligations = tuple(progress for progress, _ in states)
     applicability = {item.key: item.applicability for item in obligations}
@@ -673,7 +699,7 @@ def _parent_status(connection: sqlite3.Connection, work_id: UUID, state: WorkSta
         for child in children
         if child.status.status == phase
     ]
-    reviews = _branch_reviews(plan.plan, children, obligations)
+    reviews = _branch_reviews(plan.plan, children, obligations, departed)
     # A formal conflict of applicable choices names every address; it is settled only
     # by revising or revoking a choice, never by scope or time.
     conflicts = [
@@ -846,6 +872,29 @@ def _pins(connection: sqlite3.Connection, work_id: UUID) -> tuple[PlanPin, ...]:
     )
 
 
+def _transfers(connection: sqlite3.Connection, work_id: UUID) -> tuple[PlanTransfer, ...]:
+    if _schema(connection) < 7:
+        return ()
+    return tuple(
+        PlanTransfer(
+            attempt_id=UUID(row[0]),
+            work_id=work_id,
+            parent_work_id=UUID(row[1]),
+            role=row[2],
+            from_plan_revision=row[3],
+            plan_revision=row[4],
+            method=MethodRef(method_id=UUID(row[5]), version=row[6], checksum=row[7]),
+            operation_id=UUID(row[8]),
+        )
+        for row in connection.execute(
+            "SELECT attempt_id, parent_id, role, from_plan_revision, plan_revision, method_id, "
+            "method_version, method_checksum, operation_id FROM execution_plan_transfers "
+            "WHERE work_id = ? ORDER BY plan_revision, attempt_id",
+            (str(work_id),),
+        ).fetchall()
+    )
+
+
 def _work_state(connection: sqlite3.Connection, work_id: UUID) -> WorkState | None:
     revision, status, _ = _subject_current(connection, work_id, "work")
     if status == "deleted":
@@ -873,18 +922,21 @@ def composition_view(connection: sqlite3.Connection, work_id: UUID) -> Compositi
             role=role,
             issued_plan_revision=issued,
             pins=_pins(connection, work_id),
+            transfers=_transfers(connection, work_id),
         )
     state = _work_state(connection, work_id)
     address = _plan_address(connection, work_id)
     if state is None or not isinstance(state.method, MethodRef) or address is None:
         return None
+    children, departed = _children(connection, work_id)
     return CompositionView(
         parent_work_id=work_id,
         method=state.method,
         plan_revision=address[0],
         plan_available=address[1],
-        children=_children(connection, work_id),
+        children=children,
         obligations=_obligation_progress(connection, work_id, state.method),
+        departed=departed,
     )
 
 

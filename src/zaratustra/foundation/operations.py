@@ -32,6 +32,7 @@ from .models import (
     BootstrapRequest,
     ChoiceState,
     ClaimAttemptLaunchRequest,
+    ClosedOutcome,
     CloseWorkRequest,
     ConfirmObligationRequest,
     CreateActivityRequest,
@@ -43,6 +44,7 @@ from .models import (
     CreateResourceRequest,
     CreateWorkRequest,
     DecisionBody,
+    DecisionRef,
     DecisionRevision,
     DecisionState,
     DeleteActivityRequest,
@@ -69,6 +71,7 @@ from .models import (
     RequestAttemptStopRequest,
     ResolveObligationApplicabilityRequest,
     RevalidateResultRequest,
+    ReviseActivePlanRequest,
     ReviseActivityRequest,
     ReviseArtifactRequest,
     ReviseDecisionRequest,
@@ -530,6 +533,8 @@ def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]
         return "work.accept", "work", request.work_id
     if isinstance(request, RevalidateResultRequest):
         return "work.accept", "work", request.parent_work_id
+    if isinstance(request, ReviseActivePlanRequest):
+        return "work.write", "work", request.work_id
     if isinstance(request, (CreateResourceRequest, ReviseResourceRequest)):
         return "resource.write", "work", request.work_id
     if isinstance(
@@ -795,6 +800,11 @@ def _subject_delete(
             )
         connection.execute("DELETE FROM execution_events WHERE work_id = ?", (str(record_id),))  # type: ignore[attr-defined]
         connection.execute("DELETE FROM execution_invocations WHERE work_id = ?", (str(record_id),))  # type: ignore[attr-defined]
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7:  # type: ignore[attr-defined]
+            # Transfers are the child's own addresses and go with its Attempts.
+            connection.execute(  # type: ignore[attr-defined]
+                "DELETE FROM execution_plan_transfers WHERE work_id = ?", (str(record_id),)
+            )
         if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 6:  # type: ignore[attr-defined]
             connection.execute(  # type: ignore[attr-defined]
                 "DELETE FROM execution_plan_pins WHERE work_id = ?", (str(record_id),)
@@ -906,6 +916,37 @@ def _hold_work_execution(
                 for attempt_id in sorted(assigned_ids)
             ),
         )
+
+
+def closed_work_state(
+    connection: object,
+    work_id: UUID,
+    state: WorkState,
+    *,
+    outcome: str,
+    basis: str,
+    premises: tuple[ArtifactRef, ...],
+    decision_premises: tuple[DecisionRef, ...],
+    operation_id: UUID,
+    authority_source: str,
+    now: str,
+    cause: str,
+) -> WorkState:
+    """Hold execution and build the closed state of one Work; the caller writes it."""
+
+    _hold_work_execution(connection, work_id, operation_id, now, cause)
+    closure = WorkClosure(
+        outcome=cast(ClosedOutcome, outcome),
+        operation_id=operation_id,
+        basis=basis,
+        authority_source=authority_source,
+        closed_at=datetime.fromisoformat(now),
+        premises=premises,
+        decision_premises=decision_premises,
+    )
+    return WorkState.model_validate(
+        state.model_dump(mode="python") | {"status": outcome, "closure": closure}
+    )
 
 
 def _apply_subject_change(
@@ -1063,18 +1104,18 @@ def _apply_subject_change(
                 grants=grants,
                 decisions=decisions,
             )
-        _hold_work_execution(connection, request.work_id, request.operation_id, now, "close_work")
-        closure = WorkClosure(
+        next_state = closed_work_state(
+            connection,
+            request.work_id,
+            state,
             outcome=request.outcome,
-            operation_id=request.operation_id,
             basis=request.basis,
-            authority_source=authority.source_ref,
-            closed_at=datetime.fromisoformat(now),
             premises=request.premises,
             decision_premises=request.decision_premises,
-        )
-        next_state = WorkState.model_validate(
-            state.model_dump(mode="python") | {"status": request.outcome, "closure": closure}
+            operation_id=request.operation_id,
+            authority_source=authority.source_ref,
+            now=now,
+            cause="close_work",
         )
     else:
         assert isinstance(request, AcceptWorkRequest)
@@ -1199,6 +1240,20 @@ def _apply_change(
             request,
             now=now,
             epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
+    if isinstance(request, ReviseActivePlanRequest):
+        from .active_plan import revise_active_plan
+
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 7:  # type: ignore[attr-defined]
+            raise FoundationError("unsupported_schema", "Active plan revisions need schema 7")
+        return revise_active_plan(
+            cast(sqlite3.Connection, connection),
+            request,
+            now=now,
+            epoch=epoch,
+            authority_source=authority.source_ref,
             grants=grants,
             decisions=decisions,
         )

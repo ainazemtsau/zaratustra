@@ -6,6 +6,7 @@ from .runtime import ensure_sqlite_runtime
 
 ensure_sqlite_runtime()
 
+from .active_plan import read_plan_nodes, read_role_history
 from .composition import (
     method_checksum,
     read_method_version,
@@ -81,6 +82,8 @@ from .models import (
     MethodRef,
     MethodVersion,
     NamedInput,
+    NodeClosure,
+    NodeDecisionKind,
     ObligationProgress,
     ObligationRevision,
     ObligationTarget,
@@ -91,9 +94,13 @@ from .models import (
     OutputContract,
     PlanChild,
     PlanCondition,
+    PlanNode,
+    PlanNodeDecision,
+    PlanNodes,
     PlanOutputBinding,
     PlanPin,
     PlanRevision,
+    PlanTransfer,
     PremiseChange,
     PrepareInvocationRequest,
     ProvenanceRef,
@@ -107,12 +114,14 @@ from .models import (
     ResourceState,
     ResultRevalidation,
     RevalidateResultRequest,
+    ReviseActivePlanRequest,
     ReviseActivityRequest,
     ReviseArtifactRequest,
     ReviseDecisionRequest,
     ReviseResourceRequest,
     ReviseWorkPlanRequest,
     RevokeGrantRequest,
+    RoleFilling,
     SendInvocationRequest,
     SpaceInfo,
     SpaceInspection,
@@ -166,6 +175,16 @@ from .runtime import (
 from .work_status import read_work_status
 
 __all__ = [
+    "NodeClosure",
+    "NodeDecisionKind",
+    "PlanNode",
+    "PlanNodeDecision",
+    "PlanNodes",
+    "PlanTransfer",
+    "ReviseActivePlanRequest",
+    "RoleFilling",
+    "read_plan_nodes",
+    "read_role_history",
     "ExceptionState",
     "ObligationTarget",
     "PremiseChange",

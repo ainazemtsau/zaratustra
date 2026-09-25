@@ -428,6 +428,11 @@ class ObligationRevision(ContractModel):
     # Absent from canonical JSON while empty, so earlier payloads stay byte-identical.
     choice: DecisionRef | None = Field(default=None, exclude_if=lambda value: value is None)
     exception: DecisionRef | None = Field(default=None, exclude_if=lambda value: value is None)
+    # A plan revision reopened this execution: its evidence belongs to a Work that no longer
+    # fills the role.
+    reopened: Literal["node_replaced"] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
     @model_validator(mode="after")
     def applicability_matches_definition(self) -> ObligationRevision:
@@ -442,6 +447,8 @@ class ObligationRevision(ContractModel):
             self.status == "waived" and self.evidence is not None
         ):
             raise ValueError("Only a waived obligation names its exception, and no evidence")
+        if self.reopened is not None and (self.status != "open" or self.basis is not None):
+            raise ValueError("A reopened obligation is open and carries no basis")
         return self
 
 
@@ -760,6 +767,85 @@ class RevalidateResultRequest(OperationRequest):
         return self
 
 
+type NodeDecisionKind = Literal["keep", "replace", "cancel", "stale", "release", "add"]
+
+
+class NodeClosure(ContractModel):
+    """Outcome of an unfinished node leaving the plan, as a ``CloseWorkRequest`` records it."""
+
+    expected_revision: int = Field(ge=1)
+    outcome: Literal["cancelled", "stale"]
+    basis: str = Field(min_length=1, max_length=4096)
+    premises: tuple[ArtifactRef, ...] = ()
+    decision_premises: tuple[DecisionRef, ...] = ()
+
+    @model_validator(mode="after")
+    def premises_name_stale_only(self) -> NodeClosure:
+        named = self.premises + self.decision_premises
+        if (self.outcome == "stale") != bool(named):
+            raise ValueError("Only a stale outcome names its changed premises, and it must")
+        if len(set(self.premises)) != len(self.premises) or len(set(self.decision_premises)) != len(
+            self.decision_premises
+        ):
+            raise ValueError("Changed premises must be unique")
+        return self
+
+
+class PlanNodeDecision(ContractModel):
+    """Explicit decision for one node of the current plan revision or one new node.
+
+    ``work_id`` is the Work of the node in the current revision; for ``add`` it is the new
+    Work. ``replace`` names the new Work filling the same role in ``replacement``. An
+    unfinished node that leaves the plan (``cancel``, ``stale`` or ``replace``) gets its
+    outcome from ``closure``; a finished one keeps its outcome and has none.
+    """
+
+    role: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
+    decision: NodeDecisionKind
+    work_id: UUID
+    replacement: UUID | None = None
+    closure: NodeClosure | None = None
+
+    @model_validator(mode="after")
+    def decision_shape(self) -> PlanNodeDecision:
+        if (self.decision == "replace") != (self.replacement is not None):
+            raise ValueError("Only replace names a replacement Work, and it must")
+        if self.replacement == self.work_id:
+            raise ValueError("A replacement is another Work")
+        if self.decision in ("keep", "release", "add") and self.closure is not None:
+            raise ValueError("Only a node that leaves the plan unfinished gets an outcome")
+        outcome = {"cancel": "cancelled", "stale": "stale"}.get(self.decision)
+        if outcome is not None and (self.closure is None or self.closure.outcome != outcome):
+            raise ValueError("cancel and stale name the matching outcome of the node")
+        return self
+
+
+class ReviseActivePlanRequest(OperationRequest):
+    """Revise the plan of a started composite Work with an explicit decision per node.
+
+    Every node of the current revision gets ``keep``, ``replace``, ``cancel``, ``stale`` or
+    ``release``; every new node gets ``add``. ``ReviseWorkPlanRequest`` stays for revisions
+    before any child is issued.
+    """
+
+    kind: Literal["revise_active_plan"] = "revise_active_plan"
+    work_id: UUID
+    expected_plan_revision: int = Field(ge=1)
+    expected_work_revision: int = Field(ge=1)
+    plan: WorkPlan
+    nodes: tuple[PlanNodeDecision, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def one_decision_per_role(self) -> ReviseActivePlanRequest:
+        roles = [item.role for item in self.nodes]
+        works = [item.work_id for item in self.nodes] + [
+            item.replacement for item in self.nodes if item.replacement is not None
+        ]
+        if len(roles) != len(set(roles)) or len(works) != len(set(works)):
+            raise ValueError("Each role and each Work has one node decision")
+        return self
+
+
 class LinkWorkOutputRequest(OperationRequest):
     kind: Literal["link_work_output"] = "link_work_output"
     work_id: UUID
@@ -988,6 +1074,7 @@ DomainRequest = Annotated[
     | ResolveObligationApplicabilityRequest
     | WaiveObligationRequest
     | RevalidateResultRequest
+    | ReviseActivePlanRequest
     | LinkWorkOutputRequest
     | PublishAttemptOutputRequest
     | AcceptWorkRequest
@@ -1235,10 +1322,71 @@ class ObligationProgress(ContractModel):
     evidence: ArtifactRef | None = None
     choice: DecisionRef | None = Field(default=None, exclude_if=lambda value: value is None)
     exception: DecisionRef | None = Field(default=None, exclude_if=lambda value: value is None)
+    reopened: Literal["node_replaced"] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+
+
+class PlanTransfer(ContractModel):
+    """Explicit transfer of one active child Attempt into a later plan revision.
+
+    Recorded by the plan revision that kept its node, after the current rights, inputs,
+    readiness and Method use were rechecked; the original pin is never rewritten.
+    """
+
+    attempt_id: UUID
+    work_id: UUID
+    parent_work_id: UUID
+    role: str
+    from_plan_revision: int = Field(ge=1)
+    plan_revision: int = Field(ge=2)
+    method: MethodRef
+    operation_id: UUID
+
+
+class PlanNode(ContractModel):
+    """One recorded node decision of an active plan revision; addresses only.
+
+    ``work_id`` fills the role in the new revision (keep, replace, add) or leaves the plan
+    (cancel, stale, release); ``replaced_work_id`` is the Work a replacement took over from.
+    ``closed_revision`` is the Work revision holding the outcome recorded for a node that
+    left unfinished; its basis lives there.
+    """
+
+    role: str
+    decision: NodeDecisionKind
+    work_id: UUID
+    replaced_work_id: UUID | None = None
+    issue_carried: bool = False
+    closed_revision: int | None = Field(default=None, ge=1)
+
+
+class PlanNodes(ContractModel):
+    """The explicit node mapping from one plan revision to the next."""
+
+    parent_work_id: UUID
+    plan_revision: int = Field(ge=2)
+    operation_id: UUID
+    nodes: tuple[PlanNode, ...]
+
+
+class RoleFilling(ContractModel):
+    """One Work filling a role over consecutive plan revisions."""
+
+    role: str
+    work_id: UUID
+    first_plan_revision: int = Field(ge=1)
+    # None while the Work still fills the role in the current revision.
+    last_plan_revision: int | None = Field(default=None, ge=1)
 
 
 class CompositionView(ContractModel):
-    """Addresses and states of one composite Work; plan content stays in its revision."""
+    """Addresses and states of one composite Work; plan content stays in its revision.
+
+    ``children`` are the nodes of the current plan revision; ``departed`` are Works that
+    filled a role in an earlier revision and left the plan (replaced, cancelled, stale or
+    released).
+    """
 
     parent_work_id: UUID
     method: MethodRef
@@ -1249,6 +1397,9 @@ class CompositionView(ContractModel):
     pins: tuple[PlanPin, ...] = ()
     children: tuple[ChildProgress, ...] = ()
     obligations: tuple[ObligationProgress, ...] = ()
+    # Absent while empty, so reads of plans without active revisions stay unchanged.
+    departed: tuple[ChildProgress, ...] = Field(default=(), exclude_if=lambda value: not value)
+    transfers: tuple[PlanTransfer, ...] = Field(default=(), exclude_if=lambda value: not value)
 
 
 class ExecutionSnapshot(ContractModel):
@@ -1344,6 +1495,14 @@ class DeletionStatus(ContractModel):
 
 
 __all__ = [
+    "NodeClosure",
+    "NodeDecisionKind",
+    "PlanNode",
+    "PlanNodeDecision",
+    "PlanNodes",
+    "PlanTransfer",
+    "ReviseActivePlanRequest",
+    "RoleFilling",
     "ExceptionState",
     "ObligationTarget",
     "PremiseChange",

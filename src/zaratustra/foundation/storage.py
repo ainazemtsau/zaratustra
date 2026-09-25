@@ -545,6 +545,64 @@ PLAN_REVISION_SCHEMA_STATEMENTS: tuple[str, ...] = (
     ) STRICT
     """,
     "CREATE INDEX result_revalidation_child ON result_revalidations(child_id)",
+    # Part 3.6: a role keeps its schema 5 member row; Works that fill a role through an
+    # active plan revision are members here, and every such revision records its node
+    # decisions as addresses.
+    """
+    CREATE TABLE work_plan_members (
+        child_id TEXT PRIMARY KEY,
+        parent_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        plan_revision INTEGER NOT NULL CHECK (plan_revision >= 2),
+        issued_plan_revision INTEGER,
+        issue_operation_id TEXT,
+        FOREIGN KEY (parent_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (child_id) REFERENCES subject_records(record_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE work_plan_nodes (
+        parent_id TEXT NOT NULL,
+        plan_revision INTEGER NOT NULL CHECK (plan_revision >= 2),
+        role TEXT NOT NULL,
+        decision TEXT NOT NULL CHECK (decision IN
+            ('keep', 'replace', 'cancel', 'stale', 'release', 'add')),
+        work_id TEXT NOT NULL,
+        replaced_work_id TEXT,
+        issue_carried INTEGER NOT NULL CHECK (issue_carried IN (0, 1)),
+        closed_revision INTEGER,
+        operation_id TEXT NOT NULL,
+        PRIMARY KEY (parent_id, plan_revision, role),
+        FOREIGN KEY (parent_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (work_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (replaced_work_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    # Part 3.7: an active Attempt of a kept node is transferred explicitly; its pin stays.
+    """
+    CREATE TABLE execution_plan_transfers (
+        attempt_id TEXT NOT NULL,
+        plan_revision INTEGER NOT NULL CHECK (plan_revision >= 2),
+        work_id TEXT NOT NULL,
+        parent_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        from_plan_revision INTEGER NOT NULL CHECK (from_plan_revision >= 1),
+        method_id TEXT NOT NULL,
+        method_version INTEGER NOT NULL CHECK (method_version >= 1),
+        method_checksum TEXT NOT NULL,
+        operation_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (attempt_id, plan_revision),
+        FOREIGN KEY (attempt_id) REFERENCES execution_attempts(attempt_id),
+        FOREIGN KEY (work_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (parent_id) REFERENCES subject_records(record_id),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    "CREATE INDEX work_plan_member_parent ON work_plan_members(parent_id)",
+    "CREATE INDEX work_plan_node_work ON work_plan_nodes(work_id)",
+    "CREATE INDEX plan_transfer_work ON execution_plan_transfers(work_id)",
 )
 PLAN_REVISION_SCHEMA_SHA256 = (
     hashlib.sha256(

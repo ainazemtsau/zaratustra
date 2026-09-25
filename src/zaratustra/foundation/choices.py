@@ -41,10 +41,16 @@ def covering_scopes(connection: sqlite3.Connection, work_id: UUID) -> frozenset[
 
     scopes = {("work", work_id)}
     current = work_id
+    members = int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 7
     while True:
         row = connection.execute(
             "SELECT parent_id FROM work_plan_children WHERE child_id = ?", (str(current),)
         ).fetchone()
+        if row is None and members:
+            # A Work that filled a role through an active plan revision.
+            row = connection.execute(
+                "SELECT parent_id FROM work_plan_members WHERE child_id = ?", (str(current),)
+            ).fetchone()
         if row is None:
             break
         current = UUID(row[0])
