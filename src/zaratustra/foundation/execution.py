@@ -207,7 +207,15 @@ def _check_attempt_basis(
     )
     current_revision, state = _work(connection, work_id)
     if current_revision != work_revision:
-        raise FoundationError("stale_work", "Work changed after Attempt started")
+        own_publications = connection.execute(  # type: ignore[attr-defined]
+            "SELECT count(*) FROM subject_revisions r JOIN execution_events e "
+            "ON e.operation_id = r.operation_id AND e.work_id = r.record_id "
+            "WHERE r.record_id = ? AND r.revision > ? AND r.revision <= ? "
+            "AND e.attempt_id = ? AND e.kind = 'publish_attempt_output'",
+            (str(work_id), work_revision, current_revision, str(attempt_id)),
+        ).fetchone()[0]
+        if current_revision < work_revision or own_publications != current_revision - work_revision:
+            raise FoundationError("stale_work", "Work changed after Attempt started")
     _current_inputs(connection, state, actor=actor, epoch=epoch)
     resource = _available_resource(connection, resource_id, work_id, resource_revision)
     owner = connection.execute(  # type: ignore[attr-defined]

@@ -72,7 +72,13 @@ from zaratustra.foundation import (
 )
 
 
-def _own_parent(tmp_path: Path) -> tuple[Path, UUID, LocalAuthority, UUID, UUID, UUID]:
+def _own_parent(
+    tmp_path: Path,
+    *,
+    slots: tuple[str, ...] = ("final",),
+    obligation_slots: tuple[str, ...] = ("final",),
+    child_binding: bool = False,
+) -> tuple[Path, UUID, LocalAuthority, UUID, UUID, UUID]:
     root, space, owner, activity, source, _old_method, _old_parent, _a, _b, _plan, _create = _seed(
         tmp_path
     )
@@ -84,14 +90,16 @@ def _own_parent(tmp_path: Path) -> tuple[Path, UUID, LocalAuthority, UUID, UUID,
     definition = MethodDefinition(
         instruction="Integrate the two checked synthetic results",
         named_inputs=(OutputContract(slot="source", media_type="text/plain"),),
-        named_outputs=(OutputContract(slot="final", media_type="text/plain"),),
-        obligations=(
+        named_outputs=tuple(OutputContract(slot=slot, media_type="text/plain") for slot in slots)
+        + ((OutputContract(slot="from_a", media_type="text/plain"),) if child_binding else ()),
+        obligations=tuple(
             MethodObligation(
-                key="summary_checked",
-                source="Review the own summary",
-                slot="final",
+                key="summary_checked" if slot == "final" else f"{slot}_checked",
+                source=f"Review the own {slot}",
+                slot=slot,
                 media_type="text/plain",
-            ),
+            )
+            for slot in obligation_slots
         ),
         source_ref="synthetic-parent-method",
     )
@@ -113,7 +121,18 @@ def _own_parent(tmp_path: Path) -> tuple[Path, UUID, LocalAuthority, UUID, UUID,
     child_b = child_a.model_copy(update={"goal": "Independent B"})
     plan = WorkPlan(
         named_inputs=(NamedInput(slot="source", artifact=source_ref),),
-        parent_outputs=(ParentOutputSlot(slot="final", media_type="text/plain"),),
+        parent_outputs=tuple(
+            ParentOutputSlot(slot=slot, media_type="text/plain") for slot in slots
+        ),
+        output_bindings=(
+            (
+                PlanOutputBinding(
+                    parent_slot="from_a", role="a", child_slot="result", media_type="text/plain"
+                ),
+            )
+            if child_binding
+            else ()
+        ),
         children=(
             PlanChild(role="a", work_id=a, state=child_a),
             PlanChild(role="b", work_id=b, state=child_b),
@@ -145,6 +164,255 @@ def _own_parent(tmp_path: Path) -> tuple[Path, UUID, LocalAuthority, UUID, UUID,
         plan=plan,
     )
     return root, space, owner, parent, a, b
+
+
+def _ready_two_output_parent(
+    tmp_path: Path,
+    *,
+    obligation_slots: tuple[str, ...] = (),
+) -> tuple[Path, UUID, LocalAuthority, UUID, UUID]:
+    root, space, owner, parent, a, b = _own_parent(
+        tmp_path, slots=("final", "extra"), obligation_slots=obligation_slots
+    )
+    for child in (a, b):
+        _issue(root, space, owner, parent, child)
+        _result(root, space, owner, child, "result", b"independent child result")
+    return root, space, owner, parent, _resource(root, space, owner, parent, "workspace-parent")
+
+
+def test_one_parent_attempt_publishes_two_own_outputs(tmp_path: Path) -> None:
+    root, space, owner, parent, resource = _ready_two_output_parent(tmp_path)
+    attempt, session, _request, _receipt = _assign(root, space, owner, parent, resource)
+    _claim(root, space, owner, parent, attempt, session)
+    _invocation(root, space, owner, parent, attempt, session)
+    final_request = PublishAttemptOutputRequest(
+        operation_id=uuid4(),
+        space_id=space,
+        actor="owner",
+        attempt_id=attempt,
+        work_id=parent,
+        session_id=session,
+        slot="final",
+        media_type="text/plain",
+        content=b"own final",
+    )
+    final_receipt = apply_operation(root, final_request, owner)
+    assert apply_operation(root, final_request, owner) == final_receipt
+    extra_request = PublishAttemptOutputRequest(
+        operation_id=uuid4(),
+        space_id=space,
+        actor="owner",
+        attempt_id=attempt,
+        work_id=parent,
+        session_id=session,
+        slot="extra",
+        media_type="text/plain",
+        content=b"own extra",
+    )
+    extra_receipt = apply_operation(root, extra_request, owner)
+    assert apply_operation(root, extra_request, owner) == extra_receipt
+    assert read_receipt(root, extra_request.operation_id, owner) == extra_receipt
+    _stop(root, space, owner, parent, attempt, session)
+    _apply(
+        root,
+        space,
+        owner,
+        AcceptWorkRequest,
+        work_id=parent,
+        expected_revision=read_work(root, parent, owner).revision,
+        basis="Both own outputs are complete",
+    )
+    assert read_work_status(root, parent, owner).status == "succeeded"
+
+
+def test_linked_parent_attempts_complete_distinct_own_slots(tmp_path: Path) -> None:
+    root, space, owner, parent, resource = _ready_two_output_parent(tmp_path)
+    first, first_session, _request, _receipt = _assign(root, space, owner, parent, resource)
+    _claim(root, space, owner, parent, first, first_session)
+    _invocation(root, space, owner, parent, first, first_session)
+    final = _apply(
+        root,
+        space,
+        owner,
+        PublishAttemptOutputRequest,
+        attempt_id=first,
+        work_id=parent,
+        session_id=first_session,
+        slot="final",
+        media_type="text/plain",
+        content=b"own final",
+    )
+    _stop(root, space, owner, parent, first, first_session)
+    second, second_session, _request, _receipt = _assign(
+        root, space, owner, parent, resource, previous=first
+    )
+    _claim(root, space, owner, parent, second, second_session)
+    _invocation(root, space, owner, parent, second, second_session)
+    extra = _apply(
+        root,
+        space,
+        owner,
+        PublishAttemptOutputRequest,
+        attempt_id=second,
+        work_id=parent,
+        session_id=second_session,
+        slot="extra",
+        media_type="text/plain",
+        content=b"own extra",
+    )
+    _stop(root, space, owner, parent, second, second_session)
+    assert (
+        read_parent_output_proof(
+            root, UUID(cast(str, final.result["artifact_id"])), owner
+        ).attempt_id
+        == first
+    )
+    assert (
+        read_parent_output_proof(
+            root, UUID(cast(str, extra.result["artifact_id"])), owner
+        ).attempt_id
+        == second
+    )
+    _apply(
+        root,
+        space,
+        owner,
+        AcceptWorkRequest,
+        work_id=parent,
+        expected_revision=read_work(root, parent, owner).revision,
+        basis="Two linked own Attempts supplied distinct slots",
+    )
+    assert read_work_status(root, parent, owner).status == "succeeded"
+
+
+def test_second_own_slot_needs_its_own_confirmation(tmp_path: Path) -> None:
+    root, space, owner, parent, resource = _ready_two_output_parent(
+        tmp_path, obligation_slots=("final", "extra")
+    )
+    attempt, session, _request, _receipt = _assign(root, space, owner, parent, resource)
+    _claim(root, space, owner, parent, attempt, session)
+    _invocation(root, space, owner, parent, attempt, session)
+    final = _apply(
+        root,
+        space,
+        owner,
+        PublishAttemptOutputRequest,
+        attempt_id=attempt,
+        work_id=parent,
+        session_id=session,
+        slot="final",
+        media_type="text/plain",
+        content=b"own final",
+    )
+    final_ref = ArtifactRef(artifact_id=UUID(cast(str, final.result["artifact_id"])), revision=1)
+    _apply(
+        root,
+        space,
+        owner,
+        ConfirmObligationRequest,
+        work_id=parent,
+        key="summary_checked",
+        expected_plan_revision=1,
+        expected_obligation_revision=1,
+        evidence=final_ref,
+        basis="Final checked",
+    )
+    extra = _apply(
+        root,
+        space,
+        owner,
+        PublishAttemptOutputRequest,
+        attempt_id=attempt,
+        work_id=parent,
+        session_id=session,
+        slot="extra",
+        media_type="text/plain",
+        content=b"own extra",
+    )
+    extra_ref = ArtifactRef(artifact_id=UUID(cast(str, extra.result["artifact_id"])), revision=1)
+    _stop(root, space, owner, parent, attempt, session)
+    assert read_obligation(root, parent, "summary_checked", owner).status == "satisfied"
+    assert read_obligation(root, parent, "extra_checked", owner).status == "open"
+    with pytest.raises(FoundationError, match="obligation_open"):
+        _apply(
+            root,
+            space,
+            owner,
+            AcceptWorkRequest,
+            work_id=parent,
+            expected_revision=read_work(root, parent, owner).revision,
+            basis="Extra still needs confirmation",
+        )
+    _apply(
+        root,
+        space,
+        owner,
+        ConfirmObligationRequest,
+        work_id=parent,
+        key="extra_checked",
+        expected_plan_revision=1,
+        expected_obligation_revision=1,
+        evidence=extra_ref,
+        basis="Extra checked separately",
+    )
+    _apply(
+        root,
+        space,
+        owner,
+        AcceptWorkRequest,
+        work_id=parent,
+        expected_revision=read_work(root, parent, owner).revision,
+        basis="Both own slots checked",
+    )
+    assert read_work_status(root, parent, owner).status == "succeeded"
+
+
+def test_other_work_revision_still_fences_next_own_publication(tmp_path: Path) -> None:
+    root, space, owner, parent, a, b = _own_parent(
+        tmp_path, slots=("final", "extra"), obligation_slots=(), child_binding=True
+    )
+    for child in (a, b):
+        _issue(root, space, owner, parent, child)
+    child_output = _result(root, space, owner, a, "result", b"independent A")
+    _result(root, space, owner, b, "result", b"independent B")
+    resource = _resource(root, space, owner, parent, "workspace-parent")
+    attempt, session, _request, _receipt = _assign(root, space, owner, parent, resource)
+    _claim(root, space, owner, parent, attempt, session)
+    _invocation(root, space, owner, parent, attempt, session)
+    _apply(
+        root,
+        space,
+        owner,
+        PublishAttemptOutputRequest,
+        attempt_id=attempt,
+        work_id=parent,
+        session_id=session,
+        slot="final",
+        media_type="text/plain",
+        content=b"own final",
+    )
+    _apply(
+        root,
+        space,
+        owner,
+        LinkWorkOutputRequest,
+        work_id=parent,
+        expected_revision=read_work(root, parent, owner).revision,
+        output=LinkedOutput(slot="from_a", artifact=child_output),
+    )
+    with pytest.raises(FoundationError, match="stale_work"):
+        _apply(
+            root,
+            space,
+            owner,
+            PublishAttemptOutputRequest,
+            attempt_id=attempt,
+            work_id=parent,
+            session_id=session,
+            slot="extra",
+            media_type="text/plain",
+            content=b"own extra",
+        )
 
 
 def test_parent_own_attempt_output_confirmation_and_acceptance(tmp_path: Path) -> None:

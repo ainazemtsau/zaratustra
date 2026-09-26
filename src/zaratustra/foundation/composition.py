@@ -2126,12 +2126,52 @@ def _parent_output_proof(
     if pin.plan_revision != proof.plan_revision or pin.method != proof.method:
         raise FoundationError("stale_plan", "Publication no longer matches its own pin")
     latest = connection.execute(
-        "SELECT attempt_id FROM execution_attempts WHERE work_id = ? "
+        "SELECT attempt_id, previous_attempt_id FROM execution_attempts WHERE work_id = ? "
         "ORDER BY generation DESC LIMIT 1",
         (str(work_id),),
     ).fetchone()
-    if latest is None or latest[0] != str(proof.attempt_id):
-        raise FoundationError("stale_attempt", "Own output belongs to a superseded Attempt")
+    if latest is None:
+        raise FoundationError("stale_attempt", "Own output has no current Attempt")
+    if latest[0] != str(proof.attempt_id):
+        # A linked successor may fill another own slot without replacing this exact result.
+        # An assigned successor with no current publication still fences the older result.
+        _require_parent_pin_current(connection, UUID(latest[0]), work_id)
+        current = WorkState.model_validate(
+            _subject_state(connection, work_id, _subject_current(connection, work_id, "work")[0])
+        )
+        successor_published = any(
+            connection.execute(
+                "SELECT 1 FROM parent_output_proofs WHERE work_id = ? AND attempt_id = ? "
+                "AND slot = ? AND artifact_id = ? AND artifact_revision = ?",
+                (
+                    str(work_id),
+                    latest[0],
+                    output.slot,
+                    str(output.artifact.artifact_id),
+                    output.artifact.revision,
+                ),
+            ).fetchone()
+            is not None
+            for output in current.linked_outputs
+            if output.slot != slot
+        )
+        cursor = latest
+        while cursor[0] != str(proof.attempt_id):
+            if cursor[1] is None:
+                raise FoundationError(
+                    "stale_attempt", "Own output is not in the linked Attempt chain"
+                )
+            cursor = connection.execute(
+                "SELECT attempt_id, previous_attempt_id FROM execution_attempts "
+                "WHERE attempt_id = ? AND work_id = ?",
+                (cursor[1], str(work_id)),
+            ).fetchone()
+            if cursor is None:
+                raise FoundationError(
+                    "stale_attempt", "Own output is not in the linked Attempt chain"
+                )
+        if not successor_published:
+            raise FoundationError("stale_attempt", "Own output belongs to a superseded Attempt")
     return proof
 
 
