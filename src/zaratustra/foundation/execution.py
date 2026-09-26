@@ -207,6 +207,14 @@ def _check_attempt_basis(
     )
     current_revision, state = _work(connection, work_id)
     if current_revision != work_revision:
+        parent_pin = None
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 8:  # type: ignore[attr-defined]
+            parent_pin = connection.execute(  # type: ignore[attr-defined]
+                "SELECT 1 FROM execution_parent_pins WHERE attempt_id = ? AND work_id = ?",
+                (str(attempt_id), str(work_id)),
+            ).fetchone()
+        if parent_pin is None:
+            raise FoundationError("stale_work", "Work changed after Attempt started")
         own_publications = connection.execute(  # type: ignore[attr-defined]
             "SELECT count(*) FROM subject_revisions r JOIN execution_events e "
             "ON e.operation_id = r.operation_id AND e.work_id = r.record_id "

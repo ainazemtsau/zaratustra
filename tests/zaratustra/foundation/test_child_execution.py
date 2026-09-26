@@ -71,6 +71,8 @@ from zaratustra.foundation import (
     read_work_status,
     restore_backup,
     upgrade_child_execution_space,
+    upgrade_parent_execution_space,
+    upgrade_plan_revision_space,
 )
 
 EXECUTOR = "synthetic-child-contract-1"
@@ -297,6 +299,69 @@ def test_child_execution_needs_explicit_schema_6_and_keeps_old_routes(tmp_path: 
             expected_resource_revision=1,
             session_id=uuid4(),
             executor_version=EXECUTOR,
+        )
+
+
+@pytest.mark.parametrize("schema_version", (6, 7, 8))
+def test_legacy_plain_work_publication_fences_next_invocation(
+    tmp_path: Path, schema_version: int
+) -> None:
+    root, space, owner, activity, source, _ref, _parent, _a, _b, _plan, _create = _seed(tmp_path)
+    assert upgrade_child_execution_space(root, owner).schema_version == 6
+    if schema_version >= 7:
+        assert upgrade_plan_revision_space(root, owner).schema_version == 7
+    if schema_version == 8:
+        assert upgrade_parent_execution_space(root, owner).schema_version == 8
+    work = uuid4()
+    _apply(
+        root,
+        space,
+        owner,
+        CreateWorkRequest,
+        work_id=work,
+        state=WorkState(
+            activity_id=activity,
+            goal="Plain synthetic Work",
+            inputs=(ArtifactRef(artifact_id=source, revision=1),),
+            expected_outputs=(OutputContract(slot="final", media_type="text/plain"),),
+            method="none",
+        ),
+    )
+    resource = _resource(root, space, owner, work, "plain-work-resource")
+    attempt, session, _request, _receipt = _assign(root, space, owner, work, resource)
+    _claim(root, space, owner, work, attempt, session)
+    _invocation(root, space, owner, work, attempt, session)
+    _apply(
+        root,
+        space,
+        owner,
+        PublishAttemptOutputRequest,
+        attempt_id=attempt,
+        work_id=work,
+        session_id=session,
+        slot="final",
+        media_type="text/plain",
+        content=b"first synthetic result",
+    )
+    assert read_work(root, work, owner).revision == 2
+    assert read_execution(root, work, owner).attempts[0].work_revision == 1
+    with pytest.raises(FoundationError, match="stale_work"):
+        _apply(
+            root,
+            space,
+            owner,
+            PrepareInvocationRequest,
+            invocation_id=uuid4(),
+            attempt_id=attempt,
+            work_id=work,
+            session_id=session,
+            purpose="content",
+            provider="synthetic",
+            model="synthetic",
+            transport="http-sse",
+            request_sha256="B" * 64,
+            request_bytes=10,
+            reserve_units=5,
         )
 
 
