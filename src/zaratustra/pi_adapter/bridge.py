@@ -15,25 +15,33 @@ from typing import Any
 from urllib.parse import parse_qs, urlsplit
 from uuid import UUID, uuid5
 
-from pydantic import TypeAdapter, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from zaratustra.foundation import (
     AcceptWorkRequest,
     AnswerWaitRequest,
     ArtifactRef,
     CreateArtifactRequest,
+    CreateBindingVersionRequest,
+    CreateMethodVersionRequest,
     CreateResourceRequest,
     DomainRequest,
+    FireBindingRequest,
     FoundationError,
     LocalAuthority,
     OpenWaitRequest,
     ProvenanceRef,
     PublishAttemptOutputRequest,
+    ResolveBindingOfferRequest,
     ResourceState,
+    SetBindingStateRequest,
     StartAttemptRequest,
     StopAttemptRequest,
     apply_operation,
     inspect_space,
+    list_binding_methods,
+    list_binding_offers,
+    list_bindings,
     read_activity,
     read_execution,
     read_execution_events,
@@ -41,11 +49,24 @@ from zaratustra.foundation import (
     read_space,
     read_work,
     read_work_status,
+    upgrade_binding_space,
+    upgrade_child_execution_space,
+    upgrade_composition_space,
+    upgrade_continuation_space,
+    upgrade_parent_execution_space,
+    upgrade_plan_revision_space,
 )
 
 PROTOCOL_VERSION = 1
 MAX_BODY_BYTES = 9 * 1024 * 1024
 REQUEST_ADAPTER: TypeAdapter[DomainRequest] = TypeAdapter(DomainRequest)
+BINDING_INTENTS: dict[str, type[BaseModel]] = {
+    "create_method_version": CreateMethodVersionRequest,
+    "create_binding_version": CreateBindingVersionRequest,
+    "set_binding_state": SetBindingStateRequest,
+    "fire_binding": FireBindingRequest,
+    "resolve_binding_offer": ResolveBindingOfferRequest,
+}
 
 
 @dataclass(frozen=True)
@@ -247,6 +268,80 @@ class Bridge:
             )
         receipt = apply_operation(self.path, request, self.authority)
         return receipt.model_dump(mode="json")
+
+    def binding_catalog(self, session_id: UUID) -> dict[str, object]:
+        self._session(session_id)
+        if self.assigned_attempt_id is not None:
+            raise FoundationError("permission_denied", "Assigned RPC cannot manage Bindings")
+        info = read_space(self.path)
+        return {
+            "schema_version": info.schema_version,
+            "methods": [
+                item.model_dump(mode="json")
+                for item in list_binding_methods(self.path, self.authority)
+            ],
+            "bindings": [
+                item.model_dump(mode="json") for item in list_bindings(self.path, self.authority)
+            ]
+            if info.schema_version >= 9
+            else [],
+            "offers": [
+                item.model_dump(mode="json")
+                for item in list_binding_offers(self.path, self.authority)
+            ]
+            if info.schema_version >= 9
+            else [],
+        }
+
+    def binding_contract(self, session_id: UUID, kind: str) -> dict[str, object]:
+        self._session(session_id)
+        if self.assigned_attempt_id is not None:
+            raise FoundationError("permission_denied", "Assigned RPC cannot manage Bindings")
+        model = BINDING_INTENTS.get(kind)
+        if model is None:
+            raise FoundationError("invalid_request", "Unknown Binding operation kind")
+        return {"kind": kind, "schema": model.model_json_schema()}
+
+    def binding_upgrade(self, session_id: UUID) -> dict[str, object]:
+        self._session(session_id)
+        if self.assigned_attempt_id is not None:
+            raise FoundationError("permission_denied", "Assigned RPC cannot upgrade Bindings")
+        for version, upgrade in (
+            (4, upgrade_continuation_space),
+            (5, upgrade_composition_space),
+            (6, upgrade_child_execution_space),
+            (7, upgrade_plan_revision_space),
+            (8, upgrade_parent_execution_space),
+            (9, upgrade_binding_space),
+        ):
+            if read_space(self.path).schema_version < version:
+                upgrade(self.path, self.authority)
+        return {"schema_version": read_space(self.path).schema_version}
+
+    def binding_operation(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
+        self._session(session_id)
+        if self.assigned_attempt_id is not None:
+            raise FoundationError("permission_denied", "Assigned RPC cannot manage Bindings")
+        try:
+            request = REQUEST_ADAPTER.validate_python(raw)
+        except ValidationError as error:
+            raise FoundationError("invalid_request", str(error)) from error
+        if not isinstance(
+            request,
+            (
+                CreateMethodVersionRequest,
+                CreateBindingVersionRequest,
+                SetBindingStateRequest,
+                FireBindingRequest,
+                ResolveBindingOfferRequest,
+            ),
+        ):
+            raise FoundationError("permission_denied", "Only Binding operations use this endpoint")
+        if request.actor != self.authority.actor or request.space_id != self.authority.space_id:
+            raise FoundationError(
+                "permission_denied", "Binding actor/space differs from host authority"
+            )
+        return apply_operation(self.path, request, self.authority).model_dump(mode="json")
 
     def start_attempt(self, session_id: UUID, *, interrupt_previous: bool) -> dict[str, object]:
         if self.assigned_attempt_id is not None:
@@ -523,6 +618,10 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 result = bridge.select(session_id, UUID(body["activity_id"]), UUID(body["work_id"]))
             elif post and path.path == "/v1/operation":
                 result = bridge.operation(session_id, body["request"])
+            elif post and path.path == "/v1/binding-upgrade":
+                result = bridge.binding_upgrade(session_id)
+            elif post and path.path == "/v1/binding-operation":
+                result = bridge.binding_operation(session_id, body["request"])
             elif post and path.path == "/v1/start-attempt":
                 result = bridge.start_attempt(
                     session_id, interrupt_previous=body.get("interrupt_previous") is True
@@ -552,6 +651,10 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 result = bridge.accept(session_id, UUID(body["nonce"]), str(body["basis"]))
             elif not post and path.path == "/v1/snapshot":
                 result = bridge.snapshot(session_id)
+            elif not post and path.path == "/v1/bindings":
+                result = bridge.binding_catalog(session_id)
+            elif not post and path.path == "/v1/binding-contract":
+                result = bridge.binding_contract(session_id, params["kind"][0])
             elif not post and path.path == "/v1/receipt":
                 result = bridge.receipt(session_id, UUID(params["operation_id"][0]))
             elif not post and path.path == "/v1/events":

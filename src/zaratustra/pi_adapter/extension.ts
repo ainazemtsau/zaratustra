@@ -1,6 +1,9 @@
 import { createHash, randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
+import { dirname, join, parse, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { createProvider, openAICompletionsApi } from "@earendil-works/pi-ai";
-import { openaiCodexProvider } from "@earendil-works/pi-ai/providers/openai-codex";
+import { Type } from "typebox";
 
 const endpoint = process.env.ZARA_CORE_ENDPOINT;
 const token = process.env.ZARA_CORE_TOKEN;
@@ -12,6 +15,24 @@ const localProviderId = process.env.ZARA_LOCAL_PROVIDER_ID;
 const localModelId = process.env.ZARA_LOCAL_MODEL_ID;
 const assignedAttemptId = process.env.ZARA_ASSIGNED_ATTEMPT_ID;
 const assignedSessionId = process.env.ZARA_ASSIGNED_SESSION_ID;
+
+function codexProviderUrl(): string {
+  const executable = process.argv[1];
+  if (!executable) throw new Error("Pi executable path is unavailable");
+  let directory = dirname(resolve(executable));
+  const relative = join("@earendil-works", "pi-ai", "dist", "providers", "openai-codex.js");
+  while (directory !== parse(directory).root) {
+    const inModule = join(directory, "node_modules", relative);
+    if (existsSync(inModule)) return pathToFileURL(inModule).href;
+    const sibling = join(directory, "pi-ai", "dist", "providers", "openai-codex.js");
+    if (existsSync(sibling)) return pathToFileURL(sibling).href;
+    directory = dirname(directory);
+  }
+  throw new Error("Pi Codex provider module is unavailable");
+}
+
+const codexFactory = profile === "codex-sse"
+  ? (await import(codexProviderUrl())).openaiCodexProvider : null;
 
 function digest(body: Uint8Array): string {
   return createHash("sha256").update(body).digest("hex").toUpperCase();
@@ -188,7 +209,7 @@ export default function (pi: any): void {
     }
   }
 
-  const codex = profile === "codex-sse" ? openaiCodexProvider() : null;
+  const codex = codexFactory ? codexFactory() : null;
   const local = profile === "local-completions" && localProviderId && localModelId
     ? createProvider({
         id: localProviderId, name: `Local ${localProviderId}`, baseUrl: providerBaseUrl,
@@ -299,6 +320,10 @@ export default function (pi: any): void {
         ctx.ui.notify("Accepted Work loaded from Core. Use /zara-status to inspect its result.", "info");
         return;
       }
+      if (current.work.state.linked_outputs.length) {
+        ctx.ui.notify("Linked result loaded from Core. Use /zara-accept to accept it.", "info");
+        return;
+      }
       if (current.composition) {
         ctx.ui.notify(`${lifecycle(current)}Composite Work runs only through a Core-assigned Attempt. ` +
           "Use /zara-status to read its current Core state.", "info");
@@ -315,6 +340,80 @@ export default function (pi: any): void {
       attemptId = started.attempt_id;
       contextReady = false;
       ctx.ui.notify(`Attempt ${attemptId} selected. Enter the Work prompt.`, "info");
+    },
+  });
+
+  pi.registerTool({
+    name: "zara_binding",
+    label: "Zaratustra Binding",
+    description: "Organize a durable transfer of accepted named outputs between Activities. " +
+      "Interpret the user's request. Call catalog for addresses and exact Method versions, " +
+      "then contract with one operation kind for its typed Core schema before apply. " +
+      "Core checks references, versions, conditions, rights and causal limits. " +
+      "Create a Binding version in trial, then explicitly enable it; new_work pins a Method, " +
+      "offer_work addresses an open Work. Resolve an offer with an explicit basis.",
+    parameters: Type.Object({
+      mode: Type.Union([Type.Literal("catalog"), Type.Literal("contract"), Type.Literal("apply")]),
+      kind: Type.Optional(Type.Union([
+        Type.Literal("create_method_version"), Type.Literal("create_binding_version"),
+        Type.Literal("set_binding_state"), Type.Literal("fire_binding"),
+        Type.Literal("resolve_binding_offer"),
+      ])),
+      intent: Type.Optional(Type.Any({ description: "For apply: one typed Core request body without actor, space_id or operation_id. Kinds: create_method_version, create_binding_version, set_binding_state, fire_binding, resolve_binding_offer." })),
+    }),
+    async execute(_callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
+      if (assignedAttemptId) throw new Error("Assigned RPC cannot manage Bindings");
+      if (!connection) connection = await request("/v1/connect", {});
+      if (params.mode === "catalog") {
+        connection = await request("/v1/connect", {});
+        const catalog = await request(`/v1/bindings?session_id=${sessionId}`);
+        return { content: [{ type: "text", text: JSON.stringify({
+          activities_and_works: connection.records, ...catalog,
+        }) }] };
+      }
+      if (params.mode === "contract") {
+        if (!params.kind) throw new Error("Name one Binding operation kind");
+        const contract = await request(`/v1/binding-contract?session_id=${sessionId}&kind=${params.kind}`);
+        return { content: [{ type: "text", text: JSON.stringify(contract) }] };
+      }
+      const fields = params.intent;
+      const kinds = new Set(["create_method_version", "create_binding_version",
+        "set_binding_state", "fire_binding", "resolve_binding_offer"]);
+      if (!fields || typeof fields !== "object" || Array.isArray(fields) || !kinds.has(fields.kind)) {
+        throw new Error("Provide one supported, structured Core Binding intent");
+      }
+      const catalog = await request(`/v1/bindings?session_id=${sessionId}`);
+      if (catalog.schema_version < 9) {
+        const upgrade = await ctx.ui.confirm("Prepare Core schema 9 for Binding?",
+          `Current schema ${catalog.schema_version}; explicit additive upgrades are required.`);
+        if (!upgrade) return { content: [{ type: "text", text: "Binding preparation cancelled" }] };
+        await request("/v1/binding-upgrade", {});
+      }
+      const accepted = await ctx.ui.confirm("Apply this exact Binding operation?",
+        JSON.stringify(fields, null, 2));
+      if (!accepted) return { content: [{ type: "text", text: "Binding operation cancelled" }] };
+      const operationId = randomUUID();
+      const intent = { ...fields, protocol_version: 1, operation_id: operationId,
+        space_id: connection.space_id, actor: connection.actor };
+      let receipt: any;
+      try {
+        receipt = await request("/v1/binding-operation", { request: intent });
+      } catch (error) {
+        try { receipt = await request(`/v1/receipt?session_id=${sessionId}&operation_id=${operationId}`); }
+        catch { throw error; }
+      }
+      connection = await request("/v1/connect", {});
+      return { content: [{ type: "text", text: JSON.stringify(receipt) }], details: receipt };
+    },
+  });
+
+  pi.registerCommand("zara-binding", {
+    description: "Show Binding versions, exact methods and pending offers",
+    handler: async (_args: string, ctx: any) => {
+      if (assignedAttemptId) throw new Error("Assigned RPC cannot manage Bindings");
+      connection = await request("/v1/connect", {});
+      const catalog = await request(`/v1/bindings?session_id=${sessionId}`);
+      ctx.ui.notify(JSON.stringify({ activities_and_works: connection.records, ...catalog }, null, 2), "info");
     },
   });
 
@@ -358,6 +457,9 @@ export default function (pi: any): void {
       if (!yes) return;
       const receipt = await request("/v1/accept", { nonce: preview.nonce, basis });
       ctx.ui.notify(`Accepted by Core receipt ${receipt.operation_id}`, "info");
+      if (receipt.result?.bindings?.length) {
+        ctx.ui.notify(`Binding: ${JSON.stringify(receipt.result.bindings)}`, "info");
+      }
       attemptId = null;
       contextReady = false;
     },

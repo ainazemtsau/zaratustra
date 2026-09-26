@@ -1,4 +1,6 @@
 # Review rubric
+
+Current owner policy: `docs/core-v0.1/DELIVERY-POLICY-20260926.md`.
 For PROBA: inspect only the current CALL scope, correctness, boundaries,
 recorded commands and product behavior the owner cannot verify by eye.
 Do not add OPORA gates from global skills.

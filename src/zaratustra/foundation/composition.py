@@ -1056,6 +1056,10 @@ def apply_composition_change(
             method_id=request.method_id, version=request.version, checksum=request.checksum
         )
         _method(connection, ref)
+        if _schema(connection) >= 9:
+            from .binding import require_method_released
+
+            require_method_released(connection, ref)
         for (payload,) in connection.execute(
             "SELECT c.payload FROM subject_records s JOIN subject_content c "
             "ON c.record_id = s.record_id AND c.revision = s.current_revision "

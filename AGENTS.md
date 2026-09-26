@@ -1,6 +1,7 @@
 # Zaratustra
 
 ## Current product authority — Core v0.1
+- The owner delivery policy for the current release work is `docs/core-v0.1/DELIVERY-POLICY-20260926.md`; it changes validation organization, not product contracts. The stabilization technical review closed at `afe995d9739f655a6f495216f56dc4f53558dd97`; see `docs/core-v0.1/STABILIZATION-REVIEW-CLOSURE-20260926.md`. Nine independent targeted tests passed; the full 728-test gate is implementation evidence. Historical SQLite lock-holder and Pi exit causes remain unestablished.
 - The current product basis is `docs/core-v0.1/IMPLEMENTATION-BASELINE.md`, the
   owner-approved Core v0.1 implementation plan recorded there,
   `docs/core-v0.1/STAGE4-PLAN.md`, `docs/core-v0.1/STAGE5-PLAN.md`,

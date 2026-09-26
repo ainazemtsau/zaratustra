@@ -690,7 +690,109 @@ PARENT_EXECUTION_SCHEMA_SHA256 = (
     .hexdigest()
     .upper()
 )
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8)
+BINDING_SCHEMA_NAME = "core-v0.1-binding-9"
+BINDING_SCHEMA_STATEMENTS: tuple[str, ...] = (
+    """
+    CREATE TABLE binding_versions (
+        binding_id TEXT NOT NULL,
+        version INTEGER NOT NULL CHECK (version >= 1),
+        checksum TEXT NOT NULL,
+        payload BLOB,
+        first_event_state_revision INTEGER NOT NULL,
+        operation_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (binding_id, version),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE binding_states (
+        binding_id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        state TEXT NOT NULL CHECK (state IN ('trial', 'enabled', 'paused', 'retired')),
+        operation_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (binding_id, version, revision),
+        FOREIGN KEY (binding_id, version) REFERENCES binding_versions(binding_id, version),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE binding_firings (
+        operation_id TEXT NOT NULL,
+        binding_id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        producer_work_id TEXT NOT NULL,
+        accepted_work_revision INTEGER NOT NULL,
+        source_operation_id TEXT NOT NULL,
+        artifact_id TEXT,
+        artifact_revision INTEGER,
+        outcome TEXT NOT NULL CHECK (outcome IN ('created', 'offered', 'blocked', 'stopped')),
+        reason TEXT,
+        basis TEXT,
+        consumer_work_id TEXT,
+        offer_id TEXT,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (operation_id, binding_id),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id),
+        FOREIGN KEY (binding_id, version) REFERENCES binding_versions(binding_id, version)
+    ) STRICT
+    """,
+    "CREATE UNIQUE INDEX binding_delivered_event ON "
+    "binding_firings(binding_id, version, source_operation_id) "
+    "WHERE outcome IN ('created', 'offered', 'stopped')",
+    """
+    CREATE TABLE binding_offers (
+        offer_id TEXT PRIMARY KEY,
+        binding_id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        producer_work_id TEXT NOT NULL,
+        accepted_work_revision INTEGER NOT NULL,
+        source_operation_id TEXT NOT NULL,
+        artifact_id TEXT NOT NULL,
+        artifact_revision INTEGER NOT NULL,
+        consumer_work_id TEXT NOT NULL,
+        input_slot TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('open', 'accepted', 'refused', 'unavailable')),
+        consumer_work_revision INTEGER NOT NULL,
+        resolved_operation_id TEXT,
+        resolution_basis TEXT,
+        FOREIGN KEY (binding_id, version) REFERENCES binding_versions(binding_id, version)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE binding_input_revisions (
+        work_id TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        offer_id TEXT NOT NULL UNIQUE,
+        input_slot TEXT NOT NULL,
+        artifact_id TEXT NOT NULL,
+        artifact_revision INTEGER NOT NULL,
+        plan_revision INTEGER,
+        operation_id TEXT NOT NULL,
+        PRIMARY KEY (work_id, revision),
+        FOREIGN KEY (offer_id) REFERENCES binding_offers(offer_id),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE binding_lineages (
+        work_id TEXT PRIMARY KEY,
+        path_json TEXT NOT NULL,
+        depth INTEGER NOT NULL CHECK (depth >= 1)
+    ) STRICT
+    """,
+    "CREATE INDEX binding_source_events ON "
+    "binding_firings(producer_work_id, accepted_work_revision)",
+    "CREATE INDEX binding_offer_consumer ON binding_offers(consumer_work_id, status)",
+)
+BINDING_SCHEMA_SHA256 = (
+    hashlib.sha256("\n".join(statement.strip() for statement in BINDING_SCHEMA_STATEMENTS).encode())
+    .hexdigest()
+    .upper()
+)
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9)
 
 
 def utc_now() -> datetime:
@@ -834,6 +936,8 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         expected.append((7, PLAN_REVISION_SCHEMA_NAME, PLAN_REVISION_SCHEMA_SHA256))
     if schema_version >= 8:
         expected.append((8, PARENT_EXECUTION_SCHEMA_NAME, PARENT_EXECUTION_SCHEMA_SHA256))
+    if schema_version >= 9:
+        expected.append((9, BINDING_SCHEMA_NAME, BINDING_SCHEMA_SHA256))
     if migration != expected:
         raise FoundationError("unsupported_schema", "Schema history does not match installed code")
     rows = connection.execute(
@@ -1209,6 +1313,9 @@ def sanitize_database(path: Path) -> None:
 
 
 __all__ = [
+    "BINDING_SCHEMA_NAME",
+    "BINDING_SCHEMA_SHA256",
+    "BINDING_SCHEMA_STATEMENTS",
     "BACKUP_DIRECTORY",
     "CHILD_EXECUTION_SCHEMA_NAME",
     "CHILD_EXECUTION_SCHEMA_SHA256",

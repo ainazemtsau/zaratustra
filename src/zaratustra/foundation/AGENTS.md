@@ -261,4 +261,14 @@ adapter before completing deletion when such data exists. The package still does
 not import DBOS, Pi, a scheduler, dispatcher, memory or Sleep.
 Stage/check numbers stay in documentation and tests, not product module names.
 
+`binding.py` owns explicit schema 9, typed versioned rules for accepted named
+outputs, exact source-choice conditions, two consumer actions, current rights,
+event replay, causal limits and addressed firing/offer/input history. Accepted
+producer Work and every automatic Binding outcome share the normal operation
+transaction. An offer to a running Work is separate until explicit acceptance;
+acceptance fences its active Attempt and, for a composite Work, uses the existing
+active plan revision and revalidation path. The Method's named inputs stay pinned;
+a Binding offer to a composite Work adds addressed supporting basis. New Binding
+rows participate in backup, quarantine restore and dependent deletion sanitation.
+
 END_OF_FILE: src/zaratustra/foundation/AGENTS.md

@@ -48,4 +48,8 @@ Its provider is a localhost synthetic fixture; it never contacts a real model.
 probe_public_onboarding_t1 builds and installs the current wheel, migrates only an
 isolated copy, and faults/restores only one disposable fictional full pair. It is
 risk evidence for a later updater, not an installed updater or release proof.
+`probe_binding_pi` uses an explicit local Pi runtime and fictional localhost
+provider to exercise ordinary interactive Pi catalog/contract/apply for Binding.
+It does not call a real model. The portable pytest suite does not assume an
+ignored Pi runtime exists in every checkout.
 END_OF_FILE: tools/AGENTS.md

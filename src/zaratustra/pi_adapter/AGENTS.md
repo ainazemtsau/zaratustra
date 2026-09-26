@@ -43,3 +43,9 @@ Schema 8 lets the same assigned path run a root or nested composite Work's own
 Attempt. Its Core plan pin and output proof are visible by address in the assigned
 context and `/zara-status`, with roleless obligations labelled as own Work.
 No plan text, confirmation basis or new authority is copied into DBOS or Pi status.
+Interactive ordinary Pi exposes `zara_binding`: catalog, a generated typed Core
+contract for one operation kind, and confirmed apply. Core assigns actor and
+space, checks every request and owns the receipt; assigned RPC cannot manage
+Bindings. `/zara-binding` shows current addresses and offers. No model or
+semantic judge runs in the foundation. The development-only localhost synthetic
+model probe is `tools.probe_binding_pi --pi-runtime <path>`.

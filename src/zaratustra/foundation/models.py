@@ -615,6 +615,120 @@ class WorkState(ContractModel):
         return self
 
 
+class BindingChildTemplate(ContractModel):
+    role: Identifier
+    goal: str = Field(min_length=1, max_length=4096)
+    expected_outputs: tuple[OutputContract, ...] = Field(min_length=1)
+    constraints: tuple[str, ...] = ()
+    readiness: PlanCondition | None = None
+    consume_source: bool = False
+
+
+class BindingNewWork(ContractModel):
+    kind: Literal["new_work"] = "new_work"
+    activity_id: UUID
+    method: MethodRef
+    goal: str = Field(min_length=1, max_length=4096)
+    constraints: tuple[str, ...] = ()
+    named_inputs: tuple[Identifier, ...] = Field(min_length=1)
+    fixed_inputs: tuple[NamedInput, ...] = ()
+    expected_outputs: tuple[OutputContract, ...] = Field(min_length=1)
+    children: tuple[BindingChildTemplate, ...] = Field(min_length=1)
+    output_bindings: tuple[PlanOutputBinding, ...] = ()
+    parent_outputs: tuple[ParentOutputSlot, ...] = ()
+    completion: PlanCondition | None = None
+    rationale: str = Field(min_length=1, max_length=4096)
+    source_ref: str = Field(min_length=1, max_length=2048)
+
+    @model_validator(mode="after")
+    def one_mapping_per_slot(self) -> BindingNewWork:
+        slots = list(self.named_inputs) + [item.slot for item in self.fixed_inputs]
+        if len(slots) != len(set(slots)):
+            raise ValueError("Each consumer Method input has one Binding mapping")
+        return self
+
+
+class BindingOfferWork(ContractModel):
+    kind: Literal["offer_work"] = "offer_work"
+    work_id: UUID
+    input_slot: Identifier
+
+
+BindingTarget = Annotated[BindingNewWork | BindingOfferWork, Field(discriminator="kind")]
+
+
+class BindingCondition(ContractModel):
+    """An exact active Activity choice, never an inference from its statement."""
+
+    choice: DecisionRef
+    name: Identifier
+    value: Identifier
+
+
+class BindingDefinition(ContractModel):
+    source_activity_id: UUID
+    source_slot: Identifier
+    media_type: str = Field(min_length=1, max_length=200)
+    target: BindingTarget
+    basis: str = Field(min_length=1, max_length=4096)
+    condition: BindingCondition | None = None
+    max_depth: int = Field(default=8, ge=1, le=32)
+
+
+class BindingVersion(ContractModel):
+    binding_id: UUID
+    version: int = Field(ge=1)
+    checksum: str = Field(pattern=r"^[0-9A-F]{64}$")
+    definition: BindingDefinition
+    state: Literal["trial", "enabled", "paused", "retired"]
+    state_revision: int = Field(ge=1)
+    first_event_state_revision: int = Field(ge=1)
+    operation_id: UUID
+    created_at: AwareDatetime
+
+
+class BindingFiring(ContractModel):
+    binding_id: UUID
+    version: int = Field(ge=1)
+    producer_work_id: UUID
+    accepted_work_revision: int = Field(ge=1)
+    source_operation_id: UUID
+    artifact: ArtifactRef | None = None
+    outcome: Literal["created", "offered", "blocked", "stopped"]
+    reason: str | None = None
+    basis: str | None = None
+    consumer_work_id: UUID | None = None
+    offer_id: UUID | None = None
+    operation_id: UUID
+    created_at: AwareDatetime
+
+
+class BindingOffer(ContractModel):
+    offer_id: UUID
+    binding_id: UUID
+    version: int = Field(ge=1)
+    producer_work_id: UUID
+    accepted_work_revision: int = Field(ge=1)
+    source_operation_id: UUID
+    artifact: ArtifactRef
+    consumer_work_id: UUID
+    input_slot: Identifier
+    status: Literal["open", "accepted", "refused", "unavailable"]
+    consumer_work_revision: int = Field(ge=1)
+    resolved_operation_id: UUID | None = None
+    resolution_basis: str | None = None
+
+
+class BindingInputRevision(ContractModel):
+    work_id: UUID
+    revision: int = Field(ge=1)
+    offer_id: UUID
+    input_slot: Identifier
+    artifact: ArtifactRef
+    plan_revision: int | None = Field(default=None, ge=1)
+    operation_id: UUID
+
+
 PlanChild.model_rebuild()
 WorkPlan.model_rebuild()
 
@@ -624,6 +738,45 @@ class OperationRequest(ContractModel):
     operation_id: UUID
     space_id: UUID
     actor: str = Field(min_length=1, max_length=200)
+
+
+class CreateBindingVersionRequest(OperationRequest):
+    kind: Literal["create_binding_version"] = "create_binding_version"
+    binding_id: UUID
+    version: int = Field(ge=1)
+    definition: BindingDefinition
+
+
+class SetBindingStateRequest(OperationRequest):
+    kind: Literal["set_binding_state"] = "set_binding_state"
+    binding_id: UUID
+    version: int = Field(ge=1)
+    expected_state_revision: int = Field(ge=1)
+    state: Literal["trial", "enabled", "paused", "retired"]
+
+
+class FireBindingRequest(OperationRequest):
+    kind: Literal["fire_binding"] = "fire_binding"
+    binding_id: UUID
+    version: int = Field(ge=1)
+    producer_work_id: UUID
+    accepted_work_revision: int = Field(ge=1)
+    backfill: bool = False
+    basis: str | None = Field(default=None, min_length=1, max_length=4096)
+
+    @model_validator(mode="after")
+    def backfill_needs_basis(self) -> FireBindingRequest:
+        if self.backfill and self.basis is None:
+            raise ValueError("Historical Binding events need an explicit backfill basis")
+        return self
+
+
+class ResolveBindingOfferRequest(OperationRequest):
+    kind: Literal["resolve_binding_offer"] = "resolve_binding_offer"
+    offer_id: UUID
+    expected_consumer_revision: int = Field(ge=1)
+    decision: Literal["accept", "refuse"]
+    basis: str = Field(min_length=1, max_length=4096)
 
 
 class BootstrapRequest(OperationRequest):
@@ -1159,6 +1312,10 @@ class FinishInvocationRequest(OperationRequest):
 DomainRequest = Annotated[
     BootstrapRequest
     | RecoverRequest
+    | CreateBindingVersionRequest
+    | SetBindingStateRequest
+    | FireBindingRequest
+    | ResolveBindingOfferRequest
     | CreateArtifactRequest
     | ReviseArtifactRequest
     | DeleteArtifactRequest
@@ -1208,7 +1365,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -1585,7 +1742,7 @@ class BackupManifest(ContractModel):
     backup_id: UUID
     format_version: Literal[1, 2] = 1
     space_id: UUID
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime
@@ -1625,6 +1782,18 @@ class DeletionStatus(ContractModel):
 
 
 __all__ = [
+    "BindingInputRevision",
+    "BindingChildTemplate",
+    "BindingNewWork",
+    "BindingOfferWork",
+    "BindingDefinition",
+    "BindingVersion",
+    "BindingFiring",
+    "BindingOffer",
+    "CreateBindingVersionRequest",
+    "SetBindingStateRequest",
+    "FireBindingRequest",
+    "ResolveBindingOfferRequest",
     "NodeClosure",
     "DescendantClosure",
     "NodeDecisionKind",

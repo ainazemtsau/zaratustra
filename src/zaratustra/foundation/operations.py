@@ -37,6 +37,7 @@ from .models import (
     ConfirmObligationRequest,
     CreateActivityRequest,
     CreateArtifactRequest,
+    CreateBindingVersionRequest,
     CreateCompositeWorkRequest,
     CreateDecisionRequest,
     CreateGrantRequest,
@@ -55,6 +56,7 @@ from .models import (
     DomainRequest,
     ExceptionState,
     FinishInvocationRequest,
+    FireBindingRequest,
     GrantState,
     IssueChildWorkRequest,
     LinkedOutput,
@@ -69,6 +71,7 @@ from .models import (
     RecordSummary,
     RecoverRequest,
     RequestAttemptStopRequest,
+    ResolveBindingOfferRequest,
     ResolveObligationApplicabilityRequest,
     RevalidateResultRequest,
     ReviseActivePlanRequest,
@@ -79,6 +82,7 @@ from .models import (
     ReviseWorkPlanRequest,
     RevokeGrantRequest,
     SendInvocationRequest,
+    SetBindingStateRequest,
     SpaceInfo,
     SpaceInspection,
     StartAttemptRequest,
@@ -517,6 +521,10 @@ def _write_root(
 
 
 def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]:
+    if isinstance(request, (CreateBindingVersionRequest, SetBindingStateRequest)):
+        return "method.write", "space", None
+    if isinstance(request, (FireBindingRequest, ResolveBindingOfferRequest)):
+        return "record.read", "space", None
     if isinstance(request, (CreateMethodVersionRequest, DeleteMethodVersionRequest)):
         return "method.write", "space", None
     if isinstance(request, CreateCompositeWorkRequest):
@@ -712,6 +720,16 @@ def _subject_delete(
     now: str,
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
     _subject_expect(connection, record_id, kind, expected_revision)
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 9:  # type: ignore[attr-defined]
+        from .binding import sanitize_deleted_binding_subject
+
+        sanitize_deleted_binding_subject(
+            cast(sqlite3.Connection, connection),
+            subject_id=record_id,
+            kind=kind,
+            operation_id=operation_id,
+            now=now,
+        )
     if kind == "work" and int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 5:  # type: ignore[attr-defined]
         from .composition import prepare_work_deletion, sanitize_deleted_dependency
 
@@ -1227,6 +1245,28 @@ def _apply_change(
     if isinstance(
         request,
         (
+            CreateBindingVersionRequest,
+            SetBindingStateRequest,
+            FireBindingRequest,
+            ResolveBindingOfferRequest,
+        ),
+    ):
+        from .binding import apply_binding_change
+
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 9:  # type: ignore[attr-defined]
+            raise FoundationError("unsupported_schema", "Binding needs explicit schema 9")
+        return apply_binding_change(
+            cast(sqlite3.Connection, connection),
+            request,
+            now=now,
+            epoch=epoch,
+            authority_source=authority.source_ref,
+            grants=grants,
+            decisions=decisions,
+        )
+    if isinstance(
+        request,
+        (
             CreateMethodVersionRequest,
             DeleteMethodVersionRequest,
             CreateCompositeWorkRequest,
@@ -1429,7 +1469,7 @@ def _apply_change(
             raise FoundationError("unsupported_schema", "Activity/Work requires schema 2")
         if isinstance(request, CloseWorkRequest) and schema_version < 7:
             raise FoundationError("unsupported_schema", "Work outcomes need explicit schema 7")
-        return _apply_subject_change(
+        result, targets = _apply_subject_change(
             connection,
             request,
             now=now,
@@ -1438,6 +1478,25 @@ def _apply_change(
             grants=grants,
             decisions=decisions,
         )
+        if isinstance(request, AcceptWorkRequest) and schema_version >= 9:
+            from .binding import fire_on_acceptance
+
+            firings, binding_targets = fire_on_acceptance(
+                cast(sqlite3.Connection, connection),
+                operation_id=request.operation_id,
+                space_id=request.space_id,
+                actor=request.actor,
+                work_id=request.work_id,
+                accepted_revision=cast(int, result["revision"]),
+                now=now,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+            )
+            if firings:
+                result["bindings"] = firings
+                targets.extend(binding_targets)
+        return result, targets
     if isinstance(request, CreateArtifactRequest):
         _expect_absent(connection, request.artifact_id)
         _write_artifact(connection, request, now, 1)
@@ -1465,6 +1524,16 @@ def _apply_change(
             request.expected_revision,
             required_status="active",
         )
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 9:  # type: ignore[attr-defined]
+            from .binding import sanitize_deleted_binding_subject
+
+            sanitize_deleted_binding_subject(
+                cast(sqlite3.Connection, connection),
+                subject_id=request.artifact_id,
+                kind="artifact",
+                operation_id=request.operation_id,
+                now=now,
+            )
         if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 5:  # type: ignore[attr-defined]
             from .composition import sanitize_deleted_dependency
 
