@@ -78,9 +78,16 @@
   `docs/core-v0.1/STAGE6-PASS4-PACKAGE2-REVIEW.md`. The owner authorized only
   package 3, maintenance and release evidence, followed by one overall
   independent review. Package 3 evidence is
-  `docs/core-v0.1/STAGE6-PASS4-PACKAGE3-RESULT.md`; acceptance, real model
-  calls and development migration are not authorized.
-  `database is locked` and `rpc_transport` remain open observations.
+  `docs/core-v0.1/STAGE6-PASS4-PACKAGE3-RESULT.md`. Its technical review
+  closed on `c8a546485e756afc2b0c5c99360e9ea2a42ae84d`; see
+  `docs/core-v0.1/STAGE6-PASS4-PACKAGE3-REVIEW.md`. The owner separately
+  accepted Stage 6 at that exact commit in the scope of `STAGE6-PLAN.md`;
+  see `docs/core-v0.1/STAGE6-ACCEPTANCE.md`. This does not accept the whole
+  Core or authorize development migration. One stabilization package for
+  Core → DBOS → Pi is authorized, then stops for one independent review.
+  `database is locked` and `rpc_transport` remain open observations until
+  that investigation establishes a cause or an explicit evidence limit;
+  `stale_basis` inside `any` remains outside this package.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
 - Stage 1 stopped after recording the G07-1 DBOS and G08-1 Pi technical outcomes.
@@ -251,15 +258,12 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
 
 ## Constitution
 - Keep the accepted Core v0.1 functional composition and completed Stage 1–5
-  evidence. Stage 5 and Stage 6 passes 1–2 are owner-accepted at the exact
-  commits above; this is not owner acceptance of Stage 6. Stage 6 pass 3 is
-  implemented through part 3.10. Its technical reviews are closed separately;
-  schema 7, pass 3 and Stage 6 remain unaccepted. The separate
-  parent-execution slice has a closed technical review at `2cd3cf8`,
-  separately from owner acceptance. Pass 4 packages 1 and 2 have closed
-  technical reviews, package 2 at `8468fae` after its two corrections.
-  Package 3 is authorized only through maintenance/release evidence and then
-  stops for one overall independent review. Owner acceptance is not recorded.
+  evidence. Stage 6 is owner-accepted only in the scope of `STAGE6-PLAN.md`
+  at exact `c8a5464`; pass 4 package 3 technical closure and Stage 6
+  acceptance have separate records. This does not accept the whole Core or
+  authorize development migration. The current stabilization package covers
+  the two open SQLite/RPC observations and stops for one independent review.
+  Preserve the known `stale_basis`-inside-`any` discrepancy outside this work.
   Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.

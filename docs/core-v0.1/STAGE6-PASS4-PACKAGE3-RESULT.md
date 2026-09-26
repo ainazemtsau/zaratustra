@@ -21,7 +21,8 @@ Pi 0.87.0 и localhost provider. Исходный чистый checkout был �
 ## Матрица прерываний backup
 
 `tests/zaratustra/foundation/test_pass4_maintenance.py` создаёт отдельное
-schema 8 пространство на каждый шаг, закрывает все свои SQLite handles,
+schema 8 пространство на каждый шаг и завершает свои SQLite транзакции;
+контекст `sqlite3.connect` сам по себе не доказывает закрытие всех handles. Тест
 добавляет синтетические Core, executor SQLite и Pi RPC файлы. Дочерний
 Python-процесс получает `os._exit` только после названной операции; тест
 сверяет его **фактический exit code**, каталог пакета, marker, inventory,
