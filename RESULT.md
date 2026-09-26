@@ -15,12 +15,21 @@ Attempt, так и публикациями связанных Attempt в раз
 `stale_attempt` на исходном коде, затем прошли после исправления. Отдельная
 регрессия проверила, что второй слот не получает подтверждение автоматически;
 ещё одна проверила запрет после чужого изменения Work между публикациями.
-Scoped `tools.check --files` прошёл до последней регрессии: 10 тестов, типы,
+Scoped `tools.check --files` прошёл на окончательном коде: **11 тестов**, типы,
 Ruff, 21 импортный контракт и сборка. Предварительный полный Windows gate
-прошёл до неё: **690 тестов**, типы, Ruff, 21 контракт, sdist и wheel;
-журнал `_scratch/parent-multi-output-deliver.log`.
-Итоговые полный gate и установленная проба будут записаны
-после выполнения. Техническая запись:
+прошёл до последней регрессии: **690 тестов**, типы, Ruff, 21 контракт, sdist
+и wheel; журнал `_scratch/parent-multi-output-deliver.log`.
+Установленная schema 8 проба из точного чистого кодового коммита
+`ee262b6a3b1b4cfc72f5cb6440f88441c901759a` прошла вне checkout:
+`source_tree_dirty=false`, Python 3.13.7, SQLite 3.53.3, **3 HTTP** по
+шагам A/B/P, затем подтверждение, принятие, статус Pi, backup/restore и
+удаление без новых HTTP. SHA-256 wheel:
+`B26B4F107BE960A47C65BE312C634A853366F40FEA271DD56E8C338CF34CE1C6`.
+Отчёт `_scratch/parent-multi-installed-ee262b6/report.json`.
+Финальный полный Windows `tools.check --deliver` на документальном пакете:
+**691 тест**, типы, Ruff, 21 импортный контракт, sdist и wheel; журнал
+`_scratch/parent-multi-output-final-deliver.log`. Это проверки сеанса
+исправления, не независимого review. Техническая запись:
 `docs/core-v0.1/STAGE6-PARENT-EXECUTION-IMPLEMENTATION.md`.
 
 ## assumptions
