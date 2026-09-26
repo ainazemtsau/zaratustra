@@ -792,7 +792,100 @@ BINDING_SCHEMA_SHA256 = (
     .hexdigest()
     .upper()
 )
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9)
+KNOWLEDGE_SCHEMA_NAME = "core-v0.1-knowledge-10"
+KNOWLEDGE_SCHEMA_STATEMENTS: tuple[str, ...] = (
+    """
+    CREATE TABLE knowledge_records (
+        record_id TEXT PRIMARY KEY,
+        kind TEXT NOT NULL CHECK (kind IN
+            ('source','claim','analysis','link','view','context','handoff')),
+        current_revision INTEGER NOT NULL CHECK (current_revision >= 1),
+        status TEXT NOT NULL CHECK (status IN ('active','unavailable','deleted')),
+        received_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        created_state_revision INTEGER NOT NULL,
+        updated_state_revision INTEGER NOT NULL
+    ) STRICT
+    """,
+    """
+    CREATE TABLE knowledge_revisions (
+        record_id TEXT NOT NULL,
+        revision INTEGER NOT NULL CHECK (revision >= 1),
+        operation_id TEXT NOT NULL,
+        actor TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        event_at TEXT,
+        payload BLOB,
+        sha256 TEXT,
+        PRIMARY KEY (record_id, revision),
+        FOREIGN KEY (record_id) REFERENCES knowledge_records(record_id),
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE knowledge_edges (
+        record_id TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        ordinal INTEGER NOT NULL,
+        target_id TEXT NOT NULL,
+        target_revision INTEGER NOT NULL,
+        role TEXT NOT NULL,
+        target_mode TEXT NOT NULL CHECK (target_mode IN ('exact','current')),
+        PRIMARY KEY (record_id, revision, ordinal),
+        FOREIGN KEY (record_id, revision)
+            REFERENCES knowledge_revisions(record_id, revision) ON DELETE CASCADE
+    ) STRICT
+    """,
+    "CREATE INDEX knowledge_edges_target ON knowledge_edges(target_id, target_revision)",
+    "CREATE INDEX knowledge_received ON knowledge_records(received_at, record_id)",
+    "CREATE INDEX knowledge_event ON knowledge_revisions(event_at, record_id)",
+    """
+    CREATE TABLE knowledge_source_events (
+        connection TEXT NOT NULL,
+        profile_revision INTEGER NOT NULL,
+        source_event_id TEXT NOT NULL,
+        record_id TEXT NOT NULL UNIQUE,
+        PRIMARY KEY (connection, profile_revision, source_event_id),
+        FOREIGN KEY (record_id) REFERENCES knowledge_records(record_id)
+    ) STRICT
+    """,
+    "CREATE VIRTUAL TABLE knowledge_fts USING fts5(record_id UNINDEXED, revision UNINDEXED, text)",
+    """
+    CREATE TABLE knowledge_delivery (
+        invocation_id TEXT PRIMARY KEY,
+        manifest_id TEXT NOT NULL,
+        manifest_revision INTEGER NOT NULL,
+        stage TEXT NOT NULL CHECK (stage IN ('prepared','sent','answered','unknown')),
+        request_sha256 TEXT,
+        request_bytes INTEGER,
+        free_call INTEGER NOT NULL CHECK (free_call IN (0,1)),
+        reserve_units INTEGER NOT NULL CHECK (reserve_units >= 0),
+        usage_units INTEGER,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (manifest_id) REFERENCES knowledge_records(record_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE knowledge_deletion_jobs (
+        operation_id TEXT PRIMARY KEY,
+        record_id TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('pending','complete')),
+        created_at TEXT NOT NULL,
+        completed_at TEXT,
+        FOREIGN KEY (operation_id) REFERENCES operations(operation_id),
+        FOREIGN KEY (record_id) REFERENCES knowledge_records(record_id)
+    ) STRICT
+    """,
+)
+KNOWLEDGE_SCHEMA_SHA256 = (
+    hashlib.sha256(
+        "\n".join(statement.strip() for statement in KNOWLEDGE_SCHEMA_STATEMENTS).encode()
+    )
+    .hexdigest()
+    .upper()
+)
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
 
 def utc_now() -> datetime:
@@ -938,6 +1031,8 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         expected.append((8, PARENT_EXECUTION_SCHEMA_NAME, PARENT_EXECUTION_SCHEMA_SHA256))
     if schema_version >= 9:
         expected.append((9, BINDING_SCHEMA_NAME, BINDING_SCHEMA_SHA256))
+    if schema_version >= 10:
+        expected.append((10, KNOWLEDGE_SCHEMA_NAME, KNOWLEDGE_SCHEMA_SHA256))
     if migration != expected:
         raise FoundationError("unsupported_schema", "Schema history does not match installed code")
     rows = connection.execute(
@@ -951,7 +1046,7 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         database=database,
         space_id=UUID(space_id),
         created_at=datetime.fromisoformat(created_at),
-        schema_version=cast(Literal[1, 2, 3, 4, 5, 6, 7, 8], schema_version),
+        schema_version=cast(Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], schema_version),
         state_revision=state_revision,
         execution_epoch=execution_epoch,
         recovery_state=recovery_state,
@@ -1313,6 +1408,9 @@ def sanitize_database(path: Path) -> None:
 
 
 __all__ = [
+    "KNOWLEDGE_SCHEMA_NAME",
+    "KNOWLEDGE_SCHEMA_SHA256",
+    "KNOWLEDGE_SCHEMA_STATEMENTS",
     "BINDING_SCHEMA_NAME",
     "BINDING_SCHEMA_SHA256",
     "BINDING_SCHEMA_STATEMENTS",

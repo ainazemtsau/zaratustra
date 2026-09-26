@@ -271,4 +271,11 @@ active plan revision and revalidation path. The Method's named inputs stay pinne
 a Binding offer to a composite Work adds addressed supporting basis. New Binding
 rows participate in backup, quarantine restore and dependent deletion sanitation.
 
+`knowledge.py` owns explicit schema 10 and exact, typed primary sources, Claims,
+analysis/remainder, links, views, ContextManifest and document handoff. It uses
+the single Core operation, receipt, rights and maintenance boundary. FTS5 is a
+derived index of retained UTF-8 source bytes, never an alternate original.
+The Pi adapter may prepare a current bounded packet and record its observed
+delivery, but cannot silently substitute a summary for mandatory primary data.
+
 END_OF_FILE: src/zaratustra/foundation/AGENTS.md

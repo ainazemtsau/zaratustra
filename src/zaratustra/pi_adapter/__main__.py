@@ -24,7 +24,14 @@ from zaratustra.foundation import (
     managed_pi_session_lock,
     managed_pi_sessions,
     read_space,
+    upgrade_binding_space,
+    upgrade_child_execution_space,
+    upgrade_composition_space,
+    upgrade_continuation_space,
     upgrade_execution_space,
+    upgrade_knowledge_space,
+    upgrade_parent_execution_space,
+    upgrade_plan_revision_space,
     upgrade_space,
 )
 
@@ -52,6 +59,17 @@ def _prepare_space(path: Path, actor: str, *, create: bool) -> LocalAuthority:
         upgrade_space(path, authority)
     if read_space(path).schema_version == 2:
         upgrade_execution_space(path, authority)
+    for version, upgrade in (
+        (4, upgrade_continuation_space),
+        (5, upgrade_composition_space),
+        (6, upgrade_child_execution_space),
+        (7, upgrade_plan_revision_space),
+        (8, upgrade_parent_execution_space),
+        (9, upgrade_binding_space),
+        (10, upgrade_knowledge_space),
+    ):
+        if read_space(path).schema_version < version:
+            upgrade(path, authority)
     return authority
 
 
@@ -70,6 +88,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--new-space", action="store_true")
     parser.add_argument("--limit-units", type=int, required=True)
     parser.add_argument("--reserve-units", type=int, required=True)
+    parser.add_argument("--free-conversation-limit-units", type=int, default=100000)
+    parser.add_argument("--context-max-bytes", type=int, default=65536)
     parser.add_argument(
         "--provider-profile", choices=("codex-sse", "local-completions"), default="codex-sse"
     )
@@ -96,7 +116,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(f"Pi sessions must use the managed Core directory: {expected_sessions}")
     if not workspace.is_dir() or not pi_cli.is_file() or not (runtime / "node_modules").is_dir():
         parser.error("Workspace, Pi CLI or Pi runtime is unavailable")
-    if args.limit_units < 1 or args.reserve_units < 1:
+    if args.limit_units < 1 or args.reserve_units < 1 or args.free_conversation_limit_units < 1:
         parser.error("Model resource limits must be positive")
     base_url = args.provider_base_url or (
         "https://chatgpt.com/backend-api" if args.provider_profile == "codex-sse" else None
@@ -121,7 +141,8 @@ def main(argv: list[str] | None = None) -> int:
         f"Provider profile: {args.provider_profile}\n"
         f"Pi model: {args.model or 'Pi selection'}\n"
         f"Pi tools: {args.pi_tools or 'none'}\n"
-        f"Work limit: {args.limit_units} units; each call reserve: {args.reserve_units} units"
+        f"Work limit: {args.limit_units} units; free conversation limit: "
+        f"{args.free_conversation_limit_units} units; each call reserve: {args.reserve_units} units"
     )
     if args.activity_id:
         print(f"Activity: {args.activity_id}\nWork: {args.work_id}")
@@ -132,7 +153,14 @@ def main(argv: list[str] | None = None) -> int:
         if inspect_space(space, authority).pending_deletions:
             parser.error("Complete pending Core deletions before opening Pi")
         session_dir = managed_pi_sessions(space, authority.space_id, create=True)
-        bridge = Bridge(space, authority, workspace, args.limit_units)
+        bridge = Bridge(
+            space,
+            authority,
+            workspace,
+            args.limit_units,
+            context_max_bytes=args.context_max_bytes,
+            free_conversation_limit_units=args.free_conversation_limit_units,
+        )
         executor_store = space / ".zara-core" / "executor.sqlite3"
         if executor_store.is_file():
             from .assigned import deliver_outbox

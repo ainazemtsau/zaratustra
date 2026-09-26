@@ -49,3 +49,10 @@ space, checks every request and owns the receipt; assigned RPC cannot manage
 Bindings. `/zara-binding` shows current addresses and offers. No model or
 semantic judge runs in the foundation. The development-only localhost synthetic
 model probe is `tools.probe_binding_pi --pi-runtime <path>`.
+Interactive Pi captures admitted conversation text and exposes `zara_memory`
+for typed sources, Claim and handoff mutations plus exact retrieval. Core stores
+the original, not the extension. A ContextManifest is prepared from current Core
+rights, Work/Method/plan and scoped evidence for each request; the actual provider
+body is observed separately and must contain its marker. Free conversation has
+a separate bounded call budget. The local synthetic multi-process trace is
+`tools.probe_knowledge_pi --pi-runtime <path>`.

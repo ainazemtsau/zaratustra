@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import secrets
 import threading
@@ -11,9 +12,9 @@ from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from urllib.parse import parse_qs, urlsplit
-from uuid import UUID, uuid5
+from uuid import UUID, uuid4, uuid5
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
@@ -21,20 +22,31 @@ from zaratustra.foundation import (
     AcceptWorkRequest,
     AnswerWaitRequest,
     ArtifactRef,
+    ChoiceState,
+    ClaimState,
+    ContextState,
     CreateArtifactRequest,
     CreateBindingVersionRequest,
+    CreateGrantRequest,
+    CreateKnowledgeRequest,
     CreateMethodVersionRequest,
     CreateResourceRequest,
+    DecisionState,
+    DeleteKnowledgeRequest,
     DomainRequest,
     FireBindingRequest,
     FoundationError,
+    KnowledgeRef,
     LocalAuthority,
     OpenWaitRequest,
     ProvenanceRef,
     PublishAttemptOutputRequest,
+    RecordContextDeliveryRequest,
     ResolveBindingOfferRequest,
     ResourceState,
+    ReviseKnowledgeRequest,
     SetBindingStateRequest,
+    SourceState,
     StartAttemptRequest,
     StopAttemptRequest,
     apply_operation,
@@ -42,17 +54,28 @@ from zaratustra.foundation import (
     list_binding_methods,
     list_binding_offers,
     list_bindings,
+    list_knowledge,
+    open_knowledge,
     read_activity,
+    read_artifact,
+    read_current_rights,
+    read_decision,
     read_execution,
     read_execution_events,
+    read_knowledge,
+    read_knowledge_neighbors,
+    read_method_version,
     read_receipt,
     read_space,
     read_work,
+    read_work_plan,
     read_work_status,
+    search_knowledge,
     upgrade_binding_space,
     upgrade_child_execution_space,
     upgrade_composition_space,
     upgrade_continuation_space,
+    upgrade_knowledge_space,
     upgrade_parent_execution_space,
     upgrade_plan_revision_space,
 )
@@ -66,6 +89,12 @@ BINDING_INTENTS: dict[str, type[BaseModel]] = {
     "set_binding_state": SetBindingStateRequest,
     "fire_binding": FireBindingRequest,
     "resolve_binding_offer": ResolveBindingOfferRequest,
+}
+KNOWLEDGE_INTENTS: dict[str, type[BaseModel]] = {
+    "create_knowledge": CreateKnowledgeRequest,
+    "revise_knowledge": ReviseKnowledgeRequest,
+    "delete_knowledge": DeleteKnowledgeRequest,
+    "create_grant": CreateGrantRequest,
 }
 
 
@@ -88,6 +117,8 @@ class Bridge:
         assigned_attempt_id: UUID | None = None,
         assigned_session_id: UUID | None = None,
         deliver_answer: Callable[[UUID], object] | None = None,
+        context_max_bytes: int = 65536,
+        free_conversation_limit_units: int = 100000,
     ) -> None:
         self.path = path.resolve()
         self.authority = authority
@@ -95,6 +126,12 @@ class Bridge:
         if not self.workspace.is_dir() or limit_units < 1:
             raise FoundationError("resource_unavailable", "Choose an existing directory and limit")
         self.limit_units = limit_units
+        if free_conversation_limit_units < 1:
+            raise FoundationError("invalid_request", "Free conversation budget must be positive")
+        self.free_conversation_limit_units = free_conversation_limit_units
+        if not 1 <= context_max_bytes <= 2 * 1024 * 1024:
+            raise FoundationError("invalid_request", "Context byte limit must be finite")
+        self.context_max_bytes = context_max_bytes
         if (assigned_attempt_id is None) != (assigned_session_id is None):
             raise FoundationError("invalid_request", "Assigned attempt and session must be paired")
         self.assigned_attempt_id = assigned_attempt_id
@@ -102,6 +139,8 @@ class Bridge:
         self.deliver_answer = deliver_answer
         self.token = secrets.token_urlsafe(48)
         self.sessions: dict[UUID, Selection | None] = {}
+        self.last_sources: dict[UUID, KnowledgeRef] = {}
+        self.exposed_refs: dict[UUID, set[KnowledgeRef]] = {}
         self.accept_previews: dict[UUID, tuple[UUID, int, UUID]] = {}
         self.accept_results: dict[UUID, dict[str, object]] = {}
         self.lock = threading.Lock()
@@ -155,6 +194,7 @@ class Bridge:
             "protocol_version": PROTOCOL_VERSION,
             "space_id": str(space.space_id),
             "execution_epoch": space.execution_epoch,
+            "schema_version": space.schema_version,
             "actor": self.authority.actor,
             "session_id": str(session_id),
             "records": choices,
@@ -341,6 +381,467 @@ class Bridge:
             raise FoundationError(
                 "permission_denied", "Binding actor/space differs from host authority"
             )
+        return apply_operation(self.path, request, self.authority).model_dump(mode="json")
+
+    def knowledge_upgrade(self, session_id: UUID) -> dict[str, object]:
+        self._session(session_id)
+        if self.assigned_attempt_id is not None:
+            raise FoundationError("permission_denied", "Assigned RPC cannot upgrade Core")
+        for version, upgrade in (
+            (4, upgrade_continuation_space),
+            (5, upgrade_composition_space),
+            (6, upgrade_child_execution_space),
+            (7, upgrade_plan_revision_space),
+            (8, upgrade_parent_execution_space),
+            (9, upgrade_binding_space),
+            (10, upgrade_knowledge_space),
+        ):
+            if read_space(self.path).schema_version < version:
+                upgrade(self.path, self.authority)
+        return {"schema_version": read_space(self.path).schema_version}
+
+    def knowledge_contract(self, session_id: UUID, kind: str) -> dict[str, object]:
+        self._session(session_id)
+        model = KNOWLEDGE_INTENTS.get(kind)
+        if model is None:
+            raise FoundationError("invalid_request", "Unknown knowledge operation")
+        return {"kind": kind, "schema": model.model_json_schema()}
+
+    def knowledge_operation(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
+        self._session(session_id)
+        if self.assigned_attempt_id is not None:
+            raise FoundationError("permission_denied", "Assigned RPC cannot change knowledge")
+        prepared = dict(raw)
+        state_raw = prepared.get("state")
+        if isinstance(state_raw, dict):
+            state = dict(state_raw)
+            if state.get("kind") == "source" and isinstance(state.get("content_text"), str):
+                state["content"] = base64.b64encode(
+                    state.pop("content_text").encode("utf-8")
+                ).decode("ascii")
+            if state.get("kind") == "handoff" and isinstance(state.get("document_text"), str):
+                state["document"] = base64.b64encode(
+                    state.pop("document_text").encode("utf-8")
+                ).decode("ascii")
+            prepared["state"] = state
+        try:
+            request = REQUEST_ADAPTER.validate_json(json.dumps(prepared))
+        except ValidationError as error:
+            raise FoundationError("invalid_request", str(error)) from error
+        if not isinstance(
+            request,
+            (
+                CreateKnowledgeRequest,
+                ReviseKnowledgeRequest,
+                DeleteKnowledgeRequest,
+                CreateGrantRequest,
+            ),
+        ):
+            raise FoundationError(
+                "permission_denied", "Only knowledge operations use this endpoint"
+            )
+        if request.actor != self.authority.actor or request.space_id != self.authority.space_id:
+            raise FoundationError("permission_denied", "Knowledge actor/space differs from host")
+        return apply_operation(self.path, request, self.authority).model_dump(mode="json")
+
+    def capture_source(
+        self,
+        session_id: UUID,
+        *,
+        channel: str,
+        content: str,
+        source_event_id: str,
+        input_source: str = "interactive",
+        limitations: tuple[str, ...] = (),
+    ) -> dict[str, object]:
+        selected = self._session(session_id)
+        if channel not in ("conversation_user", "conversation_assistant", "tool_result"):
+            raise FoundationError("invalid_request", "Unsupported Pi capture channel")
+        if read_space(self.path).schema_version < 10:
+            raise FoundationError("unsupported_schema", "Capture needs explicit schema 10")
+        source_id = uuid5(self.authority.space_id, f"pi:{session_id}:{source_event_id}")
+        operation_id = uuid5(source_id, "capture")
+        with self.lock:
+            derived = set(self.exposed_refs.get(session_id, set()))
+            if channel == "conversation_assistant" and session_id in self.last_sources:
+                derived.add(self.last_sources[session_id])
+        state = SourceState.model_validate(
+            {
+                "channel": channel,
+                "connection": "ordinary-pi",
+                "profile_revision": 1,
+                "source_event_id": f"{session_id}:{source_event_id}",
+                "conversation_id": str(session_id),
+                "scope_activity_id": selected.activity_id if selected else None,
+                "scope_work_id": selected.work_id if selected else None,
+                "sender": self.authority.actor
+                if channel == "conversation_user" and input_source == "interactive"
+                else "pi-rpc"
+                if channel == "conversation_user"
+                else "pi-assistant"
+                if channel == "conversation_assistant"
+                else "pi-tool",
+                "media_type": "text/plain; charset=utf-8",
+                "capture": "excluded" if not content else "full",
+                "content": content.encode() if content else None,
+                "limitations": limitations,
+                "derived_from": sorted(derived, key=lambda ref: (str(ref.record_id), ref.revision))
+                if channel == "conversation_assistant"
+                else (),
+            }
+        )
+        receipt = apply_operation(
+            self.path,
+            CreateKnowledgeRequest(
+                operation_id=operation_id,
+                space_id=self.authority.space_id,
+                actor=self.authority.actor,
+                record_id=source_id,
+                state=state,
+            ),
+            self.authority,
+        )
+        if channel == "conversation_user":
+            with self.lock:
+                self.last_sources[session_id] = KnowledgeRef(record_id=source_id, revision=1)
+        return receipt.model_dump(mode="json")
+
+    def knowledge_read(self, session_id: UUID, body: dict[str, Any]) -> dict[str, object]:
+        self._session(session_id)
+        mode = body.get("mode")
+        if mode == "list":
+            return list_knowledge(
+                self.path,
+                self.authority,
+                kind=body.get("kind"),
+                limit=int(body.get("limit", 25)),
+                cursor=body.get("cursor"),
+            )
+        if mode == "search":
+            result = search_knowledge(
+                self.path,
+                self.authority,
+                str(body["query"]),
+                limit=int(body.get("limit", 25)),
+                cursor=str(body["cursor"]) if body.get("cursor") is not None else None,
+            )
+            with self.lock:
+                exposed = self.exposed_refs.setdefault(session_id, set())
+                for entry in cast(list[dict[str, Any]], result["items"]):
+                    exposed.add(
+                        KnowledgeRef(
+                            record_id=UUID(entry["record_id"]), revision=int(entry["revision"])
+                        )
+                    )
+            return result
+        record_id = UUID(str(body["record_id"]))
+        if mode == "open":
+            result = open_knowledge(
+                self.path,
+                record_id,
+                self.authority,
+                revision=int(body["revision"]) if body.get("revision") else None,
+                offset=int(body.get("offset", 0)),
+                max_bytes=int(body.get("max_bytes", 16384)),
+            )
+            if result.get("content_base64") is not None:
+                with self.lock:
+                    self.exposed_refs.setdefault(session_id, set()).add(
+                        KnowledgeRef(record_id=record_id, revision=cast(int, result["revision"]))
+                    )
+            return result
+        if mode == "neighbors":
+            return read_knowledge_neighbors(
+                self.path,
+                record_id,
+                self.authority,
+                limit=int(body.get("limit", 25)),
+                cursor=str(body["cursor"]) if body.get("cursor") is not None else None,
+            )
+        raise FoundationError("invalid_request", "Unknown knowledge read")
+
+    def prepare_context(self, session_id: UUID, purpose: str = "content") -> dict[str, object]:
+        selected = self._session(session_id)
+        info = read_space(self.path)
+        if info.schema_version < 10:
+            raise FoundationError("unsupported_schema", "Context needs explicit schema 10")
+        mandatory: list[KnowledgeRef] = []
+        evidence_refs: list[KnowledgeRef] = []
+        packet: dict[str, object] = {
+            "space_id": str(info.space_id),
+            "epoch": info.execution_epoch,
+            "purpose": purpose,
+        }
+        with self.lock:
+            latest_source = self.last_sources.get(session_id)
+        if latest_source is not None:
+            mandatory.append(latest_source)
+        if selected is not None and purpose == "compaction-summary":
+            work = read_work(self.path, selected.work_id, self.authority)
+            mandatory.append(KnowledgeRef(record_id=work.work_id, revision=work.revision))
+            packet["work_address"] = f"{work.work_id}@{work.revision}"
+        elif selected is not None:
+            activity = read_activity(self.path, selected.activity_id, self.authority)
+            work = read_work(self.path, selected.work_id, self.authority)
+            current = read_execution(self.path, selected.work_id, self.authority)
+            if current.work.unavailable_refs or len(current.inputs) != len(work.state.inputs):
+                raise FoundationError("incomplete_context", "Required Work input is unavailable")
+            mandatory.extend(
+                (
+                    KnowledgeRef(record_id=activity.activity_id, revision=activity.revision),
+                    KnowledgeRef(record_id=work.work_id, revision=work.revision),
+                )
+            )
+            packet["activity"] = activity.model_dump(mode="json")
+            packet["work"] = work.model_dump(mode="json")
+            packet["status"] = current.status.model_dump(mode="json") if current.status else None
+            packet["composition"] = (
+                current.composition.model_dump(mode="json") if current.composition else None
+            )
+            if work.state.method != "none":
+                method = read_method_version(self.path, work.state.method, self.authority)
+                packet["method"] = method.model_dump(mode="json")
+                if current.composition is not None:
+                    packet["plan"] = read_work_plan(
+                        self.path, selected.work_id, self.authority
+                    ).model_dump(mode="json")
+            inputs: list[dict[str, object]] = []
+            for ref in work.state.inputs:
+                exact = read_artifact(
+                    self.path, ref.artifact_id, self.authority, revision=ref.revision
+                )
+                mandatory.append(KnowledgeRef(record_id=ref.artifact_id, revision=ref.revision))
+                item = exact.model_dump(mode="json", exclude={"content"})
+                item["content_text"] = (
+                    exact.content.decode("utf-8")
+                    if exact.content is not None
+                    and exact.media_type
+                    and exact.media_type.startswith("text/")
+                    else None
+                )
+                inputs.append(item)
+            packet["inputs"] = inputs
+            inspection = inspect_space(self.path, self.authority)
+            decisions: list[dict[str, object]] = []
+            for row in inspection.records:
+                if row.kind != "decision":
+                    continue
+                decision = read_decision(self.path, row.record_id, self.authority)
+                relevant = (
+                    isinstance(decision.state, DecisionState)
+                    and decision.state.status == "active"
+                    and (
+                        "*" in decision.state.subjects
+                        or self.authority.actor in decision.state.subjects
+                    )
+                ) or (
+                    isinstance(decision.state, ChoiceState)
+                    and decision.state.status == "active"
+                    and (
+                        (
+                            decision.state.scope.kind == "activity"
+                            and decision.state.scope.record_id == selected.activity_id
+                        )
+                        or (
+                            decision.state.scope.kind == "work"
+                            and decision.state.scope.record_id == selected.work_id
+                        )
+                    )
+                )
+                if relevant:
+                    mandatory.append(
+                        KnowledgeRef(record_id=row.record_id, revision=decision.revision)
+                    )
+                    decisions.append(decision.model_dump(mode="json"))
+            packet["decisions"] = decisions
+            rights = read_current_rights(self.path, self.authority)
+            packet["rights"] = rights
+            for grant in cast(list[dict[str, Any]], rights["grants"]):
+                mandatory.append(
+                    KnowledgeRef(
+                        record_id=UUID(grant["record_id"]), revision=int(grant["revision"])
+                    )
+                )
+            # Current Claims in the selected Activity and global Claims have a structural
+            # route into this continuation. An overlarge set blocks rather than truncates.
+            cursor: str | None = None
+            claims: list[dict[str, object]] = []
+            while True:
+                page = list_knowledge(
+                    self.path, self.authority, kind="claim", limit=100, cursor=cursor
+                )
+                for entry in cast(list[dict[str, Any]], page["items"]):
+                    claim_item = read_knowledge(self.path, UUID(entry["record_id"]), self.authority)
+                    state = claim_item.state
+                    if (
+                        isinstance(state, ClaimState)
+                        and (state.scope_global or state.scope_activity_id == selected.activity_id)
+                        and state.status in ("current", "contested", "unsupported")
+                    ):
+                        mandatory.append(
+                            KnowledgeRef(
+                                record_id=claim_item.record_id, revision=claim_item.revision
+                            )
+                        )
+                        claims.append(claim_item.model_dump(mode="json"))
+                        for evidence_ref in state.evidence + state.counter_evidence:
+                            mandatory.append(evidence_ref)
+                            evidence_refs.append(evidence_ref)
+                cursor = cast(str | None, page["next_cursor"])
+                if cursor is None:
+                    break
+            packet["claims"] = claims
+        if not mandatory:
+            raise FoundationError("incomplete_context", "No received prompt or selected Work")
+        if latest_source is not None:
+            source = read_knowledge(self.path, latest_source.record_id, self.authority)
+            packet["prompt_source"] = source.model_dump(mode="json", exclude={"state"})
+            if isinstance(source.state, SourceState):
+                packet["prompt_source_state"] = source.state.model_dump(
+                    mode="json", exclude={"content"}
+                )
+                packet["prompt_text"] = (
+                    source.state.content.decode("utf-8") if source.state.content else None
+                )
+        additional: list[dict[str, object]] = []
+        input_keys = (
+            {(ref.artifact_id, ref.revision) for ref in work.state.inputs} if selected else set()
+        )
+        for required_ref in dict.fromkeys(evidence_refs):
+            if (
+                required_ref == latest_source
+                or (required_ref.record_id, required_ref.revision) in input_keys
+            ):
+                continue
+            try:
+                required_item = read_knowledge(
+                    self.path,
+                    required_ref.record_id,
+                    self.authority,
+                    revision=required_ref.revision,
+                )
+            except FoundationError as error:
+                if error.code == "not_found":
+                    try:
+                        artifact = read_artifact(
+                            self.path,
+                            required_ref.record_id,
+                            self.authority,
+                            revision=required_ref.revision,
+                        )
+                    except FoundationError as missing:
+                        if missing.code == "not_found":
+                            continue
+                        raise
+                    if artifact.content is None:
+                        raise FoundationError(
+                            "incomplete_context", "Mandatory Artifact is unavailable"
+                        ) from None
+                    artifact_bytes = artifact.content
+                    fragment = (
+                        artifact_bytes[required_ref.start : required_ref.end]
+                        if required_ref.start is not None
+                        else artifact_bytes
+                    )
+                    additional.append(
+                        {
+                            "record_id": str(required_ref.record_id),
+                            "revision": required_ref.revision,
+                            "text": fragment.decode("utf-8")
+                            if artifact.media_type and artifact.media_type.startswith("text/")
+                            else None,
+                            "bytes_base64": base64.b64encode(fragment).decode("ascii")
+                            if not artifact.media_type
+                            or not artifact.media_type.startswith("text/")
+                            else None,
+                        }
+                    )
+                    continue
+                raise
+            if isinstance(required_item.state, SourceState):
+                source_bytes = required_item.state.content
+                if source_bytes is None:
+                    raise FoundationError(
+                        "incomplete_context", "Mandatory source lacks retained bytes"
+                    )
+                fragment = (
+                    source_bytes[required_ref.start : required_ref.end]
+                    if required_ref.start is not None
+                    else source_bytes
+                )
+                additional.append(
+                    {
+                        "record_id": str(required_ref.record_id),
+                        "revision": required_ref.revision,
+                        "fragment": {"start": required_ref.start, "end": required_ref.end},
+                        "text": fragment.decode("utf-8")
+                        if required_item.state.media_type.startswith("text/")
+                        else None,
+                        "bytes_base64": base64.b64encode(fragment).decode("ascii")
+                        if not required_item.state.media_type.startswith("text/")
+                        else None,
+                    }
+                )
+        packet["primary_sources"] = additional
+        rendered = json.dumps(packet, ensure_ascii=False, separators=(",", ":"))
+        if len(rendered.encode("utf-8")) > self.context_max_bytes:
+            raise FoundationError(
+                "context_overflow", "Mandatory context exceeds configured byte limit"
+            )
+        manifest_id = UUID(bytes=secrets.token_bytes(16))
+        receipt = apply_operation(
+            self.path,
+            CreateKnowledgeRequest(
+                operation_id=uuid5(manifest_id, "prepare"),
+                space_id=info.space_id,
+                actor=self.authority.actor,
+                record_id=manifest_id,
+                state=ContextState(
+                    purpose="compaction summary"
+                    if purpose == "compaction-summary"
+                    else "selected Work continuation"
+                    if selected
+                    else "conversation continuation",
+                    session_id=session_id,
+                    work_id=selected.work_id if selected else None,
+                    method=work.state.method if selected and work.state.method != "none" else None,
+                    plan_revision=current.composition.plan_revision
+                    if selected and current.composition
+                    else None,
+                    mandatory=tuple(dict.fromkeys(mandatory)),
+                    max_bytes=self.context_max_bytes,
+                ),
+            ),
+            self.authority,
+        )
+        with self.lock:
+            self.exposed_refs.setdefault(session_id, set()).update(mandatory)
+        return {
+            "manifest_id": str(manifest_id),
+            "manifest_revision": 1,
+            "state_revision": receipt.state_revision,
+            "packet": packet,
+            "byte_count": len(rendered.encode("utf-8")),
+        }
+
+    def context_delivery(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, object]:
+        selected = self._session(session_id)
+        request = RecordContextDeliveryRequest.model_validate(
+            {
+                "operation_id": str(uuid4()),
+                "space_id": str(self.authority.space_id),
+                "actor": self.authority.actor,
+                "invocation_id": raw["invocation_id"],
+                "manifest": {"record_id": raw["manifest_id"], "revision": raw["manifest_revision"]},
+                "stage": raw["stage"],
+                "request_sha256": raw.get("request_sha256"),
+                "request_bytes": raw.get("request_bytes"),
+                "free_call": selected is None,
+                "reserve_units": int(raw.get("reserve_units", 0)) if selected is None else 0,
+                "usage_units": raw.get("usage_units"),
+                "budget_limit_units": self.free_conversation_limit_units if selected is None else 0,
+            }
+        )
         return apply_operation(self.path, request, self.authority).model_dump(mode="json")
 
     def start_attempt(self, session_id: UUID, *, interrupt_previous: bool) -> dict[str, object]:
@@ -622,6 +1123,25 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 result = bridge.binding_upgrade(session_id)
             elif post and path.path == "/v1/binding-operation":
                 result = bridge.binding_operation(session_id, body["request"])
+            elif post and path.path == "/v1/knowledge-upgrade":
+                result = bridge.knowledge_upgrade(session_id)
+            elif post and path.path == "/v1/knowledge-operation":
+                result = bridge.knowledge_operation(session_id, body["request"])
+            elif post and path.path == "/v1/knowledge-capture":
+                result = bridge.capture_source(
+                    session_id,
+                    channel=str(body["channel"]),
+                    content=str(body["content"]),
+                    source_event_id=str(body["source_event_id"]),
+                    input_source=str(body.get("input_source", "interactive")),
+                    limitations=tuple(body.get("limitations", ())),
+                )
+            elif post and path.path == "/v1/knowledge-read":
+                result = bridge.knowledge_read(session_id, body)
+            elif post and path.path == "/v1/context-prepare":
+                result = bridge.prepare_context(session_id, str(body.get("purpose", "content")))
+            elif post and path.path == "/v1/context-delivery":
+                result = bridge.context_delivery(session_id, body)
             elif post and path.path == "/v1/start-attempt":
                 result = bridge.start_attempt(
                     session_id, interrupt_previous=body.get("interrupt_previous") is True
@@ -655,6 +1175,8 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 result = bridge.binding_catalog(session_id)
             elif not post and path.path == "/v1/binding-contract":
                 result = bridge.binding_contract(session_id, params["kind"][0])
+            elif not post and path.path == "/v1/knowledge-contract":
+                result = bridge.knowledge_contract(session_id, params["kind"][0])
             elif not post and path.path == "/v1/receipt":
                 result = bridge.receipt(session_id, UUID(params["operation_id"][0]))
             elif not post and path.path == "/v1/events":

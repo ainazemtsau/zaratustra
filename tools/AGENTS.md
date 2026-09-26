@@ -52,4 +52,7 @@ risk evidence for a later updater, not an installed updater or release proof.
 provider to exercise ordinary interactive Pi catalog/contract/apply for Binding.
 It does not call a real model. The portable pytest suite does not assume an
 ignored Pi runtime exists in every checkout.
+`probe_knowledge_pi` uses the same fictional localhost transport for separate
+ordinary Pi processes that save/open sources and Claim, deliver a document,
+record its return, and verify current evidence in subsequent Work requests.
 END_OF_FILE: tools/AGENTS.md

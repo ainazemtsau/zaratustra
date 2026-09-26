@@ -31,6 +31,7 @@ type Action = Literal[
     "decision.write",
     "grant.write",
     "record.read",
+    "memory.transfer",
     "receipt.read",
     "space.inspect",
     "maintenance.backup",
@@ -51,6 +52,7 @@ ALL_ACTIONS: tuple[Action, ...] = (
     "decision.write",
     "grant.write",
     "record.read",
+    "memory.transfer",
     "receipt.read",
     "space.inspect",
     "maintenance.backup",
@@ -1309,6 +1311,269 @@ class FinishInvocationRequest(OperationRequest):
         return self
 
 
+class KnowledgeRef(ContractModel):
+    """One exact revision; a fragment is a byte range in its retained payload."""
+
+    record_id: UUID
+    revision: int = Field(ge=1)
+    start: int | None = Field(default=None, ge=0)
+    end: int | None = Field(default=None, ge=1)
+
+    @model_validator(mode="after")
+    def valid_fragment(self) -> KnowledgeRef:
+        if (self.start is None) != (self.end is None) or (
+            self.start is not None and self.end is not None and self.end <= self.start
+        ):
+            raise ValueError("A fragment needs an ordered start and end")
+        return self
+
+
+class SourceState(ContractModel):
+    kind: Literal["source"] = "source"
+    channel: Literal[
+        "conversation_user",
+        "conversation_assistant",
+        "core_operation",
+        "tool_result",
+        "document",
+        "external_report",
+    ]
+    connection: str = Field(min_length=1, max_length=160)
+    profile_revision: int = Field(ge=1)
+    source_event_id: str | None = Field(default=None, max_length=300)
+    source_order: int | None = Field(default=None, ge=0)
+    conversation_id: str | None = Field(default=None, max_length=300)
+    scope_activity_id: UUID | None = None
+    scope_work_id: UUID | None = None
+    sender: str | None = Field(default=None, max_length=200)
+    claimed_author: str | None = Field(default=None, max_length=200)
+    event_at: AwareDatetime | None = None
+    event_time_basis: str | None = Field(default=None, max_length=500)
+    media_type: str = Field(min_length=1, max_length=200)
+    capture: Literal["full", "fragment", "reference", "excluded"]
+    content: bytes | None = Field(default=None, max_length=8 * 1024 * 1024)
+    locator: str | None = Field(default=None, max_length=2048)
+    limitations: tuple[str, ...] = ()
+    derived_from: tuple[KnowledgeRef, ...] = ()
+
+    @model_validator(mode="after")
+    def capture_is_honest(self) -> SourceState:
+        if (self.capture in ("full", "fragment")) != (self.content is not None):
+            raise ValueError("Captured bytes and declared availability must agree")
+        if self.capture == "reference" and not self.locator:
+            raise ValueError("A reference-only source needs a locator")
+        if self.event_at is not None and not self.event_time_basis:
+            raise ValueError("Event time needs its source")
+        return self
+
+
+class ClaimState(ContractModel):
+    kind: Literal["claim"] = "claim"
+    proposition: str = Field(min_length=1, max_length=16384)
+    epistemic_kind: Literal["observed", "reported", "derived", "hypothesis"]
+    status: Literal["current", "contested", "superseded", "retracted", "unsupported"]
+    scope_activity_id: UUID | None = None
+    scope_method_id: UUID | None = None
+    scope_global: bool = False
+    evidence: tuple[KnowledgeRef, ...] = ()
+    counter_evidence: tuple[KnowledgeRef, ...] = ()
+    supersedes: KnowledgeRef | None = None
+    interpretation_basis: str = Field(min_length=1, max_length=4096)
+    valid_from: AwareDatetime | None = None
+    valid_until: AwareDatetime | None = None
+
+    @model_validator(mode="after")
+    def explicit_scope_and_basis(self) -> ClaimState:
+        if (
+            sum(
+                (
+                    self.scope_activity_id is not None,
+                    self.scope_method_id is not None,
+                    self.scope_global,
+                )
+            )
+            != 1
+        ):
+            raise ValueError("Claim needs exactly one declared scope")
+        if self.status in ("current", "contested") and not self.evidence:
+            raise ValueError("A current or contested Claim needs exact evidence")
+        if self.status == "contested" and not self.counter_evidence:
+            raise ValueError("A contested Claim needs counter-evidence")
+        return self
+
+
+class AnalysisState(ContractModel):
+    kind: Literal["analysis"] = "analysis"
+    task: str = Field(min_length=1, max_length=4096)
+    inputs: tuple[KnowledgeRef, ...] = Field(min_length=1)
+    executor: str = Field(min_length=1, max_length=200)
+    status: Literal["pending", "started", "no_change", "result", "interrupted", "error", "blocked"]
+    conclusion: str | None = Field(default=None, max_length=16384)
+    effects: tuple[KnowledgeRef, ...] = ()
+    remainder: str | None = Field(default=None, max_length=8192)
+
+    @model_validator(mode="after")
+    def progress_is_explicit(self) -> AnalysisState:
+        if self.status in ("no_change", "result") and not self.conclusion:
+            raise ValueError("Completed analysis needs a conclusion")
+        if self.status in ("started", "interrupted", "error", "blocked") and not self.remainder:
+            raise ValueError("Unfinished analysis needs a remainder")
+        return self
+
+
+class MemoryLinkState(ContractModel):
+    kind: Literal["link"] = "link"
+    source: KnowledgeRef
+    target: KnowledgeRef
+    target_mode: Literal["exact", "current"] = "exact"
+    relation: str = Field(min_length=1, max_length=120)
+    basis: tuple[KnowledgeRef, ...] = Field(min_length=1)
+    explanation: str = Field(min_length=1, max_length=4096)
+    status: Literal["active", "retired"] = "active"
+
+
+class MemoryViewState(ContractModel):
+    kind: Literal["view"] = "view"
+    purpose: str = Field(min_length=1, max_length=500)
+    scope: str = Field(min_length=1, max_length=500)
+    scope_kind: Literal["space", "conversation", "activity", "work"]
+    scope_id: str | None = Field(default=None, max_length=300)
+    generation_method: str = Field(min_length=1, max_length=500)
+    mode: Literal["historical", "current"]
+    sources: tuple[KnowledgeRef, ...] = Field(min_length=1)
+    text: str = Field(min_length=1, max_length=65536)
+    coverage_state_revision: int = Field(ge=0)
+    limitations: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def addressed_scope(self) -> MemoryViewState:
+        if (self.scope_kind == "space") != (self.scope_id is None):
+            raise ValueError("A scoped view needs its exact scope address")
+        if self.scope_id is not None and not self.scope_id:
+            raise ValueError("A scoped view needs a nonempty address")
+        if self.scope_kind in ("activity", "work") and self.scope_id is not None:
+            scoped_record = UUID(self.scope_id)
+            if self.mode == "current" and scoped_record not in {
+                ref.record_id for ref in self.sources
+            }:
+                raise ValueError("Current scoped view must include its Core original")
+        return self
+
+
+class ContextState(ContractModel):
+    kind: Literal["context"] = "context"
+    purpose: str = Field(min_length=1, max_length=4096)
+    session_id: UUID
+    work_id: UUID | None = None
+    attempt_id: UUID | None = None
+    method: MethodRef | None = None
+    plan_revision: int | None = Field(default=None, ge=1)
+    mandatory: tuple[KnowledgeRef, ...] = ()
+    optional: tuple[KnowledgeRef, ...] = ()
+    limits: tuple[str, ...] = ()
+    max_bytes: int = Field(ge=1, le=2 * 1024 * 1024)
+
+
+class HandoffState(ContractModel):
+    kind: Literal["handoff"] = "handoff"
+    subject: str = Field(min_length=1, max_length=4096)
+    document: bytes = Field(min_length=1, max_length=8 * 1024 * 1024)
+    media_type: str = Field(min_length=1, max_length=200)
+    included: tuple[KnowledgeRef, ...] = ()
+    expected_return: str = Field(min_length=1, max_length=2048)
+    status: Literal["prepared", "reported_sent", "delivered", "returned", "matched"]
+    transfer_source: KnowledgeRef | None = None
+    return_source: KnowledgeRef | None = None
+    match_basis: str | None = Field(default=None, max_length=4096)
+    basis_state_revision: int = Field(ge=0)
+
+    @model_validator(mode="after")
+    def stages_need_separate_evidence(self) -> HandoffState:
+        if self.status == "prepared" and (
+            self.transfer_source is not None or self.return_source is not None or self.match_basis
+        ):
+            raise ValueError("Prepared document has no transfer or return evidence")
+        if self.status != "prepared" and self.transfer_source is None:
+            raise ValueError("Transfer needs an exact report or receipt")
+        if self.status in ("returned", "matched") and self.return_source is None:
+            raise ValueError("A returned document needs a separate source")
+        if self.status == "matched" and not self.match_basis:
+            raise ValueError("Matching needs an explicit basis")
+        return self
+
+
+KnowledgeBody = Annotated[
+    SourceState
+    | ClaimState
+    | AnalysisState
+    | MemoryLinkState
+    | MemoryViewState
+    | ContextState
+    | HandoffState,
+    Field(discriminator="kind"),
+]
+
+
+class CreateKnowledgeRequest(OperationRequest):
+    kind: Literal["create_knowledge"] = "create_knowledge"
+    record_id: UUID
+    state: KnowledgeBody
+
+
+class ReviseKnowledgeRequest(OperationRequest):
+    kind: Literal["revise_knowledge"] = "revise_knowledge"
+    record_id: UUID
+    expected_revision: int = Field(ge=1)
+    state: KnowledgeBody
+
+
+class DeleteKnowledgeRequest(OperationRequest):
+    kind: Literal["delete_knowledge"] = "delete_knowledge"
+    record_id: UUID
+    expected_revision: int = Field(ge=1)
+
+
+class RecordContextDeliveryRequest(OperationRequest):
+    kind: Literal["record_context_delivery"] = "record_context_delivery"
+    invocation_id: UUID
+    manifest: KnowledgeRef
+    stage: Literal["prepared", "sent", "answered", "unknown"]
+    request_sha256: str | None = Field(default=None, pattern=r"^[0-9A-F]{64}$")
+    request_bytes: int | None = Field(default=None, ge=0)
+    free_call: bool = False
+    reserve_units: int = Field(default=0, ge=0)
+    usage_units: int | None = Field(default=None, ge=0)
+    budget_limit_units: int = Field(default=0, ge=0)
+
+    @model_validator(mode="after")
+    def valid_accounting(self) -> RecordContextDeliveryRequest:
+        if (
+            self.stage == "prepared"
+            and self.free_call
+            and (self.reserve_units < 1 or self.budget_limit_units < self.reserve_units)
+        ):
+            raise ValueError("Free model calls need a bounded reserve")
+        if (self.stage == "answered") != (self.usage_units is not None):
+            raise ValueError("Only an answered call has confirmed usage")
+        if self.stage == "sent" and (self.request_sha256 is None or self.request_bytes is None):
+            raise ValueError("Sent request needs an observed body digest and size")
+        return self
+
+
+class KnowledgeRevision(ContractModel):
+    record_id: UUID
+    kind: Literal["source", "claim", "analysis", "link", "view", "context", "handoff"]
+    revision: int = Field(ge=1)
+    operation_id: UUID
+    received_at: AwareDatetime
+    created_at: AwareDatetime
+    actor: str
+    state: KnowledgeBody | None
+    sha256: str | None
+    availability: Literal["available", "unavailable", "deleted"]
+    stale: bool = False
+
+
 DomainRequest = Annotated[
     BootstrapRequest
     | RecoverRequest
@@ -1316,6 +1581,10 @@ DomainRequest = Annotated[
     | SetBindingStateRequest
     | FireBindingRequest
     | ResolveBindingOfferRequest
+    | CreateKnowledgeRequest
+    | ReviseKnowledgeRequest
+    | DeleteKnowledgeRequest
+    | RecordContextDeliveryRequest
     | CreateArtifactRequest
     | ReviseArtifactRequest
     | DeleteArtifactRequest
@@ -1365,7 +1634,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -1742,7 +2011,7 @@ class BackupManifest(ContractModel):
     backup_id: UUID
     format_version: Literal[1, 2] = 1
     space_id: UUID
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime
@@ -1782,6 +2051,20 @@ class DeletionStatus(ContractModel):
 
 
 __all__ = [
+    "KnowledgeRef",
+    "KnowledgeBody",
+    "KnowledgeRevision",
+    "SourceState",
+    "ClaimState",
+    "AnalysisState",
+    "MemoryLinkState",
+    "MemoryViewState",
+    "ContextState",
+    "HandoffState",
+    "CreateKnowledgeRequest",
+    "ReviseKnowledgeRequest",
+    "DeleteKnowledgeRequest",
+    "RecordContextDeliveryRequest",
     "BindingInputRevision",
     "BindingChildTemplate",
     "BindingNewWork",

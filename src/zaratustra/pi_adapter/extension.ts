@@ -45,6 +45,19 @@ function bytes(body: unknown): Uint8Array {
   throw new Error("Zaratustra cannot observe the final HTTP request body");
 }
 
+function withCompactionContext(body: Uint8Array, marker: string, packet: any): Uint8Array {
+  const request = JSON.parse(Buffer.from(body).toString("utf8"));
+  const content = `${marker}\n${JSON.stringify(packet)}`;
+  if (Array.isArray(request.messages)) {
+    request.messages.push({ role: "user", content });
+  } else if (Array.isArray(request.input)) {
+    request.input.push({ role: "user", content: [{ type: "input_text", text: content }] });
+  } else {
+    throw new Error("Compaction request has no supported message field; no HTTP was sent");
+  }
+  return Buffer.from(JSON.stringify(request), "utf8");
+}
+
 function lifecycle(current: any): string {
   const status = current?.status;
   if (!status) return "";
@@ -114,12 +127,16 @@ export default function (pi: any): void {
   let selection: any = null;
   let attemptId: string | null = null;
   let contextReady = false;
+  let captureReady = true;
+  let currentManifest: any = null;
+  let manifestMarker = "";
   let nextPurpose = "content";
   let lastAnswer = "";
   let lastOutcome = "";
   const turnQueue: string[] = [];
   const compactQueue: string[] = [];
   const sent = new Set<string>();
+  const manifests = new Map<string, any>();
 
   async function request(path: string, data?: any): Promise<any> {
     const response = await fetch(`${endpoint}${path}`, {
@@ -159,42 +176,73 @@ export default function (pi: any): void {
 
   async function finish(invocationId: string, outcome: "answered" | "unknown", usage: number | null,
                         httpStatus: number | null = null): Promise<void> {
-    if (!attemptId) return;
-    await operation({
-      kind: "finish_invocation", invocation_id: invocationId, attempt_id: attemptId,
-      work_id: selection.work_id, session_id: sessionId, outcome,
-      usage_units: outcome === "answered" ? usage : null,
-      http_status: httpStatus,
-    });
+    const manifest = manifests.get(invocationId);
+    if (manifest) {
+      await request("/v1/context-delivery", {
+        invocation_id: invocationId, manifest_id: manifest.manifest_id,
+        manifest_revision: manifest.manifest_revision,
+        stage: outcome, usage_units: outcome === "answered" ? usage : null,
+      });
+      manifests.delete(invocationId);
+    }
+    if (attemptId && selection) {
+      await operation({
+        kind: "finish_invocation", invocation_id: invocationId, attempt_id: attemptId,
+        work_id: selection.work_id, session_id: sessionId, outcome,
+        usage_units: outcome === "answered" ? usage : null,
+        http_status: httpStatus,
+      });
+    }
     sent.delete(invocationId);
   }
 
   async function guardedFetch(model: any, input: any, init: any): Promise<Response> {
-    if (!selection) return fetch(input, init);
-    if (!attemptId || !contextReady) throw new Error("Core context or Attempt is not ready; no HTTP was sent");
+    if (!captureReady || !contextReady || !currentManifest) {
+      throw new Error("Core capture or ContextManifest is not ready; no HTTP was sent");
+    }
+    if (selection && !attemptId) throw new Error("Selected Work has no Attempt; no HTTP was sent");
     const selectedProvider = profile === "codex-sse" ? "openai-codex" : localProviderId;
     if (model.provider !== selectedProvider) throw new Error("Selected provider has no admitted transport profile");
     const url = new URL(typeof input === "string" ? input : input.url);
     if (url.origin !== allowedOrigin) throw new Error("Provider URL differs from the selected transport profile");
-    const body = bytes(init?.body);
-    const invocationId = randomUUID();
     const purpose = nextPurpose;
+    const body = purpose === "compaction-summary"
+      ? withCompactionContext(bytes(init?.body), manifestMarker, currentManifest.packet)
+      : bytes(init?.body);
+    if (!Buffer.from(body).toString("utf8").includes(manifestMarker)) {
+      throw new Error("Mandatory ContextManifest is absent from the actual provider request");
+    }
+    const observedInit = purpose === "compaction-summary" ? { ...init, body } : init;
+    const invocationId = randomUUID();
     nextPurpose = "content";
+    const manifest = currentManifest;
     const common = {
-      invocation_id: invocationId, attempt_id: attemptId, work_id: selection.work_id,
+      invocation_id: invocationId, attempt_id: attemptId, work_id: selection?.work_id,
       session_id: sessionId,
     };
-    await operation({
-      kind: "prepare_invocation", ...common, purpose,
-      provider: model.provider, model: model.id, transport: profile === "codex-sse" ? "sse" : "http-sse",
-      request_sha256: digest(body), request_bytes: body.byteLength,
-      reserve_units: reserveUnits,
+    await request("/v1/context-delivery", {
+      invocation_id: invocationId, manifest_id: manifest.manifest_id,
+      manifest_revision: manifest.manifest_revision, stage: "prepared", reserve_units: reserveUnits,
     });
-    await operation({ kind: "admit_invocation", ...common });
-    await operation({ kind: "send_invocation", ...common });
+    manifests.set(invocationId, manifest);
+    if (selection) {
+      await operation({
+        kind: "prepare_invocation", ...common, purpose,
+        provider: model.provider, model: model.id, transport: profile === "codex-sse" ? "sse" : "http-sse",
+        request_sha256: digest(body), request_bytes: body.byteLength,
+        reserve_units: reserveUnits,
+      });
+      await operation({ kind: "admit_invocation", ...common });
+      await operation({ kind: "send_invocation", ...common });
+    }
+    await request("/v1/context-delivery", {
+      invocation_id: invocationId, manifest_id: manifest.manifest_id,
+      manifest_revision: manifest.manifest_revision, stage: "sent",
+      request_sha256: digest(body), request_bytes: body.byteLength,
+    });
     sent.add(invocationId);
     try {
-      const response = await fetch(input, init);
+      const response = await fetch(input, observedInit);
       if (!response.ok) {
         await finish(invocationId, "unknown", null, response.status);
       } else if (purpose === "compaction-summary") {
@@ -237,9 +285,8 @@ export default function (pi: any): void {
       const original = ctx.modelRegistry.getProvider(id);
       if (!original) throw new Error(`Provider ${id} cannot be guarded`);
       if (original.stream === guardedStreams.get(id)) continue;
-      const guard = (method: "stream" | "streamSimple") => (...args: any[]) => {
-        if (selection) throw new Error(`Provider ${id} has no admitted transport profile; no HTTP was sent`);
-        return original[method](...args);
+      const guard = (_method: "stream" | "streamSimple") => (..._args: any[]) => {
+        throw new Error(`Provider ${id} has no admitted transport profile; no HTTP was sent`);
       };
       const stream = guard("stream");
       pi.registerProvider({
@@ -270,7 +317,13 @@ export default function (pi: any): void {
     selection = null;
     attemptId = null;
     contextReady = false;
+    captureReady = true;
+    currentManifest = null;
     connection = await request("/v1/connect", {});
+    if (read_space_is_older(connection)) {
+      await request("/v1/knowledge-upgrade", {});
+      connection = await request("/v1/connect", {});
+    }
     guardOtherProviders(ctx);
     if (process.env.ZARA_INITIAL_ACTIVITY_ID && process.env.ZARA_INITIAL_WORK_ID) {
       const current = await request("/v1/select", {
@@ -292,6 +345,43 @@ export default function (pi: any): void {
       }
     }
     ctx.ui.notify(`Zaratustra Core ${connection.space_id} epoch ${connection.execution_epoch}. Use /zara-work.`, "info");
+  });
+
+  function read_space_is_older(connected: any): boolean {
+    return Number(connected.schema_version ?? 0) < 10;
+  }
+
+  async function capture(channel: string, content: string, source: string,
+                         limitations: string[] = []): Promise<void> {
+    if (!content && !limitations.length) return;
+    try {
+      await request("/v1/knowledge-capture", {
+        channel, content, source_event_id: randomUUID(), input_source: source, limitations,
+      });
+    } catch (error) {
+      captureReady = false;
+      throw error;
+    }
+  }
+
+  pi.on("input", async (event: any) => {
+    const limitations = event.images?.length ? ["Attached images are not retained by this text profile"] : [];
+    await capture("conversation_user", event.text ?? "", event.source ?? "unknown", limitations);
+    return { action: "continue" };
+  });
+  pi.on("message_end", async (event: any) => {
+    const message = event.message;
+    if (message?.role !== "assistant" && message?.role !== "toolResult") return;
+    const content = (message.content ?? []).filter((x: any) => x.type === "text")
+      .map((x: any) => x.text).join("\n");
+    if (message.role === "toolResult") {
+      await capture("tool_result", "", "pi-event", ["Tool result body is not retained; Core receipts keep admitted actions"]);
+      return;
+    }
+    const limitations = (message.content ?? []).some((x: any) => x.type !== "text")
+      ? ["Non-text message parts are not retained by this profile"] : [];
+    await capture(message.role === "assistant" ? "conversation_assistant" : "tool_result",
+                  content, "pi-event", limitations);
   });
 
   pi.on("model_select", (_event: any, ctx: any) => { guardOtherProviders(ctx); });
@@ -407,6 +497,81 @@ export default function (pi: any): void {
     },
   });
 
+  pi.registerTool({
+    name: "zara_memory",
+    label: "Zaratustra sources and memory",
+    description: "Save and read exact primary sources, form source-backed Claim, preserve analysis " +
+      "and remainder, navigate links and FTS5 search, prepare/revise a document handoff and " +
+      "compare its separately captured return. An owner can explicitly grant memory.transfer " +
+      "through create_grant on an upgraded space. First use contract for the typed Core intent. " +
+      "For UTF-8 source content supply state.content_text; for a handoff document supply " +
+      "state.document_text. Core assigns actor and space. A saved source is not a fact, " +
+      "Decision, Grant or accepted Work result. An open result has exact revision, " +
+      "availability and next_offset for continued reading.",
+    parameters: Type.Object({
+      mode: Type.Union([Type.Literal("contract"), Type.Literal("apply"), Type.Literal("list"),
+                        Type.Literal("search"), Type.Literal("open"), Type.Literal("neighbors")]),
+      kind: Type.Optional(Type.String()),
+      intent: Type.Optional(Type.Any()),
+      query: Type.Optional(Type.String()),
+      record_id: Type.Optional(Type.String()),
+      revision: Type.Optional(Type.Number()),
+      offset: Type.Optional(Type.Number()),
+      max_bytes: Type.Optional(Type.Number()),
+      limit: Type.Optional(Type.Number()),
+      cursor: Type.Optional(Type.String()),
+    }),
+    async execute(_callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
+      if (!connection) connection = await request("/v1/connect", {});
+      if (params.mode === "contract") {
+        if (!params.kind) throw new Error("Name one Core knowledge operation kind");
+        const contract = await request(`/v1/knowledge-contract?session_id=${sessionId}&kind=${params.kind}`);
+        return { content: [{ type: "text", text: JSON.stringify(contract) }] };
+      }
+      if (params.mode === "apply") {
+        if (assignedAttemptId) throw new Error("Assigned RPC cannot change knowledge");
+        const fields = params.intent;
+        if (!fields || typeof fields !== "object" || Array.isArray(fields) ||
+            !["create_knowledge", "revise_knowledge", "delete_knowledge", "create_grant"].includes(fields.kind)) {
+          throw new Error("Provide one typed Core knowledge intent");
+        }
+        const accepted = await ctx.ui.confirm("Apply this exact memory operation?",
+          JSON.stringify(fields, null, 2));
+        if (!accepted) return { content: [{ type: "text", text: "Memory operation cancelled" }] };
+        const operationId = randomUUID();
+        const intent = { ...fields, protocol_version: 1, operation_id: operationId,
+          space_id: connection.space_id, actor: connection.actor };
+        let receipt: any;
+        try { receipt = await request("/v1/knowledge-operation", { request: intent }); }
+        catch (error) {
+          try { receipt = await request(`/v1/receipt?session_id=${sessionId}&operation_id=${operationId}`); }
+          catch { throw error; }
+        }
+        return { content: [{ type: "text", text: JSON.stringify(receipt) }], details: receipt };
+      }
+      const read = await request("/v1/knowledge-read", {
+        mode: params.mode, kind: params.kind, query: params.query, record_id: params.record_id,
+        revision: params.revision, offset: params.offset, max_bytes: params.max_bytes,
+        limit: params.limit, cursor: params.cursor,
+      });
+      if (params.mode === "open" && read.content_base64) {
+        const mediaType = read.state?.media_type ?? "text/plain";
+        if (mediaType.startsWith("text/") || ["claim", "analysis", "view"].includes(read.state?.kind)) {
+          read.content_text = Buffer.from(read.content_base64, "base64").toString("utf8");
+        }
+      }
+      return { content: [{ type: "text", text: JSON.stringify(read) }], details: read };
+    },
+  });
+
+  pi.registerCommand("zara-memory", {
+    description: "List received primary sources and outstanding knowledge records",
+    handler: async (_args: string, ctx: any) => {
+      const page = await request("/v1/knowledge-read", { mode: "list", kind: "source", limit: 25 });
+      ctx.ui.notify(JSON.stringify(page, null, 2), "info");
+    },
+  });
+
   pi.registerCommand("zara-binding", {
     description: "Show Binding versions, exact methods and pending offers",
     handler: async (_args: string, ctx: any) => {
@@ -466,36 +631,38 @@ export default function (pi: any): void {
   });
 
   pi.on("before_agent_start", async (_event: any, _ctx: any) => {
-    if (!selection) return;
     contextReady = false;
+    currentManifest = null;
+    if (!selection) return;
     if (!attemptId) throw new Error("Select a new Attempt before prompting");
     const current = await snapshot();
     if (current.work.unavailable_refs.length || current.inputs.length !== current.work.state.inputs.length) {
       throw new Error("Required input is unavailable; no model request is permitted");
     }
-    const render = (item: any) => ({
-      artifact_id: item.artifact_id, revision: item.revision, media_type: item.media_type,
-      content_sha256: item.content_sha256,
-      content: item.media_type?.startsWith("text/") && item.content
-        ? Buffer.from(item.content, "base64").toString("utf8") : null,
-    });
-    const context = {
-      space_id: current.space_id, epoch: current.execution_epoch,
-      activity_id: current.activity.activity_id, activity: current.activity.state,
-      work_id: current.work.work_id, work_revision: current.work.revision,
-      work: current.work.state, attempt_id: attemptId,
-      inputs: current.inputs.map(render), saved_outputs: current.outputs.map(render),
-      waits: current.waits.map((item: any) => ({ ...item })),
-      cost: { committed_units: current.committed_units, held_units: current.held_units,
-              remaining_units: current.remaining_units },
-      // Addresses and pinned versions only; the plan itself stays in its Core revision.
-      status: current.status ?? null, composition: current.composition ?? null,
-    };
-    contextReady = true;
-    return { message: { customType: "zaratustra-context", content: JSON.stringify(context), display: false } };
   });
 
-  pi.on("session_before_compact", () => { nextPurpose = "compaction-summary"; });
+  pi.on("context_with_system", async (event: any) => {
+    contextReady = false;
+    if (!captureReady) throw new Error("Primary capture failed; no dependent model send");
+    const prepared = await request("/v1/context-prepare", { purpose: nextPurpose });
+    currentManifest = prepared;
+    manifestMarker = `ZARA_MANIFEST:${prepared.manifest_id}@${prepared.manifest_revision}`;
+    if (nextPurpose === "compaction-summary") {
+      contextReady = true;
+      return;
+    }
+    const message = { role: "user", content: `${manifestMarker}\n${JSON.stringify(prepared.packet)}`,
+      timestamp: Date.now() };
+    contextReady = true;
+    return { messages: [...event.messages, message] };
+  });
+
+  pi.on("session_before_compact", async () => {
+    nextPurpose = "compaction-summary";
+    contextReady = false;
+    currentManifest = await request("/v1/context-prepare", { purpose: nextPurpose });
+    contextReady = true;
+  });
   pi.on("session_compact", async (event: any) => {
     const invocationId = compactQueue.shift();
     if (invocationId) {

@@ -41,6 +41,7 @@ from .models import (
     CreateCompositeWorkRequest,
     CreateDecisionRequest,
     CreateGrantRequest,
+    CreateKnowledgeRequest,
     CreateMethodVersionRequest,
     CreateResourceRequest,
     CreateWorkRequest,
@@ -50,6 +51,7 @@ from .models import (
     DecisionState,
     DeleteActivityRequest,
     DeleteArtifactRequest,
+    DeleteKnowledgeRequest,
     DeleteMethodVersionRequest,
     DeleteWorkRequest,
     DeletionStatus,
@@ -68,6 +70,7 @@ from .models import (
     ProvenanceRef,
     PublishAttemptOutputRequest,
     RecordAttemptStopRequest,
+    RecordContextDeliveryRequest,
     RecordSummary,
     RecoverRequest,
     RequestAttemptStopRequest,
@@ -78,6 +81,7 @@ from .models import (
     ReviseActivityRequest,
     ReviseArtifactRequest,
     ReviseDecisionRequest,
+    ReviseKnowledgeRequest,
     ReviseResourceRequest,
     ReviseWorkPlanRequest,
     RevokeGrantRequest,
@@ -155,6 +159,7 @@ class _DeletionBatch:
     artifact_jobs: tuple[str, ...]
     subject_jobs: tuple[str, ...]
     method_jobs: tuple[str, ...]
+    knowledge_jobs: tuple[str, ...]
     contaminated_backups: tuple[UUID, ...]
 
 
@@ -521,6 +526,16 @@ def _write_root(
 
 
 def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]:
+    if isinstance(request, (CreateKnowledgeRequest, ReviseKnowledgeRequest)):
+        if getattr(request.state, "kind", None) == "handoff" and getattr(
+            request.state, "status", None
+        ) in ("reported_sent", "delivered"):
+            return "memory.transfer", "artifact", request.record_id
+        return "artifact.write", "artifact", request.record_id
+    if isinstance(request, DeleteKnowledgeRequest):
+        return "maintenance.delete", "artifact", request.record_id
+    if isinstance(request, RecordContextDeliveryRequest):
+        return "model.invoke", "space", None
     if isinstance(request, (CreateBindingVersionRequest, SetBindingStateRequest)):
         return "method.write", "space", None
     if isinstance(request, (FireBindingRequest, ResolveBindingOfferRequest)):
@@ -720,6 +735,10 @@ def _subject_delete(
     now: str,
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
     _subject_expect(connection, record_id, kind, expected_revision)
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 10:  # type: ignore[attr-defined]
+        from .knowledge import sanitize_deleted_knowledge_dependency
+
+        sanitize_deleted_knowledge_dependency(cast(sqlite3.Connection, connection), record_id, now)
     if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 9:  # type: ignore[attr-defined]
         from .binding import sanitize_deleted_binding_subject
 
@@ -1245,6 +1264,31 @@ def _apply_change(
     if isinstance(
         request,
         (
+            CreateKnowledgeRequest,
+            ReviseKnowledgeRequest,
+            DeleteKnowledgeRequest,
+            RecordContextDeliveryRequest,
+        ),
+    ):
+        from .knowledge import apply_knowledge_change
+
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 10:  # type: ignore[attr-defined]
+            raise FoundationError("unsupported_schema", "Knowledge needs explicit schema 10")
+        state_revision = int(
+            connection.execute(  # type: ignore[attr-defined]
+                "SELECT state_revision FROM spaces WHERE singleton=1"
+            ).fetchone()[0]
+        )
+        return apply_knowledge_change(
+            cast(sqlite3.Connection, connection),
+            request,
+            now=now,
+            state_revision=state_revision,
+            epoch=epoch,
+        )
+    if isinstance(
+        request,
+        (
             CreateBindingVersionRequest,
             SetBindingStateRequest,
             FireBindingRequest,
@@ -1524,6 +1568,12 @@ def _apply_change(
             request.expected_revision,
             required_status="active",
         )
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 10:  # type: ignore[attr-defined]
+            from .knowledge import sanitize_deleted_knowledge_dependency
+
+            sanitize_deleted_knowledge_dependency(
+                cast(sqlite3.Connection, connection), request.artifact_id, now
+            )
         if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 9:  # type: ignore[attr-defined]
             from .binding import sanitize_deleted_binding_subject
 
@@ -2694,6 +2744,12 @@ def _deletion_counts(connection: object, schema_version: int) -> tuple[int, int,
                     "SELECT count(*) FROM method_deletion_jobs WHERE status = ?", (status,)
                 ).fetchone()[0]
             )
+        if schema_version >= 10:
+            count += int(
+                connection.execute(  # type: ignore[attr-defined]
+                    "SELECT count(*) FROM knowledge_deletion_jobs WHERE status=?", (status,)
+                ).fetchone()[0]
+            )
         counts.append(count)
     contaminated = int(
         connection.execute(  # type: ignore[attr-defined]
@@ -2837,11 +2893,22 @@ def complete_deletions(
                 if info.schema_version >= 5
                 else []
             )
+            knowledge_rows = (
+                connection.execute(
+                    "SELECT operation_id,record_id FROM knowledge_deletion_jobs "
+                    "WHERE status='pending' ORDER BY operation_id"
+                ).fetchall()
+                if info.schema_version >= 10
+                else []
+            )
             batch = _DeletionBatch(
-                record_ids=tuple(sorted({UUID(row[1]) for row in artifact_rows + subject_rows})),
+                record_ids=tuple(
+                    sorted({UUID(row[1]) for row in artifact_rows + subject_rows + knowledge_rows})
+                ),
                 artifact_jobs=tuple(row[0] for row in artifact_rows),
                 subject_jobs=tuple(row[0] for row in subject_rows),
                 method_jobs=tuple(row[0] for row in method_rows),
+                knowledge_jobs=tuple(row[0] for row in knowledge_rows),
                 contaminated_backups=tuple(
                     UUID(row[0])
                     for row in connection.execute(
@@ -2879,8 +2946,15 @@ def _complete_deletions_locked(
     pending_jobs = batch.artifact_jobs
     subject_jobs = batch.subject_jobs
     method_jobs = batch.method_jobs
+    knowledge_jobs = batch.knowledge_jobs
     contaminated = batch.contaminated_backups
-    if not pending_jobs and not subject_jobs and not method_jobs and not contaminated:
+    if (
+        not pending_jobs
+        and not subject_jobs
+        and not method_jobs
+        and not knowledge_jobs
+        and not contaminated
+    ):
         sanitize_database(root)
         with space_connection(root) as (connection, current):
             pending, complete, remaining_backups = _deletion_counts(
@@ -2955,6 +3029,13 @@ def _complete_deletions_locked(
                 connection.execute(
                     "UPDATE method_deletion_jobs SET status = 'complete', completed_at = ? "
                     "WHERE operation_id = ? AND status = 'pending'",
+                    (completed_at.isoformat(), operation_id),
+                )
+        if info.schema_version >= 10:
+            for operation_id in knowledge_jobs:
+                connection.execute(
+                    "UPDATE knowledge_deletion_jobs SET status='complete',completed_at=? "
+                    "WHERE operation_id=? AND status='pending'",
                     (completed_at.isoformat(), operation_id),
                 )
     sanitize_database(root)
