@@ -1,3 +1,95 @@
+# Core v0.1 — стабилизация Core → DBOS → Pi после приёмки Stage 6
+
+## outcome
+
+Техническое review Stage 6 pass 4 package 3 закрыто отдельно от приёмки
+владельцем Stage 6 в согласованном объёме на точном
+`c8a546485e756afc2b0c5c99360e9ea2a42ae84d`. Приёмка не относится
+ко всему ядру и не разрешает миграцию разработки. Записи:
+`docs/core-v0.1/STAGE6-PASS4-PACKAGE3-REVIEW.md` и
+`docs/core-v0.1/STAGE6-ACCEPTANCE.md`. В review пакета 3 было **55
+независимых профильных тестов**, **три внешние аварийные комбинации** и
+установленный wheel с **3 localhost HTTP**. Полный gate **709 тестов**
+того пакета принадлежит реализации. Документальная неточность о
+закрытии всех SQLite handles исправлена.
+
+Один разрешённый пакет расследования зафиксирован чистым кодовым
+`cb569fce96091d716fa1753f1f4d7f401473e41a`. На закреплённом
+Windows SQLite 3.53.3 воспроизведён конкретный WAL last-close checkpoint
+против первого `PRAGMA application_id` с `SQLITE_BUSY`; исходный
+исторический владелец lock в старом журнале неизвестен. Узко исправлен
+первый read-only boundary и закрытие handle при ошибке конфигурации.
+Для старого `rpc_transport` причина выхода Pi не установлена: в B Core
+сохранил claim и `prepare_invocation`, но не `admit`/`send`; stderr/exit
+не сохранялись. Добавлена адресная диагностика и регрессии безопасного
+отказа, без автоматического второго HTTP. Подробности и точные пределы:
+`docs/core-v0.1/STAGE6-STABILIZATION-RESULT.md`.
+
+## evidence
+
+Контролируемый WAL барьер: последний writer handle закрывался
+**460,282 мс**, читатель начал через **5 мс** и получил `SQLITE_BUSY`
+через **347,001 мс** на первом `PRAGMA application_id`; журнал
+`_scratch/stabilization-wal-close-pinned.log`. Старое одноразовое Core
+space и `_scratch/fix-3.10-stage6.log` показывают B claim в 14:12:12 UTC,
+prepare в 14:12:13, stop в 14:12:16 и reset loopback Bridge. Старая
+ошибка объединяла EOF и line bound, поэтому вывод о причине Pi не делается.
+Теперь диагностический режим сохраняет код выхода до/после host stop,
+ограниченный stderr, типы RPC событий, отказ monitor и Core
+invocation/held границу; не сохраняет payload событий.
+
+Собственный scoped Windows gate: **42 PASS**; добавленная проверка
+закрытия handle прошла в отдельном `test_space.py` (**8 PASS**).
+Полный Windows `uv run --locked python -m tools.check --deliver` на
+чистом `cb569fc`: **723 PASS за 488,01 с**, format, Ruff, strict mypy,
+**21/21** импортный контракт, sdist/wheel и report structure;
+`_scratch/stabilization-deliver-cb569fc.log`. Checkout schema 8 A/B/P:
+**3 HTTP** и три RPC diagnostic записи. Один Stage 5 fault прогон:
+семь групп; потеря post-send ответа сохранила invocation/assignment
+`unknown`, held **1000**, занятый ресурс и **1→1 HTTP** после restart;
+claim-before-Pi-crash дал **0 HTTP** и не заблокировал независимый Attempt.
+
+Wheel из точного чистого `cb569fc`, SHA-256
+`FEF4D89071E8A856EF71096D70D1B410BDB8D13A1ED435666CA8F1CD9A66B492`,
+проверен во внешнем venv: `source_tree_dirty=false`, `outside_checkout=true`,
+Python 3.13.7 / SQLite 3.53.3, Core/DBOS/Pi extension из `site-packages`,
+A/B/P **1→2→3 HTTP**; backup/restore/deletion без новых HTTP,
+независимый replay B, DBOS/Pi **3/3→2/2→1/1→0/0**.
+Отчёт `_scratch/stabilization-installed-cb569fc/report.json`.
+Это собственные проверки, а не независимое review стабилизации.
+
+## assumptions
+
+Данные синтетические, provider — localhost. Успешный повтор не
+объявляется исправлением неизвестной исторической причины. Узкий retry
+касается только первого deferred read, устойчивый lock остаётся отказом.
+
+## cuts
+
+Исторический владелец Core lock и причина старого Pi exit без stderr
+не доказаны; возможные EOF, line bound, протокол, runtime и monitor
+теперь различимы в новой трассе. `stale_basis` внутри `any` не менялся.
+Настоящих моделей, подписок, платного API, PR, миграции разработки и
+следующего предметного этапа не было. Следующий рекомендуемый этап по
+спецификации — отдельный versioned Binding для междеятельностной
+передачи принятого результата, после решения владельца.
+
+## cost
+
+Одноразовые Windows пространства, локальный DBOS/Pi, тесты, сборка и
+localhost HTTP; внешних платных вызовов нет.
+
+## manual-acceptance
+
+Владелец принял только Stage 6 на `c8a5464` в согласованном объёме.
+Пакет стабилизации не принят и передаётся на одно общее независимое
+review; собственные проверки не переименованы в независимые.
+
+## next
+
+`solmax` после независимого review точного итогового коммита. Этот чат
+останавливается после передачи пакета; Binding здесь не начинается.
+
 # Core v0.1 Stage 6 — проход 4, пакет 3: обслуживание и выпускной отчёт
 
 ## outcome
