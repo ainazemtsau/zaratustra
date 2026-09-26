@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import json
 import pickle
+import secrets
 import shutil
 import sqlite3
 import subprocess
@@ -1186,6 +1187,108 @@ def test_rpc_line_limit_and_stderr_tail_are_bounded() -> None:
     assigned_module._drain_stderr(child, tail)
     assert len(tail) == assigned_module.MAX_RPC_STDERR
     assert tail.endswith(b"new") and not tail.startswith(b"old")
+
+
+@pytest.mark.parametrize(
+    "event_type",
+    ["x" * (1024 * 1024), {"text": "x" * (1024 * 1024)}, "synthetic-secret"],
+    ids=["long-string", "large-object", "unexpected-type"],
+)
+def test_valid_large_rpc_event_keeps_diagnostic_evidence_bounded(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    event_type: object,
+) -> None:
+    request_id = "a" * 32
+    raw = b"".join(
+        (json.dumps(event, ensure_ascii=False) + "\n").encode("utf-8")
+        for event in (
+            {"type": event_type, "payload": "synthetic-secret"},
+            {"type": "response", "id": request_id, "success": True},
+            {"type": "agent_settled"},
+        )
+    )
+
+    class Child:
+        stdin = io.BytesIO()
+        stdout = io.BytesIO(raw)
+
+        def poll(self) -> None:
+            return None
+
+    child = cast(subprocess.Popen[bytes], Child())
+    monkeypatch.setattr(secrets, "token_hex", lambda _n: request_id)
+    events: list[dict[str, object]] = []
+    assigned_module._rpc_prompt(child, "synthetic prompt", threading.Event(), events)
+    assert b"synthetic prompt" in Child.stdin.getvalue()
+    assert events[1]["event_type"] == "<omitted>"
+    assert events[1]["event_type_omitted"] is True
+    assert assigned_module._trace_size(events) <= assigned_module.MAX_RPC_TRACE_BYTES
+
+    root, workspace, _, work_id, attempt_id, _ = assigned(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    config = _valid_assigned_config(root, workspace, tmp_path / "runtime")
+    monkeypatch.setenv("ZARATUSTRA_RPC_DIAGNOSTICS", "1")
+    capsys.readouterr()
+    assigned_module._emit_rpc_diagnostics(
+        config, owner, work_id, attempt_id, child, None, bytearray(), events, None
+    )
+    line = capsys.readouterr().err
+    assert len(line.encode("utf-8")) <= assigned_module.MAX_RPC_DIAGNOSTIC_BYTES
+    assert "synthetic-secret" not in line
+    assert "x" * 1000 not in line
+
+
+def test_rpc_event_trace_marks_count_or_byte_truncation() -> None:
+    events: list[dict[str, object]] = []
+    for _ in range(200):
+        assigned_module._trace_event(
+            events,
+            kind="rpc_event",
+            event_type="response",
+            request_id="a" * 32,
+            request_match=False,
+            success=False,
+        )
+    assert len(events) <= assigned_module.MAX_RPC_EVENTS
+    assert assigned_module._trace_size(events) <= assigned_module.MAX_RPC_TRACE_BYTES
+    assert events[-1] == {"kind": "trace_truncated"}
+
+
+def test_rpc_diagnostic_omits_unbounded_failure_and_core_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root, workspace, _, work_id, attempt_id, _ = assigned(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    config = _valid_assigned_config(root, workspace, tmp_path / "runtime")
+    large = "z" * (1024 * 1024)
+
+    def failed_read(*_args: object) -> None:
+        raise FoundationError("storage", large)
+
+    monkeypatch.setattr(assigned_module, "read_execution", failed_read)
+    monkeypatch.setenv("ZARATUSTRA_RPC_DIAGNOSTICS", "1")
+    capsys.readouterr()
+    assigned_module._emit_rpc_diagnostics(
+        config,
+        owner,
+        work_id,
+        attempt_id,
+        None,
+        17,
+        bytearray(b"\x00" * assigned_module.MAX_RPC_STDERR),
+        [{"kind": "rpc_event", "event_type": large}],
+        FoundationError("rpc_transport", large),
+    )
+    line = capsys.readouterr().err
+    assert len(line.encode("utf-8")) <= assigned_module.MAX_RPC_DIAGNOSTIC_BYTES
+    assert "z" * 1000 not in line
+    report = json.loads(line.removeprefix("ZARATUSTRA_RPC_DIAGNOSTIC "))
+    assert report["exit_before_host_stop"] == 17
+    assert report["failure_code"] == "rpc_transport"
+    assert report["core_read_error"]["code"] == "storage"
+    assert report["diagnostic_omitted_for_bound"] is True
 
 
 def test_rpc_runtime_exit_keeps_stderr_separate_from_eof() -> None:

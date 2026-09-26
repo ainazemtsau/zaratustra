@@ -88,6 +88,28 @@ WORKFLOW_NAME = "zara-assigned-work-v1"
 MAX_RPC_LINE = 16 * 1024 * 1024
 MAX_RPC_STDERR = 16 * 1024
 MAX_RPC_EVENTS = 128
+MAX_RPC_TRACE_BYTES = 16 * 1024
+MAX_RPC_DIAGNOSTIC_BYTES = 128 * 1024
+MAX_RPC_INVOCATIONS = 128
+MAX_RPC_LABEL_LENGTH = 64
+RPC_EVENT_TYPES = frozenset(
+    {
+        "response",
+        "extension_error",
+        "extension_ui_request",
+        "agent_start",
+        "agent_end",
+        "agent_settled",
+        "turn_start",
+        "turn_end",
+        "message_start",
+        "message_update",
+        "message_end",
+        "tool_execution_start",
+        "tool_execution_update",
+        "tool_execution_end",
+    }
+)
 # Storage or maintenance contention is not a subject refusal of the assigned child.
 TECHNICAL_REFUSALS = frozenset(
     {"busy", "storage", "history_busy", "maintenance_busy", "corrupt_space", "deletion_pending"}
@@ -379,9 +401,64 @@ def _rpc_line(process: subprocess.Popen[bytes]) -> dict[str, Any]:
     return result
 
 
+def _diagnostic_label(value: object) -> tuple[str, bool]:
+    """Retain only short metadata tokens; never copy an RPC event's prose."""
+
+    if (
+        isinstance(value, str)
+        and 0 < len(value) <= MAX_RPC_LABEL_LENGTH
+        and value.isascii()
+        and all(character.isalnum() or character in "_:-." for character in value)
+    ):
+        return value, False
+    return "<omitted>", True
+
+
+def _trace_size(events: list[dict[str, object]]) -> int:
+    return len(json.dumps(events, ensure_ascii=False).encode("utf-8"))
+
+
 def _trace_event(events: list[dict[str, object]], **fields: object) -> None:
-    if len(events) < MAX_RPC_EVENTS:
-        events.append(fields)
+    if events and events[-1] == {"kind": "trace_truncated"}:
+        return
+    safe: dict[str, object] = {}
+    for key, value in fields.items():
+        if key not in {"kind", "request_id", "event_type", "request_match", "success", "code"}:
+            continue
+        if isinstance(value, bool):
+            safe[key] = value
+        else:
+            safe[key], omitted = _diagnostic_label(value)
+            if omitted:
+                safe[f"{key}_omitted"] = True
+    if len(events) < MAX_RPC_EVENTS and _trace_size([*events, safe]) <= MAX_RPC_TRACE_BYTES:
+        events.append(safe)
+        return
+    marker: dict[str, object] = {"kind": "trace_truncated"}
+    if len(events) == MAX_RPC_EVENTS:
+        events[-1] = marker
+    else:
+        events.append(marker)
+    while _trace_size(events) > MAX_RPC_TRACE_BYTES:
+        events.pop(-2)
+
+
+def _failure_boundary(failure: Exception | None) -> str | None:
+    if failure is None:
+        return None
+    if isinstance(failure, FoundationError) and failure.code == "rpc_transport":
+        message = failure.detail
+        for boundary in (
+            "stdout is unavailable",
+            "EOF",
+            "line_limit",
+            "truncated_line",
+            "invalid_json",
+            "invalid_event",
+        ):
+            if message.startswith(f"Pi RPC {boundary}"):
+                return boundary.replace(" ", "_")
+    return _diagnostic_label(type(failure).__name__)[0]
 
 
 def _drain_stderr(process: subprocess.Popen[bytes], tail: bytearray) -> None:
@@ -416,23 +493,40 @@ def _emit_rpc_diagnostics(
         "stderr_tail": stderr_tail.decode("utf-8", errors="replace"),
         "stderr_truncated": len(stderr_tail) == MAX_RPC_STDERR,
         "rpc_events": events,
-        "failure_code": getattr(failure, "code", None),
-        "failure": str(failure) if failure is not None else None,
+        "failure_code": _diagnostic_label(getattr(failure, "code", None))[0]
+        if failure is not None
+        else None,
+        "failure_boundary": _failure_boundary(failure),
     }
     try:
         snapshot = read_execution(config.space, work_id, authority)
-        report["assignment"] = next(
+        assignment = next(
             (item.status for item in snapshot.assignments if item.attempt_id == attempt_id), None
         )
+        report["assignment"] = _diagnostic_label(assignment)[0] if assignment else None
+        invocations = [item for item in snapshot.invocations if item.attempt_id == attempt_id]
         report["invocations"] = [
-            {"id": str(item.invocation_id), "status": item.status}
-            for item in snapshot.invocations
-            if item.attempt_id == attempt_id
+            {"id": str(item.invocation_id), "status": _diagnostic_label(item.status)[0]}
+            for item in invocations[:MAX_RPC_INVOCATIONS]
         ]
+        report["invocations_truncated"] = len(invocations) > MAX_RPC_INVOCATIONS
         report["held_units"] = snapshot.held_units
     except FoundationError as error:
-        report["core_read_error"] = {"code": error.code, "detail": str(error)}
-    print("ZARATUSTRA_RPC_DIAGNOSTIC " + json.dumps(report, ensure_ascii=False), file=sys.stderr)
+        report["core_read_error"] = {"code": _diagnostic_label(error.code)[0]}
+    prefix = "ZARATUSTRA_RPC_DIAGNOSTIC "
+    line = prefix + json.dumps(report, ensure_ascii=False)
+    if len((line + "\n").encode("utf-8")) > MAX_RPC_DIAGNOSTIC_BYTES:
+        report["stderr_tail"] = ""
+        report["stderr_truncated"] = True
+        report["stderr_omitted_for_bound"] = True
+        line = prefix + json.dumps(report, ensure_ascii=False)
+    if len((line + "\n").encode("utf-8")) > MAX_RPC_DIAGNOSTIC_BYTES:
+        report["rpc_events"] = [{"kind": "trace_truncated"}]
+        report["invocations"] = []
+        report["invocations_truncated"] = True
+        report["diagnostic_omitted_for_bound"] = True
+        line = prefix + json.dumps(report, ensure_ascii=False)
+    print(line, file=sys.stderr)
 
 
 def _rpc_line_with_stop(
@@ -481,10 +575,13 @@ def _rpc_prompt(
     while True:
         event = _rpc_line_with_stop(process, stop_requested)
         if events is not None:
+            event_type = event.get("type")
             _trace_event(
                 events,
                 kind="rpc_event",
-                event_type=str(event.get("type")),
+                event_type=event_type
+                if isinstance(event_type, str) and event_type in RPC_EVENT_TYPES
+                else None,
                 request_match=event.get("id") == request_id,
                 success=event.get("success") is True,
             )
@@ -570,7 +667,7 @@ def _watch_core_stop(
 
         def control_error(error: FoundationError) -> None:
             if events is not None:
-                _trace_event(events, kind="control_read_error", code=error.code, detail=str(error))
+                _trace_event(events, kind="control_read_error", code=error.code)
 
         if not _control_stop_requested(config, authority, work_id, attempt_id, control_error):
             continue
@@ -984,7 +1081,7 @@ def _execute_under_lock(
                 observed=observed or process is None,
             )
         except FoundationError as error:
-            _trace_event(rpc_events, kind="record_stop_error", code=error.code, detail=str(error))
+            _trace_event(rpc_events, kind="record_stop_error", code=error.code)
             raise
         finally:
             _emit_rpc_diagnostics(
