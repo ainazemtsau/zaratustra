@@ -577,9 +577,28 @@ class Bridge:
         if latest_source is not None:
             mandatory.append(latest_source)
         if selected is not None and purpose == "compaction-summary":
-            work = read_work(self.path, selected.work_id, self.authority)
-            mandatory.append(KnowledgeRef(record_id=work.work_id, revision=work.revision))
+            current = read_execution(self.path, selected.work_id, self.authority)
+            work = current.work
+            mandatory.extend(
+                (
+                    KnowledgeRef(
+                        record_id=current.activity.activity_id, revision=current.activity.revision
+                    ),
+                    KnowledgeRef(record_id=work.work_id, revision=work.revision),
+                )
+            )
             packet["work_address"] = f"{work.work_id}@{work.revision}"
+            packet["activity_address"] = (
+                f"{current.activity.activity_id}@{current.activity.revision}"
+            )
+            if work.state.method != "none":
+                packet["method_address"] = work.state.method.model_dump(mode="json")
+            if current.composition is not None:
+                packet["plan_address"] = {
+                    "work_id": str(current.composition.parent_work_id),
+                    "revision": current.composition.plan_revision,
+                    "method": current.composition.method.model_dump(mode="json"),
+                }
         elif selected is not None:
             activity = read_activity(self.path, selected.activity_id, self.authority)
             work = read_work(self.path, selected.work_id, self.authority)

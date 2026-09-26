@@ -23,7 +23,9 @@ from zaratustra.foundation import (
     CreateWorkRequest,
     HandoffState,
     OutputContract,
+    StopAttemptRequest,
     WorkState,
+    read_execution,
     read_knowledge,
     read_space,
     search_knowledge,
@@ -141,6 +143,7 @@ def run_process(
     *,
     work: tuple[object, object] | None = None,
     compact: bool = False,
+    continue_after_compact: bool = False,
 ) -> list[dict[str, object]]:
     bridge_server = BridgeServer(bridge)
     bridge_thread = threading.Thread(target=bridge_server.serve_forever, daemon=True)
@@ -247,6 +250,7 @@ def run_process(
         )
         process.stdin.flush()
         compaction_started = False
+        continuation_started = False
         deadline = time.monotonic() + 90
         while time.monotonic() < deadline:
             try:
@@ -264,13 +268,41 @@ def run_process(
                     + b"\n"
                 )
                 process.stdin.flush()
-            if compact and event.get("type") == "agent_end" and not compaction_started:
+            if (
+                compact
+                and event.get("type") == ("agent_settled" if work else "agent_end")
+                and not compaction_started
+            ):
+                assert provider.calls >= 1, [
+                    item for item in observed if item.get("type") == "extension_error"
+                ]
                 process.stdin.write(b'{"id":"compact","type":"compact"}\n')
                 process.stdin.flush()
                 compaction_started = True
                 continue
             if compact and event.get("type") == "response" and event.get("id") == "compact":
-                assert event.get("success") is True, event
+                assert event.get("success") is True, (
+                    event,
+                    provider.calls,
+                    [
+                        item
+                        for item in observed
+                        if item.get("type") in ("extension_error", "compaction_end")
+                    ],
+                )
+                if not continue_after_compact:
+                    break
+                process.stdin.write(
+                    b'{"id":"continue","type":"prompt","message":"Continue the fictional Work."}\n'
+                )
+                process.stdin.flush()
+                continuation_started = True
+                continue
+            if (
+                continuation_started
+                and event.get("type") == "agent_settled"
+                and provider.calls >= 3
+            ):
                 break
             if not compact and event.get("type") == ("agent_settled" if work else "agent_end"):
                 break
@@ -287,13 +319,16 @@ def run_process(
         failures = [
             event for event in observed if event.get("type") in ("extension_error", "response")
         ]
-        assert provider.calls == len(provider.script) + (2 if compact else 1), (
+        expected_calls = len(provider.script) + (
+            3 if continue_after_compact else 2 if compact else 1
+        )
+        assert provider.calls == expected_calls, (
             provider.calls,
             stderr,
             failures,
         )
         if compact:
-            assert "ZARA_MANIFEST:" in json.dumps(provider.requests[-1])
+            assert all("ZARA_MANIFEST:" in json.dumps(body) for body in provider.requests)
         assert not errors, errors
         return observed
     finally:
@@ -408,12 +443,36 @@ def run_probe(tmp_path: Path, runtime: Path) -> None:
         state=WorkState(
             activity_id=activity,
             goal="Use current fictional setting",
-            expected_outputs=(OutputContract(slot="result", media_type="text/plain"),),
+            expected_outputs=(
+                OutputContract(slot="result", media_type="text/plain"),
+                OutputContract(slot="review", media_type="text/plain"),
+            ),
         ),
     )
     before = Provider([])
     run_process(
-        tmp_path, runtime, Bridge(root, owner, tmp_path, 10000), before, work=(activity, work_one)
+        tmp_path,
+        runtime,
+        Bridge(root, owner, tmp_path, 10000),
+        before,
+        work=(activity, work_one),
+        compact=True,
+        continue_after_compact=True,
+    )
+    assert len(before.requests) == 3
+    assert all(str(work_one) in json.dumps(body) for body in before.requests)
+    assert "work_address" in json.dumps(before.requests[1])
+    assert str(claim_id) in json.dumps(before.requests[2])
+    active = read_execution(root, work_one, owner).attempts[-1]
+    _apply(
+        root,
+        space,
+        owner,
+        StopAttemptRequest,
+        attempt_id=active.attempt_id,
+        work_id=work_one,
+        session_id=active.session_id,
+        outcome="interrupted",
     )
     assert any(
         str(claim_id) in json.dumps(body) and str(document_id) in json.dumps(body)
