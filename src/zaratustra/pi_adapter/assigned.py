@@ -36,6 +36,7 @@ from zaratustra.foundation import (
     complete_deletions,
     create_backup,
     inspect_space,
+    managed_executor_start_lock,
     managed_pi_session_lock,
     read_assigned_control,
     read_execution,
@@ -975,54 +976,52 @@ def _run_assigned_locked(
         if not claimed:
             _record_stop(config, authority, work_id, attempt_id, attempt.session_id, observed=True)
             raise FoundationError("stale_plan", "Core fenced the Attempt before Pi launched")
-    existing = None
-    if executor_database(config.space).is_file():
-        client = _client(config.space)
-        try:
-            existing = _existing_workflow(client, attempt_id)
-            if existing is not None and (
-                (
-                    existing.app_version == EXECUTOR_VERSION
-                    and existing.status in {"ENQUEUED", "PENDING"}
-                )
-                or (
-                    existing.app_version == _attempt_app_version(attempt_id)
-                    and existing.status == "PENDING"
-                    and existing.executor_id == "local"
-                )
-            ):
-                # The shared legacy route needs an addressed queue. The first
-                # addressed route also used DBOS's default executor ID "local";
-                # startup recovery under this Attempt's ID cannot see its PENDING
-                # record. Re-enqueue only this unfinished workflow through DBOS's
-                # public resume, keeping its ID, inputs, steps and app version.
-                # Core's launch claim still decides whether replay is safe.
-                client.resume_workflow(
-                    _workflow_id(attempt_id), queue_name=_attempt_queue(attempt_id)
-                )
-        finally:
-            client.destroy()
-    application_version = existing.app_version if existing else _attempt_app_version(attempt_id)
-    if application_version not in (EXECUTOR_VERSION, _attempt_app_version(attempt_id)):
-        raise FoundationError("executor_version", "DBOS workflow has an unexpected version")
     queue_name = _attempt_queue(attempt_id)
-    DBOS(
-        config={
-            "name": "zaratustra-assigned-rpc",
-            "system_database_url": _database_url(executor_database(config.space)),
-            "application_version": application_version,
-            "executor_id": str(attempt_id),
-        }
-    )
+    # DBOS SQLite schema migration is not safe under two cold process starts.
+    # Keep the lookup and launch in one short space-wide critical section. The
+    # outer Pi session lock continues to cover maintenance for the whole run.
+    with managed_executor_start_lock(config.space):
+        existing = None
+        if executor_database(config.space).is_file():
+            client = _client(config.space)
+            try:
+                existing = _existing_workflow(client, attempt_id)
+                if existing is not None and (
+                    (
+                        existing.app_version == EXECUTOR_VERSION
+                        and existing.status in {"ENQUEUED", "PENDING"}
+                    )
+                    or (
+                        existing.app_version == _attempt_app_version(attempt_id)
+                        and existing.status == "PENDING"
+                        and existing.executor_id == "local"
+                    )
+                ):
+                    # Recovery stays addressed to this Attempt and retains the
+                    # original workflow ID and DBOS steps.
+                    client.resume_workflow(_workflow_id(attempt_id), queue_name=queue_name)
+            finally:
+                client.destroy()
+        application_version = existing.app_version if existing else _attempt_app_version(attempt_id)
+        if application_version not in (EXECUTOR_VERSION, _attempt_app_version(attempt_id)):
+            raise FoundationError("executor_version", "DBOS workflow has an unexpected version")
+        DBOS(
+            config={
+                "name": "zaratustra-assigned-rpc",
+                "system_database_url": _database_url(executor_database(config.space)),
+                "application_version": application_version,
+                "executor_id": str(attempt_id),
+            }
+        )
 
-    @DBOS.workflow(name=WORKFLOW_NAME)
-    def assigned_work(work: str, attempt: str, epoch: int, generation: int) -> str:
-        return _execute(config, authority, UUID(work), UUID(attempt), epoch, generation)
+        @DBOS.workflow(name=WORKFLOW_NAME)
+        def assigned_work(work: str, attempt: str, epoch: int, generation: int) -> str:
+            return _execute(config, authority, UUID(work), UUID(attempt), epoch, generation)
 
-    # DBOS otherwise listens to every persisted queue, including the shared legacy
-    # queue. Its startup recovery must also have a distinct executor identity.
-    DBOS.listen_queues([queue_name])
-    DBOS.launch()
+        # DBOS otherwise listens to every persisted queue, including the shared
+        # legacy queue. Its recovery also needs this Attempt's executor identity.
+        DBOS.listen_queues([queue_name])
+        DBOS.launch()
     try:
         DBOS.register_queue(queue_name, worker_concurrency=1)
         deliver_outbox(config.space, authority)

@@ -34,6 +34,11 @@ unchanged Stage 5, Stage 6 and installed-wheel probes remain separate regression
 localhost Pi/DBOS path, counting three HTTP and checking own confirmation,
 Pi visibility, inert restore and sequential deletion. `probe_install_stage6
 --parent-execution` runs that mode from a wheel in an outside-checkout venv.
+`probe_stage6_pass4` is a development-only live fault harness for pass 4 package 2.
+It runs real local DBOS/Pi with a fictional localhost provider, preserves fault
+markers, runner/Pi/RPC logs and fresh-process Core/DBOS snapshots in a NEW ignored
+scratch directory, and counts HTTP. Its exclusive SQLite holder is an explicitly
+synthetic diagnostic, not proof of the cause of an earlier spontaneous lock.
 Start isolated children as `-I -X utf8`: -I ignores PYTHONIOENCODING on Windows pipes.
 Its provider is a localhost synthetic fixture; it never contacts a real model.
 probe_public_onboarding_t1 builds and installs the current wheel, migrates only an

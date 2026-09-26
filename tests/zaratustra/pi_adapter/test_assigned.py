@@ -10,6 +10,7 @@ import sqlite3
 import subprocess
 import sys
 import threading
+import time
 from contextlib import closing
 from pathlib import Path
 from typing import cast
@@ -49,6 +50,7 @@ from zaratustra.foundation import (
     complete_deletions,
     create_backup,
     inspect_space,
+    managed_executor_start_lock,
     managed_pi_lock,
     managed_pi_session_lock,
     read_artifact,
@@ -148,6 +150,41 @@ def test_concurrent_pi_locks_exclude_deletion_maintenance(tmp_path: Path) -> Non
                 raise AssertionError("Maintenance must not enter while Pi is active")
     with managed_pi_lock(root):
         assert root.is_dir()
+
+
+def test_executor_start_serializes_processes_without_serializing_sessions(tmp_path: Path) -> None:
+    root, _, _, _, _, _ = assigned(tmp_path)
+    ready_file = tmp_path / "child-ready"
+    script = (
+        "from pathlib import Path\n"
+        "from zaratustra.foundation import managed_executor_start_lock\n"
+        "import sys\n"
+        "Path(sys.argv[2]).write_text('ready', encoding='utf-8')\n"
+        "with managed_executor_start_lock(Path(sys.argv[1])):\n"
+        "    print('acquired', flush=True)\n"
+    )
+    with managed_pi_session_lock(root), managed_executor_start_lock(root):
+        process = subprocess.Popen(
+            [sys.executable, "-c", script, str(root), str(ready_file)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+        )
+        try:
+            deadline = time.monotonic() + 10
+            while not ready_file.is_file() and time.monotonic() < deadline:
+                assert process.poll() is None
+                time.sleep(0.01)
+            assert ready_file.is_file()
+            time.sleep(0.1)
+            assert process.poll() is None
+        finally:
+            if process.poll() is not None:
+                process.communicate(timeout=10)
+    stdout, stderr = process.communicate(timeout=10)
+    assert process.returncode == 0, stderr
+    assert stdout.strip() == "acquired"
 
 
 def test_assigned_launch_delivery_and_backup_share_maintenance_boundary(

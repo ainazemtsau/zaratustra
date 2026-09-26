@@ -3,6 +3,9 @@
 This package is the independent Core v0.1 subject foundation. It never imports the
 legacy `zaratustra.core` package or higher product surfaces. Its public contract is
 `__init__.py`; internal modules share only explicit typed models.
+`history.py` also owns the short cross-process DBOS startup byte lock on the
+existing managed Pi lock marker; each runner holds its Pi session lock while
+using it, so maintenance remains excluded without serializing full executions.
 
 `runtime.py` admits the exact supported SQLite build before stdlib `sqlite3` loads;
 the public package initializer calls it before importing any Core submodule.

@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 import os
 import secrets
+import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -15,6 +16,7 @@ from .storage import STATE_DIRECTORY, FoundationError, layout
 HISTORY_DIRECTORY = "pi-sessions"
 HISTORY_MARKER = "owner.txt"
 LOCK_BYTES = 4096
+EXECUTOR_START_BYTE = LOCK_BYTES
 
 
 def _check_plain(path: Path) -> None:
@@ -107,6 +109,62 @@ def managed_pi_session_lock(path: Path) -> Iterator[None]:
             yield
         finally:
             fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+@contextmanager
+def managed_executor_start_lock(path: Path) -> Iterator[None]:
+    """Serialize DBOS SQLite startup across assigned runners in one Core space.
+
+    A runner holds its ordinary Pi session lock around this short startup lock, so
+    maintenance remains excluded while DBOS creates or migrates its database.
+    """
+
+    root, _, _ = layout(path)
+    marker = root / STATE_DIRECTORY / "pi-owner.lock"
+    _check_plain(marker)
+    try:
+        opened = marker.open("a+b")
+    except OSError as error:
+        raise FoundationError("history_busy", "Cannot open DBOS startup lock") from error
+    with opened as handle:
+        deadline = time.monotonic() + 30
+        if os.name == "nt":
+            import msvcrt
+
+            while True:
+                handle.seek(EXECUTOR_START_BYTE)
+                try:
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                    break
+                except OSError as error:
+                    if time.monotonic() >= deadline:
+                        raise FoundationError(
+                            "history_busy", "DBOS startup is held by another runner"
+                        ) from error
+                    time.sleep(0.05)
+            try:
+                yield
+            finally:
+                handle.seek(EXECUTOR_START_BYTE)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            fcntl = importlib.import_module("fcntl")
+            while True:
+                try:
+                    fcntl.lockf(
+                        handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB, 1, EXECUTOR_START_BYTE
+                    )
+                    break
+                except OSError as error:
+                    if time.monotonic() >= deadline:
+                        raise FoundationError(
+                            "history_busy", "DBOS startup is held by another runner"
+                        ) from error
+                    time.sleep(0.05)
+            try:
+                yield
+            finally:
+                fcntl.lockf(handle.fileno(), fcntl.LOCK_UN, 1, EXECUTOR_START_BYTE)
 
 
 def managed_pi_sessions(path: Path, space_id: UUID, *, create: bool = False) -> Path:

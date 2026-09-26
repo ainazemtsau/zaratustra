@@ -32,6 +32,9 @@ is resumed by its own runner through the same public DBOS operation. Core's
 committed launch claim still makes a second execution unknown without new HTTP.
 An unrelated legacy workflow stays queued for its own runner. A cancelled launch
 with no claim is an observed prelaunch stop without Pi or HTTP.
+Concurrent cold runners in one Core space serialize the short DBOS SQLite
+lookup/migration/launch window with `managed_executor_start_lock`. Their
+Attempt-specific queues and Pi sessions remain independent after launch.
 Schema 8 lets the same assigned path run a root or nested composite Work's own
 Attempt. Its Core plan pin and output proof are visible by address in the assigned
 context and `/zara-status`, with roleless obligations labelled as own Work.

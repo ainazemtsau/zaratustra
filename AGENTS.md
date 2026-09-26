@@ -67,9 +67,14 @@
   composite-parent execution slice was implemented as schema 8; its technical
   review closed at `2cd3cf8bd021be5584db4ea963799ec0fc2bc4f7`; see
   `docs/core-v0.1/STAGE6-PARENT-EXECUTION-REVIEW.md`. This is not schema 7,
-  schema 8, pass 3 or Stage 6 acceptance. Pass 4 has only a working plan:
-  `docs/core-v0.1/STAGE6-PASS4-PLAN.md`. Its implementation, real model calls
-  and development migration are not authorized.
+  schema 8, pass 3 or Stage 6 acceptance. Pass 4 follows the working plan
+  `docs/core-v0.1/STAGE6-PASS4-PLAN.md`. The owner closed technical review
+  of package 1 on `6deaaf17d8432db629ddfd788589087e28a13c2c` after an
+  independent 60-test scoped gate and three external crash scenarios. The owner
+  authorized only package 2, the live DBOS/Pi windows; its implementation
+  evidence is `docs/core-v0.1/STAGE6-PASS4-PACKAGE2-RESULT.md` and awaits one
+  overall review. Package 3, real model calls and development migration are
+  not authorized.
   `database is locked` and `rpc_transport` remain open observations.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
@@ -161,8 +166,9 @@ checkpoint, with technical review closed at `73fffa7`; see
 closed at `4c9c8ec`; see `STAGE6-PASS3-IMPLEMENTATION.md` and
 `STAGE6-PASS3-REVIEW-3.10.md`. The separate parent-execution slice is
 implemented and its technical review closed at `2cd3cf8`; see
-`STAGE6-PARENT-EXECUTION-REVIEW.md`. Pass 4 has a working plan only:
-`STAGE6-PASS4-PLAN.md`.
+`STAGE6-PARENT-EXECUTION-REVIEW.md`. Pass 4 package 1 technical review is
+closed; package 2 is the authorized live DBOS/Pi checkpoint under
+`STAGE6-PASS4-PLAN.md` and `STAGE6-PASS4-PACKAGE2-RESULT.md`.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,
@@ -244,8 +250,8 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
   implemented through part 3.10. Its technical reviews are closed separately;
   schema 7, pass 3 and Stage 6 remain unaccepted. The separate
   parent-execution slice has a closed technical review at `2cd3cf8`,
-  separately from owner acceptance. Pass 4 has a plan only; implementation
-  is not yet authorized.
+  separately from owner acceptance. Pass 4 package 1 technical review is
+  closed; only package 2 implementation is authorized and awaits review.
   Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.
