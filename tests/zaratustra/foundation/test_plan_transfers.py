@@ -68,6 +68,7 @@ from zaratustra.foundation import (
     read_execution,
     read_obligation,
     read_plan_nodes,
+    read_receipt,
     read_space,
     read_technical_deletion_targets,
     read_work,
@@ -210,6 +211,8 @@ def test_kept_node_continues_through_a_transfer_and_the_replaced_node_is_fenced(
         case, revised, (_replace(case, a, a2, outcome="cancelled"), _keep(b))
     )
     receipt = apply_operation(root, request, owner)
+    assert apply_operation(root, request, owner) == receipt
+    assert read_receipt(root, request.operation_id, owner) == receipt
     assert receipt.result["transfers"] == [
         {"attempt_id": str(b_attempt), "work_id": str(b.work_id), "plan_revision": 2}
     ]

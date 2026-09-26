@@ -27,7 +27,14 @@ from tests.zaratustra.foundation.test_applicability import (
 from tests.zaratustra.foundation.test_child_execution import _assignment_revision, _invocation
 from tests.zaratustra.foundation.test_composition import _apply, _result, _sqlite_contains
 from tests.zaratustra.foundation.test_parallel_branches import _running
-from tests.zaratustra.foundation.test_plan_transfers import _case, _pair, _prepare, _publish
+from tests.zaratustra.foundation.test_plan_transfers import (
+    _case,
+    _pair,
+    _prepare,
+    _publish,
+    _states,
+    _states_in_new_process,
+)
 from tests.zaratustra.foundation.test_waivers import _except, _waive_request
 from zaratustra.foundation import (
     ChoiceApplicability,
@@ -443,6 +450,15 @@ def test_v2_transfers_kept_attempt_and_fences_replaced_attempt(tmp_path: Path) -
         "unknown"
     ]
     _refused(case, "method_in_use", delete_old)
+    assert apply_operation(root, request, owner) == receipt
+    assert read_receipt(root, request.operation_id, owner) == receipt
+    addressed = {
+        "parent": parent,
+        "replaced": a.work_id,
+        "replacement": a2.work_id,
+        "kept": b.work_id,
+    }
+    assert _states_in_new_process(root, addressed) == _states(root, owner, addressed)
 
 
 def test_replaced_v1_evidence_cannot_confirm_v2_requirement(tmp_path: Path) -> None:
