@@ -99,6 +99,16 @@ P, вызывая `complete_deletions` после каждого шага. Ме�
 Core SQLite не содержат уникальный маркер G. Этот Core-сценарий не
 создаёт DBOS/Pi; их физическая санация проверена живым случаем выше.
 
+| Достигнутая граница | До → после и чтение новым процессом | HTTP | Receipt/replay | Предел |
+| --- | --- | --- | --- | --- |
+| Карантин после Core `sent` собственного P | `assigned/sent`, held 5 → epoch 2, после recover `interrupted/unknown`, held 5; новый процесс прочёл оба адреса | 0, HTTP клиент не запускался | Старый authority отказан; прежний assignment receipt читается в новом epoch | Локальная запись send не подтверждает получение provider |
+| Старый живой runner на restore A/B/P | 3 answered вызова → карантин без активного executor, `permission_denied` до DBOS launch | 3→3 | История и ParentOutputProof читаются после явного recover; второй runner не доставлен | Не отменяет уже бывший внешний вызов |
+| Удаление A и его Artifact | 3 workflows/homes → 2/2, `pending=0` в новом процессе | 3→3 | Receipt назначения B и его точный replay сохранены | B независим в этом плане; не все возможные связи независимы |
+| Удаление B и его Artifact | 2/2 → 1/1, `pending=0` в новом процессе | 3→3 | В этой точке replay P отдельно не утверждается | Принятый P теряет зависимые основания адресно |
+| Удаление P и собственного Artifact | 1/1 → 0/0, `pending=0` в новом процессе | 3→3 | Receipt удалённых адресов не заявлен сохраняемым | Проверяются только managed Core/DBOS/Pi файлы |
+| Удаление Method после P | До P `method_in_use` → после P удаление и санация прошли | 3→3 | Независимый B был проверен ранее; deleted Method не replayable | Не проверяет Method в чужом активном плане |
+| G → N → P, с остановкой между вызовами обслуживания | Сначала Artifact G и старый backup исчезли; новый процесс подтвердил независимый Work; затем G, Artifact N, N, anchor, P, Method N/P и чистый новый backup | 0, Core-only без provider | Receipt/replay вне дерева сохранялся после каждого шага | Нет `os._exit` внутри технического cleanup этого дерева |
+
 Прерывания внутри `complete_deletions` по обе стороны compaction и
 повтор после них, а также адресная санация Pi/DBOS при межпоточной
 вставке другой deletion job проверяются сохранёнными регрессиями
@@ -114,7 +124,8 @@ review. Сохранённые probes прошли отдельно: Stage 5 RPC
 Stage 5 fault probe **7 групп**, Stage 6 child RPC **3 HTTP**, pass 3
 **4 HTTP**, schema 8 A/B/P **3 HTTP**. Журналы и одноразовые пространства
 находятся в `_scratch/pass4-package3-*`; итоговая schema 8 проба —
-`_scratch/pass4-package3-parent-final.log`, новые fault-тесты —
+`_scratch/pass4-package3-parent-final.log`, raw матрица **10 PASS** —
+`_scratch/pass4-package3-matrix.log`, новые fault-тесты —
 `test_pass4_maintenance.py`. Scoped gate изменённых файлов дал **20 PASS**,
 типы, Ruff, 21 контракт и сборки; это обратная связь, не полный выпускной
 gate.
@@ -125,8 +136,22 @@ gate.
 **21/21** импортный контракт, sdist/wheel и report structure; журнал
 `_scratch/pass4-package3-deliver.log`. После него тестовое ожидание
 удержания переведено с конкретной величины на равенство до/после.
-Точный чистый коммит, его полный повтор и установленный wheel вне
-checkout ожидают выпускной проверки; этот ранний gate не выдаётся за неё.
+
+Код и матрица зафиксированы на точном чистом коммите
+`455def17488d7ca8e54624133875f7843e5cc5a4`. На нём полный
+Windows `tools.check --deliver` повторён: **709 PASS за 581,82 с**,
+format, Ruff, strict mypy, **21/21** импортный контракт, sdist/wheel и
+report structure; журнал `_scratch/pass4-package3-deliver-clean-455def1.log`.
+`tools.probe_install_stage6` перед сборкой отвергает dirty tree; его
+отчёт `_scratch/pass4-package3-installed-455def1/report.json` записал
+`source_tree_dirty=false`, тот же `source_commit`, wheel SHA-256
+`21776AE328929113EF8F069E8CF7C19C64B7CEFB93D90DB0695F33B90887AB6F`,
+изолированный Python 3.13.7 / SQLite 3.53.3 и `foundation`, DBOS,
+Pi extension из внешнего `site-packages`. Установленный schema 8 A/B/P
+сценарий дал **3 HTTP**, старому runner отказано в карантине, после
+удалений DBOS/Pi **2/2→1/1→0/0**, затем Method удалён. Полный журнал:
+`_scratch/pass4-package3-installed-455def1.log`. Последующий коммит
+этого отчёта меняет только документацию, не проверенный код.
 
 ## Открытые наблюдения и пределы
 
