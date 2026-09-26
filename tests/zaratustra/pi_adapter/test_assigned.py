@@ -19,6 +19,7 @@ from uuid import UUID, uuid4, uuid5
 import pytest
 from dbos import DBOS, DBOSClient
 
+import zaratustra.foundation.storage as storage
 import zaratustra.pi_adapter.assigned as assigned_module
 from tests.zaratustra.foundation.test_continuation import ready
 from zaratustra.foundation import (
@@ -1141,6 +1142,177 @@ def test_active_rpc_read_is_interruptible_when_stop_is_requested() -> None:
             _rpc_line_with_stop(cast(subprocess.Popen[bytes], SilentChild()), stop)
     finally:
         release.set()
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        (b"", "EOF (exit_code=17)"),
+        (b"{}", "truncated_line"),
+        (b"{broken}\n", "invalid_json"),
+        (b"[]\n", "invalid_event"),
+        (b"{}\n", None),
+    ],
+)
+def test_rpc_line_identifies_failure_boundary(raw: bytes, expected: str | None) -> None:
+    class Child:
+        stdout = io.BytesIO(raw)
+
+        def poll(self) -> int:
+            return 17
+
+    child = cast(subprocess.Popen[bytes], Child())
+    if expected is None:
+        assert assigned_module._rpc_line(child) == {}
+    else:
+        with pytest.raises(FoundationError) as refused:
+            assigned_module._rpc_line(child)
+        assert refused.value.code == "rpc_transport"
+        assert expected in str(refused.value)
+
+
+def test_rpc_line_limit_and_stderr_tail_are_bounded() -> None:
+    class Child:
+        stdout = io.BytesIO(b"x" * (assigned_module.MAX_RPC_LINE + 1))
+        stderr = io.BytesIO(b"old" + b"x" * assigned_module.MAX_RPC_STDERR + b"new")
+
+        def poll(self) -> int:
+            return 9
+
+    child = cast(subprocess.Popen[bytes], Child())
+    with pytest.raises(FoundationError, match="line_limit"):
+        assigned_module._rpc_line(child)
+    tail = bytearray()
+    assigned_module._drain_stderr(child, tail)
+    assert len(tail) == assigned_module.MAX_RPC_STDERR
+    assert tail.endswith(b"new") and not tail.startswith(b"old")
+
+
+def test_rpc_runtime_exit_keeps_stderr_separate_from_eof() -> None:
+    child = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            "import sys; sys.stderr.write('synthetic runtime load failure'); sys.exit(17)",
+        ],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    tail = bytearray()
+    reader = threading.Thread(target=assigned_module._drain_stderr, args=(child, tail))
+    reader.start()
+    with pytest.raises(FoundationError, match="Pi RPC EOF") as refused:
+        assigned_module._rpc_line(child)
+    assert refused.value.code == "rpc_transport"
+    assert child.wait(timeout=5) == 17
+    reader.join(timeout=5)
+    assert b"synthetic runtime load failure" in tail
+
+
+def test_claimed_runtime_exit_does_not_start_a_second_pi_process(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root, workspace, _, work_id, attempt_id, _ = assigned(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    config = _valid_assigned_config(root, workspace, tmp_path / "runtime")
+    original_popen = subprocess.Popen
+    starts: list[object] = []
+
+    def failed_runtime(
+        command: object,
+        *,
+        cwd: Path,
+        env: dict[str, str],
+        stdin: int,
+        stdout: int,
+        stderr: int,
+    ) -> subprocess.Popen[bytes]:
+        starts.append(command)
+        return original_popen(
+            [
+                sys.executable,
+                "-c",
+                "import sys; sys.stderr.write('synthetic Pi runtime failed'); sys.exit(17)",
+            ],
+            cwd=cwd,
+            env=env,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+        )
+
+    monkeypatch.setattr(subprocess, "Popen", failed_runtime)
+    monkeypatch.setenv("ZARATUSTRA_RPC_DIAGNOSTICS", "1")
+    with pytest.raises(FoundationError, match="Pi RPC EOF"):
+        run_assigned(config, owner, attempt_id)
+    first = read_execution(root, work_id, owner)
+    assert first.assignments[0].status == "stopped"
+    assert first.invocations == () and first.held_units == 0
+    with pytest.raises(FoundationError):
+        run_assigned(config, owner, attempt_id)
+    assert len(starts) == 1
+    assert "synthetic Pi runtime failed" in capsys.readouterr().err
+
+
+def test_control_read_error_is_named_before_safe_stop(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, workspace, _, work_id, attempt_id, _ = assigned(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    config = _valid_assigned_config(root, workspace, tmp_path / "runtime")
+    errors: list[FoundationError] = []
+
+    def unavailable(*_args: object) -> bool:
+        raise FoundationError("storage", "SQLite identity failed (SQLITE_BUSY)")
+
+    monkeypatch.setattr(assigned_module, "read_assigned_control", unavailable)
+    assert assigned_module._control_stop_requested(
+        config, owner, work_id, attempt_id, errors.append
+    )
+    assert len(errors) == 1 and errors[0].code == "storage"
+
+
+@pytest.mark.parametrize("busy_reads", [1, 3])
+def test_record_stop_first_core_read_busy_is_bounded(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, busy_reads: int
+) -> None:
+    root, workspace, _, work_id, attempt_id, session_id = assigned(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    config = _valid_assigned_config(root, workspace, tmp_path / "runtime")
+    original_connect = storage._connect
+    attempts = 0
+
+    class BusyFirstRead:
+        def __init__(self, actual: sqlite3.Connection) -> None:
+            self.actual = actual
+
+        def execute(self, statement: str, parameters: tuple[object, ...] = ()) -> sqlite3.Cursor:
+            nonlocal attempts
+            if statement == "PRAGMA application_id":
+                attempts += 1
+                if attempts <= busy_reads:
+                    raise sqlite3.OperationalError("database is locked")
+            return self.actual.execute(statement, parameters)
+
+        def __getattr__(self, name: str) -> object:
+            return getattr(self.actual, name)
+
+    def connect(database: Path, *, writable: bool) -> BusyFirstRead:
+        return BusyFirstRead(original_connect(database, writable=writable))
+
+    monkeypatch.setattr(storage, "_connect", connect)
+    if busy_reads == 1:
+        _record_stop(config, owner, work_id, attempt_id, session_id, observed=True)
+    else:
+        with pytest.raises(FoundationError) as refused:
+            _record_stop(config, owner, work_id, attempt_id, session_id, observed=True)
+        assert refused.value.code == "storage"
+        assert "SQLite identity failed" in str(refused.value)
+    monkeypatch.undo()
+    state = read_execution(root, work_id, owner)
+    assert state.assignments[0].status == ("stopped" if busy_reads == 1 else "assigned")
+    assert state.invocations == () and state.outputs == ()
 
 
 def test_control_read_follows_stop_and_current_runner_rights(tmp_path: Path) -> None:

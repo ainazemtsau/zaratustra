@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import pytest
 
+import zaratustra.foundation.storage as storage
 from zaratustra.foundation import (
     BootstrapRequest,
     FoundationError,
@@ -52,6 +53,73 @@ def test_empty_space_has_own_identity_and_reopens_without_domain_state(tmp_path:
     assert reopened.state_revision == 0
     assert reopened.database == root / ".zara-core" / "core.sqlite3"
     assert list((root / ".zara-core" / "backups").iterdir()) == []
+
+
+@pytest.mark.parametrize("busy_reads", [1, 3])
+def test_first_deferred_read_only_retries_transient_busy(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, busy_reads: int
+) -> None:
+    root = tmp_path / "space"
+    root.mkdir()
+    created = initialize_space(root)
+    original_connect = storage._connect
+    connections: list[sqlite3.Connection] = []
+    attempts = 0
+
+    class BusyFirstRead:
+        def __init__(self, actual: sqlite3.Connection) -> None:
+            self.actual = actual
+
+        def execute(self, statement: str) -> sqlite3.Cursor:
+            nonlocal attempts
+            if statement == "PRAGMA application_id":
+                attempts += 1
+                if attempts <= busy_reads:
+                    raise sqlite3.OperationalError("database is locked")
+            return self.actual.execute(statement)
+
+        def __getattr__(self, name: str) -> object:
+            return getattr(self.actual, name)
+
+    def connect(database: Path, *, writable: bool) -> BusyFirstRead:
+        actual = original_connect(database, writable=writable)
+        connections.append(actual)
+        return BusyFirstRead(actual)
+
+    monkeypatch.setattr(storage, "_connect", connect)
+    if busy_reads == 1:
+        assert read_space(root).space_id == created.space_id
+        assert attempts == 2
+    else:
+        with pytest.raises(FoundationError) as refused:
+            read_space(root)
+        assert refused.value.code == "storage"
+        assert "SQLite identity failed" in str(refused.value)
+        assert attempts == 3
+    assert len(connections) == 1
+    with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+        connections[0].execute("SELECT 1")
+    monkeypatch.undo()
+    assert read_space(root).state_revision == created.state_revision
+
+
+def test_failed_sqlite_configuration_closes_its_handle(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class BrokenConnection:
+        closed = False
+
+        def execute(self, _statement: str) -> None:
+            raise sqlite3.OperationalError("synthetic configuration failure")
+
+        def close(self) -> None:
+            self.closed = True
+
+    broken = BrokenConnection()
+    monkeypatch.setattr(sqlite3, "connect", lambda *_args, **_kwargs: broken)
+    with pytest.raises(sqlite3.OperationalError, match="synthetic configuration failure"):
+        storage._connect(tmp_path / "synthetic.sqlite3", writable=False)
+    assert broken.closed
 
 
 def test_initialization_refuses_legacy_or_nonempty_directory_without_change(tmp_path: Path) -> None:

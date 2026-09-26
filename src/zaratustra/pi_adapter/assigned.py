@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import threading
+from collections.abc import Callable
 from contextlib import closing
 from dataclasses import dataclass
 from importlib.metadata import version
@@ -85,6 +86,8 @@ def _existing_workflow(client: DBOSClient, attempt_id: UUID) -> Any | None:
 
 WORKFLOW_NAME = "zara-assigned-work-v1"
 MAX_RPC_LINE = 16 * 1024 * 1024
+MAX_RPC_STDERR = 16 * 1024
+MAX_RPC_EVENTS = 128
 # Storage or maintenance contention is not a subject refusal of the assigned child.
 TECHNICAL_REFUSALS = frozenset(
     {"busy", "storage", "history_busy", "maintenance_busy", "corrupt_space", "deletion_pending"}
@@ -361,15 +364,75 @@ def _rpc_line(process: subprocess.Popen[bytes]) -> dict[str, Any]:
     if process.stdout is None:
         raise FoundationError("rpc_transport", "Pi RPC stdout is unavailable")
     raw = process.stdout.readline(MAX_RPC_LINE + 1)
-    if not raw or len(raw) > MAX_RPC_LINE or not raw.endswith(b"\n"):
-        raise FoundationError("rpc_transport", "Pi RPC ended or exceeded its line bound")
+    if not raw:
+        raise FoundationError("rpc_transport", f"Pi RPC EOF (exit_code={process.poll()})")
+    if len(raw) > MAX_RPC_LINE:
+        raise FoundationError("rpc_transport", f"Pi RPC line_limit ({len(raw)} bytes)")
+    if not raw.endswith(b"\n"):
+        raise FoundationError("rpc_transport", f"Pi RPC truncated_line ({len(raw)} bytes)")
     try:
         result = json.loads(raw[:-1].removesuffix(b"\r"))
     except (UnicodeDecodeError, ValueError) as error:
-        raise FoundationError("rpc_transport", "Pi RPC sent invalid JSONL") from error
+        raise FoundationError("rpc_transport", "Pi RPC invalid_json") from error
     if not isinstance(result, dict):
-        raise FoundationError("rpc_transport", "Pi RPC event is not an object")
+        raise FoundationError("rpc_transport", "Pi RPC invalid_event")
     return result
+
+
+def _trace_event(events: list[dict[str, object]], **fields: object) -> None:
+    if len(events) < MAX_RPC_EVENTS:
+        events.append(fields)
+
+
+def _drain_stderr(process: subprocess.Popen[bytes], tail: bytearray) -> None:
+    if process.stderr is None:
+        return
+    while chunk := process.stderr.read(4096):
+        tail.extend(chunk)
+        if len(tail) > MAX_RPC_STDERR:
+            del tail[:-MAX_RPC_STDERR]
+
+
+def _emit_rpc_diagnostics(
+    config: AssignedConfig,
+    authority: LocalAuthority,
+    work_id: UUID,
+    attempt_id: UUID,
+    process: subprocess.Popen[bytes] | None,
+    exit_before_host_stop: int | None,
+    stderr_tail: bytearray,
+    events: list[dict[str, object]],
+    failure: Exception | None,
+) -> None:
+    """Emit bounded investigation evidence when explicitly enabled."""
+
+    if os.environ.get("ZARATUSTRA_RPC_DIAGNOSTICS") != "1":
+        return
+    report: dict[str, object] = {
+        "attempt_id": str(attempt_id),
+        "claim_committed": True,
+        "exit_before_host_stop": exit_before_host_stop,
+        "exit_after_host_stop": process.poll() if process is not None else None,
+        "stderr_tail": stderr_tail.decode("utf-8", errors="replace"),
+        "stderr_truncated": len(stderr_tail) == MAX_RPC_STDERR,
+        "rpc_events": events,
+        "failure_code": getattr(failure, "code", None),
+        "failure": str(failure) if failure is not None else None,
+    }
+    try:
+        snapshot = read_execution(config.space, work_id, authority)
+        report["assignment"] = next(
+            (item.status for item in snapshot.assignments if item.attempt_id == attempt_id), None
+        )
+        report["invocations"] = [
+            {"id": str(item.invocation_id), "status": item.status}
+            for item in snapshot.invocations
+            if item.attempt_id == attempt_id
+        ]
+        report["held_units"] = snapshot.held_units
+    except FoundationError as error:
+        report["core_read_error"] = {"code": error.code, "detail": str(error)}
+    print("ZARATUSTRA_RPC_DIAGNOSTIC " + json.dumps(report, ensure_ascii=False), file=sys.stderr)
 
 
 def _rpc_line_with_stop(
@@ -399,7 +462,10 @@ def _rpc_line_with_stop(
 
 
 def _rpc_prompt(
-    process: subprocess.Popen[bytes], message: str, stop_requested: threading.Event
+    process: subprocess.Popen[bytes],
+    message: str,
+    stop_requested: threading.Event,
+    events: list[dict[str, object]] | None = None,
 ) -> None:
     if stop_requested.is_set():
         raise FoundationError("rpc_stop_requested", "Core closed this assigned Pi turn")
@@ -409,9 +475,19 @@ def _rpc_prompt(
     command = {"id": request_id, "type": "prompt", "message": message}
     process.stdin.write((json.dumps(command, ensure_ascii=False) + "\n").encode("utf-8"))
     process.stdin.flush()
+    if events is not None:
+        _trace_event(events, kind="prompt_written", request_id=request_id)
     accepted = False
     while True:
         event = _rpc_line_with_stop(process, stop_requested)
+        if events is not None:
+            _trace_event(
+                events,
+                kind="rpc_event",
+                event_type=str(event.get("type")),
+                request_match=event.get("id") == request_id,
+                success=event.get("success") is True,
+            )
         if event.get("type") == "extension_error":
             raise FoundationError("rpc_extension", "Pi extension rejected the assigned turn")
         if event.get("type") == "response" and event.get("id") == request_id:
@@ -425,12 +501,18 @@ def _rpc_prompt(
 
 
 def _control_stop_requested(
-    config: AssignedConfig, authority: LocalAuthority, work_id: UUID, attempt_id: UUID
+    config: AssignedConfig,
+    authority: LocalAuthority,
+    work_id: UUID,
+    attempt_id: UUID,
+    on_error: Callable[[FoundationError], None] | None = None,
 ) -> bool:
     try:
         return not read_assigned_control(config.space, work_id, attempt_id, authority)
-    except FoundationError:
+    except FoundationError as error:
         # Lost runner rights or an unavailable Core gate stop the child safely.
+        if on_error is not None:
+            on_error(error)
         return True
 
 
@@ -480,12 +562,20 @@ def _watch_core_stop(
     finished: threading.Event,
     stop_requested: threading.Event,
     stop_lock: threading.Lock,
+    events: list[dict[str, object]] | None = None,
 ) -> None:
     """Observe only this claimed Attempt and wake its DBOS wait on a Core stop."""
 
     while not finished.wait(0.5):
-        if not _control_stop_requested(config, authority, work_id, attempt_id):
+
+        def control_error(error: FoundationError) -> None:
+            if events is not None:
+                _trace_event(events, kind="control_read_error", code=error.code, detail=str(error))
+
+        if not _control_stop_requested(config, authority, work_id, attempt_id, control_error):
             continue
+        if events is not None:
+            _trace_event(events, kind="control_stop")
         stop_requested.set()
         _rpc_stop_commands(process)
         with stop_lock:
@@ -675,10 +765,16 @@ def _execute_under_lock(
     thread: threading.Thread | None = None
     process: subprocess.Popen[bytes] | None = None
     monitor: threading.Thread | None = None
+    stderr_reader: threading.Thread | None = None
+    stderr_tail = bytearray()
+    rpc_events: list[dict[str, object]] = []
+    _trace_event(rpc_events, kind="launch_claim_committed")
     monitor_done = threading.Event()
     stop_requested = threading.Event()
     stop_lock = threading.Lock()
     observed = False
+    failure: Exception | None = None
+    exit_before_host_stop: int | None = None
     try:
         with managed_pi_session_lock(config.space):
             shutil.copy2(extension, installed)
@@ -782,8 +878,12 @@ def _execute_under_lock(
                 env=environment,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
             )
+            stderr_reader = threading.Thread(
+                target=_drain_stderr, args=(process, stderr_tail), daemon=True
+            )
+            stderr_reader.start()
             monitor = threading.Thread(
                 target=_watch_core_stop,
                 args=(
@@ -795,6 +895,7 @@ def _execute_under_lock(
                     monitor_done,
                     stop_requested,
                     stop_lock,
+                    rpc_events,
                 ),
                 daemon=True,
             )
@@ -807,7 +908,7 @@ def _execute_under_lock(
                 '"question":"one exact question","remainder":"what remains"}. '
                 'Otherwise return {"zara":"final","text":"the result"}. Do not call tools.'
             )
-            _rpc_prompt(process, first, stop_requested)
+            _rpc_prompt(process, first, stop_requested, rpc_events)
             current = _current_snapshot(config, authority, work_id, attempt_id, epoch, generation)
             open_waits = [
                 x for x in current.waits if x.attempt_id == attempt_id and x.status == "open"
@@ -846,6 +947,7 @@ def _execute_under_lock(
                     "Use the addressed answer in Core context. Return only "
                     '{"zara":"final","text":"the final result"}. Do not call tools.',
                     stop_requested,
+                    rpc_events,
                 )
                 current = _current_snapshot(
                     config, authority, work_id, attempt_id, epoch, generation
@@ -853,27 +955,49 @@ def _execute_under_lock(
             if not current.outputs or current.work.state.status != "proposed":
                 raise FoundationError("rpc_result", "Pi RPC did not publish the declared Artifact")
             return "proposed"
+    except Exception as error:
+        failure = error
+        raise
     finally:
         monitor_done.set()
         if process is not None:
             with stop_lock:
+                exit_before_host_stop = process.poll()
                 observed = _terminate_pi(process)
         if monitor is not None:
             monitor.join(timeout=5)
+        if stderr_reader is not None:
+            stderr_reader.join(timeout=2)
         if server is not None:
             server.shutdown()
             server.server_close()
         if thread is not None:
             thread.join(timeout=5)
         installed.unlink(missing_ok=True)
-        _record_stop(
-            config,
-            authority,
-            work_id,
-            attempt_id,
-            attempt.session_id,
-            observed=observed or process is None,
-        )
+        try:
+            _record_stop(
+                config,
+                authority,
+                work_id,
+                attempt_id,
+                attempt.session_id,
+                observed=observed or process is None,
+            )
+        except FoundationError as error:
+            _trace_event(rpc_events, kind="record_stop_error", code=error.code, detail=str(error))
+            raise
+        finally:
+            _emit_rpc_diagnostics(
+                config,
+                authority,
+                work_id,
+                attempt_id,
+                process,
+                exit_before_host_stop,
+                stderr_tail,
+                rpc_events,
+                failure,
+            )
 
 
 def resolve_assigned_work(space: Path, authority: LocalAuthority, attempt_id: UUID) -> UUID:

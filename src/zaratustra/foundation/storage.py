@@ -759,7 +759,11 @@ def _connect(database: Path, *, writable: bool) -> sqlite3.Connection:
         autocommit=True,
         timeout=BUSY_TIMEOUT_MS / 1000,
     )
-    _configure(connection, writable=writable)
+    try:
+        _configure(connection, writable=writable)
+    except BaseException:
+        connection.close()
+        raise
     return connection
 
 
@@ -791,7 +795,18 @@ def _begin(connection: sqlite3.Connection, *, writable: bool) -> None:
 
 
 def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> SpaceInfo:
-    application_id = int(connection.execute("PRAGMA application_id").fetchone()[0])
+    # BEGIN is deferred for readers. This PRAGMA is their first actual read and
+    # can meet the short exclusive WAL cleanup held by the last closing handle.
+    # Only this read is retried; a persistent lock still fails without an effect.
+    for attempt in range(BUSY_ATTEMPTS):
+        try:
+            application_id = int(connection.execute("PRAGMA application_id").fetchone()[0])
+            break
+        except sqlite3.OperationalError as error:
+            busy = "locked" in str(error).casefold() or "busy" in str(error).casefold()
+            if not busy or attempt + 1 == BUSY_ATTEMPTS:
+                raise
+            time.sleep(0.05 * (attempt + 1))
     schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
     if application_id != APPLICATION_ID or schema_version not in SUPPORTED_SCHEMA_VERSIONS:
         raise FoundationError(
@@ -847,18 +862,29 @@ def space_connection(
     """Open, validate and close one bounded transaction; never migrate or repair."""
 
     connection: sqlite3.Connection | None = None
+    phase = "layout"
     try:
         root, database, _ = layout(path)
+        phase = "connect"
         connection = _connect(database, writable=writable)
+        phase = "begin"
         _begin(connection, writable=writable)
+        phase = "identity"
         info = _space_info(connection, root, database)
+        phase = "body"
         yield connection, info
+        phase = "commit"
         connection.execute("COMMIT")
     except FoundationError:
         if connection is not None and connection.in_transaction:
             connection.execute("ROLLBACK")
         raise
-    except (OSError, ValueError, sqlite3.Error) as error:
+    except sqlite3.Error as error:
+        if connection is not None and connection.in_transaction:
+            connection.execute("ROLLBACK")
+        name = getattr(error, "sqlite_errorname", type(error).__name__)
+        raise FoundationError("storage", f"SQLite {phase} failed ({name}): {error}") from error
+    except (OSError, ValueError) as error:
         if connection is not None and connection.in_transaction:
             connection.execute("ROLLBACK")
         raise FoundationError("storage", str(error)) from error
