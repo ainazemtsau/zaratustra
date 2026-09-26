@@ -909,7 +909,7 @@ def _run_assigned_locked(
     config: AssignedConfig, authority: LocalAuthority, attempt_id: UUID
 ) -> str:
 
-    from dbos import DBOS
+    from dbos import DBOS, run_dbos_database_migrations
 
     config = AssignedConfig(
         **{
@@ -982,7 +982,14 @@ def _run_assigned_locked(
     # outer Pi session lock continues to cover maintenance for the whole run.
     with managed_executor_start_lock(config.space):
         existing = None
-        if executor_database(config.space).is_file():
+        database = executor_database(config.space)
+        database_url = _database_url(database)
+        if database.is_file():
+            # A killed first DBOS launch can leave only the SQLite file. The
+            # public migration entry point completes its schema before the
+            # read-only DBOSClient queries workflow_status. It also preserves
+            # already recorded workflows and their exact application versions.
+            run_dbos_database_migrations(database_url)
             client = _client(config.space)
             try:
                 existing = _existing_workflow(client, attempt_id)
@@ -1008,7 +1015,7 @@ def _run_assigned_locked(
         DBOS(
             config={
                 "name": "zaratustra-assigned-rpc",
-                "system_database_url": _database_url(executor_database(config.space)),
+                "system_database_url": database_url,
                 "application_version": application_version,
                 "executor_id": str(attempt_id),
             }

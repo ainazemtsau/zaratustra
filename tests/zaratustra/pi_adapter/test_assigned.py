@@ -581,6 +581,48 @@ def _valid_assigned_config(root: Path, workspace: Path, runtime: Path) -> Assign
     )
 
 
+def test_empty_executor_file_recovers_same_attempt_without_recreating_database(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, workspace, _, work_id, attempt_id, _ = assigned(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    config = _valid_assigned_config(root, workspace, tmp_path / "runtime")
+    database = root / ".zara-core" / "executor.sqlite3"
+    with sqlite3.connect(database) as connection:
+        assert connection.execute("SELECT name FROM sqlite_master").fetchall() == []
+    identity = database.stat().st_ino
+    executed: list[UUID] = []
+
+    def execute(
+        _config: AssignedConfig,
+        _authority: LocalAuthority,
+        selected_work: UUID,
+        selected_attempt: UUID,
+        _epoch: int,
+        _generation: int,
+    ) -> str:
+        assert selected_work == work_id and selected_attempt == attempt_id
+        executed.append(selected_attempt)
+        return "proposed"
+
+    monkeypatch.setattr(assigned_module, "_execute", execute)
+    assert run_assigned(config, owner, attempt_id) == "proposed"
+    assert run_assigned(config, owner, attempt_id) == "proposed"
+    assert database.stat().st_ino == identity and executed == [attempt_id]
+    client = DBOSClient(
+        system_database_url=f"sqlite:///{database.resolve().as_posix()}",
+        application_name="zaratustra-assigned-rpc",
+        retry_connection_errors=False,
+    )
+    try:
+        workflows = client.list_workflows(load_output=True)
+        assert len(workflows) == 1
+        assert workflows[0].executor_id == str(attempt_id)
+        assert workflows[0].status == "SUCCESS"
+    finally:
+        client.destroy()
+
+
 @pytest.mark.parametrize("claimed", [False, True])
 def test_pending_local_addressed_workflow_recovers_at_core_claim_boundary(
     tmp_path: Path,

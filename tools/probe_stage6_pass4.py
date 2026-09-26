@@ -22,16 +22,8 @@ from pathlib import Path
 from typing import Any, cast
 from uuid import UUID, uuid4, uuid5
 
-from tests.zaratustra.foundation.test_plan_transfers import _pair
-from tools.probe_stage5_faults import DropFirstProvider, competing_resource
-from tools.probe_stage6_rpc import (
-    Markers,
-    SyntheticHandler,
-    SyntheticProvider,
-    _assign,
-    _issue,
-    _space,
-)
+# This import admits the configured SQLite DLL before development fixtures can
+# import sqlite3. Runner and inspect children enter through this module too.
 from zaratustra.foundation import (
     AcceptWorkRequest,
     ClaimAttemptLaunchRequest,
@@ -52,6 +44,18 @@ from zaratustra.foundation import (
     read_work_status,
     upgrade_parent_execution_space,
     upgrade_plan_revision_space,
+)
+
+# isort: split
+from tests.zaratustra.foundation.test_plan_transfers import _pair
+from tools.probe_stage5_faults import DropFirstProvider, competing_resource
+from tools.probe_stage6_rpc import (
+    Markers,
+    SyntheticHandler,
+    SyntheticProvider,
+    _assign,
+    _issue,
+    _space,
 )
 from zaratustra.pi_adapter.assigned import (
     AssignedConfig,
@@ -202,6 +206,8 @@ def _workflow_rows(root: Path) -> list[dict[str, object]]:
     database = executor_database(root)
     if not database.is_file():
         return []
+    if "workflow_status" not in _executor_tables(root):
+        return []
     client = DBOSClient(
         system_database_url=f"sqlite:///{database.resolve().as_posix()}",
         application_name="zaratustra-assigned-rpc",
@@ -223,6 +229,19 @@ def _workflow_rows(root: Path) -> list[dict[str, object]]:
         ]
     finally:
         client.destroy()
+
+
+def _executor_tables(root: Path) -> list[str]:
+    from sqlite3 import connect
+
+    database = executor_database(root)
+    if not database.is_file():
+        return []
+    with closing(connect(database)) as connection:
+        return sorted(
+            row[0]
+            for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        )
 
 
 def _inspect(case_file: Path) -> dict[str, object]:
@@ -265,6 +284,7 @@ def _inspect(case_file: Path) -> dict[str, object]:
         "held_units": state.held_units,
         "receipts": receipts,
         "workflows": _workflow_rows(root),
+        "executor_tables": _executor_tables(root),
     }
 
 
@@ -326,6 +346,23 @@ def _runner(case_file: Path, fault: str) -> int:
         return event
 
     vars(assigned)["_rpc_line"] = log_rpc_line
+    if fault == "migration-interrupt":
+        from sqlalchemy import event
+        from sqlalchemy.engine import Engine
+
+        def exit_after_migration_lookup(
+            connection: object,
+            cursor: object,
+            statement: str,
+            parameters: object,
+            context: object,
+            executemany: bool,
+        ) -> None:
+            if "SELECT name FROM sqlite_master" in statement and "dbos_migrations" in statement:
+                _save(marker, {"point": "DBOS first migration lookup after SQLite file creation"})
+                os._exit(71)
+
+        event.listen(Engine, "after_cursor_execute", exit_after_migration_lookup)
     if fault == "precommit":
         original_write = operations._write_receipt
 
@@ -765,6 +802,7 @@ def _run_window(output: Path, runtime: Path, window: str) -> dict[str, object]:
                 "http": [0, 1, 1],
             }
         fault, exit_code = {
+            "migration": ("migration-interrupt", 71),
             "precommit": ("precommit", 72),
             "postcommit": ("postcommit", 73),
             "postcheckpoint": ("postcheckpoint", 74),
@@ -773,11 +811,37 @@ def _run_window(output: Path, runtime: Path, window: str) -> dict[str, object]:
         assert (case.parent / f"fault-{fault}.json").is_file(), "Fault point was not reached"
         crashed = _fresh(case, "crashed-before-retry")
         assert len(provider.digests) == (1 if window == "postcheckpoint" else 0)
+        if window == "migration":
+            assert crashed["executor_tables"] == []
+            assert crashed["work"] == before["work"]
+            assert crashed["attempts"] == before["attempts"]
+            assert crashed["receipts"] == before["receipts"]
+            assert crashed["held_units"] == before["held_units"]
+            data = cast(dict[str, str], json.loads(case.read_text(encoding="utf-8")))
+            database = executor_database(Path(data["space"]))
+            assert database.is_file()
+            database_identity = database.stat().st_ino
         restarted_process = _start(case, "restart")
         expected = 1 if window == "postcommit" else 0
         _finish(restarted_process, expected)
         after = _fresh(case, "after-restart")
         assert len(provider.digests) == (0 if window == "postcommit" else 1)
+        if window == "migration":
+            assert database.stat().st_ino == database_identity
+            assert len(cast(list[object], after["workflows"])) == 1
+            assert cast(dict[str, object], after["receipts"])["claim"] != {"error": "not_found"}
+            _finish(_start(case, "none"), 0)
+            replay = _fresh(case, "replay")
+            assert replay == after and len(provider.digests) == 1
+            return {
+                "before": before,
+                "crashed": crashed,
+                "after": after,
+                "replay": replay,
+                "executor_database": str(database),
+                "same_database_identity": True,
+                "http": [0, 0, 1, 1],
+            }
         after_conflict: str | None = None
         if window == "postcommit":
             data = cast(dict[str, str], json.loads(case.read_text(encoding="utf-8")))
@@ -804,6 +868,7 @@ def main() -> int:
         "--case",
         choices=(
             "delivery",
+            "migration",
             "precommit",
             "postcommit",
             "postcheckpoint",

@@ -29,6 +29,7 @@ pass 3 проверяются отдельно. `tools.probe_stage6_pass4` со�
 
 | Точка вмешательства и тип | HTTP по шагам | Новый процесс до повтора → после; receipts, replay, ресурс |
 | --- | --- | --- |
+| `os._exit(71)` после первого lookup `dbos_migrations`, до CREATE таблиц DBOS | 0→0→1→1 | Маркер сработал; executor SQLite существует без таблиц, Core `assigned`, `claim=not_found`, выходов нет, `held=0`. Новый runner мигрирует тот же файл через DBOS, исполняет ту же Attempt один раз: `stopped`, один выход, `claim`/`stop` читаются. Replay неизменен и не добавляет HTTP; обязательства родителя остаются `open`, его выходов нет. Эта строка добавлена после независимого review `f6d7f13`. |
 | Повтор доставки одного outbox до claim; два `deliver_outbox`, затем runner и повтор того же runner | 0→0→1→1 | Один адресованный DBOS workflow. До запуска `assigned`, `claim=not_found`; после — `stopped`, один `answered` и один выход, `claim`/`stop` читаются, `held=0`. Второй runner возвращает тот же результат без нового HTTP и без изменения снимка. Это доставка и replay, без инъекции аварии. |
 | `os._exit(72)` после INSERT квитанции `claim_attempt_launch`, до Core COMMIT | 0→1 | Маркер сработал. До повтора: `assigned`, `claim=not_found`, DBOS `PENDING`, ни invocation, ни выхода, `held=0`. Новый runner выполняет один HTTP, оставляет `stopped`, `answered`, один выход, `claim`/`stop` читаются. Незавершённый receipt откатился. |
 | `os._exit(73)` после Core commit claim, до DBOS checkpoint | 0→0 | Маркер сработал. До повтора: `assigned`, `claim` читается, DBOS `PENDING`, invocation/выхода нет, `held=0`. Повтор того же workflow даёт `unknown`/`blocked`, `stop_unknown` читается, HTTP остаётся 0; конкурент за тот же эксклюзивный ресурс получает `resource_busy`. Это защитная неизвестность даже при локально наблюдённых 0 HTTP. |
@@ -67,6 +68,68 @@ DBOS workflow IDs и параллельное выполнение остают�
 2 HTTP и точным повтором; последовательный запуск A→B и изоляция B также
 прошли. Это не устанавливает причину прежнего Core `database is locked`.
 
+## Независимое review кандидата и исправления
+
+Независимое review кандидата `f6d7f1301d826bae173a5935ddf58a8ad8eb870c`
+оставило пакет 2 открытым из-за двух замечаний. Это review отдельно
+выполнило scoped gate: **41 тест**, типы, Ruff, 21 импортный контракт и
+сборки; шесть живых сценариев с явной временной настройкой
+`PYTHONPATH=tools/sqlite_bootstrap`. Полные **698 тестов** ниже — проверка
+прежнего сеанса реализации, а не этого независимого review.
+
+### Исправление двух замечаний review
+
+**P1, обрыв первой миграции DBOS.** Внешний скрипт review повторён на
+исходном `f6d7f13`: `os._exit(71)` после запроса DBOS к `sqlite_master`
+оставил файл executor SQLite без таблиц, `claim=not_found`, HTTP 0.
+Два новых `run_assigned` на том же пространстве и Attempt отказывали
+`no such table: main.workflow_status`. Сохранены внешний маркер,
+снимки и журналы в `_scratch/pass4-package2-review-p1-repro/`.
+
+Исправленный runner под уже существующим межпроцессным startup lock
+вызывает публичный `run_dbos_database_migrations` перед DBOSClient lookup,
+если файл executor SQLite существует. После этого остаётся обычный путь
+поиска точного workflow с его ID и app version; база не удаляется.
+Проверенный живой failpoint снова завершил первый процесс кодом 71 **до
+CREATE**, после чего новый процесс прочитал исходный Core, восстановил
+ту же SQLite и Attempt, выполнил один HTTP и вернул точный replay без
+второго HTTP: **0→0→1→1**. Снимки до повтора, после него и после replay,
+таблицы DBOS и идентичность файла сохранены в
+`_scratch/pass4-package2-migration-fixed-b/`.
+
+**P2, ранний импорт SQLite стендом.** На исходном коде standalone
+`probe_stage6_pass4 --case postcommit` с заданным DLL и без `PYTHONPATH`
+завершался на bundled SQLite 3.50.4 до создания case. Стенд теперь
+импортирует foundation для допуска DLL перед тестовыми helpers. Живой
+`postcommit` с тем же окружением прошёл вместе с дочерними runner/inspect:
+HTTP **0→0**, `claim` сохранён, результат fenced unknown. Сохранён
+`_scratch/pass4-package2-review-p2-fixed/report.json`.
+На окончательном коде повторены без `PYTHONPATH` и с заданным DLL:
+`postcommit` **0→0** (`_scratch/pass4-package2-review-fix-postcommit/`),
+изоляция соседей **0→1→2→2**
+(`_scratch/pass4-package2-review-fix-isolation/`) и два одновременных
+runner **0→2→2** (`_scratch/pass4-package2-review-fix-parallel/`).
+В каждой пробе дочерние runner/inspect запускались тем же модулем;
+адресные очереди, версии workflow и повтор видны в JSON-снимках.
+
+Новые регрессии: файл DBOS без таблиц восстанавливается в том же
+пространстве с одним workflow и replay; импорт standalone стенда
+проверяется дочерним Python без `PYTHONPATH`. Живой `migration` сценарий
+закрепляет точную точку `os._exit(71)`, чтение до повторного запуска,
+один эффект, receipts и replay.
+
+Собственные проверки исправленного пакета: новые профильные pytest
+**3 PASS** (пустая SQLite и два варианта прежнего адресного `PENDING`),
+проверки запуска стенда **3 PASS**; живые `migration`, `postcommit`,
+`isolation`, `parallel` выше, schema 8 A/B/P **3 HTTP**
+(`_scratch/pass4-package2-review-fix-parent/`) и pass 3 **4 HTTP**
+(`_scratch/pass4-package2-review-fix-pass3/`). Полный Windows
+`uv run --locked python -m tools.check --deliver` на исправленном коде:
+**700 PASS за 469.00 с**, типы, Ruff, **21** импортный контракт, sdist
+и wheel. Журнал: `_scratch/pass4-package2-review-fix-deliver.log`.
+Это проверки сеанса исправления, не независимое review. Техническое
+review остаётся открытым до новой независимой проверки; приёмка не записана.
+
 ## Открытые наблюдения
 
 `database is locked`: старый независимый отказ возникал на Core
@@ -89,8 +152,8 @@ SQLite здесь воспроизвёл тот же стек и показал 
 
 ## Проверки, атрибуция и предел
 
-Собственные проверки реализации: профильный межпроцессный pytest,
-10 живых сценариев выше, семь существующих Stage 5 fault-групп
+Собственные проверки исходной реализации: профильный межпроцессный pytest,
+10 исходных живых сценариев, семь существующих Stage 5 fault-групп
 (`_scratch/pass4-package2-stage5-faults/report.json`), pass 3 synthetic
 probe (4 HTTP) и schema 8 A/B/P (3 HTTP, включая отдельное подтверждение,
 backup/restore и удаление как регрессионную проверку неизменённого пути).

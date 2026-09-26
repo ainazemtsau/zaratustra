@@ -35,6 +35,10 @@ with no claim is an observed prelaunch stop without Pi or HTTP.
 Concurrent cold runners in one Core space serialize the short DBOS SQLite
 lookup/migration/launch window with `managed_executor_start_lock`. Their
 Attempt-specific queues and Pi sessions remain independent after launch.
+An interrupted first DBOS migration can leave only the executor SQLite file.
+Under the same startup lock, use DBOS's public migration entry point before
+DBOSClient queries an existing file; preserve its workflow IDs, versions and
+post-claim unknown fence. Never replace that file as a recovery shortcut.
 Schema 8 lets the same assigned path run a root or nested composite Work's own
 Attempt. Its Core plan pin and output proof are visible by address in the assigned
 context and `/zara-status`, with roleless obligations labelled as own Work.

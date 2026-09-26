@@ -251,7 +251,9 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
   schema 7, pass 3 and Stage 6 remain unaccepted. The separate
   parent-execution slice has a closed technical review at `2cd3cf8`,
   separately from owner acceptance. Pass 4 package 1 technical review is
-  closed; only package 2 implementation is authorized and awaits review.
+  closed. Package 2's `f6d7f13` independent review remains open; its two
+  findings are corrected in one package awaiting a new technical review.
+  Package 3 and owner acceptance are not authorized.
   Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.

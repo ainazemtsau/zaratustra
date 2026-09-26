@@ -8,8 +8,10 @@ check cannot tell a missing flag apart; the Windows gate can.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -37,3 +39,20 @@ def test_isolated_child_prints_exact_non_ascii_json(flags: tuple[str, ...]) -> N
     assert result.returncode == 0, result.stderr
     assert "-I" in flags
     assert json.loads(result.stdout.strip().splitlines()[-1]) == {"text": "".join(map(chr, CODES))}
+
+
+def test_pass4_probe_admits_sqlite_without_pythonpath_bootstrap() -> None:
+    environment = os.environ.copy()
+    environment.pop("PYTHONPATH", None)
+    root = Path(__file__).resolve().parents[2]
+    result = subprocess.run(
+        [sys.executable, "-X", "utf8", "-m", "tools.probe_stage6_pass4", "--help"],
+        cwd=root,
+        env=environment,
+        capture_output=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "--case" in result.stdout
