@@ -1461,11 +1461,14 @@ def run_parent_execution(output: Path, pi_runtime: Path) -> dict[str, object]:
 
         artifacts: dict[str, ArtifactRef] = {}
         runs: dict[str, object] = {}
+        assignment_requests: dict[str, Any] = {}
+        assignment_receipts: dict[str, OperationReceipt] = {}
         for number, (name, work) in enumerate((("a", a), ("b", b), ("p", p)), 1):
             if name != "p":
                 apply_operation(root, _issue(root, owner, p, work, 1), owner)
             assignment = _assign(root, owner, work)
-            apply_operation(root, assignment, owner)
+            assignment_requests[name] = assignment
+            assignment_receipts[name] = apply_operation(root, assignment, owner)
             runs[name] = run_assigned(config(name), owner, assignment.attempt_id)
             snapshot = read_execution(root, work, owner)
             output_record = snapshot.outputs[-1]
@@ -1527,6 +1530,13 @@ def run_parent_execution(output: Path, pi_runtime: Path) -> dict[str, object]:
             authorize_recovery(actor=ACTOR, source_ref="fictional-parent-restore"),
         )
         assert restored.schema_version == 8 and restored.execution_epoch == 2
+        old_runner = AssignedConfig(**{**config("p").__dict__, "space": restored_root})
+        old_runner_refusal = _refusal(
+            lambda: run_assigned(old_runner, owner, assignment.attempt_id)
+        )
+        assert old_runner_refusal == "permission_denied"
+        assert len(provider.digests) == 3
+        assert not (restored_root / ".zara-core" / "executor.sqlite3").exists()
         recovery = authorize_recovery(actor=ACTOR, source_ref="fictional-parent-recovery")
         apply_operation(
             restored_root,
@@ -1547,7 +1557,24 @@ def run_parent_execution(output: Path, pi_runtime: Path) -> dict[str, object]:
             == assignment.attempt_id
         )
         assert read_work_status(restored_root, p, restored_owner).status == "succeeded"
-        steps.append({"step": "backup and inert restore", "http": len(provider.digests)})
+        steps.append(
+            {
+                "step": "backup, inert restore and old runner refusal",
+                "old_runner": old_runner_refusal,
+                "http": len(provider.digests),
+            }
+        )
+        method_before_delete = _refusal(
+            lambda: _apply(
+                root,
+                owner,
+                DeleteMethodVersionRequest,
+                method_id=method.method_id,
+                version=method.version,
+                checksum=method.checksum,
+            )
+        )
+        assert method_before_delete == "method_in_use"
         for name, work in (("a", a), ("b", b), ("p", p)):
             _apply(
                 root,
@@ -1565,7 +1592,69 @@ def run_parent_execution(output: Path, pi_runtime: Path) -> dict[str, object]:
             )
             deletion = complete_assigned_deletions(root, owner)
             assert deletion.pending_jobs == 0 and deletion.live_store_sanitized
-            steps.append({"step": f"delete {name}", "http": len(provider.digests)})
+            if name == "a":
+                b_request = assignment_requests["b"]
+                b_receipt = assignment_receipts["b"]
+                assert read_receipt(root, b_request.operation_id, owner) == b_receipt
+                assert apply_operation(root, b_request, owner) == b_receipt
+            workflows = _workflows(root)
+            pi_homes = sorted(
+                item.name
+                for item in (root / ".zara-core" / "pi-rpc-home").glob("*")
+                if item.is_dir()
+            )
+            assert all(item["work_id"] != str(work) for item in workflows)
+            assert not (
+                root / ".zara-core" / "pi-rpc-home" / str(assignment_requests[name].attempt_id)
+            ).exists()
+            fresh = subprocess.run(
+                [
+                    sys.executable,
+                    *ISOLATED_UTF8,
+                    "-c",
+                    "import json,sys; from pathlib import Path; "
+                    "from zaratustra.foundation import authorize_local,inspect_space,read_space; "
+                    "p=Path(sys.argv[1]); o=authorize_local(p,actor='owner',source_ref='fresh'); "
+                    "i=inspect_space(p,o); print(json.dumps({'schema':read_space(p).schema_version,"
+                    "'epoch':read_space(p).execution_epoch,'pending':i.pending_deletions}))",
+                    str(root),
+                ],
+                cwd=output,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=30,
+                check=False,
+            )
+            assert fresh.returncode == 0, fresh.stderr
+            fresh_state = json.loads(fresh.stdout.strip())
+            assert fresh_state == {"schema": 8, "epoch": 1, "pending": 0}
+            steps.append(
+                {
+                    "step": f"delete {name}",
+                    "http": len(provider.digests),
+                    "workflows": len(workflows),
+                    "pi_homes": len(pi_homes),
+                    "fresh_process": fresh_state,
+                    "independent_b_replay": name == "a",
+                }
+            )
+        _apply(
+            root,
+            owner,
+            DeleteMethodVersionRequest,
+            method_id=method.method_id,
+            version=method.version,
+            checksum=method.checksum,
+        )
+        assert complete_assigned_deletions(root, owner).live_store_sanitized
+        steps.append(
+            {
+                "step": "delete unused Method",
+                "before": method_before_delete,
+                "http": len(provider.digests),
+            }
+        )
         assert not prior.package.exists()
         clean = create_assigned_backup(root, uuid4(), owner)
         assert not _contains(root / ".zara-core", marker)

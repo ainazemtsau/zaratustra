@@ -65,15 +65,20 @@ def main() -> int:
         ):
             raise SystemExit("STOP: unsupported SQLite DLL")
     output = args.output.resolve()
+    source_commit = _git("rev-parse", "HEAD")
+    if _git("status", "--porcelain"):
+        raise SystemExit("STOP: installed wheel trial requires a clean exact commit")
     output.mkdir(parents=True, exist_ok=False)
     version = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"][
         "version"
     ]
     _command(uv, "build", "--no-sources", cwd=ROOT)
+    if _git("rev-parse", "HEAD") != source_commit or _git("status", "--porcelain"):
+        raise RuntimeError("Source changed while building the installed wheel")
     wheel = ROOT / f"dist/zaratustra-{version}-py3-none-any.whl"
     report: dict[str, object] = {
-        "source_commit": _git("rev-parse", "HEAD"),
-        "source_tree_dirty": bool(_git("status", "--porcelain")),
+        "source_commit": source_commit,
+        "source_tree_dirty": False,
         "wheel_sha256": hashlib.sha256(wheel.read_bytes()).hexdigest().upper(),
     }
     with tempfile.TemporaryDirectory(prefix="zaratustra-installed-stage6-") as temporary:

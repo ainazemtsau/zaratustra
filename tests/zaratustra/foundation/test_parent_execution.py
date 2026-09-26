@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 import subprocess
 import sys
@@ -20,14 +21,16 @@ from tests.zaratustra.foundation.test_child_execution import (
     _resource,
     _stop,
 )
-from tests.zaratustra.foundation.test_composition import _apply, _result, _seed
+from tests.zaratustra.foundation.test_composition import _apply, _result, _seed, _sqlite_contains
 from zaratustra.foundation import (
     AcceptWorkRequest,
     ArtifactRef,
     ConfirmObligationRequest,
     CreateCompositeWorkRequest,
     CreateMethodVersionRequest,
+    CreateWorkRequest,
     DeleteArtifactRequest,
+    DeleteMethodVersionRequest,
     DeleteWorkRequest,
     FoundationError,
     IssueChildWorkRequest,
@@ -1041,7 +1044,8 @@ def test_nested_own_attempt_full_grandchild_to_parent_acceptance(tmp_path: Path)
         expected_work_revision=read_work(root, n, owner).revision,
     )
     _issue(root, space, owner, n, g)
-    _result(root, space, owner, g, "result", b"grandchild independent evidence")
+    deleted_marker = f"fictional grandchild result {uuid4()}"
+    grandchild_result = _result(root, space, owner, g, "result", deleted_marker.encode())
     resource = _resource(root, space, owner, n, "workspace-nested")
     attempt, session, _request, _receipt = _assign(root, space, owner, n, resource)
     view = read_execution(root, n, owner).composition
@@ -1117,3 +1121,117 @@ def test_nested_own_attempt_full_grandchild_to_parent_acceptance(tmp_path: Path)
     )
     assert read_work_status(root, p, owner).status == "succeeded"
     assert read_work(root, anchor, owner).state.status == "proposed"
+    independent = uuid4()
+    independent_request = CreateWorkRequest(
+        operation_id=uuid4(),
+        space_id=space,
+        actor="owner",
+        work_id=independent,
+        state=WorkState(
+            activity_id=activity,
+            goal="Independent synthetic Work outside the composition",
+            expected_outputs=(OutputContract(slot="other", media_type="text/plain"),),
+        ),
+    )
+    independent_receipt = apply_operation(root, independent_request, owner)
+    _result(root, space, owner, independent, "other", b"unrelated branch result")
+    archived = create_backup(root, uuid4(), owner)
+    with pytest.raises(FoundationError, match="method_in_use"):
+        _apply(
+            root,
+            space,
+            owner,
+            DeleteMethodVersionRequest,
+            method_id=nref.method_id,
+            version=nref.version,
+            checksum=nref.checksum,
+        )
+    _apply(
+        root,
+        space,
+        owner,
+        DeleteArtifactRequest,
+        artifact_id=grandchild_result.artifact_id,
+        expected_revision=1,
+    )
+    assert complete_deletions(root, owner).live_store_sanitized
+    assert not archived.package.exists()
+    sanitation_steps = ["grandchild artifact: old backup purged"]
+    fresh = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-X",
+            "utf8",
+            "-c",
+            "import sys; from pathlib import Path; from uuid import UUID; "
+            "from zaratustra.foundation import authorize_local,read_work,read_receipt; "
+            "p=Path(sys.argv[1]); a=authorize_local(p,actor='owner',source_ref='restart'); "
+            "assert read_work(p,UUID(sys.argv[2]),a).state.status=='succeeded'; "
+            "assert read_receipt(p,UUID(sys.argv[3]),a).operation_id==UUID(sys.argv[3])",
+            str(root),
+            str(independent),
+            str(independent_request.operation_id),
+        ],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+    assert fresh.returncode == 0, fresh.stderr
+    work_names = {g: "grandchild", n: "nested", anchor: "anchor", p: "root"}
+    for work in (g, n, anchor, p):
+        if work == n:
+            _apply(
+                root,
+                space,
+                owner,
+                DeleteArtifactRequest,
+                artifact_id=result.artifact_id,
+                expected_revision=1,
+            )
+            assert complete_deletions(root, owner).live_store_sanitized
+            sanitation_steps.append("nested own artifact")
+        _apply(
+            root,
+            space,
+            owner,
+            DeleteWorkRequest,
+            work_id=work,
+            expected_revision=read_work(root, work, owner).revision,
+        )
+        assert complete_deletions(root, owner).live_store_sanitized
+        assert read_receipt(root, independent_request.operation_id, owner) == independent_receipt
+        assert apply_operation(root, independent_request, owner) == independent_receipt
+        sanitation_steps.append(f"Work {work_names[work]}")
+    for method in (nref, pref):
+        _apply(
+            root,
+            space,
+            owner,
+            DeleteMethodVersionRequest,
+            method_id=method.method_id,
+            version=method.version,
+            checksum=method.checksum,
+        )
+        assert complete_deletions(root, owner).live_store_sanitized
+        sanitation_steps.append("Method nested" if method == nref else "Method root")
+    clean = create_backup(root, uuid4(), owner)
+    assert not _sqlite_contains(root / ".zara-core", deleted_marker)
+    assert not _sqlite_contains(clean.package, deleted_marker)
+    assert read_work(root, independent, owner).state.status == "succeeded"
+    print(
+        json.dumps(
+            {
+                "phase": "nested-own-sequential-deletion",
+                "steps": sanitation_steps,
+                "independent_status": read_work(root, independent, owner).state.status,
+                "independent_replay": True,
+                "old_backup_purged": True,
+                "new_backup_clean": True,
+                "http": 0,
+            },
+            sort_keys=True,
+        )
+    )

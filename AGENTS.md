@@ -71,10 +71,15 @@
   `docs/core-v0.1/STAGE6-PASS4-PLAN.md`. The owner closed technical review
   of package 1 on `6deaaf17d8432db629ddfd788589087e28a13c2c` after an
   independent 60-test scoped gate and three external crash scenarios. The owner
-  authorized only package 2, the live DBOS/Pi windows; its implementation
-  evidence is `docs/core-v0.1/STAGE6-PASS4-PACKAGE2-RESULT.md` and awaits one
-  overall review. Package 3, real model calls and development migration are
-  not authorized.
+  authorized only package 2, the live DBOS/Pi windows. The owner separately
+  closed its corrected technical review at `8468fae0e90e8002bfd1d0189c872e43ac711d03`:
+  independent 45 scoped tests, one external recovery scenario and three live
+  probes; the 700-test full gate belongs to implementation. See
+  `docs/core-v0.1/STAGE6-PASS4-PACKAGE2-REVIEW.md`. The owner authorized only
+  package 3, maintenance and release evidence, followed by one overall
+  independent review. Package 3 evidence is
+  `docs/core-v0.1/STAGE6-PASS4-PACKAGE3-RESULT.md`; acceptance, real model
+  calls and development migration are not authorized.
   `database is locked` and `rpc_transport` remain open observations.
 - Earlier CALLs, ordered Works 1–8, M0/M1 plans and their acceptance records are
   retained as engineering history. They do not prohibit or define the new Core.
@@ -166,9 +171,10 @@ checkpoint, with technical review closed at `73fffa7`; see
 closed at `4c9c8ec`; see `STAGE6-PASS3-IMPLEMENTATION.md` and
 `STAGE6-PASS3-REVIEW-3.10.md`. The separate parent-execution slice is
 implemented and its technical review closed at `2cd3cf8`; see
-`STAGE6-PARENT-EXECUTION-REVIEW.md`. Pass 4 package 1 technical review is
-closed; package 2 is the authorized live DBOS/Pi checkpoint under
-`STAGE6-PASS4-PLAN.md` and `STAGE6-PASS4-PACKAGE2-RESULT.md`.
+`STAGE6-PARENT-EXECUTION-REVIEW.md`. Pass 4 packages 1 and 2 have separate
+closed technical reviews; package 3 is the authorized maintenance/release
+checkpoint under `STAGE6-PASS4-PLAN.md` and
+`STAGE6-PASS4-PACKAGE3-RESULT.md`.
 Work 1 implements installed `zara init` / `zara status`, SQLite bootstrap
 metadata and explicit migration v1. Work 2 adds explicit `zara migrate` to schema 2,
 initial draft records and consistent `zara records read`. Work 3 adds schema 3,
@@ -250,10 +256,10 @@ CI/CD, GitHub Actions and push notifications are excluded requirements until the
   implemented through part 3.10. Its technical reviews are closed separately;
   schema 7, pass 3 and Stage 6 remain unaccepted. The separate
   parent-execution slice has a closed technical review at `2cd3cf8`,
-  separately from owner acceptance. Pass 4 package 1 technical review is
-  closed. Package 2's `f6d7f13` independent review remains open; its two
-  findings are corrected in one package awaiting a new technical review.
-  Package 3 and owner acceptance are not authorized.
+  separately from owner acceptance. Pass 4 packages 1 and 2 have closed
+  technical reviews, package 2 at `8468fae` after its two corrections.
+  Package 3 is authorized only through maintenance/release evidence and then
+  stops for one overall independent review. Owner acceptance is not recorded.
   Preserve earlier Works/CALLs as history, not current scope.
 - CLI calls Core through public module surfaces; Core never imports CLI.
 - No product writes to Direction OS, old repositories, or unselected user workspaces.
