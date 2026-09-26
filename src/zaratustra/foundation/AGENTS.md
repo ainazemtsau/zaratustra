@@ -240,7 +240,11 @@ fences its Attempt; a sent call remains unknown with resource/reserve held.
 `CompositionView.own_pins` and derived Work status expose addresses and own phase.
 Exact history, backup format 2/schema 8, inert restore and dependent deletion use
 the existing maintenance path. Schema 7 payloads and DDL remain byte compatible.
-See `docs/core-v0.1/STAGE6-PARENT-EXECUTION-IMPLEMENTATION.md`.
+Its technical review closed at `2cd3cf8bd021be5584db4ea963799ec0fc2bc4f7`,
+separately from Stage 6 acceptance. Pass 4 has only a working failure-matrix
+plan; see `docs/core-v0.1/STAGE6-PARENT-EXECUTION-REVIEW.md` and
+`docs/core-v0.1/STAGE6-PASS4-PLAN.md`. The implemented contract is recorded in
+`docs/core-v0.1/STAGE6-PARENT-EXECUTION-IMPLEMENTATION.md`.
 
 The foundation stores Work execution records but never imports Pi or runs a model.
 Schema 4 adds durable assignment, addressed wait/answer, a saved remainder,
