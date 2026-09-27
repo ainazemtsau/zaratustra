@@ -6,19 +6,26 @@ from pathlib import Path
 from typing import cast
 from uuid import UUID, uuid4
 
+import pytest
+
 from tests.zaratustra.foundation.test_binding import _ready
 from tests.zaratustra.foundation.test_composition import _seed
+from tests.zaratustra.foundation.test_execution import ready, start
 from zaratustra.foundation import (
     ContextState,
     DeleteKnowledgeRequest,
+    FoundationError,
     SourceState,
     apply_operation,
     complete_deletions,
     read_execution,
     read_knowledge,
+    read_work,
     search_knowledge,
     upgrade_binding_space,
     upgrade_child_execution_space,
+    upgrade_composition_space,
+    upgrade_continuation_space,
     upgrade_knowledge_space,
     upgrade_parent_execution_space,
     upgrade_plan_revision_space,
@@ -121,3 +128,61 @@ def test_selected_work_compaction_keeps_exact_work_method_and_plan(tmp_path: Pat
         },
     )
     assert cast(dict[str, object], delivery["result"])["stage"] == "prepared"
+
+
+def test_trial_send_cap_survives_bridge_restart_and_assigned_attempt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, working, space_id, _, work_id, resource_id, owner = ready(tmp_path)
+    for upgrade in (
+        upgrade_continuation_space,
+        upgrade_composition_space,
+        upgrade_child_execution_space,
+        upgrade_plan_revision_space,
+        upgrade_parent_execution_space,
+        upgrade_binding_space,
+        upgrade_knowledge_space,
+    ):
+        upgrade(root, owner)
+    monkeypatch.setenv("ZARA_TRIAL_MAX_TOTAL_SENDS", "2")
+    activity_id = read_work(root, work_id, owner).state.activity_id
+
+    for _ in range(2):
+        bridge = Bridge(root, owner, working, 100)
+        session_id = uuid4()
+        bridge.connect(session_id)
+        bridge.select(session_id, activity_id, work_id)
+        manifest = bridge.prepare_context(session_id)
+        bridge.context_delivery(
+            session_id,
+            {
+                "invocation_id": str(uuid4()),
+                "manifest_id": manifest["manifest_id"],
+                "manifest_revision": manifest["manifest_revision"],
+                "stage": "prepared",
+            },
+        )
+
+
+    attempt_id, assigned_session_id = start(root, space_id, work_id, resource_id, owner)
+    assigned = Bridge(
+        root,
+        owner,
+        working,
+        100,
+        assigned_attempt_id=attempt_id,
+        assigned_session_id=assigned_session_id,
+    )
+    assigned.connect(assigned_session_id)
+    assigned.select(assigned_session_id, activity_id, work_id)
+    manifest = assigned.prepare_context(assigned_session_id)
+    with pytest.raises(FoundationError, match="trial_send_limit"):
+        assigned.context_delivery(
+            assigned_session_id,
+            {
+                "invocation_id": str(uuid4()),
+                "manifest_id": manifest["manifest_id"],
+                "manifest_revision": manifest["manifest_revision"],
+                "stage": "prepared",
+            },
+        )

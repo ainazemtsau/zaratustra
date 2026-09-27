@@ -501,6 +501,14 @@ def apply_knowledge_change(
         if old is None:
             if request.stage != "prepared":
                 raise FoundationError("invalid_transition", "Delivery starts prepared")
+            if request.trial_total_send_limit is not None:
+                admitted = int(
+                    connection.execute("SELECT COUNT(*) FROM knowledge_delivery").fetchone()[0]
+                )
+                if admitted >= request.trial_total_send_limit:
+                    raise FoundationError(
+                        "trial_send_limit", "Local trial provider-send limit is spent"
+                    )
             if request.free_call:
                 spent = int(
                     connection.execute(

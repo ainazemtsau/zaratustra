@@ -22,6 +22,13 @@ const localModelId = process.env.ZARA_LOCAL_MODEL_ID;
 const assignedAttemptId = process.env.ZARA_ASSIGNED_ATTEMPT_ID;
 const assignedSessionId = process.env.ZARA_ASSIGNED_SESSION_ID;
 
+const developmentKindAliases: Record<string, string> = {
+  create_method: "create_method_version", register_resource: "create_resource",
+};
+function developmentKind(kind: string | undefined): string | undefined {
+  return kind ? (developmentKindAliases[kind] ?? kind) : undefined;
+}
+
 function codexProviderUrl(): string {
   const executable = process.argv[1];
   if (!executable) throw new Error("Pi executable path is unavailable");
@@ -51,7 +58,7 @@ function bytes(body: unknown): Uint8Array {
   throw new Error("Zaratustra cannot observe the final HTTP request body");
 }
 
-function providerBodyText(body: Uint8Array, init: any): string {
+export function providerBodyText(body: Uint8Array, init: any): string {
   const encoding = new Headers(init?.headers).get("content-encoding");
   if (encoding === "zstd") return zstdDecompressSync(body).toString("utf8");
   if (encoding && encoding !== "identity") {
@@ -609,6 +616,7 @@ export default function (pi: any): void {
       "continue its saved analysis across sessions, enumerate bounded authorized intake and " +
       "unlinked exploratory material, and save exact ChangeCandidate, ValidationPlan, results, " +
       "Decision, apply, stop, restoration and later outcomes. Use contract before an apply. " +
+      "Setup kinds are create_activity, create_method_version, create_work, create_resource. " +
       "Core verifies exact versions, receipts, current rights, and delivery. A candidate never " +
       "grants authority. Assigned Work may save its own Sleep analysis and a candidate, but " +
       "cannot decide or apply a change.",
@@ -635,7 +643,8 @@ export default function (pi: any): void {
       if (!connection) connection = await request("/v1/connect", {});
       if (params.mode === "contract") {
         if (!params.kind) throw new Error("Name one development operation kind");
-        const contract = await request(`/v1/development-contract?session_id=${sessionId}&kind=${params.kind}`);
+        const kind = developmentKind(params.kind);
+        const contract = await request(`/v1/development-contract?session_id=${sessionId}&kind=${kind}`);
         return { content: [{ type: "text", text: JSON.stringify(contract) }] };
       }
       if (params.mode === "start_sleep") {
@@ -672,9 +681,9 @@ export default function (pi: any): void {
           "create_development", "revise_development", "delete_development",
           "apply_candidate", "stop_candidate", "restore_candidate", "record_change_outcome",
           "create_decision", "revise_decision", "create_composite_work"]);
-        const intentKind = fields?.kind ?? params.kind;
+        const intentKind = developmentKind(fields?.kind ?? params.kind);
         if (!fields || typeof fields !== "object" || Array.isArray(fields) ||
-            !kinds.has(intentKind) || (fields.kind && params.kind && fields.kind !== params.kind)) {
+            !kinds.has(intentKind) || (fields.kind && params.kind && developmentKind(fields.kind) !== developmentKind(params.kind))) {
           throw new Error("Provide one typed Core development intent with a matching kind");
         }
         if (assignedAttemptId && !["create_development", "revise_development"].includes(intentKind)) {

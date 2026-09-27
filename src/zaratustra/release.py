@@ -37,6 +37,13 @@ def _config(path: Path) -> dict[str, object]:
     ):
         raise ValueError("Configured SQLite DLL is missing or changed")
     os.environ["ZARATUSTRA_SQLITE_DLL"] = str(sqlite_dll)
+    trial_limit = result.get("trial_total_send_limit")
+    if trial_limit is not None:
+        if isinstance(trial_limit, bool) or not isinstance(trial_limit, int) or trial_limit < 1:
+            raise ValueError("Trial send limit must be a positive integer")
+        os.environ["ZARA_TRIAL_MAX_TOTAL_SENDS"] = str(trial_limit)
+    else:
+        os.environ.pop("ZARA_TRIAL_MAX_TOTAL_SENDS", None)
     return result
 
 
@@ -223,6 +230,8 @@ def _run(args: argparse.Namespace, config: dict[str, object]) -> int:
         "--model",
         str(config["model_id"]),
     ]
+    if "free_conversation_limit_units" in config:
+        command += ["--free-conversation-limit-units", str(config["free_conversation_limit_units"])]
     if config["provider_profile"] == "local-completions":
         command += [
             "--local-provider-id",
@@ -274,6 +283,8 @@ def _assign(args: argparse.Namespace, config: dict[str, object]) -> int:
         command += ["--context-window", str(config["context_window"])]
     if config["max_tokens"]:
         command += ["--max-tokens", str(config["max_tokens"])]
+    if config.get("subscription_agent_dir"):
+        command += ["--subscription-agent-dir", str(config["subscription_agent_dir"])]
     if args.attempt_id:
         command += ["--attempt-id", str(args.attempt_id)]
     else:

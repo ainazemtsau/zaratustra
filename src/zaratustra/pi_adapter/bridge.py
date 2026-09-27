@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 import secrets
 import threading
 import time
@@ -192,6 +193,18 @@ class Bridge:
         if not self.workspace.is_dir() or limit_units < 1:
             raise FoundationError("resource_unavailable", "Choose an existing directory and limit")
         self.limit_units = limit_units
+        trial_limit = os.environ.get("ZARA_TRIAL_MAX_TOTAL_SENDS")
+        if trial_limit is not None:
+            try:
+                self.trial_total_send_limit = int(trial_limit)
+            except ValueError as error:
+                raise FoundationError(
+                    "invalid_request", "Trial send limit must be positive"
+                ) from error
+            if self.trial_total_send_limit < 1:
+                raise FoundationError("invalid_request", "Trial send limit must be positive")
+        else:
+            self.trial_total_send_limit = None
         if free_conversation_limit_units < 1:
             raise FoundationError("invalid_request", "Free conversation budget must be positive")
         self.free_conversation_limit_units = free_conversation_limit_units
@@ -1247,6 +1260,7 @@ class Bridge:
                 "reserve_units": int(raw.get("reserve_units", 0)) if selected is None else 0,
                 "usage_units": raw.get("usage_units"),
                 "budget_limit_units": self.free_conversation_limit_units if selected is None else 0,
+                "trial_total_send_limit": self.trial_total_send_limit,
             }
         )
         return apply_operation(self.path, request, self.authority).model_dump(mode="json")

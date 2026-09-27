@@ -133,6 +133,8 @@ class AssignedConfig:
     limit_units: int
     offline: bool = False
     pi_tools: tuple[str, ...] = ()
+    disable_tools: bool = False
+    subscription_agent_dir: Path | None = None
 
 
 def executor_database(space: Path) -> Path:
@@ -589,7 +591,13 @@ def _rpc_prompt(
             raise FoundationError("rpc_extension", "Pi extension rejected the assigned turn")
         if event.get("type") == "response" and event.get("id") == request_id:
             if event.get("success") is not True:
-                raise FoundationError("rpc_prompt", "Pi refused the assigned prompt")
+                detail = event.get("error")
+                explanation = (
+                    detail[:500] if isinstance(detail, str) else "preflight failed"
+                )
+                raise FoundationError(
+                    "rpc_prompt", f"Pi refused the assigned prompt: {explanation}"
+                )
             accepted = True
         if event.get("type") == "agent_settled":
             if not accepted:
@@ -909,6 +917,13 @@ def _execute_under_lock(
                 encoding="utf-8",
                 newline="\n",
             )
+            if config.subscription_agent_dir is not None and (
+                not config.subscription_agent_dir.is_dir()
+                or not (config.subscription_agent_dir / "auth.json").is_file()
+            ):
+                raise FoundationError(
+                    "rpc_auth", "Selected Pi subscription directory is unavailable"
+                )
             environment = {
                 key: value
                 for key, value in os.environ.items()
@@ -921,7 +936,9 @@ def _execute_under_lock(
                     "USERPROFILE": str(managed_home),
                     "APPDATA": str(managed_home / "AppData"),
                     "LOCALAPPDATA": str(managed_home / "LocalAppData"),
-                    "PI_CODING_AGENT_DIR": str(pi_agent_home),
+                    "PI_CODING_AGENT_DIR": str(
+                        config.subscription_agent_dir or pi_agent_home
+                    ),
                     "ZARA_CORE_ENDPOINT": f"http://127.0.0.1:{server.server_port}",
                     "ZARA_CORE_TOKEN": bridge.token,
                     "ZARA_RESERVE_UNITS": str(config.reserve_units),
@@ -963,20 +980,23 @@ def _execute_under_lock(
                 "--no-themes",
                 "--no-approve",
             ]
-            command.extend(
-                [
-                    "--tools",
-                    ",".join(
-                        dict.fromkeys(
-                            [
-                                *(config.pi_tools or ("read", "write", "edit", "bash")),
-                                "zara_memory",
-                                "zara_development",
-                            ]
-                        )
-                    ),
-                ]
-            )
+            if config.disable_tools:
+                command.append("--no-tools")
+            else:
+                command.extend(
+                    [
+                        "--tools",
+                        ",".join(
+                            dict.fromkeys(
+                                [
+                                    *(config.pi_tools or ("read", "write", "edit", "bash")),
+                                    "zara_memory",
+                                    "zara_development",
+                                ]
+                            )
+                        ),
+                    ]
+                )
             if config.offline:
                 command.append("--offline")
             process = subprocess.Popen(
@@ -1016,7 +1036,7 @@ def _execute_under_lock(
                 'Otherwise return {"zara":"final","text":"the result"}. '
                 + (
                     "Use only the configured tools and save required Core records before final."
-                    if config.pi_tools
+                    if not config.disable_tools
                     else "Do not call tools."
                 )
             )
@@ -1060,7 +1080,7 @@ def _execute_under_lock(
                     '{"zara":"final","text":"the final result"}. '
                     + (
                         "Use only the configured tools for outstanding work."
-                        if config.pi_tools
+                        if not config.disable_tools
                         else "Do not call tools."
                     ),
                     stop_requested,
@@ -1311,6 +1331,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--context-window", type=int)
     parser.add_argument("--max-tokens", type=int)
     parser.add_argument("--pi-tools", help="Comma-separated Pi tools admitted for this resource")
+    parser.add_argument("--subscription-agent-dir", type=Path)
     parser.add_argument("--offline", action="store_true")
     parser.add_argument("--reserve-units", required=True, type=int)
     parser.add_argument("--limit-units", required=True, type=int)
@@ -1337,8 +1358,14 @@ def main(argv: list[str] | None = None) -> int:
         reserve_units=args.reserve_units,
         limit_units=args.limit_units,
         offline=args.offline,
+        subscription_agent_dir=(
+            args.subscription_agent_dir.resolve() if args.subscription_agent_dir else None
+        ),
+        disable_tools=args.pi_tools == "none",
         pi_tools=(
-            tuple(item.strip() for item in args.pi_tools.split(",") if item.strip())
+            ()
+            if args.pi_tools == "none"
+            else tuple(item.strip() for item in args.pi_tools.split(",") if item.strip())
             if args.pi_tools
             else ("read", "write", "edit", "bash")
         ),

@@ -1980,6 +1980,7 @@ class RecordContextDeliveryRequest(OperationRequest):
     reserve_units: int = Field(default=0, ge=0)
     usage_units: int | None = Field(default=None, ge=0)
     budget_limit_units: int = Field(default=0, ge=0)
+    trial_total_send_limit: int | None = Field(default=None, ge=1)
 
     @model_validator(mode="after")
     def valid_accounting(self) -> RecordContextDeliveryRequest:
