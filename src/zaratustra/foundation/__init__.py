@@ -36,6 +36,7 @@ from .composition import (
     upgrade_plan_revision_space,
 )
 from .development import (
+    check_program_change_boundary,
     list_change_applications,
     list_development,
     list_sleep_sources,
@@ -321,6 +322,7 @@ __all__ = [
     "ConfirmProgramInstallRequest",
     "upgrade_change_package_space",
     "program_target_path",
+    "check_program_change_boundary",
     "ValidationCriterion",
     "ValidationPlanState",
     "ValidationResultState",

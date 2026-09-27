@@ -327,10 +327,12 @@ def _installed_program_change(
     from zaratustra.foundation import (
         CompositeChange,
         ConfirmProgramInstallRequest,
+        FoundationError,
         ProgramChange,
         RestoreCandidateRequest,
         apply_operation,
         authorize_local,
+        check_program_change_boundary,
         program_target_path,
         read_artifact,
         read_change_application,
@@ -356,7 +358,7 @@ def _installed_program_change(
     programs = tuple(item for item in parts if isinstance(item, ProgramChange))
     if not programs:
         raise ValueError("Change package has no program build to install")
-    actions: list[tuple[Path, bytes | None, str | None, str]] = []
+    actions: list[tuple[Path, bytes | None, str | None, str | None, ProgramChange]] = []
     for part in programs:
         destination = program_target_path(space, part, authority)
         selected = workspace.joinpath(*part.relative_path.split("/")).resolve()
@@ -380,38 +382,13 @@ def _installed_program_change(
         prior_hash = part.from_checksum if installing else part.build_sha256
         if actual not in (prior_hash, desired_hash):
             raise ValueError(f"Program path changed independently: {destination}")
-        actions.append((destination, content, desired_hash, part.relative_path))
+        actions.append((destination, content, desired_hash, prior_hash, part))
     word = "INSTALL" if installing else "RESTORE"
     print(f"Change: {application.application_id} ({application.target_kind})")
-    for destination, _, digest, _ in actions:
+    for destination, _, digest, _, _ in actions:
         print(f"{destination}: {'absent' if digest is None else digest}")
     if input(f"Type {word} to change these exact working resource files: ").strip() != word:
         return 1
-    for destination, content, desired_hash, _ in actions:
-        actual = (
-            hashlib.sha256(destination.read_bytes()).hexdigest().upper()
-            if destination.is_file()
-            else None
-        )
-        if actual == desired_hash:
-            continue
-        if content is None:
-            destination.unlink()
-            continue
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        pending: Path | None = None
-        try:
-            with tempfile.NamedTemporaryFile(
-                mode="wb", prefix=".zara-change-", dir=destination.parent, delete=False
-            ) as handle:
-                pending = Path(handle.name)
-                handle.write(content)
-                handle.flush()
-                os.fsync(handle.fileno())
-            pending.replace(destination)
-        finally:
-            if pending is not None and pending.exists():
-                pending.unlink()
     operation = (
         ConfirmProgramInstallRequest(
             operation_id=uuid4(),
@@ -432,7 +409,61 @@ def _installed_program_change(
             external_effects=args.external_effects,
         )
     )
-    print(apply_operation(space, operation, authority).model_dump_json(indent=2))
+    if check_program_change_boundary(space, operation, authority) != programs:
+        raise ValueError("Program package changed after preparation")
+    for destination, _, desired_hash, prior_hash, part in actions:
+        if program_target_path(space, part, authority) != destination:
+            raise ValueError("Program target changed during confirmation")
+        actual = (
+            hashlib.sha256(destination.read_bytes()).hexdigest().upper()
+            if destination.is_file()
+            else None
+        )
+        if actual not in (prior_hash, desired_hash):
+            raise ValueError(f"Program path changed independently: {destination}")
+    changed = False
+    for destination, content, desired_hash, prior_hash, _ in actions:
+        actual = (
+            hashlib.sha256(destination.read_bytes()).hexdigest().upper()
+            if destination.is_file()
+            else None
+        )
+        if actual == desired_hash:
+            continue
+        if actual != prior_hash:
+            raise ValueError(f"Program path changed independently: {destination}")
+        if content is None:
+            destination.unlink()
+            changed = True
+            continue
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        pending: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="wb", prefix=".zara-change-", dir=destination.parent, delete=False
+            ) as handle:
+                pending = Path(handle.name)
+                handle.write(content)
+                handle.flush()
+                os.fsync(handle.fileno())
+            if prior_hash is None:
+                os.link(pending, destination)
+            else:
+                pending.replace(destination)
+            changed = True
+        finally:
+            if pending is not None and pending.exists():
+                pending.unlink()
+    try:
+        receipt = apply_operation(space, operation, authority)
+    except FoundationError as error:
+        if changed:
+            raise ValueError(
+                f"Core refused {word} after file effects ({error.code}); inspect the exact "
+                "working files and application before a supported retry or restoration"
+            ) from error
+        raise
+    print(receipt.model_dump_json(indent=2))
     return 0
 
 

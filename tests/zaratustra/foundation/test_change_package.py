@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import hashlib
 from argparse import Namespace
+from dataclasses import dataclass
 from pathlib import Path
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -26,12 +27,14 @@ from zaratustra.foundation import (
     CreateWorkRequest,
     FoundationError,
     KnowledgeRef,
+    LocalAuthority,
     MethodChange,
     MethodDefinition,
     MethodRef,
     OutputContract,
     ProgramChange,
     ResourceState,
+    ReviseDecisionRequest,
     SourceState,
     StopCandidateRequest,
     ValidationCriterion,
@@ -43,6 +46,7 @@ from zaratustra.foundation import (
     pulse_space,
     read_binding_version,
     read_change_application,
+    read_decision,
     read_method_version,
     upgrade_change_package_space,
     upgrade_development_space,
@@ -51,9 +55,21 @@ from zaratustra.foundation import (
 from zaratustra.release import _installed_program_change
 
 
-def test_composite_program_install_stop_and_restore(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+@dataclass(frozen=True)
+class _PreparedProgram:
+    root: Path
+    space: UUID
+    owner: LocalAuthority
+    application_id: UUID
+    candidate_id: UUID
+    decision_id: UUID
+    method_ref: MethodRef
+    installed: Path
+    build: bytes
+    config: dict[str, object]
+
+
+def _prepared_program_change(tmp_path: Path) -> _PreparedProgram:
     root, space, owner, activity_id, _ = _ready(tmp_path)
     upgrade_knowledge_space(root, owner)
     upgrade_development_space(root, owner)
@@ -248,6 +264,33 @@ def test_composite_program_install_stop_and_restore(
         "space_id": str(space),
         "workspace": str(workspace),
     }
+    return _PreparedProgram(
+        root,
+        space,
+        owner,
+        application_id,
+        candidate_id,
+        decision_id,
+        method_ref,
+        installed,
+        build,
+        config,
+    )
+
+
+def test_composite_program_install_stop_and_restore(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    prepared = _prepared_program_change(tmp_path)
+    root, space, owner = prepared.root, prepared.space, prepared.owner
+    application_id = prepared.application_id
+    candidate_id, decision_id = prepared.candidate_id, prepared.decision_id
+    method_ref, installed, build, config = (
+        prepared.method_ref,
+        prepared.installed,
+        prepared.build,
+        prepared.config,
+    )
     apply_operation(
         root,
         StopCandidateRequest(
@@ -356,6 +399,60 @@ def test_composite_program_install_stop_and_restore(
     )
     assert not installed.exists()
     assert read_change_application(root, application_id, owner)[0].status == "restored"
+
+
+def test_revoked_program_admission_has_no_file_effect(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    prepared = _prepared_program_change(tmp_path)
+    decision = read_decision(prepared.root, prepared.decision_id, prepared.owner)
+    apply_operation(
+        prepared.root,
+        ReviseDecisionRequest(
+            operation_id=uuid4(),
+            space_id=prepared.space,
+            actor="owner",
+            decision_id=decision.decision_id,
+            expected_revision=decision.revision,
+            state=decision.state.model_copy(update={"status": "revoked"}),
+        ),
+        prepared.owner,
+    )
+    monkeypatch.setattr("builtins.input", lambda _: "INSTALL")
+    with pytest.raises(FoundationError) as failure:
+        _installed_program_change(
+            Namespace(command="change-install", application_id=prepared.application_id),
+            prepared.config,
+            "owner",
+        )
+    assert failure.value.code == "stale_decision"
+    assert not prepared.installed.exists()
+    app, events = read_change_application(prepared.root, prepared.application_id, prepared.owner)
+    assert app.status == "prepared" and app.revision == 1
+    assert [event["kind"] for event in events] == ["prepare"]
+
+
+def test_program_edit_during_install_confirmation_is_preserved(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    prepared = _prepared_program_change(tmp_path)
+    independent = b"owner independently edited this file\n"
+
+    def confirm(_: str) -> str:
+        prepared.installed.write_bytes(independent)
+        return "INSTALL"
+
+    monkeypatch.setattr("builtins.input", confirm)
+    with pytest.raises(ValueError, match="Program path changed independently"):
+        _installed_program_change(
+            Namespace(command="change-install", application_id=prepared.application_id),
+            prepared.config,
+            "owner",
+        )
+    assert prepared.installed.read_bytes() == independent
+    app, events = read_change_application(prepared.root, prepared.application_id, prepared.owner)
+    assert app.status == "prepared" and app.revision == 1
+    assert [event["kind"] for event in events] == ["prepare"]
 
 
 def test_internal_method_and_binding_package_is_one_admitted_change(tmp_path: Path) -> None:

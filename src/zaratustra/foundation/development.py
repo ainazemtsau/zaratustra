@@ -737,6 +737,90 @@ def program_target_path(path: Path, part: ProgramChange, authority: LocalAuthori
         return _program_path(connection, part)
 
 
+def check_program_change_boundary(
+    path: Path,
+    request: ConfirmProgramInstallRequest | RestoreCandidateRequest,
+    authority: LocalAuthority,
+) -> tuple[ProgramChange, ...]:
+    """Check current Core authority immediately before installed file effects."""
+
+    with space_connection(path) as (connection, info):
+        _local_space(authority, info)
+        if request.space_id != info.space_id or request.actor != authority.actor:
+            raise FoundationError("wrong_space", "Program action differs from local authority")
+        if info.schema_version < 12 or info.recovery_state != "active":
+            raise FoundationError("upgrade_required", "Program change needs active schema 12")
+        _authorize(
+            connection,
+            actor=request.actor,
+            action="method.write",
+            epoch=info.execution_epoch,
+        )
+        app = _application(connection, request.application_id)
+        if app.revision != request.expected_revision:
+            raise FoundationError("stale_revision", "Change application changed")
+        if app.target_kind not in ("program", "composite"):
+            raise FoundationError("wrong_kind", "Change package has no program build")
+        installing = isinstance(request, ConfirmProgramInstallRequest)
+        if app.status not in (("prepared",) if installing else ("stopped", "partial")):
+            raise FoundationError(
+                "invalid_transition", "Program change is not ready for this action"
+            )
+        _authorize(
+            connection,
+            actor=request.actor,
+            action="record.read",
+            epoch=info.execution_epoch,
+            resource_type="artifact",
+            resource_id=app.candidate_id,
+        )
+        if installing:
+            candidate_revision, candidate = _current(connection, app.candidate_id)
+            if candidate_revision != app.candidate_revision or not isinstance(
+                candidate, ChangeCandidateState
+            ):
+                raise FoundationError("stale_candidate", "Prepared candidate changed")
+            admission = ApplyCandidateRequest(
+                operation_id=request.operation_id,
+                space_id=request.space_id,
+                actor=request.actor,
+                candidate_id=app.candidate_id,
+                candidate_revision=app.candidate_revision,
+                decision_id=app.decision_id,
+                decision_revision=app.decision_revision,
+                mode=app.mode,
+            )
+            _decision(connection, admission, candidate)
+        else:
+            candidate = _at_revision(connection, app.candidate_id, app.candidate_revision)
+            if not isinstance(candidate, ChangeCandidateState):
+                raise FoundationError("wrong_kind", "Application candidate is unavailable")
+        _check_candidate(connection, candidate, request.actor, info.execution_epoch)
+        parts = _package_parts(connection, app.application_id)
+        expected_parts = (
+            candidate.target.parts
+            if isinstance(candidate.target, CompositeChange)
+            else (candidate.target,)
+        )
+        if parts != expected_parts:
+            raise FoundationError("corrupt_space", "Package parts differ from exact candidate")
+        programs = tuple(part for part in parts if isinstance(part, ProgramChange))
+        if not programs:
+            raise FoundationError("wrong_kind", "Change package has no program build")
+        if not installing:
+            for part in programs:
+                newer = connection.execute(
+                    "SELECT 1 FROM change_package_parts t JOIN change_packages p "
+                    "ON p.application_id=t.application_id WHERE t.target_kind='program' "
+                    "AND t.target_id=? AND t.version>? AND p.status IN ('active','stopped') "
+                    "LIMIT 1",
+                    (str(part.program_id), part.to_version),
+                ).fetchone()
+                if newer:
+                    raise FoundationError("stale_program", "Newer program must be addressed first")
+        return programs
+
+
 def _event(
     connection: sqlite3.Connection,
     application_id: UUID,
