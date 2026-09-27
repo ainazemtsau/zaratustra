@@ -164,8 +164,7 @@ def run_probe(directory: Path, runtime: Path) -> None:
                 other_source_id, source("Fictional planning note has no known link to the handoff.")
             ),
             {
-                "_tool": "zara_development",
-                "mode": "start_sleep",
+                "_tool": "zara_sleep",
                 "start_id": str(start_id),
                 "scope": "Review one fictional handoff and explore beyond its ready links",
                 "scope_activity_ids": [str(activity)],
@@ -174,7 +173,7 @@ def run_probe(directory: Path, runtime: Path) -> None:
         ]
     )
     run_process(directory, runtime, Bridge(root, owner, directory, 10000), initial)
-    assert read_space(root).schema_version == 11
+    assert read_space(root).schema_version == 12
     original = read_development(root, sleep_id, owner)
     assert isinstance(original.state, SleepState)
     selected = original.state.model_copy(

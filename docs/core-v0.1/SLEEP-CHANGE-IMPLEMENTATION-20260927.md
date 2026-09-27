@@ -17,7 +17,7 @@
 ## Предметные записи
 
 `initial_sleep_method()` поставляет Method v1 с обязательствами
-`consolidation` и `exploration`. `zara_development.start_sleep` публикует эту
+`consolidation` и `exploration`. `zara_sleep` публикует эту
 неизменяемую версию и создаёт обычный составной Work с двумя видимыми дочерними
 Work. Запуск ручной. `SleepState` — адресуемый разбор этого Work, а не статус
 исполнителя. Он фиксирует точный Method, область, границу поступления из
@@ -77,7 +77,7 @@ Schema 11 включает ревизии/ребра, приложения и с
 
 После выбора Core space:
 
-1. `zara_development` с `mode=start_sleep`, описанной областью и конечным
+1. `zara_sleep` с описанной областью и конечным
    `resource_limit_units` создаёт Work и возвращает `work_id`/`sleep_id`.
 2. Обычный `/zara-work` выбирает Work. Назначенные дочерние Attempt могут
    вызвать разрешённые `zara_memory` и `zara_development`; `read` и

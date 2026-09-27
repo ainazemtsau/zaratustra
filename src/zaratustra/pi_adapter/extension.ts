@@ -608,31 +608,69 @@ export default function (pi: any): void {
   });
 
   pi.registerTool({
+    name: "zara_sleep",
+    label: "Review accumulated experience with Sleep",
+    description: "Start a bounded Sleep review only when the user explicitly asks to review " +
+      "accumulated experience. Sleep is not used to create an Activity, plan a backlog, " +
+      "or onboard a new direction. It creates a separate composite Work and needs a " +
+      "described scope and positive resource limit.",
+    parameters: Type.Object({
+      start_id: Type.Optional(Type.String()),
+      activity_id: Type.Optional(Type.String()),
+      scope_activity_ids: Type.Optional(Type.Array(Type.String())),
+      include_free_conversation: Type.Optional(Type.Boolean()),
+      scope: Type.String(),
+      resource_limit_units: Type.Integer({ minimum: reserveUnits }),
+    }),
+    async execute(_callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
+      if (!connection) connection = await request("/v1/connect", {});
+      if (assignedAttemptId) throw new Error("Assigned Work cannot create another Sleep Work");
+      if (!params.scope || !Number.isSafeInteger(params.resource_limit_units) ||
+          params.resource_limit_units < reserveUnits) {
+        throw new Error(`Sleep needs a described scope and at least ${reserveUnits} resource units`);
+      }
+      if (connection.schema_version < 11) {
+        const upgrade = await ctx.ui.confirm("Prepare Core schema 11 for Sleep and change?",
+          `Current schema ${connection.schema_version}; explicit additive upgrade is required.`);
+        if (!upgrade) return { content: [{ type: "text", text: "Preparation cancelled" }] };
+        await request("/v1/development-upgrade", {});
+      }
+      const startId = params.start_id || randomUUID();
+      const start = {
+        start_id: startId, activity_id: params.activity_id,
+        scope_activity_ids: params.scope_activity_ids ?? [],
+        include_free_conversation: params.include_free_conversation !== false,
+        scope: params.scope, resource_limit_units: params.resource_limit_units,
+      };
+      const accepted = await ctx.ui.confirm("Start this bounded Sleep Work?",
+        JSON.stringify(start, null, 2));
+      if (!accepted) return { content: [{ type: "text", text: "Sleep start cancelled" }] };
+      const created = await request("/v1/development-start-sleep", start);
+      connection = await request("/v1/connect", {});
+      return { content: [{ type: "text", text: JSON.stringify({ start_id: startId, ...created }) }], details: created };
+    },
+  });
+
+  pi.registerTool({
     name: "zara_development",
-    label: "Zaratustra Sleep and change",
-    description: "Create and reorganize Activity, Work and admitted exact Method, Binding or " +
-      "program packages; issue child Work and register the " +
-      "selected working resource. Start the shipped versioned Sleep Method as a composite Work; " +
-      "continue its saved analysis across sessions, enumerate bounded authorized intake and " +
-      "unlinked exploratory material, and save exact ChangeCandidate, ValidationPlan, results, " +
+    label: "Create Activity, Work and Method",
+    description: "Create an Activity when the user asks to start a direction; use contract " +
+      "for create_activity, then apply the typed intent after user confirmation. " +
+      "Create and reorganize Activity, Work and admitted exact Method, Binding or " +
+      "program packages; issue child Work and register the selected working resource. " +
+      "Save ChangeCandidate, ValidationPlan, results, " +
       "Decision, apply, stop, restoration and later outcomes. Use contract before an apply. " +
       "Setup kinds are create_activity, create_method_version, create_work, create_resource. " +
       "Core verifies exact versions, receipts, current rights, and delivery. A candidate never " +
       "grants authority. Assigned Work may save its own Sleep analysis and a candidate, but " +
       "cannot decide or apply a change.",
     parameters: Type.Object({
-      mode: Type.Union([Type.Literal("start_sleep"), Type.Literal("contract"),
-                        Type.Literal("apply"), Type.Literal("list"), Type.Literal("read"),
+      mode: Type.Union([Type.Literal("contract"), Type.Literal("apply"),
+                        Type.Literal("list"), Type.Literal("read"),
                         Type.Literal("enumerate"), Type.Literal("application"),
                         Type.Literal("applications")]),
       kind: Type.Optional(Type.String()),
       intent: Type.Optional(Type.Any()),
-      start_id: Type.Optional(Type.String()),
-      activity_id: Type.Optional(Type.String()),
-      scope_activity_ids: Type.Optional(Type.Array(Type.String())),
-      include_free_conversation: Type.Optional(Type.Boolean()),
-      scope: Type.Optional(Type.String()),
-      resource_limit_units: Type.Optional(Type.Number()),
       record_id: Type.Optional(Type.String()),
       application_id: Type.Optional(Type.String()),
       purpose: Type.Optional(Type.Union([Type.Literal("consolidation"), Type.Literal("exploration")])),
@@ -646,31 +684,6 @@ export default function (pi: any): void {
         const kind = developmentKind(params.kind);
         const contract = await request(`/v1/development-contract?session_id=${sessionId}&kind=${kind}`);
         return { content: [{ type: "text", text: JSON.stringify(contract) }] };
-      }
-      if (params.mode === "start_sleep") {
-        if (assignedAttemptId) throw new Error("Assigned Work cannot create another Sleep Work");
-        if (!params.scope || !params.resource_limit_units) {
-          throw new Error("Sleep needs a described scope and positive finite resource limit");
-        }
-        if (connection.schema_version < 11) {
-          const upgrade = await ctx.ui.confirm("Prepare Core schema 11 for Sleep and change?",
-            `Current schema ${connection.schema_version}; explicit additive upgrade is required.`);
-          if (!upgrade) return { content: [{ type: "text", text: "Preparation cancelled" }] };
-          await request("/v1/development-upgrade", {});
-        }
-        const startId = params.start_id || randomUUID();
-        const start = {
-          start_id: startId, activity_id: params.activity_id,
-          scope_activity_ids: params.scope_activity_ids ?? [],
-          include_free_conversation: params.include_free_conversation !== false,
-          scope: params.scope, resource_limit_units: params.resource_limit_units,
-        };
-        const accepted = await ctx.ui.confirm("Start this bounded Sleep Work?",
-          JSON.stringify(start, null, 2));
-        if (!accepted) return { content: [{ type: "text", text: "Sleep start cancelled" }] };
-        const created = await request("/v1/development-start-sleep", start);
-        connection = await request("/v1/connect", {});
-        return { content: [{ type: "text", text: JSON.stringify({ start_id: startId, ...created }) }], details: created };
       }
       if (params.mode === "apply") {
         const fields = params.intent;
