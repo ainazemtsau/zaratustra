@@ -11,6 +11,11 @@ const token = process.env.ZARA_CORE_TOKEN;
 const allowedOrigin = process.env.ZARA_PROVIDER_ORIGIN;
 const providerBaseUrl = process.env.ZARA_PROVIDER_BASE_URL;
 const reserveUnits = Number(process.env.ZARA_RESERVE_UNITS);
+const trialSendLimitRaw = process.env.ZARA_TRIAL_MAX_SENDS;
+const trialSendLimit = trialSendLimitRaw === undefined ? null : Number(trialSendLimitRaw);
+if (trialSendLimit !== null && (!Number.isSafeInteger(trialSendLimit) || trialSendLimit < 1)) {
+  throw new Error("ZARA_TRIAL_MAX_SENDS must be a positive integer");
+}
 const profile = process.env.ZARA_PROVIDER_PROFILE ?? "codex-sse";
 const localProviderId = process.env.ZARA_LOCAL_PROVIDER_ID;
 const localModelId = process.env.ZARA_LOCAL_MODEL_ID;
@@ -146,6 +151,7 @@ export default function (pi: any): void {
   const turnQueue: string[] = [];
   const compactQueue: string[] = [];
   const sent = new Set<string>();
+  let trialSendCount = 0;
   const manifests = new Map<string, any>();
 
   async function request(path: string, data?: any): Promise<any> {
@@ -232,6 +238,10 @@ export default function (pi: any): void {
     if (!providerBodyText(body, observedInit).includes(manifestMarker)) {
       throw new Error("Mandatory ContextManifest is absent from the actual provider request");
     }
+    if (trialSendLimit !== null && trialSendCount >= trialSendLimit) {
+      throw new Error("Local trial provider-send limit reached; no HTTP was sent");
+    }
+    trialSendCount += 1;
     const invocationId = randomUUID();
     nextPurpose = "content";
     const manifest = currentManifest;
