@@ -885,7 +885,132 @@ KNOWLEDGE_SCHEMA_SHA256 = (
     .hexdigest()
     .upper()
 )
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+DEVELOPMENT_SCHEMA_NAME = "core-v0.1-development-11"
+DEVELOPMENT_SCHEMA_STATEMENTS: tuple[str, ...] = (
+    """
+    CREATE TABLE development_records (
+        record_id TEXT PRIMARY KEY,
+        kind TEXT NOT NULL CHECK(kind IN ('sleep','candidate')),
+        current_revision INTEGER NOT NULL CHECK(current_revision >= 1),
+        status TEXT NOT NULL CHECK(status IN ('active','unavailable','deleted')),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    ) STRICT
+    """,
+    """
+    CREATE TABLE development_revisions (
+        record_id TEXT NOT NULL,
+        revision INTEGER NOT NULL CHECK(revision >= 1),
+        operation_id TEXT NOT NULL,
+        actor TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        payload BLOB,
+        sha256 TEXT,
+        PRIMARY KEY(record_id,revision),
+        FOREIGN KEY(record_id) REFERENCES development_records(record_id),
+        FOREIGN KEY(operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE development_edges (
+        record_id TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        ordinal INTEGER NOT NULL,
+        target_id TEXT NOT NULL,
+        target_revision INTEGER NOT NULL,
+        role TEXT NOT NULL,
+        PRIMARY KEY(record_id,revision,ordinal),
+        FOREIGN KEY(record_id,revision) REFERENCES development_revisions(record_id,revision)
+    ) STRICT
+    """,
+    "CREATE INDEX development_edge_target ON development_edges(target_id,target_revision)",
+    """
+    CREATE TABLE change_applications (
+        application_id TEXT PRIMARY KEY,
+        candidate_id TEXT NOT NULL,
+        candidate_revision INTEGER NOT NULL,
+        decision_id TEXT NOT NULL,
+        decision_revision INTEGER NOT NULL,
+        mode TEXT NOT NULL CHECK(mode IN ('trial','regular')),
+        target_kind TEXT NOT NULL CHECK(target_kind IN ('method','binding')),
+        target_id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        checksum TEXT NOT NULL,
+        status TEXT NOT NULL CHECK(status IN ('active','stopped','restored','partial')),
+        revision INTEGER NOT NULL CHECK(revision >= 1),
+        created_at TEXT NOT NULL,
+        changed_at TEXT NOT NULL,
+        FOREIGN KEY(candidate_id) REFERENCES development_records(record_id),
+        FOREIGN KEY(decision_id) REFERENCES records(record_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE change_application_events (
+        application_id TEXT NOT NULL,
+        revision INTEGER NOT NULL,
+        operation_id TEXT NOT NULL,
+        kind TEXT NOT NULL CHECK(kind IN ('apply','stop','restore','outcome')),
+        detail_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY(application_id,revision),
+        FOREIGN KEY(application_id) REFERENCES change_applications(application_id),
+        FOREIGN KEY(operation_id) REFERENCES operations(operation_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE change_application_works (
+        application_id TEXT NOT NULL,
+        work_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY(application_id,work_id),
+        FOREIGN KEY(application_id) REFERENCES change_applications(application_id),
+        FOREIGN KEY(work_id) REFERENCES subject_records(record_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE change_application_firings (
+        application_id TEXT NOT NULL,
+        operation_id TEXT NOT NULL,
+        binding_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY(application_id,operation_id,binding_id),
+        FOREIGN KEY(application_id) REFERENCES change_applications(application_id),
+        FOREIGN KEY(operation_id,binding_id) REFERENCES binding_firings(operation_id,binding_id)
+    ) STRICT
+    """,
+    """
+    CREATE TABLE change_application_evidence (
+        application_id TEXT NOT NULL,
+        event_revision INTEGER NOT NULL,
+        ordinal INTEGER NOT NULL,
+        target_id TEXT NOT NULL,
+        target_revision INTEGER NOT NULL,
+        PRIMARY KEY(application_id,event_revision,ordinal),
+        FOREIGN KEY(application_id,event_revision)
+            REFERENCES change_application_events(application_id,revision)
+    ) STRICT
+    """,
+    "CREATE INDEX change_application_evidence_target ON change_application_evidence(target_id)",
+    """
+    CREATE TABLE development_deletion_jobs (
+        operation_id TEXT PRIMARY KEY,
+        record_id TEXT NOT NULL,
+        status TEXT NOT NULL CHECK(status IN ('pending','complete')),
+        created_at TEXT NOT NULL,
+        completed_at TEXT,
+        FOREIGN KEY(operation_id) REFERENCES operations(operation_id),
+        FOREIGN KEY(record_id) REFERENCES development_records(record_id)
+    ) STRICT
+    """,
+)
+DEVELOPMENT_SCHEMA_SHA256 = (
+    hashlib.sha256(
+        "\n".join(statement.strip() for statement in DEVELOPMENT_SCHEMA_STATEMENTS).encode()
+    )
+    .hexdigest()
+    .upper()
+)
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
 
 def utc_now() -> datetime:
@@ -1033,6 +1158,8 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         expected.append((9, BINDING_SCHEMA_NAME, BINDING_SCHEMA_SHA256))
     if schema_version >= 10:
         expected.append((10, KNOWLEDGE_SCHEMA_NAME, KNOWLEDGE_SCHEMA_SHA256))
+    if schema_version >= 11:
+        expected.append((11, DEVELOPMENT_SCHEMA_NAME, DEVELOPMENT_SCHEMA_SHA256))
     if migration != expected:
         raise FoundationError("unsupported_schema", "Schema history does not match installed code")
     rows = connection.execute(
@@ -1046,7 +1173,7 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         database=database,
         space_id=UUID(space_id),
         created_at=datetime.fromisoformat(created_at),
-        schema_version=cast(Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], schema_version),
+        schema_version=cast(Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], schema_version),
         state_revision=state_revision,
         execution_epoch=execution_epoch,
         recovery_state=recovery_state,
@@ -1411,6 +1538,9 @@ __all__ = [
     "KNOWLEDGE_SCHEMA_NAME",
     "KNOWLEDGE_SCHEMA_SHA256",
     "KNOWLEDGE_SCHEMA_STATEMENTS",
+    "DEVELOPMENT_SCHEMA_NAME",
+    "DEVELOPMENT_SCHEMA_SHA256",
+    "DEVELOPMENT_SCHEMA_STATEMENTS",
     "BINDING_SCHEMA_NAME",
     "BINDING_SCHEMA_SHA256",
     "BINDING_SCHEMA_STATEMENTS",

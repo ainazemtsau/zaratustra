@@ -486,6 +486,23 @@ def _fire(
             "consumer_work_id": delivered[1],
             "offer_id": delivered[2],
         }, []
+    selected_application = None
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 11:
+        from .development import check_binding_trial_limit
+
+        if isinstance(definition.target, BindingNewWork):
+            activity_id = definition.target.activity_id
+        else:
+            activity_row = connection.execute(
+                "SELECT parent_id FROM subject_records WHERE record_id=? AND kind='work'",
+                (str(definition.target.work_id),),
+            ).fetchone()
+            if activity_row is None:
+                raise FoundationError("not_found", "Binding target Work is absent")
+            activity_id = UUID(activity_row[0])
+        selected_application = check_binding_trial_limit(
+            connection, request.binding_id, request.version, activity_id
+        )
     _right(
         connection,
         request.actor,
@@ -583,6 +600,16 @@ def _fire(
             now,
         ),
     )
+    if outcome in ("created", "offered") and selected_application is not None:
+        from .development import record_binding_use
+
+        record_binding_use(
+            connection,
+            selected_application,
+            request.operation_id,
+            request.binding_id,
+            now,
+        )
     return {
         "outcome": outcome,
         "reason": reason,
@@ -1132,6 +1159,10 @@ def sanitize_deleted_binding_subject(
             "UPDATE binding_versions SET payload = NULL WHERE binding_id = ? AND version = ?",
             (binding_id, version),
         )
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 11:
+            from .development import sanitize_deleted_change_target
+
+            sanitize_deleted_change_target(connection, UUID(binding_id), version, now)
         connection.execute(
             "UPDATE binding_firings SET basis = NULL WHERE binding_id = ? AND version = ?",
             (binding_id, version),

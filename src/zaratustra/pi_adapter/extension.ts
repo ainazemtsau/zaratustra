@@ -440,7 +440,9 @@ export default function (pi: any): void {
       "Interpret the user's request. Call catalog for addresses and exact Method versions, " +
       "then contract with one operation kind for its typed Core schema before apply. " +
       "Core checks references, versions, conditions, rights and causal limits. " +
-      "Create a Binding version in trial, then explicitly enable it; new_work pins a Method, " +
+      "At schema 11, create reusable Method and Binding versions through an admitted " +
+      "zara_development ChangeCandidate. Earlier schemas use direct version operations. " +
+      "New_work pins a Method, " +
       "offer_work addresses an open Work. Resolve an offer with an explicit basis.",
     parameters: Type.Object({
       mode: Type.Union([Type.Literal("catalog"), Type.Literal("contract"), Type.Literal("apply")]),
@@ -529,13 +531,15 @@ export default function (pi: any): void {
         return { content: [{ type: "text", text: JSON.stringify(contract) }] };
       }
       if (params.mode === "apply") {
-        if (assignedAttemptId) throw new Error("Assigned RPC cannot change knowledge");
         const fields = params.intent;
         if (!fields || typeof fields !== "object" || Array.isArray(fields) ||
             !["create_knowledge", "revise_knowledge", "delete_knowledge", "create_grant"].includes(fields.kind)) {
           throw new Error("Provide one typed Core knowledge intent");
         }
-        const accepted = await ctx.ui.confirm("Apply this exact memory operation?",
+        if (assignedAttemptId && fields.kind === "create_grant") {
+          throw new Error("Assigned Work cannot create a Grant");
+        }
+        const accepted = assignedAttemptId || await ctx.ui.confirm("Apply this exact memory operation?",
           JSON.stringify(fields, null, 2));
         if (!accepted) return { content: [{ type: "text", text: "Memory operation cancelled" }] };
         const operationId = randomUUID();
@@ -560,6 +564,101 @@ export default function (pi: any): void {
           read.content_text = Buffer.from(read.content_base64, "base64").toString("utf8");
         }
       }
+      return { content: [{ type: "text", text: JSON.stringify(read) }], details: read };
+    },
+  });
+
+  pi.registerTool({
+    name: "zara_development",
+    label: "Zaratustra Sleep and change",
+    description: "Start the shipped versioned Sleep Method as an ordinary composite Work; " +
+      "continue its saved analysis across sessions, enumerate bounded authorized intake and " +
+      "unlinked exploratory material, and save exact ChangeCandidate, ValidationPlan, results, " +
+      "Decision, apply, stop, restoration and later outcomes. Use contract before an apply. " +
+      "Core verifies exact versions, receipts, current rights, and delivery. A candidate never " +
+      "grants authority. Assigned Work may save its own Sleep analysis and a candidate, but " +
+      "cannot decide or apply a change.",
+    parameters: Type.Object({
+      mode: Type.Union([Type.Literal("start_sleep"), Type.Literal("contract"),
+                        Type.Literal("apply"), Type.Literal("list"), Type.Literal("read"),
+                        Type.Literal("enumerate"), Type.Literal("application"),
+                        Type.Literal("applications")]),
+      kind: Type.Optional(Type.String()),
+      intent: Type.Optional(Type.Any()),
+      start_id: Type.Optional(Type.String()),
+      activity_id: Type.Optional(Type.String()),
+      scope_activity_ids: Type.Optional(Type.Array(Type.String())),
+      include_free_conversation: Type.Optional(Type.Boolean()),
+      scope: Type.Optional(Type.String()),
+      resource_limit_units: Type.Optional(Type.Number()),
+      record_id: Type.Optional(Type.String()),
+      application_id: Type.Optional(Type.String()),
+      purpose: Type.Optional(Type.Union([Type.Literal("consolidation"), Type.Literal("exploration")])),
+      revision: Type.Optional(Type.Number()),
+      limit: Type.Optional(Type.Number()),
+    }),
+    async execute(_callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
+      if (!connection) connection = await request("/v1/connect", {});
+      if (params.mode === "contract") {
+        if (!params.kind) throw new Error("Name one development operation kind");
+        const contract = await request(`/v1/development-contract?session_id=${sessionId}&kind=${params.kind}`);
+        return { content: [{ type: "text", text: JSON.stringify(contract) }] };
+      }
+      if (params.mode === "start_sleep") {
+        if (assignedAttemptId) throw new Error("Assigned Work cannot create another Sleep Work");
+        if (!params.scope || !params.resource_limit_units) {
+          throw new Error("Sleep needs a described scope and positive finite resource limit");
+        }
+        if (connection.schema_version < 11) {
+          const upgrade = await ctx.ui.confirm("Prepare Core schema 11 for Sleep and change?",
+            `Current schema ${connection.schema_version}; explicit additive upgrade is required.`);
+          if (!upgrade) return { content: [{ type: "text", text: "Preparation cancelled" }] };
+          await request("/v1/development-upgrade", {});
+        }
+        const startId = params.start_id || randomUUID();
+        const start = {
+          start_id: startId, activity_id: params.activity_id,
+          scope_activity_ids: params.scope_activity_ids ?? [],
+          include_free_conversation: params.include_free_conversation !== false,
+          scope: params.scope, resource_limit_units: params.resource_limit_units,
+        };
+        const accepted = await ctx.ui.confirm("Start this bounded Sleep Work?",
+          JSON.stringify(start, null, 2));
+        if (!accepted) return { content: [{ type: "text", text: "Sleep start cancelled" }] };
+        const created = await request("/v1/development-start-sleep", start);
+        connection = await request("/v1/connect", {});
+        return { content: [{ type: "text", text: JSON.stringify({ start_id: startId, ...created }) }], details: created };
+      }
+      if (params.mode === "apply") {
+        const fields = params.intent;
+        const kinds = new Set(["create_development", "revise_development", "delete_development",
+          "apply_candidate", "stop_candidate", "restore_candidate", "record_change_outcome",
+          "create_decision", "revise_decision", "create_composite_work"]);
+        if (!fields || typeof fields !== "object" || Array.isArray(fields) || !kinds.has(fields.kind)) {
+          throw new Error("Provide one typed Core development intent");
+        }
+        if (assignedAttemptId && !["create_development", "revise_development"].includes(fields.kind)) {
+          throw new Error("Assigned Work may save analysis or candidate only");
+        }
+        const accepted = assignedAttemptId || await ctx.ui.confirm("Apply this exact development operation?",
+          JSON.stringify(fields, null, 2));
+        if (!accepted) return { content: [{ type: "text", text: "Operation cancelled" }] };
+        const operationId = randomUUID();
+        const intent = { ...fields, protocol_version: 1, operation_id: operationId,
+          space_id: connection.space_id, actor: connection.actor };
+        let receipt: any;
+        try { receipt = await request("/v1/development-operation", { request: intent }); }
+        catch (error) {
+          try { receipt = await request(`/v1/receipt?session_id=${sessionId}&operation_id=${operationId}`); }
+          catch { throw error; }
+        }
+        return { content: [{ type: "text", text: JSON.stringify(receipt) }], details: receipt };
+      }
+      const read = await request("/v1/development-read", {
+        mode: params.mode, kind: params.kind, record_id: params.record_id,
+        application_id: params.application_id, purpose: params.purpose,
+        revision: params.revision, limit: params.limit,
+      });
       return { content: [{ type: "text", text: JSON.stringify(read) }], details: read };
     },
   });

@@ -20,18 +20,26 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from zaratustra.foundation import (
     AcceptWorkRequest,
+    ActivityState,
     AnswerWaitRequest,
+    ApplyCandidateRequest,
     ArtifactRef,
+    ChangeDecisionState,
     ChoiceState,
     ClaimState,
     ContextState,
+    CreateActivityRequest,
     CreateArtifactRequest,
     CreateBindingVersionRequest,
+    CreateCompositeWorkRequest,
+    CreateDecisionRequest,
+    CreateDevelopmentRequest,
     CreateGrantRequest,
     CreateKnowledgeRequest,
     CreateMethodVersionRequest,
     CreateResourceRequest,
     DecisionState,
+    DeleteDevelopmentRequest,
     DeleteKnowledgeRequest,
     DomainRequest,
     FireBindingRequest,
@@ -41,40 +49,58 @@ from zaratustra.foundation import (
     OpenWaitRequest,
     ProvenanceRef,
     PublishAttemptOutputRequest,
+    RecordChangeOutcomeRequest,
     RecordContextDeliveryRequest,
     ResolveBindingOfferRequest,
     ResourceState,
+    RestoreCandidateRequest,
+    ReviseDecisionRequest,
+    ReviseDevelopmentRequest,
     ReviseKnowledgeRequest,
     SetBindingStateRequest,
+    SleepRemainder,
+    SleepState,
     SourceState,
     StartAttemptRequest,
     StopAttemptRequest,
+    StopCandidateRequest,
     apply_operation,
+    initial_sleep_method,
+    initial_sleep_ref,
     inspect_space,
     list_binding_methods,
     list_binding_offers,
     list_bindings,
+    list_change_applications,
+    list_development,
     list_knowledge,
+    list_sleep_sources,
     open_knowledge,
     read_activity,
     read_artifact,
+    read_change_application,
     read_current_rights,
     read_decision,
+    read_development,
     read_execution,
     read_execution_events,
     read_knowledge,
     read_knowledge_neighbors,
     read_method_version,
     read_receipt,
+    read_sleep_for_work,
+    read_sleep_usage,
     read_space,
     read_work,
     read_work_plan,
     read_work_status,
     search_knowledge,
+    sleep_work_template,
     upgrade_binding_space,
     upgrade_child_execution_space,
     upgrade_composition_space,
     upgrade_continuation_space,
+    upgrade_development_space,
     upgrade_knowledge_space,
     upgrade_parent_execution_space,
     upgrade_plan_revision_space,
@@ -95,6 +121,18 @@ KNOWLEDGE_INTENTS: dict[str, type[BaseModel]] = {
     "revise_knowledge": ReviseKnowledgeRequest,
     "delete_knowledge": DeleteKnowledgeRequest,
     "create_grant": CreateGrantRequest,
+}
+DEVELOPMENT_INTENTS: dict[str, type[BaseModel]] = {
+    "create_development": CreateDevelopmentRequest,
+    "revise_development": ReviseDevelopmentRequest,
+    "delete_development": DeleteDevelopmentRequest,
+    "apply_candidate": ApplyCandidateRequest,
+    "stop_candidate": StopCandidateRequest,
+    "restore_candidate": RestoreCandidateRequest,
+    "record_change_outcome": RecordChangeOutcomeRequest,
+    "create_decision": CreateDecisionRequest,
+    "revise_decision": ReviseDecisionRequest,
+    "create_composite_work": CreateCompositeWorkRequest,
 }
 
 
@@ -409,8 +447,6 @@ class Bridge:
 
     def knowledge_operation(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
         self._session(session_id)
-        if self.assigned_attempt_id is not None:
-            raise FoundationError("permission_denied", "Assigned RPC cannot change knowledge")
         prepared = dict(raw)
         state_raw = prepared.get("state")
         if isinstance(state_raw, dict):
@@ -440,9 +476,256 @@ class Bridge:
             raise FoundationError(
                 "permission_denied", "Only knowledge operations use this endpoint"
             )
+        if self.assigned_attempt_id is not None and isinstance(request, CreateGrantRequest):
+            raise FoundationError("permission_denied", "Assigned Work cannot create a Grant")
         if request.actor != self.authority.actor or request.space_id != self.authority.space_id:
             raise FoundationError("permission_denied", "Knowledge actor/space differs from host")
         return apply_operation(self.path, request, self.authority).model_dump(mode="json")
+
+    def development_contract(self, session_id: UUID, kind: str) -> dict[str, object]:
+        self._session(session_id)
+        model = DEVELOPMENT_INTENTS.get(kind)
+        if model is None:
+            raise FoundationError("invalid_request", "Unknown development operation")
+        return {"kind": kind, "schema": model.model_json_schema()}
+
+    def development_upgrade(self, session_id: UUID) -> dict[str, object]:
+        self._session(session_id)
+        if self.assigned_attempt_id is not None:
+            raise FoundationError("permission_denied", "Assigned Work cannot upgrade Core")
+        self.knowledge_upgrade(session_id)
+        if read_space(self.path).schema_version < 11:
+            upgrade_development_space(self.path, self.authority)
+        return {"schema_version": read_space(self.path).schema_version}
+
+    def development_start_sleep(
+        self, session_id: UUID, raw: dict[str, object]
+    ) -> dict[str, object]:
+        self._session(session_id)
+        if self.assigned_attempt_id is not None:
+            raise FoundationError(
+                "permission_denied", "Assigned Work cannot create a new Sleep Work"
+            )
+        if read_space(self.path).schema_version < 11:
+            raise FoundationError("upgrade_required", "Prepare explicit schema 11 before Sleep")
+        start_id = UUID(str(raw["start_id"]))
+        scope = str(raw["scope"]).strip()
+        if not scope or len(scope) > 2048:
+            raise FoundationError("invalid_request", "Sleep needs a bounded scope description")
+        units = int(str(raw["resource_limit_units"]))
+        if units < 1 or units > self.limit_units:
+            raise FoundationError(
+                "resource_exhausted", "Sleep resource exceeds the chosen Work limit"
+            )
+        activity_id = (
+            UUID(str(raw["activity_id"]))
+            if raw.get("activity_id")
+            else uuid5(self.authority.space_id, "zaratustra-development-activity")
+        )
+        if not raw.get("activity_id"):
+            try:
+                read_activity(self.path, activity_id, self.authority)
+            except FoundationError as error:
+                if error.code != "not_found":
+                    raise
+                apply_operation(
+                    self.path,
+                    CreateActivityRequest(
+                        operation_id=uuid5(activity_id, "create"),
+                        space_id=self.authority.space_id,
+                        actor=self.authority.actor,
+                        activity_id=activity_id,
+                        state=ActivityState(
+                            title="Zaratustra development",
+                            goal="Review experience and improve authorized methods",
+                        ),
+                    ),
+                    self.authority,
+                )
+        activity = read_activity(self.path, activity_id, self.authority)
+        if activity.state.status != "ongoing":
+            raise FoundationError("activity_not_ongoing", "Sleep Work needs an ongoing Activity")
+        ref = initial_sleep_ref(self.authority.space_id)
+        try:
+            read_method_version(self.path, ref, self.authority)
+        except FoundationError as error:
+            if error.code != "method_unavailable":
+                raise
+            apply_operation(
+                self.path,
+                CreateMethodVersionRequest(
+                    operation_id=uuid5(ref.method_id, "publish-v1"),
+                    space_id=self.authority.space_id,
+                    actor=self.authority.actor,
+                    method_id=ref.method_id,
+                    version=1,
+                    definition=initial_sleep_method(),
+                ),
+                self.authority,
+            )
+        work_id = uuid5(start_id, "sleep-work")
+        sleep_id = uuid5(start_id, "sleep-analysis")
+        parent, plan = sleep_work_template(
+            activity_id=activity_id,
+            method=ref,
+            work_id=work_id,
+            consolidation_id=uuid5(start_id, "consolidation"),
+            exploration_id=uuid5(start_id, "exploration"),
+            scope=scope,
+        )
+        work_receipt = apply_operation(
+            self.path,
+            CreateCompositeWorkRequest(
+                operation_id=uuid5(start_id, "create-work"),
+                space_id=self.authority.space_id,
+                actor=self.authority.actor,
+                work_id=work_id,
+                state=parent,
+                plan=plan,
+            ),
+            self.authority,
+        )
+        # The Work receipt pins the intake boundary across retries and sessions.
+        cutoff = work_receipt.state_revision
+        scope_activities = tuple(
+            UUID(str(item)) for item in cast(list[object], raw.get("scope_activity_ids", []))
+        )
+        sleep_receipt = apply_operation(
+            self.path,
+            CreateDevelopmentRequest(
+                operation_id=uuid5(start_id, "create-analysis"),
+                space_id=self.authority.space_id,
+                actor=self.authority.actor,
+                record_id=sleep_id,
+                state=SleepState(
+                    work_id=work_id,
+                    method=ref,
+                    scope_activity_ids=scope_activities,
+                    include_free_conversation=raw.get("include_free_conversation") is not False,
+                    intake_cutoff_revision=cutoff,
+                    resource_limit_units=units,
+                    remainder=(
+                        SleepRemainder(
+                            kind="new_intake",
+                            description="Enumerate received material to the saved cutoff",
+                        ),
+                        SleepRemainder(
+                            kind="question",
+                            description="Make one bounded exploration outside ready links",
+                        ),
+                    ),
+                ),
+            ),
+            self.authority,
+        )
+        return {
+            "activity_id": str(activity_id),
+            "work_id": str(work_id),
+            "sleep_id": str(sleep_id),
+            "method": ref.model_dump(mode="json"),
+            "work_receipt": work_receipt.model_dump(mode="json"),
+            "sleep_receipt": sleep_receipt.model_dump(mode="json"),
+        }
+
+    def development_operation(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
+        self._session(session_id)
+        state = raw.get("state")
+        if (
+            raw.get("kind") in ("create_development", "revise_development")
+            and isinstance(state, dict)
+            and state.get("kind") == "sleep"
+        ):
+            work_id = UUID(str(state["work_id"]))
+            spent, reserved = read_sleep_usage(self.path, work_id, self.authority)
+            raw = {
+                **raw,
+                "state": {**state, "spent_units": spent, "reserved_units": reserved},
+            }
+        try:
+            request = REQUEST_ADAPTER.validate_json(json.dumps(raw))
+        except ValidationError as error:
+            raise FoundationError("invalid_request", str(error)) from error
+        if not isinstance(request, tuple(DEVELOPMENT_INTENTS.values())):
+            raise FoundationError(
+                "permission_denied", "Only development operations use this endpoint"
+            )
+        if request.actor != self.authority.actor or request.space_id != self.authority.space_id:
+            raise FoundationError("permission_denied", "Development actor/space differs from host")
+        if self.assigned_attempt_id is not None:
+            if not isinstance(request, (CreateDevelopmentRequest, ReviseDevelopmentRequest)):
+                raise FoundationError(
+                    "permission_denied", "Assigned Work may save analysis or candidate only"
+                )
+            if isinstance(request.state, SleepState):
+                selected = self._selection(session_id)
+                members = {
+                    item.work_id
+                    for item in read_work_plan(
+                        self.path, request.state.work_id, self.authority
+                    ).plan.children
+                }
+                if selected.work_id not in members and selected.work_id != request.state.work_id:
+                    raise FoundationError(
+                        "wrong_work", "Sleep analysis belongs to the assigned Work family"
+                    )
+        return apply_operation(self.path, request, self.authority).model_dump(mode="json")
+
+    def development_read(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
+        self._session(session_id)
+        mode = str(raw["mode"])
+        if mode == "list":
+            return {
+                "items": [
+                    item.model_dump(mode="json")
+                    for item in list_development(
+                        self.path,
+                        self.authority,
+                        kind=cast(str | None, raw.get("kind")),
+                        limit=int(str(raw.get("limit", 50))),
+                    )
+                ]
+            }
+        if mode == "read":
+            item = read_development(
+                self.path,
+                UUID(str(raw["record_id"])),
+                self.authority,
+                revision=int(str(raw["revision"])) if raw.get("revision") else None,
+            )
+            result = item.model_dump(mode="json")
+            if isinstance(item.state, SleepState):
+                spent, reserved = read_sleep_usage(self.path, item.state.work_id, self.authority)
+                result["live_resource"] = {
+                    "spent_units": spent,
+                    "reserved_units": reserved,
+                    "remaining_units": item.state.resource_limit_units - spent - reserved,
+                }
+            return result
+        if mode == "application":
+            app, history = read_change_application(
+                self.path, UUID(str(raw["application_id"])), self.authority
+            )
+            return {"application": app.model_dump(mode="json"), "history": history}
+        if mode == "applications":
+            return {
+                "items": [
+                    item.model_dump(mode="json")
+                    for item in list_change_applications(
+                        self.path,
+                        self.authority,
+                        limit=int(str(raw.get("limit", 50))),
+                    )
+                ]
+            }
+        if mode == "enumerate":
+            return list_sleep_sources(
+                self.path,
+                UUID(str(raw["record_id"])),
+                self.authority,
+                purpose=str(raw["purpose"]),
+                limit=int(str(raw.get("limit", 20))),
+            )
+        raise FoundationError("invalid_request", "Unknown development read mode")
 
     def capture_source(
         self,
@@ -624,6 +907,12 @@ class Bridge:
                     packet["plan"] = read_work_plan(
                         self.path, selected.work_id, self.authority
                     ).model_dump(mode="json")
+            elif current.composition is not None:
+                method = read_method_version(self.path, current.composition.method, self.authority)
+                packet["method"] = method.model_dump(mode="json")
+                packet["plan"] = read_work_plan(
+                    self.path, current.composition.parent_work_id, self.authority
+                ).model_dump(mode="json")
             inputs: list[dict[str, object]] = []
             for ref in work.state.inputs:
                 exact = read_artifact(
@@ -647,23 +936,34 @@ class Bridge:
                     continue
                 decision = read_decision(self.path, row.record_id, self.authority)
                 relevant = (
-                    isinstance(decision.state, DecisionState)
-                    and decision.state.status == "active"
-                    and (
-                        "*" in decision.state.subjects
-                        or self.authority.actor in decision.state.subjects
-                    )
-                ) or (
-                    isinstance(decision.state, ChoiceState)
-                    and decision.state.status == "active"
-                    and (
-                        (
-                            decision.state.scope.kind == "activity"
-                            and decision.state.scope.record_id == selected.activity_id
+                    (
+                        isinstance(decision.state, DecisionState)
+                        and decision.state.status == "active"
+                        and (
+                            "*" in decision.state.subjects
+                            or self.authority.actor in decision.state.subjects
                         )
-                        or (
-                            decision.state.scope.kind == "work"
-                            and decision.state.scope.record_id == selected.work_id
+                    )
+                    or (
+                        isinstance(decision.state, ChoiceState)
+                        and decision.state.status == "active"
+                        and (
+                            (
+                                decision.state.scope.kind == "activity"
+                                and decision.state.scope.record_id == selected.activity_id
+                            )
+                            or (
+                                decision.state.scope.kind == "work"
+                                and decision.state.scope.record_id == selected.work_id
+                            )
+                        )
+                    )
+                    or (
+                        isinstance(decision.state, ChangeDecisionState)
+                        and decision.state.status == "active"
+                        and (
+                            decision.state.scope_global
+                            or decision.state.scope_activity_id == selected.activity_id
                         )
                     )
                 )
@@ -710,6 +1010,54 @@ class Bridge:
                 if cursor is None:
                     break
             packet["claims"] = claims
+        if selected is not None and info.schema_version >= 11:
+            sleep = read_sleep_for_work(self.path, selected.work_id, self.authority)
+            if sleep is not None:
+                mandatory.append(KnowledgeRef(record_id=sleep.record_id, revision=sleep.revision))
+                packet["sleep_analysis"] = sleep.model_dump(mode="json")
+                if isinstance(sleep.state, SleepState):
+                    spent, reserved = read_sleep_usage(
+                        self.path, sleep.state.work_id, self.authority
+                    )
+                    packet["sleep_resource"] = {
+                        "spent_units": spent,
+                        "reserved_units": reserved,
+                        "remaining_units": sleep.state.resource_limit_units - spent - reserved,
+                    }
+                    role = current.composition.role if current.composition else None
+                    selected_sources: list[dict[str, object]] = []
+                    for sleep_selection in sleep.state.selected:
+                        if role is not None and sleep_selection.purpose != role:
+                            continue
+                        record = read_knowledge(
+                            self.path,
+                            sleep_selection.source.record_id,
+                            self.authority,
+                            revision=sleep_selection.source.revision,
+                        )
+                        mandatory.append(sleep_selection.source)
+                        selected_sources.append(record.model_dump(mode="json"))
+                    packet["sleep_sources"] = selected_sources
+            if purpose != "compaction-summary":
+                applications: list[dict[str, object]] = []
+                for app in list_change_applications(self.path, self.authority):
+                    if app.status != "active":
+                        continue
+                    decision = read_decision(self.path, app.decision_id, self.authority)
+                    if (
+                        isinstance(decision.state, ChangeDecisionState)
+                        and decision.revision == app.decision_revision
+                        and decision.state.status == "active"
+                        and (
+                            decision.state.scope_global
+                            or decision.state.scope_activity_id == selected.activity_id
+                        )
+                    ):
+                        mandatory.append(
+                            KnowledgeRef(record_id=app.decision_id, revision=app.decision_revision)
+                        )
+                        applications.append(app.model_dump(mode="json"))
+                packet["active_changes"] = applications
         if not mandatory:
             raise FoundationError("incomplete_context", "No received prompt or selected Work")
         if latest_source is not None:
@@ -823,7 +1171,13 @@ class Bridge:
                     else "conversation continuation",
                     session_id=session_id,
                     work_id=selected.work_id if selected else None,
-                    method=work.state.method if selected and work.state.method != "none" else None,
+                    method=(
+                        work.state.method
+                        if selected and work.state.method != "none"
+                        else current.composition.method
+                        if selected and current.composition
+                        else None
+                    ),
                     plan_revision=current.composition.plan_revision
                     if selected and current.composition
                     else None,
@@ -1157,6 +1511,14 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 )
             elif post and path.path == "/v1/knowledge-read":
                 result = bridge.knowledge_read(session_id, body)
+            elif post and path.path == "/v1/development-upgrade":
+                result = bridge.development_upgrade(session_id)
+            elif post and path.path == "/v1/development-start-sleep":
+                result = bridge.development_start_sleep(session_id, body)
+            elif post and path.path == "/v1/development-operation":
+                result = bridge.development_operation(session_id, body["request"])
+            elif post and path.path == "/v1/development-read":
+                result = bridge.development_read(session_id, body)
             elif post and path.path == "/v1/context-prepare":
                 result = bridge.prepare_context(session_id, str(body.get("purpose", "content")))
             elif post and path.path == "/v1/context-delivery":
@@ -1196,6 +1558,8 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 result = bridge.binding_contract(session_id, params["kind"][0])
             elif not post and path.path == "/v1/knowledge-contract":
                 result = bridge.knowledge_contract(session_id, params["kind"][0])
+            elif not post and path.path == "/v1/development-contract":
+                result = bridge.development_contract(session_id, params["kind"][0])
             elif not post and path.path == "/v1/receipt":
                 result = bridge.receipt(session_id, UUID(params["operation_id"][0]))
             elif not post and path.path == "/v1/events":

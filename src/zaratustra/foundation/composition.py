@@ -1117,6 +1117,10 @@ def apply_composition_change(
             "WHERE method_id = ? AND version = ?",
             (str(request.method_id), request.version),
         )
+        if _schema(connection) >= 11:
+            from .development import sanitize_deleted_change_target
+
+            sanitize_deleted_change_target(connection, request.method_id, request.version, now)
         connection.execute(
             "INSERT INTO method_deletion_jobs(operation_id, method_id, version, "
             "status, created_at) "
@@ -1135,6 +1139,16 @@ def apply_composition_change(
     if isinstance(request, CreateCompositeWorkRequest):
         if not isinstance(request.state.method, MethodRef):
             raise FoundationError("invalid_request", "Composite Work needs an exact Method")
+        selected_application = None
+        if _schema(connection) >= 11:
+            from .development import check_new_method_use
+
+            selected_application = check_new_method_use(
+                connection,
+                request.state.method.method_id,
+                request.state.method.version,
+                request.state.activity_id,
+            )
         definition = _method(connection, request.state.method)
         _method_use(
             connection,
@@ -1196,6 +1210,10 @@ def apply_composition_change(
             state=request.state,
             revision=1,
         )
+        if _schema(connection) >= 11:
+            from .development import record_method_use
+
+            record_method_use(connection, selected_application, request.work_id, now)
         targets = [
             {"record_id": str(request.work_id), "revision": 1},
             {"record_id": str(request.state.activity_id), "revision": activity_rev},

@@ -28,6 +28,7 @@ from zaratustra.foundation import (
     upgrade_child_execution_space,
     upgrade_composition_space,
     upgrade_continuation_space,
+    upgrade_development_space,
     upgrade_execution_space,
     upgrade_knowledge_space,
     upgrade_parent_execution_space,
@@ -67,6 +68,7 @@ def _prepare_space(path: Path, actor: str, *, create: bool) -> LocalAuthority:
         (8, upgrade_parent_execution_space),
         (9, upgrade_binding_space),
         (10, upgrade_knowledge_space),
+        (11, upgrade_development_space),
     ):
         if read_space(path).schema_version < version:
             upgrade(path, authority)

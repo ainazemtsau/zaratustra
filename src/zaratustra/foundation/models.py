@@ -114,6 +114,31 @@ class ChoiceState(ContractModel):
     status: Literal["active", "revoked"] = "active"
 
 
+class ChangeDecisionState(ContractModel):
+    """An addressed adoption decision, never an access rule or a Grant."""
+
+    variant: Literal["change_adoption"] = "change_adoption"
+    statement: str = Field(min_length=1, max_length=4096)
+    candidate_id: UUID
+    candidate_revision: int = Field(ge=1)
+    mode: Literal["trial", "regular"]
+    trial_use_limit: int | None = Field(default=None, ge=1, le=1000)
+    use: Literal["permitted", "recommended", "required"]
+    scope_activity_id: UUID | None = None
+    scope_global: bool = False
+    validation_result_ids: tuple[UUID, ...] = ()
+    review_condition: str = Field(min_length=1, max_length=2048)
+    status: Literal["active", "suspended", "revoked"] = "active"
+
+    @model_validator(mode="after")
+    def one_scope(self) -> ChangeDecisionState:
+        if (self.scope_activity_id is not None) == self.scope_global:
+            raise ValueError("Adoption has exactly one activity or global scope")
+        if (self.mode == "trial") != (self.trial_use_limit is not None):
+            raise ValueError("Trial admission needs a finite use limit")
+        return self
+
+
 class GrantState(ContractModel):
     grantee: str = Field(min_length=1, max_length=200)
     actions: tuple[Action, ...] = Field(min_length=1)
@@ -187,14 +212,15 @@ class ExceptionState(ContractModel):
 
 def _decision_variant(value: object) -> str:
     variant = value.get("variant") if isinstance(value, dict) else getattr(value, "variant", None)
-    return str(variant) if variant in ("choice", "exception") else "rule"
+    return str(variant) if variant in ("choice", "exception", "change_adoption") else "rule"
 
 
 # An access rule keeps its earlier canonical form; only the other variants name themselves.
 DecisionBody = Annotated[
     Annotated[DecisionState, Tag("rule")]
     | Annotated[ChoiceState, Tag("choice")]
-    | Annotated[ExceptionState, Tag("exception")],
+    | Annotated[ExceptionState, Tag("exception")]
+    | Annotated[ChangeDecisionState, Tag("change_adoption")],
     Discriminator(_decision_variant),
 ]
 
@@ -1502,6 +1528,237 @@ class HandoffState(ContractModel):
         return self
 
 
+class SleepSelection(ContractModel):
+    source: KnowledgeRef
+    purpose: Literal["consolidation", "exploration"]
+    analysis_id: UUID | None = None
+
+
+class SleepDelivery(ContractModel):
+    source: KnowledgeRef
+    manifest: KnowledgeRef
+    invocation_id: UUID
+    stage: Literal["prepared", "sent", "answered", "unknown"]
+
+
+class SleepEffect(ContractModel):
+    operation_id: UUID
+    result: KnowledgeRef
+
+
+class SleepRemainder(ContractModel):
+    kind: Literal["selected", "new_intake", "question", "stored_source"]
+    description: str = Field(min_length=1, max_length=4096)
+    source: KnowledgeRef | None = None
+    return_condition: str | None = Field(default=None, max_length=2048)
+
+
+class SleepState(ContractModel):
+    """Saved analysis of one ordinary Work; Work owns execution state."""
+
+    kind: Literal["sleep"] = "sleep"
+    work_id: UUID
+    method: MethodRef
+    scope_activity_ids: tuple[UUID, ...]
+    include_free_conversation: bool = True
+    intake_cutoff_revision: int = Field(ge=0)
+    enumeration_cursor_revision: int = Field(default=0, ge=0)
+    enumeration_cursor_id: UUID | None = None
+    exploration_cursor_revision: int = Field(default=0, ge=0)
+    exploration_cursor_id: UUID | None = None
+    selected: tuple[SleepSelection, ...] = ()
+    deliveries: tuple[SleepDelivery, ...] = ()
+    analyses: tuple[KnowledgeRef, ...] = ()
+    effects: tuple[SleepEffect, ...] = ()
+    remainder: tuple[SleepRemainder, ...] = ()
+    resource_limit_units: int = Field(ge=1)
+    reserved_units: int = Field(default=0, ge=0)
+    spent_units: int = Field(default=0, ge=0)
+    consolidation: Literal["pending", "partial", "complete", "no_material"] = "pending"
+    exploration: Literal["pending", "partial", "complete", "no_material"] = "pending"
+    conclusion: str | None = Field(default=None, max_length=8192)
+    stop_reason: str | None = Field(default=None, max_length=2048)
+
+    @model_validator(mode="after")
+    def bounded_and_addressed(self) -> SleepState:
+        if self.spent_units + self.reserved_units > self.resource_limit_units:
+            raise ValueError("Sleep consumption exceeds its fixed resource")
+        if self.enumeration_cursor_revision > self.intake_cutoff_revision:
+            raise ValueError("Enumeration cannot pass its intake boundary")
+        if (
+            self.consolidation in ("complete", "no_material")
+            and self.exploration in ("complete", "no_material")
+            and not self.conclusion
+        ):
+            raise ValueError("Finished Sleep analysis needs a conclusion")
+        return self
+
+
+class ValidationCriterion(ContractModel):
+    key: Identifier
+    question: str = Field(min_length=1, max_length=4096)
+    pass_condition: str = Field(min_length=1, max_length=4096)
+    basis: tuple[KnowledgeRef, ...] = ()
+
+
+class ValidationPlanState(ContractModel):
+    baseline: str = Field(min_length=1, max_length=4096)
+    environment: str = Field(min_length=1, max_length=4096)
+    criteria: tuple[ValidationCriterion, ...] = Field(min_length=1)
+    cases: str = Field(min_length=1, max_length=8192)
+    method: str = Field(min_length=1, max_length=4096)
+    sufficiency: str = Field(min_length=1, max_length=4096)
+    limits: str = Field(min_length=1, max_length=4096)
+    stop_and_restore: str = Field(min_length=1, max_length=4096)
+    decision_condition: str = Field(min_length=1, max_length=4096)
+    follow_up: str = Field(min_length=1, max_length=4096)
+
+
+class ValidationResultState(ContractModel):
+    result_id: UUID
+    criterion: Identifier
+    outcome: Literal["met", "not_met", "undetermined"]
+    evidence: tuple[KnowledgeRef, ...]
+    actual_input: str = Field(min_length=1, max_length=4096)
+    environment: str = Field(min_length=1, max_length=4096)
+    limitations: str | None = Field(default=None, max_length=4096)
+    manifest: KnowledgeRef | None = None
+    trial_work_id: UUID | None = None
+
+    @model_validator(mode="after")
+    def observed_result_has_evidence(self) -> ValidationResultState:
+        if self.outcome != "undetermined" and not self.evidence:
+            raise ValueError("Observed validation needs saved evidence")
+        return self
+
+
+class MethodChange(ContractModel):
+    kind: Literal["method"] = "method"
+    method_id: UUID
+    from_version: int | None = Field(default=None, ge=1)
+    from_checksum: str | None = Field(default=None, pattern=r"^[0-9A-F]{64}$")
+    to_version: int = Field(ge=1)
+    definition: MethodDefinition
+
+    @model_validator(mode="after")
+    def exact_previous(self) -> MethodChange:
+        if (self.from_version is None) != (self.from_checksum is None):
+            raise ValueError("Previous Method needs version and checksum together")
+        if self.to_version != (self.from_version or 0) + 1:
+            raise ValueError("Method versions must be consecutive")
+        return self
+
+
+class BindingChange(ContractModel):
+    kind: Literal["binding"] = "binding"
+    binding_id: UUID
+    from_version: int | None = Field(default=None, ge=1)
+    from_checksum: str | None = Field(default=None, pattern=r"^[0-9A-F]{64}$")
+    to_version: int = Field(ge=1)
+    definition: BindingDefinition
+
+    @model_validator(mode="after")
+    def exact_previous(self) -> BindingChange:
+        if (self.from_version is None) != (self.from_checksum is None):
+            raise ValueError("Previous Binding needs version and checksum together")
+        if self.to_version != (self.from_version or 0) + 1:
+            raise ValueError("Binding versions must be consecutive")
+        return self
+
+
+ChangeTarget = Annotated[MethodChange | BindingChange, Field(discriminator="kind")]
+
+
+class ChangeCandidateState(ContractModel):
+    kind: Literal["candidate"] = "candidate"
+    target: ChangeTarget
+    proposal: str = Field(min_length=1, max_length=8192)
+    evidence: tuple[KnowledgeRef, ...] = ()
+    counter_evidence: tuple[KnowledgeRef, ...] = ()
+    expected_outcome: str = Field(min_length=1, max_length=4096)
+    scope_activity_ids: tuple[UUID, ...] = ()
+    scope_global: bool = False
+    exclusions: str = Field(min_length=1, max_length=4096)
+    impact: str = Field(min_length=1, max_length=8192)
+    affected_work_ids: tuple[UUID, ...] = ()
+    unknowns: str = Field(min_length=1, max_length=4096)
+    validation_plan: ValidationPlanState | None = None
+    results: tuple[ValidationResultState, ...] = ()
+    restore_plan: str = Field(min_length=1, max_length=4096)
+    irreversible_effects: str = Field(min_length=1, max_length=4096)
+    status: Literal["open", "deferred", "closed"] = "open"
+    return_condition: str | None = Field(default=None, max_length=2048)
+
+    @model_validator(mode="after")
+    def clear_scope_and_results(self) -> ChangeCandidateState:
+        if self.scope_global == bool(self.scope_activity_ids):
+            raise ValueError("Candidate needs one global or activity scope")
+        criteria = self.validation_plan.criteria if self.validation_plan else ()
+        keys = {item.key for item in criteria}
+        if len(keys) != len(criteria):
+            raise ValueError("Validation criteria must have unique keys")
+        if any(item.criterion not in keys for item in self.results):
+            raise ValueError("Results need a criterion in the saved plan")
+        if len({item.result_id for item in self.results}) != len(self.results):
+            raise ValueError("Validation result addresses must be unique")
+        return self
+
+
+class CreateDevelopmentRequest(OperationRequest):
+    kind: Literal["create_development"] = "create_development"
+    record_id: UUID
+    state: SleepState | ChangeCandidateState
+
+
+class ReviseDevelopmentRequest(OperationRequest):
+    kind: Literal["revise_development"] = "revise_development"
+    record_id: UUID
+    expected_revision: int = Field(ge=1)
+    state: SleepState | ChangeCandidateState
+
+
+class DeleteDevelopmentRequest(OperationRequest):
+    kind: Literal["delete_development"] = "delete_development"
+    record_id: UUID
+    expected_revision: int = Field(ge=1)
+
+
+class ApplyCandidateRequest(OperationRequest):
+    kind: Literal["apply_candidate"] = "apply_candidate"
+    candidate_id: UUID
+    candidate_revision: int = Field(ge=1)
+    decision_id: UUID
+    decision_revision: int = Field(ge=1)
+    mode: Literal["trial", "regular"]
+
+
+class StopCandidateRequest(OperationRequest):
+    kind: Literal["stop_candidate"] = "stop_candidate"
+    application_id: UUID
+    expected_revision: int = Field(ge=1)
+    reason: str = Field(min_length=1, max_length=4096)
+    started_works: str = Field(min_length=1, max_length=4096)
+    external_effects: str = Field(min_length=1, max_length=4096)
+
+
+class RestoreCandidateRequest(OperationRequest):
+    kind: Literal["restore_candidate"] = "restore_candidate"
+    application_id: UUID
+    expected_revision: int = Field(ge=1)
+    reason: str = Field(min_length=1, max_length=4096)
+    data_restoration: str = Field(min_length=1, max_length=4096)
+    external_effects: str = Field(min_length=1, max_length=4096)
+
+
+class RecordChangeOutcomeRequest(OperationRequest):
+    kind: Literal["record_change_outcome"] = "record_change_outcome"
+    application_id: UUID
+    expected_revision: int = Field(ge=1)
+    outcome: Literal["positive", "negative", "undetermined"]
+    evidence: tuple[KnowledgeRef, ...] = ()
+    observation: str = Field(min_length=1, max_length=8192)
+
+
 KnowledgeBody = Annotated[
     SourceState
     | ClaimState
@@ -1574,6 +1831,33 @@ class KnowledgeRevision(ContractModel):
     stale: bool = False
 
 
+class DevelopmentRevision(ContractModel):
+    record_id: UUID
+    revision: int = Field(ge=1)
+    operation_id: UUID
+    actor: str
+    created_at: AwareDatetime
+    state: SleepState | ChangeCandidateState | None
+    availability: Literal["available", "unavailable", "deleted"]
+
+
+class ChangeApplication(ContractModel):
+    application_id: UUID
+    candidate_id: UUID
+    candidate_revision: int = Field(ge=1)
+    decision_id: UUID
+    decision_revision: int = Field(ge=1)
+    mode: Literal["trial", "regular"]
+    target_kind: Literal["method", "binding"]
+    target_id: UUID
+    version: int = Field(ge=1)
+    checksum: str = Field(pattern=r"^[0-9A-F]{64}$")
+    status: Literal["active", "stopped", "restored", "partial"]
+    revision: int = Field(ge=1)
+    created_at: AwareDatetime
+    changed_at: AwareDatetime
+
+
 DomainRequest = Annotated[
     BootstrapRequest
     | RecoverRequest
@@ -1585,6 +1869,13 @@ DomainRequest = Annotated[
     | ReviseKnowledgeRequest
     | DeleteKnowledgeRequest
     | RecordContextDeliveryRequest
+    | CreateDevelopmentRequest
+    | ReviseDevelopmentRequest
+    | DeleteDevelopmentRequest
+    | ApplyCandidateRequest
+    | StopCandidateRequest
+    | RestoreCandidateRequest
+    | RecordChangeOutcomeRequest
     | CreateArtifactRequest
     | ReviseArtifactRequest
     | DeleteArtifactRequest
@@ -1634,7 +1925,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -2011,7 +2302,7 @@ class BackupManifest(ContractModel):
     backup_id: UUID
     format_version: Literal[1, 2] = 1
     space_id: UUID
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime

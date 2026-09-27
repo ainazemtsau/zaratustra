@@ -11,6 +11,7 @@ import subprocess
 import tempfile
 import threading
 import time
+from collections.abc import Callable
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib.resources import files
 from pathlib import Path
@@ -35,9 +36,15 @@ from zaratustra.pi_adapter import Bridge, BridgeServer
 
 
 class Provider(ThreadingHTTPServer):
-    def __init__(self, script: list[dict[str, object]]) -> None:
+    def __init__(
+        self,
+        script: list[dict[str, object] | Callable[[dict[str, Any]], dict[str, object]]],
+        *,
+        final_content: str = "The addressed step is complete.",
+    ) -> None:
         super().__init__(("127.0.0.1", 0), ProviderHandler)
         self.script = script
+        self.final_content = final_content
         self.calls = 0
         self.requests: list[dict[str, Any]] = []
 
@@ -54,6 +61,8 @@ class ProviderHandler(BaseHTTPRequestHandler):
         self.server.calls += 1
         call = self.server.calls
         scripted = self.server.script[call - 1] if call <= len(self.server.script) else None
+        if callable(scripted):
+            scripted = scripted(body)
         chunks: list[dict[str, object]] = [
             {
                 "id": "synthetic",
@@ -68,12 +77,17 @@ class ProviderHandler(BaseHTTPRequestHandler):
                         "index": 0,
                         "id": f"call-{call}",
                         "type": "function",
-                        "function": {"name": "zara_memory", "arguments": json.dumps(scripted)},
+                        "function": {
+                            "name": str(scripted.get("_tool", "zara_memory")),
+                            "arguments": json.dumps(
+                                {key: value for key, value in scripted.items() if key != "_tool"}
+                            ),
+                        },
                     }
                 ]
             }
             if scripted is not None
-            else {"content": "The addressed step is complete."}
+            else {"content": self.server.final_content}
         )
         chunks.append(
             {

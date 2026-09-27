@@ -92,6 +92,12 @@ source_modules = ["zaratustra.foundation.knowledge"]
 forbidden_modules = ["zaratustra.pi_adapter", "zaratustra.core", "zaratustra.cli", "zaratustra.local", "tests", "tools"]
 
 [[tool.importlinter.contracts]]
+name = "Development domain stays below Pi and legacy surfaces"
+type = "forbidden"
+source_modules = ["zaratustra.foundation.development", "zaratustra.foundation.sleep_method"]
+forbidden_modules = ["zaratustra.pi_adapter", "zaratustra.core", "zaratustra.cli", "zaratustra.local", "tests", "tools"]
+
+[[tool.importlinter.contracts]]
 name = "Entry catalog depends only on Core"
 type = "forbidden"
 source_modules = ["zaratustra.entry"]

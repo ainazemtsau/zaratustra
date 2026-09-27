@@ -148,6 +148,19 @@ def _require_ref(connection: sqlite3.Connection, ref: KnowledgeRef, actor: str, 
             if content is None or ref.end > len(content):
                 raise FoundationError("invalid_fragment", "Fragment exceeds retained source bytes")
         return
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 11:
+        development = connection.execute(
+            "SELECT r.status,v.payload FROM development_records r "
+            "JOIN development_revisions v ON v.record_id=r.record_id "
+            "WHERE r.record_id=? AND v.revision=?",
+            (str(ref.record_id), ref.revision),
+        ).fetchone()
+        if development is not None:
+            if development[0] != "active" or development[1] is None:
+                raise FoundationError("content_unavailable", "Development basis is unavailable")
+            if ref.start is not None:
+                raise FoundationError("invalid_fragment", "Development basis has no byte fragments")
+            return
     other = connection.execute(
         "SELECT 1 FROM record_revisions WHERE record_id=? AND revision=? UNION ALL "
         "SELECT 1 FROM subject_revisions WHERE record_id=? AND revision=? LIMIT 1",
@@ -383,6 +396,11 @@ def _sanitize_deleted(connection: sqlite3.Connection, record_id: UUID, now: str)
             if child not in affected:
                 affected.add(child)
                 queue.append(child)
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 11:
+        from .development import sanitize_deleted_development_dependency
+
+        for item in affected:
+            sanitize_deleted_development_dependency(connection, UUID(item), now)
     for item in affected:
         connection.execute("DELETE FROM knowledge_fts WHERE record_id=?", (item,))
         operation_rows = connection.execute(
@@ -453,6 +471,17 @@ def apply_knowledge_change(
                     knowledge[0] != ref.revision or knowledge[1] != "active"
                 ):
                     raise FoundationError("stale_context", "Mandatory knowledge changed")
+                if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 11:
+                    development = connection.execute(
+                        "SELECT current_revision,status FROM development_records WHERE record_id=?",
+                        (str(ref.record_id),),
+                    ).fetchone()
+                    if development is not None and (
+                        development[0] != ref.revision or development[1] != "active"
+                    ):
+                        raise FoundationError(
+                            "stale_context", "Mandatory development record changed"
+                        )
                 ordinary = connection.execute(
                     "SELECT current_revision,status FROM records WHERE record_id=? UNION ALL "
                     "SELECT current_revision,status FROM subject_records WHERE record_id=? LIMIT 1",

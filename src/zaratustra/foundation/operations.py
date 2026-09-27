@@ -25,11 +25,13 @@ from .models import (
     ActivityState,
     AdmitInvocationRequest,
     AnswerWaitRequest,
+    ApplyCandidateRequest,
     ArtifactRef,
     ArtifactRevision,
     AssignAttemptRequest,
     BackupInfo,
     BootstrapRequest,
+    ChangeDecisionState,
     ChoiceState,
     ClaimAttemptLaunchRequest,
     ClosedOutcome,
@@ -40,6 +42,7 @@ from .models import (
     CreateBindingVersionRequest,
     CreateCompositeWorkRequest,
     CreateDecisionRequest,
+    CreateDevelopmentRequest,
     CreateGrantRequest,
     CreateKnowledgeRequest,
     CreateMethodVersionRequest,
@@ -51,6 +54,7 @@ from .models import (
     DecisionState,
     DeleteActivityRequest,
     DeleteArtifactRequest,
+    DeleteDevelopmentRequest,
     DeleteKnowledgeRequest,
     DeleteMethodVersionRequest,
     DeleteWorkRequest,
@@ -70,17 +74,20 @@ from .models import (
     ProvenanceRef,
     PublishAttemptOutputRequest,
     RecordAttemptStopRequest,
+    RecordChangeOutcomeRequest,
     RecordContextDeliveryRequest,
     RecordSummary,
     RecoverRequest,
     RequestAttemptStopRequest,
     ResolveBindingOfferRequest,
     ResolveObligationApplicabilityRequest,
+    RestoreCandidateRequest,
     RevalidateResultRequest,
     ReviseActivePlanRequest,
     ReviseActivityRequest,
     ReviseArtifactRequest,
     ReviseDecisionRequest,
+    ReviseDevelopmentRequest,
     ReviseKnowledgeRequest,
     ReviseResourceRequest,
     ReviseWorkPlanRequest,
@@ -91,6 +98,7 @@ from .models import (
     SpaceInspection,
     StartAttemptRequest,
     StopAttemptRequest,
+    StopCandidateRequest,
     TechnicalVersions,
     WaivedObligation,
     WaiveObligationRequest,
@@ -160,14 +168,15 @@ class _DeletionBatch:
     subject_jobs: tuple[str, ...]
     method_jobs: tuple[str, ...]
     knowledge_jobs: tuple[str, ...]
+    development_jobs: tuple[str, ...]
     contaminated_backups: tuple[UUID, ...]
 
 
 type Authority = LocalAuthority | RecoveryAuthority
 REQUEST_ADAPTER: TypeAdapter[DomainRequest] = TypeAdapter(DomainRequest)
-DECISION_ADAPTER: TypeAdapter[DecisionState | ChoiceState | ExceptionState] = TypeAdapter(
-    DecisionBody
-)
+DECISION_ADAPTER: TypeAdapter[
+    DecisionState | ChoiceState | ExceptionState | ChangeDecisionState
+] = TypeAdapter(DecisionBody)
 
 
 def authorize_local(path: Path, *, actor: str, source_ref: str) -> LocalAuthority:
@@ -233,7 +242,9 @@ def _current_bodies(connection: object, kind: str) -> list[tuple[str, int, str]]
     return cast(list[tuple[str, int, str]], rows)
 
 
-def _decision_body(raw: str | bytes) -> DecisionState | ChoiceState | ExceptionState:
+def _decision_body(
+    raw: str | bytes,
+) -> DecisionState | ChoiceState | ExceptionState | ChangeDecisionState:
     try:
         return DECISION_ADAPTER.validate_json(raw)
     except ValidationError as error:
@@ -526,6 +537,14 @@ def _write_root(
 
 
 def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]:
+    if isinstance(request, (CreateDevelopmentRequest, ReviseDevelopmentRequest)):
+        return "artifact.write", "artifact", request.record_id
+    if isinstance(request, DeleteDevelopmentRequest):
+        return "maintenance.delete", "artifact", request.record_id
+    if isinstance(request, (ApplyCandidateRequest, StopCandidateRequest, RestoreCandidateRequest)):
+        return "method.write", "space", None
+    if isinstance(request, RecordChangeOutcomeRequest):
+        return "artifact.write", "space", None
     if isinstance(request, (CreateKnowledgeRequest, ReviseKnowledgeRequest)):
         if getattr(request.state, "kind", None) == "handoff" and getattr(
             request.state, "status", None
@@ -739,6 +758,12 @@ def _subject_delete(
         from .knowledge import sanitize_deleted_knowledge_dependency
 
         sanitize_deleted_knowledge_dependency(cast(sqlite3.Connection, connection), record_id, now)
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 11:  # type: ignore[attr-defined]
+        from .development import sanitize_deleted_development_dependency
+
+        sanitize_deleted_development_dependency(
+            cast(sqlite3.Connection, connection), record_id, now
+        )
     if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 9:  # type: ignore[attr-defined]
         from .binding import sanitize_deleted_binding_subject
 
@@ -1264,6 +1289,31 @@ def _apply_change(
     if isinstance(
         request,
         (
+            CreateDevelopmentRequest,
+            ReviseDevelopmentRequest,
+            DeleteDevelopmentRequest,
+            ApplyCandidateRequest,
+            StopCandidateRequest,
+            RestoreCandidateRequest,
+            RecordChangeOutcomeRequest,
+        ),
+    ):
+        from .development import apply_development_change
+
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 11:  # type: ignore[attr-defined]
+            raise FoundationError("unsupported_schema", "Development needs explicit schema 11")
+        return apply_development_change(
+            cast(sqlite3.Connection, connection),
+            request,
+            now=now,
+            epoch=epoch,
+            authority_source=authority.source_ref,
+            grants=grants,
+            decisions=decisions,
+        )
+    if isinstance(
+        request,
+        (
             CreateKnowledgeRequest,
             ReviseKnowledgeRequest,
             DeleteKnowledgeRequest,
@@ -1574,6 +1624,12 @@ def _apply_change(
             sanitize_deleted_knowledge_dependency(
                 cast(sqlite3.Connection, connection), request.artifact_id, now
             )
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 11:  # type: ignore[attr-defined]
+            from .development import sanitize_deleted_development_dependency
+
+            sanitize_deleted_development_dependency(
+                cast(sqlite3.Connection, connection), request.artifact_id, now
+            )
         if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 9:  # type: ignore[attr-defined]
             from .binding import sanitize_deleted_binding_subject
 
@@ -1767,8 +1823,19 @@ def _apply_change(
     if isinstance(request, CreateDecisionRequest):
         if not isinstance(request.state, DecisionState):
             _variant_schema(connection)
+        if isinstance(request.state, ChangeDecisionState):
+            if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 11:  # type: ignore[attr-defined]
+                raise FoundationError("unsupported_schema", "Change Decision needs schema 11")
+            from .development import validate_change_decision
+
+            validate_change_decision(
+                cast(sqlite3.Connection, connection),
+                request.state,
+                request.actor,
+                epoch,
+            )
         _expect_absent(connection, request.decision_id)
-        if not isinstance(request.state, DecisionState):
+        if isinstance(request.state, (ChoiceState, ExceptionState)):
             # A choice covers and an exception targets one exact existing subject.
             kind, subject_id = (
                 (request.state.scope.kind, request.state.scope.record_id)
@@ -1831,6 +1898,21 @@ def _apply_change(
                     "invalid_request",
                     "An exception keeps its target requirement; create another exception",
                 )
+        if isinstance(request.state, ChangeDecisionState):
+            assert isinstance(previous_decision, ChangeDecisionState)
+            if (
+                previous_decision.candidate_id != request.state.candidate_id
+                or previous_decision.candidate_revision != request.state.candidate_revision
+                or previous_decision.mode != request.state.mode
+                or previous_decision.scope_activity_id != request.state.scope_activity_id
+                or previous_decision.scope_global != request.state.scope_global
+                or previous_decision.validation_result_ids != request.state.validation_result_ids
+            ):
+                raise FoundationError(
+                    "invalid_transition", "Change Decision keeps its exact admitted subject"
+                )
+            if previous_decision.status == "revoked" and request.state.status != "revoked":
+                raise FoundationError("invalid_transition", "Revoked change decision stays revoked")
         revision = request.expected_revision + 1
         _insert_record(
             connection,
@@ -1983,6 +2065,54 @@ def apply_operation(path: Path, request: DomainRequest, authority: Authority) ->
                 )
                 grants.extend(receipt_grants)
                 decisions.extend(receipt_decisions)
+            if info.schema_version >= 11 and isinstance(request, CreateCompositeWorkRequest):
+                from .development import check_new_method_use
+
+                assert request.state.method != "none"
+                check_new_method_use(
+                    connection,
+                    request.state.method.method_id,
+                    request.state.method.version,
+                    request.state.activity_id,
+                )
+            if info.schema_version >= 11 and isinstance(request, CreateMethodVersionRequest):
+                from .sleep_method import initial_sleep_method, initial_sleep_ref
+
+                seed = initial_sleep_ref(info.space_id)
+                if (
+                    request.method_id != seed.method_id
+                    or request.version != 1
+                    or request.definition != initial_sleep_method()
+                ):
+                    raise FoundationError(
+                        "candidate_required", "New reusable Method needs admitted change"
+                    )
+            if info.schema_version >= 11 and isinstance(request, CreateBindingVersionRequest):
+                raise FoundationError(
+                    "candidate_required", "New reusable Binding needs admitted change"
+                )
+            if (
+                info.schema_version >= 11
+                and isinstance(request, ReviseActivePlanRequest)
+                and request.target_method is not None
+            ):
+                from .development import check_new_method_use
+
+                activity = connection.execute(
+                    "SELECT parent_id FROM subject_records WHERE record_id=? AND kind='work'",
+                    (str(request.work_id),),
+                ).fetchone()
+                if activity is not None:
+                    check_new_method_use(
+                        connection,
+                        request.target_method.method_id,
+                        request.target_method.version,
+                        UUID(activity[0]),
+                    )
+            if info.schema_version >= 11 and isinstance(request, AdmitInvocationRequest):
+                from .development import check_sleep_invocation_budget
+
+                check_sleep_invocation_budget(connection, request)
             if (
                 isinstance(
                     request,
@@ -2075,6 +2205,25 @@ def apply_operation(path: Path, request: DomainRequest, authority: Authority) ->
                 grants=grants,
                 decisions=decisions,
             )
+            if (
+                info.schema_version >= 11
+                and isinstance(request, ReviseActivePlanRequest)
+                and request.target_method is not None
+            ):
+                from .development import check_new_method_use, record_method_use
+
+                activity = connection.execute(
+                    "SELECT parent_id FROM subject_records WHERE record_id=? AND kind='work'",
+                    (str(request.work_id),),
+                ).fetchone()
+                if activity is not None:
+                    application = check_new_method_use(
+                        connection,
+                        request.target_method.method_id,
+                        request.target_method.version,
+                        UUID(activity[0]),
+                    )
+                    record_method_use(connection, application, request.work_id, now_text)
 
         connection.execute(
             "INSERT INTO operation_audit(operation_id, authority_source, target_refs_json, "
@@ -2750,6 +2899,12 @@ def _deletion_counts(connection: object, schema_version: int) -> tuple[int, int,
                     "SELECT count(*) FROM knowledge_deletion_jobs WHERE status=?", (status,)
                 ).fetchone()[0]
             )
+        if schema_version >= 11:
+            count += int(
+                connection.execute(  # type: ignore[attr-defined]
+                    "SELECT count(*) FROM development_deletion_jobs WHERE status=?", (status,)
+                ).fetchone()[0]
+            )
         counts.append(count)
     contaminated = int(
         connection.execute(  # type: ignore[attr-defined]
@@ -2901,14 +3056,31 @@ def complete_deletions(
                 if info.schema_version >= 10
                 else []
             )
+            development_rows = (
+                connection.execute(
+                    "SELECT operation_id,record_id FROM development_deletion_jobs "
+                    "WHERE status='pending' ORDER BY operation_id"
+                ).fetchall()
+                if info.schema_version >= 11
+                else []
+            )
             batch = _DeletionBatch(
                 record_ids=tuple(
-                    sorted({UUID(row[1]) for row in artifact_rows + subject_rows + knowledge_rows})
+                    sorted(
+                        {
+                            UUID(row[1])
+                            for row in artifact_rows
+                            + subject_rows
+                            + knowledge_rows
+                            + development_rows
+                        }
+                    )
                 ),
                 artifact_jobs=tuple(row[0] for row in artifact_rows),
                 subject_jobs=tuple(row[0] for row in subject_rows),
                 method_jobs=tuple(row[0] for row in method_rows),
                 knowledge_jobs=tuple(row[0] for row in knowledge_rows),
+                development_jobs=tuple(row[0] for row in development_rows),
                 contaminated_backups=tuple(
                     UUID(row[0])
                     for row in connection.execute(
@@ -2947,12 +3119,14 @@ def _complete_deletions_locked(
     subject_jobs = batch.subject_jobs
     method_jobs = batch.method_jobs
     knowledge_jobs = batch.knowledge_jobs
+    development_jobs = batch.development_jobs
     contaminated = batch.contaminated_backups
     if (
         not pending_jobs
         and not subject_jobs
         and not method_jobs
         and not knowledge_jobs
+        and not development_jobs
         and not contaminated
     ):
         sanitize_database(root)
@@ -3035,6 +3209,13 @@ def _complete_deletions_locked(
             for operation_id in knowledge_jobs:
                 connection.execute(
                     "UPDATE knowledge_deletion_jobs SET status='complete',completed_at=? "
+                    "WHERE operation_id=? AND status='pending'",
+                    (completed_at.isoformat(), operation_id),
+                )
+        if info.schema_version >= 11:
+            for operation_id in development_jobs:
+                connection.execute(
+                    "UPDATE development_deletion_jobs SET status='complete',completed_at=? "
                     "WHERE operation_id=? AND status='pending'",
                     (completed_at.isoformat(), operation_id),
                 )

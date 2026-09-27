@@ -1003,7 +1003,12 @@ def _execute_under_lock(
                 "Return only one JSON object. If a condition is unknown, return "
                 '{"zara":"wait","partial":"what is known",'
                 '"question":"one exact question","remainder":"what remains"}. '
-                'Otherwise return {"zara":"final","text":"the result"}. Do not call tools.'
+                'Otherwise return {"zara":"final","text":"the result"}. '
+                + (
+                    "Use only the configured tools and save required Core records before final."
+                    if any(tool.startswith("zara_") for tool in config.pi_tools)
+                    else "Do not call tools."
+                )
             )
             _rpc_prompt(process, first, stop_requested, rpc_events)
             current = _current_snapshot(config, authority, work_id, attempt_id, epoch, generation)
@@ -1042,7 +1047,12 @@ def _execute_under_lock(
                     "Continue the same assigned Work from the saved Core remainder "
                     "and partial Artifact. "
                     "Use the addressed answer in Core context. Return only "
-                    '{"zara":"final","text":"the final result"}. Do not call tools.',
+                    '{"zara":"final","text":"the final result"}. '
+                    + (
+                        "Use only configured Core tools for outstanding records."
+                        if any(tool.startswith("zara_") for tool in config.pi_tools)
+                        else "Do not call tools."
+                    ),
                     stop_requested,
                     rpc_events,
                 )
@@ -1170,8 +1180,11 @@ def _run_assigned_locked(
         or config.max_tokens < 1
     ):
         raise FoundationError("rpc_profile", "Local Provider needs model and context bounds")
-    if any(tool not in {"read", "grep", "find", "ls"} for tool in config.pi_tools):
-        raise FoundationError("rpc_tools", "Assigned RPC admits only read-only Pi tools")
+    if any(
+        tool not in {"read", "grep", "find", "ls", "zara_memory", "zara_development"}
+        for tool in config.pi_tools
+    ):
+        raise FoundationError("rpc_tools", "Assigned RPC tool is unavailable")
     work_id = resolve_assigned_work(config.space, authority, attempt_id)
     snapshot = read_execution(config.space, work_id, authority)
     attempt = next(x for x in snapshot.attempts if x.attempt_id == attempt_id)
