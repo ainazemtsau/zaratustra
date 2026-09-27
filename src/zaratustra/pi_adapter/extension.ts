@@ -582,7 +582,7 @@ export default function (pi: any): void {
           JSON.stringify(fields, null, 2));
         if (!accepted) return { content: [{ type: "text", text: "Memory operation cancelled" }] };
         const operationId = randomUUID();
-        const intent = { ...fields, kind: intentKind, protocol_version: 1, operation_id: operationId,
+        const intent = { ...fields, kind: fields.kind, protocol_version: 1, operation_id: operationId,
           space_id: connection.space_id, actor: connection.actor };
         let receipt: any;
         try { receipt = await request("/v1/knowledge-operation", { request: intent }); }
