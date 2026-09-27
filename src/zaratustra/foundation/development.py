@@ -1471,7 +1471,9 @@ def list_sleep_sources(
         items: list[dict[str, object]] = []
         last_revision, last_id = cursor_revision, str(cursor_id or "")
         selected_ids = {str(item.source.record_id) for item in state.selected}
+        consumed = 0
         for row in rows:
+            consumed += 1
             last_revision, last_id = int(row[2]), row[0]
             source = SourceState.model_validate_json(bytes(row[3]))
             if source.scope_activity_id not in state.scope_activity_ids and not (
@@ -1523,7 +1525,7 @@ def list_sleep_sources(
             "next_cursor_revision": last_revision,
             "next_cursor_id": last_id or None,
             "cutoff_revision": state.intake_cutoff_revision,
-            "exhausted": len(rows) < limit * 5,
+            "exhausted": consumed == len(rows) and len(rows) < limit * 5,
         }
 
 

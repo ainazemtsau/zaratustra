@@ -3,6 +3,9 @@
 the legacy Core or product surfaces. It owns its separate `.zara-core` space through
 its public `__init__.py`. The interactive `pi_adapter` composes that public surface.
 Public package contains Core, trusted local adapter and CLI for records and mutations.
+`release.py` is the installed `zara-core` entry above the public foundation and
+Pi adapter surfaces. It owns chosen runtime/configuration paths, explicit setup,
+upgrade and external maintenance; neither lower module imports it.
 The entry adapter owns an explicit discovery catalog and depends only on public Core.
 The intake coordinator depends only on public Core and composes exact standard
 publication/acceptance operations after separately trusted confirmation.

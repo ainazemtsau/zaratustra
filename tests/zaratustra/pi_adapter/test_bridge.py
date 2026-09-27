@@ -10,19 +10,26 @@ import pytest
 
 from tests.zaratustra.foundation.test_execution import InvocationFields, ready
 from zaratustra.foundation import (
+    ActivityState,
     AdmitInvocationRequest,
     ArtifactRef,
+    CreateActivityRequest,
     CreateArtifactRequest,
     CreateGrantRequest,
+    CreateResourceRequest,
+    CreateWorkRequest,
     DeleteWorkRequest,
     FinishInvocationRequest,
     FoundationError,
     GrantState,
     LinkedOutput,
     LinkWorkOutputRequest,
+    OutputContract,
     PrepareInvocationRequest,
+    ResourceState,
     SendInvocationRequest,
     StopAttemptRequest,
+    WorkState,
     apply_operation,
     authorize_local,
     complete_deletions,
@@ -33,6 +40,81 @@ from zaratustra.foundation import (
     read_work,
 )
 from zaratustra.pi_adapter import Bridge
+
+
+def test_development_creates_work_and_selected_resource(tmp_path: Path) -> None:
+    root, working, space_id, _, _, _, owner = ready(tmp_path)
+    bridge = Bridge(root, owner, working, limit_units=100)
+    session_id = uuid4()
+    bridge.connect(session_id)
+    activity_id, work_id, resource_id = uuid4(), uuid4(), uuid4()
+    activity = CreateActivityRequest(
+        operation_id=uuid4(),
+        space_id=space_id,
+        actor=owner.actor,
+        activity_id=activity_id,
+        state=ActivityState(title="Fictional development", goal="Change one test resource"),
+    )
+    assert bridge.development_contract(session_id, "create_activity")["kind"] == "create_activity"
+    bridge.development_operation(session_id, activity.model_dump(mode="json"))
+    work = CreateWorkRequest(
+        operation_id=uuid4(),
+        space_id=space_id,
+        actor=owner.actor,
+        work_id=work_id,
+        state=WorkState(
+            activity_id=activity_id,
+            goal="Make and verify a fictional edit",
+            expected_outputs=(OutputContract(slot="result", media_type="text/plain"),),
+        ),
+    )
+    bridge.development_operation(session_id, work.model_dump(mode="json"))
+    resource = CreateResourceRequest(
+        operation_id=uuid4(),
+        space_id=space_id,
+        actor=owner.actor,
+        resource_id=resource_id,
+        work_id=work_id,
+        state=ResourceState(label="Selected resource", root=working, limit_units=100),
+    )
+    bridge.development_operation(session_id, resource.model_dump(mode="json"))
+    assert read_execution(root, work_id, owner).resources[0].resource_id == resource_id
+    artifact_id = uuid4()
+    artifact = CreateArtifactRequest(
+        operation_id=uuid4(),
+        space_id=space_id,
+        actor=owner.actor,
+        artifact_id=artifact_id,
+        media_type="text/plain",
+        content=b"Test result",
+    )
+    bridge.development_operation(session_id, artifact.model_dump(mode="json"))
+    bridge.development_operation(
+        session_id,
+        LinkWorkOutputRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor=owner.actor,
+            work_id=work_id,
+            expected_revision=1,
+            output=LinkedOutput(
+                slot="result", artifact=ArtifactRef(artifact_id=artifact_id, revision=1)
+            ),
+        ).model_dump(mode="json"),
+    )
+    assert read_work(root, work_id, owner).state.status == "proposed"
+    assert read_artifact(root, artifact_id, owner).content == b"Test result"
+    with pytest.raises(FoundationError, match="resource_unavailable"):
+        bridge.development_operation(
+            session_id,
+            resource.model_copy(
+                update={
+                    "operation_id": uuid4(),
+                    "resource_id": uuid4(),
+                    "state": resource.state.model_copy(update={"root": root}),
+                }
+            ).model_dump(mode="json"),
+        )
 
 
 def test_publish_accept_and_fresh_read(tmp_path: Path) -> None:

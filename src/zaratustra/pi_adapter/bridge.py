@@ -27,6 +27,8 @@ from zaratustra.foundation import (
     ChangeDecisionState,
     ChoiceState,
     ClaimState,
+    CloseWorkRequest,
+    ConfirmObligationRequest,
     ContextState,
     CreateActivityRequest,
     CreateArtifactRequest,
@@ -38,13 +40,16 @@ from zaratustra.foundation import (
     CreateKnowledgeRequest,
     CreateMethodVersionRequest,
     CreateResourceRequest,
+    CreateWorkRequest,
     DecisionState,
     DeleteDevelopmentRequest,
     DeleteKnowledgeRequest,
     DomainRequest,
     FireBindingRequest,
     FoundationError,
+    IssueChildWorkRequest,
     KnowledgeRef,
+    LinkWorkOutputRequest,
     LocalAuthority,
     OpenWaitRequest,
     ProvenanceRef,
@@ -52,11 +57,14 @@ from zaratustra.foundation import (
     RecordChangeOutcomeRequest,
     RecordContextDeliveryRequest,
     ResolveBindingOfferRequest,
+    ResolveObligationApplicabilityRequest,
     ResourceState,
     RestoreCandidateRequest,
+    RevalidateResultRequest,
     ReviseDecisionRequest,
     ReviseDevelopmentRequest,
     ReviseKnowledgeRequest,
+    ReviseWorkPlanRequest,
     SetBindingStateRequest,
     SleepRemainder,
     SleepState,
@@ -64,6 +72,7 @@ from zaratustra.foundation import (
     StartAttemptRequest,
     StopAttemptRequest,
     StopCandidateRequest,
+    WaiveObligationRequest,
     apply_operation,
     initial_sleep_method,
     initial_sleep_ref,
@@ -123,6 +132,20 @@ KNOWLEDGE_INTENTS: dict[str, type[BaseModel]] = {
     "create_grant": CreateGrantRequest,
 }
 DEVELOPMENT_INTENTS: dict[str, type[BaseModel]] = {
+    "create_activity": CreateActivityRequest,
+    "create_work": CreateWorkRequest,
+    "create_artifact": CreateArtifactRequest,
+    "create_method_version": CreateMethodVersionRequest,
+    "create_resource": CreateResourceRequest,
+    "revise_work_plan": ReviseWorkPlanRequest,
+    "issue_child_work": IssueChildWorkRequest,
+    "link_work_output": LinkWorkOutputRequest,
+    "accept_work": AcceptWorkRequest,
+    "close_work": CloseWorkRequest,
+    "confirm_obligation": ConfirmObligationRequest,
+    "resolve_obligation_applicability": ResolveObligationApplicabilityRequest,
+    "waive_obligation": WaiveObligationRequest,
+    "revalidate_result": RevalidateResultRequest,
     "create_development": CreateDevelopmentRequest,
     "revise_development": ReviseDevelopmentRequest,
     "delete_development": DeleteDevelopmentRequest,
@@ -651,6 +674,10 @@ class Bridge:
             )
         if request.actor != self.authority.actor or request.space_id != self.authority.space_id:
             raise FoundationError("permission_denied", "Development actor/space differs from host")
+        if isinstance(request, CreateResourceRequest) and request.state.root != self.workspace:
+            raise FoundationError(
+                "resource_unavailable", "Resource must be the locally selected working directory"
+            )
         if self.assigned_attempt_id is not None:
             if not isinstance(request, (CreateDevelopmentRequest, ReviseDevelopmentRequest)):
                 raise FoundationError(

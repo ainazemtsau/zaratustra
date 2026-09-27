@@ -527,6 +527,7 @@ source = { editable = "." }
 dependencies = [
     { name = "dbos" },
     { name = "pydantic" },
+    { name = "sqlalchemy" },
 ]
 
 [package.dev-dependencies]
@@ -540,7 +541,8 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "dbos", specifier = "==3.0.0" },
-    { name = "pydantic", specifier = ">=2,<3" },
+    { name = "pydantic", specifier = "==2.13.5" },
+    { name = "sqlalchemy", specifier = "==2.0.54" },
 ]
 
 [package.metadata.requires-dev]

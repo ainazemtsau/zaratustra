@@ -1006,7 +1006,7 @@ def _execute_under_lock(
                 'Otherwise return {"zara":"final","text":"the result"}. '
                 + (
                     "Use only the configured tools and save required Core records before final."
-                    if any(tool.startswith("zara_") for tool in config.pi_tools)
+                    if config.pi_tools
                     else "Do not call tools."
                 )
             )
@@ -1049,8 +1049,8 @@ def _execute_under_lock(
                     "Use the addressed answer in Core context. Return only "
                     '{"zara":"final","text":"the final result"}. '
                     + (
-                        "Use only configured Core tools for outstanding records."
-                        if any(tool.startswith("zara_") for tool in config.pi_tools)
+                        "Use only the configured tools for outstanding work."
+                        if config.pi_tools
                         else "Do not call tools."
                     ),
                     stop_requested,
@@ -1181,7 +1181,18 @@ def _run_assigned_locked(
     ):
         raise FoundationError("rpc_profile", "Local Provider needs model and context bounds")
     if any(
-        tool not in {"read", "grep", "find", "ls", "zara_memory", "zara_development"}
+        tool
+        not in {
+            "read",
+            "grep",
+            "find",
+            "ls",
+            "bash",
+            "edit",
+            "write",
+            "zara_memory",
+            "zara_development",
+        }
         for tool in config.pi_tools
     ):
         raise FoundationError("rpc_tools", "Assigned RPC tool is unavailable")
@@ -1289,7 +1300,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model-id", required=True)
     parser.add_argument("--context-window", type=int)
     parser.add_argument("--max-tokens", type=int)
-    parser.add_argument("--pi-tools", help="Comma-separated read-only Pi tools")
+    parser.add_argument("--pi-tools", help="Comma-separated Pi tools admitted for this resource")
     parser.add_argument("--offline", action="store_true")
     parser.add_argument("--reserve-units", required=True, type=int)
     parser.add_argument("--limit-units", required=True, type=int)

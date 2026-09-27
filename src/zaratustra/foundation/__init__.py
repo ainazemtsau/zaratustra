@@ -263,6 +263,7 @@ from .operations import (
     restore_backup,
     upgrade_space,
 )
+from .pulse import PulseFinding, PulseReport, pulse_space
 from .revalidation import read_revalidation
 from .runtime import (
     EXPECTED_SQLITE_VERSION,
@@ -279,6 +280,9 @@ from .sleep_method import (
 from .work_status import read_work_status
 
 __all__ = [
+    "PulseFinding",
+    "PulseReport",
+    "pulse_space",
     "list_change_applications",
     "read_sleep_for_work",
     "read_sleep_usage",

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from uuid import UUID, uuid4
 
 import pytest
@@ -76,6 +76,87 @@ def _operation(
         root,
         kind(operation_id=uuid4(), space_id=space, actor="owner", **fields),
         owner,
+    )
+
+
+def test_sleep_enumeration_persists_cursor_across_two_pages(tmp_path: Path) -> None:
+    root, space, owner, activity_id, _ = _ready(tmp_path)
+    upgrade_knowledge_space(root, owner)
+    upgrade_development_space(root, owner)
+    for number in range(3):
+        _operation(
+            root,
+            space,
+            owner,
+            CreateKnowledgeRequest,
+            record_id=uuid4(),
+            state={
+                "kind": "source",
+                "channel": "conversation_user",
+                "connection": "test-pi",
+                "profile_revision": 1,
+                "source_event_id": f"pagination-{number}",
+                "media_type": "text/plain",
+                "capture": "full",
+                "content": f"Observation {number}".encode(),
+            },
+        )
+    seed = initial_sleep_ref(space)
+    _operation(
+        root,
+        space,
+        owner,
+        CreateMethodVersionRequest,
+        method_id=seed.method_id,
+        version=1,
+        definition=initial_sleep_method(),
+    )
+    work_id, sleep_id = uuid4(), uuid4()
+    work, plan = sleep_work_template(
+        activity_id=activity_id,
+        method=seed,
+        work_id=work_id,
+        consolidation_id=uuid4(),
+        exploration_id=uuid4(),
+        scope="fictional experience",
+    )
+    _operation(
+        root, space, owner, CreateCompositeWorkRequest, work_id=work_id, state=work, plan=plan
+    )
+    state = SleepState(
+        work_id=work_id,
+        method=seed,
+        scope_activity_ids=(),
+        intake_cutoff_revision=read_space(root).state_revision,
+        resource_limit_units=100,
+    )
+    _operation(root, space, owner, CreateDevelopmentRequest, record_id=sleep_id, state=state)
+
+    first = list_sleep_sources(root, sleep_id, owner, purpose="consolidation", limit=2)
+    first_items = cast(list[dict[str, object]], first["items"])
+    assert len(first_items) == 2
+    assert first["exhausted"] is False
+    state = state.model_copy(
+        update={
+            "enumeration_cursor_revision": first["next_cursor_revision"],
+            "enumeration_cursor_id": UUID(str(first["next_cursor_id"])),
+        }
+    )
+    _operation(
+        root,
+        space,
+        owner,
+        ReviseDevelopmentRequest,
+        record_id=sleep_id,
+        expected_revision=1,
+        state=state,
+    )
+    second = list_sleep_sources(root, sleep_id, owner, purpose="consolidation", limit=2)
+    second_items = cast(list[dict[str, object]], second["items"])
+    assert len(second_items) == 1
+    assert second["exhausted"] is True
+    assert {item["record_id"] for item in first_items}.isdisjoint(
+        item["record_id"] for item in second_items
     )
 
 

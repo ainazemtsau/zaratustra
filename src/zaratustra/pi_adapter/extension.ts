@@ -320,7 +320,10 @@ export default function (pi: any): void {
     captureReady = true;
     currentManifest = null;
     connection = await request("/v1/connect", {});
-    if (read_space_is_older(connection)) {
+    if (read_space_is_older(connection) && !assignedAttemptId) {
+      const upgrade = await ctx.ui.confirm("Upgrade this Core space to schema 10?",
+        `Current schema ${connection.schema_version}; the upgrade changes the selected space.`);
+      if (!upgrade) throw new Error("Core schema upgrade was not confirmed");
       await request("/v1/knowledge-upgrade", {});
       connection = await request("/v1/connect", {});
     }
@@ -571,7 +574,8 @@ export default function (pi: any): void {
   pi.registerTool({
     name: "zara_development",
     label: "Zaratustra Sleep and change",
-    description: "Start the shipped versioned Sleep Method as an ordinary composite Work; " +
+    description: "Create Activity, Work and admitted Method; issue child Work and register the " +
+      "selected working resource. Start the shipped versioned Sleep Method as a composite Work; " +
       "continue its saved analysis across sessions, enumerate bounded authorized intake and " +
       "unlinked exploratory material, and save exact ChangeCandidate, ValidationPlan, results, " +
       "Decision, apply, stop, restoration and later outcomes. Use contract before an apply. " +
@@ -631,7 +635,11 @@ export default function (pi: any): void {
       }
       if (params.mode === "apply") {
         const fields = params.intent;
-        const kinds = new Set(["create_development", "revise_development", "delete_development",
+        const kinds = new Set(["create_activity", "create_work", "create_artifact",
+          "create_method_version", "create_resource", "revise_work_plan", "issue_child_work",
+          "link_work_output", "accept_work", "close_work", "confirm_obligation",
+          "resolve_obligation_applicability", "waive_obligation", "revalidate_result",
+          "create_development", "revise_development", "delete_development",
           "apply_candidate", "stop_candidate", "restore_candidate", "record_change_outcome",
           "create_decision", "revise_decision", "create_composite_work"]);
         if (!fields || typeof fields !== "object" || Array.isArray(fields) || !kinds.has(fields.kind)) {

@@ -150,6 +150,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Activity: {args.activity_id}\nWork: {args.work_id}")
     if input("Type CONNECT to use these paths and local identity: ").strip() != "CONNECT":
         return 1
+    current_schema = 0 if args.new_space else read_space(space).schema_version
+    if current_schema < 11:
+        print(f"Selected Core schema: {current_schema}; explicit upgrade target: 11")
+        if input("Type UPGRADE to initialize or upgrade this space: ").strip() != "UPGRADE":
+            return 1
     authority = _prepare_space(space, actor, create=args.new_space)
     with managed_pi_session_lock(space):
         if inspect_space(space, authority).pending_deletions:
@@ -181,6 +186,10 @@ def main(argv: list[str] | None = None) -> int:
         environment["ZARA_PROVIDER_PROFILE"] = args.provider_profile
         environment["ZARA_PROVIDER_BASE_URL"] = base_url
         environment["ZARA_PROVIDER_ORIGIN"] = f"{parsed_url.scheme}://{parsed_url.netloc}"
+        environment["PI_SKIP_VERSION_CHECK"] = "1"
+        environment["PI_TELEMETRY"] = "0"
+        if args.provider_profile == "local-completions":
+            environment["PI_OFFLINE"] = "1"
         if args.activity_id:
             environment["ZARA_INITIAL_ACTIVITY_ID"] = str(args.activity_id)
             environment["ZARA_INITIAL_WORK_ID"] = str(args.work_id)
