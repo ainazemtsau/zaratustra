@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { dirname, join, parse, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { zstdDecompressSync } from "node:zlib";
 import { createProvider, openAICompletionsApi } from "@earendil-works/pi-ai";
 import { Type } from "typebox";
 
@@ -43,6 +44,15 @@ function bytes(body: unknown): Uint8Array {
   if (body instanceof Uint8Array) return body;
   if (body instanceof ArrayBuffer) return new Uint8Array(body);
   throw new Error("Zaratustra cannot observe the final HTTP request body");
+}
+
+function providerBodyText(body: Uint8Array, init: any): string {
+  const encoding = new Headers(init?.headers).get("content-encoding");
+  if (encoding === "zstd") return zstdDecompressSync(body).toString("utf8");
+  if (encoding && encoding !== "identity") {
+    throw new Error("Unsupported provider request encoding; no HTTP was sent");
+  }
+  return Buffer.from(body).toString("utf8");
 }
 
 function withCompactionContext(body: Uint8Array, marker: string, packet: any): Uint8Array {
@@ -206,13 +216,22 @@ export default function (pi: any): void {
     const url = new URL(typeof input === "string" ? input : input.url);
     if (url.origin !== allowedOrigin) throw new Error("Provider URL differs from the selected transport profile");
     const purpose = nextPurpose;
+    const suppliedBody = bytes(init?.body);
     const body = purpose === "compaction-summary"
-      ? withCompactionContext(bytes(init?.body), manifestMarker, currentManifest.packet)
-      : bytes(init?.body);
-    if (!Buffer.from(body).toString("utf8").includes(manifestMarker)) {
+      ? withCompactionContext(
+          Buffer.from(providerBodyText(suppliedBody, init), "utf8"),
+          manifestMarker, currentManifest.packet,
+        )
+      : suppliedBody;
+    const observedInit = purpose === "compaction-summary"
+      ? { ...init, headers: new Headers(init?.headers), body }
+      : init;
+    if (purpose === "compaction-summary") {
+      observedInit.headers.delete("content-encoding");
+    }
+    if (!providerBodyText(body, observedInit).includes(manifestMarker)) {
       throw new Error("Mandatory ContextManifest is absent from the actual provider request");
     }
-    const observedInit = purpose === "compaction-summary" ? { ...init, body } : init;
     const invocationId = randomUUID();
     nextPurpose = "content";
     const manifest = currentManifest;
@@ -546,7 +565,7 @@ export default function (pi: any): void {
           JSON.stringify(fields, null, 2));
         if (!accepted) return { content: [{ type: "text", text: "Memory operation cancelled" }] };
         const operationId = randomUUID();
-        const intent = { ...fields, protocol_version: 1, operation_id: operationId,
+        const intent = { ...fields, kind: intentKind, protocol_version: 1, operation_id: operationId,
           space_id: connection.space_id, actor: connection.actor };
         let receipt: any;
         try { receipt = await request("/v1/knowledge-operation", { request: intent }); }
@@ -643,17 +662,19 @@ export default function (pi: any): void {
           "create_development", "revise_development", "delete_development",
           "apply_candidate", "stop_candidate", "restore_candidate", "record_change_outcome",
           "create_decision", "revise_decision", "create_composite_work"]);
-        if (!fields || typeof fields !== "object" || Array.isArray(fields) || !kinds.has(fields.kind)) {
-          throw new Error("Provide one typed Core development intent");
+        const intentKind = fields?.kind ?? params.kind;
+        if (!fields || typeof fields !== "object" || Array.isArray(fields) ||
+            !kinds.has(intentKind) || (fields.kind && params.kind && fields.kind !== params.kind)) {
+          throw new Error("Provide one typed Core development intent with a matching kind");
         }
-        if (assignedAttemptId && !["create_development", "revise_development"].includes(fields.kind)) {
+        if (assignedAttemptId && !["create_development", "revise_development"].includes(intentKind)) {
           throw new Error("Assigned Work may save analysis or candidate only");
         }
         const accepted = assignedAttemptId || await ctx.ui.confirm("Apply this exact development operation?",
           JSON.stringify(fields, null, 2));
         if (!accepted) return { content: [{ type: "text", text: "Operation cancelled" }] };
         const operationId = randomUUID();
-        const intent = { ...fields, protocol_version: 1, operation_id: operationId,
+        const intent = { ...fields, kind: intentKind, protocol_version: 1, operation_id: operationId,
           space_id: connection.space_id, actor: connection.actor };
         let receipt: any;
         try { receipt = await request("/v1/development-operation", { request: intent }); }
