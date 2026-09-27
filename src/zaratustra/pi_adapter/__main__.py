@@ -39,6 +39,15 @@ from zaratustra.foundation import (
 
 from .bridge import Bridge, BridgeServer
 
+INTERACTIVE_ZARA_TOOLS = (
+    "zara_activity",
+    "zara_binding",
+    "zara_memory",
+    "zara_grant",
+    "zara_sleep",
+    "zara_development",
+)
+
 
 def _prepare_space(path: Path, actor: str, *, create: bool) -> LocalAuthority:
     if create:
@@ -144,9 +153,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.pi_tools
         else ["read", "write", "edit", "bash"]
     )
-    active_tools = ",".join(
-        dict.fromkeys([*native_tools, "zara_binding", "zara_memory", "zara_development"])
-    )
+    active_tools = ",".join(dict.fromkeys([*native_tools, *INTERACTIVE_ZARA_TOOLS]))
     actor = getpass.getuser()
     print(f"Core space: {space}\nWorking directory: {workspace}\nLocal user: {actor}")
     print(

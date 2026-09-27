@@ -193,6 +193,7 @@ class Bridge:
         if not self.workspace.is_dir() or limit_units < 1:
             raise FoundationError("resource_unavailable", "Choose an existing directory and limit")
         self.limit_units = limit_units
+        self.trial_total_send_limit: int | None
         trial_limit = os.environ.get("ZARA_TRIAL_MAX_TOTAL_SENDS")
         if trial_limit is not None:
             try:

@@ -592,9 +592,7 @@ def _rpc_prompt(
         if event.get("type") == "response" and event.get("id") == request_id:
             if event.get("success") is not True:
                 detail = event.get("error")
-                explanation = (
-                    detail[:500] if isinstance(detail, str) else "preflight failed"
-                )
+                explanation = detail[:500] if isinstance(detail, str) else "preflight failed"
                 raise FoundationError(
                     "rpc_prompt", f"Pi refused the assigned prompt: {explanation}"
                 )
@@ -936,9 +934,7 @@ def _execute_under_lock(
                     "USERPROFILE": str(managed_home),
                     "APPDATA": str(managed_home / "AppData"),
                     "LOCALAPPDATA": str(managed_home / "LocalAppData"),
-                    "PI_CODING_AGENT_DIR": str(
-                        config.subscription_agent_dir or pi_agent_home
-                    ),
+                    "PI_CODING_AGENT_DIR": str(config.subscription_agent_dir or pi_agent_home),
                     "ZARA_CORE_ENDPOINT": f"http://127.0.0.1:{server.server_port}",
                     "ZARA_CORE_TOKEN": bridge.token,
                     "ZARA_RESERVE_UNITS": str(config.reserve_units),

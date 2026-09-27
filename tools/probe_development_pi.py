@@ -37,7 +37,9 @@ from zaratustra.foundation import (
     apply_operation,
     initial_sleep_method,
     initial_sleep_ref,
+    inspect_space,
     list_change_applications,
+    read_activity,
     read_change_application,
     read_context_delivery,
     read_development,
@@ -164,6 +166,17 @@ def run_probe(directory: Path, runtime: Path) -> None:
                 other_source_id, source("Fictional planning note has no known link to the handoff.")
             ),
             {
+                "_tool": "zara_activity",
+                "title": "Fictional development",
+                "goal": "Organize one fictional improvement direction",
+            },
+            {
+                "_tool": "zara_grant",
+                "grantee": "fictional-reviewer",
+                "actions": ["record.read"],
+                "resource_type": "space",
+            },
+            {
                 "_tool": "zara_sleep",
                 "start_id": str(start_id),
                 "scope": "Review one fictional handoff and explore beyond its ready links",
@@ -173,6 +186,21 @@ def run_probe(directory: Path, runtime: Path) -> None:
         ]
     )
     run_process(directory, runtime, Bridge(root, owner, directory, 10000), initial)
+    overview = inspect_space(root, owner)
+    activity_receipt = last_tool_receipt(initial.requests[3])
+    assert activity_receipt["kind"] == "create_activity"
+    activity_result = activity_receipt["result"]
+    assert isinstance(activity_result, dict)
+    activity_id = UUID(str(activity_result["record_id"]))
+    assert read_activity(root, activity_id, owner).state.title == "Fictional development"
+    assert len([item for item in overview.records if item.kind == "activity"]) == 4
+    assert len([item for item in overview.records if item.kind == "grant"]) == 2
+    offered_tools = {
+        tool["function"]["name"]
+        for tool in initial.requests[0]["tools"]
+        if tool["type"] == "function"
+    }
+    assert {"zara_activity", "zara_grant", "zara_sleep", "zara_development"} <= offered_tools
     assert read_space(root).schema_version == 12
     original = read_development(root, sleep_id, owner)
     assert isinstance(original.state, SleepState)

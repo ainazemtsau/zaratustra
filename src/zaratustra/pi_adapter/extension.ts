@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { dirname, join, parse, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { zstdDecompressSync } from "node:zlib";
-import { createProvider, openAICompletionsApi } from "@earendil-works/pi-ai";
+import { createProvider, openAICompletionsApi, StringEnum } from "@earendil-works/pi-ai";
 import { Type } from "typebox";
 
 const endpoint = process.env.ZARA_CORE_ENDPOINT;
@@ -431,11 +431,19 @@ export default function (pi: any): void {
     handler: async (_args: string, ctx: any) => {
       connection = await request("/v1/connect", {});
       const activities = connection.records.filter((row: any) => row.kind === "activity");
+      if (!activities.length) {
+        ctx.ui.notify("No Activity exists. Ask Pi to create one with zara_activity first.", "info");
+        return;
+      }
       const activityLabel = await ctx.ui.select("Activity", activities.map((row: any) => `${row.label} [${row.record_id}]`));
       const activity = activities.find((row: any) => `${row.label} [${row.record_id}]` === activityLabel);
       if (!activity) return;
       const works = connection.records.filter((row: any) => row.kind === "work" &&
                                                 row.activity_id === activity.record_id);
+      if (!works.length) {
+        ctx.ui.notify("This Activity has no Work yet. Ask Pi to create a Work before /zara-work.", "info");
+        return;
+      }
       const workLabel = await ctx.ui.select("Work", works.map((row: any) => `${row.label} [${row.record_id}]`));
       const work = works.find((row: any) => `${row.label} [${row.record_id}]` === workLabel);
       if (!work) return;
@@ -479,18 +487,15 @@ export default function (pi: any): void {
       "Interpret the user's request. Call catalog for addresses and exact Method versions, " +
       "then contract with one operation kind for its typed Core schema before apply. " +
       "Core checks references, versions, conditions, rights and causal limits. " +
-      "At schema 11, create reusable Method and Binding versions through an admitted " +
-      "zara_development ChangeCandidate. Earlier schemas use direct version operations. " +
+      "Create or use a Binding version, not a Method; Method changes use zara_development. " +
+      "At schema 11+, create reusable Binding versions through an admitted ChangeCandidate. " +
       "New_work pins a Method, " +
       "offer_work addresses an open Work. Resolve an offer with an explicit basis.",
     parameters: Type.Object({
-      mode: Type.Union([Type.Literal("catalog"), Type.Literal("contract"), Type.Literal("apply")]),
-      kind: Type.Optional(Type.Union([
-        Type.Literal("create_method_version"), Type.Literal("create_binding_version"),
-        Type.Literal("set_binding_state"), Type.Literal("fire_binding"),
-        Type.Literal("resolve_binding_offer"),
-      ])),
-      intent: Type.Optional(Type.Any({ description: "For apply: one typed Core request body without actor, space_id or operation_id. Kinds: create_method_version, create_binding_version, set_binding_state, fire_binding, resolve_binding_offer." })),
+      mode: StringEnum(["catalog", "contract", "apply"] as const),
+      kind: Type.Optional(StringEnum(["create_binding_version", "set_binding_state",
+        "fire_binding", "resolve_binding_offer"] as const)),
+      intent: Type.Optional(Type.Any({ description: "For apply: one typed Binding request from contract, without actor, space_id or operation_id." })),
     }),
     async execute(_callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
       if (assignedAttemptId) throw new Error("Assigned RPC cannot manage Bindings");
@@ -504,15 +509,22 @@ export default function (pi: any): void {
       }
       if (params.mode === "contract") {
         if (!params.kind) throw new Error("Name one Binding operation kind");
+        if (!["create_binding_version", "set_binding_state", "fire_binding",
+              "resolve_binding_offer"].includes(params.kind)) {
+          throw new Error("Binding contracts do not create Methods; use zara_development");
+        }
         const contract = await request(`/v1/binding-contract?session_id=${sessionId}&kind=${params.kind}`);
         return { content: [{ type: "text", text: JSON.stringify(contract) }] };
       }
       const fields = params.intent;
-      const kinds = new Set(["create_method_version", "create_binding_version",
+      const kinds = new Set(["create_binding_version",
         "set_binding_state", "fire_binding", "resolve_binding_offer"]);
       if (!fields || typeof fields !== "object" || Array.isArray(fields) || !kinds.has(fields.kind)) {
         throw new Error("Provide one supported, structured Core Binding intent");
       }
+      const accepted = await ctx.ui.confirm("Apply this exact Binding operation?",
+        JSON.stringify(fields, null, 2));
+      if (!accepted) return { content: [{ type: "text", text: "Binding operation cancelled" }] };
       const catalog = await request(`/v1/bindings?session_id=${sessionId}`);
       if (catalog.schema_version < 9) {
         const upgrade = await ctx.ui.confirm("Prepare Core schema 9 for Binding?",
@@ -520,9 +532,6 @@ export default function (pi: any): void {
         if (!upgrade) return { content: [{ type: "text", text: "Binding preparation cancelled" }] };
         await request("/v1/binding-upgrade", {});
       }
-      const accepted = await ctx.ui.confirm("Apply this exact Binding operation?",
-        JSON.stringify(fields, null, 2));
-      if (!accepted) return { content: [{ type: "text", text: "Binding operation cancelled" }] };
       const operationId = randomUUID();
       const intent = { ...fields, protocol_version: 1, operation_id: operationId,
         space_id: connection.space_id, actor: connection.actor };
@@ -543,15 +552,14 @@ export default function (pi: any): void {
     label: "Zaratustra sources and memory",
     description: "Save and read exact primary sources, form source-backed Claim, preserve analysis " +
       "and remainder, navigate links and FTS5 search, prepare/revise a document handoff and " +
-      "compare its separately captured return. An owner can explicitly grant memory.transfer " +
-      "through create_grant on an upgraded space. First use contract for the typed Core intent. " +
+      "compare its separately captured return. Access Grants use zara_grant, not this tool. " +
+      "First use contract for the typed Core intent. " +
       "For UTF-8 source content supply state.content_text; for a handoff document supply " +
       "state.document_text. Core assigns actor and space. A saved source is not a fact, " +
       "Decision, Grant or accepted Work result. An open result has exact revision, " +
       "availability and next_offset for continued reading.",
     parameters: Type.Object({
-      mode: Type.Union([Type.Literal("contract"), Type.Literal("apply"), Type.Literal("list"),
-                        Type.Literal("search"), Type.Literal("open"), Type.Literal("neighbors")]),
+      mode: StringEnum(["contract", "apply", "list", "search", "open", "neighbors"] as const),
       kind: Type.Optional(Type.String()),
       intent: Type.Optional(Type.Any()),
       query: Type.Optional(Type.String()),
@@ -566,17 +574,17 @@ export default function (pi: any): void {
       if (!connection) connection = await request("/v1/connect", {});
       if (params.mode === "contract") {
         if (!params.kind) throw new Error("Name one Core knowledge operation kind");
+        if (!["create_knowledge", "revise_knowledge", "delete_knowledge"].includes(params.kind)) {
+          throw new Error("Memory contracts cover knowledge records; use zara_grant for access Grants");
+        }
         const contract = await request(`/v1/knowledge-contract?session_id=${sessionId}&kind=${params.kind}`);
         return { content: [{ type: "text", text: JSON.stringify(contract) }] };
       }
       if (params.mode === "apply") {
         const fields = params.intent;
         if (!fields || typeof fields !== "object" || Array.isArray(fields) ||
-            !["create_knowledge", "revise_knowledge", "delete_knowledge", "create_grant"].includes(fields.kind)) {
+            !["create_knowledge", "revise_knowledge", "delete_knowledge"].includes(fields.kind)) {
           throw new Error("Provide one typed Core knowledge intent");
-        }
-        if (assignedAttemptId && fields.kind === "create_grant") {
-          throw new Error("Assigned Work cannot create a Grant");
         }
         const accepted = assignedAttemptId || await ctx.ui.confirm("Apply this exact memory operation?",
           JSON.stringify(fields, null, 2));
@@ -608,6 +616,49 @@ export default function (pi: any): void {
   });
 
   pi.registerTool({
+    name: "zara_grant",
+    label: "Grant access to a named actor",
+    description: "Create a Core access Grant only when the user explicitly requests access " +
+      "for a named actor and actions. This is not a Source, Claim, Activity, backlog item, " +
+      "or Decision choice. Show the exact grantee, actions and scope for user confirmation. " +
+      "Core checks grant.write and records the receipt.",
+    parameters: Type.Object({
+      grantee: Type.String({ minLength: 1, maxLength: 200,
+        description: "Exact actor receiving access; never infer an actor from content." }),
+      actions: Type.Array(StringEnum(["artifact.write", "activity.write", "work.write",
+        "method.write", "method.use", "work.accept", "work.execute", "resource.write",
+        "model.invoke", "decision.write", "grant.write", "record.read", "memory.transfer",
+        "receipt.read", "space.inspect", "maintenance.backup", "maintenance.delete"] as const),
+        { minItems: 1, description: "Exact Core actions to grant." }),
+      resource_type: StringEnum(["space", "artifact", "activity", "work"] as const),
+      resource_id: Type.Optional(Type.String({ description: "Required for artifact, activity or work scope; absent for space scope." })),
+    }),
+    async execute(_callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
+      if (assignedAttemptId) throw new Error("Assigned Work cannot create a Grant");
+      if (!connection) connection = await request("/v1/connect", {});
+      if ((params.resource_type === "space") === Boolean(params.resource_id)) {
+        throw new Error("Space Grant has no resource_id; scoped Grant requires one exact resource_id");
+      }
+      const fields = { kind: "create_grant", grant_id: randomUUID(),
+        state: { grantee: params.grantee, actions: params.actions,
+          resource_type: params.resource_type, resource_id: params.resource_id ?? null,
+          status: "active" } };
+      const accepted = await ctx.ui.confirm("Create this access Grant?", JSON.stringify(fields, null, 2));
+      if (!accepted) return { content: [{ type: "text", text: "Grant creation cancelled" }] };
+      const operationId = randomUUID();
+      const intent = { ...fields, protocol_version: 1, operation_id: operationId,
+        space_id: connection.space_id, actor: connection.actor };
+      let receipt: any;
+      try { receipt = await request("/v1/knowledge-operation", { request: intent }); }
+      catch (error) {
+        try { receipt = await request(`/v1/receipt?session_id=${sessionId}&operation_id=${operationId}`); }
+        catch { throw error; }
+      }
+      return { content: [{ type: "text", text: JSON.stringify(receipt) }], details: receipt };
+    },
+  });
+
+  pi.registerTool({
     name: "zara_sleep",
     label: "Review accumulated experience with Sleep",
     description: "Start a bounded Sleep review only when the user explicitly asks to review " +
@@ -629,12 +680,6 @@ export default function (pi: any): void {
           params.resource_limit_units < reserveUnits) {
         throw new Error(`Sleep needs a described scope and at least ${reserveUnits} resource units`);
       }
-      if (connection.schema_version < 11) {
-        const upgrade = await ctx.ui.confirm("Prepare Core schema 11 for Sleep and change?",
-          `Current schema ${connection.schema_version}; explicit additive upgrade is required.`);
-        if (!upgrade) return { content: [{ type: "text", text: "Preparation cancelled" }] };
-        await request("/v1/development-upgrade", {});
-      }
       const startId = params.start_id || randomUUID();
       const start = {
         start_id: startId, activity_id: params.activity_id,
@@ -645,6 +690,12 @@ export default function (pi: any): void {
       const accepted = await ctx.ui.confirm("Start this bounded Sleep Work?",
         JSON.stringify(start, null, 2));
       if (!accepted) return { content: [{ type: "text", text: "Sleep start cancelled" }] };
+      if (connection.schema_version < 11) {
+        const upgrade = await ctx.ui.confirm("Prepare Core schema 11 for Sleep and change?",
+          `Current schema ${connection.schema_version}; explicit additive upgrade is required.`);
+        if (!upgrade) return { content: [{ type: "text", text: "Preparation cancelled" }] };
+        await request("/v1/development-upgrade", {});
+      }
       const created = await request("/v1/development-start-sleep", start);
       connection = await request("/v1/connect", {});
       return { content: [{ type: "text", text: JSON.stringify({ start_id: startId, ...created }) }], details: created };
@@ -652,23 +703,55 @@ export default function (pi: any): void {
   });
 
   pi.registerTool({
+    name: "zara_activity",
+    label: "Create a new Activity",
+    description: "Create one ongoing Activity when the user asks to start a new direction " +
+      "or area of work. Ask for a title and goal if missing. This does not create " +
+      "a Work, Method, backlog, Grant or Sleep; explain those as separate next steps. " +
+      "Never use zara_sleep to create a direction.",
+    parameters: Type.Object({
+      title: Type.String({ minLength: 1, maxLength: 200,
+        description: "User-facing name of this Activity, for example Zaratustra Development." }),
+      goal: Type.String({ minLength: 1, maxLength: 4096,
+        description: "The ongoing purpose of the Activity, in the user's own terms." }),
+    }),
+    async execute(_callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
+      if (assignedAttemptId) throw new Error("Assigned Work cannot create an Activity");
+      if (!connection) connection = await request("/v1/connect", {});
+      const fields = { kind: "create_activity", activity_id: randomUUID(),
+        state: { title: params.title, goal: params.goal, status: "ongoing" } };
+      const accepted = await ctx.ui.confirm("Create this Activity?", JSON.stringify(fields, null, 2));
+      if (!accepted) return { content: [{ type: "text", text: "Activity creation cancelled" }] };
+      const operationId = randomUUID();
+      const intent = { ...fields, protocol_version: 1, operation_id: operationId,
+        space_id: connection.space_id, actor: connection.actor };
+      let receipt: any;
+      try { receipt = await request("/v1/development-operation", { request: intent }); }
+      catch (error) {
+        try { receipt = await request(`/v1/receipt?session_id=${sessionId}&operation_id=${operationId}`); }
+        catch { throw error; }
+      }
+      connection = await request("/v1/connect", {});
+      return { content: [{ type: "text", text: JSON.stringify(receipt) }], details: receipt };
+    },
+  });
+
+  pi.registerTool({
     name: "zara_development",
-    label: "Create Activity, Work and Method",
-    description: "Create an Activity when the user asks to start a direction; use contract " +
-      "for create_activity, then apply the typed intent after user confirmation. " +
-      "Create and reorganize Activity, Work and admitted exact Method, Binding or " +
+    label: "Manage Work, Method and changes",
+    description: "Use zara_activity for a new direction and zara_sleep only for an explicit " +
+      "review of accumulated experience. This tool creates and revises Work, Method, " +
+      "Activity structure and admitted exact Binding or " +
       "program packages; issue child Work and register the selected working resource. " +
       "Save ChangeCandidate, ValidationPlan, results, " +
       "Decision, apply, stop, restoration and later outcomes. Use contract before an apply. " +
-      "Setup kinds are create_activity, create_method_version, create_work, create_resource. " +
+      "Setup kinds here are create_method_version, create_work and create_resource. " +
       "Core verifies exact versions, receipts, current rights, and delivery. A candidate never " +
       "grants authority. Assigned Work may save its own Sleep analysis and a candidate, but " +
       "cannot decide or apply a change.",
     parameters: Type.Object({
-      mode: Type.Union([Type.Literal("contract"), Type.Literal("apply"),
-                        Type.Literal("list"), Type.Literal("read"),
-                        Type.Literal("enumerate"), Type.Literal("application"),
-                        Type.Literal("applications")]),
+      mode: StringEnum(["contract", "apply", "list", "read", "enumerate",
+        "application", "applications"] as const),
       kind: Type.Optional(Type.String()),
       intent: Type.Optional(Type.Any()),
       record_id: Type.Optional(Type.String()),
@@ -682,12 +765,13 @@ export default function (pi: any): void {
       if (params.mode === "contract") {
         if (!params.kind) throw new Error("Name one development operation kind");
         const kind = developmentKind(params.kind);
+        if (kind === "create_activity") throw new Error("Use zara_activity to create a direction");
         const contract = await request(`/v1/development-contract?session_id=${sessionId}&kind=${kind}`);
         return { content: [{ type: "text", text: JSON.stringify(contract) }] };
       }
       if (params.mode === "apply") {
         const fields = params.intent;
-        const kinds = new Set(["create_activity", "reorganize_activities", "create_work", "create_artifact",
+        const kinds = new Set(["reorganize_activities", "create_work", "create_artifact",
           "create_method_version", "create_resource", "revise_work_plan", "issue_child_work",
           "link_work_output", "accept_work", "close_work", "confirm_obligation",
           "resolve_obligation_applicability", "waive_obligation", "revalidate_result",
@@ -754,18 +838,21 @@ export default function (pi: any): void {
   pi.registerCommand("zara-answer", {
     description: "Answer one saved, addressed Core question without a model call",
     handler: async (_args: string, ctx: any) => {
-      if (!selection || assignedAttemptId) throw new Error("Select an assigned Work in interactive Pi");
+      if (!selection || assignedAttemptId) {
+        ctx.ui.notify("Select an assigned Work with /zara-work before answering.", "warning");
+        return;
+      }
       const current = await snapshot();
       const open = current.waits.filter((x: any) => x.status === "open");
       if (!open.length) { ctx.ui.notify("No open question for this Work.", "info"); return; }
       const labels = open.map((x: any) => `${x.question} [${x.wait_id}]`);
       const label = await ctx.ui.select("Saved Core question", labels);
       const chosen = open[labels.indexOf(label)];
-      if (!chosen) return;
+      if (!chosen) { ctx.ui.notify("Answer cancelled; no change was made.", "info"); return; }
       const answer = await ctx.ui.input("Addressed answer", chosen.question);
-      if (!answer?.trim()) return;
+      if (!answer?.trim()) { ctx.ui.notify("Answer cancelled; no change was made.", "info"); return; }
       const yes = await ctx.ui.confirm("Answer this exact question?", `${chosen.question}\nAnswer: ${answer}`);
-      if (!yes) return;
+      if (!yes) { ctx.ui.notify("Answer cancelled; no change was made.", "info"); return; }
       const receipt = await request("/v1/answer", { wait_id: chosen.wait_id, answer });
       ctx.ui.notify(`Answer saved in Core receipt ${receipt.operation_id}.`, "info");
     },
@@ -774,13 +861,16 @@ export default function (pi: any): void {
   pi.registerCommand("zara-accept", {
     description: "Explicitly accept the current exact Work result",
     handler: async (_args: string, ctx: any) => {
-      if (!selection) throw new Error("Select a Work first");
+      if (!selection) {
+        ctx.ui.notify("Select a Work with /zara-work before accepting its result.", "warning");
+        return;
+      }
       const preview = await request("/v1/accept-preview", {});
       const basis = await ctx.ui.input("Acceptance basis", "Why is this exact result acceptable?");
-      if (!basis?.trim()) return;
+      if (!basis?.trim()) { ctx.ui.notify("Acceptance cancelled; no change was made.", "info"); return; }
       const yes = await ctx.ui.confirm("Accept this exact Work revision?",
         `Work ${preview.work_id}@${preview.revision}\nOutputs: ${preview.outputs.map((x: any) => `${x.artifact_id}@${x.revision}`).join(", ")}\nBasis: ${basis}`);
-      if (!yes) return;
+      if (!yes) { ctx.ui.notify("Acceptance cancelled; no change was made.", "info"); return; }
       const receipt = await request("/v1/accept", { nonce: preview.nonce, basis });
       ctx.ui.notify(`Accepted by Core receipt ${receipt.operation_id}`, "info");
       if (receipt.result?.bindings?.length) {

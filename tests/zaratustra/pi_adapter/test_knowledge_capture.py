@@ -163,7 +163,6 @@ def test_trial_send_cap_survives_bridge_restart_and_assigned_attempt(
             },
         )
 
-
     attempt_id, assigned_session_id = start(root, space_id, work_id, resource_id, owner)
     assigned = Bridge(
         root,

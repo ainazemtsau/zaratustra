@@ -29,6 +29,7 @@ from zaratustra.foundation import (
     authorize_local,
     read_binding_firings,
     read_binding_version,
+    upgrade_knowledge_space,
 )
 from zaratustra.pi_adapter import Bridge, BridgeServer
 
@@ -126,6 +127,7 @@ class _Handler(BaseHTTPRequestHandler):
 
 def run_pi_binding_probe(tmp_path: Path, runtime: Path) -> None:
     root, space, owner, producer, consumer = _ready(tmp_path)
+    upgrade_knowledge_space(root, owner)
     source_work, source_artifact = uuid4(), uuid4()
     _apply(
         root,
@@ -343,7 +345,11 @@ def run_pi_binding_probe(tmp_path: Path, runtime: Path) -> None:
             if process.poll() is not None and process.stderr
             else ""
         )
-        assert provider.calls >= len(scripted_calls) + 1, (stderr, observed[-8:])
+        assert provider.calls >= len(scripted_calls) + 1, (
+            process.returncode,
+            stderr,
+            observed[-8:],
+        )
         assert any("zara_binding" in json.dumps(request) for request in provider.requests)
         assert read_binding_version(root, binding_id, 1, owner).state == "enabled"
         assert not any(
