@@ -61,13 +61,19 @@ def development(intent: dict[str, object]) -> dict[str, object]:
     return {"_tool": "zara_development", "mode": "apply", "intent": intent}
 
 
-def last_tool_receipt(body: dict[str, object]) -> dict[str, object]:
+def last_tool_result(body: dict[str, object]) -> dict[str, object]:
     messages = body.get("messages", [])
     assert isinstance(messages, list)
     tools = [item for item in messages if isinstance(item, dict) and item.get("role") == "tool"]
     assert tools
-    receipt = json.loads(str(tools[-1]["content"]))
-    assert isinstance(receipt, dict) and "operation_id" in receipt
+    result = json.loads(str(tools[-1]["content"]))
+    assert isinstance(result, dict)
+    return result
+
+
+def last_tool_receipt(body: dict[str, object]) -> dict[str, object]:
+    receipt = last_tool_result(body)
+    assert "operation_id" in receipt
     return receipt
 
 
@@ -159,6 +165,13 @@ def run_probe(directory: Path, runtime: Path) -> None:
     start_id = uuid4()
     work_id = uuid5(start_id, "sleep-work")
     sleep_id = uuid5(start_id, "sleep-analysis")
+
+    def read_new_activity(_body: dict[str, object]) -> dict[str, object]:
+        receipt = last_tool_receipt(initial.requests[3])
+        result = receipt["result"]
+        assert isinstance(result, dict)
+        return {"_tool": "zara_activity", "mode": "read", "record_id": result["record_id"]}
+
     initial = Provider(
         [
             apply(source_id, source("Fictional review found an incomplete handoff.")),
@@ -167,9 +180,12 @@ def run_probe(directory: Path, runtime: Path) -> None:
             ),
             {
                 "_tool": "zara_activity",
+                "mode": "create",
                 "title": "Fictional development",
                 "goal": "Organize one fictional improvement direction",
             },
+            {"_tool": "zara_activity", "mode": "list"},
+            read_new_activity,
             {
                 "_tool": "zara_grant",
                 "grantee": "fictional-reviewer",
@@ -183,6 +199,7 @@ def run_probe(directory: Path, runtime: Path) -> None:
                 "scope_activity_ids": [str(activity)],
                 "resource_limit_units": 10000,
             },
+            {"_tool": "zara_development", "mode": "list"},
         ]
     )
     run_process(directory, runtime, Bridge(root, owner, directory, 10000), initial)
@@ -193,6 +210,19 @@ def run_probe(directory: Path, runtime: Path) -> None:
     assert isinstance(activity_result, dict)
     activity_id = UUID(str(activity_result["record_id"]))
     assert read_activity(root, activity_id, owner).state.title == "Fictional development"
+    activity_list = last_tool_result(initial.requests[4])
+    listed = activity_list["items"]
+    assert isinstance(listed, list)
+    assert any(item["record_id"] == str(activity_id) for item in listed)
+    activity_read = last_tool_result(initial.requests[5])
+    activity_state = activity_read["state"]
+    assert isinstance(activity_state, dict)
+    assert activity_state["title"] == "Fictional development"
+    development_list = last_tool_result(initial.requests[8])
+    assert development_list["record_family"] == "development_records_only"
+    development_activities = development_list["activities"]
+    assert isinstance(development_activities, list)
+    assert any(item["record_id"] == str(activity_id) for item in development_activities)
     assert len([item for item in overview.records if item.kind == "activity"]) == 4
     assert len([item for item in overview.records if item.kind == "grant"]) == 2
     offered_tools = {

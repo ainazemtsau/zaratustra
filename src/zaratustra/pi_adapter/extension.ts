@@ -704,20 +704,37 @@ export default function (pi: any): void {
 
   pi.registerTool({
     name: "zara_activity",
-    label: "Create a new Activity",
-    description: "Create one ongoing Activity when the user asks to start a new direction " +
-      "or area of work. Ask for a title and goal if missing. This does not create " +
-      "a Work, Method, backlog, Grant or Sleep; explain those as separate next steps. " +
-      "Never use zara_sleep to create a direction.",
+    label: "List, read or create Activities",
+    description: "For 'which Activities or directions exist?', use mode=list. For the exact " +
+      "goal and state of one Activity, use mode=read with its record_id. Use mode=create " +
+      "only when the user asks to start a new direction, and confirm its title and goal. " +
+      "zara_development list covers Sleep and Change records, not Activities. " +
+      "Activity creation does not create Work, backlog, Grant or Sleep.",
     parameters: Type.Object({
-      title: Type.String({ minLength: 1, maxLength: 200,
-        description: "User-facing name of this Activity, for example Zaratustra Development." }),
-      goal: Type.String({ minLength: 1, maxLength: 4096,
-        description: "The ongoing purpose of the Activity, in the user's own terms." }),
+      mode: StringEnum(["list", "read", "create"] as const),
+      record_id: Type.Optional(Type.String({ description: "Exact Activity ID for mode=read." })),
+      title: Type.Optional(Type.String({ minLength: 1, maxLength: 200,
+        description: "User-facing name of this Activity, for example Zaratustra Development." })),
+      goal: Type.Optional(Type.String({ minLength: 1, maxLength: 4096,
+        description: "The ongoing purpose of the Activity, in the user's own terms." })),
     }),
     async execute(_callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
-      if (assignedAttemptId) throw new Error("Assigned Work cannot create an Activity");
       if (!connection) connection = await request("/v1/connect", {});
+      if (params.mode === "list") {
+        connection = await request("/v1/connect", {});
+        const result = { items: connection.records.filter((row: any) => row.kind === "activity") };
+        return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
+      }
+      if (params.mode === "read") {
+        if (!params.record_id) throw new Error("Name one exact Activity record_id to read");
+        const result = await request("/v1/activity-read", { activity_id: params.record_id });
+        return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
+      }
+      if (params.mode !== "create") throw new Error("Choose Activity mode list, read or create");
+      if (assignedAttemptId) throw new Error("Assigned Work cannot create an Activity");
+      if (!params.title?.trim() || !params.goal?.trim()) {
+        throw new Error("Activity creation needs a title and ongoing goal");
+      }
       const fields = { kind: "create_activity", activity_id: randomUUID(),
         state: { title: params.title, goal: params.goal, status: "ongoing" } };
       const accepted = await ctx.ui.confirm("Create this Activity?", JSON.stringify(fields, null, 2));
@@ -739,7 +756,9 @@ export default function (pi: any): void {
   pi.registerTool({
     name: "zara_development",
     label: "Manage Work, Method and changes",
-    description: "Use zara_activity for a new direction and zara_sleep only for an explicit " +
+    description: "Use zara_activity to list, read or create Activities. Mode=list here " +
+      "lists only development records such as Sleep analyses and ChangeCandidates, " +
+      "never Activities or Work. Use zara_sleep only for an explicit " +
       "review of accumulated experience. This tool creates and revises Work, Method, " +
       "Activity structure and admitted exact Binding or " +
       "program packages; issue child Work and register the selected working resource. " +
@@ -805,6 +824,12 @@ export default function (pi: any): void {
         application_id: params.application_id, purpose: params.purpose,
         revision: params.revision, limit: params.limit,
       });
+      if (params.mode === "list") {
+        connection = await request("/v1/connect", {});
+        const result = { ...read, record_family: "development_records_only",
+          activities: connection.records.filter((row: any) => row.kind === "activity") };
+        return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
+      }
       return { content: [{ type: "text", text: JSON.stringify(read) }], details: read };
     },
   });

@@ -52,13 +52,16 @@ checkout для обычного запуска не нужен.
 
 ## Предметный рабочий путь
 
-В обычном Pi `zara_activity` создаёт новую Activity с отдельным подтверждением;
+В обычном Pi `zara_activity` показывает список и точное состояние Activity,
+а новую Activity создаёт только отдельным подтверждённым действием;
 `zara_development` создаёт Method и Work, в том числе составной Work с
 отдельными детьми. `zara_grant` выдаёт явно подтверждённое адресное право;
 `zara_memory` сохраняет и читает первичные источники, а `zara_binding`
 обслуживает передачу результата. Создание Activity само по себе не запускает
 Sleep и не создаёт Work или готовую доску задач. Выбранная рабочая папка становится
 ресурсом через `create_resource`; `zara-core assign` выдаёт адресный Attempt.
+`zara_development(mode=list)` перечисляет записи Sleep/Change и не служит
+списком Activity; ответ о текущих Activity берут через `zara_activity(mode=list)`.
 Назначенный Pi использует нативные `read/write/edit/bash` вместе с
 `zara_development` и `zara_memory`. Пауза с вопросом переживает закрытие Pi:
 `/zara-answer` записывает ответ, затем назначение продолжается. Output

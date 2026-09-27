@@ -286,6 +286,10 @@ class Bridge:
             else None,
         }
 
+    def activity_read(self, session_id: UUID, activity_id: UUID) -> dict[str, object]:
+        self._session(session_id)
+        return read_activity(self.path, activity_id, self.authority).model_dump(mode="json")
+
     def select(self, session_id: UUID, activity_id: UUID, work_id: UUID) -> dict[str, object]:
         self._session(session_id)
         activity = read_activity(self.path, activity_id, self.authority)
@@ -1568,6 +1572,8 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 result = bridge.development_operation(session_id, body["request"])
             elif post and path.path == "/v1/development-read":
                 result = bridge.development_read(session_id, body)
+            elif post and path.path == "/v1/activity-read":
+                result = bridge.activity_read(session_id, UUID(body["activity_id"]))
             elif post and path.path == "/v1/context-prepare":
                 result = bridge.prepare_context(session_id, str(body.get("purpose", "content")))
             elif post and path.path == "/v1/context-delivery":

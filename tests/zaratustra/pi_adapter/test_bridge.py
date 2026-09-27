@@ -57,6 +57,13 @@ def test_development_creates_work_and_selected_resource(tmp_path: Path) -> None:
     )
     assert bridge.development_contract(session_id, "create_activity")["kind"] == "create_activity"
     bridge.development_operation(session_id, activity.model_dump(mode="json"))
+    listed = bridge.connect(session_id)["records"]
+    assert isinstance(listed, list)
+    assert any(item["record_id"] == str(activity_id) for item in listed)
+    exact_activity = bridge.activity_read(session_id, activity_id)
+    exact_state = exact_activity["state"]
+    assert isinstance(exact_state, dict)
+    assert exact_state["title"] == "Fictional development"
     work = CreateWorkRequest(
         operation_id=uuid4(),
         space_id=space_id,
