@@ -574,7 +574,8 @@ export default function (pi: any): void {
   pi.registerTool({
     name: "zara_development",
     label: "Zaratustra Sleep and change",
-    description: "Create Activity, Work and admitted Method; issue child Work and register the " +
+    description: "Create and reorganize Activity, Work and admitted exact Method, Binding or " +
+      "program packages; issue child Work and register the " +
       "selected working resource. Start the shipped versioned Sleep Method as a composite Work; " +
       "continue its saved analysis across sessions, enumerate bounded authorized intake and " +
       "unlinked exploratory material, and save exact ChangeCandidate, ValidationPlan, results, " +
@@ -635,7 +636,7 @@ export default function (pi: any): void {
       }
       if (params.mode === "apply") {
         const fields = params.intent;
-        const kinds = new Set(["create_activity", "create_work", "create_artifact",
+        const kinds = new Set(["create_activity", "reorganize_activities", "create_work", "create_artifact",
           "create_method_version", "create_resource", "revise_work_plan", "issue_child_work",
           "link_work_output", "accept_work", "close_work", "confirm_obligation",
           "resolve_obligation_applicability", "waive_obligation", "revalidate_result",

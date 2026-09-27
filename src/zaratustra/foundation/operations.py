@@ -37,6 +37,7 @@ from .models import (
     ClosedOutcome,
     CloseWorkRequest,
     ConfirmObligationRequest,
+    ConfirmProgramInstallRequest,
     CreateActivityRequest,
     CreateArtifactRequest,
     CreateBindingVersionRequest,
@@ -78,6 +79,7 @@ from .models import (
     RecordContextDeliveryRequest,
     RecordSummary,
     RecoverRequest,
+    ReorganizeActivitiesRequest,
     RequestAttemptStopRequest,
     ResolveBindingOfferRequest,
     ResolveObligationApplicabilityRequest,
@@ -541,7 +543,15 @@ def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]
         return "artifact.write", "artifact", request.record_id
     if isinstance(request, DeleteDevelopmentRequest):
         return "maintenance.delete", "artifact", request.record_id
-    if isinstance(request, (ApplyCandidateRequest, StopCandidateRequest, RestoreCandidateRequest)):
+    if isinstance(
+        request,
+        (
+            ApplyCandidateRequest,
+            ConfirmProgramInstallRequest,
+            StopCandidateRequest,
+            RestoreCandidateRequest,
+        ),
+    ):
         return "method.write", "space", None
     if isinstance(request, RecordChangeOutcomeRequest):
         return "artifact.write", "space", None
@@ -614,6 +624,8 @@ def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]
         return "activity.write", "space", None
     if isinstance(request, (ReviseActivityRequest, DeleteActivityRequest)):
         return "activity.write", "activity", request.activity_id
+    if isinstance(request, ReorganizeActivitiesRequest):
+        return "activity.write", "space", None
     if isinstance(request, CreateWorkRequest):
         return "work.write", "activity", request.state.activity_id
     if isinstance(request, (LinkWorkOutputRequest, PublishAttemptOutputRequest, DeleteWorkRequest)):
@@ -1024,6 +1036,7 @@ def _apply_subject_change(
         CreateActivityRequest
         | ReviseActivityRequest
         | DeleteActivityRequest
+        | ReorganizeActivitiesRequest
         | CreateWorkRequest
         | LinkWorkOutputRequest
         | AcceptWorkRequest
@@ -1053,6 +1066,156 @@ def _apply_subject_change(
         return {"record_id": str(request.activity_id), "revision": 1}, [
             {"record_id": str(request.activity_id), "revision": 1}
         ]
+    if isinstance(request, ReorganizeActivitiesRequest):
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 11:  # type: ignore[attr-defined]
+            raise FoundationError("unsupported_schema", "Activity reorganization needs schema 11")
+        move_map = {item.work_id: item for item in request.moves}
+        for move in request.moves:
+            current, status, parent = _subject_current(connection, move.work_id, "work")
+            if current != move.expected_revision or parent != str(move.from_activity_id):
+                raise FoundationError("stale_revision", "Work membership changed")
+            if status == "deleted":
+                raise FoundationError("content_unavailable", "Cannot move deleted Work")
+            if connection.execute(  # type: ignore[attr-defined]
+                "SELECT 1 FROM execution_attempts WHERE work_id=? AND status='active' LIMIT 1",
+                (str(move.work_id),),
+            ).fetchone():
+                raise FoundationError(
+                    "attempt_active", "Stop the active Attempt before moving its Work"
+                )
+            for activity_id in (move.from_activity_id, move.to_activity_id):
+                _authorize(
+                    connection,
+                    actor=request.actor,
+                    action="activity.write",
+                    epoch=epoch,
+                    resource_type="activity",
+                    resource_id=activity_id,
+                )
+            _authorize(
+                connection,
+                actor=request.actor,
+                action="work.write",
+                epoch=epoch,
+                resource_type="work",
+                resource_id=move.work_id,
+            )
+        # A composite remains in one Activity. Its current plan edges cannot be
+        # silently split by a move of only the parent or only one member.
+        if move_map:
+            edges = connection.execute(  # type: ignore[attr-defined]
+                "SELECT parent_id,child_id FROM work_plan_children UNION ALL "
+                "SELECT parent_id,child_id FROM work_plan_members"
+            ).fetchall()
+            for parent, child in edges:
+                if UUID(parent) not in move_map and UUID(child) not in move_map:
+                    continue
+                parent_destination = (
+                    move_map[UUID(parent)].to_activity_id
+                    if UUID(parent) in move_map
+                    else UUID(_subject_current(connection, UUID(parent), "work")[2])
+                )
+                child_destination = (
+                    move_map[UUID(child)].to_activity_id
+                    if UUID(child) in move_map
+                    else UUID(_subject_current(connection, UUID(child), "work")[2])
+                )
+                if parent_destination != child_destination:
+                    raise FoundationError(
+                        "dependent_work", "Move every current composite member together"
+                    )
+        reorganization_targets: list[dict[str, object]] = []
+        for creation in request.creations:
+            if creation.state.status != "ongoing":
+                raise FoundationError("invalid_transition", "New destination must be ongoing")
+            _write_subject(
+                connection,
+                record_id=creation.activity_id,
+                kind="activity",
+                parent_id=None,
+                operation_id=request.operation_id,
+                actor=request.actor,
+                now=now,
+                status=creation.state.status,
+                state=creation.state,
+                revision=1,
+            )
+            reorganization_targets.append({"record_id": str(creation.activity_id), "revision": 1})
+        for move in request.moves:
+            destination_revision, destination_status, _ = _subject_current(
+                connection, move.to_activity_id, "activity"
+            )
+            if destination_status != "ongoing":
+                raise FoundationError("activity_not_ongoing", "Destination Activity is not ongoing")
+            _subject_state(connection, move.to_activity_id, destination_revision)
+            old = WorkState.model_validate(
+                _subject_state(connection, move.work_id, move.expected_revision)
+            )
+            if old.activity_id != move.from_activity_id:
+                raise FoundationError("corrupt_space", "Work membership and content differ")
+            changed = WorkState.model_validate(
+                old.model_dump(mode="python") | {"activity_id": move.to_activity_id}
+            )
+            _write_subject(
+                connection,
+                record_id=move.work_id,
+                kind="work",
+                parent_id=move.to_activity_id,
+                operation_id=request.operation_id,
+                actor=request.actor,
+                now=now,
+                status=old.status,
+                state=changed,
+                revision=move.expected_revision + 1,
+            )
+            connection.execute(  # type: ignore[attr-defined]
+                "UPDATE subject_records SET parent_id=? WHERE record_id=?",
+                (str(move.to_activity_id), str(move.work_id)),
+            )
+            reorganization_targets.append(
+                {"record_id": str(move.work_id), "revision": move.expected_revision + 1}
+            )
+        for change in request.revisions:
+            _subject_expect(connection, change.activity_id, "activity", change.expected_revision)
+            _authorize(
+                connection,
+                actor=request.actor,
+                action="activity.write",
+                epoch=epoch,
+                resource_type="activity",
+                resource_id=change.activity_id,
+            )
+            if (
+                change.state.status == "completed"
+                and connection.execute(  # type: ignore[attr-defined]
+                    "SELECT 1 FROM subject_records WHERE parent_id=? AND kind='work' "
+                    "AND status NOT IN "
+                    "('succeeded','failed','cancelled','stale','deleted') LIMIT 1",
+                    (str(change.activity_id),),
+                ).fetchone()
+            ):
+                raise FoundationError("dependent_work", "Activity still has open Work")
+            _write_subject(
+                connection,
+                record_id=change.activity_id,
+                kind="activity",
+                parent_id=None,
+                operation_id=request.operation_id,
+                actor=request.actor,
+                now=now,
+                status=change.state.status,
+                state=change.state,
+                revision=change.expected_revision + 1,
+            )
+            reorganization_targets.append(
+                {"record_id": str(change.activity_id), "revision": change.expected_revision + 1}
+            )
+        return {
+            "created": [str(item.activity_id) for item in request.creations],
+            "moved": [str(item.work_id) for item in request.moves],
+            "revised": [str(item.activity_id) for item in request.revisions],
+            "event_boundary": request.event_boundary,
+        }, reorganization_targets
     if isinstance(request, ReviseActivityRequest):
         _subject_expect(connection, request.activity_id, "activity", request.expected_revision)
         if request.state.status == "completed":
@@ -1293,6 +1456,7 @@ def _apply_change(
             ReviseDevelopmentRequest,
             DeleteDevelopmentRequest,
             ApplyCandidateRequest,
+            ConfirmProgramInstallRequest,
             StopCandidateRequest,
             RestoreCandidateRequest,
             RecordChangeOutcomeRequest,
@@ -1308,6 +1472,7 @@ def _apply_change(
             now=now,
             epoch=epoch,
             authority_source=authority.source_ref,
+            authority=authority,
             grants=grants,
             decisions=decisions,
         )
@@ -1551,6 +1716,7 @@ def _apply_change(
             CreateActivityRequest,
             ReviseActivityRequest,
             DeleteActivityRequest,
+            ReorganizeActivitiesRequest,
             CreateWorkRequest,
             LinkWorkOutputRequest,
             AcceptWorkRequest,

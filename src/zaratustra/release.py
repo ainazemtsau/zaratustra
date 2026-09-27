@@ -11,6 +11,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import urllib.request
 import zipfile
 from contextlib import closing
@@ -148,7 +149,7 @@ def _setup(args: argparse.Namespace) -> int:
     actor = getpass.getuser()
     print(f"Core space: {space}\nWorking resource: {workspace}\nLocal identity: {actor}")
     print(f"Provider: {args.provider_profile} / {args.model_id} at {args.provider_base_url}")
-    print(f"New space: {args.new_space}; target schema: 11")
+    print(f"New space: {args.new_space}; target schema: 12")
     if input("Type SETUP to prepare this installation and selected space: ").strip() != "SETUP":
         return 1
     runtime_root = config_path.parent / "runtime"
@@ -190,7 +191,7 @@ def _setup(args: argparse.Namespace) -> int:
     temp.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     temp.replace(config_path)
     print(f"Prepared: {config_path}")
-    if not args.new_space and info.schema_version < 11:
+    if not args.new_space and info.schema_version < 12:
         print("Existing space requires zara-core upgrade before run or assign")
     return 0
 
@@ -288,7 +289,7 @@ def _ready_space(config: dict[str, object]) -> None:
     info = read_space(Path(str(config["space"])))
     if config.get("space_id") and str(info.space_id) != config["space_id"]:
         raise ValueError("Selected space identity differs from the saved configuration")
-    if info.schema_version != 11:
+    if info.schema_version != 12:
         raise ValueError("Run zara-core upgrade for this selected space before execution")
     if info.recovery_state != "active":
         raise ValueError("Recover the selected space before execution")
@@ -318,11 +319,133 @@ def _preserves_operations(original: Path, restored: Path) -> None:
                 )
 
 
+def _installed_program_change(
+    args: argparse.Namespace, config: dict[str, object], actor: str
+) -> int:
+    """Converge exact resource bytes, then record Core's observed result."""
+
+    from zaratustra.foundation import (
+        CompositeChange,
+        ConfirmProgramInstallRequest,
+        ProgramChange,
+        RestoreCandidateRequest,
+        apply_operation,
+        authorize_local,
+        program_target_path,
+        read_artifact,
+        read_change_application,
+        read_development,
+    )
+
+    _ready_space(config)
+    space = Path(str(config["space"]))
+    workspace = Path(str(config["workspace"])).resolve()
+    authority = authorize_local(space, actor=actor, source_ref=f"local-console:{actor}:{uuid4()}")
+    application, _ = read_change_application(space, args.application_id, authority)
+    installing = args.command == "change-install"
+    expected_status = "prepared" if installing else "stopped"
+    if application.status not in (("prepared",) if installing else ("stopped", "partial")):
+        raise ValueError(f"Change must be {expected_status} before this action")
+    candidate = read_development(
+        space, application.candidate_id, authority, revision=application.candidate_revision
+    )
+    if candidate.state is None or candidate.state.kind != "candidate":
+        raise ValueError("Exact change candidate is unavailable")
+    target = candidate.state.target
+    parts = target.parts if isinstance(target, CompositeChange) else (target,)
+    programs = tuple(item for item in parts if isinstance(item, ProgramChange))
+    if not programs:
+        raise ValueError("Change package has no program build to install")
+    actions: list[tuple[Path, bytes | None, str | None, str]] = []
+    for part in programs:
+        destination = program_target_path(space, part, authority)
+        selected = workspace.joinpath(*part.relative_path.split("/")).resolve()
+        if destination != selected:
+            raise ValueError("Program resource differs from the selected working directory")
+        build_ref = part.build if installing else part.from_build
+        desired_hash = part.build_sha256 if installing else part.from_checksum
+        content = None
+        if build_ref is not None:
+            artifact = read_artifact(
+                space, build_ref.artifact_id, authority, revision=build_ref.revision
+            )
+            content = artifact.content
+            if artifact.content_sha256 != desired_hash:
+                raise ValueError("Managed build bytes differ from the candidate")
+        actual = (
+            hashlib.sha256(destination.read_bytes()).hexdigest().upper()
+            if destination.is_file()
+            else None
+        )
+        prior_hash = part.from_checksum if installing else part.build_sha256
+        if actual not in (prior_hash, desired_hash):
+            raise ValueError(f"Program path changed independently: {destination}")
+        actions.append((destination, content, desired_hash, part.relative_path))
+    word = "INSTALL" if installing else "RESTORE"
+    print(f"Change: {application.application_id} ({application.target_kind})")
+    for destination, _, digest, _ in actions:
+        print(f"{destination}: {'absent' if digest is None else digest}")
+    if input(f"Type {word} to change these exact working resource files: ").strip() != word:
+        return 1
+    for destination, content, desired_hash, _ in actions:
+        actual = (
+            hashlib.sha256(destination.read_bytes()).hexdigest().upper()
+            if destination.is_file()
+            else None
+        )
+        if actual == desired_hash:
+            continue
+        if content is None:
+            destination.unlink()
+            continue
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        pending: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="wb", prefix=".zara-change-", dir=destination.parent, delete=False
+            ) as handle:
+                pending = Path(handle.name)
+                handle.write(content)
+                handle.flush()
+                os.fsync(handle.fileno())
+            pending.replace(destination)
+        finally:
+            if pending is not None and pending.exists():
+                pending.unlink()
+    operation = (
+        ConfirmProgramInstallRequest(
+            operation_id=uuid4(),
+            space_id=authority.space_id,
+            actor=actor,
+            application_id=application.application_id,
+            expected_revision=application.revision,
+        )
+        if installing
+        else RestoreCandidateRequest(
+            operation_id=uuid4(),
+            space_id=authority.space_id,
+            actor=actor,
+            application_id=application.application_id,
+            expected_revision=application.revision,
+            reason=args.reason,
+            data_restoration=args.data_restoration,
+            external_effects=args.external_effects,
+        )
+    )
+    print(apply_operation(space, operation, authority).model_dump_json(indent=2))
+    return 0
+
+
 def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
     from importlib.metadata import version
 
     from zaratustra.foundation import (
+        CompositeChange,
+        FoundationError,
+        ProgramChange,
         RecoverRequest,
+        RestoreCandidateRequest,
+        StopCandidateRequest,
         apply_operation,
         authorize_local,
         authorize_recovery,
@@ -340,19 +463,60 @@ def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
     )
 
     actor = _actor(config)
+    if args.command == "change-install":
+        return _installed_program_change(args, config, actor)
     space = Path(str(config["space"]))
+    if args.command == "change-restore":
+        _ready_space(config)
+        authority = authorize_local(
+            space, actor=actor, source_ref=f"local-console:{actor}:{uuid4()}"
+        )
+        application, _ = read_change_application(space, args.application_id, authority)
+        candidate = read_development(
+            space, application.candidate_id, authority, revision=application.candidate_revision
+        )
+        if candidate.state is None or candidate.state.kind != "candidate":
+            raise ValueError("Exact change candidate is unavailable")
+        change_target = candidate.state.target
+        parts = (
+            change_target.parts if isinstance(change_target, CompositeChange) else (change_target,)
+        )
+        if any(isinstance(part, ProgramChange) for part in parts):
+            return _installed_program_change(args, config, actor)
+        if application.status not in ("stopped", "partial"):
+            raise ValueError("Stop the change before restoration")
+        print(f"Change {application.application_id}: {application.status} -> restore")
+        if input("Type RESTORE to apply the exact Core restoration: ").strip() != "RESTORE":
+            return 1
+        print(
+            apply_operation(
+                space,
+                RestoreCandidateRequest(
+                    operation_id=uuid4(),
+                    space_id=authority.space_id,
+                    actor=actor,
+                    application_id=application.application_id,
+                    expected_revision=application.revision,
+                    reason=args.reason,
+                    data_restoration=args.data_restoration,
+                    external_effects=args.external_effects,
+                ),
+                authority,
+            ).model_dump_json(indent=2)
+        )
+        return 0
     if args.command == "upgrade":
         info = read_space(space)
         if config.get("space_id") and str(info.space_id) != config["space_id"]:
             raise ValueError("Selected space identity differs from the saved configuration")
-        if info.schema_version == 11:
-            print("Core space already uses schema 11")
+        if info.schema_version == 12:
+            print("Core space already uses schema 12")
             return 0
-        if info.schema_version > 11:
+        if info.schema_version > 12:
             raise ValueError("Installed program cannot upgrade a newer Core schema")
         if info.recovery_state != "active":
             raise ValueError("Recover this space before a schema upgrade")
-        print(f"Space {info.space_id}: schema {info.schema_version} -> 11")
+        print(f"Space {info.space_id}: schema {info.schema_version} -> 12")
         if (
             input("Type UPGRADE to save a verified backup and migrate this space: ").strip()
             != "UPGRADE"
@@ -444,6 +608,27 @@ def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
         print(receipt.model_dump_json(indent=2))
         return 0
     authority = authorize_local(space, actor=actor, source_ref=f"local-console:{actor}:{uuid4()}")
+    if args.command == "change-stop":
+        application, _ = read_change_application(space, args.application_id, authority)
+        print(f"Change {application.application_id}: {application.status} -> stopped")
+        if input("Type STOP to prevent new use of this change: ").strip() != "STOP":
+            return 1
+        receipt = apply_operation(
+            space,
+            StopCandidateRequest(
+                operation_id=uuid4(),
+                space_id=authority.space_id,
+                actor=actor,
+                application_id=application.application_id,
+                expected_revision=application.revision,
+                reason=args.reason,
+                started_works=args.started_works,
+                external_effects=args.external_effects,
+            ),
+            authority,
+        )
+        print(receipt.model_dump_json(indent=2))
+        return 0
     if args.command == "inspect":
         if args.kind == "space":
             result: object = inspect_space(space, authority).model_dump(mode="json")
@@ -498,7 +683,79 @@ def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
         print(create_assigned_backup(space, uuid4(), authority).model_dump_json(indent=2))
     elif args.command == "repair":
         report = pulse_space(space, authority)
-        print(report.model_dump_json(indent=2))
+        observations: list[dict[str, str]] = []
+        for record in inspect_space(space, authority).records:
+            if record.kind != "work" or record.status == "deleted":
+                continue
+            try:
+                execution = read_execution(space, record.record_id, authority)
+            except (FoundationError, ValueError) as error:
+                # A damaged Work must remain addressable even when its full view fails.
+                observations.append(
+                    {
+                        "address": f"work:{record.record_id}",
+                        "condition": "inspection_failed",
+                        "reason": str(error),
+                        "action": (
+                            "Inspect the addressed Work and Pulse findings; "
+                            "restore a verified backup if required."
+                        ),
+                    }
+                )
+                continue
+            for assignment in execution.assignments:
+                if assignment.status == "unknown":
+                    observations.append(
+                        {
+                            "address": f"assignment:{assignment.attempt_id}",
+                            "condition": "external_outcome_unknown",
+                            "reason": "The assigned execution has no confirmed external outcome.",
+                            "action": (
+                                "Keep its resource fenced; inspect the provider or executor "
+                                "record before a new assignment on that resource."
+                            ),
+                        }
+                    )
+            for invocation in execution.invocations:
+                if invocation.status == "unknown":
+                    observations.append(
+                        {
+                            "address": f"invocation:{invocation.invocation_id}",
+                            "condition": "provider_outcome_unknown",
+                            "reason": "The provider response is unconfirmed.",
+                            "action": (
+                                "Preserve the ledger and use an independent resource until "
+                                "the external outcome is established."
+                            ),
+                        }
+                    )
+            for wait in execution.waits:
+                if wait.status == "open":
+                    observations.append(
+                        {
+                            "address": f"wait:{wait.wait_id}",
+                            "condition": "awaiting_answer",
+                            "reason": f"Waiting for {wait.expected_actor} on Work {wait.work_id}.",
+                            "action": (
+                                "Answer through /zara-answer in the selected space when ready."
+                            ),
+                        }
+                    )
+        print(
+            json.dumps(
+                {
+                    "pulse": report.model_dump(mode="json"),
+                    "operational_observations": observations,
+                    "safe_operations": [
+                        "inspect the addressed record",
+                        "answer an open wait through Pi",
+                        "complete pending managed deletions with DELETE",
+                        "backup, restore to an empty directory, recover, then select",
+                    ],
+                },
+                indent=2,
+            )
+        )
         if (
             input("Type DELETE to complete pending managed deletions, or press Enter: ").strip()
             == "DELETE"
@@ -540,6 +797,9 @@ def main(argv: list[str] | None = None) -> int:
         "repair",
         "restore",
         "recover",
+        "change-install",
+        "change-stop",
+        "change-restore",
     ):
         command = commands.add_parser(name)
         command.add_argument("--config", required=True, type=Path)
@@ -577,6 +837,16 @@ def main(argv: list[str] | None = None) -> int:
             command.add_argument("--destination", required=True, type=Path)
         elif name == "recover":
             command.add_argument("--space", required=True, type=Path)
+        elif name in ("change-install", "change-stop", "change-restore"):
+            command.add_argument("--application-id", required=True, type=UUID)
+            if name == "change-restore":
+                command.add_argument("--reason", required=True)
+                command.add_argument("--data-restoration", required=True)
+                command.add_argument("--external-effects", required=True)
+            elif name == "change-stop":
+                command.add_argument("--reason", required=True)
+                command.add_argument("--started-works", required=True)
+                command.add_argument("--external-effects", required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == "setup":

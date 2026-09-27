@@ -13,12 +13,17 @@ from uuid import UUID, uuid4
 from pydantic import TypeAdapter, ValidationError
 
 from .models import (
+    ActivityChange,
+    ActivityRevisionChange,
+    ActivityState,
     AdmitInvocationRequest,
     ApplyCandidateRequest,
     BindingChange,
     ChangeApplication,
     ChangeCandidateState,
     ChangeDecisionState,
+    CompositeChange,
+    ConfirmProgramInstallRequest,
     ContextState,
     CreateBindingVersionRequest,
     CreateDevelopmentRequest,
@@ -28,17 +33,33 @@ from .models import (
     KnowledgeRef,
     MethodChange,
     MethodRef,
+    ProgramChange,
     RecordChangeOutcomeRequest,
+    ReorganizeActivitiesRequest,
     RestoreCandidateRequest,
     ReviseDevelopmentRequest,
     SetBindingStateRequest,
     SleepState,
     SpaceInfo,
     StopCandidateRequest,
+    ValidationResultState,
+    WorkActivityMove,
     WorkState,
 )
-from .operations import LocalAuthority, _authorize, _decision_body, _local_space
+from .operations import (
+    LocalAuthority,
+    _apply_subject_change,
+    _authorize,
+    _decision_body,
+    _local_space,
+    _subject_current,
+    _subject_state,
+    _write_subject,
+)
 from .storage import (
+    CHANGE_PACKAGE_SCHEMA_NAME,
+    CHANGE_PACKAGE_SCHEMA_SHA256,
+    CHANGE_PACKAGE_SCHEMA_STATEMENTS,
     DEVELOPMENT_SCHEMA_NAME,
     DEVELOPMENT_SCHEMA_SHA256,
     DEVELOPMENT_SCHEMA_STATEMENTS,
@@ -52,11 +73,14 @@ from .storage import (
 DEVELOPMENT_ADAPTER: TypeAdapter[SleepState | ChangeCandidateState] = TypeAdapter(
     SleepState | ChangeCandidateState
 )
+PackagePart = MethodChange | BindingChange | ProgramChange | ActivityChange
+CHANGE_PART_ADAPTER: TypeAdapter[PackagePart] = TypeAdapter(PackagePart)
 DevelopmentChange = (
     CreateDevelopmentRequest
     | ReviseDevelopmentRequest
     | DeleteDevelopmentRequest
     | ApplyCandidateRequest
+    | ConfirmProgramInstallRequest
     | StopCandidateRequest
     | RestoreCandidateRequest
     | RecordChangeOutcomeRequest
@@ -94,6 +118,39 @@ def upgrade_development_space(path: Path, authority: LocalAuthority) -> SpaceInf
                 "INSERT INTO maintenance_events(event_id,kind,occurred_at,detail_json) "
                 "VALUES (?,'schema_upgrade',?,?)",
                 (str(uuid4()), now, canonical_json({"from": 10, "to": 11})),
+            )
+    return read_space(path)
+
+
+def upgrade_change_package_space(path: Path, authority: LocalAuthority) -> SpaceInfo:
+    """Explicit additive schema 11 to 12 upgrade for exact change packages."""
+
+    with space_connection(path, writable=True) as (connection, info):
+        _local_space(authority, info)
+        if info.recovery_state != "active" or info.schema_version < 11:
+            raise FoundationError("unsupported_schema", "Change upgrade needs active schema 11")
+        _authorize(
+            connection,
+            actor=authority.actor,
+            action="maintenance.backup",
+            epoch=info.execution_epoch,
+        )
+        if info.schema_version == 11:
+            for statement in CHANGE_PACKAGE_SCHEMA_STATEMENTS:
+                connection.execute(statement)
+            now = utc_now().isoformat()
+            connection.execute(
+                "INSERT INTO schema_migrations(version,name,sha256,applied_at) VALUES (12,?,?,?)",
+                (CHANGE_PACKAGE_SCHEMA_NAME, CHANGE_PACKAGE_SCHEMA_SHA256, now),
+            )
+            connection.execute("PRAGMA user_version = 12")
+            connection.execute(
+                "UPDATE spaces SET state_revision=state_revision+1 WHERE singleton=1"
+            )
+            connection.execute(
+                "INSERT INTO maintenance_events(event_id,kind,occurred_at,detail_json) "
+                "VALUES (?,'schema_upgrade',?,?)",
+                (str(uuid4()), now, canonical_json({"from": 11, "to": 12})),
             )
     return read_space(path)
 
@@ -354,21 +411,67 @@ def _check_candidate(
     from .models import MethodRef
 
     target = state.target
-    if isinstance(target, MethodChange) and target.from_version is not None:
-        assert target.from_checksum is not None
-        _method(
-            connection,
-            MethodRef(
-                method_id=target.method_id,
-                version=target.from_version,
-                checksum=target.from_checksum,
-            ),
-        )
-    if isinstance(target, BindingChange) and target.from_version is not None:
-        assert target.from_checksum is not None
-        prior = _version(connection, target.binding_id, target.from_version)
-        if prior.checksum != target.from_checksum:
-            raise FoundationError("stale_binding", "Candidate prior Binding checksum differs")
+    parts = target.parts if isinstance(target, CompositeChange) else (target,)
+    for part in parts:
+        if isinstance(part, MethodChange) and part.from_version is not None:
+            assert part.from_checksum is not None
+            _method(
+                connection,
+                MethodRef(
+                    method_id=part.method_id,
+                    version=part.from_version,
+                    checksum=part.from_checksum,
+                ),
+            )
+        if isinstance(part, BindingChange) and part.from_version is not None:
+            assert part.from_checksum is not None
+            prior = _version(connection, part.binding_id, part.from_version)
+            if prior.checksum != part.from_checksum:
+                raise FoundationError("stale_binding", "Candidate prior Binding checksum differs")
+        if isinstance(part, ProgramChange):
+            from .execution import _resource
+
+            work_id, revision, resource = _resource(connection, part.resource_id)
+            if revision != part.resource_revision or resource.status != "active":
+                raise FoundationError("stale_resource", "Program resource changed or was revoked")
+            work = connection.execute(
+                "SELECT parent_id FROM subject_records WHERE record_id=? AND kind='work'",
+                (str(work_id),),
+            ).fetchone()
+            if work is None or (
+                not state.scope_global and UUID(work[0]) not in state.scope_activity_ids
+            ):
+                raise FoundationError("out_of_scope", "Program resource is outside candidate scope")
+            _authorize(
+                connection,
+                actor=actor,
+                action="resource.write",
+                epoch=epoch,
+                resource_type="work",
+                resource_id=work_id,
+            )
+            for artifact, digest in (
+                (part.build, part.build_sha256),
+                (part.from_build, part.from_checksum),
+            ):
+                if artifact is None:
+                    continue
+                _authorize(
+                    connection,
+                    actor=actor,
+                    action="record.read",
+                    epoch=epoch,
+                    resource_type="artifact",
+                    resource_id=artifact.artifact_id,
+                )
+                row = connection.execute(
+                    "SELECT sha256 FROM managed_content WHERE record_id=? AND revision=?",
+                    (str(artifact.artifact_id), artifact.revision),
+                ).fetchone()
+                if row is None or row[0] != digest:
+                    raise FoundationError(
+                        "content_unavailable", "Exact program build is unavailable"
+                    )
     for activity_id in state.scope_activity_ids:
         _authorize(
             connection,
@@ -479,21 +582,47 @@ def _save_revision(
             (str(request.record_id), revision, ordinal, str(ref.record_id), ref.revision, role),
         )
     if isinstance(state, ChangeCandidateState):
-        target = state.target
-        target_id = target.method_id if isinstance(target, MethodChange) else target.binding_id
-        for ordinal, (role, version) in enumerate(
-            (
+        targets = (
+            state.target.parts if isinstance(state.target, CompositeChange) else (state.target,)
+        )
+        ordinal = len(references)
+        for target in targets:
+            target_id = (
+                target.method_id
+                if isinstance(target, MethodChange)
+                else target.binding_id
+                if isinstance(target, BindingChange)
+                else target.program_id
+                if isinstance(target, ProgramChange)
+                else target.change_id
+            )
+            for role, version in (
                 ("target_previous", target.from_version),
                 ("target_proposed", target.to_version),
-            ),
-            start=len(references),
-        ):
-            if version is not None:
-                connection.execute(
-                    "INSERT INTO development_edges(record_id,revision,ordinal,target_id,"
-                    "target_revision,role) VALUES (?,?,?,?,?,?)",
-                    (str(request.record_id), revision, ordinal, str(target_id), version, role),
-                )
+            ):
+                if version is not None:
+                    connection.execute(
+                        "INSERT INTO development_edges(record_id,revision,ordinal,target_id,"
+                        "target_revision,role) VALUES (?,?,?,?,?,?)",
+                        (str(request.record_id), revision, ordinal, str(target_id), version, role),
+                    )
+                    ordinal += 1
+            if isinstance(target, ProgramChange):
+                for role, build in (("build", target.build), ("previous_build", target.from_build)):
+                    if build is not None:
+                        connection.execute(
+                            "INSERT INTO development_edges(record_id,revision,ordinal,target_id,"
+                            "target_revision,role) VALUES (?,?,?,?,?,?)",
+                            (
+                                str(request.record_id),
+                                revision,
+                                ordinal,
+                                str(build.artifact_id),
+                                build.revision,
+                                role,
+                            ),
+                        )
+                        ordinal += 1
 
 
 def _application(connection: sqlite3.Connection, application_id: UUID) -> ChangeApplication:
@@ -503,6 +632,13 @@ def _application(connection: sqlite3.Connection, application_id: UUID) -> Change
         "FROM change_applications WHERE application_id=?",
         (str(application_id),),
     ).fetchone()
+    if row is None and int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 12:
+        row = connection.execute(
+            "SELECT candidate_id,candidate_revision,decision_id,decision_revision,mode,target_kind,"
+            "target_id,version,checksum,status,revision,created_at,changed_at "
+            "FROM change_packages WHERE application_id=?",
+            (str(application_id),),
+        ).fetchone()
     if row is None:
         raise FoundationError("not_found", "Change application is absent")
     return ChangeApplication(
@@ -521,6 +657,84 @@ def _application(connection: sqlite3.Connection, application_id: UUID) -> Change
         created_at=datetime.fromisoformat(row[11]),
         changed_at=datetime.fromisoformat(row[12]),
     )
+
+
+def _package_event(
+    connection: sqlite3.Connection,
+    application_id: UUID,
+    revision: int,
+    operation_id: UUID,
+    kind: str,
+    detail: dict[str, object],
+    now: str,
+) -> None:
+    connection.execute(
+        "INSERT INTO change_package_events(application_id,revision,operation_id,kind,"
+        "detail_json,created_at) VALUES (?,?,?,?,?,?)",
+        (str(application_id), revision, str(operation_id), kind, canonical_json(detail), now),
+    )
+
+
+def _package_parts(connection: sqlite3.Connection, application_id: UUID) -> tuple[PackagePart, ...]:
+    rows = connection.execute(
+        "SELECT detail_json FROM change_package_parts WHERE application_id=? ORDER BY ordinal",
+        (str(application_id),),
+    ).fetchall()
+    if not rows:
+        raise FoundationError("corrupt_space", "Change package has no exact parts")
+    return tuple(CHANGE_PART_ADAPTER.validate_json(row[0]) for row in rows)
+
+
+def _program_path(connection: sqlite3.Connection, part: ProgramChange) -> Path:
+    from .execution import _resource
+
+    _, revision, resource = _resource(connection, part.resource_id)
+    if revision != part.resource_revision or resource.status != "active":
+        raise FoundationError("stale_resource", "Program resource changed or was revoked")
+    root = resource.root.expanduser().resolve(strict=True)
+    if not root.is_dir():
+        raise FoundationError("resource_unavailable", "Program resource root is unavailable")
+    candidate = root.joinpath(*part.relative_path.split("/"))
+    if any(item.is_symlink() for item in (candidate, *candidate.parents) if item != root):
+        raise FoundationError("resource_unavailable", "Program path contains a symbolic link")
+    resolved = candidate.resolve()
+    if not resolved.is_relative_to(root):
+        raise FoundationError("out_of_scope", "Program path leaves its working resource")
+    return resolved
+
+
+def _check_program_observed(
+    connection: sqlite3.Connection, part: ProgramChange, *, installed: bool
+) -> None:
+    path = _program_path(connection, part)
+    expected = part.build_sha256 if installed else part.from_checksum
+    if expected is None:
+        if path.exists():
+            raise FoundationError("program_mismatch", "Expected the previous program path absent")
+        return
+    if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest().upper() != expected:
+        raise FoundationError("program_mismatch", "Observed program bytes differ from exact build")
+
+
+def program_target_path(path: Path, part: ProgramChange, authority: LocalAuthority) -> Path:
+    """Resolve an admitted resource target for the installed local change tool."""
+
+    from .execution import _resource
+
+    with space_connection(path) as (connection, info):
+        _local_space(authority, info)
+        if info.schema_version < 12 or info.recovery_state != "active":
+            raise FoundationError("upgrade_required", "Program target needs active schema 12")
+        work_id, _, _ = _resource(connection, part.resource_id)
+        _authorize(
+            connection,
+            actor=authority.actor,
+            action="resource.write",
+            epoch=info.execution_epoch,
+            resource_type="work",
+            resource_id=work_id,
+        )
+        return _program_path(connection, part)
 
 
 def _event(
@@ -576,6 +790,7 @@ def _decision(
     observed = [results[item] for item in state.validation_result_ids]
     if any(item.outcome == "not_met" for item in observed):
         raise FoundationError("validation_failed", "A failed criterion cannot admit use")
+    _check_program_prerequisites(candidate, observed)
     if request.mode == "regular":
         keys = {item.key for item in candidate.validation_plan.criteria}
         if {item.criterion for item in observed if item.outcome == "met"} != keys:
@@ -583,6 +798,27 @@ def _decision(
                 "validation_missing", "Regular use needs met results for every criterion"
             )
     return state
+
+
+def _check_program_prerequisites(
+    candidate: ChangeCandidateState, observed: list[ValidationResultState]
+) -> None:
+    parts = (
+        candidate.target.parts
+        if isinstance(candidate.target, CompositeChange)
+        else (candidate.target,)
+    )
+    required = {
+        key
+        for part in parts
+        if isinstance(part, ProgramChange)
+        for key in part.required_validation_keys
+    }
+    passed = {item.criterion for item in observed if item.outcome == "met" and item.evidence}
+    if not required.issubset(passed):
+        raise FoundationError(
+            "validation_missing", "Program needs met, evidenced prerequisite checks"
+        )
 
 
 def validate_change_decision(
@@ -614,6 +850,7 @@ def validate_change_decision(
     observed = [results[item] for item in state.validation_result_ids]
     if any(item.outcome == "not_met" for item in observed):
         raise FoundationError("validation_failed", "Failed criterion cannot admit use")
+    _check_program_prerequisites(candidate, observed)
     if state.mode == "regular":
         required = {item.key for item in candidate.validation_plan.criteria}
         if {item.criterion for item in observed if item.outcome == "met"} != required:
@@ -637,6 +874,14 @@ def _active_target_modes(
         "WHERE target_kind=? AND target_id=? AND version=? AND status='active'",
         (target_kind, str(target_id), version),
     ).fetchall()
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 12:
+        rows += connection.execute(
+            "SELECT p.application_id,p.mode,p.decision_id,p.decision_revision "
+            "FROM change_packages p JOIN change_package_parts t "
+            "ON t.application_id=p.application_id WHERE t.target_kind=? AND t.target_id=? "
+            "AND t.version=? AND p.status='active'",
+            (target_kind, str(target_id), version),
+        ).fetchall()
     result: list[tuple[str, ChangeDecisionState]] = []
     for application_id, mode, decision_id, decision_revision in rows:
         if excluding is not None and application_id == str(excluding):
@@ -654,6 +899,705 @@ def _active_target_modes(
     return result
 
 
+def _publish_package_part(
+    connection: sqlite3.Connection,
+    part: MethodChange | BindingChange,
+    request: ApplyCandidateRequest | ConfirmProgramInstallRequest,
+    *,
+    mode: Literal["trial", "regular"],
+    now: str,
+    epoch: int,
+    authority_source: str,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> str:
+    """Publish one exact internal part inside the package's Core transaction."""
+
+    if isinstance(part, MethodChange):
+        from .composition import apply_composition_change, method_checksum
+
+        checksum = method_checksum(part.definition)
+        row = connection.execute(
+            "SELECT checksum,payload FROM method_versions WHERE method_id=? AND version=?",
+            (str(part.method_id), part.to_version),
+        ).fetchone()
+        if row is None:
+            apply_composition_change(
+                connection,
+                CreateMethodVersionRequest(
+                    operation_id=request.operation_id,
+                    space_id=request.space_id,
+                    actor=request.actor,
+                    method_id=part.method_id,
+                    version=part.to_version,
+                    definition=part.definition,
+                ),
+                now=now,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+            )
+        elif row[0] != checksum or row[1] is None:
+            raise FoundationError("version_conflict", "Published Method differs from package")
+        return checksum
+    from .binding import _version, apply_binding_change, binding_checksum
+
+    checksum = binding_checksum(part.definition)
+    row = connection.execute(
+        "SELECT checksum,payload FROM binding_versions WHERE binding_id=? AND version=?",
+        (str(part.binding_id), part.to_version),
+    ).fetchone()
+    if row is None:
+        apply_binding_change(
+            connection,
+            CreateBindingVersionRequest(
+                operation_id=request.operation_id,
+                space_id=request.space_id,
+                actor=request.actor,
+                binding_id=part.binding_id,
+                version=part.to_version,
+                definition=part.definition,
+            ),
+            now=now,
+            epoch=epoch,
+            authority_source=authority_source,
+            grants=grants,
+            decisions=decisions,
+        )
+    elif row[0] != checksum or row[1] is None:
+        raise FoundationError("version_conflict", "Published Binding differs from package")
+    version = _version(connection, part.binding_id, part.to_version)
+    desired: Literal["trial", "enabled"] = "enabled" if mode == "regular" else "trial"
+    if version.state != desired:
+        apply_binding_change(
+            connection,
+            SetBindingStateRequest(
+                operation_id=request.operation_id,
+                space_id=request.space_id,
+                actor=request.actor,
+                binding_id=part.binding_id,
+                version=part.to_version,
+                expected_state_revision=version.state_revision,
+                state=desired,
+            ),
+            now=now,
+            epoch=epoch,
+            authority_source=authority_source,
+            grants=grants,
+            decisions=decisions,
+        )
+    return checksum
+
+
+def _package_apply(
+    connection: sqlite3.Connection,
+    request: ApplyCandidateRequest,
+    state: ChangeCandidateState,
+    revision: int,
+    *,
+    now: str,
+    epoch: int,
+    authority_source: str,
+    authority: LocalAuthority,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> tuple[dict[str, object], list[dict[str, object]]]:
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 12:
+        raise FoundationError("upgrade_required", "Program and composite changes need schema 12")
+    decision = _decision(connection, request, state)
+    _check_candidate(connection, state, request.actor, epoch)
+    target = state.target
+    assert isinstance(target, (ProgramChange, CompositeChange, ActivityChange))
+    if isinstance(target, ActivityChange):
+        created_ids = {item.activity_id for item in target.creations}
+        affected = (
+            {item.activity_id for item in target.revisions}
+            | {item.from_activity_id for item in target.moves}
+            | {item.to_activity_id for item in target.moves}
+        ) - created_ids
+        if not state.scope_global and not affected.issubset(state.scope_activity_ids):
+            raise FoundationError("out_of_scope", "Activity change exceeds candidate scope")
+        if not decision.scope_global and affected - {decision.scope_activity_id}:
+            raise FoundationError("out_of_scope", "Activity change exceeds Decision scope")
+    parts = target.parts if isinstance(target, CompositeChange) else (target,)
+    if connection.execute(
+        "SELECT 1 FROM change_packages WHERE candidate_id=? AND status IN ('prepared','active') "
+        "LIMIT 1",
+        (str(request.candidate_id),),
+    ).fetchone():
+        raise FoundationError("change_already_active", "Candidate already has a live package")
+    if isinstance(target, ActivityChange):
+        _authorize(
+            connection,
+            actor=request.actor,
+            action="activity.write",
+            epoch=epoch,
+            resource_type="space",
+        )
+    else:
+        _authorize(
+            connection,
+            actor=request.actor,
+            action="method.use",
+            epoch=epoch,
+            resource_type="activity" if decision.scope_activity_id else "space",
+            resource_id=decision.scope_activity_id,
+        )
+    part_rows: list[tuple[str, UUID, int, str, str]] = []
+    has_program = False
+    for part in parts:
+        target_id = (
+            part.method_id
+            if isinstance(part, MethodChange)
+            else part.binding_id
+            if isinstance(part, BindingChange)
+            else part.program_id
+            if isinstance(part, ProgramChange)
+            else part.change_id
+        )
+        existing = _active_target_modes(connection, part.kind, target_id, part.to_version)
+        for _, other in existing:
+            if (
+                decision.scope_global
+                or other.scope_global
+                or decision.scope_activity_id == other.scope_activity_id
+            ):
+                raise FoundationError("change_already_active", "Target version is already active")
+        if isinstance(part, ProgramChange):
+            has_program = True
+            prior = connection.execute(
+                "SELECT t.version,t.checksum,p.status FROM change_package_parts t "
+                "JOIN change_packages p ON p.application_id=t.application_id "
+                "WHERE t.target_kind='program' AND t.target_id=? AND p.status IN "
+                "('active','stopped','partial') "
+                "ORDER BY t.version DESC LIMIT 1",
+                (str(part.program_id),),
+            ).fetchone()
+            if part.from_version is None:
+                if prior is not None:
+                    raise FoundationError(
+                        "stale_program", "Program already has an installed version"
+                    )
+            elif prior is None or (prior[0], prior[1]) != (
+                part.from_version,
+                part.from_checksum,
+            ):
+                raise FoundationError("stale_program", "Program predecessor differs")
+            if prior is not None and prior[2] == "active":
+                raise FoundationError("change_already_active", "Stop prior program use first")
+            _check_program_observed(connection, part, installed=False)
+            checksum = part.build_sha256
+        elif isinstance(part, ActivityChange):
+            checksum = hashlib.sha256(part.model_dump_json().encode("utf-8")).hexdigest().upper()
+        elif isinstance(part, MethodChange):
+            from .composition import method_checksum
+
+            checksum = method_checksum(part.definition)
+        else:
+            from .binding import binding_checksum
+
+            checksum = binding_checksum(part.definition)
+        part_rows.append((part.kind, target_id, part.to_version, checksum, part.model_dump_json()))
+    if isinstance(target, CompositeChange):
+        target_id, version = target.package_id, target.to_version
+    else:
+        target_id, version = (
+            (target.program_id, target.to_version)
+            if isinstance(target, ProgramChange)
+            else (target.change_id, target.to_version)
+        )
+    checksum = (
+        hashlib.sha256(canonical_json(target.model_dump(mode="json")).encode("utf-8"))
+        .hexdigest()
+        .upper()
+    )
+    reorganization_targets: list[dict[str, object]] = []
+    if not has_program:
+        for part in parts:
+            if isinstance(part, ActivityChange):
+                _, reorganization_targets = _apply_subject_change(
+                    connection,
+                    ReorganizeActivitiesRequest(
+                        operation_id=request.operation_id,
+                        space_id=request.space_id,
+                        actor=request.actor,
+                        creations=part.creations,
+                        revisions=part.revisions,
+                        moves=part.moves,
+                        rationale=part.rationale,
+                        binding_disposition=part.binding_disposition,
+                        decision_disposition=part.decision_disposition,
+                        grant_disposition=part.grant_disposition,
+                        event_boundary=part.event_boundary,
+                    ),
+                    now=now,
+                    epoch=epoch,
+                    authority=authority,
+                    grants=grants,
+                    decisions=decisions,
+                )
+                continue
+            assert isinstance(part, (MethodChange, BindingChange))
+            _publish_package_part(
+                connection,
+                part,
+                request,
+                mode=request.mode,
+                now=now,
+                epoch=epoch,
+                authority_source=authority_source,
+                grants=grants,
+                decisions=decisions,
+            )
+    status = "prepared" if has_program else "active"
+    connection.execute(
+        "INSERT INTO change_packages(application_id,candidate_id,candidate_revision,decision_id,"
+        "decision_revision,mode,target_kind,target_id,version,checksum,status,revision,"
+        "created_at,changed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,1,?,?)",
+        (
+            str(request.operation_id),
+            str(request.candidate_id),
+            revision,
+            str(request.decision_id),
+            request.decision_revision,
+            request.mode,
+            target.kind,
+            str(target_id),
+            version,
+            checksum,
+            status,
+            now,
+            now,
+        ),
+    )
+    for ordinal, (kind, item_id, item_version, item_checksum, detail) in enumerate(part_rows):
+        connection.execute(
+            "INSERT INTO change_package_parts(application_id,ordinal,target_kind,target_id,"
+            "version,checksum,detail_json) VALUES (?,?,?,?,?,?,?)",
+            (
+                str(request.operation_id),
+                ordinal,
+                kind,
+                str(item_id),
+                item_version,
+                item_checksum,
+                detail,
+            ),
+        )
+    _package_event(
+        connection,
+        request.operation_id,
+        1,
+        request.operation_id,
+        "prepare" if has_program else "apply",
+        {"parts": [item[0] + ":" + str(item[1]) for item in part_rows], "mode": request.mode},
+        now,
+    )
+    return {
+        "application_id": str(request.operation_id),
+        "status": status,
+        "target_id": str(target_id),
+        "version": version,
+        "checksum": checksum,
+        "parts": [item[0] + ":" + str(item[1]) for item in part_rows],
+        "reorganization": reorganization_targets,
+    }, [
+        {"record_id": str(request.candidate_id), "revision": revision},
+        {"record_id": str(request.decision_id), "revision": request.decision_revision},
+        *[
+            {"record_id": str(item_id), "revision": item_version}
+            for _, item_id, item_version, _, _ in part_rows
+        ],
+        *reorganization_targets,
+    ]
+
+
+def _restore_activity_change(
+    connection: sqlite3.Connection,
+    part: ActivityChange,
+    request: RestoreCandidateRequest,
+    *,
+    now: str,
+    epoch: int,
+    authority: LocalAuthority,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> tuple[list[str], list[dict[str, object]]]:
+    """Reverse exact current membership; leave changed successors for explicit review."""
+
+    pending: list[str] = []
+    for move in part.moves:
+        revision, status, parent = _subject_current(connection, move.work_id, "work")
+        if revision != move.expected_revision + 1 or parent != str(move.to_activity_id):
+            pending.append(f"work:{move.work_id}:changed_after_application")
+        elif status == "deleted":
+            pending.append(f"work:{move.work_id}:deleted")
+        elif connection.execute(
+            "SELECT 1 FROM execution_attempts WHERE work_id=? AND status='active' LIMIT 1",
+            (str(move.work_id),),
+        ).fetchone():
+            pending.append(f"work:{move.work_id}:attempt_active")
+    for change in part.revisions:
+        revision, _, _ = _subject_current(connection, change.activity_id, "activity")
+        if revision != change.expected_revision + 1:
+            pending.append(f"activity:{change.activity_id}:changed_after_application")
+    for creation in part.creations:
+        revision, _, _ = _subject_current(connection, creation.activity_id, "activity")
+        if revision != 1:
+            pending.append(f"activity:{creation.activity_id}:changed_after_application")
+        moved = {
+            str(item.work_id) for item in part.moves if item.to_activity_id == creation.activity_id
+        }
+        others = connection.execute(
+            "SELECT record_id FROM subject_records WHERE kind='work' AND parent_id=? "
+            "AND status!='deleted'",
+            (str(creation.activity_id),),
+        ).fetchall()
+        if any(row[0] not in moved for row in others):
+            pending.append(f"activity:{creation.activity_id}:new_work")
+    if pending:
+        return pending, []
+    targets: list[dict[str, object]] = []
+    reopened: set[UUID] = set()
+    reverse_destinations = {move.from_activity_id for move in part.moves}
+    for change in part.revisions:
+        if change.activity_id not in reverse_destinations:
+            continue
+        prior = ActivityState.model_validate(
+            _subject_state(connection, change.activity_id, change.expected_revision)
+        )
+        _, current_status, _ = _subject_current(connection, change.activity_id, "activity")
+        if current_status == "ongoing":
+            continue
+        if prior.status != "ongoing":
+            return [f"activity:{change.activity_id}:not_reopenable"], []
+        _write_subject(
+            connection,
+            record_id=change.activity_id,
+            kind="activity",
+            parent_id=None,
+            operation_id=request.operation_id,
+            actor=request.actor,
+            now=now,
+            status=prior.status,
+            state=prior,
+            revision=change.expected_revision + 2,
+        )
+        targets.append(
+            {"record_id": str(change.activity_id), "revision": change.expected_revision + 2}
+        )
+        reopened.add(change.activity_id)
+    revisions = [
+        ActivityRevisionChange(
+            activity_id=change.activity_id,
+            expected_revision=change.expected_revision + 1,
+            state=ActivityState.model_validate(
+                _subject_state(connection, change.activity_id, change.expected_revision)
+            ),
+        )
+        for change in part.revisions
+        if change.activity_id not in reopened
+    ]
+    revisions.extend(
+        ActivityRevisionChange(
+            activity_id=creation.activity_id,
+            expected_revision=1,
+            state=creation.state.model_copy(update={"status": "completed"}),
+        )
+        for creation in part.creations
+    )
+    _, restored_targets = _apply_subject_change(
+        connection,
+        ReorganizeActivitiesRequest(
+            operation_id=request.operation_id,
+            space_id=request.space_id,
+            actor=request.actor,
+            revisions=tuple(revisions),
+            moves=tuple(
+                WorkActivityMove(
+                    work_id=move.work_id,
+                    expected_revision=move.expected_revision + 1,
+                    from_activity_id=move.to_activity_id,
+                    to_activity_id=move.from_activity_id,
+                )
+                for move in part.moves
+            ),
+            rationale=request.reason,
+            binding_disposition="Prior Binding scopes remain separate and unchanged",
+            decision_disposition="Prior Decision scopes remain separate and unchanged",
+            grant_disposition="Prior Grant scopes remain separate and unchanged",
+            event_boundary=request.external_effects,
+        ),
+        now=now,
+        epoch=epoch,
+        authority=authority,
+        grants=grants,
+        decisions=decisions,
+    )
+    return [], targets + restored_targets
+
+
+def _package_followup(
+    connection: sqlite3.Connection,
+    request: StopCandidateRequest | RestoreCandidateRequest | RecordChangeOutcomeRequest,
+    app: ChangeApplication,
+    *,
+    now: str,
+    epoch: int,
+    authority_source: str,
+    authority: LocalAuthority,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+) -> tuple[dict[str, object], list[dict[str, object]]]:
+    parts = _package_parts(connection, app.application_id)
+    detail: dict[str, object]
+    followup_targets: list[dict[str, object]] = []
+    if isinstance(request, StopCandidateRequest):
+        if app.status not in ("prepared", "active"):
+            raise FoundationError("invalid_transition", "Only prepared or active package can stop")
+        for part in parts if app.status == "active" else ():
+            if not isinstance(part, BindingChange):
+                continue
+            from .binding import _version, apply_binding_change
+
+            version = _version(connection, part.binding_id, part.to_version)
+            if version.checksum != part_rows_checksum(connection, app.application_id, part):
+                raise FoundationError("stale_binding", "Package Binding changed")
+            remaining = _active_target_modes(
+                connection,
+                "binding",
+                part.binding_id,
+                part.to_version,
+                excluding=app.application_id,
+            )
+            desired: Literal["paused", "trial", "enabled"] = (
+                "enabled"
+                if any(mode == "regular" for mode, _ in remaining)
+                else "trial"
+                if remaining
+                else "paused"
+            )
+            if version.state != desired and version.state != "retired":
+                apply_binding_change(
+                    connection,
+                    SetBindingStateRequest(
+                        operation_id=request.operation_id,
+                        space_id=request.space_id,
+                        actor=request.actor,
+                        binding_id=part.binding_id,
+                        version=part.to_version,
+                        expected_state_revision=version.state_revision,
+                        state=desired,
+                    ),
+                    now=now,
+                    epoch=epoch,
+                    authority_source=authority_source,
+                    grants=grants,
+                    decisions=decisions,
+                )
+        status, kind = "stopped", "stop"
+        detail = {
+            "reason": request.reason,
+            "started_works": request.started_works,
+            "external_effects": request.external_effects,
+        }
+    elif isinstance(request, RestoreCandidateRequest):
+        if app.status not in ("stopped", "partial"):
+            raise FoundationError("invalid_transition", "Stop package before restoration")
+        activated = bool(
+            connection.execute(
+                "SELECT 1 FROM change_package_events WHERE application_id=? "
+                "AND kind IN ('apply','confirm') LIMIT 1",
+                (str(app.application_id),),
+            ).fetchone()
+        )
+        pending: list[str] = []
+        for part in reversed(parts):
+            if isinstance(part, ProgramChange):
+                newer = connection.execute(
+                    "SELECT 1 FROM change_package_parts t JOIN change_packages p "
+                    "ON p.application_id=t.application_id WHERE t.target_kind='program' "
+                    "AND t.target_id=? AND t.version>? AND p.status IN ('active','stopped') "
+                    "LIMIT 1",
+                    (str(part.program_id), part.to_version),
+                ).fetchone()
+                if newer:
+                    raise FoundationError("stale_program", "Newer program must be addressed first")
+                _check_program_observed(connection, part, installed=False)
+                if part.from_version is not None and not _active_target_modes(
+                    connection, "program", part.program_id, part.from_version
+                ):
+                    pending.append(f"program:{part.program_id}:prior_needs_admission")
+            elif not activated:
+                continue
+            elif isinstance(part, ActivityChange):
+                _authorize(
+                    connection,
+                    actor=request.actor,
+                    action="activity.write",
+                    epoch=epoch,
+                    resource_type="space",
+                )
+                activity_pending, activity_targets = _restore_activity_change(
+                    connection,
+                    part,
+                    request,
+                    now=now,
+                    epoch=epoch,
+                    authority=authority,
+                    grants=grants,
+                    decisions=decisions,
+                )
+                pending.extend(activity_pending)
+                followup_targets.extend(activity_targets)
+            elif isinstance(part, MethodChange):
+                from .composition import _method
+
+                row = connection.execute(
+                    "SELECT version,checksum FROM method_versions WHERE method_id=? "
+                    "ORDER BY version DESC LIMIT 1",
+                    (str(part.method_id),),
+                ).fetchone()
+                if row is None or (row[0], row[1]) != (
+                    part.to_version,
+                    part_rows_checksum(connection, app.application_id, part),
+                ):
+                    raise FoundationError("stale_method", "Method changed after package")
+                if part.from_version is not None:
+                    assert part.from_checksum is not None
+                    try:
+                        _method(
+                            connection,
+                            MethodRef(
+                                method_id=part.method_id,
+                                version=part.from_version,
+                                checksum=part.from_checksum,
+                            ),
+                        )
+                    except FoundationError:
+                        pending.append(f"method:{part.method_id}:prior_unavailable")
+                    if not _active_target_modes(
+                        connection, "method", part.method_id, part.from_version
+                    ):
+                        pending.append(f"method:{part.method_id}:prior_needs_admission")
+            else:
+                from .binding import _version, apply_binding_change
+
+                row = connection.execute(
+                    "SELECT max(version) FROM binding_versions WHERE binding_id=?",
+                    (str(part.binding_id),),
+                ).fetchone()
+                if row is None or row[0] != part.to_version:
+                    raise FoundationError("stale_binding", "Binding changed after package")
+                if part.from_version is not None:
+                    prior = _version(connection, part.binding_id, part.from_version)
+                    if prior.checksum != part.from_checksum:
+                        raise FoundationError("stale_binding", "Prior Binding differs")
+                    apply_binding_change(
+                        connection,
+                        CreateBindingVersionRequest(
+                            operation_id=request.operation_id,
+                            space_id=request.space_id,
+                            actor=request.actor,
+                            binding_id=part.binding_id,
+                            version=part.to_version + 1,
+                            definition=prior.definition,
+                        ),
+                        now=now,
+                        epoch=epoch,
+                        authority_source=authority_source,
+                        grants=grants,
+                        decisions=decisions,
+                    )
+                    apply_binding_change(
+                        connection,
+                        SetBindingStateRequest(
+                            operation_id=request.operation_id,
+                            space_id=request.space_id,
+                            actor=request.actor,
+                            binding_id=part.binding_id,
+                            version=part.to_version + 1,
+                            expected_state_revision=1,
+                            state="enabled",
+                        ),
+                        now=now,
+                        epoch=epoch,
+                        authority_source=authority_source,
+                        grants=grants,
+                        decisions=decisions,
+                    )
+        status, kind = ("partial" if pending else "restored"), "restore"
+        detail = {
+            "reason": request.reason,
+            "data_restoration": request.data_restoration,
+            "external_effects": request.external_effects,
+            "pending": pending,
+        }
+    else:
+        from .knowledge import _require_ref
+
+        for ref in request.evidence:
+            _require_ref(connection, ref, request.actor, epoch)
+        status, kind = app.status, "outcome"
+        detail = {
+            "outcome": request.outcome,
+            "observation": request.observation,
+            "evidence": [item.model_dump(mode="json") for item in request.evidence],
+        }
+    connection.execute(
+        "UPDATE change_packages SET status=?,revision=revision+1,changed_at=? "
+        "WHERE application_id=?",
+        (status, now, str(app.application_id)),
+    )
+    _package_event(
+        connection, app.application_id, app.revision + 1, request.operation_id, kind, detail, now
+    )
+    if isinstance(request, RecordChangeOutcomeRequest):
+        for ordinal, ref in enumerate(request.evidence):
+            connection.execute(
+                "INSERT INTO change_package_evidence(application_id,event_revision,ordinal,"
+                "target_id,target_revision) VALUES (?,?,?,?,?)",
+                (
+                    str(app.application_id),
+                    app.revision + 1,
+                    ordinal,
+                    str(ref.record_id),
+                    ref.revision,
+                ),
+            )
+    return {
+        "application_id": str(app.application_id),
+        "revision": app.revision + 1,
+        "status": status,
+        **detail,
+    }, [
+        {"record_id": str(app.candidate_id), "revision": app.candidate_revision},
+        *followup_targets,
+    ]
+
+
+def part_rows_checksum(
+    connection: sqlite3.Connection,
+    application_id: UUID,
+    part: MethodChange | BindingChange | ProgramChange,
+) -> str:
+    target_id = (
+        part.method_id
+        if isinstance(part, MethodChange)
+        else part.binding_id
+        if isinstance(part, BindingChange)
+        else part.program_id
+    )
+    row = connection.execute(
+        "SELECT checksum FROM change_package_parts WHERE application_id=? AND target_kind=? "
+        "AND target_id=? AND version=?",
+        (str(application_id), part.kind, str(target_id), part.to_version),
+    ).fetchone()
+    if row is None:
+        raise FoundationError("corrupt_space", "Change package part is absent")
+    return str(row[0])
+
+
 def apply_development_change(
     connection: sqlite3.Connection,
     request: DevelopmentChange,
@@ -661,6 +1605,7 @@ def apply_development_change(
     now: str,
     epoch: int,
     authority_source: str,
+    authority: LocalAuthority,
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
@@ -712,6 +1657,15 @@ def apply_development_change(
             raise FoundationError(
                 "change_in_use", "Stop active applications before deleting candidate"
             )
+        if (
+            int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 12
+            and connection.execute(
+                "SELECT 1 FROM change_packages WHERE candidate_id=? "
+                "AND status IN ('prepared','active','partial') LIMIT 1",
+                (str(request.record_id),),
+            ).fetchone()
+        ):
+            raise FoundationError("change_in_use", "Resolve live package before deletion")
         _sanitize_development(connection, request.record_id, now, deleted=True)
         connection.execute(
             "UPDATE development_records SET current_revision=?,updated_at=? WHERE record_id=?",
@@ -744,6 +1698,19 @@ def apply_development_change(
         revision, state = _current(connection, request.candidate_id)
         if revision != request.candidate_revision or not isinstance(state, ChangeCandidateState):
             raise FoundationError("stale_candidate", "Candidate proposal changed")
+        if isinstance(state.target, (ProgramChange, CompositeChange, ActivityChange)):
+            return _package_apply(
+                connection,
+                request,
+                state,
+                revision,
+                now=now,
+                epoch=epoch,
+                authority_source=authority_source,
+                authority=authority,
+                grants=grants,
+                decisions=decisions,
+            )
         decision = _decision(connection, request, state)
         target = state.target
         target_id = target.method_id if isinstance(target, MethodChange) else target.binding_id
@@ -892,9 +1859,83 @@ def apply_development_change(
             {"record_id": str(request.decision_id), "revision": request.decision_revision},
             {"record_id": str(target_id), "revision": target.to_version},
         ]
+    if isinstance(request, ConfirmProgramInstallRequest):
+        app = _application(connection, request.application_id)
+        if app.target_kind not in ("program", "composite") or app.status != "prepared":
+            raise FoundationError("invalid_transition", "Only a prepared program can confirm")
+        if app.revision != request.expected_revision:
+            raise FoundationError("stale_revision", "Change application changed")
+        current_revision, candidate = _current(connection, app.candidate_id)
+        if current_revision != app.candidate_revision or not isinstance(
+            candidate, ChangeCandidateState
+        ):
+            raise FoundationError("stale_candidate", "Prepared candidate changed")
+        admission = ApplyCandidateRequest(
+            operation_id=request.operation_id,
+            space_id=request.space_id,
+            actor=request.actor,
+            candidate_id=app.candidate_id,
+            candidate_revision=app.candidate_revision,
+            decision_id=app.decision_id,
+            decision_revision=app.decision_revision,
+            mode=app.mode,
+        )
+        _decision(connection, admission, candidate)
+        _check_candidate(connection, candidate, request.actor, epoch)
+        parts = _package_parts(connection, app.application_id)
+        for part in parts:
+            if isinstance(part, ProgramChange):
+                _check_program_observed(connection, part, installed=True)
+            else:
+                assert isinstance(part, (MethodChange, BindingChange))
+                _publish_package_part(
+                    connection,
+                    part,
+                    request,
+                    mode=app.mode,
+                    now=now,
+                    epoch=epoch,
+                    authority_source=authority_source,
+                    grants=grants,
+                    decisions=decisions,
+                )
+        connection.execute(
+            "UPDATE change_packages SET status='active',revision=revision+1,changed_at=? "
+            "WHERE application_id=?",
+            (now, str(request.application_id)),
+        )
+        _package_event(
+            connection,
+            request.application_id,
+            app.revision + 1,
+            request.operation_id,
+            "confirm",
+            {
+                "observed_programs": [
+                    str(part.program_id) for part in parts if isinstance(part, ProgramChange)
+                ]
+            },
+            now,
+        )
+        return {"application_id": str(request.application_id), "status": "active"}, [
+            {"record_id": str(app.candidate_id), "revision": app.candidate_revision},
+            {"record_id": str(app.decision_id), "revision": app.decision_revision},
+        ]
     app = _application(connection, request.application_id)
     if app.revision != request.expected_revision:
         raise FoundationError("stale_revision", "Change application changed")
+    if app.target_kind in ("program", "composite", "activity"):
+        return _package_followup(
+            connection,
+            request,
+            app,
+            now=now,
+            epoch=epoch,
+            authority_source=authority_source,
+            authority=authority,
+            grants=grants,
+            decisions=decisions,
+        )
     if isinstance(request, StopCandidateRequest):
         if app.status != "active":
             raise FoundationError("invalid_transition", "Only active application can stop")
@@ -967,7 +2008,9 @@ def apply_development_change(
         candidate = _at_revision(connection, app.candidate_id, app.candidate_revision)
         if not isinstance(candidate, ChangeCandidateState):
             raise FoundationError("wrong_kind", "Application candidate is unavailable")
-        target = candidate.target
+        legacy_target = candidate.target
+        if not isinstance(legacy_target, (MethodChange, BindingChange)):
+            raise FoundationError("wrong_kind", "Application target differs from its candidate")
         if app.target_kind == "method":
             from .composition import _method
 
@@ -980,17 +2023,17 @@ def apply_development_change(
                 raise FoundationError(
                     "stale_method", "Method changed since application; reassess restoration"
                 )
-            restored = target.from_version
+            restored = legacy_target.from_version
             restoration_pending: str | None = None
             if restored is not None:
-                assert target.from_checksum is not None
+                assert legacy_target.from_checksum is not None
                 try:
                     _method(
                         connection,
                         MethodRef(
                             method_id=app.target_id,
                             version=restored,
-                            checksum=target.from_checksum,
+                            checksum=legacy_target.from_checksum,
                         ),
                     )
                 except FoundationError:
@@ -1033,10 +2076,10 @@ def apply_development_change(
             ).fetchone()[0]
             if current != app.version:
                 raise FoundationError("stale_binding", "Binding changed since application")
-            if target.from_version is None:
+            if legacy_target.from_version is None:
                 restored = None
             else:
-                prior = _version(connection, app.target_id, target.from_version)
+                prior = _version(connection, app.target_id, legacy_target.from_version)
                 restore_request = CreateBindingVersionRequest(
                     operation_id=request.operation_id,
                     space_id=request.space_id,
@@ -1169,6 +2212,28 @@ def _sanitize_development(
             "WHERE candidate_id=? AND status IN ('active','stopped')",
             (now, item),
         )
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 12:
+            connection.execute(
+                "UPDATE change_packages SET status='partial',changed_at=? "
+                "WHERE candidate_id=? AND status IN ('prepared','active','stopped')",
+                (now, item),
+            )
+            for (application_id,) in connection.execute(
+                "SELECT application_id FROM change_packages WHERE candidate_id=?", (item,)
+            ).fetchall():
+                for (operation_id,) in connection.execute(
+                    "SELECT operation_id FROM change_package_events WHERE application_id=?",
+                    (application_id,),
+                ).fetchall():
+                    connection.execute("DELETE FROM receipts WHERE operation_id=?", (operation_id,))
+                    connection.execute(
+                        "UPDATE operations SET fingerprint='DELETED' WHERE operation_id=?",
+                        (operation_id,),
+                    )
+                connection.execute(
+                    "UPDATE change_package_events SET detail_json='{}' WHERE application_id=?",
+                    (application_id,),
+                )
         for (application_id,) in connection.execute(
             "SELECT application_id FROM change_applications WHERE candidate_id=?", (item,)
         ).fetchall():
@@ -1192,6 +2257,24 @@ def _sanitize_development(
 
 
 def _sanitize_application_evidence(connection: sqlite3.Connection, record_id: UUID) -> None:
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 12:
+        for application_id, event_revision, operation_id in connection.execute(
+            "SELECT DISTINCT e.application_id,e.event_revision,v.operation_id "
+            "FROM change_package_evidence e JOIN change_package_events v "
+            "ON v.application_id=e.application_id AND v.revision=e.event_revision "
+            "WHERE e.target_id=?",
+            (str(record_id),),
+        ).fetchall():
+            connection.execute(
+                "UPDATE change_package_events SET detail_json='{}' "
+                "WHERE application_id=? AND revision=?",
+                (application_id, event_revision),
+            )
+            connection.execute("DELETE FROM receipts WHERE operation_id=?", (operation_id,))
+            connection.execute(
+                "UPDATE operations SET fingerprint='DELETED' WHERE operation_id=?",
+                (operation_id,),
+            )
     for application_id, event_revision, operation_id in connection.execute(
         "SELECT DISTINCT e.application_id,e.event_revision,v.operation_id "
         "FROM change_application_evidence e JOIN change_application_events v "
@@ -1291,7 +2374,13 @@ def read_change_application(
         )
         rows = connection.execute(
             "SELECT revision,operation_id,kind,detail_json,created_at "
-            "FROM change_application_events WHERE application_id=? ORDER BY revision",
+            "FROM "
+            + (
+                "change_package_events"
+                if app.target_kind in ("program", "composite")
+                else "change_application_events"
+            )
+            + " WHERE application_id=? ORDER BY revision",
             (str(application_id),),
         ).fetchall()
         history = tuple(
@@ -1317,7 +2406,13 @@ def list_change_applications(
         if info.schema_version < 11 or info.recovery_state != "active":
             raise FoundationError("unsupported_schema", "Change reads need schema 11")
         rows = connection.execute(
-            "SELECT application_id FROM change_applications ORDER BY changed_at DESC",
+            "SELECT application_id,changed_at FROM change_applications "
+            + (
+                "UNION ALL SELECT application_id,changed_at FROM change_packages "
+                if info.schema_version >= 12
+                else ""
+            )
+            + "ORDER BY changed_at DESC"
         )
         visible: list[ChangeApplication] = []
         for row in rows:
@@ -1540,6 +2635,14 @@ def check_new_method_use(
         "WHERE a.target_kind='method' AND a.target_id=? AND a.version=?",
         (str(method_id), version),
     ).fetchall()
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 12:
+        rows += connection.execute(
+            "SELECT a.application_id,a.status,a.decision_id,a.decision_revision,a.mode "
+            "FROM change_packages a JOIN change_package_parts p "
+            "ON p.application_id=a.application_id WHERE p.target_kind='method' "
+            "AND p.target_id=? AND p.version=?",
+            (str(method_id), version),
+        ).fetchall()
     if not rows:
         return None
     eligible: list[tuple[int, UUID]] = []
@@ -1560,8 +2663,13 @@ def check_new_method_use(
             continue
         if mode == "trial":
             assert decision.trial_use_limit is not None
+            table = (
+                "change_package_works"
+                if _package_exists(connection, UUID(application_id))
+                else "change_application_works"
+            )
             count = connection.execute(
-                "SELECT count(*) FROM change_application_works WHERE application_id=?",
+                f"SELECT count(*) FROM {table} WHERE application_id=?",
                 (application_id,),
             ).fetchone()[0]
             if count >= decision.trial_use_limit:
@@ -1579,9 +2687,13 @@ def record_method_use(
     now: str,
 ) -> None:
     if application_id is not None:
+        table = (
+            "change_package_works"
+            if _package_exists(connection, application_id)
+            else "change_application_works"
+        )
         connection.execute(
-            "INSERT OR IGNORE INTO change_application_works(application_id,work_id,created_at) "
-            "VALUES (?,?,?)",
+            f"INSERT OR IGNORE INTO {table}(application_id,work_id,created_at) VALUES (?,?,?)",
             (str(application_id), str(work_id), now),
         )
 
@@ -1595,6 +2707,14 @@ def check_binding_trial_limit(
         "AND a.target_id=? AND a.version=?",
         (str(binding_id), version),
     ).fetchall()
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 12:
+        rows += connection.execute(
+            "SELECT a.application_id,a.status,a.decision_id,a.decision_revision,a.mode "
+            "FROM change_packages a JOIN change_package_parts p "
+            "ON p.application_id=a.application_id WHERE p.target_kind='binding' "
+            "AND p.target_id=? AND p.version=?",
+            (str(binding_id), version),
+        ).fetchall()
     if not rows:
         return None
     eligible: list[tuple[int, UUID]] = []
@@ -1615,8 +2735,13 @@ def check_binding_trial_limit(
             eligible.append((0, UUID(application_id)))
             continue
         assert decision.trial_use_limit is not None
+        table = (
+            "change_package_firings"
+            if _package_exists(connection, UUID(application_id))
+            else "change_application_firings"
+        )
         used = connection.execute(
-            "SELECT count(*) FROM change_application_firings WHERE application_id=?",
+            f"SELECT count(*) FROM {table} WHERE application_id=?",
             (application_id,),
         ).fetchone()[0]
         if used < decision.trial_use_limit:
@@ -1634,9 +2759,23 @@ def record_binding_use(
     now: str,
 ) -> None:
     if application_id is not None:
+        table = (
+            "change_package_firings"
+            if _package_exists(connection, application_id)
+            else "change_application_firings"
+        )
         connection.execute(
-            "INSERT INTO change_application_firings("
-            "application_id,operation_id,binding_id,created_at) "
+            f"INSERT INTO {table}(application_id,operation_id,binding_id,created_at) "
             "VALUES (?,?,?,?)",
             (str(application_id), str(operation_id), str(binding_id), now),
         )
+
+
+def _package_exists(connection: sqlite3.Connection, application_id: UUID) -> bool:
+    return bool(
+        int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 12
+        and connection.execute(
+            "SELECT 1 FROM change_packages WHERE application_id=?",
+            (str(application_id),),
+        ).fetchone()
+    )

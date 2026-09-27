@@ -278,4 +278,19 @@ derived index of retained UTF-8 source bytes, never an alternate original.
 The Pi adapter may prepare a current bounded packet and record its observed
 delivery, but cannot silently substitute a summary for mandatory primary data.
 
+Schema 11 adds Sleep state/cursors and exact Method/Binding Change applications.
+Schema 12 adds one explicit additive migration for program, composite and Activity
+change packages. Candidate, ValidationPlan/Result, Decision/Grant and the normal Core
+operation/receipt remain their authority path. A program package is prepared
+before filesystem installation and becomes active only after Core observes exact
+bytes in its selected Resource. Interrupted preparation can be stopped and its
+exact prior bytes restored; Pulse reports active build drift. Package parts never
+make a Method/Binding active ahead of a dependent program confirmation.
+Activity reorganization uses one normal operation transaction, retains previous
+Work revisions and membership, and fences current composite edges and active
+Attempts. A substantial ActivityChange passes the same admission cycle and can
+stop and restore unchanged current membership without rewriting its history.
+Small direct corrections use the same typed reorganization transaction. Neither
+route copies scoped Decision, Binding or Grant records.
+
 END_OF_FILE: src/zaratustra/foundation/AGENTS.md

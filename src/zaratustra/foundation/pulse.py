@@ -128,6 +128,20 @@ def pulse_space(
                     (address,),
                 ):
                     dependencies.add(str(target))
+            if info.schema_version >= 11:
+                for (target,) in connection.execute(
+                    "SELECT e.target_id FROM development_edges e "
+                    "JOIN development_records r ON r.record_id=e.record_id "
+                    "AND r.current_revision=e.revision WHERE e.record_id=? LIMIT 100",
+                    (address,),
+                ):
+                    dependencies.add(str(target))
+            if info.schema_version >= 12:
+                for (target,) in connection.execute(
+                    "SELECT target_id FROM change_package_parts WHERE application_id=? LIMIT 100",
+                    (address,),
+                ):
+                    dependencies.add(str(target))
             for dependency in dependencies - addresses:
                 addresses.add(dependency)
                 queue.append(dependency)
@@ -231,6 +245,42 @@ def pulse_space(
                             repair="Inspect the Attempt and reconcile through normal operations",
                         )
                     )
+        if info.schema_version >= 12:
+            for application_id, status in connection.execute(
+                "SELECT application_id,status FROM change_packages "
+                "WHERE status IN ('prepared','partial') LIMIT 20"
+            ):
+                observations.append(
+                    PulseFinding(
+                        code="change_pending",
+                        address=f"application:{application_id}",
+                        detail=f"Saved package state is {status}; installed bytes need inspection",
+                        repair="Inspect the package and reconcile its exact program files",
+                    )
+                )
+            from .development import _check_program_observed, _package_parts
+            from .models import ProgramChange
+
+            for (application_id,) in connection.execute(
+                "SELECT DISTINCT p.application_id FROM change_packages p "
+                "JOIN change_package_parts t ON t.application_id=p.application_id "
+                "WHERE p.status='active' AND t.target_kind='program' "
+                "ORDER BY p.changed_at DESC LIMIT 20"
+            ):
+                for part in _package_parts(connection, UUID(application_id)):
+                    if not isinstance(part, ProgramChange):
+                        continue
+                    try:
+                        _check_program_observed(connection, part, installed=True)
+                    except (FoundationError, OSError) as error:
+                        findings.append(
+                            PulseFinding(
+                                code="program_unavailable",
+                                address=f"application:{application_id}/program:{part.program_id}",
+                                detail=str(error),
+                                repair="Stop new use and inspect the exact build and resource",
+                            )
+                        )
         return PulseReport(
             space_id=info.space_id,
             from_revision=checkpoint,

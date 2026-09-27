@@ -29,6 +29,7 @@ from zaratustra.foundation import (
     ClaimState,
     CloseWorkRequest,
     ConfirmObligationRequest,
+    ConfirmProgramInstallRequest,
     ContextState,
     CreateActivityRequest,
     CreateArtifactRequest,
@@ -56,6 +57,7 @@ from zaratustra.foundation import (
     PublishAttemptOutputRequest,
     RecordChangeOutcomeRequest,
     RecordContextDeliveryRequest,
+    ReorganizeActivitiesRequest,
     ResolveBindingOfferRequest,
     ResolveObligationApplicabilityRequest,
     ResourceState,
@@ -106,6 +108,7 @@ from zaratustra.foundation import (
     search_knowledge,
     sleep_work_template,
     upgrade_binding_space,
+    upgrade_change_package_space,
     upgrade_child_execution_space,
     upgrade_composition_space,
     upgrade_continuation_space,
@@ -133,6 +136,7 @@ KNOWLEDGE_INTENTS: dict[str, type[BaseModel]] = {
 }
 DEVELOPMENT_INTENTS: dict[str, type[BaseModel]] = {
     "create_activity": CreateActivityRequest,
+    "reorganize_activities": ReorganizeActivitiesRequest,
     "create_work": CreateWorkRequest,
     "create_artifact": CreateArtifactRequest,
     "create_method_version": CreateMethodVersionRequest,
@@ -150,6 +154,7 @@ DEVELOPMENT_INTENTS: dict[str, type[BaseModel]] = {
     "revise_development": ReviseDevelopmentRequest,
     "delete_development": DeleteDevelopmentRequest,
     "apply_candidate": ApplyCandidateRequest,
+    "confirm_program_install": ConfirmProgramInstallRequest,
     "stop_candidate": StopCandidateRequest,
     "restore_candidate": RestoreCandidateRequest,
     "record_change_outcome": RecordChangeOutcomeRequest,
@@ -519,6 +524,8 @@ class Bridge:
         self.knowledge_upgrade(session_id)
         if read_space(self.path).schema_version < 11:
             upgrade_development_space(self.path, self.authority)
+        if read_space(self.path).schema_version < 12:
+            upgrade_change_package_space(self.path, self.authority)
         return {"schema_version": read_space(self.path).schema_version}
 
     def development_start_sleep(

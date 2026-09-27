@@ -25,6 +25,7 @@ from zaratustra.foundation import (
     managed_pi_sessions,
     read_space,
     upgrade_binding_space,
+    upgrade_change_package_space,
     upgrade_child_execution_space,
     upgrade_composition_space,
     upgrade_continuation_space,
@@ -69,6 +70,7 @@ def _prepare_space(path: Path, actor: str, *, create: bool) -> LocalAuthority:
         (9, upgrade_binding_space),
         (10, upgrade_knowledge_space),
         (11, upgrade_development_space),
+        (12, upgrade_change_package_space),
     ):
         if read_space(path).schema_version < version:
             upgrade(path, authority)
@@ -102,7 +104,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--local-max-tokens", type=int)
     parser.add_argument("--model", help="Provider/model selected by Pi; no product default")
     parser.add_argument("--thinking", help="Pi reasoning level")
-    parser.add_argument("--pi-tools", help="Optional comma-separated Pi tool allowlist")
+    parser.add_argument("--pi-tools", help="Optional comma-separated native Pi tool allowlist")
     parser.add_argument("--session-dir", type=Path)
     parser.add_argument("--activity-id", type=UUID)
     parser.add_argument("--work-id", type=UUID)
@@ -137,12 +139,20 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("Local Provider needs id, model and context/output bounds")
     if (args.activity_id is None) != (args.work_id is None):
         parser.error("Initial Activity and Work must be selected together")
+    native_tools = (
+        [item.strip() for item in args.pi_tools.split(",") if item.strip()]
+        if args.pi_tools
+        else ["read", "write", "edit", "bash"]
+    )
+    active_tools = ",".join(
+        dict.fromkeys([*native_tools, "zara_binding", "zara_memory", "zara_development"])
+    )
     actor = getpass.getuser()
     print(f"Core space: {space}\nWorking directory: {workspace}\nLocal user: {actor}")
     print(
         f"Provider profile: {args.provider_profile}\n"
         f"Pi model: {args.model or 'Pi selection'}\n"
-        f"Pi tools: {args.pi_tools or 'none'}\n"
+        f"Pi tools: {active_tools}\n"
         f"Work limit: {args.limit_units} units; free conversation limit: "
         f"{args.free_conversation_limit_units} units; each call reserve: {args.reserve_units} units"
     )
@@ -212,10 +222,7 @@ def main(argv: list[str] | None = None) -> int:
             command.extend(["--model", args.model])
         if args.thinking:
             command.extend(["--thinking", args.thinking])
-        if args.pi_tools:
-            command.extend(["--tools", args.pi_tools])
-        else:
-            command.append("--no-tools")
+        command.extend(["--tools", active_tools])
         command.extend(["--session-dir", str(session_dir)])
         try:
             return subprocess.run(command, cwd=workspace, env=environment, check=False).returncode

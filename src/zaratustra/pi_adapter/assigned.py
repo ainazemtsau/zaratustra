@@ -963,10 +963,20 @@ def _execute_under_lock(
                 "--no-themes",
                 "--no-approve",
             ]
-            if config.pi_tools:
-                command.extend(["--tools", ",".join(config.pi_tools)])
-            else:
-                command.append("--no-tools")
+            command.extend(
+                [
+                    "--tools",
+                    ",".join(
+                        dict.fromkeys(
+                            [
+                                *(config.pi_tools or ("read", "write", "edit", "bash")),
+                                "zara_memory",
+                                "zara_development",
+                            ]
+                        )
+                    ),
+                ]
+            )
             if config.offline:
                 command.append("--offline")
             process = subprocess.Popen(
@@ -1327,7 +1337,11 @@ def main(argv: list[str] | None = None) -> int:
         reserve_units=args.reserve_units,
         limit_units=args.limit_units,
         offline=args.offline,
-        pi_tools=tuple(item.strip() for item in args.pi_tools.split(",")) if args.pi_tools else (),
+        pi_tools=(
+            tuple(item.strip() for item in args.pi_tools.split(",") if item.strip())
+            if args.pi_tools
+            else ("read", "write", "edit", "bash")
+        ),
     )
     actor = getpass.getuser()
     print(f"Core: {config.space}\nWorkspace: {config.workspace}\nActor: {actor}")

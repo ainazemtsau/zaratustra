@@ -886,6 +886,57 @@ class DeleteActivityRequest(OperationRequest):
     expected_revision: int = Field(ge=1)
 
 
+class ActivityCreation(ContractModel):
+    activity_id: UUID
+    state: ActivityState
+
+
+class ActivityRevisionChange(ContractModel):
+    activity_id: UUID
+    expected_revision: int = Field(ge=1)
+    state: ActivityState
+
+
+class WorkActivityMove(ContractModel):
+    work_id: UUID
+    expected_revision: int = Field(ge=1)
+    from_activity_id: UUID
+    to_activity_id: UUID
+
+    @model_validator(mode="after")
+    def different_activities(self) -> WorkActivityMove:
+        if self.from_activity_id == self.to_activity_id:
+            raise ValueError("Work move needs a different destination Activity")
+        return self
+
+
+class ReorganizeActivitiesRequest(OperationRequest):
+    """One exact split, merge or retirement of current Activity membership."""
+
+    kind: Literal["reorganize_activities"] = "reorganize_activities"
+    creations: tuple[ActivityCreation, ...] = ()
+    revisions: tuple[ActivityRevisionChange, ...] = ()
+    moves: tuple[WorkActivityMove, ...] = ()
+    rationale: str = Field(min_length=1, max_length=4096)
+    binding_disposition: str = Field(min_length=1, max_length=4096)
+    decision_disposition: str = Field(min_length=1, max_length=4096)
+    grant_disposition: str = Field(min_length=1, max_length=4096)
+    event_boundary: str = Field(min_length=1, max_length=4096)
+
+    @model_validator(mode="after")
+    def unique_targets(self) -> ReorganizeActivitiesRequest:
+        created = [item.activity_id for item in self.creations]
+        revised = [item.activity_id for item in self.revisions]
+        moved = [item.work_id for item in self.moves]
+        if not (created or revised or moved):
+            raise ValueError("Reorganization needs an actual change")
+        if len(created) != len(set(created)) or len(revised) != len(set(revised)):
+            raise ValueError("Activity addresses must be unique")
+        if set(created) & set(revised) or len(moved) != len(set(moved)):
+            raise ValueError("Reorganization targets overlap")
+        return self
+
+
 class CreateWorkRequest(OperationRequest):
     kind: Literal["create_work"] = "create_work"
     work_id: UUID
@@ -1666,7 +1717,120 @@ class BindingChange(ContractModel):
         return self
 
 
-ChangeTarget = Annotated[MethodChange | BindingChange, Field(discriminator="kind")]
+class ProgramChange(ContractModel):
+    """An exact managed build destined for one selected working resource file."""
+
+    kind: Literal["program"] = "program"
+    program_id: UUID
+    resource_id: UUID
+    resource_revision: int = Field(ge=1)
+    relative_path: str = Field(min_length=1, max_length=1024)
+    from_version: int | None = Field(default=None, ge=1)
+    from_checksum: str | None = Field(default=None, pattern=r"^[0-9A-F]{64}$")
+    from_build: ArtifactRef | None = None
+    to_version: int = Field(ge=1)
+    build: ArtifactRef
+    build_sha256: str = Field(pattern=r"^[0-9A-F]{64}$")
+    required_validation_keys: tuple[Identifier, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def exact_build_and_path(self) -> ProgramChange:
+        from pathlib import PurePosixPath
+
+        parts = PurePosixPath(self.relative_path).parts
+        if (
+            not parts
+            or self.relative_path.startswith(("/", chr(92)))
+            or chr(92) in self.relative_path
+            or ":" in self.relative_path
+            or any(part in (".", "..") for part in parts)
+            or PurePosixPath(self.relative_path).as_posix() != self.relative_path
+        ):
+            raise ValueError("Program path must be relative and remain inside its resource")
+        if (
+            len({self.from_version is None, self.from_checksum is None, self.from_build is None})
+            != 1
+        ):
+            raise ValueError("Previous program needs version, checksum and build together")
+        if self.to_version != (self.from_version or 0) + 1:
+            raise ValueError("Program versions must be consecutive")
+        if self.from_checksum == self.build_sha256:
+            raise ValueError("Program build must change exact bytes")
+        if len(self.required_validation_keys) != len(set(self.required_validation_keys)):
+            raise ValueError("Program prerequisites must be unique")
+        return self
+
+
+ChangePart = Annotated[MethodChange | BindingChange | ProgramChange, Field(discriminator="kind")]
+
+
+class CompositeChange(ContractModel):
+    """A single admission for multiple exact dependent changes."""
+
+    kind: Literal["composite"] = "composite"
+    package_id: UUID
+    from_version: int | None = Field(default=None, ge=1)
+    to_version: int = Field(ge=1)
+    parts: tuple[ChangePart, ...] = Field(min_length=2)
+
+    @model_validator(mode="after")
+    def unique_parts(self) -> CompositeChange:
+        if self.to_version != (self.from_version or 0) + 1:
+            raise ValueError("Composite versions must be consecutive")
+        keys = [
+            (item.kind, item.method_id if isinstance(item, MethodChange) else item.binding_id)
+            if not isinstance(item, ProgramChange)
+            else (item.kind, item.program_id)
+            for item in self.parts
+        ]
+        if len(keys) != len(set(keys)):
+            raise ValueError("Composite targets must be unique")
+        paths = [
+            (item.resource_id, item.relative_path.casefold())
+            for item in self.parts
+            if isinstance(item, ProgramChange)
+        ]
+        if len(paths) != len(set(paths)):
+            raise ValueError("Composite program paths must be unique")
+        return self
+
+
+class ActivityChange(ContractModel):
+    """An exact, admitted reorganization of current Activity membership."""
+
+    kind: Literal["activity"] = "activity"
+    change_id: UUID
+    from_version: int | None = None
+    to_version: Literal[1] = 1
+    creations: tuple[ActivityCreation, ...] = ()
+    revisions: tuple[ActivityRevisionChange, ...] = ()
+    moves: tuple[WorkActivityMove, ...] = ()
+    rationale: str = Field(min_length=1, max_length=4096)
+    binding_disposition: str = Field(min_length=1, max_length=4096)
+    decision_disposition: str = Field(min_length=1, max_length=4096)
+    grant_disposition: str = Field(min_length=1, max_length=4096)
+    event_boundary: str = Field(min_length=1, max_length=4096)
+
+    @model_validator(mode="after")
+    def valid_reorganization(self) -> ActivityChange:
+        if self.from_version is not None:
+            raise ValueError("Each Activity reorganization has one exact version")
+        created = [item.activity_id for item in self.creations]
+        revised = [item.activity_id for item in self.revisions]
+        moved = [item.work_id for item in self.moves]
+        if not (created or revised or moved):
+            raise ValueError("Activity change needs a real reorganization")
+        if len(created) != len(set(created)) or len(revised) != len(set(revised)):
+            raise ValueError("Activity addresses must be unique")
+        if set(created) & set(revised) or len(moved) != len(set(moved)):
+            raise ValueError("Activity change targets overlap")
+        return self
+
+
+ChangeTarget = Annotated[
+    MethodChange | BindingChange | ProgramChange | CompositeChange | ActivityChange,
+    Field(discriminator="kind"),
+]
 
 
 class ChangeCandidateState(ContractModel):
@@ -1701,6 +1865,15 @@ class ChangeCandidateState(ContractModel):
             raise ValueError("Results need a criterion in the saved plan")
         if len({item.result_id for item in self.results}) != len(self.results):
             raise ValueError("Validation result addresses must be unique")
+        parts = self.target.parts if isinstance(self.target, CompositeChange) else (self.target,)
+        required = {
+            key
+            for part in parts
+            if isinstance(part, ProgramChange)
+            for key in part.required_validation_keys
+        }
+        if self.validation_plan is not None and not required.issubset(keys):
+            raise ValueError("Program prerequisites need criteria in the saved plan")
         return self
 
 
@@ -1730,6 +1903,12 @@ class ApplyCandidateRequest(OperationRequest):
     decision_id: UUID
     decision_revision: int = Field(ge=1)
     mode: Literal["trial", "regular"]
+
+
+class ConfirmProgramInstallRequest(OperationRequest):
+    kind: Literal["confirm_program_install"] = "confirm_program_install"
+    application_id: UUID
+    expected_revision: int = Field(ge=1)
 
 
 class StopCandidateRequest(OperationRequest):
@@ -1848,11 +2027,11 @@ class ChangeApplication(ContractModel):
     decision_id: UUID
     decision_revision: int = Field(ge=1)
     mode: Literal["trial", "regular"]
-    target_kind: Literal["method", "binding"]
+    target_kind: Literal["method", "binding", "program", "composite", "activity"]
     target_id: UUID
     version: int = Field(ge=1)
     checksum: str = Field(pattern=r"^[0-9A-F]{64}$")
-    status: Literal["active", "stopped", "restored", "partial"]
+    status: Literal["prepared", "active", "stopped", "restored", "partial"]
     revision: int = Field(ge=1)
     created_at: AwareDatetime
     changed_at: AwareDatetime
@@ -1873,6 +2052,7 @@ DomainRequest = Annotated[
     | ReviseDevelopmentRequest
     | DeleteDevelopmentRequest
     | ApplyCandidateRequest
+    | ConfirmProgramInstallRequest
     | StopCandidateRequest
     | RestoreCandidateRequest
     | RecordChangeOutcomeRequest
@@ -1886,6 +2066,7 @@ DomainRequest = Annotated[
     | CreateActivityRequest
     | ReviseActivityRequest
     | DeleteActivityRequest
+    | ReorganizeActivitiesRequest
     | CreateWorkRequest
     | CreateMethodVersionRequest
     | DeleteMethodVersionRequest
@@ -1925,7 +2106,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -2302,7 +2483,7 @@ class BackupManifest(ContractModel):
     backup_id: UUID
     format_version: Literal[1, 2] = 1
     space_id: UUID
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime
