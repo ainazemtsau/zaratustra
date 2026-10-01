@@ -1,6 +1,15 @@
 # Zaratustra
 
 ## Current product authority — Core v0.1
+- On 2026-10-01 the owner chose the latest Core/Activity implementation as the
+  single main basis and authorized consolidation. Read
+  `docs/core-v0.1/CONSOLIDATION-20261001.md` before branch, setup or adapter work.
+  The former Home/file-first main is retained in Git history, not a second
+  current backend. Core's SQLite domain authority and the accepted specification
+  remain unchanged. Current ordinary entry is `zara-core`; earlier `zara`,
+  `zara-agent` instructions and Home-era plans are historical context.
+  ChatGPT + phone + local agents and Health-first are the owner's current use
+  request; only the ordinary Pi connection has current implementation evidence.
 - The owner delivery policy for the current release work is `docs/core-v0.1/DELIVERY-POLICY-20260926.md`; it changes validation organization, not product contracts. The stabilization technical review closed at `afe995d9739f655a6f495216f56dc4f53558dd97`; see `docs/core-v0.1/STABILIZATION-REVIEW-CLOSURE-20260926.md`. Nine independent targeted tests passed; the full 728-test gate is implementation evidence. Historical SQLite lock-holder and Pi exit causes remain unestablished.
 - The current product basis is `docs/core-v0.1/IMPLEMENTATION-BASELINE.md`, the
   owner-approved Core v0.1 implementation plan recorded there,
