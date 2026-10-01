@@ -144,7 +144,7 @@ export default function (pi: any): void {
   if (!endpoint || !token || !allowedOrigin || !providerBaseUrl || !Number.isSafeInteger(reserveUnits) || reserveUnits < 1) {
     throw new Error("Zaratustra bridge requires endpoint, token, origin and positive reserve");
   }
-  const sessionId = assignedSessionId ?? randomUUID();
+  let sessionId = assignedSessionId ?? randomUUID();
   let connection: any = null;
   let selection: any = null;
   let attemptId: string | null = null;
@@ -350,6 +350,9 @@ export default function (pi: any): void {
   });
 
   pi.on("session_start", async (_event: any, ctx: any) => {
+    // A new Pi conversation has a clean context. Do not keep deleted provenance
+    // from a previous conversation; assigned RPC retains its pinned identity.
+    if (_event.reason === "new" && !assignedSessionId) sessionId = randomUUID();
     selection = null;
     attemptId = null;
     contextReady = false;

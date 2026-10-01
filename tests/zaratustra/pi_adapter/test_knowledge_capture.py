@@ -10,12 +10,19 @@ import pytest
 
 from tests.zaratustra.foundation.test_binding import _ready
 from tests.zaratustra.foundation.test_composition import _seed
+from tests.zaratustra.foundation.test_continuation import assign
 from tests.zaratustra.foundation.test_execution import ready, start
 from zaratustra.foundation import (
     ContextState,
+    CreateKnowledgeRequest,
+    CreateResourceRequest,
+    CreateWorkRequest,
     DeleteKnowledgeRequest,
     FoundationError,
+    OutputContract,
+    ResourceState,
     SourceState,
+    WorkState,
     apply_operation,
     complete_deletions,
     read_execution,
@@ -31,6 +38,77 @@ from zaratustra.foundation import (
     upgrade_plan_revision_space,
 )
 from zaratustra.pi_adapter import Bridge
+
+
+def test_assigned_memory_writer_cannot_delete_owner_knowledge(tmp_path: Path) -> None:
+    root, space, owner, activity_id, _ = _ready(tmp_path)
+    upgrade_knowledge_space(root, owner)
+    work_id, resource_id = uuid4(), uuid4()
+    apply_operation(
+        root,
+        CreateWorkRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor=owner.actor,
+            work_id=work_id,
+            state=WorkState(
+                activity_id=activity_id,
+                goal="Write a fictional memory note",
+                expected_outputs=(OutputContract(slot="note", media_type="text/plain"),),
+            ),
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        CreateResourceRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor=owner.actor,
+            work_id=work_id,
+            resource_id=resource_id,
+            state=ResourceState(label="Synthetic writer", root=tmp_path, limit_units=100),
+        ),
+        owner,
+    )
+    attempt_id, session_id, _ = assign(root, space, work_id, resource_id)
+    writer = Bridge(
+        root, owner, tmp_path, 100, assigned_attempt_id=attempt_id, assigned_session_id=session_id
+    )
+    writer.connect(session_id)
+    writer.select(session_id, activity_id, work_id)
+    source_id = uuid4()
+    source = CreateKnowledgeRequest(
+        operation_id=uuid4(),
+        space_id=space,
+        actor=owner.actor,
+        record_id=source_id,
+        state=SourceState(
+            channel="document",
+            connection="synthetic-writer",
+            profile_revision=1,
+            source_event_id="written-note",
+            media_type="text/plain",
+            capture="full",
+            content=b"Fictional memory note",
+        ),
+    )
+    writer.knowledge_operation(session_id, source.model_dump(mode="json"))
+    deletion = DeleteKnowledgeRequest(
+        operation_id=uuid4(),
+        space_id=space,
+        actor=owner.actor,
+        record_id=source_id,
+        expected_revision=1,
+    )
+    with pytest.raises(FoundationError, match="interactive owner path"):
+        writer.knowledge_operation(session_id, deletion.model_dump(mode="json"))
+    assert read_knowledge(root, source_id, owner).availability == "available"
+    interactive = Bridge(root, owner, tmp_path, 100)
+    owner_session = uuid4()
+    interactive.connect(owner_session)
+    interactive.knowledge_operation(owner_session, deletion.model_dump(mode="json"))
+    assert read_knowledge(root, source_id, owner).availability == "deleted"
 
 
 def test_captured_answer_depends_on_received_user_source(tmp_path: Path) -> None:
@@ -70,6 +148,31 @@ def test_captured_answer_depends_on_received_user_source(tmp_path: Path) -> None
     assert read_knowledge(root, answer_id, owner).availability == "unavailable"
     assert search_knowledge(root, owner, "Private fictional phrase")["items"] == []
     assert complete_deletions(root, owner).live_store_sanitized
+    with pytest.raises(FoundationError, match="content_unavailable"):
+        bridge.capture_source(
+            session_id,
+            channel="conversation_assistant",
+            content="The old context still saw deleted text",
+            source_event_id="blocked-answer",
+        )
+    clean_session = uuid4()
+    bridge.connect(clean_session)
+    bridge.capture_source(
+        clean_session,
+        channel="conversation_user",
+        content="Begin a clean fictional conversation",
+        source_event_id="clean-user",
+    )
+    clean_answer = bridge.capture_source(
+        clean_session,
+        channel="conversation_assistant",
+        content="A new answer from the clean context",
+        source_event_id="clean-answer",
+    )
+    clean_id = UUID(str(cast(dict[str, object], clean_answer["result"])["record_id"]))
+    clean_state = read_knowledge(root, clean_id, owner).state
+    assert isinstance(clean_state, SourceState)
+    assert received_id not in {ref.record_id for ref in clean_state.derived_from}
 
 
 def test_selected_work_compaction_keeps_exact_work_method_and_plan(tmp_path: Path) -> None:

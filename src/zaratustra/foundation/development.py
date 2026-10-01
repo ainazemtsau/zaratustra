@@ -2334,10 +2334,21 @@ def _sanitize_development(
                 "UPDATE change_application_events SET detail_json='{}' WHERE application_id=?",
                 (application_id,),
             )
-    connection.execute(
-        "UPDATE backup_inventory SET status='contaminated' "
-        "WHERE status IN ('planned','failed','complete')"
-    )
+    # Preserve snapshots from before all affected development payloads existed.
+    # Knowledge deletion applies its own earlier source boundary as well.
+    marks = ",".join("?" for _ in ids)
+    earliest = connection.execute(
+        "SELECT MIN(o.state_revision) FROM development_revisions r "
+        "JOIN operations o ON o.operation_id=r.operation_id "
+        f"WHERE r.record_id IN ({marks})",
+        tuple(sorted(ids)),
+    ).fetchone()[0]
+    if earliest is not None:
+        connection.execute(
+            "UPDATE backup_inventory SET status='contaminated' "
+            "WHERE status IN ('planned','failed','complete') AND state_revision >= ?",
+            (earliest,),
+        )
 
 
 def _sanitize_application_evidence(connection: sqlite3.Connection, record_id: UUID) -> None:

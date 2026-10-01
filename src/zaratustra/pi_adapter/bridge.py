@@ -524,6 +524,10 @@ class Bridge:
             )
         if self.assigned_attempt_id is not None and isinstance(request, CreateGrantRequest):
             raise FoundationError("permission_denied", "Assigned Work cannot create a Grant")
+        if self.assigned_attempt_id is not None and isinstance(request, DeleteKnowledgeRequest):
+            raise FoundationError(
+                "permission_denied", "Knowledge deletion requires the interactive owner path"
+            )
         if request.actor != self.authority.actor or request.space_id != self.authority.space_id:
             raise FoundationError("permission_denied", "Knowledge actor/space differs from host")
         return apply_operation(self.path, request, self.authority).model_dump(mode="json")

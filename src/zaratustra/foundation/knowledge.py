@@ -425,12 +425,20 @@ def _sanitize_deleted(connection: sqlite3.Connection, record_id: UUID, now: str)
             f"WHERE manifest_id IN ({marks})",
             tuple(sorted(affected)),
         )
-    # A backup may contain the source or one of its derived payloads. The same
-    # quarantine purge used for other managed deletions removes all such copies.
-    connection.execute(
-        "UPDATE backup_inventory SET status='contaminated' "
-        "WHERE status IN ('planned','failed','complete')"
-    )
+    # A snapshot older than every affected record cannot contain its payload.
+    # Keep those known-clean recovery points; conservatively quarantine later
+    # snapshots, which may contain a source or any of its derived payloads.
+    marks = ",".join("?" for _ in affected)
+    earliest = connection.execute(
+        f"SELECT MIN(created_state_revision) FROM knowledge_records WHERE record_id IN ({marks})",
+        tuple(sorted(affected)),
+    ).fetchone()[0]
+    if earliest is not None:
+        connection.execute(
+            "UPDATE backup_inventory SET status='contaminated' "
+            "WHERE status IN ('planned','failed','complete') AND state_revision >= ?",
+            (earliest,),
+        )
 
 
 def sanitize_deleted_knowledge_dependency(

@@ -299,6 +299,43 @@ def test_handoff_return_and_deletion_retire_derived_bytes(tmp_path: Path) -> Non
     assert not backup.package.exists()
 
 
+def test_knowledge_deletion_preserves_backup_from_before_source_creation(tmp_path: Path) -> None:
+    root, space, owner, _, _ = _ready(tmp_path)
+    upgrade_knowledge_space(root, owner)
+    clean_backup = create_backup(root, uuid4(), owner)
+    source_id = uuid4()
+    _apply(
+        root,
+        space,
+        owner,
+        CreateKnowledgeRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            record_id=source_id,
+            state=_source("Fictional note created after the clean backup"),
+        ),
+    )
+    affected_backup = create_backup(root, uuid4(), owner)
+    _apply(
+        root,
+        space,
+        owner,
+        DeleteKnowledgeRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            record_id=source_id,
+            expected_revision=1,
+        ),
+    )
+    deletion = complete_deletions(root, owner)
+    assert deletion.live_store_sanitized and deletion.purged_backups == 1
+    assert clean_backup.package.is_dir()
+    assert not affected_backup.package.exists()
+    assert read_knowledge(root, source_id, owner).availability == "deleted"
+
+
 def test_current_view_marks_new_in_scope_source_without_unrelated_invalidation(
     tmp_path: Path,
 ) -> None:

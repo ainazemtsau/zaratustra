@@ -474,6 +474,7 @@ def test_sleep_progress_candidate_apply_stop_and_restore(tmp_path: Path) -> None
 def test_binding_trial_limit_backup_and_deleted_basis(tmp_path: Path) -> None:
     root, space, owner, producer, consumer = _ready(tmp_path)
     upgrade_knowledge_space(root, owner)
+    clean_backup = create_backup(root, uuid4(), owner)
     source_id = uuid4()
     _operation(
         root,
@@ -653,3 +654,4 @@ def test_binding_trial_limit_backup_and_deleted_basis(tmp_path: Path) -> None:
     assert history[0]["detail"] == {}
     assert complete_deletions(root, owner).live_store_sanitized
     assert not backup.package.exists()
+    assert clean_backup.package.is_dir()
