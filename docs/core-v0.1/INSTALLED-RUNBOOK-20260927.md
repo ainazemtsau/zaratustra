@@ -60,6 +60,10 @@ launch-reference в пользовательском профиле. `bind` вы
 
 ## Работа и память
 
+Поставка 0.19.0 добавляет [общую память](../general-memory.md): каталог, несколько
+областей в одной подборке, историю, проверяемый кэш и Markdown-экспорт. Схема 13
+подготавливается `setup` для нового Core и явно `upgrade` для существующего.
+
 Попросите создать/прочитать Activity, подготовить Work или способ исполнения обычным
 языком. `zara_activity` работает с направлениями, `zara_development` — с Method/Work,
 Sleep/Change и их контролируемыми действиями. Это не закрытое меню задач пользователя.
@@ -82,6 +86,7 @@ Bridge. Unknown после возможного внешнего эффекта 
 
 ```text
 uv tool install --force --from <new-wheel> zaratustra
+zaratustra upgrade
 zaratustra verify
 zaratustra
 ```

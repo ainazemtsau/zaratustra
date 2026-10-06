@@ -1008,6 +1008,8 @@ def apply_composition_change(
             connection, request, now=now, epoch=epoch, grants=grants, decisions=decisions
         )
     if isinstance(request, CreateMethodVersionRequest):
+        if request.definition.memory_requirements and _schema(connection) < 13:
+            raise FoundationError("unsupported_schema", "Memory requirements need schema 13")
         if _schema(connection) < 8 and any(
             item.role is None for item in request.definition.obligations
         ):

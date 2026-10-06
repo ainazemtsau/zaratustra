@@ -149,7 +149,8 @@ class ManualExchange:
             if item.availability != "available":
                 raise FoundationError("content_unavailable", "Context basis is unavailable")
             if isinstance(item.state, (SourceState, ClaimState)) and (
-                item.state.scope_activity_id is not None
+                item.state.memory is None
+                and item.state.scope_activity_id is not None
                 and item.state.scope_activity_id != activity_id
             ):
                 raise FoundationError("wrong_work", "Context material is outside this Activity")

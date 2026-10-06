@@ -1,6 +1,6 @@
 [project]
 name = "zaratustra"
-version = "0.18.11"
+version = "0.19.0"
 description = "Zaratustra local workspace and transactional mutation protocol"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -221,3 +221,9 @@ name = "Process construction inputs stay development-only and untrusted"
 type = "forbidden"
 source_modules = ["tests.fixtures.process_creation"]
 forbidden_modules = ["zaratustra.local", "zaratustra.cli", "tools"]
+
+[[tool.importlinter.contracts]]
+name = "Shared memory remains inside independent Core"
+type = "forbidden"
+source_modules = ["zaratustra.foundation.memory"]
+forbidden_modules = ["zaratustra.pi_adapter", "zaratustra.integrations", "zaratustra.release", "zaratustra.core", "tests", "tools"]

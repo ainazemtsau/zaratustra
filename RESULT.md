@@ -66,4 +66,91 @@ manual return. Existing installations are not implicitly replaced by code public
 the parallel dirty development branch remains preserved, not silently committed to main.
 This report-only follow-up records completed effects and does not change the tested code.
 
+# General memory 0.19.0
+
+## outcome
+
+Implemented the owner-approved shared-memory package on codex/general-memory:
+explicit schema 13, optional organization over existing knowledge, indexed catalog,
+batch/history, exact persistent selections, cache checks, Method requirements,
+ordinary Pi and integration operations, complete Markdown export. Version 0.19.0
+is built and verified outside checkout. The owner authorized publication to the
+public main; its exact publication receipt is recorded separately below when done.
+
+## evidence
+
+One existing full native gate was executed: 793 passed, 5 failed, 613.20 seconds.
+Those five failures exposed CLI compatibility: schema-12 Program Change install/
+restore and the existing manual adapter's catalog order. Both causes were fixed;
+all five corresponding tests passed in the subsequent scoped run. That run had
+38 passes and two failures in newly expanded Context fixtures (missing mandatory
+prompt), corrected without weakening Core's context contract. The later affected
+memory/Pi/capture run passed 18 tests. Subsequent targeted checks passed bounded
+catalog/search and intake disclosure (2), applicable constraints/legacy Claims (1),
+and interrupted Unicode/binary export and concurrent publication (1). Earlier
+32- and 19-test scoped runs also passed. No test was removed or disabled. This
+report does not relabel the initial full gate as green or claim a second full run.
+
+Final ruff format/check: 262 files. Mypy: 229 source/test/tool files. Import-linter:
+29 kept, none broken. Native hygiene/report checks and offline wheel/sdist build
+passed. Version 0.19.0 wheel SHA-256:
+`D2B74EE3449AA90A1BA2E5F1BBD63B3D12F8DE9D78FC8C42A8BA1B71EC3A0CBB`.
+
+A non-editable temporary installation started with the exact planning baseline
+0.18.11 and fictional schema 12. Installed `zaratustra upgrade` saved its verified
+backup and migrated 12 -> 13; the original Source SHA and bytes were unchanged.
+All 98 installed product files matched the final wheel; uv pip check passed.
+Installed CLI catalog/batch/export worked independently of checkout imports.
+
+The installed ordinary Pi 1.0.4 localhost trial passed: 21 interactive and 2
+assigned synthetic HTTP, including four sends for a native session resume with
+both compaction summaries and subsequent content. It covered multiple areas,
+changed cache membership, complete 3341-byte Markdown, Work publication, native
+resume, compact, fresh-session result reading and an admitted Method's automatic
+memory requirements in assigned Pi/DBOS. Both Work outputs remained unaccepted.
+The earlier source trial had 17 interactive and 2 assigned synthetic sends.
+
+The AGENTS-required bounded read-only evaluator smoke checked installed package
+metadata, RECORD file hashes/sizes, wheel SHA and saved upgrade/live reports. Its
+role was files-only, so independent CLI/Core execution is not claimed. The primary
+agent executed the behavior checks above. Logs remain in local fictional test
+directories, not public user data. Local HTTP shutdown emitted connection-reset
+diagnostics; the successful trial completed its assertions and exited zero.
+
+## assumptions
+
+Core remains the only domain authority. New memory has explicit typed metadata,
+not a profile database or inferred classification of existing bytes. Saved
+selection writes require existing artifact-write authority; reads confer no rights.
+Existing Work inputs and Method versions remain pinned. Text delivered externally
+is a snapshot, not a remotely updated store. See docs/general-memory.md.
+
+## cuts
+
+No planned functionality removed. Health, automatic external storage connectors
+and migration of real personal information are outside this authorized package.
+User-chosen external delivery files are not managed deletion targets; Core-managed
+selection parts and containing backups use the existing sanitation path.
+
+## cost
+
+Zero real model/subscription calls and zero paid API calls. All test HTTP was
+localhost synthetic. Early trial and expanded-test failures were fixture
+preparation errors and are not counted as passes. One installed resume trial
+sent a tool response to the second compaction summary; its corrected sequence
+passed. Text Source encoding remains UTF-8 under the existing Core contract;
+arbitrary binary originals export losslessly as base64. No broad new failure
+matrix was run, and the whole native gate was not repeated after scoped fixes.
+
+## manual-acceptance
+
+Owner acceptance of the implementation and Work results remains separate and pending.
+Authorization to implement and publish this package is not acceptance of its result.
+
+## next
+
+solmax. Publish this verified package to the owner-named public main. Owner
+acceptance is pending. The real installed instance still requires the ordinary
+program update and explicit schema upgrade; no personal space was migrated here.
+
 END_OF_FILE: RESULT.md

@@ -169,6 +169,26 @@ export default function (pi: any): void {
   }
   let sessionId = assignedSessionId ?? randomUUID();
   let connection: any = null;
+  let historicalMemory: any[] = [];
+  function rememberMemoryBranch(branch: any[]): void {
+    const selected = new Map<string, any>();
+    for (const entry of branch) {
+      const message = entry.message;
+      if (entry.type !== "message" || message?.role !== "toolResult" ||
+          !["zara_memory", "zara_integration"].includes(message.toolName)) continue;
+      for (const block of message.content ?? []) {
+        if (block.type !== "text") continue;
+        try {
+          const value = JSON.parse(block.text);
+          if (typeof value.selection_id === "string") {
+            selected.set(value.selection_id, { record_id: value.selection_id,
+              revision: value.revision ?? 1 });
+          }
+        } catch { /* A non-selection tool response has no memory snapshot address. */ }
+      }
+    }
+    historicalMemory = [...selected.values()];
+  }
   let selection: any = null;
   let attemptId: string | null = null;
   let contextReady = false;
@@ -281,7 +301,9 @@ export default function (pi: any): void {
     const purpose = compactionInProgress ? "compaction-summary" : nextPurpose;
     if (compactionInProgress) {
       await ensurePromptAttempt();
-      currentManifest = await request("/v1/context-prepare", { purpose });
+      currentManifest = await request("/v1/context-prepare", {
+        purpose, historical_memory: historicalMemory,
+      });
       manifestMarker = `ZARA_MANIFEST:${currentManifest.manifest_id}@${currentManifest.manifest_revision}`;
     }
     const suppliedBody = bytes(init?.body);
@@ -708,9 +730,30 @@ export default function (pi: any): void {
       "Decision, Grant or accepted Work result. Creation and revision use current Core rights " +
       "without a confirmation prompt; interactive deletion requires owner confirmation. " +
       "An open result has exact revision, " +
-      "availability and next_offset for continued reading.",
+      "availability and next_offset for continued reading. For shared memory use catalog, then " +
+      "read_batch with multiple selectors across common and Activity memory. full includes history " +
+      "and raw originals. prepare_cache reuses unchanged selections without a model; open_selection " +
+      "continues using selection_id, next_part and next_offset. A partial window is not the full selection. " +
+      "Use history for one record, then open its exact revisions. export writes a complete Markdown " +
+      "snapshot to file within the selected workspace, without overwriting. Read only what the task needs.",
     parameters: Type.Object({
-      mode: StringEnum(["contract", "apply", "list", "search", "open", "neighbors"] as const),
+      mode: StringEnum(["contract", "apply", "list", "search", "open", "neighbors",
+        "catalog", "read_batch", "history", "open_selection", "prepare_cache", "export"] as const),
+      selectors: Type.Optional(Type.Array(Type.Object({
+        activity_ids: Type.Optional(Type.Array(Type.String())),
+        common: Type.Optional(Type.Boolean()),
+        record_ids: Type.Optional(Type.Array(Type.String())),
+        topics: Type.Optional(Type.Array(Type.String())),
+        query: Type.Optional(Type.String()),
+        full: Type.Optional(Type.Boolean()),
+        context_role: Type.Optional(StringEnum(["reference", "required", "legacy"] as const)),
+      }))),
+      selection_id: Type.Optional(Type.String()),
+      file: Type.Optional(Type.String()),
+      part: Type.Optional(Type.Number()),
+      toc_offset: Type.Optional(Type.Number()),
+      after_revision: Type.Optional(Type.Number()),
+      full: Type.Optional(Type.Boolean()),
       kind: Type.Optional(Type.String()),
       intent: Type.Optional(Type.Any()),
       query: Type.Optional(Type.String()),
@@ -756,6 +799,10 @@ export default function (pi: any): void {
         mode: params.mode, kind: params.kind, query: params.query, record_id: params.record_id,
         revision: params.revision, offset: params.offset, max_bytes: params.max_bytes,
         limit: params.limit, cursor: params.cursor,
+        selectors: params.selectors, selection_id: params.selection_id, part: params.part,
+        file: params.file,
+        toc_offset: params.toc_offset,
+        after_revision: params.after_revision, full: params.full,
       });
       if (params.mode === "open" && read.content_base64) {
         const mediaType = read.state?.media_type ?? "text/plain";
@@ -910,8 +957,8 @@ export default function (pi: any): void {
     label: "Installed integration capabilities",
     description: "Discover installed adapters with catalog, read an operation's typed contract, " +
       "then apply it to the user's request. Hardcoded technical operations, not a menu of user " +
-      "topics. Currently manual document preparation, retention, bounded reading and product " +
-      "context only; no API sending or automatic workflows. Settings and tailored instructions " +
+      "topics. Includes manual document preparation, retention, shared memory catalog/batch/" +
+      "history/cache and product context; no external API sending. Settings and tailored instructions " +
       "belong in Core. No authority is granted by a profile. Read windows are at most 32 KiB; " +
       "continue next_offset until null. Use zara_transfer import for an explicitly chosen file.",
     parameters: Type.Object({
@@ -1246,7 +1293,9 @@ export default function (pi: any): void {
   async function prepareCurrentContext(event: any): Promise<any> {
     contextReady = false;
     if (!captureReady) throw new Error("Primary capture failed; no dependent model send");
-    const prepared = await request("/v1/context-prepare", { purpose: nextPurpose });
+    const prepared = await request("/v1/context-prepare", {
+      purpose: nextPurpose, historical_memory: historicalMemory,
+    });
     currentManifest = prepared;
     manifestMarker = `ZARA_MANIFEST:${prepared.manifest_id}@${prepared.manifest_revision}`;
     if (nextPurpose === "compaction-summary") {
@@ -1272,7 +1321,8 @@ export default function (pi: any): void {
     return { messages: [{ ...system, content: systemContent }, ...event.messages.slice(1)] };
   }
 
-  pi.on("context_with_system", async (event: any) => {
+  pi.on("context_with_system", async (event: any, ctx: any) => {
+    rememberMemoryBranch(ctx.sessionManager.getBranch());
     try { return await prepareCurrentContext(event); }
     catch (error) {
       try { await clearFailedPrompt(); } catch { /* Preserve Core state if cleanup refuses */ }
@@ -1282,6 +1332,7 @@ export default function (pi: any): void {
 
   pi.on("session_before_compact", async (event: any, ctx: any) => {
     try {
+      rememberMemoryBranch(event.branchEntries ?? ctx.sessionManager.getBranch());
       await checkPromptWork();
       if (!receivedPrompt) {
         const branch = event.branchEntries ?? ctx.sessionManager.getBranch();
@@ -1302,7 +1353,9 @@ export default function (pi: any): void {
       compactionInProgress = true;
       nextPurpose = "compaction-summary";
       contextReady = false;
-      currentManifest = await request("/v1/context-prepare", { purpose: nextPurpose });
+      currentManifest = await request("/v1/context-prepare", {
+        purpose: nextPurpose, historical_memory: historicalMemory,
+      });
       manifestMarker = `ZARA_MANIFEST:${currentManifest.manifest_id}@${currentManifest.manifest_revision}`;
       contextReady = true;
     } catch (error) {

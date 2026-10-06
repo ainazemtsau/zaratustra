@@ -1,4 +1,11 @@
 # Development tools
+
+`probe_memory_pi` is an installed-compatible schema 13 localhost trial: normal Pi
+captures organized memory across areas, batches, refreshes cache, exports Markdown,
+compacts and reopens a Work result; a separate admitted Method runs via assigned
+Pi/DBOS. Its synthetic provider/run_process harness is reused from
+`probe_knowledge_pi`, whose older fixtures are loaded only by those older trials.
+Use a new fictional output directory; no credentials or real model calls.
 These tools explicitly select fictional fixtures and disposable workspaces.
 They are outside the installed product and may import tests/fixtures via public APIs.
 ProcessTrial owns only trusted local confirmations, public Core calls and retained

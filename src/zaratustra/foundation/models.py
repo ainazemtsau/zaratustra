@@ -267,6 +267,34 @@ class MethodObligation(ContractModel):
     applicability: Literal["always"] | ChoiceApplicability = "always"
 
 
+class MemoryMetadata(ContractModel):
+    """Agent-declared organization, separate from epistemic status and access."""
+
+    title: str = Field(min_length=1, max_length=500)
+    activity_id: UUID | None = None
+    topics: tuple[Annotated[str, Field(min_length=1, max_length=200)], ...] = ()
+    aliases: tuple[Annotated[str, Field(min_length=1, max_length=500)], ...] = ()
+    context_role: Literal["reference", "required"] = "reference"
+
+
+class MemorySelector(ContractModel):
+    """Union across selectors; filters within a selector are conjunctive."""
+
+    activity_ids: tuple[UUID, ...] = ()
+    current_activity: bool = False
+    common: bool = False
+    record_ids: tuple[UUID, ...] = ()
+    topics: tuple[str, ...] = ()
+    query: str | None = None
+    full: bool = False
+    context_role: Literal["reference", "required", "legacy"] | None = None
+
+
+class MemoryRequirement(ContractModel):
+    selectors: tuple[MemorySelector, ...] = Field(min_length=1)
+    required: bool = True
+
+
 class MethodDefinition(ContractModel):
     instruction: str = Field(min_length=1, max_length=32768)
     applicability: Literal["always"] = "always"
@@ -276,6 +304,9 @@ class MethodDefinition(ContractModel):
     role_methods: tuple[tuple[str, MethodRef], ...] = ()
     required_capabilities: tuple[CapabilityRequirement, ...] = ()
     source_ref: str = Field(min_length=1, max_length=2048)
+    memory_requirements: tuple[MemoryRequirement, ...] = Field(
+        default=(), exclude_if=lambda value: not value
+    )
 
     @model_validator(mode="after")
     def unique_contract(self) -> MethodDefinition:
@@ -1432,6 +1463,7 @@ class SourceState(ContractModel):
     locator: str | None = Field(default=None, max_length=2048)
     limitations: tuple[str, ...] = ()
     derived_from: tuple[KnowledgeRef, ...] = ()
+    memory: MemoryMetadata | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
     def capture_is_honest(self) -> SourceState:
@@ -1458,6 +1490,7 @@ class ClaimState(ContractModel):
     interpretation_basis: str = Field(min_length=1, max_length=4096)
     valid_from: AwareDatetime | None = None
     valid_until: AwareDatetime | None = None
+    memory: MemoryMetadata | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
     def explicit_scope_and_basis(self) -> ClaimState:
@@ -1488,6 +1521,7 @@ class AnalysisState(ContractModel):
     conclusion: str | None = Field(default=None, max_length=16384)
     effects: tuple[KnowledgeRef, ...] = ()
     remainder: str | None = Field(default=None, max_length=8192)
+    memory: MemoryMetadata | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
     def progress_is_explicit(self) -> AnalysisState:
@@ -1507,6 +1541,20 @@ class MemoryLinkState(ContractModel):
     basis: tuple[KnowledgeRef, ...] = Field(min_length=1)
     explanation: str = Field(min_length=1, max_length=4096)
     status: Literal["active", "retired"] = "active"
+    memory: MemoryMetadata | None = Field(default=None, exclude_if=lambda value: value is None)
+
+
+class MemorySelectionBasis(ContractModel):
+    selectors: tuple[MemorySelector, ...] = Field(min_length=1)
+    fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    actor: str = Field(min_length=1, max_length=200)
+    epoch: int = Field(ge=1)
+    rule_version: int = Field(default=1, ge=1)
+    parts: tuple[KnowledgeRef, ...] = ()
+    members: tuple[KnowledgeRef, ...] = ()
+    total_bytes: int = Field(default=0, ge=0)
+    cache: bool = False
+    restricted: bool = False
 
 
 class MemoryViewState(ContractModel):
@@ -1517,13 +1565,23 @@ class MemoryViewState(ContractModel):
     scope_id: str | None = Field(default=None, max_length=300)
     generation_method: str = Field(min_length=1, max_length=500)
     mode: Literal["historical", "current"]
-    sources: tuple[KnowledgeRef, ...] = Field(min_length=1)
+    sources: tuple[KnowledgeRef, ...]
     text: str = Field(min_length=1, max_length=65536)
     coverage_state_revision: int = Field(ge=0)
     limitations: tuple[str, ...] = ()
+    memory: MemoryMetadata | None = Field(default=None, exclude_if=lambda value: value is None)
+    selection: MemorySelectionBasis | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
     @model_validator(mode="after")
     def addressed_scope(self) -> MemoryViewState:
+        if not self.sources and self.selection is None:
+            raise ValueError("A regular view requires exact sources")
+        if self.selection is not None and not set(
+            self.selection.members + self.selection.parts
+        ).issubset(set(self.sources)):
+            raise ValueError("Selection members and parts require structural source links")
         if (self.scope_kind == "space") != (self.scope_id is None):
             raise ValueError("A scoped view needs its exact scope address")
         if self.scope_id is not None and not self.scope_id:
@@ -1547,6 +1605,9 @@ class ContextState(ContractModel):
     plan_revision: int | None = Field(default=None, ge=1)
     mandatory: tuple[KnowledgeRef, ...] = ()
     optional: tuple[KnowledgeRef, ...] = ()
+    historical_memory: tuple[KnowledgeRef, ...] = Field(
+        default=(), exclude_if=lambda value: not value
+    )
     limits: tuple[str, ...] = ()
     max_bytes: int | None = Field(default=None, ge=1)
 
@@ -1563,6 +1624,7 @@ class HandoffState(ContractModel):
     return_source: KnowledgeRef | None = None
     match_basis: str | None = Field(default=None, max_length=4096)
     basis_state_revision: int = Field(ge=0)
+    memory: MemoryMetadata | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
     def stages_need_separate_evidence(self) -> HandoffState:
@@ -2116,7 +2178,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -2493,7 +2555,7 @@ class BackupManifest(ContractModel):
     backup_id: UUID
     format_version: Literal[1, 2] = 1
     space_id: UUID
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime
@@ -2533,6 +2595,10 @@ class DeletionStatus(ContractModel):
 
 
 __all__ = [
+    "MemoryMetadata",
+    "MemoryRequirement",
+    "MemorySelector",
+    "MemorySelectionBasis",
     "KnowledgeRef",
     "KnowledgeBody",
     "KnowledgeRevision",

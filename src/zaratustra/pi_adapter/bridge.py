@@ -54,6 +54,8 @@ from zaratustra.foundation import (
     KnowledgeRef,
     LinkWorkOutputRequest,
     LocalAuthority,
+    MemorySelector,
+    MemoryViewState,
     OpenWaitRequest,
     ProvenanceRef,
     PublishAttemptOutputRequest,
@@ -78,6 +80,7 @@ from zaratustra.foundation import (
     StopCandidateRequest,
     WaiveObligationRequest,
     apply_operation,
+    export_memory_selection,
     initial_sleep_method,
     initial_sleep_ref,
     inspect_space,
@@ -88,7 +91,12 @@ from zaratustra.foundation import (
     list_development,
     list_knowledge,
     list_sleep_sources,
+    memory_catalog,
+    memory_history,
+    memory_required_refs,
     open_knowledge,
+    open_memory_selection,
+    prepare_memory_cache,
     read_activity,
     read_artifact,
     read_change_application,
@@ -99,6 +107,7 @@ from zaratustra.foundation import (
     read_execution_events,
     read_knowledge,
     read_knowledge_neighbors,
+    read_memory_batch,
     read_method_version,
     read_receipt,
     read_sleep_for_work,
@@ -225,6 +234,8 @@ class Bridge:
         self.sessions: dict[UUID, Selection | None] = {}
         self.last_sources: dict[UUID, KnowledgeRef] = {}
         self.exposed_refs: dict[UUID, set[KnowledgeRef]] = {}
+        self.memory_rules: dict[UUID, dict[str, tuple[MemorySelector, ...]]] = {}
+        self.memory_snapshots: dict[UUID, set[KnowledgeRef]] = {}
         self.accept_previews: dict[UUID, tuple[UUID, int, UUID]] = {}
         self.accept_results: dict[UUID, dict[str, object]] = {}
         self.lock = threading.Lock()
@@ -519,6 +530,20 @@ class Bridge:
         )
         with self.lock:
             self.exposed_refs.setdefault(session_id, set()).update(result.exposed)
+            if adapter == "memory" and operation in ("read_batch", "open_selection"):
+                self.memory_snapshots.setdefault(session_id, set()).add(
+                    KnowledgeRef(
+                        record_id=UUID(str(result.output["selection_id"])),
+                        revision=1,
+                    )
+                )
+            if adapter == "memory" and operation == "prepare_cache":
+                selectors = tuple(
+                    MemorySelector.model_validate(s) for s in raw["arguments"].get("selectors", [])
+                )
+                self.memory_rules.setdefault(session_id, {})[
+                    json.dumps([s.model_dump(mode="json") for s in selectors], sort_keys=True)
+                ] = selectors
         return result.output
 
     def manual_exchange(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
@@ -968,6 +993,73 @@ class Bridge:
     def knowledge_read(self, session_id: UUID, body: dict[str, Any]) -> dict[str, object]:
         self._session(session_id)
         mode = body.get("mode")
+        if mode in (
+            "catalog",
+            "read_batch",
+            "history",
+            "open_selection",
+            "prepare_cache",
+            "export",
+        ):
+            selectors = tuple(
+                MemorySelector.model_validate(value) for value in body.get("selectors", [])
+            )
+            maximum = int(body.get("max_bytes", 16384))
+            if mode == "export":
+                destination = (self.workspace / str(body["file"])).resolve()
+                if not destination.is_relative_to(self.workspace.resolve()):
+                    raise FoundationError(
+                        "wrong_scope", "Export must stay in the selected workspace"
+                    )
+                return export_memory_selection(
+                    self.path, UUID(str(body["selection_id"])), self.authority, destination
+                )
+            if mode == "catalog":
+                return memory_catalog(
+                    self.path,
+                    self.authority,
+                    selectors=selectors,
+                    limit=int(body.get("limit", 25)),
+                    cursor=body.get("cursor"),
+                    full=bool(body.get("full", False)),
+                )
+            if mode == "history":
+                return memory_history(
+                    self.path,
+                    UUID(str(body["record_id"])),
+                    self.authority,
+                    after_revision=int(body.get("after_revision", 0)),
+                    limit=int(body.get("limit", 25)),
+                )
+            if mode == "open_selection":
+                result = open_memory_selection(
+                    self.path,
+                    UUID(str(body["selection_id"])),
+                    self.authority,
+                    part=int(body.get("part", 0)),
+                    offset=int(body.get("offset", 0)),
+                    max_bytes=maximum,
+                    toc_offset=int(body.get("toc_offset", 0)),
+                )
+            else:
+                function = prepare_memory_cache if mode == "prepare_cache" else read_memory_batch
+                result = function(self.path, self.authority, selectors, max_bytes=maximum)
+            with self.lock:
+                self.exposed_refs.setdefault(session_id, set()).update(
+                    KnowledgeRef.model_validate(ref) for ref in cast(list[Any], result["exposed"])
+                )
+                if mode in ("read_batch", "open_selection"):
+                    self.memory_snapshots.setdefault(session_id, set()).add(
+                        KnowledgeRef(
+                            record_id=UUID(str(result["selection_id"])),
+                            revision=1,
+                        )
+                    )
+                if mode == "prepare_cache":
+                    self.memory_rules.setdefault(session_id, {})[
+                        json.dumps([s.model_dump(mode="json") for s in selectors], sort_keys=True)
+                    ] = selectors
+            return result
         if mode == "list":
             return list_knowledge(
                 self.path,
@@ -1019,7 +1111,12 @@ class Bridge:
             )
         raise FoundationError("invalid_request", "Unknown knowledge read")
 
-    def prepare_context(self, session_id: UUID, purpose: str = "content") -> dict[str, object]:
+    def prepare_context(
+        self,
+        session_id: UUID,
+        purpose: str = "content",
+        historical_memory: tuple[KnowledgeRef, ...] = (),
+    ) -> dict[str, object]:
         selected = self._session(session_id)
         info = read_space(self.path)
         if info.schema_version < 10:
@@ -1031,10 +1128,54 @@ class Bridge:
             "epoch": info.execution_epoch,
             "purpose": purpose,
         }
+        if info.schema_version >= 13:
+            packet["memory_access"] = (
+                "Shared memory: use zara_memory catalog/read_batch/prepare_cache/history/"
+                "open_selection/export. "
+                "Select common or Activity areas/topics/addresses together; full includes history. "
+                "Use memory relevant to this request; do not load the whole catalog by default."
+            )
         with self.lock:
             latest_source = self.last_sources.get(session_id)
         if latest_source is not None:
             mandatory.append(latest_source)
+        # A cache explicitly used in this conversation is rechecked before each send.
+        # New matches are refreshed by ordinary code; old tool messages remain historical.
+        with self.lock:
+            rules = dict(self.memory_rules.get(session_id, {}))
+            snapshots = set(self.memory_snapshots.get(session_id, set()))
+        snapshots.update(historical_memory)
+        historic = tuple(sorted(snapshots, key=lambda ref: str(ref.record_id)))
+        # Native Pi persists tool responses across sessions. Recover the saved cache
+        # rule from Core, while retaining its old revision as historical provenance.
+        for historic_ref in historic:
+            saved = read_knowledge(
+                self.path, historic_ref.record_id, self.authority, revision=historic_ref.revision
+            )
+            if (
+                isinstance(saved.state, MemoryViewState)
+                and saved.state.selection is not None
+                and saved.state.selection.cache
+            ):
+                selectors = saved.state.selection.selectors
+                rules[
+                    json.dumps([s.model_dump(mode="json") for s in selectors], sort_keys=True)
+                ] = selectors
+        if historic:
+            packet["memory_snapshots"] = [ref.model_dump(mode="json") for ref in historic]
+        if info.schema_version >= 13 and purpose != "compaction-summary":
+            packet["conversation_memory"] = []
+            for selectors in rules.values():
+                selected_memory = prepare_memory_cache(self.path, self.authority, selectors)
+                mandatory.append(
+                    KnowledgeRef(
+                        record_id=UUID(str(selected_memory["selection_id"])),
+                        revision=1,
+                    )
+                )
+                cast(list[Any], packet["conversation_memory"]).append(
+                    {key: value for key, value in selected_memory.items() if key != "exposed"}
+                )
         if selected is not None and purpose == "compaction-summary":
             current = read_execution(self.path, selected.work_id, self.authority)
             work = current.work
@@ -1089,6 +1230,92 @@ class Bridge:
                 packet["plan"] = read_work_plan(
                     self.path, current.composition.parent_work_id, self.authority
                 ).model_dump(mode="json")
+            if info.schema_version >= 13:
+                packet["memory"] = []
+                if work.state.method != "none" or current.composition is not None:
+                    for requirement in method.definition.memory_requirements:
+                        selectors = tuple(
+                            selector.model_copy(
+                                update={
+                                    "current_activity": False,
+                                    "activity_ids": selector.activity_ids + (selected.activity_id,),
+                                }
+                            )
+                            if selector.current_activity
+                            else selector
+                            for selector in requirement.selectors
+                        )
+                        try:
+                            cached = prepare_memory_cache(self.path, self.authority, selectors)
+                        except FoundationError as error:
+                            if requirement.required or error.code not in (
+                                "permission_denied",
+                                "decision_denied",
+                                "not_found",
+                                "content_unavailable",
+                            ):
+                                raise
+                            cast(list[Any], packet["memory"]).append(
+                                {
+                                    "required": False,
+                                    "available": False,
+                                    "reason": error.code,
+                                }
+                            )
+                            continue
+                        selection_id = UUID(str(cached["selection_id"]))
+                        cache_ref = KnowledgeRef(
+                            record_id=selection_id, revision=int(str(cached["revision"]))
+                        )
+                        mandatory.append(cache_ref)
+                        cast(list[Any], packet["memory"]).append(
+                            {
+                                **{key: value for key, value in cached.items() if key != "exposed"},
+                                "selection": cache_ref.model_dump(mode="json"),
+                                "text": cached["content_text"],
+                                "content_complete": cached["content_complete"],
+                                "next_part": cached["next_part"],
+                                "next_offset": cached["next_offset"],
+                                "required": requirement.required,
+                            }
+                        )
+                required = memory_required_refs(self.path, self.authority, selected.activity_id)
+                constraints = prepare_memory_cache(
+                    self.path,
+                    self.authority,
+                    (
+                        MemorySelector(
+                            activity_ids=(selected.activity_id,),
+                            common=True,
+                            context_role="required",
+                        ),
+                    ),
+                )
+                constraint_id = UUID(str(constraints["selection_id"]))
+                mandatory.append(
+                    KnowledgeRef(
+                        record_id=constraint_id, revision=int(str(constraints["revision"]))
+                    )
+                )
+                mandatory.extend(required)
+                evidence_refs.extend(required)
+                packet["memory_constraints"] = [
+                    read_knowledge(
+                        self.path, ref.record_id, self.authority, revision=ref.revision
+                    ).model_dump(mode="json")
+                    for ref in required
+                ]
+                intake = memory_catalog(
+                    self.path,
+                    self.authority,
+                    selectors=(MemorySelector(activity_ids=(selected.activity_id,), common=True),),
+                    unprocessed_only=True,
+                )
+                packet["memory_intake"] = intake
+                for entry in cast(list[dict[str, Any]], intake["items"]):
+                    mandatory.append(
+                        KnowledgeRef(record_id=UUID(entry["record_id"]), revision=entry["revision"])
+                    )
             inputs: list[dict[str, object]] = []
             for ref in work.state.inputs:
                 exact = read_artifact(
@@ -1162,14 +1389,33 @@ class Bridge:
             cursor: str | None = None
             claims: list[dict[str, object]] = []
             while True:
-                page = list_knowledge(
-                    self.path, self.authority, kind="claim", limit=100, cursor=cursor
+                page = (
+                    memory_catalog(
+                        self.path,
+                        self.authority,
+                        selectors=(
+                            MemorySelector(
+                                activity_ids=(selected.activity_id,),
+                                common=True,
+                                context_role="legacy",
+                            ),
+                        ),
+                        limit=100,
+                        cursor=cursor,
+                    )
+                    if info.schema_version >= 13
+                    else list_knowledge(
+                        self.path, self.authority, kind="claim", limit=100, cursor=cursor
+                    )
                 )
                 for entry in cast(list[dict[str, Any]], page["items"]):
+                    if entry["kind"] != "claim":
+                        continue
                     claim_item = read_knowledge(self.path, UUID(entry["record_id"]), self.authority)
                     state = claim_item.state
                     if (
                         isinstance(state, ClaimState)
+                        and state.memory is None
                         and (state.scope_global or state.scope_activity_id == selected.activity_id)
                         and state.status in ("current", "contested", "unsupported")
                     ):
@@ -1368,6 +1614,7 @@ class Bridge:
                     if selected and current.composition
                     else None,
                     mandatory=tuple(dict.fromkeys(mandatory)),
+                    historical_memory=historic,
                     max_bytes=self.context_max_bytes,
                 ),
             ),
@@ -1375,6 +1622,7 @@ class Bridge:
         )
         with self.lock:
             self.exposed_refs.setdefault(session_id, set()).update(mandatory)
+            self.exposed_refs[session_id].update(historic)
         return {
             "manifest_id": str(manifest_id),
             "manifest_revision": 1,
@@ -1716,7 +1964,14 @@ class BridgeHandler(BaseHTTPRequestHandler):
             elif post and path.path == "/v1/activity-read":
                 result = bridge.activity_read(session_id, UUID(body["activity_id"]))
             elif post and path.path == "/v1/context-prepare":
-                result = bridge.prepare_context(session_id, str(body.get("purpose", "content")))
+                result = bridge.prepare_context(
+                    session_id,
+                    str(body.get("purpose", "content")),
+                    tuple(
+                        KnowledgeRef.model_validate(ref)
+                        for ref in body.get("historical_memory", [])
+                    ),
+                )
             elif post and path.path == "/v1/context-delivery":
                 result = bridge.context_delivery(session_id, body)
             elif post and path.path == "/v1/start-attempt":

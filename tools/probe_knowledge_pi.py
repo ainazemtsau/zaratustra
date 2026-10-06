@@ -19,7 +19,6 @@ from pathlib import Path
 from typing import Any, cast
 from uuid import UUID, uuid4
 
-from tests.zaratustra.foundation.test_binding import _apply, _ready
 from zaratustra.foundation import (
     ClaimState,
     CreateWorkRequest,
@@ -37,6 +36,18 @@ from zaratustra.foundation import (
     upgrade_knowledge_space,
 )
 from zaratustra.pi_adapter import Bridge, BridgeServer
+
+
+def _ready(tmp_path: Path) -> Any:
+    from tests.zaratustra.foundation.test_binding import _ready as fixture
+
+    return fixture(tmp_path)
+
+
+def _apply(*args: Any, **kwargs: Any) -> Any:
+    from tests.zaratustra.foundation.test_binding import _apply as fixture
+
+    return fixture(*args, **kwargs)
 
 
 class Provider(ThreadingHTTPServer):
@@ -605,7 +616,12 @@ def run_probe(tmp_path: Path, runtime: Path) -> None:
     )
 
     class RefusingContextBridge(Bridge):
-        def prepare_context(self, session_id: UUID, purpose: str = "content") -> dict[str, object]:
+        def prepare_context(
+            self,
+            session_id: UUID,
+            purpose: str = "content",
+            historical_memory: tuple[KnowledgeRef, ...] = (),
+        ) -> dict[str, object]:
             raise FoundationError("context_overflow", "Synthetic context preflight refusal")
 
     refused = Provider([])

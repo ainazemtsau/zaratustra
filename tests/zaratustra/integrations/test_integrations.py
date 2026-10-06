@@ -20,8 +20,10 @@ from zaratustra.foundation import (
     GrantState,
     HandoffState,
     KnowledgeRef,
+    MemoryMetadata,
     OutputContract,
     ReviseActivityRequest,
+    ReviseKnowledgeRequest,
     SourceState,
     WorkState,
     authorize_local,
@@ -29,7 +31,10 @@ from zaratustra.foundation import (
     read_knowledge,
     read_space,
     read_work,
+    upgrade_change_package_space,
+    upgrade_development_space,
     upgrade_knowledge_space,
+    upgrade_memory_space,
 )
 from zaratustra.integrations import (
     IntegrationRegistry,
@@ -233,6 +238,50 @@ def test_reply_accepts_source_evidence_but_not_foreign_activity_or_work(tmp_path
                 exchange.receive(
                     uuid4(), activity, origin="Chat", content=b"Reply", reply_to=reply_to
                 )
+
+
+def test_organized_foreign_memory_keeps_exchange_and_origin_separate(tmp_path: Path) -> None:
+    """Readable organized support crosses areas; a foreign Activity never becomes the anchor."""
+    root, space, owner, activity, other = _ready(tmp_path)
+    for upgrade in (
+        upgrade_knowledge_space,
+        upgrade_development_space,
+        upgrade_change_package_space,
+        upgrade_memory_space,
+    ):
+        upgrade(root, owner)
+    exchange = ManualExchange(root, owner)
+    original = exchange.receive(uuid4(), other, origin="Fictional report", content=b"Other area")
+    identifier = UUID(str(original["record_id"]))
+    source = read_knowledge(root, identifier, owner).state
+    assert isinstance(source, SourceState)
+    _apply(
+        root,
+        space,
+        owner,
+        ReviseKnowledgeRequest,
+        record_id=identifier,
+        expected_revision=1,
+        state=source.model_copy(
+            update={"memory": MemoryMetadata(title="Report", activity_id=other)}
+        ),
+    )
+    document = exchange.prepare_document(
+        uuid4(),
+        activity,
+        external_tool="Fictional chat",
+        document_text="Use the explicitly selected report",
+        expected_return="Written review",
+        context=(KnowledgeRef(record_id=identifier, revision=2),),
+    )
+    retained = read_knowledge(root, UUID(str(document["record_id"])), owner).state
+    assert isinstance(retained, HandoffState)
+    assert KnowledgeRef(record_id=identifier, revision=2) in retained.included
+    assert KnowledgeRef(record_id=activity, revision=1) in retained.included
+    assert KnowledgeRef(record_id=other, revision=1) not in retained.included
+    assert read_knowledge(root, identifier, owner).state == source.model_copy(
+        update={"memory": MemoryMetadata(title="Report", activity_id=other)}
+    )
 
 
 def test_document_replay_keeps_original_activity_basis(tmp_path: Path) -> None:

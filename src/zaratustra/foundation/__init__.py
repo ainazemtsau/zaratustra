@@ -71,6 +71,16 @@ from .knowledge import (
     search_knowledge,
     upgrade_knowledge_space,
 )
+from .memory import (
+    export_memory_selection,
+    memory_catalog,
+    memory_history,
+    memory_required_refs,
+    open_memory_selection,
+    prepare_memory_cache,
+    read_memory_batch,
+    upgrade_memory_space,
+)
 from .models import (
     ALL_ACTIONS,
     CLOSED_OUTCOMES,
@@ -158,6 +168,10 @@ from .models import (
     LinkedOutput,
     LinkWorkOutputRequest,
     MemoryLinkState,
+    MemoryMetadata,
+    MemoryRequirement,
+    MemorySelectionBasis,
+    MemorySelector,
     MemoryViewState,
     MethodChange,
     MethodDefinition,
@@ -291,6 +305,18 @@ from .sleep_method import (
 from .work_status import read_work_status
 
 __all__ = [
+    "MemoryMetadata",
+    "MemoryRequirement",
+    "MemorySelector",
+    "MemorySelectionBasis",
+    "export_memory_selection",
+    "memory_catalog",
+    "memory_history",
+    "memory_required_refs",
+    "open_memory_selection",
+    "prepare_memory_cache",
+    "read_memory_batch",
+    "upgrade_memory_space",
     "ActivityChange",
     "ActivityCreation",
     "ActivityRevisionChange",

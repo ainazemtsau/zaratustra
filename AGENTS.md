@@ -140,6 +140,12 @@ and parallel dirty work; do not publish private preparation branches merely to k
 - A focused run is feedback, not full-delivery evidence. Do not claim green from individual tools.
 
 ## What exists
+
+Owner-authorized general-memory implementation (0.19.0) explicitly upgrades schema
+12 to 13. It extends existing knowledge with optional typed organization, indexed
+catalog/batch/history, durable exact selections, scoped cache checks and Markdown
+export. Method requirements and Pi/integrations use the public Core; see
+`docs/general-memory.md`. Existing versions/history and separate acceptance remain.
 Python 3.13 / uv / sqlite3 / Pydantic v2 / pytest / ruff / SHA-256.
 Core v0.1 Stage 2 adds the independent `zaratustra.foundation` package: a new empty
 `.zara-core` space, typed Artifact/Decision/Grant revisions and managed bytes,

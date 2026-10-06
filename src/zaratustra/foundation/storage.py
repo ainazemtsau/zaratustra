@@ -1102,7 +1102,21 @@ CHANGE_PACKAGE_SCHEMA_SHA256 = (
     .hexdigest()
     .upper()
 )
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+MEMORY_SCHEMA_NAME = "core-v0.1-memory-13"
+MEMORY_SCHEMA_STATEMENTS = (
+    "CREATE TABLE memory_index (record_id TEXT PRIMARY KEY REFERENCES knowledge_records(record_id),"
+    "revision INTEGER NOT NULL,kind TEXT NOT NULL,activity_id TEXT,common INTEGER NOT NULL,"
+    "title TEXT NOT NULL,catalogued INTEGER NOT NULL,unprocessed INTEGER NOT NULL,"
+    "context_role TEXT NOT NULL,changed INTEGER NOT NULL,current INTEGER NOT NULL) STRICT",
+    "CREATE INDEX memory_scope ON memory_index(activity_id,common,record_id)",
+    "CREATE TABLE memory_topics (record_id TEXT NOT NULL REFERENCES knowledge_records(record_id),"
+    "topic TEXT NOT NULL,PRIMARY KEY(record_id,topic)) STRICT",
+    "CREATE INDEX memory_topic ON memory_topics(topic,record_id)",
+)
+MEMORY_SCHEMA_SHA256 = (
+    hashlib.sha256("\n".join(MEMORY_SCHEMA_STATEMENTS).encode()).hexdigest().upper()
+)
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
 
 
 def utc_now() -> datetime:
@@ -1254,6 +1268,8 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         expected.append((11, DEVELOPMENT_SCHEMA_NAME, DEVELOPMENT_SCHEMA_SHA256))
     if schema_version >= 12:
         expected.append((12, CHANGE_PACKAGE_SCHEMA_NAME, CHANGE_PACKAGE_SCHEMA_SHA256))
+    if schema_version >= 13:
+        expected.append((13, MEMORY_SCHEMA_NAME, MEMORY_SCHEMA_SHA256))
     if migration != expected:
         raise FoundationError("unsupported_schema", "Schema history does not match installed code")
     rows = connection.execute(
@@ -1267,7 +1283,7 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         database=database,
         space_id=UUID(space_id),
         created_at=datetime.fromisoformat(created_at),
-        schema_version=cast(Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], schema_version),
+        schema_version=cast(Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], schema_version),
         state_revision=state_revision,
         execution_epoch=execution_epoch,
         recovery_state=recovery_state,

@@ -1,5 +1,14 @@
 # Core v0.1 domain foundation
 
+Schema 13 explicitly extends schema 12 with the shared-memory derived index.
+`memory.py` owns bounded catalog/search selection, exact source-backed text parts,
+history, deterministic cache validation and Markdown export. It uses existing
+knowledge records, operation receipts, rights and transitive deletion; there is
+no profile database. Reserved generated views are written only by the ordinary
+Core compiler. Source bytes/event identity remain immutable; organization alone
+may have a new revision. Method memory requirements are optional and do not
+replace pinned Method versions or Work inputs. See `docs/general-memory.md`.
+
 This package is the independent Core v0.1 subject foundation. It never imports the
 legacy `zaratustra.core` package or higher product surfaces. Its public contract is
 `__init__.py`; internal modules share only explicit typed models.

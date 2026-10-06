@@ -1,5 +1,12 @@
 # Interactive Pi adapter
 
+Schema 13 `zara_memory` catalog/read_batch/history/open_selection/prepare_cache/export
+uses the shared public Core. Method requirements resolve current Activity in the
+host, then pin the checked selection in ContextManifest; large reference text
+has explicit continuation instead of unlimited automatic context. Conversation
+caches refresh before sends. Export stays inside the selected resource and never
+overwrites. Existing composite execution still uses assigned ordinary Pi RPC.
+
 `manual_exchange.py` is a compatibility import from `zaratustra.integrations`.
 The shared adapter owns manual operations over public Core, not Pi or release state.
 `zara_integration` exposes installed catalog/contract/apply; actor and operation identity

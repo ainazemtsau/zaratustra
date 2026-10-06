@@ -190,7 +190,7 @@ def _setup(args: argparse.Namespace) -> int:
     actor = getpass.getuser()
     print(f"Core space: {space}\nWorking resource: {workspace}\nLocal identity: {actor}")
     print(f"Provider: {args.provider_profile} / {args.model_id} at {args.provider_base_url}")
-    print(f"New space: {args.new_space}; target schema: 12")
+    print(f"New space: {args.new_space}; target schema: 13")
     if input("Type SETUP to prepare this installation and selected space: ").strip() != "SETUP":
         return 1
     runtime_root = config_path.parent / "runtime"
@@ -234,7 +234,7 @@ def _setup(args: argparse.Namespace) -> int:
     temp.replace(config_path)
     _register_config(config_path)
     print(f"Prepared: {config_path}")
-    if not args.new_space and info.schema_version < 12:
+    if not args.new_space and info.schema_version < 13:
         print("Existing space requires zara-core upgrade before run or assign")
     return 0
 
@@ -338,13 +338,13 @@ def _assign(args: argparse.Namespace, config: dict[str, object]) -> int:
     return assigned_main(command)
 
 
-def _ready_space(config: dict[str, object]) -> None:
+def _ready_space(config: dict[str, object], *, minimum_schema: int = 13) -> None:
     from zaratustra.foundation import read_space
 
     info = read_space(Path(str(config["space"])))
     if config.get("space_id") and str(info.space_id) != config["space_id"]:
         raise ValueError("Selected space identity differs from the saved configuration")
-    if info.schema_version != 12:
+    if not minimum_schema <= info.schema_version <= 13:
         raise ValueError("Run zara-core upgrade for this selected space before execution")
     if info.recovery_state != "active":
         raise ValueError("Recover the selected space before execution")
@@ -394,7 +394,7 @@ def _installed_program_change(
         read_development,
     )
 
-    _ready_space(config)
+    _ready_space(config, minimum_schema=12)
     space = Path(str(config["space"]))
     workspace = Path(str(config["workspace"])).resolve()
     authority = authorize_local(space, actor=actor, source_ref=f"local-console:{actor}:{uuid4()}")
@@ -553,7 +553,7 @@ def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
         return _installed_program_change(args, config, actor)
     space = Path(str(config["space"]))
     if args.command == "change-restore":
-        _ready_space(config)
+        _ready_space(config, minimum_schema=12)
         authority = authorize_local(
             space, actor=actor, source_ref=f"local-console:{actor}:{uuid4()}"
         )
@@ -595,14 +595,14 @@ def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
         info = read_space(space)
         if config.get("space_id") and str(info.space_id) != config["space_id"]:
             raise ValueError("Selected space identity differs from the saved configuration")
-        if info.schema_version == 12:
-            print("Core space already uses schema 12")
+        if info.schema_version == 13:
+            print("Core space already uses schema 13")
             return 0
-        if info.schema_version > 12:
+        if info.schema_version > 13:
             raise ValueError("Installed program cannot upgrade a newer Core schema")
         if info.recovery_state != "active":
             raise ValueError("Recover this space before a schema upgrade")
-        print(f"Space {info.space_id}: schema {info.schema_version} -> 12")
+        print(f"Space {info.space_id}: schema {info.schema_version} -> 13")
         if (
             input("Type UPGRADE to save a verified backup and migrate this space: ").strip()
             != "UPGRADE"
@@ -946,9 +946,100 @@ def _integration(args: argparse.Namespace, config: dict[str, object]) -> int:
     return 0
 
 
+def _memory(args: argparse.Namespace, config: dict[str, object]) -> int:
+    from .foundation import (
+        MemorySelector,
+        authorize_local,
+        export_memory_selection,
+        memory_catalog,
+        memory_history,
+        open_memory_selection,
+        prepare_memory_cache,
+        read_memory_batch,
+    )
+
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    _ready_space(config)
+    space = Path(str(config["space"]))
+    authority = authorize_local(
+        space, actor=str(config["actor"]), source_ref="local-memory-console"
+    )
+    if args.mode == "export":
+        result = export_memory_selection(space, args.selection_id, authority, args.file)
+    elif args.mode == "open_selection":
+        result = open_memory_selection(
+            space,
+            args.selection_id,
+            authority,
+            part=args.part,
+            offset=args.offset,
+            max_bytes=args.max_bytes,
+            toc_offset=args.toc_offset,
+        )
+    elif args.mode == "history":
+        result = memory_history(
+            space, args.record_id, authority, after_revision=args.after_revision, limit=args.limit
+        )
+    else:
+        selectors = (
+            MemorySelector(
+                activity_ids=tuple(args.activity or ()),
+                common=args.common,
+                record_ids=tuple(args.record or ()),
+                topics=tuple(args.topic or ()),
+                query=args.query,
+                full=args.full,
+            ),
+        )
+        if args.mode == "catalog":
+            result = memory_catalog(
+                space,
+                authority,
+                selectors=selectors,
+                limit=args.limit,
+                cursor=args.cursor,
+                full=args.full,
+            )
+        else:
+            function = prepare_memory_cache if args.mode == "prepare_cache" else read_memory_batch
+            result = function(space, authority, selectors, max_bytes=args.max_bytes)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0
+
+
 def main(argv: list[str] | None = None, *, prog: str = "zara-core") -> int:
     parser = argparse.ArgumentParser(prog=prog, description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    memory = commands.add_parser("memory", help="Shared indexed memory and exact text selections")
+    memory_modes = memory.add_subparsers(dest="mode", required=True)
+    for mode in ("catalog", "read_batch", "prepare_cache", "open_selection", "history", "export"):
+        command = memory_modes.add_parser(mode)
+        command.add_argument("--config", type=Path)
+        if mode in ("catalog", "read_batch", "prepare_cache"):
+            command.add_argument("--activity", action="append", type=UUID)
+            command.add_argument("--common", action="store_true")
+            command.add_argument("--record", action="append", type=UUID)
+            command.add_argument("--topic", action="append")
+            command.add_argument("--query")
+            command.add_argument("--full", action="store_true")
+        if mode in ("catalog", "history"):
+            command.add_argument("--limit", type=int, default=25)
+        if mode == "catalog":
+            command.add_argument("--cursor")
+        if mode in ("read_batch", "prepare_cache", "open_selection"):
+            command.add_argument("--max-bytes", type=int, default=16384)
+        if mode in ("open_selection", "export"):
+            command.add_argument("selection_id", type=UUID)
+        if mode == "open_selection":
+            command.add_argument("--part", type=int, default=0)
+            command.add_argument("--offset", type=int, default=0)
+            command.add_argument("--toc-offset", type=int, default=0)
+        if mode == "export":
+            command.add_argument("--file", type=Path, required=True)
+        if mode == "history":
+            command.add_argument("record_id", type=UUID)
+            command.add_argument("--after-revision", type=int, default=0)
     integration = commands.add_parser("integration", help="Installed typed integration operations")
     integration_modes = integration.add_subparsers(dest="mode", required=True)
     for mode in ("catalog", "contract", "apply"):
@@ -1084,6 +1175,8 @@ def main(argv: list[str] | None = None, *, prog: str = "zara-core") -> int:
         config_path = _selected_config(args.config)
         config = _config(config_path)
         _actor(config)
+        if args.command == "memory":
+            return _memory(args, config)
         if args.command == "integration":
             return _integration(args, config)
         if args.command == "bind":

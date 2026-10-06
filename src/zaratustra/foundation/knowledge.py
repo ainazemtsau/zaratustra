@@ -104,9 +104,11 @@ def _refs(state: KnowledgeBody) -> list[tuple[str, KnowledgeRef]]:
     if isinstance(state, MemoryViewState):
         return [("source", ref) for ref in state.sources]
     if isinstance(state, ContextState):
-        return [("mandatory", ref) for ref in state.mandatory] + [
-            ("optional", ref) for ref in state.optional
-        ]
+        return (
+            [("mandatory", ref) for ref in state.mandatory]
+            + [("optional", ref) for ref in state.optional]
+            + [("memory_snapshot", ref) for ref in state.historical_memory]
+        )
     refs = [("included", ref) for ref in state.included]
     if state.transfer_source is not None:
         refs.append(("transfer_source", state.transfer_source))
@@ -128,22 +130,30 @@ def _require_ref(connection: sqlite3.Connection, ref: KnowledgeRef, actor: str, 
         resource_id=ref.record_id,
     )
     row = connection.execute(
-        "SELECT r.status,v.payload FROM knowledge_records r "
+        "SELECT r.status,v.payload IS NOT NULL FROM knowledge_records r "
         "JOIN knowledge_revisions v ON v.record_id=r.record_id "
         "WHERE r.record_id=? AND v.revision=?",
         (str(ref.record_id), ref.revision),
     ).fetchone()
     if row is not None:
-        if row[0] != "active" or row[1] is None:
+        if row[0] != "active" or not row[1]:
             raise FoundationError(
                 "content_unavailable", f"Knowledge basis {ref.record_id}@{ref.revision}"
             )
         if ref.end is not None:
-            referenced = BODY_ADAPTER.validate_json(row[1])
+            payload = connection.execute(
+                "SELECT payload FROM knowledge_revisions WHERE record_id=? AND revision=?",
+                (str(ref.record_id), ref.revision),
+            ).fetchone()[0]
+            referenced = BODY_ADAPTER.validate_json(payload)
             content = (
                 referenced.content
                 if isinstance(referenced, SourceState)
-                else (referenced.document if isinstance(referenced, HandoffState) else None)
+                else referenced.document
+                if isinstance(referenced, HandoffState)
+                else referenced.text.encode("utf-8")
+                if isinstance(referenced, MemoryViewState)
+                else None
             )
             if content is None or ref.end > len(content):
                 raise FoundationError("invalid_fragment", "Fragment exceeds retained source bytes")
@@ -193,6 +203,12 @@ def _check_transition(prior: KnowledgeBody, state: KnowledgeBody) -> None:
     if type(prior) is not type(state):
         raise FoundationError("wrong_kind", "Knowledge kind cannot change")
     if isinstance(prior, SourceState):
+        if (
+            isinstance(state, SourceState)
+            and prior.memory != state.memory
+            and (prior.model_dump(exclude={"memory"}) == state.model_dump(exclude={"memory"}))
+        ):
+            return
         raise FoundationError("source_immutable", "A correction is a new primary source")
     if isinstance(prior, ClaimState) and isinstance(state, ClaimState):
         if prior.status in ("superseded", "retracted"):
@@ -244,8 +260,46 @@ def _write_revision(
     state_revision: int,
     epoch: int,
 ) -> None:
+    schema = int(connection.execute("PRAGMA user_version").fetchone()[0])
+    if isinstance(state, MemoryViewState) and (
+        state.selection is not None or state.generation_method == "zaratustra.memory/1"
+    ):
+        from .memory import COMPILING_SELECTION
+
+        if not COMPILING_SELECTION.get():
+            raise FoundationError("permission_denied", "Use the Core memory selection compiler")
+    if schema < 13 and (
+        getattr(state, "memory", None) is not None
+        or (isinstance(state, MemoryViewState) and state.selection is not None)
+        or (isinstance(state, ContextState) and state.historical_memory)
+    ):
+        raise FoundationError("unsupported_schema", "Memory organization needs schema 13")
+    if (
+        isinstance(state, MemoryViewState)
+        and state.selection is not None
+        and (state.selection.actor != request.actor or state.selection.epoch != epoch)
+    ):
+        raise FoundationError("permission_denied", "Selection actor/epoch must match its creator")
     for _, ref in _refs(state):
         _require_ref(connection, ref, request.actor, epoch)
+    metadata = getattr(state, "memory", None)
+    memory_scope = None
+    if metadata is not None and metadata.activity_id is not None:
+        memory_scope = connection.execute(
+            "SELECT current_revision FROM subject_records "
+            "WHERE record_id=? AND kind='activity' AND status!='deleted'",
+            (str(metadata.activity_id),),
+        ).fetchone()
+        if memory_scope is None:
+            raise FoundationError("not_found", "Memory Activity is absent or deleted")
+        _authorize(
+            connection,
+            actor=request.actor,
+            action="record.read",
+            epoch=epoch,
+            resource_type="activity",
+            resource_id=metadata.activity_id,
+        )
     if isinstance(state, ContextState):
         if not state.mandatory:
             raise FoundationError(
@@ -258,6 +312,10 @@ def _write_revision(
             ).fetchone()
             if row is not None and int(row[0]) != ref.revision:
                 raise FoundationError("stale_context", "Mandatory knowledge revision changed")
+        for ref in state.historical_memory:
+            _, _, historic = _prior_state(connection, ref.record_id)
+            if not isinstance(historic, MemoryViewState) or historic.selection is None:
+                raise FoundationError("wrong_kind", "Historical memory needs a compiled selection")
     if isinstance(state, MemoryViewState) and state.coverage_state_revision > state_revision:
         raise FoundationError("stale_revision", "View coverage is from the future")
     if isinstance(state, HandoffState):
@@ -339,7 +397,19 @@ def _write_revision(
                 else "exact",
             ),
         )
-    if isinstance(state, SourceState):
+    if memory_scope is not None and metadata is not None:
+        connection.execute(
+            "INSERT INTO knowledge_edges VALUES (?,?,?,?,?,?,'exact')",
+            (
+                str(request.record_id),
+                revision,
+                len(_refs(state)),
+                str(metadata.activity_id),
+                memory_scope[0],
+                "memory_scope",
+            ),
+        )
+    if isinstance(state, SourceState) and revision == 1:
         if state.source_event_id:
             connection.execute(
                 "INSERT INTO knowledge_source_events(connection,profile_revision,source_event_id,"
@@ -374,11 +444,28 @@ def _write_revision(
             searchable = state.subject + "\n" + state.document.decode("utf-8")
         except UnicodeDecodeError as error:
             raise FoundationError("invalid_content", "Text handoff must be UTF-8") from error
+    metadata = getattr(state, "memory", None)
+    if metadata is not None:
+        searchable = "\n".join(
+            filter(
+                None,
+                (
+                    searchable,
+                    metadata.title,
+                    " ".join(metadata.topics),
+                    " ".join(metadata.aliases),
+                ),
+            )
+        )
     if searchable:
         connection.execute(
             "INSERT INTO knowledge_fts(record_id,revision,text) VALUES (?,?,?)",
             (str(request.record_id), revision, searchable),
         )
+    if schema >= 13:
+        from .memory import index_memory
+
+        index_memory(connection, request.record_id, state, revision, state_revision)
 
 
 def _sanitize_deleted(connection: sqlite3.Connection, record_id: UUID, now: str) -> None:
@@ -403,6 +490,9 @@ def _sanitize_deleted(connection: sqlite3.Connection, record_id: UUID, now: str)
             sanitize_deleted_development_dependency(connection, UUID(item), now)
     for item in affected:
         connection.execute("DELETE FROM knowledge_fts WHERE record_id=?", (item,))
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 13:
+            connection.execute("DELETE FROM memory_topics WHERE record_id=?", (item,))
+            connection.execute("DELETE FROM memory_index WHERE record_id=?", (item,))
         operation_rows = connection.execute(
             "SELECT operation_id FROM knowledge_revisions WHERE record_id=?", (item,)
         ).fetchall()
@@ -418,6 +508,10 @@ def _sanitize_deleted(connection: sqlite3.Connection, record_id: UUID, now: str)
             "UPDATE knowledge_records SET status=?,updated_at=? WHERE record_id=?",
             ("deleted" if item == str(record_id) else "unavailable", now, item),
         )
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 13:
+        from .memory import refresh_intake
+
+        refresh_intake(connection)
     if affected:
         marks = ",".join("?" for _ in affected)
         connection.execute(
@@ -469,8 +563,53 @@ def apply_knowledge_change(
         if current_revision != request.manifest.revision:
             raise FoundationError("stale_context", "Manifest revision changed")
         if request.stage in ("prepared", "sent"):
-            for ref in manifest.mandatory:
+            for ref in dict.fromkeys(manifest.mandatory + manifest.historical_memory):
                 _require_ref(connection, ref, request.actor, epoch)
+                if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 13:
+                    _, _, selected = (
+                        _prior_state(connection, ref.record_id)
+                        if connection.execute(
+                            "SELECT 1 FROM knowledge_records WHERE record_id=?",
+                            (str(ref.record_id),),
+                        ).fetchone()
+                        else (None, None, None)
+                    )
+                    if (
+                        isinstance(selected, MemoryViewState)
+                        and selected.generation_method == "zaratustra.memory/1"
+                    ):
+                        # Recheck copied originals even for an explicit historical snapshot.
+                        # Read metadata only, not all original bodies in this write transaction.
+                        for original in selected.sources:
+                            _authorize(
+                                connection,
+                                actor=request.actor,
+                                action="record.read",
+                                epoch=epoch,
+                                resource_type="artifact",
+                                resource_id=original.record_id,
+                            )
+                            available = connection.execute(
+                                "SELECT r.status,v.payload IS NOT NULL FROM knowledge_records r "
+                                "JOIN knowledge_revisions v ON v.record_id=r.record_id "
+                                "WHERE r.record_id=? AND v.revision=?",
+                                (str(original.record_id), original.revision),
+                            ).fetchone()
+                            if available is None or available[0] != "active" or not available[1]:
+                                raise FoundationError(
+                                    "content_unavailable", "Memory basis disappeared"
+                                )
+                        if (
+                            selected.selection is not None
+                            and selected.selection.cache
+                            and ref in manifest.mandatory
+                        ):
+                            from .memory import selection_current_for_actor
+
+                            if not selection_current_for_actor(
+                                connection, request.actor, epoch, selected.selection
+                            ):
+                                raise FoundationError("stale_context", "Memory selection changed")
                 knowledge = connection.execute(
                     "SELECT current_revision,status FROM knowledge_records WHERE record_id=?",
                     (str(ref.record_id),),
@@ -668,6 +807,18 @@ def _checked_read(
     stale = int(row[1]) != int(row[4])
     if state is not None:
         for role, ref in _refs(state):
+            if (
+                isinstance(state, MemoryViewState)
+                and state.generation_method == "zaratustra.memory/1"
+            ):
+                _authorize(
+                    connection,
+                    actor=authority.actor,
+                    action="record.read",
+                    epoch=info.execution_epoch,
+                    resource_type="artifact",
+                    resource_id=ref.record_id,
+                )
             target = connection.execute(
                 "SELECT status,current_revision FROM knowledge_records WHERE record_id=?",
                 (str(ref.record_id),),
@@ -689,7 +840,11 @@ def _checked_read(
                 or (target[1] != ref.revision and not follows_current)
             ):
                 stale = True
-        if isinstance(state, MemoryViewState) and state.mode == "current":
+        if isinstance(state, MemoryViewState) and state.selection is not None:
+            from .memory import selection_current
+
+            stale = not selection_current(connection, info, authority, state.selection)
+        elif isinstance(state, MemoryViewState) and state.mode == "current":
             if _read_scope_limited(connection, info, authority):
                 stale = True
             else:
@@ -835,7 +990,9 @@ def open_knowledge(
     if offset > len(content):
         raise FoundationError("invalid_request", "Open offset exceeds exact content")
     end = min(offset + max_bytes, len(content))
-    if isinstance(state, (SourceState, HandoffState)) and state.media_type.startswith("text/"):
+    if isinstance(state, (ClaimState, AnalysisState, MemoryViewState)) or (
+        isinstance(state, (SourceState, HandoffState)) and state.media_type.startswith("text/")
+    ):
         while end < len(content):
             try:
                 content[offset:end].decode("utf-8")
@@ -981,7 +1138,7 @@ def search_knowledge(
                 "SELECT rowid,record_id,revision,snippet(knowledge_fts,2,'[',']','…',12) "
                 "FROM knowledge_fts WHERE knowledge_fts MATCH ? AND rowid>? ORDER BY rowid",
                 (query, after_rowid),
-            ).fetchall()
+            )
         except sqlite3.OperationalError as error:
             raise FoundationError("invalid_query", str(error)) from error
         entries: list[dict[str, object]] = []

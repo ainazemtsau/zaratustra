@@ -22,6 +22,7 @@ from zaratustra.foundation import (
 )
 
 from .manual import ManualExchange
+from .memory import memory_operations
 from .registry import IntegrationRegistry, IntegrationResult, Operation, Parameters
 
 
@@ -155,6 +156,7 @@ def installed_integrations(path: Path, authority: LocalAuthority) -> Integration
                     ProductContext,
                     context,
                 ),
-            }
+            },
+            "memory": memory_operations(path, authority),
         }
     )

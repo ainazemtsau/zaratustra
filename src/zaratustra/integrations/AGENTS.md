@@ -1,5 +1,11 @@
 # Integration boundary
 
+The installed `memory` adapter exposes catalog, batch, history, selection windows
+and cache preparation through the public Core. It has no external transport.
+The manual boundary may include explicitly selected organized memory from another
+Activity, retaining its origin and checking rights; exchange Activity/Work anchors
+stay separate. Managed selection writes require existing artifact-write authority.
+
 Use only the public Core foundation. Never import Pi, release, legacy backends,
 instances, tests or tools. Core owns durable state, rights, revisions and receipts.
 
