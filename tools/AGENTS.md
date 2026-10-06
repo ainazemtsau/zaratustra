@@ -55,4 +55,23 @@ ignored Pi runtime exists in every checkout.
 `probe_knowledge_pi` uses the same fictional localhost transport for separate
 ordinary Pi processes that save/open sources and Claim, deliver a document,
 record its return, and verify current evidence in subsequent Work requests.
+Its `--split-compaction-only` trace forces native history + turn-prefix summaries,
+then publishes an Artifact and reopens it in another Pi. `--fail-prefix` injects
+one HTTP 400 and checks separate answered/unknown accounting. Both use a NEW
+temporary directory inside `_scratch`, fictional data and localhost only.
+`--resume-compaction-only` saves a real synthetic Pi session, stops its process,
+opens it in a new process/Bridge through both startup and switch_session, and
+compacts immediately without a new prompt. It checks exact saved user bytes,
+separate summary requests and no duplicate restored Source across reopening.
+`probe_external_pi` loads the actual packaged external-integration skill and exercises
+installed operation catalog/contract/prepare/retain/read in ordinary Pi with a local
+synthetic provider. It checks exact document/source bytes and reopening, not model
+judgement, live external accounts or semantic quality via keywords. The shared
+run_process accepts explicit prompt/skill paths without changing compaction/resume.
+
+`probe_development_autonomy_pi` exercises unattended development preparation/evidence saves
+through ordinary Pi with zero automatic confirmation answers. A fresh Pi/Bridge
+reopens exact saved records; owner Decisions/application/deletion/acceptance stay
+confirmed, and a Candidate does not apply its proposed Method. Localhost only,
+disposable fictional Core, no real model or credentials.
 END_OF_FILE: tools/AGENTS.md

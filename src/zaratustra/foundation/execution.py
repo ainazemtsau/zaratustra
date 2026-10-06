@@ -521,7 +521,10 @@ def apply_execution_change(
                     (str(request.invocation_id),),
                 ).fetchone()[0]
             )
-            if committed + held + reserve > resource.limit_units:
+            if (
+                resource.limit_units is not None
+                and committed + held + reserve > resource.limit_units
+            ):
                 raise FoundationError("budget_exhausted", "Model reserve exceeds Work limit")
         next_status = "admitted" if isinstance(request, AdmitInvocationRequest) else "sent"
         connection.execute(  # type: ignore[attr-defined]
@@ -1122,7 +1125,7 @@ def read_execution(path: Path, work_id: UUID, authority: LocalAuthority) -> Exec
             (
                 resource.state.limit_units
                 for resource in resources
-                if resource.state.status == "active"
+                if resource.state.status == "active" and resource.state.limit_units is not None
             ),
             default=None,
         )

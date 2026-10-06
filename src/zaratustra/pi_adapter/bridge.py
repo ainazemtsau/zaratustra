@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import os
 import secrets
@@ -118,6 +119,9 @@ from zaratustra.foundation import (
     upgrade_parent_execution_space,
     upgrade_plan_revision_space,
 )
+from zaratustra.integrations import installed_integrations
+
+from .manual_exchange import ManualExchange
 
 PROTOCOL_VERSION = 1
 MAX_BODY_BYTES = 9 * 1024 * 1024
@@ -179,18 +183,18 @@ class Bridge:
         path: Path,
         authority: LocalAuthority,
         workspace: Path,
-        limit_units: int,
+        limit_units: int | None = None,
         *,
         assigned_attempt_id: UUID | None = None,
         assigned_session_id: UUID | None = None,
         deliver_answer: Callable[[UUID], object] | None = None,
-        context_max_bytes: int = 65536,
-        free_conversation_limit_units: int = 100000,
+        context_max_bytes: int | None = None,
+        free_conversation_limit_units: int | None = None,
     ) -> None:
         self.path = path.resolve()
         self.authority = authority
         self.workspace = workspace.resolve()
-        if not self.workspace.is_dir() or limit_units < 1:
+        if not self.workspace.is_dir() or (limit_units is not None and limit_units < 1):
             raise FoundationError("resource_unavailable", "Choose an existing directory and limit")
         self.limit_units = limit_units
         self.trial_total_send_limit: int | None
@@ -206,10 +210,10 @@ class Bridge:
                 raise FoundationError("invalid_request", "Trial send limit must be positive")
         else:
             self.trial_total_send_limit = None
-        if free_conversation_limit_units < 1:
+        if free_conversation_limit_units is not None and free_conversation_limit_units < 1:
             raise FoundationError("invalid_request", "Free conversation budget must be positive")
         self.free_conversation_limit_units = free_conversation_limit_units
-        if not 1 <= context_max_bytes <= 2 * 1024 * 1024:
+        if context_max_bytes is not None and context_max_bytes < 1:
             raise FoundationError("invalid_request", "Context byte limit must be finite")
         self.context_max_bytes = context_max_bytes
         if (assigned_attempt_id is None) != (assigned_session_id is None):
@@ -491,6 +495,100 @@ class Bridge:
             raise FoundationError("invalid_request", "Unknown knowledge operation")
         return {"kind": kind, "schema": model.model_json_schema()}
 
+    def integration(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, object]:
+        self._session(session_id)
+        if self.assigned_attempt_id is not None:
+            raise FoundationError("permission_denied", "Integration setup is interactive only")
+        registry = installed_integrations(self.path, self.authority)
+        mode = raw["mode"]
+        if mode == "catalog":
+            return registry.catalog()
+        adapter, operation = str(raw["adapter"]), str(raw["operation"])
+        if mode == "contract":
+            return registry.contract(adapter, operation)
+        if mode != "apply" or not isinstance(raw.get("arguments"), dict):
+            raise FoundationError("invalid_request", "Use catalog, contract or typed apply")
+        # Pi call identity is bound to this session, never an actor supplied by the model.
+        operation_id = uuid5(session_id, f"integration:{raw['operation_key']}")
+        result = registry.execute(
+            operation_id,
+            adapter,
+            operation,
+            raw["arguments"],
+            contract_version=raw["contract_version"],
+        )
+        with self.lock:
+            self.exposed_refs.setdefault(session_id, set()).update(result.exposed)
+        return result.output
+
+    def manual_exchange(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
+        self._session(session_id)
+        exchange = ManualExchange(self.path, self.authority)
+        mode = str(raw["mode"])
+        if mode == "read":
+            return self._expose_exchange(
+                session_id,
+                exchange.read(
+                    UUID(str(raw["record_id"])),
+                    revision=int(str(raw["revision"])) if raw.get("revision") is not None else None,
+                ),
+            )
+        if raw.get("work_id") is not None and raw.get("activity_id") is None:
+            raise FoundationError("invalid_request", "Explicit Work also needs its Activity")
+        if raw.get("activity_id") is not None:
+            activity_id = UUID(str(raw["activity_id"]))
+            work_id = UUID(str(raw["work_id"])) if raw.get("work_id") is not None else None
+        else:
+            selected = self._selection(session_id)
+            activity_id, work_id = selected.activity_id, selected.work_id
+        if self.assigned_attempt_id is not None:
+            selected = self._selection(session_id)
+            if (activity_id, work_id) != (selected.activity_id, selected.work_id):
+                raise FoundationError("wrong_work", "Use the assigned Work for manual exchange")
+        operation_id = (
+            uuid5(session_id, f"manual-exchange:{raw['operation_key']}")
+            if raw.get("operation_key") is not None
+            else UUID(str(raw["operation_id"]))
+        )
+        if mode == "prepare":
+            return self._expose_exchange(
+                session_id,
+                exchange.prepare(
+                    operation_id,
+                    activity_id,
+                    work_id=work_id,
+                    external_tool=str(raw["external_tool"]),
+                ),
+            )
+        if mode == "import":
+            content = base64.b64decode(str(raw["content_base64"]), validate=True)
+            reply = raw.get("reply_to")
+            previous = raw.get("previous_source")
+            return exchange.receive(
+                operation_id,
+                activity_id,
+                work_id=work_id,
+                origin=str(raw["origin"]),
+                content=content,
+                previous_source=KnowledgeRef.model_validate(previous)
+                if previous is not None
+                else None,
+                sender=str(raw["sender"]) if raw.get("sender") is not None else None,
+                locator=str(raw["locator"]) if raw.get("locator") is not None else None,
+                reply_to=KnowledgeRef.model_validate(reply) if reply is not None else None,
+            )
+        raise FoundationError("invalid_request", "Unknown manual exchange mode")
+
+    def _expose_exchange(self, session_id: UUID, result: dict[str, object]) -> dict[str, object]:
+        with self.lock:
+            self.exposed_refs.setdefault(session_id, set()).add(
+                KnowledgeRef(
+                    record_id=UUID(str(result["record_id"])),
+                    revision=int(str(result["revision"])),
+                )
+            )
+        return result
+
     def knowledge_operation(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
         self._session(session_id)
         prepared = dict(raw)
@@ -564,8 +662,11 @@ class Bridge:
         scope = str(raw["scope"]).strip()
         if not scope or len(scope) > 2048:
             raise FoundationError("invalid_request", "Sleep needs a bounded scope description")
-        units = int(str(raw["resource_limit_units"]))
-        if units < 1 or units > self.limit_units:
+        raw_units = raw.get("resource_limit_units")
+        units = int(str(raw_units)) if raw_units is not None else self.limit_units
+        if units is not None and (
+            units < 1 or (self.limit_units is not None and units > self.limit_units)
+        ):
             raise FoundationError(
                 "resource_exhausted", "Sleep resource exceeds the chosen Work limit"
             )
@@ -754,7 +855,9 @@ class Bridge:
                 result["live_resource"] = {
                     "spent_units": spent,
                     "reserved_units": reserved,
-                    "remaining_units": item.state.resource_limit_units - spent - reserved,
+                    "remaining_units": None
+                    if item.state.resource_limit_units is None
+                    else item.state.resource_limit_units - spent - reserved,
                 }
             return result
         if mode == "application":
@@ -792,13 +895,24 @@ class Bridge:
         source_event_id: str,
         input_source: str = "interactive",
         limitations: tuple[str, ...] = (),
+        replay_session_id: UUID | None = None,
     ) -> dict[str, object]:
         selected = self._session(session_id)
         if channel not in ("conversation_user", "conversation_assistant", "tool_result"):
             raise FoundationError("invalid_request", "Unsupported Pi capture channel")
         if read_space(self.path).schema_version < 10:
             raise FoundationError("unsupported_schema", "Capture needs explicit schema 10")
-        source_id = uuid5(self.authority.space_id, f"pi:{session_id}:{source_event_id}")
+        if replay_session_id is not None and (
+            channel != "conversation_user" or input_source != "session-resume"
+        ):
+            raise FoundationError("invalid_request", "Replay identity needs saved Pi user input")
+        identity_session = replay_session_id or session_id
+        identity = (
+            f"pi-resume:{identity_session}:{source_event_id}"
+            if replay_session_id is not None
+            else f"pi:{session_id}:{source_event_id}"
+        )
+        source_id = uuid5(self.authority.space_id, identity)
         operation_id = uuid5(source_id, "capture")
         with self.lock:
             derived = set(self.exposed_refs.get(session_id, set()))
@@ -809,12 +923,18 @@ class Bridge:
                 "channel": channel,
                 "connection": "ordinary-pi",
                 "profile_revision": 1,
-                "source_event_id": f"{session_id}:{source_event_id}",
-                "conversation_id": str(session_id),
-                "scope_activity_id": selected.activity_id if selected else None,
-                "scope_work_id": selected.work_id if selected else None,
+                "source_event_id": f"{identity_session}:{source_event_id}",
+                "conversation_id": str(identity_session),
+                "scope_activity_id": selected.activity_id
+                if selected and replay_session_id is None
+                else None,
+                "scope_work_id": selected.work_id
+                if selected and replay_session_id is None
+                else None,
                 "sender": self.authority.actor
                 if channel == "conversation_user" and input_source == "interactive"
+                else "pi-session-history"
+                if replay_session_id is not None
                 else "pi-rpc"
                 if channel == "conversation_user"
                 else "pi-assistant"
@@ -1038,7 +1158,7 @@ class Bridge:
                     )
                 )
             # Current Claims in the selected Activity and global Claims have a structural
-            # route into this continuation. An overlarge set blocks rather than truncates.
+            # route into this continuation; every selected basis remains in the packet.
             cursor: str | None = None
             claims: list[dict[str, object]] = []
             while True:
@@ -1078,7 +1198,9 @@ class Bridge:
                     packet["sleep_resource"] = {
                         "spent_units": spent,
                         "reserved_units": reserved,
-                        "remaining_units": sleep.state.resource_limit_units - spent - reserved,
+                        "remaining_units": None
+                        if sleep.state.resource_limit_units is None
+                        else sleep.state.resource_limit_units - spent - reserved,
                     }
                     role = current.composition.role if current.composition else None
                     selected_sources: list[dict[str, object]] = []
@@ -1207,11 +1329,19 @@ class Bridge:
                 )
         packet["primary_sources"] = additional
         rendered = json.dumps(packet, ensure_ascii=False, separators=(",", ":"))
-        if len(rendered.encode("utf-8")) > self.context_max_bytes:
+        if (
+            self.context_max_bytes is not None
+            and len(rendered.encode("utf-8")) > self.context_max_bytes
+        ):
             raise FoundationError(
                 "context_overflow", "Mandatory context exceeds configured byte limit"
             )
-        manifest_id = UUID(bytes=secrets.token_bytes(16))
+        # Reuse an exact packet during a tool loop. A random marker in the system
+        # prefix on every call prevents reuse of the unchanged provider context.
+        manifest_id = uuid5(
+            session_id,
+            f"context:{self.context_max_bytes}:{hashlib.sha256(rendered.encode()).hexdigest()}",
+        )
         receipt = apply_operation(
             self.path,
             CreateKnowledgeRequest(
@@ -1565,9 +1695,16 @@ class BridgeHandler(BaseHTTPRequestHandler):
                     source_event_id=str(body["source_event_id"]),
                     input_source=str(body.get("input_source", "interactive")),
                     limitations=tuple(body.get("limitations", ())),
+                    replay_session_id=UUID(str(body["replay_session_id"]))
+                    if body.get("replay_session_id") is not None
+                    else None,
                 )
             elif post and path.path == "/v1/knowledge-read":
                 result = bridge.knowledge_read(session_id, body)
+            elif post and path.path == "/v1/integration":
+                result = bridge.integration(session_id, body)
+            elif post and path.path == "/v1/manual-exchange":
+                result = bridge.manual_exchange(session_id, body)
             elif post and path.path == "/v1/development-upgrade":
                 result = bridge.development_upgrade(session_id)
             elif post and path.path == "/v1/development-start-sleep":

@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from .bridge import Bridge, BridgeServer
+from .manual_exchange import ManualExchange
+from .runtime import PiRuntime, read_pi_runtime, system_pi_runtime
+from .skills import external_workflow_skill
 
 if TYPE_CHECKING:
     from zaratustra.foundation import BackupInfo, DeletionStatus, LocalAuthority
@@ -30,10 +33,14 @@ def assigned_main(argv: list[str]) -> int:
     return main(argv)
 
 
-def create_assigned_backup(space: Path, backup_id: UUID, authority: LocalAuthority) -> BackupInfo:
+def create_assigned_backup(
+    space: Path, backup_id: UUID, authority: LocalAuthority, *, pi_version: str | None = None
+) -> BackupInfo:
     from .assigned import create_assigned_backup as create_backup
 
-    return create_backup(space, backup_id, authority)
+    if pi_version is None:
+        return create_backup(space, backup_id, authority)
+    return create_backup(space, backup_id, authority, pi_version=pi_version)
 
 
 def complete_assigned_deletions(space: Path, authority: LocalAuthority) -> DeletionStatus:
@@ -45,6 +52,11 @@ def complete_assigned_deletions(space: Path, authority: LocalAuthority) -> Delet
 __all__ = [
     "Bridge",
     "BridgeServer",
+    "ManualExchange",
+    "external_workflow_skill",
+    "PiRuntime",
+    "read_pi_runtime",
+    "system_pi_runtime",
     "prepare_space",
     "pi_main",
     "assigned_main",

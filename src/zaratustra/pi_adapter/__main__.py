@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import getpass
 import os
-import shutil
 import subprocess
 import sys
 import threading
@@ -38,6 +37,7 @@ from zaratustra.foundation import (
 )
 
 from .bridge import Bridge, BridgeServer
+from .skills import external_workflow_skill
 
 INTERACTIVE_ZARA_TOOLS = (
     "zara_activity",
@@ -46,6 +46,9 @@ INTERACTIVE_ZARA_TOOLS = (
     "zara_grant",
     "zara_sleep",
     "zara_development",
+    "zara_result",
+    "zara_transfer",
+    "zara_integration",
 )
 
 
@@ -99,10 +102,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--node", default="node")
     parser.add_argument("--new-space", action="store_true")
-    parser.add_argument("--limit-units", type=int, required=True)
+    parser.add_argument("--limit-units", type=int)
     parser.add_argument("--reserve-units", type=int, required=True)
-    parser.add_argument("--free-conversation-limit-units", type=int, default=100000)
-    parser.add_argument("--context-max-bytes", type=int, default=65536)
+    parser.add_argument("--free-conversation-limit-units", type=int)
+    parser.add_argument("--context-max-bytes", type=int)
     parser.add_argument(
         "--provider-profile", choices=("codex-sse", "local-completions"), default="codex-sse"
     )
@@ -113,6 +116,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--local-max-tokens", type=int)
     parser.add_argument("--model", help="Provider/model selected by Pi; no product default")
     parser.add_argument("--thinking", help="Pi reasoning level")
+    parser.add_argument("--subscription-agent-dir", type=Path)
     parser.add_argument("--pi-tools", help="Optional comma-separated native Pi tool allowlist")
     parser.add_argument("--session-dir", type=Path)
     parser.add_argument("--activity-id", type=UUID)
@@ -129,7 +133,15 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(f"Pi sessions must use the managed Core directory: {expected_sessions}")
     if not workspace.is_dir() or not pi_cli.is_file() or not (runtime / "node_modules").is_dir():
         parser.error("Workspace, Pi CLI or Pi runtime is unavailable")
-    if args.limit_units < 1 or args.reserve_units < 1 or args.free_conversation_limit_units < 1:
+    if (
+        args.reserve_units < 1
+        or (args.limit_units is not None and args.limit_units < 1)
+        or (
+            args.free_conversation_limit_units is not None
+            and args.free_conversation_limit_units < 1
+        )
+        or (args.context_max_bytes is not None and args.context_max_bytes < 1)
+    ):
         parser.error("Model resource limits must be positive")
     base_url = args.provider_base_url or (
         "https://chatgpt.com/backend-api" if args.provider_profile == "codex-sse" else None
@@ -154,14 +166,20 @@ def main(argv: list[str] | None = None) -> int:
         else ["read", "write", "edit", "bash"]
     )
     active_tools = ",".join(dict.fromkeys([*native_tools, *INTERACTIVE_ZARA_TOOLS]))
+    workflow_skill = external_workflow_skill()
     actor = getpass.getuser()
     print(f"Core space: {space}\nWorking directory: {workspace}\nLocal user: {actor}")
+    usage_line = (
+        "Local model usage: recorded without a spending stop"
+        if args.limit_units is None and args.free_conversation_limit_units is None
+        else f"Work limit: {args.limit_units or 'none'}; "
+        f"free conversation limit: {args.free_conversation_limit_units or 'none'}"
+    )
     print(
         f"Provider profile: {args.provider_profile}\n"
         f"Pi model: {args.model or 'Pi selection'}\n"
         f"Pi tools: {active_tools}\n"
-        f"Work limit: {args.limit_units} units; free conversation limit: "
-        f"{args.free_conversation_limit_units} units; each call reserve: {args.reserve_units} units"
+        f"{usage_line}"
     )
     if args.activity_id:
         print(f"Activity: {args.activity_id}\nWork: {args.work_id}")
@@ -194,8 +212,6 @@ def main(argv: list[str] | None = None) -> int:
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         extension = Path(str(files("zaratustra.pi_adapter").joinpath("extension.ts")))
-        installed = runtime / "zaratustra-extension.ts"
-        shutil.copy2(extension, installed)
         environment = os.environ.copy()
         environment["ZARA_CORE_ENDPOINT"] = f"http://127.0.0.1:{server.server_port}"
         environment["ZARA_CORE_TOKEN"] = bridge.token
@@ -205,6 +221,8 @@ def main(argv: list[str] | None = None) -> int:
         environment["ZARA_PROVIDER_ORIGIN"] = f"{parsed_url.scheme}://{parsed_url.netloc}"
         environment["PI_SKIP_VERSION_CHECK"] = "1"
         environment["PI_TELEMETRY"] = "0"
+        if args.subscription_agent_dir:
+            environment["PI_CODING_AGENT_DIR"] = str(args.subscription_agent_dir.resolve())
         if args.provider_profile == "local-completions":
             environment["PI_OFFLINE"] = "1"
         if args.activity_id:
@@ -221,9 +239,11 @@ def main(argv: list[str] | None = None) -> int:
             "--provider",
             "openai-codex" if args.provider_profile == "codex-sse" else args.local_provider_id,
             "--extension",
-            str(installed),
+            str(extension),
             "--no-extensions",
             "--no-context-files",
+            "--skill",
+            str(workflow_skill),
         ]
         if args.model:
             command.extend(["--model", args.model])
@@ -237,7 +257,6 @@ def main(argv: list[str] | None = None) -> int:
             server.shutdown()
             server.server_close()
             thread.join(timeout=5)
-            installed.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

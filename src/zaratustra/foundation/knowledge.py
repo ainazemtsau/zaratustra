@@ -524,7 +524,10 @@ def apply_knowledge_change(
                         "ELSE reserve_units END),0) FROM knowledge_delivery WHERE free_call=1"
                     ).fetchone()[0]
                 )
-                if spent + request.reserve_units > request.budget_limit_units:
+                if (
+                    request.budget_limit_units is not None
+                    and spent + request.reserve_units > request.budget_limit_units
+                ):
                     raise FoundationError(
                         "resource_exhausted", "Free conversation model budget is spent"
                     )

@@ -2,8 +2,13 @@
 `foundation` is the independent Core v0.1 subject foundation and has no dependency on
 the legacy Core or product surfaces. It owns its separate `.zara-core` space through
 its public `__init__.py`. The interactive `pi_adapter` composes that public surface.
+`integrations` sits above the public foundation and below Pi/release, with no
+legacy dependency. It provides a typed code-installed operation boundary and the
+manual adapter, not a second store or external-effect dispatcher. Instance settings
+stay in Core; shared guidance and the non-personal product reference ship in the package.
 Public package contains Core, trusted local adapter and CLI for records and mutations.
-`release.py` is the installed `zara-core` entry above the public foundation and
+`release.py` supplies the installed `zaratustra` daily entry and `zara-core`
+maintenance entry above the public foundation and
 Pi adapter surfaces. It owns chosen runtime/configuration paths, explicit setup,
 upgrade and external maintenance; neither lower module imports it.
 The entry adapter owns an explicit discovery catalog and depends only on public Core.

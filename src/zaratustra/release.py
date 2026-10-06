@@ -8,7 +8,6 @@ import hashlib
 import io
 import json
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -22,8 +21,6 @@ from uuid import UUID, uuid4
 SQLITE_ARCHIVE_URL = "https://www.sqlite.org/2026/sqlite-dll-win-x64-3530300.zip"
 SQLITE_ARCHIVE_SHA3 = "3A494861CE24D1F330EFBC6C3FB58CE4972F2CF8DF4E43122246ED987109DC8A"
 SQLITE_DLL_SHA256 = "79FD9EC89DBA3F8BD64529A2CA8E9DDE6AE6EDC486C55A1D3F1CE77975A8375C"
-PI_VERSION = "0.87.0"
-PI_PACKAGE_SHA256 = "9BB655451E850A8593BA87F563C26D3D2AF2F503B76318E2F1BBE53EB28C9180"
 
 
 def _config(path: Path) -> dict[str, object]:
@@ -55,18 +52,79 @@ def _actor(config: dict[str, object]) -> str:
 
 
 def _pi_cli(runtime: Path) -> Path:
-    package = runtime / "node_modules" / "@earendil-works" / "pi-coding-agent"
-    package_file = package / "package.json"
-    data = package_file.read_bytes()
-    metadata = json.loads(data)
-    cli = package / "dist" / "bundle" / "cli.js"
+    from .pi_adapter import read_pi_runtime
+
+    return read_pi_runtime(runtime).cli
+
+
+def _runtime(config: dict[str, object]) -> tuple[Path, Path, str]:
+    from .pi_adapter import read_pi_runtime, system_pi_runtime
+
+    source = config.get("pi_source", "managed")
+    if source not in ("system", "managed"):
+        raise ValueError("Choose Pi source system or managed")
+    runtime = (
+        system_pi_runtime()
+        if source == "system"
+        else read_pi_runtime(Path(str(config["pi_runtime"])))
+    )
+    return runtime.root, runtime.cli, runtime.version
+
+
+def _launch_reference() -> Path:
+    return Path.home() / ".zaratustra" / "launch-config.json"
+
+
+def _register_config(path: Path) -> None:
+    reference = _launch_reference()
+    reference.parent.mkdir(parents=True, exist_ok=True)
+    pending = reference.with_suffix(".pending")
+    pending.write_text(
+        json.dumps({"version": 1, "config": str(path.resolve())}) + "\n", encoding="utf-8"
+    )
+    pending.replace(reference)
+
+
+def _selected_config(explicit: Path | None) -> Path:
+    if explicit is not None:
+        return explicit.expanduser().resolve()
+    if os.environ.get("ZARATUSTRA_CONFIG"):
+        return Path(os.environ["ZARATUSTRA_CONFIG"]).expanduser().resolve()
+    reference = _launch_reference()
+    if not reference.is_file():
+        raise ValueError("Select your installation once: zaratustra bind --config <config.json>")
+    saved = json.loads(reference.read_text(encoding="utf-8"))
     if (
-        metadata.get("version") != PI_VERSION
-        or hashlib.sha256(data).hexdigest().upper() != PI_PACKAGE_SHA256
-        or not cli.is_file()
+        not isinstance(saved, dict)
+        or saved.get("version") != 1
+        or not isinstance(saved.get("config"), str)
     ):
-        raise ValueError(f"Selected Pi runtime must be {PI_VERSION}")
-    return cli
+        raise ValueError("Saved launch configuration reference is invalid")
+    return Path(saved["config"]).expanduser().resolve()
+
+
+def _runtime_command(args: argparse.Namespace, config: dict[str, object], path: Path) -> int:
+    if args.use_system:
+        from .pi_adapter import system_pi_runtime
+
+        runtime = system_pi_runtime()
+        config = {**config, "pi_source": "system", "pi_runtime": str(runtime.root)}
+        pending = path.with_suffix(path.suffix + ".pending")
+        pending.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+        pending.replace(path)
+    root, cli, version = _runtime(config)
+    print(
+        json.dumps(
+            {
+                "pi_source": config.get("pi_source", "managed"),
+                "pi_version": version,
+                "pi_runtime": str(root),
+                "pi_cli": str(cli),
+            },
+            indent=2,
+        )
+    )
+    return 0
 
 
 def _prepare_sqlite(destination: Path, supplied: Path | None) -> Path:
@@ -90,37 +148,10 @@ def _prepare_sqlite(destination: Path, supplied: Path | None) -> Path:
     return destination
 
 
-def _prepare_pi(destination: Path, supplied: Path | None) -> Path:
-    pending = destination.with_name(destination.name + ".pending")
-    if destination.exists():
-        _pi_cli(destination)
-        return destination
-    if pending.exists():
-        _pi_cli(pending)
-        pending.replace(destination)
-        return destination
-    if supplied is not None:
-        _pi_cli(supplied)
-        shutil.copytree(supplied, pending)
-    else:
-        pending.mkdir(parents=True, exist_ok=True)
-        subprocess.run(
-            [
-                "npm",
-                "install",
-                "--prefix",
-                str(pending),
-                "--no-audit",
-                "--no-fund",
-                "--save-exact",
-                f"@earendil-works/pi-coding-agent@{PI_VERSION}",
-                f"@earendil-works/pi-ai@{PI_VERSION}",
-            ],
-            check=True,
-        )
-    _pi_cli(pending)
-    pending.replace(destination)
-    return destination
+def _prepare_pi(supplied: Path | None) -> Path:
+    from .pi_adapter import read_pi_runtime, system_pi_runtime
+
+    return (read_pi_runtime(supplied) if supplied is not None else system_pi_runtime()).root
 
 
 def _setup(args: argparse.Namespace) -> int:
@@ -151,7 +182,10 @@ def _setup(args: argparse.Namespace) -> int:
         not args.context_window or not args.max_tokens
     ):
         raise ValueError("Local provider needs context and output bounds")
-    if args.limit_units < 1 or args.reserve_units < 1 or args.reserve_units > args.limit_units:
+    if args.reserve_units < 1 or (
+        args.limit_units is not None
+        and (args.limit_units < 1 or args.reserve_units > args.limit_units)
+    ):
         raise ValueError("Choose positive model resource and reserve bounds")
     actor = getpass.getuser()
     print(f"Core space: {space}\nWorking resource: {workspace}\nLocal identity: {actor}")
@@ -175,7 +209,7 @@ def _setup(args: argparse.Namespace) -> int:
         )
         if info.recovery_state != "active":
             raise ValueError("Recover the selected Core space before setup")
-    pi_runtime = _prepare_pi(runtime_root / "pi", args.pi_runtime)
+    pi_runtime = _prepare_pi(args.pi_runtime)
     config: dict[str, object] = {
         "version": 1,
         "actor": actor,
@@ -184,6 +218,7 @@ def _setup(args: argparse.Namespace) -> int:
         "workspace": str(workspace),
         "sqlite_dll": str(sqlite_dll),
         "pi_runtime": str(pi_runtime),
+        "pi_source": "managed" if args.pi_runtime is not None else "system",
         "node": args.node,
         "provider_profile": args.provider_profile,
         "provider_base_url": args.provider_base_url,
@@ -197,6 +232,7 @@ def _setup(args: argparse.Namespace) -> int:
     temp = config_path.with_suffix(config_path.suffix + ".pending")
     temp.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     temp.replace(config_path)
+    _register_config(config_path)
     print(f"Prepared: {config_path}")
     if not args.new_space and info.schema_version < 12:
         print("Existing space requires zara-core upgrade before run or assign")
@@ -207,20 +243,19 @@ def _run(args: argparse.Namespace, config: dict[str, object]) -> int:
     _ready_space(config)
     from .pi_adapter import pi_main
 
-    runtime = Path(str(config["pi_runtime"]))
+    runtime, cli, pi_version = _runtime(config)
+    print(f"Pi {pi_version}: {cli}")
     command = [
         "--space",
         str(config["space"]),
         "--workspace",
         str(config["workspace"]),
         "--pi-cli",
-        str(_pi_cli(runtime)),
+        str(cli),
         "--pi-runtime",
         str(runtime),
         "--node",
         str(config["node"]),
-        "--limit-units",
-        str(config["limit_units"]),
         "--reserve-units",
         str(config["reserve_units"]),
         "--provider-profile",
@@ -228,10 +263,14 @@ def _run(args: argparse.Namespace, config: dict[str, object]) -> int:
         "--provider-base-url",
         str(config["provider_base_url"]),
         "--model",
-        str(config["model_id"]),
+        str(args.model or config["model_id"]),
     ]
-    if "free_conversation_limit_units" in config:
+    if config.get("limit_units") is not None:
+        command += ["--limit-units", str(config["limit_units"])]
+    if config.get("free_conversation_limit_units") is not None:
         command += ["--free-conversation-limit-units", str(config["free_conversation_limit_units"])]
+    if config.get("context_max_bytes") is not None:
+        command += ["--context-max-bytes", str(config["context_max_bytes"])]
     if config["provider_profile"] == "local-completions":
         command += [
             "--local-provider-id",
@@ -247,6 +286,10 @@ def _run(args: argparse.Namespace, config: dict[str, object]) -> int:
         command += ["--activity-id", str(args.activity_id), "--work-id", str(args.work_id)]
     if args.pi_tools:
         command += ["--pi-tools", args.pi_tools]
+    if args.thinking:
+        command += ["--thinking", args.thinking]
+    if config.get("subscription_agent_dir"):
+        command += ["--subscription-agent-dir", str(config["subscription_agent_dir"])]
     return pi_main(command)
 
 
@@ -254,14 +297,15 @@ def _assign(args: argparse.Namespace, config: dict[str, object]) -> int:
     _ready_space(config)
     from .pi_adapter import assigned_main
 
-    runtime = Path(str(config["pi_runtime"]))
+    runtime, cli, pi_version = _runtime(config)
+    print(f"Pi {pi_version}: {cli}")
     command = [
         "--space",
         str(config["space"]),
         "--workspace",
         str(config["workspace"]),
         "--pi-cli",
-        str(_pi_cli(runtime)),
+        str(cli),
         "--pi-runtime",
         str(runtime),
         "--node",
@@ -276,9 +320,9 @@ def _assign(args: argparse.Namespace, config: dict[str, object]) -> int:
         str(config["model_id"]),
         "--reserve-units",
         str(config["reserve_units"]),
-        "--limit-units",
-        str(config["limit_units"]),
     ]
+    if config.get("limit_units") is not None:
+        command += ["--limit-units", str(config["limit_units"])]
     if config["context_window"]:
         command += ["--context-window", str(config["context_window"])]
     if config["max_tokens"]:
@@ -569,7 +613,7 @@ def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
         authority = authorize_local(
             space, actor=actor, source_ref=f"local-console:{actor}:{uuid4()}"
         )
-        backup = create_assigned_backup(space, uuid4(), authority)
+        backup = create_assigned_backup(space, uuid4(), authority, pi_version=_runtime(config)[2])
         print(f"Pre-upgrade backup: {backup.package}")
         from .pi_adapter import prepare_space
 
@@ -589,7 +633,9 @@ def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
                     "execution_epoch": info.execution_epoch,
                     "recovery_state": info.recovery_state,
                     "workspace": str(config["workspace"]),
-                    "pi_cli": str(_pi_cli(Path(str(config["pi_runtime"])))),
+                    "pi_cli": str(_runtime(config)[1]),
+                    "pi_version": _runtime(config)[2],
+                    "pi_source": config.get("pi_source", "managed"),
                 },
                 indent=2,
             )
@@ -722,7 +768,11 @@ def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
     if args.command == "backup":
         if input("Type BACKUP for this selected Core space: ").strip() != "BACKUP":
             return 1
-        print(create_assigned_backup(space, uuid4(), authority).model_dump_json(indent=2))
+        print(
+            create_assigned_backup(
+                space, uuid4(), authority, pi_version=_runtime(config)[2]
+            ).model_dump_json(indent=2)
+        )
     elif args.command == "repair":
         report = pulse_space(space, authority)
         observations: list[dict[str, str]] = []
@@ -806,16 +856,145 @@ def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
     return 0
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="zara-core", description=__doc__)
+def _exchange(args: argparse.Namespace, config: dict[str, object]) -> int:
+    from .foundation import KnowledgeRef, authorize_local, read_space
+    from .pi_adapter import ManualExchange
+
+    reconfigure = getattr(sys.stdout, "reconfigure", None)
+    if reconfigure is not None:
+        reconfigure(encoding="utf-8")
+
+    space = Path(str(config["space"]))
+    info = read_space(space)
+    if str(info.space_id) != config["space_id"]:
+        raise ValueError("Selected space differs from the saved configuration")
+    authority = authorize_local(
+        space, actor=str(config["actor"]), source_ref=f"local-manual-exchange:{uuid4()}"
+    )
+    exchange = ManualExchange(space, authority)
+    operation_id = args.operation_id or uuid4()
+    if args.mode == "prepare":
+        result = exchange.prepare(
+            operation_id,
+            args.activity_id,
+            work_id=args.work_id,
+            external_tool=args.external_tool,
+        )
+    elif args.mode == "import":
+        content = args.file.read_bytes() if args.file is not None else sys.stdin.buffer.read()
+        if (args.reply_id is None) != (args.reply_revision is None):
+            raise ValueError("Reply needs the exact document ID and revision")
+        if (args.previous_source_id is None) != (args.previous_source_revision is None):
+            raise ValueError("Previous Source needs an exact ID and revision")
+        result = exchange.receive(
+            operation_id,
+            args.activity_id,
+            work_id=args.work_id,
+            origin=args.origin,
+            content=content,
+            previous_source=KnowledgeRef(
+                record_id=args.previous_source_id, revision=args.previous_source_revision
+            )
+            if args.previous_source_id is not None
+            else None,
+            sender=args.sender,
+            locator=str(args.file.resolve()) if args.file is not None else None,
+            reply_to=KnowledgeRef(record_id=args.reply_id, revision=args.reply_revision)
+            if args.reply_id is not None
+            else None,
+        )
+    else:
+        result = exchange.read(args.record_id, revision=args.revision)
+    if args.json:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        print(f"{result['kind']} {result['record_id']}@{result['revision']}")
+        print(result["content_text"], end="")
+    return 0
+
+
+def _integration(args: argparse.Namespace, config: dict[str, object]) -> int:
+    from .foundation import authorize_local, read_space
+    from .integrations import installed_integrations
+
+    space = Path(str(config["space"]))
+    if str(read_space(space).space_id) != config["space_id"]:
+        raise ValueError("Selected space differs from the saved configuration")
+    authority = authorize_local(
+        space, actor=str(config["actor"]), source_ref=f"local-integration:{uuid4()}"
+    )
+    registry = installed_integrations(space, authority)
+    if args.mode == "catalog":
+        result = registry.catalog()
+    elif args.mode == "contract":
+        result = registry.contract(args.adapter, args.operation)
+    else:
+        arguments = json.loads(args.arguments.read_text(encoding="utf-8"))
+        if not isinstance(arguments, dict):
+            raise ValueError("Expected one typed operation argument object")
+        result = registry.execute(
+            args.operation_id,
+            args.adapter,
+            args.operation,
+            arguments,
+            contract_version=args.contract_version,
+        ).output
+    reconfigure = getattr(sys.stdout, "reconfigure", None)
+    if reconfigure is not None:
+        reconfigure(encoding="utf-8")
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0
+
+
+def main(argv: list[str] | None = None, *, prog: str = "zara-core") -> int:
+    parser = argparse.ArgumentParser(prog=prog, description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    integration = commands.add_parser("integration", help="Installed typed integration operations")
+    integration_modes = integration.add_subparsers(dest="mode", required=True)
+    for mode in ("catalog", "contract", "apply"):
+        command = integration_modes.add_parser(mode)
+        command.add_argument("--config", type=Path)
+        if mode != "catalog":
+            command.add_argument("--adapter", required=True)
+            command.add_argument("--operation", required=True)
+        if mode == "apply":
+            command.add_argument("--arguments", required=True, type=Path)
+            command.add_argument("--contract-version", required=True, type=int)
+            command.add_argument("--operation-id", required=True, type=UUID)
+    exchange = commands.add_parser("exchange", help="Manual exchange with an external tool")
+    modes = exchange.add_subparsers(dest="mode", required=True)
+    for mode in ("prepare", "import", "read"):
+        command = modes.add_parser(mode)
+        command.add_argument("--config", type=Path)
+        command.add_argument("--operation-id", type=UUID)
+        command.add_argument("--json", action="store_true")
+        if mode == "read":
+            command.add_argument("--record-id", required=True, type=UUID)
+            command.add_argument("--revision", type=int)
+        else:
+            command.add_argument("--activity-id", required=True, type=UUID)
+            command.add_argument("--work-id", type=UUID)
+            if mode == "prepare":
+                command.add_argument("--external-tool", required=True)
+            else:
+                content = command.add_mutually_exclusive_group(required=True)
+                content.add_argument("--file", type=Path)
+                content.add_argument("--stdin", action="store_true")
+                command.add_argument("--origin", required=True)
+                command.add_argument("--sender")
+                command.add_argument("--previous-source-id", type=UUID)
+                command.add_argument("--previous-source-revision", type=int)
+                command.add_argument("--reply-id", type=UUID)
+                command.add_argument("--reply-revision", type=int)
     setup = commands.add_parser("setup")
     setup.add_argument("--config", required=True, type=Path)
     setup.add_argument("--space", required=True, type=Path)
     setup.add_argument("--workspace", required=True, type=Path)
     setup.add_argument("--new-space", action="store_true")
     setup.add_argument("--sqlite-dll", type=Path, help="Verified SQLite DLL for offline setup")
-    setup.add_argument("--pi-runtime", type=Path, help="Pinned Pi runtime for offline setup")
+    setup.add_argument(
+        "--pi-runtime", type=Path, help="Explicit Pi runtime; default uses pi on PATH"
+    )
     setup.add_argument("--node", default="node")
     setup.add_argument(
         "--provider-profile", choices=("codex-sse", "local-completions"), required=True
@@ -825,7 +1004,7 @@ def main(argv: list[str] | None = None) -> int:
     setup.add_argument("--model-id", required=True)
     setup.add_argument("--context-window", type=int)
     setup.add_argument("--max-tokens", type=int)
-    setup.add_argument("--limit-units", type=int, required=True)
+    setup.add_argument("--limit-units", type=int)
     setup.add_argument("--reserve-units", type=int, required=True)
     for name in (
         "run",
@@ -842,13 +1021,22 @@ def main(argv: list[str] | None = None) -> int:
         "change-install",
         "change-stop",
         "change-restore",
+        "bind",
+        "runtime",
+        "models",
     ):
         command = commands.add_parser(name)
-        command.add_argument("--config", required=True, type=Path)
+        command.add_argument("--config", type=Path)
         if name == "run":
             command.add_argument("--activity-id", type=UUID)
             command.add_argument("--work-id", type=UUID)
             command.add_argument("--pi-tools")
+            command.add_argument("--model", help="Codex subscription model for this run")
+            command.add_argument("--thinking")
+        elif name == "runtime":
+            command.add_argument("--use-system", action="store_true")
+        elif name == "models":
+            command.add_argument("search", nargs="?")
         elif name == "assign":
             command.add_argument("--attempt-id", type=UUID)
             command.add_argument("--work-id", type=UUID)
@@ -893,8 +1081,36 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "setup":
             return _setup(args)
-        config = _config(args.config.expanduser().resolve())
+        config_path = _selected_config(args.config)
+        config = _config(config_path)
         _actor(config)
+        if args.command == "integration":
+            return _integration(args, config)
+        if args.command == "bind":
+            _runtime(config)
+            _register_config(config_path)
+            print(f"Selected installation: {config_path}")
+            return 0
+        if args.command == "runtime":
+            return _runtime_command(args, config, config_path)
+        if args.command == "models":
+            _, cli, pi_version = _runtime(config)
+            print(f"Pi {pi_version}: {cli}", flush=True)
+            environment = os.environ.copy()
+            if config.get("subscription_agent_dir"):
+                environment["PI_CODING_AGENT_DIR"] = str(config["subscription_agent_dir"])
+            return subprocess.run(
+                [
+                    str(config["node"]),
+                    str(cli),
+                    "--list-models",
+                    *([args.search] if args.search else []),
+                ],
+                env=environment,
+                check=False,
+            ).returncode
+        if args.command == "exchange":
+            return _exchange(args, config)
         if args.command == "run":
             return _run(args, config)
         if args.command == "assign":
@@ -908,6 +1124,18 @@ def main(argv: list[str] | None = None) -> int:
         if isinstance(error, FoundationError):
             parser.exit(1, f"zara-core: {error.code}: {error}\n")
         raise
+
+
+def app_main(argv: list[str] | None = None) -> int:
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if arguments == ["--version"]:
+        from importlib.metadata import version
+
+        print(f"Zaratustra {version('zaratustra')}")
+        return 0
+    if not arguments or (arguments[0].startswith("-") and arguments[0] not in ("--help", "-h")):
+        arguments.insert(0, "run")
+    return main(arguments, prog="zaratustra")
 
 
 if __name__ == "__main__":

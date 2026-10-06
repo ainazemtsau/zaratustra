@@ -366,21 +366,28 @@ def read_sleep_usage(path: Path, work_id: UUID, authority: LocalAuthority) -> tu
         return _sleep_usage(connection, work_id)
 
 
-def check_sleep_invocation_budget(
-    connection: sqlite3.Connection, request: AdmitInvocationRequest
-) -> None:
-    """A Sleep limit covers parent and child Attempts inside the admitting transaction."""
-
-    root = str(request.work_id)
-    while True:
+def _root_work(connection: sqlite3.Connection, work_id: UUID) -> UUID:
+    root = str(work_id)
+    seen: set[str] = set()
+    while root not in seen:
+        seen.add(root)
         row = connection.execute(
             "SELECT parent_id FROM work_plan_children WHERE child_id=? UNION ALL "
             "SELECT parent_id FROM work_plan_members WHERE child_id=? LIMIT 1",
             (root, root),
         ).fetchone()
         if row is None:
-            break
+            return UUID(root)
         root = row[0]
+    raise FoundationError("corrupt_space", "Work ancestry contains a cycle")
+
+
+def check_sleep_invocation_budget(
+    connection: sqlite3.Connection, request: AdmitInvocationRequest
+) -> None:
+    """A Sleep limit covers parent and child Attempts inside the admitting transaction."""
+
+    root = str(_root_work(connection, request.work_id))
     row = connection.execute(
         "SELECT v.payload FROM development_records r JOIN development_revisions v "
         "ON v.record_id=r.record_id AND v.revision=r.current_revision "
@@ -399,7 +406,10 @@ def check_sleep_invocation_budget(
     ).fetchone()
     if prepared is None or prepared[1] != "prepared":
         return
-    if committed + held + int(prepared[0]) > state.resource_limit_units:
+    if (
+        state.resource_limit_units is not None
+        and committed + held + int(prepared[0]) > state.resource_limit_units
+    ):
         raise FoundationError("resource_exhausted", "Sleep's shared finite resource is spent")
 
 
@@ -2546,12 +2556,7 @@ def read_sleep_for_work(
             resource_type="work",
             resource_id=work_id,
         )
-        parent = connection.execute(
-            "SELECT parent_id FROM work_plan_children WHERE child_id=? UNION ALL "
-            "SELECT parent_id FROM work_plan_members WHERE child_id=? LIMIT 1",
-            (str(work_id), str(work_id)),
-        ).fetchone()
-        target_work_id = parent[0] if parent is not None else str(work_id)
+        target_work_id = str(_root_work(connection, work_id))
         row = connection.execute(
             "SELECT r.record_id FROM development_records r JOIN development_revisions v "
             "ON v.record_id=r.record_id AND v.revision=r.current_revision "

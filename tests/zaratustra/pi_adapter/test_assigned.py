@@ -1050,7 +1050,7 @@ def test_launch_claim_is_exact_and_rejects_a_second_process(tmp_path: Path) -> N
     assert snapshot.attempts[0].status == "active"
 
 
-def test_incompatible_pi_package_refuses_before_dbos_launch(tmp_path: Path) -> None:
+def test_wrong_pi_package_refuses_before_dbos_launch(tmp_path: Path) -> None:
     root, workspace, _, work_id, attempt_id, _ = assigned(tmp_path)
     owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
     runtime = tmp_path / "runtime"
@@ -1059,7 +1059,7 @@ def test_incompatible_pi_package_refuses_before_dbos_launch(tmp_path: Path) -> N
     cli.parent.mkdir(parents=True)
     cli.write_text("synthetic", encoding="utf-8")
     (package / "package.json").write_text(
-        '{"name":"@earendil-works/pi-coding-agent","version":"0.88.0"}',
+        '{"name":"another-package","version":"1.0.4"}',
         encoding="utf-8",
     )
     config = AssignedConfig(
@@ -1313,8 +1313,12 @@ def test_rpc_runtime_exit_keeps_stderr_separate_from_eof() -> None:
     assert b"synthetic runtime load failure" in tail
 
 
+@pytest.mark.parametrize("exit_before_prompt", [False, True])
 def test_claimed_runtime_exit_does_not_start_a_second_pi_process(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    exit_before_prompt: bool,
 ) -> None:
     root, workspace, _, work_id, attempt_id, _ = assigned(tmp_path)
     owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
@@ -1332,7 +1336,7 @@ def test_claimed_runtime_exit_does_not_start_a_second_pi_process(
         stderr: int,
     ) -> subprocess.Popen[bytes]:
         starts.append(command)
-        return original_popen(
+        process = original_popen(
             [
                 sys.executable,
                 "-c",
@@ -1345,10 +1349,19 @@ def test_claimed_runtime_exit_does_not_start_a_second_pi_process(
             stderr=stderr,
         )
 
+        if exit_before_prompt:
+            assert process.wait(timeout=5) == 17
+        return process
+
     monkeypatch.setattr(subprocess, "Popen", failed_runtime)
     monkeypatch.setenv("ZARATUSTRA_RPC_DIAGNOSTICS", "1")
-    with pytest.raises(FoundationError, match="Pi RPC EOF"):
+    # The child may exit before the prompt is written or while RPC reads it.
+    # Both are observed failures; neither permits a second claimed launch.
+    with pytest.raises(FoundationError, match="Pi RPC") as refused:
         run_assigned(config, owner, attempt_id)
+    assert refused.value.code in {"rpc_stopped", "rpc_transport"}
+    if exit_before_prompt:
+        assert refused.value.code == "rpc_stopped"
     first = read_execution(root, work_id, owner)
     assert first.assignments[0].status == "stopped"
     assert first.invocations == () and first.held_units == 0

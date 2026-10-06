@@ -27,6 +27,7 @@ from zaratustra.foundation import (
     PrepareInvocationRequest,
     ResourceState,
     ReviseArtifactRequest,
+    ReviseResourceRequest,
     RevokeGrantRequest,
     SendInvocationRequest,
     StartAttemptRequest,
@@ -261,6 +262,94 @@ def test_reserve_replay_unknown_and_new_session(tmp_path: Path) -> None:
     assert snapshot.held_units == 40 and snapshot.remaining_units == 60
     assert snapshot.attempts[-1].previous_attempt_id == attempt_id
     assert snapshot.invocations[0].status == "unknown"
+
+
+def test_removing_resource_cap_preserves_prior_usage_and_allows_next_attempt(
+    tmp_path: Path,
+) -> None:
+    root, working, space_id, _, work_id, resource_id, owner = ready(tmp_path)
+    first, session = start(root, space_id, work_id, resource_id, owner)
+    invocation_id, _ = invocation(root, space_id, work_id, first, session, owner, 30)
+    common: InvocationFields = dict(
+        invocation_id=invocation_id, attempt_id=first, work_id=work_id, session_id=session
+    )
+    for request in (
+        AdmitInvocationRequest(
+            operation_id=uuid4(), space_id=space_id, actor=owner.actor, **common
+        ),
+        SendInvocationRequest(operation_id=uuid4(), space_id=space_id, actor=owner.actor, **common),
+        FinishInvocationRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor=owner.actor,
+            outcome="answered",
+            usage_units=125,
+            **common,
+        ),
+    ):
+        apply_operation(root, request, owner)
+    apply_operation(
+        root,
+        StopAttemptRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor=owner.actor,
+            attempt_id=first,
+            work_id=work_id,
+            session_id=session,
+            outcome="completed",
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        ReviseResourceRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor=owner.actor,
+            resource_id=resource_id,
+            work_id=work_id,
+            expected_revision=1,
+            state=ResourceState(label="Synthetic workdir", root=working),
+        ),
+        owner,
+    )
+    next_attempt, next_session = uuid4(), uuid4()
+    apply_operation(
+        root,
+        StartAttemptRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor=owner.actor,
+            attempt_id=next_attempt,
+            work_id=work_id,
+            expected_work_revision=1,
+            resource_id=resource_id,
+            expected_resource_revision=2,
+            session_id=next_session,
+            previous_attempt_id=first,
+        ),
+        owner,
+    )
+    next_id, _ = invocation(root, space_id, work_id, next_attempt, next_session, owner, 30)
+    apply_operation(
+        root,
+        AdmitInvocationRequest(
+            operation_id=uuid4(),
+            space_id=space_id,
+            actor=owner.actor,
+            invocation_id=next_id,
+            attempt_id=next_attempt,
+            work_id=work_id,
+            session_id=next_session,
+        ),
+        owner,
+    )
+    reopened = authorize_local(root, actor=owner.actor, source_ref="new-local-session")
+    snapshot = read_execution(root, work_id, reopened)
+    assert snapshot.committed_units == 125 and snapshot.held_units == 30
+    assert snapshot.limit_units is None and snapshot.remaining_units is None
+    assert snapshot.invocations[0].status == "answered"
 
 
 def test_stale_input_blocks_pre_send(tmp_path: Path) -> None:

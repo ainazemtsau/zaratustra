@@ -8,7 +8,9 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from tests.zaratustra.foundation.test_applicability import _issue
 from tests.zaratustra.foundation.test_binding import _accepted, _new_definition, _ready
+from tests.zaratustra.foundation.test_nested_composition import _add_nested, _nested
 from zaratustra.foundation import (
     ApplyCandidateRequest,
     BindingChange,
@@ -48,11 +50,15 @@ from zaratustra.foundation import (
     read_binding_version,
     read_change_application,
     read_development,
+    read_sleep_for_work,
     read_space,
+    read_work,
     restore_backup,
     sleep_work_template,
+    upgrade_binding_space,
     upgrade_development_space,
     upgrade_knowledge_space,
+    upgrade_parent_execution_space,
 )
 from zaratustra.foundation.models import (
     MethodChange,
@@ -77,6 +83,41 @@ def _operation(
         kind(operation_id=uuid4(), space_id=space, actor="owner", **fields),
         owner,
     )
+
+
+def test_nested_work_reads_the_same_root_sleep_context(tmp_path: Path) -> None:
+    case = _nested(tmp_path)
+    root, space, owner = case.setup.root, case.setup.space, case.setup.owner
+    apply_operation(root, _add_nested(case), owner)
+    _issue(case.parent, "review")
+    _issue(case.node, "g")
+    for upgrade in (
+        upgrade_parent_execution_space,
+        upgrade_binding_space,
+        upgrade_knowledge_space,
+        upgrade_development_space,
+    ):
+        upgrade(root, owner)
+    method = read_work(root, case.parent.parent, owner).state.method
+    assert isinstance(method, MethodRef)
+    sleep_id = uuid4()
+    _operation(
+        root,
+        space,
+        owner,
+        CreateDevelopmentRequest,
+        record_id=sleep_id,
+        state=SleepState(
+            work_id=case.parent.parent,
+            method=method,
+            scope_activity_ids=(),
+            intake_cutoff_revision=read_space(root).state_revision,
+        ),
+    )
+    exact = read_sleep_for_work(root, case.nested_child.work_id, owner)
+    assert exact is not None and exact.record_id == sleep_id
+    assert read_sleep_for_work(root, case.node.parent, owner) == exact
+    assert read_sleep_for_work(root, case.parent.parent, owner) == exact
 
 
 def test_sleep_enumeration_persists_cursor_across_two_pages(tmp_path: Path) -> None:

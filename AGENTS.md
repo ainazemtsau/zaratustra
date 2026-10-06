@@ -6,10 +6,12 @@
   `docs/core-v0.1/CONSOLIDATION-20261001.md` before branch, setup or adapter work.
   The former Home/file-first main is retained in Git history, not a second
   current backend. Core's SQLite domain authority and the accepted specification
-  remain unchanged. Current ordinary entry is `zara-core`; earlier `zara`,
+  remain unchanged. Current ordinary entry is `zaratustra`, using ordinary Pi
+  from PATH; `zara-core` is the compatible maintenance entry. Earlier `zara`,
   `zara-agent` instructions and Home-era plans are historical context.
-  ChatGPT + phone + local agents and Health-first are the owner's current use
-  request; only the ordinary Pi connection has current implementation evidence.
+  The installed integration boundary supplies manual prepare/retain/read and
+  adaptable external-chat guidance. Repository reading by an external account
+  is distinct from a Zaratustra API connector; do not infer account setup from code.
 - The owner delivery policy for the current release work is `docs/core-v0.1/DELIVERY-POLICY-20260926.md`; it changes validation organization, not product contracts. The stabilization technical review closed at `afe995d9739f655a6f495216f56dc4f53558dd97`; see `docs/core-v0.1/STABILIZATION-REVIEW-CLOSURE-20260926.md`. Nine independent targeted tests passed; the full 728-test gate is implementation evidence. Historical SQLite lock-holder and Pi exit causes remain unestablished.
 - The current product basis is `docs/core-v0.1/IMPLEMENTATION-BASELINE.md`, the
   owner-approved Core v0.1 implementation plan recorded there,
@@ -117,6 +119,17 @@
   the complete Stage 5 at `245e7288c08eb4d49c84edd89f01e746a45c37a5`;
   see `docs/core-v0.1/STAGE5-ACCEPTANCE.md`. This is separate from accepting
   the synthetic Stage 5 Work.
+
+## Product and instance boundary
+
+Shared functionality and non-personal instructions belong in this source tree.
+User Activity goals, access reports, instance paths/IDs, raw conversations and operational
+receipts belong in the user's Core or selected private delivery copies, not public docs.
+The package's integrations sit above the public foundation and below Pi/release.
+Technical contracts are exact; user goals are open. GitHub is the changing context source
+when available; an attached Project file is a fallback, never an obligatory duplicate.
+Publication requires an explicit request naming the destination. Preserve local history
+and parallel dirty work; do not publish private preparation branches merely to keep ancestry.
 
 ## Commands (run from this repository)
 - Prepare: `uv sync --locked`

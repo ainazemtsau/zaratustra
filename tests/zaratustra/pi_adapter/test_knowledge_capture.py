@@ -288,3 +288,137 @@ def test_trial_send_cap_survives_bridge_restart_and_assigned_attempt(
                 "stage": "prepared",
             },
         )
+
+
+def test_large_context_keeps_full_source_and_reuses_exact_manifest(tmp_path: Path) -> None:
+    root, _, owner, _, _ = _ready(tmp_path)
+    upgrade_knowledge_space(root, owner)
+    bridge = Bridge(root, owner, tmp_path)
+    session_id = uuid4()
+    bridge.connect(session_id)
+    text = "Полный исходный материал. " * 5000
+    captured = bridge.capture_source(
+        session_id, channel="conversation_user", content=text, source_event_id="large-source"
+    )
+    first = bridge.prepare_context(session_id)
+    assert cast(dict[str, object], first["packet"])["prompt_text"] == text
+    assert bridge.prepare_context(session_id)["manifest_id"] == first["manifest_id"]
+    source_id = UUID(str(cast(dict[str, object], captured["result"])["record_id"]))
+    retained = read_knowledge(root, source_id, owner)
+    assert isinstance(retained.state, SourceState)
+    assert retained.state.content == text.encode()
+    bridge.capture_source(
+        session_id, channel="conversation_user", content="New exact source", source_event_id="next"
+    )
+    assert bridge.prepare_context(session_id)["manifest_id"] != first["manifest_id"]
+
+
+def test_unlimited_conversation_keeps_usage_across_bridge_restart(tmp_path: Path) -> None:
+    root, _, owner, _, _ = _ready(tmp_path)
+    upgrade_knowledge_space(root, owner)
+    for index in range(2):
+        bridge = Bridge(root, owner, tmp_path)
+        session_id = uuid4()
+        bridge.connect(session_id)
+        bridge.capture_source(
+            session_id, channel="conversation_user", content="Continue", source_event_id=str(index)
+        )
+        manifest = bridge.prepare_context(session_id)
+        common = {
+            "invocation_id": str(uuid4()),
+            "manifest_id": manifest["manifest_id"],
+            "manifest_revision": manifest["manifest_revision"],
+        }
+        prepared = bridge.context_delivery(
+            session_id, {**common, "stage": "prepared", "reserve_units": 30}
+        )
+        assert prepared["result"]
+        bridge.context_delivery(
+            session_id,
+            {**common, "stage": "sent", "request_sha256": "A" * 64, "request_bytes": 123},
+        )
+        answered = bridge.context_delivery(
+            session_id, {**common, "stage": "answered", "usage_units": 20000000}
+        )
+        assert answered["result"]
+
+
+def test_saved_user_message_restores_manifest_without_duplicate_source(tmp_path: Path) -> None:
+    root, _, owner, _, _ = _ready(tmp_path)
+    upgrade_knowledge_space(root, owner)
+    native_session = uuid4()
+    restored = []
+    for _ in range(2):
+        bridge = Bridge(root, owner, tmp_path)
+        session_id = uuid4()
+        bridge.connect(session_id)
+        receipt = bridge.capture_source(
+            session_id,
+            channel="conversation_user",
+            content="Retained fictional user message",
+            source_event_id="resume:saved-entry",
+            input_source="session-resume",
+            replay_session_id=native_session,
+            limitations=("Restored from a saved Pi user message; not a new owner request",),
+        )
+        source_id = UUID(str(cast(dict[str, object], receipt["result"])["record_id"]))
+        restored.append(source_id)
+        manifest = bridge.prepare_context(session_id, purpose="compaction-summary")
+        assert (
+            cast(dict[str, object], manifest["packet"])["prompt_text"]
+            == "Retained fictional user message"
+        )
+        source = read_knowledge(root, source_id, owner)
+        assert isinstance(source.state, SourceState)
+        assert source.state.sender == "pi-session-history"
+        assert source.state.conversation_id == str(native_session)
+    assert restored[0] == restored[1]
+    items = cast(
+        list[dict[str, object]],
+        search_knowledge(root, owner, "Retained fictional user message")["items"],
+    )
+    assert len(items) == 1
+
+
+def test_saved_message_replay_does_not_recreate_deleted_source(tmp_path: Path) -> None:
+    root, space, owner, _, _ = _ready(tmp_path)
+    upgrade_knowledge_space(root, owner)
+    native_session = uuid4()
+    bridge = Bridge(root, owner, tmp_path)
+    session_id = uuid4()
+    bridge.connect(session_id)
+    captured = bridge.capture_source(
+        session_id,
+        channel="conversation_user",
+        content="Fictional replay to be deleted",
+        source_event_id="resume:saved-entry",
+        input_source="session-resume",
+        replay_session_id=native_session,
+    )
+    source_id = UUID(str(cast(dict[str, object], captured["result"])["record_id"]))
+    apply_operation(
+        root,
+        DeleteKnowledgeRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor=owner.actor,
+            record_id=source_id,
+            expected_revision=1,
+        ),
+        owner,
+    )
+    assert complete_deletions(root, owner).live_store_sanitized
+    reopened = Bridge(root, owner, tmp_path)
+    resumed = uuid4()
+    reopened.connect(resumed)
+    with pytest.raises(FoundationError, match="history_unavailable"):
+        reopened.capture_source(
+            resumed,
+            channel="conversation_user",
+            content="Fictional replay to be deleted",
+            source_event_id="resume:saved-entry",
+            input_source="session-resume",
+            replay_session_id=native_session,
+        )
+    assert read_knowledge(root, source_id, owner).availability == "deleted"
+    assert search_knowledge(root, owner, "Fictional replay to be deleted")["items"] == []

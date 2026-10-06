@@ -47,6 +47,7 @@ from zaratustra.foundation import (
 )
 
 from .bridge import PROTOCOL_VERSION, Bridge, BridgeServer
+from .runtime import read_pi_runtime
 
 if TYPE_CHECKING:
     from dbos import DBOSClient
@@ -130,7 +131,7 @@ class AssignedConfig:
     context_window: int | None
     max_tokens: int | None
     reserve_units: int
-    limit_units: int
+    limit_units: int | None
     offline: bool = False
     pi_tools: tuple[str, ...] = ()
     disable_tools: bool = False
@@ -350,7 +351,9 @@ def complete_assigned_deletions(space: Path, authority: LocalAuthority) -> Delet
     return complete_deletions(space, authority, technical_cleanup=_purge_technical_data)
 
 
-def create_assigned_backup(space: Path, backup_id: UUID, authority: LocalAuthority) -> BackupInfo:
+def create_assigned_backup(
+    space: Path, backup_id: UUID, authority: LocalAuthority, *, pi_version: str = PI_VERSION
+) -> BackupInfo:
     """Snapshot the managed Core/DBOS/Pi composition with its pinned runtime versions."""
 
     executor = space.resolve() / ".zara-core" / "executor.sqlite3"
@@ -362,7 +365,7 @@ def create_assigned_backup(space: Path, backup_id: UUID, authority: LocalAuthori
         technical_versions = TechnicalVersions(
             executor=EXECUTOR_VERSION,
             dbos=actual_dbos,
-            pi=PI_VERSION,
+            pi=pi_version,
             bridge_protocol=PROTOCOL_VERSION,
         )
     return create_backup(space, backup_id, authority, technical_versions=technical_versions)
@@ -863,7 +866,7 @@ def _execute_under_lock(
                 pass
         raise
     extension = Path(str(files("zaratustra.pi_adapter").joinpath("extension.ts")))
-    installed = config.pi_runtime / f"zaratustra-assigned-{attempt_id}.ts"
+    installed = extension
     server: BridgeServer | None = None
     thread: threading.Thread | None = None
     process: subprocess.Popen[bytes] | None = None
@@ -880,7 +883,6 @@ def _execute_under_lock(
     exit_before_host_stop: int | None = None
     try:
         with managed_pi_session_lock(config.space):
-            shutil.copy2(extension, installed)
             bridge = Bridge(
                 config.space,
                 authority,
@@ -1106,7 +1108,6 @@ def _execute_under_lock(
             server.server_close()
         if thread is not None:
             thread.join(timeout=5)
-        installed.unlink(missing_ok=True)
         try:
             _record_stop(
                 config,
@@ -1175,22 +1176,12 @@ def _run_assigned_locked(
             "workspace": config.workspace.resolve(),
         }
     )
-    package_root = config.pi_runtime / "node_modules" / "@earendil-works" / "pi-coding-agent"
-    package_file = package_root / "package.json"
-    expected_cli = package_root / "dist" / "bundle" / "cli.js"
-    if not package_file.is_file() or not expected_cli.is_file():
-        raise FoundationError("rpc_runtime", "Pinned ordinary Pi runtime is unavailable")
     try:
-        package = json.loads(package_file.read_text(encoding="utf-8"))
+        runtime = read_pi_runtime(config.pi_runtime)
     except (OSError, ValueError) as error:
-        raise FoundationError("pi_version", "Pi package metadata is unreadable") from error
-    if (
-        not isinstance(package, dict)
-        or package.get("name") != "@earendil-works/pi-coding-agent"
-        or package.get("version") != PI_VERSION
-        or config.pi_cli.resolve() != expected_cli.resolve()
-    ):
-        raise FoundationError("pi_version", "Assigned Pi RPC requires pinned Pi 0.87.0")
+        raise FoundationError("pi_version", f"Pi runtime is unavailable: {error}") from error
+    if config.pi_cli.resolve() != runtime.cli:
+        raise FoundationError("pi_version", "Assigned Pi CLI differs from its selected package")
     if config.provider_profile not in ("local-completions", "codex-sse"):
         raise FoundationError("rpc_profile", "Pi provider transport profile is unsupported")
     parsed = urlsplit(config.provider_base_url)
@@ -1330,7 +1321,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--subscription-agent-dir", type=Path)
     parser.add_argument("--offline", action="store_true")
     parser.add_argument("--reserve-units", required=True, type=int)
-    parser.add_argument("--limit-units", required=True, type=int)
+    parser.add_argument("--limit-units", type=int)
     args = parser.parse_args(argv)
     if not sys.stdin.isatty() or not sys.stdout.isatty():
         parser.error("Start from an interactive local console for trusted setup")

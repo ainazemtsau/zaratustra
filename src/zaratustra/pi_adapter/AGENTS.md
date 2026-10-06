@@ -1,6 +1,25 @@
 # Interactive Pi adapter
 
+`manual_exchange.py` is a compatibility import from `zaratustra.integrations`.
+The shared adapter owns manual operations over public Core, not Pi or release state.
+`zara_integration` exposes installed catalog/contract/apply; actor and operation identity
+come from the host session. Assigned RPC cannot use this interactive setup path.
+It propagates only exact references whose content was actually exposed, not import
+acknowledgements. Read windows are bounded; instance settings and sources remain Core
+data. Do not infer sending, matching or acceptance from preparation or source import.
+The interactive launcher explicitly passes the installed `zaratustra-external` skill
+via Pi's native --skill path; never substitute a cwd profile or copy personal settings
+into package resources. Synthetic tools.probe_external_pi checks actual delivery and
+retention/reopening, not autonomous instruction quality or a real external connection.
+
 This package hosts the loopback HTTP bridge for ordinary upstream Pi.
+Resolve the ordinary Pi from PATH for the selected system runtime on each launch,
+including assigned Work. Do not freeze a second Pi installation or copy the extension
+into npm-owned files. The wheel supplies extension bytes; the extension resolves its
+dependencies from the actual Pi CLI. Preserve explicit-runtime configurations as an
+opt-in and keep subscription-agent-dir separate from managed Pi sessions. Pi 1.0.4
+has scoped interactive, compaction and assigned localhost evidence; future updates
+still pass the existing provider observation and Core admission checks.
 It establishes local authority in the host process, never from model or request text.
 It composes public foundation operations and owns no model loop or subject store.
 The TypeScript extension runs inside ordinary upstream Pi and observes supported
@@ -51,8 +70,34 @@ semantic judge runs in the foundation. The development-only localhost synthetic
 model probe is `tools.probe_binding_pi --pi-runtime <path>`.
 Interactive Pi captures admitted conversation text and exposes `zara_memory`
 for typed sources, Claim and handoff mutations plus exact retrieval. Core stores
-the original, not the extension. A ContextManifest is prepared from current Core
+the original, not the extension. Memory creation and revision use the current Core
+rights without per-record owner prompts; interactive deletion still requires exact
+confirmation and assigned Attempts cannot delete knowledge. A ContextManifest is prepared from current Core
 rights, Work/Method/plan and scoped evidence for each request; the actual provider
 body is observed separately and must contain its marker. Free conversation has
-a separate bounded call budget. The local synthetic multi-process trace is
+separate durable usage accounting. Spending/context caps are optional and must
+be explicitly configured; absence means no local spending stop. Ordinary Work
+delivers complete results through `zara_result` and Core's atomic Attempt
+publication. Routine conversation never replaces a linked output. The local synthetic multi-process trace is
 `tools.probe_knowledge_pi --pi-runtime <path>`.
+Native split compaction can send history and turn-prefix summaries separately.
+Keep its purpose through the whole lifecycle, prepare the current manifest for
+each HTTP, and finish each provider stream's own usage before closing its Attempt.
+The aggregate compaction entry is not per-request usage. The focused synthetic
+trace is `tools.probe_knowledge_pi --split-compaction-only --pi-runtime <path>`;
+`--fail-prefix` preserves an unknown second send without erasing the first usage.
+Compact must also work immediately after reopening a saved Pi session, before any
+new prompt or Work selection. Restore only the last original user message on the
+actual branch, label it as saved history, and use native session/entry identity
+for idempotent capture. Do not capture a generated summary as user input or infer
+Work selection/authority from history. `--resume-compaction-only` checks native
+startup and switch_session with fresh Bridge processes and no intervening prompt.
+Routine `zara_development` preparation and evidence writes do not ask per-operation
+owner confirmation: new Work/Artifact/resource, Method registration already admitted
+by Core, composite preparation/child issue, output linking, Sleep/Candidate revisions
+and change outcome observations. All other development mutations stay confirmed,
+including acceptance, Decisions, deletion, obligations and application/stop/restore.
+This UI policy grants no Core rights and does not admit a reusable Method or Candidate.
+Keep assigned RPC's narrower operation allowlist. The ordinary localhost trace is
+`tools.probe_development_autonomy_pi`; it fails on any routine confirmation, then checks
+reopening, cancelled owner actions and explicit acceptance/deletion.

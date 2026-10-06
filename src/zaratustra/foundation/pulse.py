@@ -227,6 +227,12 @@ def pulse_space(
                 (
                     "execution_invocations",
                     "invocation_id",
+                    "'admitted'",
+                    "invocation_not_sent",
+                ),
+                (
+                    "execution_invocations",
+                    "invocation_id",
                     "'sent','unknown'",
                     "external_outcome_unknown",
                 ),

@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 import queue
+import re
 import shutil
 import subprocess
 import tempfile
@@ -16,16 +17,19 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib.resources import files
 from pathlib import Path
 from typing import Any, cast
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from tests.zaratustra.foundation.test_binding import _apply, _ready
 from zaratustra.foundation import (
     ClaimState,
     CreateWorkRequest,
+    FoundationError,
     HandoffState,
+    KnowledgeRef,
     OutputContract,
-    StopAttemptRequest,
+    SourceState,
     WorkState,
+    read_artifact,
     read_execution,
     read_knowledge,
     read_space,
@@ -38,13 +42,15 @@ from zaratustra.pi_adapter import Bridge, BridgeServer
 class Provider(ThreadingHTTPServer):
     def __init__(
         self,
-        script: list[dict[str, object] | Callable[[dict[str, Any]], dict[str, object]]],
+        script: list[dict[str, object] | Callable[[dict[str, Any]], dict[str, object]] | None],
         *,
         final_content: str = "The addressed step is complete.",
+        usage_step: int = 0,
     ) -> None:
         super().__init__(("127.0.0.1", 0), ProviderHandler)
         self.script = script
         self.final_content = final_content
+        self.usage_step = usage_step
         self.calls = 0
         self.requests: list[dict[str, Any]] = []
 
@@ -63,6 +69,12 @@ class ProviderHandler(BaseHTTPRequestHandler):
         scripted = self.server.script[call - 1] if call <= len(self.server.script) else None
         if callable(scripted):
             scripted = scripted(body)
+        if scripted is not None and "_http_status" in scripted:
+            self.send_response(int(str(scripted["_http_status"])))
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"error":{"message":"Fictional summary failure"}}')
+            return
         chunks: list[dict[str, object]] = [
             {
                 "id": "synthetic",
@@ -110,7 +122,11 @@ class ProviderHandler(BaseHTTPRequestHandler):
                 "id": "synthetic",
                 "object": "chat.completion.chunk",
                 "choices": [],
-                "usage": {"prompt_tokens": 30, "completion_tokens": 20, "total_tokens": 50},
+                "usage": {
+                    "prompt_tokens": 30 + self.server.usage_step * call,
+                    "completion_tokens": 20,
+                    "total_tokens": 50 + self.server.usage_step * call,
+                },
             }
         )
         self.send_response(200)
@@ -158,13 +174,26 @@ def run_process(
     work: tuple[object, object] | None = None,
     compact: bool = False,
     continue_after_compact: bool = False,
+    split_compact: bool = False,
+    expected_compact_failure: bool = False,
+    confirmation_answers: tuple[bool, ...] = (),
+    continue_work: bool = False,
+    expected_pre_send_failure: bool = False,
+    expected_repeated_tool_failure: bool = False,
+    expected_provider_calls: int | None = None,
+    session_directory: Path | None = None,
+    resume_session: Path | None = None,
+    resume_via_switch: bool = False,
+    prompt: str = "Keep the fictional material, Claim and handoff trace.",
+    skills: tuple[Path, ...] = (),
+    catalog_only: bool = False,
 ) -> list[dict[str, object]]:
     bridge_server = BridgeServer(bridge)
     bridge_thread = threading.Thread(target=bridge_server.serve_forever, daemon=True)
     bridge_thread.start()
     provider_thread = threading.Thread(target=provider.serve_forever, daemon=True)
     provider_thread.start()
-    installed = runtime / f"zaratustra-knowledge-{uuid4()}.ts"
+    installed = directory / f"zaratustra-knowledge-{uuid4()}.ts"
     shutil.copyfile(Path(str(files("zaratustra.pi_adapter").joinpath("extension.ts"))), installed)
     home = directory / f"pi-home-{uuid4()}"
     home.mkdir()
@@ -206,6 +235,10 @@ def run_process(
     )
     if work:
         env["ZARA_INITIAL_ACTIVITY_ID"], env["ZARA_INITIAL_WORK_ID"] = map(str, work)
+    if catalog_only:
+        env["ZARA_PROVIDER_PROFILE"] = "codex-sse"
+        env["ZARA_PROVIDER_BASE_URL"] = "https://chatgpt.com/backend-api"
+        env["ZARA_PROVIDER_ORIGIN"] = "https://chatgpt.com"
     cli = runtime / "node_modules" / "@earendil-works" / "pi-coding-agent" / "dist" / "cli.js"
     command = [
         shutil.which("node") or "node",
@@ -213,20 +246,27 @@ def run_process(
         "--mode",
         "rpc",
         "--provider",
-        "fictional-local",
+        "openai-codex" if catalog_only else "fictional-local",
         "--model",
-        "fictional-model",
+        "gpt-6.1-sol" if catalog_only else "fictional-model",
         "--extension",
         str(installed),
         "--no-extensions",
         "--no-context-files",
-        "--no-session",
         "--no-skills",
         "--no-prompt-templates",
         "--no-themes",
         "--no-approve",
         "--offline",
     ]
+    for skill in skills:
+        command.extend(["--skill", str(skill)])
+    if session_directory is not None:
+        command.extend(["--session-dir", str(session_directory)])
+    elif resume_session is None or resume_via_switch:
+        command.append("--no-session")
+    if resume_session is not None and not resume_via_switch:
+        command.extend(["--session", str(resume_session)])
     process: subprocess.Popen[bytes] | None = None
     observed: list[dict[str, object]] = []
     try:
@@ -252,19 +292,23 @@ def run_process(
 
         threading.Thread(target=reader, daemon=True).start()
         assert process.stdin is not None
-        process.stdin.write(
-            json.dumps(
-                {
-                    "id": "knowledge",
-                    "type": "prompt",
-                    "message": "Keep the fictional material, Claim and handoff trace.",
-                }
-            ).encode()
-            + b"\n"
+        initial_command = (
+            {"id": "resume", "type": "switch_session", "sessionPath": str(resume_session)}
+            if resume_session is not None and resume_via_switch
+            else {"id": "compact", "type": "compact"}
+            if resume_session is not None
+            else {
+                "id": "knowledge",
+                "type": "prompt",
+                "message": "/zara-models" if catalog_only else prompt,
+            }
         )
+        process.stdin.write(json.dumps(initial_command).encode() + b"\n")
         process.stdin.flush()
-        compaction_started = False
+        compaction_started = resume_session is not None
+        second_turn_started = False
         continuation_started = False
+        confirmations = 0
         deadline = time.monotonic() + 90
         while time.monotonic() < deadline:
             try:
@@ -274,10 +318,22 @@ def run_process(
                     break
                 continue
             observed.append(event)
+            if catalog_only and "zaratustra_models" in json.dumps(event):
+                break
+            if event.get("type") == "response" and event.get("id") == "resume":
+                assert event.get("success") is True, event
+                process.stdin.write(b'{"id":"compact","type":"compact"}\n')
+                process.stdin.flush()
+                continue
+            if expected_pre_send_failure and event.get("type") == "extension_error":
+                break
             if event.get("type") == "extension_ui_request" and event.get("method") == "confirm":
+                assert confirmations < len(confirmation_answers), ("Unexpected confirmation", event)
+                confirmed = confirmation_answers[confirmations]
+                confirmations += 1
                 process.stdin.write(
                     json.dumps(
-                        {"type": "extension_ui_response", "id": event["id"], "confirmed": True}
+                        {"type": "extension_ui_response", "id": event["id"], "confirmed": confirmed}
                     ).encode()
                     + b"\n"
                 )
@@ -290,12 +346,20 @@ def run_process(
                 assert provider.calls >= 1, [
                     item for item in observed if item.get("type") == "extension_error"
                 ]
+                if split_compact and not second_turn_started:
+                    process.stdin.write(
+                        b'{"id":"second","type":"prompt",'
+                        b'"message":"Inspect the fictional material in a second turn."}\n'
+                    )
+                    process.stdin.flush()
+                    second_turn_started = True
+                    continue
                 process.stdin.write(b'{"id":"compact","type":"compact"}\n')
                 process.stdin.flush()
                 compaction_started = True
                 continue
             if compact and event.get("type") == "response" and event.get("id") == "compact":
-                assert event.get("success") is True, (
+                assert event.get("success") is (not expected_compact_failure), (
                     event,
                     provider.calls,
                     [
@@ -319,6 +383,14 @@ def run_process(
             ):
                 break
             if not compact and event.get("type") == ("agent_settled" if work else "agent_end"):
+                if continue_work and not continuation_started:
+                    process.stdin.write(
+                        b'{"id":"continue","type":"prompt",'
+                        b'"message":"Revise the fictional draft."}\n'
+                    )
+                    process.stdin.flush()
+                    continuation_started = True
+                    continue
                 break
         errors = [
             event
@@ -333,9 +405,17 @@ def run_process(
         failures = [
             event for event in observed if event.get("type") in ("extension_error", "response")
         ]
-        expected_calls = len(provider.script) + (
-            3 if continue_after_compact else 2 if compact else 1
+        expected_calls = (
+            0
+            if expected_pre_send_failure or catalog_only
+            else 2
+            if expected_repeated_tool_failure
+            else len(provider.script)
+            + (3 if continue_after_compact else 2 if compact or continue_work else 1)
+            + int(split_compact)
         )
+        if expected_provider_calls is not None:
+            expected_calls = expected_provider_calls
         assert provider.calls == expected_calls, (
             provider.calls,
             stderr,
@@ -343,7 +423,11 @@ def run_process(
         )
         if compact:
             assert all("ZARA_MANIFEST:" in json.dumps(body) for body in provider.requests)
-        assert not errors, errors
+        if expected_repeated_tool_failure:
+            assert len(errors) == 2, errors
+        else:
+            assert not errors, errors
+        assert confirmations == len(confirmation_answers), observed
         return observed
     finally:
         if process is not None:
@@ -477,16 +561,8 @@ def run_probe(tmp_path: Path, runtime: Path) -> None:
     assert all(str(work_one) in json.dumps(body) for body in before.requests)
     assert "work_address" in json.dumps(before.requests[1])
     assert str(claim_id) in json.dumps(before.requests[2])
-    active = read_execution(root, work_one, owner).attempts[-1]
-    _apply(
-        root,
-        space,
-        owner,
-        StopAttemptRequest,
-        attempt_id=active.attempt_id,
-        work_id=work_one,
-        session_id=active.session_id,
-        outcome="interrupted",
+    assert all(
+        item.status == "completed" for item in read_execution(root, work_one, owner).attempts
     )
     assert any(
         str(claim_id) in json.dumps(body) and str(document_id) in json.dumps(body)
@@ -527,23 +603,524 @@ def run_probe(tmp_path: Path, runtime: Path) -> None:
             expected_outputs=(OutputContract(slot="result", media_type="text/plain"),),
         ),
     )
-    after = Provider([])
+
+    class RefusingContextBridge(Bridge):
+        def prepare_context(self, session_id: UUID, purpose: str = "content") -> dict[str, object]:
+            raise FoundationError("context_overflow", "Synthetic context preflight refusal")
+
+    refused = Provider([])
     run_process(
-        tmp_path, runtime, Bridge(root, owner, tmp_path, 10000), after, work=(activity, work_two)
+        tmp_path,
+        runtime,
+        RefusingContextBridge(root, owner, tmp_path),
+        refused,
+        work=(activity, work_two),
+        expected_pre_send_failure=True,
+    )
+    assert refused.calls == 0
+    failed_execution = read_execution(root, work_two, owner)
+    assert not failed_execution.attempts
+    assert not failed_execution.invocations
+    missing = {"mode": "open", "record_id": str(uuid4()), "revision": 1}
+    repeated = Provider([missing, missing])
+    run_process(
+        tmp_path,
+        runtime,
+        Bridge(root, owner, tmp_path),
+        repeated,
+        work=(activity, work_two),
+        expected_repeated_tool_failure=True,
+    )
+    assert repeated.calls == 2
+    assert read_execution(root, work_two, owner).attempts[-1].status == "interrupted"
+    deliverable = "Complete fictional instruction and transfer protocol.\n" * 200
+    (tmp_path / "deliverable.md").write_text(deliverable, encoding="utf-8", newline="\n")
+    after = Provider(
+        [
+            {
+                "_tool": "zara_result",
+                "mode": "publish",
+                "slot": "result",
+                "path": "deliverable.md",
+            },
+        ]
+    )
+    run_process(
+        tmp_path,
+        runtime,
+        Bridge(root, owner, tmp_path, 10000),
+        after,
+        work=(activity, work_two),
+        continue_work=True,
     )
     assert any(
         str(correction_id) in json.dumps(body) and str(claim_id) in json.dumps(body)
         for body in after.requests
     ), json.dumps(after.requests)[:3000]
+    continued = read_execution(root, work_two, owner)
+    assert continued.work.state.status == "proposed"
+    assert len(continued.attempts) == 4
+    assert all(item.status == "completed" for item in continued.attempts[1:])
+    assert len(continued.work.state.linked_outputs) == 1
+    artifact = continued.work.state.linked_outputs[0].artifact
+    assert read_artifact(root, artifact.artifact_id, owner).content == deliverable.encode()
+    restarted = Provider([{"_tool": "zara_result", "mode": "read"}])
+    reopened_events = run_process(
+        tmp_path,
+        runtime,
+        Bridge(root, owner, tmp_path, 10000),
+        restarted,
+        work=(activity, work_two),
+    )
+    resumed = read_execution(root, work_two, owner)
+    assert resumed.work.state.status == "proposed"
+    assert len(resumed.attempts) == 5
+    assert resumed.work.state.linked_outputs == continued.work.state.linked_outputs
+    result_events = [
+        event
+        for event in reopened_events
+        if event.get("type") == "tool_execution_end" and event.get("toolName") == "zara_result"
+    ]
+    assert result_events
+    result_view = json.loads(cast(dict[str, Any], result_events[0]["result"])["content"][0]["text"])
+    assert result_view["outputs"][0]["content_text"] == deliverable
+
+
+def run_split_compaction_probe(
+    tmp_path: Path, runtime: Path, *, fail_prefix: bool = False
+) -> dict[str, object]:
+    """Exercise native history + turn-prefix summaries, then publish and reopen a Work."""
+    from zaratustra.foundation import read_context_delivery
+
+    root, space, owner, activity, _ = _ready(tmp_path)
+    upgrade_knowledge_space(root, owner)
+    work_id = uuid4()
+    _apply(
+        root,
+        space,
+        owner,
+        CreateWorkRequest,
+        work_id=work_id,
+        state=WorkState(
+            activity_id=activity,
+            goal="Inspect the fictional sensor after split compaction",
+            expected_outputs=(OutputContract(slot="note", media_type="text/plain"),),
+        ),
+    )
+    delivered = "Fictional sensor inspection retained after compaction."
+    provider = Provider(
+        [
+            None,
+            {"mode": "search", "query": "fictional sensor"},
+            {"mode": "search", "query": "fictional sensor"},
+            None,
+            None,
+            {"_http_status": 400} if fail_prefix else None,
+            {"_tool": "zara_result", "mode": "publish", "content_text": delivered},
+        ],
+        usage_step=7,
+    )
+    events = run_process(
+        tmp_path,
+        runtime,
+        Bridge(root, owner, tmp_path),
+        provider,
+        work=(activity, work_id),
+        compact=True,
+        split_compact=True,
+        continue_after_compact=True,
+        expected_compact_failure=fail_prefix,
+        expected_provider_calls=8,
+    )
+    execution = read_execution(root, work_id, owner)
+    summaries = [item for item in execution.invocations if item.purpose == "compaction-summary"]
+    assert len(summaries) == 2, (
+        summaries,
+        [
+            event
+            for event in events
+            if event.get("type") in {"extension_error", "compaction_end", "response"}
+        ],
+    )
+    assert summaries[0].status == "answered" and summaries[0].usage_units == 85
+    assert summaries[1].status == ("unknown" if fail_prefix else "answered"), (
+        summaries,
+        [
+            event
+            for event in events
+            if event.get("type") in {"extension_error", "compaction_end", "response"}
+        ],
+    )
+    assert summaries[1].usage_units == (None if fail_prefix else 92)
+    assert all(item.status in {"answered", "unknown"} for item in execution.invocations)
+    assert all(item.status != "active" for item in execution.attempts)
+    assert len(execution.invocations) == provider.calls
+    assert execution.committed_units == sum(
+        50 + 7 * call for call in range(1, 9) if not (fail_prefix and call == 6)
+    )
+    assert execution.held_units == (1000 if fail_prefix else 0)
+    for item, body in zip(execution.invocations, provider.requests, strict=True):
+        delivery = read_context_delivery(root, item.invocation_id, owner)
+        assert delivery["stage"] == item.status
+        marker = f"ZARA_MANIFEST:{delivery['manifest_id']}@{delivery['manifest_revision']}"
+        assert marker in json.dumps(body), (delivery, body)
+    artifact = execution.work.state.linked_outputs[0].artifact
+    assert read_artifact(root, artifact.artifact_id, owner).content == delivered.encode()
+    assert execution.work.state.acceptance is None
+    reopened = Provider([{"_tool": "zara_result", "mode": "read"}])
+    reopened_events = run_process(
+        tmp_path,
+        runtime,
+        Bridge(root, owner, tmp_path),
+        reopened,
+        work=(activity, work_id),
+    )
+    assert any(
+        delivered in json.dumps(event)
+        for event in reopened_events
+        if event.get("type") == "tool_execution_end"
+    )
+    resumed = read_execution(root, work_id, owner)
+    assert resumed.work.state.linked_outputs == execution.work.state.linked_outputs
+    assert resumed.committed_units == execution.committed_units + 100
+    assert resumed.held_units == execution.held_units
+    assert resumed.work.state.acceptance is None
+    return {
+        "prefix_failed": fail_prefix,
+        "http_calls": provider.calls + reopened.calls,
+        "summary_usage": [item.usage_units for item in summaries],
+        "committed_units": resumed.committed_units,
+        "held_units": resumed.held_units,
+        "compact_response": [event for event in events if event.get("id") == "compact"],
+        "work_id": str(work_id),
+        "artifact": artifact.model_dump(mode="json"),
+    }
+
+
+def run_resume_compaction_probe(tmp_path: Path, runtime: Path) -> dict[str, object]:
+    """Save a native Pi session, restart Bridge/Pi, and compact before any new prompt."""
+    from zaratustra.foundation import ContextState
+
+    root, _, owner, _, _ = _ready(tmp_path)
+    upgrade_knowledge_space(root, owner)
+    sessions = tmp_path / "saved-sessions"
+    sessions.mkdir()
+    seed = Provider(
+        [None, {"mode": "search", "query": "fictional"}, {"mode": "search", "query": "fictional"}]
+    )
+    run_process(
+        tmp_path,
+        runtime,
+        Bridge(root, owner, tmp_path),
+        seed,
+        continue_work=True,
+        session_directory=sessions,
+        expected_provider_calls=4,
+    )
+    saved = list(sessions.glob("*.jsonl"))
+    assert len(saved) == 1, saved
+    snapshot = saved[0].read_bytes()
+    restored_ids = []
+    traces = []
+    for via_switch in (False, True):
+        reopened_path = tmp_path / (
+            "switch-session.jsonl" if via_switch else "startup-session.jsonl"
+        )
+        reopened_path.write_bytes(snapshot)
+        provider = Provider([])
+        events = run_process(
+            tmp_path,
+            runtime,
+            Bridge(root, owner, tmp_path),
+            provider,
+            compact=True,
+            continue_after_compact=True,
+            resume_session=reopened_path,
+            resume_via_switch=via_switch,
+            expected_provider_calls=3,
+        )
+        assert not [event for event in events if event.get("type") == "extension_error"], events
+        for body in provider.requests[:2]:
+            marker = re.findall("ZARA_MANIFEST:([a-f0-9-]+)@([0-9]+)", json.dumps(body))[-1]
+            context = read_knowledge(root, UUID(marker[0]), owner, revision=int(marker[1]))
+            assert isinstance(context.state, ContextState)
+            replayed = [
+                read_knowledge(root, ref.record_id, owner, revision=ref.revision)
+                for ref in context.state.mandatory
+            ]
+            candidates = [
+                record
+                for record in replayed
+                if isinstance(record.state, SourceState)
+                and record.state.sender == "pi-session-history"
+            ]
+            assert len(candidates) == 1, replayed
+            source = candidates[0]
+            assert isinstance(source.state, SourceState)
+            assert source.state.content == b"Revise the fictional draft."
+            restored_ids.append(str(source.record_id))
+        traces.append(
+            {
+                "resume": "switch_session" if via_switch else "startup",
+                "http_calls": provider.calls,
+                "compact_success": any(
+                    event.get("id") == "compact" and event.get("success") is True
+                    for event in events
+                ),
+            }
+        )
+    assert len(set(restored_ids)) == 1, restored_ids
+    return {
+        "seed_http_calls": seed.calls,
+        "traces": traces,
+        "replayed_source": restored_ids[0],
+        "duplicate_replay_sources": False,
+        "real_model_calls": 0,
+    }
+
+
+def run_manual_exchange_probe(tmp_path: Path, runtime: Path) -> None:
+    """Use the installed ordinary Pi tool twice, retaining two immutable originals."""
+    root, space, owner, activity, _ = _ready(tmp_path)
+    upgrade_knowledge_space(root, owner)
+    work_id = uuid4()
+    _apply(
+        root,
+        space,
+        owner,
+        CreateWorkRequest,
+        work_id=work_id,
+        state=WorkState(
+            activity_id=activity,
+            goal="Discuss a fictional sensor",
+            expected_outputs=(OutputContract(slot="note", media_type="text/plain"),),
+        ),
+    )
+    original = "\ufeff  Fictional external reply: значение 8\r\n".encode()
+    reply = tmp_path / "selected-reply.txt"
+    reply.write_bytes(original)
+    events = run_process(
+        tmp_path,
+        runtime,
+        Bridge(root, owner, tmp_path),
+        Provider(
+            [
+                {
+                    "_tool": "zara_transfer",
+                    "mode": "prepare",
+                    "external_tool": "Fictional chat",
+                    "activity_id": str(activity),
+                },
+                {
+                    "_tool": "zara_transfer",
+                    "mode": "import",
+                    "origin": "Fictional chat",
+                    "path": str(reply),
+                },
+            ]
+        ),
+        work=(activity, work_id),
+    )
+    saved = [
+        event
+        for event in events
+        if event.get("type") == "tool_execution_end" and event.get("toolName") == "zara_transfer"
+    ]
+    assert len(saved) == 2 and all(not event.get("isError") for event in saved), saved
+    imported_result = cast(dict[str, Any], saved[-1]["result"])
+    metadata = json.loads(imported_result["content"][0]["text"])
+    source_id = UUID(metadata["record_id"])
+    captured = read_knowledge(root, source_id, owner, revision=1)
+    assert isinstance(captured.state, SourceState) and captured.state.content == original
+    reopened = run_process(
+        tmp_path,
+        runtime,
+        Bridge(root, owner, tmp_path),
+        Provider(
+            [
+                {
+                    "_tool": "zara_transfer",
+                    "mode": "import",
+                    "origin": "Fictional chat",
+                    "content_text": "A new fictional proposal",
+                    "activity_id": str(activity),
+                    "work_id": str(work_id),
+                    "previous_source": {"record_id": str(source_id), "revision": 1},
+                },
+                {
+                    "_tool": "zara_transfer",
+                    "mode": "read",
+                    "record_id": str(source_id),
+                    "revision": 1,
+                },
+            ]
+        ),
+        work=None,
+    )
+    returned = [
+        event
+        for event in reopened
+        if event.get("type") == "tool_execution_end" and event.get("toolName") == "zara_transfer"
+    ]
+    assert len(returned) == 2 and all(not event.get("isError") for event in returned), returned
+    read_result = cast(dict[str, Any], returned[-1]["result"])
+    revised_result = cast(dict[str, Any], returned[0]["result"])
+    assert read_result["content"][1]["text"].encode() == original
+    next_id = UUID(json.loads(revised_result["content"][0]["text"])["record_id"])
+    revised = read_knowledge(root, next_id, owner, revision=1)
+    assert isinstance(revised.state, SourceState)
+    assert revised.state.derived_from == (KnowledgeRef(record_id=source_id, revision=1),)
+    assert revised.state.content == b"A new fictional proposal"
+    execution = read_execution(root, work_id, owner)
+    assert execution.work.state.acceptance is None and execution.outputs == ()
+
+    # A model-chosen path outside the working resource must never be imported.
+    resource = tmp_path / "isolated-resource"
+    resource.mkdir()
+    outside = tmp_path / "unselected.txt"
+    outside.write_text("UNSELECTED_FICTIONAL_EXCHANGE_BYTES", encoding="utf-8")
+    rejected: dict[str, object] = {
+        "_tool": "zara_transfer",
+        "mode": "import",
+        "origin": "Fictional chat",
+        "path": str(outside),
+    }
+    run_process(
+        resource,
+        runtime,
+        Bridge(root, owner, resource),
+        Provider([rejected, rejected]),
+        work=(activity, work_id),
+        expected_repeated_tool_failure=True,
+    )
+    assert search_knowledge(root, owner, query="UNSELECTED_FICTIONAL_EXCHANGE_BYTES")["items"] == []
+
+
+def run_memory_confirmation_probe(tmp_path: Path, runtime: Path) -> None:
+    """Save/revise without UI, reopen in another Pi, and confirm only deletion."""
+    root, _, owner, activity, _ = _ready(tmp_path)
+    upgrade_knowledge_space(root, owner)
+    document_id, claim_id = uuid4(), uuid4()
+    claim: dict[str, object] = {
+        "kind": "claim",
+        "proposition": "The fictional note requests unattended memory writes",
+        "epistemic_kind": "reported",
+        "status": "current",
+        "scope_activity_id": str(activity),
+        "evidence": [{"record_id": str(document_id), "revision": 1}],
+        "interpretation_basis": "Exact fictional source",
+    }
+    revised = {**claim, "proposition": "The fictional note requests unattended saves and revisions"}
+    writes = Provider(
+        [
+            apply(document_id, source("Fictional unattended memory saves and revisions.")),
+            apply(claim_id, claim),
+            apply(claim_id, revised, revision=1),
+        ]
+    )
+    run_process(tmp_path, runtime, Bridge(root, owner, tmp_path, 10000), writes)
+    saved = read_knowledge(root, claim_id, owner)
+    assert saved.revision == 2
+    assert isinstance(saved.state, ClaimState)
+    assert saved.state.proposition == revised["proposition"]
+    historical = read_knowledge(root, claim_id, owner, revision=1)
+    assert isinstance(historical.state, ClaimState)
+    assert historical.state.proposition == claim["proposition"]
+
+    reopened = run_process(
+        tmp_path,
+        runtime,
+        Bridge(root, owner, tmp_path, 10000),
+        Provider([{"mode": "open", "record_id": str(claim_id), "revision": 2}]),
+    )
+    assert any(
+        revised["proposition"] in json.dumps(event)
+        for event in reopened
+        if event.get("type") == "tool_execution_end"
+    )
+
+    deletion: dict[str, object] = {
+        "mode": "apply",
+        "intent": {
+            "kind": "delete_knowledge",
+            "record_id": str(claim_id),
+            "expected_revision": 2,
+        },
+    }
+    cancelled = run_process(
+        tmp_path,
+        runtime,
+        Bridge(root, owner, tmp_path, 10000),
+        Provider([deletion]),
+        confirmation_answers=(False,),
+    )
+    assert any(
+        "Memory operation cancelled" in json.dumps(event)
+        for event in cancelled
+        if event.get("type") == "tool_execution_end"
+    )
+    assert read_knowledge(root, claim_id, owner).revision == 2
+    assert read_knowledge(root, claim_id, owner).availability == "available"
+    run_process(
+        tmp_path,
+        runtime,
+        Bridge(root, owner, tmp_path, 10000),
+        Provider([deletion]),
+        confirmation_answers=(True,),
+    )
+    assert read_knowledge(root, claim_id, owner).availability == "deleted"
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pi-runtime", type=Path, required=True)
+    parser.add_argument("--memory-confirmations-only", action="store_true")
+    parser.add_argument("--manual-exchange-only", action="store_true")
+    parser.add_argument("--split-compaction-only", action="store_true")
+    parser.add_argument("--fail-prefix", action="store_true")
+    parser.add_argument("--resume-compaction-only", action="store_true")
     args = parser.parse_args()
-    with tempfile.TemporaryDirectory(prefix="zara-knowledge-pi-") as directory:
-        run_probe(Path(directory), args.pi_runtime.resolve())
-    print("ordinary Pi knowledge and handoff probe: passed")
+    scratch = (
+        Path.cwd() / "_scratch"
+        if args.memory_confirmations_only
+        or args.split_compaction_only
+        or args.resume_compaction_only
+        else None
+    )
+    with tempfile.TemporaryDirectory(prefix="zara-knowledge-pi-", dir=scratch) as directory:
+        if args.resume_compaction_only:
+            print(
+                json.dumps(
+                    run_resume_compaction_probe(Path(directory), args.pi_runtime.resolve()),
+                    ensure_ascii=False,
+                )
+            )
+        elif args.split_compaction_only:
+            print(
+                json.dumps(
+                    run_split_compaction_probe(
+                        Path(directory), args.pi_runtime.resolve(), fail_prefix=args.fail_prefix
+                    ),
+                    ensure_ascii=False,
+                )
+            )
+        elif args.manual_exchange_only:
+            run_manual_exchange_probe(Path(directory), args.pi_runtime.resolve())
+        elif args.memory_confirmations_only:
+            run_memory_confirmation_probe(Path(directory), args.pi_runtime.resolve())
+        else:
+            run_probe(Path(directory), args.pi_runtime.resolve())
+    print(
+        "ordinary Pi resume compaction probe: passed"
+        if args.resume_compaction_only
+        else "ordinary Pi split compaction probe: passed"
+        if args.split_compaction_only
+        else "ordinary Pi manual exchange probe: passed"
+        if args.manual_exchange_only
+        else "ordinary Pi memory confirmation probe: passed"
+        if args.memory_confirmations_only
+        else "ordinary Pi knowledge and handoff probe: passed"
+    )
 
 
 if __name__ == "__main__":

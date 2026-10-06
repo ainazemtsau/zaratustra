@@ -1240,7 +1240,7 @@ class ResourceState(ContractModel):
     label: str = Field(min_length=1, max_length=200)
     root: Path
     mode: Literal["exclusive", "shared"] = "exclusive"
-    limit_units: int = Field(ge=1)
+    limit_units: int | None = Field(default=None, ge=1)
     status: Literal["active", "revoked"] = "active"
 
 
@@ -1548,7 +1548,7 @@ class ContextState(ContractModel):
     mandatory: tuple[KnowledgeRef, ...] = ()
     optional: tuple[KnowledgeRef, ...] = ()
     limits: tuple[str, ...] = ()
-    max_bytes: int = Field(ge=1, le=2 * 1024 * 1024)
+    max_bytes: int | None = Field(default=None, ge=1)
 
 
 class HandoffState(ContractModel):
@@ -1622,7 +1622,7 @@ class SleepState(ContractModel):
     analyses: tuple[KnowledgeRef, ...] = ()
     effects: tuple[SleepEffect, ...] = ()
     remainder: tuple[SleepRemainder, ...] = ()
-    resource_limit_units: int = Field(ge=1)
+    resource_limit_units: int | None = Field(default=None, ge=1)
     reserved_units: int = Field(default=0, ge=0)
     spent_units: int = Field(default=0, ge=0)
     consolidation: Literal["pending", "partial", "complete", "no_material"] = "pending"
@@ -1632,7 +1632,10 @@ class SleepState(ContractModel):
 
     @model_validator(mode="after")
     def bounded_and_addressed(self) -> SleepState:
-        if self.spent_units + self.reserved_units > self.resource_limit_units:
+        if (
+            self.resource_limit_units is not None
+            and self.spent_units + self.reserved_units > self.resource_limit_units
+        ):
             raise ValueError("Sleep consumption exceeds its fixed resource")
         if self.enumeration_cursor_revision > self.intake_cutoff_revision:
             raise ValueError("Enumeration cannot pass its intake boundary")
@@ -1979,7 +1982,7 @@ class RecordContextDeliveryRequest(OperationRequest):
     free_call: bool = False
     reserve_units: int = Field(default=0, ge=0)
     usage_units: int | None = Field(default=None, ge=0)
-    budget_limit_units: int = Field(default=0, ge=0)
+    budget_limit_units: int | None = Field(default=None, ge=0)
     trial_total_send_limit: int | None = Field(default=None, ge=1)
 
     @model_validator(mode="after")
@@ -1987,7 +1990,13 @@ class RecordContextDeliveryRequest(OperationRequest):
         if (
             self.stage == "prepared"
             and self.free_call
-            and (self.reserve_units < 1 or self.budget_limit_units < self.reserve_units)
+            and (
+                self.reserve_units < 1
+                or (
+                    self.budget_limit_units is not None
+                    and self.budget_limit_units < self.reserve_units
+                )
+            )
         ):
             raise ValueError("Free model calls need a bounded reserve")
         if (self.stage == "answered") != (self.usage_units is not None):
