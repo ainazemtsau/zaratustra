@@ -74,8 +74,10 @@ Implemented the owner-approved shared-memory package on codex/general-memory:
 explicit schema 13, optional organization over existing knowledge, indexed catalog,
 batch/history, exact persistent selections, cache checks, Method requirements,
 ordinary Pi and integration operations, complete Markdown export. Version 0.19.0
-is built and verified outside checkout. The owner authorized publication to the
-public main; its exact publication receipt is recorded separately below when done.
+is built and verified outside checkout. The implementation was published to the
+owner-named public main at `ce1998cf209345d822f232cc8ee442d1a57b3c42`.
+Authenticated GitHub readback confirmed that exact ref after the push. This
+report-only follow-up records publication and does not change tested runtime bytes.
 
 ## evidence
 
@@ -149,8 +151,9 @@ Authorization to implement and publish this package is not acceptance of its res
 
 ## next
 
-solmax. Publish this verified package to the owner-named public main. Owner
-acceptance is pending. The real installed instance still requires the ordinary
-program update and explicit schema upgrade; no personal space was migrated here.
+solmax. Owner review/acceptance of this delivered package remains separate.
+The real installed instance still requires the ordinary program update and
+explicit schema upgrade; no personal space was migrated here. Health and external
+storage adapters remain future owner-scoped work.
 
 END_OF_FILE: RESULT.md
