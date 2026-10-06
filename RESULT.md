@@ -2,11 +2,11 @@
 
 ## outcome
 
-Prepared a clean product tree for the explicitly authorized GitHub main publication.
+Published the clean product tree to GitHub main by normal fast-forward push.
 It includes the full Core/Pi fixes and integration implementation previously assembled
 as 0.18.10, with GitHub-first guidance and generic installation documentation.
-The current package gate and installed-wheel checks passed. Remote publication and
-readback remain pending at this checkpoint.
+The current package gate, installed-wheel checks and independent remote readback passed.
+Product publication commit: 64502bc6ac497e70737d68d725dace8e8be04505.
 
 ## evidence
 
@@ -23,7 +23,16 @@ The model catalog used zero provider sends; all release checks used zero real mo
 Wheel SHA-256: 398AE5964756516038E6B80916FED8CE5A989E161AD0FD02C961E602429017AB.
 The Runtime Python/TypeScript and tests are identical to the earlier combined 0.18.10;
 changes in this release concern public documentation, shared guidance and version metadata.
-Remote readback will be recorded after execution.
+A fresh HTTPS clone of public main matched the complete local Git tree (1,063 files),
+version 0.18.11, unchanged specification and all 240 runtime/test/tool blob identities.
+The publication commit has only the previously public main as parent; the new private
+preparation commits and operational reports were not pushed. Both selected repositories'
+local main/origin-main refs matched the published commit. Fifty preexisting regular files
+in the dirty development workspace and two unrelated untracked repository files retained
+their exact hashes; the reserved Windows name was excluded from regular-file evidence.
+A later report-only use of --files RESULT.md wrongly passed Markdown to mypy and failed;
+the native hygiene/report-structure follow-up was run correctly and passed. This did not
+change source or tests and is not represented as a full-gate failure or a PASS of that call.
 
 ## assumptions
 
@@ -52,8 +61,9 @@ of a Work result or proof that a ChatGPT account is configured.
 
 ## next
 
-solmax. Publish by normal fast-forward push, read back GitHub, then synchronize local
-main refs without overwriting parallel work. The existing user's 0.18.10 installation
-is not replaced by this code-publication operation.
+solmax. The public repository is ready for a real GitHub-first external discussion and
+manual return. Existing installations are not implicitly replaced by code publication;
+the parallel dirty development branch remains preserved, not silently committed to main.
+This report-only follow-up records completed effects and does not change the tested code.
 
 END_OF_FILE: RESULT.md
