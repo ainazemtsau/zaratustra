@@ -165,9 +165,9 @@ END_OF_FILE: RESULT.md
 
 Implemented on codex/activity-setup from public main 6616d8e: durable typed
 ActivitySetup, explicit schema 14, bounded whole-review coordination over ordinary
-assigned Pi/DBOS and automatic exact initial adoption. The verified package is
-ready for the explicitly authorized public-main publication; publication readback
-is recorded below after the push. No owner acceptance is inferred.
+assigned Pi/DBOS and automatic exact initial adoption. Published to the authorized
+public main of ainazemtsau/zaratustra at implementation commit
+4e475fa02cc6854f5f1717be25d8c00bb3cd8504. No owner acceptance is inferred.
 
 ## evidence
 
@@ -206,6 +206,10 @@ hygiene/report structure and git diff whitespace checks also passed.
 Detailed local trial logs
 remain in ignored scratch/temporary engineering directories; no personal instance
 paths or data are included in this public report.
+
+Publication: ordinary fast-forward push from 6616d8e to 4e475fa and authenticated
+GitHub main readback returned the exact implementation SHA above. This follow-up
+report records delivery only; it does not change the tested product or wheel bytes.
 
 ## assumptions
 
