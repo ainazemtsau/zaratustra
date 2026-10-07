@@ -1,5 +1,9 @@
 # Development tools
 
+`probe_activity_setup_pi` exercises schema 14 interview, whole review/correction,
+activation, new session, compact and an unaccepted ordinary Work with localhost
+only. It shares the installed-compatible native harness from `probe_knowledge_pi`.
+
 `probe_memory_pi` is an installed-compatible schema 13 localhost trial: normal Pi
 captures organized memory across areas, batches, refreshes cache, exports Markdown,
 compacts and reopens a Work result; a separate admitted Method runs via assigned

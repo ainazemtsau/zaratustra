@@ -1116,7 +1116,32 @@ MEMORY_SCHEMA_STATEMENTS = (
 MEMORY_SCHEMA_SHA256 = (
     hashlib.sha256("\n".join(MEMORY_SCHEMA_STATEMENTS).encode()).hexdigest().upper()
 )
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
+SETUP_SCHEMA_NAME = "core-v0.1-activity-setup-14"
+SETUP_SCHEMA_STATEMENTS = (
+    (
+        "CREATE TABLE activity_setups (setup_id TEXT PRIMARY KEY,activity_id TEXT NOT NULL "
+        "UNIQUE REFERENCES subject_records(record_id),current_revision INTEGER NOT "
+        "NULL,status TEXT NOT NULL CHECK(status IN ('active','unavailable'))) STRICT"
+    ),
+    (
+        "CREATE TABLE activity_setup_revisions (setup_id TEXT NOT NULL REFERENCES "
+        "activity_setups(setup_id),revision INTEGER NOT NULL,operation_id TEXT NOT NULL "
+        "REFERENCES operations(operation_id),payload BLOB,sha256 TEXT,PRIMARY "
+        "KEY(setup_id,revision)) STRICT"
+    ),
+    (
+        "CREATE TABLE activity_setup_edges (setup_id TEXT NOT NULL,revision INTEGER NOT "
+        "NULL,ordinal INTEGER NOT NULL,target_id TEXT NOT NULL,target_revision INTEGER NOT "
+        "NULL,role TEXT NOT NULL,PRIMARY KEY(setup_id,revision,ordinal),FOREIGN "
+        "KEY(setup_id,revision) REFERENCES activity_setup_revisions(setup_id,revision)) "
+        "STRICT"
+    ),
+    "CREATE INDEX activity_setup_target ON activity_setup_edges(target_id,setup_id)",
+)
+SETUP_SCHEMA_SHA256 = (
+    hashlib.sha256("\n".join(SETUP_SCHEMA_STATEMENTS).encode()).hexdigest().upper()
+)
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
 
 
 def utc_now() -> datetime:
@@ -1270,6 +1295,8 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         expected.append((12, CHANGE_PACKAGE_SCHEMA_NAME, CHANGE_PACKAGE_SCHEMA_SHA256))
     if schema_version >= 13:
         expected.append((13, MEMORY_SCHEMA_NAME, MEMORY_SCHEMA_SHA256))
+    if schema_version >= 14:
+        expected.append((14, SETUP_SCHEMA_NAME, SETUP_SCHEMA_SHA256))
     if migration != expected:
         raise FoundationError("unsupported_schema", "Schema history does not match installed code")
     rows = connection.execute(
@@ -1283,7 +1310,7 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         database=database,
         space_id=UUID(space_id),
         created_at=datetime.fromisoformat(created_at),
-        schema_version=cast(Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], schema_version),
+        schema_version=cast(Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], schema_version),
         state_revision=state_revision,
         execution_epoch=execution_epoch,
         recovery_state=recovery_state,

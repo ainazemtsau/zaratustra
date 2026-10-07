@@ -141,6 +141,13 @@ and parallel dirty work; do not publish private preparation branches merely to k
 
 ## What exists
 
+Owner-authorized Activity setup (0.20.0) explicitly upgrades schema 13 to 14.
+A typed durable interview and exact full draft/review/correction cycle gates
+activation of one new Activity; existing Candidate/adoption authority and separate
+Work acceptance remain. The Pi window owns coordination over ordinary assigned
+Pi/DBOS, at most five started review Work per explicitly continued run.
+See `docs/activity-setup.md`.
+
 Owner-authorized general-memory implementation (0.19.0) explicitly upgrades schema
 12 to 13. It extends existing knowledge with optional typed organization, indexed
 catalog/batch/history, durable exact selections, scoped cache checks and Markdown

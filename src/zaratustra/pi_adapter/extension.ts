@@ -901,54 +901,126 @@ export default function (pi: any): void {
     },
   });
 
+  let setupSelection: string | null = null;
+  let setupTimer: ReturnType<typeof setInterval> | null = null;
+  let setupShown = "";
+  const setupModel = (ctx: any) => ({ id: ctx.model?.id, provider: ctx.model?.provider });
+  async function showSetup(ctx: any, appendMessage = true) {
+    if (!setupSelection) return;
+    try {
+      const item = await request("/v1/activity-setup", { action: "status", setup_id: setupSelection });
+      const key = `${item.setup_id}:${item.revision}`;
+      if (key === setupShown) return;
+      setupShown = key;
+      const state = item.state;
+      ctx.ui.setStatus("zara-setup", `Activity: ${state.phase}; review ${state.reviews_started - state.pass_boundary}/5`);
+      if (["ready", "needs_input", "needs_attention"].includes(state.phase)) {
+        const text = state.phase === "ready"
+          ? `Activity готова.\n${state.result}\nWork: ${state.activated_works.join(", ")}. Результаты Work принимаются отдельно.`
+          : state.question ?? state.result ?? "Настройка требует внимания; прочитай сохранённое состояние.";
+        if (appendMessage) pi.sendMessage({ customType: "zara-setup", content: text, display: true,
+          details: { setup_id: item.setup_id, revision: item.revision } }, { triggerTurn: false });
+        ctx.ui.notify(text, state.phase === "ready" ? "info" : "warning");
+      }
+    } catch (error) { ctx.ui.notify(String(error), "warning"); }
+  }
+  function watchSetup(ctx: any) {
+    if (setupTimer) clearInterval(setupTimer);
+    setupTimer = setInterval(() => { void showSetup(ctx); }, 2000);
+  }
+  pi.on("session_start", async (_event: any, ctx: any) => {
+    if (assignedAttemptId) return;
+    setupSelection = null;
+    setupShown = "";
+    if (setupTimer) clearInterval(setupTimer);
+    const page = await request("/v1/activity-setup", { action: "list", pending_only: true });
+    const pending = page.items.filter((item: any) => !["ready", "cancelled"].includes(item.state.phase));
+    if (pending.length === 1) {
+      setupSelection = pending[0].setup_id;
+      const state = pending[0].state;
+      if (state.stages.length && (state.phase !== "paused" || state.auto_resume) && ["paused", "drafting", "correcting", "reviewing", "activating"].includes(state.phase)) {
+        await request("/v1/activity-setup", { action: "resume", setup_id: setupSelection, model: setupModel(ctx) });
+      }
+      watchSetup(ctx);
+      await showSetup(ctx, false);
+    } else if (pending.length > 1) {
+      ctx.ui.notify("Есть несколько незавершённых настроек Activity. Выбери нужный setup_id через zara_activity.", "info");
+    }
+  });
+  pi.on("session_shutdown", async () => {
+    if (setupTimer) clearInterval(setupTimer);
+    if (setupSelection && !assignedAttemptId) {
+      try { await request("/v1/activity-setup", { action: "window_close", setup_id: setupSelection }); }
+      catch { /* The host finally also stops the window-owned coordinator. */ }
+    }
+  });
+  pi.registerCommand("zara-setup", { description: "Show saved Activity setup, question and result",
+    handler: async (_args: string, ctx: any) => {
+      if (setupSelection) await showSetup(ctx);
+      else ctx.ui.notify(JSON.stringify(await request("/v1/activity-setup", { action: "list" }), null, 2), "info");
+    },
+  });
   pi.registerTool({
-    name: "zara_activity",
-    label: "List, read or create Activities",
-    description: "For 'which Activities or directions exist?', use mode=list. For the exact " +
-      "goal and state of one Activity, use mode=read with its record_id. Use mode=create " +
-      "only when the user asks to start a new direction, and confirm its title and goal. " +
-      "zara_development list covers Sleep and Change records, not Activities. " +
-      "Activity creation does not create Work, backlog, Grant or Sleep.",
+    name: "zara_activity", label: "Create and set up an Activity",
+    description: "List/read Activities or start a new Activity setup after the user asks for a direction. " +
+      "Create retains the request and authorizes this new Activity's interview, whole draft/review/correction and activation. " +
+      "Use question to retain a necessary user question, answer to save the actual received user message, " +
+      "submit when enough is known, status/resume/pause/cancel for saved continuation. " +
+      "Retry after five reviews only on explicit user request. Do not ask the owner about internal Method/schema design. " +
+      "Setup stages run through assigned ordinary Pi; no per-step confirmations and no automatic Work acceptance.",
     parameters: Type.Object({
-      mode: StringEnum(["list", "read", "create"] as const),
-      record_id: Type.Optional(Type.String({ description: "Exact Activity ID for mode=read." })),
-      title: Type.Optional(Type.String({ minLength: 1, maxLength: 200,
-        description: "User-facing name of this Activity, for example Zaratustra Development." })),
-      goal: Type.Optional(Type.String({ minLength: 1, maxLength: 4096,
-        description: "The ongoing purpose of the Activity, in the user's own terms." })),
+      mode: StringEnum(["list", "read", "create", "question", "answer", "submit", "status", "resume", "pause", "cancel", "retry"] as const),
+      record_id: Type.Optional(Type.String()), setup_id: Type.Optional(Type.String()),
+      title: Type.Optional(Type.String({ minLength: 1, maxLength: 200 })),
+      goal: Type.Optional(Type.String({ minLength: 1, maxLength: 4096 })),
+      question: Type.Optional(Type.String({ minLength: 1, maxLength: 32768 })),
+      source_refs: Type.Optional(Type.Array(Type.Object({ record_id: Type.String(), revision: Type.Number() }))),
     }),
     async execute(_callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
       if (!connection) connection = await request("/v1/connect", {});
       if (params.mode === "list") {
         connection = await request("/v1/connect", {});
-        const result = { items: connection.records.filter((row: any) => row.kind === "activity") };
+        const setups = await request("/v1/activity-setup", { action: "list" });
+        const result = { items: connection.records.filter((row: any) => row.kind === "activity"), setups: setups.items };
         return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
       }
       if (params.mode === "read") {
-        if (!params.record_id) throw new Error("Name one exact Activity record_id to read");
+        if (!params.record_id) throw new Error("Name one Activity record_id");
         const result = await request("/v1/activity-read", { activity_id: params.record_id });
         return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
       }
-      if (params.mode !== "create") throw new Error("Choose Activity mode list, read or create");
-      if (assignedAttemptId) throw new Error("Assigned Work cannot create an Activity");
-      if (!params.title?.trim() || !params.goal?.trim()) {
-        throw new Error("Activity creation needs a title and ongoing goal");
+      if (assignedAttemptId) throw new Error("Assigned Work cannot control Activity setup");
+      let result: any;
+      if (params.mode === "create") {
+        if (!params.title?.trim() || !params.goal?.trim()) throw new Error("Activity needs a title and goal");
+        const yes = await ctx.ui.confirm("Создать и настроить эту Activity?",
+          `${params.title}\n${params.goal}\nПосле ответов: подготовка, до пяти полных ревью, исправления и включение новой Activity. Принятие результатов Work отдельно.`);
+        if (!yes) return { content: [{ type: "text", text: "Activity setup cancelled" }] };
+        setupSelection = randomUUID();
+        const operationId = randomUUID();
+        try {
+          result = await request("/v1/activity-setup", { action: "begin", setup_id: setupSelection,
+            activity_id: randomUUID(), title: params.title, goal: params.goal, operation_id: operationId,
+            source_refs: params.source_refs ?? [] });
+        } catch (error) {
+          try {
+            await request(`/v1/receipt?session_id=${sessionId}&operation_id=${operationId}`);
+            result = await request("/v1/activity-setup", { action: "status", setup_id: setupSelection });
+          } catch { throw error; }
+        }
+      } else {
+        setupSelection = params.setup_id ?? setupSelection;
+        if (!setupSelection) throw new Error("Name one saved setup_id");
+        if (params.mode === "retry" && !await ctx.ui.confirm("Продолжить настройку?",
+          "Разрешить следующие пять полных ревью этой настройки, сохранив прежнюю историю и расход?")) {
+          return { content: [{ type: "text", text: "Additional setup review passes not authorized" }] };
+        }
+        result = await request("/v1/activity-setup", { action: params.mode, setup_id: setupSelection,
+          question: params.question, source_refs: params.source_refs ?? [], model: setupModel(ctx) });
       }
-      const fields = { kind: "create_activity", activity_id: randomUUID(),
-        state: { title: params.title, goal: params.goal, status: "ongoing" } };
-      const accepted = await ctx.ui.confirm("Create this Activity?", JSON.stringify(fields, null, 2));
-      if (!accepted) return { content: [{ type: "text", text: "Activity creation cancelled" }] };
-      const operationId = randomUUID();
-      const intent = { ...fields, protocol_version: 1, operation_id: operationId,
-        space_id: connection.space_id, actor: connection.actor };
-      let receipt: any;
-      try { receipt = await request("/v1/development-operation", { request: intent }); }
-      catch (error) {
-        try { receipt = await request(`/v1/receipt?session_id=${sessionId}&operation_id=${operationId}`); }
-        catch { throw error; }
-      }
-      connection = await request("/v1/connect", {});
-      return { content: [{ type: "text", text: JSON.stringify(receipt) }], details: receipt };
+      watchSetup(ctx);
+      await showSetup(ctx);
+      return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
     },
   });
 
@@ -1276,6 +1348,7 @@ export default function (pi: any): void {
   });
 
   pi.on("before_agent_start", async (_event: any, _ctx: any) => {
+    if (process.env.ZARA_DISABLE_MODEL_TOOLS === "1") pi.setActiveTools([]);
     lastToolFailure = "";
     repeatedToolFailures = 0;
     lastOutcome = "";

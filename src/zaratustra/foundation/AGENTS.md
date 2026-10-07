@@ -1,5 +1,11 @@
 # Core v0.1 domain foundation
 
+Schema 14 explicitly extends 13 with durable ActivitySetup revisions/edges.
+`activity_setup.py` composes existing authorized operations for one new Activity;
+exact whole review gates activation, never Work acceptance. Pause/cancel fence
+assigned execution, and source access/deletion covers derived setup copies.
+See `docs/activity-setup.md`.
+
 Schema 13 explicitly extends schema 12 with the shared-memory derived index.
 `memory.py` owns bounded catalog/search selection, exact source-backed text parts,
 history, deterministic cache validation and Markdown export. It uses existing

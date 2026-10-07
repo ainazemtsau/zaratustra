@@ -12,6 +12,12 @@ from .active_plan import (
     read_plan_nodes,
     read_role_history,
 )
+from .activity_setup import (
+    activity_setup_memory,
+    list_activity_setups,
+    read_activity_setup,
+    upgrade_activity_setup_space,
+)
 from .binding import (
     binding_checksum,
     list_binding_methods,
@@ -90,6 +96,11 @@ from .models import (
     ActivityCreation,
     ActivityRevision,
     ActivityRevisionChange,
+    ActivitySetupDraft,
+    ActivitySetupRequest,
+    ActivitySetupReview,
+    ActivitySetupRevision,
+    ActivitySetupState,
     ActivityState,
     AdmitInvocationRequest,
     AnalysisState,
@@ -235,6 +246,10 @@ from .models import (
     RoleFilling,
     SendInvocationRequest,
     SetBindingStateRequest,
+    SetupFinding,
+    SetupMethodTemplate,
+    SetupStage,
+    SetupWorkTemplate,
     SleepDelivery,
     SleepEffect,
     SleepRemainder,
@@ -305,6 +320,19 @@ from .sleep_method import (
 from .work_status import read_work_status
 
 __all__ = [
+    "activity_setup_memory",
+    "list_activity_setups",
+    "read_activity_setup",
+    "upgrade_activity_setup_space",
+    "ActivitySetupRequest",
+    "ActivitySetupRevision",
+    "ActivitySetupState",
+    "ActivitySetupDraft",
+    "ActivitySetupReview",
+    "SetupFinding",
+    "SetupStage",
+    "SetupWorkTemplate",
+    "SetupMethodTemplate",
     "MemoryMetadata",
     "MemoryRequirement",
     "MemorySelector",

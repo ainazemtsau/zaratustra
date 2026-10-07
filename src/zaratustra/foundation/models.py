@@ -2109,8 +2109,163 @@ class ChangeApplication(ContractModel):
     changed_at: AwareDatetime
 
 
+SetupArea = Literal[
+    "goal", "workflow", "history", "continuation", "extension", "capabilities", "consistency"
+]
+
+
+class SetupMethodTemplate(ContractModel):
+    key: Identifier
+    definition: MethodDefinition
+
+
+class SetupWorkTemplate(ContractModel):
+    key: Identifier
+    goal: str = Field(min_length=1, max_length=4096)
+    method_key: Identifier | None = None
+    expected_outputs: tuple[OutputContract, ...] = ()
+    plan: WorkPlan | None = None
+
+
+class ActivitySetupDraft(ContractModel):
+    title: str = Field(min_length=1, max_length=200)
+    goal: str = Field(min_length=1, max_length=4096)
+    instructions: str = Field(min_length=1, max_length=16384)
+    methods: tuple[SetupMethodTemplate, ...] = ()
+    works: tuple[SetupWorkTemplate, ...] = Field(min_length=1)
+    memory: tuple[MemoryRequirement, ...] = ()
+    extensions: tuple[str, ...] = ()
+    open_questions: tuple[str, ...] = ()
+    first_action: str = Field(min_length=1, max_length=4096)
+
+    @model_validator(mode="after")
+    def coherent_templates(self) -> ActivitySetupDraft:
+        keys = [item.key for item in self.methods]
+        if len(keys) != len(set(keys)) or len({item.key for item in self.works}) != len(self.works):
+            raise ValueError("Setup template keys must be unique")
+        for method in self.methods:
+            if method.definition.required_capabilities or method.definition.role_methods:
+                raise ValueError("Setup must use supported capabilities and self-contained Methods")
+        for work in self.works:
+            if work.method_key is not None and work.method_key not in keys:
+                raise ValueError("Work template refers to a missing Method")
+            if work.method_key is not None and work.plan is None:
+                raise ValueError("Method Work requires its typed composite plan")
+            if work.method_key is None and (work.plan is not None or not work.expected_outputs):
+                raise ValueError("Plain Work requires outputs and cannot have a composite plan")
+        return self
+
+
+class SetupFinding(ContractModel):
+    area: SetupArea
+    problem: str = Field(min_length=1, max_length=4096)
+    blocking: bool
+    cause: str = Field(min_length=1, max_length=4096)
+
+
+class ActivitySetupReview(ContractModel):
+    draft: ArtifactRef
+    input_version: int = Field(ge=1)
+    checked: tuple[SetupArea, ...]
+    findings: tuple[SetupFinding, ...] = ()
+    unresolved: tuple[str, ...] = ()
+    conclusion: str = Field(min_length=1, max_length=4096)
+
+    @model_validator(mode="after")
+    def complete_review(self) -> ActivitySetupReview:
+        areas = {
+            "goal",
+            "workflow",
+            "history",
+            "continuation",
+            "extension",
+            "capabilities",
+            "consistency",
+        }
+        if len(self.checked) != len(areas) or set(self.checked) != areas:
+            raise ValueError("Review must cover every setup area exactly once")
+        return self
+
+
+class SetupStage(ContractModel):
+    work_id: UUID
+    kind: Literal["draft", "correction", "review"]
+    input_version: int = Field(ge=1)
+    packet: ArtifactRef
+    draft: ArtifactRef | None = None
+    output: ArtifactRef | None = None
+    review_pass: int = Field(default=0, ge=0)
+    retired: bool = False
+
+
+class ActivitySetupState(ContractModel):
+    activity_id: UUID
+    owner: str
+    authorization_scope: Literal["new_activity_setup"] = "new_activity_setup"
+    phase: Literal[
+        "collecting",
+        "drafting",
+        "reviewing",
+        "correcting",
+        "needs_input",
+        "paused",
+        "needs_attention",
+        "activating",
+        "ready",
+        "cancelled",
+    ]
+    sources: tuple[KnowledgeRef, ...] = Field(min_length=1)
+    input_version: int = Field(default=1, ge=1)
+    question: str | None = None
+    draft: ArtifactRef | None = None
+    review: ArtifactRef | None = None
+    stages: tuple[SetupStage, ...] = ()
+    reviews_started: int = Field(default=0, ge=0)
+    reviews_completed: int = Field(default=0, ge=0)
+    pass_boundary: int = Field(default=0, ge=0)
+    auto_resume: bool = False
+    repair_work: UUID | None = None
+    result: str | None = None
+    activated_works: tuple[UUID, ...] = ()
+    activated_methods: tuple[MethodRef, ...] = ()
+
+
+class ActivitySetupRevision(ContractModel):
+    setup_id: UUID
+    revision: int = Field(ge=1)
+    state: ActivitySetupState
+
+
+class ActivitySetupRequest(OperationRequest):
+    kind: Literal["activity_setup"] = "activity_setup"
+    action: Literal[
+        "begin",
+        "answer",
+        "question",
+        "start_stage",
+        "complete_stage",
+        "pause",
+        "resume",
+        "cancel",
+        "finish",
+        "retry",
+        "attention",
+    ]
+    setup_id: UUID
+    activity_id: UUID
+    expected_revision: int | None = Field(default=None, ge=1)
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    text: str | None = Field(default=None, min_length=1, max_length=32768)
+    source_refs: tuple[KnowledgeRef, ...] = ()
+    stage_kind: Literal["draft", "correction", "review"] | None = None
+    stage_instruction: str | None = Field(default=None, min_length=1, max_length=4096)
+    auto_resume: bool = False
+    output: ArtifactRef | None = None
+
+
 DomainRequest = Annotated[
-    BootstrapRequest
+    ActivitySetupRequest
+    | BootstrapRequest
     | RecoverRequest
     | CreateBindingVersionRequest
     | SetBindingStateRequest
@@ -2178,7 +2333,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -2555,7 +2710,7 @@ class BackupManifest(ContractModel):
     backup_id: UUID
     format_version: Literal[1, 2] = 1
     space_id: UUID
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime
@@ -2615,6 +2770,16 @@ __all__ = [
     "RecordContextDeliveryRequest",
     "BindingInputRevision",
     "BindingChildTemplate",
+    "ActivitySetupRequest",
+    "ActivitySetupRevision",
+    "ActivitySetupState",
+    "ActivitySetupDraft",
+    "ActivitySetupReview",
+    "SetupFinding",
+    "SetupStage",
+    "SetupWorkTemplate",
+    "SetupMethodTemplate",
+    "SetupArea",
     "BindingNewWork",
     "BindingOfferWork",
     "BindingDefinition",

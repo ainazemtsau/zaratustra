@@ -13,3 +13,17 @@ def external_workflow_skill() -> Path:
     if not path.is_file():
         raise FileNotFoundError(f"Installed external workflow is unavailable: {path}")
     return path
+
+
+def activity_setup_skill() -> Path:
+    """Locate the shipped new-Activity interview and full-review workflow."""
+    path = Path(
+        str(
+            files("zaratustra.pi_adapter").joinpath(
+                "skills", "zaratustra-activity-setup", "SKILL.md"
+            )
+        )
+    )
+    if not path.is_file():
+        raise FileNotFoundError(f"Installed Activity setup workflow is unavailable: {path}")
+    return path

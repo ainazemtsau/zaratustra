@@ -23,6 +23,7 @@ from zaratustra.foundation import (
     managed_pi_session_lock,
     managed_pi_sessions,
     read_space,
+    upgrade_activity_setup_space,
     upgrade_binding_space,
     upgrade_change_package_space,
     upgrade_child_execution_space,
@@ -38,7 +39,7 @@ from zaratustra.foundation import (
 )
 
 from .bridge import Bridge, BridgeServer
-from .skills import external_workflow_skill
+from .skills import activity_setup_skill, external_workflow_skill
 
 INTERACTIVE_ZARA_TOOLS = (
     "zara_activity",
@@ -85,6 +86,7 @@ def _prepare_space(path: Path, actor: str, *, create: bool) -> LocalAuthority:
         (11, upgrade_development_space),
         (12, upgrade_change_package_space),
         (13, upgrade_memory_space),
+        (14, upgrade_activity_setup_space),
     ):
         if read_space(path).schema_version < version:
             upgrade(path, authority)
@@ -188,8 +190,8 @@ def main(argv: list[str] | None = None) -> int:
     if input("Type CONNECT to use these paths and local identity: ").strip() != "CONNECT":
         return 1
     current_schema = 0 if args.new_space else read_space(space).schema_version
-    if current_schema < 11:
-        print(f"Selected Core schema: {current_schema}; explicit upgrade target: 11")
+    if current_schema < 14:
+        print(f"Selected Core schema: {current_schema}; explicit upgrade target: 14")
         if input("Type UPGRADE to initialize or upgrade this space: ").strip() != "UPGRADE":
             return 1
     authority = _prepare_space(space, actor, create=args.new_space)
@@ -210,6 +212,32 @@ def main(argv: list[str] | None = None) -> int:
             from .assigned import deliver_outbox
 
             bridge.deliver_answer = lambda outbox_id: deliver_outbox(space, authority, outbox_id)
+        from .activity_setup import SetupCoordinator
+        from .assigned import AssignedConfig
+
+        bridge.setup_controller = SetupCoordinator(
+            bridge,
+            AssignedConfig(
+                space=space,
+                workspace=workspace,
+                pi_cli=pi_cli,
+                pi_runtime=runtime,
+                node=args.node,
+                provider_profile=args.provider_profile,
+                provider_base_url=base_url,
+                provider_id="openai-codex"
+                if args.provider_profile == "codex-sse"
+                else args.local_provider_id,
+                model_id=args.model or args.local_model_id or "",
+                context_window=args.local_context_window,
+                max_tokens=args.local_max_tokens,
+                reserve_units=args.reserve_units,
+                limit_units=args.limit_units,
+                offline=args.provider_profile == "local-completions",
+                disable_tools=True,
+                subscription_agent_dir=args.subscription_agent_dir,
+            ),
+        )
         server = BridgeServer(bridge)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
@@ -246,6 +274,8 @@ def main(argv: list[str] | None = None) -> int:
             "--no-context-files",
             "--skill",
             str(workflow_skill),
+            "--skill",
+            str(activity_setup_skill()),
         ]
         if args.model:
             command.extend(["--model", args.model])
@@ -256,9 +286,12 @@ def main(argv: list[str] | None = None) -> int:
         try:
             return subprocess.run(command, cwd=workspace, env=environment, check=False).returncode
         finally:
-            server.shutdown()
-            server.server_close()
-            thread.join(timeout=5)
+            try:
+                bridge.setup_controller.close()
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=5)
 
 
 if __name__ == "__main__":

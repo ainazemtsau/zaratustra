@@ -157,3 +157,95 @@ explicit schema upgrade; no personal space was migrated here. Health and externa
 storage adapters remain future owner-scoped work.
 
 END_OF_FILE: RESULT.md
+
+
+# Activity setup 0.20.0
+
+## outcome
+
+Implemented on codex/activity-setup from public main 6616d8e: durable typed
+ActivitySetup, explicit schema 14, bounded whole-review coordination over ordinary
+assigned Pi/DBOS and automatic exact initial adoption. The verified package is
+ready for the explicitly authorized public-main publication; publication readback
+is recorded below after the push. No owner acceptance is inferred.
+
+## evidence
+
+Public contract and reproduction: docs/activity-setup.md,
+tests/zaratustra/foundation/test_activity_setup.py and tools/probe_activity_setup_pi.py.
+One full native deliver gate passed: 806 tests in 718.09 seconds, Ruff formatting
+and lint, mypy over 233 files, 30 import contracts, hygiene/report structure and
+source/wheel build. After bounded corrections, the affected Core knowledge/memory,
+ActivitySetup and Pi bridge/assigned suite passed: 71 tests in 100.05 seconds.
+Eight focused setup tests now cover interrupted interview/review continuation,
+full correction/review inputs, stale review refusal, persistent five-pass limits,
+scope/rights, atomic adoption, backup/restore and deletion, including preservation
+of an original selected from another Activity. Each test documents its risk.
+
+The checkout ordinary Pi 1.0.4 localhost path passed. The rebuilt wheel was then
+installed in a new venv outside the checkout and the final same native path passed:
+18 actual synthetic HTTP sends per passing trace, four assigned stages, two
+complete reviews, saved question in a new session, compact with both summary
+requests, activation and a first ordinary Work with acceptance still absent.
+Assigned-stage requests exposed no model tools. The installed trace upgraded a
+fictional schema-13 space, preserved its earlier Artifact, and completed actual
+managed backup/deletion with dependent Pi/DBOS copies and backups purged.
+All actual provider requests had their Core ContextManifest and invocation count.
+There were no intermediate Method/preparation confirmation prompts.
+
+Wheel: dist/zaratustra-0.20.0-py3-none-any.whl.
+SHA-256: A26652A324E5B6134E0B76CF65653922431B027E908A1943B506CD7F35897E08.
+The required bounded read-only evaluator smoke checked installed metadata,
+public exports, packaged skill/extension and agreement of the native report/log.
+It found an obsolete README install-wheel name; that example was corrected and
+the wheel rebuilt/reinstalled. The parent separately ran installed CLI --version,
+--help and runtime imports. All 101 packaged product files match the final source
+and installed wheel exactly. The README-only rebuild did not change the executable
+files exercised by the final installed trace. Final Ruff, mypy, 30 boundaries,
+hygiene/report structure and git diff whitespace checks also passed.
+Detailed local trial logs
+remain in ignored scratch/temporary engineering directories; no personal instance
+paths or data are included in this public report.
+
+## assumptions
+
+The selected ordinary Pi supplies the configured admitted subscription profile and
+model. Full structural review is an agent conclusion, not a guarantee of semantic
+quality. Automatic execution lasts only while its Pi host is open.
+Initial adoption is one SQLite operation: it either commits all required subject
+effects or rolls them back; an interruption is safely replayed through its receipt.
+This avoids an externally visible partially enabled Activity. Progress before that
+operation remains separately versioned. Existing Activity and Method versions are
+not automatically reconfigured.
+
+## cuts
+
+No owner-scope reduction. Personal Health and a universal review platform are outside
+this explicitly approved package. Existing dirty materials and user installations
+are preserved. No user workspace is upgraded by engineering probes.
+
+## cost
+
+Zero real model calls and zero paid API requests in automatic verification.
+The recorded 18-send checkout and final installed paths used only a fictional
+localhost provider. Earlier incomplete trials are not passes: they exposed startup
+message ordering, missing JSON Artifact text, a local inspection lock and a
+compaction fixture count. The first installed functional path then exposed a
+maintenance acknowledgement mismatch for knowledge/development deletion jobs;
+the bounded correction passed the affected suite and final installed cleanup.
+The synthetic server logs include client connection-reset diagnostics during Pi
+teardown; these are not concealed or counted as semantic success. No second full
+matrix was run after the passing native gate.
+The evaluator smoke was read-only metadata/file/report inspection; CLI execution
+and runtime imports are the separately recorded parent checks, not attributed to
+that evaluator.
+
+## manual-acceptance
+
+Implementation/publication is authorized; product and Work acceptance are separate.
+No acceptance is inferred from tests or review completion.
+
+## next
+
+solmax. Owner acceptance remains separate. Updating a personal installation and
+creating Health are separate next actions through the delivered setup procedure.

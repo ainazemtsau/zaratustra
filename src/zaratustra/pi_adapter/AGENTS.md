@@ -1,5 +1,11 @@
 # Interactive Pi adapter
 
+Activity setup uses a window-owned finite coordinator in `activity_setup.py`.
+Every stage is the existing assigned ordinary Pi/DBOS path in a separate session,
+with arbitrary tools disabled. Core holds all progress and review counts.
+No real-provider fallback, no background service, and no automatic Work acceptance.
+The packaged setup skill drives small substantive question groups.
+
 Schema 13 `zara_memory` catalog/read_batch/history/open_selection/prepare_cache/export
 uses the shared public Core. Method requirements resolve current Activity in the
 host, then pin the checked selection in ContextManifest; large reference text

@@ -93,6 +93,10 @@ class ProviderHandler(BaseHTTPRequestHandler):
                 "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": None}],
             }
         ]
+        final_content = self.server.final_content
+        if scripted is not None and "_final_text" in scripted:
+            final_content = str(scripted["_final_text"])
+            scripted = None
         delta = (
             {
                 "tool_calls": [
@@ -110,7 +114,7 @@ class ProviderHandler(BaseHTTPRequestHandler):
                 ]
             }
             if scripted is not None
-            else {"content": self.server.final_content}
+            else {"content": final_content}
         )
         chunks.append(
             {
@@ -198,6 +202,7 @@ def run_process(
     prompt: str = "Keep the fictional material, Claim and handoff trace.",
     skills: tuple[Path, ...] = (),
     catalog_only: bool = False,
+    wait_for: Callable[[], bool] | None = None,
 ) -> list[dict[str, object]]:
     bridge_server = BridgeServer(bridge)
     bridge_thread = threading.Thread(target=bridge_server.serve_forever, daemon=True)
@@ -250,7 +255,9 @@ def run_process(
         env["ZARA_PROVIDER_PROFILE"] = "codex-sse"
         env["ZARA_PROVIDER_BASE_URL"] = "https://chatgpt.com/backend-api"
         env["ZARA_PROVIDER_ORIGIN"] = "https://chatgpt.com"
-    cli = runtime / "node_modules" / "@earendil-works" / "pi-coding-agent" / "dist" / "cli.js"
+    from zaratustra.pi_adapter import read_pi_runtime
+
+    cli = read_pi_runtime(runtime).cli
     command = [
         shutil.which("node") or "node",
         str(cli),
@@ -325,6 +332,8 @@ def run_process(
             try:
                 event = events.get(timeout=0.25)
             except queue.Empty:
+                if wait_for is not None and wait_for():
+                    break
                 if process.poll() is not None:
                     break
                 continue
@@ -402,6 +411,8 @@ def run_process(
                     process.stdin.flush()
                     continuation_started = True
                     continue
+                if wait_for is not None and not wait_for():
+                    continue
                 break
         errors = [
             event
@@ -441,6 +452,8 @@ def run_process(
         assert confirmations == len(confirmation_answers), observed
         return observed
     finally:
+        if bridge.setup_controller is not None:
+            bridge.setup_controller.close()
         if process is not None:
             process.terminate()
             process.wait(timeout=10)

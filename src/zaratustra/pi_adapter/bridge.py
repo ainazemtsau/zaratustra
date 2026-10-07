@@ -22,6 +22,7 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from zaratustra.foundation import (
     AcceptWorkRequest,
+    ActivitySetupRequest,
     ActivityState,
     AnswerWaitRequest,
     ApplyCandidateRequest,
@@ -79,11 +80,13 @@ from zaratustra.foundation import (
     StopAttemptRequest,
     StopCandidateRequest,
     WaiveObligationRequest,
+    activity_setup_memory,
     apply_operation,
     export_memory_selection,
     initial_sleep_method,
     initial_sleep_ref,
     inspect_space,
+    list_activity_setups,
     list_binding_methods,
     list_binding_offers,
     list_bindings,
@@ -98,6 +101,7 @@ from zaratustra.foundation import (
     open_memory_selection,
     prepare_memory_cache,
     read_activity,
+    read_activity_setup,
     read_artifact,
     read_change_application,
     read_current_rights,
@@ -239,6 +243,150 @@ class Bridge:
         self.accept_previews: dict[UUID, tuple[UUID, int, UUID]] = {}
         self.accept_results: dict[UUID, dict[str, object]] = {}
         self.lock = threading.Lock()
+        self.setup_controller: Any = None
+
+    def activity_setup(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, Any]:
+        """Only the interactive trusted host controls a bounded new-Activity setup."""
+        self._session(session_id)
+        if self.assigned_attempt_id is not None:
+            raise FoundationError(
+                "permission_denied", "Assigned Work cannot control Activity setup"
+            )
+        action = str(raw.get("action", "status"))
+        if action == "window_close":
+            if self.setup_controller is not None:
+                self.setup_controller.close()
+            return {"closed": True}
+        if action == "list":
+            return {
+                "items": [
+                    item.model_dump(mode="json")
+                    for item in list_activity_setups(
+                        self.path, self.authority, pending_only=bool(raw.get("pending_only", False))
+                    )
+                ]
+            }
+        identifier = UUID(str(raw["setup_id"]))
+        if action == "status":
+            current = read_activity_setup(self.path, identifier, self.authority)
+            usage: list[dict[str, Any]] = []
+            for stage in current.state.stages:
+                snapshot = read_execution(self.path, stage.work_id, self.authority)
+                usage.extend(item.model_dump(mode="json") for item in snapshot.invocations)
+            return {**current.model_dump(mode="json"), "invocations": usage}
+        if action not in (
+            "begin",
+            "answer",
+            "question",
+            "submit",
+            "pause",
+            "resume",
+            "cancel",
+            "retry",
+        ):
+            raise FoundationError(
+                "permission_denied", "Internal review/adoption operations are host-owned"
+            )
+        if action in ("pause", "cancel") and self.setup_controller is not None:
+            self.setup_controller.close()
+        fields: dict[str, Any] = {}
+        if action == "begin":
+            fields.update(
+                activity_id=UUID(str(raw["activity_id"])), title=raw["title"], text=raw["goal"]
+            )
+            source = self.last_sources.get(session_id)
+            if source is not None:
+                fields["source_refs"] = (source,)
+        else:
+            current = read_activity_setup(self.path, identifier, self.authority)
+            fields.update(activity_id=current.state.activity_id, expected_revision=current.revision)
+        if action == "answer":
+            original = self.last_sources.get(session_id)
+            if original is None:
+                raise FoundationError("incomplete_context", "No actual user message to retain")
+            message = read_knowledge(
+                self.path, original.record_id, self.authority, revision=original.revision
+            )
+            if (
+                not isinstance(message.state, SourceState)
+                or message.state.channel != "conversation_user"
+                or message.state.content is None
+                or message.state.sender == "pi-session-history"
+            ):
+                raise FoundationError(
+                    "permission_denied", "Setup answer must come from a fresh received user message"
+                )
+            fields["text"] = message.state.content.decode("utf-8")
+            fields["source_refs"] = (original,)
+            state = current.state
+            if original in state.sources:
+                return current.model_dump(mode="json")
+            if state.stages and state.stages[-1].output is None:
+                stage = state.stages[-1]
+                snapshot = read_execution(self.path, stage.work_id, self.authority)
+                opened = next((wait for wait in snapshot.waits if wait.status == "open"), None)
+                if opened is not None:
+                    answered = apply_operation(
+                        self.path,
+                        AnswerWaitRequest(
+                            operation_id=uuid5(
+                                original.record_id, f"setup-answer:{opened.wait_id}"
+                            ),
+                            space_id=self.authority.space_id,
+                            actor=self.authority.actor,
+                            wait_id=opened.wait_id,
+                            attempt_id=opened.attempt_id,
+                            work_id=stage.work_id,
+                            session_id=next(
+                                item.session_id
+                                for item in snapshot.attempts
+                                if item.attempt_id == opened.attempt_id
+                            ),
+                            expected_wait_revision=opened.revision,
+                            answer=fields["text"],
+                        ),
+                        self.authority,
+                    )
+                    from .assigned import deliver_outbox
+
+                    deliver_outbox(
+                        self.path, self.authority, UUID(str(answered.result["outbox_id"]))
+                    )
+        elif action == "question":
+            fields["text"] = str(raw["question"])
+        if action in ("begin", "answer"):
+            supplied = tuple(KnowledgeRef.model_validate(ref) for ref in raw.get("source_refs", []))
+            if any(ref not in self.exposed_refs.get(session_id, set()) for ref in supplied):
+                raise FoundationError(
+                    "permission_denied", "Setup can select only actually exposed authorized memory"
+                )
+            fields["source_refs"] = tuple(dict.fromkeys(fields.get("source_refs", ()) + supplied))
+        if action == "submit":
+            current = read_activity_setup(self.path, identifier, self.authority)
+            if current.state.phase == "needs_input":
+                raise FoundationError(
+                    "incomplete_context", "Answer the saved question before submitting setup"
+                )
+        if action != "submit":
+            apply_operation(
+                self.path,
+                ActivitySetupRequest(
+                    operation_id=UUID(str(raw.get("operation_id", uuid4()))),
+                    space_id=self.authority.space_id,
+                    actor=self.authority.actor,
+                    setup_id=identifier,
+                    action=cast(Any, action),
+                    **fields,
+                ),
+                self.authority,
+            )
+        if action in ("submit", "resume", "retry"):
+            if self.setup_controller is None:
+                raise FoundationError(
+                    "setup_executor_unavailable", "The interactive host has no setup executor"
+                )
+            self.setup_controller.start(identifier, raw.get("model", {}))
+        return read_activity_setup(self.path, identifier, self.authority).model_dump(mode="json")
 
     def connect(self, session_id: UUID) -> dict[str, object]:
         if self.assigned_session_id is not None and session_id != self.assigned_session_id:
@@ -1139,6 +1287,26 @@ class Bridge:
             latest_source = self.last_sources.get(session_id)
         if latest_source is not None:
             mandatory.append(latest_source)
+        if info.schema_version >= 14 and selected is None and purpose != "compaction-summary":
+            pending = list_activity_setups(self.path, self.authority, pending_only=True, limit=2)
+            if len(pending) == 1:
+                pending_setup = pending[0]
+                activity = read_activity(self.path, pending_setup.state.activity_id, self.authority)
+                packet["activity_setup"] = {
+                    "setup_id": str(pending_setup.setup_id),
+                    "revision": pending_setup.revision,
+                    "activity_id": str(pending_setup.state.activity_id),
+                    "goal": activity.state.goal,
+                    "phase": pending_setup.state.phase,
+                    "question": pending_setup.state.question,
+                    "reviews_started": pending_setup.state.reviews_started,
+                    "source_refs": [
+                        ref.model_dump(mode="json") for ref in pending_setup.state.sources
+                    ],
+                }
+                mandatory.append(
+                    KnowledgeRef(record_id=activity.activity_id, revision=activity.revision)
+                )
         # A cache explicitly used in this conversation is rechecked before each send.
         # New matches are refreshed by ordinary code; old tool messages remain historical.
         with self.lock:
@@ -1232,8 +1400,17 @@ class Bridge:
                 ).model_dump(mode="json")
             if info.schema_version >= 13:
                 packet["memory"] = []
+                requirements = (
+                    activity_setup_memory(self.path, selected.activity_id, self.authority)
+                    if info.schema_version >= 14
+                    else ()
+                )
                 if work.state.method != "none" or current.composition is not None:
-                    for requirement in method.definition.memory_requirements:
+                    requirements = tuple(
+                        dict.fromkeys(requirements + method.definition.memory_requirements)
+                    )
+                if requirements:
+                    for requirement in requirements:
                         selectors = tuple(
                             selector.model_copy(
                                 update={
@@ -1327,7 +1504,10 @@ class Bridge:
                     exact.content.decode("utf-8")
                     if exact.content is not None
                     and exact.media_type
-                    and exact.media_type.startswith("text/")
+                    and (
+                        exact.media_type.startswith("text/")
+                        or exact.media_type == "application/json"
+                    )
                     else None
                 )
                 inputs.append(item)
@@ -1963,6 +2143,8 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 result = bridge.development_read(session_id, body)
             elif post and path.path == "/v1/activity-read":
                 result = bridge.activity_read(session_id, UUID(body["activity_id"]))
+            elif post and path.path == "/v1/activity-setup":
+                result = bridge.activity_setup(session_id, body)
             elif post and path.path == "/v1/context-prepare":
                 result = bridge.prepare_context(
                     session_id,

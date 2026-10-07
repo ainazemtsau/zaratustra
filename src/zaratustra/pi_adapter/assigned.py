@@ -930,6 +930,8 @@ def _execute_under_lock(
                 if key.upper()
                 in {"PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP"}
             }
+            if config.disable_tools:
+                environment["ZARA_DISABLE_MODEL_TOOLS"] = "1"
             environment.update(
                 {
                     "HOME": str(managed_home),

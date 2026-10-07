@@ -470,7 +470,10 @@ def _write_revision(
 
 def _sanitize_deleted(connection: sqlite3.Connection, record_id: UUID, now: str) -> None:
     """Retire dependent copies by provenance, including transitive derived records."""
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 14:
+        from .activity_setup import sanitize_setup_dependency
 
+        sanitize_setup_dependency(connection, record_id, now)
     affected = {str(record_id)}
     queue = [str(record_id)]
     while queue:
@@ -540,6 +543,10 @@ def sanitize_deleted_knowledge_dependency(
 ) -> None:
     """Retire derived payloads after an Artifact, Work or Activity is deleted."""
 
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 14:
+        from .activity_setup import sanitize_setup_dependency
+
+        sanitize_setup_dependency(connection, record_id, now)
     found = connection.execute(
         "SELECT 1 FROM knowledge_edges WHERE target_id=? LIMIT 1", (str(record_id),)
     ).fetchone()

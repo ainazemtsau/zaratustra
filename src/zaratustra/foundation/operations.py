@@ -22,6 +22,7 @@ from .models import (
     AcceptWorkRequest,
     Action,
     ActivityRevision,
+    ActivitySetupRequest,
     ActivityState,
     AdmitInvocationRequest,
     AnswerWaitRequest,
@@ -296,6 +297,10 @@ def _authorize(
         raise FoundationError(
             "permission_denied", f"No current Grant permits {actor} to perform {action}"
         )
+    if action == "record.read" and resource_id is not None:
+        from .activity_setup import check_setup_record_access
+
+        check_setup_record_access(cast(sqlite3.Connection, connection), resource_id, actor, epoch)
     return grants, decisions
 
 
@@ -569,6 +574,12 @@ def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]
         return "method.write", "space", None
     if isinstance(request, (FireBindingRequest, ResolveBindingOfferRequest)):
         return "record.read", "space", None
+    if isinstance(request, ActivitySetupRequest):
+        return (
+            ("activity.write", "space", None)
+            if request.action == "begin"
+            else ("activity.write", "activity", request.activity_id)
+        )
     if isinstance(request, (CreateMethodVersionRequest, DeleteMethodVersionRequest)):
         return "method.write", "space", None
     if isinstance(request, CreateCompositeWorkRequest):
@@ -1449,6 +1460,18 @@ def _apply_change(
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
+    if isinstance(request, ActivitySetupRequest):
+        from .activity_setup import apply_setup_change
+
+        return apply_setup_change(
+            cast(sqlite3.Connection, connection),
+            request,
+            now=now,
+            epoch=epoch,
+            authority=authority,
+            grants=grants,
+            decisions=decisions,
+        )
     if isinstance(
         request,
         (
@@ -2222,6 +2245,23 @@ def apply_operation(path: Path, request: DomainRequest, authority: Authority) ->
                 resource_type=resource_type,
                 resource_id=resource_id,
             )
+            if info.schema_version >= 14 and isinstance(
+                request,
+                (
+                    StartAttemptRequest,
+                    AssignAttemptRequest,
+                    ClaimAttemptLaunchRequest,
+                    PrepareInvocationRequest,
+                    AdmitInvocationRequest,
+                    SendInvocationRequest,
+                    PublishAttemptOutputRequest,
+                ),
+            ):
+                from .activity_setup import check_setup_execution
+
+                check_setup_execution(
+                    connection, request.work_id, request.actor, info.execution_epoch
+                )
             if isinstance(request, AnswerWaitRequest):
                 receipt_grants, receipt_decisions = _authorize(
                     connection,
@@ -3154,6 +3194,22 @@ def read_technical_deletion_targets(
                         attempt_ids.update(
                             _preserved_attempt_ids(connection, operation_id, record_id, "work_id")
                         )
+        # Knowledge/development jobs may accompany addressed Artifact/Work copies.
+        # They have no independent DBOS workflow; recognize their pending identities.
+        if info.schema_version >= 10:
+            for (record_id,) in connection.execute(
+                "SELECT record_id FROM knowledge_deletion_jobs WHERE status='pending'"
+            ):
+                identifier = UUID(record_id)
+                if identifier in selected:
+                    seen.add(identifier)
+        if info.schema_version >= 11:
+            for (record_id,) in connection.execute(
+                "SELECT record_id FROM development_deletion_jobs WHERE status='pending'"
+            ):
+                identifier = UUID(record_id)
+                if identifier in selected:
+                    seen.add(identifier)
     if seen != selected:
         raise FoundationError("technical_state", "Deletion batch no longer matches pending jobs")
     return TechnicalDeletionTargets(tuple(sorted(work_ids)), tuple(sorted(attempt_ids)))
@@ -3309,7 +3365,7 @@ def _complete_deletions_locked(
             completed_at=utc_now() if finished else None,
         )
 
-    if pending_jobs or subject_jobs:
+    if pending_jobs or subject_jobs or knowledge_jobs or development_jobs or method_jobs:
         purge_managed_pi_sessions(root, authority.space_id)
 
     for backup_id in contaminated:
