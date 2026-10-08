@@ -1,5 +1,11 @@
 # Development tools
 
+`probe_activity_setup_ui.mjs` loads the actual installed Pi extension and executes
+its renderers/context/UI hooks on fictional data. It performs no model sends or
+network calls, checks legacy setup-notice filtering and both compaction parts,
+and preserves expanded technical details. Pass the runtime, extension and NEW
+fictional output directory explicitly.
+
 `probe_activity_setup_pi` exercises schema 14 interview, whole review/correction,
 activation, new session, compact and an unaccepted ordinary Work with localhost
 only. It shares the installed-compatible native harness from `probe_knowledge_pi`.

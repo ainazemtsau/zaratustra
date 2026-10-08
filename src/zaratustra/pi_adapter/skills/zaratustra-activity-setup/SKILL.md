@@ -10,6 +10,16 @@ starting situation, normal workflow, autonomy and likely extensions. Reuse actua
 known answers. Ask a few necessary questions at a time; never ask them to design
 schemas, entities, internal Methods or storage. Recommend a simple effective base.
 
+Read the original request before forming the interview. Preserve stated goals,
+workflow and constraints; do not ask the person to repeat them in a questionnaire.
+Separate what is needed to organize the Activity from data needed for its later
+research or planning Works. A person may want to research before choosing a plan:
+retain that rule and make the missing subject-specific baseline an initial Work,
+instead of delaying Activity creation for a full domain intake. Ask only questions
+whose answers change the initial setup, in small groups. Explain a proposed default
+when the original request already gives enough direction. After saving a question,
+ask it once in the normal assistant reply; the tool stores it and shows concise status.
+
 1. Use `zara_activity(mode=create)` after the person requests a new direction.
    The trusted confirmation authorizes setup and activation of this new Activity.
    Retain the returned setup_id. Existing Activities use their ordinary change path.

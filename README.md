@@ -2,7 +2,7 @@
 
 Zaratustra — open-source продукт для длительных направлений работы, конкретных
 задач и сохраняемого знания с участием человека и программных агентов.
-Актуальная основа — **Core v0.1 / Activity**, версия пакета — **0.20.0**.
+Актуальная основа — **Core v0.1 / Activity**, версия пакета — **0.20.1**.
 
 Один SQLite Core хранит предметные данные, права, адресные версии и квитанции.
 Activity задаёт направление; Work — конкретную работу; Method — версионированный
@@ -26,7 +26,7 @@ Pi из PATH. Назначенное исполнение использует �
 ```text
 uv sync --locked
 uv build
-uv tool install --force --from dist/zaratustra-0.20.0-py3-none-any.whl zaratustra
+uv tool install --force --from dist/zaratustra-0.20.1-py3-none-any.whl zaratustra
 ```
 
 Для новой установки сначала подготовьте обычный Pi и свой конфиг:

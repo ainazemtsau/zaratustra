@@ -253,3 +253,71 @@ No acceptance is inferred from tests or review completion.
 
 solmax. Owner acceptance remains separate. Updating a personal installation and
 creating Health are separate next actions through the delivered setup procedure.
+
+# Activity setup interview self-loop correction — 0.20.1
+
+## outcome
+
+Corrected the demonstrated interview self-loop in the shared installed product.
+The 0.20.0 extension used sendMessage for a saved-question UI notice; ordinary Pi
+converts that custom message to role=user. During the same tool loop the model
+could interpret its own question as an owner answer. triggerTurn=false did not
+exclude the message from model context. This was a product defect, not user input.
+Schema stays 14; existing setup records, originals and session history are retained.
+
+## evidence
+
+Status/question display now uses UI state separately from conversation messages.
+Tool output is concise by default, with exact technical JSON available on expansion;
+actual error results remain visible. Ordinary questions are not warning notifications.
+Restored/background questions are displayed in a widget without model sends.
+Legacy custom zara-setup notices are excluded before provider conversion and from
+both compact inputs; genuine user messages and other extensions remain intact.
+The setup skill reuses original requirements and separates initial workflow questions
+from detailed intake needed only for a later research/planning Work.
+
+Scoped native check passed: four existing skill/tool-surface tests, formatting/lint,
+types, 30 boundaries, hygiene and build. The actual Pi loader/UI probe executed
+the installed tool renderer and hooks: collapsed/expanded output, genuine user input,
+legacy filtering, both compact inputs, restored question, ready notification and
+duplicate-error suppression. It made zero provider requests. The installed wheel
+outside checkout passed the corrected ordinary Pi path: 19 synthetic sends, four
+assigned stages, two complete reviews, both compact requests, new-session Work,
+separate acceptance, migration preservation and managed deletion. Required bounded
+read-only evaluator smoke independently checked metadata/resources and those reports;
+it did not claim model-quality review. Installed CLI reports Zaratustra 0.20.1.
+
+Wheel: dist/zaratustra-0.20.1-py3-none-any.whl.
+SHA-256: DB27D420F241D1916DAEB0E2C5BD55C5E54295226130C4B0F4C17E927FD0E439.
+
+## assumptions
+
+The earlier scripted-provider probe checked persistence/accounting but did not
+assert the UI notice's provider role. It could not catch a model interpreting that
+notice as an answer. The new regression checks the actual structural cause; it
+does not claim to guarantee every future interview formulation.
+
+## cuts
+
+No Core functionality removed, no personal Health data copied into this repository,
+no personal installation or setup record rewritten. Existing unrelated dirty files
+remain untouched. The passing 0.20.0 full native gate is earlier evidence; no full
+matrix was rerun for this addressed extension/skill correction.
+
+## cost
+
+Zero real model/subscription calls and zero paid API calls. The completed installed
+trace sent 19 localhost synthetic requests. An earlier 13-request incomplete trace
+exposed a fixture assumption: removing fake custom messages left only one compact
+summary. The corrected fixture uses two actual synthetic user turns to exercise
+both summaries. UI probe's first failure was a missing mock modelRegistry, not a
+product pass. These incomplete runs are not reported as successful checks.
+
+## manual-acceptance
+
+Correction/publication does not accept the product or any Work on the owner's behalf.
+
+## next
+
+solmax. Update the closed personal Pi installation from the checked wheel, then
+continue its existing Activity setup. Owner acceptance remains separate.

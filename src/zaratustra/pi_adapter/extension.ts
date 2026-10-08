@@ -28,6 +28,7 @@ const piAiUrl = piDependencyUrl("@earendil-works/pi-ai");
 const { createProvider, StringEnum } = await import(piAiUrl);
 const { openAICompletionsApi } = await import(new URL("./api/openai-completions.lazy.js", piAiUrl).href);
 const { Type } = await import(piDependencyUrl("typebox"));
+const { Text } = await import(piDependencyUrl("@earendil-works/pi-tui"));
 
 const endpoint = process.env.ZARA_CORE_ENDPOINT;
 const token = process.env.ZARA_CORE_TOKEN;
@@ -904,25 +905,42 @@ export default function (pi: any): void {
   let setupSelection: string | null = null;
   let setupTimer: ReturnType<typeof setInterval> | null = null;
   let setupShown = "";
+  let setupDisplayError = "";
+  const setupPhases: Record<string, string> = {
+    collecting: "сбор пожеланий", needs_input: "ожидает ответа", drafting: "подготовка",
+    reviewing: "полное ревью", correcting: "исправления", activating: "включение",
+    ready: "готова", paused: "пауза", cancelled: "отменена", needs_attention: "требует внимания",
+  };
   const setupModel = (ctx: any) => ({ id: ctx.model?.id, provider: ctx.model?.provider });
-  async function showSetup(ctx: any, appendMessage = true) {
+  async function showSetup(ctx: any, display = true, force = false) {
     if (!setupSelection) return;
     try {
       const item = await request("/v1/activity-setup", { action: "status", setup_id: setupSelection });
       const key = `${item.setup_id}:${item.revision}`;
-      if (key === setupShown) return;
+      setupDisplayError = "";
+      if (!display) ctx.ui.setWidget("zara-setup", undefined);
+      if (key === setupShown && !force) return;
       setupShown = key;
       const state = item.state;
-      ctx.ui.setStatus("zara-setup", `Activity: ${state.phase}; review ${state.reviews_started - state.pass_boundary}/5`);
-      if (["ready", "needs_input", "needs_attention"].includes(state.phase)) {
+      ctx.ui.setStatus("zara-setup", `Activity: ${setupPhases[state.phase] ?? state.phase}; ревью ${state.reviews_started - state.pass_boundary}/5`);
+      ctx.ui.setWidget("zara-setup", undefined);
+      if (display && ["ready", "needs_input", "needs_attention"].includes(state.phase)) {
         const text = state.phase === "ready"
           ? `Activity готова.\n${state.result}\nWork: ${state.activated_works.join(", ")}. Результаты Work принимаются отдельно.`
           : state.question ?? state.result ?? "Настройка требует внимания; прочитай сохранённое состояние.";
-        if (appendMessage) pi.sendMessage({ customType: "zara-setup", content: text, display: true,
-          details: { setup_id: item.setup_id, revision: item.revision } }, { triggerTurn: false });
-        ctx.ui.notify(text, state.phase === "ready" ? "info" : "warning");
+        // UI-only: a restored/background question must not create a second model message
+        // or precede Pi's initial conversation header. Tool questions are asked by the assistant.
+        ctx.ui.setWidget("zara-setup", text.split("\n"));
+        if (state.phase !== "needs_input") ctx.ui.notify(
+          state.phase === "ready" ? "Activity готова к работе." : "Настройка требует внимания: /zara-setup",
+          state.phase === "ready" ? "info" : "warning",
+        );
       }
-    } catch (error) { ctx.ui.notify(String(error), "warning"); }
+    } catch (error) {
+      const message = String(error);
+      if (message !== setupDisplayError) ctx.ui.notify(message, "warning");
+      setupDisplayError = message;
+    }
   }
   function watchSetup(ctx: any) {
     if (setupTimer) clearInterval(setupTimer);
@@ -942,7 +960,7 @@ export default function (pi: any): void {
         await request("/v1/activity-setup", { action: "resume", setup_id: setupSelection, model: setupModel(ctx) });
       }
       watchSetup(ctx);
-      await showSetup(ctx, false);
+      await showSetup(ctx);
     } else if (pending.length > 1) {
       ctx.ui.notify("Есть несколько незавершённых настроек Activity. Выбери нужный setup_id через zara_activity.", "info");
     }
@@ -954,9 +972,10 @@ export default function (pi: any): void {
       catch { /* The host finally also stops the window-owned coordinator. */ }
     }
   });
+  pi.on("input", async (_event: any, ctx: any) => { ctx.ui.setWidget("zara-setup", undefined); });
   pi.registerCommand("zara-setup", { description: "Show saved Activity setup, question and result",
     handler: async (_args: string, ctx: any) => {
-      if (setupSelection) await showSetup(ctx);
+      if (setupSelection) await showSetup(ctx, true, true);
       else ctx.ui.notify(JSON.stringify(await request("/v1/activity-setup", { action: "list" }), null, 2), "info");
     },
   });
@@ -965,6 +984,8 @@ export default function (pi: any): void {
     description: "List/read Activities or start a new Activity setup after the user asks for a direction. " +
       "Create retains the request and authorizes this new Activity's interview, whole draft/review/correction and activation. " +
       "Use question to retain a necessary user question, answer to save the actual received user message, " +
+      "then ask the saved question once in your normal reply. Reuse the original request; ask only missing " +
+      "details needed to set up the workflow. Data needed only for a later research/planning Work can wait. " +
       "submit when enough is known, status/resume/pause/cancel for saved continuation. " +
       "Retry after five reviews only on explicit user request. Do not ask the owner about internal Method/schema design. " +
       "Setup stages run through assigned ordinary Pi; no per-step confirmations and no automatic Work acceptance.",
@@ -976,6 +997,22 @@ export default function (pi: any): void {
       question: Type.Optional(Type.String({ minLength: 1, maxLength: 32768 })),
       source_refs: Type.Optional(Type.Array(Type.Object({ record_id: Type.String(), revision: Type.Number() }))),
     }),
+    renderCall(params: any, theme: any) {
+      return new Text(theme.fg("toolTitle", theme.bold("Activity ")) +
+        theme.fg("accent", params.title ?? params.mode ?? "…"), 0, 0);
+    },
+    renderResult(result: any, { expanded, isPartial }: any, theme: any, context: any) {
+      const raw = result.content?.filter((item: any) => item.type === "text").map((item: any) => item.text).join("\n") ?? "";
+      if (result.isError || context?.isError) return new Text(theme.fg("error", raw), 0, 0);
+      if (expanded) return new Text(raw, 0, 0);
+      if (isPartial) return new Text(theme.fg("muted", "Настройка Activity…"), 0, 0);
+      const state = result.details?.state;
+      const summary = state?.phase
+        ? `Настройка: ${setupPhases[state.phase] ?? state.phase}. Ревью: ${state.reviews_started - state.pass_boundary}/5.`
+        : state?.title ? `${state.title}: ${state.status}.`
+        : result.details?.items ? `Activity: ${result.details.items.length}.` : raw;
+      return new Text(theme.fg("muted", summary), 0, 0);
+    },
     async execute(_callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
       if (!connection) connection = await request("/v1/connect", {});
       if (params.mode === "list") {
@@ -1019,7 +1056,7 @@ export default function (pi: any): void {
           question: params.question, source_refs: params.source_refs ?? [], model: setupModel(ctx) });
       }
       watchSetup(ctx);
-      await showSetup(ctx);
+      await showSetup(ctx, false);
       return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
     },
   });
@@ -1403,8 +1440,17 @@ export default function (pi: any): void {
     }
   });
 
+  function withoutSetupNotices(messages: any[]) {
+    // Pi converts custom messages to role=user. Old setup notices are retained in
+    // session history, but must never be interpreted as a person's interview answer.
+    return messages.filter(message => !(message.role === "custom" && message.customType === "zara-setup"));
+  }
+  pi.on("context", (event: any) => ({ messages: withoutSetupNotices(event.messages) }));
+
   pi.on("session_before_compact", async (event: any, ctx: any) => {
     try {
+      event.preparation.messagesToSummarize = withoutSetupNotices(event.preparation.messagesToSummarize);
+      event.preparation.turnPrefixMessages = withoutSetupNotices(event.preparation.turnPrefixMessages);
       rememberMemoryBranch(event.branchEntries ?? ctx.sessionManager.getBranch());
       await checkPromptWork();
       if (!receivedPrompt) {

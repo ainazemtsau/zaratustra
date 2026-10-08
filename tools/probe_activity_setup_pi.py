@@ -181,6 +181,21 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
         )
         return bridge
 
+    question = "How do you normally bring your project notes?"
+
+    def interview_reply(body: dict[str, Any]) -> dict[str, str]:
+        # A saved assistant question must not reappear as user input and become a
+        # phantom answer. The model still receives the actual tool result.
+        assert not any(
+            message.get("role") == "user"
+            and (
+                message.get("content") == question
+                or message.get("content") == [{"type": "text", "text": question}]
+            )
+            for message in body.get("messages", [])
+        )
+        return {"_final_text": question}
+
     first = native.Provider(
         [
             {
@@ -193,11 +208,12 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
                 "_tool": "zara_activity",
                 "mode": "question",
                 "setup_id": str(core.list_activity_setups(root, authority)[0].setup_id),
-                "question": "How do you normally bring your project notes?",
+                "question": question,
             },
+            interview_reply,
         ]
     )
-    native.run_process(
+    first_events = native.run_process(
         working,
         runtime,
         bridge_for(first),
@@ -206,6 +222,12 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
         skills=(activity_setup_skill(),),
         expected_provider_calls=3,
         prompt="Create a fictional workshop Activity for notes and summaries",
+    )
+    assert not any(
+        event.get("type") == "extension_ui_request"
+        and event.get("method") == "notify"
+        and event.get("message") == question
+        for event in first_events
     )
     requests.extend(first.requests)
     setup = core.list_activity_setups(root, authority)[0]
@@ -324,7 +346,8 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
         Bridge(root, authority, working),
         third,
         compact=True,
-        expected_provider_calls=4,
+        split_compact=True,
+        expected_provider_calls=5,
     )
     requests.extend(third.requests)
     first_work = final.state.activated_works[0]
