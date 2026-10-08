@@ -289,6 +289,10 @@ it did not claim model-quality review. Installed CLI reports Zaratustra 0.20.1.
 
 Wheel: dist/zaratustra-0.20.1-py3-none-any.whl.
 SHA-256: DB27D420F241D1916DAEB0E2C5BD55C5E54295226130C4B0F4C17E927FD0E439.
+All 101 packaged product files match the source, wheel and installed venv exactly.
+Published to public ainazemtsau/zaratustra main at implementation commit
+f6af092b499c681055a8a326d2488d5fb43987ae; authenticated GitHub readback confirmed
+that exact SHA. This report follow-up changes no product bytes.
 
 ## assumptions
 
