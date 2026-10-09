@@ -5,8 +5,9 @@
 Implemented 0.21.0 on codex/workspace-separation: explicit configuration v2,
 registered project resources, native Pi roots and prepared private Git snapshots.
 Core schema remains 14. The existing selected space was preserved and the installed
-entry now selects its personal root. Repository publication is the remaining step
-at this evidence checkpoint.
+entry now selects its personal root. Product code was published to public main;
+the personal snapshot was published separately to the owner-selected private main.
+Product implementation commit: c16b9b4309ec77c2d111dd5847bbddb10efd8145.
 
 ## evidence
 
@@ -44,6 +45,13 @@ setup, Attempt, invocation, receipt and operation row unchanged. Existing Work
 and Activity revisions, acceptance and ready setup states matched through public
 reads. Interactive session bytes and archived dirty work were also checked.
 Paths, addresses, contents and detailed migration receipts stay in private evidence.
+A fresh clone of public main matched the implementation Git tree. A fresh clone
+of the private destination matched all 3,455 prepared file hashes, contained no
+database/runtime/install/source-archive files and had a new root commit without
+product ancestry. Both repositories reported the intended visibility and main.
+The personal delivery journal reports published, exact remote ref confirmed and
+no pending changes. New-process public Core reads recovered both ordinary and
+assigned synthetic results and their exact selected resources without acceptance.
 
 ## assumptions
 
@@ -69,8 +77,8 @@ No old personal repository content or history was imported.
 
 ## next
 
-solmax. Publish the checked product and personal snapshots to the explicitly selected
-destinations, verify remote refs, and return the ordinary launch command.
+solmax. Ready for ordinary use of the preserved Activities. Future personal pushes
+require approval of a prepared packet; Work acceptance remains the owner's action.
 
 # Product publication 0.18.11
 
