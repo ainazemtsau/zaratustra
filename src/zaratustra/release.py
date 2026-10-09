@@ -25,7 +25,7 @@ SQLITE_DLL_SHA256 = "79FD9EC89DBA3F8BD64529A2CA8E9DDE6AE6EDC486C55A1D3F1CE77975A
 
 def _config(path: Path) -> dict[str, object]:
     result = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(result, dict) or result.get("version") != 1:
+    if not isinstance(result, dict) or result.get("version") not in (1, 2):
         raise ValueError("Unsupported launch configuration")
     sqlite_dll = Path(str(result["sqlite_dll"])).resolve()
     if (
@@ -34,6 +34,10 @@ def _config(path: Path) -> dict[str, object]:
     ):
         raise ValueError("Configured SQLite DLL is missing or changed")
     os.environ["ZARATUSTRA_SQLITE_DLL"] = str(sqlite_dll)
+    from .workspace import LaunchConfig
+
+    result = LaunchConfig.model_validate(result).model_dump(mode="json", exclude_none=False)
+    result["_config_path"] = str(path.resolve())
     trial_limit = result.get("trial_total_send_limit")
     if trial_limit is not None:
         if isinstance(trial_limit, bool) or not isinstance(trial_limit, int) or trial_limit < 1:
@@ -110,7 +114,13 @@ def _runtime_command(args: argparse.Namespace, config: dict[str, object], path: 
         runtime = system_pi_runtime()
         config = {**config, "pi_source": "system", "pi_runtime": str(runtime.root)}
         pending = path.with_suffix(path.suffix + ".pending")
-        pending.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+        pending.write_text(
+            json.dumps(
+                {key: value for key, value in config.items() if not key.startswith("_")}, indent=2
+            )
+            + "\n",
+            encoding="utf-8",
+        )
         pending.replace(path)
     root, cli, version = _runtime(config)
     print(
@@ -157,6 +167,35 @@ def _prepare_pi(supplied: Path | None) -> Path:
 def _setup(args: argparse.Namespace) -> int:
     if sys.version_info[:3] != (3, 13, 7):
         raise ValueError("Use the supported Python 3.13.7 to install the wheel")
+    interactive = args.workspace is None
+    if interactive:
+        chosen = input("Personal workspace folder (separate from the product source): ").strip()
+        if not chosen:
+            raise ValueError("Choose a personal workspace folder")
+        args.workspace = Path(chosen)
+        default_space = args.workspace / "space"
+        selected = input(f"Existing Core folder, or Enter for {default_space}: ").strip()
+        args.space = Path(selected) if selected else default_space
+        args.new_space = not (args.space / ".zara-core").exists()
+        args.git_repository = (
+            input("Optional private GitHub owner/repository, or Enter to skip: ").strip() or None
+        )
+        if args.git_repository:
+            args.create_private = (
+                input("Create that private repository if absent? [y/N]: ").strip().lower() == "y"
+            )
+        args.model_id = (
+            input(f"Codex subscription model [{args.model_id}]: ").strip() or args.model_id
+        )
+        args.workspace.expanduser().resolve().mkdir(parents=True, exist_ok=True)
+        args.space.expanduser().resolve().mkdir(parents=True, exist_ok=True)
+    if args.space is None:
+        args.space = args.workspace / "space"
+    if args.config is None:
+        args.config = (
+            Path.home() / ".zaratustra" / "instances" / args.workspace.name / "config.json"
+        )
+        args.config.parent.mkdir(parents=True, exist_ok=True)
     config_path = args.config.expanduser().resolve()
     if config_path.exists():
         raise ValueError("Configuration already exists; use an explicit update or another path")
@@ -168,6 +207,11 @@ def _setup(args: argparse.Namespace) -> int:
         raise ValueError("Choose an existing working resource directory")
     if not space.is_dir():
         raise ValueError("Choose an existing empty or initialized Core space directory")
+    if (workspace / "src" / "zaratustra" / "release.py").exists():
+        raise ValueError("Choose a personal folder separate from the product source checkout")
+    runtime_root = (args.runtime_root or config_path.parent / "runtime").expanduser().resolve()
+    if runtime_root.is_relative_to(workspace) or workspace.is_relative_to(runtime_root):
+        raise ValueError("Choose a runtime outside the personal folder")
     node_version = subprocess.run(
         [args.node, "--version"], capture_output=True, text=True, encoding="utf-8", check=True
     ).stdout.strip()
@@ -193,7 +237,6 @@ def _setup(args: argparse.Namespace) -> int:
     print(f"New space: {args.new_space}; target schema: 14")
     if input("Type SETUP to prepare this installation and selected space: ").strip() != "SETUP":
         return 1
-    runtime_root = config_path.parent / "runtime"
     sqlite_dll = _prepare_sqlite(runtime_root / "sqlite3.dll", args.sqlite_dll)
     os.environ["ZARATUSTRA_SQLITE_DLL"] = str(sqlite_dll)
     from zaratustra.foundation import authorize_local, read_space
@@ -211,11 +254,17 @@ def _setup(args: argparse.Namespace) -> int:
             raise ValueError("Recover the selected Core space before setup")
     pi_runtime = _prepare_pi(args.pi_runtime)
     config: dict[str, object] = {
-        "version": 1,
+        "version": 2,
         "actor": actor,
         "space_id": str(authority.space_id),
         "space": str(space),
         "workspace": str(workspace),
+        "personal_root": str(workspace),
+        "runtime_root": str(runtime_root),
+        "projects": [],
+        "git": {"repository": args.git_repository, "branch": "main"}
+        if args.git_repository
+        else None,
         "sqlite_dll": str(sqlite_dll),
         "pi_runtime": str(pi_runtime),
         "pi_source": "managed" if args.pi_runtime is not None else "system",
@@ -233,6 +282,10 @@ def _setup(args: argparse.Namespace) -> int:
     temp.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     temp.replace(config_path)
     _register_config(config_path)
+    if args.git_repository:
+        from .workspace import initialize_git, read_config
+
+        initialize_git(read_config(config_path), create_private=args.create_private)
     print(f"Prepared: {config_path}")
     if not args.new_space and info.schema_version < 14:
         print("Existing space requires zara-core upgrade before run or assign")
@@ -290,6 +343,8 @@ def _run(args: argparse.Namespace, config: dict[str, object]) -> int:
         command += ["--thinking", args.thinking]
     if config.get("subscription_agent_dir"):
         command += ["--subscription-agent-dir", str(config["subscription_agent_dir"])]
+    if config.get("version") == 2:
+        command += ["--workspace-config", str(config["_config_path"])]
     return pi_main(command)
 
 
@@ -335,6 +390,8 @@ def _assign(args: argparse.Namespace, config: dict[str, object]) -> int:
         command += ["--work-id", str(args.work_id), "--resource-id", str(args.resource_id)]
     if args.pi_tools:
         command += ["--pi-tools", args.pi_tools]
+    if config.get("version") == 2:
+        command += ["--workspace-config", str(config["_config_path"])]
     return assigned_main(command)
 
 
@@ -661,7 +718,8 @@ def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
         print(f"Space {target.space_id}: {space} -> {selected}; epoch {target.execution_epoch}")
         if input("Type SELECT to save this restored space: ").strip() != "SELECT":
             return 1
-        updated = {**config, "space": str(selected), "space_id": str(target.space_id)}
+        updated = {key: value for key, value in config.items() if not key.startswith("_")}
+        updated.update(space=str(selected), space_id=str(target.space_id))
         pending = output.with_name(output.name + ".pending")
         pending.write_text(json.dumps(updated, indent=2) + "\n", encoding="utf-8")
         pending.replace(output)
@@ -1008,9 +1066,112 @@ def _memory(args: argparse.Namespace, config: dict[str, object]) -> int:
     return 0
 
 
+def _workspace_cli(args: argparse.Namespace, path: Path) -> int:
+    from .foundation import authorize_local
+    from .workspace import (
+        GitDestination,
+        Project,
+        defer_git,
+        git_status,
+        initialize_git,
+        migrate_config,
+        prepare_git,
+        publish_git,
+        read_config,
+        reconcile_git,
+        register_project,
+        select_work_project,
+        workspace_info,
+    )
+
+    config = read_config(path)
+    authority = authorize_local(
+        config.space, actor=config.actor, source_ref=f"local-console:{config.actor}:{uuid4()}"
+    )
+    result: object
+    if args.command == "workspace":
+        if args.mode == "migrate":
+            config = migrate_config(
+                path,
+                args.output,
+                personal_root=args.personal_root,
+                runtime_root=args.runtime_root,
+                projects=config.projects,
+                git=GitDestination(repository=args.git_repository)
+                if args.git_repository
+                else config.git,
+            )
+            _register_config(args.output)
+        result = workspace_info(config)
+    elif args.command == "projects":
+        if args.mode == "register":
+            config = register_project(path, Project(name=args.name, path=args.path))
+        elif args.mode == "select":
+            result = {"root": str(select_work_project(config, authority, args.work_id, args.name))}
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 0
+        result = workspace_info(config)["projects"]
+    elif args.mode == "init":
+        initialize_git(config, create_private=args.create_private)
+        result = git_status(config)
+    elif args.mode == "prepare":
+        result = prepare_git(config, authority).model_dump(mode="json")
+    elif args.mode in ("publish", "defer"):
+        if args.mode == "defer":
+            result = defer_git(config, args.preparation_id).model_dump(mode="json")
+        else:
+            status = git_status(config)
+            delivery = status["delivery"]
+            if not isinstance(delivery, dict) or delivery["preparation_id"] != str(
+                args.preparation_id
+            ):
+                raise ValueError("No matching prepared delivery")
+            print(f"Destination: {config.git}\nPrepared files:")
+            print("\n".join(delivery["files"]))
+            approved = (
+                input("Type PUSH to publish exactly these personal files: ").strip() == "PUSH"
+            )
+            result = publish_git(
+                config, authority, args.preparation_id, approved=approved
+            ).model_dump(mode="json")
+    elif args.mode == "check":
+        item = reconcile_git(config)
+        result = item.model_dump(mode="json") if item else {"delivery": None}
+    else:
+        result = git_status(config)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0
+
+
 def main(argv: list[str] | None = None, *, prog: str = "zara-core") -> int:
     parser = argparse.ArgumentParser(prog=prog, description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    for name, workspace_modes in (
+        ("workspace", ("info", "migrate")),
+        ("projects", ("list", "register", "select")),
+        ("git", ("status", "init", "prepare", "publish", "defer", "check")),
+    ):
+        group = commands.add_parser(name)
+        actions = group.add_subparsers(dest="mode")
+        group.set_defaults(mode=workspace_modes[0], config=None)
+        for mode in workspace_modes:
+            command = actions.add_parser(mode)
+            command.add_argument("--config", type=Path)
+            if name == "workspace" and mode == "migrate":
+                command.add_argument("--personal-root", required=True, type=Path)
+                command.add_argument("--runtime-root", required=True, type=Path)
+                command.add_argument("--output", required=True, type=Path)
+                command.add_argument("--git-repository")
+            elif name == "projects" and mode in ("register", "select"):
+                command.add_argument("name")
+                if mode == "register":
+                    command.add_argument("path", type=Path)
+                else:
+                    command.add_argument("--work-id", required=True, type=UUID)
+            elif name == "git" and mode == "init":
+                command.add_argument("--create-private", action="store_true")
+            elif name == "git" and mode in ("publish", "defer"):
+                command.add_argument("preparation_id", type=UUID)
     memory = commands.add_parser("memory", help="Shared indexed memory and exact text selections")
     memory_modes = memory.add_subparsers(dest="mode", required=True)
     for mode in ("catalog", "read_batch", "prepare_cache", "open_selection", "history", "export"):
@@ -1078,25 +1239,28 @@ def main(argv: list[str] | None = None, *, prog: str = "zara-core") -> int:
                 command.add_argument("--reply-id", type=UUID)
                 command.add_argument("--reply-revision", type=int)
     setup = commands.add_parser("setup")
-    setup.add_argument("--config", required=True, type=Path)
-    setup.add_argument("--space", required=True, type=Path)
-    setup.add_argument("--workspace", required=True, type=Path)
+    setup.add_argument("--config", type=Path)
+    setup.add_argument("--space", type=Path)
+    setup.add_argument("--workspace", type=Path)
     setup.add_argument("--new-space", action="store_true")
+    setup.add_argument("--runtime-root", type=Path)
+    setup.add_argument("--git-repository", help="Optional permitted private owner/repository")
+    setup.add_argument("--create-private", action="store_true")
     setup.add_argument("--sqlite-dll", type=Path, help="Verified SQLite DLL for offline setup")
     setup.add_argument(
         "--pi-runtime", type=Path, help="Explicit Pi runtime; default uses pi on PATH"
     )
     setup.add_argument("--node", default="node")
     setup.add_argument(
-        "--provider-profile", choices=("codex-sse", "local-completions"), required=True
+        "--provider-profile", choices=("codex-sse", "local-completions"), default="codex-sse"
     )
-    setup.add_argument("--provider-base-url", required=True)
-    setup.add_argument("--provider-id", required=True)
-    setup.add_argument("--model-id", required=True)
+    setup.add_argument("--provider-base-url", default="https://chatgpt.com/backend-api")
+    setup.add_argument("--provider-id", default="openai-codex")
+    setup.add_argument("--model-id", default="gpt-5.6-luna")
     setup.add_argument("--context-window", type=int)
     setup.add_argument("--max-tokens", type=int)
     setup.add_argument("--limit-units", type=int)
-    setup.add_argument("--reserve-units", type=int, required=True)
+    setup.add_argument("--reserve-units", type=int, default=3000)
     for name in (
         "run",
         "assign",
@@ -1175,6 +1339,8 @@ def main(argv: list[str] | None = None, *, prog: str = "zara-core") -> int:
         config_path = _selected_config(args.config)
         config = _config(config_path)
         _actor(config)
+        if args.command in ("workspace", "projects", "git"):
+            return _workspace_cli(args, config_path)
         if args.command == "memory":
             return _memory(args, config)
         if args.command == "integration":

@@ -1,4 +1,79 @@
+# Workspace separation 0.21.0
+
+## outcome
+
+Implemented 0.21.0 on codex/workspace-separation: explicit configuration v2,
+registered project resources, native Pi roots and prepared private Git snapshots.
+Core schema remains 14. The existing selected space was preserved and the installed
+entry now selects its personal root. Repository publication is the remaining step
+at this evidence checkpoint.
+
+## evidence
+
+The single full native run passed hygiene, Ruff, mypy, 31 module contracts and
+810 tests; one existing source-presence parser failed on dynamically registered
+native tools. Its guard was corrected without removing or skipping a test. The
+affected native gate then passed both tests in that file and built the wheel.
+A later installed CLI check exposed missing defaults for bare navigation commands;
+the extended existing release test reproduced it. After fixing argparse defaults,
+the affected gate passed all three release tests, types, boundaries, build and
+report structure. The initial full run and failed addressed attempt are retained
+as failures, not described as a green full run. No second full matrix was run.
+
+Seven addressed workspace/release tests passed. Ordinary Pi 1.0.4 used native
+filesystem and command tools in a registered external root, retained a Work
+deliverable, deferred publication, compacted and resumed the same resource.
+Assigned DBOS/Pi wrote into its resource root. The final wheel was installed outside
+checkout; its coherent trace observed 16 localhost synthetic HTTP sends (14 ordinary,
+2 assigned). Every request included ContextManifest. Work remained unaccepted and
+the agent did not receive its own setup question as user input. Exact Work/resource/
+Artifact addresses are retained in the final probe report. A model-free UI probe
+passed legacy notice filtering and both compaction parts.
+
+Installed CLI migration kept a fictional schema-13 space and its Activity identity,
+then explicitly upgraded it to schema 14 and read it in a new process. The bounded
+read-only evaluator checked installed metadata, config and retained reports; its
+developer scope prevented interpreter/CLI execution, so no independent runtime
+verification is claimed. The author supplied the actual installed runtime trace.
+
+Final wheel SHA-256:
+4CF472C69A487147B95FF243242689DF42A1ED31944A1D6642FBAFF7E09520EF.
+The permanent installation uses the exported uv.lock dependency constraints.
+Private preservation checks found every original subject, Artifact, knowledge,
+setup, Attempt, invocation, receipt and operation row unchanged. Existing Work
+and Activity revisions, acceptance and ready setup states matched through public
+reads. Interactive session bytes and archived dirty work were also checked.
+Paths, addresses, contents and detailed migration receipts stay in private evidence.
+
+## assumptions
+
+Core is authoritative; readable Git snapshots are selected delivery copies.
+Configuration migration keeps the existing Core and requires explicit roots.
+
+## cuts
+
+No second domain backend, new protocol, graphical panel or external model engine.
+Binary originals stay in Core; text Git views are not a full restoration format.
+Remote Git history is not rewritten by Core deletion.
+
+## cost
+
+Verification uses fictional temporary spaces and localhost synthetic providers.
+No real model calls or paid API calls.
+
+## manual-acceptance
+
+Implementation and the two named publication destinations are owner-authorized.
+Owner acceptance of Work remains separate and has not been performed by this package.
+No old personal repository content or history was imported.
+
+## next
+
+solmax. Publish the checked product and personal snapshots to the explicitly selected
+destinations, verify remote refs, and return the ordinary launch command.
+
 # Product publication 0.18.11
+
 
 ## outcome
 

@@ -14,7 +14,7 @@ def test_every_registered_zara_tool_is_enabled_in_interactive_pi() -> None:
     registered = {
         block.split('name: "', 1)[1].split('"', 1)[0]
         for block in extension.split("pi.registerTool({")[1:]
-        if block.split('name: "', 1)[1].startswith("zara_")
+        if 'name: "' in block and block.split('name: "', 1)[1].startswith("zara_")
     }
 
     assert registered == set(INTERACTIVE_ZARA_TOOLS)

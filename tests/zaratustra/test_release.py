@@ -56,6 +56,23 @@ def test_default_launch_reference_and_explicit_selection(
     assert _selected_config(other) == other.resolve()
     monkeypatch.setenv("ZARATUSTRA_CONFIG", str(other))
     assert _selected_config(None) == other.resolve()
+    # Bare navigation commands must inspect the selected space, not fail parsing.
+    observed: list[tuple[str, str, Path]] = []
+    monkeypatch.setattr(release, "_config", lambda _: {})
+    monkeypatch.setattr(release, "_actor", lambda _: None)
+
+    def inspect(args: argparse.Namespace, path: Path) -> int:
+        observed.append((args.command, args.mode, path))
+        return 0
+
+    monkeypatch.setattr(release, "_workspace_cli", inspect)
+    for command in ("workspace", "projects", "git"):
+        assert release.main([command]) == 0
+    assert observed == [
+        ("workspace", "info", other.resolve()),
+        ("projects", "list", other.resolve()),
+        ("git", "status", other.resolve()),
+    ]
 
 
 def test_run_uses_system_pi_and_selected_subscription_model(

@@ -14,7 +14,7 @@ import sys
 import threading
 from collections.abc import Callable
 from contextlib import closing
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from importlib.metadata import version
 from importlib.resources import files
 from pathlib import Path
@@ -136,6 +136,7 @@ class AssignedConfig:
     pi_tools: tuple[str, ...] = ()
     disable_tools: bool = False
     subscription_agent_dir: Path | None = None
+    workspace_config: Path | None = None
 
 
 def executor_database(space: Path) -> Path:
@@ -888,6 +889,7 @@ def _execute_under_lock(
                 authority,
                 config.workspace,
                 config.limit_units,
+                workspace_config=config.workspace_config,
                 assigned_attempt_id=attempt_id,
                 assigned_session_id=attempt.session_id,
             )
@@ -1219,6 +1221,12 @@ def _run_assigned_locked(
     snapshot = read_execution(config.space, work_id, authority)
     attempt = next(x for x in snapshot.attempts if x.attempt_id == attempt_id)
     assignment = next(x for x in snapshot.assignments if x.attempt_id == attempt_id)
+    if config.workspace_config is not None:
+        from zaratustra.workspace import read_config
+
+        resource = next(x for x in snapshot.resources if x.resource_id == attempt.resource_id)
+        read_config(config.workspace_config).project_name(resource.state.root)
+        config = replace(config, workspace=resource.state.root.resolve())
     if assignment.executor_version != EXECUTOR_VERSION:
         raise FoundationError("executor_version", "Assigned executor version is not installed")
     if assignment.status == "stop_requested" and any(
@@ -1305,6 +1313,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--space", required=True, type=Path)
     parser.add_argument("--workspace", required=True, type=Path)
+    parser.add_argument("--workspace-config", type=Path)
     parser.add_argument("--pi-cli", required=True, type=Path)
     parser.add_argument("--pi-runtime", required=True, type=Path)
     parser.add_argument("--attempt-id", type=UUID)
@@ -1334,6 +1343,7 @@ def main(argv: list[str] | None = None) -> int:
     config = AssignedConfig(
         space=args.space.resolve(),
         workspace=args.workspace.resolve(),
+        workspace_config=args.workspace_config,
         pi_cli=args.pi_cli.resolve(),
         pi_runtime=args.pi_runtime.resolve(),
         node=args.node,
@@ -1372,6 +1382,11 @@ def main(argv: list[str] | None = None) -> int:
         assert args.work_id is not None and args.resource_id is not None
         snapshot = read_execution(config.space, args.work_id, authority)
         resource = next((x for x in snapshot.resources if x.resource_id == args.resource_id), None)
+        if resource is not None and config.workspace_config is not None:
+            from zaratustra.workspace import read_config
+
+            read_config(config.workspace_config).project_name(resource.state.root)
+            config = replace(config, workspace=resource.state.root.resolve())
         if resource is None or resource.state.root != config.workspace:
             parser.error("Selected Work resource differs from the RPC workspace")
         attempt_id = uuid4()

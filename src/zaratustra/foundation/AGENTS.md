@@ -308,4 +308,8 @@ stop and restore unchanged current membership without rewriting its history.
 Small direct corrections use the same typed reorganization transaction. Neither
 route copies scoped Decision, Binding or Grant records.
 
+`projection.py` streams exact readable workspace snapshots through current rights.
+It keeps schema 14 and uses no write transaction or alternate domain store.
+Prepared bases, operational accounting and UTF-8 parts are rechecked before delivery.
+
 END_OF_FILE: src/zaratustra/foundation/AGENTS.md

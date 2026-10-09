@@ -199,6 +199,7 @@ def run_process(
     session_directory: Path | None = None,
     resume_session: Path | None = None,
     resume_via_switch: bool = False,
+    prompt_after_switch: bool = False,
     prompt: str = "Keep the fictional material, Claim and handoff trace.",
     skills: tuple[Path, ...] = (),
     catalog_only: bool = False,
@@ -323,7 +324,7 @@ def run_process(
         )
         process.stdin.write(json.dumps(initial_command).encode() + b"\n")
         process.stdin.flush()
-        compaction_started = resume_session is not None
+        compaction_started = resume_session is not None and not prompt_after_switch
         second_turn_started = False
         continuation_started = False
         confirmations = 0
@@ -342,7 +343,16 @@ def run_process(
                 break
             if event.get("type") == "response" and event.get("id") == "resume":
                 assert event.get("success") is True, event
-                process.stdin.write(b'{"id":"compact","type":"compact"}\n')
+                process.stdin.write(
+                    (
+                        json.dumps(
+                            {"id": "resumed-prompt", "type": "prompt", "message": prompt}
+                        ).encode()
+                        if prompt_after_switch
+                        else b'{"id":"compact","type":"compact"}'
+                    )
+                    + b"\n"
+                )
                 process.stdin.flush()
                 continue
             if expected_pre_send_failure and event.get("type") == "extension_error":
@@ -363,9 +373,7 @@ def run_process(
                 and event.get("type") == ("agent_settled" if work else "agent_end")
                 and not compaction_started
             ):
-                assert provider.calls >= 1, [
-                    item for item in observed if item.get("type") == "extension_error"
-                ]
+                assert provider.calls >= 1, observed
                 if split_compact and not second_turn_started:
                     process.stdin.write(
                         b'{"id":"second","type":"prompt",'

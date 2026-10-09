@@ -360,7 +360,14 @@ def worker() -> int:
     """Internal parent-started worker; never an interactive public entry point."""
     raw = json.loads(sys.stdin.buffer.read())
     fields = raw["config"]
-    for key in ("space", "workspace", "pi_cli", "pi_runtime", "subscription_agent_dir"):
+    for key in (
+        "space",
+        "workspace",
+        "pi_cli",
+        "pi_runtime",
+        "subscription_agent_dir",
+        "workspace_config",
+    ):
         if fields.get(key) is not None:
             fields[key] = Path(fields[key])
     fields["pi_tools"] = tuple(fields.get("pi_tools", ()))

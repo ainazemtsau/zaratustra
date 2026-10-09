@@ -45,6 +45,10 @@ globalThis.fetch = async (url, init) => {
   if (String(url).includes("/v1/context-prepare")) return Response.json({
     manifest_id: "fictional-manifest", manifest_revision: 1,
   });
+  if (String(url).includes("/v1/workspace")) return Response.json({
+    personal_root: directory, selected_root: directory, selected_project: "personal",
+    projects: [], git: { connected: false },
+  });
   assert(String(url).includes("/v1/activity-setup"));
   const body = JSON.parse(init.body);
   if (body.action === "list") return Response.json({ items: [item] });

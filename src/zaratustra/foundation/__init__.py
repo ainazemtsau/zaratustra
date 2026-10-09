@@ -303,6 +303,12 @@ from .operations import (
     restore_backup,
     upgrade_space,
 )
+from .projection import (
+    ProjectionReceipt,
+    ProjectionRef,
+    export_workspace_projection,
+    validate_workspace_projection,
+)
 from .pulse import PulseFinding, PulseReport, pulse_space
 from .revalidation import read_revalidation
 from .runtime import (
@@ -320,6 +326,10 @@ from .sleep_method import (
 from .work_status import read_work_status
 
 __all__ = [
+    "ProjectionReceipt",
+    "ProjectionRef",
+    "export_workspace_projection",
+    "validate_workspace_projection",
     "activity_setup_memory",
     "list_activity_setups",
     "read_activity_setup",

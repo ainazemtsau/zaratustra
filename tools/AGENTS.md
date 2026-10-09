@@ -1,5 +1,9 @@
 # Development tools
 
+`probe_workspace_pi` is an installed-compatible ordinary Pi localhost scenario:
+upstream native file/command roots, saved Work resource, declined Git publication,
+compact and continuation. Fictional data only; no real provider calls.
+
 `probe_activity_setup_ui.mjs` loads the actual installed Pi extension and executes
 its renderers/context/UI hooks on fictional data. It performs no model sends or
 network calls, checks legacy setup-notice filtering and both compaction parts,

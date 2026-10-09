@@ -51,6 +51,7 @@ INTERACTIVE_ZARA_TOOLS = (
     "zara_result",
     "zara_transfer",
     "zara_integration",
+    "zara_workspace",
 )
 
 
@@ -97,6 +98,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--space", required=True, type=Path)
     parser.add_argument("--workspace", required=True, type=Path)
+    parser.add_argument("--workspace-config", type=Path)
     parser.add_argument("--pi-cli", required=True, type=Path)
     parser.add_argument(
         "--pi-runtime",
@@ -206,6 +208,7 @@ def main(argv: list[str] | None = None) -> int:
             args.limit_units,
             context_max_bytes=args.context_max_bytes,
             free_conversation_limit_units=args.free_conversation_limit_units,
+            workspace_config=args.workspace_config,
         )
         executor_store = space / ".zara-core" / "executor.sqlite3"
         if executor_store.is_file():
@@ -236,6 +239,7 @@ def main(argv: list[str] | None = None) -> int:
                 offline=args.provider_profile == "local-completions",
                 disable_tools=True,
                 subscription_agent_dir=args.subscription_agent_dir,
+                workspace_config=args.workspace_config,
             ),
         )
         server = BridgeServer(bridge)

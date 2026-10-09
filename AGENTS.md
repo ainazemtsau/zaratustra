@@ -141,6 +141,12 @@ and parallel dirty work; do not publish private preparation branches merely to k
 
 ## What exists
 
+Owner-authorized workspace separation (0.21.0) adds explicit local config v2,
+registered project resources and exact private Git delivery. Core schema stays 14;
+Core remains authoritative. Ordinary and assigned Pi use the chosen resource root.
+Personal workspace, installed runtime and product source are separate. See
+`docs/workspace.md`; old personal repositories are never automatically imported.
+
 Owner-authorized Activity setup (0.20.0) explicitly upgrades schema 13 to 14.
 A typed durable interview and exact full draft/review/correction cycle gates
 activation of one new Activity; existing Candidate/adoption authority and separate

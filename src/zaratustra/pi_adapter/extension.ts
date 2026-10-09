@@ -29,6 +29,13 @@ const { createProvider, StringEnum } = await import(piAiUrl);
 const { openAICompletionsApi } = await import(new URL("./api/openai-completions.lazy.js", piAiUrl).href);
 const { Type } = await import(piDependencyUrl("typebox"));
 const { Text } = await import(piDependencyUrl("@earendil-works/pi-tui"));
+const nativePi = await import(piDependencyUrl("@earendil-works/pi-coding-agent"));
+const nativeFactories: Record<string, (cwd: string) => any> = {
+  read: nativePi.createReadToolDefinition, write: nativePi.createWriteToolDefinition,
+  edit: nativePi.createEditToolDefinition, bash: nativePi.createBashToolDefinition,
+  powershell: nativePi.createPowerShellToolDefinition, grep: nativePi.createGrepToolDefinition,
+  find: nativePi.createFindToolDefinition, ls: nativePi.createLsToolDefinition,
+};
 
 const endpoint = process.env.ZARA_CORE_ENDPOINT;
 const token = process.env.ZARA_CORE_TOKEN;
@@ -201,6 +208,7 @@ export default function (pi: any): void {
   let compactionInProgress = false;
   let lastAnswer = "";
   let lastOutcome = "";
+  let lastTransportError = "";
   let lastToolFailure = "";
   let repeatedToolFailures = 0;
   const turnQueue: string[] = [];
@@ -220,6 +228,87 @@ export default function (pi: any): void {
     if (!response.ok) throw new Error(`Core ${result.error ?? response.status}: ${result.detail ?? ""}`);
     return result;
   }
+
+  let workspaceState: any = null;
+  let gitPreview: any = null;
+  async function refreshWorkspace(ctx: any): Promise<any> {
+    workspaceState = await request("/v1/workspace", { mode: "info" });
+    ctx.ui.setStatus("zara-workspace", `${workspaceState.selected_project}: ${workspaceState.selected_root} | ` +
+      `Git: ${workspaceState.git?.connected ? (workspaceState.git.pending ? "есть неотправленное" : "отправлено") : "не подключён"}`);
+    return workspaceState;
+  }
+  // Upstream public factories bind the actual filesystem/command cwd. A resumed
+  // transcript's old cwd is not used to construct the next tool invocation.
+  for (const name of ["read", "write", "edit", "bash", "powershell", "grep", "find", "ls"]) {
+    const definition = nativeFactories[name](process.cwd());
+    pi.registerTool({ ...definition,
+      execute: async (callId: string, params: any, signal: any, onUpdate: any, ctx: any) => {
+        const state = await refreshWorkspace(ctx);
+        if (params.path && ["write", "edit"].includes(name)) {
+          const target = resolve(state.selected_root, params.path);
+          let ancestor = target;
+          while (!existsSync(ancestor)) ancestor = dirname(ancestor);
+          const actualTarget = resolve(realpathSync(ancestor), relative(ancestor, target));
+          const suffix = relative(realpathSync(state.selected_root), actualTarget);
+          if (isAbsolute(suffix) || suffix === ".." || suffix.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`)) {
+            throw new Error("Choose the project before writing outside the selected resource");
+          }
+        }
+        return nativeFactories[name](state.selected_root).execute(callId, params, signal, onUpdate,
+          { ...ctx, cwd: state.selected_root });
+      },
+    });
+  }
+
+  pi.registerTool({ name: "zara_workspace", label: "Zaratustra Workspace",
+    description: "Inspect the personal workspace and registered projects; select a project for this Work. " +
+      "Free personal conversation uses the personal root. Linking an Activity does not move its documents. " +
+      "Use prepare after a meaningful saved piece of work, then offer Git publication with destination and composition. " +
+      "publish asks the owner once for the exact packet; defer continues local work. Git never accepts a Work. " +
+      "Before sending context to ChatGPT Web, report unpublished material. No full memory catalog is automatically loaded.",
+    parameters: Type.Object({ mode: StringEnum(["info", "projects", "select", "register", "status", "prepare", "publish", "defer", "check"] as const),
+      name: Type.Optional(Type.String()), path: Type.Optional(Type.String()),
+      preparation_id: Type.Optional(Type.String()) }),
+    execute: async (_callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) => {
+      let result: any;
+      const previousRoot = workspaceState?.selected_root;
+      if (params.mode === "publish") {
+        if (!gitPreview || (params.preparation_id && params.preparation_id !== gitPreview.preparation_id)) {
+          throw new Error("Prepare and inspect the exact Git composition first");
+        }
+        const approved = await ctx.ui.confirm(`Отправить в приватный ${gitPreview.repository}/main?`,
+          `${gitPreview.file_count} файлов.\n${gitPreview.files.join("\n")}` +
+          (gitPreview.more_files ? `\nЕщё ${gitPreview.more_files}; полный состав: zaratustra git status` : ""));
+        result = await request("/v1/workspace", approved ? { mode: "publish", nonce: gitPreview.nonce,
+          preparation_id: gitPreview.preparation_id } : { mode: "defer", preparation_id: gitPreview.preparation_id });
+        gitPreview = null;
+      } else {
+        result = await request("/v1/workspace", { ...params, operation_id: randomUUID() });
+        if (params.mode === "prepare") gitPreview = result;
+        if (params.mode === "select" && selection) {
+          pi.appendEntry("zara-project-selection", { ...selection, project: params.name });
+          if (previousRoot !== result.selected_root) attemptId = null;
+          contextReady = false; currentManifest = null;
+        }
+      }
+      await refreshWorkspace(ctx);
+      return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
+    },
+  });
+  pi.registerCommand("zara-workspace", { description: "Show personal workspace, project and pending Git delivery",
+    handler: async (_args: string, ctx: any) => { ctx.ui.notify(JSON.stringify(await refreshWorkspace(ctx), null, 2), "info"); } });
+  pi.registerCommand("zara-project", { description: "Select a registered project for this session or selected Work",
+    handler: async (args: string, ctx: any) => {
+      const state = await refreshWorkspace(ctx);
+      const names = ["personal", ...state.projects.map((item: any) => item.name)];
+      const name = args.trim() || await ctx.ui.select("Проект", names);
+      if (!name) return;
+      await request("/v1/workspace", { mode: "select", name, operation_id: randomUUID() });
+      if (state.selected_project !== name) attemptId = null;
+      contextReady = false; currentManifest = null;
+      if (selection) pi.appendEntry("zara-project-selection", { ...selection, project: name });
+      await refreshWorkspace(ctx);
+    } });
 
   async function operation(fields: any): Promise<any> {
     if (!connection) throw new Error("Pi is not connected to Core");
@@ -285,6 +374,7 @@ export default function (pi: any): void {
                               onInvocation: (id: string) => void): Promise<Response> {
     try { return await observedFetch(model, input, init, onInvocation); }
     catch (error) {
+      lastTransportError = String(error);
       try { await clearFailedPrompt(); } catch { /* Core keeps any unresolved send */ }
       throw error;
     }
@@ -492,6 +582,13 @@ export default function (pi: any): void {
         attemptId = assignedAttemptId;
       }
     }
+    const saved = ctx.sessionManager.getBranch().filter((entry: any) => entry.type === "custom" &&
+      entry.customType === "zara-project-selection").at(-1)?.data;
+    if (!selection && saved?.work_id && saved?.activity_id) {
+      await request("/v1/select", { activity_id: saved.activity_id, work_id: saved.work_id });
+      selection = { activity_id: saved.activity_id, work_id: saved.work_id };
+    }
+    await refreshWorkspace(ctx);
     ctx.ui.notify(`Zaratustra Core ${connection.space_id} epoch ${connection.execution_epoch}. Use /zara-work.`, "info");
   });
 
@@ -552,10 +649,14 @@ export default function (pi: any): void {
     }
     return { action: "continue" };
   });
-  pi.on("message_end", async (event: any) => {
+  pi.on("message_end", async (event: any, ctx: any) => {
     const message = event.message;
     if (message?.role !== "assistant" && message?.role !== "toolResult") return;
     if (message.role === "assistant") {
+      if (message.stopReason === "error" && lastTransportError) {
+        ctx.ui.notify(lastTransportError, "error");
+        lastTransportError = "";
+      }
       // Pi emits the completed message before executing its tool calls. Save
       // actual usage now so explicit publication can use Core's atomic path.
       const invocationId = turnQueue.shift();
@@ -615,6 +716,8 @@ export default function (pi: any): void {
       if (!work) return;
       const current = await request("/v1/select", { activity_id: activity.record_id, work_id: work.record_id });
       selection = { activity_id: activity.record_id, work_id: work.record_id };
+      pi.appendEntry("zara-project-selection", selection);
+      await refreshWorkspace(ctx);
       attemptId = null;
       contextReady = false;
       currentManifest = null;
@@ -1109,7 +1212,7 @@ export default function (pi: any): void {
         record_id: Type.String(), revision: Type.Integer({ minimum: 1 }),
       })),
     }),
-    async execute(_callId: string, params: any) {
+    async execute(_callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
       if (params.mode !== "read" && !selection && !params.activity_id) {
         throw new Error("Name the Activity or select an Activity/Work for manual exchange");
       }
@@ -1125,7 +1228,7 @@ export default function (pi: any): void {
         }
         let bytes: Buffer;
         if (params.path !== undefined) {
-          const root = realpathSync(process.cwd());
+          const root = realpathSync((await refreshWorkspace(ctx)).selected_root);
           const file = realpathSync(resolve(root, params.path));
           const fromRoot = relative(root, file);
           if (fromRoot === ".." || fromRoot.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`) || isAbsolute(fromRoot)) {
@@ -1164,7 +1267,7 @@ export default function (pi: any): void {
       content_text: Type.Optional(Type.String()),
       path: Type.Optional(Type.String()),
     }),
-    async execute(_toolCallId: string, params: any) {
+    async execute(_toolCallId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
       if (!selection) throw new Error("Choose the Work with /zara-work before saving its result");
       const current = await snapshot();
       if (params.mode === "read") {
@@ -1183,7 +1286,7 @@ export default function (pi: any): void {
       }
       let content = params.content_text;
       if (params.path !== undefined) {
-        const root = realpathSync(process.cwd());
+        const root = realpathSync((await refreshWorkspace(ctx)).selected_root);
         const file = realpathSync(resolve(root, params.path));
         const fromRoot = relative(root, file);
         if (fromRoot === ".." || fromRoot.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`) || isAbsolute(fromRoot)) {
@@ -1384,7 +1487,14 @@ export default function (pi: any): void {
     },
   });
 
-  pi.on("before_agent_start", async (_event: any, _ctx: any) => {
+  pi.on("before_agent_start", async (event: any, ctx: any) => {
+    const place = await refreshWorkspace(ctx);
+    const workspaceInstructions = `\nPersonal workspace: ${place.personal_root}. ` +
+      `Selected project: ${place.selected_project}; file and command root: ${place.selected_root}. ` +
+      "Keep personal planning and memory in Core. Code belongs to the selected project. " +
+      "After a meaningful saved deliverable, offer Git publication with zara_workspace prepare; " +
+      "local saving needs no publication approval. ChatGPT Web reads published snapshots only. " +
+      "Work acceptance is a separate owner action.";
     if (process.env.ZARA_DISABLE_MODEL_TOOLS === "1") pi.setActiveTools([]);
     lastToolFailure = "";
     repeatedToolFailures = 0;
@@ -1392,6 +1502,10 @@ export default function (pi: any): void {
     lastAnswer = "";
     contextReady = false;
     currentManifest = null;
+    // Structured sections preserve the request-local ContextManifest added later.
+    // A forced whole systemPrompt would overwrite that transformed message in Pi.
+    event.systemPromptOptions.sections.zaratustra_workspace = workspaceInstructions;
+    event.systemPromptOptions.cwd = place.selected_root;
     if (!selection) return;
     await checkPromptWork();
     const current = await snapshot();

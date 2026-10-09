@@ -133,6 +133,20 @@ from zaratustra.foundation import (
     upgrade_plan_revision_space,
 )
 from zaratustra.integrations import installed_integrations
+from zaratustra.workspace import (
+    GitPreparation,
+    LaunchConfig,
+    Project,
+    defer_git,
+    git_status,
+    prepare_git,
+    publish_git,
+    read_config,
+    reconcile_git,
+    register_project,
+    select_work_project,
+    workspace_info,
+)
 
 from .manual_exchange import ManualExchange
 
@@ -203,10 +217,12 @@ class Bridge:
         deliver_answer: Callable[[UUID], object] | None = None,
         context_max_bytes: int | None = None,
         free_conversation_limit_units: int | None = None,
+        workspace_config: Path | None = None,
     ) -> None:
         self.path = path.resolve()
         self.authority = authority
         self.workspace = workspace.resolve()
+        self.workspace_config = workspace_config
         if not self.workspace.is_dir() or (limit_units is not None and limit_units < 1):
             raise FoundationError("resource_unavailable", "Choose an existing directory and limit")
         self.limit_units = limit_units
@@ -242,8 +258,125 @@ class Bridge:
         self.memory_snapshots: dict[UUID, set[KnowledgeRef]] = {}
         self.accept_previews: dict[UUID, tuple[UUID, int, UUID]] = {}
         self.accept_results: dict[UUID, dict[str, object]] = {}
+        self.git_previews: dict[UUID, UUID] = {}
         self.lock = threading.Lock()
         self.setup_controller: Any = None
+
+    def _workspace_configuration(self) -> LaunchConfig | None:
+        return read_config(self.workspace_config) if self.workspace_config else None
+
+    def workspace_operation(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, Any]:
+        self._session(session_id)
+        config = self._workspace_configuration()
+        if config is None:
+            return {
+                "personal_root": str(self.workspace),
+                "selected_root": str(self.workspace),
+                "selected_project": "legacy",
+                "projects": [],
+                "git": {"connected": False},
+            }
+        action = raw.get("mode", "info")
+        if action == "register":
+            if self.assigned_attempt_id is not None:
+                raise FoundationError("permission_denied", "Assigned Work cannot register projects")
+            assert self.workspace_config is not None
+            config = register_project(
+                self.workspace_config, Project(name=str(raw["name"]), path=Path(str(raw["path"])))
+            )
+        elif action == "select":
+            root = config.project_root(str(raw["name"]))
+            if not root.is_dir():
+                raise FoundationError("resource_unavailable", "Registered project is unavailable")
+            selected = self._session(session_id)
+            if selected:
+                if self.assigned_attempt_id is not None:
+                    raise FoundationError("permission_denied", "Assigned resource cannot change")
+                snapshot = read_execution(self.path, selected.work_id, self.authority)
+                active = next((item for item in snapshot.attempts if item.status == "active"), None)
+                if active and self.workspace.resolve() != root:
+                    if active.session_id != session_id or any(
+                        item.attempt_id == active.attempt_id and item.status != "answered"
+                        for item in snapshot.invocations
+                    ):
+                        raise FoundationError(
+                            "active_attempt", "Resolve the existing send before changing project"
+                        )
+                    apply_operation(
+                        self.path,
+                        StopAttemptRequest(
+                            operation_id=uuid5(active.attempt_id, f"project:{root.as_posix()}"),
+                            space_id=self.authority.space_id,
+                            actor=self.authority.actor,
+                            attempt_id=active.attempt_id,
+                            work_id=selected.work_id,
+                            session_id=session_id,
+                            outcome="interrupted",
+                        ),
+                        self.authority,
+                    )
+                select_work_project(
+                    config,
+                    self.authority,
+                    selected.work_id,
+                    str(raw["name"]),
+                    operation_id=UUID(str(raw.get("operation_id", uuid4()))),
+                )
+            elif self.assigned_attempt_id is not None:
+                raise FoundationError("permission_denied", "Assigned resource cannot change")
+            self.workspace = root
+        elif action in ("prepare", "publish", "defer", "check"):
+            item: GitPreparation | None
+            if self.assigned_attempt_id is not None:
+                raise FoundationError(
+                    "permission_denied", "Assigned Work cannot publish the workspace"
+                )
+            if action == "prepare":
+                item = prepare_git(config, self.authority)
+            elif action == "check":
+                item = reconcile_git(config)
+            elif action == "defer":
+                item = defer_git(config, UUID(str(raw["preparation_id"])))
+            else:
+                # This endpoint is reached only after the extension's trusted UI approval.
+                nonce = UUID(str(raw["nonce"]))
+                prepared = self.git_previews.pop(nonce, None)
+                if prepared is None or prepared != UUID(str(raw["preparation_id"])):
+                    raise FoundationError(
+                        "confirmation_required", "No local approval for this Git packet"
+                    )
+                item = publish_git(config, self.authority, prepared, approved=True)
+            result: dict[str, Any] = (
+                {
+                    "preparation_id": str(item.preparation_id),
+                    "status": item.status,
+                    "repository": item.repository,
+                    "commit": item.commit,
+                    "error": item.error,
+                    "file_count": len(item.files),
+                    "files": list(item.files)[:50],
+                    "more_files": max(0, len(item.files) - 50),
+                }
+                if item
+                else {"delivery": None}
+            )
+            if action == "prepare" and item:
+                nonce = uuid4()
+                self.git_previews[nonce] = item.preparation_id
+                result["nonce"] = str(nonce)
+            return result
+        elif action not in ("info", "projects", "status"):
+            raise FoundationError("invalid_request", "Unsupported workspace operation")
+        git = git_status(config)
+        delivery = git.get("delivery")
+        if isinstance(delivery, dict):
+            delivery["files"] = list(delivery["files"])[:50]
+        return {
+            **workspace_info(config),
+            "selected_root": str(self.workspace),
+            "selected_project": config.project_name(self.workspace),
+            "git": git,
+        }
 
     def activity_setup(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, Any]:
         """Only the interactive trusted host controls a bounded new-Activity setup."""
@@ -473,6 +606,21 @@ class Bridge:
             ),
             None,
         )
+        config = self._workspace_configuration()
+        if config is not None:
+            active = [item for item in snapshot.resources if item.state.status == "active"]
+            if len(active) > 1:
+                raise FoundationError("resource_unavailable", "Work has multiple active resources")
+            if active:
+                resource = active[0]
+                config.project_name(
+                    resource.state.root
+                )  # Old session cwd grants no project access.
+                if not resource.state.root.is_dir():
+                    raise FoundationError(
+                        "resource_unavailable", "Saved Work project is unavailable"
+                    )
+                self.workspace = resource.state.root.resolve()
         # A composite parent or child runs only through a Core-assigned Attempt.
         if resource is None and work.state.status == "proposed" and snapshot.composition is None:
             resource_id = uuid5(
@@ -2103,6 +2251,8 @@ class BridgeHandler(BaseHTTPRequestHandler):
             session_id = UUID(str(body.get("session_id") if post else params["session_id"][0]))
             if post and path.path == "/v1/connect":
                 result = bridge.connect(session_id)
+            elif post and path.path == "/v1/workspace":
+                result = bridge.workspace_operation(session_id, body)
             elif post and path.path == "/v1/select":
                 result = bridge.select(session_id, UUID(body["activity_id"]), UUID(body["work_id"]))
             elif post and path.path == "/v1/operation":

@@ -1,5 +1,11 @@
 # Interactive Pi adapter
 
+Config v2 workspace/project operations use public `zaratustra.workspace`.
+Native Pi factories receive both the selected root and that root in their tool
+context; persisted transcript cwd never changes Core resources on resume.
+Add workspace guidance as structured prompt sections, never a forced prompt that
+overwrites the request-local ContextManifest. Git UI confirms one exact packet.
+
 Activity setup uses a window-owned finite coordinator in `activity_setup.py`.
 Every stage is the existing assigned ordinary Pi/DBOS path in a separate session,
 with arbitrary tools disabled. Core holds all progress and review counts.
