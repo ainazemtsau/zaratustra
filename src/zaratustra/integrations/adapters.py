@@ -21,6 +21,7 @@ from zaratustra.foundation import (
     read_knowledge,
 )
 
+from .data import data_operations
 from .manual import ManualExchange
 from .memory import memory_operations
 from .registry import IntegrationRegistry, IntegrationResult, Operation, Parameters
@@ -158,5 +159,6 @@ def installed_integrations(path: Path, authority: LocalAuthority) -> Integration
                 ),
             },
             "memory": memory_operations(path, authority),
+            "data": data_operations(path, authority),
         }
     )

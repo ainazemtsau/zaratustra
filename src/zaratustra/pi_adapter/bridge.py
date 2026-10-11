@@ -261,6 +261,7 @@ class Bridge:
         self.git_previews: dict[UUID, UUID] = {}
         self.lock = threading.Lock()
         self.setup_controller: Any = None
+        self.procedure_controller: Any = None
 
     def _workspace_configuration(self) -> LaunchConfig | None:
         return read_config(self.workspace_config) if self.workspace_config else None
@@ -425,7 +426,11 @@ class Bridge:
         fields: dict[str, Any] = {}
         if action == "begin":
             fields.update(
-                activity_id=UUID(str(raw["activity_id"])), title=raw["title"], text=raw["goal"]
+                activity_id=UUID(str(raw["activity_id"])),
+                title=raw["title"],
+                text=raw["goal"],
+                contract_version=2 if read_space(self.path).schema_version >= 15 else 1,
+                mode=raw.get("mode", "create"),
             )
             source = self.last_sources.get(session_id)
             if source is not None:
@@ -842,6 +847,79 @@ class Bridge:
                 ] = selectors
         return result.output
 
+    def data_operation(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, object]:
+        selected = self._session(session_id)
+        if raw.get("mode") == "run":
+            if self.assigned_attempt_id is not None or self.procedure_controller is None:
+                raise FoundationError(
+                    "permission_denied", "Procedure execution belongs to an interactive Pi window"
+                )
+            return cast(
+                dict[str, object],
+                self.procedure_controller.start(UUID(str(raw["run_id"])), raw.get("model", {})),
+            )
+        registry = installed_integrations(self.path, self.authority)
+        operation = str(raw.get("operation", "describe_structure"))
+        if raw.get("mode") == "contract":
+            return registry.contract("data", operation)
+        arguments = dict(raw.get("arguments", {}))
+        if operation == "start_procedure" and "request_basis" not in arguments:
+            original = self.last_sources.get(session_id)
+            arguments["request_basis"] = [original.model_dump(mode="json")] if original else []
+        if operation in ("create_entry", "correct_entry", "ingest_batch") and selected is not None:
+            attempt = next(
+                (
+                    item
+                    for item in read_execution(self.path, selected.work_id, self.authority).attempts
+                    if item.session_id == session_id and item.status == "active"
+                ),
+                None,
+            )
+            if attempt is None:
+                raise FoundationError(
+                    "stale_attempt", "No active Attempt belongs to this Work session"
+                )
+            states = (
+                [arguments["state"]]
+                if operation != "ingest_batch"
+                else [
+                    item["mutation"]["state"]
+                    for item in arguments.get("elements", [])
+                    if item.get("mutation")
+                ]
+            )
+            for state in states:
+                if (
+                    "scope_activity_id" in state
+                    and state["scope_activity_id"] != str(selected.activity_id)
+                ) or (state.get("work_id") not in (None, str(selected.work_id))):
+                    raise FoundationError(
+                        "wrong_scope", "Work cannot write data of another Activity"
+                    )
+                state.update(
+                    work_id=str(selected.work_id),
+                    scope_activity_id=str(selected.activity_id),
+                    attempt_id=str(attempt.attempt_id),
+                    session_id=str(session_id),
+                )
+        if self.assigned_attempt_id is not None and operation == "start_procedure":
+            raise FoundationError(
+                "permission_denied", "Assigned Work cannot launch another procedure"
+            )
+        result = registry.execute(
+            uuid5(session_id, "data:" + str(raw["operation_key"])),
+            "data",
+            operation,
+            arguments,
+            contract_version=1,
+        )
+        with self.lock:
+            self.exposed_refs.setdefault(session_id, set()).update(result.exposed)
+            if operation == "query_entries":
+                ref = KnowledgeRef(record_id=UUID(str(result.output["selection_id"])), revision=1)
+                self.memory_snapshots.setdefault(session_id, set()).add(ref)
+        return result.output
+
     def manual_exchange(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
         self._session(session_id)
         exchange = ManualExchange(self.path, self.authority)
@@ -916,6 +994,11 @@ class Bridge:
         state_raw = prepared.get("state")
         if isinstance(state_raw, dict):
             state = dict(state_raw)
+            if state.get("kind") in ("data_entry", "data_format", "activity_structure"):
+                raise FoundationError(
+                    "invalid_request",
+                    "Use zara_data for typed data and reviewed setup for structure",
+                )
             if state.get("kind") == "source" and isinstance(state.get("content_text"), str):
                 state["content"] = base64.b64encode(
                     state.pop("content_text").encode("utf-8")
@@ -1418,6 +1501,8 @@ class Bridge:
         if info.schema_version < 10:
             raise FoundationError("unsupported_schema", "Context needs explicit schema 10")
         mandatory: list[KnowledgeRef] = []
+        structure_pin: KnowledgeRef | None = None
+        procedure_snapshot: KnowledgeRef | None = None
         evidence_refs: list[KnowledgeRef] = []
         packet: dict[str, object] = {
             "space_id": str(info.space_id),
@@ -1430,6 +1515,13 @@ class Bridge:
                 "open_selection/export. "
                 "Select common or Activity areas/topics/addresses together; full includes history. "
                 "Use memory relevant to this request; do not load the whole catalog by default."
+            )
+        if info.schema_version >= 15:
+            packet["data_access"] = (
+                "Use zara_data for declared formats, typed entries, exact queries/calculations "
+                "and durable procedures. Use contract to read operation schemas. "
+                "Plan periods and event dates are explicit; "
+                "never turn missing observations into zero."
             )
         with self.lock:
             latest_source = self.last_sources.get(session_id)
@@ -1495,6 +1587,14 @@ class Bridge:
         if selected is not None and purpose == "compaction-summary":
             current = read_execution(self.path, selected.work_id, self.authority)
             work = current.work
+            if info.schema_version >= 15:
+                structure_pin = work.state.structure
+                from zaratustra.foundation import procedure_for_work
+
+                run = procedure_for_work(self.path, self.authority, selected.work_id)
+                if run is not None:
+                    procedure_snapshot = KnowledgeRef.model_validate(run["snapshot"])
+                    packet["procedure_address"] = run["run_id"]
             mandatory.extend(
                 (
                     KnowledgeRef(
@@ -1529,6 +1629,25 @@ class Bridge:
             )
             packet["activity"] = activity.model_dump(mode="json")
             packet["work"] = work.model_dump(mode="json")
+            if info.schema_version >= 15:
+                from zaratustra.foundation import describe_structure
+
+                description = describe_structure(
+                    self.path, selected.activity_id, self.authority, work_id=selected.work_id
+                )
+                if not description["legacy"]:
+                    structure_pin = KnowledgeRef.model_validate(description["structure"])
+                    packet["activity_structure"] = description
+                from zaratustra.foundation import procedure_for_work
+
+                run = procedure_for_work(self.path, self.authority, selected.work_id)
+                if run is not None:
+                    procedure_snapshot = KnowledgeRef.model_validate(run["snapshot"])
+                    packet["procedure"] = run
+                    selected_input = open_memory_selection(
+                        self.path, procedure_snapshot.record_id, self.authority, max_bytes=16384
+                    )
+                    packet["procedure_input"] = selected_input
             packet["status"] = current.status.model_dump(mode="json") if current.status else None
             packet["composition"] = (
                 current.composition.model_dump(mode="json") if current.composition else None
@@ -1549,7 +1668,9 @@ class Bridge:
             if info.schema_version >= 13:
                 packet["memory"] = []
                 requirements = (
-                    activity_setup_memory(self.path, selected.activity_id, self.authority)
+                    activity_setup_memory(
+                        self.path, selected.activity_id, self.authority, work_id=selected.work_id
+                    )
                     if info.schema_version >= 14
                     else ()
                 )
@@ -1943,6 +2064,8 @@ class Bridge:
                     else None,
                     mandatory=tuple(dict.fromkeys(mandatory)),
                     historical_memory=historic,
+                    pinned_structure=structure_pin,
+                    procedure_snapshot=procedure_snapshot,
                     max_bytes=self.context_max_bytes,
                 ),
             ),
@@ -2281,6 +2404,8 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 result = bridge.knowledge_read(session_id, body)
             elif post and path.path == "/v1/integration":
                 result = bridge.integration(session_id, body)
+            elif post and path.path == "/v1/data":
+                result = bridge.data_operation(session_id, body)
             elif post and path.path == "/v1/manual-exchange":
                 result = bridge.manual_exchange(session_id, body)
             elif post and path.path == "/v1/development-upgrade":

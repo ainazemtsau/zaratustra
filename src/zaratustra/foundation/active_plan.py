@@ -485,6 +485,7 @@ def _create_nested_plan(
             status="proposed",
             state=child.state,
             revision=1,
+            structure_parent=node.work_id,
         )
         connection.execute(
             "INSERT INTO work_plan_children(child_id, parent_id, role) VALUES (?, ?, ?)",
@@ -998,6 +999,7 @@ def revise_active_plan(
             status="proposed",
             state=fresh_node.state,
             revision=1,
+            structure_parent=request.work_id,
         )
         connection.execute(
             "INSERT INTO work_plan_members(child_id, parent_id, role, plan_revision) "

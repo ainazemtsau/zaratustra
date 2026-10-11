@@ -42,6 +42,7 @@ from .models import (
     SleepState,
     SpaceInfo,
     StopCandidateRequest,
+    StructureChange,
     ValidationResultState,
     WorkActivityMove,
     WorkState,
@@ -73,7 +74,7 @@ from .storage import (
 DEVELOPMENT_ADAPTER: TypeAdapter[SleepState | ChangeCandidateState] = TypeAdapter(
     SleepState | ChangeCandidateState
 )
-PackagePart = MethodChange | BindingChange | ProgramChange | ActivityChange
+PackagePart = MethodChange | BindingChange | ProgramChange | ActivityChange | StructureChange
 CHANGE_PART_ADAPTER: TypeAdapter[PackagePart] = TypeAdapter(PackagePart)
 DevelopmentChange = (
     CreateDevelopmentRequest
@@ -195,6 +196,18 @@ def _references(state: SleepState | ChangeCandidateState) -> list[tuple[str, Kno
         refs += [("effect", item.result) for item in state.effects]
         return refs + [("remainder", item.source) for item in state.remainder if item.source]
     refs = [("evidence", item) for item in state.evidence]
+    if isinstance(state.target, StructureChange):
+        refs.append(
+            (
+                "structure_manifest",
+                KnowledgeRef(
+                    record_id=state.target.manifest.artifact_id,
+                    revision=state.target.manifest.revision,
+                ),
+            )
+        )
+        if state.target.expected_structure:
+            refs.append(("previous_structure", state.target.expected_structure))
     refs += [("counter_evidence", item) for item in state.counter_evidence]
     if state.validation_plan:
         refs += [
@@ -607,7 +620,10 @@ def _save_revision(
                 else target.change_id
             )
             for role, version in (
-                ("target_previous", target.from_version),
+                (
+                    "target_previous",
+                    None if isinstance(target, StructureChange) else target.from_version,
+                ),
                 ("target_proposed", target.to_version),
             ):
                 if version is not None:
@@ -1574,7 +1590,7 @@ def _package_followup(
                         connection, "method", part.method_id, part.from_version
                     ):
                         pending.append(f"method:{part.method_id}:prior_needs_admission")
-            else:
+            elif isinstance(part, BindingChange):
                 from .binding import _version, apply_binding_change
 
                 row = connection.execute(
@@ -1792,6 +1808,19 @@ def apply_development_change(
         revision, state = _current(connection, request.candidate_id)
         if revision != request.candidate_revision or not isinstance(state, ChangeCandidateState):
             raise FoundationError("stale_candidate", "Candidate proposal changed")
+        if isinstance(state.target, StructureChange):
+            from .structure_change import apply_structure_candidate
+
+            return apply_structure_candidate(
+                connection,
+                request,
+                state,
+                now=now,
+                epoch=epoch,
+                authority=authority,
+                grants=grants,
+                decisions=decisions,
+            )
         if isinstance(state.target, (ProgramChange, CompositeChange, ActivityChange)):
             return _package_apply(
                 connection,
@@ -2018,6 +2047,10 @@ def apply_development_change(
     app = _application(connection, request.application_id)
     if app.revision != request.expected_revision:
         raise FoundationError("stale_revision", "Change application changed")
+    if app.target_kind == "structure":
+        from .structure_change import followup_structure
+
+        return followup_structure(connection, request, app, now=now, epoch=epoch)
     if app.target_kind in ("program", "composite", "activity"):
         return _package_followup(
             connection,

@@ -9,6 +9,7 @@ import time
 from collections.abc import Iterator
 from contextlib import closing, contextmanager
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, Literal, cast
 from uuid import UUID, uuid4
@@ -1141,7 +1142,83 @@ SETUP_SCHEMA_STATEMENTS = (
 SETUP_SCHEMA_SHA256 = (
     hashlib.sha256("\n".join(SETUP_SCHEMA_STATEMENTS).encode()).hexdigest().upper()
 )
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+STRUCTURES_SCHEMA_NAME = "core-v0.1-activity-structures-15"
+STRUCTURES_SCHEMA_STATEMENTS = (
+    "CREATE TABLE data_index (record_id TEXT PRIMARY KEY REFERENCES knowledge_records,"
+    "revision INTEGER NOT NULL,activity_id TEXT,format_id TEXT NOT NULL,format_revision "
+    "INTEGER NOT NULL,role TEXT NOT NULL,status TEXT NOT NULL,event_date TEXT,event_at TEXT,"
+    "period_from TEXT,period_until TEXT,complete INTEGER NOT NULL) STRICT",
+    "CREATE INDEX data_scope_time ON data_index(activity_id,event_date,record_id)",
+    "CREATE INDEX data_format ON data_index(format_id,format_revision,record_id)",
+    "CREATE TABLE data_values (record_id TEXT NOT NULL REFERENCES knowledge_records,"
+    "field TEXT NOT NULL,type TEXT NOT NULL,value TEXT,unknown INTEGER NOT NULL,"
+    "PRIMARY KEY(record_id,field)) STRICT",
+    "CREATE INDEX data_field ON data_values(field,type,value,record_id)",
+    "CREATE TABLE data_external (activity_key TEXT NOT NULL,namespace TEXT NOT NULL,"
+    "external_key TEXT NOT NULL,record_id TEXT NOT NULL REFERENCES knowledge_records,"
+    "PRIMARY KEY(activity_key,namespace,external_key)) STRICT",
+    "CREATE TABLE structure_heads (activity_id TEXT PRIMARY KEY REFERENCES subject_records,"
+    "record_id TEXT NOT NULL REFERENCES knowledge_records,revision INTEGER NOT NULL,"
+    "sha256 TEXT NOT NULL,setup_id TEXT NOT NULL REFERENCES activity_setups,"
+    "status TEXT NOT NULL CHECK(status IN ('active','stopped'))) STRICT",
+    "CREATE TABLE structure_work_pins (work_id TEXT PRIMARY KEY REFERENCES subject_records,"
+    "record_id TEXT NOT NULL REFERENCES knowledge_records,revision INTEGER NOT NULL) STRICT",
+    "CREATE TABLE data_deliveries (delivery_key TEXT PRIMARY KEY,source_id TEXT NOT NULL "
+    "REFERENCES knowledge_records,source_revision INTEGER NOT NULL,complete INTEGER NOT NULL,"
+    "operation_id TEXT NOT NULL REFERENCES operations,signature TEXT NOT NULL) STRICT",
+    "CREATE TABLE data_intake (source_id TEXT NOT NULL REFERENCES knowledge_records,"
+    "source_revision INTEGER NOT NULL,element_key TEXT NOT NULL,status TEXT NOT NULL,"
+    "record_id TEXT,revision INTEGER,reason TEXT,PRIMARY KEY(source_id,source_revision,"
+    "element_key)) STRICT",
+    "CREATE TABLE data_intake_heads (source_id TEXT NOT NULL REFERENCES knowledge_records,"
+    "source_revision INTEGER NOT NULL,delivery_key TEXT NOT NULL REFERENCES data_deliveries,"
+    "PRIMARY KEY(source_id,source_revision)) STRICT",
+    "CREATE TABLE procedure_runs (run_id TEXT PRIMARY KEY REFERENCES operations,"
+    "activity_id TEXT NOT NULL REFERENCES subject_records,procedure_key TEXT NOT NULL,"
+    "request_key TEXT NOT NULL,signature TEXT NOT NULL,logical_key TEXT NOT NULL,"
+    "structure_id TEXT NOT NULL REFERENCES knowledge_records,structure_revision INTEGER "
+    "NOT NULL,snapshot_id TEXT NOT NULL REFERENCES knowledge_records,snapshot_revision "
+    "INTEGER NOT NULL,parameters TEXT,period_from TEXT,period_until TEXT,work_id TEXT NOT "
+    "NULL REFERENCES subject_records,UNIQUE(activity_id,procedure_key,request_key)) STRICT",
+    "CREATE INDEX procedure_logical ON procedure_runs(activity_id,procedure_key,logical_key)",
+    "CREATE TABLE procedure_intents (activity_id TEXT NOT NULL REFERENCES subject_records,"
+    "procedure_key TEXT NOT NULL,request_key TEXT NOT NULL,structure_id TEXT NOT NULL "
+    "REFERENCES knowledge_records,structure_revision INTEGER NOT NULL,parameters TEXT,"
+    "period_from TEXT,period_until TEXT,operation_id TEXT NOT NULL REFERENCES operations,"
+    "bases TEXT,"
+    "PRIMARY KEY(activity_id,procedure_key,request_key)) STRICT",
+    "CREATE TABLE data_artifact_bases (artifact_id TEXT NOT NULL REFERENCES records,"
+    "revision INTEGER NOT NULL,target_id TEXT NOT NULL,target_revision INTEGER NOT NULL,"
+    "PRIMARY KEY(artifact_id,revision,target_id,target_revision)) STRICT",
+    "ALTER TABLE memory_index ADD COLUMN material_role TEXT",
+    "CREATE INDEX memory_material_role ON memory_index(material_role,activity_id,record_id)",
+)
+STRUCTURES_REBUILD_TABLES = {
+    "knowledge_records": KNOWLEDGE_SCHEMA_STATEMENTS[0].replace(
+        "'context','handoff'", "'context','handoff','data_format','data_entry','activity_structure'"
+    ),
+    "activity_setups": SETUP_SCHEMA_STATEMENTS[0]
+    .replace("UNIQUE REFERENCES", "REFERENCES")
+    .replace(
+        ") STRICT",
+        ",mode TEXT NOT NULL DEFAULT 'create' CHECK(mode IN ('create','change_structure'))) STRICT",
+    ),
+    **{
+        name: next(
+            sql for sql in CHANGE_PACKAGE_SCHEMA_STATEMENTS if f"CREATE TABLE {name} " in sql
+        ).replace("'activity'", "'activity','structure'")
+        for name in ("change_packages", "change_package_parts")
+    },
+}
+STRUCTURES_SCHEMA_SHA256 = (
+    hashlib.sha256(
+        json.dumps(STRUCTURES_REBUILD_TABLES, sort_keys=True).encode()
+        + "\n".join(STRUCTURES_SCHEMA_STATEMENTS).encode()
+    )
+    .hexdigest()
+    .upper()
+)
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
 
 
 def utc_now() -> datetime:
@@ -1193,6 +1270,12 @@ def layout(path: Path) -> tuple[Path, Path, Path]:
 
 
 def _configure(connection: sqlite3.Connection, *, writable: bool) -> None:
+    connection.create_function(
+        "decimal_compare",
+        2,
+        lambda left, right: (Decimal(left) > Decimal(right)) - (Decimal(left) < Decimal(right)),
+        deterministic=True,
+    )
     connection.execute("PRAGMA foreign_keys = ON")
     connection.execute(f"PRAGMA busy_timeout = {BUSY_TIMEOUT_MS}")
     if writable:
@@ -1297,6 +1380,8 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         expected.append((13, MEMORY_SCHEMA_NAME, MEMORY_SCHEMA_SHA256))
     if schema_version >= 14:
         expected.append((14, SETUP_SCHEMA_NAME, SETUP_SCHEMA_SHA256))
+    if schema_version >= 15:
+        expected.append((15, STRUCTURES_SCHEMA_NAME, STRUCTURES_SCHEMA_SHA256))
     if migration != expected:
         raise FoundationError("unsupported_schema", "Schema history does not match installed code")
     rows = connection.execute(
@@ -1310,7 +1395,9 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         database=database,
         space_id=UUID(space_id),
         created_at=datetime.fromisoformat(created_at),
-        schema_version=cast(Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], schema_version),
+        schema_version=cast(
+            Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], schema_version
+        ),
         state_revision=state_revision,
         execution_epoch=execution_epoch,
         recovery_state=recovery_state,

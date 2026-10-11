@@ -40,6 +40,11 @@ INSTRUCTIONS = {
         "unresolved necessary user questions in open_questions. Do not invent implemented "
         "capabilities. Method Works need a complete typed composite plan; plain Works need "
         "declared outputs. No trial is required."
+        " For contract_version 2, design the entire first workflow: planning horizon, intake, "
+        "facts versus intentions, use, review and adaptation. Ask about meaningful periods. "
+        "Declare only needed finite typed formats, reusable procedures and working sets. "
+        "Distinguish blocking questions from deferred extensions. Explain decisions and sources. "
+        "Do not require Health, journals or calendar templates."
     ),
     "correction": (
         "Correct the whole current ActivitySetupDraft using the complete review and original "
@@ -56,6 +61,11 @@ INSTRUCTIONS = {
         "required user choices. Return ActivitySetupReview JSON matching result_schema, "
         "exact draft_ref and input_version. A structural review is not real-use evidence or "
         "owner acceptance. Do not run a fictional trial."
+        " For contract_version 2, inspect the whole activation_manifest and initial draft; "
+        "return exact manifest_ref. Give reasoned coverage for each area with existing component "
+        "keys (process, first_path, formats.<key>, procedures.<key>, etc.). Verify event identity, "
+        "corrections, periods, incomplete intake, current working sets and useful first path. "
+        "Never mistake a list of seven area names for evidence."
     ),
 }
 

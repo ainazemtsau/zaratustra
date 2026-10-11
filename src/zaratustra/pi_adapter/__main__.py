@@ -36,6 +36,7 @@ from zaratustra.foundation import (
     upgrade_parent_execution_space,
     upgrade_plan_revision_space,
     upgrade_space,
+    upgrade_structures_space,
 )
 
 from .bridge import Bridge, BridgeServer
@@ -45,6 +46,7 @@ INTERACTIVE_ZARA_TOOLS = (
     "zara_activity",
     "zara_binding",
     "zara_memory",
+    "zara_data",
     "zara_grant",
     "zara_sleep",
     "zara_development",
@@ -88,6 +90,7 @@ def _prepare_space(path: Path, actor: str, *, create: bool) -> LocalAuthority:
         (12, upgrade_change_package_space),
         (13, upgrade_memory_space),
         (14, upgrade_activity_setup_space),
+        (15, upgrade_structures_space),
     ):
         if read_space(path).schema_version < version:
             upgrade(path, authority)
@@ -217,6 +220,7 @@ def main(argv: list[str] | None = None) -> int:
             bridge.deliver_answer = lambda outbox_id: deliver_outbox(space, authority, outbox_id)
         from .activity_setup import SetupCoordinator
         from .assigned import AssignedConfig
+        from .procedures import ProcedureCoordinator
 
         bridge.setup_controller = SetupCoordinator(
             bridge,
@@ -242,6 +246,7 @@ def main(argv: list[str] | None = None) -> int:
                 workspace_config=args.workspace_config,
             ),
         )
+        bridge.procedure_controller = ProcedureCoordinator(bridge, bridge.setup_controller.config)
         server = BridgeServer(bridge)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
@@ -292,6 +297,7 @@ def main(argv: list[str] | None = None) -> int:
         finally:
             try:
                 bridge.setup_controller.close()
+                bridge.procedure_controller.close()
             finally:
                 server.shutdown()
                 server.server_close()

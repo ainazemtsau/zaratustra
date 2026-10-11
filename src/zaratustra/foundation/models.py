@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Annotated, Literal
 from uuid import UUID
@@ -158,6 +158,32 @@ class ArtifactRef(ContractModel):
     revision: int = Field(ge=1)
 
 
+class KnowledgeRef(ContractModel):
+    """One exact revision; optional offsets refer to retained bytes."""
+
+    record_id: UUID
+    revision: int = Field(ge=1)
+    start: int | None = Field(default=None, ge=0)
+    end: int | None = Field(default=None, ge=1)
+
+    @model_validator(mode="after")
+    def valid_fragment(self) -> KnowledgeRef:
+        if (self.start is None) != (self.end is None) or (
+            self.start is not None and self.end is not None and self.end <= self.start
+        ):
+            raise ValueError("A fragment needs an ordered start and end")
+        return self
+
+
+MaterialRole = Literal["working", "basis", "intake", "execution", "representation"]
+
+
+class DataFilter(ContractModel):
+    field: Identifier
+    operator: Literal["eq", "ne", "lt", "le", "gt", "ge", "missing", "unknown"] = "eq"
+    value: JsonValue = None
+
+
 class ActivityState(ContractModel):
     title: str = Field(min_length=1, max_length=200)
     goal: str = Field(min_length=1, max_length=4096)
@@ -167,6 +193,8 @@ class ActivityState(ContractModel):
 class OutputContract(ContractModel):
     slot: str = Field(min_length=1, max_length=80, pattern=r"^[a-z][a-z0-9_-]*$")
     media_type: str = Field(min_length=1, max_length=200)
+    format_ref: KnowledgeRef | None = Field(default=None, exclude_if=lambda value: value is None)
+    allow_empty: bool = Field(default=False, exclude_if=lambda value: not value)
 
 
 class LinkedOutput(ContractModel):
@@ -275,10 +303,14 @@ class MemoryMetadata(ContractModel):
     topics: tuple[Annotated[str, Field(min_length=1, max_length=200)], ...] = ()
     aliases: tuple[Annotated[str, Field(min_length=1, max_length=500)], ...] = ()
     context_role: Literal["reference", "required"] = "reference"
+    material_role: MaterialRole | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class MemorySelector(ContractModel):
     """Union across selectors; filters within a selector are conjunctive."""
+
+    empty: bool = Field(default=False, exclude_if=lambda value: not value)
+    use_period: bool = Field(default=False, exclude_if=lambda value: not value)
 
     activity_ids: tuple[UUID, ...] = ()
     current_activity: bool = False
@@ -288,6 +320,29 @@ class MemorySelector(ContractModel):
     query: str | None = None
     full: bool = False
     context_role: Literal["reference", "required", "legacy"] | None = None
+    kinds: tuple[
+        Literal[
+            "source",
+            "claim",
+            "analysis",
+            "link",
+            "view",
+            "handoff",
+            "data_format",
+            "data_entry",
+            "activity_structure",
+        ],
+        ...,
+    ] = Field(default=(), exclude_if=lambda value: not value)
+    material_roles: tuple[MaterialRole, ...] = Field(default=(), exclude_if=lambda value: not value)
+    format_refs: tuple[KnowledgeRef, ...] = Field(default=(), exclude_if=lambda value: not value)
+    format_keys: tuple[Identifier, ...] = Field(default=(), exclude_if=lambda value: not value)
+    data_filters: tuple[DataFilter, ...] = Field(default=(), exclude_if=lambda value: not value)
+    date_from: date | None = Field(default=None, exclude_if=lambda value: value is None)
+    date_until: date | None = Field(default=None, exclude_if=lambda value: value is None)
+    time_from: AwareDatetime | None = Field(default=None, exclude_if=lambda value: value is None)
+    time_until: AwareDatetime | None = Field(default=None, exclude_if=lambda value: value is None)
+    data_statuses: tuple[str, ...] = Field(default=(), exclude_if=lambda value: not value)
 
 
 class MemoryRequirement(ContractModel):
@@ -655,6 +710,7 @@ class WorkState(ContractModel):
     acceptance: WorkAcceptance | None = None
     # Absent from canonical JSON while empty, so earlier payloads and fingerprints hold.
     closure: WorkClosure | None = Field(default=None, exclude_if=lambda value: value is None)
+    structure: KnowledgeRef | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
     def valid_slots(self) -> WorkState:
@@ -1419,23 +1475,6 @@ class FinishInvocationRequest(OperationRequest):
         return self
 
 
-class KnowledgeRef(ContractModel):
-    """One exact revision; a fragment is a byte range in its retained payload."""
-
-    record_id: UUID
-    revision: int = Field(ge=1)
-    start: int | None = Field(default=None, ge=0)
-    end: int | None = Field(default=None, ge=1)
-
-    @model_validator(mode="after")
-    def valid_fragment(self) -> KnowledgeRef:
-        if (self.start is None) != (self.end is None) or (
-            self.start is not None and self.end is not None and self.end <= self.start
-        ):
-            raise ValueError("A fragment needs an ordered start and end")
-        return self
-
-
 class SourceState(ContractModel):
     kind: Literal["source"] = "source"
     channel: Literal[
@@ -1552,6 +1591,9 @@ class MemorySelectionBasis(ContractModel):
     rule_version: int = Field(default=1, ge=1)
     parts: tuple[KnowledgeRef, ...] = ()
     members: tuple[KnowledgeRef, ...] = ()
+    query_members: tuple[KnowledgeRef, ...] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     total_bytes: int = Field(default=0, ge=0)
     cache: bool = False
     restricted: bool = False
@@ -1608,6 +1650,12 @@ class ContextState(ContractModel):
     historical_memory: tuple[KnowledgeRef, ...] = Field(
         default=(), exclude_if=lambda value: not value
     )
+    pinned_structure: KnowledgeRef | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+    procedure_snapshot: KnowledgeRef | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     limits: tuple[str, ...] = ()
     max_bytes: int | None = Field(default=None, ge=1)
 
@@ -1639,6 +1687,264 @@ class HandoffState(ContractModel):
         if self.status == "matched" and not self.match_basis:
             raise ValueError("Matching needs an explicit basis")
         return self
+
+
+class DataField(ContractModel):
+    """Finite declarative field tree; never executable schema code."""
+
+    key: Identifier
+    meaning: str = Field(min_length=1, max_length=2048)
+    type: Literal[
+        "text", "boolean", "integer", "decimal", "date", "datetime", "enum", "ref", "object", "list"
+    ]
+    required: bool = True
+    unknown_allowed: bool = False
+    unit: str | None = None
+    precision: int | None = Field(default=None, ge=0)
+    minimum: str | None = None
+    maximum: str | None = None
+    choices: tuple[str, ...] = ()
+    fields: tuple[DataField, ...] = ()
+    item: DataField | None = None
+    indexed: bool = False
+
+    @model_validator(mode="after")
+    def supported_shape(self) -> DataField:
+        if (self.type == "object") != bool(self.fields):
+            raise ValueError("Object fields require exactly their declared children")
+        if (self.type == "list") != (self.item is not None):
+            raise ValueError("List fields require exactly one item definition")
+        if (self.type == "enum") != bool(self.choices):
+            raise ValueError("Enums require explicit choices")
+        if len({field.key for field in self.fields}) != len(self.fields):
+            raise ValueError("Field keys must be unique")
+        if self.indexed and self.type in ("object", "list"):
+            raise ValueError("Only declared scalar fields can be indexed")
+        if self.precision is not None and self.type != "decimal":
+            raise ValueError("Precision is a decimal contract")
+        return self
+
+
+class DataFormatState(ContractModel):
+    kind: Literal["data_format"] = "data_format"
+    language_version: Literal[1] = 1
+    title: str = Field(min_length=1, max_length=500)
+    scope_activity_id: UUID | None = None
+    role: Literal["object", "event", "plan", "document", "analysis"]
+    fields: tuple[DataField, ...] = Field(min_length=1)
+    statuses: tuple[str, ...] = ("recorded",)
+    identity_fields: tuple[Identifier, ...] = ()
+    time_field: Identifier | None = None
+    memory: MemoryMetadata | None = Field(default=None, exclude_if=lambda value: value is None)
+
+    @model_validator(mode="after")
+    def addressable_fields(self) -> DataFormatState:
+        keys = {field.key for field in self.fields}
+        if len(keys) != len(self.fields):
+            raise ValueError("Format keys must be unique")
+        if not set(self.identity_fields).issubset(keys) or (
+            self.time_field is not None and self.time_field not in keys
+        ):
+            raise ValueError("Identity/time fields must be declared")
+        if self.time_field is not None and next(
+            field.type for field in self.fields if field.key == self.time_field
+        ) not in ("date", "datetime"):
+            raise ValueError("Time field must be date or timezone-aware datetime")
+        return self
+
+
+class DataReference(ContractModel):
+    record_id: UUID
+    mode: Literal["exact", "current"] = "exact"
+    revision: int | None = Field(default=None, ge=1)
+
+    @model_validator(mode="after")
+    def exact_has_revision(self) -> DataReference:
+        if (self.mode == "exact") != (self.revision is not None):
+            raise ValueError("An exact relation requires revision; current resolves at reading")
+        return self
+
+
+class DataEntryState(ContractModel):
+    kind: Literal["data_entry"] = "data_entry"
+    scope_activity_id: UUID | None = None
+    format_ref: KnowledgeRef
+    structure: KnowledgeRef | None = None
+    role: Literal["object", "event", "plan", "document", "analysis"]
+    values: dict[str, JsonValue]
+    bases: tuple[KnowledgeRef, ...] = Field(min_length=1)
+    event_date: date | None = None
+    event_at: AwareDatetime | None = None
+    period_from: date | None = None
+    period_until: date | None = None
+    timezone: str | None = None
+    status: str = "recorded"
+    external_namespace: str | None = None
+    external_key: str | None = None
+    complete: bool = True
+    limitations: tuple[str, ...] = ()
+    explanation: str | None = None
+    work_id: UUID | None = None
+    attempt_id: UUID | None = None
+    session_id: UUID | None = None
+    selection: KnowledgeRef | None = None
+    memory: MemoryMetadata | None = Field(default=None, exclude_if=lambda value: value is None)
+
+    @model_validator(mode="after")
+    def honest_identity_and_period(self) -> DataEntryState:
+        if (self.external_namespace is None) != (self.external_key is None):
+            raise ValueError("External identity requires namespace and key together")
+        if (self.period_from is None) != (self.period_until is None) or (
+            self.period_from is not None
+            and self.period_until is not None
+            and self.period_from >= self.period_until
+        ):
+            raise ValueError("Period is ordered and end-exclusive")
+        if self.attempt_id is not None and self.work_id is None:
+            raise ValueError("Attempt effects require Work")
+        if (self.attempt_id is None) != (self.session_id is None):
+            raise ValueError("Attempt effect requires its session")
+        if not self.complete and not self.limitations:
+            raise ValueError("Incomplete data must explain what is unknown")
+        return self
+
+
+class ProcedureDefinition(ContractModel):
+    key: Identifier
+    purpose: str = Field(min_length=1, max_length=4096)
+    parameters: tuple[DataField, ...] = ()
+    inputs: tuple[MemorySelector, ...] = ()
+    operations: tuple[str, ...] = ()
+    goal: str = Field(min_length=1, max_length=4096)
+    outputs: tuple[OutputContract, ...] = Field(min_length=1)
+    method: MethodRef | None = None
+    input_slot: Identifier | None = None
+    plan: WorkPlan | None = None
+    trigger: Literal["manual", "event", "period"] = "manual"
+    period: Literal["day", "week", "month"] | None = None
+    timezone: str | None = None
+    autonomy: Literal["propose", "run"] = "propose"
+    resource: Literal["workspace", "project"] = "workspace"
+    project: str | None = None
+
+    @model_validator(mode="after")
+    def executable_contract(self) -> ProcedureDefinition:
+        if (self.method is None) != (self.plan is None):
+            raise ValueError("Method procedure requires its ordinary composite plan")
+        if self.trigger == "period" and (self.period is None or self.timezone is None):
+            raise ValueError("Period trigger requires calendar and timezone")
+        if (self.resource == "project") != (self.project is not None):
+            raise ValueError("Project resource requires a registered project name")
+        if len({field.key for field in self.parameters}) != len(self.parameters):
+            raise ValueError("Parameter keys must be unique")
+        return self
+
+
+class WorkingSet(ContractModel):
+    key: Identifier
+    purpose: str
+    selectors: tuple[MemorySelector, ...] = Field(min_length=1)
+    cardinality: Literal["one", "many"] = "many"
+
+
+class ActivityStructureState(ContractModel):
+    kind: Literal["activity_structure"] = "activity_structure"
+    contract_version: Literal[1] = 1
+    scope_activity_id: UUID
+    title: str
+    goal: str
+    instructions: str
+    first_action: str
+    process: str
+    formats: dict[str, KnowledgeRef] = {}
+    procedures: tuple[ProcedureDefinition, ...] = ()
+    working_sets: tuple[WorkingSet, ...] = ()
+    memory_requirements: tuple[MemoryRequirement, ...] = ()
+    bases: tuple[KnowledgeRef, ...] = Field(min_length=1)
+    extensions: tuple[str, ...] = ()
+    deferred_questions: tuple[str, ...] = ()
+    memory: MemoryMetadata | None = Field(default=None, exclude_if=lambda value: value is None)
+
+    @model_validator(mode="after")
+    def unique_components(self) -> ActivityStructureState:
+        for items in (self.procedures, self.working_sets):
+            if len({item.key for item in items}) != len(items):
+                raise ValueError("Structure component keys must be unique")
+        return self
+
+
+class StructureChange(ContractModel):
+    kind: Literal["structure"] = "structure"
+    change_id: UUID
+    activity_id: UUID
+    expected_structure: KnowledgeRef | None = None
+    manifest: ArtifactRef
+    to_version: Literal[1] = 1
+
+
+class DataOutputEnvelope(ContractModel):
+    contract_version: Literal[1] = 1
+    entries: tuple[KnowledgeRef, ...] = ()
+    basis_snapshot: KnowledgeRef | None = None
+    complete: bool
+    limitations: tuple[str, ...] = ()
+    result: str = Field(min_length=1)
+
+
+class DataMutation(ContractModel):
+    record_id: UUID
+    expected_revision: int | None = Field(default=None, ge=1)
+    state: DataEntryState
+
+
+class IntakeElement(ContractModel):
+    key: str = Field(min_length=1, max_length=500)
+    status: Literal["saved", "deferred", "rejected"]
+    mutation: DataMutation | None = None
+    reason: str | None = None
+
+    @model_validator(mode="after")
+    def explicit_outcome(self) -> IntakeElement:
+        if (self.status == "saved") != (self.mutation is not None):
+            raise ValueError("Saved intake element needs its mutation")
+        if self.status != "saved" and not self.reason:
+            raise ValueError("Unprocessed elements need a reason")
+        return self
+
+
+class IngestDataRequest(OperationRequest):
+    kind: Literal["ingest_data"] = "ingest_data"
+    source: KnowledgeRef
+    delivery_key: str = Field(min_length=1, max_length=500)
+    elements: tuple[IntakeElement, ...]
+    complete: bool = False
+
+
+class PrepareProcedureRequest(OperationRequest):
+    kind: Literal["prepare_procedure"] = "prepare_procedure"
+    activity_id: UUID
+    procedure: Identifier
+    request_key: str = Field(min_length=1, max_length=500)
+    structure: KnowledgeRef
+    parameters: dict[str, JsonValue] = {}
+    request_basis: tuple[KnowledgeRef, ...] = ()
+    rerun_of: UUID | None = None
+    period_from: date | None = None
+    period_until: date | None = None
+
+
+class StartProcedureRequest(OperationRequest):
+    kind: Literal["start_procedure"] = "start_procedure"
+    activity_id: UUID
+    procedure: Identifier
+    request_key: str = Field(min_length=1, max_length=500)
+    structure: KnowledgeRef
+    parameters: dict[str, JsonValue] = {}
+    request_basis: tuple[KnowledgeRef, ...] = ()
+    rerun_of: UUID | None = None
+    snapshot: KnowledgeRef
+    period_from: date | None = None
+    period_until: date | None = None
 
 
 class SleepSelection(ContractModel):
@@ -1893,7 +2199,12 @@ class ActivityChange(ContractModel):
 
 
 ChangeTarget = Annotated[
-    MethodChange | BindingChange | ProgramChange | CompositeChange | ActivityChange,
+    MethodChange
+    | BindingChange
+    | ProgramChange
+    | CompositeChange
+    | ActivityChange
+    | StructureChange,
     Field(discriminator="kind"),
 ]
 
@@ -2010,7 +2321,10 @@ KnowledgeBody = Annotated[
     | MemoryLinkState
     | MemoryViewState
     | ContextState
-    | HandoffState,
+    | HandoffState
+    | DataFormatState
+    | DataEntryState
+    | ActivityStructureState,
     Field(discriminator="kind"),
 ]
 
@@ -2070,7 +2384,18 @@ class RecordContextDeliveryRequest(OperationRequest):
 
 class KnowledgeRevision(ContractModel):
     record_id: UUID
-    kind: Literal["source", "claim", "analysis", "link", "view", "context", "handoff"]
+    kind: Literal[
+        "source",
+        "claim",
+        "analysis",
+        "link",
+        "view",
+        "context",
+        "handoff",
+        "data_format",
+        "data_entry",
+        "activity_structure",
+    ]
     revision: int = Field(ge=1)
     operation_id: UUID
     received_at: AwareDatetime
@@ -2099,7 +2424,7 @@ class ChangeApplication(ContractModel):
     decision_id: UUID
     decision_revision: int = Field(ge=1)
     mode: Literal["trial", "regular"]
-    target_kind: Literal["method", "binding", "program", "composite", "activity"]
+    target_kind: Literal["method", "binding", "program", "composite", "activity", "structure"]
     target_id: UUID
     version: int = Field(ge=1)
     checksum: str = Field(pattern=r"^[0-9A-F]{64}$")
@@ -2117,6 +2442,9 @@ SetupArea = Literal[
 class SetupMethodTemplate(ContractModel):
     key: Identifier
     definition: MethodDefinition
+    output_formats: dict[str, Identifier] = Field(
+        default_factory=dict, exclude_if=lambda value: not value
+    )
 
 
 class SetupWorkTemplate(ContractModel):
@@ -2125,6 +2453,9 @@ class SetupWorkTemplate(ContractModel):
     method_key: Identifier | None = None
     expected_outputs: tuple[OutputContract, ...] = ()
     plan: WorkPlan | None = None
+    output_formats: dict[str, Identifier] = Field(
+        default_factory=dict, exclude_if=lambda value: not value
+    )
 
 
 class ActivitySetupDraft(ContractModel):
@@ -2161,6 +2492,162 @@ class SetupFinding(ContractModel):
     problem: str = Field(min_length=1, max_length=4096)
     blocking: bool
     cause: str = Field(min_length=1, max_length=4096)
+
+
+class SetupQuestion(ContractModel):
+    text: str = Field(min_length=1, max_length=4096)
+    blocking: bool
+
+
+class SetupFormatTemplate(ContractModel):
+    key: Identifier
+    definition: DataFormatState
+    existing: KnowledgeRef | None = None
+
+
+class SetupOutputTemplate(OutputContract):
+    format_key: Identifier | None = None
+
+
+class SetupProcedureTemplate(ContractModel):
+    key: Identifier
+    purpose: str = Field(min_length=1, max_length=4096)
+    goal: str = Field(min_length=1, max_length=4096)
+    parameters: tuple[DataField, ...] = ()
+    inputs: tuple[MemorySelector, ...] = ()
+    operations: tuple[str, ...] = ()
+    outputs: tuple[SetupOutputTemplate, ...] = Field(min_length=1)
+    method_key: Identifier | None = None
+    input_slot: Identifier | None = None
+    plan: WorkPlan | None = None
+    trigger: Literal["manual", "event", "period"] = "manual"
+    period: Literal["day", "week", "month"] | None = None
+    timezone: str | None = None
+    autonomy: Literal["propose", "run"] = "propose"
+    resource: Literal["workspace", "project"] = "workspace"
+    project: str | None = None
+
+
+class SetupDecisionBasis(ContractModel):
+    subject: str = Field(min_length=1, max_length=4096)
+    status: Literal["confirmed", "proposed", "unknown", "not_applicable"]
+    explanation: str = Field(min_length=1, max_length=4096)
+    sources: tuple[KnowledgeRef, ...] = ()
+
+
+class ActivitySetupDraftV2(ContractModel):
+    contract_version: Literal[2] = 2
+    title: str = Field(min_length=1, max_length=200)
+    goal: str = Field(min_length=1, max_length=4096)
+    instructions: str = Field(min_length=1, max_length=16384)
+    process: str = Field(min_length=1, max_length=16384)
+    first_action: str = Field(min_length=1, max_length=4096)
+    first_path: str = Field(min_length=1, max_length=8192)
+    formats: tuple[SetupFormatTemplate, ...] = ()
+    procedures: tuple[SetupProcedureTemplate, ...] = ()
+    working_sets: tuple[WorkingSet, ...] = ()
+    methods: tuple[SetupMethodTemplate, ...] = ()
+    works: tuple[SetupWorkTemplate, ...] = ()
+    memory: tuple[MemoryRequirement, ...] = ()
+    decisions: tuple[SetupDecisionBasis, ...] = Field(min_length=1)
+    extensions: tuple[str, ...] = ()
+    questions: tuple[SetupQuestion, ...] = ()
+
+    @property
+    def open_questions(self) -> tuple[str, ...]:
+        return tuple(item.text for item in self.questions if item.blocking)
+
+    @model_validator(mode="after")
+    def coherent_package(self) -> ActivitySetupDraftV2:
+        for components in (
+            self.formats,
+            self.procedures,
+            self.methods,
+            self.works,
+            self.working_sets,
+        ):
+            keys = [item.key for item in components]
+            if len(keys) != len(set(keys)):
+                raise ValueError("Component keys must be unique")
+        method_keys = {item.key for item in self.methods}
+        format_keys = {item.key for item in self.formats}
+        for procedure in self.procedures:
+            if procedure.method_key is not None and procedure.method_key not in method_keys:
+                raise ValueError("Procedure refers to an absent Method")
+            if (procedure.method_key is None) != (procedure.plan is None):
+                raise ValueError("Method procedure needs its exact composite plan")
+            if any(
+                output.format_key is not None and output.format_key not in format_keys
+                for output in procedure.outputs
+            ):
+                raise ValueError("Procedure output refers to an absent format")
+        for work in self.works:
+            if work.method_key is not None and (
+                work.method_key not in method_keys or work.plan is None
+            ):
+                raise ValueError("Work needs an existing Method key and exact plan")
+            if work.method_key is None and (work.plan is not None or not work.expected_outputs):
+                raise ValueError("Plain Work needs output contracts")
+        return self
+
+
+class SetupAreaEvidence(ContractModel):
+    area: SetupArea
+    explanation: str = Field(min_length=1, max_length=8192)
+    components: tuple[str, ...] = Field(min_length=1)
+
+
+class ActivitySetupReviewV2(ContractModel):
+    contract_version: Literal[2] = 2
+    draft: ArtifactRef
+    manifest: ArtifactRef
+    input_version: int = Field(ge=1)
+    checked: tuple[SetupArea, ...]
+    coverage: tuple[SetupAreaEvidence, ...]
+    findings: tuple[SetupFinding, ...] = ()
+    questions: tuple[SetupQuestion, ...] = ()
+    conclusion: str = Field(min_length=1, max_length=4096)
+
+    @property
+    def unresolved(self) -> tuple[str, ...]:
+        return tuple(item.text for item in self.questions if item.blocking)
+
+    @model_validator(mode="after")
+    def complete_review(self) -> ActivitySetupReviewV2:
+        ActivitySetupReview(
+            draft=self.draft,
+            input_version=self.input_version,
+            checked=self.checked,
+            findings=self.findings,
+            conclusion=self.conclusion,
+        )
+        if len(self.coverage) != 7 or {item.area for item in self.coverage} != set(self.checked):
+            raise ValueError("Full review needs reasoned evidence for all seven areas")
+        return self
+
+
+class CompiledFormat(ContractModel):
+    key: Identifier
+    ref: KnowledgeRef
+    definition: DataFormatState
+    expected_revision: int | None = None
+    create: bool = True
+
+
+class ActivityActivationManifest(ContractModel):
+    compiler_version: Literal[1] = 1
+    setup_id: UUID
+    activity_id: UUID
+    draft: ArtifactRef
+    input_version: int = Field(ge=1)
+    previous_structure: KnowledgeRef | None = None
+    previous_setup_id: UUID | None = None
+    structure_expected_revision: int | None = Field(default=None, ge=1)
+    formats: tuple[CompiledFormat, ...] = ()
+    structure_ref: KnowledgeRef
+    structure: ActivityStructureState
+    method_definitions: dict[str, MethodDefinition] = Field(default_factory=dict)
+    initial_works: tuple[SetupWorkTemplate, ...] = ()
 
 
 class ActivitySetupReview(ContractModel):
@@ -2201,7 +2688,15 @@ class SetupStage(ContractModel):
 class ActivitySetupState(ContractModel):
     activity_id: UUID
     owner: str
-    authorization_scope: Literal["new_activity_setup"] = "new_activity_setup"
+    authorization_scope: Literal["new_activity_setup", "activity_structure_change"] = (
+        "new_activity_setup"
+    )
+    mode: Literal["create", "change_structure"] = Field(
+        default="create", exclude_if=lambda v: v == "create"
+    )
+    contract_version: Literal[1, 2] = Field(default=1, exclude_if=lambda v: v == 1)
+    previous_structure: KnowledgeRef | None = Field(default=None, exclude_if=lambda v: v is None)
+    manifest: ArtifactRef | None = Field(default=None, exclude_if=lambda v: v is None)
     phase: Literal[
         "collecting",
         "drafting",
@@ -2261,10 +2756,17 @@ class ActivitySetupRequest(OperationRequest):
     stage_instruction: str | None = Field(default=None, min_length=1, max_length=4096)
     auto_resume: bool = False
     output: ArtifactRef | None = None
+    mode: Literal["create", "change_structure"] = Field(
+        default="create", exclude_if=lambda v: v == "create"
+    )
+    contract_version: Literal[1, 2] = Field(default=1, exclude_if=lambda v: v == 1)
 
 
 DomainRequest = Annotated[
-    ActivitySetupRequest
+    IngestDataRequest
+    | StartProcedureRequest
+    | PrepareProcedureRequest
+    | ActivitySetupRequest
     | BootstrapRequest
     | RecoverRequest
     | CreateBindingVersionRequest
@@ -2333,7 +2835,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -2710,7 +3212,7 @@ class BackupManifest(ContractModel):
     backup_id: UUID
     format_version: Literal[1, 2] = 1
     space_id: UUID
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime

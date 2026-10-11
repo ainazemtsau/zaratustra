@@ -544,7 +544,10 @@ def _validate_plan(
             raise FoundationError("invalid_plan", "Parent output binding has wrong type")
         source = roles.get(binding.role)
         if source is not None and not any(
-            item.slot == binding.child_slot and item.media_type == binding.media_type
+            item.slot == binding.child_slot
+            and item.media_type == binding.media_type
+            and item.format_ref
+            == next(output.format_ref for output in definition.named_outputs if output.slot == slot)
             for item in source.state.expected_outputs
         ):
             raise FoundationError("invalid_plan", "Bound child output slot/type differs")
@@ -1232,6 +1235,7 @@ def apply_composition_change(
                 status="proposed",
                 state=child.state,
                 revision=1,
+                structure_parent=request.work_id,
             )
             connection.execute(
                 "INSERT INTO work_plan_children(child_id, parent_id, role) VALUES (?, ?, ?)",
@@ -1361,6 +1365,7 @@ def apply_composition_change(
                 status="proposed",
                 state=child.state,
                 revision=1,
+                structure_parent=request.work_id,
             )
             connection.execute(
                 "INSERT INTO work_plan_children(child_id, parent_id, role) VALUES (?, ?, ?)",

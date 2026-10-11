@@ -1,5 +1,9 @@
 # Integration boundary
 
+The `data` adapter exposes the public typed Core formats, entries, intake,
+queries/calculations, working sets and saved procedures. It does not run a model
+or add external transport. Window-owned Pi uses ordinary assigned execution.
+
 The installed `memory` adapter exposes catalog, batch, history, selection windows
 and cache preparation through the public Core. It has no external transport.
 The manual boundary may include explicitly selected organized memory from another

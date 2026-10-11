@@ -1,5 +1,11 @@
 # Interactive Pi adapter
 
+`procedures.py` coordinates saved procedure Work through existing RPC/DBOS while
+Pi is open, using the selected admitted provider/model. Intent precedes input
+selection; Work acceptance stays separate. `zara_data` uses the public installed
+Core/integration contract. Setup v2 has separate full preparation/review/correction
+sessions without file/command tools. Old Work context retains its exact or legacy pin.
+
 Config v2 workspace/project operations use public `zaratustra.workspace`.
 Native Pi factories receive both the selected root and that root in their tool
 context; persisted transcript cwd never changes Core resources on resume.

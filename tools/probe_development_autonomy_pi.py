@@ -43,7 +43,7 @@ def run_probe(tmp_path: Path, runtime: Path) -> dict[str, object]:
     output = {"slot": "report", "media_type": "text/plain"}
     definition = MethodDefinition(
         instruction="Prepare a fictional proposal and save its evidence for owner review.",
-        named_outputs=(OutputContract(**output),),
+        named_outputs=(OutputContract(slot=output["slot"], media_type=output["media_type"]),),
         source_ref="fictional-development-probe",
     ).model_dump(mode="json")
     evidence = {"record_id": str(source_id), "revision": 1}

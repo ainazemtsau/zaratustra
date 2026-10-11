@@ -1,5 +1,14 @@
 # Core v0.1 domain foundation
 
+Schema 15 explicitly upgrades 14, preserving older hashes and retained bytes.
+`data_formats.py` validates finite field trees and Decimal; `data_store.py` owns
+indexes, transitive access/output checks and sanitation; `data.py` exposes exact
+queries, calculations, intake and durable intent/Work. `structure_setup.py`
+compiles setup v2 before full review; `structure_change.py` applies its exact
+manifest through existing Candidate/Decision authority. Existing Activity state
+and old Work pins remain. Restoration changes only the current head. Read paths
+never migrate; export writers are outside this package.
+
 Schema 14 explicitly extends 13 with durable ActivitySetup revisions/edges.
 `activity_setup.py` composes existing authorized operations for one new Activity;
 exact whole review gates activation, never Work acceptance. Pause/cancel fence

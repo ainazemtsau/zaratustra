@@ -287,7 +287,7 @@ def _setup(args: argparse.Namespace) -> int:
 
         initialize_git(read_config(config_path), create_private=args.create_private)
     print(f"Prepared: {config_path}")
-    if not args.new_space and info.schema_version < 14:
+    if not args.new_space and info.schema_version < 15:
         print("Existing space requires zara-core upgrade before run or assign")
     return 0
 
@@ -401,7 +401,7 @@ def _ready_space(config: dict[str, object], *, minimum_schema: int = 14) -> None
     info = read_space(Path(str(config["space"])))
     if config.get("space_id") and str(info.space_id) != config["space_id"]:
         raise ValueError("Selected space identity differs from the saved configuration")
-    if not minimum_schema <= info.schema_version <= 14:
+    if not minimum_schema <= info.schema_version <= 15:
         raise ValueError("Run zara-core upgrade for this selected space before execution")
     if info.recovery_state != "active":
         raise ValueError("Recover the selected space before execution")
@@ -652,14 +652,14 @@ def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
         info = read_space(space)
         if config.get("space_id") and str(info.space_id) != config["space_id"]:
             raise ValueError("Selected space identity differs from the saved configuration")
-        if info.schema_version == 14:
-            print("Core space already uses schema 14")
+        if info.schema_version == 15:
+            print("Core space already uses schema 15")
             return 0
-        if info.schema_version > 14:
+        if info.schema_version > 15:
             raise ValueError("Installed program cannot upgrade a newer Core schema")
         if info.recovery_state != "active":
             raise ValueError("Recover this space before a schema upgrade")
-        print(f"Space {info.space_id}: schema {info.schema_version} -> 14")
+        print(f"Space {info.space_id}: schema {info.schema_version} -> 15")
         if (
             input("Type UPGRADE to save a verified backup and migrate this space: ").strip()
             != "UPGRADE"
@@ -1213,6 +1213,16 @@ def main(argv: list[str] | None = None, *, prog: str = "zara-core") -> int:
             command.add_argument("--arguments", required=True, type=Path)
             command.add_argument("--contract-version", required=True, type=int)
             command.add_argument("--operation-id", required=True, type=UUID)
+    data = commands.add_parser("data", help="Typed Activity structures, data and procedures")
+    data_modes = data.add_subparsers(dest="mode", required=True)
+    for mode in ("contract", "apply"):
+        command = data_modes.add_parser(mode)
+        command.add_argument("--config", type=Path)
+        command.add_argument("--operation", required=True)
+        command.set_defaults(adapter="data", contract_version=1)
+        if mode == "apply":
+            command.add_argument("--arguments", required=True, type=Path)
+            command.add_argument("--operation-id", required=True, type=UUID)
     exchange = commands.add_parser("exchange", help="Manual exchange with an external tool")
     modes = exchange.add_subparsers(dest="mode", required=True)
     for mode in ("prepare", "import", "read"):
@@ -1343,7 +1353,7 @@ def main(argv: list[str] | None = None, *, prog: str = "zara-core") -> int:
             return _workspace_cli(args, config_path)
         if args.command == "memory":
             return _memory(args, config)
-        if args.command == "integration":
+        if args.command in ("integration", "data"):
             return _integration(args, config)
         if args.command == "bind":
             _runtime(config)

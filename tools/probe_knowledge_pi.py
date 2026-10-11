@@ -204,6 +204,7 @@ def run_process(
     skills: tuple[Path, ...] = (),
     catalog_only: bool = False,
     wait_for: Callable[[], bool] | None = None,
+    tool_names: tuple[str, ...] | None = None,
 ) -> list[dict[str, object]]:
     bridge_server = BridgeServer(bridge)
     bridge_thread = threading.Thread(target=bridge_server.serve_forever, daemon=True)
@@ -280,6 +281,8 @@ def run_process(
     ]
     for skill in skills:
         command.extend(["--skill", str(skill)])
+    if tool_names is not None:
+        command.extend(["--tools", ",".join(tool_names)])
     if session_directory is not None:
         command.extend(["--session-dir", str(session_directory)])
     elif resume_session is None or resume_via_switch:

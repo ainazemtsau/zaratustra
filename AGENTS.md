@@ -141,6 +141,13 @@ and parallel dirty work; do not publish private preparation branches merely to k
 
 ## What exists
 
+Owner-authorized Activity structures (0.22.0) explicitly upgrade Core 14 to 15.
+Finite DataFormat, versioned DataEntry and reviewed ActivityStructure use existing
+knowledge/operation authority. Setup v2 reviews an exact compiled manifest.
+Existing Activity adoption preserves identity and old Work pins. Durable procedure
+intent/selection/Work use ordinary assigned Pi/DBOS; acceptance stays separate.
+Export writers are outside this package. See `docs/activity-structures.md`.
+
 Owner-authorized workspace separation (0.21.0) adds explicit local config v2,
 registered project resources and exact private Git delivery. Core schema stays 14;
 Core remains authoritative. Ordinary and assigned Pi use the chosen resource root.

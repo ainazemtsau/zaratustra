@@ -9,8 +9,10 @@ import pytest
 from tests.zaratustra.foundation.test_binding import _ready
 from zaratustra.foundation import (
     ActivitySetupDraft,
+    ActivitySetupDraftV2,
     ActivitySetupRequest,
     ActivitySetupReview,
+    ActivitySetupReviewV2,
     ArtifactRef,
     CreateArtifactRequest,
     FoundationError,
@@ -83,7 +85,13 @@ def _step(case: Case, action: Any, **fields: Any) -> OperationReceipt:
     )
 
 
-def _complete(case: Case, content: ActivitySetupDraft | ActivitySetupReview) -> ArtifactRef:
+def _complete(
+    case: Case,
+    content: ActivitySetupDraft
+    | ActivitySetupReview
+    | ActivitySetupDraftV2
+    | ActivitySetupReviewV2,
+) -> ArtifactRef:
     root, space, owner, setup, *_ = case
     stage = read_activity_setup(root, setup, owner).state.stages[-1]
     identifier = uuid4()

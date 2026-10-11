@@ -1,6 +1,6 @@
 ---
 name: zaratustra-activity-setup
-description: Create a new Zaratustra Activity together with its owner, retain the interview, and run the installed complete setup and review procedure. Use for a new ongoing direction, not for rewriting an existing Activity.
+description: Design a new Activity or change the structure of an existing one through the installed interview, exact compilation and full review. Keep prior Work and history.
 ---
 
 # Initial Activity setup
@@ -22,7 +22,8 @@ ask it once in the normal assistant reply; the tool stores it and shows concise 
 
 1. Use `zara_activity(mode=create)` after the person requests a new direction.
    The trusted confirmation authorizes setup and activation of this new Activity.
-   Retain the returned setup_id. Existing Activities use their ordinary change path.
+   Retain the returned setup_id. For an existing Activity use mode=change_structure
+   with its record_id; preserve the Activity and all existing Work and history.
 2. Save a useful question through mode=question before asking it. Save each actual
    received answer through mode=answer. The host retains the original user message;
    it does not trust a model's reconstruction. Additional authorized memory can be
@@ -43,3 +44,32 @@ ask it once in the normal assistant reply; the tool stores it and shows concise 
 
 Setup Sources, Artifacts, Methods and receipts remain in the owner's Core.
 Do not put personal goals, raw answers or instance identifiers into product files.
+
+## Design the whole first workflow
+
+Activity is an ongoing direction with data and repeatable ways of acting. It is
+not a folder of unrelated Markdown or only a prompt. Design a complete, usable
+first path while retaining room for later changes. No fixed domain template is
+mandatory. A one-off document Activity may need no data formats or calendar.
+
+Ask or recommend meaningful defaults for planning horizon, recording, execution,
+periodic/event review, corrections, missing input and autonomy. Do not silently
+choose two days when the person expects a week. Distinguish event dates from
+import dates, intentions from facts, unknown from zero, a correction from a new
+event and current revision from the explicitly selected active plan.
+
+The installed contract_version 2 packet declares formats, procedures, working
+sets, supported operations, first path, decision bases and deferred extensions.
+The model designs them; Core compiles stable addresses and validates finite field
+types and references. Review sees the entire exact compiled manifest. Every area
+needs reasons and references to actual packet components. After correction review
+the whole new package. A deferred unknown does not block an independent first path.
+
+Use zara_data contract/apply for typed entries, batch intake, exact queries,
+calculations and procedures. Preserve original Sources before interpreting them.
+Repeated procedure request_key restores the same Work, input snapshot and period.
+Use a new request for a new period; never rewrite an old Work's pinned structure.
+Weekly/monthly analysis is an agent Work over declared data, not an automatic
+calendar rule imposed by Zaratustra. While Pi is closed no new procedure starts.
+The person communicates through assistants; do not require them to edit schemas,
+read Markdown or reconcile copies. Publish results separately from owner acceptance.

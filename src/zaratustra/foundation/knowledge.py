@@ -17,10 +17,13 @@ from uuid import UUID, uuid4
 from pydantic import TypeAdapter, ValidationError
 
 from .models import (
+    ActivityStructureState,
     AnalysisState,
     ClaimState,
     ContextState,
     CreateKnowledgeRequest,
+    DataEntryState,
+    DataFormatState,
     DeleteKnowledgeRequest,
     GrantState,
     HandoffState,
@@ -88,7 +91,9 @@ def upgrade_knowledge_space(path: Path, authority: LocalAuthority) -> SpaceInfo:
     return read_space(path)
 
 
-def _refs(state: KnowledgeBody) -> list[tuple[str, KnowledgeRef]]:
+def _refs(
+    state: KnowledgeBody, connection: sqlite3.Connection | None = None
+) -> list[tuple[str, KnowledgeRef]]:
     if isinstance(state, SourceState):
         return [("derived_from", ref) for ref in state.derived_from]
     if isinstance(state, ClaimState):
@@ -108,7 +113,25 @@ def _refs(state: KnowledgeBody) -> list[tuple[str, KnowledgeRef]]:
             [("mandatory", ref) for ref in state.mandatory]
             + [("optional", ref) for ref in state.optional]
             + [("memory_snapshot", ref) for ref in state.historical_memory]
+            + ([("structure_pin", state.pinned_structure)] if state.pinned_structure else [])
+            + (
+                [("procedure_snapshot", state.procedure_snapshot)]
+                if state.procedure_snapshot
+                else []
+            )
         )
+    if isinstance(state, DataEntryState):
+        from .data_store import data_references
+
+        if connection is None:
+            raise FoundationError("invalid_request", "Data references need their database resolver")
+        return data_references(connection, state)
+    if isinstance(state, DataFormatState):
+        return []
+    if isinstance(state, ActivityStructureState):
+        return [("structure_basis", ref) for ref in state.bases] + [
+            ("structure_format", ref) for ref in state.formats.values()
+        ]
     refs = [("included", ref) for ref in state.included]
     if state.transfer_source is not None:
         refs.append(("transfer_source", state.transfer_source))
@@ -130,13 +153,18 @@ def _require_ref(connection: sqlite3.Connection, ref: KnowledgeRef, actor: str, 
         resource_id=ref.record_id,
     )
     row = connection.execute(
-        "SELECT r.status,v.payload IS NOT NULL FROM knowledge_records r "
+        "SELECT r.status,v.payload IS NOT NULL,r.kind FROM knowledge_records r "
         "JOIN knowledge_revisions v ON v.record_id=r.record_id "
         "WHERE r.record_id=? AND v.revision=?",
         (str(ref.record_id), ref.revision),
     ).fetchone()
     if row is not None:
-        if row[0] != "active" or not row[1]:
+        retained_typed_revision = row[0] == "unavailable" and row[2] in (
+            "data_format",
+            "data_entry",
+            "activity_structure",
+        )
+        if (row[0] != "active" and not retained_typed_revision) or not row[1]:
             raise FoundationError(
                 "content_unavailable", f"Knowledge basis {ref.record_id}@{ref.revision}"
             )
@@ -202,6 +230,19 @@ def _prior_state(connection: sqlite3.Connection, record_id: UUID) -> tuple[str, 
 def _check_transition(prior: KnowledgeBody, state: KnowledgeBody) -> None:
     if type(prior) is not type(state):
         raise FoundationError("wrong_kind", "Knowledge kind cannot change")
+    if isinstance(prior, (DataEntryState, DataFormatState, ActivityStructureState)) and (
+        prior.scope_activity_id != getattr(state, "scope_activity_id", None)
+    ):
+        raise FoundationError("wrong_scope", "Data origin cannot change through a correction")
+    if (
+        isinstance(prior, DataEntryState)
+        and isinstance(state, DataEntryState)
+        and (
+            (prior.external_namespace, prior.external_key)
+            != (state.external_namespace, state.external_key)
+        )
+    ):
+        raise FoundationError("identity_changed", "Correction keeps the external event identity")
     if isinstance(prior, SourceState):
         if (
             isinstance(state, SourceState)
@@ -261,6 +302,10 @@ def _write_revision(
     epoch: int,
 ) -> None:
     schema = int(connection.execute("PRAGMA user_version").fetchone()[0])
+    if schema >= 15:
+        from .data_store import validate_data_state
+
+        state = validate_data_state(connection, state, request.actor, epoch)
     if isinstance(state, MemoryViewState) and (
         state.selection is not None or state.generation_method == "zaratustra.memory/1"
     ):
@@ -280,7 +325,7 @@ def _write_revision(
         and (state.selection.actor != request.actor or state.selection.epoch != epoch)
     ):
         raise FoundationError("permission_denied", "Selection actor/epoch must match its creator")
-    for _, ref in _refs(state):
+    for _, ref in _refs(state, connection):
         _require_ref(connection, ref, request.actor, epoch)
     metadata = getattr(state, "memory", None)
     memory_scope = None
@@ -301,6 +346,9 @@ def _write_revision(
             resource_id=metadata.activity_id,
         )
     if isinstance(state, ContextState):
+        from .data_store import check_context_pins
+
+        check_context_pins(connection, state, request.actor, epoch)
         if not state.mandatory:
             raise FoundationError(
                 "incomplete_context", "Context requires an explicit mandatory set"
@@ -380,7 +428,7 @@ def _write_revision(
             digest,
         ),
     )
-    for index, (role, ref) in enumerate(_refs(state)):
+    for index, (role, ref) in enumerate(_refs(state, connection)):
         connection.execute(
             "INSERT INTO knowledge_edges(record_id,revision,ordinal,target_id,"
             "target_revision,role,target_mode) "
@@ -394,6 +442,8 @@ def _write_revision(
                 role,
                 state.target_mode
                 if isinstance(state, MemoryLinkState) and role == "target"
+                else "current"
+                if role == "data_current"
                 else "exact",
             ),
         )
@@ -403,7 +453,7 @@ def _write_revision(
             (
                 str(request.record_id),
                 revision,
-                len(_refs(state)),
+                len(_refs(state, connection)),
                 str(metadata.activity_id),
                 memory_scope[0],
                 "memory_scope",
@@ -439,6 +489,8 @@ def _write_revision(
         searchable = state.explanation
     elif isinstance(state, MemoryViewState):
         searchable = state.text
+    elif isinstance(state, (DataFormatState, DataEntryState, ActivityStructureState)):
+        searchable = canonical_json(state.model_dump(mode="json"))
     elif isinstance(state, HandoffState) and state.media_type.startswith("text/"):
         try:
             searchable = state.subject + "\n" + state.document.decode("utf-8")
@@ -466,6 +518,10 @@ def _write_revision(
         from .memory import index_memory
 
         index_memory(connection, request.record_id, state, revision, state_revision)
+    if schema >= 15:
+        from .data_store import index_data
+
+        index_data(connection, request.record_id, state, revision)
 
 
 def _sanitize_deleted(connection: sqlite3.Connection, record_id: UUID, now: str) -> None:
@@ -479,18 +535,42 @@ def _sanitize_deleted(connection: sqlite3.Connection, record_id: UUID, now: str)
     while queue:
         current = queue.pop()
         rows = connection.execute(
-            "SELECT DISTINCT record_id FROM knowledge_edges WHERE target_id=?", (current,)
+            "SELECT DISTINCT record_id,revision FROM knowledge_edges WHERE target_id=?", (current,)
         ).fetchall()
         for row in rows:
             child = str(row[0])
+            if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 15:
+                kind = connection.execute(
+                    "SELECT kind FROM knowledge_records WHERE record_id=?", (child,)
+                ).fetchone()
+                if kind and kind[0] in ("data_entry", "data_format", "activity_structure"):
+                    from .data_store import sanitize_data_revision
+
+                    sanitize_data_revision(
+                        connection, KnowledgeRef(record_id=UUID(child), revision=row[1]), now
+                    )
+                    continue
             if child not in affected:
                 affected.add(child)
                 queue.append(child)
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 15:
+            for (child,) in connection.execute(
+                "SELECT DISTINCT artifact_id FROM data_artifact_bases WHERE target_id=? UNION "
+                "SELECT record_id FROM revision_provenance WHERE source_record_id=?",
+                (current, current),
+            ):
+                if child not in affected:
+                    affected.add(child)
+                    queue.append(child)
     if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 11:
         from .development import sanitize_deleted_development_dependency
 
         for item in affected:
             sanitize_deleted_development_dependency(connection, UUID(item), now)
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 15:
+        from .data_store import sanitize_data_dependency
+
+        sanitize_data_dependency(connection, affected, now)
     for item in affected:
         connection.execute("DELETE FROM knowledge_fts WHERE record_id=?", (item,))
         if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 13:
@@ -550,6 +630,12 @@ def sanitize_deleted_knowledge_dependency(
     found = connection.execute(
         "SELECT 1 FROM knowledge_edges WHERE target_id=? LIMIT 1", (str(record_id),)
     ).fetchone()
+    if found is None and int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 15:
+        found = connection.execute(
+            "SELECT 1 FROM data_artifact_bases WHERE target_id=? UNION ALL "
+            "SELECT 1 FROM revision_provenance WHERE source_record_id=? LIMIT 1",
+            (str(record_id), str(record_id)),
+        ).fetchone()
     if found is not None:
         _sanitize_deleted(connection, record_id, now)
 
@@ -570,6 +656,9 @@ def apply_knowledge_change(
         if current_revision != request.manifest.revision:
             raise FoundationError("stale_context", "Manifest revision changed")
         if request.stage in ("prepared", "sent"):
+            from .data_store import check_context_pins
+
+            check_context_pins(connection, manifest, request.actor, epoch)
             for ref in dict.fromkeys(manifest.mandatory + manifest.historical_memory):
                 _require_ref(connection, ref, request.actor, epoch)
                 if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 13:
@@ -748,6 +837,15 @@ def apply_knowledge_change(
     state = request.state
     if isinstance(request, CreateKnowledgeRequest):
         revision = 1
+        if isinstance(state, DataEntryState) and state.work_id is None:
+            from .data_store import head_ref
+
+            if (
+                state.structure is not None
+                and state.scope_activity_id is not None
+                and (state.structure != head_ref(connection, state.scope_activity_id))
+            ):
+                raise FoundationError("stale_structure", "New data requires the current structure")
         if isinstance(state, HandoffState) and state.status != "prepared":
             raise FoundationError("invalid_transition", "Handoff starts with a prepared document")
         if isinstance(state, SourceState) and state.source_event_id:
@@ -765,6 +863,15 @@ def apply_knowledge_change(
         if prior_revision != request.expected_revision:
             raise FoundationError("stale_revision", "Knowledge revision changed")
         _check_transition(prior, state)
+        if isinstance(prior, DataEntryState) and isinstance(state, DataEntryState):
+            from .data_formats import validate_values
+            from .data_store import exact_state
+
+            definition = exact_state(connection, prior.format_ref, request.actor, epoch)
+            assert isinstance(definition, DataFormatState)
+            revised = validate_values(definition.fields, state.values)
+            if any(prior.values.get(key) != revised.get(key) for key in definition.identity_fields):
+                raise FoundationError("identity_changed", "Correction cannot become another event")
         revision = prior_revision + 1
     _write_revision(connection, request, state, revision, now, state_revision, epoch)
     return {"record_id": str(request.record_id), "revision": revision}, [
@@ -811,9 +918,13 @@ def _checked_read(
     if payload is not None and hashlib.sha256(payload).hexdigest().upper() != row[9]:
         raise FoundationError("corrupt_space", "Knowledge payload digest mismatch")
     state = BODY_ADAPTER.validate_json(payload) if payload is not None else None
+    if state is not None and info.schema_version >= 15:
+        from .data_store import check_data_access
+
+        check_data_access(connection, record_id, row[4], authority.actor, info.execution_epoch)
     stale = int(row[1]) != int(row[4])
     if state is not None:
-        for role, ref in _refs(state):
+        for role, ref in _refs(state, connection):
             if (
                 isinstance(state, MemoryViewState)
                 and state.generation_method == "zaratustra.memory/1"
@@ -840,6 +951,12 @@ def _checked_read(
                 isinstance(state, MemoryLinkState)
                 and role == "target"
                 and state.target_mode == "current"
+            ) or role in (
+                "data_current",
+                "data_format",
+                "data_structure",
+                "structure_format",
+                "data_scope",
             )
             if (
                 target is None
@@ -851,6 +968,17 @@ def _checked_read(
             from .memory import selection_current
 
             stale = not selection_current(connection, info, authority, state.selection)
+        elif isinstance(state, DataEntryState) and state.role == "analysis" and state.selection:
+            from .data_store import exact_state
+            from .memory import selection_current
+
+            selected_basis = exact_state(
+                connection, state.selection, authority.actor, info.execution_epoch
+            )
+            if isinstance(selected_basis, MemoryViewState) and selected_basis.selection:
+                stale = stale or not selection_current(
+                    connection, info, authority, selected_basis.selection
+                )
         elif isinstance(state, MemoryViewState) and state.mode == "current":
             if _read_scope_limited(connection, info, authority):
                 stale = True
@@ -983,7 +1111,19 @@ def open_knowledge(
         field, content = "proposition", state.proposition.encode("utf-8")
     elif isinstance(state, AnalysisState) and state.conclusion is not None:
         field, content = "conclusion", state.conclusion.encode("utf-8")
+    elif isinstance(state, (DataFormatState, DataEntryState, ActivityStructureState)):
+        field, content = (
+            "structured_data",
+            canonical_json(state.model_dump(mode="json")).encode("utf-8"),
+        )
     metadata = state.model_dump(mode="json", exclude={field} if field else None)
+    if isinstance(state, (DataFormatState, DataEntryState, ActivityStructureState)):
+        metadata = {
+            "kind": state.kind,
+            "scope_activity_id": str(state.scope_activity_id)
+            if state.scope_activity_id is not None
+            else None,
+        }
     if content is None:
         return {
             "record_id": str(record_id),
@@ -997,9 +1137,17 @@ def open_knowledge(
     if offset > len(content):
         raise FoundationError("invalid_request", "Open offset exceeds exact content")
     end = min(offset + max_bytes, len(content))
-    if isinstance(state, (ClaimState, AnalysisState, MemoryViewState)) or (
-        isinstance(state, (SourceState, HandoffState)) and state.media_type.startswith("text/")
-    ):
+    if isinstance(
+        state,
+        (
+            ClaimState,
+            AnalysisState,
+            MemoryViewState,
+            DataFormatState,
+            DataEntryState,
+            ActivityStructureState,
+        ),
+    ) or (isinstance(state, (SourceState, HandoffState)) and state.media_type.startswith("text/")):
         while end < len(content):
             try:
                 content[offset:end].decode("utf-8")

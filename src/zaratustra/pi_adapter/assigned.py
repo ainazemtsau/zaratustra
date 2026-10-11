@@ -993,6 +993,7 @@ def _execute_under_lock(
                                 [
                                     *(config.pi_tools or ("read", "write", "edit", "bash")),
                                     "zara_memory",
+                                    "zara_data",
                                     "zara_development",
                                 ]
                             )

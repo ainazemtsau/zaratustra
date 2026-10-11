@@ -66,6 +66,7 @@ from .models import (
     FinishInvocationRequest,
     FireBindingRequest,
     GrantState,
+    IngestDataRequest,
     IssueChildWorkRequest,
     LinkedOutput,
     LinkWorkOutputRequest,
@@ -73,6 +74,7 @@ from .models import (
     OperationAuditEntry,
     OperationReceipt,
     PrepareInvocationRequest,
+    PrepareProcedureRequest,
     ProvenanceRef,
     PublishAttemptOutputRequest,
     RecordAttemptStopRequest,
@@ -100,6 +102,7 @@ from .models import (
     SpaceInfo,
     SpaceInspection,
     StartAttemptRequest,
+    StartProcedureRequest,
     StopAttemptRequest,
     StopCandidateRequest,
     TechnicalVersions,
@@ -544,6 +547,10 @@ def _write_root(
 
 
 def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]:
+    if isinstance(request, IngestDataRequest):
+        return "artifact.write", "artifact", request.source.record_id
+    if isinstance(request, (StartProcedureRequest, PrepareProcedureRequest)):
+        return "work.write", "activity", request.activity_id
     if isinstance(request, (CreateDevelopmentRequest, ReviseDevelopmentRequest)):
         return "artifact.write", "artifact", request.record_id
     if isinstance(request, DeleteDevelopmentRequest):
@@ -696,7 +703,79 @@ def _write_subject(
     status: str,
     state: ActivityState | WorkState,
     revision: int,
+    structure_parent: UUID | None = None,
 ) -> None:
+    if (
+        kind == "work"
+        and isinstance(state, WorkState)
+        and int(
+            connection.execute("PRAGMA user_version").fetchone()[0]  # type: ignore[attr-defined]
+        )
+        >= 15
+    ):
+        from .data_store import head_ref
+
+        if revision > 1:
+            previous_payload = connection.execute(  # type: ignore[attr-defined]
+                "SELECT payload FROM subject_content WHERE record_id=? AND revision=?",
+                (str(record_id), revision - 1),
+            ).fetchone()
+            if previous_payload is not None:
+                previous_state = WorkState.model_validate_json(previous_payload[0])
+                if state.structure != previous_state.structure:
+                    raise FoundationError(
+                        "structure_pinned", "An existing Work retains its exact structure version"
+                    )
+        expected = head_ref(cast(sqlite3.Connection, connection), state.activity_id)
+        if revision == 1 and structure_parent is not None:
+            parent_row = connection.execute(  # type: ignore[attr-defined]
+                "SELECT current_revision FROM subject_records WHERE record_id=? "
+                "AND kind='work' AND status!='deleted'",
+                (str(structure_parent),),
+            ).fetchone()
+            if parent_row is None:
+                raise FoundationError("not_found", "Parent Work is unavailable")
+            parent = WorkState.model_validate(
+                _subject_state(connection, structure_parent, parent_row[0])
+            )
+            if parent.activity_id != state.activity_id:
+                raise FoundationError("wrong_scope", "Child belongs to its parent's Activity")
+            expected = parent.structure
+        if revision == 1 and (state.structure is None or structure_parent is not None):
+            state = state.model_copy(update={"structure": expected})
+        if revision == 1:
+            if state.structure != expected:
+                raise FoundationError(
+                    "stale_structure", "New Work must use the current Activity structure"
+                )
+            head = (
+                cast(sqlite3.Connection, connection)
+                .execute(
+                    "SELECT status FROM structure_heads WHERE activity_id=?",
+                    (str(state.activity_id),),
+                )
+                .fetchone()
+            )
+            if structure_parent is None and head is not None and head[0] != "active":
+                raise FoundationError("structure_stopped", "Structure is stopped for new Work")
+        if state.structure is not None:
+            from .data_store import exact_state
+            from .models import ActivityStructureState
+
+            definition = exact_state(
+                cast(sqlite3.Connection, connection),
+                state.structure,
+                actor,
+                int(
+                    connection.execute(  # type: ignore[attr-defined]
+                        "SELECT execution_epoch FROM spaces"
+                    ).fetchone()[0]
+                ),
+            )
+            if not isinstance(definition, ActivityStructureState) or (
+                definition.scope_activity_id != state.activity_id
+            ):
+                raise FoundationError("wrong_scope", "Work structure belongs to another Activity")
     if revision == 1:
         _expect_absent(connection, record_id)
         connection.execute(  # type: ignore[attr-defined]
@@ -720,6 +799,12 @@ def _write_subject(
         "INSERT INTO subject_content(record_id, revision, payload, sha256) VALUES (?, ?, ?, ?)",
         (str(record_id), revision, payload, hashlib.sha256(payload).hexdigest().upper()),
     )
+    if kind == "work" and isinstance(state, WorkState) and state.structure is not None:
+        connection.execute(  # type: ignore[attr-defined]
+            "INSERT INTO structure_work_pins VALUES (?,?,?) ON CONFLICT(work_id) DO UPDATE "
+            "SET record_id=excluded.record_id,revision=excluded.revision",
+            (str(record_id), str(state.structure.record_id), state.structure.revision),
+        )
 
 
 def _artifact_reference(
@@ -1331,6 +1416,34 @@ def _apply_subject_change(
             decisions=decisions,
             media_type=contract.media_type,
         )
+        if contract.format_ref is not None:
+            from .data_store import validate_output_envelope
+
+            content = (
+                cast(sqlite3.Connection, connection)
+                .execute(
+                    "SELECT payload FROM managed_content WHERE record_id=? AND revision=?",
+                    (str(request.output.artifact.artifact_id), request.output.artifact.revision),
+                )
+                .fetchone()
+            )
+            validate_output_envelope(
+                cast(sqlite3.Connection, connection),
+                request.work_id,
+                state,
+                contract,
+                content[0],
+                request.actor,
+                epoch,
+            )
+            from .data_store import index_output_bases
+
+            index_output_bases(
+                cast(sqlite3.Connection, connection),
+                request.output.artifact.artifact_id,
+                request.output.artifact.revision,
+                content[0],
+            )
         linked = tuple(
             item for item in state.linked_outputs if item.slot != request.output.slot
         ) + (request.output,)
@@ -1376,6 +1489,23 @@ def _apply_subject_change(
                 decisions=decisions,
                 media_type=declared[slot],
             )
+            contract = next(item for item in state.expected_outputs if item.slot == slot)
+            if contract.format_ref is not None:
+                from .data_store import validate_output_envelope
+
+                content = connection.execute(  # type: ignore[attr-defined]
+                    "SELECT payload FROM managed_content WHERE record_id=? AND revision=?",
+                    (str(reference.artifact_id), reference.revision),
+                ).fetchone()
+                validate_output_envelope(
+                    cast(sqlite3.Connection, connection),
+                    request.work_id,
+                    state,
+                    contract,
+                    content[0],
+                    request.actor,
+                    epoch,
+                )
         for reference in state.inputs:
             _authorize_artifact_ref(
                 connection,
@@ -1460,6 +1590,18 @@ def _apply_change(
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
+    if isinstance(request, (IngestDataRequest, StartProcedureRequest, PrepareProcedureRequest)):
+        from .data import apply_data_change
+
+        return apply_data_change(
+            cast(sqlite3.Connection, connection),
+            request,
+            now=now,
+            epoch=epoch,
+            authority=authority,
+            grants=grants,
+            decisions=decisions,
+        )
     if isinstance(request, ActivitySetupRequest):
         from .activity_setup import apply_setup_change
 
@@ -1612,6 +1754,19 @@ def _apply_change(
         declared = {item.slot: item.media_type for item in state.expected_outputs}
         if declared.get(request.slot) != request.media_type:
             raise FoundationError("wrong_output", "Slot or media type is not declared by Work")
+        from .data_store import validate_output_envelope
+
+        contract = next(item for item in state.expected_outputs if item.slot == request.slot)
+        validate_output_envelope(
+            cast(sqlite3.Connection, connection),
+            request.work_id,
+            state,
+            contract,
+            request.content,
+            request.actor,
+            epoch,
+            attempt_id=request.attempt_id,
+        )
         artifact_id = uuid5(request.attempt_id, f"artifact:{request.slot}")
         artifact_grants, artifact_decisions = _authorize(
             connection,
@@ -1638,6 +1793,12 @@ def _apply_change(
             ),
         )
         _write_artifact(connection, artifact, now, 1)
+        if contract.format_ref is not None:
+            from .data_store import index_output_bases
+
+            index_output_bases(
+                cast(sqlite3.Connection, connection), artifact_id, 1, request.content
+            )
         linked = tuple(item for item in state.linked_outputs if item.slot != request.slot) + (
             LinkedOutput(
                 slot=request.slot, artifact=ArtifactRef(artifact_id=artifact_id, revision=1)
@@ -2575,6 +2736,12 @@ def read_artifact(
             raise FoundationError(
                 "content_unavailable",
                 f"Managed content is unavailable for {artifact_id}@{selected}",
+            )
+        if info.schema_version >= 15:
+            from .data_store import check_data_access
+
+            check_data_access(
+                connection, artifact_id, selected, authority.actor, info.execution_epoch
             )
         return ArtifactRevision(
             artifact_id=artifact_id,

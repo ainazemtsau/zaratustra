@@ -124,24 +124,30 @@ def index_memory(
             "document",
             "external_report",
         )
-        and metadata is None
+        and (metadata is None or metadata.material_role == "intake")
     )
-    connection.execute(
-        "INSERT INTO memory_index VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-        (
-            identifier,
-            revision,
-            state.kind,
-            str(activity) if activity else None,
-            int(common),
-            title,
-            int(metadata is not None or not raw),
-            int(unprocessed),
-            metadata.context_role if metadata else "legacy",
-            changed,
-            int(getattr(state, "status", None) not in ("superseded", "retracted", "retired")),
-        ),
+    values: tuple[object, ...] = (
+        identifier,
+        revision,
+        state.kind,
+        str(activity) if activity else None,
+        int(common),
+        title,
+        int(metadata is not None or not raw),
+        int(unprocessed),
+        metadata.context_role if metadata else "legacy",
+        changed,
+        int(getattr(state, "status", None) not in ("superseded", "retracted", "retired")),
     )
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 15:
+        role = metadata.material_role if metadata is not None else None
+        if role is None:
+            role = "intake" if unprocessed else "execution" if raw else "working"
+        connection.execute(
+            "INSERT INTO memory_index VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", (*values, role)
+        )
+    else:
+        connection.execute("INSERT INTO memory_index VALUES (?,?,?,?,?,?,?,?,?,?,?)", values)
     if metadata is not None:
         for topic in {value.strip().casefold() for value in metadata.topics}:
             connection.execute("INSERT INTO memory_topics VALUES (?,?)", (identifier, topic))
@@ -171,6 +177,15 @@ def refresh_intake(connection: sqlite3.Connection, record_id: str | None = None)
         ),
         (record_id, record_id) if record_id else (),
     )
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 15:
+        connection.execute(
+            "UPDATE memory_index AS m SET unprocessed=NOT EXISTS (SELECT 1 FROM data_intake_heads "
+            "h JOIN data_deliveries d ON d.delivery_key=h.delivery_key WHERE "
+            "h.source_id=m.record_id AND h.source_revision=m.revision AND d.complete=1) "
+            "OR EXISTS (SELECT 1 FROM data_intake i WHERE i.source_id=m.record_id AND "
+            "i.source_revision=m.revision AND i.status='deferred') WHERE EXISTS (SELECT 1 "
+            "FROM data_deliveries d WHERE d.source_id=m.record_id AND d.source_revision=m.revision)"
+        )
 
 
 def upgrade_memory_space(path: Path, authority: LocalAuthority) -> SpaceInfo:
@@ -232,6 +247,11 @@ def _filter(selectors: tuple[MemorySelector, ...]) -> tuple[str, list[object]]:
         if selector.current_activity:
             raise FoundationError("invalid_request", "Resolve current_activity from the host focus")
         clauses: list[str] = []
+        if selector.empty:
+            clauses.append("0")
+        if selector.kinds:
+            clauses.append("m.kind IN (SELECT value FROM json_each(?))")
+            params.append(canonical_json(selector.kinds))
         if not selector.full and not selector.record_ids:
             clauses.extend(("m.current=1", "(m.catalogued=1 OR m.unprocessed=1)"))
         scopes: list[str] = []
@@ -260,6 +280,33 @@ def _filter(selectors: tuple[MemorySelector, ...]) -> tuple[str, list[object]]:
         if selector.context_role is not None:
             clauses.append("m.context_role=?")
             params.append(selector.context_role)
+        if selector.material_roles:
+            clauses.append(
+                "(m.material_role IN (SELECT value FROM json_each(?))"
+                + (" OR m.unprocessed=1" if "intake" in selector.material_roles else "")
+                + ")"
+            )
+            params.append(canonical_json(selector.material_roles))
+        if (
+            selector.format_refs
+            or selector.data_filters
+            or selector.date_from
+            or (
+                selector.date_until
+                or selector.data_statuses
+                or selector.time_from
+                or selector.time_until
+            )
+        ):
+            from .data_store import data_filter_sql
+
+            data_where, data_params = data_filter_sql(selector)
+            clauses.append(
+                "EXISTS (SELECT 1 FROM data_index d WHERE d.record_id=m.record_id AND "
+                + data_where
+                + ")"
+            )
+            params.extend(data_params)
         unions.append("(" + " AND ".join(clauses or ["1"]) + ")")
     return "(" + " OR ".join(unions or ["1"]) + ")", params
 
@@ -279,6 +326,9 @@ def _rows(
     catalog: bool = False,
     unprocessed_only: bool = False,
 ) -> Iterator[sqlite3.Row | tuple[Any, ...]]:
+    from .data_store import check_data_access, validate_data_selectors
+
+    validate_data_selectors(connection, selectors, reader.actor, reader.epoch)
     where, params = _filter(selectors)
     query = "SELECT m.* FROM memory_index m WHERE " + where + " AND m.record_id>?"
     if catalog:
@@ -297,8 +347,9 @@ def _rows(
                     resource_type="artifact",
                     resource_id=UUID(row[0]),
                 )
+                check_data_access(connection, UUID(row[0]), row[1], reader.actor, reader.epoch)
             except FoundationError as error:
-                if error.code in ("permission_denied", "decision_denied"):
+                if error.code in ("permission_denied", "decision_denied", "content_unavailable"):
                     continue
                 raise
             yield row
@@ -354,6 +405,7 @@ def memory_catalog(
                     "title": row[5],
                     "unprocessed": bool(row[7]),
                     "context_role": row[8],
+                    **({"material_role": row[11]} if len(row) > 11 else {}),
                     "has_history": revisions > 1,
                     "topics": [
                         t[0]
@@ -444,6 +496,46 @@ def _members(
     # Full areas also retain exact knowledge bases originating in another area.
     # Structural Activity/Work anchors remain addresses, not imported work ownership.
     seen = set(refs)
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 15:
+        # Exact schema/relations are part of a data snapshot, even for current-only queries.
+        # Subject anchors and conversation capture edges do not expand the content selection.
+        data_roots = list(refs)
+        while data_roots:
+            root = data_roots.pop()
+            for identifier, revision, mode in connection.execute(
+                "SELECT target_id,target_revision,target_mode FROM knowledge_edges WHERE "
+                "record_id=? AND revision=? AND role IN ('data_format','data_current',"
+                "'data_exact','data_structure','structure_format') ORDER BY ordinal",
+                (str(root.record_id), root.revision),
+            ):
+                if mode == "current":
+                    current = connection.execute(
+                        "SELECT current_revision FROM knowledge_records WHERE record_id=?",
+                        (identifier,),
+                    ).fetchone()
+                    if current is None:
+                        raise FoundationError("content_unavailable", "Related object disappeared")
+                    revision = current[0]
+                reference = KnowledgeRef(record_id=UUID(identifier), revision=revision)
+                if reference in seen:
+                    continue
+                from .data_store import check_data_access
+                from .knowledge import _require_ref
+
+                _require_ref(connection, reference, reader.actor, reader.epoch)
+                check_data_access(
+                    connection, reference.record_id, reference.revision, reader.actor, reader.epoch
+                )
+                checksum = connection.execute(
+                    "SELECT sha256 FROM knowledge_revisions WHERE record_id=? AND revision=?",
+                    (identifier, revision),
+                ).fetchone()
+                if checksum is None or checksum[0] is None:
+                    raise FoundationError("content_unavailable", "Related definition disappeared")
+                refs.append(reference)
+                seen.add(reference)
+                data_roots.append(reference)
+                digest.update(f"{identifier}:{revision}:{checksum[0]}".encode())
     while full_roots:
         root = full_roots.pop()
         for identifier, revision, checksum in connection.execute(
@@ -599,6 +691,16 @@ def prepare_memory_cache(
         members, fingerprint = _members(
             connection, _Reader(authority.actor, info.execution_epoch), selectors
         )
+        query_members = (
+            tuple(
+                KnowledgeRef(record_id=UUID(row[0]), revision=row[1])
+                for row in _rows(
+                    connection, _Reader(authority.actor, info.execution_epoch), selectors
+                )
+            )
+            if info.schema_version >= 15
+            else None
+        )
         restricted = _read_scope_limited(connection, info, authority)
         identity = canonical_json(
             {
@@ -674,6 +776,7 @@ def prepare_memory_cache(
         epoch=info.execution_epoch,
         parts=tuple(parts),
         members=members,
+        query_members=query_members,
         total_bytes=total_bytes,
         cache=cache,
         restricted=restricted,

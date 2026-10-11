@@ -183,7 +183,7 @@ export default function (pi: any): void {
     for (const entry of branch) {
       const message = entry.message;
       if (entry.type !== "message" || message?.role !== "toolResult" ||
-          !["zara_memory", "zara_integration"].includes(message.toolName)) continue;
+          !["zara_memory", "zara_integration", "zara_data"].includes(message.toolName)) continue;
       for (const block of message.content ?? []) {
         if (block.type !== "text") continue;
         try {
@@ -851,6 +851,15 @@ export default function (pi: any): void {
         query: Type.Optional(Type.String()),
         full: Type.Optional(Type.Boolean()),
         context_role: Type.Optional(StringEnum(["reference", "required", "legacy"] as const)),
+        kinds: Type.Optional(Type.Array(Type.String())),
+        material_roles: Type.Optional(Type.Array(StringEnum(["working", "basis", "intake", "execution", "representation"] as const))),
+        format_refs: Type.Optional(Type.Array(Type.Object({record_id: Type.String(), revision: Type.Number()}))),
+        data_filters: Type.Optional(Type.Array(Type.Any())),
+        date_from: Type.Optional(Type.String()),
+        date_until: Type.Optional(Type.String()),
+        time_from: Type.Optional(Type.String()),
+        time_until: Type.Optional(Type.String()),
+        data_statuses: Type.Optional(Type.Array(Type.String())),
       }))),
       selection_id: Type.Optional(Type.String()),
       file: Type.Optional(Type.String()),
@@ -1083,17 +1092,40 @@ export default function (pi: any): void {
     },
   });
   pi.registerTool({
+    name: "zara_data", label: "Typed Activity data",
+    description: "Use contract for the exact public operation schema, then apply with arguments. " +
+      "Operations: describe_structure, list_formats, read_format, create_entry, correct_entry, ingest_batch, " +
+      "read_entry, history, query_entries, aggregate_entries, working_set, start_procedure, procedure_status, due_procedures. " +
+      "Retain an original Source before intake; preserve explicit event identity and dates. Decimal is a string. " +
+      "Correct an existing event by revision; a new event has a new address. Partial input stays visible. " +
+      "A procedure request_key restores its same Work, period and input snapshot across sessions. " +
+      "Use run with the returned run_id to execute through ordinary assigned Pi/DBOS using the current model. " +
+      "Typed output publication uses DataOutputEnvelope with entries, basis_snapshot, complete, limitations and result. " +
+      "No automatic Work acceptance or Git publication. Read only data needed for the task.",
+    parameters: Type.Object({mode: StringEnum(["contract", "apply", "run"] as const),
+      operation: Type.Optional(Type.String()), run_id: Type.Optional(Type.String()),
+      arguments: Type.Optional(Type.Any()), operation_key: Type.Optional(Type.String())}),
+    async execute(callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
+      const result = await request("/v1/data", {...params, operation_key: params.operation_key ?? callId,
+        model: setupModel(ctx)});
+      return {content: [{type: "text", text: JSON.stringify(result)}], details: result};
+    },
+  });
+  pi.registerTool({
     name: "zara_activity", label: "Create and set up an Activity",
-    description: "List/read Activities or start a new Activity setup after the user asks for a direction. " +
+    description: "List/read Activities, start a new Activity setup or change_structure for one existing Activity without recreating it. " +
       "Create retains the request and authorizes this new Activity's interview, whole draft/review/correction and activation. " +
       "Use question to retain a necessary user question, answer to save the actual received user message, " +
       "then ask the saved question once in your normal reply. Reuse the original request; ask only missing " +
       "details needed to set up the workflow. Data needed only for a later research/planning Work can wait. " +
       "submit when enough is known, status/resume/pause/cancel for saved continuation. " +
       "Retry after five reviews only on explicit user request. Do not ask the owner about internal Method/schema design. " +
+      "Design the user's complete first workflow: periods, data intake, planning, execution, review and changes. " +
+      "Use generic typed data formats and durable procedures where needed; no mandatory domain template. " +
+      "Ask about meaningful defaults and planning horizon; users do not design schemas. " +
       "Setup stages run through assigned ordinary Pi; no per-step confirmations and no automatic Work acceptance.",
     parameters: Type.Object({
-      mode: StringEnum(["list", "read", "create", "question", "answer", "submit", "status", "resume", "pause", "cancel", "retry"] as const),
+      mode: StringEnum(["list", "read", "create", "change_structure", "question", "answer", "submit", "status", "resume", "pause", "cancel", "retry"] as const),
       record_id: Type.Optional(Type.String()), setup_id: Type.Optional(Type.String()),
       title: Type.Optional(Type.String({ minLength: 1, maxLength: 200 })),
       goal: Type.Optional(Type.String({ minLength: 1, maxLength: 4096 })),
@@ -1131,16 +1163,25 @@ export default function (pi: any): void {
       }
       if (assignedAttemptId) throw new Error("Assigned Work cannot control Activity setup");
       let result: any;
-      if (params.mode === "create") {
+      if (params.mode === "create" || params.mode === "change_structure") {
+        if (params.mode === "change_structure") {
+          if (!params.record_id) throw new Error("Name the existing Activity record_id");
+          const existing = await request("/v1/activity-read", { activity_id: params.record_id });
+          params.title ??= existing.state.title;
+          params.goal ??= existing.state.goal;
+        }
         if (!params.title?.trim() || !params.goal?.trim()) throw new Error("Activity needs a title and goal");
-        const yes = await ctx.ui.confirm("Создать и настроить эту Activity?",
-          `${params.title}\n${params.goal}\nПосле ответов: подготовка, до пяти полных ревью, исправления и включение новой Activity. Принятие результатов Work отдельно.`);
+        const yes = await ctx.ui.confirm(params.mode === "change_structure"
+          ? "Обновить структуру этой Activity?" : "Создать и настроить эту Activity?",
+          `${params.title}\n${params.goal}\nПосле ответов: подготовка, до пяти полных ревью, исправления и включение структуры. Прежняя история сохраняется. Принятие результатов Work отдельно.`);
         if (!yes) return { content: [{ type: "text", text: "Activity setup cancelled" }] };
         setupSelection = randomUUID();
         const operationId = randomUUID();
         try {
+          if (params.mode === "change_structure" && !params.record_id) throw new Error("Name the existing Activity record_id");
           result = await request("/v1/activity-setup", { action: "begin", setup_id: setupSelection,
-            activity_id: randomUUID(), title: params.title, goal: params.goal, operation_id: operationId,
+            mode: params.mode === "change_structure" ? "change_structure" : "create",
+            activity_id: params.mode === "change_structure" ? params.record_id : randomUUID(), title: params.title, goal: params.goal, operation_id: operationId,
             source_refs: params.source_refs ?? [] });
         } catch (error) {
           try {
@@ -1670,7 +1711,8 @@ export default function (pi: any): void {
     }
     const current = await snapshot();
     const slots = current.work.state.expected_outputs;
-    if (slots.length !== 1 || !slots[0].media_type.startsWith("text/")) {
+    if (slots.length !== 1 || !(slots[0].media_type.startsWith("text/") ||
+        (slots[0].media_type === "application/json" && slots[0].format_ref))) {
       ctx.ui.notify("Use an explicit output path for multi-slot or non-text Work.", "warning");
       return;
     }

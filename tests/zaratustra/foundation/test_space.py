@@ -109,6 +109,9 @@ def test_failed_sqlite_configuration_closes_its_handle(
     class BrokenConnection:
         closed = False
 
+        def create_function(self, *args: object, **kwargs: object) -> None:
+            pass
+
         def execute(self, _statement: str) -> None:
             raise sqlite3.OperationalError("synthetic configuration failure")
 

@@ -12,9 +12,12 @@ from uuid import UUID, uuid4, uuid5
 from pydantic import ValidationError
 
 from .models import (
+    ActivityActivationManifest,
     ActivitySetupDraft,
+    ActivitySetupDraftV2,
     ActivitySetupRequest,
     ActivitySetupReview,
+    ActivitySetupReviewV2,
     ActivitySetupRevision,
     ActivitySetupState,
     ActivityState,
@@ -58,6 +61,12 @@ from .storage import (
     read_space,
     space_connection,
     utc_now,
+)
+from .structure_setup import (
+    compile_structure,
+    draft_from_bytes,
+    review_from_bytes,
+    validate_review_components,
 )
 
 AREAS = ("goal", "workflow", "history", "continuation", "extension", "capabilities", "consistency")
@@ -246,6 +255,11 @@ def check_setup_execution(
         (
             "SELECT a.setup_id FROM activity_setups a JOIN subject_records w ON "
             "w.parent_id=a.activity_id WHERE w.record_id=?"
+            + (
+                " AND a.mode='create'"
+                if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 15
+                else ""
+            )
         ),
         (str(work_id),),
     ).fetchone()
@@ -288,21 +302,39 @@ def check_setup_record_access(
 
 
 def activity_setup_memory(
-    path: Path, activity_id: UUID, authority: LocalAuthority
+    path: Path, activity_id: UUID, authority: LocalAuthority, *, work_id: UUID | None = None
 ) -> tuple[MemoryRequirement, ...]:
     """Exact ready setup requirements, also for subsequent plain Work."""
-    entries = list_activity_setups(path, authority, activity_id=activity_id, limit=1)
+    from .data import describe_structure
+
+    with space_connection(path) as (_, info):
+        schema = info.schema_version
+    if schema >= 15:
+        structure = describe_structure(path, activity_id, authority, work_id=work_id)
+        if not structure["legacy"]:
+            return tuple(
+                MemoryRequirement.model_validate(item)
+                for item in structure["state"]["memory_requirements"]
+            )
+        if work_id is not None:
+            # A pre-structure Work keeps its previous context contract.
+            pass
+    entries = list_activity_setups(path, authority, activity_id=activity_id, limit=100)
+    entries = tuple(
+        item for item in entries if item.state.mode == "create" and item.state.contract_version == 1
+    )
     if not entries or entries[0].state.phase != "ready" or not entries[0].state.draft:
         return ()
     with space_connection(path) as (connection, info):
-        draft = ActivitySetupDraft.model_validate_json(
+        draft = draft_from_bytes(
             _artifact(
                 connection,
                 entries[0].state.draft,
                 authority.actor,
                 info.execution_epoch,
                 current=False,
-            )
+            ),
+            entries[0].state.contract_version,
         )
         return draft.memory
 
@@ -315,10 +347,17 @@ def _save(
     now: str,
 ) -> None:
     if revision == 1:
-        connection.execute(
-            "INSERT INTO activity_setups VALUES (?,?,1,'active')",
-            (str(request.setup_id), str(state.activity_id)),
-        )
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 15:
+            connection.execute(
+                "INSERT INTO activity_setups (setup_id,activity_id,current_revision,status,mode) "
+                "VALUES (?,?,1,'active',?)",
+                (str(request.setup_id), str(state.activity_id), state.mode),
+            )
+        else:
+            connection.execute(
+                "INSERT INTO activity_setups VALUES (?,?,1,'active')",
+                (str(request.setup_id), str(state.activity_id)),
+            )
     else:
         connection.execute(
             "UPDATE activity_setups SET current_revision=? WHERE setup_id=?",
@@ -349,7 +388,11 @@ def _save(
                 "scope_activity_id"
             ) == str(state.activity_id):
                 refs.append(("owned_source", ref.record_id, ref.revision))
-    refs.append(("activity", state.activity_id, 1))
+    refs.append(
+        ("activity" if state.mode == "create" else "referenced_activity", state.activity_id, 1)
+    )
+    if state.manifest:
+        refs.append(("derived_artifact", state.manifest.artifact_id, state.manifest.revision))
     for stage in state.stages:
         refs.extend(
             (
@@ -363,8 +406,26 @@ def _save(
     refs.extend(("method", ref.method_id, ref.version) for ref in state.activated_methods)
     if state.repair_work:
         refs.append(("work", state.repair_work, 1))
-    if state.phase == "ready":
+    if state.phase == "ready" and state.contract_version == 1:
         refs.append(("derived_knowledge", uuid5(request.setup_id, "instructions"), 1))
+    if state.phase == "ready" and state.contract_version == 2 and state.manifest:
+        manifest = ActivityActivationManifest.model_validate_json(
+            _artifact(
+                connection,
+                state.manifest,
+                request.actor,
+                connection.execute("SELECT execution_epoch FROM spaces").fetchone()[0],
+                current=False,
+            )
+        )
+        refs.append(
+            ("derived_knowledge", manifest.structure_ref.record_id, manifest.structure_ref.revision)
+        )
+        refs.extend(
+            ("derived_format", item.ref.record_id, item.ref.revision)
+            for item in manifest.formats
+            if item.create
+        )
     for ordinal, (role, identifier, version) in enumerate(refs):
         connection.execute(
             "INSERT INTO activity_setup_edges VALUES (?,?,?,?,?,?)",
@@ -419,6 +480,9 @@ def apply_setup_change(
         return answer
 
     def source(text: str) -> KnowledgeRef:
+        settings = (
+            _current(connection, request.setup_id).state if request.action != "begin" else request
+        )
         identifier = uuid5(request.operation_id, "user-source")
         effect(
             CreateKnowledgeRequest,
@@ -428,11 +492,18 @@ def apply_setup_change(
                 connection="activity-setup",
                 profile_revision=1,
                 source_event_id=str(request.operation_id),
-                scope_activity_id=request.activity_id,
+                scope_activity_id=settings.activity_id,
                 sender=request.actor,
                 media_type="text/plain",
                 capture="full",
                 content=text.encode("utf-8"),
+                memory=MemoryMetadata(
+                    title="Activity setup request or answer",
+                    activity_id=settings.activity_id,
+                    material_role="basis",
+                )
+                if settings.contract_version == 2 or settings.mode == "change_structure"
+                else None,
             ),
         )
         return KnowledgeRef(record_id=identifier, revision=1)
@@ -440,16 +511,50 @@ def apply_setup_change(
     if request.action == "begin":
         if not request.title or not request.text or request.expected_revision is not None:
             raise FoundationError("invalid_request", "Begin needs a title and original request")
-        effect(
-            CreateActivityRequest,
-            activity_id=request.activity_id,
-            state=ActivityState(title=request.title, goal=request.text[:4096]),
-        )
+        schema = int(connection.execute("PRAGMA user_version").fetchone()[0])
+        if (request.contract_version == 2 or request.mode == "change_structure") and schema < 15:
+            raise FoundationError("upgrade_required", "Structure setup needs explicit schema 15")
+        previous_structure = None
+        if request.mode == "create":
+            effect(
+                CreateActivityRequest,
+                activity_id=request.activity_id,
+                state=ActivityState(title=request.title, goal=request.text[:4096]),
+            )
+        else:
+            from .data_store import head_ref
+            from .operations import _subject_state
+
+            row = connection.execute(
+                "SELECT current_revision FROM subject_records WHERE record_id=? "
+                "AND kind='activity'",
+                (str(request.activity_id),),
+            ).fetchone()
+            if row is None:
+                raise FoundationError("not_found", "Activity to change does not exist")
+            _subject_state(connection, request.activity_id, row[0])
+            previous_structure = head_ref(connection, request.activity_id)
+            for (identifier,) in connection.execute(
+                "SELECT setup_id FROM activity_setups WHERE activity_id=? "
+                "AND mode='change_structure' AND status='active'",
+                (str(request.activity_id),),
+            ):
+                if _current(connection, UUID(identifier)).state.phase not in ("ready", "cancelled"):
+                    raise FoundationError("setup_running", "Continue the existing structure change")
         refs = (source(request.text),) + request.source_refs
         for ref in refs:
             _basis(connection, ref, request.actor, epoch)
         state = ActivitySetupState(
-            activity_id=request.activity_id, owner=request.actor, phase="collecting", sources=refs
+            activity_id=request.activity_id,
+            owner=request.actor,
+            phase="collecting",
+            sources=refs,
+            mode=request.mode,
+            contract_version=request.contract_version,
+            previous_structure=previous_structure,
+            authorization_scope="activity_structure_change"
+            if request.mode == "change_structure"
+            else "new_activity_setup",
         )
         revision = 1
     else:
@@ -573,6 +678,7 @@ def apply_setup_change(
                 question=None,
                 draft=state.draft if answering_wait else None,
                 review=state.review if answering_wait else None,
+                manifest=state.manifest if answering_wait else None,
                 stages=retired,
             )
         elif request.action == "question":
@@ -621,8 +727,9 @@ def apply_setup_change(
                 raise FoundationError("incomplete_context", "Answer the saved question first")
             successful_review = False
             if state.review and state.draft:
-                report = ActivitySetupReview.model_validate_json(
-                    _artifact(connection, state.review, request.actor, epoch)
+                report = review_from_bytes(
+                    _artifact(connection, state.review, request.actor, epoch),
+                    state.contract_version,
                 )
                 successful_review = (
                     report.draft == state.draft
@@ -674,29 +781,56 @@ def apply_setup_change(
             }
             if state.draft:
                 packet["draft_ref"] = state.draft.model_dump(mode="json")
-                packet["draft"] = ActivitySetupDraft.model_validate_json(
-                    _artifact(connection, state.draft, request.actor, epoch)
+                packet["draft"] = draft_from_bytes(
+                    _artifact(connection, state.draft, request.actor, epoch), state.contract_version
                 ).model_dump(mode="json")
             if state.review:
-                packet["previous_review"] = ActivitySetupReview.model_validate_json(
-                    _artifact(connection, state.review, request.actor, epoch)
+                packet["previous_review"] = review_from_bytes(
+                    _artifact(connection, state.review, request.actor, epoch),
+                    state.contract_version,
                 ).model_dump(mode="json")
+            packet["contract_version"] = state.contract_version
+            if state.contract_version == 2:
+                packet["supported_path"] = (
+                    "Public typed data operations, exact formats, durable ordinary Work "
+                    "procedures, scoped memory; no mandatory domain templates. "
+                    "Original Sources and owner acceptance remain separate."
+                )
+                if state.manifest:
+                    packet["manifest_ref"] = state.manifest.model_dump(mode="json")
+                    packet["activation_manifest"] = json.loads(
+                        _artifact(connection, state.manifest, request.actor, epoch)
+                    )
+                if state.previous_structure:
+                    from .data_store import exact_state
+
+                    packet["previous_structure"] = exact_state(
+                        connection, state.previous_structure, request.actor, epoch
+                    ).model_dump(mode="json")
             packet["result_schema"] = (
-                ActivitySetupReview.model_json_schema()
+                (
+                    ActivitySetupReviewV2 if state.contract_version == 2 else ActivitySetupReview
+                ).model_json_schema()
                 if request.stage_kind == "review"
-                else ActivitySetupDraft.model_json_schema()
+                else (
+                    ActivitySetupDraftV2 if state.contract_version == 2 else ActivitySetupDraft
+                ).model_json_schema()
             )
-            packet["supported_path"] = (
-                "Source originals and revisioned knowledge; "
-                "public memory catalog/batch/history/cache; "
-                "plain Work with output contracts or composite Method Work "
-                "with at least one child; "
-                "all initial children are fresh plain Work in this Activity. "
-                "Named inputs must match "
-                "the Method exactly. Initial Methods are self-contained (no existing role Methods "
-                "or capability admission). Outputs remain separately owner-accepted. Sleep stores "
-                "experience and scoped Candidates for later change. Manual external exchange "
-                "preserves provenance; external API sending is not provided by this setup."
+            packet.setdefault(
+                "supported_path",
+                (
+                    "Source originals and revisioned knowledge; "
+                    "public memory catalog/batch/history/cache; "
+                    "plain Work with output contracts or composite Method Work "
+                    "with at least one child; "
+                    "all initial children are fresh plain Work in this Activity. "
+                    "Named inputs must match "
+                    "the Method exactly. Initial Methods are self-contained "
+                    "(no existing role Methods or capability admission). "
+                    "Outputs remain separately owner-accepted. Sleep stores "
+                    "experience and scoped Candidates for later change. Manual external exchange "
+                    "preserves provenance; external API sending is not provided by this setup."
+                ),
             )
             packet_id = uuid5(request.operation_id, "packet")
             work_id = uuid5(request.operation_id, "stage-work")
@@ -757,11 +891,20 @@ def apply_setup_change(
             raw = _artifact(connection, request.output, request.actor, epoch)
             try:
                 if stage.kind == "review":
-                    review = ActivitySetupReview.model_validate_json(raw)
+                    review = review_from_bytes(raw, state.contract_version)
                     if review.draft != state.draft or review.input_version != state.input_version:
                         raise FoundationError(
                             "stale_basis", "Review addresses an old draft or interview"
                         )
+                    if isinstance(review, ActivitySetupReviewV2):
+                        if review.manifest != state.manifest or state.manifest is None:
+                            raise FoundationError(
+                                "stale_basis", "Review must address the exact compiled manifest"
+                            )
+                        manifest = ActivityActivationManifest.model_validate_json(
+                            _artifact(connection, state.manifest, request.actor, epoch)
+                        )
+                        validate_review_components(review, manifest)
                     updates = dict(
                         review=request.output,
                         reviews_completed=state.reviews_completed + 1,
@@ -778,13 +921,31 @@ def apply_setup_change(
                     ):
                         updates.update(phase="needs_attention", result=review.conclusion)
                 else:
-                    draft = ActivitySetupDraft.model_validate_json(raw)
+                    draft = draft_from_bytes(raw, state.contract_version)
                     updates = dict(
                         draft=request.output,
                         review=None,
                         phase="needs_input" if draft.open_questions else "drafting",
                         question="\n".join(draft.open_questions) or None,
                     )
+                    if isinstance(draft, ActivitySetupDraftV2):
+                        manifest = compile_structure(
+                            connection,
+                            request.setup_id,
+                            state,
+                            draft,
+                            request.output,
+                            request.actor,
+                            epoch,
+                        )
+                        manifest_id = uuid5(request.output.artifact_id, "activation-manifest")
+                        effect(
+                            CreateArtifactRequest,
+                            artifact_id=manifest_id,
+                            media_type="application/json",
+                            content=manifest.model_dump_json().encode("utf-8"),
+                        )
+                        updates["manifest"] = ArtifactRef(artifact_id=manifest_id, revision=1)
             except ValidationError as error:
                 raise FoundationError("invalid_setup_result", str(error)) from error
             updates["stages"] = state.stages[:-1] + (
@@ -820,11 +981,11 @@ def _activate(
         )
     for basis in state.sources:
         _basis(connection, basis, request.actor, epoch)
-    draft = ActivitySetupDraft.model_validate_json(
-        _artifact(connection, state.draft, request.actor, epoch)
+    draft = draft_from_bytes(
+        _artifact(connection, state.draft, request.actor, epoch), state.contract_version
     )
-    review = ActivitySetupReview.model_validate_json(
-        _artifact(connection, state.review, request.actor, epoch)
+    review = review_from_bytes(
+        _artifact(connection, state.review, request.actor, epoch), state.contract_version
     )
     if (
         review.draft != state.draft
@@ -834,42 +995,66 @@ def _activate(
         or any(item.blocking for item in review.findings)
     ):
         raise FoundationError("stale_basis", "Setup does not have a current successful review")
+    manifest = None
+    if isinstance(draft, ActivitySetupDraftV2):
+        if (
+            not isinstance(review, ActivitySetupReviewV2)
+            or state.manifest != review.manifest
+            or not state.manifest
+        ):
+            raise FoundationError("stale_basis", "Exact manifest review is required")
+        manifest = ActivityActivationManifest.model_validate_json(
+            _artifact(connection, state.manifest, request.actor, epoch)
+        )
+        if manifest != compile_structure(
+            connection, request.setup_id, state, draft, state.draft, request.actor, epoch
+        ):
+            raise FoundationError("stale_basis", "Compiled definitions changed after review")
     activity_revision = connection.execute(
         "SELECT current_revision FROM subject_records WHERE record_id=?",
         (str(state.activity_id),),
     ).fetchone()[0]
-    effect(
-        ReviseActivityRequest,
-        activity_id=state.activity_id,
-        expected_revision=activity_revision,
-        state=ActivityState(title=draft.title, goal=draft.goal),
-    )
-    effect(
-        CreateKnowledgeRequest,
-        record_id=uuid5(request.setup_id, "instructions"),
-        state=ClaimState(
-            proposition=draft.instructions,
-            epistemic_kind="derived",
-            status="current",
-            scope_activity_id=state.activity_id,
-            evidence=state.sources
-            + (
-                KnowledgeRef(record_id=state.draft.artifact_id, revision=state.draft.revision),
-                KnowledgeRef(record_id=state.review.artifact_id, revision=state.review.revision),
+    if state.mode == "create":
+        effect(
+            ReviseActivityRequest,
+            activity_id=state.activity_id,
+            expected_revision=activity_revision,
+            state=ActivityState(title=draft.title, goal=draft.goal),
+        )
+    if manifest is None:
+        effect(
+            CreateKnowledgeRequest,
+            record_id=uuid5(request.setup_id, "instructions"),
+            state=ClaimState(
+                proposition=draft.instructions,
+                epistemic_kind="derived",
+                status="current",
+                scope_activity_id=state.activity_id,
+                evidence=state.sources
+                + (
+                    KnowledgeRef(record_id=state.draft.artifact_id, revision=state.draft.revision),
+                    KnowledgeRef(
+                        record_id=state.review.artifact_id, revision=state.review.revision
+                    ),
+                ),
+                interpretation_basis="Initial setup admitted after its exact complete review",
+                memory=MemoryMetadata(
+                    title="Activity instructions",
+                    activity_id=state.activity_id,
+                    context_role="required",
+                ),
             ),
-            interpretation_basis="Initial setup admitted after its exact complete review",
-            memory=MemoryMetadata(
-                title="Activity instructions",
-                activity_id=state.activity_id,
-                context_role="required",
-            ),
-        ),
+        )
+    definitions = (
+        manifest.method_definitions
+        if manifest
+        else {item.key: item.definition for item in draft.methods}
     )
     refs = {
         item.key: MethodRef(
             method_id=uuid5(request.setup_id, f"method:{item.key}"),
             version=1,
-            checksum=method_checksum(item.definition),
+            checksum=method_checksum(definitions[item.key]),
         )
         for item in draft.methods
     }
@@ -878,7 +1063,7 @@ def _activate(
         decision_id = uuid5(candidate_id, "adoption")
         changes = tuple(
             MethodChange(
-                method_id=refs[item.key].method_id, to_version=1, definition=item.definition
+                method_id=refs[item.key].method_id, to_version=1, definition=definitions[item.key]
             )
             for item in draft.methods
         )
@@ -963,16 +1148,16 @@ def _activate(
             decision_revision=1,
             mode="regular",
         )
+    if manifest is not None:
+        from .structure_change import activate_setup_structure
+
+        activate_setup_structure(connection, request, state, manifest, review, effect, epoch)
     works = []
-    for template in draft.works:
+    for template in manifest.initial_works if manifest is not None else draft.works:
         identifier = uuid5(request.setup_id, f"work:{template.key}")
         method = refs.get(template.method_key) if template.method_key else None
         outputs = (
-            next(
-                item.definition.named_outputs
-                for item in draft.methods
-                if item.key == template.method_key
-            )
+            definitions[template.method_key or ""].named_outputs
             if method
             else template.expected_outputs
         )
@@ -994,7 +1179,7 @@ def _activate(
             for child in template.plan.children:
                 if (
                     child.state.activity_id != state.activity_id
-                    or child.state.method != "none"
+                    or (manifest is None and child.state.method != "none")
                     or child.state.status != "proposed"
                     or child.state.linked_outputs
                 ):
@@ -1027,7 +1212,8 @@ def sanitize_setup_dependency(connection: sqlite3.Connection, record_id: UUID, n
         row[0]
         for row in connection.execute(
             "SELECT DISTINCT setup_id FROM activity_setup_edges WHERE target_id=? "
-            "AND role IN ('basis','owned_source','derived_artifact','method','activity')",
+            "AND role IN ('basis','owned_source','derived_artifact','method','activity',"
+            "'referenced_activity')",
             (str(record_id),),
         )
     ]
@@ -1071,10 +1257,29 @@ def sanitize_setup_dependency(connection: sqlite3.Connection, record_id: UUID, n
             (
                 "SELECT DISTINCT target_id,role FROM activity_setup_edges WHERE setup_id=? "
                 "AND role IN ('derived_artifact','derived_knowledge','owned_source',"
-                "'method','work','activity')"
+                "'method','work','activity','derived_format')"
             ),
             (identifier,),
         ):
+            if role == "derived_format" or (
+                role == "derived_knowledge"
+                and int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 15
+                and connection.execute(
+                    "SELECT kind FROM knowledge_records WHERE record_id=?", (target,)
+                ).fetchone()[0]
+                == "activity_structure"
+            ):
+                from .data_store import sanitize_data_revision
+
+                for (version,) in connection.execute(
+                    "SELECT DISTINCT target_revision FROM activity_setup_edges WHERE "
+                    "setup_id=? AND target_id=? AND role=?",
+                    (identifier, target, role),
+                ):
+                    sanitize_data_revision(
+                        connection, KnowledgeRef(record_id=UUID(target), revision=version), now
+                    )
+                continue
             if role in ("derived_knowledge", "owned_source"):
                 from .knowledge import _sanitize_deleted
 
