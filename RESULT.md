@@ -1,4 +1,40 @@
-# Activity structures 0.22.0 — implementation result
+# Activity setup recovery 0.22.1 — implementation result
+
+## outcome
+
+Implemented durable rejected-result recovery and one shared procedure-operation
+catalog in the public product; Core schema remains 15.
+
+## evidence
+
+See [the release report](docs/activity-setup-recovery-0.22.1.md) for the actual
+native gate, affected rechecks, installed ordinary Pi, legacy-stage compatibility,
+independent send accounting, read-only evaluator finding and wheel SHA-256.
+
+## assumptions
+
+The model interprets user needs; Core checks typed results and permissions.
+
+## cuts
+
+Exports and Git projections are outside this package. No domain templates or
+real-model checks. Personal data and reset records stay private.
+
+## cost
+
+Real model and paid API calls: zero. Installed verification: 33 localhost sends.
+
+## manual-acceptance
+
+Checks passed; owner acceptance remains separate and pending real use.
+
+## next
+
+solmax.
+
+---
+
+# Previous release: Activity structures 0.22.0
 
 ## outcome
 

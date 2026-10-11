@@ -1034,7 +1034,9 @@ export default function (pi: any): void {
       if (key === setupShown && !force) return;
       setupShown = key;
       const state = item.state;
-      ctx.ui.setStatus("zara-setup", `Activity: ${setupPhases[state.phase] ?? state.phase}; ревью ${state.reviews_started - state.pass_boundary}/5`);
+      const stage = state.stages.at(-1);
+      const repair = stage?.repair_number ? `; исправление результата ${stage.repair_number}/2` : "";
+      ctx.ui.setStatus("zara-setup", `Activity: ${setupPhases[state.phase] ?? state.phase}; ревью ${state.reviews_started - state.pass_boundary}/5${repair}`);
       ctx.ui.setWidget("zara-setup", undefined);
       if (display && ["ready", "needs_input", "needs_attention"].includes(state.phase)) {
         const text = state.phase === "ready"
@@ -1690,8 +1692,10 @@ export default function (pi: any): void {
       contextReady = false;
       return;
     }
-    if (lastOutcome !== "completed" || !lastAnswer.trim()) return;
-    if (assignedAttemptId) {
+    if (lastOutcome !== "completed") return;
+    const current = await snapshot();
+    if (current.setup_result_protocol !== "setup_json" && !lastAnswer.trim()) return;
+    if (assignedAttemptId && current.setup_result_protocol !== "setup_json") {
       let result: any;
       try { result = JSON.parse(lastAnswer); }
       catch { throw new Error("Assigned RPC must return one JSON result or wait"); }
@@ -1709,7 +1713,6 @@ export default function (pi: any): void {
       }
       lastAnswer = result.text;
     }
-    const current = await snapshot();
     const slots = current.work.state.expected_outputs;
     if (slots.length !== 1 || !(slots[0].media_type.startsWith("text/") ||
         (slots[0].media_type === "application/json" && slots[0].format_ref))) {

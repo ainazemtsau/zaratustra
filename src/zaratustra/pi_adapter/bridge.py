@@ -114,6 +114,7 @@ from zaratustra.foundation import (
     read_memory_batch,
     read_method_version,
     read_receipt,
+    read_setup_stage,
     read_sleep_for_work,
     read_sleep_usage,
     read_space,
@@ -661,7 +662,12 @@ class Bridge:
 
     def snapshot(self, session_id: UUID) -> dict[str, object]:
         selected = self._selection(session_id)
-        return read_execution(self.path, selected.work_id, self.authority).model_dump(mode="json")
+        result = read_execution(self.path, selected.work_id, self.authority).model_dump(mode="json")
+        if self.assigned_attempt_id is not None:
+            stage = read_setup_stage(self.path, selected.work_id, self.authority)
+            if stage is not None and stage.result_protocol is not None:
+                result["setup_result_protocol"] = stage.result_protocol
+        return result
 
     def operation(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
         selected = self._selection(session_id)
@@ -2157,7 +2163,13 @@ class Bridge:
         if self.assigned_attempt_id is not None and attempt_id != self.assigned_attempt_id:
             raise FoundationError("permission_denied", "RPC cannot publish another Attempt")
         data = content.encode("utf-8")
-        if not data or len(data) > 8 * 1024 * 1024:
+        setup_stage = (
+            read_setup_stage(self.path, selected.work_id, self.authority)
+            if self.assigned_attempt_id is not None
+            else None
+        )
+        raw_setup = setup_stage is not None and setup_stage.result_protocol == "setup_json"
+        if (not data and not raw_setup) or len(data) > 8 * 1024 * 1024:
             raise FoundationError("invalid_request", "Result is empty or too large")
         publication = PublishAttemptOutputRequest(
             operation_id=uuid5(attempt_id, f"publish:{slot}"),

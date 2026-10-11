@@ -1757,6 +1757,16 @@ def _apply_change(
         from .data_store import validate_output_envelope
 
         contract = next(item for item in state.expected_outputs if item.slot == request.slot)
+        if not request.content:
+            from .activity_setup import _stage_for_work
+
+            setup_stage, _ = _stage_for_work(cast(sqlite3.Connection, connection), request.work_id)
+            if (
+                setup_stage is None
+                or setup_stage.result_protocol != "setup_json"
+                or not contract.allow_empty
+            ):
+                raise FoundationError("invalid_output", "Ordinary Attempt output must not be empty")
         validate_output_envelope(
             cast(sqlite3.Connection, connection),
             request.work_id,

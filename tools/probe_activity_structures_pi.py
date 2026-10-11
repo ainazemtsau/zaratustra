@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import sqlite3
 from pathlib import Path
 from typing import Any, Literal
 from uuid import UUID, uuid4
@@ -75,7 +76,10 @@ def draft(period: Literal["day", "week", "month"] = "week") -> core.ActivitySetu
                         key="value", meaning="Observed value", type="decimal", precision=2
                     ),
                 ),
-                operations=("create_entry",),
+                operations=(
+                    core.ProcedureOperation.CREATE_ENTRY,
+                    core.ProcedureOperation.WORKING_SET,
+                ),
                 outputs=(
                     core.SetupOutputTemplate(
                         slot="result", media_type="application/json", format_key="observation"
@@ -106,7 +110,7 @@ def draft(period: Literal["day", "week", "month"] = "week") -> core.ActivitySetu
     )
 
 
-def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
+def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -> dict[str, Any]:
     directory.mkdir(parents=True, exist_ok=False)
     root, working = directory / "space", directory / "work"
     root.mkdir()
@@ -246,15 +250,34 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     )
     setup_id = core.list_activity_setups(root, authority)[0].setup_id
     reviews, packets = 0, []
+    raw_drafts = 0
+    malformed = "" if blank_response else '{"contract_version":2,'
     cadence: Literal["day", "week", "month"] = "week"
 
     def stage_reply(body: dict[str, Any]) -> dict[str, Any]:
-        nonlocal reviews
+        nonlocal reviews, raw_drafts
         packet = context(body)
         if "work" in packet:
             assert not body.get("tools"), "Review must not expose file/command tools"
             incoming = json.loads(packet["inputs"][0]["content_text"])
             packets.append(incoming)
+            assert "working_set" in {item["operation"] for item in incoming["supported_operations"]}
+            if not incoming.get("draft"):
+                raw_drafts += 1
+                if raw_drafts == 1:
+                    return {"_final_text": malformed}
+                if raw_drafts == 2:
+                    assert incoming["rejected_result"]["content_text"] == malformed
+                    invalid = json.loads(draft(cadence).model_dump_json())
+                    invalid["procedures"][0]["operations"] = ["Preserve the original separately"]
+                    return {"_final_text": json.dumps(invalid)}
+                if raw_drafts == 3:
+                    assert incoming["rejected_result"]["issues"][0]["path"] == [
+                        "procedures",
+                        0,
+                        "operations",
+                        0,
+                    ]
             if incoming["result_schema"]["title"] == "ActivitySetupReviewV2":
                 reviews += 1
                 manifest = incoming["activation_manifest"]
@@ -306,7 +329,7 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
                 ).model_dump_json()
             else:
                 result = draft(cadence).model_dump_json()
-            return {"_final_text": json.dumps({"zara": "final", "text": result})}
+            return {"_final_text": result}
         tools = [message for message in body["messages"] if message["role"] == "tool"]
         if not tools:
             return {"_tool": "zara_activity", "mode": "answer", "setup_id": str(setup_id)}
@@ -318,7 +341,7 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     run(
         second,
         skills=(activity_setup_skill(),),
-        expected_provider_calls=7,
+        expected_provider_calls=9,
         prompt="Daily observations, weekly review; preserve originals and event dates",
         wait_for=lambda: (
             core.read_activity_setup(root, setup_id, authority).state.phase
@@ -327,7 +350,8 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     )
     setup = core.read_activity_setup(root, setup_id, authority)
     assert setup.state.phase == "ready", setup.model_dump_json()
-    assert setup.state.reviews_completed == 2 and len(packets) == 4
+    assert setup.state.reviews_completed == 2 and len(packets) == 6
+    assert sum(stage.rejection is not None for stage in setup.state.stages) == 2
     activity = setup.state.activity_id
     start = native.Provider(
         [
@@ -475,10 +499,22 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     run(continued, work=(legacy_activity, legacy_work), expected_provider_calls=1)
     assert core.read_work(root, legacy_work, authority) == legacy_before
     assert all("ZARA_MANIFEST:" in json.dumps(body) for body in requests)
+    # Read the fictional ledger independently of provider callbacks; never modify it.
+    ledger_path = root / ".zara-core" / "core.sqlite3"
+    with sqlite3.connect(f"{ledger_path.as_uri()}?mode=ro", uri=True) as connection:
+        invocation_ids = [
+            UUID(row[0])
+            for row in connection.execute("SELECT invocation_id FROM knowledge_delivery")
+        ]
+    deliveries = [core.read_context_delivery(root, item, authority) for item in invocation_ids]
+    assert len(deliveries) == len(requests), (len(deliveries), len(requests))
+    assert all(item["stage"] == "answered" for item in deliveries), deliveries
     report = {
         "schema": 15,
         "pi_version": actual.version,
         "review_passes": reviews,
+        "raw_result_repairs": 2,
+        "blank_response_retained": blank_response,
         "typed_work": str(work_id),
         "typed_entry": str(entry_id),
         "activity_id": str(activity),
@@ -486,6 +522,7 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
         "legacy_history_preserved": True,
         "compact_requests": 2,
         "synthetic_http": len(requests),
+        "accounted_sends": len(deliveries),
         "real_model_calls": 0,
         "paid_api_calls": 0,
         "work_accepted": False,
@@ -499,8 +536,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--directory", type=Path, required=True)
     parser.add_argument("--pi-runtime", type=Path, required=True)
+    parser.add_argument("--blank-response", action="store_true")
     args = parser.parse_args()
-    print(json.dumps(run_probe(args.directory.resolve(), args.pi_runtime.resolve()), indent=2))
+    print(
+        json.dumps(
+            run_probe(
+                args.directory.resolve(),
+                args.pi_runtime.resolve(),
+                blank_response=args.blank_response,
+            ),
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

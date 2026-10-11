@@ -119,6 +119,8 @@ class WorkingSet(Structure):
 
 
 def data_operations(path: Path, authority: LocalAuthority) -> dict[str, Operation]:
+    from zaratustra.foundation import FoundationError, capability_names
+
     def execute(name: str, operation_id: UUID, parameters: BaseModel) -> IntegrationResult:
         args = parameters.model_dump()
         if isinstance(parameters, Exact):
@@ -194,6 +196,10 @@ def data_operations(path: Path, authority: LocalAuthority) -> dict[str, Operatio
         "procedure_status": Run,
         "due_procedures": Due,
     }
+    if frozenset(definitions) != capability_names("data"):
+        raise FoundationError(
+            "unsupported_contract", "Installed data capabilities differ from Core"
+        )
 
     def operation(name: str, model: type[Parameters]) -> Operation:
         return Operation(

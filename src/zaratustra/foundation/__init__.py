@@ -16,6 +16,7 @@ from .activity_setup import (
     activity_setup_memory,
     list_activity_setups,
     read_activity_setup,
+    read_setup_stage,
     upgrade_activity_setup_space,
 )
 from .binding import (
@@ -29,6 +30,7 @@ from .binding import (
     read_binding_version,
     upgrade_binding_space,
 )
+from .capabilities import ProcedureOperation, capability_names, procedure_operation_catalog
 from .composition import (
     method_checksum,
     read_method_version,
@@ -287,7 +289,9 @@ from .models import (
     SetupOutputTemplate,
     SetupProcedureTemplate,
     SetupQuestion,
+    SetupResultRejection,
     SetupStage,
+    SetupValidationIssue,
     SetupWorkTemplate,
     SleepDelivery,
     SleepEffect,
@@ -415,6 +419,10 @@ __all__ = [
     "activity_setup_memory",
     "list_activity_setups",
     "read_activity_setup",
+    "read_setup_stage",
+    "ProcedureOperation",
+    "capability_names",
+    "procedure_operation_catalog",
     "upgrade_activity_setup_space",
     "ActivitySetupRequest",
     "ActivitySetupRevision",
@@ -423,6 +431,8 @@ __all__ = [
     "ActivitySetupReview",
     "SetupFinding",
     "SetupStage",
+    "SetupResultRejection",
+    "SetupValidationIssue",
     "SetupWorkTemplate",
     "SetupMethodTemplate",
     "MemoryMetadata",

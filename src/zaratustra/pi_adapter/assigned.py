@@ -42,6 +42,7 @@ from zaratustra.foundation import (
     read_assigned_control,
     read_execution,
     read_execution_events,
+    read_setup_stage,
     read_space,
     read_technical_deletion_targets,
 )
@@ -1031,16 +1032,26 @@ def _execute_under_lock(
             )
             monitor.start()
             _current_snapshot(config, authority, work_id, attempt_id, epoch, generation)
+            setup_stage = read_setup_stage(config.space, work_id, authority)
+            direct_setup = setup_stage is not None and setup_stage.result_protocol == "setup_json"
             first = (
-                "Perform the assigned Core Work using the exact context supplied by Zaratustra. "
-                "Return only one JSON object. If a condition is unknown, return "
-                '{"zara":"wait","partial":"what is known",'
-                '"question":"one exact question","remainder":"what remains"}. '
-                'Otherwise return {"zara":"final","text":"the result"}. '
-                + (
-                    "Use only the configured tools and save required Core records before final."
-                    if not config.disable_tools
-                    else "Do not call tools."
+                "Perform the assigned Activity setup stage using its exact Core packet. "
+                "Return the single JSON object matching result_schema directly, without an "
+                "outer zara.final/text envelope, code fences or extra prose. Put necessary "
+                "user questions in the schema's question fields. Do not call tools."
+                if direct_setup
+                else (
+                    "Perform the assigned Core Work using the exact context supplied "
+                    "by Zaratustra. "
+                    "Return only one JSON object. If a condition is unknown, return "
+                    '{"zara":"wait","partial":"what is known",'
+                    '"question":"one exact question","remainder":"what remains"}. '
+                    'Otherwise return {"zara":"final","text":"the result"}. '
+                    + (
+                        "Use only the configured tools and save required Core records before final."
+                        if not config.disable_tools
+                        else "Do not call tools."
+                    )
                 )
             )
             _rpc_prompt(process, first, stop_requested, rpc_events)
@@ -1079,12 +1090,18 @@ def _execute_under_lock(
                     process,
                     "Continue the same assigned Work from the saved Core remainder "
                     "and partial Artifact. "
-                    "Use the addressed answer in Core context. Return only "
-                    '{"zara":"final","text":"the final result"}. '
-                    + (
-                        "Use only the configured tools for outstanding work."
-                        if not config.disable_tools
-                        else "Do not call tools."
+                    "Return the single JSON matching result_schema directly. Do not call tools."
+                    if direct_setup
+                    else (
+                        "Continue the same assigned Work from the saved Core remainder "
+                        "and partial Artifact. "
+                        "Use the addressed answer in Core context. Return only "
+                        '{"zara":"final","text":"the final result"}. '
+                        + (
+                            "Use only the configured tools for outstanding work."
+                            if not config.disable_tools
+                            else "Do not call tools."
+                        )
                     ),
                     stop_requested,
                     rpc_events,

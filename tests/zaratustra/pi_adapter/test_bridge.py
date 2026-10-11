@@ -26,6 +26,7 @@ from zaratustra.foundation import (
     LinkWorkOutputRequest,
     OutputContract,
     PrepareInvocationRequest,
+    PublishAttemptOutputRequest,
     ResourceState,
     SendInvocationRequest,
     StopAttemptRequest,
@@ -171,6 +172,23 @@ def test_publish_accept_and_fresh_read(tmp_path: Path) -> None:
         ),
     ):
         bridge.operation(session_id, request.model_dump(mode="json"))
+    with pytest.raises(FoundationError, match="invalid_output"):
+        apply_operation(
+            root,
+            PublishAttemptOutputRequest(
+                operation_id=uuid4(),
+                space_id=space_id,
+                actor=owner.actor,
+                attempt_id=attempt_id,
+                work_id=work_id,
+                session_id=session_id,
+                slot="summary",
+                media_type="text/plain",
+                content=b"",
+            ),
+            owner,
+        )
+    assert not read_execution(root, work_id, owner).outputs
     first = bridge.publish(
         session_id, attempt_id, "summary", "text/plain", "Fictional note summary."
     )

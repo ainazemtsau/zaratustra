@@ -43,6 +43,15 @@ ask it once in the normal assistant reply; the tool stores it and shows concise 
    retained and considered by the existing Sleep/change procedure.
 
 Setup Sources, Artifacts, Methods and receipts remain in the owner's Core.
+
+The host retains rejected stage output with field diagnostics, then repeats the
+same preparation/correction/full-review stage. It permits two result corrections;
+the same error on the next response stops the loop. These counters survive resume.
+Never ask the person to repeat answers because of a technical output error. An
+explicit retry opens a new bounded run; unknown sends need inspection first.
+In internal stage packets use exact supported_operations names in operations.
+Describe meaningful steps in process/instructions. New stage results are one JSON
+matching result_schema, with no outer zara.final/text envelope or code fences.
 Do not put personal goals, raw answers or instance identifiers into product files.
 
 ## Design the whole first workflow

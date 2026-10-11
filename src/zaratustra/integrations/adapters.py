@@ -130,7 +130,7 @@ def installed_integrations(path: Path, authority: LocalAuthority) -> Integration
             }
         )
 
-    return IntegrationRegistry(
+    registry = IntegrationRegistry(
         {
             "manual": {
                 "prepare_document": Operation(
@@ -162,3 +162,5 @@ def installed_integrations(path: Path, authority: LocalAuthority) -> Integration
             "data": data_operations(path, authority),
         }
     )
+    registry.check_procedure_capabilities()
+    return registry

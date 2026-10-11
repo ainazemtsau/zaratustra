@@ -13,6 +13,9 @@ Add workspace guidance as structured prompt sections, never a forced prompt that
 overwrites the request-local ContextManifest. Git UI confirms one exact packet.
 
 Activity setup uses a window-owned finite coordinator in `activity_setup.py`.
+New stages pin setup_json in Core; ordinary/legacy assigned Work keep the envelope.
+Retain raw completed stage text before JSON validation. Core rejection decides
+same-kind bounded correction; never retry unknown sends or stored-state failures.
 Every stage is the existing assigned ordinary Pi/DBOS path in a separate session,
 with arbitrary tools disabled. Core holds all progress and review counts.
 No real-provider fallback, no background service, and no automatic Work acceptance.

@@ -18,6 +18,8 @@ from pydantic import (
     model_validator,
 )
 
+from .capabilities import ProcedureOperation
+
 type Action = Literal[
     "artifact.write",
     "activity.write",
@@ -1284,7 +1286,7 @@ class PublishAttemptOutputRequest(OperationRequest):
     session_id: UUID
     slot: str = Field(min_length=1, max_length=200)
     media_type: str = Field(min_length=1, max_length=200)
-    content: bytes = Field(min_length=1, max_length=8 * 1024 * 1024)
+    content: bytes = Field(max_length=8 * 1024 * 1024)
 
 
 class AcceptWorkRequest(OperationRequest):
@@ -2515,7 +2517,7 @@ class SetupProcedureTemplate(ContractModel):
     goal: str = Field(min_length=1, max_length=4096)
     parameters: tuple[DataField, ...] = ()
     inputs: tuple[MemorySelector, ...] = ()
-    operations: tuple[str, ...] = ()
+    operations: tuple[ProcedureOperation, ...] = ()
     outputs: tuple[SetupOutputTemplate, ...] = Field(min_length=1)
     method_key: Identifier | None = None
     input_slot: Identifier | None = None
@@ -2674,6 +2676,20 @@ class ActivitySetupReview(ContractModel):
         return self
 
 
+class SetupValidationIssue(ContractModel):
+    code: str = Field(min_length=1, max_length=100)
+    path: tuple[str | int, ...] = ()
+    message: str = Field(min_length=1, max_length=2048)
+    allowed_values: tuple[str, ...] = ()
+
+
+class SetupResultRejection(ContractModel):
+    artifact: ArtifactRef
+    issues: tuple[SetupValidationIssue, ...] = Field(min_length=1, max_length=16)
+    fingerprint: str
+    series_id: UUID
+
+
 class SetupStage(ContractModel):
     work_id: UUID
     kind: Literal["draft", "correction", "review"]
@@ -2683,6 +2699,13 @@ class SetupStage(ContractModel):
     output: ArtifactRef | None = None
     review_pass: int = Field(default=0, ge=0)
     retired: bool = False
+    result_protocol: Literal["setup_json"] | None = Field(
+        default=None, exclude_if=lambda v: v is None
+    )
+    rejection: SetupResultRejection | None = Field(default=None, exclude_if=lambda v: v is None)
+    repair_of: UUID | None = Field(default=None, exclude_if=lambda v: v is None)
+    repair_series: UUID | None = Field(default=None, exclude_if=lambda v: v is None)
+    repair_number: int = Field(default=0, ge=0, le=2, exclude_if=lambda v: v == 0)
 
 
 class ActivitySetupState(ContractModel):
@@ -2723,6 +2746,7 @@ class ActivitySetupState(ContractModel):
     result: str | None = None
     activated_works: tuple[UUID, ...] = ()
     activated_methods: tuple[MethodRef, ...] = ()
+    recovery_boundary: int = Field(default=0, ge=0, exclude_if=lambda v: v == 0)
 
 
 class ActivitySetupRevision(ContractModel):

@@ -11,6 +11,7 @@ from uuid import UUID, uuid4, uuid5
 
 from pydantic import ValidationError
 
+from .capabilities import procedure_operation_catalog
 from .models import (
     ActivityActivationManifest,
     ActivitySetupDraft,
@@ -43,7 +44,9 @@ from .models import (
     OutputContract,
     RequestAttemptStopRequest,
     ReviseActivityRequest,
+    SetupResultRejection,
     SetupStage,
+    SetupValidationIssue,
     SourceState,
     SpaceInfo,
     ValidationCriterion,
@@ -52,6 +55,7 @@ from .models import (
     WorkState,
 )
 from .operations import LocalAuthority, _authorize, _local_space
+from .setup_validation import SetupResultError, validation_issues
 from .storage import (
     SETUP_SCHEMA_NAME,
     SETUP_SCHEMA_SHA256,
@@ -70,6 +74,82 @@ from .structure_setup import (
 )
 
 AREAS = ("goal", "workflow", "history", "continuation", "extension", "capabilities", "consistency")
+
+
+def read_setup_stage(path: Path, work_id: UUID, authority: LocalAuthority) -> SetupStage | None:
+    """Resolve a trusted protocol from the saved setup, never from model flags."""
+    with space_connection(path) as (connection, info):
+        _local_space(authority, info)
+        stage, state = _stage_for_work(connection, work_id)
+        if state is not None:
+            _readable(connection, state, authority.actor, info.execution_epoch)
+        return stage
+
+
+def _stage_for_work(
+    connection: sqlite3.Connection, work_id: UUID
+) -> tuple[SetupStage | None, ActivitySetupState | None]:
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 14:
+        return None, None
+    row = connection.execute(
+        "SELECT e.setup_id FROM activity_setup_edges e JOIN activity_setups s "
+        "ON s.setup_id=e.setup_id AND s.current_revision=e.revision "
+        "WHERE e.target_id=? AND e.role='work' AND s.status='active' LIMIT 1",
+        (str(work_id),),
+    ).fetchone()
+    if row is None:
+        return None, None
+    state = _current(connection, UUID(row[0])).state
+    return next((stage for stage in state.stages if stage.work_id == work_id), None), state
+
+
+def _rejected_result(
+    state: ActivitySetupState,
+    stage: SetupStage,
+    output: ArtifactRef,
+    issues: tuple[SetupValidationIssue, ...],
+) -> dict[str, Any]:
+    identity = sorted((item.code, canonical_json(item.path)) for item in issues)
+    fingerprint = hashlib.sha256(canonical_json(identity).encode("utf-8")).hexdigest()
+    series = stage.repair_series or stage.work_id
+    previous = next((item for item in state.stages if item.work_id == stage.repair_of), None)
+    repeated = bool(
+        previous
+        and previous.rejection
+        and previous.rejection.series_id == series
+        and previous.rejection.fingerprint == fingerprint
+    )
+    stopped = (
+        repeated
+        or stage.repair_number >= 2
+        or (stage.kind == "review" and state.reviews_started - state.pass_boundary >= 5)
+    )
+    rejected = stage.model_copy(
+        update={
+            "retired": True,
+            "rejection": SetupResultRejection(
+                artifact=output, issues=issues, fingerprint=fingerprint, series_id=series
+            ),
+        }
+    )
+    reason = (
+        "Повторилась та же ошибка результата"
+        if repeated
+        else "Исчерпаны исправления результата"
+        if stopped
+        else "Исправляется результат этапа"
+    )
+    details = "; ".join(
+        f"{item.code} ({'.'.join(map(str, item.path)) or '$'}): {item.message}" for item in issues
+    )
+    return {
+        "stages": state.stages[:-1] + (rejected,),
+        "phase": "needs_attention"
+        if stopped
+        else {"draft": "drafting", "correction": "correcting", "review": "reviewing"}[stage.kind],
+        "result": (reason + ". Ответы сохранены. " + details)[:4096],
+        "auto_resume": False,
+    }
 
 
 def upgrade_activity_setup_space(path: Path, authority: LocalAuthority) -> SpaceInfo:
@@ -402,6 +482,14 @@ def _save(
         )
         if stage.output:
             refs.append(("derived_artifact", stage.output.artifact_id, stage.output.revision))
+        if stage.rejection:
+            refs.append(
+                (
+                    "derived_artifact",
+                    stage.rejection.artifact.artifact_id,
+                    stage.rejection.artifact.revision,
+                )
+            )
     refs.extend(("work", ref, 1) for ref in state.activated_works)
     refs.extend(("method", ref.method_id, ref.version) for ref in state.activated_methods)
     if state.repair_work:
@@ -680,6 +768,7 @@ def apply_setup_change(
                 review=state.review if answering_wait else None,
                 manifest=state.manifest if answering_wait else None,
                 stages=retired,
+                recovery_boundary=len(retired) if not answering_wait else state.recovery_boundary,
             )
         elif request.action == "question":
             if not request.text:
@@ -739,6 +828,12 @@ def apply_setup_change(
                 )
             if request.action == "retry":
                 updates["pass_boundary"] = state.reviews_started
+                updates["recovery_boundary"] = len(state.stages)
+            elif state.phase == "needs_attention" and state.stages and state.stages[-1].rejection:
+                raise FoundationError(
+                    "setup_result_exhausted",
+                    "Explicit retry is required after stopped result corrections",
+                )
             elif state.reviews_started - state.pass_boundary >= 5 and not successful_review:
                 raise FoundationError(
                     "setup_review_exhausted", "Explicit retry is required after five review passes"
@@ -773,6 +868,17 @@ def apply_setup_change(
                 )
             if state.reviews_started - state.pass_boundary >= 5:
                 raise FoundationError("setup_review_exhausted", "Five reviews already started")
+            previous = state.stages[-1] if state.stages and state.stages[-1].rejection else None
+            repairing = previous is not None and previous.input_version == state.input_version
+            if repairing and previous is not None and request.stage_kind != previous.kind:
+                raise FoundationError(
+                    "invalid_transition", "A rejected result repeats its original stage kind"
+                )
+            continuing_series = repairing and len(state.stages) > state.recovery_boundary
+            if continuing_series and previous is not None and previous.repair_number >= 2:
+                raise FoundationError(
+                    "setup_result_exhausted", "Explicit retry is required after two corrections"
+                )
             packet: dict[str, Any] = {
                 "setup_id": str(request.setup_id),
                 "activity_id": str(state.activity_id),
@@ -790,6 +896,15 @@ def apply_setup_change(
                     state.contract_version,
                 ).model_dump(mode="json")
             packet["contract_version"] = state.contract_version
+            packet["supported_operations"] = procedure_operation_catalog()
+            if repairing and previous is not None and previous.rejection is not None:
+                packet["rejected_result"] = {
+                    **previous.rejection.model_dump(mode="json"),
+                    "content_text": _artifact(
+                        connection, previous.rejection.artifact, request.actor, epoch
+                    ).decode("utf-8"),
+                    "stage_kind": previous.kind,
+                }
             if state.contract_version == 2:
                 packet["supported_path"] = (
                     "Public typed data operations, exact formats, durable ordinary Work "
@@ -847,7 +962,9 @@ def apply_setup_change(
                     activity_id=state.activity_id,
                     goal=request.stage_instruction,
                     inputs=(ArtifactRef(artifact_id=packet_id, revision=1),),
-                    expected_outputs=(OutputContract(slot="report", media_type="text/plain"),),
+                    expected_outputs=(
+                        OutputContract(slot="report", media_type="text/plain", allow_empty=True),
+                    ),
                 ),
             )
             reviews = state.reviews_started + int(request.stage_kind == "review")
@@ -858,6 +975,14 @@ def apply_setup_change(
                 packet=ArtifactRef(artifact_id=packet_id, revision=1),
                 draft=state.draft,
                 review_pass=reviews if request.stage_kind == "review" else 0,
+                result_protocol="setup_json",
+                repair_of=previous.work_id if repairing and previous is not None else None,
+                repair_series=previous.rejection.series_id
+                if continuing_series and previous is not None and previous.rejection
+                else None,
+                repair_number=previous.repair_number + 1
+                if continuing_series and previous is not None
+                else 0,
             )
             updates = dict(
                 stages=state.stages + (stage,),
@@ -889,9 +1014,21 @@ def apply_setup_change(
                     "stale_basis", "Output does not belong to the current setup stage"
                 )
             raw = _artifact(connection, request.output, request.actor, epoch)
+            issues: tuple[SetupValidationIssue, ...] = ()
             try:
+                parsed = (
+                    review_from_bytes(raw, state.contract_version)
+                    if stage.kind == "review"
+                    else draft_from_bytes(raw, state.contract_version)
+                )
+            except ValidationError as error:
+                issues = validation_issues(error)
+                parsed = None
+            manifest = None
+            if parsed is not None:
                 if stage.kind == "review":
-                    review = review_from_bytes(raw, state.contract_version)
+                    assert isinstance(parsed, (ActivitySetupReview, ActivitySetupReviewV2))
+                    review = parsed
                     if review.draft != state.draft or review.input_version != state.input_version:
                         raise FoundationError(
                             "stale_basis", "Review addresses an old draft or interview"
@@ -901,10 +1038,19 @@ def apply_setup_change(
                             raise FoundationError(
                                 "stale_basis", "Review must address the exact compiled manifest"
                             )
-                        manifest = ActivityActivationManifest.model_validate_json(
-                            _artifact(connection, state.manifest, request.actor, epoch)
-                        )
-                        validate_review_components(review, manifest)
+                        saved_manifest = _artifact(connection, state.manifest, request.actor, epoch)
+                        try:
+                            manifest = ActivityActivationManifest.model_validate_json(
+                                saved_manifest
+                            )
+                        except ValidationError as error:
+                            raise FoundationError(
+                                "corrupt_space", "Saved activation manifest is invalid"
+                            ) from error
+                        try:
+                            validate_review_components(review, manifest)
+                        except SetupResultError as error:
+                            issues = error.issues
                     updates = dict(
                         review=request.output,
                         reviews_completed=state.reviews_completed + 1,
@@ -921,7 +1067,8 @@ def apply_setup_change(
                     ):
                         updates.update(phase="needs_attention", result=review.conclusion)
                 else:
-                    draft = draft_from_bytes(raw, state.contract_version)
+                    assert isinstance(parsed, (ActivitySetupDraft, ActivitySetupDraftV2))
+                    draft = parsed
                     updates = dict(
                         draft=request.output,
                         review=None,
@@ -929,28 +1076,35 @@ def apply_setup_change(
                         question="\n".join(draft.open_questions) or None,
                     )
                     if isinstance(draft, ActivitySetupDraftV2):
-                        manifest = compile_structure(
-                            connection,
-                            request.setup_id,
-                            state,
-                            draft,
-                            request.output,
-                            request.actor,
-                            epoch,
-                        )
-                        manifest_id = uuid5(request.output.artifact_id, "activation-manifest")
-                        effect(
-                            CreateArtifactRequest,
-                            artifact_id=manifest_id,
-                            media_type="application/json",
-                            content=manifest.model_dump_json().encode("utf-8"),
-                        )
-                        updates["manifest"] = ArtifactRef(artifact_id=manifest_id, revision=1)
-            except ValidationError as error:
-                raise FoundationError("invalid_setup_result", str(error)) from error
-            updates["stages"] = state.stages[:-1] + (
-                stage.model_copy(update={"output": request.output}),
-            )
+                        try:
+                            manifest = compile_structure(
+                                connection,
+                                request.setup_id,
+                                state,
+                                draft,
+                                request.output,
+                                request.actor,
+                                epoch,
+                            )
+                        except SetupResultError as error:
+                            issues = error.issues
+            if issues:
+                updates = _rejected_result(state, stage, request.output, issues)
+            else:
+                if stage.kind != "review" and manifest is not None:
+                    manifest_id = uuid5(request.output.artifact_id, "activation-manifest")
+                    effect(
+                        CreateArtifactRequest,
+                        artifact_id=manifest_id,
+                        media_type="application/json",
+                        content=manifest.model_dump_json().encode("utf-8"),
+                    )
+                    updates["manifest"] = ArtifactRef(artifact_id=manifest_id, revision=1)
+                updates["stages"] = state.stages[:-1] + (
+                    stage.model_copy(update={"output": request.output}),
+                )
+                if updates["phase"] != "needs_attention":
+                    updates["result"] = None
         elif request.action == "finish":
             state = _activate(connection, request, state, effect, epoch)
         else:

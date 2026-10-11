@@ -1,5 +1,11 @@
 # Core v0.1 domain foundation
 
+0.22.1 retains typed setup-result rejections and correction series in existing
+schema-15 JSON revisions. capabilities.py owns names shared by result schemas,
+compilation and installed adapters. setup_validation.py converts only new-result
+and pure-validator failures; stored-state corruption/rights/stale checks cannot
+authorize model repair. Old stages keep their protocol and canonical bytes.
+
 Schema 15 explicitly upgrades 14, preserving older hashes and retained bytes.
 `data_formats.py` validates finite field trees and Decimal; `data_store.py` owns
 indexes, transitive access/output checks and sanitation; `data.py` exposes exact

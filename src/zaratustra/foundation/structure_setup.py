@@ -6,6 +6,7 @@ import sqlite3
 from typing import Any
 from uuid import UUID, uuid5
 
+from .capabilities import ProcedureOperation
 from .data_formats import validate_format
 from .data_store import exact_state, head_ref
 from .models import (
@@ -26,6 +27,7 @@ from .models import (
     ProcedureDefinition,
     WorkPlan,
 )
+from .setup_validation import SetupResultError, validate_new_value
 from .storage import FoundationError
 
 
@@ -57,31 +59,7 @@ def _typed_plan(plan: WorkPlan, outputs: tuple[OutputContract, ...]) -> WorkPlan
     return plan.model_copy(update={"children": tuple(children)})
 
 
-SUPPORTED_OPERATIONS = frozenset(
-    {
-        "describe_structure",
-        "list_formats",
-        "read_format",
-        "create_entry",
-        "correct_entry",
-        "ingest_batch",
-        "read_entry",
-        "history",
-        "query_entries",
-        "aggregate_entries",
-        "start_procedure",
-        "procedure_status",
-        "due_procedures",
-        "catalog",
-        "read_batch",
-        "prepare_cache",
-        "open_selection",
-        "retain",
-        "prepare",
-        "publish",
-        "request_input",
-    }
-)
+SUPPORTED_OPERATIONS = frozenset(ProcedureOperation)
 
 
 def draft_from_bytes(raw: bytes, version: int) -> ActivitySetupDraft | ActivitySetupDraftV2:
@@ -133,7 +111,7 @@ def compile_structure(
                 ),
             }
         )
-        validate_format(definition)
+        validate_new_value(("formats", template.key, "definition"), validate_format, definition)
         identifier = uuid5(state.activity_id, "format:" + template.key)
         row = connection.execute(
             "SELECT current_revision FROM knowledge_records WHERE record_id=?", (str(identifier),)
@@ -169,7 +147,11 @@ def compile_structure(
         result = []
         for value in values:
             if not set(value.format_keys).issubset(formats):
-                raise FoundationError("invalid_format", "Selection names an absent local format")
+                raise SetupResultError(
+                    "invalid_format",
+                    "Selection names an absent local format",
+                    ("selectors", "format_keys"),
+                )
             result.append(
                 value.model_copy(
                     update={
@@ -184,13 +166,25 @@ def compile_structure(
     definitions = {}
     for item in draft.methods:
         if item.definition.required_capabilities:
-            raise FoundationError("unsupported_condition", "Method capabilities are not connected")
+            raise SetupResultError(
+                "unsupported_condition",
+                "Method capabilities are not connected",
+                ("methods", item.key, "definition", "required_capabilities"),
+            )
         if not set(item.output_formats).issubset(
             {output.slot for output in item.definition.named_outputs}
         ):
-            raise FoundationError("invalid_format", "Method output format names an absent slot")
+            raise SetupResultError(
+                "invalid_format",
+                "Method output format names an absent slot",
+                ("methods", item.key, "output_formats"),
+            )
         if not set(item.output_formats.values()).issubset(formats):
-            raise FoundationError("invalid_format", "Method output names an absent local format")
+            raise SetupResultError(
+                "invalid_format",
+                "Method output names an absent local format",
+                ("methods", item.key, "output_formats"),
+            )
         definitions[item.key] = item.definition.model_copy(
             update={
                 "named_outputs": tuple(
@@ -231,7 +225,7 @@ def compile_structure(
     procedures: list[ProcedureDefinition] = []
     for procedure_template in draft.procedures:
         if not set(procedure_template.operations).issubset(SUPPORTED_OPERATIONS):
-            raise FoundationError(
+            raise SetupResultError(
                 "unsupported_operation", "Procedure names an unavailable operation"
             )
         outputs = tuple(
@@ -249,13 +243,24 @@ def compile_structure(
         fields.update(outputs=outputs, method=methods.get(procedure_template.method_key or ""))
         fields["inputs"] = selectors(procedure_template.inputs)
         if procedure_template.plan is not None:
-            fields["plan"] = _typed_plan(procedure_template.plan, outputs)
-        procedure = ProcedureDefinition.model_validate(fields)
+            fields["plan"] = validate_new_value(
+                ("procedures", procedure_template.key, "plan"),
+                _typed_plan,
+                procedure_template.plan,
+                outputs,
+            )
+        procedure = validate_new_value(
+            ("procedures", procedure_template.key),
+            ProcedureDefinition.model_validate,
+            fields,
+        )
         if procedure.parameters:
-            validate_format(
+            validate_new_value(
+                ("procedures", procedure_template.key, "parameters"),
+                validate_format,
                 DataFormatState(
                     title="Procedure parameters", role="object", fields=procedure.parameters
-                )
+                ),
             )
         if procedure.timezone is not None:
             from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -263,27 +268,45 @@ def compile_structure(
             try:
                 ZoneInfo(procedure.timezone)
             except (ZoneInfoNotFoundError, ValueError) as error:
-                raise FoundationError(
-                    "invalid_timezone", "Procedure needs an IANA timezone"
+                raise SetupResultError(
+                    "invalid_timezone",
+                    "Procedure needs an IANA timezone",
+                    ("procedures", procedure_template.key, "timezone"),
                 ) from error
         if procedure.method is not None:
             assert procedure_template.method_key is not None
             method_definition = definitions[procedure_template.method_key]
             if procedure.outputs != method_definition.named_outputs:
-                raise FoundationError("invalid_plan", "Procedure outputs differ from its Method")
+                raise SetupResultError(
+                    "invalid_plan",
+                    "Procedure outputs differ from its Method",
+                    ("procedures", procedure_template.key, "outputs"),
+                )
             if procedure.input_slot not in {
                 value.slot
                 for value in method_definition.named_inputs
                 if value.media_type == "application/json"
             }:
-                raise FoundationError(
-                    "invalid_plan", "Composite procedure needs its JSON input slot"
+                raise SetupResultError(
+                    "invalid_plan",
+                    "Composite procedure needs its JSON input slot",
+                    ("procedures", procedure_template.key, "input_slot"),
                 )
             from .composition import _validate_plan
 
             assert procedure.plan is not None
-            _validate_plan(
-                procedure.plan, method_definition, state.activity_id, schema=15, allow_nested=True
+            if any(
+                child.state.activity_id != state.activity_id for child in procedure.plan.children
+            ):
+                raise FoundationError("out_of_scope", "Procedure children belong to this Activity")
+            validate_new_value(
+                ("procedures", procedure_template.key, "plan"),
+                _validate_plan,
+                procedure.plan,
+                method_definition,
+                state.activity_id,
+                schema=15,
+                allow_nested=True,
             )
         procedures.append(procedure)
     identifier = uuid5(state.activity_id, "structure")
@@ -326,9 +349,17 @@ def compile_structure(
     initial_works = []
     for work in draft.works:
         if not set(work.output_formats).issubset({item.slot for item in work.expected_outputs}):
-            raise FoundationError("invalid_format", "Initial Work names an absent output slot")
+            raise SetupResultError(
+                "invalid_format",
+                "Initial Work names an absent output slot",
+                ("works", work.key, "output_formats"),
+            )
         if not set(work.output_formats.values()).issubset(formats):
-            raise FoundationError("invalid_format", "Initial Work names an absent local format")
+            raise SetupResultError(
+                "invalid_format",
+                "Initial Work names an absent local format",
+                ("works", work.key, "output_formats"),
+            )
         outputs = tuple(
             item.model_copy(update={"format_ref": formats[work.output_formats[item.slot]]})
             if item.slot in work.output_formats
@@ -339,10 +370,20 @@ def compile_structure(
             from .composition import _validate_plan
 
             assert work.plan is not None
-            work = work.model_copy(update={"plan": _typed_plan(work.plan, outputs)})
+            work = work.model_copy(
+                update={
+                    "plan": validate_new_value(
+                        ("works", work.key, "plan"), _typed_plan, work.plan, outputs
+                    )
+                }
+            )
             assert work.plan is not None
             assert work.method_key is not None
-            _validate_plan(
+            if any(child.state.activity_id != state.activity_id for child in work.plan.children):
+                raise FoundationError("out_of_scope", "Initial children belong to this Activity")
+            validate_new_value(
+                ("works", work.key, "plan"),
+                _validate_plan,
                 work.plan,
                 definitions[work.method_key],
                 state.activity_id,
@@ -389,8 +430,10 @@ def validate_review_components(
     allowed.update("methods." + key for key in manifest.method_definitions)
     for coverage in report.coverage:
         if not set(coverage.components).issubset(allowed):
-            raise FoundationError(
-                "invalid_setup_result", "Review addresses an absent manifest component"
+            raise SetupResultError(
+                "invalid_setup_result",
+                "Review addresses an absent manifest component",
+                ("coverage", coverage.area, "components"),
             )
 
 

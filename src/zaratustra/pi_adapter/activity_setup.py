@@ -43,6 +43,9 @@ INSTRUCTIONS = {
         " For contract_version 2, design the entire first workflow: planning horizon, intake, "
         "facts versus intentions, use, review and adaptation. Ask about meaningful periods. "
         "Declare only needed finite typed formats, reusable procedures and working sets. "
+        "Use only exact names from supported_operations in operations; put step descriptions "
+        "in process/instructions. Reuse supplied answers, including forwarded originals; ask "
+        "only missing user decisions. A minimal foundation must support a useful first action. "
         "Distinguish blocking questions from deferred extensions. Explain decisions and sources. "
         "Do not require Health, journals or calendar templates."
     ),
@@ -155,7 +158,11 @@ class SetupCoordinator:
                     or state.stages[-1].retired
                 ):
                     kind = (
-                        "draft"
+                        state.stages[-1].kind
+                        if state.stages
+                        and state.stages[-1].rejection
+                        and state.stages[-1].input_version == state.input_version
+                        else "draft"
                         if state.draft is None
                         else "correction"
                         if state.review is not None
@@ -165,7 +172,14 @@ class SetupCoordinator:
                         identifier,
                         "start_stage",
                         stage_kind=kind,
-                        stage_instruction=INSTRUCTIONS[kind],
+                        stage_instruction=INSTRUCTIONS[kind]
+                        + (
+                            " Correct the rejected raw result using its typed diagnostics and "
+                            "supported_operations. Return the whole result matching result_schema. "
+                            "For review, inspect the whole current package again."
+                            if state.stages and state.stages[-1].rejection
+                            else ""
+                        ),
                     )
                     state = _observe(
                         read_activity_setup, self.config.space, identifier, self.bridge.authority

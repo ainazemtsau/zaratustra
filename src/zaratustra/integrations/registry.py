@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from zaratustra.foundation import FoundationError, KnowledgeRef
+from zaratustra.foundation import FoundationError, KnowledgeRef, procedure_operation_catalog
 
 
 class Parameters(BaseModel):
@@ -37,6 +37,16 @@ class IntegrationRegistry:
 
     def __init__(self, adapters: Mapping[str, Mapping[str, Operation]]) -> None:
         self._adapters = {name: dict(operations) for name, operations in adapters.items()}
+
+    def check_procedure_capabilities(self) -> None:
+        """The installed composition checks its bindings; partial registries remain legal."""
+        for capability in procedure_operation_catalog():
+            for call in cast(tuple[str, ...], capability["calls"]):
+                adapter, operation = call.split(".", 1)
+                if adapter in self._adapters and operation not in self._adapters[adapter]:
+                    raise FoundationError(
+                        "unsupported_contract", "Adapter misses a Core procedure capability"
+                    )
 
     def _operation(self, adapter: str, operation: str) -> Operation:
         try:

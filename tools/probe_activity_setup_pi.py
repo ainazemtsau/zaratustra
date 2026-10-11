@@ -288,7 +288,7 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
                 result = changed.model_dump_json()
             else:
                 result = fictional_draft(UUID(input_packet["activity_id"])).model_dump_json()
-            return {"_final_text": json.dumps({"zara": "final", "text": result})}
+            return {"_final_text": result}
         tools = [message for message in body["messages"] if message["role"] == "tool"]
         if not tools:
             assert packet["activity_setup"]["setup_id"] == str(identifier)

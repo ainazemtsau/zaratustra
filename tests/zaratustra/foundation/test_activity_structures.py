@@ -17,6 +17,7 @@ from zaratustra.foundation import (
     DataFormatState,
     FoundationError,
     KnowledgeRef,
+    ProcedureOperation,
     SetupAreaEvidence,
     SetupDecisionBasis,
     SetupFormatTemplate,
@@ -101,7 +102,7 @@ def _proposal() -> ActivitySetupDraftV2:
                 key="observe",
                 purpose="Record a dated observation",
                 goal="Retain and structure the supplied observation",
-                operations=("ingest_batch",),
+                operations=(ProcedureOperation.INGEST_BATCH,),
                 outputs=(
                     SetupOutputTemplate(
                         slot="result", media_type="application/json", format_key="observation"
