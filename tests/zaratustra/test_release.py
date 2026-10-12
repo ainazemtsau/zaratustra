@@ -75,8 +75,9 @@ def test_default_launch_reference_and_explicit_selection(
     ]
 
 
+@pytest.mark.parametrize("explicit", [True, False])
 def test_run_uses_system_pi_and_selected_subscription_model(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, explicit: bool
 ) -> None:
     from zaratustra import pi_adapter, release
 
@@ -98,16 +99,29 @@ def test_run_uses_system_pi_and_selected_subscription_model(
         "node": "node",
         "reserve_units": 3000,
         "provider_profile": "codex-sse",
+        "provider_id": "openai-codex",
         "provider_base_url": "https://chatgpt.com/backend-api",
         "model_id": "gpt-5.6-luna",
         "subscription_agent_dir": str(tmp_path / "subscription"),
+        "preferred_model": {
+            "provider_profile": "codex-sse",
+            "provider_id": "openai-codex",
+            "model_id": "gpt-6.1-sol",
+            "thinking": "high",
+        },
     }
     args = argparse.Namespace(
-        model="gpt-6.1-sol", thinking=None, activity_id=None, work_id=None, pi_tools=None
+        model="gpt-6.1-sol" if explicit else None,
+        thinking="medium" if explicit else None,
+        activity_id=None,
+        work_id=None,
+        pi_tools=None,
     )
     assert _run(args, config) == 0
     command = observed[0]
     assert command[command.index("--pi-cli") + 1] == str(runtime.cli)
     assert command[command.index("--model") + 1] == "gpt-6.1-sol"
+    assert command[command.index("--thinking") + 1] == ("medium" if explicit else "high")
+    assert ("--remember-selection" in command) is explicit
     assert command[command.index("--provider-profile") + 1] == "codex-sse"
     assert command[command.index("--subscription-agent-dir") + 1] == str(tmp_path / "subscription")

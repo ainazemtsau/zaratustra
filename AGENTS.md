@@ -141,6 +141,14 @@ and parallel dirty work; do not publish private preparation branches merely to k
 
 ## What exists
 
+Workflow release work (0.23.0) explicitly upgrades Core 15 to 16. Definitions
+instantiate native WorkPlan/Work/Attempt graphs; host waits, exact internal
+validation, addressed user answers and version transfer use the same Core
+operation/receipt authority. Internal continuation never accepts owner Work.
+Activity creation is the first system workflow. Sleep retains its domain cursors
+and change admission; exports remain a separate package. See docs/workflows.md.
+Release checks and owner acceptance are reported separately.
+
 Owner-authorized Activity structures (0.22.0) explicitly upgrade Core 14 to 15.
 Finite DataFormat, versioned DataEntry and reviewed ActivityStructure use existing
 knowledge/operation authority. Setup v2 reviews an exact compiled manifest.

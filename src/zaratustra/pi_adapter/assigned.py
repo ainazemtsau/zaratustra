@@ -22,15 +22,20 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import urlsplit
 from uuid import UUID, uuid4, uuid5
 
+from pydantic import ValidationError
+
 from zaratustra.foundation import (
     AssignAttemptRequest,
     BackupInfo,
     ClaimAttemptLaunchRequest,
+    CreateKnowledgeRequest,
     DeletionStatus,
     FoundationError,
+    KnowledgeRef,
     LocalAuthority,
     RecordAttemptStopRequest,
     RequestAttemptStopRequest,
+    SourceState,
     TechnicalVersions,
     apply_operation,
     authorize_local,
@@ -42,12 +47,15 @@ from zaratustra.foundation import (
     read_assigned_control,
     read_execution,
     read_execution_events,
+    read_knowledge,
     read_setup_stage,
     read_space,
     read_technical_deletion_targets,
+    read_work,
+    read_workflow_node_for_work,
 )
 
-from .bridge import PROTOCOL_VERSION, Bridge, BridgeServer
+from .bridge import PROTOCOL_VERSION, Bridge, BridgeServer, ProviderPreflightRefusal
 from .runtime import read_pi_runtime
 
 if TYPE_CHECKING:
@@ -138,6 +146,10 @@ class AssignedConfig:
     disable_tools: bool = False
     subscription_agent_dir: Path | None = None
     workspace_config: Path | None = None
+    thinking: str | None = None
+    restricted_tools: tuple[str, ...] = ()
+    result_protocol: str | None = None
+    workflow_project_tools: bool = False
 
 
 def executor_database(space: Path) -> Path:
@@ -753,6 +765,7 @@ def _record_stop(
     session_id: UUID,
     *,
     observed: bool,
+    reason: str | None = None,
 ) -> None:
     snapshot = read_execution(config.space, work_id, authority)
     assignment = next((x for x in snapshot.assignments if x.attempt_id == attempt_id), None)
@@ -776,7 +789,7 @@ def _record_stop(
                 work_id=work_id,
                 session_id=session_id,
                 expected_assignment_revision=assignment.revision,
-                reason="Pi RPC reached a terminal process outcome",
+                reason=reason or "Pi RPC reached a terminal process outcome",
             ),
             authority,
         )
@@ -795,6 +808,120 @@ def _record_stop(
             outcome="stopped" if observed else "unknown",
         ),
         authority,
+    )
+
+
+def _retain_preflight_diagnostic(
+    config: AssignedConfig,
+    authority: LocalAuthority,
+    work_id: UUID,
+    refusal: ProviderPreflightRefusal,
+    events: list[dict[str, object]],
+    stderr_tail: bytearray,
+) -> ProviderPreflightRefusal:
+    """Retain observer evidence separately from the Work's expected output."""
+    snapshot = read_execution(config.space, work_id, authority)
+    attempt = next(item for item in snapshot.attempts if item.attempt_id == refusal.attempt_id)
+    pinned_work = read_work(config.space, work_id, authority, revision=attempt.work_revision)
+    identifier = uuid5(refusal.attempt_id, "provider-preflight-diagnostic")
+    content = json.dumps(
+        {
+            "refusal": refusal.model_dump(mode="json"),
+            "rpc_events": events,
+            "stderr_tail": stderr_tail.decode("utf-8", errors="replace"),
+        },
+        ensure_ascii=False,
+    ).encode("utf-8")
+    bases = (KnowledgeRef(record_id=work_id, revision=attempt.work_revision),) + tuple(
+        KnowledgeRef(record_id=item.artifact_id, revision=item.revision)
+        for item in pinned_work.state.inputs
+    )
+    apply_operation(
+        config.space,
+        CreateKnowledgeRequest(
+            operation_id=uuid5(identifier, "retain"),
+            space_id=authority.space_id,
+            actor=authority.actor,
+            record_id=identifier,
+            state=SourceState(
+                channel="core_operation",
+                connection="zaratustra.pi/assigned-preflight",
+                profile_revision=1,
+                source_event_id=str(refusal.attempt_id),
+                scope_activity_id=snapshot.activity.activity_id,
+                scope_work_id=work_id,
+                sender="trusted_local_observer",
+                media_type="application/json",
+                capture="full",
+                content=content,
+                derived_from=bases,
+            ),
+        ),
+        authority,
+    )
+    return refusal.model_copy(
+        update={
+            "detail": refusal.detail[:500],
+            "diagnostic": KnowledgeRef(record_id=identifier, revision=1),
+        }
+    )
+
+
+def read_assignment_refusal(
+    path: Path, work_id: UUID, attempt_id: UUID, authority: LocalAuthority
+) -> FoundationError | None:
+    """Read the exact observer protocol, never parse a stderr/prose explanation."""
+    snapshot = read_execution(path, work_id, authority)
+    assignment = next(
+        (item for item in snapshot.assignments if item.attempt_id == attempt_id), None
+    )
+    if assignment is None or not assignment.stop_reason:
+        return None
+    try:
+        record = ProviderPreflightRefusal.model_validate_json(assignment.stop_reason)
+    except ValidationError:
+        return None
+    if record.attempt_id != attempt_id or record.session_id != next(
+        item.session_id for item in snapshot.attempts if item.attempt_id == attempt_id
+    ):
+        return None
+    detail = record.detail
+    if record.diagnostic is not None:
+        source = read_knowledge(
+            path, record.diagnostic.record_id, authority, revision=record.diagnostic.revision
+        ).state
+        if (
+            not isinstance(source, SourceState)
+            or source.connection != "zaratustra.pi/assigned-preflight"
+            or source.scope_work_id != work_id
+            or source.source_event_id != str(attempt_id)
+        ):
+            raise FoundationError(
+                "corrupt_content", "Assigned observer diagnosis has another scope"
+            )
+        detail += f" Диагностика: {record.diagnostic.record_id}@{record.diagnostic.revision}."
+    return FoundationError(record.code, detail)
+
+
+def _has_published_attempt_output(
+    config: AssignedConfig, authority: LocalAuthority, work_id: UUID, attempt_id: UUID
+) -> bool:
+    snapshot = read_execution(config.space, work_id, authority)
+    expected = {item.slot for item in snapshot.work.state.expected_outputs}
+    if not expected or expected != {item.slot for item in snapshot.work.state.linked_outputs}:
+        return False
+    producer_operations: set[str] = set()
+    cursor = 0
+    while page := read_execution_events(config.space, work_id, cursor, authority):
+        producer_operations.update(
+            str(item["operation_id"])
+            for item in page
+            if item["attempt_id"] == str(attempt_id) and item["kind"] == "publish_attempt_output"
+        )
+        cursor = int(str(page[-1]["sequence"]))
+    return len(snapshot.outputs) == len(expected) and all(
+        item.content is not None and str(item.operation_id) in producer_operations
+        for item in snapshot.outputs
     )
 
 
@@ -883,6 +1010,7 @@ def _execute_under_lock(
     observed = False
     failure: Exception | None = None
     exit_before_host_stop: int | None = None
+    bridge: Bridge | None = None
     try:
         with managed_pi_session_lock(config.space):
             bridge = Bridge(
@@ -893,6 +1021,7 @@ def _execute_under_lock(
                 workspace_config=config.workspace_config,
                 assigned_attempt_id=attempt_id,
                 assigned_session_id=attempt.session_id,
+                restricted_core_reads=bool(config.restricted_tools),
             )
             server = BridgeServer(bridge)
             thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -935,6 +1064,11 @@ def _execute_under_lock(
             }
             if config.disable_tools:
                 environment["ZARA_DISABLE_MODEL_TOOLS"] = "1"
+            if config.restricted_tools:
+                environment["ZARA_RESTRICTED_CORE_READS"] = "1"
+                environment["ZARA_RESTRICTED_TOOLS"] = ",".join(config.restricted_tools)
+            if config.workflow_project_tools:
+                environment["ZARA_WORKFLOW_PROJECT_TOOLS"] = "1"
             environment.update(
                 {
                     "HOME": str(managed_home),
@@ -964,6 +1098,9 @@ def _execute_under_lock(
                 environment["ZARA_LOCAL_MAX_TOKENS"] = str(config.max_tokens)
             if config.offline:
                 environment["PI_OFFLINE"] = "1"
+            trace_directory = os.environ.get("ZARA_TRIAL_HTTP_TRACE_DIR")
+            if trace_directory is not None:
+                environment["ZARA_TRIAL_HTTP_TRACE_DIR"] = trace_directory
             command = [
                 config.node,
                 str(config.pi_cli),
@@ -983,7 +1120,11 @@ def _execute_under_lock(
                 "--no-themes",
                 "--no-approve",
             ]
-            if config.disable_tools:
+            if config.thinking is not None:
+                command.extend(["--thinking", config.thinking])
+            if config.restricted_tools:
+                command.extend(["--tools", ",".join(config.restricted_tools)])
+            elif config.disable_tools:
                 command.append("--no-tools")
             else:
                 command.extend(
@@ -1034,12 +1175,24 @@ def _execute_under_lock(
             _current_snapshot(config, authority, work_id, attempt_id, epoch, generation)
             setup_stage = read_setup_stage(config.space, work_id, authority)
             direct_setup = setup_stage is not None and setup_stage.result_protocol == "setup_json"
+            direct_workflow = (
+                read_workflow_node_for_work(config.space, work_id, authority) is not None
+            )
+            direct_result = direct_setup or direct_workflow
             first = (
-                "Perform the assigned Activity setup stage using its exact Core packet. "
+                "Perform the assigned internal stage using its exact Core packet. "
                 "Return the single JSON object matching result_schema directly, without an "
                 "outer zara.final/text envelope, code fences or extra prose. Put necessary "
-                "user questions in the schema's question fields. Do not call tools."
-                if direct_setup
+                "user questions in the schema's question fields. "
+                + (
+                    "Use only declared project tools and Core reads. Keep filesystem actions "
+                    "inside the selected resource."
+                    if config.workflow_project_tools
+                    else "Only configured Core read tools are available; do not perform effects."
+                    if config.restricted_tools
+                    else "Do not call tools."
+                )
+                if direct_result
                 else (
                     "Perform the assigned Core Work using the exact context supplied "
                     "by Zaratustra. "
@@ -1055,11 +1208,14 @@ def _execute_under_lock(
                 )
             )
             _rpc_prompt(process, first, stop_requested, rpc_events)
+            if bridge.provider_preflight_refusal is not None:
+                refusal = bridge.provider_preflight_refusal
+                raise FoundationError(refusal.code, refusal.detail[:500])
             current = _current_snapshot(config, authority, work_id, attempt_id, epoch, generation)
             open_waits = [
                 x for x in current.waits if x.attempt_id == attempt_id and x.status == "open"
             ]
-            if open_waits:
+            while open_waits:
                 while True:
                     if stop_requested.is_set():
                         raise FoundationError(
@@ -1090,13 +1246,17 @@ def _execute_under_lock(
                     process,
                     "Continue the same assigned Work from the saved Core remainder "
                     "and partial Artifact. "
-                    "Return the single JSON matching result_schema directly. Do not call tools."
-                    if direct_setup
+                    "Return the single JSON matching result_schema directly. "
+                    "Use only configured Core reads."
+                    if direct_result
                     else (
                         "Continue the same assigned Work from the saved Core remainder "
                         "and partial Artifact. "
                         "Use the addressed answer in Core context. Return only "
-                        '{"zara":"final","text":"the final result"}. '
+                        '{"zara":"final","text":"the final result"}. If another user '
+                        'decision is needed, return {"zara":"wait","partial":"what is '
+                        'known","question":"one exact question","remainder":"what '
+                        'remains"}. '
                         + (
                             "Use only the configured tools for outstanding work."
                             if not config.disable_tools
@@ -1106,13 +1266,29 @@ def _execute_under_lock(
                     stop_requested,
                     rpc_events,
                 )
+                if bridge.provider_preflight_refusal is not None:
+                    refusal = bridge.provider_preflight_refusal
+                    raise FoundationError(refusal.code, refusal.detail[:500])
                 current = _current_snapshot(
                     config, authority, work_id, attempt_id, epoch, generation
                 )
+                open_waits = [
+                    x for x in current.waits if x.attempt_id == attempt_id and x.status == "open"
+                ]
             if not current.outputs or current.work.state.status != "proposed":
                 raise FoundationError("rpc_result", "Pi RPC did not publish the declared Artifact")
             return "proposed"
     except Exception as error:
+        if bridge is not None and bridge.provider_preflight_refusal is not None:
+            refusal = bridge.provider_preflight_refusal
+            try:
+                if _has_published_attempt_output(config, authority, work_id, attempt_id):
+                    return "proposed"
+            except FoundationError:
+                # Inaccessible producer evidence cannot authorize a success claim.
+                pass
+            failure = FoundationError(refusal.code, refusal.detail[:500])
+            raise failure from error
         failure = error
         raise
     finally:
@@ -1130,6 +1306,23 @@ def _execute_under_lock(
             server.server_close()
         if thread is not None:
             thread.join(timeout=5)
+        stop_reason = None
+        if bridge is not None and bridge.provider_preflight_refusal is not None:
+            refusal = bridge.provider_preflight_refusal.model_copy(
+                update={"detail": bridge.provider_preflight_refusal.detail[:500]}
+            )
+            try:
+                refusal = _retain_preflight_diagnostic(
+                    config,
+                    authority,
+                    work_id,
+                    bridge.provider_preflight_refusal,
+                    rpc_events,
+                    stderr_tail,
+                )
+            except FoundationError as error:
+                _trace_event(rpc_events, kind="preflight_diagnostic_unavailable", code=error.code)
+            stop_reason = refusal.model_dump_json()
         try:
             _record_stop(
                 config,
@@ -1138,10 +1331,12 @@ def _execute_under_lock(
                 attempt_id,
                 attempt.session_id,
                 observed=observed or process is None,
+                reason=stop_reason,
             )
         except FoundationError as error:
             _trace_event(rpc_events, kind="record_stop_error", code=error.code)
-            raise
+            if stop_reason is None:
+                raise
         finally:
             _emit_rpc_diagnostics(
                 config,
@@ -1344,6 +1539,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--provider-base-url", required=True)
     parser.add_argument("--provider-id")
     parser.add_argument("--model-id", required=True)
+    parser.add_argument("--thinking")
     parser.add_argument("--context-window", type=int)
     parser.add_argument("--max-tokens", type=int)
     parser.add_argument("--pi-tools", help="Comma-separated Pi tools admitted for this resource")
@@ -1370,6 +1566,7 @@ def main(argv: list[str] | None = None) -> int:
         provider_id=args.provider_id
         or ("openai-codex" if args.provider_profile == "codex-sse" else ""),
         model_id=args.model_id,
+        thinking=args.thinking,
         context_window=args.context_window,
         max_tokens=args.max_tokens,
         reserve_units=args.reserve_units,

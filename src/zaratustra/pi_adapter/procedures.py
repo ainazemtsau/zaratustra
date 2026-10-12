@@ -43,6 +43,14 @@ class ProcedureCoordinator:
         self.stop = threading.Event()
         self.lock = threading.Lock()
 
+    def update_model(self, model: dict[str, Any]) -> None:
+        if model.get("provider") != self.config.provider_id or not model.get("id"):
+            raise FoundationError("unsupported_provider", "Use the admitted selected provider")
+        with self.lock:
+            self.config = replace(
+                self.config, model_id=str(model["id"]), thinking=model.get("thinking")
+            )
+
     def start(self, run_id: UUID, model: dict[str, Any]) -> dict[str, Any]:
         if model.get("provider") != self.config.provider_id or not model.get("id"):
             raise FoundationError(
@@ -70,7 +78,7 @@ class ProcedureCoordinator:
             procedure = next(
                 item for item in definition["procedures"] if item["key"] == status["procedure"]
             )
-            config = replace(self.config, model_id=str(model["id"]))
+            config = replace(self.config, model_id=str(model["id"]), thinking=model.get("thinking"))
             if config.workspace_config is not None:
                 workspace = read_config(config.workspace_config)
                 project = procedure["project"] if procedure["resource"] == "project" else "personal"

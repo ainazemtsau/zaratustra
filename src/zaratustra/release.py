@@ -287,7 +287,7 @@ def _setup(args: argparse.Namespace) -> int:
 
         initialize_git(read_config(config_path), create_private=args.create_private)
     print(f"Prepared: {config_path}")
-    if not args.new_space and info.schema_version < 15:
+    if not args.new_space and info.schema_version < 16:
         print("Existing space requires zara-core upgrade before run or assign")
     return 0
 
@@ -298,6 +298,19 @@ def _run(args: argparse.Namespace, config: dict[str, object]) -> int:
 
     runtime, cli, pi_version = _runtime(config)
     print(f"Pi {pi_version}: {cli}")
+    preference = config.get("preferred_model")
+    if preference is not None:
+        if not isinstance(preference, dict) or (
+            preference.get("provider_profile"),
+            preference.get("provider_id"),
+        ) != (config["provider_profile"], config["provider_id"]):
+            raise ValueError("Saved model choice does not match the admitted provider profile")
+    model_id = args.model or (
+        preference["model_id"] if isinstance(preference, dict) else config["model_id"]
+    )
+    thinking = args.thinking or (
+        preference.get("thinking") if isinstance(preference, dict) else None
+    )
     command = [
         "--space",
         str(config["space"]),
@@ -316,7 +329,7 @@ def _run(args: argparse.Namespace, config: dict[str, object]) -> int:
         "--provider-base-url",
         str(config["provider_base_url"]),
         "--model",
-        str(args.model or config["model_id"]),
+        str(model_id),
     ]
     if config.get("limit_units") is not None:
         command += ["--limit-units", str(config["limit_units"])]
@@ -339,8 +352,10 @@ def _run(args: argparse.Namespace, config: dict[str, object]) -> int:
         command += ["--activity-id", str(args.activity_id), "--work-id", str(args.work_id)]
     if args.pi_tools:
         command += ["--pi-tools", args.pi_tools]
-    if args.thinking:
-        command += ["--thinking", args.thinking]
+    if thinking:
+        command += ["--thinking", str(thinking)]
+    if args.model or args.thinking:
+        command.append("--remember-selection")
     if config.get("subscription_agent_dir"):
         command += ["--subscription-agent-dir", str(config["subscription_agent_dir"])]
     if config.get("version") == 2:
@@ -395,13 +410,13 @@ def _assign(args: argparse.Namespace, config: dict[str, object]) -> int:
     return assigned_main(command)
 
 
-def _ready_space(config: dict[str, object], *, minimum_schema: int = 14) -> None:
+def _ready_space(config: dict[str, object], *, minimum_schema: int = 16) -> None:
     from zaratustra.foundation import read_space
 
     info = read_space(Path(str(config["space"])))
     if config.get("space_id") and str(info.space_id) != config["space_id"]:
         raise ValueError("Selected space identity differs from the saved configuration")
-    if not minimum_schema <= info.schema_version <= 15:
+    if not minimum_schema <= info.schema_version <= 16:
         raise ValueError("Run zara-core upgrade for this selected space before execution")
     if info.recovery_state != "active":
         raise ValueError("Recover the selected space before execution")
@@ -652,14 +667,14 @@ def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
         info = read_space(space)
         if config.get("space_id") and str(info.space_id) != config["space_id"]:
             raise ValueError("Selected space identity differs from the saved configuration")
-        if info.schema_version == 15:
-            print("Core space already uses schema 15")
+        if info.schema_version == 16:
+            print("Core space already uses schema 16")
             return 0
-        if info.schema_version > 15:
+        if info.schema_version > 16:
             raise ValueError("Installed program cannot upgrade a newer Core schema")
         if info.recovery_state != "active":
             raise ValueError("Recover this space before a schema upgrade")
-        print(f"Space {info.space_id}: schema {info.schema_version} -> 15")
+        print(f"Space {info.space_id}: schema {info.schema_version} -> 16")
         if (
             input("Type UPGRADE to save a verified backup and migrate this space: ").strip()
             != "UPGRADE"
@@ -674,7 +689,10 @@ def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
         print(f"Pre-upgrade backup: {backup.package}")
         from .pi_adapter import prepare_space
 
-        prepare_space(space, actor, create=False)
+        authority = prepare_space(space, actor, create=False)
+        from zaratustra.foundation import upgrade_workflow_space
+
+        upgrade_workflow_space(space, authority)
         print(f"Core schema: {read_space(space).schema_version}")
         return 0
     if args.command == "verify":

@@ -38,6 +38,7 @@ from zaratustra.pi_adapter import Bridge
 from zaratustra.workspace import (
     GitDestination,
     LaunchConfig,
+    ModelPreference,
     Project,
     defer_git,
     delivery,
@@ -46,6 +47,7 @@ from zaratustra.workspace import (
     publish_git,
     read_config,
     register_project,
+    remember_model,
     select_work_project,
     write_config,
 )
@@ -77,6 +79,61 @@ def configuration(tmp_path: Path, root: Path, space: Any) -> tuple[Path, LaunchC
     )
     write_config(path, config)
     return path, config
+
+
+def test_explicit_model_choice_persists_without_changing_provider_or_core(tmp_path: Path) -> None:
+    """Risk: next session falls back to the install default or silently changes transport."""
+    root, space, owner, *_ = ready(tmp_path)
+    path, config = configuration(tmp_path, root, space)
+    original = read_space(root)
+    preference = ModelPreference(
+        provider_profile=config.provider_profile,
+        provider_id=config.provider_id,
+        model_id="selected-model",
+        thinking="high",
+    )
+    remembered = remember_model(path, preference)
+    assert read_config(path).preferred_model == preference
+    assert remembered.model_id == "fictional-model" and read_space(root) == original
+    bridge = Bridge(root, owner, config.workspace, workspace_config=path)
+    session = uuid4()
+    bridge.connect(session)
+    reported: list[dict[str, Any]] = []
+
+    class Controller:
+        def update_model(self, model: dict[str, Any]) -> None:
+            reported.append(model)
+
+    bridge.workflow_controller = Controller()
+    bridge.model_selection(
+        session,
+        {
+            "model": {
+                "id": "new-selected-model",
+                "provider": config.provider_id,
+                "thinking": "xhigh",
+            }
+        },
+    )
+    saved = read_config(path).preferred_model
+    assert (
+        saved is not None and saved.model_id == "new-selected-model" and saved.thinking == "xhigh"
+    )
+    assert reported[0]["id"] == "new-selected-model"
+    bridge.model_selection(
+        session,
+        {
+            "persist": False,
+            "model": {"id": "restored-model", "provider": config.provider_id, "thinking": "low"},
+        },
+    )
+    assert reported[-1]["id"] == "restored-model" and read_config(path).preferred_model == saved
+    with pytest.raises(FoundationError) as error:
+        bridge.model_selection(
+            session, {"model": {"id": "other-model", "provider": "other-provider"}}
+        )
+    assert error.value.code == "unsupported_provider"
+    assert read_config(path).preferred_model == saved
 
 
 def test_v1_migration_and_project_resume_preserve_core(tmp_path: Path) -> None:

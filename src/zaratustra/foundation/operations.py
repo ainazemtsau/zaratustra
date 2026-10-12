@@ -547,6 +547,14 @@ def _write_root(
 
 
 def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]:
+    from .models import WorkflowRequest
+
+    if isinstance(request, WorkflowRequest):
+        if request.action == "create_definition":
+            return "method.write", "space", None
+        if request.action == "start":
+            return "work.write", "activity", request.activity_id
+        return "work.write", "work", request.root_work_id
     if isinstance(request, IngestDataRequest):
         return "artifact.write", "artifact", request.source.record_id
     if isinstance(request, (StartProcedureRequest, PrepareProcedureRequest)):
@@ -1590,6 +1598,20 @@ def _apply_change(
     grants: list[dict[str, object]],
     decisions: list[dict[str, object]],
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
+    from .models import WorkflowRequest
+
+    if isinstance(request, WorkflowRequest):
+        from .workflows import apply_workflow_change
+
+        return apply_workflow_change(
+            cast(sqlite3.Connection, connection),
+            request,
+            now=now,
+            epoch=epoch,
+            authority=authority,
+            grants=grants,
+            decisions=decisions,
+        )
     if isinstance(request, (IngestDataRequest, StartProcedureRequest, PrepareProcedureRequest)):
         from .data import apply_data_change
 
@@ -1748,7 +1770,9 @@ def _apply_change(
             "AND status = 'answered' LIMIT 1",
             (str(request.attempt_id),),
         ).fetchone()
-        if answered is None:
+        from .workflows import HOST_PUBLICATION
+
+        if answered is None and not HOST_PUBLICATION.get():
             raise FoundationError("no_answer", "No answered model invocation belongs to Attempt")
         revision, state = _work(connection, request.work_id)
         declared = {item.slot: item.media_type for item in state.expected_outputs}

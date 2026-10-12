@@ -14,11 +14,11 @@ from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast
 from urllib.parse import parse_qs, urlsplit
 from uuid import UUID, uuid4, uuid5
 
-from pydantic import BaseModel, TypeAdapter, ValidationError
+from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 
 from zaratustra.foundation import (
     AcceptWorkRequest,
@@ -121,6 +121,7 @@ from zaratustra.foundation import (
     read_work,
     read_work_plan,
     read_work_status,
+    read_workflow_node_for_work,
     search_knowledge,
     sleep_work_template,
     upgrade_binding_space,
@@ -137,6 +138,7 @@ from zaratustra.integrations import installed_integrations
 from zaratustra.workspace import (
     GitPreparation,
     LaunchConfig,
+    ModelPreference,
     Project,
     defer_git,
     git_status,
@@ -145,6 +147,7 @@ from zaratustra.workspace import (
     read_config,
     reconcile_git,
     register_project,
+    remember_model,
     select_work_project,
     workspace_info,
 )
@@ -203,6 +206,27 @@ class Selection:
     work_id: UUID
 
 
+class ProviderPreflightRefusal(BaseModel):
+    """Trusted native transport refusal, never inferred from Pi/model prose."""
+
+    model_config = {"extra": "forbid", "frozen": True}
+    protocol: Literal["zara.pi.preflight.v1"] = "zara.pi.preflight.v1"
+    attempt_id: UUID
+    session_id: UUID
+    boundary: Literal[
+        "context-prepare",
+        "context-prepared",
+        "context-sent",
+        "prepare_invocation",
+        "admit_invocation",
+        "send_invocation",
+    ]
+    invocation_id: UUID | None = None
+    code: str = Field(min_length=1, max_length=100)
+    detail: str = Field(min_length=1)
+    diagnostic: KnowledgeRef | None = None
+
+
 class Bridge:
     """One trusted local process and one selected Core space."""
 
@@ -219,11 +243,13 @@ class Bridge:
         context_max_bytes: int | None = None,
         free_conversation_limit_units: int | None = None,
         workspace_config: Path | None = None,
+        restricted_core_reads: bool = False,
     ) -> None:
         self.path = path.resolve()
         self.authority = authority
         self.workspace = workspace.resolve()
         self.workspace_config = workspace_config
+        self.restricted_core_reads = restricted_core_reads
         if not self.workspace.is_dir() or (limit_units is not None and limit_units < 1):
             raise FoundationError("resource_unavailable", "Choose an existing directory and limit")
         self.limit_units = limit_units
@@ -255,14 +281,422 @@ class Bridge:
         self.sessions: dict[UUID, Selection | None] = {}
         self.last_sources: dict[UUID, KnowledgeRef] = {}
         self.exposed_refs: dict[UUID, set[KnowledgeRef]] = {}
+        self.selected_file_refs: dict[UUID, set[KnowledgeRef]] = {}
         self.memory_rules: dict[UUID, dict[str, tuple[MemorySelector, ...]]] = {}
         self.memory_snapshots: dict[UUID, set[KnowledgeRef]] = {}
         self.accept_previews: dict[UUID, tuple[UUID, int, UUID]] = {}
         self.accept_results: dict[UUID, dict[str, object]] = {}
         self.git_previews: dict[UUID, UUID] = {}
         self.lock = threading.Lock()
+        self.provider_preflight_refusal: ProviderPreflightRefusal | None = None
+        self.workflow_executor_pool: Any = None
         self.setup_controller: Any = None
         self.procedure_controller: Any = None
+        self.workflow_controller: Any = None
+
+    def capture_provider_refusal(
+        self,
+        session_id: UUID,
+        endpoint: str,
+        raw: dict[str, Any],
+        error: FoundationError,
+    ) -> None:
+        """Capture only an explicitly marked native preflight of this assignment."""
+        if (
+            raw.get("provider_preflight") is not True
+            or self.assigned_attempt_id is None
+            or session_id != self.assigned_session_id
+        ):
+            return
+        boundary: Any = None
+        invocation: Any = raw.get("invocation_id")
+        if endpoint == "/v1/context-prepare":
+            boundary = "context-prepare"
+        elif endpoint == "/v1/context-delivery" and raw.get("stage") in ("prepared", "sent"):
+            boundary = "context-" + str(raw["stage"])
+        elif endpoint == "/v1/operation":
+            operation = raw.get("request")
+            if (
+                isinstance(operation, dict)
+                and operation.get("kind")
+                in ("prepare_invocation", "admit_invocation", "send_invocation")
+                and str(operation.get("attempt_id")) == str(self.assigned_attempt_id)
+                and str(operation.get("session_id")) == str(session_id)
+            ):
+                boundary = operation["kind"]
+                invocation = operation.get("invocation_id")
+        if boundary is None:
+            return
+        try:
+            refusal = ProviderPreflightRefusal(
+                attempt_id=self.assigned_attempt_id,
+                session_id=session_id,
+                boundary=boundary,
+                invocation_id=UUID(str(invocation)) if invocation is not None else None,
+                code=error.code,
+                detail=error.detail,
+            )
+        except (ValueError, ValidationError):
+            return
+        with self.lock:
+            if (
+                self.sessions.get(session_id) is not None
+                and self.provider_preflight_refusal is None
+            ):
+                self.provider_preflight_refusal = refusal
+
+    def complete_provider_preflight(
+        self, session_id: UUID, endpoint: str, raw: dict[str, Any]
+    ) -> None:
+        """A recovered exact preflight receipt is not a terminal refusal."""
+        if raw.get("provider_preflight") is not True or session_id != self.assigned_session_id:
+            return
+        with self.lock:
+            refusal = self.provider_preflight_refusal
+            if refusal is None:
+                return
+            if (endpoint == "/v1/context-prepare" and refusal.boundary == "context-prepare") or (
+                endpoint == "/v1/context-delivery"
+                and raw.get("stage") == "sent"
+                and str(raw.get("invocation_id")) == str(refusal.invocation_id)
+            ):
+                self.provider_preflight_refusal = None
+
+    def model_selection(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, Any]:
+        """The extension reports its current selection before future node dispatch."""
+        self._session(session_id)
+        if self.assigned_attempt_id is not None:
+            return {"pinned": True}
+        selection = dict(raw["model"])
+        config = self._workspace_configuration()
+        if config is not None:
+            preference = ModelPreference(
+                provider_profile=config.provider_profile,
+                provider_id=str(selection.get("provider", "")),
+                model_id=str(selection.get("id", "")),
+                thinking=selection.get("thinking"),
+            )
+            assert self.workspace_config is not None
+            try:
+                if (preference.provider_profile, preference.provider_id) != (
+                    config.provider_profile,
+                    config.provider_id,
+                ):
+                    raise ValueError("Selected model must use the configured provider and profile")
+                if raw.get("persist", True):
+                    remember_model(self.workspace_config, preference)
+            except ValueError as error:
+                raise FoundationError("unsupported_provider", str(error)) from error
+        for controller in (
+            self.setup_controller,
+            self.procedure_controller,
+            self.workflow_controller,
+        ):
+            if controller is not None and hasattr(controller, "update_model"):
+                controller.update_model(selection)
+        return {"model": selection}
+
+    def _exposed_sources(self, session_id: UUID, raw: dict[str, Any]) -> tuple[KnowledgeRef, ...]:
+        supplied = tuple(KnowledgeRef.model_validate(ref) for ref in raw.get("source_refs", []))
+        permitted = self.exposed_refs.get(session_id, set()) | self.selected_file_refs.get(
+            session_id, set()
+        )
+        if any(ref not in permitted for ref in supplied):
+            raise FoundationError(
+                "permission_denied", "Select only exact actually exposed authorized memory"
+            )
+        return tuple(dict.fromkeys(supplied))
+
+    def _fresh_user_source(self, session_id: UUID) -> tuple[KnowledgeRef, str]:
+        original = self.last_sources.get(session_id)
+        if original is None:
+            raise FoundationError("incomplete_context", "No actual user message to retain")
+        message = read_knowledge(
+            self.path, original.record_id, self.authority, revision=original.revision
+        )
+        if (
+            not isinstance(message.state, SourceState)
+            or message.state.channel != "conversation_user"
+            or message.state.content is None
+            or message.state.sender != self.authority.actor
+        ):
+            raise FoundationError(
+                "permission_denied", "Answer must come from a fresh received user message"
+            )
+        return original, message.state.content.decode("utf-8")
+
+    def workflow(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, Any]:
+        """Public conversation actions; dispatch/validation remain host-owned."""
+        from zaratustra.foundation import (
+            WorkflowDefinition,
+            WorkflowRef,
+            WorkflowRequest,
+            list_workflow_runs,
+            list_workflows,
+            read_workflow,
+            read_workflow_method_tasks,
+            read_workflow_packet,
+            read_workflow_run,
+            read_workflow_wait,
+        )
+
+        from .workflows import workflow_view
+
+        self._session(session_id)
+        action = str(raw.get("mode", "status"))
+        if action == "contract":
+            return {
+                "definition_schema": WorkflowDefinition.model_json_schema(),
+                "request_schema": WorkflowRequest.model_json_schema(),
+            }
+        if action == "runs":
+            if self.assigned_attempt_id is not None:
+                raise FoundationError("permission_denied", "Assigned nodes cannot enumerate runs")
+            runs = list_workflow_runs(
+                self.path,
+                self.authority,
+                after=UUID(str(raw["after"])) if raw.get("after") else None,
+                limit=int(raw.get("limit", 25)),
+                pending_only=bool(raw.get("pending_only", False)),
+            )
+            return {
+                "items": [
+                    workflow_view(self.path, run.root_work_id, self.authority) for run in runs
+                ],
+                "after": str(runs[-1].root_work_id) if runs else None,
+            }
+        if action == "catalog":
+            after = raw.get("after")
+            refs = list_workflows(
+                self.path,
+                self.authority,
+                after=(str(after["workflow_id"]), int(after["version"])) if after else None,
+                limit=int(raw.get("limit", 25)),
+            )
+            return {
+                "items": [
+                    {
+                        "workflow": ref.model_dump(mode="json"),
+                        "description": read_workflow(self.path, ref, self.authority).model_dump(
+                            mode="json", include={"title", "purpose"}
+                        ),
+                    }
+                    for ref in refs
+                ],
+                "after": refs[-1].model_dump(mode="json") if refs else None,
+            }
+        if action == "read":
+            ref = WorkflowRef.model_validate(raw["workflow"])
+            return {
+                "workflow": ref.model_dump(mode="json"),
+                "definition": read_workflow(self.path, ref, self.authority).model_dump(mode="json"),
+            }
+        root_id = UUID(str(raw["root_work_id"])) if raw.get("root_work_id") else None
+        if action == "interaction":
+            if root_id is None:
+                raise FoundationError("invalid_request", "Name the workflow root Work")
+            if self.assigned_attempt_id is not None:
+                from .workflows import workflow_work_ids
+
+                if self._selection(session_id).work_id not in workflow_work_ids(
+                    self.path, root_id, self.authority
+                ):
+                    raise FoundationError("wrong_scope", "Read only the assigned workflow")
+            return read_workflow_wait(
+                self.path, root_id, UUID(str(raw["wait_id"])), self.authority
+            ).model_dump(mode="json")
+        if action == "method_tasks":
+            from .workflows import workflow_work_ids
+
+            if root_id is None:
+                raise FoundationError("invalid_request", "Name the workflow root Work")
+            work_id = UUID(str(raw["work_id"]))
+            if work_id not in workflow_work_ids(self.path, root_id, self.authority):
+                raise FoundationError("wrong_scope", "Method Work is not in this workflow")
+            if self.assigned_attempt_id is not None and self._selection(session_id).work_id not in (
+                workflow_work_ids(self.path, root_id, self.authority)
+            ):
+                raise FoundationError("wrong_scope", "Read only the assigned workflow")
+            return read_workflow_method_tasks(self.path, work_id, self.authority)
+        if action == "read_packet":
+            if raw.get("setup_id"):
+                return self.activity_setup(session_id, {**raw, "action": "read_packet"})
+            if root_id is None:
+                raise FoundationError("invalid_request", "Name the workflow root Work")
+            if self.assigned_attempt_id is not None:
+                from .workflows import workflow_work_ids
+
+                selected = self._selection(session_id)
+                if selected.work_id not in workflow_work_ids(self.path, root_id, self.authority):
+                    raise FoundationError("wrong_scope", "Read only the assigned workflow")
+            packet_ref = ArtifactRef.model_validate(raw["reference"])
+            content = read_workflow_packet(self.path, root_id, packet_ref, self.authority)
+            offset, maximum = int(raw.get("offset", 0)), int(raw.get("max_bytes", 16384))
+            if offset < 0 or offset > len(content) or not 1 <= maximum <= 65536:
+                raise FoundationError("invalid_request", "Use a bounded workflow window")
+            end = min(offset + maximum, len(content))
+            while end > offset:
+                try:
+                    content[offset:end].decode("utf-8")
+                    break
+                except UnicodeDecodeError:
+                    end -= 1
+            if end == offset and offset < len(content):
+                raise FoundationError("invalid_request", "Window cannot hold a UTF-8 character")
+            return {
+                "reference": packet_ref.model_dump(mode="json"),
+                "offset": offset,
+                "total_bytes": len(content),
+                "content_base64": base64.b64encode(content[offset:end]).decode(),
+                "content_text": content[offset:end].decode("utf-8"),
+                "next_offset": end if end < len(content) else None,
+            }
+        if action in ("status", "explain"):
+            if root_id is None:
+                raise FoundationError("invalid_request", "Name the workflow root Work")
+            read_workflow_run(self.path, root_id, self.authority)
+            if self.assigned_attempt_id is not None:
+                from .workflows import workflow_work_ids
+
+                selected = self._selection(session_id)
+                if selected.work_id not in workflow_work_ids(self.path, root_id, self.authority):
+                    raise FoundationError("wrong_scope", "Read only the assigned workflow")
+            return workflow_view(self.path, root_id, self.authority)
+        if self.assigned_attempt_id is not None:
+            raise FoundationError(
+                "permission_denied", "Assigned nodes may only read workflow state"
+            )
+        if action not in (
+            "propose",
+            "start",
+            "answer",
+            "correct_answer",
+            "retry",
+            "pause",
+            "resume",
+            "cancel",
+            "migrate",
+        ):
+            raise FoundationError(
+                "permission_denied", "Internal workflow transitions are host-owned"
+            )
+        operation_key = str(raw["operation_key"])
+        operation_id = uuid5(session_id, "workflow:" + operation_key)
+        try:
+            earlier = read_receipt(self.path, operation_id, self.authority)
+        except FoundationError as error:
+            if error.code != "not_found":
+                raise
+        else:
+            if action == "propose":
+                return {
+                    "receipt": earlier.model_dump(mode="json"),
+                    "next_action": (
+                        "Validate and apply a scoped workflow Candidate; proposal is not executable"
+                    ),
+                }
+            if "root_work_id" not in earlier.result and action == "answer" and root_id is not None:
+                if str(earlier.result.get("wait_id")) != str(raw["wait_id"]):
+                    raise FoundationError(
+                        "operation_conflict", "Call already answered another question"
+                    )
+                return workflow_view(self.path, root_id, self.authority)
+            recorded_root = UUID(str(earlier.result["root_work_id"]))
+            if root_id is not None and root_id != recorded_root:
+                raise FoundationError(
+                    "operation_conflict", "Call already addressed another workflow"
+                )
+            return workflow_view(self.path, recorded_root, self.authority)
+        fields: dict[str, Any] = {}
+        if action in ("pause", "cancel", "migrate", "correct_answer") and (
+            self.workflow_controller is not None and self.workflow_controller.active == root_id
+        ):
+            self.workflow_controller.close()
+        if action == "propose":
+            fields.update(
+                workflow_id=UUID(str(raw.get("workflow_id", uuid5(operation_id, "definition")))),
+                version=int(raw.get("version", 1)),
+                definition=raw["definition"],
+            )
+        elif action == "start":
+            root_id = root_id or uuid5(operation_id, "root")
+            original, _ = self._fresh_user_source(session_id)
+            fields.update(
+                root_work_id=root_id,
+                workflow=raw["workflow"],
+                activity_id=UUID(str(raw["activity_id"])),
+                source_refs=tuple(
+                    dict.fromkeys((original,) + self._exposed_sources(session_id, raw))
+                ),
+                inputs=raw.get("inputs", ()),
+            )
+        else:
+            if root_id is None:
+                raise FoundationError("invalid_request", "Name the workflow root Work")
+            current = read_workflow_run(self.path, root_id, self.authority)
+            fields.update(root_work_id=root_id, expected_revision=current.revision)
+            if action == "answer":
+                original, _ = self._fresh_user_source(session_id)
+                wait_id = UUID(str(raw["wait_id"]))
+                wait = next((wait for wait in current.waits if wait.wait_id == wait_id), None)
+                if wait is None:
+                    raise FoundationError("stale_wait", "Named question is no longer open")
+                fields.update(
+                    wait_id=wait_id,
+                    expected_wait_revision=int(raw.get("expected_wait_revision", wait.revision)),
+                    answer=original,
+                )
+            elif action == "correct_answer":
+                original, _ = self._fresh_user_source(session_id)
+                fields.update(
+                    wait_id=UUID(str(raw["wait_id"])),
+                    expected_wait_revision=int(raw["expected_wait_revision"]),
+                    answer=original,
+                )
+            elif action == "retry":
+                original, _ = self._fresh_user_source(session_id)
+                fields.update(node_key=str(raw["node_key"]), answer=original)
+            elif action == "migrate":
+                fields.update(
+                    workflow=raw["workflow"],
+                    node_mapping=raw.get("node_mapping", {}),
+                    node_dispositions=raw["node_dispositions"],
+                )
+        receipt = apply_operation(
+            self.path,
+            WorkflowRequest.model_validate(
+                {
+                    "operation_id": operation_id,
+                    "space_id": self.authority.space_id,
+                    "actor": self.authority.actor,
+                    "action": "create_definition" if action == "propose" else action,
+                    **fields,
+                }
+            ),
+            self.authority,
+        )
+        if action == "propose":
+            return {
+                "receipt": receipt.model_dump(mode="json"),
+                "next_action": (
+                    "Validate and apply a scoped workflow Candidate; proposal is not executable"
+                ),
+            }
+        if action in ("start", "answer", "correct_answer", "retry", "resume"):
+            if self.workflow_controller is None:
+                raise FoundationError(
+                    "workflow_executor_unavailable", "No window workflow executor"
+                )
+            assert root_id is not None
+            if (
+                action == "answer"
+                and self.deliver_answer is not None
+                and receipt.result.get("outbox_id")
+            ):
+                self.deliver_answer(UUID(str(receipt.result["outbox_id"])))
+            self.workflow_controller.start(root_id, raw.get("model", {}))
+        assert root_id is not None
+        return workflow_view(self.path, root_id, self.authority)
 
     def _workspace_configuration(self) -> LaunchConfig | None:
         return read_config(self.workspace_config) if self.workspace_config else None
@@ -383,7 +817,7 @@ class Bridge:
     def activity_setup(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, Any]:
         """Only the interactive trusted host controls a bounded new-Activity setup."""
         self._session(session_id)
-        if self.assigned_attempt_id is not None:
+        if self.assigned_attempt_id is not None and raw.get("action") != "read_packet":
             raise FoundationError(
                 "permission_denied", "Assigned Work cannot control Activity setup"
             )
@@ -402,6 +836,100 @@ class Bridge:
                 ]
             }
         identifier = UUID(str(raw["setup_id"]))
+        if action == "retain_file":
+            current = read_activity_setup(self.path, identifier, self.authority)
+            original, _ = self._fresh_user_source(session_id)
+            content = base64.b64decode(str(raw["content_base64"]), validate=True)
+            content.decode("utf-8")
+            digest = hashlib.sha256(content).hexdigest().upper()
+            if digest != str(raw["content_sha256"]).upper():
+                raise FoundationError("invalid_request", "Selected file digest differs from bytes")
+            source_id = uuid5(identifier, "selected-file:" + str(raw["operation_key"]))
+            receipt = apply_operation(
+                self.path,
+                CreateKnowledgeRequest(
+                    operation_id=uuid5(source_id, "retain"),
+                    space_id=self.authority.space_id,
+                    actor=self.authority.actor,
+                    record_id=source_id,
+                    state=SourceState(
+                        channel="document",
+                        connection="ordinary-pi-selected-file",
+                        profile_revision=1,
+                        scope_activity_id=current.state.activity_id,
+                        media_type="text/plain; charset=utf-8",
+                        capture="full",
+                        content=content,
+                        locator=str(raw["locator"]),
+                        derived_from=(original,),
+                        limitations=(
+                            "File selected explicitly; archived names are origin labels, "
+                            "not Core addresses",
+                        ),
+                    ),
+                ),
+                self.authority,
+            )
+            reference = KnowledgeRef(record_id=source_id, revision=1)
+            self.selected_file_refs.setdefault(session_id, set()).add(reference)
+            return {
+                "selected_source": reference.model_dump(mode="json"),
+                "content_sha256": digest,
+                "total_bytes": len(content),
+                "exposed": [],
+                "receipt": receipt.model_dump(mode="json"),
+            }
+        if action == "read_packet":
+            current = read_activity_setup(self.path, identifier, self.authority)
+            if self.assigned_attempt_id is not None and not any(
+                stage.work_id == self._selection(session_id).work_id
+                for stage in current.state.stages
+            ):
+                raise FoundationError("wrong_scope", "Read only packets of the assigned setup")
+            packet_reference = ArtifactRef.model_validate(raw["reference"])
+            allowed = {
+                ref
+                for ref in (current.state.manifest, current.state.draft, current.state.review)
+                if ref is not None
+            }
+            allowed.update(stage.packet for stage in current.state.stages)
+            allowed.update(stage.output for stage in current.state.stages if stage.output)
+            if packet_reference not in allowed:
+                raise FoundationError(
+                    "wrong_scope", "Artifact is not a packet/result of this setup"
+                )
+            item = read_artifact(
+                self.path,
+                packet_reference.artifact_id,
+                self.authority,
+                revision=packet_reference.revision,
+            )
+            packet_content = item.content
+            if packet_content is None or item.media_type is None:
+                raise FoundationError(
+                    "unavailable_context", "Setup artifact content is unavailable"
+                )
+            offset, maximum = int(raw.get("offset", 0)), int(raw.get("max_bytes", 16384))
+            if offset < 0 or offset > len(packet_content) or not 1 <= maximum <= 65536:
+                raise FoundationError("invalid_request", "Use a bounded artifact window")
+            end = min(offset + maximum, len(packet_content))
+            if item.media_type.startswith("text/") or item.media_type == "application/json":
+                while end > offset:
+                    try:
+                        packet_content[offset:end].decode("utf-8")
+                        break
+                    except UnicodeDecodeError:
+                        end -= 1
+                if end == offset and offset < len(packet_content):
+                    raise FoundationError("invalid_request", "Window cannot hold a UTF-8 character")
+            return {
+                "reference": packet_reference.model_dump(mode="json"),
+                "media_type": item.media_type,
+                "offset": offset,
+                "total_bytes": len(packet_content),
+                "content_base64": base64.b64encode(packet_content[offset:end]).decode("ascii"),
+                "next_offset": end if end < len(packet_content) else None,
+            }
         if action == "status":
             current = read_activity_setup(self.path, identifier, self.authority)
             usage: list[dict[str, Any]] = []
@@ -412,6 +940,7 @@ class Bridge:
         if action not in (
             "begin",
             "answer",
+            "attach_sources",
             "question",
             "submit",
             "pause",
@@ -433,33 +962,39 @@ class Bridge:
                 contract_version=2 if read_space(self.path).schema_version >= 15 else 1,
                 mode=raw.get("mode", "create"),
             )
-            source = self.last_sources.get(session_id)
+            source = (
+                KnowledgeRef.model_validate(raw["request_source"])
+                if raw.get("request_source") is not None
+                else self.last_sources.get(session_id)
+            )
             if source is not None:
+                if source != self.last_sources.get(
+                    session_id
+                ) and source not in self.exposed_refs.get(session_id, set()):
+                    raise FoundationError("permission_denied", "Original request must be exposed")
+                request = read_knowledge(
+                    self.path, source.record_id, self.authority, revision=source.revision
+                )
+                if (
+                    not isinstance(request.state, SourceState)
+                    or request.state.channel != "conversation_user"
+                ):
+                    raise FoundationError("invalid_request", "Request anchor must be a user Source")
                 fields["source_refs"] = (source,)
         else:
             current = read_activity_setup(self.path, identifier, self.authority)
             fields.update(activity_id=current.state.activity_id, expected_revision=current.revision)
         if action == "answer":
-            original = self.last_sources.get(session_id)
-            if original is None:
-                raise FoundationError("incomplete_context", "No actual user message to retain")
-            message = read_knowledge(
-                self.path, original.record_id, self.authority, revision=original.revision
-            )
-            if (
-                not isinstance(message.state, SourceState)
-                or message.state.channel != "conversation_user"
-                or message.state.content is None
-                or message.state.sender == "pi-session-history"
-            ):
-                raise FoundationError(
-                    "permission_denied", "Setup answer must come from a fresh received user message"
-                )
-            fields["text"] = message.state.content.decode("utf-8")
+            original, fields["text"] = self._fresh_user_source(session_id)
             fields["source_refs"] = (original,)
             state = current.state
             if original in state.sources:
-                return current.model_dump(mode="json")
+                supplied = self._exposed_sources(session_id, raw)
+                if not any(ref not in state.sources for ref in supplied):
+                    return current.model_dump(mode="json")
+                action = "attach_sources"
+                fields.pop("text")
+                fields["source_refs"] = supplied
             if state.stages and state.stages[-1].output is None:
                 stage = state.stages[-1]
                 snapshot = read_execution(self.path, stage.work_id, self.authority)
@@ -493,15 +1028,34 @@ class Bridge:
                     )
         elif action == "question":
             fields["text"] = str(raw["question"])
-        if action in ("begin", "answer"):
-            supplied = tuple(KnowledgeRef.model_validate(ref) for ref in raw.get("source_refs", []))
-            if any(ref not in self.exposed_refs.get(session_id, set()) for ref in supplied):
-                raise FoundationError(
-                    "permission_denied", "Setup can select only actually exposed authorized memory"
-                )
+        if action in ("begin", "answer", "attach_sources", "submit"):
+            supplied = self._exposed_sources(session_id, raw)
             fields["source_refs"] = tuple(dict.fromkeys(fields.get("source_refs", ()) + supplied))
         if action == "submit":
             current = read_activity_setup(self.path, identifier, self.authority)
+            supplied = fields.get("source_refs", ())
+            if any(ref not in current.state.sources for ref in supplied):
+                apply_operation(
+                    self.path,
+                    ActivitySetupRequest(
+                        operation_id=uuid5(
+                            identifier,
+                            "submit-sources:"
+                            + json.dumps(
+                                [ref.model_dump(mode="json") for ref in supplied], sort_keys=True
+                            ),
+                        ),
+                        space_id=self.authority.space_id,
+                        actor=self.authority.actor,
+                        setup_id=identifier,
+                        action="attach_sources",
+                        activity_id=current.state.activity_id,
+                        expected_revision=current.revision,
+                        source_refs=supplied,
+                    ),
+                    self.authority,
+                )
+                current = read_activity_setup(self.path, identifier, self.authority)
             if current.state.phase == "needs_input":
                 raise FoundationError(
                     "incomplete_context", "Answer the saved question before submitting setup"
@@ -667,6 +1221,8 @@ class Bridge:
             stage = read_setup_stage(self.path, selected.work_id, self.authority)
             if stage is not None and stage.result_protocol is not None:
                 result["setup_result_protocol"] = stage.result_protocol
+            if read_workflow_node_for_work(self.path, selected.work_id, self.authority) is not None:
+                result["workflow_result_protocol"] = "workflow_json"
         return result
 
     def operation(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
@@ -866,6 +1422,19 @@ class Bridge:
             )
         registry = installed_integrations(self.path, self.authority)
         operation = str(raw.get("operation", "describe_structure"))
+        if self.restricted_core_reads and operation not in (
+            "describe_structure",
+            "list_formats",
+            "read_format",
+            "read_entry",
+            "history",
+            "query_entries",
+            "aggregate_entries",
+            "working_set",
+            "procedure_status",
+            "due_procedures",
+        ):
+            raise FoundationError("permission_denied", "This node permits Core reads only")
         if raw.get("mode") == "contract":
             return registry.contract("data", operation)
         arguments = dict(raw.get("arguments", {}))
@@ -996,6 +1565,8 @@ class Bridge:
 
     def knowledge_operation(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
         self._session(session_id)
+        if self.restricted_core_reads:
+            raise FoundationError("permission_denied", "This node permits Core reads only")
         prepared = dict(raw)
         state_raw = prepared.get("state")
         if isinstance(state_raw, dict):
@@ -1192,6 +1763,8 @@ class Bridge:
 
     def development_operation(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
         self._session(session_id)
+        if self.restricted_core_reads:
+            raise FoundationError("permission_denied", "This node permits Core reads only")
         state = raw.get("state")
         if (
             raw.get("kind") in ("create_development", "revise_development")
@@ -1342,7 +1915,10 @@ class Bridge:
                 if selected and replay_session_id is None
                 else None,
                 "sender": self.authority.actor
-                if channel == "conversation_user" and input_source == "interactive"
+                if channel == "conversation_user"
+                and input_source in ("interactive", "rpc")
+                and self.assigned_attempt_id is None
+                and replay_session_id is None
                 else "pi-session-history"
                 if replay_session_id is not None
                 else "pi-rpc"
@@ -1378,6 +1954,8 @@ class Bridge:
     def knowledge_read(self, session_id: UUID, body: dict[str, Any]) -> dict[str, object]:
         self._session(session_id)
         mode = body.get("mode")
+        if self.restricted_core_reads and mode in ("export", "prepare_cache"):
+            raise FoundationError("permission_denied", "This node cannot export or prepare caches")
         if mode in (
             "catalog",
             "read_batch",
@@ -1454,22 +2032,13 @@ class Bridge:
                 cursor=body.get("cursor"),
             )
         if mode == "search":
-            result = search_knowledge(
+            return search_knowledge(
                 self.path,
                 self.authority,
                 str(body["query"]),
                 limit=int(body.get("limit", 25)),
                 cursor=str(body["cursor"]) if body.get("cursor") is not None else None,
             )
-            with self.lock:
-                exposed = self.exposed_refs.setdefault(session_id, set())
-                for entry in cast(list[dict[str, Any]], result["items"]):
-                    exposed.add(
-                        KnowledgeRef(
-                            record_id=UUID(entry["record_id"]), revision=int(entry["revision"])
-                        )
-                    )
-            return result
         record_id = UUID(str(body["record_id"]))
         if mode == "open":
             result = open_knowledge(
@@ -1481,10 +2050,18 @@ class Bridge:
                 max_bytes=int(body.get("max_bytes", 16384)),
             )
             if result.get("content_base64") is not None:
+                start = int(cast(int, result["offset"]))
+                end = start + len(base64.b64decode(str(result["content_base64"])))
+                complete = start == 0 and end == result["total_bytes"]
+                reference = KnowledgeRef(
+                    record_id=record_id,
+                    revision=cast(int, result["revision"]),
+                    start=None if complete else start,
+                    end=None if complete else end,
+                )
+                result["exposed"] = [reference.model_dump(mode="json")]
                 with self.lock:
-                    self.exposed_refs.setdefault(session_id, set()).add(
-                        KnowledgeRef(record_id=record_id, revision=cast(int, result["revision"]))
-                    )
+                    self.exposed_refs.setdefault(session_id, set()).add(reference)
             return result
         if mode == "neighbors":
             return read_knowledge_neighbors(
@@ -1769,6 +2346,59 @@ class Bridge:
                         KnowledgeRef(record_id=UUID(entry["record_id"]), revision=entry["revision"])
                     )
             inputs: list[dict[str, object]] = []
+            if info.schema_version >= 16:
+                from zaratustra.foundation import read_workflow_continuation_for_work
+
+                continuation = read_workflow_continuation_for_work(
+                    self.path, selected.work_id, self.authority
+                )
+                if continuation is not None:
+                    exact_continuation = read_artifact(
+                        self.path,
+                        continuation.artifact_id,
+                        self.authority,
+                        revision=continuation.revision,
+                    )
+                    if exact_continuation.content is None:
+                        raise FoundationError(
+                            "incomplete_context", "Native continuation is unavailable"
+                        )
+                    mandatory.append(
+                        KnowledgeRef(
+                            record_id=continuation.artifact_id, revision=continuation.revision
+                        )
+                    )
+                    packet["workflow_continuation"] = {
+                        "reference": continuation.model_dump(mode="json"),
+                        "content_text": exact_continuation.content.decode("utf-8"),
+                    }
+                    partial_materials: list[dict[str, Any]] = []
+                    for raw_partial in json.loads(exact_continuation.content)["partial_refs"]:
+                        partial_ref = ArtifactRef.model_validate(raw_partial)
+                        partial = read_artifact(
+                            self.path,
+                            partial_ref.artifact_id,
+                            self.authority,
+                            revision=partial_ref.revision,
+                        )
+                        if partial.content is None:
+                            raise FoundationError(
+                                "incomplete_context", "Native partial is unavailable"
+                            )
+                        mandatory.append(
+                            KnowledgeRef(
+                                record_id=partial_ref.artifact_id, revision=partial_ref.revision
+                            )
+                        )
+                        partial_materials.append(
+                            {
+                                "reference": partial_ref.model_dump(mode="json"),
+                                "content_base64": base64.b64encode(partial.content).decode("ascii"),
+                            }
+                        )
+                    cast(dict[str, Any], packet["workflow_continuation"])["partials"] = (
+                        partial_materials
+                    )
             for ref in work.state.inputs:
                 exact = read_artifact(
                     self.path, ref.artifact_id, self.authority, revision=ref.revision
@@ -2169,7 +2799,11 @@ class Bridge:
             else None
         )
         raw_setup = setup_stage is not None and setup_stage.result_protocol == "setup_json"
-        if (not data and not raw_setup) or len(data) > 8 * 1024 * 1024:
+        raw_workflow = (
+            self.assigned_attempt_id is not None
+            and read_workflow_node_for_work(self.path, selected.work_id, self.authority) is not None
+        )
+        if (not data and not (raw_setup or raw_workflow)) or len(data) > 8 * 1024 * 1024:
             raise FoundationError("invalid_request", "Result is empty or too large")
         publication = PublishAttemptOutputRequest(
             operation_id=uuid5(attempt_id, f"publish:{slot}"),
@@ -2378,6 +3012,9 @@ class BridgeHandler(BaseHTTPRequestHandler):
         if not self._authorized():
             self._reply(HTTPStatus.UNAUTHORIZED, {"error": "unauthorized"})
             return
+        body: dict[str, Any] = {}
+        session_id: UUID | None = None
+        path = urlsplit(self.path)
         try:
             path = urlsplit(self.path)
             params = parse_qs(path.query)
@@ -2432,6 +3069,10 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 result = bridge.activity_read(session_id, UUID(body["activity_id"]))
             elif post and path.path == "/v1/activity-setup":
                 result = bridge.activity_setup(session_id, body)
+            elif post and path.path == "/v1/model-selection":
+                result = bridge.model_selection(session_id, body)
+            elif post and path.path == "/v1/workflow":
+                result = bridge.workflow(session_id, body)
             elif post and path.path == "/v1/context-prepare":
                 result = bridge.prepare_context(
                     session_id,
@@ -2491,10 +3132,16 @@ class BridgeHandler(BaseHTTPRequestHandler):
             else:
                 self._reply(HTTPStatus.NOT_FOUND, {"error": "not_found"})
                 return
+            bridge.complete_provider_preflight(session_id, path.path, body)
             self._reply(HTTPStatus.OK, result)
         except (FoundationError, KeyError, ValueError, TypeError, json.JSONDecodeError) as error:
             code = error.code if isinstance(error, FoundationError) else "invalid_request"
-            self._reply(HTTPStatus.CONFLICT, {"error": code, "detail": str(error)})
+            if isinstance(error, FoundationError) and session_id is not None:
+                self.server.bridge.capture_provider_refusal(session_id, path.path, body, error)
+            result = {"error": code, "detail": str(error)}
+            if isinstance(error, FoundationError):
+                result["foundation_detail"] = error.detail
+            self._reply(HTTPStatus.CONFLICT, result)
 
     def do_GET(self) -> None:
         self._dispatch(post=False)

@@ -1119,24 +1119,17 @@ MEMORY_SCHEMA_SHA256 = (
 )
 SETUP_SCHEMA_NAME = "core-v0.1-activity-setup-14"
 SETUP_SCHEMA_STATEMENTS = (
-    (
-        "CREATE TABLE activity_setups (setup_id TEXT PRIMARY KEY,activity_id TEXT NOT NULL "
-        "UNIQUE REFERENCES subject_records(record_id),current_revision INTEGER NOT "
-        "NULL,status TEXT NOT NULL CHECK(status IN ('active','unavailable'))) STRICT"
-    ),
-    (
-        "CREATE TABLE activity_setup_revisions (setup_id TEXT NOT NULL REFERENCES "
-        "activity_setups(setup_id),revision INTEGER NOT NULL,operation_id TEXT NOT NULL "
-        "REFERENCES operations(operation_id),payload BLOB,sha256 TEXT,PRIMARY "
-        "KEY(setup_id,revision)) STRICT"
-    ),
-    (
-        "CREATE TABLE activity_setup_edges (setup_id TEXT NOT NULL,revision INTEGER NOT "
-        "NULL,ordinal INTEGER NOT NULL,target_id TEXT NOT NULL,target_revision INTEGER NOT "
-        "NULL,role TEXT NOT NULL,PRIMARY KEY(setup_id,revision,ordinal),FOREIGN "
-        "KEY(setup_id,revision) REFERENCES activity_setup_revisions(setup_id,revision)) "
-        "STRICT"
-    ),
+    "CREATE TABLE activity_setups (setup_id TEXT PRIMARY KEY,activity_id TEXT NOT NULL "
+    "UNIQUE REFERENCES subject_records(record_id),current_revision INTEGER NOT NULL,status "
+    "TEXT NOT NULL CHECK(status IN ('active','unavailable'))) STRICT",
+    "CREATE TABLE activity_setup_revisions (setup_id TEXT NOT NULL REFERENCES "
+    "activity_setups(setup_id),revision INTEGER NOT NULL,operation_id TEXT NOT NULL "
+    "REFERENCES operations(operation_id),payload BLOB,sha256 TEXT,PRIMARY "
+    "KEY(setup_id,revision)) STRICT",
+    "CREATE TABLE activity_setup_edges (setup_id TEXT NOT NULL,revision INTEGER NOT "
+    "NULL,ordinal INTEGER NOT NULL,target_id TEXT NOT NULL,target_revision INTEGER NOT "
+    "NULL,role TEXT NOT NULL,PRIMARY KEY(setup_id,revision,ordinal),FOREIGN "
+    "KEY(setup_id,revision) REFERENCES activity_setup_revisions(setup_id,revision)) STRICT",
     "CREATE INDEX activity_setup_target ON activity_setup_edges(target_id,setup_id)",
 )
 SETUP_SCHEMA_SHA256 = (
@@ -1218,7 +1211,86 @@ STRUCTURES_SCHEMA_SHA256 = (
     .hexdigest()
     .upper()
 )
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+WORKFLOW_SCHEMA_NAME = "core-workflows-v1"
+WORKFLOW_REBUILD_TABLES = {
+    name: STRUCTURES_REBUILD_TABLES[name].replace("'structure'", "'structure','workflow'")
+    for name in ("change_packages", "change_package_parts")
+}
+WORKFLOW_SCHEMA_STATEMENTS = (
+    "CREATE TABLE workflow_versions (workflow_id TEXT NOT NULL,version INTEGER NOT NULL,"
+    "checksum TEXT NOT NULL,status TEXT NOT NULL CHECK(status IN ('proposed','active','deleted')),"
+    "payload BLOB,operation_id TEXT NOT NULL REFERENCES operations,created_at TEXT NOT NULL,"
+    "actor TEXT NOT NULL,PRIMARY KEY(workflow_id,version)) STRICT",
+    "CREATE TABLE workflow_adoptions (workflow_id TEXT NOT NULL,version INTEGER NOT NULL,"
+    "application_id TEXT NOT NULL,candidate_id TEXT NOT NULL,candidate_revision INTEGER NOT NULL,"
+    "decision_id TEXT NOT NULL,decision_revision INTEGER NOT NULL,scope_activity_id TEXT,"
+    "PRIMARY KEY(workflow_id,version,application_id)) STRICT",
+    "CREATE TABLE workflow_runs (root_work_id TEXT PRIMARY KEY REFERENCES subject_records "
+    "DEFERRABLE INITIALLY DEFERRED,"
+    "workflow_id TEXT NOT NULL,version INTEGER NOT NULL,checksum TEXT NOT NULL,revision INTEGER "
+    "NOT NULL,"
+    "control TEXT NOT NULL CHECK(control IN ('running','paused','cancelled')),sources TEXT,"
+    "operation_id TEXT NOT NULL REFERENCES operations,FOREIGN KEY(workflow_id,version) "
+    "REFERENCES workflow_versions) STRICT",
+    "CREATE TABLE workflow_nodes (root_work_id TEXT NOT NULL REFERENCES workflow_runs,"
+    "node_key TEXT NOT NULL,iteration INTEGER NOT NULL,role TEXT NOT NULL,work_id TEXT NOT NULL "
+    "REFERENCES subject_records DEFERRABLE INITIALLY DEFERRED,packet_id TEXT NOT NULL "
+    "REFERENCES records,packet_revision INTEGER NOT NULL,"
+    "model TEXT,PRIMARY KEY(root_work_id,node_key,iteration),UNIQUE(work_id)) STRICT",
+    "CREATE TABLE workflow_validations (validation_id TEXT PRIMARY KEY REFERENCES operations,"
+    "root_work_id TEXT NOT NULL REFERENCES workflow_runs,work_id TEXT NOT NULL REFERENCES "
+    "subject_records,"
+    "work_revision INTEGER NOT NULL,artifact_id TEXT NOT NULL REFERENCES "
+    "records,artifact_revision INTEGER NOT NULL,"
+    "inputs_sha256 TEXT NOT NULL,contract_sha256 TEXT NOT NULL,result TEXT,issues "
+    "TEXT,created_at TEXT NOT NULL) STRICT",
+    "CREATE INDEX workflow_validation_work ON "
+    "workflow_validations(work_id,created_at,validation_id)",
+    "CREATE TABLE workflow_transitions (validation_id TEXT NOT NULL REFERENCES operations,"
+    "node_key TEXT NOT NULL,target_work_id TEXT NOT NULL REFERENCES subject_records,"
+    "operation_id TEXT NOT NULL REFERENCES operations,PRIMARY "
+    "KEY(validation_id,node_key,target_work_id)) STRICT",
+    "CREATE TABLE workflow_recovery_boundaries (root_work_id TEXT NOT NULL REFERENCES "
+    "workflow_runs,"
+    "node_key TEXT NOT NULL,iteration INTEGER NOT NULL,operation_id TEXT NOT NULL "
+    "REFERENCES operations,"
+    "PRIMARY KEY(root_work_id,node_key)) STRICT",
+    "CREATE TABLE workflow_waits (wait_id TEXT PRIMARY KEY,root_work_id TEXT NOT NULL "
+    "REFERENCES workflow_runs,"
+    "work_id TEXT NOT NULL REFERENCES subject_records,node_key TEXT NOT NULL,revision INTEGER "
+    "NOT NULL,"
+    "kind TEXT NOT NULL CHECK(kind IN ('question','external')),question TEXT,purpose "
+    "TEXT,expected_actor TEXT NOT NULL,"
+    "bases TEXT,answer TEXT,operation_id TEXT NOT NULL REFERENCES operations,closed INTEGER NOT "
+    "NULL DEFAULT 0) STRICT",
+    "CREATE TABLE workflow_native_answers (root_work_id TEXT NOT NULL REFERENCES workflow_runs,"
+    "wait_id TEXT PRIMARY KEY REFERENCES execution_waits,work_id TEXT NOT NULL "
+    "REFERENCES subject_records,"
+    "answer TEXT NOT NULL,packet_id TEXT NOT NULL REFERENCES records,packet_revision "
+    "INTEGER NOT NULL,"
+    "operation_id TEXT NOT NULL REFERENCES operations) STRICT",
+    "CREATE TABLE workflow_events (root_work_id TEXT NOT NULL REFERENCES workflow_runs,revision "
+    "INTEGER NOT NULL,"
+    "operation_id TEXT NOT NULL REFERENCES operations,kind TEXT NOT NULL,detail TEXT,created_at "
+    "TEXT NOT NULL,"
+    "PRIMARY KEY(root_work_id,revision)) STRICT",
+    "CREATE TABLE workflow_edges (root_work_id TEXT NOT NULL,role TEXT NOT NULL,target_id TEXT "
+    "NOT NULL,"
+    "target_revision INTEGER NOT NULL,PRIMARY KEY(root_work_id,role,target_id,target_revision)) "
+    "STRICT",
+)
+WORKFLOW_SCHEMA_SHA256 = (
+    hashlib.sha256(
+        (
+            json.dumps(WORKFLOW_REBUILD_TABLES, sort_keys=True)
+            + "\n"
+            + "\n".join(WORKFLOW_SCHEMA_STATEMENTS)
+        ).encode()
+    )
+    .hexdigest()
+    .upper()
+)
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
 
 
 def utc_now() -> datetime:
@@ -1328,31 +1400,56 @@ def _begin(connection: sqlite3.Connection, *, writable: bool) -> None:
             time.sleep(0.05 * (attempt + 1))
 
 
-def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> SpaceInfo:
-    # BEGIN is deferred for readers. This PRAGMA is their first actual read and
-    # can meet the short exclusive WAL cleanup held by the last closing handle.
-    # Only this read is retried; a persistent lock still fails without an effect.
+def _identity_read(
+    connection: sqlite3.Connection, statement: str, label: str
+) -> list[tuple[Any, ...]]:
+    """Retry only one pure identity read, including stepping/fetching its cursor."""
     for attempt in range(BUSY_ATTEMPTS):
+        cursor: sqlite3.Cursor | None = None
         try:
-            application_id = int(connection.execute("PRAGMA application_id").fetchone()[0])
-            break
+            cursor = connection.execute(statement)
+            return cursor.fetchall()
         except sqlite3.OperationalError as error:
-            busy = "locked" in str(error).casefold() or "busy" in str(error).casefold()
+            code = getattr(error, "sqlite_errorcode", None)
+            busy = (
+                code & 0xFF in (sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED)
+                if isinstance(code, int)
+                else "locked" in str(error).casefold() or "busy" in str(error).casefold()
+            )
             if not busy or attempt + 1 == BUSY_ATTEMPTS:
-                raise
+                name = getattr(error, "sqlite_errorname", type(error).__name__)
+                raise FoundationError(
+                    "storage", f"SQLite identity failed at {label} ({name}): {error}"
+                ) from error
             time.sleep(0.05 * (attempt + 1))
-    schema_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
+        finally:
+            if cursor is not None:
+                cursor.close()
+    raise AssertionError("Identity retry loop must return or raise")
+
+
+def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> SpaceInfo:
+    # Validation finishes before the caller receives the connection. None of
+    # these bounded read retries replays its operation body, commit or a model.
+    application_id = int(
+        _identity_read(connection, "PRAGMA application_id", "application_id")[0][0]
+    )
+    schema_version = int(_identity_read(connection, "PRAGMA user_version", "user_version")[0][0])
     if application_id != APPLICATION_ID or schema_version not in SUPPORTED_SCHEMA_VERSIONS:
         raise FoundationError(
             "unsupported_schema",
             f"Unsupported application/schema identity: {application_id}/{schema_version}",
         )
-    journal = str(connection.execute("PRAGMA journal_mode").fetchone()[0]).casefold()
+    journal = str(
+        _identity_read(connection, "PRAGMA journal_mode", "journal_mode")[0][0]
+    ).casefold()
     if journal != "wal":
         raise FoundationError("unsupported_configuration", f"Expected WAL, found {journal}")
-    migration = connection.execute(
-        "SELECT version, name, sha256 FROM schema_migrations ORDER BY version"
-    ).fetchall()
+    migration = _identity_read(
+        connection,
+        "SELECT version, name, sha256 FROM schema_migrations ORDER BY version",
+        "schema_migrations",
+    )
     expected = [(SCHEMA_VERSION, SCHEMA_NAME, SCHEMA_SHA256)]
     if schema_version >= 2:
         expected.append((2, SUBJECT_SCHEMA_NAME, SUBJECT_SCHEMA_SHA256))
@@ -1382,11 +1479,15 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         expected.append((14, SETUP_SCHEMA_NAME, SETUP_SCHEMA_SHA256))
     if schema_version >= 15:
         expected.append((15, STRUCTURES_SCHEMA_NAME, STRUCTURES_SCHEMA_SHA256))
+    if schema_version >= 16:
+        expected.append((16, WORKFLOW_SCHEMA_NAME, WORKFLOW_SCHEMA_SHA256))
     if migration != expected:
         raise FoundationError("unsupported_schema", "Schema history does not match installed code")
-    rows = connection.execute(
-        "SELECT space_id, created_at, state_revision, execution_epoch, recovery_state FROM spaces"
-    ).fetchall()
+    rows = _identity_read(
+        connection,
+        "SELECT space_id, created_at, state_revision, execution_epoch, recovery_state FROM spaces",
+        "spaces",
+    )
     if len(rows) != 1:
         raise FoundationError("corrupt_space", "Expected exactly one space identity")
     space_id, created_at, state_revision, execution_epoch, recovery_state = rows[0]

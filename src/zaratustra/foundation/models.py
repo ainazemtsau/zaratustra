@@ -386,6 +386,7 @@ class PlanCondition(ContractModel):
         "artifact_current",
         "decision_active",
         "decision_value",
+        "validated_internal_output",
         "all",
         "any",
     ]
@@ -399,9 +400,29 @@ class PlanCondition(ContractModel):
     # Only a decision_value leaf names a choice; absent from earlier canonical plans.
     name: Identifier | None = Field(default=None, exclude_if=lambda value: value is None)
     value: Identifier | None = Field(default=None, exclude_if=lambda value: value is None)
+    validation_id: UUID | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
     def exact_shape(self) -> PlanCondition:
+        if self.kind == "validated_internal_output":
+            if (
+                not self.role
+                or not self.slot
+                or not self.media_type
+                or self.artifact is None
+                or self.validation_id is None
+                or self.members
+                or self.decision_id is not None
+                or self.decision_revision is not None
+                or self.name is not None
+                or self.value is not None
+            ):
+                raise ValueError(
+                    "Internal output needs exact role, slot, type, Artifact and validation receipt"
+                )
+            return self
+        if self.validation_id is not None:
+            raise ValueError("Only internal output names a validation receipt")
         fields = (
             self.role,
             self.slot,
@@ -469,6 +490,7 @@ class PlanChild(ContractModel):
     work_id: UUID
     state: WorkState
     readiness: PlanCondition | None = None
+    nested_plan: WorkPlan | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class WorkPlan(ContractModel):
@@ -1858,6 +1880,7 @@ class ActivityStructureState(ContractModel):
     instructions: str
     first_action: str
     process: str
+    workflows: tuple[WorkflowRef, ...] = Field(default=(), exclude_if=lambda v: not v)
     formats: dict[str, KnowledgeRef] = {}
     procedures: tuple[ProcedureDefinition, ...] = ()
     working_sets: tuple[WorkingSet, ...] = ()
@@ -2056,6 +2079,249 @@ class ValidationResultState(ContractModel):
         return self
 
 
+class WorkflowRef(ContractModel):
+    workflow_id: UUID
+    version: int = Field(ge=1)
+    checksum: str = Field(pattern=r"^[0-9A-F]{64}$")
+
+
+class WorkflowModel(ContractModel):
+    provider: str = Field(min_length=1, max_length=100)
+    model_id: str = Field(min_length=1, max_length=200)
+    profile: str = Field(min_length=1, max_length=100)
+    reasoning: str = Field(min_length=1, max_length=50)
+
+
+class WorkflowNode(ContractModel):
+    key: Identifier
+    kind: Literal["model", "question", "external", "core", "nested"]
+    instruction: str = Field(min_length=1, max_length=16384)
+    method: MethodRef | None = None
+    plan: WorkPlan | None = None
+    input_slot: Identifier | None = None
+    inputs: tuple[NamedInput, ...] = ()
+    dependencies: tuple[Identifier, ...] = ()
+    successors: tuple[Identifier, ...] = ()
+    max_iterations: int = Field(default=1, ge=1, le=100)
+    result_fields: tuple[DataField, ...] = ()
+    operation: str | None = None
+    operation_arguments: dict[str, JsonValue] = Field(default_factory=dict)
+    workflow: WorkflowRef | None = None
+    resource: Literal["workspace", "project"] = "workspace"
+    project: str | None = None
+    result_protocol: Literal["workflow_json", "setup_draft", "setup_review"] = "workflow_json"
+    allowed_actions: tuple[
+        Literal["core_read", "project_read", "project_write", "project_command"], ...
+    ] = ("core_read",)
+
+    @model_validator(mode="after")
+    def executable_node(self) -> WorkflowNode:
+        if (
+            any(action != "core_read" for action in self.allowed_actions)
+            and self.resource != "project"
+        ):
+            raise ValueError("Project actions require a selected project resource")
+        if self.result_protocol != "workflow_json" and self.allowed_actions != ("core_read",):
+            raise ValueError("Setup stages allow only their declared Core reads")
+        if (self.method is None) != (self.plan is None):
+            raise ValueError("A Method node requires its exact composite plan")
+        if (self.kind == "core") != (self.operation is not None):
+            raise ValueError("A core node names its registered operation")
+        if (self.kind == "nested") != (self.workflow is not None):
+            raise ValueError("A nested node names its exact workflow")
+        if (self.resource == "project") != (self.project is not None):
+            raise ValueError("Project nodes need a registered project")
+        if len(set(self.dependencies)) != len(self.dependencies) or len(
+            set(self.successors)
+        ) != len(self.successors):
+            raise ValueError("Workflow edges must be unique")
+        return self
+
+
+class WorkflowDefinition(ContractModel):
+    contract_version: Literal[1] = 1
+    title: str = Field(min_length=1, max_length=200)
+    purpose: str = Field(min_length=1, max_length=4096)
+    inputs: tuple[OutputContract, ...] = ()
+    outputs: tuple[OutputContract, ...] = (
+        OutputContract(slot="report", media_type="application/json"),
+    )
+    nodes: tuple[WorkflowNode, ...] = Field(min_length=1, max_length=100)
+    entry_nodes: tuple[Identifier, ...] = Field(min_length=1)
+    allowed_operations: tuple[str, ...] = ()
+    allowed_action_classes: tuple[
+        Literal["core_read", "project_read", "project_write", "project_command"], ...
+    ] = ("core_read",)
+
+    @model_validator(mode="after")
+    def valid_graph_template(self) -> WorkflowDefinition:
+        if (
+            len(self.outputs) != 1
+            or self.outputs[0].slot != "report"
+            or self.outputs[0].media_type not in ("application/json", "text/plain")
+            or self.outputs[0].format_ref is not None
+        ):
+            raise ValueError(
+                "Workflow root declares one JSON or text report; typed data is a node effect"
+            )
+        keys = {node.key for node in self.nodes}
+        if len(keys) != len(self.nodes) or not set(self.entry_nodes).issubset(keys):
+            raise ValueError("Workflow nodes and entry addresses must be exact and unique")
+        for node in self.nodes:
+            if not set(node.allowed_actions).issubset(set(self.allowed_action_classes)):
+                raise ValueError("Node actions exceed the workflow contract")
+            if not set(node.dependencies + node.successors).issubset(keys):
+                raise ValueError("Workflow edge names an absent node")
+            if node.operation is not None and node.operation not in self.allowed_operations:
+                raise ValueError("Core node operation is outside the definition")
+        # Readiness is acyclic. Bounded successor loops materialize fresh Work iterations.
+        visiting: set[str] = set()
+        visited: set[str] = set()
+
+        def visit(key: str) -> None:
+            if key in visiting:
+                raise ValueError("Workflow readiness cannot contain cycles")
+            if key in visited:
+                return
+            visiting.add(key)
+            for dependency in next(node for node in self.nodes if node.key == key).dependencies:
+                visit(dependency)
+            visiting.remove(key)
+            visited.add(key)
+
+        for key in keys:
+            visit(key)
+        return self
+
+
+class WorkflowChange(ContractModel):
+    kind: Literal["workflow"] = "workflow"
+    workflow_id: UUID
+    from_version: int | None = Field(default=None, ge=1)
+    to_version: int = Field(ge=1)
+    definition: WorkflowDefinition
+
+    @model_validator(mode="after")
+    def consecutive_version(self) -> WorkflowChange:
+        if self.to_version != (self.from_version or 0) + 1:
+            raise ValueError("Workflow versions must be consecutive")
+        return self
+
+
+class WorkflowNodeResult(ContractModel):
+    outcome: Literal["result", "question", "external", "obstacle"]
+    values: dict[str, JsonValue] = Field(default_factory=dict)
+    question: str | None = None
+    purpose: str | None = None
+    next_nodes: tuple[Identifier, ...] = ()
+    explanation: str | None = None
+
+    @model_validator(mode="after")
+    def honest_outcome(self) -> WorkflowNodeResult:
+        if self.outcome in ("question", "external") and (not self.question or not self.purpose):
+            raise ValueError("An interaction needs its exact question and purpose")
+        if self.outcome == "obstacle" and not self.explanation:
+            raise ValueError("An obstacle needs a concrete explanation")
+        return self
+
+
+class WorkflowWait(ContractModel):
+    wait_id: UUID
+    node_key: str
+    work_id: UUID
+    revision: int
+    kind: Literal["question", "external"]
+    question: str
+    purpose: str
+    expected_actor: str
+    bases: tuple[KnowledgeRef, ...] = ()
+    answer: KnowledgeRef | None = None
+    root_work_id: UUID | None = Field(default=None, exclude_if=lambda v: v is None)
+    native: bool = Field(default=False, exclude_if=lambda value: not value)
+    attempt_id: UUID | None = Field(default=None, exclude_if=lambda value: value is None)
+    session_id: UUID | None = Field(default=None, exclude_if=lambda value: value is None)
+
+
+class WorkflowNodeView(ContractModel):
+    key: str
+    iteration: int
+    role: str
+    work_id: UUID
+    packet: ArtifactRef
+    model: WorkflowModel | None = None
+    output: ArtifactRef | None = None
+    validation_id: UUID | None = None
+    issues: tuple[SetupValidationIssue, ...] = ()
+    retired: bool = False
+
+
+class WorkflowRunView(ContractModel):
+    root_work_id: UUID
+    revision: int
+    workflow: WorkflowRef
+    activity_id: UUID
+    nodes: tuple[WorkflowNodeView, ...]
+    waits: tuple[WorkflowWait, ...]
+    ready_nodes: tuple[str, ...]
+    next_action: Literal["run", "answer", "resume", "attention", "finish", "closed", "owner_action"]
+    explanation: str
+    control: Literal["running", "paused", "cancelled"]
+    diagnostics: tuple[ArtifactRef, ...] = ()
+
+
+class WorkflowRequest(OperationRequest):
+    kind: Literal["workflow"] = "workflow"
+    action: Literal[
+        "create_definition",
+        "start",
+        "bind_node",
+        "validate_output",
+        "ask",
+        "answer",
+        "advance",
+        "pause",
+        "resume",
+        "cancel",
+        "migrate",
+        "attention",
+        "finish",
+        "correct_answer",
+        "retry",
+    ]
+    workflow: WorkflowRef | None = None
+    workflow_id: UUID | None = None
+    version: int = Field(default=1, ge=1)
+    definition: WorkflowDefinition | None = None
+    root_work_id: UUID | None = None
+    activity_id: UUID | None = None
+    expected_revision: int | None = Field(default=None, ge=1)
+    node_key: str | None = None
+    iteration: int | None = Field(default=None, ge=1)
+    model: WorkflowModel | None = None
+    source_refs: tuple[KnowledgeRef, ...] = ()
+    inputs: tuple[NamedInput, ...] = ()
+    output: ArtifactRef | None = None
+    wait_id: UUID | None = None
+    expected_wait_revision: int | None = Field(default=None, ge=1)
+    question: str | None = None
+    purpose: str | None = None
+    interaction_kind: Literal["question", "external"] = "question"
+    answer: KnowledgeRef | None = None
+    next_nodes: tuple[str, ...] = ()
+    node_mapping: dict[str, str] = Field(default_factory=dict)
+    node_dispositions: dict[str, Literal["keep", "replace", "retire"]] = Field(default_factory=dict)
+    text: str | None = None
+    code: str | None = None
+
+
+class SetupInteraction(ContractModel):
+    interaction_id: UUID
+    question: str
+    input_version: int
+    sources: tuple[KnowledgeRef, ...] = ()
+    answer: KnowledgeRef | None = None
+
+
 class MethodChange(ContractModel):
     kind: Literal["method"] = "method"
     method_id: UUID
@@ -2206,7 +2472,8 @@ ChangeTarget = Annotated[
     | ProgramChange
     | CompositeChange
     | ActivityChange
-    | StructureChange,
+    | StructureChange
+    | WorkflowChange,
     Field(discriminator="kind"),
 ]
 
@@ -2426,7 +2693,9 @@ class ChangeApplication(ContractModel):
     decision_id: UUID
     decision_revision: int = Field(ge=1)
     mode: Literal["trial", "regular"]
-    target_kind: Literal["method", "binding", "program", "composite", "activity", "structure"]
+    target_kind: Literal[
+        "method", "binding", "program", "composite", "activity", "structure", "workflow"
+    ]
     target_id: UUID
     version: int = Field(ge=1)
     checksum: str = Field(pattern=r"^[0-9A-F]{64}$")
@@ -2499,6 +2768,16 @@ class SetupFinding(ContractModel):
 class SetupQuestion(ContractModel):
     text: str = Field(min_length=1, max_length=4096)
     blocking: bool
+    scope: Literal["setup", "procedure", "none"] | None = Field(
+        default=None, exclude_if=lambda v: v is None
+    )
+    procedure_key: Identifier | None = Field(default=None, exclude_if=lambda v: v is None)
+
+    @model_validator(mode="after")
+    def addressed_blocking_scope(self) -> SetupQuestion:
+        if (self.scope == "procedure") != (self.procedure_key is not None):
+            raise ValueError("A procedure-scoped question needs its procedure key")
+        return self
 
 
 class SetupFormatTemplate(ContractModel):
@@ -2554,10 +2833,15 @@ class ActivitySetupDraftV2(ContractModel):
     decisions: tuple[SetupDecisionBasis, ...] = Field(min_length=1)
     extensions: tuple[str, ...] = ()
     questions: tuple[SetupQuestion, ...] = ()
+    workflows: tuple[WorkflowDefinition, ...] = Field(default=(), exclude_if=lambda v: not v)
 
     @property
     def open_questions(self) -> tuple[str, ...]:
-        return tuple(item.text for item in self.questions if item.blocking)
+        return tuple(
+            item.text
+            for item in self.questions
+            if item.blocking and item.scope not in ("procedure", "none")
+        )
 
     @model_validator(mode="after")
     def coherent_package(self) -> ActivitySetupDraftV2:
@@ -2612,7 +2896,11 @@ class ActivitySetupReviewV2(ContractModel):
 
     @property
     def unresolved(self) -> tuple[str, ...]:
-        return tuple(item.text for item in self.questions if item.blocking)
+        return tuple(
+            item.text
+            for item in self.questions
+            if item.blocking and item.scope not in ("procedure", "none")
+        )
 
     @model_validator(mode="after")
     def complete_review(self) -> ActivitySetupReviewV2:
@@ -2650,6 +2938,9 @@ class ActivityActivationManifest(ContractModel):
     structure: ActivityStructureState
     method_definitions: dict[str, MethodDefinition] = Field(default_factory=dict)
     initial_works: tuple[SetupWorkTemplate, ...] = ()
+    workflow_definitions: tuple[WorkflowDefinition, ...] = Field(
+        default=(), exclude_if=lambda v: not v
+    )
 
 
 class ActivitySetupReview(ContractModel):
@@ -2706,6 +2997,7 @@ class SetupStage(ContractModel):
     repair_of: UUID | None = Field(default=None, exclude_if=lambda v: v is None)
     repair_series: UUID | None = Field(default=None, exclude_if=lambda v: v is None)
     repair_number: int = Field(default=0, ge=0, le=2, exclude_if=lambda v: v == 0)
+    model: WorkflowModel | None = Field(default=None, exclude_if=lambda v: v is None)
 
 
 class ActivitySetupState(ContractModel):
@@ -2747,6 +3039,9 @@ class ActivitySetupState(ContractModel):
     activated_works: tuple[UUID, ...] = ()
     activated_methods: tuple[MethodRef, ...] = ()
     recovery_boundary: int = Field(default=0, ge=0, exclude_if=lambda v: v == 0)
+    workflow: WorkflowRef | None = Field(default=None, exclude_if=lambda v: v is None)
+    root_work_id: UUID | None = Field(default=None, exclude_if=lambda v: v is None)
+    interactions: tuple[SetupInteraction, ...] = Field(default=(), exclude_if=lambda v: not v)
 
 
 class ActivitySetupRevision(ContractModel):
@@ -2769,6 +3064,9 @@ class ActivitySetupRequest(OperationRequest):
         "finish",
         "retry",
         "attention",
+        "attach_sources",
+        "migrate_workflow",
+        "bind_model",
     ]
     setup_id: UUID
     activity_id: UUID
@@ -2778,6 +3076,7 @@ class ActivitySetupRequest(OperationRequest):
     source_refs: tuple[KnowledgeRef, ...] = ()
     stage_kind: Literal["draft", "correction", "review"] | None = None
     stage_instruction: str | None = Field(default=None, min_length=1, max_length=4096)
+    stage_model: WorkflowModel | None = Field(default=None, exclude_if=lambda v: v is None)
     auto_resume: bool = False
     output: ArtifactRef | None = None
     mode: Literal["create", "change_structure"] = Field(
@@ -2787,7 +3086,8 @@ class ActivitySetupRequest(OperationRequest):
 
 
 DomainRequest = Annotated[
-    IngestDataRequest
+    WorkflowRequest
+    | IngestDataRequest
     | StartProcedureRequest
     | PrepareProcedureRequest
     | ActivitySetupRequest
@@ -2859,7 +3159,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -3236,7 +3536,7 @@ class BackupManifest(ContractModel):
     backup_id: UUID
     format_version: Literal[1, 2] = 1
     space_id: UUID
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime

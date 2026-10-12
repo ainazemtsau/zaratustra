@@ -1,6 +1,6 @@
 [project]
 name = "zaratustra"
-version = "0.22.1"
+version = "0.23.0"
 description = "Zaratustra local workspace and transactional mutation protocol"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
@@ -123,6 +123,12 @@ name = "Activity setup domain stays below its Pi coordinator"
 type = "forbidden"
 source_modules = ["zaratustra.foundation.activity_setup"]
 forbidden_modules = ["zaratustra.pi_adapter", "zaratustra.release", "tests", "tools"]
+
+[[tool.importlinter.contracts]]
+name = "Workflow domain stays below Pi and release"
+type = "forbidden"
+source_modules = ["zaratustra.foundation.workflows"]
+forbidden_modules = ["zaratustra.pi_adapter", "zaratustra.release", "tests", "tools", "zaratustra.core", "zaratustra.cli"]
 
 [[tool.importlinter.contracts]]
 name = "Entry catalog depends only on Core"

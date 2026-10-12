@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 from uuid import UUID, uuid4, uuid5
 
 import pytest
 
+from tests.zaratustra.foundation.test_activity_setup import _case, _step
 from tests.zaratustra.foundation.test_execution import InvocationFields, ready
+from tests.zaratustra.foundation.test_memory import note
 from zaratustra.foundation import (
     ActivityState,
     AdmitInvocationRequest,
@@ -16,12 +18,14 @@ from zaratustra.foundation import (
     CreateActivityRequest,
     CreateArtifactRequest,
     CreateGrantRequest,
+    CreateKnowledgeRequest,
     CreateResourceRequest,
     CreateWorkRequest,
     DeleteWorkRequest,
     FinishInvocationRequest,
     FoundationError,
     GrantState,
+    KnowledgeRef,
     LinkedOutput,
     LinkWorkOutputRequest,
     OutputContract,
@@ -29,6 +33,7 @@ from zaratustra.foundation import (
     PublishAttemptOutputRequest,
     ResourceState,
     SendInvocationRequest,
+    SourceState,
     StopAttemptRequest,
     WorkState,
     apply_operation,
@@ -36,11 +41,264 @@ from zaratustra.foundation import (
     complete_deletions,
     managed_pi_lock,
     managed_pi_sessions,
+    read_activity_setup,
     read_artifact,
     read_execution,
+    read_knowledge,
     read_work,
 )
 from zaratustra.pi_adapter import Bridge
+
+
+def test_exact_open_window_is_not_authority_for_unread_original(tmp_path: Path) -> None:
+    """Risk: fragment exposure silently authorizes the rest of the source."""
+    case = _case(tmp_path)
+    root, space, owner, setup, *_ = case
+    source = note(root, space, owner, "абв\nprivate unread suffix")
+    bridge = Bridge(root, owner, root)
+    session = uuid4()
+    bridge.connect(session)
+    bridge.knowledge_read(session, {"mode": "search", "query": "private"})
+    assert KnowledgeRef(record_id=source, revision=1) not in bridge.exposed_refs.get(session, set())
+    result = bridge.knowledge_read(
+        session, {"mode": "open", "record_id": str(source), "max_bytes": 5}
+    )
+    exposed = KnowledgeRef.model_validate(cast(list[Any], result["exposed"])[0])
+    assert exposed.start == 0 and exposed.end == 4
+    with pytest.raises(FoundationError) as error:
+        bridge.activity_setup(
+            session,
+            {
+                "action": "attach_sources",
+                "setup_id": str(setup),
+                "source_refs": [{"record_id": str(source), "revision": 1}],
+            },
+        )
+    assert error.value.code == "permission_denied"
+    result = bridge.activity_setup(
+        session,
+        {
+            "action": "attach_sources",
+            "setup_id": str(setup),
+            "source_refs": [exposed.model_dump(mode="json")],
+        },
+    )
+    assert exposed in read_activity_setup(root, setup, owner).state.sources
+    assert cast(dict[str, Any], result["state"])["phase"] == "collecting"
+
+
+def test_repeated_answer_can_attach_sources_without_erasing_question(tmp_path: Path) -> None:
+    """Risk: repeated answer drops new bases or erases a pending question."""
+    case = _case(tmp_path)
+    root, space, owner, setup, *_ = case
+    bridge = Bridge(root, owner, root)
+    session = uuid4()
+    bridge.connect(session)
+    bridge.capture_source(
+        session,
+        channel="conversation_user",
+        content="Use monthly summaries",
+        source_event_id="answer-one",
+        input_source="interactive",
+    )
+    bridge.activity_setup(session, {"action": "answer", "setup_id": str(setup)})
+    _step(case, "question", text="Which start date?")
+    source = note(root, space, owner, "Existing confirmed calendar")
+    bridge.knowledge_read(session, {"mode": "open", "record_id": str(source)})
+    bridge.activity_setup(
+        session,
+        {
+            "action": "answer",
+            "setup_id": str(setup),
+            "source_refs": [{"record_id": str(source), "revision": 1}],
+        },
+    )
+    current = read_activity_setup(root, setup, owner).state
+    assert KnowledgeRef(record_id=source, revision=1) in current.sources
+    assert current.question == "Which start date?" and current.phase == "needs_input"
+
+
+def test_begin_keeps_exact_original_request_fragment_after_later_message(tmp_path: Path) -> None:
+    """An exposed fragment can anchor creation; its unread suffix remains unselected."""
+    root, _, owner, *_ = _case(tmp_path)
+    bridge = Bridge(root, owner, root)
+    session = uuid4()
+    bridge.connect(session)
+    bridge.capture_source(
+        session,
+        channel="conversation_user",
+        content="Create a learning activity; unread private suffix",
+        source_event_id="original-goal",
+        input_source="rpc",
+    )
+    original = bridge.last_sources[session]
+    bridge.capture_source(
+        session,
+        channel="conversation_user",
+        content="Explain the next step",
+        source_event_id="later-message",
+        input_source="rpc",
+    )
+    opened = bridge.knowledge_read(
+        session, {"mode": "open", "record_id": str(original.record_id), "max_bytes": 26}
+    )
+    exposed = cast(list[Any], opened["exposed"])[0]
+    setup = uuid4()
+    bridge.activity_setup(
+        session,
+        {
+            "action": "begin",
+            "setup_id": str(setup),
+            "activity_id": str(uuid4()),
+            "title": "Learning",
+            "goal": "Learn consistently",
+            "request_source": exposed,
+        },
+    )
+    sources = read_activity_setup(root, setup, owner).state.sources
+    assert KnowledgeRef.model_validate(exposed) in sources
+    assert original not in sources
+    anchor = next(ref for ref in sources if ref.record_id == original.record_id)
+    assert anchor.start == 0 and anchor.end == 26
+
+
+def test_retained_file_has_honest_origin_and_addressed_packet_read(tmp_path: Path) -> None:
+    """Risk: file receipts imply exposure or allow unrelated Artifact reads."""
+    import base64
+    import hashlib
+
+    case = _case(tmp_path)
+    root, _, owner, setup, *_ = case
+    bridge = Bridge(root, owner, root)
+    session = uuid4()
+    bridge.connect(session)
+    bridge.capture_source(
+        session,
+        channel="conversation_user",
+        content="Use the selected original",
+        source_event_id="file-request",
+        input_source="interactive",
+    )
+    content = "Original вымышленный материал".encode()
+    payload = {
+        "action": "retain_file",
+        "setup_id": str(setup),
+        "operation_key": "file-one",
+        "locator": "selected-original.txt",
+        "content_base64": base64.b64encode(content).decode(),
+        "content_sha256": hashlib.sha256(content).hexdigest(),
+    }
+    retained = bridge.activity_setup(session, payload)
+    assert bridge.activity_setup(session, payload) == retained
+    reference = KnowledgeRef.model_validate(retained["selected_source"])
+    source = read_knowledge(root, reference.record_id, owner).state
+    assert source is not None and source.kind == "source"
+    assert source.content == content and source.derived_from == (bridge.last_sources[session],)
+    assert reference not in bridge.exposed_refs.get(session, set())
+    bridge.activity_setup(
+        session,
+        {
+            "action": "attach_sources",
+            "setup_id": str(setup),
+            "source_refs": [reference.model_dump(mode="json")],
+        },
+    )
+    _step(case, "start_stage", stage_kind="draft", stage_instruction="Use the complete packet")
+    packet = read_activity_setup(root, setup, owner).state.stages[-1].packet
+    read = bridge.activity_setup(
+        session,
+        {
+            "action": "read_packet",
+            "setup_id": str(setup),
+            "reference": packet.model_dump(mode="json"),
+            "max_bytes": 16,
+        },
+    )
+    assert len(base64.b64decode(read["content_base64"])) <= 16 and read["next_offset"] == 16
+    with pytest.raises(FoundationError) as error:
+        bridge.activity_setup(
+            session,
+            {
+                "action": "read_packet",
+                "setup_id": str(setup),
+                "reference": {"artifact_id": str(uuid4()), "revision": 1},
+            },
+        )
+    assert error.value.code == "wrong_scope"
+
+
+def test_internal_read_tools_cannot_write_through_bridge(tmp_path: Path) -> None:
+    """Risk: a read-only tool allowlist still exposes mutation modes to a model node."""
+    root, space, owner, *_ = _case(tmp_path)
+    source = note(root, space, owner, "Readable original")
+    bridge = Bridge(root, owner, root, restricted_core_reads=True)
+    session = uuid4()
+    bridge.connect(session)
+    assert (
+        bridge.knowledge_read(session, {"mode": "open", "record_id": str(source)})["content_base64"]
+        is not None
+    )
+    identifier = uuid4()
+    mutation = CreateKnowledgeRequest(
+        operation_id=uuid4(),
+        space_id=space,
+        actor=owner.actor,
+        record_id=identifier,
+        state=SourceState(
+            channel="document",
+            connection="fictional",
+            profile_revision=1,
+            media_type="text/plain",
+            capture="full",
+            content=b"unauthorized effect",
+        ),
+    )
+    with pytest.raises(FoundationError) as error:
+        bridge.knowledge_operation(session, mutation.model_dump(mode="json"))
+    assert error.value.code == "permission_denied"
+    with pytest.raises(FoundationError) as error:
+        read_knowledge(root, identifier, owner)
+    assert error.value.code == "not_found"
+    with pytest.raises(FoundationError) as error:
+        bridge.knowledge_read(session, {"mode": "export", "file": "must-not-exist.md"})
+    assert error.value.code == "permission_denied" and not (root / "must-not-exist.md").exists()
+
+
+@pytest.mark.parametrize(
+    "input_source,owner_input",
+    [
+        ("interactive", True),
+        ("rpc", True),
+        ("extension", False),
+        ("session-resume", False),
+    ],
+)
+def test_only_fresh_ordinary_owner_input_can_answer(
+    tmp_path: Path, input_source: str, owner_input: bool
+) -> None:
+    """Risk: generated or restored user-shaped messages become answers to saved questions."""
+    root, _, owner, *_ = _case(tmp_path)
+    bridge = Bridge(root, owner, root)
+    session = uuid4()
+    bridge.connect(session)
+    bridge.capture_source(
+        session,
+        channel="conversation_user",
+        content="Original input",
+        source_event_id="input-one",
+        input_source=input_source,
+        replay_session_id=uuid4() if input_source == "session-resume" else None,
+    )
+    source = read_knowledge(root, bridge.last_sources[session].record_id, owner).state
+    assert source is not None and source.kind == "source"
+    if owner_input:
+        assert source.sender == owner.actor
+        assert bridge._fresh_user_source(session)[1] == "Original input"
+    else:
+        assert source.sender != owner.actor
+        with pytest.raises(FoundationError) as error:
+            bridge._fresh_user_source(session)
+        assert error.value.code == "permission_denied"
 
 
 def test_development_creates_work_and_selected_resource(tmp_path: Path) -> None:

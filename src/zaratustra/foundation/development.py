@@ -45,6 +45,8 @@ from .models import (
     StructureChange,
     ValidationResultState,
     WorkActivityMove,
+    WorkflowChange,
+    WorkPlan,
     WorkState,
 )
 from .operations import (
@@ -617,6 +619,8 @@ def _save_revision(
                 if isinstance(target, BindingChange)
                 else target.program_id
                 if isinstance(target, ProgramChange)
+                else target.workflow_id
+                if isinstance(target, WorkflowChange)
                 else target.change_id
             )
             for role, version in (
@@ -646,6 +650,49 @@ def _save_revision(
                                 str(build.artifact_id),
                                 build.revision,
                                 role,
+                            ),
+                        )
+                        ordinal += 1
+            if isinstance(target, WorkflowChange):
+
+                def plan_methods(plan: WorkPlan) -> tuple[MethodRef, ...]:
+                    found = []
+                    for child in plan.children:
+                        if isinstance(child.state.method, MethodRef):
+                            found.append(child.state.method)
+                        if child.nested_plan:
+                            found.extend(plan_methods(child.nested_plan))
+                    return tuple(found)
+
+                for node in target.definition.nodes:
+                    if node.workflow is not None:
+                        connection.execute(
+                            "INSERT INTO "
+                            "development_edges(record_id,revision,ordinal,target_id,targ"
+                            "et_revision,role) VALUES (?,?,?,?,?,'nested_workflow')",
+                            (
+                                str(request.record_id),
+                                revision,
+                                ordinal,
+                                str(node.workflow.workflow_id),
+                                node.workflow.version,
+                            ),
+                        )
+                        ordinal += 1
+                    methods: tuple[MethodRef, ...] = (node.method,) if node.method else ()
+                    if node.plan:
+                        methods += plan_methods(node.plan)
+                    for method in methods:
+                        connection.execute(
+                            "INSERT INTO "
+                            "development_edges(record_id,revision,ordinal,target_id,"
+                            "target_revision,role) VALUES (?,?,?,?,?,'workflow_method')",
+                            (
+                                str(request.record_id),
+                                revision,
+                                ordinal,
+                                str(method.method_id),
+                                method.version,
                             ),
                         )
                         ordinal += 1
@@ -1821,6 +1868,19 @@ def apply_development_change(
                 grants=grants,
                 decisions=decisions,
             )
+        if isinstance(state.target, WorkflowChange):
+            from .workflows import apply_workflow_candidate
+
+            return apply_workflow_candidate(
+                connection,
+                request,
+                state,
+                now=now,
+                epoch=epoch,
+                authority=authority,
+                grants=grants,
+                decisions=decisions,
+            )
         if isinstance(state.target, (ProgramChange, CompositeChange, ActivityChange)):
             return _package_apply(
                 connection,
@@ -2051,6 +2111,10 @@ def apply_development_change(
         from .structure_change import followup_structure
 
         return followup_structure(connection, request, app, now=now, epoch=epoch)
+    if app.target_kind == "workflow":
+        from .workflows import followup_workflow
+
+        return followup_workflow(connection, request, app, now=now, epoch=epoch)
     if app.target_kind in ("program", "composite", "activity"):
         return _package_followup(
             connection,
@@ -2435,6 +2499,9 @@ def _sanitize_application_evidence(connection: sqlite3.Connection, record_id: UU
 def sanitize_deleted_development_dependency(
     connection: sqlite3.Connection, record_id: UUID, now: str
 ) -> None:
+    from .workflows import sanitize_workflow_dependency
+
+    sanitize_workflow_dependency(connection, record_id, now)
     _sanitize_application_evidence(connection, record_id)
     for (child,) in connection.execute(
         "SELECT DISTINCT record_id FROM development_edges WHERE target_id=?", (str(record_id),)
@@ -2445,11 +2512,15 @@ def sanitize_deleted_development_dependency(
 def sanitize_deleted_change_target(
     connection: sqlite3.Connection, target_id: UUID, version: int, now: str
 ) -> None:
+    from .workflows import sanitize_workflow_dependency
+
     for (child,) in connection.execute(
         "SELECT DISTINCT record_id FROM development_edges WHERE target_id=? "
-        "AND target_revision=? AND role IN ('target_previous','target_proposed')",
+        "AND target_revision=? AND role IN "
+        "('target_previous','target_proposed','workflow_method')",
         (str(target_id), version),
     ).fetchall():
+        sanitize_workflow_dependency(connection, UUID(child), now)
         _sanitize_development(connection, UUID(child), now, deleted=False)
 
 
@@ -2515,7 +2586,7 @@ def read_change_application(
             "FROM "
             + (
                 "change_package_events"
-                if app.target_kind in ("program", "composite")
+                if app.target_kind in ("program", "composite", "activity", "structure", "workflow")
                 else "change_application_events"
             )
             + " WHERE application_id=? ORDER BY revision",

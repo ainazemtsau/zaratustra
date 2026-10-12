@@ -1,6 +1,7 @@
 """Raw response regressions: durable repair, bounded sends and retained originals."""
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 from uuid import uuid4
@@ -15,6 +16,7 @@ from zaratustra.foundation import (
     AdmitInvocationRequest,
     ArtifactRef,
     CreateArtifactRequest,
+    CreateKnowledgeRequest,
     CreateResourceRequest,
     DeleteKnowledgeRequest,
     FinishInvocationRequest,
@@ -22,11 +24,14 @@ from zaratustra.foundation import (
     LinkedOutput,
     LinkWorkOutputRequest,
     MemorySelector,
+    OutputContract,
     ProcedureOperation,
     PublishAttemptOutputRequest,
     RecoverRequest,
     ResourceState,
     SendInvocationRequest,
+    SetupWorkTemplate,
+    SourceState,
     WorkingSet,
     apply_operation,
     authorize_local,
@@ -35,11 +40,21 @@ from zaratustra.foundation import (
     create_backup,
     read_activity_setup,
     read_artifact,
+    read_knowledge,
     read_setup_stage,
     read_work,
     restore_backup,
+    upgrade_workflow_space,
 )
 from zaratustra.integrations import installed_integrations
+
+
+def _recovery_case(tmp_path: Path, schema: int) -> Case:
+    case = _structured_case(tmp_path)
+    if schema == 16:
+        upgrade_workflow_space(case[0], case[2])
+        _step(case, "migrate_workflow")
+    return case
 
 
 def _raw(case: Case, text: str, *, complete: bool = True) -> ArtifactRef:
@@ -126,9 +141,12 @@ def _report(case: Case, blocking: bool = False) -> str:
         "I know my goal; I do not know the schedule yet",
     ],
 )
-def test_input_forms_keep_originals_and_saved_question(tmp_path: Path, text: str) -> None:
+@pytest.mark.parametrize("schema", (15, 16))
+def test_input_forms_keep_originals_and_saved_question(
+    tmp_path: Path, text: str, schema: int
+) -> None:
     """Risk: forwarded/partial answers disappear or restart duplicates the Activity."""
-    case = _structured_case(tmp_path)
+    case = _recovery_case(tmp_path, schema)
     _step(case, "answer", text=text)
     _step(case, "question", text="Which review period is useful?")
     saved = read_activity_setup(case[0], case[3], case[2])
@@ -142,11 +160,12 @@ def test_input_forms_keep_originals_and_saved_question(tmp_path: Path, text: str
 
 
 @pytest.mark.parametrize("original", ['{"contract_version":2,', " ", ""])
+@pytest.mark.parametrize("schema", (15, 16))
 def test_raw_failures_repair_after_reopen_and_compile_working_set(
-    tmp_path: Path, original: str
+    tmp_path: Path, original: str, schema: int
 ) -> None:
     """Risk: malformed JSON/operation prose locks setup or working_set is rejected."""
-    case = _structured_case(tmp_path)
+    case = _recovery_case(tmp_path, schema)
     packet = _start(case)
     assert "working_set" in {item["operation"] for item in packet["supported_operations"]}
     first = _raw(case, original)
@@ -222,10 +241,126 @@ def test_invalid_result_repeats_same_kind_with_whole_package(tmp_path: Path, kin
     assert current.reviews_started == (2 if kind == "review" else 1)
 
 
+@pytest.mark.parametrize("schema", (15, 16))
+def test_review_component_contract_and_repair_use_same_exact_catalog(
+    tmp_path: Path, schema: int
+) -> None:
+    """Risk: real keyed components are rejected or review has to guess valid addresses."""
+    case = _recovery_case(tmp_path, schema)
+    proposal = _proposal().model_copy(
+        update={
+            "working_sets": tuple(
+                WorkingSet(
+                    key=key,
+                    purpose="Selected observations",
+                    selectors=(MemorySelector(current_activity=True),),
+                )
+                for key in ("foundation", "period_events", "period_plans", "reviews")
+            ),
+            "works": tuple(
+                SetupWorkTemplate(
+                    key=key,
+                    goal="Record the first observation",
+                    expected_outputs=(OutputContract(slot="result", media_type="text/plain"),),
+                )
+                for key in ("foundation_and_first_event", "first_personal_program")
+            ),
+        }
+    )
+    _start(case)
+    _raw(case, proposal.model_dump_json())
+    packet = _start(case, "review")
+    components = [
+        "first_action",
+        "working_sets.foundation",
+        "working_sets.period_events",
+        "working_sets.period_plans",
+        "working_sets.reviews",
+        "works.foundation_and_first_event",
+        "works.first_personal_program",
+    ]
+    catalog = packet["review_components"]
+    component_schema = packet["result_schema"]["$defs"]["SetupAreaEvidence"]["properties"][
+        "components"
+    ]["items"]
+    assert component_schema == {"type": "string", "enum": catalog}
+    assert set(components).issubset(catalog)
+    assert {"first_path", "working_sets", "initial_works"}.issubset(catalog)
+    assert "initial_works.first_personal_program" in catalog
+    report = json.loads(_report(case))
+    for item in report["coverage"]:
+        item["components"] = components
+    report["coverage"][1]["components"] = ["working_sets.absent"]
+    original = json.dumps(report)
+    rejected = _raw(case, original)
+    state = read_activity_setup(case[0], case[3], case[2]).state
+    rejection = state.stages[-1].rejection
+    assert rejection is not None and rejection.artifact == rejected
+    assert rejection.issues[0].code == "unsupported_review_component"
+    assert rejection.issues[0].path == ("coverage", 1, "components", 0)
+    assert list(rejection.issues[0].allowed_values) == catalog
+    assert "working_sets.absent" not in rejection.issues[0].allowed_values
+    repair = _start(case, "review")
+    assert repair["review_components"] == catalog
+    assert repair["result_schema"] == packet["result_schema"]
+    assert repair["rejected_result"]["content_text"] == original
+    assert repair["activation_manifest"] == packet["activation_manifest"]
+    report["coverage"][1]["components"] = components
+    _raw(case, json.dumps(report))
+    _step(case, "finish")
+    state = read_activity_setup(case[0], case[3], case[2]).state
+    assert state.phase == "ready" and state.reviews_started == 2
+    assert read_artifact(case[0], rejected.artifact_id, case[2]).content == original.encode()
+
+
+def test_setup_source_packet_keeps_received_and_event_times_distinct(tmp_path: Path) -> None:
+    """Risk: an old event is presented as current or a relative report loses receipt time."""
+    case = _recovery_case(tmp_path, 16)
+    source_id = uuid4()
+    event_at = datetime(2024, 1, 5, 12, tzinfo=UTC)
+    source = SourceState(
+        channel="conversation_user",
+        connection="fictional-test",
+        profile_revision=1,
+        source_event_id="original-message",
+        event_at=event_at,
+        event_time_basis="An exact supplied event timestamp",
+        media_type="text/plain",
+        capture="full",
+        content=b"Today I reported an earlier observation",
+    )
+    apply_operation(
+        case[0],
+        CreateKnowledgeRequest(
+            operation_id=uuid4(),
+            space_id=case[1],
+            actor="owner",
+            record_id=source_id,
+            state=source,
+        ),
+        case[2],
+    )
+    saved = read_knowledge(case[0], source_id, case[2])
+    ref = {"record_id": str(source_id), "revision": 1, "start": None, "end": None}
+    _step(case, "attach_sources", source_refs=(ref,))
+    packet = _start(case)
+    basis = next(item for item in packet["sources"] if item["ref"]["record_id"] == str(source_id))
+    assert datetime.fromisoformat(basis["state"]["received_at"]) == saved.received_at
+    assert datetime.fromisoformat(basis["state"]["event_at"].replace("Z", "+00:00")) == event_at
+    assert saved.received_at != event_at
+    assert basis["state"]["channel"] == source.channel
+    assert basis["state"]["connection"] == source.connection
+    assert basis["state"]["source_event_id"] == source.source_event_id
+    assert read_knowledge(case[0], source_id, case[2]) == saved
+
+
 @pytest.mark.parametrize("repeat", [True, False])
-def test_repair_boundaries_survive_reopen_and_receipt_replay(tmp_path: Path, repeat: bool) -> None:
+@pytest.mark.parametrize("schema", (15, 16))
+def test_repair_boundaries_survive_reopen_and_receipt_replay(
+    tmp_path: Path, repeat: bool, schema: int
+) -> None:
     """Risk: restart/replay silently resets limits or retries the same bad response forever."""
-    case = _structured_case(tmp_path)
+    case = _recovery_case(tmp_path, schema)
     _start(case)
     _raw(case, "{broken")
     _start(case)
@@ -254,9 +389,10 @@ def test_repair_boundaries_survive_reopen_and_receipt_replay(tmp_path: Path, rep
     assert read_activity_setup(case[0], case[3], reopened).state.stages[-1].repair_number == 0
 
 
-def test_bad_fifth_review_cannot_start_sixth(tmp_path: Path) -> None:
+@pytest.mark.parametrize("schema", (15, 16))
+def test_bad_fifth_review_cannot_start_sixth(tmp_path: Path, schema: int) -> None:
     """Risk: format repair bypasses the five started full-review limit."""
-    case = _structured_case(tmp_path)
+    case = _recovery_case(tmp_path, schema)
     _start(case)
     _raw(case, _proposal().model_dump_json())
     for _ in range(4):
@@ -273,9 +409,12 @@ def test_bad_fifth_review_cannot_start_sixth(tmp_path: Path) -> None:
     assert read_activity_setup(case[0], case[3], case[2]).state == current
 
 
-def test_rejected_original_is_backed_up_and_sanitized_with_basis(tmp_path: Path) -> None:
+@pytest.mark.parametrize("schema", (15, 16))
+def test_rejected_original_is_backed_up_and_sanitized_with_basis(
+    tmp_path: Path, schema: int
+) -> None:
     """Risk: rejected content/diagnostics survive deletion or disappear from recovery."""
-    case = _structured_case(tmp_path)
+    case = _recovery_case(tmp_path, schema)
     _start(case)
     ref = _raw(case, "{broken private fictional value")
     state = read_activity_setup(case[0], case[3], case[2]).state

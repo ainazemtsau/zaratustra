@@ -1,5 +1,13 @@
 # Interactive Pi adapter
 
+`workflows.py` coordinates schema-16 workflow nodes through ordinary assigned Pi/DBOS.
+WorkPlan is the actual graph; Work/Attempt and committed receipts own progress.
+Node model/profile/reasoning is pinned before launch. At most two read-only model
+nodes run together. No additional queue, execution-status copy or model engine.
+Host questions retain original user Sources and can wait without a live Pi process.
+Internal validation permits only an addressed next step, never owner acceptance.
+Setup nodes expose only admitted Core readers; changes remain host-owned.
+
 `procedures.py` coordinates saved procedure Work through existing RPC/DBOS while
 Pi is open, using the selected admitted provider/model. Intent precedes input
 selection; Work acceptance stays separate. `zara_data` uses the public installed

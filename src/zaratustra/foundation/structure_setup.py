@@ -25,6 +25,7 @@ from .models import (
     MethodRef,
     OutputContract,
     ProcedureDefinition,
+    SetupValidationIssue,
     WorkPlan,
 )
 from .setup_validation import SetupResultError, validate_new_value
@@ -321,6 +322,25 @@ def compile_structure(
         record_id=identifier,
         revision=(expected_revision or 0) + 1,
     )
+    from .models import WorkflowRef
+    from .workflows import WORKFLOW_CORE_OPERATIONS, workflow_checksum
+
+    for ordinal, workflow_definition in enumerate(draft.workflows):
+        for index, node in enumerate(workflow_definition.nodes):
+            if node.kind == "core" and node.operation not in WORKFLOW_CORE_OPERATIONS:
+                raise SetupResultError(
+                    "unsupported_operation",
+                    "Core workflow operation is not registered",
+                    ("workflows", ordinal, "nodes", index, "operation"),
+                )
+    workflow_refs = tuple(
+        WorkflowRef(
+            workflow_id=uuid5(setup_id, f"workflow:{ordinal}"),
+            version=1,
+            checksum=workflow_checksum(definition),
+        )
+        for ordinal, definition in enumerate(draft.workflows)
+    )
     structure = ActivityStructureState(
         scope_activity_id=state.activity_id,
         title=draft.title,
@@ -328,6 +348,7 @@ def compile_structure(
         instructions=draft.instructions,
         first_action=draft.first_action,
         process=draft.process + "\n\nFirst path:\n" + draft.first_path,
+        workflows=workflow_refs,
         formats=formats,
         procedures=tuple(procedures),
         working_sets=tuple(
@@ -341,7 +362,11 @@ def compile_structure(
         bases=state.sources
         + (KnowledgeRef(record_id=draft_ref.artifact_id, revision=draft_ref.revision),),
         extensions=draft.extensions,
-        deferred_questions=tuple(item.text for item in draft.questions if not item.blocking),
+        deferred_questions=tuple(
+            item.text
+            for item in draft.questions
+            if not item.blocking or item.scope in ("procedure", "none")
+        ),
         memory=MemoryMetadata(
             title="Activity structure", activity_id=state.activity_id, material_role="working"
         ),
@@ -406,16 +431,18 @@ def compile_structure(
         structure=structure,
         method_definitions=definitions,
         initial_works=tuple(initial_works),
+        workflow_definitions=draft.workflows,
     )
 
 
-def validate_review_components(
-    report: ActivitySetupReviewV2, manifest: ActivityActivationManifest
-) -> None:
+def review_component_catalog(manifest: ActivityActivationManifest) -> tuple[str, ...]:
+    """Exact review addresses; retained root aliases keep older reports readable."""
     allowed = {
+        "title",
         "goal",
         "instructions",
         "process",
+        "first_action",
         "first_path",
         "sources",
         "decisions",
@@ -424,17 +451,56 @@ def validate_review_components(
         "questions",
         "working_sets",
         "initial_works",
+        "formats",
+        "procedures",
+        "methods",
+        "works",
+        "workflows",
     }
     allowed.update("formats." + item.key for item in manifest.formats)
     allowed.update("procedures." + item.key for item in manifest.structure.procedures)
     allowed.update("methods." + key for key in manifest.method_definitions)
-    for coverage in report.coverage:
-        if not set(coverage.components).issubset(allowed):
-            raise SetupResultError(
-                "invalid_setup_result",
-                "Review addresses an absent manifest component",
-                ("coverage", coverage.area, "components"),
-            )
+    allowed.update("working_sets." + item.key for item in manifest.structure.working_sets)
+    for item in manifest.initial_works:
+        allowed.update(("works." + item.key, "initial_works." + item.key))
+    allowed.update("workflows." + str(index) for index in range(len(manifest.workflow_definitions)))
+    allowed.update("workflows." + str(item.workflow_id) for item in manifest.structure.workflows)
+    return tuple(sorted(allowed))
+
+
+def review_result_schema(manifest: ActivityActivationManifest) -> dict[str, Any]:
+    """Constrain only a newly prepared review packet, not persisted model contracts."""
+    schema = ActivitySetupReviewV2.model_json_schema()
+    schema["$defs"]["SetupAreaEvidence"]["properties"]["components"]["items"] = {
+        "type": "string",
+        "enum": list(review_component_catalog(manifest)),
+    }
+    return schema
+
+
+def validate_review_components(
+    report: ActivitySetupReviewV2, manifest: ActivityActivationManifest
+) -> None:
+    allowed = review_component_catalog(manifest)
+    issues = tuple(
+        SetupValidationIssue(
+            code="unsupported_review_component",
+            message="Use an exact component address from review_components",
+            path=("coverage", coverage_index, "components", component_index),
+            allowed_values=allowed,
+        )
+        for coverage_index, coverage in enumerate(report.coverage)
+        for component_index, component in enumerate(coverage.components)
+        if component not in allowed
+    )[:16]
+    if issues:
+        error = SetupResultError(
+            issues[0].code,
+            issues[0].message,
+            issues[0].path,
+        )
+        error.issues = issues
+        raise error
 
 
 __all__ = ["compile_structure", "draft_from_bytes", "review_from_bytes"]

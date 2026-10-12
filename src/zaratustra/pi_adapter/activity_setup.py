@@ -8,7 +8,7 @@ import subprocess
 import sys
 import threading
 import time
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 from uuid import UUID, uuid4, uuid5
@@ -20,10 +20,13 @@ from zaratustra.foundation import (
     FoundationError,
     RequestAttemptStopRequest,
     ResourceState,
+    WorkflowModel,
     apply_operation,
     authorize_local,
     read_activity_setup,
     read_execution,
+    read_space,
+    read_workflow_node_for_work,
 )
 
 from .assigned import EXECUTOR_VERSION, AssignedConfig, run_assigned
@@ -48,6 +51,12 @@ INSTRUCTIONS = {
         "only missing user decisions. A minimal foundation must support a useful first action. "
         "Distinguish blocking questions from deferred extensions. Explain decisions and sources. "
         "Do not require Health, journals or calendar templates."
+        " The person works through an assistant, not by reading or repairing files. "
+        "Distinguish confirmed decisions, suggested defaults and unknowns. A question "
+        "needed for a later procedure may be that procedure's first step, without "
+        "blocking a usable initial foundation. Present all proposed questions for "
+        "whole-structure review; do not confuse missing subject measurements with "
+        "permission to create an Activity. Never require the user to repeat known facts."
     ),
     "correction": (
         "Correct the whole current ActivitySetupDraft using the complete review and original "
@@ -69,6 +78,11 @@ INSTRUCTIONS = {
         "keys (process, first_path, formats.<key>, procedures.<key>, etc.). Verify event identity, "
         "corrections, periods, incomplete intake, current working sets and useful first path. "
         "Never mistake a list of seven area names for evidence."
+        " Check every proposed question's blocking scope against the first useful "
+        "path. Reject inconsistent claims that recording may start while activation "
+        "is blocked by data needed only for later planning. Correct the whole design "
+        "when such a question is misplaced. Genuine missing setup decisions remain "
+        "questions for the owner; never invent their answers."
     ),
 }
 
@@ -94,6 +108,17 @@ class SetupCoordinator:
         self.stop = threading.Event()
         self.lock = threading.Lock()
         self.active: UUID | None = None
+        self.selection: dict[str, Any] = {
+            "id": config.model_id,
+            "provider": config.provider_id,
+            "thinking": config.thinking or "off",
+        }
+
+    def update_model(self, model: dict[str, Any]) -> None:
+        if not model.get("id") or model.get("provider") != self.config.provider_id:
+            raise FoundationError("unsupported_provider", "Use the admitted selected provider")
+        with self.lock:
+            self.selection = dict(model)
 
     def _step(self, identifier: UUID, action: str, **fields: Any) -> None:
         current = _observe(
@@ -116,12 +141,11 @@ class SetupCoordinator:
         )
 
     def start(self, identifier: UUID, model: dict[str, Any]) -> None:
-        from dataclasses import replace
-
         if not model.get("id") or model.get("provider") != self.config.provider_id:
             raise FoundationError(
                 "unsupported_provider", "Setup must use the selected admitted Pi provider/model"
             )
+        self.update_model(model)
         with self.lock:
             if self.thread is not None and self.thread.is_alive():
                 if self.active == identifier:
@@ -129,7 +153,14 @@ class SetupCoordinator:
                 raise FoundationError(
                     "setup_running", "Another setup already runs in this Pi window"
                 )
-            self.config = replace(self.config, model_id=str(model["id"]), disable_tools=True)
+            self.config = replace(
+                self.config,
+                model_id=str(model["id"]),
+                thinking=model.get("thinking"),
+                disable_tools=False,
+                restricted_tools=("zara_workflow", "zara_memory"),
+                pi_tools=(),
+            )
             self.stop.clear()
             self.active = identifier
             self.thread = threading.Thread(target=self._run, args=(identifier,), daemon=True)
@@ -220,6 +251,42 @@ class SetupCoordinator:
         if self.stop.is_set():
             return
         authority = self.bridge.authority
+        config = self.config
+        setup = _observe(read_activity_setup, config.space, setup_id, authority)
+        stage = next(item for item in reversed(setup.state.stages) if item.work_id == work_id)
+        if stage.model is None and read_space(config.space).schema_version >= 16:
+            with self.lock:
+                selection = dict(self.selection)
+            pinned = WorkflowModel(
+                provider=str(selection["provider"]),
+                model_id=str(selection["id"]),
+                profile=config.provider_profile,
+                reasoning=str(selection.get("thinking") or config.thinking or "off"),
+            )
+            self._step(setup_id, "bind_model", stage_model=pinned)
+            setup = _observe(read_activity_setup, config.space, setup_id, authority)
+            stage = next(item for item in reversed(setup.state.stages) if item.work_id == work_id)
+        if stage.model is not None:
+            if (stage.model.profile, stage.model.provider) != (
+                config.provider_profile,
+                config.provider_id,
+            ):
+                raise FoundationError(
+                    "unsupported_provider", "Stored stage model differs from admission"
+                )
+            config = replace(config, model_id=stage.model.model_id, thinking=stage.model.reasoning)
+        if setup.state.root_work_id is not None:
+            from .workflows import WorkflowCoordinator
+
+            node = read_workflow_node_for_work(config.space, work_id, authority)
+            if node is None:
+                raise FoundationError(
+                    "wrong_work", "Setup stage is absent from its actual workflow"
+                )
+            executor = WorkflowCoordinator(self.bridge, config)
+            executor.stop = self.stop
+            executor._execute_node(setup.state.root_work_id, node)
+            return
         snapshot = _observe(read_execution, self.config.space, work_id, authority)
         resource_id = uuid5(work_id, "setup-resource")
         if not snapshot.resources:
@@ -233,8 +300,8 @@ class SetupCoordinator:
                     work_id=work_id,
                     state=ResourceState(
                         label="Activity setup",
-                        root=self.config.workspace,
-                        limit_units=self.config.limit_units,
+                        root=config.workspace,
+                        limit_units=config.limit_units,
                     ),
                 ),
                 authority,
@@ -271,7 +338,7 @@ class SetupCoordinator:
         payload = {
             "config": {
                 key: str(value) if isinstance(value, Path) else value
-                for key, value in asdict(self.config).items()
+                for key, value in asdict(config).items()
             },
             "actor": authority.actor,
             "setup_id": str(setup_id),
@@ -395,8 +462,11 @@ def worker() -> int:
         if fields.get(key) is not None:
             fields[key] = Path(fields[key])
     fields["pi_tools"] = tuple(fields.get("pi_tools", ()))
+    fields["restricted_tools"] = tuple(fields.get("restricted_tools", ()))
     config = AssignedConfig(**fields)
-    if not config.disable_tools or config.provider_profile not in (
+    if (
+        not config.disable_tools and config.restricted_tools != ("zara_workflow", "zara_memory")
+    ) or config.provider_profile not in (
         "codex-sse",
         "local-completions",
     ):

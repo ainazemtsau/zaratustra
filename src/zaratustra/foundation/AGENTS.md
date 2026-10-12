@@ -1,5 +1,11 @@
 # Core v0.1 domain foundation
 
+Schema 16 adds immutable workflow templates and receipt-backed node mappings over
+ordinary root WorkPlan. Work/Attempt still own execution, host questions have
+addressed Sources and need no fake Pi process. Exact service validation opens
+only internal transitions, never owner acceptance. Setup uses the shipped workflow;
+legacy revisions and Sleep cursors remain exact. Export writers are unchanged.
+
 0.22.1 retains typed setup-result rejections and correction series in existing
 schema-15 JSON revisions. capabilities.py owns names shared by result schemas,
 compilation and installed adapters. setup_validation.py converts only new-result

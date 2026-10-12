@@ -25,6 +25,16 @@ class GitDestination(BaseModel):
         return f"https://github.com/{self.repository}.git"
 
 
+class ModelPreference(BaseModel):
+    """Last explicit Pi choice; never credentials or permission to change providers."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    provider_profile: Literal["codex-sse", "local-completions"]
+    provider_id: str = Field(min_length=1)
+    model_id: str = Field(min_length=1)
+    thinking: Literal["off", "minimal", "low", "medium", "high", "xhigh"] | None = None
+
+
 class LaunchConfig(BaseModel):
     """V1 is read without reinterpretation; V2 names the personal root explicitly."""
 
@@ -52,6 +62,7 @@ class LaunchConfig(BaseModel):
     runtime_root: Path | None = None
     projects: tuple[Project, ...] = ()
     git: GitDestination | None = None
+    preferred_model: ModelPreference | None = Field(default=None, exclude_if=lambda v: v is None)
 
     @model_validator(mode="after")
     def explicit_roots(self) -> LaunchConfig:
@@ -98,6 +109,19 @@ def write_config(path: Path, config: LaunchConfig) -> None:
     pending = path.with_suffix(path.suffix + ".pending")
     pending.write_text(config.model_dump_json(indent=2) + "\n", encoding="utf-8")
     pending.replace(path)
+
+
+def remember_model(path: Path, preference: ModelPreference) -> LaunchConfig:
+    config = read_config(path)
+    if (preference.provider_profile, preference.provider_id) != (
+        config.provider_profile,
+        config.provider_id,
+    ):
+        raise ValueError("Selected model must use the configured provider and profile")
+    result = config.model_copy(update={"preferred_model": preference})
+    if result != config:
+        write_config(path, result)
+    return result
 
 
 def migrate_config(

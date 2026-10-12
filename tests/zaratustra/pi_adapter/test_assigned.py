@@ -58,6 +58,7 @@ from zaratustra.foundation import (
     read_artifact,
     read_assigned_control,
     read_execution,
+    read_knowledge,
     restore_backup,
 )
 from zaratustra.pi_adapter import Bridge
@@ -142,6 +143,31 @@ def test_assigned_bridge_saves_partial_question_and_one_addressed_answer(tmp_pat
     after = read_execution(root, work_id, authority)
     assert [item.kind for item in after.outbox] == ["launch", "resume"]
     assert after.assignments[0].status == "ready"
+
+
+def test_assigned_rpc_prompt_is_not_a_new_owner_answer(tmp_path: Path) -> None:
+    """Risk: a coordinator's RPC instructions masquerade as fresh owner answers."""
+    root, workspace, _, work, attempt, session = assigned(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="fictional-local-console")
+    interactive = Bridge(root, owner, workspace)
+    local_session = uuid4()
+    interactive.connect(local_session)
+    interactive.knowledge_upgrade(local_session)
+    rpc = Bridge(root, owner, workspace, assigned_attempt_id=attempt, assigned_session_id=session)
+    rpc.connect(session)
+    rpc.select(session, read_execution(root, work, owner).activity.activity_id, work)
+    rpc.capture_source(
+        session,
+        channel="conversation_user",
+        content="Perform assigned work",
+        source_event_id="coordinator-input",
+        input_source="rpc",
+    )
+    source = read_knowledge(root, rpc.last_sources[session].record_id, owner).state
+    assert source is not None and source.kind == "source" and source.sender == "pi-rpc"
+    with pytest.raises(FoundationError) as error:
+        rpc._fresh_user_source(session)
+    assert error.value.code == "permission_denied"
 
 
 def test_concurrent_pi_locks_exclude_deletion_maintenance(tmp_path: Path) -> None:

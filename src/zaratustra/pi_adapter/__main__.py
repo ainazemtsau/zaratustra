@@ -15,6 +15,7 @@ from uuid import UUID, uuid4
 
 from zaratustra.foundation import (
     BootstrapRequest,
+    FoundationError,
     LocalAuthority,
     apply_operation,
     authorize_local,
@@ -37,7 +38,9 @@ from zaratustra.foundation import (
     upgrade_plan_revision_space,
     upgrade_space,
     upgrade_structures_space,
+    upgrade_workflow_space,
 )
+from zaratustra.workspace import read_config
 
 from .bridge import Bridge, BridgeServer
 from .skills import activity_setup_skill, external_workflow_skill
@@ -54,6 +57,7 @@ INTERACTIVE_ZARA_TOOLS = (
     "zara_transfer",
     "zara_integration",
     "zara_workspace",
+    "zara_workflow",
 )
 
 
@@ -61,6 +65,10 @@ def _prepare_space(path: Path, actor: str, *, create: bool) -> LocalAuthority:
     if create:
         initialize_space(path)
     info = read_space(path)
+    if not create and info.schema_version < 16:
+        raise FoundationError(
+            "upgrade_required", "Run zaratustra upgrade explicitly before opening Pi"
+        )
     authority = authorize_local(path, actor=actor, source_ref=f"local-console:{actor}:{uuid4()}")
     if info.state_revision == 0:
         apply_operation(
@@ -91,6 +99,7 @@ def _prepare_space(path: Path, actor: str, *, create: bool) -> LocalAuthority:
         (13, upgrade_memory_space),
         (14, upgrade_activity_setup_space),
         (15, upgrade_structures_space),
+        (16, upgrade_workflow_space),
     ):
         if read_space(path).schema_version < version:
             upgrade(path, authority)
@@ -125,12 +134,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--local-max-tokens", type=int)
     parser.add_argument("--model", help="Provider/model selected by Pi; no product default")
     parser.add_argument("--thinking", help="Pi reasoning level")
+    parser.add_argument("--remember-selection", action="store_true")
     parser.add_argument("--subscription-agent-dir", type=Path)
     parser.add_argument("--pi-tools", help="Optional comma-separated native Pi tool allowlist")
     parser.add_argument("--session-dir", type=Path)
     parser.add_argument("--activity-id", type=UUID)
     parser.add_argument("--work-id", type=UUID)
     args = parser.parse_args(argv)
+    if args.workspace_config:
+        config = read_config(args.workspace_config)
+        preferred = config.preferred_model
+        if preferred is not None and preferred.provider_profile == args.provider_profile:
+            args.model = args.model or preferred.model_id
+            args.thinking = args.thinking or preferred.thinking
     if not sys.stdin.isatty() or not sys.stdout.isatty():
         parser.error("Start from an interactive local console for trusted setup")
     space = args.space.expanduser().resolve()
@@ -195,8 +211,10 @@ def main(argv: list[str] | None = None) -> int:
     if input("Type CONNECT to use these paths and local identity: ").strip() != "CONNECT":
         return 1
     current_schema = 0 if args.new_space else read_space(space).schema_version
-    if current_schema < 14:
-        print(f"Selected Core schema: {current_schema}; explicit upgrade target: 14")
+    if not args.new_space and current_schema < 16:
+        parser.error("Run zaratustra upgrade explicitly; Pi does not migrate an existing Core")
+    if args.new_space:
+        print(f"Selected Core schema: {current_schema}; new Core target: 16")
         if input("Type UPGRADE to initialize or upgrade this space: ").strip() != "UPGRADE":
             return 1
     authority = _prepare_space(space, actor, create=args.new_space)
@@ -221,6 +239,7 @@ def main(argv: list[str] | None = None) -> int:
         from .activity_setup import SetupCoordinator
         from .assigned import AssignedConfig
         from .procedures import ProcedureCoordinator
+        from .workflows import WorkflowCoordinator
 
         bridge.setup_controller = SetupCoordinator(
             bridge,
@@ -236,6 +255,7 @@ def main(argv: list[str] | None = None) -> int:
                 if args.provider_profile == "codex-sse"
                 else args.local_provider_id,
                 model_id=args.model or args.local_model_id or "",
+                thinking=args.thinking,
                 context_window=args.local_context_window,
                 max_tokens=args.local_max_tokens,
                 reserve_units=args.reserve_units,
@@ -247,6 +267,7 @@ def main(argv: list[str] | None = None) -> int:
             ),
         )
         bridge.procedure_controller = ProcedureCoordinator(bridge, bridge.setup_controller.config)
+        bridge.workflow_controller = WorkflowCoordinator(bridge, bridge.setup_controller.config)
         server = BridgeServer(bridge)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
@@ -257,6 +278,8 @@ def main(argv: list[str] | None = None) -> int:
         environment["ZARA_RESERVE_UNITS"] = str(args.reserve_units)
         environment["ZARA_PROVIDER_PROFILE"] = args.provider_profile
         environment["ZARA_PROVIDER_BASE_URL"] = base_url
+        if args.remember_selection:
+            environment["ZARA_REMEMBER_SELECTION"] = "1"
         environment["ZARA_PROVIDER_ORIGIN"] = f"{parsed_url.scheme}://{parsed_url.netloc}"
         environment["PI_SKIP_VERSION_CHECK"] = "1"
         environment["PI_TELEMETRY"] = "0"
@@ -298,6 +321,7 @@ def main(argv: list[str] | None = None) -> int:
             try:
                 bridge.setup_controller.close()
                 bridge.procedure_controller.close()
+                bridge.workflow_controller.close()
             finally:
                 server.shutdown()
                 server.server_close()

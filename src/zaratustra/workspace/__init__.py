@@ -3,10 +3,12 @@
 from .config import (
     GitDestination,
     LaunchConfig,
+    ModelPreference,
     Project,
     migrate_config,
     read_config,
     register_project,
+    remember_model,
     workspace_info,
     write_config,
 )
@@ -25,10 +27,12 @@ from .selection import select_work_project
 __all__ = [
     "GitDestination",
     "LaunchConfig",
+    "ModelPreference",
     "Project",
     "migrate_config",
     "read_config",
     "register_project",
+    "remember_model",
     "workspace_info",
     "write_config",
     "GitPreparation",

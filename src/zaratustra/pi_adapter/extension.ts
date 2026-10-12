@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { existsSync, readFileSync, realpathSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, parse, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { zstdDecompressSync } from "node:zlib";
@@ -52,6 +52,11 @@ const localProviderId = process.env.ZARA_LOCAL_PROVIDER_ID;
 const localModelId = process.env.ZARA_LOCAL_MODEL_ID;
 const assignedAttemptId = process.env.ZARA_ASSIGNED_ATTEMPT_ID;
 const assignedSessionId = process.env.ZARA_ASSIGNED_SESSION_ID;
+const trialTracePath = process.env.ZARA_TRIAL_HTTP_TRACE_DIR;
+if (trialTracePath !== undefined && !isAbsolute(trialTracePath)) {
+  throw new Error("Trial HTTP trace directory must be explicitly selected by its absolute path");
+}
+const trialTraceDirectory = trialTracePath === undefined ? null : realpathSync(trialTracePath);
 
 const developmentKindAliases: Record<string, string> = {
   create_method: "create_method_version", register_resource: "create_resource",
@@ -209,6 +214,12 @@ export default function (pi: any): void {
   let lastAnswer = "";
   let lastOutcome = "";
   let lastTransportError = "";
+  class CoreRequestError extends Error {
+    constructor(readonly code: string, readonly detail: string, readonly preflight: boolean) {
+      super(`Core ${code}: ${detail}`);
+    }
+  }
+  let lastPreflightRefusal: CoreRequestError | null = null;
   let lastToolFailure = "";
   let repeatedToolFailures = 0;
   const turnQueue: string[] = [];
@@ -218,14 +229,20 @@ export default function (pi: any): void {
   let trialSendCount = 0;
   const manifests = new Map<string, any>();
 
-  async function request(path: string, data?: any): Promise<any> {
+  async function request(path: string, data?: any, providerPreflight = false): Promise<any> {
     const response = await fetch(`${endpoint}${path}`, {
       method: data === undefined ? "GET" : "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: data === undefined ? undefined : JSON.stringify({ session_id: sessionId, ...data }),
+      body: data === undefined ? undefined : JSON.stringify({ session_id: sessionId, ...data,
+        ...(providerPreflight ? {provider_preflight: true} : {}) }),
     });
     const result = await response.json();
-    if (!response.ok) throw new Error(`Core ${result.error ?? response.status}: ${result.detail ?? ""}`);
+    if (!response.ok) {
+      const error = new CoreRequestError(String(result.error ?? response.status),
+        String(result.foundation_detail ?? result.detail ?? ""), providerPreflight);
+      if (providerPreflight) lastPreflightRefusal = error;
+      throw error;
+    }
     return result;
   }
 
@@ -244,7 +261,8 @@ export default function (pi: any): void {
     pi.registerTool({ ...definition,
       execute: async (callId: string, params: any, signal: any, onUpdate: any, ctx: any) => {
         const state = await refreshWorkspace(ctx);
-        if (params.path && ["write", "edit"].includes(name)) {
+        if (params.path && (["write", "edit"].includes(name) ||
+            process.env.ZARA_WORKFLOW_PROJECT_TOOLS === "1" && ["read", "grep", "find", "ls"].includes(name))) {
           const target = resolve(state.selected_root, params.path);
           let ancestor = target;
           while (!existsSync(ancestor)) ancestor = dirname(ancestor);
@@ -310,7 +328,7 @@ export default function (pi: any): void {
       await refreshWorkspace(ctx);
     } });
 
-  async function operation(fields: any): Promise<any> {
+  async function operation(fields: any, providerPreflight = false): Promise<any> {
     if (!connection) throw new Error("Pi is not connected to Core");
     const operationId = fields.operation_id ?? randomUUID();
     const intent = {
@@ -321,7 +339,7 @@ export default function (pi: any): void {
       ...fields,
     };
     try {
-      return await request("/v1/operation", { request: intent });
+      return await request("/v1/operation", { request: intent }, providerPreflight);
     } catch (error) {
       try {
         return await request(`/v1/receipt?session_id=${sessionId}&operation_id=${operationId}`);
@@ -382,6 +400,7 @@ export default function (pi: any): void {
 
   async function observedFetch(model: any, input: any, init: any,
                                onInvocation: (id: string) => void): Promise<Response> {
+    assertThinkingCapability(model);
     if (!captureReady || !contextReady || !currentManifest) {
       throw new Error("Core capture or ContextManifest is not ready; no HTTP was sent");
     }
@@ -394,7 +413,7 @@ export default function (pi: any): void {
       await ensurePromptAttempt();
       currentManifest = await request("/v1/context-prepare", {
         purpose, historical_memory: historicalMemory,
-      });
+      }, true);
       manifestMarker = `ZARA_MANIFEST:${currentManifest.manifest_id}@${currentManifest.manifest_revision}`;
     }
     const suppliedBody = bytes(init?.body);
@@ -429,7 +448,7 @@ export default function (pi: any): void {
     await request("/v1/context-delivery", {
       invocation_id: invocationId, manifest_id: manifest.manifest_id,
       manifest_revision: manifest.manifest_revision, stage: "prepared", reserve_units: reserveUnits,
-    });
+    }, true);
     manifests.set(invocationId, manifest);
     if (selection) {
       await operation({
@@ -437,18 +456,32 @@ export default function (pi: any): void {
         provider: model.provider, model: model.id, transport: profile === "codex-sse" ? "sse" : "http-sse",
         request_sha256: digest(body), request_bytes: body.byteLength,
         reserve_units: reserveUnits,
-      });
-      await operation({ kind: "admit_invocation", ...common });
-      await operation({ kind: "send_invocation", ...common });
+      }, true);
+      await operation({ kind: "admit_invocation", ...common }, true);
+      await operation({ kind: "send_invocation", ...common }, true);
     }
     await request("/v1/context-delivery", {
       invocation_id: invocationId, manifest_id: manifest.manifest_id,
       manifest_revision: manifest.manifest_revision, stage: "sent",
       request_sha256: digest(body), request_bytes: body.byteLength,
-    });
+    }, true);
+    lastPreflightRefusal = null;
     sent.add(invocationId);
     onInvocation(invocationId);
     try {
+      if (trialTraceDirectory !== null) {
+        // Opt-in fictional trial evidence only. Never write headers, cookies or authorization.
+        const decoded = Buffer.from(providerBodyText(body, observedInit), "utf8");
+        writeFileSync(join(trialTraceDirectory, `${invocationId}.body`), body, {flag: "wx"});
+        writeFileSync(join(trialTraceDirectory, `${invocationId}.request`), decoded, {flag: "wx"});
+        writeFileSync(join(trialTraceDirectory, `${invocationId}.json`), JSON.stringify({
+          invocation_id: invocationId, endpoint: `${url.origin}${url.pathname}`,
+          provider: model.provider, model: model.id, profile, purpose,
+          request_sha256: digest(body), request_bytes: body.byteLength,
+          decoded_sha256: digest(decoded), decoded_bytes: decoded.byteLength,
+          manifest_id: manifest.manifest_id, manifest_revision: manifest.manifest_revision,
+        }), {encoding: "utf8", flag: "wx"});
+      }
       const response = await fetch(input, observedInit);
       if (!response.ok) {
         await finish(invocationId, "unknown", null, response.status);
@@ -568,6 +601,10 @@ export default function (pi: any): void {
       connection = await request("/v1/connect", {});
     }
     guardOtherProviders(ctx);
+    if (!assignedAttemptId && process.env.ZARA_REMEMBER_SELECTION === "1") {
+      await request("/v1/model-selection", {model: {id: ctx.model?.id, provider: ctx.model?.provider,
+        thinking: pi.getThinkingLevel(), profile}, persist: true});
+    }
     if (process.env.ZARA_INITIAL_ACTIVITY_ID && process.env.ZARA_INITIAL_WORK_ID) {
       const current = await request("/v1/select", {
         activity_id: process.env.ZARA_INITIAL_ACTIVITY_ID,
@@ -680,7 +717,20 @@ export default function (pi: any): void {
 
   pi.on("tool_result", (event: any, ctx: any) => {
     if (!event.isError) { lastToolFailure = ""; repeatedToolFailures = 0; return; }
-    const signature = `${event.toolName}:${JSON.stringify(event.content)}`;
+    const input = event.input ?? {};
+    const arguments_ = input.arguments ?? input;
+    const operation = input.operation ?? input.mode ?? input.intent?.kind ?? "call";
+    const targets = ["record_id", "revision", "setup_id", "run_id", "wait_id", "work_id",
+      "activity_id", "selection_id", "path", "reference"].map(key => [key, arguments_[key] ?? input[key]])
+      .filter(([_key, value]) => value !== undefined);
+    const errorText = (event.content ?? []).filter((item: any) => item.type === "text")
+      .map((item: any) => item.text).join("\n");
+    // Only parse the technical Core error prefix; never infer user intent from text.
+    const code = event.details?.code ?? event.details?.error ??
+      /^Core ([a-z_]+):/.exec(errorText)?.[1] ?? errorText;
+    const target = targets.length ? targets : Object.entries(input)
+      .filter(([key]) => !["operation_id", "operation_key"].includes(key)).sort();
+    const signature = `${event.toolName}:${operation}:${JSON.stringify(target)}:${code}`;
     repeatedToolFailures = signature === lastToolFailure ? repeatedToolFailures + 1 : 1;
     lastToolFailure = signature;
     if (repeatedToolFailures >= 2) {
@@ -690,8 +740,19 @@ export default function (pi: any): void {
     }
   });
 
-  pi.on("model_select", (_event: any, ctx: any) => { guardOtherProviders(ctx); });
-  pi.on("before_provider_request", (_event: any, ctx: any) => { guardOtherProviders(ctx); });
+  async function reportModel(ctx: any, persist = false) {
+    assertThinkingCapability(ctx.model);
+    if (!assignedAttemptId && ctx.model) await request("/v1/model-selection", { model: setupModel(ctx), persist });
+  }
+  function assertThinkingCapability(model: any): void {
+    if (model && !model.reasoning && pi.getThinkingLevel() !== "off") {
+      throw new Error("The selected model does not support the selected thinking level; no HTTP was sent");
+    }
+  }
+  pi.on("model_select", async (event: any, ctx: any) => { guardOtherProviders(ctx);
+    await reportModel(ctx, event.source === "set" || event.source === "cycle"); });
+  pi.on("thinking_level_select", async (_event: any, ctx: any) => { await reportModel(ctx, true); });
+  pi.on("before_provider_request", async (_event: any, ctx: any) => { guardOtherProviders(ctx); await reportModel(ctx); });
 
   pi.registerCommand("zara-work", {
     description: "Choose a Core Activity and Work, then start a bound Attempt",
@@ -1018,12 +1079,62 @@ export default function (pi: any): void {
   let setupTimer: ReturnType<typeof setInterval> | null = null;
   let setupShown = "";
   let setupDisplayError = "";
+  let workflowSelection: string | null = null;
+  let workflowTimer: ReturnType<typeof setInterval> | undefined;
+  let workflowShown = "";
+  const workflowActions: Record<string, string> = {run: "выполняется следующий этап",
+    answer: "ожидается ответ", owner_action: "ожидается решение владельца",
+    resume: "доступно продолжение", attention: "требует внимания",
+    finish: "завершается", closed: "завершён или отменён"};
+  async function showWorkflow(ctx: any) {
+    if (!workflowSelection) return;
+    try {
+      const state = await request("/v1/workflow", {mode: "status", root_work_id: workflowSelection});
+      ctx.ui.setStatus("zara-workflow", `Процесс: ${workflowActions[state.next_action] ?? state.next_action}`);
+      const key = `${state.root_work_id}:${state.revision}:${state.next_action}:` +
+        JSON.stringify(state.native_waits ?? []);
+      if (key === workflowShown) return;
+      workflowShown = key;
+      const lines = [state.explanation];
+      for (const wait of state.waits ?? []) lines.push(`${wait.question}\nДля чего: ${wait.purpose}`);
+      ctx.ui.setWidget("zara-workflow", ["Сохранённый процесс", ...lines].join("\n").split("\n"));
+    } catch (error) { ctx.ui.setStatus("zara-workflow", String(error)); }
+  }
+  function watchWorkflow(ctx: any) {
+    if (workflowTimer) clearInterval(workflowTimer);
+    workflowTimer = setInterval(() => { void showWorkflow(ctx); }, 2000);
+  }
+  pi.on("session_start", async (_event: any, ctx: any) => {
+    if (assignedAttemptId || Number(connection?.schema_version ?? 0) < 16) return;
+    workflowSelection = null;
+    workflowShown = "";
+    if (workflowTimer) clearInterval(workflowTimer);
+    const page = await request("/v1/workflow", {mode: "runs", pending_only: true});
+    const setups = await request("/v1/activity-setup", {action: "list", pending_only: true});
+    const setupRoots = new Set(setups.items.map((item: any) => item.state.root_work_id));
+    const pending = page.items.filter((item: any) => !setupRoots.has(item.root_work_id));
+    if (pending.length === 1) {
+      workflowSelection = pending[0].root_work_id;
+      watchWorkflow(ctx);
+      await showWorkflow(ctx);
+    } else if (pending.length > 1) {
+      ctx.ui.notify("Есть несколько сохранённых процессов. Назови работу, которую хочешь продолжить; ассистент поможет выбрать.", "info");
+    }
+  });
+  pi.on("session_shutdown", async () => { if (workflowTimer) clearInterval(workflowTimer); });
+  pi.registerCommand("zara-workflow", {description: "Show saved workflow state and next action",
+    handler: async (args: string, ctx: any) => {
+      if (args.trim()) workflowSelection = args.trim();
+      if (workflowSelection) await showWorkflow(ctx);
+      else ctx.ui.notify(JSON.stringify(await request("/v1/workflow", {mode: "runs", pending_only: true}), null, 2), "info");
+    }});
   const setupPhases: Record<string, string> = {
     collecting: "сбор пожеланий", needs_input: "ожидает ответа", drafting: "подготовка",
     reviewing: "полное ревью", correcting: "исправления", activating: "включение",
     ready: "готова", paused: "пауза", cancelled: "отменена", needs_attention: "требует внимания",
   };
-  const setupModel = (ctx: any) => ({ id: ctx.model?.id, provider: ctx.model?.provider });
+  const setupModel = (ctx: any) => ({ id: ctx.model?.id, provider: ctx.model?.provider,
+    thinking: pi.getThinkingLevel(), profile });
   async function showSetup(ctx: any, display = true, force = false) {
     if (!setupSelection) return;
     try {
@@ -1117,7 +1228,9 @@ export default function (pi: any): void {
     name: "zara_activity", label: "Create and set up an Activity",
     description: "List/read Activities, start a new Activity setup or change_structure for one existing Activity without recreating it. " +
       "Create retains the request and authorizes this new Activity's interview, whole draft/review/correction and activation. " +
-      "Use question to retain a necessary user question, answer to save the actual received user message, " +
+      "Use question to retain a necessary user question, answer ONLY to save a real answer to that saved question. " +
+      "If the user asks why or what happens next, explain status without answering the question for them. " +
+      "Use attach_sources to add explicitly read originals separately from answers; read_packet opens exact setup artifacts. " +
       "then ask the saved question once in your normal reply. Reuse the original request; ask only missing " +
       "details needed to set up the workflow. Data needed only for a later research/planning Work can wait. " +
       "submit when enough is known, status/resume/pause/cancel for saved continuation. " +
@@ -1127,12 +1240,20 @@ export default function (pi: any): void {
       "Ask about meaningful defaults and planning horizon; users do not design schemas. " +
       "Setup stages run through assigned ordinary Pi; no per-step confirmations and no automatic Work acceptance.",
     parameters: Type.Object({
-      mode: StringEnum(["list", "read", "create", "change_structure", "question", "answer", "submit", "status", "resume", "pause", "cancel", "retry"] as const),
+      mode: StringEnum(["list", "read", "create", "change_structure", "question", "answer", "attach_sources", "retain_file", "read_packet", "submit", "status", "resume", "pause", "cancel", "retry"] as const),
       record_id: Type.Optional(Type.String()), setup_id: Type.Optional(Type.String()),
       title: Type.Optional(Type.String({ minLength: 1, maxLength: 200 })),
       goal: Type.Optional(Type.String({ minLength: 1, maxLength: 4096 })),
       question: Type.Optional(Type.String({ minLength: 1, maxLength: 32768 })),
-      source_refs: Type.Optional(Type.Array(Type.Object({ record_id: Type.String(), revision: Type.Number() }))),
+      source_refs: Type.Optional(Type.Array(Type.Object({ record_id: Type.String(), revision: Type.Integer({ minimum: 1 }),
+        start: Type.Optional(Type.Union([Type.Integer({minimum: 0}), Type.Null()])),
+        end: Type.Optional(Type.Union([Type.Integer({minimum: 0}), Type.Null()])) }))),
+      request_source: Type.Optional(Type.Object({ record_id: Type.String(), revision: Type.Integer({minimum: 1}),
+        start: Type.Optional(Type.Union([Type.Integer({minimum: 0}), Type.Null()])),
+        end: Type.Optional(Type.Union([Type.Integer({minimum: 0}), Type.Null()])) })),
+      reference: Type.Optional(Type.Object({ artifact_id: Type.String(), revision: Type.Integer({minimum: 1}) })),
+      offset: Type.Optional(Type.Integer({minimum: 0})), max_bytes: Type.Optional(Type.Integer({minimum: 1, maximum: 65536})),
+      path: Type.Optional(Type.String({description: "Explicitly selected original file to retain; ordinary read does not attach it."})),
     }),
     renderCall(params: any, theme: any) {
       return new Text(theme.fg("toolTitle", theme.bold("Activity ")) +
@@ -1184,7 +1305,7 @@ export default function (pi: any): void {
           result = await request("/v1/activity-setup", { action: "begin", setup_id: setupSelection,
             mode: params.mode === "change_structure" ? "change_structure" : "create",
             activity_id: params.mode === "change_structure" ? params.record_id : randomUUID(), title: params.title, goal: params.goal, operation_id: operationId,
-            source_refs: params.source_refs ?? [] });
+            source_refs: params.source_refs ?? [], request_source: params.request_source });
         } catch (error) {
           try {
             await request(`/v1/receipt?session_id=${sessionId}&operation_id=${operationId}`);
@@ -1194,19 +1315,80 @@ export default function (pi: any): void {
       } else {
         setupSelection = params.setup_id ?? setupSelection;
         if (!setupSelection) throw new Error("Name one saved setup_id");
+        if (params.mode === "retain_file") {
+          if (!params.path) throw new Error("Name the explicitly selected original file");
+          const root = realpathSync((await refreshWorkspace(ctx)).selected_root);
+          const file = realpathSync(resolve(root, params.path));
+          const fromRoot = relative(root, file);
+          if ((fromRoot === ".." || fromRoot.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`) || isAbsolute(fromRoot)) &&
+              !await ctx.ui.confirm("Сохранить выбранный внешний файл как основание настройки?", file)) {
+            return {content: [{type: "text", text: "External file was not selected; nothing retained"}]};
+          }
+          const bytes = readFileSync(file);
+          new TextDecoder("utf-8", {fatal: true}).decode(bytes);
+          result = await request("/v1/activity-setup", {action: "retain_file", setup_id: setupSelection,
+            content_base64: bytes.toString("base64"), content_sha256: createHash("sha256").update(bytes).digest("hex"),
+            locator: file, operation_key: _callId});
+          return {content: [{type: "text", text: JSON.stringify(result)}], details: result};
+        }
         if (params.mode === "retry" && !await ctx.ui.confirm("Продолжить настройку?",
           "Разрешить следующие пять полных ревью этой настройки, сохранив прежнюю историю и расход?")) {
           return { content: [{ type: "text", text: "Additional setup review passes not authorized" }] };
         }
         result = await request("/v1/activity-setup", { action: params.mode, setup_id: setupSelection,
-          question: params.question, source_refs: params.source_refs ?? [], model: setupModel(ctx) });
+          question: params.question, source_refs: params.source_refs ?? [], model: setupModel(ctx),
+          reference: params.reference, offset: params.offset, max_bytes: params.max_bytes });
       }
       watchSetup(ctx);
       await showSetup(ctx, false);
+      if (result.content_base64 && result.media_type?.startsWith("text/")) {
+        result.content_text = Buffer.from(result.content_base64, "base64").toString("utf8");
+      }
       return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
     },
   });
 
+  pi.registerTool({
+    name: "zara_workflow", label: "Saved workflow",
+    description: "Catalog/read reusable workflow definitions; propose a definition for Candidate validation, " +
+      "start one active workflow in an Activity, inspect status and exact packets, answer one addressed saved question, " +
+      "pause/resume/cancel or explicitly migrate a run. Each run is a Core composite Work with exact history. " +
+      "Explain confusion using status without converting it to an answer. answer saves the real latest user message; " +
+      "never answer your own question. Name wait_id and root_work_id; do not pick the last question of the space. " +
+      "Read contract before proposing definitions. Proposals grant no rights and need the existing Candidate/Decision path. " +
+      "Methods are optional node instructions. New model stages inherit the current Pi model and thinking. " +
+      "An answer preserves an explicit pause. If the user wants to continue and status says resume, call resume. " +
+      "Ordinary Work acceptance stays separate; no automatic publication.",
+    parameters: Type.Object({
+      mode: StringEnum(["contract", "catalog", "runs", "read", "propose", "start", "status", "explain", "method_tasks", "interaction", "read_packet", "answer", "correct_answer", "retry", "pause", "resume", "cancel", "migrate"] as const),
+      root_work_id: Type.Optional(Type.String()), activity_id: Type.Optional(Type.String()),
+      work_id: Type.Optional(Type.String({description: "Exact native Method Work for read-only role/acceptance state."})),
+      setup_id: Type.Optional(Type.String({description: "For reading an exact internal Activity setup packet."})),
+      workflow: Type.Optional(Type.Object({workflow_id: Type.String(), version: Type.Integer({minimum: 1}), checksum: Type.String()})),
+      workflow_id: Type.Optional(Type.String()), version: Type.Optional(Type.Integer({minimum: 1})),
+      definition: Type.Optional(Type.Any()), inputs: Type.Optional(Type.Array(Type.Any())),
+      source_refs: Type.Optional(Type.Array(Type.Object({record_id: Type.String(), revision: Type.Integer({minimum: 1}),
+        start: Type.Optional(Type.Union([Type.Integer({minimum: 0}), Type.Null()])),
+        end: Type.Optional(Type.Union([Type.Integer({minimum: 0}), Type.Null()]))}))),
+      wait_id: Type.Optional(Type.String()), node_mapping: Type.Optional(Type.Record(Type.String(), Type.String())),
+      expected_wait_revision: Type.Optional(Type.Integer({minimum: 1})),
+      node_key: Type.Optional(Type.String()),
+      node_dispositions: Type.Optional(Type.Record(Type.String(), StringEnum(["keep", "replace", "retire"] as const))),
+      reference: Type.Optional(Type.Object({artifact_id: Type.String(), revision: Type.Integer({minimum: 1})})),
+      offset: Type.Optional(Type.Integer({minimum: 0})), max_bytes: Type.Optional(Type.Integer({minimum: 1, maximum: 65536})),
+      limit: Type.Optional(Type.Integer({minimum: 1, maximum: 100})), after: Type.Optional(Type.Any()),
+      pending_only: Type.Optional(Type.Boolean()),
+    }),
+    async execute(callId: string, params: any, _signal: any, _update: any, ctx: any) {
+      const result = await request("/v1/workflow", {...params, operation_key: callId, model: setupModel(ctx)});
+      if (!assignedAttemptId && result.root_work_id) {
+        workflowSelection = result.root_work_id;
+        watchWorkflow(ctx);
+        await showWorkflow(ctx);
+      }
+      return {content: [{type: "text", text: JSON.stringify(result)}], details: result};
+    },
+  });
   pi.registerTool({
     name: "zara_integration",
     label: "Installed integration capabilities",
@@ -1538,11 +1720,14 @@ export default function (pi: any): void {
       "After a meaningful saved deliverable, offer Git publication with zara_workspace prepare; " +
       "local saving needs no publication approval. ChatGPT Web reads published snapshots only. " +
       "Work acceptance is a separate owner action.";
-    if (process.env.ZARA_DISABLE_MODEL_TOOLS === "1") pi.setActiveTools([]);
+    if (process.env.ZARA_RESTRICTED_CORE_READS === "1") {
+      pi.setActiveTools((process.env.ZARA_RESTRICTED_TOOLS ?? "").split(",").filter(Boolean));
+    } else if (process.env.ZARA_DISABLE_MODEL_TOOLS === "1") pi.setActiveTools([]);
     lastToolFailure = "";
     repeatedToolFailures = 0;
     lastOutcome = "";
     lastAnswer = "";
+    lastPreflightRefusal = null;
     contextReady = false;
     currentManifest = null;
     // Structured sections preserve the request-local ContextManifest added later.
@@ -1562,7 +1747,7 @@ export default function (pi: any): void {
     if (!captureReady) throw new Error("Primary capture failed; no dependent model send");
     const prepared = await request("/v1/context-prepare", {
       purpose: nextPurpose, historical_memory: historicalMemory,
-    });
+    }, true);
     currentManifest = prepared;
     manifestMarker = `ZARA_MANIFEST:${prepared.manifest_id}@${prepared.manifest_revision}`;
     if (nextPurpose === "compaction-summary") {
@@ -1685,6 +1870,7 @@ export default function (pi: any): void {
       }
     }
     if (!attemptId || !selection) return;
+    if (lastPreflightRefusal !== null) return;
     if (!assignedAttemptId) {
       await operation({ kind: "stop_attempt", attempt_id: attemptId, work_id: selection.work_id,
                         session_id: sessionId, outcome: lastOutcome === "completed" ? "completed" : "interrupted" });
@@ -1694,8 +1880,10 @@ export default function (pi: any): void {
     }
     if (lastOutcome !== "completed") return;
     const current = await snapshot();
-    if (current.setup_result_protocol !== "setup_json" && !lastAnswer.trim()) return;
-    if (assignedAttemptId && current.setup_result_protocol !== "setup_json") {
+    const directResult = current.setup_result_protocol === "setup_json" ||
+      current.workflow_result_protocol === "workflow_json";
+    if (!directResult && !lastAnswer.trim()) return;
+    if (assignedAttemptId && !directResult) {
       let result: any;
       try { result = JSON.parse(lastAnswer); }
       catch { throw new Error("Assigned RPC must return one JSON result or wait"); }

@@ -5,6 +5,40 @@ description: Design a new Activity or change the structure of an existing one th
 
 # Initial Activity setup
 
+## Conversation and durable continuation
+
+Read the selected setup/workflow status before describing progress. Say whether
+work is running, a particular answer/material is needed, a result is ready, or a
+specific retained obstacle prevents continuation. Never promise background work
+when no executor is running. Explain the next useful step in the person's language.
+
+A message such as "why did this stop?" or "I do not understand" is a request for
+an explanation, not an answer to the pending question. Explain the purpose of the
+question and keep it open. Only use the answer operation for an actual received
+user answer, bound to the addressed question. An assistant explanation, UI notice,
+restored transcript or your reconstruction of older facts is not a new user answer.
+Short answers must remain paired with the exact question. Do not route an answer
+to an unrelated waiting process. With several pending processes ask the person
+which named task to continue; do not require internal IDs.
+
+Questions have a scope: the initial setup, a particular later procedure, or no
+blocking scope. Missing measurements or other subject data may be the first
+ordinary Work of a usable Activity. Review the entire proposed structure,
+including its questions and first path, before declaring a proposed question an
+obstacle to activation. Keep confirmed choices, suggested defaults and unknowns
+distinct. Preserve the user's research-before-planning rule where requested.
+
+## Sources and diagnostic tools
+
+Native file reading does not attach a file to the setup. Explicitly retain selected
+originals through the installed Source interface, then attach their returned exact
+references. Preserve start/end bounds on a reference; a returned window is not the
+whole document. Archive IDs describe origin and may not be live Core addresses.
+Attach additional sources separately from answering a question when possible.
+Use the setup/workflow diagnostic reader for retained stage packets and Artifacts;
+do not guess that memory or development readers can open every record family.
+Never report that material was attached before checking the returned state.
+
 Use the person's language and existing authorized memory. Ask about their goals,
 starting situation, normal workflow, autonomy and likely extensions. Reuse actual
 known answers. Ask a few necessary questions at a time; never ask them to design

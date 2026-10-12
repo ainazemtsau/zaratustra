@@ -751,6 +751,12 @@ def _evaluate(
                 decisions=decisions,
             ),
         )
+    if condition.kind == "validated_internal_output":
+        if _schema(connection) < 16:
+            raise FoundationError("upgrade_required", "Internal validation requires schema 16")
+        from .workflows import validate_internal_output
+
+        return (validate_internal_output(connection, plan, condition, actor=actor, epoch=epoch),)
     if condition.kind == "work_succeeded":
         assert condition.role
         child = next((item for item in plan.children if item.role == condition.role), None)
@@ -1168,7 +1174,12 @@ def apply_composition_change(
         if tuple(request.state.expected_outputs) != definition.named_outputs:
             raise FoundationError("method_mismatch", "Parent outputs differ from pinned Method")
         _validate_plan(
-            request.plan, definition, request.state.activity_id, schema=_schema(connection)
+            request.plan,
+            definition,
+            request.state.activity_id,
+            schema=_schema(connection),
+            allow_nested=_schema(connection) >= 16
+            and any(child.nested_plan is not None for child in request.plan.children),
         )
         _validate_choice_leaves(connection, request.plan)
         declared_inputs = {item.slot: item.media_type for item in definition.named_inputs}
@@ -1224,19 +1235,39 @@ def apply_composition_change(
             {"record_id": str(request.state.activity_id), "revision": activity_rev},
         ]
         for child in request.plan.children:
-            _write_subject(
-                connection,
-                record_id=child.work_id,
-                kind="work",
-                parent_id=request.state.activity_id,
-                operation_id=request.operation_id,
-                actor=request.actor,
-                now=now,
-                status="proposed",
-                state=child.state,
-                revision=1,
-                structure_parent=request.work_id,
-            )
+            if child.nested_plan is not None:
+                if _schema(connection) < 16:
+                    raise FoundationError("upgrade_required", "Initial nested plans need schema 16")
+                result, nested_targets = apply_composition_change(
+                    connection,
+                    CreateCompositeWorkRequest(
+                        operation_id=request.operation_id,
+                        space_id=request.space_id,
+                        actor=request.actor,
+                        work_id=child.work_id,
+                        state=child.state,
+                        plan=child.nested_plan,
+                    ),
+                    now=now,
+                    epoch=epoch,
+                    grants=grants,
+                    decisions=decisions,
+                )
+                targets.extend(nested_targets)
+            else:
+                _write_subject(
+                    connection,
+                    record_id=child.work_id,
+                    kind="work",
+                    parent_id=request.state.activity_id,
+                    operation_id=request.operation_id,
+                    actor=request.actor,
+                    now=now,
+                    status="proposed",
+                    state=child.state,
+                    revision=1,
+                    structure_parent=request.work_id,
+                )
             connection.execute(
                 "INSERT INTO work_plan_children(child_id, parent_id, role) VALUES (?, ?, ?)",
                 (str(child.work_id), str(request.work_id), child.role),

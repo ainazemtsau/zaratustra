@@ -1,4 +1,61 @@
-# Activity setup recovery 0.22.1 — implementation result
+# Workflow 0.23.0 — implementation result
+
+## outcome
+
+Implemented versioned workflow definitions and durable execution on WorkPlan/
+Work/Attempt, explicit schema 15 → 16, and system Activity creation. Internal
+transitions preserve separate owner acceptance. Exact questions, answers,
+fragments, model pins, repairs and receipts survive continuation.
+
+## evidence
+
+See [the release evidence](docs/workflows-0.23.0-result.md) for the full native
+gate (881 tests and 32 import contracts before late corrections), affected
+rechecks, outside-checkout installed ordinary Pi, exact HTTP/ContextManifest
+accounting, final wheel SHA and bounded read-only evaluator.
+
+The real subscription trial activated the short and detailed fictional cases;
+the forwarded case stopped before draft HTTP at the trial admission cap. The
+overall real trial is incomplete. Two unknown sends remain unknown and were not
+replayed. First ordinary Work execution was checked with a local synthetic
+provider, not in the real model trial.
+
+The final wheel passed a 25-send native workflow/Method/project scenario and a
+zero-send preflight refusal scenario. An earlier final recheck encountered
+intermittent SQLITE_BUSY on read-only status/observation; the same check passed
+in a new fictional space without a code change. The cause remains unestablished.
+
+## assumptions
+
+The model interprets user needs. Core validates structured results, exact
+dependencies, current rights and receipts. Structural checks do not establish
+quality for every future conversation.
+
+## cuts
+
+Exports, Git representations, personal Activity changes, a separate panel,
+background service and a new queue remain outside this package.
+
+## cost
+
+Automatic scenarios used fictional spaces and local synthetic providers. The
+real trial used Sol 6.1/high through the existing subscription: 39 actual sends,
+581918 known usage units, two unknown sends with additional unknown usage, and
+one prepared context counted separately. The forty-send limit was preserved.
+No paid API fallback or personal Activity execution occurred.
+
+## manual-acceptance
+
+Owner acceptance of this release and later Work results remains separate.
+
+## next
+
+solmax. Owner acceptance remains separate. Personal installation is a separate
+action; the public implementation does not change personal Activity history.
+
+---
+
+# Previous release: Activity setup recovery 0.22.1 — implementation result
 
 ## outcome
 

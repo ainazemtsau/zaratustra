@@ -1,5 +1,13 @@
 # Development tools
 
+`probe_workflows_real_pi` is an explicitly authorized subscription trial, never
+an automatic test. It creates fictional Core data and uses ordinary installed
+Pi with the selected model, profile and reasoning. One Core enforces a total
+forty sends across the three input cases and their assigned stages. Credentials
+are used by native Pi, never read by the probe or retained in its evidence.
+Actual request bodies, transitions and outcomes are saved to ignored local
+evidence. An incomplete or exhausted trial is reported as incomplete.
+
 `probe_workspace_pi` is an installed-compatible ordinary Pi localhost scenario:
 upstream native file/command roots, saved Work resource, declined Git publication,
 compact and continuation. Fictional data only; no real provider calls.

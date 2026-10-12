@@ -17,6 +17,7 @@ from zaratustra.pi_adapter.activity_setup import SetupCoordinator
 from zaratustra.pi_adapter.assigned import AssignedConfig
 from zaratustra.pi_adapter.procedures import ProcedureCoordinator
 from zaratustra.pi_adapter.skills import activity_setup_skill
+from zaratustra.pi_adapter.workflows import WorkflowCoordinator
 
 from .probe_activity_setup_pi import context, harness
 
@@ -142,6 +143,8 @@ def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -
         core.upgrade_activity_setup_space,
     ):
         upgrade(root, authority)
+    core.upgrade_structures_space(root, authority)
+    assert core.read_space(root).schema_version == 15
     legacy_activity, legacy_work, legacy_result = uuid4(), uuid4(), uuid4()
     operation(
         core.CreateActivityRequest,
@@ -165,7 +168,7 @@ def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -
         ),
     )
     legacy_before = core.read_work(root, legacy_work, authority)
-    core.upgrade_structures_space(root, authority)
+    core.upgrade_workflow_space(root, authority)
     native, actual = harness(), read_pi_runtime(runtime)
     requests: list[dict[str, Any]] = []
     bridges: list[Bridge] = []
@@ -191,12 +194,14 @@ def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -
         )
         bridge.setup_controller = SetupCoordinator(bridge, config)
         bridge.procedure_controller = ProcedureCoordinator(bridge, config)
+        bridge.workflow_controller = WorkflowCoordinator(bridge, config)
         bridges.append(bridge)
         return bridge
 
     def run(provider: Any, **options: Any) -> None:
         bridge = bridge_for(provider)
         options["tool_names"] = ("read", "write", "edit", "bash", *INTERACTIVE_ZARA_TOOLS)
+        options["timeout_seconds"] = 240
         waiting = options.get("wait_for")
         if waiting is not None:
 
@@ -249,6 +254,48 @@ def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -
         prompt="Create observations; ask about the review period",
     )
     setup_id = core.list_activity_setups(root, authority)[0].setup_id
+    first_wait = core.read_activity_setup(root, setup_id, authority)
+    confusion = native.Provider(
+        [
+            {
+                "_tool": "zara_activity",
+                "mode": "status",
+                "setup_id": str(setup_id),
+            },
+            {"_final_text": "The saved question asks how often to review; it is still open"},
+        ]
+    )
+    run(
+        confusion,
+        expected_provider_calls=2,
+        prompt="Why did everything stop? I do not understand the question",
+    )
+    unchanged = core.read_activity_setup(root, setup_id, authority)
+    assert unchanged.state.question == first_wait.state.question
+    assert unchanged.state.input_version == first_wait.state.input_version
+    assert unchanged.state.phase == "needs_input"
+    followup_question = "Should corrections retain their original event date?"
+    followup = native.Provider(
+        [
+            {"_tool": "zara_activity", "mode": "answer", "setup_id": str(setup_id)},
+            {
+                "_tool": "zara_activity",
+                "mode": "question",
+                "setup_id": str(setup_id),
+                "question": followup_question,
+            },
+            {"_final_text": followup_question},
+        ]
+    )
+    run(
+        followup,
+        expected_provider_calls=3,
+        prompt="Review weekly",
+    )
+    following = core.read_activity_setup(root, setup_id, authority)
+    assert following.state.phase == "needs_input"
+    assert following.state.question == followup_question
+    assert len(following.state.interactions) == len(first_wait.state.interactions) + 1
     reviews, packets = 0, []
     raw_drafts = 0
     malformed = "" if blank_response else '{"contract_version":2,'
@@ -258,7 +305,9 @@ def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -
         nonlocal reviews, raw_drafts
         packet = context(body)
         if "work" in packet:
-            assert not body.get("tools"), "Review must not expose file/command tools"
+            assert {item["function"]["name"] for item in body.get("tools", [])}.issubset(
+                {"zara_workflow", "zara_memory"}
+            ), "Review must not expose file/command or mutation tools"
             incoming = json.loads(packet["inputs"][0]["content_text"])
             packets.append(incoming)
             assert "working_set" in {item["operation"] for item in incoming["supported_operations"]}
@@ -342,7 +391,7 @@ def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -
         second,
         skills=(activity_setup_skill(),),
         expected_provider_calls=9,
-        prompt="Daily observations, weekly review; preserve originals and event dates",
+        prompt="Yes, preserve originals and event dates; daily observations and weekly review",
         wait_for=lambda: (
             core.read_activity_setup(root, setup_id, authority).state.phase
             in ("ready", "needs_attention")
@@ -498,6 +547,31 @@ def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -
     continued = native.Provider([{"_final_text": "The old Development Work continues"}])
     run(continued, work=(legacy_activity, legacy_work), expected_provider_calls=1)
     assert core.read_work(root, legacy_work, authority) == legacy_before
+    missing_a, missing_b = uuid4(), uuid4()
+    different_errors = native.Provider(
+        [
+            {"mode": "open", "record_id": str(missing_a), "revision": 1},
+            {"mode": "open", "record_id": str(missing_b), "revision": 1},
+            {"_final_text": "Two different addresses are absent; this is not a repeated call"},
+        ]
+    )
+    run(
+        different_errors,
+        expected_provider_calls=3,
+        expected_tool_errors=2,
+        prompt="Inspect two fictional missing addresses and report the exact obstacles",
+    )
+    repeated_error = native.Provider(
+        [
+            {"mode": "open", "record_id": str(missing_b), "revision": 1},
+            {"mode": "open", "record_id": str(missing_b), "revision": 1},
+        ]
+    )
+    run(
+        repeated_error,
+        expected_repeated_tool_failure=True,
+        prompt="Repeat the same fictional missing address only to test the stop guard",
+    )
     assert all("ZARA_MANIFEST:" in json.dumps(body) for body in requests)
     # Read the fictional ledger independently of provider callbacks; never modify it.
     ledger_path = root / ".zara-core" / "core.sqlite3"
@@ -510,10 +584,16 @@ def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -
     assert len(deliveries) == len(requests), (len(deliveries), len(requests))
     assert all(item["stage"] == "answered" for item in deliveries), deliveries
     report = {
-        "schema": 15,
+        "schema": core.read_space(root).schema_version,
+        "upgrade_from_schema": 15,
         "pi_version": actual.version,
         "review_passes": reviews,
         "raw_result_repairs": 2,
+        "successive_user_questions": 2,
+        "clarification_preserved_wait": True,
+        "question_answered_in_new_pi": True,
+        "different_missing_addresses_do_not_abort": True,
+        "same_failed_operation_stops": True,
         "blank_response_retained": blank_response,
         "typed_work": str(work_id),
         "typed_entry": str(entry_id),

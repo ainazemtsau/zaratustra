@@ -42,8 +42,10 @@ from .models import (
     MethodChange,
     MethodRef,
     OutputContract,
+    PlanChild,
     RequestAttemptStopRequest,
     ReviseActivityRequest,
+    SetupInteraction,
     SetupResultRejection,
     SetupStage,
     SetupValidationIssue,
@@ -52,6 +54,7 @@ from .models import (
     ValidationCriterion,
     ValidationPlanState,
     ValidationResultState,
+    WorkflowChange,
     WorkState,
 )
 from .operations import LocalAuthority, _authorize, _local_space
@@ -69,7 +72,9 @@ from .storage import (
 from .structure_setup import (
     compile_structure,
     draft_from_bytes,
+    review_component_catalog,
     review_from_bytes,
+    review_result_schema,
     validate_review_components,
 )
 
@@ -198,10 +203,31 @@ def _current(
         raise FoundationError("content_unavailable", f"Activity setup {setup_id} lost its basis")
     if hashlib.sha256(bytes(row[2])).hexdigest().upper() != row[3]:
         raise FoundationError("corrupt_content", "Activity setup revision checksum differs")
+    state = ActivitySetupState.model_validate_json(row[2])
+    if revision is None and state.root_work_id:
+        # Historical setup JSON stays exact. Current coordination is read from its one
+        # workflow event/control stream; revisions retain snapshots for audit only.
+        event = connection.execute(
+            "SELECT detail FROM workflow_events WHERE root_work_id=? AND kind LIKE 'setup:%' "
+            "ORDER BY revision DESC LIMIT 1",
+            (str(state.root_work_id),),
+        ).fetchone()
+        if event and event[0]:
+            status = json.loads(event[0])
+            state = state.model_copy(
+                update={"phase": status["phase"], "question": status.get("question")}
+            )
+        control = connection.execute(
+            "SELECT control FROM workflow_runs WHERE root_work_id=?", (str(state.root_work_id),)
+        ).fetchone()
+        if control and control[0] in ("paused", "cancelled"):
+            state = state.model_copy(
+                update={"phase": "paused" if control[0] == "paused" else "cancelled"}
+            )
     return ActivitySetupRevision(
         setup_id=setup_id,
         revision=revision or row[0],
-        state=ActivitySetupState.model_validate_json(row[2]),
+        state=state,
     )
 
 
@@ -217,7 +243,8 @@ def _basis(
 
     _require_ref(connection, ref, actor, epoch)
     row = connection.execute(
-        "SELECT r.current_revision,v.payload FROM knowledge_records r JOIN knowledge_revisions v "
+        "SELECT r.current_revision,v.payload,r.received_at FROM knowledge_records r "
+        "JOIN knowledge_revisions v "
         "ON v.record_id=r.record_id AND v.revision=? WHERE r.record_id=?",
         (ref.revision, str(ref.record_id)),
     ).fetchone()
@@ -227,7 +254,33 @@ def _basis(
     if state.get("kind") == "source":
         source = SourceState.model_validate_json(row[1])
         state = source.model_dump(mode="json", exclude={"content"})
-        state["text"] = source.content.decode("utf-8") if source.content else None
+        state["received_at"] = row[2]
+        content = source.content
+    elif ref.start is not None:
+        from .knowledge import BODY_ADAPTER
+        from .models import HandoffState, MemoryViewState
+
+        body = BODY_ADAPTER.validate_json(row[1])
+        content = (
+            body.document
+            if isinstance(body, HandoffState)
+            else body.text.encode("utf-8")
+            if isinstance(body, MemoryViewState)
+            else None
+        )
+        state = {"kind": state["kind"]}
+    else:
+        content = None
+    if content is not None:
+        selected = content[ref.start : ref.end] if ref.start is not None else content
+        try:
+            state["text"] = selected.decode("utf-8")
+        except UnicodeDecodeError as error:
+            raise FoundationError(
+                "invalid_fragment", "Selected bytes split UTF-8 characters"
+            ) from error
+    elif state.get("kind") == "source":
+        state["text"] = None
     return {"ref": ref.model_dump(mode="json"), "state": state}
 
 
@@ -350,6 +403,17 @@ def check_setup_execution(
         return
     for ref in state.sources:
         _basis(connection, ref, actor, epoch)
+    if state.root_work_id and state.phase not in ("paused", "cancelled", "needs_attention"):
+        from .workflows import _run
+
+        if _run(connection, state.root_work_id)[2] == "running" and (
+            work_id == state.root_work_id
+            or connection.execute(
+                "SELECT 1 FROM workflow_nodes WHERE root_work_id=? AND work_id=?",
+                (str(state.root_work_id), str(work_id)),
+            ).fetchone()
+        ):
+            return
     if state.phase not in ("paused", "cancelled", "needs_attention") and any(
         stage.work_id == work_id
         and stage.output is None
@@ -426,6 +490,31 @@ def _save(
     revision: int,
     now: str,
 ) -> None:
+    if state.root_work_id:
+        run_revision = (
+            connection.execute(
+                "SELECT revision FROM workflow_runs WHERE root_work_id=?",
+                (str(state.root_work_id),),
+            ).fetchone()[0]
+            + 1
+        )
+        connection.execute(
+            "UPDATE workflow_runs SET revision=? WHERE root_work_id=?",
+            (run_revision, str(state.root_work_id)),
+        )
+        connection.execute(
+            "INSERT INTO workflow_events VALUES (?,?,?,?,?,?)",
+            (
+                str(state.root_work_id),
+                run_revision,
+                str(request.operation_id),
+                "setup:" + request.action,
+                canonical_json(
+                    {"phase": state.phase, "question": state.question, "setup_revision": revision}
+                ),
+                now,
+            ),
+        )
     if revision == 1:
         if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 15:
             connection.execute(
@@ -471,6 +560,15 @@ def _save(
     refs.append(
         ("activity" if state.mode == "create" else "referenced_activity", state.activity_id, 1)
     )
+    if state.root_work_id:
+        refs.append(("work", state.root_work_id, 1))
+        refs.extend(
+            ("work", UUID(row[0]), 1)
+            for row in connection.execute(
+                "SELECT work_id FROM workflow_nodes WHERE root_work_id=?",
+                (str(state.root_work_id),),
+            )
+        )
     if state.manifest:
         refs.append(("derived_artifact", state.manifest.artifact_id, state.manifest.revision))
     for stage in state.stages:
@@ -644,6 +742,20 @@ def apply_setup_change(
             if request.mode == "change_structure"
             else "new_activity_setup",
         )
+        if schema >= 16:
+            from .workflows import setup_workflow_begin
+
+            workflow, root_work_id = setup_workflow_begin(
+                connection,
+                request,
+                refs,
+                now=now,
+                epoch=epoch,
+                authority=authority,
+                grants=grants,
+                decisions=decisions,
+            )
+            state = state.model_copy(update={"workflow": workflow, "root_work_id": root_work_id})
         revision = 1
     else:
         current = _current(connection, request.setup_id)
@@ -661,7 +773,38 @@ def apply_setup_change(
         if state.phase in ("ready", "cancelled"):
             raise FoundationError("setup_closed", "Setup is already ready or cancelled")
         updates: dict[str, Any] = {}
-        if request.action == "answer":
+        if request.action == "bind_model":
+            if not request.stage_model or not state.stages:
+                raise FoundationError("invalid_request", "Model pin needs the current stage")
+            stage = state.stages[-1]
+            if stage.model is not None and stage.model != request.stage_model:
+                raise FoundationError("stale_node_model", "Started stage keeps its selected model")
+            updates["stages"] = state.stages[:-1] + (
+                stage.model_copy(update={"model": request.stage_model}),
+            )
+            if state.root_work_id:
+                connection.execute(
+                    "UPDATE workflow_nodes SET model=? WHERE work_id=?",
+                    (request.stage_model.model_dump_json(), str(stage.work_id)),
+                )
+        elif request.action == "attach_sources":
+            refs = tuple(dict.fromkeys(state.sources + request.source_refs))
+            for ref in refs:
+                _basis(connection, ref, request.actor, epoch)
+            if refs != state.sources:
+                if any(stage.output is None and not stage.retired for stage in state.stages):
+                    raise FoundationError(
+                        "setup_running", "Pause the active stage before adding inputs"
+                    )
+                updates = dict(
+                    sources=refs,
+                    input_version=state.input_version + 1,
+                    draft=None,
+                    review=None,
+                    manifest=None,
+                    phase="needs_input" if state.question else "collecting",
+                )
+        elif request.action == "answer":
             if not request.text:
                 raise FoundationError("invalid_request", "Answer must retain original text")
             answering_wait = False
@@ -703,9 +846,43 @@ def apply_setup_change(
                     retired = state.stages[:-1] + (
                         state.stages[-1].model_copy(update={"retired": True}),
                     )
-            refs = state.sources + (source(request.text),) + request.source_refs
+            answer_ref = source(request.text)
+            refs = tuple(dict.fromkeys(state.sources + (answer_ref,) + request.source_refs))
             for ref in refs:
                 _basis(connection, ref, request.actor, epoch)
+            if state.root_work_id and state.question:
+                from .models import WorkflowRequest
+                from .workflows import _run, _waits, apply_workflow_change
+
+                wait = next(
+                    (
+                        item
+                        for item in _waits(connection, state.root_work_id)
+                        if item.question == state.question
+                    ),
+                    None,
+                )
+                if wait:
+                    apply_workflow_change(
+                        connection,
+                        WorkflowRequest(
+                            operation_id=request.operation_id,
+                            space_id=request.space_id,
+                            actor=request.actor,
+                            action="answer",
+                            root_work_id=state.root_work_id,
+                            expected_revision=_run(connection, state.root_work_id)[1],
+                            wait_id=wait.wait_id,
+                            expected_wait_revision=wait.revision,
+                            answer=answer_ref,
+                            source_refs=request.source_refs,
+                        ),
+                        now=now,
+                        epoch=epoch,
+                        authority=authority,
+                        grants=grants,
+                        decisions=decisions,
+                    )
             if restart_wait:
                 stage = state.stages[-1]
                 continuation_packet = json.loads(
@@ -769,11 +946,53 @@ def apply_setup_change(
                 manifest=state.manifest if answering_wait else None,
                 stages=retired,
                 recovery_boundary=len(retired) if not answering_wait else state.recovery_boundary,
+                interactions=tuple(
+                    interaction.model_copy(update={"answer": answer_ref})
+                    if interaction.answer is None and interaction.question == state.question
+                    else interaction
+                    for interaction in state.interactions
+                ),
             )
         elif request.action == "question":
             if not request.text:
                 raise FoundationError("invalid_request", "Question text is required")
-            updates = dict(question=request.text, phase="needs_input")
+            updates = dict(
+                question=request.text,
+                phase="needs_input",
+                interactions=state.interactions
+                + (
+                    SetupInteraction(
+                        interaction_id=uuid5(request.operation_id, "question"),
+                        question=request.text,
+                        input_version=state.input_version,
+                        sources=state.sources,
+                    ),
+                ),
+            )
+            if state.root_work_id:
+                from .models import WorkflowRequest
+                from .workflows import _run, apply_workflow_change
+
+                apply_workflow_change(
+                    connection,
+                    WorkflowRequest(
+                        operation_id=request.operation_id,
+                        space_id=request.space_id,
+                        actor=request.actor,
+                        action="ask",
+                        root_work_id=state.root_work_id,
+                        expected_revision=_run(connection, state.root_work_id)[1],
+                        node_key="interview",
+                        question=request.text,
+                        purpose="Obtain the missing owner decision for Activity setup",
+                        source_refs=state.sources,
+                    ),
+                    now=now,
+                    epoch=epoch,
+                    authority=authority,
+                    grants=grants,
+                    decisions=decisions,
+                )
         elif request.action in ("pause", "cancel", "attention"):
             for stage in state.stages:
                 for attempt_id, session_id, assignment_revision in connection.execute(
@@ -797,6 +1016,18 @@ def apply_setup_change(
                 result=request.text,
                 auto_resume=request.auto_resume if request.action == "pause" else False,
             )
+            if state.root_work_id:
+                connection.execute(
+                    "UPDATE workflow_runs SET control=? WHERE root_work_id=?",
+                    (
+                        "cancelled"
+                        if request.action == "cancel"
+                        else "paused"
+                        if request.action == "pause"
+                        else "running",
+                        str(state.root_work_id),
+                    ),
+                )
             if request.action == "attention" and state.repair_work is None:
                 repair_id = uuid5(request.setup_id, "technical-repair")
                 effect(
@@ -811,6 +1042,86 @@ def apply_setup_change(
                     ),
                 )
                 updates["repair_work"] = repair_id
+        elif request.action == "migrate_workflow":
+            if state.root_work_id is not None:
+                raise FoundationError("workflow_exists", "Setup already uses its workflow")
+            if state.phase in ("activating", "ready"):
+                raise FoundationError(
+                    "setup_result_pending",
+                    "Finish the exact saved successful review before switching execution; "
+                    "a ready Activity needs no setup migration",
+                )
+            for stage in state.stages:
+                assignment = connection.execute(
+                    "SELECT status FROM execution_assignments WHERE work_id=? ORDER BY rowid "
+                    "DESC LIMIT 1",
+                    (str(stage.work_id),),
+                ).fetchone()
+                if assignment and assignment[0] in (
+                    "assigned",
+                    "waiting",
+                    "ready",
+                    "stop_requested",
+                    "unknown",
+                ):
+                    raise FoundationError(
+                        "unknown_outcome" if assignment[0] == "unknown" else "setup_running",
+                        "Finish or stop the old stage before migration",
+                    )
+                if stage.output is None and not stage.retired:
+                    row = connection.execute(
+                        "SELECT c.payload FROM subject_records w JOIN subject_content c ON "
+                        "c.record_id=w.record_id AND c.revision=w.current_revision WHERE "
+                        "w.record_id=?",
+                        (str(stage.work_id),),
+                    ).fetchone()
+                    if row and row[0] and WorkState.model_validate_json(row[0]).linked_outputs:
+                        raise FoundationError(
+                            "setup_result_pending",
+                            "Process the retained old output before migration",
+                        )
+            from .models import WorkflowRequest
+            from .workflows import _run, apply_workflow_change, setup_workflow_begin
+
+            workflow, root_work_id = setup_workflow_begin(
+                connection,
+                request,
+                state.sources,
+                now=now,
+                epoch=epoch,
+                authority=authority,
+                grants=grants,
+                decisions=decisions,
+            )
+            updates = dict(
+                workflow=workflow,
+                root_work_id=root_work_id,
+                stages=tuple(
+                    item.model_copy(update={"retired": True}) if item.output is None else item
+                    for item in state.stages
+                ),
+            )
+            if state.question:
+                apply_workflow_change(
+                    connection,
+                    WorkflowRequest(
+                        operation_id=request.operation_id,
+                        space_id=request.space_id,
+                        actor=request.actor,
+                        action="ask",
+                        root_work_id=root_work_id,
+                        expected_revision=_run(connection, root_work_id)[1],
+                        node_key="interview",
+                        question=state.question,
+                        purpose="Continue the saved owner question",
+                        source_refs=state.sources,
+                    ),
+                    now=now,
+                    epoch=epoch,
+                    authority=authority,
+                    grants=grants,
+                    decisions=decisions,
+                )
         elif request.action in ("resume", "retry"):
             if state.question:
                 raise FoundationError("incomplete_context", "Answer the saved question first")
@@ -849,6 +1160,11 @@ def apply_setup_change(
             )
             updates["result"] = None
             updates["auto_resume"] = False
+            if state.root_work_id:
+                connection.execute(
+                    "UPDATE workflow_runs SET control='running' WHERE root_work_id=?",
+                    (str(state.root_work_id),),
+                )
         elif request.action == "start_stage":
             if (
                 state.phase in ("paused", "needs_input", "needs_attention")
@@ -879,11 +1195,22 @@ def apply_setup_change(
                 raise FoundationError(
                     "setup_result_exhausted", "Explicit retry is required after two corrections"
                 )
+            review_manifest: ActivityActivationManifest | None = None
             packet: dict[str, Any] = {
                 "setup_id": str(request.setup_id),
                 "activity_id": str(state.activity_id),
                 "input_version": state.input_version,
                 "sources": [_basis(connection, ref, request.actor, epoch) for ref in state.sources],
+                "interactions": [
+                    {
+                        "question": item.question,
+                        "input_version": item.input_version,
+                        "answer": _basis(connection, item.answer, request.actor, epoch)
+                        if item.answer
+                        else None,
+                    }
+                    for item in state.interactions
+                ],
             }
             if state.draft:
                 packet["draft_ref"] = state.draft.model_dump(mode="json")
@@ -913,9 +1240,17 @@ def apply_setup_change(
                 )
                 if state.manifest:
                     packet["manifest_ref"] = state.manifest.model_dump(mode="json")
-                    packet["activation_manifest"] = json.loads(
-                        _artifact(connection, state.manifest, request.actor, epoch)
-                    )
+                    manifest_bytes = _artifact(connection, state.manifest, request.actor, epoch)
+                    packet["activation_manifest"] = json.loads(manifest_bytes)
+                    try:
+                        review_manifest = ActivityActivationManifest.model_validate_json(
+                            manifest_bytes
+                        )
+                    except ValidationError as error:
+                        raise FoundationError(
+                            "corrupt_space", "Saved activation manifest is invalid"
+                        ) from error
+                    packet["review_components"] = review_component_catalog(review_manifest)
                 if state.previous_structure:
                     from .data_store import exact_state
 
@@ -931,6 +1266,16 @@ def apply_setup_change(
                     ActivitySetupDraftV2 if state.contract_version == 2 else ActivitySetupDraft
                 ).model_json_schema()
             )
+            if (
+                request.stage_kind == "review"
+                and state.contract_version == 2
+                and review_manifest is not None
+            ):
+                packet["result_schema"] = review_result_schema(review_manifest)
+                packet["review_component_instruction"] = (
+                    "coverage.components uses exact addresses from review_components; "
+                    "explanations describe the reasoning in prose."
+                )
             packet.setdefault(
                 "supported_path",
                 (
@@ -955,18 +1300,31 @@ def apply_setup_change(
                 media_type="application/json",
                 content=canonical_json(packet).encode("utf-8"),
             )
-            effect(
-                CreateWorkRequest,
-                work_id=work_id,
-                state=WorkState(
-                    activity_id=state.activity_id,
-                    goal=request.stage_instruction,
-                    inputs=(ArtifactRef(artifact_id=packet_id, revision=1),),
-                    expected_outputs=(
-                        OutputContract(slot="report", media_type="text/plain", allow_empty=True),
-                    ),
+            stage_state = WorkState(
+                activity_id=state.activity_id,
+                goal=request.stage_instruction,
+                inputs=(ArtifactRef(artifact_id=packet_id, revision=1),),
+                expected_outputs=(
+                    OutputContract(slot="report", media_type="text/plain", allow_empty=True),
                 ),
             )
+            if state.root_work_id:
+                from .workflows import setup_workflow_add_stage
+
+                setup_workflow_add_stage(
+                    connection,
+                    request,
+                    state,
+                    PlanChild(role=request.stage_kind, work_id=work_id, state=stage_state),
+                    ArtifactRef(artifact_id=packet_id, revision=1),
+                    now=now,
+                    epoch=epoch,
+                    authority=authority,
+                    grants=grants,
+                    decisions=decisions,
+                )
+            else:
+                effect(CreateWorkRequest, work_id=work_id, state=stage_state)
             reviews = state.reviews_started + int(request.stage_kind == "review")
             stage = SetupStage(
                 work_id=work_id,
@@ -976,6 +1334,7 @@ def apply_setup_change(
                 draft=state.draft,
                 review_pass=reviews if request.stage_kind == "review" else 0,
                 result_protocol="setup_json",
+                model=request.stage_model,
                 repair_of=previous.work_id if repairing and previous is not None else None,
                 repair_series=previous.rejection.series_id
                 if continuing_series and previous is not None and previous.rejection
@@ -1062,18 +1421,51 @@ def apply_setup_change(
                         question="\n".join(review.unresolved) or None,
                     )
                     if (
+                        state.root_work_id
+                        and not review.unresolved
+                        and not any(item.blocking for item in review.findings)
+                        and state.draft
+                    ):
+                        reviewed_draft = draft_from_bytes(
+                            _artifact(connection, state.draft, request.actor, epoch),
+                            state.contract_version,
+                        )
+                        if reviewed_draft.open_questions:
+                            issues = (
+                                SetupValidationIssue(
+                                    code="unreviewed_setup_question",
+                                    path=("questions",),
+                                    message="A successful review must resolve or request "
+                                    "correction of setup-blocking draft questions",
+                                ),
+                            )
+                    if (
                         updates["phase"] == "correcting"
                         and state.reviews_started - state.pass_boundary >= 5
                     ):
                         updates.update(phase="needs_attention", result=review.conclusion)
+                    if updates["phase"] == "needs_input" and updates["question"]:
+                        updates["interactions"] = state.interactions + (
+                            SetupInteraction(
+                                interaction_id=uuid5(request.operation_id, "review-question"),
+                                question=updates["question"],
+                                input_version=state.input_version,
+                                sources=state.sources,
+                            ),
+                        )
                 else:
                     assert isinstance(parsed, (ActivitySetupDraft, ActivitySetupDraftV2))
                     draft = parsed
                     updates = dict(
                         draft=request.output,
                         review=None,
-                        phase="needs_input" if draft.open_questions else "drafting",
-                        question="\n".join(draft.open_questions) or None,
+                        phase="needs_input"
+                        if draft.open_questions
+                        and int(connection.execute("PRAGMA user_version").fetchone()[0]) < 16
+                        else "drafting",
+                        question="\n".join(draft.open_questions) or None
+                        if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 16
+                        else None,
                     )
                     if isinstance(draft, ActivitySetupDraftV2):
                         try:
@@ -1105,8 +1497,56 @@ def apply_setup_change(
                 )
                 if updates["phase"] != "needs_attention":
                     updates["result"] = None
+            if state.root_work_id:
+                from .workflows import setup_workflow_complete_stage
+
+                setup_workflow_complete_stage(connection, request, state, stage, issues, now=now)
+                if not issues and updates.get("phase") == "needs_input" and updates.get("question"):
+                    from .models import WorkflowRequest
+                    from .workflows import _run, apply_workflow_change
+
+                    apply_workflow_change(
+                        connection,
+                        WorkflowRequest(
+                            operation_id=request.operation_id,
+                            space_id=request.space_id,
+                            actor=request.actor,
+                            action="ask",
+                            root_work_id=state.root_work_id,
+                            expected_revision=_run(connection, state.root_work_id)[1],
+                            node_key=stage.kind,
+                            question=updates["question"],
+                            purpose="Resolve an owner decision checked by the full Activity review",
+                            source_refs=state.sources,
+                        ),
+                        now=now,
+                        epoch=epoch,
+                        authority=authority,
+                        grants=grants,
+                        decisions=decisions,
+                    )
         elif request.action == "finish":
             state = _activate(connection, request, state, effect, epoch)
+            if state.root_work_id:
+                from .models import WorkflowRequest
+                from .workflows import _run, apply_workflow_change
+
+                apply_workflow_change(
+                    connection,
+                    WorkflowRequest(
+                        operation_id=request.operation_id,
+                        space_id=request.space_id,
+                        actor=request.actor,
+                        action="finish",
+                        root_work_id=state.root_work_id,
+                        expected_revision=_run(connection, state.root_work_id)[1],
+                    ),
+                    now=now,
+                    epoch=epoch,
+                    authority=authority,
+                    grants=grants,
+                    decisions=decisions,
+                )
         else:
             raise FoundationError("invalid_request", "Unknown setup action")
         state = ActivitySetupState.model_validate({**state.model_dump(), **updates})
@@ -1303,6 +1743,85 @@ def _activate(
             mode="regular",
         )
     if manifest is not None:
+        for ordinal, definition in enumerate(manifest.workflow_definitions):
+            identifier = uuid5(request.setup_id, f"workflow:{ordinal}")
+            candidate_id = uuid5(request.setup_id, f"workflow-candidate:{ordinal}")
+            decision_id = uuid5(request.setup_id, f"workflow-decision:{ordinal}")
+            evidence = KnowledgeRef(
+                record_id=state.review.artifact_id, revision=state.review.revision
+            )
+            results = tuple(
+                ValidationResultState(
+                    result_id=uuid5(candidate_id, area),
+                    criterion=area,
+                    outcome="met",
+                    evidence=(evidence,),
+                    actual_input="Entire exact reviewed Activity package",
+                    environment="Core setup review",
+                )
+                for area in AREAS
+            )
+            effect(
+                CreateDevelopmentRequest,
+                record_id=candidate_id,
+                state=ChangeCandidateState(
+                    target=WorkflowChange(
+                        workflow_id=identifier, to_version=1, definition=definition
+                    ),
+                    proposal="Adopt the exact workflow in the fully reviewed Activity",
+                    evidence=state.sources + (evidence,),
+                    expected_outcome=manifest.structure.first_action,
+                    scope_activity_ids=(state.activity_id,),
+                    exclusions="No grants, code, external publication or Work acceptance",
+                    impact="Only declared workflows in this Activity",
+                    unknowns="Future experience",
+                    validation_plan=ValidationPlanState(
+                        baseline=str(state.draft),
+                        environment="Core and ordinary Pi",
+                        criteria=tuple(
+                            ValidationCriterion(
+                                key=area,
+                                question=area,
+                                pass_condition="No substantial obstacle",
+                                basis=(evidence,),
+                            )
+                            for area in AREAS
+                        ),
+                        cases="Whole current setup",
+                        method="Whole exact review",
+                        sufficiency="All seven areas",
+                        limits="No mandatory trial",
+                        stop_and_restore="Stop future starts",
+                        decision_condition="Exact current review",
+                        follow_up="Use and Sleep",
+                    ),
+                    results=results,
+                    restore_plan="Stop future use; preserve history",
+                    irreversible_effects="Actual work effects retain their own receipts",
+                ),
+            )
+            effect(
+                CreateDecisionRequest,
+                decision_id=decision_id,
+                state=ChangeDecisionState(
+                    statement="Adopt one reviewed workflow within the initial setup permission",
+                    candidate_id=candidate_id,
+                    candidate_revision=1,
+                    mode="regular",
+                    use="permitted",
+                    scope_activity_id=state.activity_id,
+                    validation_result_ids=tuple(item.result_id for item in results),
+                    review_condition="Review when needs or process change",
+                ),
+            )
+            effect(
+                ApplyCandidateRequest,
+                candidate_id=candidate_id,
+                candidate_revision=1,
+                decision_id=decision_id,
+                decision_revision=1,
+                mode="regular",
+            )
         from .structure_change import activate_setup_structure
 
         activate_setup_structure(connection, request, state, manifest, review, effect, epoch)

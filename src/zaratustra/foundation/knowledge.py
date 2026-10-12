@@ -526,6 +526,9 @@ def _write_revision(
 
 def _sanitize_deleted(connection: sqlite3.Connection, record_id: UUID, now: str) -> None:
     """Retire dependent copies by provenance, including transitive derived records."""
+    from .workflows import sanitize_workflow_dependency
+
+    sanitize_workflow_dependency(connection, record_id, now)
     if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 14:
         from .activity_setup import sanitize_setup_dependency
 
@@ -622,6 +625,9 @@ def sanitize_deleted_knowledge_dependency(
     connection: sqlite3.Connection, record_id: UUID, now: str
 ) -> None:
     """Retire derived payloads after an Artifact, Work or Activity is deleted."""
+    from .workflows import sanitize_workflow_dependency
+
+    sanitize_workflow_dependency(connection, record_id, now)
 
     if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 14:
         from .activity_setup import sanitize_setup_dependency

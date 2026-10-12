@@ -195,6 +195,7 @@ def run_process(
     continue_work: bool = False,
     expected_pre_send_failure: bool = False,
     expected_repeated_tool_failure: bool = False,
+    expected_tool_errors: int = 0,
     expected_provider_calls: int | None = None,
     session_directory: Path | None = None,
     resume_session: Path | None = None,
@@ -204,7 +205,13 @@ def run_process(
     skills: tuple[Path, ...] = (),
     catalog_only: bool = False,
     wait_for: Callable[[], bool] | None = None,
+    timeout_seconds: int = 90,
     tool_names: tuple[str, ...] | None = None,
+    local_model_id: str = "fictional-model",
+    thinking: str | None = None,
+    model_overrides: dict[str, object] | None = None,
+    remember_selection: bool = False,
+    fixture_agent_dir: Path | None = None,
 ) -> list[dict[str, object]]:
     bridge_server = BridgeServer(bridge)
     bridge_thread = threading.Thread(target=bridge_server.serve_forever, daemon=True)
@@ -215,9 +222,15 @@ def run_process(
     shutil.copyfile(Path(str(files("zaratustra.pi_adapter").joinpath("extension.ts"))), installed)
     home = directory / f"pi-home-{uuid4()}"
     home.mkdir()
+    agent_home = fixture_agent_dir or home / "pi-agent"
+    if model_overrides is not None:
+        agent_home.mkdir(parents=True, exist_ok=True)
+        (agent_home / "models.json").write_text(
+            json.dumps({"providers": {"fictional-local": {"modelOverrides": model_overrides}}}),
+            encoding="utf-8",
+        )
     if compact:
-        agent_home = home / "pi-agent"
-        agent_home.mkdir()
+        agent_home.mkdir(parents=True, exist_ok=True)
         (agent_home / "settings.json").write_text(
             json.dumps(
                 {"compaction": {"enabled": True, "keepRecentTokens": 1, "reserveTokens": 512}}
@@ -235,7 +248,7 @@ def run_process(
             "USERPROFILE": str(home),
             "APPDATA": str(home / "AppData"),
             "LOCALAPPDATA": str(home / "LocalAppData"),
-            "PI_CODING_AGENT_DIR": str(home / "pi-agent"),
+            "PI_CODING_AGENT_DIR": str(agent_home),
             "PI_OFFLINE": "1",
             "PI_SKIP_VERSION_CHECK": "1",
             "PI_TELEMETRY": "0",
@@ -246,11 +259,13 @@ def run_process(
             "ZARA_PROVIDER_BASE_URL": f"http://127.0.0.1:{provider.server_port}/v1",
             "ZARA_PROVIDER_ORIGIN": f"http://127.0.0.1:{provider.server_port}",
             "ZARA_LOCAL_PROVIDER_ID": "fictional-local",
-            "ZARA_LOCAL_MODEL_ID": "fictional-model",
+            "ZARA_LOCAL_MODEL_ID": local_model_id,
             "ZARA_LOCAL_CONTEXT_WINDOW": "16384",
             "ZARA_LOCAL_MAX_TOKENS": "512",
         }
     )
+    if remember_selection:
+        env["ZARA_REMEMBER_SELECTION"] = "1"
     if work:
         env["ZARA_INITIAL_ACTIVITY_ID"], env["ZARA_INITIAL_WORK_ID"] = map(str, work)
     if catalog_only:
@@ -268,7 +283,7 @@ def run_process(
         "--provider",
         "openai-codex" if catalog_only else "fictional-local",
         "--model",
-        "gpt-6.1-sol" if catalog_only else "fictional-model",
+        "gpt-6.1-sol" if catalog_only else local_model_id,
         "--extension",
         str(installed),
         "--no-extensions",
@@ -279,6 +294,8 @@ def run_process(
         "--no-approve",
         "--offline",
     ]
+    if thinking is not None:
+        command.extend(["--thinking", thinking])
     for skill in skills:
         command.extend(["--skill", str(skill)])
     if tool_names is not None:
@@ -331,7 +348,7 @@ def run_process(
         second_turn_started = False
         continuation_started = False
         confirmations = 0
-        deadline = time.monotonic() + 90
+        deadline = time.monotonic() + timeout_seconds
         while time.monotonic() < deadline:
             try:
                 event = events.get(timeout=0.25)
@@ -459,7 +476,7 @@ def run_process(
         if expected_repeated_tool_failure:
             assert len(errors) == 2, errors
         else:
-            assert not errors, errors
+            assert len(errors) == expected_tool_errors, errors
         assert confirmations == len(confirmation_answers), observed
         return observed
     finally:
