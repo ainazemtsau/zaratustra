@@ -4,7 +4,8 @@
 
 Implementation and installed checks are complete. On 2026-10-12 the owner
 authorized public main delivery after the explanation of the verified behaviour
-and trial allowance violation; publication is being completed. Version
+and trial allowance violation. Publication and authenticated readback completed
+at da457b0776f2ebf36e45ecc5460a70507f285291. Version
 0.23.0 was published before the real-model trial and the intermittent status
 contention were resolved. Its original evidence remains in
 [the 0.23.0 report](workflows-0.23.0-result.md); it does not establish completion
@@ -175,3 +176,11 @@ reset. The owner has now authorized publication with this evidence. That
 authorization does not reclassify the bounded trial as successful or
 retroactively authorize the excess sends. Personal installation and acceptance
 of later Work remain separate.
+
+Publication destination was checked as the public repository
+`ainazemtsau/zaratustra`, default branch `main`. Ordinary fast-forward push
+published da457b0776f2ebf36e45ecc5460a70507f285291. Authenticated GitHub readback
+confirmed that exact commit, version 0.23.1, and matching Git blobs for
+`pyproject.toml`, this report, the native Pi extension and the public data
+contract. The final wheel SHA remains unchanged. This final delivery receipt
+adds documentation only; it does not change the verified product bytes.

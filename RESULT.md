@@ -1,12 +1,14 @@
-# Workflow 0.23.1 — correction, publication authorized
+# Workflow 0.23.1 — published correction
 
 ## outcome
 
 Corrected status contention handling and the ordinary typed Work publication
 contract after the incomplete real-model trial. On 2026-10-12 the owner
 authorized publication to the public main with the recorded evidence and
-allowance violation. Publication is being completed; personal installation and
-Activity history remain unchanged.
+allowance violation. Published to ainazemtsau/zaratustra/main at
+da457b0776f2ebf36e45ecc5460a70507f285291; authenticated readback confirmed the
+commit, version 0.23.1 and matching code/report blobs. Personal installation
+and Activity history remain unchanged.
 
 ## evidence
 
@@ -54,7 +56,7 @@ and does not retroactively authorize the three excess sends.
 
 solmax. The bounded read-only final-wheel smoke passed. The launcher admission
 fix passed 30 affected no-model checks; the installed product bytes are
-unchanged. Complete authorized public delivery and authenticated readback.
+unchanged. Authorized public delivery and authenticated readback are complete.
 Personal installation and Work acceptance remain separate.
 
 ---
