@@ -1,10 +1,12 @@
-# Workflow 0.23.1 — correction, delivery held
+# Workflow 0.23.1 — correction, publication authorized
 
 ## outcome
 
 Corrected status contention handling and the ordinary typed Work publication
-contract after the incomplete real-model trial. This correction has not been
-published; personal installation and Activity history remain unchanged.
+contract after the incomplete real-model trial. On 2026-10-12 the owner
+authorized publication to the public main with the recorded evidence and
+allowance violation. Publication is being completed; personal installation and
+Activity history remain unchanged.
 
 ## evidence
 
@@ -44,13 +46,15 @@ known usage: 2413867, plus unknown historical usage. No new real run follows.
 
 ## manual-acceptance
 
-Owner acceptance remains separate and has not been recorded.
+The owner authorized public delivery after the explanation of the verified
+behaviour and trial deviation. This is separate from acceptance of later Work
+and does not retroactively authorize the three excess sends.
 
 ## next
 
 solmax. The bounded read-only final-wheel smoke passed. The launcher admission
 fix passed 30 affected no-model checks; the installed product bytes are
-unchanged. Delivery is held for owner review of the trial allowance violation.
+unchanged. Complete authorized public delivery and authenticated readback.
 Personal installation and Work acceptance remain separate.
 
 ---

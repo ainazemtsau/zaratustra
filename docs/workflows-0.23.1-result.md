@@ -2,8 +2,9 @@
 
 ## Status
 
-Implementation and installed checks are complete; delivery is held after a
-trial allowance violation. This correction has not been published. Version
+Implementation and installed checks are complete. On 2026-10-12 the owner
+authorized public main delivery after the explanation of the verified behaviour
+and trial allowance violation; publication is being completed. Version
 0.23.0 was published before the real-model trial and the intermittent status
 contention were resolved. Its original evidence remains in
 [the 0.23.0 report](workflows-0.23.0-result.md); it does not establish completion
@@ -170,5 +171,7 @@ continuation trial remains incomplete due to the allowance violation. Two
 launcher attempts stopped before a provider send because the development trace
 directory was absent. The directory was added to the launcher; both attempts
 retain zero HTTP and zero new delivery records. No budget or unknown send was
-reset. Delivery remains held for owner review of this deviation. Owner
-acceptance of the release and later Work results remains separate.
+reset. The owner has now authorized publication with this evidence. That
+authorization does not reclassify the bounded trial as successful or
+retroactively authorize the excess sends. Personal installation and acceptance
+of later Work remain separate.
