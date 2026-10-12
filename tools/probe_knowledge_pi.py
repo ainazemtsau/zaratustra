@@ -180,6 +180,30 @@ def apply(
     return {"mode": "apply", "intent": intent}
 
 
+def _completed_observation(bridge: Bridge, predicate: Callable[[], bool]) -> bool:
+    """Observe an idle boundary; never interrupt active coordination with an unused read."""
+    for controller in (
+        bridge.setup_controller,
+        bridge.procedure_controller,
+        bridge.workflow_controller,
+    ):
+        thread = getattr(controller, "thread", None)
+        if thread is not None and thread.is_alive():
+            return False
+    for attempt in range(3):
+        try:
+            return predicate()
+        except FoundationError as error:
+            transient = error.code == "busy" or (
+                error.code == "storage"
+                and any(name in error.detail for name in ("SQLITE_BUSY", "SQLITE_LOCKED"))
+            )
+            if not transient or attempt == 2:
+                raise
+            time.sleep(0.05 * (attempt + 1))
+    raise AssertionError("Bounded observation must return or raise")
+
+
 def run_process(
     directory: Path,
     runtime: Path,
@@ -353,7 +377,7 @@ def run_process(
             try:
                 event = events.get(timeout=0.25)
             except queue.Empty:
-                if wait_for is not None and wait_for():
+                if wait_for is not None and _completed_observation(bridge, wait_for):
                     break
                 if process.poll() is not None:
                     break
@@ -439,7 +463,7 @@ def run_process(
                     process.stdin.flush()
                     continuation_started = True
                     continue
-                if wait_for is not None and not wait_for():
+                if wait_for is not None and not _completed_observation(bridge, wait_for):
                     continue
                 break
         errors = [

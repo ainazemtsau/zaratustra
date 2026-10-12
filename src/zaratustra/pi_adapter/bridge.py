@@ -58,6 +58,7 @@ from zaratustra.foundation import (
     MemorySelector,
     MemoryViewState,
     OpenWaitRequest,
+    OutputValidationError,
     ProvenanceRef,
     PublishAttemptOutputRequest,
     RecordChangeOutcomeRequest,
@@ -99,6 +100,7 @@ from zaratustra.foundation import (
     memory_required_refs,
     open_knowledge,
     open_memory_selection,
+    output_publication_contracts,
     prepare_memory_cache,
     read_activity,
     read_activity_setup,
@@ -554,14 +556,22 @@ class Bridge:
         if action in ("status", "explain"):
             if root_id is None:
                 raise FoundationError("invalid_request", "Name the workflow root Work")
-            read_workflow_run(self.path, root_id, self.authority)
-            if self.assigned_attempt_id is not None:
-                from .workflows import workflow_work_ids
+            from .activity_setup import _observe
 
-                selected = self._selection(session_id)
-                if selected.work_id not in workflow_work_ids(self.path, root_id, self.authority):
-                    raise FoundationError("wrong_scope", "Read only the assigned workflow")
-            return workflow_view(self.path, root_id, self.authority)
+            status_root = root_id
+
+            def current_status() -> dict[str, Any]:
+                if self.assigned_attempt_id is not None:
+                    from .workflows import workflow_work_ids
+
+                    selected = self._selection(session_id)
+                    if selected.work_id not in workflow_work_ids(
+                        self.path, status_root, self.authority
+                    ):
+                        raise FoundationError("wrong_scope", "Read only the assigned workflow")
+                return workflow_view(self.path, status_root, self.authority)
+
+            return cast(dict[str, Any], _observe(current_status))
         if self.assigned_attempt_id is not None:
             raise FoundationError(
                 "permission_denied", "Assigned nodes may only read workflow state"
@@ -931,12 +941,17 @@ class Bridge:
                 "next_offset": end if end < len(packet_content) else None,
             }
         if action == "status":
-            current = read_activity_setup(self.path, identifier, self.authority)
-            usage: list[dict[str, Any]] = []
-            for stage in current.state.stages:
-                snapshot = read_execution(self.path, stage.work_id, self.authority)
-                usage.extend(item.model_dump(mode="json") for item in snapshot.invocations)
-            return {**current.model_dump(mode="json"), "invocations": usage}
+            from .activity_setup import _observe
+
+            def current_status() -> dict[str, Any]:
+                current = read_activity_setup(self.path, identifier, self.authority)
+                usage: list[dict[str, Any]] = []
+                for stage in current.state.stages:
+                    snapshot = read_execution(self.path, stage.work_id, self.authority)
+                    usage.extend(item.model_dump(mode="json") for item in snapshot.invocations)
+                return {**current.model_dump(mode="json"), "invocations": usage}
+
+            return cast(dict[str, Any], _observe(current_status))
         if action not in (
             "begin",
             "answer",
@@ -1216,7 +1231,9 @@ class Bridge:
 
     def snapshot(self, session_id: UUID) -> dict[str, object]:
         selected = self._selection(session_id)
-        result = read_execution(self.path, selected.work_id, self.authority).model_dump(mode="json")
+        current = read_execution(self.path, selected.work_id, self.authority)
+        result = current.model_dump(mode="json")
+        result["output_publication_contracts"] = output_publication_contracts(current.work.state)
         if self.assigned_attempt_id is not None:
             stage = read_setup_stage(self.path, selected.work_id, self.authority)
             if stage is not None and stage.result_protocol is not None:
@@ -2212,6 +2229,7 @@ class Bridge:
             )
             packet["activity"] = activity.model_dump(mode="json")
             packet["work"] = work.model_dump(mode="json")
+            packet["output_publication_contracts"] = output_publication_contracts(work.state)
             if info.schema_version >= 15:
                 from zaratustra.foundation import describe_structure
 
@@ -3138,10 +3156,14 @@ class BridgeHandler(BaseHTTPRequestHandler):
             code = error.code if isinstance(error, FoundationError) else "invalid_request"
             if isinstance(error, FoundationError) and session_id is not None:
                 self.server.bridge.capture_provider_refusal(session_id, path.path, body, error)
-            result = {"error": code, "detail": str(error)}
+            error_result: dict[str, object] = {"error": code, "detail": str(error)}
             if isinstance(error, FoundationError):
-                result["foundation_detail"] = error.detail
-            self._reply(HTTPStatus.CONFLICT, result)
+                error_result["foundation_detail"] = error.detail
+            if isinstance(error, OutputValidationError):
+                error_result["validation_issues"] = [
+                    issue.model_dump(mode="json") for issue in error.issues
+                ]
+            self._reply(HTTPStatus.CONFLICT, error_result)
 
     def do_GET(self) -> None:
         self._dispatch(post=False)

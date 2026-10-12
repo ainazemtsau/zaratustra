@@ -52,6 +52,7 @@ from .data import (
     entry_history,
     ingest_batch,
     list_formats,
+    output_publication_contracts,
     procedure_for_work,
     procedure_status,
     query_entries,
@@ -61,6 +62,7 @@ from .data import (
     upgrade_structures_space,
     working_set,
 )
+from .data_store import OutputValidationError
 from .development import (
     check_program_change_boundary,
     list_change_applications,
@@ -268,6 +270,7 @@ from .models import (
     ResourceState,
     RestoreCandidateRequest,
     ResultRevalidation,
+    ResultValidationIssue,
     RevalidateResultRequest,
     ReviseActivePlanRequest,
     ReviseActivityRequest,
@@ -437,6 +440,9 @@ __all__ = [
     "DataFormatState",
     "DataMutation",
     "DataOutputEnvelope",
+    "ResultValidationIssue",
+    "OutputValidationError",
+    "output_publication_contracts",
     "DataReference",
     "IngestDataRequest",
     "IntakeElement",

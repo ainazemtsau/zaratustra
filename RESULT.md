@@ -1,4 +1,61 @@
-# Workflow 0.23.0 — implementation result
+# Workflow 0.23.1 — correction, delivery held
+
+## outcome
+
+Corrected status contention handling and the ordinary typed Work publication
+contract after the incomplete real-model trial. This correction has not been
+published; personal installation and Activity history remain unchanged.
+
+## evidence
+
+See [the correction report](docs/workflows-0.23.1-result.md) for the confirmed
+failures, completed checks and remaining verification. The affected native
+gate passed 76 tests and 32 import contracts, with types, hygiene and build.
+The final installed wheel passed ordinary Pi with 54 answered localhost
+requests, field diagnostics, corrected publication, repeat stop, reopening and
+separate acceptance. Intermediate installed checks passed with 25 and 42
+local provider requests. The real additional trial
+activated its Activity and saved typed entries, but failed output publication.
+It is incomplete. A later real continuation published all three declared
+first-Work outputs and preserved them after reopening, but made 11 requests
+against an eight-request authorization. That trial remains incomplete due to
+the allowance violation; it is not evidence of a successful bounded trial.
+
+## assumptions
+
+The model interprets goals. Core validates exact typed outputs, current rights
+and producer ownership. A successful synthetic trace does not establish model
+quality for all conversations. The historical OS lock holder is unidentified.
+
+## cuts
+
+Exports, Git representations, personal installation and personal Activity
+changes remain outside this correction.
+
+## cost
+
+The additional real trial consumed its twenty-send allowance: 20 answered
+requests and 919984 recorded usage units. The earlier trial retains 39 requests,
+581918 known units and two unknown outcomes with unknown additional usage.
+No paid API fallback was used; further real sends require renewed authorization.
+The later continuation added 11 answered requests and 911965 recorded units,
+three requests beyond its eight-send authorization. Total actual sends: 70;
+known usage: 2413867, plus unknown historical usage. No new real run follows.
+
+## manual-acceptance
+
+Owner acceptance remains separate and has not been recorded.
+
+## next
+
+solmax. The bounded read-only final-wheel smoke passed. The launcher admission
+fix passed 30 affected no-model checks; the installed product bytes are
+unchanged. Delivery is held for owner review of the trial allowance violation.
+Personal installation and Work acceptance remain separate.
+
+---
+
+# Previous release: Workflow 0.23.0 — implementation result
 
 ## outcome
 

@@ -93,7 +93,14 @@ def _observe(function: Any, *args: Any, **kwargs: Any) -> Any:
         try:
             return function(*args, **kwargs)
         except FoundationError as error:
-            if number == 2 or error.code not in ("busy", "storage") or "locked" not in str(error):
+            contention = error.code == "busy" or (
+                error.code == "storage"
+                and any(
+                    marker in error.detail.casefold()
+                    for marker in ("sqlite_busy", "sqlite_locked", "locked")
+                )
+            )
+            if number == 2 or not contention:
                 raise
             time.sleep(0.05 * (number + 1))
 

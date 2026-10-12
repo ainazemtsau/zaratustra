@@ -7,7 +7,7 @@ import json
 import shutil
 import sqlite3
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 from uuid import UUID, uuid4
 
 import zaratustra.foundation as core
@@ -494,6 +494,154 @@ def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -
     assert core.start_procedure(root, authority, activity, "observe", "first-observation")[
         "work_id"
     ] == str(work_id)
+
+    # An ordinary selected Work uses the same typed publication schema. The raw
+    # responses mirror the observed object-result / invented-kind failure, without
+    # repairing or interpreting the provider's text in the product.
+    ordinary_work, ordinary_entry = uuid4(), uuid4()
+    ordinary_state = core.WorkState(
+        activity_id=activity,
+        goal="Save one supplied dated observation and publish its exact result",
+        inputs=result.state.inputs,
+        structure=result.state.structure,
+        expected_outputs=(
+            core.OutputContract(
+                slot="result", media_type="application/json", format_ref=format_ref
+            ),
+        ),
+    )
+    operation(core.CreateWorkRequest, work_id=ordinary_work, state=ordinary_state)
+    bad_result = '{"entries":[],"complete":true,"result":{"value":"1.25"}}'
+    bad_kind = '{"kind":"data_output_envelope","entries":[],"complete":true,"result":"Saved"}'
+    good_result = (
+        '{"contract_version":1,"entries":[{"record_id":"'
+        + str(ordinary_entry)
+        + '","revision":1}],"complete":true,"limitations":[],"result":"Observation saved"}'
+    )
+
+    def issues_in_last_tool(body: dict[str, Any]) -> list[dict[str, Any]]:
+        tools = [message for message in body["messages"] if message["role"] == "tool"]
+        text = str(tools[-1]["content"])
+        marker = text.index('{"validation_issues":')
+        return cast(
+            list[dict[str, Any]],
+            json.JSONDecoder().raw_decode(text[marker:])[0]["validation_issues"],
+        )
+
+    def ordinary_step(index: int, body: dict[str, Any]) -> dict[str, Any]:
+        incoming = context(body)
+        assert incoming["work"]["work_id"] == str(ordinary_work)
+        actual_schema = incoming["output_publication_contracts"][0]["content_schema"]
+        assert actual_schema == core.DataOutputEnvelope.model_json_schema()
+        assert actual_schema["properties"]["result"]["type"] == "string"
+        if index == 0:
+            return {
+                "_tool": "zara_data",
+                "mode": "apply",
+                "operation": "create_entry",
+                "arguments": {
+                    "record_id": str(ordinary_entry),
+                    "state": {
+                        "kind": "data_entry",
+                        "role": "event",
+                        "format_ref": format_ref.model_dump(mode="json"),
+                        "values": {"day": "2026-01-05", "value": "1.25"},
+                        "bases": [
+                            {
+                                "record_id": str(ordinary_state.inputs[0].artifact_id),
+                                "revision": ordinary_state.inputs[0].revision,
+                            }
+                        ],
+                    },
+                },
+            }
+        if index in (1, 3, 5):
+            if index in (3, 5):
+                issues = issues_in_last_tool(body)
+                assert any(
+                    item["code"] == ("string_type" if index == 3 else "extra_forbidden")
+                    and item["path"] == (["result"] if index == 3 else ["kind"])
+                    for item in issues
+                )
+                if index == 5:
+                    assert not any(item["path"] == ["result"] for item in issues)
+            return {"_tool": "zara_result", "mode": "contract", "slot": "result"}
+        if index in (2, 4, 6):
+            tools = [message for message in body["messages"] if message["role"] == "tool"]
+            supplied = json.loads(tools[-1]["content"])["contract"]["content_schema"]
+            assert supplied == actual_schema
+            return {
+                "_tool": "zara_result",
+                "mode": "publish",
+                "slot": "result",
+                "content_text": bad_result
+                if index == 2
+                else bad_kind
+                if index == 4
+                else good_result,
+            }
+        return {"_final_text": "The actual observation result is saved; acceptance is separate"}
+
+    ordinary = native.Provider(
+        [lambda body, index=index: ordinary_step(index, body) for index in range(8)]
+    )
+    run(
+        ordinary,
+        work=(activity, ordinary_work),
+        expected_provider_calls=8,
+        expected_tool_errors=2,
+        prompt="Record 5 January: observed value 1.25; save the result",
+    )
+    ordinary_saved = core.read_execution(root, ordinary_work, authority)
+    assert ordinary_saved.work.state.acceptance is None
+    assert ordinary_saved.work.state.inputs == ordinary_state.inputs
+    assert len(ordinary_saved.outputs) == 1
+    assert ordinary_saved.outputs[0].content == good_result.encode("utf-8")
+    assert any(
+        attempt.status == "completed"
+        and any(
+            ref.relation == "produced_by_attempt"
+            and ref.external_ref == f"attempt:{attempt.attempt_id}"
+            for ref in ordinary_saved.outputs[0].provenance
+        )
+        for attempt in ordinary_saved.attempts
+    )
+
+    repeated_work = uuid4()
+    operation(core.CreateWorkRequest, work_id=repeated_work, state=ordinary_state)
+    repeated_publication = native.Provider(
+        [
+            {
+                "_tool": "zara_result",
+                "mode": "publish",
+                "slot": "result",
+                "content_text": bad_result,
+            },
+            {"_tool": "zara_data", "mode": "contract", "operation": "query_entries"},
+            {
+                "_tool": "zara_result",
+                "mode": "publish",
+                "slot": "result",
+                "content_text": '{"kind":"data_result",' + bad_result[1:],
+            },
+        ]
+    )
+    run(
+        repeated_publication,
+        work=(activity, repeated_work),
+        expected_provider_calls=3,
+        expected_repeated_tool_failure=True,
+        prompt="Exercise the exact repeated publication failure across an unrelated contract read",
+    )
+    assert not core.read_work(root, repeated_work, authority).state.linked_outputs
+    assert len(repeated_publication.requests) == 3
+    reopened_result = native.Provider([{"_final_text": "Read the preserved ordinary result"}])
+    run(reopened_result, work=(activity, ordinary_work), expected_provider_calls=1)
+    assert core.read_work(root, ordinary_work, authority) == ordinary_saved.work
+    assert (
+        core.read_artifact(root, ordinary_saved.outputs[0].artifact_id, authority)
+        == ordinary_saved.outputs[0]
+    )
     legacy = native.Provider([{"_final_text": "Existing Development context remains available"}])
     run(legacy, work=(legacy_activity, legacy_work), expected_provider_calls=1)
     assert core.read_work(root, legacy_work, authority) == legacy_before
@@ -606,6 +754,12 @@ def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -
         "real_model_calls": 0,
         "paid_api_calls": 0,
         "work_accepted": False,
+        "ordinary_typed_work": str(ordinary_work),
+        "ordinary_output_schema_in_actual_requests": True,
+        "ordinary_field_diagnostics_delivered": True,
+        "different_publication_cause_can_be_corrected": True,
+        "repeated_publication_cause_stops_across_contract_read": True,
+        "ordinary_output_preserved_after_reopen": True,
         "module": str(Path(core.__file__).resolve()),
     }
     (directory / "report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")

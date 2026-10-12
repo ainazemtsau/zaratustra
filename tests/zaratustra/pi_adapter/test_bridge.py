@@ -2,15 +2,21 @@
 
 from __future__ import annotations
 
+import json
+import threading
 from pathlib import Path
 from typing import Any, cast
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 from uuid import UUID, uuid4, uuid5
 
 import pytest
 
 from tests.zaratustra.foundation.test_activity_setup import _case, _step
+from tests.zaratustra.foundation.test_activity_structures import _activate, _structured_case
 from tests.zaratustra.foundation.test_execution import InvocationFields, ready
 from tests.zaratustra.foundation.test_memory import note
+from tests.zaratustra.foundation.test_workflows import _raw_node_result, _setup
 from zaratustra.foundation import (
     ActivityState,
     AdmitInvocationRequest,
@@ -21,6 +27,7 @@ from zaratustra.foundation import (
     CreateKnowledgeRequest,
     CreateResourceRequest,
     CreateWorkRequest,
+    DataOutputEnvelope,
     DeleteWorkRequest,
     FinishInvocationRequest,
     FoundationError,
@@ -35,6 +42,7 @@ from zaratustra.foundation import (
     SendInvocationRequest,
     SourceState,
     StopAttemptRequest,
+    WorkflowNode,
     WorkState,
     apply_operation,
     authorize_local,
@@ -46,8 +54,351 @@ from zaratustra.foundation import (
     read_execution,
     read_knowledge,
     read_work,
+    start_procedure,
 )
-from zaratustra.pi_adapter import Bridge
+from zaratustra.pi_adapter import Bridge, BridgeServer
+
+
+def _typed_publication_bridge(tmp_path: Path) -> tuple[Bridge, UUID, UUID]:
+    case = _structured_case(tmp_path)
+    root, _, owner, _, activity, *_ = case
+    _activate(case)
+    run = start_procedure(root, owner, activity, "observe", "typed-output-contract")
+    work_id, session = UUID(str(run["work_id"])), uuid4()
+    bridge = Bridge(root, owner, root)
+    bridge.connect(session)
+    bridge.select(session, activity, work_id)
+    attempt = UUID(cast(str, bridge.start_attempt(session, interrupt_previous=False)["attempt_id"]))
+    common: InvocationFields = {
+        "invocation_id": uuid4(),
+        "attempt_id": attempt,
+        "work_id": work_id,
+        "session_id": session,
+    }
+    for request in (
+        PrepareInvocationRequest(
+            operation_id=uuid4(),
+            space_id=bridge.authority.space_id,
+            actor=owner.actor,
+            purpose="content",
+            provider="local",
+            model="fictional",
+            transport="http-sse",
+            request_sha256="A" * 64,
+            request_bytes=123,
+            reserve_units=10,
+            **common,
+        ),
+        AdmitInvocationRequest(
+            operation_id=uuid4(), space_id=bridge.authority.space_id, actor=owner.actor, **common
+        ),
+        SendInvocationRequest(
+            operation_id=uuid4(), space_id=bridge.authority.space_id, actor=owner.actor, **common
+        ),
+        FinishInvocationRequest(
+            operation_id=uuid4(),
+            space_id=bridge.authority.space_id,
+            actor=owner.actor,
+            outcome="answered",
+            usage_units=1,
+            **common,
+        ),
+    ):
+        bridge.operation(session, request.model_dump(mode="json"))
+    return bridge, session, attempt
+
+
+def test_selected_work_snapshot_and_packet_supply_the_exact_publication_contract(
+    tmp_path: Path,
+) -> None:
+    bridge, session, _ = _typed_publication_bridge(tmp_path)
+    snapshot = bridge.snapshot(session)
+    contracts = cast(list[dict[str, Any]], snapshot["output_publication_contracts"])
+    assert len(contracts) == 1 and contracts[0]["slot"] == "result"
+    schema = contracts[0]["content_schema"]
+    assert schema == DataOutputEnvelope.model_json_schema()
+    assert schema["properties"]["result"]["type"] == "string"
+    assert schema["additionalProperties"] is False
+    packet = cast(dict[str, Any], bridge.prepare_context(session, "content")["packet"])
+    assert packet["output_publication_contracts"] == snapshot["output_publication_contracts"]
+    assert packet["procedure"]["snapshot"] is not None
+    assert contracts[0]["allow_incomplete"] is True
+    assert contracts[0]["technical_requirements"]
+
+
+@pytest.mark.parametrize("extra_kind", (False, True))
+def test_actual_http_preserves_typed_publication_diagnostics_without_effects(
+    tmp_path: Path, extra_kind: bool
+) -> None:
+    """The real-trial object result is rejected with an addressable field cause."""
+    bridge, session, attempt = _typed_publication_bridge(tmp_path)
+    selected = bridge.sessions[session]
+    assert selected is not None
+    before = read_execution(bridge.path, selected.work_id, bridge.authority)
+    body = '{"entries":[],"complete":true,"result":{"value":"1.25"}}'
+    if extra_kind:
+        body = '{"kind":"data_output_envelope",' + body[1:]
+    server = BridgeServer(bridge)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    request = Request(
+        f"http://127.0.0.1:{server.server_port}/v1/publish",
+        data=json.dumps(
+            {
+                "session_id": str(session),
+                "attempt_id": str(attempt),
+                "slot": "result",
+                "media_type": "application/json",
+                "content": body,
+            }
+        ).encode("utf-8"),
+        headers={"Authorization": f"Bearer {bridge.token}", "Content-Type": "application/json"},
+    )
+    try:
+        with pytest.raises(HTTPError) as failure:
+            urlopen(request, timeout=5)
+        with failure.value:
+            error = json.loads(failure.value.read())
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+    assert error["error"] == "invalid_output"
+    issues = {(issue["code"], tuple(issue["path"])) for issue in error["validation_issues"]}
+    assert ("string_type", ("result",)) in issues
+    assert (("extra_forbidden", ("kind",)) in issues) is extra_kind
+    assert all("input" not in issue for issue in error["validation_issues"])
+    assert read_execution(bridge.path, selected.work_id, bridge.authority) == before
+
+
+def _status_case(tmp_path: Path, target: str) -> tuple[Bridge, UUID, dict[str, Any]]:
+    if target == "setup":
+        case = _case(tmp_path)
+        root, _, owner, identifier, *_ = case
+        _step(case, "start_stage", stage_kind="draft", stage_instruction="Keep exact inputs")
+        query = {"action": "status", "setup_id": str(identifier)}
+    else:
+        workflow_case = _setup(
+            tmp_path,
+            (WorkflowNode(key="summarize", kind="model", instruction="Summarize observations"),),
+        )
+        root, _, owner, _, _, identifier = workflow_case
+        _raw_node_result(
+            workflow_case, "summarize", b'{"outcome":"result","values":{"kept":"confirmed"}}'
+        )
+        query = {"mode": target, "root_work_id": str(identifier)}
+    bridge = Bridge(root, owner, root)
+    session = uuid4()
+    bridge.connect(session)
+    return bridge, session, query
+
+
+def _read_status(bridge: Bridge, session: UUID, query: dict[str, Any]) -> dict[str, Any]:
+    return (
+        bridge.activity_setup(session, query)
+        if "setup_id" in query
+        else bridge.workflow(session, query)
+    )
+
+
+@pytest.mark.parametrize("target", ("status", "explain", "setup"))
+@pytest.mark.parametrize("transient", (True, False))
+def test_status_recovers_read_lock_without_starting_or_changing_work(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, target: str, transient: bool
+) -> None:
+    """A real SQLite holder must not turn status reads into lost work or model replay."""
+    import sqlite3
+    import threading
+
+    from zaratustra.foundation.storage import _identity_read, layout, space_connection
+
+    bridge, session, query = _status_case(tmp_path, target)
+    expected = _read_status(bridge, session, query)
+
+    def accounting() -> tuple[int, int, int]:
+        with space_connection(bridge.path) as (connection, info):
+            return (
+                info.state_revision,
+                connection.execute("SELECT count(*) FROM operations").fetchone()[0],
+                connection.execute("SELECT count(*) FROM execution_invocations").fetchone()[0],
+            )
+
+    before = accounting()
+    database = layout(bridge.path)[1]
+    locked, release = threading.Event(), threading.Event()
+    holder_errors: list[Exception] = []
+
+    def hold() -> None:
+        try:
+            connection = sqlite3.connect(database, autocommit=True, timeout=0.25)
+            try:
+                assert connection.execute("PRAGMA locking_mode=EXCLUSIVE").fetchone() == (
+                    "exclusive",
+                )
+                connection.execute("BEGIN EXCLUSIVE")
+                connection.execute("SELECT count(*) FROM spaces").fetchone()
+                locked.set()
+                assert release.wait(timeout=15)
+                connection.execute("ROLLBACK")
+            finally:
+                connection.close()
+        except Exception as error:
+            holder_errors.append(error)
+            locked.set()
+
+    thread = threading.Thread(target=hold)
+    thread.start()
+    failures: list[FoundationError] = []
+
+    def observed_identity(
+        connection: sqlite3.Connection, statement: str, label: str
+    ) -> list[tuple[Any, ...]]:
+        try:
+            return _identity_read(connection, statement, label)
+        except FoundationError as error:
+            failures.append(error)
+            assert label == "application_id" and isinstance(error.__cause__, sqlite3.Error)
+            assert error.__cause__.sqlite_errorcode == sqlite3.SQLITE_BUSY
+            if transient:
+                release.set()
+                thread.join(timeout=3)
+                assert not thread.is_alive()
+            raise
+
+    try:
+        assert locked.wait(timeout=3) and not holder_errors
+        with monkeypatch.context() as observation:
+            observation.setattr("zaratustra.foundation.storage._identity_read", observed_identity)
+            if transient:
+                assert _read_status(bridge, session, query) == expected
+                assert len(failures) == 1
+            else:
+                with pytest.raises(FoundationError) as refused:
+                    _read_status(bridge, session, query)
+                assert len(failures) == 3 and refused.value is failures[-1]
+                assert refused.value.code == "storage"
+                assert "application_id (SQLITE_BUSY)" in refused.value.detail
+    finally:
+        release.set()
+        thread.join(timeout=3)
+    assert not thread.is_alive() and not holder_errors
+    assert accounting() == before and before[2] == 0
+    assert _read_status(bridge, session, query) == expected
+    assert bridge.setup_controller is None and bridge.workflow_controller is None
+
+
+@pytest.mark.parametrize("target", ("status", "explain", "setup"))
+def test_status_permission_refusal_is_not_retried(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, target: str
+) -> None:
+    """The read retry never overrides current rights or disguises their refusal."""
+    import zaratustra.pi_adapter.bridge as bridge_module
+    import zaratustra.pi_adapter.workflows as workflows_module
+
+    bridge, session, query = _status_case(tmp_path, target)
+    bridge.authority = authorize_local(
+        bridge.path, actor="ungranted-observer", source_ref="fictional-observer"
+    )
+    calls = 0
+    module = bridge_module if target == "setup" else workflows_module
+    name = "read_activity_setup" if target == "setup" else "workflow_view"
+    original = getattr(module, name)
+
+    def observed(*args: Any, **kwargs: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(module, name, observed)
+    with pytest.raises(FoundationError) as refused:
+        _read_status(bridge, session, query)
+    assert refused.value.code == "permission_denied" and calls == 1
+
+
+@pytest.mark.parametrize("target", ("status", "explain", "setup"))
+@pytest.mark.parametrize("transient", (True, False))
+def test_status_retries_typed_begin_busy_before_body(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, target: str, transient: bool
+) -> None:
+    """Core's stable BEGIN refusal does not need the word locked to recover a pure read."""
+    import sqlite3
+
+    from zaratustra.foundation.storage import _begin, space_connection
+
+    bridge, session, query = _status_case(tmp_path, target)
+    expected = _read_status(bridge, session, query)
+
+    def accounting() -> tuple[int, int, int]:
+        with space_connection(bridge.path) as (connection, info):
+            return (
+                info.state_revision,
+                connection.execute("SELECT count(*) FROM operations").fetchone()[0],
+                connection.execute("SELECT count(*) FROM execution_invocations").fetchone()[0],
+            )
+
+    before = accounting()
+    failures: list[FoundationError] = []
+    admitted = 0
+
+    def exhausted_begin(connection: sqlite3.Connection, *, writable: bool) -> None:
+        nonlocal admitted
+        assert not writable and not connection.in_transaction
+        if not failures or not transient:
+            error = FoundationError("busy", "SQLite write/read boundary remained busy")
+            failures.append(error)
+            raise error
+        admitted += 1
+        _begin(connection, writable=writable)
+
+    with monkeypatch.context() as observation:
+        observation.setattr("zaratustra.foundation.storage._begin", exhausted_begin)
+        if transient:
+            assert _read_status(bridge, session, query) == expected
+            assert len(failures) == 1 and admitted >= 1
+        else:
+            with pytest.raises(FoundationError) as refused:
+                _read_status(bridge, session, query)
+            assert len(failures) == 3 and admitted == 0
+            assert refused.value is failures[-1] and refused.value.code == "busy"
+    assert accounting() == before and before[2] == 0
+    assert _read_status(bridge, session, query) == expected
+    assert bridge.setup_controller is None and bridge.workflow_controller is None
+
+
+@pytest.mark.parametrize(
+    "detail,retry",
+    (
+        ("SQLite identity failed (SQLITE_BUSY): unavailable", True),
+        ("SQLite identity failed (SQLITE_LOCKED): unavailable", True),
+        ("SQLite read failed (SQLITE_IOERR): unavailable", False),
+    ),
+)
+def test_status_storage_recovery_keeps_non_contention_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, detail: str, retry: bool
+) -> None:
+    """Only recognized SQLite contention permits another read, not arbitrary storage errors."""
+    import zaratustra.pi_adapter.workflows as workflows_module
+
+    bridge, session, query = _status_case(tmp_path, "status")
+    expected = _read_status(bridge, session, query)
+    original = workflows_module.workflow_view
+    failure = FoundationError("storage", detail)
+    calls = 0
+
+    def interrupted(*args: Any, **kwargs: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise failure
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(workflows_module, "workflow_view", interrupted)
+    if retry:
+        assert _read_status(bridge, session, query) == expected and calls == 2
+    else:
+        with pytest.raises(FoundationError) as refused:
+            _read_status(bridge, session, query)
+        assert refused.value is failure and calls == 1
 
 
 def test_exact_open_window_is_not_authority_for_unread_original(tmp_path: Path) -> None:

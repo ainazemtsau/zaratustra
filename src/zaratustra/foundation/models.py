@@ -1916,6 +1916,15 @@ class DataOutputEnvelope(ContractModel):
     result: str = Field(min_length=1)
 
 
+class ResultValidationIssue(ContractModel):
+    """An addressed new-result diagnostic without retaining rejected input values."""
+
+    code: str = Field(min_length=1, max_length=100)
+    path: tuple[str | int, ...] = ()
+    message: str = Field(min_length=1, max_length=2048)
+    allowed_values: tuple[str, ...] = ()
+
+
 class DataMutation(ContractModel):
     record_id: UUID
     expected_revision: int | None = Field(default=None, ge=1)
@@ -3712,6 +3721,7 @@ __all__ = [
     "PrepareInvocationRequest",
     "PublishAttemptOutputRequest",
     "OutputContract",
+    "ResultValidationIssue",
     "LinkedOutput",
     "ProvenanceRef",
     "RecordSummary",

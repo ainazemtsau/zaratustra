@@ -56,6 +56,18 @@ SCENARIOS = (
 )
 
 
+def _configured_send_limits(per_session: int) -> tuple[int, int]:
+    """Require the host limit before starting Pi; child environment alone is insufficient."""
+    configured = os.environ.get("ZARA_TRIAL_MAX_TOTAL_SENDS")
+    try:
+        total = int(configured) if configured is not None else 0
+    except ValueError as error:
+        raise ValueError("Configure the Core trial send limit before starting Pi") from error
+    if per_session < 1 or total < 1:
+        raise ValueError("Configure positive session and Core trial send limits before starting Pi")
+    return per_session, total
+
+
 class Conversation:
     """One native Pi RPC session, with the ordinary installed Core extension."""
 
@@ -72,7 +84,9 @@ class Conversation:
         resume: Path | None = None,
         remaining_sends: int = 40,
         coordination_timeout: int = 1800,
+        ordinary_work_tools: bool = False,
     ) -> None:
+        session_send_limit, total_send_limit = _configured_send_limits(remaining_sends)
         self.coordination_timeout = coordination_timeout
         authority = core.authorize_local(root, actor="owner", source_ref="fictional-real-trial")
         actual = read_pi_runtime(runtime)
@@ -122,8 +136,8 @@ class Conversation:
                 "ZARA_PROVIDER_PROFILE": "codex-sse",
                 "ZARA_PROVIDER_BASE_URL": "https://chatgpt.com/backend-api",
                 "ZARA_PROVIDER_ORIGIN": "https://chatgpt.com",
-                "ZARA_TRIAL_MAX_SENDS": str(remaining_sends),
-                "ZARA_TRIAL_MAX_TOTAL_SENDS": str(remaining_sends),
+                "ZARA_TRIAL_MAX_SENDS": str(session_send_limit),
+                "ZARA_TRIAL_MAX_TOTAL_SENDS": str(total_send_limit),
                 "ZARA_TRIAL_HTTP_TRACE_DIR": str(directory / "http"),
             }
         )
@@ -149,7 +163,8 @@ class Conversation:
             "--no-themes",
             "--no-approve",
             "--tools",
-            "zara_activity,zara_workflow,zara_memory,zara_data,zara_binding",
+            "zara_activity,zara_workflow,zara_memory,zara_data,zara_binding"
+            + (",zara_result,zara_development" if ordinary_work_tools else ""),
             "--session-dir",
             str(root / ".zara-core" / "pi-sessions"),
         ]
@@ -168,6 +183,7 @@ class Conversation:
         self.evidence = directory / "rpc.jsonl"
         self.errors = bytearray()
         self.prompts = 0
+        self.ui_selections: dict[str, str] = {}
 
         def read_events() -> None:
             assert self.process.stdout is not None
@@ -217,6 +233,14 @@ class Conversation:
                     # RPC also emits display-only status/widget/notification events.
                     if method not in ("confirm", "select", "input", "editor"):
                         continue
+                    if method == "select" and str(event.get("title")) in self.ui_selections:
+                        value = self.ui_selections[str(event["title"])]
+                        if value not in event.get("options", []):
+                            raise RuntimeError("The addressed ordinary Work is not a native choice")
+                        self.send(
+                            {"type": "extension_ui_response", "id": event["id"], "value": value}
+                        )
+                        continue
                     if method != "confirm":
                         raise RuntimeError("The fictional trial requires an unplanned UI choice")
                     # Only creation of these fictional activities is authorized.
@@ -228,9 +252,67 @@ class Conversation:
                     )
                 if event.get("type") == "agent_end":
                     return observed
+                if (
+                    event.get("type") == "response"
+                    and event.get("id") == f"prompt-{self.prompts}"
+                    and event.get("success") is True
+                    and event.get("data", {}).get("disposition") == "handled"
+                ):
+                    return observed
                 if event.get("type") == "response" and event.get("success") is False:
                     raise RuntimeError(str(event.get("error", event)))
         raise TimeoutError("Native Pi did not complete within the bounded turn timeout")
+
+    def session_file(self) -> Path:
+        """Read the exact native session; do not infer it from a global last-file search."""
+        self.send({"id": "trial-state", "type": "get_state"})
+        deadline = time.monotonic() + 30
+        with self.evidence.open("a", encoding="utf-8") as stream:
+            while time.monotonic() < deadline:
+                try:
+                    event = self.events.get(timeout=0.25)
+                except queue.Empty:
+                    if self.process.poll() is not None:
+                        raise RuntimeError(
+                            "Native Pi exited before reporting its session"
+                        ) from None
+                    continue
+                stream.write(json.dumps(event, ensure_ascii=False) + "\n")
+                stream.flush()
+                if event.get("type") == "response" and event.get("id") == "trial-state":
+                    if event.get("success") is not True:
+                        raise RuntimeError("Native Pi could not report its retained session")
+                    session = Path(event["data"]["sessionFile"]).resolve()
+                    sessions = (self.bridge.path / ".zara-core" / "pi-sessions").resolve()
+                    if not session.is_relative_to(sessions) or not session.is_file():
+                        raise RuntimeError("Native session is outside the fictional space")
+                    return session
+        raise TimeoutError("Native Pi did not report its exact session")
+
+    def select_ordinary_work(self, activity_id: UUID, work_id: UUID) -> None:
+        """Exercise the normal native selector, scoped to this created Activity and Work."""
+        activity = core.read_activity(self.bridge.path, activity_id, self.bridge.authority)
+        work = core.read_work(self.bridge.path, work_id, self.bridge.authority)
+        if work.state.activity_id != activity_id or work.state.method != "none":
+            raise RuntimeError("First ordinary selection must be a plain Work of this Activity")
+        self.ui_selections = {
+            "Activity": f"{activity.state.title} [{activity_id}]",
+            "Work": f"{work.state.goal} [{work_id}]",
+        }
+        try:
+            self.prompt("/zara-work")
+        finally:
+            self.ui_selections = {}
+
+    def settle_ordinary_work(self) -> None:
+        """Wait outside Core reads until window-owned procedure/workflow executors stop."""
+        deadline = time.monotonic() + self.coordination_timeout
+        while time.monotonic() < deadline:
+            controllers = (self.bridge.procedure_controller, self.bridge.workflow_controller)
+            if all(item.thread is None or not item.thread.is_alive() for item in controllers):
+                return
+            time.sleep(0.25)
+        raise TimeoutError("First ordinary Work did not reach a saved boundary")
 
     def settle_setup(self, setup_id: Any) -> Any:
         deadline = time.monotonic() + self.coordination_timeout
@@ -277,6 +359,127 @@ class Conversation:
         self.server.server_close()
 
 
+def _trial_options(
+    case: str,
+    maximum_sends: int,
+    prior_sends: int,
+    *,
+    resume_trial: bool,
+    exercise_first_action: bool,
+    previous_report: dict[str, Any] | None = None,
+) -> tuple[tuple[tuple[str, str], ...], int]:
+    if not 1 <= maximum_sends <= 40 or not 0 <= prior_sends < maximum_sends:
+        raise ValueError("Trial allowance must leave a positive part of at most forty sends")
+    selected = tuple(item for item in SCENARIOS if case in ("all", item[0]))
+    if not selected:
+        raise ValueError("Choose all, short, detailed or forwarded")
+    if resume_trial:
+        old = previous_report or {}
+        if (
+            old.get("prior_trial_sends") != prior_sends
+            or old.get("maximum_actual_sends", 40) != maximum_sends
+            or old.get("selected_cases", [item[0] for item in SCENARIOS])
+            != [item[0] for item in selected]
+        ):
+            raise ValueError("Resume must preserve the prior trial allowance and scenarios")
+        if exercise_first_action:
+            raise ValueError("The first-action observation requires a fresh fictional trial")
+    return selected, maximum_sends - prior_sends
+
+
+def _ordinary_outputs(
+    root: Path,
+    authority: Any,
+    setup: Any,
+) -> dict[UUID, tuple[core.LinkedOutput, ...]]:
+    internal = {stage.work_id for stage in setup.state.stages}
+    if setup.state.root_work_id is not None:
+        internal.add(setup.state.root_work_id)
+        internal.update(
+            node.work_id
+            for node in core.read_workflow_run(root, setup.state.root_work_id, authority).nodes
+        )
+    outputs = {}
+    for summary in core.inspect_space(root, authority).records:
+        if summary.kind != "work" or summary.status == "deleted" or summary.record_id in internal:
+            continue
+        work = core.read_work(root, summary.record_id, authority)
+        if work.state.activity_id == setup.state.activity_id:
+            outputs[work.work_id] = work.state.linked_outputs
+    return outputs
+
+
+def _first_work_evidence(
+    root: Path,
+    authority: Any,
+    setup: Any,
+    before: dict[UUID, tuple[core.LinkedOutput, ...]],
+) -> list[dict[str, Any]]:
+    evidence = []
+    for work_id, outputs in _ordinary_outputs(root, authority, setup).items():
+        added = tuple(item for item in outputs if item not in before.get(work_id, ()))
+        if not added:
+            continue
+        snapshot = core.read_execution(root, work_id, authority)
+        if snapshot.work.state.acceptance is not None:
+            raise RuntimeError("First ordinary Work was automatically accepted")
+        saved = []
+        for linked in added:
+            artifact = core.read_artifact(
+                root, linked.artifact.artifact_id, authority, revision=linked.artifact.revision
+            )
+            producing = [
+                attempt
+                for attempt in snapshot.attempts
+                if attempt.work_id == work_id
+                and attempt.status == "completed"
+                and any(
+                    ref.relation == "produced_by_attempt"
+                    and ref.external_ref == f"attempt:{attempt.attempt_id}"
+                    for ref in artifact.provenance
+                )
+            ]
+            if len(producing) != 1 or not artifact.content:
+                raise RuntimeError("Ordinary output lacks its completed producing Attempt")
+            producer = producing[0]
+            pinned = core.read_work(root, work_id, authority, revision=producer.work_revision)
+            if (
+                producer.input_refs != pinned.state.inputs
+                or snapshot.work.state.inputs != pinned.state.inputs
+                or not any(
+                    invocation.attempt_id == producer.attempt_id and invocation.status == "answered"
+                    for invocation in snapshot.invocations
+                )
+            ):
+                raise RuntimeError(
+                    "Ordinary producer lacks pinned inputs or an answered model send"
+                )
+            saved.append(
+                {
+                    "slot": linked.slot,
+                    "artifact": linked.artifact.model_dump(mode="json"),
+                    "sha256": artifact.content_sha256,
+                    "producer_attempt": producer.model_dump(mode="json"),
+                }
+            )
+        declared = {slot.slot for slot in snapshot.work.state.expected_outputs}
+        published = {slot.slot for slot in snapshot.work.state.linked_outputs}
+        if not declared.issubset(published):
+            raise RuntimeError("The first ordinary Work has unpublished declared output slots")
+        evidence.append(
+            {
+                "work_id": str(work_id),
+                "work_revision": snapshot.work.revision,
+                "inputs": [ref.model_dump(mode="json") for ref in snapshot.work.state.inputs],
+                "outputs": saved,
+                "acceptance": None,
+            }
+        )
+    if not evidence:
+        raise RuntimeError("The first useful action produced no saved ordinary Work result")
+    return evidence
+
+
 def run_probe(
     directory: Path,
     runtime: Path,
@@ -287,13 +490,22 @@ def run_probe(
     prior_sends: int = 0,
     coordination_timeout: int = 1800,
     resume_trial: bool = False,
+    case: str = "all",
+    maximum_sends: int = 40,
+    exercise_first_action: bool = False,
 ) -> dict[str, Any]:
     previous_report: dict[str, Any] = {}
     if resume_trial:
         previous_report = json.loads((directory / "report.json").read_text(encoding="utf-8"))
-        if previous_report["prior_trial_sends"] != prior_sends:
-            raise ValueError("Resume must preserve the prior trial send allowance")
-    else:
+    selected, remaining_sends = _trial_options(
+        case,
+        maximum_sends,
+        prior_sends,
+        resume_trial=resume_trial,
+        exercise_first_action=exercise_first_action,
+        previous_report=previous_report,
+    )
+    if not resume_trial:
         directory.mkdir(parents=True, exist_ok=False)
         (directory / "http").mkdir()
     root, working = directory / "space", directory / "work"
@@ -301,7 +513,6 @@ def run_probe(
         root.mkdir()
         working.mkdir()
     authority = _prepare_space(root, "owner", create=not resume_trial)
-    remaining_sends = 40 - prior_sends
     os.environ["ZARA_TRIAL_MAX_TOTAL_SENDS"] = str(remaining_sends)
     os.environ["ZARA_TRIAL_HTTP_TRACE_DIR"] = str(directory / "http")
     report: dict[str, Any] = {
@@ -309,18 +520,20 @@ def run_probe(
         "provider": "openai-codex",
         "profile": "codex-sse",
         "reasoning": reasoning,
-        "maximum_actual_sends": 40,
+        "maximum_actual_sends": maximum_sends,
         "prior_trial_sends": prior_sends,
         "maximum_new_sends": remaining_sends,
         "fictional_only": True,
         "owner_acceptance": False,
         "resumed_trial": resume_trial,
+        "selected_cases": [item[0] for item in selected],
+        "exercise_first_action": exercise_first_action,
         "scenarios": [],
         "status": "incomplete",
     }
     conversation: Conversation | None = None
     try:
-        for key, text in SCENARIOS:
+        for key, text in selected:
             prior_case = next(
                 (item for item in previous_report.get("scenarios", []) if item["case"] == key), None
             )
@@ -355,6 +568,7 @@ def run_probe(
                 resume=session,
                 remaining_sends=remaining_sends,
                 coordination_timeout=coordination_timeout,
+                ordinary_work_tools=exercise_first_action,
             )
             conversation.prompt(
                 text
@@ -410,6 +624,7 @@ def run_probe(
                     resume=sessions[-1],
                     remaining_sends=remaining_sends,
                     coordination_timeout=coordination_timeout,
+                    ordinary_work_tools=exercise_first_action,
                 )
                 item["reopened"] = True
             for _ in range(3):
@@ -426,12 +641,83 @@ def run_probe(
             item["final_phase"] = state.state.phase
             item["reviews_started"] = state.state.reviews_started
             item["first_action"] = state.state.result
+            session = conversation.session_file() if exercise_first_action else None
             conversation.close()
             conversation = None
             if state.state.phase != "ready":
                 raise RuntimeError(
                     f"Case {key} stopped at {state.state.phase}; inspect retained evidence"
                 )
+            if exercise_first_action:
+                original_refs = state.state.sources
+                originals = {
+                    ref: core.read_knowledge(root, ref.record_id, authority, revision=ref.revision)
+                    for ref in original_refs
+                }
+                before_outputs = _ordinary_outputs(root, authority, state)
+                conversation = Conversation(
+                    directory,
+                    root,
+                    working,
+                    runtime,
+                    subscription,
+                    model,
+                    reasoning,
+                    resume=session,
+                    remaining_sends=remaining_sends,
+                    coordination_timeout=coordination_timeout,
+                    ordinary_work_tools=True,
+                )
+                item["reopened_before_first_action"] = True
+                # The native selector uses one explicitly addressed initial plain
+                # Work. If there is none, the model may run its own saved procedure.
+                for work_id in state.state.activated_works:
+                    work = core.read_work(root, work_id, authority)
+                    if work.state.method == "none" and not work.state.linked_outputs:
+                        conversation.select_ordinary_work(state.state.activity_id, work_id)
+                        item["selected_initial_work"] = str(work_id)
+                        break
+                conversation.prompt(
+                    "Выполни первый полезный шаг этой Activity из уже сохранённых сведений. "
+                    "Продолжи после закрытия окна, не создавая Activity повторно. "
+                    "Сохрани настоящий результат работы, а не только объяснение. "
+                    "Не принимай Work за владельца; ничего наружу не отправляй."
+                )
+                conversation.settle_ordinary_work()
+                item["first_work"] = _first_work_evidence(root, authority, state, before_outputs)
+                session = conversation.session_file()
+                conversation.close()
+                conversation = None
+                conversation = Conversation(
+                    directory,
+                    root,
+                    working,
+                    runtime,
+                    subscription,
+                    model,
+                    reasoning,
+                    resume=session,
+                    remaining_sends=remaining_sends,
+                    coordination_timeout=coordination_timeout,
+                    ordinary_work_tools=True,
+                )
+                if conversation.session_file() != session:
+                    raise RuntimeError("Native Pi reopened a different ordinary session")
+                current = core.read_activity_setup(root, setup_id, authority)
+                if current.state.sources != original_refs or any(
+                    core.read_knowledge(root, ref.record_id, authority, revision=ref.revision)
+                    != original
+                    for ref, original in originals.items()
+                ):
+                    raise RuntimeError("Reopening or the first Work changed original setup sources")
+                if (
+                    _first_work_evidence(root, authority, current, before_outputs)
+                    != item["first_work"]
+                ):
+                    raise RuntimeError("The saved ordinary result changed on reopening")
+                item["first_work_preserved_after_reopen"] = True
+                conversation.close()
+                conversation = None
         report["status"] = "completed"
     except Exception as error:
         report["obstacle"] = f"{type(error).__name__}: {error}"
@@ -493,12 +779,20 @@ def main() -> int:
     parser.add_argument("--prior-sends", type=int, default=0)
     parser.add_argument("--coordination-timeout", type=int, default=1800)
     parser.add_argument("--resume-trial", action="store_true")
+    parser.add_argument("--case", choices=("all", "short", "detailed", "forwarded"), default="all")
+    parser.add_argument("--maximum-sends", type=int, default=40)
+    parser.add_argument("--exercise-first-action", action="store_true")
     parser.add_argument("--authorized-subscription-trial", action="store_true")
     args = parser.parse_args()
     if not args.authorized_subscription_trial:
         parser.error("This real subscription trial requires explicit owner authorization")
-    if not 0 <= args.prior_sends < 40 or args.coordination_timeout < 1:
-        parser.error("Prior sends must leave a positive part of forty; timeout must be positive")
+    if (
+        not 1 <= args.maximum_sends <= 40
+        or not 0 <= args.prior_sends < args.maximum_sends
+        or args.coordination_timeout < 1
+        or (args.exercise_first_action and args.resume_trial)
+    ):
+        parser.error("Use a positive allowance of at most forty; first action needs a fresh trial")
     report = run_probe(
         args.directory.resolve(),
         args.pi_runtime.resolve(),
@@ -508,6 +802,9 @@ def main() -> int:
         prior_sends=args.prior_sends,
         coordination_timeout=args.coordination_timeout,
         resume_trial=args.resume_trial,
+        case=args.case,
+        maximum_sends=args.maximum_sends,
+        exercise_first_action=args.exercise_first_action,
     )
     print(
         json.dumps(

@@ -26,6 +26,7 @@ from .models import (
     CreateWorkRequest,
     DataEntryState,
     DataFormatState,
+    DataOutputEnvelope,
     IngestDataRequest,
     KnowledgeRef,
     MemorySelector,
@@ -39,6 +40,45 @@ from .models import (
 )
 from .operations import LocalAuthority, _authorize, _local_space, apply_operation
 from .storage import FoundationError, canonical_json, space_connection
+
+
+def output_publication_contracts(work: WorkState) -> tuple[dict[str, Any], ...]:
+    """Describe actual output validation without changing Work, rights or its results."""
+
+    contracts: list[dict[str, Any]] = []
+    for output in work.expected_outputs:
+        typed = output.format_ref is not None
+        requirements = (
+            (
+                "Publish one JSON object matching content_schema; entries are exact retained "
+                "DataEntry revisions, not new inline data or a summary of unsaved entries.",
+                "Each entry must use this slot's exact format_ref and the current Work's "
+                "Activity and structure. Current Core read and write rights still apply.",
+                "Direct output entries belong to the current Work and publishing Attempt. "
+                "For a composite output binding, entries belong to its bound producing child.",
+                "For a procedure Work or its descendant, basis_snapshot must be the exact "
+                "input snapshot returned by procedure_for_work, not a newly selected snapshot.",
+                "Entry revision references must not repeat. Empty entries are allowed only "
+                "when allow_empty is true.",
+                "An incomplete output (complete=false) must retain non-empty limitations.",
+            )
+            if typed
+            else ("Publish the actual content in the declared media_type.",)
+        )
+        contracts.append(
+            {
+                "slot": output.slot,
+                "media_type": output.media_type,
+                "format_ref": output.format_ref.model_dump(mode="json")
+                if output.format_ref is not None
+                else None,
+                "allow_empty": output.allow_empty,
+                "allow_incomplete": True if typed else None,
+                "content_schema": DataOutputEnvelope.model_json_schema() if typed else None,
+                "technical_requirements": requirements,
+            }
+        )
+    return tuple(contracts)
 
 
 def describe_structure(

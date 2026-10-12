@@ -151,6 +151,210 @@ def _activate(
     return describe_structure(root, case[4], owner)
 
 
+def test_publication_contract_exposes_the_actual_envelope_without_changing_work() -> None:
+    """An agent receives the same finite JSON shape that Core actually validates."""
+    from zaratustra.foundation import (
+        DataOutputEnvelope,
+        OutputContract,
+        SetupValidationIssue,
+        WorkState,
+        output_publication_contracts,
+    )
+
+    ref = KnowledgeRef(record_id=uuid4(), revision=2)
+    work = WorkState(
+        activity_id=uuid4(),
+        goal="Record a dated observation",
+        expected_outputs=(
+            OutputContract(slot="observation", media_type="application/json", format_ref=ref),
+            OutputContract(slot="notes", media_type="text/plain"),
+        ),
+    )
+    before = work.model_dump_json()
+    typed, plain = output_publication_contracts(work)
+    assert typed["slot"] == "observation" and typed["media_type"] == "application/json"
+    assert typed["format_ref"] == ref.model_dump(mode="json")
+    assert typed["allow_empty"] is False and typed["allow_incomplete"] is True
+    schema = typed["content_schema"]
+    assert schema == DataOutputEnvelope.model_json_schema()
+    assert schema["additionalProperties"] is False
+    assert schema["properties"]["result"]["type"] == "string"
+    assert set(schema["required"]) == {"complete", "result"}
+    assert plain["content_schema"] is None and plain["allow_incomplete"] is None
+    assert plain["format_ref"] is None and work.model_dump_json() == before
+    assert SetupValidationIssue(
+        code="string_type", path=("result",), message="Invalid field"
+    ).model_dump_json() == (
+        '{"code":"string_type","path":["result"],"message":"Invalid field","allowed_values":[]}'
+    )
+
+
+def test_invalid_publication_keeps_original_and_exact_field_diagnostics(tmp_path: Path) -> None:
+    """Valid JSON with the wrong result type is diagnosed without applying or guessing it."""
+    import pickle
+
+    from zaratustra.foundation import (
+        ArtifactRef,
+        CreateArtifactRequest,
+        LinkedOutput,
+        LinkWorkOutputRequest,
+        OutputValidationError,
+        ResultValidationIssue,
+        read_artifact,
+        read_work,
+        start_procedure,
+    )
+
+    case = _structured_case(tmp_path)
+    root, space, owner, _, activity, *_ = case
+    _activate(case)
+    run = start_procedure(root, owner, activity, "observe", "malformed-publication")
+    work_id = UUID(str(run["work_id"]))
+    before = read_work(root, work_id, owner)
+    raw = (
+        b'{"complete":true,"result":{"saved":"fictional-value-not-in-diagnostics"},'
+        b'"kind":"data_output"}'
+    )
+    artifact = uuid4()
+    apply_operation(
+        root,
+        CreateArtifactRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            artifact_id=artifact,
+            media_type="application/json",
+            content=raw,
+        ),
+        owner,
+    )
+    with pytest.raises(OutputValidationError) as refused:
+        apply_operation(
+            root,
+            LinkWorkOutputRequest(
+                operation_id=uuid4(),
+                space_id=space,
+                actor="owner",
+                work_id=work_id,
+                expected_revision=before.revision,
+                output=LinkedOutput(
+                    slot="result", artifact=ArtifactRef(artifact_id=artifact, revision=1)
+                ),
+            ),
+            owner,
+        )
+    failure = refused.value
+    assert failure.code == "invalid_output"
+    assert {(issue.code, issue.path) for issue in failure.issues} == {
+        ("string_type", ("result",)),
+        ("extra_forbidden", ("kind",)),
+    }
+    assert all(isinstance(issue, ResultValidationIssue) for issue in failure.issues)
+    extra = next(issue for issue in failure.issues if issue.code == "extra_forbidden")
+    assert "result" in extra.allowed_values and "kind" not in extra.allowed_values
+    assert all(
+        "fictional-value-not-in-diagnostics" not in issue.model_dump_json()
+        for issue in failure.issues
+    )
+    restored = pickle.loads(pickle.dumps(failure))
+    assert isinstance(restored, OutputValidationError)
+    assert restored.issues == failure.issues and restored.detail == failure.detail
+    assert restored.code == failure.code
+    assert read_artifact(root, artifact, owner).content == raw
+    assert read_work(root, work_id, owner) == before
+
+
+def test_envelope_diagnostics_do_not_relax_entry_attempt_rights_or_snapshot(
+    tmp_path: Path,
+) -> None:
+    """A correctly shaped output still needs the actual scoped entry and procedure basis."""
+    from zaratustra.foundation import (
+        DataOutputEnvelope,
+        OutputValidationError,
+        create_entry,
+        procedure_for_work,
+        read_work,
+        start_procedure,
+    )
+    from zaratustra.foundation.data_store import validate_output_envelope
+    from zaratustra.foundation.storage import space_connection
+
+    case = _structured_case(tmp_path)
+    root, _, owner, setup, activity, *_ = case
+    described = _activate(case)
+    run = start_procedure(root, owner, activity, "observe", "exact-output-basis")
+    work_id = UUID(str(run["work_id"]))
+    work = read_work(root, work_id, owner).state
+    saved = procedure_for_work(root, owner, work_id)
+    assert saved is not None
+    snapshot = KnowledgeRef.model_validate(saved["snapshot"])
+    entry = create_entry(
+        root,
+        owner,
+        DataEntryState(
+            scope_activity_id=activity,
+            format_ref=KnowledgeRef.model_validate(described["state"]["formats"]["observation"]),
+            structure=work.structure,
+            role="event",
+            work_id=work_id,
+            selection=snapshot,
+            values={"day": "2026-01-01", "value": "1.25"},
+            bases=(read_activity_setup(root, setup, owner).state.sources[0],),
+        ),
+    )
+    ref = KnowledgeRef(record_id=UUID(str(entry.result["record_id"])), revision=1)
+    envelope = DataOutputEnvelope(
+        entries=(ref,), basis_snapshot=snapshot, complete=True, result="A retained observation"
+    )
+    with space_connection(root) as (connection, info):
+        validate_output_envelope(
+            connection,
+            work_id,
+            work,
+            work.expected_outputs[0],
+            envelope.model_dump_json().encode(),
+            "owner",
+            info.execution_epoch,
+        )
+        with pytest.raises(FoundationError) as wrong_attempt:
+            validate_output_envelope(
+                connection,
+                work_id,
+                work,
+                work.expected_outputs[0],
+                envelope.model_dump_json().encode(),
+                "owner",
+                info.execution_epoch,
+                attempt_id=uuid4(),
+            )
+        assert wrong_attempt.value.code == "invalid_output"
+        assert not isinstance(wrong_attempt.value, OutputValidationError)
+        with pytest.raises(FoundationError) as denied:
+            validate_output_envelope(
+                connection,
+                work_id,
+                work,
+                work.expected_outputs[0],
+                envelope.model_dump_json().encode(),
+                "ungranted-observer",
+                info.execution_epoch,
+            )
+        assert denied.value.code == "permission_denied"
+        with pytest.raises(FoundationError) as missing_snapshot:
+            validate_output_envelope(
+                connection,
+                work_id,
+                work,
+                work.expected_outputs[0],
+                envelope.model_copy(update={"basis_snapshot": None}).model_dump_json().encode(),
+                "owner",
+                info.execution_epoch,
+            )
+        assert missing_snapshot.value.code == "invalid_output"
+        assert "exact input snapshot" in missing_snapshot.value.detail
+    assert read_work(root, work_id, owner).state == work
+
+
 def test_composite_procedure_child_retains_snapshot_and_typed_output(tmp_path: Path) -> None:
     """Risk: assigned children lose the procedure input or publish untyped parent results."""
     from zaratustra.foundation import (

@@ -6,7 +6,7 @@ import hashlib
 import sqlite3
 from contextvars import ContextVar
 from datetime import UTC, date, datetime
-from typing import cast
+from typing import Any, cast
 from uuid import UUID, uuid5
 
 from .data_formats import field_references, validate_format, validate_values
@@ -17,11 +17,23 @@ from .models import (
     KnowledgeBody,
     KnowledgeRef,
     MemorySelector,
+    ResultValidationIssue,
     WorkState,
 )
 from .storage import FoundationError, canonical_json
 
 APPLYING_STRUCTURE: ContextVar[bool] = ContextVar("applying_activity_structure", default=False)
+
+
+class OutputValidationError(FoundationError):
+    """A rejected typed output with stable field diagnostics, never an applied result."""
+
+    def __init__(self, detail: str, issues: tuple[ResultValidationIssue, ...]) -> None:
+        super().__init__("invalid_output", detail)
+        self.issues = issues
+
+    def __reduce__(self) -> Any:
+        return type(self), (self.detail, self.issues)
 
 
 def exact_state(
@@ -157,8 +169,31 @@ def validate_output_envelope(
     try:
         envelope = DataOutputEnvelope.model_validate_json(content)
     except ValidationError as error:
-        raise FoundationError(
-            "invalid_output", "Typed output must use the data result envelope"
+        schema_fields = DataOutputEnvelope.model_json_schema()["properties"]
+        issues = []
+        for problem in error.errors(include_input=False, include_context=False, include_url=False)[
+            :16
+        ]:
+            path = tuple(problem["loc"])
+            allowed: tuple[str, ...] = ()
+            if problem["type"] == "extra_forbidden":
+                allowed = tuple(schema_fields)
+            elif path and problem["type"] == "literal_error":
+                field = schema_fields.get(path[0], {})
+                if "const" in field:
+                    allowed = (str(field["const"]),)
+                elif "enum" in field:
+                    allowed = tuple(str(value) for value in field["enum"])
+            issues.append(
+                ResultValidationIssue(
+                    code=str(problem["type"]),
+                    path=path,
+                    message=str(problem["msg"])[:2048],
+                    allowed_values=allowed,
+                )
+            )
+        raise OutputValidationError(
+            "Typed output must use the data result envelope", tuple(issues)
         ) from error
     if not envelope.entries and not contract.allow_empty:
         raise FoundationError("invalid_output", "This output requires typed data entries")

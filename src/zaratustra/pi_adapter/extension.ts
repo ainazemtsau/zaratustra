@@ -215,13 +215,15 @@ export default function (pi: any): void {
   let lastOutcome = "";
   let lastTransportError = "";
   class CoreRequestError extends Error {
-    constructor(readonly code: string, readonly detail: string, readonly preflight: boolean) {
+    constructor(readonly code: string, readonly detail: string, readonly preflight: boolean,
+                readonly validationIssues: any[] = []) {
       super(`Core ${code}: ${detail}`);
     }
   }
   let lastPreflightRefusal: CoreRequestError | null = null;
-  let lastToolFailure = "";
-  let repeatedToolFailures = 0;
+  const toolFailureCounts = new Map<string, number>();
+  const publicationFailures = new Map<string, CoreRequestError>();
+  const publicationTargets = new Map<string, {work_id: string; slot: string}>();
   const turnQueue: string[] = [];
   const compactQueue = new Set<string>();
   const compactCompletions: Promise<any>[] = [];
@@ -239,7 +241,8 @@ export default function (pi: any): void {
     const result = await response.json();
     if (!response.ok) {
       const error = new CoreRequestError(String(result.error ?? response.status),
-        String(result.foundation_detail ?? result.detail ?? ""), providerPreflight);
+        String(result.foundation_detail ?? result.detail ?? ""), providerPreflight,
+        Array.isArray(result.validation_issues) ? result.validation_issues : []);
       if (providerPreflight) lastPreflightRefusal = error;
       throw error;
     }
@@ -716,28 +719,57 @@ export default function (pi: any): void {
   });
 
   pi.on("tool_result", (event: any, ctx: any) => {
-    if (!event.isError) { lastToolFailure = ""; repeatedToolFailures = 0; return; }
     const input = event.input ?? {};
     const arguments_ = input.arguments ?? input;
     const operation = input.operation ?? input.mode ?? input.intent?.kind ?? "call";
-    const targets = ["record_id", "revision", "setup_id", "run_id", "wait_id", "work_id",
+    let targets = ["record_id", "revision", "setup_id", "run_id", "wait_id", "work_id",
       "activity_id", "selection_id", "path", "reference"].map(key => [key, arguments_[key] ?? input[key]])
       .filter(([_key, value]) => value !== undefined);
+    const publicationTarget = publicationTargets.get(event.toolCallId);
+    publicationTargets.delete(event.toolCallId);
+    if (event.toolName === "zara_result" && operation === "publish") {
+      const declared = currentManifest?.packet?.work?.state?.expected_outputs ?? [];
+      targets = [["work_id", publicationTarget?.work_id ?? selection?.work_id],
+                 ["slot", publicationTarget?.slot ?? input.slot ??
+                   (declared.length === 1 ? declared[0].slot : null)]];
+    }
+    const target = targets.length ? targets : Object.entries(input)
+      .filter(([key]) => !["operation_id", "operation_key"].includes(key)).sort();
+    const identity = `${event.toolName}:${operation}:${JSON.stringify(target)}:`;
+    const failure = publicationFailures.get(event.toolCallId);
+    publicationFailures.delete(event.toolCallId);
+    if (!event.isError) {
+      for (const signature of toolFailureCounts.keys()) {
+        if (signature.startsWith(identity)) toolFailureCounts.delete(signature);
+      }
+      return;
+    }
+    const details = failure ? {...event.details, code: failure.code,
+      validation_issues: failure.validationIssues} : event.details;
+    const issues = details?.validation_issues ?? [];
+    const content = issues.length
+      ? [...(event.content ?? []), {type: "text", text: JSON.stringify({validation_issues: issues})}]
+      : event.content;
     const errorText = (event.content ?? []).filter((item: any) => item.type === "text")
       .map((item: any) => item.text).join("\n");
     // Only parse the technical Core error prefix; never infer user intent from text.
-    const code = event.details?.code ?? event.details?.error ??
+    const code = details?.code ?? details?.error ??
       /^Core ([a-z_]+):/.exec(errorText)?.[1] ?? errorText;
-    const target = targets.length ? targets : Object.entries(input)
-      .filter(([key]) => !["operation_id", "operation_key"].includes(key)).sort();
-    const signature = `${event.toolName}:${operation}:${JSON.stringify(target)}:${code}`;
-    repeatedToolFailures = signature === lastToolFailure ? repeatedToolFailures + 1 : 1;
-    lastToolFailure = signature;
-    if (repeatedToolFailures >= 2) {
+    const causes: string[] = issues.length
+      ? issues.map((issue: any) => JSON.stringify([code, issue.code, issue.path])) : [String(code)];
+    let repeated = false;
+    for (const cause of new Set(causes)) {
+      const signature = identity + cause;
+      const count = (toolFailureCounts.get(signature) ?? 0) + 1;
+      toolFailureCounts.set(signature, count);
+      repeated ||= count >= 2;
+    }
+    if (repeated) {
       ctx.ui.notify("Одинаковая ошибка инструмента повторилась. Модельный цикл остановлен; " +
         "история сохранена. Нужно устранить причину перед продолжением.", "warning");
       ctx.abort();
     }
+    if (failure) return {details, content};
   });
 
   async function reportModel(ctx: any, persist = false) {
@@ -1485,9 +1517,12 @@ export default function (pi: any): void {
       "Use the complete prepared file via path, or content_text. Publish the instruction, report or other " +
       "requested deliverable itself. Routine explanations, progress updates and questions stay in conversation " +
       "memory and must not replace the Work result. Saving leaves owner acceptance separate. " +
-      "Call mode read to inspect the selected Work and its linked results.",
+      "Call mode read to inspect the selected Work and its linked results. " +
+      "Use contract to read the exact content_schema and technical_requirements for its output slot. " +
+      "For typed output, entries reference already saved DataEntry revisions; result is a text string. " +
+      "The data format defines entry values; content_schema defines the result envelope. Do not invent fields.",
     parameters: Type.Object({
-      mode: StringEnum(["read", "publish"] as const),
+      mode: StringEnum(["read", "contract", "publish"] as const),
       slot: Type.Optional(Type.String()),
       content_text: Type.Optional(Type.String()),
       path: Type.Optional(Type.String()),
@@ -1504,6 +1539,15 @@ export default function (pi: any): void {
         });
         const view = { ...current, inputs: readable(current.inputs), outputs: readable(current.outputs) };
         return { content: [{ type: "text", text: JSON.stringify(view) }], details: current };
+      }
+      if (params.mode === "contract") {
+        const contracts = current.output_publication_contracts;
+        const contract = params.slot
+          ? contracts.find((item: any) => item.slot === params.slot) : undefined;
+        if (params.slot && !contract) throw new Error("Name a declared output slot of this Work");
+        const result = {work_id: current.work.work_id,
+          ...(contract ? {contract} : {contracts})};
+        return {content: [{type: "text", text: JSON.stringify(result)}], details: result};
       }
       if (assignedAttemptId) throw new Error("Assigned RPC publishes its pinned JSON final result");
       if ((params.path !== undefined) === (params.content_text !== undefined)) {
@@ -1526,16 +1570,22 @@ export default function (pi: any): void {
       }
       const contract = slots.find((item: any) => item.slot === slot);
       if (!attemptId || !contract) throw new Error("No current Attempt or declared output slot");
-      const result = await request("/v1/publish", {
-        attempt_id: attemptId, slot, media_type: contract.media_type, content,
-      });
-      // Publication advances Work. Close this Attempt and bind the next tool-loop
-      // request to that new revision, retaining the producing Attempt's history.
-      await operation({ kind: "stop_attempt", attempt_id: attemptId, work_id: selection.work_id,
-                        session_id: sessionId, outcome: "completed" });
-      attemptId = null;
-      contextReady = false;
-      return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
+      publicationTargets.set(_toolCallId, {work_id: selection.work_id, slot});
+      try {
+        const result = await request("/v1/publish", {
+          attempt_id: attemptId, slot, media_type: contract.media_type, content,
+        });
+        // Publication advances Work. Close this Attempt and bind the next tool-loop
+        // request to that new revision, retaining the producing Attempt's history.
+        await operation({ kind: "stop_attempt", attempt_id: attemptId, work_id: selection.work_id,
+                          session_id: sessionId, outcome: "completed" });
+        attemptId = null;
+        contextReady = false;
+        return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
+      } catch (error) {
+        if (error instanceof CoreRequestError) publicationFailures.set(_toolCallId, error);
+        throw error;
+      }
     },
   });
 
@@ -1723,8 +1773,9 @@ export default function (pi: any): void {
     if (process.env.ZARA_RESTRICTED_CORE_READS === "1") {
       pi.setActiveTools((process.env.ZARA_RESTRICTED_TOOLS ?? "").split(",").filter(Boolean));
     } else if (process.env.ZARA_DISABLE_MODEL_TOOLS === "1") pi.setActiveTools([]);
-    lastToolFailure = "";
-    repeatedToolFailures = 0;
+    toolFailureCounts.clear();
+    publicationFailures.clear();
+    publicationTargets.clear();
     lastOutcome = "";
     lastAnswer = "";
     lastPreflightRefusal = null;
