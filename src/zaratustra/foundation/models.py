@@ -1387,6 +1387,9 @@ class StopAttemptRequest(OperationRequest):
     work_id: UUID
     session_id: UUID
     outcome: Literal["completed", "interrupted"]
+    observed_final: OrdinaryFinalProof | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
 
 class AssignAttemptRequest(OperationRequest):
@@ -1526,6 +1529,7 @@ class SourceState(ContractModel):
     locator: str | None = Field(default=None, max_length=2048)
     limitations: tuple[str, ...] = ()
     derived_from: tuple[KnowledgeRef, ...] = ()
+    conversation_final: bool = Field(default=False, exclude_if=lambda value: not value)
     memory: MemoryMetadata | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
@@ -1661,6 +1665,61 @@ class MemoryViewState(ContractModel):
         return self
 
 
+class ConversationActionRef(ContractModel):
+    action_id: UUID
+    digest: str = Field(pattern=r"^[0-9A-F]{64}$")
+
+
+class ConversationAnswerTarget(ContractModel):
+    kind: Literal["setup", "workflow", "work"]
+    subject_id: UUID
+    revision: int = Field(ge=1)
+    wait_id: UUID | None = None
+
+
+class ConversationActionView(ContractModel):
+    ref: ConversationActionRef
+    subject_kind: Literal["setup", "workflow", "work", "procedure"]
+    subject_id: UUID
+    subject_revision: int = Field(ge=1)
+    activity_id: UUID
+    work_id: UUID | None = None
+    kind: Literal[
+        "question",
+        "ready",
+        "result",
+        "attention",
+        "paused",
+        "cancelled",
+        "available_work",
+        "running",
+    ]
+    label: str
+    explanation: str
+    next_action: str
+    bases: tuple[KnowledgeRef, ...] = ()
+    answer_target: ConversationAnswerTarget | None = None
+
+
+class ConversationActionPage(ContractModel):
+    actions: tuple[ConversationActionView, ...]
+    next_offset: int | None = Field(default=None, ge=0)
+    scanned: int = Field(ge=0)
+
+
+class OrdinaryFinalProof(ContractModel):
+    work_id: UUID
+    work_revision: int = Field(ge=1)
+    attempt_id: UUID
+    attempt_revision: int = Field(ge=1)
+    session_id: UUID
+    execution_epoch: int = Field(ge=1)
+    manifest: KnowledgeRef
+    invocation_id: UUID
+    assistant_source: KnowledgeRef
+    assistant_entry_id: str = Field(min_length=1, max_length=300)
+
+
 class ContextState(ContractModel):
     kind: Literal["context"] = "context"
     purpose: str = Field(min_length=1, max_length=4096)
@@ -1671,6 +1730,9 @@ class ContextState(ContractModel):
     plan_revision: int | None = Field(default=None, ge=1)
     mandatory: tuple[KnowledgeRef, ...] = ()
     optional: tuple[KnowledgeRef, ...] = ()
+    conversation_actions: tuple[ConversationActionRef, ...] = Field(
+        default=(), exclude_if=lambda value: not value
+    )
     historical_memory: tuple[KnowledgeRef, ...] = Field(
         default=(), exclude_if=lambda value: not value
     )
@@ -3094,8 +3156,39 @@ class ActivitySetupRequest(OperationRequest):
     contract_version: Literal[1, 2] = Field(default=1, exclude_if=lambda v: v == 1)
 
 
+class ConversationDeliveryRequest(OperationRequest):
+    kind: Literal["conversation_delivery"] = "conversation_delivery"
+    action: Literal["claim", "include", "respond", "unknown", "abandon"]
+    delivery_id: UUID
+    action_ref: ConversationActionRef
+    host_id: str = Field(min_length=1, max_length=300)
+    session_id: UUID
+    branch_id: str = Field(min_length=1, max_length=300)
+    fenced: bool = False
+    manifest: KnowledgeRef | None = None
+    invocation_id: UUID | None = None
+    assistant_source: KnowledgeRef | None = None
+    assistant_entry_id: str | None = Field(default=None, min_length=1, max_length=300)
+
+
+class ConversationDeliveryView(ContractModel):
+    delivery_id: UUID
+    action_ref: ConversationActionRef
+    actor: str
+    epoch: int = Field(ge=1)
+    host_id: str
+    session_id: UUID
+    branch_id: str
+    status: Literal["claimed", "included", "responded", "unknown", "abandoned", "stale"]
+    manifest: KnowledgeRef | None = None
+    invocation_id: UUID | None = None
+    assistant_source: KnowledgeRef | None = None
+    assistant_entry_id: str | None = None
+
+
 DomainRequest = Annotated[
-    WorkflowRequest
+    ConversationDeliveryRequest
+    | WorkflowRequest
     | IngestDataRequest
     | StartProcedureRequest
     | PrepareProcedureRequest
@@ -3168,7 +3261,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -3545,7 +3638,7 @@ class BackupManifest(ContractModel):
     backup_id: UUID
     format_version: Literal[1, 2] = 1
     space_id: UUID
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime

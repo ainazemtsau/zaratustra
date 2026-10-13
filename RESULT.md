@@ -1,3 +1,51 @@
+# Conversation continuation — 0.24.0
+
+## outcome
+
+Implemented and verified on `codex/conversation-continuation`. The package adds
+Core-derived conversation actions and observed native delivery receipts, preserving
+the existing execution and acceptance authority. Ordinary final completion and
+recovery require exact saved proof. Context identity covers the full persisted
+contract. Selected installation, explicit upgrade and authorized reset completed
+with private backup, rehearsal and exact preservation evidence.
+
+## evidence
+
+One full native gate passed 1041 tests, hygiene, Ruff, types, 32 import contracts,
+build and report structure. After audit/native corrections, the final affected
+native gate passed 62 tests and the same required checks. The final wheel passed
+ordinary Pi 1.0.4 outside checkout: 27 localhost HTTP across creation, exact input,
+review, completion notice, first Work, lost/stale event, abrupt exit, failed final
+capture, compact and reopening. All 121 installed product files matched the wheel.
+Independent bounded reviews and one read-only evaluator smoke informed the fixes.
+Actual checks, failed runs, wheel SHA and evidence limits are in
+[the report](docs/conversation-continuation-0.24.0-result.md).
+
+## assumptions
+
+Native input, actual provider delivery and final conversation completion need
+separate evidence. Local synthetic providers prove mechanism, not universal
+model interpretation. Current execution state stays in Core.
+
+## cuts
+
+No exports, Git projections, background service, new execution graph, automatic
+Work acceptance, real-provider trial or automatic personal Activity creation.
+
+## cost
+
+Full gate: 884.16 seconds; final affected tests: 53.94 seconds. Local native probes
+and model-free maintenance only. Zero real-provider or paid API calls. Actual
+failures and corrections are recorded in the completed report.
+
+## manual-acceptance
+
+Not accepted by the owner. The ordinary fresh Activity trial follows delivery.
+
+## next
+
+solmax
+
 # Derived Artifact cleanup — installed 0.23.5
 
 ## outcome

@@ -30,6 +30,7 @@ from zaratustra.foundation import (
     upgrade_child_execution_space,
     upgrade_composition_space,
     upgrade_continuation_space,
+    upgrade_conversation_space,
     upgrade_development_space,
     upgrade_execution_space,
     upgrade_knowledge_space,
@@ -58,6 +59,7 @@ INTERACTIVE_ZARA_TOOLS = (
     "zara_integration",
     "zara_workspace",
     "zara_workflow",
+    "zara_conversation",
 )
 
 
@@ -67,7 +69,7 @@ def _prepare_space(
     if create:
         initialize_space(path)
     info = read_space(path)
-    if not create and not upgrade_existing and info.schema_version < 16:
+    if not create and not upgrade_existing and info.schema_version < 17:
         raise FoundationError(
             "upgrade_required", "Run zaratustra upgrade explicitly before opening Pi"
         )
@@ -102,6 +104,7 @@ def _prepare_space(
         (14, upgrade_activity_setup_space),
         (15, upgrade_structures_space),
         (16, upgrade_workflow_space),
+        (17, upgrade_conversation_space),
     ):
         if read_space(path).schema_version < version:
             upgrade(path, authority)

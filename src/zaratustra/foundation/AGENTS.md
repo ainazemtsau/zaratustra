@@ -1,5 +1,11 @@
 # Core v0.1 domain foundation
 
+Schema 17 adds receipt-backed conversation delivery metadata. `conversations.py`
+derives actions from existing setup, workflow and Work authority; it owns no
+execution graph or queue. Exact context/invocation/final assistant Source proof
+acknowledges communication only, never owner acceptance. Old canonical payloads
+omit absent action and final-response fields; deletion sanitizes correlation links.
+
 Schema 16 adds immutable workflow templates and receipt-backed node mappings over
 ordinary root WorkPlan. Work/Attempt still own execution, host questions have
 addressed Sources and need no fake Pi process. Exact service validation opens

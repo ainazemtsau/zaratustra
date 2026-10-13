@@ -1290,7 +1290,32 @@ WORKFLOW_SCHEMA_SHA256 = (
     .hexdigest()
     .upper()
 )
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
+CONVERSATION_SCHEMA_NAME = "core-conversations-v1"
+CONVERSATION_SCHEMA_STATEMENTS = (
+    "CREATE TABLE conversation_deliveries (delivery_id TEXT PRIMARY KEY,action_id TEXT NOT NULL,"
+    "action_digest TEXT NOT NULL,actor TEXT NOT NULL,epoch INTEGER NOT NULL,host_id TEXT NOT NULL,"
+    "session_id TEXT NOT NULL,branch_id TEXT NOT NULL,status TEXT NOT NULL CHECK(status IN "
+    "('claimed','included','responded','unknown','abandoned','stale')),manifest_id TEXT,"
+    "manifest_revision INTEGER,invocation_id TEXT,assistant_source_id TEXT,"
+    "assistant_source_revision INTEGER,assistant_entry_id TEXT,operation_id TEXT NOT NULL "
+    "REFERENCES operations,created_at TEXT NOT NULL,updated_at TEXT NOT NULL) STRICT",
+    "CREATE UNIQUE INDEX conversation_live_action ON conversation_deliveries(action_id,"
+    "action_digest) WHERE status IN ('claimed','included','responded','unknown')",
+    "CREATE TABLE conversation_delivery_edges (delivery_id TEXT NOT NULL REFERENCES "
+    "conversation_deliveries,role TEXT NOT NULL,target_id TEXT NOT NULL,target_revision INTEGER "
+    "NOT NULL,PRIMARY KEY(delivery_id,role,target_id,target_revision)) STRICT",
+    "CREATE INDEX conversation_edge_target ON conversation_delivery_edges(target_id)",
+    "CREATE TABLE conversation_delivery_invocations (delivery_id TEXT NOT NULL REFERENCES "
+    "conversation_deliveries,invocation_id TEXT PRIMARY KEY,manifest_id TEXT NOT NULL,"
+    "manifest_revision INTEGER NOT NULL,operation_id TEXT NOT NULL REFERENCES operations) STRICT",
+    "CREATE TABLE conversation_delivery_events (delivery_id TEXT NOT NULL REFERENCES "
+    "conversation_deliveries,operation_id TEXT PRIMARY KEY REFERENCES operations,"
+    "action TEXT NOT NULL) STRICT",
+)
+CONVERSATION_SCHEMA_SHA256 = (
+    hashlib.sha256("\n".join(CONVERSATION_SCHEMA_STATEMENTS).encode()).hexdigest().upper()
+)
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17)
 
 
 def utc_now() -> datetime:
@@ -1481,6 +1506,8 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         expected.append((15, STRUCTURES_SCHEMA_NAME, STRUCTURES_SCHEMA_SHA256))
     if schema_version >= 16:
         expected.append((16, WORKFLOW_SCHEMA_NAME, WORKFLOW_SCHEMA_SHA256))
+    if schema_version >= 17:
+        expected.append((17, CONVERSATION_SCHEMA_NAME, CONVERSATION_SCHEMA_SHA256))
     if migration != expected:
         raise FoundationError("unsupported_schema", "Schema history does not match installed code")
     rows = _identity_read(

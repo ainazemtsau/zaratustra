@@ -77,13 +77,14 @@ def _upgrade_to(root: Path, actor: str, target: int) -> None:
         core.upgrade_memory_space,
         core.upgrade_activity_setup_space,
         core.upgrade_structures_space,
+        core.upgrade_workflow_space,
     )
     for version, upgrade in enumerate(upgrades, 2):
         if core.read_space(root).schema_version < version <= target:
             upgrade(root, owner)
 
 
-@pytest.mark.parametrize("schema", (1, 2, 6, 14, 15))
+@pytest.mark.parametrize("schema", (1, 2, 6, 14, 15, 16))
 def test_confirmed_upgrade_uses_the_public_chain_after_a_verified_backup(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, schema: int
 ) -> None:
@@ -118,7 +119,7 @@ def test_confirmed_upgrade_uses_the_public_chain_after_a_verified_backup(
     monkeypatch.setattr("builtins.input", confirm)
     assert release.main(["upgrade", "--config", str(selected)]) == 0
     current = core.read_space(root)
-    assert current.schema_version == 16
+    assert current.schema_version == 17
     assert current.space_id == before.space_id
     assert current.execution_epoch == before.execution_epoch
     assert len(prompts) == 1 and "verified backup" in prompts[0]
@@ -155,8 +156,9 @@ def test_declined_upgrade_preserves_the_existing_space_without_backup(
     assert core.read_execution(root, work_id, owner) == execution
 
 
-def test_schema_15_upgrade_keeps_exact_results_acceptance_and_send_history(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize("schema", (15, 16))
+def test_upgrade_keeps_exact_results_acceptance_and_send_history(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, schema: int
 ) -> None:
     from tests.zaratustra.foundation.test_execution import (
         InvocationFields,
@@ -168,7 +170,7 @@ def test_schema_15_upgrade_keeps_exact_results_acceptance_and_send_history(
     from zaratustra import release
 
     root, _, space, input_id, work_id, resource_id, owner = ready(tmp_path)
-    _upgrade_to(root, owner.actor, 15)
+    _upgrade_to(root, owner.actor, schema)
     attempt, session = start(root, space, work_id, resource_id, owner)
     invocation_id, _ = invocation(root, space, work_id, attempt, session, owner, 10)
     common: InvocationFields = dict(
@@ -217,7 +219,7 @@ def test_schema_15_upgrade_keeps_exact_results_acceptance_and_send_history(
     monkeypatch.setattr("builtins.input", lambda _: "UPGRADE")
     assert release.main(["upgrade", "--config", str(selected)]) == 0
     current = core.read_execution(root, work_id, owner)
-    assert core.read_space(root).schema_version == 16
+    assert core.read_space(root).schema_version == 17
     assert current.space_id == before.space_id
     assert current.activity == before.activity
     assert current.work == before.work

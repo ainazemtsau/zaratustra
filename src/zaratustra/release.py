@@ -234,7 +234,7 @@ def _setup(args: argparse.Namespace) -> int:
     actor = getpass.getuser()
     print(f"Core space: {space}\nWorking resource: {workspace}\nLocal identity: {actor}")
     print(f"Provider: {args.provider_profile} / {args.model_id} at {args.provider_base_url}")
-    print(f"New space: {args.new_space}; target schema: 14")
+    print(f"New space: {args.new_space}; target schema: 17")
     if input("Type SETUP to prepare this installation and selected space: ").strip() != "SETUP":
         return 1
     sqlite_dll = _prepare_sqlite(runtime_root / "sqlite3.dll", args.sqlite_dll)
@@ -287,7 +287,7 @@ def _setup(args: argparse.Namespace) -> int:
 
         initialize_git(read_config(config_path), create_private=args.create_private)
     print(f"Prepared: {config_path}")
-    if not args.new_space and info.schema_version < 16:
+    if not args.new_space and info.schema_version < 17:
         print("Existing space requires zara-core upgrade before run or assign")
     return 0
 
@@ -410,13 +410,13 @@ def _assign(args: argparse.Namespace, config: dict[str, object]) -> int:
     return assigned_main(command)
 
 
-def _ready_space(config: dict[str, object], *, minimum_schema: int = 16) -> None:
+def _ready_space(config: dict[str, object], *, minimum_schema: int = 17) -> None:
     from zaratustra.foundation import read_space
 
     info = read_space(Path(str(config["space"])))
     if config.get("space_id") and str(info.space_id) != config["space_id"]:
         raise ValueError("Selected space identity differs from the saved configuration")
-    if not minimum_schema <= info.schema_version <= 16:
+    if not minimum_schema <= info.schema_version <= 17:
         raise ValueError("Run zara-core upgrade for this selected space before execution")
     if info.recovery_state != "active":
         raise ValueError("Recover the selected space before execution")
@@ -667,14 +667,14 @@ def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
         info = read_space(space)
         if config.get("space_id") and str(info.space_id) != config["space_id"]:
             raise ValueError("Selected space identity differs from the saved configuration")
-        if info.schema_version == 16:
-            print("Core space already uses schema 16")
+        if info.schema_version == 17:
+            print("Core space already uses schema 17")
             return 0
-        if info.schema_version > 16:
+        if info.schema_version > 17:
             raise ValueError("Installed program cannot upgrade a newer Core schema")
         if info.recovery_state != "active":
             raise ValueError("Recover this space before a schema upgrade")
-        print(f"Space {info.space_id}: schema {info.schema_version} -> 16")
+        print(f"Space {info.space_id}: schema {info.schema_version} -> 17")
         if (
             input("Type UPGRADE to save a verified backup and migrate this space: ").strip()
             != "UPGRADE"

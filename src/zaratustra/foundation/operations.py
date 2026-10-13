@@ -39,6 +39,7 @@ from .models import (
     CloseWorkRequest,
     ConfirmObligationRequest,
     ConfirmProgramInstallRequest,
+    ConversationDeliveryRequest,
     CreateActivityRequest,
     CreateArtifactRequest,
     CreateBindingVersionRequest,
@@ -548,6 +549,9 @@ def _write_root(
 
 def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]:
     from .models import WorkflowRequest
+
+    if isinstance(request, ConversationDeliveryRequest):
+        return "model.invoke", "space", None
 
     if isinstance(request, WorkflowRequest):
         if request.action == "create_definition":
@@ -1600,6 +1604,13 @@ def _apply_change(
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
     from .models import WorkflowRequest
 
+    if isinstance(request, ConversationDeliveryRequest):
+        from .conversations import apply_conversation_change
+
+        return apply_conversation_change(
+            cast(sqlite3.Connection, connection), request, authority=authority, now=now
+        )
+
     if isinstance(request, WorkflowRequest):
         from .workflows import apply_workflow_change
 
@@ -1890,7 +1901,34 @@ def _apply_change(
             raise FoundationError(
                 "unsupported_schema", "Execution operation needs its explicit schema"
             )
+        if isinstance(request, StopAttemptRequest) and request.observed_final is not None:
+            from .conversations import ordinary_final_proof
+            from .storage import _space_info
+
+            root, database, _ = layout(authority.space_root)
+            proof = ordinary_final_proof(
+                cast(sqlite3.Connection, connection),
+                _space_info(cast(sqlite3.Connection, connection), root, database),
+                request.work_id,
+                authority,
+                attempt_id=request.attempt_id,
+            )
+            if (
+                request.outcome != "completed"
+                or proof is None
+                or proof != request.observed_final
+                or proof.session_id != request.session_id
+            ):
+                raise FoundationError("stale_final_response", "Observed final proof changed")
         result, targets = apply_execution_change(connection, request, now=now, epoch=epoch)
+        if isinstance(request, StopAttemptRequest) and request.observed_final is not None:
+            targets.extend(
+                {"record_id": str(ref.record_id), "revision": ref.revision}
+                for ref in (
+                    request.observed_final.manifest,
+                    request.observed_final.assistant_source,
+                )
+            )
         if isinstance(request, AssignAttemptRequest) and schema_version >= 6:
             from .composition import pin_child_attempt
 

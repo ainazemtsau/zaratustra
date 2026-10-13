@@ -574,6 +574,10 @@ def _sanitize_deleted(connection: sqlite3.Connection, record_id: UUID, now: str)
         from .data_store import sanitize_data_dependency
 
         sanitize_data_dependency(connection, affected, now)
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 17:
+        from .conversations import sanitize_conversation_dependency
+
+        sanitize_conversation_dependency(connection, affected, now)
     for item in affected:
         connection.execute("DELETE FROM knowledge_fts WHERE record_id=?", (item,))
         if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 13:
@@ -628,6 +632,10 @@ def sanitize_deleted_knowledge_dependency(
     from .workflows import sanitize_workflow_dependency
 
     sanitize_workflow_dependency(connection, record_id, now)
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 17:
+        from .conversations import sanitize_conversation_dependency
+
+        sanitize_conversation_dependency(connection, {str(record_id)}, now)
 
     if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 14:
         from .activity_setup import sanitize_setup_dependency
@@ -662,6 +670,9 @@ def apply_knowledge_change(
         if current_revision != request.manifest.revision:
             raise FoundationError("stale_context", "Manifest revision changed")
         if request.stage in ("prepared", "sent"):
+            from .conversations import check_conversation_context
+
+            check_conversation_context(connection, manifest, request.actor, epoch)
             from .data_store import check_context_pins
 
             check_context_pins(connection, manifest, request.actor, epoch)

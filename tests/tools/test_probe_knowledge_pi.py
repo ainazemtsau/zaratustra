@@ -78,3 +78,30 @@ def test_completed_observation_does_not_hide_a_terminal_failure(
         probe._completed_observation(bridge, read)
     assert refusal.value is error and len(reads) == expected_reads
     assert bridge.workflow_controller.thread is None
+
+
+def test_dynamic_selected_work_waits_for_durable_attempt_close(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bridge = _bridge()
+    runtime = cast(Any, bridge)
+    runtime.sessions = {"native": SimpleNamespace(work_id="selected-after-start")}
+    runtime.path = "fictional"
+    runtime.authority = "owner"
+    observed = []
+    active = True
+
+    def execution(*args: Any) -> Any:
+        observed.append(args)
+        return SimpleNamespace(
+            assignments=[],
+            attempts=[
+                SimpleNamespace(status="active" if active else "completed", attempt_id="commentary")
+            ],
+        )
+
+    monkeypatch.setattr(probe, "read_execution", execution)
+    assert not probe._completed_observation(bridge, lambda: True)
+    active = False
+    assert probe._completed_observation(bridge, lambda: True)
+    assert len(observed) == 2

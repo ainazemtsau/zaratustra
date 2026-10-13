@@ -1,5 +1,29 @@
 # Interactive Pi adapter
 
+Schema 17 conversation continuation derives current actions from Core. Native
+followUp wakes carry empty, checked-address custom entries filtered from provider
+and compaction input; exact ContextManifest, observed invocation and persisted
+final assistant entry prove delivery. Tool-use answers are not final delivery.
+Closed/switch/fork/tree generations fence callbacks; only proven unsent claims
+can be abandoned. Actual owner requests recover current facts after notices were
+delivered. Selecting the existing first Work neither duplicates nor accepts it.
+
+Native received input is not consumed input. Schema-17 origin uses newly delivered
+persisted native user entries, preserving raw receipt separately. Extension-origin
+user input is retained without owner authority and refused at ingress; extensions
+must use checked Core events. No text marker or natural-language intent parser.
+Multiple consumed entries need an exact source choice for addressed answers; a
+source predating a question cannot answer it. Host/history turns have Core-reader
+and scoped file-reader authority; writable tools and unknown extension tools are
+not admitted. Ordinary owner turns restore their selected loadout. Pin invocation
+Work/Attempt/session independently of later selection changes.
+Ordinary successful finals retain exact native entry and pinned manifest proof at
+turn_end. After abrupt loss, Core atomically rechecks that proof on completed
+StopAttempt; absent or unknown proof preserves execution and restores a free
+conversation with an addressed obstacle. Explicit interruption requires a real
+owner Source and native confirmation. Never replay a send or accept Work during
+recovery. Model memory cannot create or revise the reserved final-proof flag.
+
 `workflows.py` coordinates schema-16 workflow nodes through ordinary assigned Pi/DBOS.
 WorkPlan is the actual graph; Work/Attempt and committed receipts own progress.
 Node model/profile/reasoning is pinned before launch. At most two read-only model

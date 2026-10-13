@@ -422,3 +422,23 @@ def test_saved_message_replay_does_not_recreate_deleted_source(tmp_path: Path) -
         )
     assert read_knowledge(root, source_id, owner).availability == "deleted"
     assert search_knowledge(root, owner, "Fictional replay to be deleted")["items"] == []
+
+
+def test_compaction_manifest_identity_includes_exact_attempt_pin(tmp_path: Path) -> None:
+    from tests.zaratustra.pi_adapter.test_conversation import _case
+
+    bridge, session_id, activity_id, work_id = _case(tmp_path)
+    bridge.select(session_id, activity_id, work_id)
+    before = bridge.prepare_context(session_id, purpose="compaction-summary")
+    started = bridge.start_attempt(session_id, interrupt_previous=False)
+    after = bridge.prepare_context(session_id, purpose="compaction-summary")
+    assert before["packet"] == after["packet"]
+    assert before["manifest_id"] != after["manifest_id"]
+    original = read_knowledge(bridge.path, UUID(str(before["manifest_id"])), bridge.authority)
+    pinned = read_knowledge(bridge.path, UUID(str(after["manifest_id"])), bridge.authority)
+    assert isinstance(original.state, ContextState) and original.state.attempt_id is None
+    assert isinstance(pinned.state, ContextState)
+    assert str(pinned.state.attempt_id) == started["attempt_id"]
+    repeated = bridge.prepare_context(session_id, purpose="compaction-summary")
+    assert repeated["manifest_id"] == after["manifest_id"]
+    assert repeated["state_revision"] == after["state_revision"]

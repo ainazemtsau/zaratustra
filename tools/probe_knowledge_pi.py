@@ -192,7 +192,26 @@ def _completed_observation(bridge: Bridge, predicate: Callable[[], bool]) -> boo
             return False
     for attempt in range(3):
         try:
-            return predicate()
+            if not predicate():
+                return False
+            # A dynamically selected ordinary Work is not known to the harness's
+            # initial `work` argument. agent_end precedes native agent_settled,
+            # where the extension durably closes its commentary Attempt. Do not
+            # kill Pi while that final Core operation is still in flight.
+            selected = {
+                item.work_id
+                for item in getattr(bridge, "sessions", {}).values()
+                if item is not None
+            }
+            for work_id in selected:
+                execution = read_execution(bridge.path, work_id, bridge.authority)
+                assigned = {item.attempt_id for item in execution.assignments}
+                if any(
+                    item.status == "active" and item.attempt_id not in assigned
+                    for item in execution.attempts
+                ):
+                    return False
+            return True
         except FoundationError as error:
             transient = error.code == "busy" or (
                 error.code == "storage"
@@ -236,6 +255,9 @@ def run_process(
     model_overrides: dict[str, object] | None = None,
     remember_selection: bool = False,
     fixture_agent_dir: Path | None = None,
+    on_event: Callable[[Any, dict[str, object]], None] | None = None,
+    extra_extensions: tuple[Path, ...] = (),
+    abrupt_end_predicate: Callable[[], bool] | None = None,
 ) -> list[dict[str, object]]:
     bridge_server = BridgeServer(bridge)
     bridge_thread = threading.Thread(target=bridge_server.serve_forever, daemon=True)
@@ -320,6 +342,8 @@ def run_process(
     ]
     if thinking is not None:
         command.extend(["--thinking", thinking])
+    for extension in extra_extensions:
+        command.extend(["--extension", str(extension)])
     for skill in skills:
         command.extend(["--skill", str(skill)])
     if tool_names is not None:
@@ -377,12 +401,16 @@ def run_process(
             try:
                 event = events.get(timeout=0.25)
             except queue.Empty:
+                if abrupt_end_predicate is not None and abrupt_end_predicate():
+                    break
                 if wait_for is not None and _completed_observation(bridge, wait_for):
                     break
                 if process.poll() is not None:
                     break
                 continue
             observed.append(event)
+            if on_event is not None:
+                on_event(process, event)
             if catalog_only and "zaratustra_models" in json.dumps(event):
                 break
             if event.get("type") == "response" and event.get("id") == "resume":

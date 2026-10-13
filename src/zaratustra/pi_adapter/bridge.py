@@ -282,6 +282,13 @@ class Bridge:
         self.token = secrets.token_urlsafe(48)
         self.sessions: dict[UUID, Selection | None] = {}
         self.last_sources: dict[UUID, KnowledgeRef] = {}
+        # Receipt is not consumption. The native request binds its actually
+        # delivered owner entries before preparing context or executing tools.
+        self.request_sources: dict[UUID, tuple[KnowledgeRef, ...]] = {}
+        self.request_origins: dict[UUID, str] = {}
+        self.conversation_hosts: dict[UUID, dict[str, str]] = {}
+        self.conversation_actions: dict[UUID, Any] = {}
+        self.recovery_obstacles: dict[UUID, UUID] = {}
         self.exposed_refs: dict[UUID, set[KnowledgeRef]] = {}
         self.selected_file_refs: dict[UUID, set[KnowledgeRef]] = {}
         self.memory_rules: dict[UUID, dict[str, tuple[MemorySelector, ...]]] = {}
@@ -409,8 +416,19 @@ class Bridge:
             )
         return tuple(dict.fromkeys(supplied))
 
-    def _fresh_user_source(self, session_id: UUID) -> tuple[KnowledgeRef, str]:
-        original = self.last_sources.get(session_id)
+    def _fresh_user_source(
+        self, session_id: UUID, selected_ref: dict[str, Any] | None = None
+    ) -> tuple[KnowledgeRef, str]:
+        original = (
+            KnowledgeRef.model_validate(selected_ref)
+            if selected_ref
+            else self._request_source(session_id)
+        )
+        if read_space(self.path).schema_version >= 17 and (
+            self.request_origins.get(session_id) != "owner"
+            or original not in self.request_sources.get(session_id, ())
+        ):
+            raise FoundationError("incomplete_context", "Choose an exact delivered owner Source")
         if original is None:
             raise FoundationError("incomplete_context", "No actual user message to retain")
         message = read_knowledge(
@@ -427,16 +445,78 @@ class Bridge:
             )
         return original, message.state.content.decode("utf-8")
 
+    def _request_source(self, session_id: UUID) -> KnowledgeRef | None:
+        if read_space(self.path).schema_version < 17:
+            return self.last_sources.get(session_id)
+        sources = self.request_sources.get(session_id, ())
+        if self.request_origins.get(session_id) != "owner" or len(sources) != 1:
+            return None
+        return sources[0]
+
+    def _require_model_effect(self, session_id: UUID) -> None:
+        if (
+            self.assigned_attempt_id is None
+            and read_space(self.path).schema_version >= 17
+            and (self.request_origins.get(session_id) in ("host", "history", "unsupported"))
+        ):
+            raise FoundationError(
+                "permission_denied", "Host/history conversation has read-only authority"
+            )
+
+    def _answer_temporal_guard(
+        self, source: KnowledgeRef, *, kind: str, subject: UUID, wait: UUID | None = None
+    ) -> None:
+        if read_space(self.path).schema_version < 17:
+            return
+        from zaratustra.foundation import validate_conversation_answer
+
+        validate_conversation_answer(
+            self.path,
+            self.authority,
+            source,
+            kind=cast(Any, kind),
+            subject_id=subject,
+            wait_id=wait,
+        )
+
+    def bind_request_origin(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, object]:
+        """Trusted native adapter binds consumed sources, never arbitrary model text."""
+        self._session(session_id)
+        refs = tuple(KnowledgeRef.model_validate(item) for item in raw.get("sources", ()))
+        origin = str(raw.get("origin", "unsupported"))
+        if origin not in ("owner", "host", "history", "unsupported"):
+            raise FoundationError("invalid_request", "Unknown native request origin")
+        for ref in refs:
+            item = read_knowledge(self.path, ref.record_id, self.authority, revision=ref.revision)
+            if not isinstance(item.state, SourceState) or item.state.channel != "conversation_user":
+                raise FoundationError("invalid_request", "Native origin must address a user Source")
+            if origin == "owner" and (
+                item.state.sender != self.authority.actor
+                or item.state.conversation_id != str(session_id)
+            ):
+                raise FoundationError("permission_denied", "Origin is not a delivered owner entry")
+        if origin != "owner" and refs:
+            raise FoundationError("invalid_request", "Host origin has no fresh owner answer")
+        with self.lock:
+            self.request_origins[session_id] = origin
+            self.request_sources[session_id] = refs
+        return {"origin": origin, "sources": [ref.model_dump(mode="json") for ref in refs]}
+
     def _setup_request_source(self, session_id: UUID, raw: dict[str, Any]) -> KnowledgeRef | None:
         """Select an original received request; never turn it into an answer."""
         original = (
             KnowledgeRef.model_validate(raw["request_source"])
             if raw.get("request_source") is not None
-            else self.last_sources.get(session_id)
+            else self._request_source(session_id)
         )
         if original is None:
             return None
-        if original != self.last_sources.get(session_id) and original not in self.exposed_refs.get(
+        if read_space(self.path).schema_version >= 17 and (
+            self.request_origins.get(session_id) != "owner"
+            or original not in self.request_sources.get(session_id, ())
+        ):
+            raise FoundationError("permission_denied", "Request must use a delivered owner Source")
+        if original != self._request_source(session_id) and original not in self.exposed_refs.get(
             session_id, set()
         ):
             raise FoundationError("permission_denied", "Original request must be exposed")
@@ -587,6 +667,18 @@ class Bridge:
         }
 
     def workflow(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, Any]:
+        if raw.get("mode", "status") not in (
+            "contract",
+            "runs",
+            "catalog",
+            "read",
+            "interaction",
+            "method_tasks",
+            "read_packet",
+            "status",
+            "explain",
+        ):
+            self._require_model_effect(session_id)
         """Public conversation actions; dispatch/validation remain host-owned."""
         from zaratustra.foundation import (
             WorkflowDefinition,
@@ -789,7 +881,7 @@ class Bridge:
             )
         elif action == "start":
             root_id = root_id or uuid5(operation_id, "root")
-            original, _ = self._fresh_user_source(session_id)
+            original, _ = self._fresh_user_source(session_id, raw.get("answer_source"))
             fields.update(
                 root_work_id=root_id,
                 workflow=raw["workflow"],
@@ -805,8 +897,11 @@ class Bridge:
             current = read_workflow_run(self.path, root_id, self.authority)
             fields.update(root_work_id=root_id, expected_revision=current.revision)
             if action == "answer":
-                original, _ = self._fresh_user_source(session_id)
+                original, _ = self._fresh_user_source(session_id, raw.get("answer_source"))
                 wait_id = UUID(str(raw["wait_id"]))
+                self._answer_temporal_guard(
+                    original, kind="workflow", subject=root_id, wait=wait_id
+                )
                 wait = next((wait for wait in current.waits if wait.wait_id == wait_id), None)
                 if wait is None:
                     raise FoundationError("stale_wait", "Named question is no longer open")
@@ -816,14 +911,14 @@ class Bridge:
                     answer=original,
                 )
             elif action == "correct_answer":
-                original, _ = self._fresh_user_source(session_id)
+                original, _ = self._fresh_user_source(session_id, raw.get("answer_source"))
                 fields.update(
                     wait_id=UUID(str(raw["wait_id"])),
                     expected_wait_revision=int(raw["expected_wait_revision"]),
                     answer=original,
                 )
             elif action == "retry":
-                original, _ = self._fresh_user_source(session_id)
+                original, _ = self._fresh_user_source(session_id, raw.get("answer_source"))
                 fields.update(node_key=str(raw["node_key"]), answer=original)
             elif action == "migrate":
                 fields.update(
@@ -871,6 +966,8 @@ class Bridge:
         return read_config(self.workspace_config) if self.workspace_config else None
 
     def workspace_operation(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, Any]:
+        if raw.get("mode") not in ("info", "projects", "status", "check"):
+            self._require_model_effect(session_id)
         self._session(session_id)
         config = self._workspace_configuration()
         if config is None:
@@ -984,6 +1081,8 @@ class Bridge:
         }
 
     def activity_setup(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, Any]:
+        if raw.get("action", "status") not in ("status", "list", "read_packet", "window_close"):
+            self._require_model_effect(session_id)
         """Only the interactive trusted host controls a bounded new-Activity setup."""
         self._session(session_id)
         if self.assigned_attempt_id is not None and raw.get("action") != "read_packet":
@@ -1007,7 +1106,7 @@ class Bridge:
         identifier = UUID(str(raw["setup_id"]))
         if action == "retain_file":
             current = read_activity_setup(self.path, identifier, self.authority)
-            original, _ = self._fresh_user_source(session_id)
+            original, _ = self._fresh_user_source(session_id, raw.get("answer_source"))
             content = base64.b64decode(str(raw["content_base64"]), validate=True)
             content.decode("utf-8")
             digest = hashlib.sha256(content).hexdigest().upper()
@@ -1133,9 +1232,11 @@ class Bridge:
             current = read_activity_setup(self.path, identifier, self.authority)
             fields.update(activity_id=current.state.activity_id, expected_revision=current.revision)
         if action == "answer":
-            original, fields["text"] = self._fresh_user_source(session_id)
+            original, fields["text"] = self._fresh_user_source(session_id, raw.get("answer_source"))
             fields["source_refs"] = (original,)
             state = current.state
+            if state.question:
+                self._answer_temporal_guard(original, kind="setup", subject=identifier)
             if original in state.sources:
                 supplied = self._exposed_sources(session_id, raw)
                 if not any(ref not in state.sources for ref in supplied):
@@ -1416,7 +1517,18 @@ class Bridge:
                 "permission_denied", "This endpoint accepts execution operations only"
             )
         if getattr(request, "work_id", None) != selected.work_id:
-            raise FoundationError("wrong_work", "Operation does not address the selected Work")
+            if request.kind != "finish_invocation":
+                raise FoundationError("wrong_work", "Operation does not address the selected Work")
+            pinned = read_execution(self.path, request.work_id, self.authority)
+            if not any(
+                item.invocation_id == request.invocation_id
+                and item.attempt_id == request.attempt_id
+                for item in pinned.invocations
+            ) or not any(
+                item.attempt_id == request.attempt_id and item.session_id == session_id
+                for item in pinned.attempts
+            ):
+                raise FoundationError("wrong_work", "Finish lacks the exact native invocation pin")
         if self.assigned_attempt_id is not None:
             if (
                 request.kind
@@ -1488,6 +1600,7 @@ class Bridge:
         return {"schema_version": read_space(self.path).schema_version}
 
     def binding_operation(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
+        self._require_model_effect(session_id)
         self._session(session_id)
         if self.assigned_attempt_id is not None:
             raise FoundationError("permission_denied", "Assigned RPC cannot manage Bindings")
@@ -1537,6 +1650,25 @@ class Bridge:
         return {"kind": kind, "schema": model.model_json_schema()}
 
     def integration(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, object]:
+        if raw.get("mode") not in ("catalog", "contract") and raw.get("operation") not in (
+            "read_document",
+            "product_context",
+            "catalog",
+            "history",
+            "open_selection",
+            "read_batch",
+            "prepare_cache",
+            "describe_structure",
+            "list_formats",
+            "read_format",
+            "read_entry",
+            "query_entries",
+            "aggregate_entries",
+            "working_set",
+            "procedure_status",
+            "due_procedures",
+        ):
+            self._require_model_effect(session_id)
         self._session(session_id)
         if self.assigned_attempt_id is not None:
             raise FoundationError("permission_denied", "Integration setup is interactive only")
@@ -1577,6 +1709,19 @@ class Bridge:
         return result.output
 
     def data_operation(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, object]:
+        if raw.get("mode") != "contract" and raw.get("operation", "describe_structure") not in (
+            "describe_structure",
+            "list_formats",
+            "read_format",
+            "read_entry",
+            "history",
+            "query_entries",
+            "aggregate_entries",
+            "working_set",
+            "procedure_status",
+            "due_procedures",
+        ):
+            self._require_model_effect(session_id)
         selected = self._session(session_id)
         if raw.get("mode") == "run":
             if self.assigned_attempt_id is not None or self.procedure_controller is None:
@@ -1606,7 +1751,7 @@ class Bridge:
             return registry.contract("data", operation)
         arguments = dict(raw.get("arguments", {}))
         if operation == "start_procedure" and "request_basis" not in arguments:
-            original = self.last_sources.get(session_id)
+            original = self._request_source(session_id)
             arguments["request_basis"] = [original.model_dump(mode="json")] if original else []
         if operation in ("create_entry", "correct_entry", "ingest_batch") and selected is not None:
             attempt = next(
@@ -1663,6 +1808,8 @@ class Bridge:
         return result.output
 
     def manual_exchange(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
+        if raw.get("mode") != "read":
+            self._require_model_effect(session_id)
         self._session(session_id)
         exchange = ManualExchange(self.path, self.authority)
         mode = str(raw["mode"])
@@ -1731,6 +1878,7 @@ class Bridge:
         return result
 
     def knowledge_operation(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
+        self._require_model_effect(session_id)
         self._session(session_id)
         if self.restricted_core_reads:
             raise FoundationError("permission_denied", "This node permits Core reads only")
@@ -1738,6 +1886,10 @@ class Bridge:
         state_raw = prepared.get("state")
         if isinstance(state_raw, dict):
             state = dict(state_raw)
+            if state.get("conversation_final") not in (None, False):
+                raise FoundationError(
+                    "permission_denied", "Native final proof cannot be supplied by model memory"
+                )
             if state.get("kind") in ("data_entry", "data_format", "activity_structure"):
                 raise FoundationError(
                     "invalid_request",
@@ -1799,6 +1951,7 @@ class Bridge:
     def development_start_sleep(
         self, session_id: UUID, raw: dict[str, object]
     ) -> dict[str, object]:
+        self._require_model_effect(session_id)
         self._session(session_id)
         if self.assigned_attempt_id is not None:
             raise FoundationError(
@@ -1929,6 +2082,7 @@ class Bridge:
         }
 
     def development_operation(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
+        self._require_model_effect(session_id)
         self._session(session_id)
         if self.restricted_core_reads:
             raise FoundationError("permission_denied", "This node permits Core reads only")
@@ -2046,6 +2200,8 @@ class Bridge:
         input_source: str = "interactive",
         limitations: tuple[str, ...] = (),
         replay_session_id: UUID | None = None,
+        conversation_final: bool = False,
+        final_manifest: KnowledgeRef | None = None,
     ) -> dict[str, object]:
         selected = self._session(session_id)
         if channel not in ("conversation_user", "conversation_assistant", "tool_result"):
@@ -2056,6 +2212,30 @@ class Bridge:
             channel != "conversation_user" or input_source != "session-resume"
         ):
             raise FoundationError("invalid_request", "Replay identity needs saved Pi user input")
+        if conversation_final and (channel != "conversation_assistant" or not content):
+            raise FoundationError("invalid_request", "Final proof needs assistant text")
+        if final_manifest is not None:
+            manifest = read_knowledge(
+                self.path,
+                final_manifest.record_id,
+                self.authority,
+                revision=final_manifest.revision,
+            )
+            if (
+                not conversation_final
+                or not isinstance(manifest.state, ContextState)
+                or manifest.state.session_id != session_id
+            ):
+                raise FoundationError(
+                    "invalid_request", "Final manifest differs from native session"
+                )
+            if manifest.state.work_id is not None:
+                pinned_work = read_work(self.path, manifest.state.work_id, self.authority)
+                selected = Selection(
+                    activity_id=pinned_work.state.activity_id, work_id=manifest.state.work_id
+                )
+            else:
+                selected = None
         identity_session = replay_session_id or session_id
         identity = (
             f"pi-resume:{identity_session}:{source_event_id}"
@@ -2066,8 +2246,12 @@ class Bridge:
         operation_id = uuid5(source_id, "capture")
         with self.lock:
             derived = set(self.exposed_refs.get(session_id, set()))
-            if channel == "conversation_assistant" and session_id in self.last_sources:
-                derived.add(self.last_sources[session_id])
+            if final_manifest is not None:
+                derived.add(final_manifest)
+            if channel == "conversation_assistant":
+                source = self._request_source(session_id)
+                if source is not None:
+                    derived.add(source)
         state = SourceState.model_validate(
             {
                 "channel": channel,
@@ -2097,6 +2281,7 @@ class Bridge:
                 "capture": "excluded" if not content else "full",
                 "content": content.encode() if content else None,
                 "limitations": limitations,
+                "conversation_final": conversation_final,
                 "derived_from": sorted(derived, key=lambda ref: (str(ref.record_id), ref.revision))
                 if channel == "conversation_assistant"
                 else (),
@@ -2116,11 +2301,16 @@ class Bridge:
         if channel == "conversation_user":
             with self.lock:
                 self.last_sources[session_id] = KnowledgeRef(record_id=source_id, revision=1)
-        return receipt.model_dump(mode="json")
+        return {
+            **receipt.model_dump(mode="json"),
+            "source_ref": KnowledgeRef(record_id=source_id, revision=1).model_dump(mode="json"),
+        }
 
     def knowledge_read(self, session_id: UUID, body: dict[str, Any]) -> dict[str, object]:
         self._session(session_id)
         mode = body.get("mode")
+        if mode == "export":
+            self._require_model_effect(session_id)
         if self.restricted_core_reads and mode in ("export", "prepare_cache"):
             raise FoundationError("permission_denied", "This node cannot export or prepare caches")
         if mode in (
@@ -2247,6 +2437,8 @@ class Bridge:
         historical_memory: tuple[KnowledgeRef, ...] = (),
     ) -> dict[str, object]:
         selected = self._session(session_id)
+        if self.request_origins.get(session_id) == "host":
+            selected = None
         info = read_space(self.path)
         if info.schema_version < 10:
             raise FoundationError("unsupported_schema", "Context needs explicit schema 10")
@@ -2254,11 +2446,31 @@ class Bridge:
         structure_pin: KnowledgeRef | None = None
         procedure_snapshot: KnowledgeRef | None = None
         evidence_refs: list[KnowledgeRef] = []
+        included_conversation: list[Any] = []
         packet: dict[str, object] = {
             "space_id": str(info.space_id),
             "epoch": info.execution_epoch,
             "purpose": purpose,
         }
+        recovery_work = self.recovery_obstacles.get(session_id)
+        if recovery_work is not None:
+            recovery = read_execution(self.path, recovery_work, self.authority)
+            packet["recovery_obstacle"] = {
+                "work_id": str(recovery_work),
+                "goal": recovery.work.state.goal,
+                "reason": "The former window left an active execution without exact final proof. "
+                "No request was repeated and no Work was accepted. Read its saved result; "
+                "interrupt_execution requires an actual addressed owner request and confirmation.",
+                "attempts": [
+                    item.model_dump(mode="json")
+                    for item in recovery.attempts
+                    if item.status == "active"
+                ],
+                "invocations": [
+                    item.model_dump(mode="json") for item in recovery.invocations[-10:]
+                ],
+                "invocation_count": len(recovery.invocations),
+            }
         if info.schema_version >= 13:
             packet["memory_access"] = (
                 "Shared memory: use zara_memory catalog/read_batch/prepare_cache/history/"
@@ -2274,8 +2486,41 @@ class Bridge:
                 "never turn missing observations into zero."
             )
         with self.lock:
-            latest_source = self.last_sources.get(session_id)
-        if latest_source is not None:
+            latest_source = self._request_source(session_id)
+            origin_sources = self.request_sources.get(session_id, ())
+        if info.schema_version >= 17:
+            mandatory.extend(origin_sources)
+            packet["request_origin"] = {
+                "kind": self.request_origins.get(session_id, "history"),
+                "sources": [ref.model_dump(mode="json") for ref in origin_sources],
+            }
+            if purpose != "compaction-summary" and self.assigned_attempt_id is None:
+                from zaratustra.foundation import (
+                    read_conversation_action,
+                    read_conversation_actions_page,
+                )
+
+                action_page = read_conversation_actions_page(self.path, self.authority, limit=20)
+                actions = list(action_page.actions)
+                packet["conversation_next_offset"] = action_page.next_offset
+                host_ref = self.conversation_actions.get(session_id)
+                if host_ref is not None:
+                    host_action = read_conversation_action(self.path, host_ref, self.authority)
+                    if all(item.ref != host_ref for item in actions):
+                        actions.insert(0, host_action)
+                    packet["conversation_event"] = host_action.model_dump(mode="json")
+                    included_conversation.append(host_action)
+                packet["conversation_actions"] = [item.model_dump(mode="json") for item in actions]
+                packet["conversation_guidance"] = (
+                    "These are current Core facts, not owner messages. Explain the result and next "
+                    "useful step in ordinary conversation. Lost notifications do not lose results. "
+                    "Use zara_conversation catalog/read/use_existing_work to select existing Work "
+                    "only from an actual owner request; never duplicate it or accept it. "
+                    "Host/history origins cannot answer a user's wait or authorize new Work."
+                )
+                for action_item in included_conversation:
+                    mandatory.extend(action_item.bases)
+        elif latest_source is not None:
             mandatory.append(latest_source)
         if info.schema_version >= 14 and selected is None and purpose != "compaction-summary":
             pending = list_activity_setups(self.path, self.authority, pending_only=True, limit=2)
@@ -2835,11 +3080,59 @@ class Bridge:
             raise FoundationError(
                 "context_overflow", "Mandatory context exceeds configured byte limit"
             )
-        # Reuse an exact packet during a tool loop. A random marker in the system
-        # prefix on every call prevents reuse of the unchanged provider context.
+        context_state = ContextState(
+            purpose="compaction summary"
+            if purpose == "compaction-summary"
+            else "selected Work continuation"
+            if selected
+            else "conversation continuation",
+            session_id=session_id,
+            work_id=selected.work_id if selected else None,
+            attempt_id=next(
+                (
+                    item.attempt_id
+                    for item in current.attempts
+                    if item.session_id == session_id and item.status == "active"
+                ),
+                None,
+            )
+            if selected
+            else None,
+            method=(
+                work.state.method
+                if selected and work.state.method != "none"
+                else current.composition.method
+                if selected and current.composition
+                else None
+            ),
+            plan_revision=current.composition.plan_revision
+            if selected and current.composition
+            else None,
+            mandatory=tuple(dict.fromkeys(mandatory)),
+            historical_memory=historic,
+            pinned_structure=structure_pin,
+            procedure_snapshot=procedure_snapshot,
+            max_bytes=self.context_max_bytes,
+            conversation_actions=tuple(item.ref for item in included_conversation)
+            if info.schema_version >= 17
+            and purpose != "compaction-summary"
+            and self.assigned_attempt_id is None
+            else (),
+        )
+        # Reuse unchanged packets, but identity must also cover exact persisted
+        # pins that need not appear in model prose (for example an Attempt).
+        identity_bytes = rendered.encode("utf-8")
+        if info.schema_version >= 17:
+            canonical_state = json.dumps(
+                context_state.model_dump(mode="json"),
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+            identity_bytes += b"\0" + canonical_state
         manifest_id = uuid5(
             session_id,
-            f"context:{self.context_max_bytes}:{hashlib.sha256(rendered.encode()).hexdigest()}",
+            f"context:{self.context_max_bytes}:{hashlib.sha256(identity_bytes).hexdigest()}",
         )
         receipt = apply_operation(
             self.path,
@@ -2848,30 +3141,7 @@ class Bridge:
                 space_id=info.space_id,
                 actor=self.authority.actor,
                 record_id=manifest_id,
-                state=ContextState(
-                    purpose="compaction summary"
-                    if purpose == "compaction-summary"
-                    else "selected Work continuation"
-                    if selected
-                    else "conversation continuation",
-                    session_id=session_id,
-                    work_id=selected.work_id if selected else None,
-                    method=(
-                        work.state.method
-                        if selected and work.state.method != "none"
-                        else current.composition.method
-                        if selected and current.composition
-                        else None
-                    ),
-                    plan_revision=current.composition.plan_revision
-                    if selected and current.composition
-                    else None,
-                    mandatory=tuple(dict.fromkeys(mandatory)),
-                    historical_memory=historic,
-                    pinned_structure=structure_pin,
-                    procedure_snapshot=procedure_snapshot,
-                    max_bytes=self.context_max_bytes,
-                ),
+                state=context_state,
             ),
             self.authority,
         )
@@ -2887,7 +3157,16 @@ class Bridge:
         }
 
     def context_delivery(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, object]:
-        selected = self._session(session_id)
+        self._session(session_id)
+        manifest = read_knowledge(
+            self.path,
+            UUID(str(raw["manifest_id"])),
+            self.authority,
+            revision=int(raw["manifest_revision"]),
+        )
+        if not isinstance(manifest.state, ContextState) or manifest.state.session_id != session_id:
+            raise FoundationError("wrong_scope", "Invocation manifest differs from native session")
+        free_call = manifest.state.work_id is None
         request = RecordContextDeliveryRequest.model_validate(
             {
                 "operation_id": str(uuid4()),
@@ -2898,10 +3177,10 @@ class Bridge:
                 "stage": raw["stage"],
                 "request_sha256": raw.get("request_sha256"),
                 "request_bytes": raw.get("request_bytes"),
-                "free_call": selected is None,
-                "reserve_units": int(raw.get("reserve_units", 0)) if selected is None else 0,
+                "free_call": free_call,
+                "reserve_units": int(raw.get("reserve_units", 0)) if free_call else 0,
                 "usage_units": raw.get("usage_units"),
-                "budget_limit_units": self.free_conversation_limit_units if selected is None else 0,
+                "budget_limit_units": self.free_conversation_limit_units if free_call else 0,
                 "trial_total_send_limit": self.trial_total_send_limit,
             }
         )
@@ -2957,6 +3236,7 @@ class Bridge:
     def publish(
         self, session_id: UUID, attempt_id: UUID, slot: str, media_type: str, content: str
     ) -> dict[str, object]:
+        self._require_model_effect(session_id)
         selected = self._selection(session_id)
         if self.assigned_attempt_id is not None and attempt_id != self.assigned_attempt_id:
             raise FoundationError("permission_denied", "RPC cannot publish another Attempt")
@@ -3216,7 +3496,17 @@ class BridgeHandler(BaseHTTPRequestHandler):
                     replay_session_id=UUID(str(body["replay_session_id"]))
                     if body.get("replay_session_id") is not None
                     else None,
+                    conversation_final=body.get("conversation_final") is True,
+                    final_manifest=KnowledgeRef.model_validate(body["final_manifest"])
+                    if body.get("final_manifest") is not None
+                    else None,
                 )
+            elif post and path.path == "/v1/request-origin":
+                result = bridge.bind_request_origin(session_id, body)
+            elif post and path.path == "/v1/conversation":
+                from .conversation import conversation
+
+                result = conversation(bridge, session_id, body)
             elif post and path.path == "/v1/knowledge-read":
                 result = bridge.knowledge_read(session_id, body)
             elif post and path.path == "/v1/integration":

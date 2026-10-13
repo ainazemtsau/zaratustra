@@ -29,6 +29,7 @@ const loaded = await discoverAndLoadExtensions([extensionPath], directory, agent
 assert.deepEqual(loaded.errors, []);
 // The UI-only harness has no live AgentSession; supply its chosen thinking state.
 loaded.runtime.getThinkingLevel = () => "off";
+loaded.runtime.getActiveTools = () => [];
 const extension = loaded.extensions.find(item => item.resolvedPath === extensionPath);
 assert(extension);
 const tool = extension.tools.get("zara_activity").definition;
@@ -84,7 +85,7 @@ const ctx = {
     setWidget(key, value) { widgets.set(key, value); },
     notify(message, type) { notifications.push({ message, type }); },
     async confirm(title, message) { confirmations.push({title, message}); return false; } },
-  sessionManager: { getBranch() { return []; } },
+  sessionManager: { getBranch() { return []; }, getSessionId() { return "fictional-native"; } },
 };
 const emit = async (name, event) => {
   let result;
@@ -125,7 +126,8 @@ item = { ...item, revision: 3, state: { ...item.state, phase: "ready", result: "
 // The watcher runs asynchronously; observe its public UI effects without any provider request.
 tick();
 await new Promise(resolve => setImmediate(resolve));
-assert(widgets.get("zara-setup").join("\n").includes("Fictional ready result"));
+assert.equal(widgets.get("zara-setup").length, 1);
+assert(!widgets.get("zara-setup").join("\n").includes("Fictional ready result"));
 assert.equal(notifications.filter(item => item.message === "Activity готова к работе.").length, 1);
 tick();
 await new Promise(resolve => setImmediate(resolve));

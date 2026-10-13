@@ -141,6 +141,13 @@ and parallel dirty work; do not publish private preparation branches merely to k
 
 ## What exists
 
+Conversation continuation (0.24.0) explicitly upgrades Core 16 to 17. Current
+setup, workflow and Work state derives addressed conversation actions; typed
+delivery receipts record observed context inclusion and final replies, without
+another execution graph. Native owner input and trusted host continuation have
+separate origins. Work acceptance remains separate. See
+`docs/conversation-continuation-plan.md`; release evidence is reported separately.
+
 Workflow release work (0.23.0) explicitly upgrades Core 15 to 16. Definitions
 instantiate native WorkPlan/Work/Attempt graphs; host waits, exact internal
 validation, addressed user answers and version transfer use the same Core
