@@ -57,3 +57,11 @@ Health while preserving answers and Development. Private paths, identities,
 answers and reset receipts are retained only in the private maintenance archive.
 Exports and personal Git publication remain outside this work. Authorization
 to deliver the correction is separate from acceptance of later owner Work.
+
+## Public delivery
+
+Published to `ainazemtsau/zaratustra/main` at
+`e8b08bcc1973d9f3a6559845478c68ab6a837a5b`. Authenticated GitHub ref readback
+and a subsequent Git fetch confirmed the exact commit and matching version,
+patched modules and report. The following documentation receipt does not
+change the installed wheel or its recorded SHA.

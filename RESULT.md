@@ -6,7 +6,9 @@ Corrected the installed maintenance command that refused schema 15 before its
 explicit 15-to-16 migration could run. Ordinary Pi still refuses an old Core;
 confirmed upgrade creates a verified backup and uses the existing migration
 chain. The final wheel is installed and the selected Core was migrated without
-recreating it; public delivery readback is pending.
+recreating it. Public delivery to ainazemtsau/zaratustra/main at
+e8b08bcc1973d9f3a6559845478c68ab6a837a5b was confirmed by authenticated
+readback of the ref and matching code/version/report Git contents.
 
 ## evidence
 
@@ -43,9 +45,8 @@ verified correction. No later Work is automatically accepted.
 
 ## next
 
-solmax. The privately authorized update/reset and preservation checks are
-complete. Publish the shared patch and verify the exact destination by
-authenticated readback. The owner tests fresh Activity creation through
+solmax. The privately authorized update/reset, preservation checks and public
+delivery readback are complete. The owner tests fresh Activity creation through
 ordinary Pi; no new personal Activity or model send was started automatically.
 
 ---
