@@ -1,4 +1,56 @@
-# Workflow 0.23.1 — published correction
+# Workflow 0.23.2 — explicit upgrade correction
+
+## outcome
+
+Corrected the installed maintenance command that refused schema 15 before its
+explicit 15-to-16 migration could run. Ordinary Pi still refuses an old Core;
+confirmed upgrade creates a verified backup and uses the existing migration
+chain. The final wheel is installed and the selected Core was migrated without
+recreating it; public delivery readback is pending.
+
+## evidence
+
+The affected native gate passed 15 tests, types, Ruff, hygiene, all 32 import
+contracts and build. Actual release CLI regressions cover schemas 1/2/6/14/15,
+restorable backups, declined confirmation and preservation of an accepted Work.
+The installed wheel migrated a restored schema-15 Core through the ordinary
+CLI outside the checkout. One bounded read-only evaluator smoke passed.
+The private reset rehearsal and live reset passed exact preservation checks
+for the independent Activity/Work history, bases, results and send accounting.
+Answers and the original research remain in the private verified archive.
+See [the patch report](docs/workflows-0.23.2-result.md) for wheel SHA and limits.
+
+## assumptions
+
+This is evidence for the migration path and preserved domain history. It does
+not establish quality for every future Activity conversation or replace the
+earlier recorded real-model trial limits.
+
+## cuts
+
+No schema change, export/Git-representation change, private Git publication or
+automatic creation of a personal Activity. Private reset details stay private.
+
+## cost
+
+No new real-model sends or paid API calls. Private operations use model-free
+Core APIs and the selected installed CLI.
+
+## manual-acceptance
+
+The owner authorized personal update/reset and public delivery of a useful
+verified correction. No later Work is automatically accepted.
+
+## next
+
+solmax. The privately authorized update/reset and preservation checks are
+complete. Publish the shared patch and verify the exact destination by
+authenticated readback. The owner tests fresh Activity creation through
+ordinary Pi; no new personal Activity or model send was started automatically.
+
+---
+
+# Previous release: Workflow 0.23.1 — published correction
 
 ## outcome
 

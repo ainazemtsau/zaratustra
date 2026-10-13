@@ -61,11 +61,13 @@ INTERACTIVE_ZARA_TOOLS = (
 )
 
 
-def _prepare_space(path: Path, actor: str, *, create: bool) -> LocalAuthority:
+def _prepare_space(
+    path: Path, actor: str, *, create: bool, upgrade_existing: bool = False
+) -> LocalAuthority:
     if create:
         initialize_space(path)
     info = read_space(path)
-    if not create and info.schema_version < 16:
+    if not create and not upgrade_existing and info.schema_version < 16:
         raise FoundationError(
             "upgrade_required", "Run zaratustra upgrade explicitly before opening Pi"
         )

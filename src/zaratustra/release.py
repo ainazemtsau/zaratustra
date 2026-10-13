@@ -689,10 +689,7 @@ def _maintenance(args: argparse.Namespace, config: dict[str, object]) -> int:
         print(f"Pre-upgrade backup: {backup.package}")
         from .pi_adapter import prepare_space
 
-        authority = prepare_space(space, actor, create=False)
-        from zaratustra.foundation import upgrade_workflow_space
-
-        upgrade_workflow_space(space, authority)
+        prepare_space(space, actor, create=False, upgrade_existing=True)
         print(f"Core schema: {read_space(space).schema_version}")
         return 0
     if args.command == "verify":

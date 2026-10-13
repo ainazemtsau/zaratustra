@@ -15,10 +15,13 @@ if TYPE_CHECKING:
     from zaratustra.foundation import BackupInfo, DeletionStatus, LocalAuthority
 
 
-def prepare_space(path: Path, actor: str, *, create: bool) -> LocalAuthority:
+def prepare_space(
+    path: Path, actor: str, *, create: bool, upgrade_existing: bool = False
+) -> LocalAuthority:
+    """Prepare a new Core, or explicitly migrate an already selected Core."""
     from .__main__ import _prepare_space
 
-    return _prepare_space(path, actor, create=create)
+    return _prepare_space(path, actor, create=create, upgrade_existing=upgrade_existing)
 
 
 def pi_main(argv: list[str]) -> int:
