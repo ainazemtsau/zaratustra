@@ -7,7 +7,9 @@ and distinguished observed executor stop from unknown provider response. New
 inputs invalidate earlier proposal/review; superseded internal stage Work leaves
 the current native plan through cancellation, retaining addressable history.
 The final wheel is installed. Private original retention is complete; Health
-awaits owner-confirmed new preparation. Public delivery readback is pending.
+awaits owner-confirmed new preparation. Public delivery at
+ebc806025ed4fdcd3987d1d08e504fa7182617c8 was verified by authenticated main-ref
+readback and matching fetched code/version/report contents.
 
 ## evidence
 
@@ -46,8 +48,9 @@ This authorizes maintenance, not automatic acceptance of subsequent Work.
 ## next
 
 solmax. Installed verification, selected package update and private basis
-retention are complete. The existing Health remains for owner-confirmed
-continuation. Publish the shared correction and verify the exact main ref.
+retention and public delivery readback are complete. The existing Health remains
+for owner-confirmed continuation in ordinary Pi; no new real-model stage was
+started by maintenance.
 
 ---
 

@@ -85,3 +85,11 @@ every possible user request. Unknown prior usage is not replaced with zero or
 a guessed result. Personal identities, paths, originals and maintenance receipts
 stay in the private archive. Exports and private Git publication are unchanged.
 Owner authorization and later Work acceptance are reported separately.
+
+## Public delivery
+
+Published to `ainazemtsau/zaratustra/main` at
+`ebc806025ed4fdcd3987d1d08e504fa7182617c8`. Authenticated GitHub ref readback
+and a subsequent fetch confirmed the exact commit and matching code, version
+and report contents. This following documentation receipt does not modify
+the installed wheel or its recorded SHA.
