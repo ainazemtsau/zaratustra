@@ -4,23 +4,26 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
 from tests.zaratustra.foundation.test_activity_setup import Case, _step
 from tests.zaratustra.foundation.test_activity_structures import AREAS, _proposal, _structured_case
+from tests.zaratustra.foundation.test_child_execution import _assign, _claim, _invocation, _stop
 from tests.zaratustra.foundation.test_execution import InvocationFields, invocation, start
 from zaratustra.foundation import (
     ActivitySetupRequest,
     AdmitInvocationRequest,
     ArtifactRef,
+    AssignAttemptRequest,
     CreateArtifactRequest,
     CreateKnowledgeRequest,
     CreateResourceRequest,
     DeleteKnowledgeRequest,
     FinishInvocationRequest,
     FoundationError,
+    KnowledgeRef,
     LinkedOutput,
     LinkWorkOutputRequest,
     MemorySelector,
@@ -30,6 +33,7 @@ from zaratustra.foundation import (
     RecoverRequest,
     ResourceState,
     SendInvocationRequest,
+    SetupStage,
     SetupWorkTemplate,
     SourceState,
     WorkingSet,
@@ -40,9 +44,12 @@ from zaratustra.foundation import (
     create_backup,
     read_activity_setup,
     read_artifact,
+    read_execution,
     read_knowledge,
     read_setup_stage,
     read_work,
+    read_work_plan,
+    read_workflow_run,
     restore_backup,
     upgrade_workflow_space,
 )
@@ -130,6 +137,326 @@ def _report(case: Case, blocking: bool = False) -> str:
             "conclusion": "Whole review",
         }
     )
+
+
+def _setup_source(case: Case, text: str = "Additional original observations") -> KnowledgeRef:
+    record = uuid4()
+    apply_operation(
+        case[0],
+        CreateKnowledgeRequest(
+            operation_id=uuid4(),
+            space_id=case[1],
+            actor="owner",
+            record_id=record,
+            state=SourceState(
+                channel="document",
+                connection="fictional-test",
+                profile_revision=1,
+                source_event_id=str(record),
+                media_type="text/plain",
+                capture="full",
+                content=text.encode("utf-8"),
+            ),
+        ),
+        case[2],
+    )
+    return KnowledgeRef(record_id=record, revision=1)
+
+
+def _assigned_setup_stage(case: Case) -> tuple[SetupStage, UUID, UUID]:
+    root, space, owner, setup, *_ = case
+    stage = read_activity_setup(root, setup, owner).state.stages[-1]
+    resource = uuid4()
+    apply_operation(
+        root,
+        CreateResourceRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            work_id=stage.work_id,
+            resource_id=resource,
+            state=ResourceState(label="Fictional setup resource", root=root, mode="shared"),
+        ),
+        owner,
+    )
+    attempt, session, _, _ = _assign(root, space, owner, stage.work_id, resource)
+    _claim(root, space, owner, stage.work_id, attempt, session)
+    return stage, attempt, session
+
+
+@pytest.mark.parametrize("schema", (15, 16))
+def test_paused_stopped_stage_accepts_new_sources_and_preserves_raw_history(
+    tmp_path: Path, schema: int
+) -> None:
+    """A stopped unfinished correction must not permanently reject new user originals."""
+    case = _recovery_case(tmp_path, schema)
+    _start(case)
+    _raw(case, _proposal().model_dump_json())
+    _start(case, "review")
+    _raw(case, _report(case, blocking=True))
+    _start(case, "correction")
+    raw = _raw(case, '{"unfinished":', complete=False)
+    stage, attempt, session = _assigned_setup_stage(case)
+    _step(case, "pause")
+    _stop(case[0], case[1], case[2], stage.work_id, attempt, session)
+    before = read_activity_setup(case[0], case[3], case[2])
+    work_before = read_work(case[0], stage.work_id, case[2])
+    source = _setup_source(case, "New known facts Шаг")
+    request = ActivitySetupRequest(
+        operation_id=uuid4(),
+        space_id=case[1],
+        actor="owner",
+        setup_id=case[3],
+        activity_id=case[4],
+        action="attach_sources",
+        expected_revision=before.revision,
+        source_refs=(source,),
+    )
+    receipt = apply_operation(case[0], request, case[2])
+    assert apply_operation(case[0], request, case[2]) == receipt
+    current = read_activity_setup(case[0], case[3], case[2])
+    assert current.state.phase == "paused" and current.state.stages[-1].retired
+    assert current.state.input_version == before.state.input_version + 1
+    assert current.state.sources[:-1] == before.state.sources
+    assert current.state.sources[-1] == source
+    assert current.state.reviews_started == before.state.reviews_started == 1
+    assert current.state.draft is current.state.review is current.state.manifest is None
+    if schema == 16:
+        closed = read_work(case[0], stage.work_id, case[2])
+        assert closed.state.status == "cancelled" and closed.state.acceptance is None
+        assert closed.state.linked_outputs == work_before.state.linked_outputs
+        assert (
+            read_work(case[0], stage.work_id, case[2], revision=work_before.revision) == work_before
+        )
+    else:
+        assert read_work(case[0], stage.work_id, case[2]) == work_before
+    assert read_artifact(case[0], raw.artifact_id, case[2]).content == b'{"unfinished":'
+    assert (
+        read_activity_setup(
+            case[0], case[3], authorize_local(case[0], actor="owner", source_ref="reopened")
+        )
+        == current
+    )
+    _step(case, "resume")
+    packet = _start(case)
+    assert [item["ref"] for item in packet["sources"]] == [
+        ref.model_dump(mode="json") for ref in current.state.sources
+    ]
+    assert read_activity_setup(case[0], case[3], case[2]).state.stages[-1].work_id != stage.work_id
+    if schema == 16:
+        parent = read_activity_setup(case[0], case[3], case[2]).state.root_work_id
+        assert parent is not None
+        assert stage.work_id not in {
+            child.work_id for child in read_work_plan(case[0], parent, case[2]).plan.children
+        }
+        old_plan = read_work_plan(case[0], parent, case[2], revision=4)
+        assert stage.work_id in {child.work_id for child in old_plan.plan.children}
+        assert next(
+            node
+            for node in read_workflow_run(case[0], parent, case[2]).nodes
+            if node.work_id == stage.work_id
+        ).retired
+    _raw(case, _proposal().model_dump_json())
+    _start(case, "review")
+    _raw(case, _report(case))
+    assert read_activity_setup(case[0], case[3], case[2]).state.reviews_started == 2
+    _step(case, "finish")
+    assert read_activity_setup(case[0], case[3], case[2]).state.phase == "ready"
+
+
+@pytest.mark.parametrize("schema", (15, 16))
+def test_pause_does_not_claim_executor_stopped_before_new_input_changes(
+    tmp_path: Path, schema: int
+) -> None:
+    """A pause receipt fences sends but cannot stand in for observed Attempt shutdown."""
+    case = _recovery_case(tmp_path, schema)
+    _start(case)
+    stage, attempt, session = _assigned_setup_stage(case)
+    source = _setup_source(case)
+    with pytest.raises(FoundationError, match="setup_running"):
+        _step(case, "attach_sources", source_refs=(source,))
+    _step(case, "pause")
+    before = read_activity_setup(case[0], case[3], case[2])
+    assert (
+        read_execution(case[0], stage.work_id, case[2]).assignments[-1].status == "stop_requested"
+    )
+    for action in ("attach_sources", "resume", "retry"):
+        with pytest.raises(FoundationError, match="setup_stopping"):
+            _step(
+                case, action, **({"source_refs": (source,)} if action == "attach_sources" else {})
+            )
+        assert read_activity_setup(case[0], case[3], case[2]) == before
+    _stop(case[0], case[1], case[2], stage.work_id, attempt, session)
+    _step(case, "attach_sources", source_refs=(source,))
+    assert read_activity_setup(case[0], case[3], case[2]).state.stages[-1].retired
+
+
+@pytest.mark.parametrize("schema", (15, 16))
+@pytest.mark.parametrize("outcome", ("admitted", "sent", "unknown"))
+def test_paused_unknown_saves_inputs_without_implicit_send_or_same_work_replay(
+    tmp_path: Path, schema: int, outcome: str
+) -> None:
+    """Changed inputs plus explicit retry permit a fresh read-only stage, never request replay."""
+    case = _recovery_case(tmp_path, schema)
+    original_packet = _start(case)
+    stage, attempt, session = _assigned_setup_stage(case)
+    invocation_id, _ = invocation(case[0], case[1], stage.work_id, attempt, session, case[2], 7)
+    common: InvocationFields = dict(
+        invocation_id=invocation_id, attempt_id=attempt, work_id=stage.work_id, session_id=session
+    )
+    apply_operation(
+        case[0],
+        AdmitInvocationRequest(operation_id=uuid4(), space_id=case[1], actor="owner", **common),
+        case[2],
+    )
+    if outcome != "admitted":
+        apply_operation(
+            case[0],
+            SendInvocationRequest(operation_id=uuid4(), space_id=case[1], actor="owner", **common),
+            case[2],
+        )
+    if outcome == "unknown":
+        apply_operation(
+            case[0],
+            FinishInvocationRequest(
+                operation_id=uuid4(), space_id=case[1], actor="owner", outcome="unknown", **common
+            ),
+            case[2],
+        )
+    _step(case, "pause")
+    with pytest.raises(FoundationError, match="unknown_effect"):
+        _step(case, "retry")
+    source = _setup_source(case)
+    _step(case, "attach_sources", source_refs=(source,))
+    current = read_activity_setup(case[0], case[3], case[2])
+    assert current.state.phase == "paused" and not current.state.stages[-1].retired
+    assert current.state.input_version == stage.input_version + 1
+    assert current.state.result and "saved" in current.state.result
+    assert (
+        read_artifact(case[0], stage.packet.artifact_id, case[2]).content
+        == json.dumps(
+            original_packet, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode()
+    )
+    snapshot = read_execution(case[0], stage.work_id, case[2])
+    assert (
+        snapshot.invocations[-1].status == outcome and snapshot.invocations[-1].reserve_units == 7
+    )
+    for action in ("resume", "retry", "start_stage", "answer"):
+        fields = (
+            {"stage_kind": "draft", "stage_instruction": "Forbidden replay"}
+            if action == "start_stage"
+            else {"text": "Do not answer for owner"}
+            if action == "answer"
+            else {}
+        )
+        with pytest.raises(FoundationError, match="unknown_effect"):
+            _step(case, action, **fields)
+        assert read_activity_setup(case[0], case[3], case[2]) == current
+        assert read_execution(case[0], stage.work_id, case[2]) == snapshot
+    _stop(case[0], case[1], case[2], stage.work_id, attempt, session)
+    stopped = read_execution(case[0], stage.work_id, case[2])
+    assert stopped.assignments[-1].status == "stopped"
+    assert (
+        stopped.invocations[-1].status == "unknown" and stopped.invocations[-1].usage_units is None
+    )
+    reopened = authorize_local(case[0], actor="owner", source_ref="reopened")
+    assert read_activity_setup(case[0], case[3], reopened) == current
+    with pytest.raises(FoundationError, match="unknown_effect"):
+        _step(case, "resume")
+    _step(case, "retry")
+    packet = _start(case)
+    assert packet["sources"][:-1] == original_packet["sources"]
+    assert packet["sources"][-1]["ref"] == source.model_dump(mode="json")
+    historical = read_execution(case[0], stage.work_id, reopened)
+    assert historical.attempts == stopped.attempts
+    assert historical.assignments == stopped.assignments
+    assert historical.invocations == stopped.invocations
+    if schema == 16:
+        assert historical.work.state.status == "cancelled"
+        assert historical.work.state.acceptance is None
+        assert (
+            read_work(case[0], stage.work_id, reopened, revision=stopped.work.revision)
+            == stopped.work
+        )
+    final = read_activity_setup(case[0], case[3], reopened)
+    assert final.state.stages[-2].retired and final.state.stages[-1].work_id != stage.work_id
+    resource = stopped.resources[0]
+    with pytest.raises(FoundationError, match="setup_pending"):
+        apply_operation(
+            case[0],
+            AssignAttemptRequest(
+                operation_id=uuid4(),
+                space_id=case[1],
+                actor="owner",
+                attempt_id=uuid4(),
+                work_id=stage.work_id,
+                expected_work_revision=stopped.work.revision,
+                resource_id=resource.resource_id,
+                expected_resource_revision=resource.revision,
+                session_id=uuid4(),
+                previous_attempt_id=attempt,
+                executor_version="fictional-setup",
+            ),
+            reopened,
+        )
+
+
+@pytest.mark.parametrize("schema", (15, 16))
+def test_unknown_retry_requires_new_inputs_even_after_observed_stop(
+    tmp_path: Path, schema: int
+) -> None:
+    """Explicit retry is not permission to duplicate an unknown request with the same packet."""
+    case = _recovery_case(tmp_path, schema)
+    _start(case)
+    stage, attempt, session = _assigned_setup_stage(case)
+    _invocation(case[0], case[1], case[2], stage.work_id, attempt, session, finish=False)
+    _step(case, "pause")
+    _stop(case[0], case[1], case[2], stage.work_id, attempt, session)
+    before = read_activity_setup(case[0], case[3], case[2])
+    with pytest.raises(FoundationError, match="unknown_effect"):
+        _step(case, "retry")
+    assert read_activity_setup(case[0], case[3], case[2]) == before
+
+
+def test_paused_unknown_question_keeps_actual_answer_without_native_continuation(
+    tmp_path: Path,
+) -> None:
+    """A real owner answer must not be lost or implicitly restart an unknown request."""
+    case = _recovery_case(tmp_path, 16)
+    original = _start(case)
+    stage, attempt, session = _assigned_setup_stage(case)
+    _invocation(case[0], case[1], case[2], stage.work_id, attempt, session, finish=False)
+    _step(case, "question", text="Which period should the ordinary process use?")
+    _step(case, "pause")
+    before = read_execution(case[0], stage.work_id, case[2])
+    _step(case, "answer", text="Use a month; this is my original answer")
+    current = read_activity_setup(case[0], case[3], case[2])
+    assert current.state.question is None and current.state.phase == "paused"
+    assert not current.state.stages[-1].retired
+    assert current.state.input_version == stage.input_version + 1
+    pair = current.state.interactions[-1]
+    assert (
+        pair.question == "Which period should the ordinary process use?" and pair.answer is not None
+    )
+    answer = read_knowledge(case[0], pair.answer.record_id, case[2])
+    assert isinstance(answer.state, SourceState)
+    assert answer.state.content == b"Use a month; this is my original answer"
+    assert read_execution(case[0], stage.work_id, case[2]) == before
+    with pytest.raises(FoundationError, match="unknown_effect"):
+        _step(case, "resume")
+    with pytest.raises(FoundationError, match="unknown_effect"):
+        _step(case, "retry")
+    _stop(case[0], case[1], case[2], stage.work_id, attempt, session)
+    _step(case, "retry")
+    packet = _start(case)
+    assert packet["sources"][:-1] == original["sources"]
+    assert (
+        packet["interactions"][-1]["answer"]["state"]["text"]
+        == "Use a month; this is my original answer"
+    )
+    assert packet["interactions"][-1]["question"] == pair.question
+    assert read_execution(case[0], stage.work_id, case[2]).invocations[-1].status == "unknown"
 
 
 @pytest.mark.parametrize(

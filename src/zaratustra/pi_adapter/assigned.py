@@ -34,6 +34,7 @@ from zaratustra.foundation import (
     KnowledgeRef,
     LocalAuthority,
     RecordAttemptStopRequest,
+    RecordContextDeliveryRequest,
     RequestAttemptStopRequest,
     SourceState,
     TechnicalVersions,
@@ -45,6 +46,7 @@ from zaratustra.foundation import (
     managed_executor_start_lock,
     managed_pi_session_lock,
     read_assigned_control,
+    read_context_delivery,
     read_execution,
     read_execution_events,
     read_knowledge,
@@ -769,16 +771,30 @@ def _record_stop(
 ) -> None:
     snapshot = read_execution(config.space, work_id, authority)
     assignment = next((x for x in snapshot.assignments if x.attempt_id == attempt_id), None)
-    if assignment is None or assignment.status in ("stopped", "unknown", "interrupted"):
+    if assignment is None or assignment.status == "interrupted":
         return
-    # A stopped child does not establish the outcome of a request already sent.
-    # Keep the resource fenced until that external outcome is reconciled.
-    if any(
+    unfinished = any(
         invocation.attempt_id == attempt_id and invocation.status in ("admitted", "sent", "unknown")
         for invocation in snapshot.invocations
-    ):
+    )
+    stage = (
+        read_setup_stage(config.space, work_id, authority)
+        if observed and (unfinished or assignment.status in ("stopped", "unknown"))
+        else None
+    )
+    direct_setup = stage is not None and stage.result_protocol == "setup_json"
+    if assignment.status == "stopped":
+        if observed and direct_setup:
+            _record_unknown_setup_deliveries(config, authority, work_id, attempt_id)
+        return
+    if assignment.status == "unknown" and not (observed and direct_setup):
+        return
+    # A stopped child does not establish the outcome of a request already sent.
+    # Direct setup stages can record the observed local stop while Core retains
+    # every unfinished send as unknown. Ordinary Work keeps its existing fence.
+    if unfinished and not direct_setup:
         observed = False
-    if assignment.status != "stop_requested":
+    if assignment.status not in ("stop_requested", "unknown"):
         apply_operation(
             config.space,
             RequestAttemptStopRequest(
@@ -809,6 +825,41 @@ def _record_stop(
         ),
         authority,
     )
+    if observed and direct_setup:
+        _record_unknown_setup_deliveries(config, authority, work_id, attempt_id)
+
+
+def _record_unknown_setup_deliveries(
+    config: AssignedConfig, authority: LocalAuthority, work_id: UUID, attempt_id: UUID
+) -> None:
+    """Advance existing observed context sends without replacing any answered usage."""
+    snapshot = read_execution(config.space, work_id, authority)
+    for invocation in snapshot.invocations:
+        if invocation.attempt_id != attempt_id or invocation.status != "unknown":
+            continue
+        try:
+            delivered = read_context_delivery(config.space, invocation.invocation_id, authority)
+        except FoundationError as error:
+            if error.code != "not_found":
+                raise
+            continue
+        if delivered["stage"] not in ("prepared", "sent"):
+            continue
+        apply_operation(
+            config.space,
+            RecordContextDeliveryRequest(
+                operation_id=uuid5(invocation.invocation_id, "setup-stop-context-unknown"),
+                space_id=authority.space_id,
+                actor=authority.actor,
+                invocation_id=invocation.invocation_id,
+                manifest=KnowledgeRef(
+                    record_id=UUID(str(delivered["manifest_id"])),
+                    revision=int(str(delivered["manifest_revision"])),
+                ),
+                stage="unknown",
+            ),
+            authority,
+        )
 
 
 def _retain_preflight_diagnostic(

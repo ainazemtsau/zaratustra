@@ -55,10 +55,13 @@ from zaratustra.foundation import (
     managed_executor_start_lock,
     managed_pi_lock,
     managed_pi_session_lock,
+    read_activity_setup,
     read_artifact,
     read_assigned_control,
+    read_context_delivery,
     read_execution,
     read_knowledge,
+    read_work,
     restore_backup,
 )
 from zaratustra.pi_adapter import Bridge
@@ -1149,6 +1152,115 @@ def test_refused_child_termination_records_unknown(tmp_path: Path) -> None:
     assert state.assignments[0].status == "unknown"
     assert state.attempts[0].status == "active"
     assert state.work.state.status == "proposed"
+
+
+@pytest.mark.parametrize("direct_setup", [False, True])
+@pytest.mark.parametrize("observed", [False, True])
+@pytest.mark.parametrize("delivery_answered", [False, True])
+def test_observed_setup_stop_keeps_unknown_send_and_expense(
+    tmp_path: Path, direct_setup: bool, observed: bool, delivery_answered: bool
+) -> None:
+    """Local setup stop frees execution without pretending its provider replied."""
+    from tests.zaratustra.foundation.test_activity_setup_recovery import _recovery_case, _start
+    from tests.zaratustra.foundation.test_execution import InvocationFields, invocation
+
+    if direct_setup:
+        case = _recovery_case(tmp_path, 16)
+        root, space, owner, setup, *_ = case
+        _start(case)
+        work_id = read_activity_setup(root, setup, owner).state.stages[-1].work_id
+        resource_id, attempt_id, session_id = uuid4(), uuid4(), uuid4()
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+        apply_operation(
+            root,
+            CreateResourceRequest(
+                operation_id=uuid4(),
+                space_id=space,
+                actor=owner.actor,
+                resource_id=resource_id,
+                work_id=work_id,
+                state=ResourceState(label="Fictional setup", root=workspace, limit_units=100),
+            ),
+            owner,
+        )
+        apply_operation(
+            root,
+            AssignAttemptRequest(
+                operation_id=uuid4(),
+                space_id=space,
+                actor=owner.actor,
+                attempt_id=attempt_id,
+                work_id=work_id,
+                expected_work_revision=read_work(root, work_id, owner).revision,
+                resource_id=resource_id,
+                expected_resource_revision=1,
+                session_id=session_id,
+                executor_version=EXECUTOR_VERSION,
+            ),
+            owner,
+        )
+    else:
+        root, workspace, space, work_id, attempt_id, session_id = assigned(tmp_path)
+        owner = authorize_local(root, actor="owner", source_ref="synthetic-local-console")
+    config = _valid_assigned_config(root, workspace, tmp_path / "runtime")
+    invocation_id, _ = invocation(root, space, work_id, attempt_id, session_id, owner, 10)
+    common: InvocationFields = dict(
+        invocation_id=invocation_id, attempt_id=attempt_id, work_id=work_id, session_id=session_id
+    )
+    for request in (
+        AdmitInvocationRequest(operation_id=uuid4(), space_id=space, actor=owner.actor, **common),
+        SendInvocationRequest(operation_id=uuid4(), space_id=space, actor=owner.actor, **common),
+    ):
+        apply_operation(root, request, owner)
+    if direct_setup:
+        rpc = Bridge(
+            root, owner, workspace, assigned_attempt_id=attempt_id, assigned_session_id=session_id
+        )
+        rpc.connect(session_id)
+        rpc.select(session_id, read_execution(root, work_id, owner).activity.activity_id, work_id)
+        manifest = rpc.prepare_context(session_id)
+        delivery = {
+            "invocation_id": str(invocation_id),
+            "manifest_id": manifest["manifest_id"],
+            "manifest_revision": 1,
+        }
+        rpc.context_delivery(session_id, {**delivery, "stage": "prepared"})
+        rpc.context_delivery(
+            session_id,
+            {**delivery, "stage": "sent", "request_sha256": "A" * 64, "request_bytes": 123},
+        )
+        if delivery_answered:
+            rpc.context_delivery(session_id, {**delivery, "stage": "answered", "usage_units": 3})
+    _record_stop(config, owner, work_id, attempt_id, session_id, observed=observed)
+    state = read_execution(root, work_id, owner)
+    stopped = direct_setup and observed
+    assert state.assignments[0].status == ("stopped" if stopped else "unknown")
+    assert state.attempts[0].status == ("interrupted" if stopped else "active")
+    assert state.invocations[0].invocation_id == invocation_id
+    assert state.invocations[0].status == ("unknown" if stopped else "sent")
+    assert state.invocations[0].usage_units is None and state.held_units == 10
+    assert not state.outputs and state.work.state.acceptance is None
+    if direct_setup:
+        delivered = read_context_delivery(root, invocation_id, owner)
+        assert delivered["stage"] == (
+            "answered" if delivery_answered else "unknown" if stopped else "sent"
+        )
+    if direct_setup and not observed:
+        # A later actual process-exit observation can resolve the local stop,
+        # while the same provider outcome and its reserved cost stay unknown.
+        _record_stop(config, owner, work_id, attempt_id, session_id, observed=True)
+        recovered = read_execution(root, work_id, owner)
+        assert recovered.assignments[0].status == "stopped"
+        assert recovered.attempts[0].status == "interrupted"
+        assert recovered.invocations[0].status == "unknown"
+        assert recovered.held_units == 10 and len(recovered.invocations) == 1
+        assert read_context_delivery(root, invocation_id, owner)["stage"] == (
+            "answered" if delivery_answered else "unknown"
+        )
+        before_repeat = read_execution(root, work_id, owner)
+        _record_stop(config, owner, work_id, attempt_id, session_id, observed=True)
+        assert read_execution(root, work_id, owner) == before_repeat
 
 
 def test_active_rpc_read_is_interruptible_when_stop_is_requested() -> None:

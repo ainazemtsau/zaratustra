@@ -1167,11 +1167,19 @@ export default function (pi: any): void {
   };
   const setupModel = (ctx: any) => ({ id: ctx.model?.id, provider: ctx.model?.provider,
     thinking: pi.getThinkingLevel(), profile });
+  function setupExecutionText(execution: any): string {
+    if (execution?.status === "stopping") return "исполнитель останавливается";
+    if (execution?.status === "unknown") return execution.can_retry
+      ? "прерванный ответ недоступен; можно начать новую подготовку с сохранёнными уточнениями"
+      : "исход прерванного ответа неизвестен; продолжение требует проверки";
+    if (execution?.status === "active") return "этап выполняется";
+    return "";
+  }
   async function showSetup(ctx: any, display = true, force = false) {
     if (!setupSelection) return;
     try {
       const item = await request("/v1/activity-setup", { action: "status", setup_id: setupSelection });
-      const key = `${item.setup_id}:${item.revision}`;
+      const key = `${item.setup_id}:${item.revision}:${JSON.stringify(item.execution ?? null)}`;
       setupDisplayError = "";
       if (!display) ctx.ui.setWidget("zara-setup", undefined);
       if (key === setupShown && !force) return;
@@ -1179,9 +1187,14 @@ export default function (pi: any): void {
       const state = item.state;
       const stage = state.stages.at(-1);
       const repair = stage?.repair_number ? `; исправление результата ${stage.repair_number}/2` : "";
-      ctx.ui.setStatus("zara-setup", `Activity: ${setupPhases[state.phase] ?? state.phase}; ревью ${state.reviews_started - state.pass_boundary}/5${repair}`);
+      const execution = setupExecutionText(item.execution);
+      ctx.ui.setStatus("zara-setup", `Activity: ${setupPhases[state.phase] ?? state.phase}${execution ? `; ${execution}` : ""}; ревью ${state.reviews_started - state.pass_boundary}/5${repair}`);
       ctx.ui.setWidget("zara-setup", undefined);
-      if (display && ["ready", "needs_input", "needs_attention"].includes(state.phase)) {
+      if (display && state.phase === "paused" && execution) {
+        ctx.ui.setWidget("zara-setup", [execution,
+          item.execution.can_attach_sources ? "Новые сведения можно сохранить, не возобновляя прерванный запрос." :
+            "Сведения сохранены в разговоре; дождитесь подтверждения остановки перед добавлением к настройке."]);
+      } else if (display && ["ready", "needs_input", "needs_attention"].includes(state.phase)) {
         const text = state.phase === "ready"
           ? `Activity готова.\n${state.result}\nWork: ${state.activated_works.join(", ")}. Результаты Work принимаются отдельно.`
           : state.question ?? state.result ?? "Настройка требует внимания; прочитай сохранённое состояние.";
@@ -1263,6 +1276,10 @@ export default function (pi: any): void {
       "Use question to retain a necessary user question, answer ONLY to save a real answer to that saved question. " +
       "If the user asks why or what happens next, explain status without answering the question for them. " +
       "Use attach_sources to add explicitly read originals separately from answers; read_packet opens exact setup artifacts. " +
+      "attach_sources also retains the actual received user supplement; request_source can address an exposed original. " +
+      "Native file read does not retain it: use retain_file before attaching the returned source. " +
+      "Pause requests a stop; inspect execution before continuing. Unknown replies never resume automatically. " +
+      "If can_retry is true, explain the unavailable interrupted reply and ask to start new preparation from saved inputs. " +
       "then ask the saved question once in your normal reply. Reuse the original request; ask only missing " +
       "details needed to set up the workflow. Data needed only for a later research/planning Work can wait. " +
       "submit when enough is known, status/resume/pause/cancel for saved continuation. " +
@@ -1298,7 +1315,7 @@ export default function (pi: any): void {
       if (isPartial) return new Text(theme.fg("muted", "Настройка Activity…"), 0, 0);
       const state = result.details?.state;
       const summary = state?.phase
-        ? `Настройка: ${setupPhases[state.phase] ?? state.phase}. Ревью: ${state.reviews_started - state.pass_boundary}/5.`
+        ? `Настройка: ${setupPhases[state.phase] ?? state.phase}. ${setupExecutionText(result.details?.execution)}${setupExecutionText(result.details?.execution) ? ". " : ""}Ревью: ${state.reviews_started - state.pass_boundary}/5.`
         : state?.title ? `${state.title}: ${state.status}.`
         : result.details?.items ? `Activity: ${result.details.items.length}.` : raw;
       return new Text(theme.fg("muted", summary), 0, 0);
@@ -1363,12 +1380,19 @@ export default function (pi: any): void {
             locator: file, operation_key: _callId});
           return {content: [{type: "text", text: JSON.stringify(result)}], details: result};
         }
-        if (params.mode === "retry" && !await ctx.ui.confirm("Продолжить настройку?",
-          "Разрешить следующие пять полных ревью этой настройки, сохранив прежнюю историю и расход?")) {
-          return { content: [{ type: "text", text: "Additional setup review passes not authorized" }] };
+        if (params.mode === "retry") {
+          const current = await request("/v1/activity-setup", {action: "status", setup_id: setupSelection});
+          const interrupted = current.execution?.blocking_unknown_invocations?.length;
+          const message = interrupted
+            ? "Ответ прерванной подготовки недоступен. Старый запрос не будет отправлен повторно; его история и неизвестный расход сохранятся. Начать новую подготовку по сохранённым уточнениям и разрешить до пяти полных ревью?"
+            : "Разрешить следующие пять полных ревью этой настройки, сохранив прежнюю историю и расход?";
+          if (!await ctx.ui.confirm("Продолжить настройку?", message)) {
+            return { content: [{ type: "text", text: "Additional setup review passes not authorized" }] };
+          }
         }
         result = await request("/v1/activity-setup", { action: params.mode, setup_id: setupSelection,
           question: params.question, source_refs: params.source_refs ?? [], model: setupModel(ctx),
+          request_source: params.request_source,
           reference: params.reference, offset: params.offset, max_bytes: params.max_bytes });
       }
       watchSetup(ctx);

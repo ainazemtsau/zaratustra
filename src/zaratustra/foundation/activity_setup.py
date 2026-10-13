@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
 from uuid import UUID, uuid4, uuid5
@@ -79,6 +80,59 @@ from .structure_setup import (
 )
 
 AREAS = ("goal", "workflow", "history", "continuation", "extension", "capabilities", "consistency")
+
+
+@dataclass(frozen=True)
+class _StageExecution:
+    pending_outcome: bool
+    stopped: bool
+
+
+def _stage_execution(connection: sqlite3.Connection, stage: SetupStage) -> _StageExecution:
+    """Read execution evidence; a saved pause is not an observed process stop."""
+    work = str(stage.work_id)
+    assignments = tuple(
+        row[0]
+        for row in connection.execute(
+            "SELECT status FROM execution_assignments WHERE work_id=?", (work,)
+        )
+    )
+    active = (
+        connection.execute(
+            "SELECT 1 FROM execution_attempts WHERE work_id=? AND status='active' LIMIT 1",
+            (work,),
+        ).fetchone()
+        is not None
+    )
+    invocation_states = tuple(
+        row[0]
+        for row in connection.execute(
+            "SELECT status FROM execution_invocations WHERE work_id=?", (work,)
+        )
+    )
+    in_flight = any(status in ("admitted", "sent") for status in invocation_states)
+    return _StageExecution(
+        pending_outcome=in_flight or "unknown" in invocation_states or "unknown" in assignments,
+        stopped=not active and not in_flight and all(status == "stopped" for status in assignments),
+    )
+
+
+def _unfinished_stages(state: ActivitySetupState) -> tuple[SetupStage, ...]:
+    return tuple(stage for stage in state.stages if stage.output is None and not stage.retired)
+
+
+def _require_known_stage_outcomes(
+    connection: sqlite3.Connection, state: ActivitySetupState
+) -> None:
+    if any(
+        _stage_execution(connection, stage).pending_outcome for stage in _unfinished_stages(state)
+    ):
+        raise FoundationError(
+            "unknown_effect",
+            "An earlier setup request has a pending or unknown outcome. Inputs may be saved "
+            "while paused; a fresh stage requires explicit retry after observed local stop "
+            "and changed inputs. The earlier request will not be replayed.",
+        )
 
 
 def read_setup_stage(path: Path, work_id: UUID, authority: LocalAuthority) -> SetupStage | None:
@@ -403,6 +457,9 @@ def check_setup_execution(
         return
     for ref in state.sources:
         _basis(connection, ref, actor, epoch)
+    stage = next((item for item in state.stages if item.work_id == work_id), None)
+    if stage is not None and (stage.retired or stage.input_version != state.input_version):
+        raise FoundationError("setup_pending", "The setup stage was retired or its inputs changed")
     if state.root_work_id and state.phase not in ("paused", "cancelled", "needs_attention"):
         from .workflows import _run
 
@@ -694,6 +751,49 @@ def apply_setup_change(
         )
         return KnowledgeRef(record_id=identifier, revision=1)
 
+    def retire_stage_nodes(state: ActivitySetupState, stages: tuple[SetupStage, ...]) -> None:
+        """Retire unfinished host stages in the actual native plan, retaining its history."""
+        if state.root_work_id is None or not stages:
+            return
+        from .composition import _plan
+        from .models import NodeClosure, PlanNodeDecision, ReviseActivePlanRequest
+        from .operations import _subject_current
+
+        parent = state.root_work_id
+        current = _plan(connection, parent)
+        departing = {stage.work_id for stage in stages}
+        nodes = tuple(
+            PlanNodeDecision(
+                role=child.role,
+                work_id=child.work_id,
+                decision="cancel" if child.work_id in departing else "keep",
+                closure=NodeClosure(
+                    expected_revision=_subject_current(connection, child.work_id, "work")[0],
+                    outcome="cancelled",
+                    basis="Unfinished setup preparation superseded by newly attached owner inputs",
+                )
+                if child.work_id in departing
+                else None,
+            )
+            for child in current.plan.children
+        )
+        if not any(child.work_id in departing for child in current.plan.children):
+            return
+        effect(
+            ReviseActivePlanRequest,
+            work_id=parent,
+            expected_work_revision=_subject_current(connection, parent, "work")[0],
+            expected_plan_revision=current.revision,
+            plan=current.plan.model_copy(
+                update={
+                    "children": tuple(
+                        child for child in current.plan.children if child.work_id not in departing
+                    )
+                }
+            ),
+            nodes=nodes,
+        )
+
     if request.action == "begin":
         if not request.title or not request.text or request.expected_revision is not None:
             raise FoundationError("invalid_request", "Begin needs a title and original request")
@@ -792,25 +892,71 @@ def apply_setup_change(
             for ref in refs:
                 _basis(connection, ref, request.actor, epoch)
             if refs != state.sources:
-                if any(stage.output is None and not stage.retired for stage in state.stages):
+                unfinished = _unfinished_stages(state)
+                pending = any(
+                    _stage_execution(connection, stage).pending_outcome for stage in unfinished
+                )
+                if unfinished and state.phase != "paused":
                     raise FoundationError(
                         "setup_running", "Pause the active stage before adding inputs"
                     )
+                if not pending and any(
+                    not _stage_execution(connection, stage).stopped for stage in unfinished
+                ):
+                    raise FoundationError(
+                        "setup_stopping", "The setup executor has not yet confirmed its local stop"
+                    )
+                if not pending:
+                    retire_stage_nodes(state, unfinished)
                 updates = dict(
                     sources=refs,
                     input_version=state.input_version + 1,
                     draft=None,
                     review=None,
                     manifest=None,
-                    phase="needs_input" if state.question else "collecting",
+                    phase="paused"
+                    if state.phase == "paused"
+                    else "needs_input"
+                    if state.question
+                    else "collecting",
+                    stages=state.stages
+                    if pending
+                    else tuple(
+                        stage.model_copy(update={"retired": True}) if stage in unfinished else stage
+                        for stage in state.stages
+                    ),
+                    result=(
+                        "New inputs are saved. An earlier setup request has a pending or unknown "
+                        "outcome; execution remains paused. After observed local stop, explicit "
+                        "retry can prepare a fresh stage from these inputs without replaying "
+                        "the earlier request."
+                    )
+                    if pending
+                    else None,
+                    auto_resume=False,
                 )
         elif request.action == "answer":
             if not request.text:
                 raise FoundationError("invalid_request", "Answer must retain original text")
+            saving_pending_answer = bool(
+                state.phase == "paused"
+                and state.question
+                and any(
+                    _stage_execution(connection, stage).pending_outcome
+                    for stage in _unfinished_stages(state)
+                )
+            )
+            if not saving_pending_answer:
+                _require_known_stage_outcomes(connection, state)
             answering_wait = False
             restart_wait = False
             retired = state.stages
-            if state.stages and state.stages[-1].output is None and not state.stages[-1].retired:
+            if (
+                not saving_pending_answer
+                and state.stages
+                and state.stages[-1].output is None
+                and not state.stages[-1].retired
+            ):
                 waiting_work_id = str(state.stages[-1].work_id)
                 answering_wait = (
                     state.phase == "needs_input"
@@ -935,7 +1081,9 @@ def apply_setup_change(
             updates = dict(
                 sources=refs,
                 input_version=state.input_version + int(not answering_wait),
-                phase={"draft": "drafting", "correction": "correcting", "review": "reviewing"}[
+                phase="paused"
+                if saving_pending_answer
+                else {"draft": "drafting", "correction": "correcting", "review": "reviewing"}[
                     state.stages[-1].kind
                 ]
                 if answering_wait
@@ -945,7 +1093,9 @@ def apply_setup_change(
                 review=state.review if answering_wait else None,
                 manifest=state.manifest if answering_wait else None,
                 stages=retired,
-                recovery_boundary=len(retired) if not answering_wait else state.recovery_boundary,
+                recovery_boundary=state.recovery_boundary
+                if saving_pending_answer or answering_wait
+                else len(retired),
                 interactions=tuple(
                     interaction.model_copy(update={"answer": answer_ref})
                     if interaction.answer is None and interaction.question == state.question
@@ -953,6 +1103,13 @@ def apply_setup_change(
                     for interaction in state.interactions
                 ),
             )
+            if saving_pending_answer:
+                updates.update(
+                    result="The original answer is saved. Execution remains paused because an "
+                    "earlier setup request has a pending or unknown outcome. After observed "
+                    "local stop, explicit retry can use the new inputs without replaying it.",
+                    auto_resume=False,
+                )
         elif request.action == "question":
             if not request.text:
                 raise FoundationError("invalid_request", "Question text is required")
@@ -1125,6 +1282,36 @@ def apply_setup_change(
         elif request.action in ("resume", "retry"):
             if state.question:
                 raise FoundationError("incomplete_context", "Answer the saved question first")
+            unfinished = _unfinished_stages(state)
+            pending_stages = tuple(
+                stage for stage in unfinished if _stage_execution(connection, stage).pending_outcome
+            )
+            if pending_stages:
+                if request.action != "retry":
+                    _require_known_stage_outcomes(connection, state)
+                if state.phase != "paused" or any(
+                    stage.result_protocol != "setup_json"
+                    or stage.input_version >= state.input_version
+                    or not _stage_execution(connection, stage).stopped
+                    for stage in pending_stages
+                ):
+                    raise FoundationError(
+                        "unknown_effect",
+                        "A fresh setup stage requires an explicit retry of paused setup_json "
+                        "work, changed inputs and an observed local stop. The earlier outcome "
+                        "and accounting remain unknown.",
+                    )
+                updates["stages"] = tuple(
+                    stage.model_copy(update={"retired": True}) if stage in pending_stages else stage
+                    for stage in state.stages
+                )
+                retire_stage_nodes(state, pending_stages)
+            if state.phase == "paused" and any(
+                not _stage_execution(connection, stage).stopped for stage in unfinished
+            ):
+                raise FoundationError(
+                    "setup_stopping", "The setup executor has not yet confirmed its local stop"
+                )
             successful_review = False
             if state.review and state.draft:
                 report = review_from_bytes(
@@ -1166,6 +1353,7 @@ def apply_setup_change(
                     (str(state.root_work_id),),
                 )
         elif request.action == "start_stage":
+            _require_known_stage_outcomes(connection, state)
             if (
                 state.phase in ("paused", "needs_input", "needs_attention")
                 or not request.stage_kind

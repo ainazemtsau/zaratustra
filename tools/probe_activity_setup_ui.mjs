@@ -27,6 +27,8 @@ const { discoverAndLoadExtensions } = await import(pathToFileURL(join(packageDir
 const { convertToLlm } = await import(pathToFileURL(join(packageDir, "dist/core/messages.js")).href);
 const loaded = await discoverAndLoadExtensions([extensionPath], directory, agentDir);
 assert.deepEqual(loaded.errors, []);
+// The UI-only harness has no live AgentSession; supply its chosen thinking state.
+loaded.runtime.getThinkingLevel = () => "off";
 const extension = loaded.extensions.find(item => item.resolvedPath === extensionPath);
 assert(extension);
 const tool = extension.tools.get("zara_activity").definition;
@@ -61,11 +63,17 @@ globalThis.setInterval = callback => { tick = callback; return 1; };
 globalThis.clearInterval = () => {};
 const notifications = [];
 const widgets = new Map();
+const statuses = new Map();
+let aborted = 0;
+const confirmations = [];
 const ctx = {
   model: { id: "fictional-model", provider: "fictional-local" },
   modelRegistry: { getAll() { return []; } },
-  ui: { setStatus() {}, setWidget(key, value) { widgets.set(key, value); },
-    notify(message, type) { notifications.push({ message, type }); } },
+  abort() { aborted += 1; },
+  ui: { setStatus(key, value) { statuses.set(key, value); },
+    setWidget(key, value) { widgets.set(key, value); },
+    notify(message, type) { notifications.push({ message, type }); },
+    async confirm(title, message) { confirmations.push({title, message}); return false; } },
   sessionManager: { getBranch() { return []; } },
 };
 const emit = async (name, event) => {
@@ -118,8 +126,43 @@ await new Promise(resolve => setImmediate(resolve));
 tick();
 await new Promise(resolve => setImmediate(resolve));
 assert.equal(notifications.filter(item => item.message.includes("fictional read failure")).length, 1);
+statusFails = false;
+item = {...item, revision: 4, state: {...item.state, phase: "paused"},
+  execution: {status: "stopping", can_attach_sources: false, can_retry: false}};
+tick();
+await new Promise(resolve => setImmediate(resolve));
+assert(statuses.get("zara-setup").includes("исполнитель останавливается"));
+assert(widgets.get("zara-setup").join("\n").includes("дождитесь подтверждения остановки"));
+// Assignment changes may not revise ActivitySetup; the derived status must refresh.
+item = {...item, execution: {status: "unknown", can_attach_sources: true, can_retry: true,
+  blocking_unknown_invocations: ["fictional-invocation"]}};
+tick();
+await new Promise(resolve => setImmediate(resolve));
+assert(statuses.get("zara-setup").includes("новую подготовку"));
+assert(widgets.get("zara-setup").join("\n").includes("не возобновляя прерванный запрос"));
+const declined = await tool.execute("retry-fixture", {mode: "retry", setup_id: item.setup_id},
+  undefined, undefined, ctx);
+assert(declined.content[0].text.includes("not authorized"));
+assert(confirmations.at(-1).message.includes("неизвестный расход сохранятся"));
+assert(confirmations.at(-1).message.includes("не будет отправлен повторно"));
+
+const failureEvent = (code, setup_id = "fictional-guard-setup") => ({toolName: "zara_activity",
+  toolCallId: `fixture-${code}`, input: {mode: "attach_sources", setup_id}, isError: true,
+  content: [{type: "text", text: `Core ${code}: Fictional addressed refusal`}], details: {code}});
+await emit("tool_result", failureEvent("setup_running"));
+await emit("tool_result", {toolName: "zara_activity", toolCallId: "pause-fixture",
+  input: {mode: "pause", setup_id: "fictional-guard-setup"}, isError: false,
+  content: [{type: "text", text: "Saved pause; executor is stopping"}]});
+await emit("tool_result", failureEvent("setup_stopping"));
+assert.equal(aborted, 0); // A distinct cause has its own bounded history.
+await emit("tool_result", {toolName: "zara_activity", toolCallId: "status-fixture",
+  input: {mode: "status", setup_id: "fictional-guard-setup"}, isError: false});
+await emit("tool_result", failureEvent("setup_stopping"));
+assert.equal(aborted, 1); // Neither pause nor a read clears an unchanged failing call.
 const report = { pi: packageMetadata.version, rendered_tool: true, no_phantom_user_notice: true,
   legacy_history_filtered: true, compact_both_parts_filtered: true,
-  resumed_question_visible: true, duplicate_notifications: false, actual_provider_calls: 0 };
+  resumed_question_visible: true, duplicate_notifications: false,
+  observed_stop_status: true, interrupted_retry_confirmation: true,
+  addressed_error_guard_preserved: true, actual_provider_calls: 0 };
 writeFileSync(join(directory, "report.json"), JSON.stringify(report, null, 2) + "\n");
 console.log(JSON.stringify(report, null, 2));

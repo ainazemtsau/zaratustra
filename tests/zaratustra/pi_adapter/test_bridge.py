@@ -21,6 +21,7 @@ from zaratustra.foundation import (
     ActivityState,
     AdmitInvocationRequest,
     ArtifactRef,
+    AssignAttemptRequest,
     CreateActivityRequest,
     CreateArtifactRequest,
     CreateGrantRequest,
@@ -38,6 +39,7 @@ from zaratustra.foundation import (
     OutputContract,
     PrepareInvocationRequest,
     PublishAttemptOutputRequest,
+    RecordAttemptStopRequest,
     ResourceState,
     SendInvocationRequest,
     SourceState,
@@ -576,6 +578,256 @@ def test_retained_file_has_honest_origin_and_addressed_packet_read(tmp_path: Pat
             },
         )
     assert error.value.code == "wrong_scope"
+
+
+@pytest.mark.parametrize("unknown_send", [False, True])
+def test_paused_setup_retains_file_and_received_supplement_without_answering(
+    tmp_path: Path, unknown_send: bool
+) -> None:
+    """New requirements survive a stop without replaying or answering a saved wait."""
+    import base64
+    import hashlib
+
+    from tests.zaratustra.foundation.test_activity_setup_recovery import _recovery_case, _start
+    from tests.zaratustra.foundation.test_execution import invocation
+    from zaratustra.pi_adapter.assigned import EXECUTOR_VERSION
+
+    case = _recovery_case(tmp_path, 16)
+    root, space, owner, setup, *_ = case
+    _start(case)
+    stage = read_activity_setup(root, setup, owner).state.stages[-1]
+    resource, attempt, assigned_session = uuid4(), uuid4(), uuid4()
+    apply_operation(
+        root,
+        CreateResourceRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor=owner.actor,
+            resource_id=resource,
+            work_id=stage.work_id,
+            state=ResourceState(label="Fictional setup", root=root, limit_units=100),
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        AssignAttemptRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor=owner.actor,
+            attempt_id=attempt,
+            work_id=stage.work_id,
+            expected_work_revision=read_work(root, stage.work_id, owner).revision,
+            resource_id=resource,
+            expected_resource_revision=1,
+            session_id=assigned_session,
+            executor_version=EXECUTOR_VERSION,
+        ),
+        owner,
+    )
+    common: InvocationFields | None = None
+    if unknown_send:
+        invocation_id, _ = invocation(
+            root, space, stage.work_id, attempt, assigned_session, owner, 10
+        )
+        common = dict(
+            invocation_id=invocation_id,
+            attempt_id=attempt,
+            work_id=stage.work_id,
+            session_id=assigned_session,
+        )
+        for request in (
+            AdmitInvocationRequest(
+                operation_id=uuid4(), space_id=space, actor=owner.actor, **common
+            ),
+            SendInvocationRequest(
+                operation_id=uuid4(), space_id=space, actor=owner.actor, **common
+            ),
+        ):
+            apply_operation(root, request, owner)
+    bridge = Bridge(root, owner, root)
+    session = uuid4()
+    bridge.connect(session)
+    supplement = "Use the existing research; weekly planning remains confirmed."
+    bridge.capture_source(
+        session,
+        channel="conversation_user",
+        content=supplement,
+        source_event_id="received-supplement",
+        input_source="interactive",
+    )
+    original = bridge.last_sources[session]
+    content = "Complete вымышленное research original".encode()
+    retained = bridge.activity_setup(
+        session,
+        {
+            "action": "retain_file",
+            "setup_id": str(setup),
+            "operation_key": "selected-research",
+            "locator": "research.txt",
+            "content_base64": base64.b64encode(content).decode(),
+            "content_sha256": hashlib.sha256(content).hexdigest(),
+        },
+    )
+    selected = KnowledgeRef.model_validate(retained["selected_source"])
+    attach = {
+        "action": "attach_sources",
+        "setup_id": str(setup),
+        "source_refs": [selected.model_dump(mode="json")],
+    }
+    with pytest.raises(FoundationError, match="setup_running"):
+        bridge.activity_setup(session, attach)
+    paused = bridge.activity_setup(session, {"action": "pause", "setup_id": str(setup)})
+    assert paused["state"]["phase"] == "paused"
+    assert paused["execution"]["status"] == "stopping"
+    assert paused["execution"]["next_action"] == "wait_for_stop"
+    assert not paused["execution"]["can_resume"]
+    assert paused["execution"]["can_attach_sources"] is unknown_send
+    assignment = read_execution(root, stage.work_id, owner).assignments[-1]
+    apply_operation(
+        root,
+        RecordAttemptStopRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor=owner.actor,
+            work_id=stage.work_id,
+            attempt_id=attempt,
+            session_id=assigned_session,
+            expected_assignment_revision=assignment.revision,
+            outcome="stopped",
+        ),
+        owner,
+    )
+    status = bridge.activity_setup(session, {"action": "status", "setup_id": str(setup)})
+    assert status["execution"]["status"] == ("unknown" if unknown_send else "stopped")
+    assert status["execution"]["can_attach_sources"]
+    result = bridge.activity_setup(session, attach)
+    current = read_activity_setup(root, setup, owner).state
+    assert original in current.sources and selected in current.sources
+    assert current.question is None
+    assert current.stages[-1].retired is (not unknown_send)
+    assert result["execution"]["can_retry"] is unknown_send
+    assert result["execution"]["status"] == ("unknown" if unknown_send else "idle")
+    assert current.phase == "paused"
+    if unknown_send:
+        with pytest.raises(FoundationError, match="unknown_effect"):
+            bridge.activity_setup(session, {"action": "resume", "setup_id": str(setup)})
+        assert read_execution(root, stage.work_id, owner).held_units == 10
+    else:
+        assert result["execution"]["can_resume"]
+        _step(case, "resume")
+        _start(case)
+        fresh = read_activity_setup(root, setup, owner).state.stages[-1]
+        packet = read_artifact(root, fresh.packet.artifact_id, owner).content
+        assert packet is not None
+        decoded = json.loads(packet)
+        assert supplement in json.dumps(decoded, ensure_ascii=False)
+        assert content.decode() in json.dumps(decoded, ensure_ascii=False)
+    assert read_work(root, stage.work_id, owner).state.acceptance is None
+
+
+def test_paused_unknown_answer_does_not_wake_interrupted_native_wait(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A real owner answer is saved without sending to an unknown RPC session."""
+    from tests.zaratustra.foundation.test_activity_setup_recovery import _recovery_case, _start
+    from zaratustra.pi_adapter.assigned import EXECUTOR_VERSION
+
+    case = _recovery_case(tmp_path, 16)
+    root, space, owner, setup, activity, *_ = case
+    _start(case)
+    stage = read_activity_setup(root, setup, owner).state.stages[-1]
+    resource, attempt, assigned_session, wait_id = uuid4(), uuid4(), uuid4(), uuid4()
+    apply_operation(
+        root,
+        CreateResourceRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor=owner.actor,
+            resource_id=resource,
+            work_id=stage.work_id,
+            state=ResourceState(label="Fictional setup", root=root),
+        ),
+        owner,
+    )
+    apply_operation(
+        root,
+        AssignAttemptRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor=owner.actor,
+            attempt_id=attempt,
+            work_id=stage.work_id,
+            expected_work_revision=read_work(root, stage.work_id, owner).revision,
+            resource_id=resource,
+            expected_resource_revision=1,
+            session_id=assigned_session,
+            executor_version=EXECUTOR_VERSION,
+        ),
+        owner,
+    )
+    rpc = Bridge(
+        root, owner, root, assigned_attempt_id=attempt, assigned_session_id=assigned_session
+    )
+    rpc.connect(assigned_session)
+    rpc.select(assigned_session, activity, stage.work_id)
+    question = "Which period should be compared?"
+    rpc.open_wait(
+        assigned_session,
+        attempt,
+        wait_id,
+        "Known original observations",
+        question,
+        "Compare the addressed period",
+    )
+    _step(case, "question", text=question)
+    _step(case, "pause")
+    assignment = read_execution(root, stage.work_id, owner).assignments[-1]
+    apply_operation(
+        root,
+        RecordAttemptStopRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor=owner.actor,
+            work_id=stage.work_id,
+            attempt_id=attempt,
+            session_id=assigned_session,
+            expected_assignment_revision=assignment.revision,
+            outcome="unknown",
+        ),
+        owner,
+    )
+    before = read_execution(root, stage.work_id, owner)
+    assert before.waits[0].status == "open"
+    delivered: list[UUID] = []
+    monkeypatch.setattr(
+        "zaratustra.pi_adapter.assigned.deliver_outbox",
+        lambda _root, _owner, outbox: delivered.append(outbox),
+    )
+    bridge = Bridge(root, owner, root)
+    session = uuid4()
+    bridge.connect(session)
+    pending = bridge.activity_setup(session, {"action": "status", "setup_id": str(setup)})
+    assert pending["execution"]["next_action"] == "answer"
+    assert not pending["execution"]["can_retry"]
+    bridge.capture_source(
+        session,
+        channel="conversation_user",
+        content="Previous complete month",
+        source_event_id="received-owner-answer",
+        input_source="interactive",
+    )
+    original = bridge.last_sources[session]
+    result = bridge.activity_setup(session, {"action": "answer", "setup_id": str(setup)})
+    state = read_activity_setup(root, setup, owner).state
+    after = read_execution(root, stage.work_id, owner)
+    assert not delivered and after.outbox == before.outbox
+    assert after.waits[0] == before.waits[0]
+    assert after.assignments[0].status == "unknown"
+    assert original in state.sources and state.question is None
+    assert state.phase == "paused" and not state.stages[-1].retired
+    assert result["execution"]["status"] == "unknown" and not result["execution"]["can_retry"]
+    assert read_work(root, stage.work_id, owner).state.acceptance is None
 
 
 def test_internal_read_tools_cannot_write_through_bridge(tmp_path: Path) -> None:

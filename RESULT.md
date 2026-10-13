@@ -1,4 +1,57 @@
-# Workflow 0.23.2 — explicit upgrade correction
+# Activity setup 0.23.3 — paused inputs and explicit recovery
+
+## outcome
+
+Corrected the permanent pause/attach lock, retained supplemental owner originals,
+and distinguished observed executor stop from unknown provider response. New
+inputs invalidate earlier proposal/review; superseded internal stage Work leaves
+the current native plan through cancellation, retaining addressable history.
+The final wheel is installed. Private original retention is complete; Health
+awaits owner-confirmed new preparation. Public delivery readback is pending.
+
+## evidence
+
+Core targeted regressions cover schemas 15/16, stop pending, source receipt
+replay, exact original bytes, fresh complete preparation/review and root
+activation without accepting owner Work. Pi checks cover observed/unobserved
+stop, preserved unknown reserve, supplemental user Source and unchanged error
+guard. The final affected native gate passed 149 tests, types, Ruff, hygiene,
+32 import contracts and build. Both checkout and installed ordinary Pi passed
+the actual interruption/attachment/explicit-retry path: 10 HTTP equal 10 ledger
+records, nine answered and one unknown. Exact new packets were fully reviewed
+and activated without owner Work acceptance. The bounded read-only wheel smoke
+passed. See [the correction report](docs/setup-input-pause-0.23.3-result.md).
+
+## assumptions
+
+Saved pause is control, not proof of response or usage. A synthetic provider
+can prove the request/receipt path but not all future model interpretations.
+
+## cuts
+
+No schema change, new queue, exporter or private Git publication. The existing
+personal Activity is preserved. A new model stage after an unknown response
+requires explicit owner continuation; it is not launched by maintenance.
+
+## cost
+
+No new real-model trial or paid API calls. Verification uses fictional data and
+localhost providers; old unknown response and usage remain unknown.
+
+## manual-acceptance
+
+The owner requested correction and closed Pi for the selected installation.
+This authorizes maintenance, not automatic acceptance of subsequent Work.
+
+## next
+
+solmax. Installed verification, selected package update and private basis
+retention are complete. The existing Health remains for owner-confirmed
+continuation. Publish the shared correction and verify the exact main ref.
+
+---
+
+# Previous release: Workflow 0.23.2 — explicit upgrade correction
 
 ## outcome
 

@@ -427,6 +427,156 @@ class Bridge:
             )
         return original, message.state.content.decode("utf-8")
 
+    def _setup_request_source(self, session_id: UUID, raw: dict[str, Any]) -> KnowledgeRef | None:
+        """Select an original received request; never turn it into an answer."""
+        original = (
+            KnowledgeRef.model_validate(raw["request_source"])
+            if raw.get("request_source") is not None
+            else self.last_sources.get(session_id)
+        )
+        if original is None:
+            return None
+        if original != self.last_sources.get(session_id) and original not in self.exposed_refs.get(
+            session_id, set()
+        ):
+            raise FoundationError("permission_denied", "Original request must be exposed")
+        record = read_knowledge(
+            self.path, original.record_id, self.authority, revision=original.revision
+        ).state
+        if (
+            not isinstance(record, SourceState)
+            or record.channel != "conversation_user"
+            or record.sender != self.authority.actor
+            or record.content is None
+        ):
+            raise FoundationError(
+                "invalid_request", "Request anchor must be an original user Source"
+            )
+        return original
+
+    def _setup_status(self, identifier: UUID) -> dict[str, Any]:
+        """Derive local execution and permitted continuation from current Core records."""
+        current = read_activity_setup(self.path, identifier, self.authority)
+        state = current.state
+        usage: list[dict[str, Any]] = []
+        current_snapshot = None
+        stage = state.stages[-1] if state.stages else None
+        for item in state.stages:
+            snapshot = read_execution(self.path, item.work_id, self.authority)
+            usage.extend(invocation.model_dump(mode="json") for invocation in snapshot.invocations)
+            if stage is not None and item.work_id == stage.work_id:
+                current_snapshot = snapshot
+        status = "idle"
+        unresolved: list[str] = []
+        running = False
+        if stage is not None and not stage.retired and stage.output is None:
+            assert current_snapshot is not None
+            assignments = current_snapshot.assignments
+            running = any(
+                item.status in ("assigned", "waiting", "ready", "stop_requested")
+                for item in assignments
+            )
+            unresolved = [
+                str(item.invocation_id)
+                for item in current_snapshot.invocations
+                if item.status in ("admitted", "sent", "unknown")
+            ]
+            if any(item.status == "stop_requested" for item in assignments):
+                status = "stopping"
+            elif running:
+                status = "active"
+            elif unresolved or any(item.status == "unknown" for item in assignments):
+                status = "unknown"
+            else:
+                status = "stopped"
+        closed = state.phase in ("ready", "cancelled")
+        pending_outcome = current_snapshot is not None and (
+            any(
+                item.status in ("admitted", "sent", "unknown")
+                for item in current_snapshot.invocations
+            )
+            or any(item.status == "unknown" for item in current_snapshot.assignments)
+        )
+        can_attach = not closed and (
+            state.phase == "paused"
+            and pending_outcome
+            or not running
+            and (
+                stage is None
+                or stage.output is not None
+                or stage.retired
+                or state.phase == "paused"
+            )
+        )
+        can_retry = (
+            not closed
+            and state.phase == "paused"
+            and state.question is None
+            and stage is not None
+            and current_snapshot is not None
+            and status == "unknown"
+            and stage.input_version != state.input_version
+            and stage.result_protocol == "setup_json"
+            and not any(item.status == "active" for item in current_snapshot.attempts)
+            and all(item.status == "stopped" for item in current_snapshot.assignments)
+            and not any(
+                item.status in ("admitted", "sent") for item in current_snapshot.invocations
+            )
+        )
+        can_resume = (
+            not closed
+            and not running
+            and status != "unknown"
+            and state.question is None
+            and state.phase in ("paused", "needs_attention", "collecting")
+        )
+        next_action = (
+            "use_activity"
+            if state.phase == "ready"
+            else "none"
+            if closed
+            else "answer"
+            if state.question
+            and (
+                state.phase == "needs_input"
+                or state.phase == "paused"
+                and (pending_outcome or not running)
+            )
+            else "wait_for_stop"
+            if status == "stopping"
+            else "wait"
+            if status == "active"
+            else "retry_new_stage"
+            if can_retry
+            else "inspect_unknown"
+            if status == "unknown"
+            else "answer"
+            if state.question
+            else "resume"
+            if state.phase == "paused" and can_resume
+            else "submit"
+            if state.phase == "collecting"
+            else "inspect"
+            if state.phase == "needs_attention"
+            else "resume"
+        )
+        return {
+            **current.model_dump(mode="json"),
+            "invocations": usage,
+            "execution": {
+                "status": status,
+                "stage_work_id": str(stage.work_id) if stage else None,
+                "can_attach_sources": can_attach,
+                "can_resume": can_resume,
+                "can_retry": can_retry,
+                "next_action": next_action,
+                "blocking_unknown_invocations": unresolved,
+                "unknown_invocations": [
+                    item["invocation_id"] for item in usage if item["status"] == "unknown"
+                ],
+            },
+        }
+
     def workflow(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, Any]:
         """Public conversation actions; dispatch/validation remain host-owned."""
         from zaratustra.foundation import (
@@ -943,15 +1093,7 @@ class Bridge:
         if action == "status":
             from .activity_setup import _observe
 
-            def current_status() -> dict[str, Any]:
-                current = read_activity_setup(self.path, identifier, self.authority)
-                usage: list[dict[str, Any]] = []
-                for stage in current.state.stages:
-                    snapshot = read_execution(self.path, stage.work_id, self.authority)
-                    usage.extend(item.model_dump(mode="json") for item in snapshot.invocations)
-                return {**current.model_dump(mode="json"), "invocations": usage}
-
-            return cast(dict[str, Any], _observe(current_status))
+            return cast(dict[str, Any], _observe(self._setup_status, identifier))
         if action not in (
             "begin",
             "answer",
@@ -977,24 +1119,8 @@ class Bridge:
                 contract_version=2 if read_space(self.path).schema_version >= 15 else 1,
                 mode=raw.get("mode", "create"),
             )
-            source = (
-                KnowledgeRef.model_validate(raw["request_source"])
-                if raw.get("request_source") is not None
-                else self.last_sources.get(session_id)
-            )
+            source = self._setup_request_source(session_id, raw)
             if source is not None:
-                if source != self.last_sources.get(
-                    session_id
-                ) and source not in self.exposed_refs.get(session_id, set()):
-                    raise FoundationError("permission_denied", "Original request must be exposed")
-                request = read_knowledge(
-                    self.path, source.record_id, self.authority, revision=source.revision
-                )
-                if (
-                    not isinstance(request.state, SourceState)
-                    or request.state.channel != "conversation_user"
-                ):
-                    raise FoundationError("invalid_request", "Request anchor must be a user Source")
                 fields["source_refs"] = (source,)
         else:
             current = read_activity_setup(self.path, identifier, self.authority)
@@ -1006,15 +1132,22 @@ class Bridge:
             if original in state.sources:
                 supplied = self._exposed_sources(session_id, raw)
                 if not any(ref not in state.sources for ref in supplied):
-                    return current.model_dump(mode="json")
+                    return self._setup_status(identifier)
                 action = "attach_sources"
                 fields.pop("text")
                 fields["source_refs"] = supplied
-            if state.stages and state.stages[-1].output is None:
+            if action == "answer" and state.stages and state.stages[-1].output is None:
                 stage = state.stages[-1]
                 snapshot = read_execution(self.path, stage.work_id, self.authority)
                 opened = next((wait for wait in snapshot.waits if wait.status == "open"), None)
-                if opened is not None:
+                interrupted = state.phase == "paused" and (
+                    any(
+                        item.status in ("admitted", "sent", "unknown")
+                        for item in snapshot.invocations
+                    )
+                    or any(item.status == "unknown" for item in snapshot.assignments)
+                )
+                if opened is not None and not interrupted:
                     answered = apply_operation(
                         self.path,
                         AnswerWaitRequest(
@@ -1043,6 +1176,12 @@ class Bridge:
                     )
         elif action == "question":
             fields["text"] = str(raw["question"])
+        if action == "attach_sources":
+            request_anchor = self._setup_request_source(session_id, raw)
+            if request_anchor is not None:
+                fields["source_refs"] = tuple(
+                    dict.fromkeys(fields.get("source_refs", ()) + (request_anchor,))
+                )
         if action in ("begin", "answer", "attach_sources", "submit"):
             supplied = self._exposed_sources(session_id, raw)
             fields["source_refs"] = tuple(dict.fromkeys(fields.get("source_refs", ()) + supplied))
@@ -1094,7 +1233,9 @@ class Bridge:
                     "setup_executor_unavailable", "The interactive host has no setup executor"
                 )
             self.setup_controller.start(identifier, raw.get("model", {}))
-        return read_activity_setup(self.path, identifier, self.authority).model_dump(mode="json")
+        from .activity_setup import _observe
+
+        return cast(dict[str, Any], _observe(self._setup_status, identifier))
 
     def connect(self, session_id: UUID) -> dict[str, object]:
         if self.assigned_session_id is not None and session_id != self.assigned_session_id:

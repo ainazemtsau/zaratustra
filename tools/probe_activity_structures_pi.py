@@ -6,6 +6,7 @@ import argparse
 import json
 import shutil
 import sqlite3
+import threading
 from pathlib import Path
 from typing import Any, Literal, cast
 from uuid import UUID, uuid4
@@ -766,12 +767,296 @@ def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -
     return report
 
 
+def run_pause_inputs_probe(directory: Path, runtime: Path) -> dict[str, Any]:
+    """Actual in-flight stop, new originals, explicit replacement and whole review."""
+    from zaratustra.pi_adapter import prepare_space
+    from zaratustra.pi_adapter.activity_setup import INSTRUCTIONS
+
+    directory.mkdir(parents=True, exist_ok=False)
+    root, working = directory / "space", directory / "work"
+    root.mkdir()
+    working.mkdir()
+    owner = prepare_space(root, "owner", create=True)
+    native, actual = harness(), read_pi_runtime(runtime)
+    setup_id, activity_id = uuid4(), uuid4()
+
+    def operation(model: Any, **fields: Any) -> Any:
+        return core.apply_operation(
+            root,
+            model(operation_id=uuid4(), space_id=owner.space_id, actor="owner", **fields),
+            owner,
+        )
+
+    def step(action: str, **fields: Any) -> None:
+        current = core.read_activity_setup(root, setup_id, owner)
+        operation(
+            core.ActivitySetupRequest,
+            setup_id=setup_id,
+            activity_id=activity_id,
+            expected_revision=current.revision,
+            action=action,
+            **fields,
+        )
+
+    def retain_result(text: str) -> core.ArtifactRef:
+        stage = core.read_activity_setup(root, setup_id, owner).state.stages[-1]
+        identifier = uuid4()
+        reference = core.ArtifactRef(artifact_id=identifier, revision=1)
+        operation(
+            core.CreateArtifactRequest,
+            artifact_id=identifier,
+            media_type="text/plain",
+            content=text.encode("utf-8"),
+        )
+        work = core.read_work(root, stage.work_id, owner)
+        operation(
+            core.LinkWorkOutputRequest,
+            work_id=stage.work_id,
+            expected_revision=work.revision,
+            output=core.LinkedOutput(slot="report", artifact=reference),
+        )
+        step("complete_stage", output=reference)
+        return reference
+
+    operation(
+        core.ActivitySetupRequest,
+        action="begin",
+        setup_id=setup_id,
+        activity_id=activity_id,
+        title="Fictional observations",
+        contract_version=2,
+        text="Keep supplied observations and review their period",
+    )
+    step("start_stage", stage_kind="draft", stage_instruction=INSTRUCTIONS["draft"])
+    original_draft = retain_result(draft("week").model_dump_json())
+    step("start_stage", stage_kind="review", stage_instruction=INSTRUCTIONS["review"])
+
+    def report_for(state: Any, blocking: bool) -> core.ActivitySetupReviewV2:
+        return core.ActivitySetupReviewV2(
+            draft=state.draft,
+            manifest=state.manifest,
+            input_version=state.input_version,
+            checked=AREAS,
+            coverage=tuple(
+                core.SetupAreaEvidence(
+                    area=area,
+                    explanation="Checked the complete current dated intake and first path",
+                    components=(
+                        "process",
+                        "formats.observation",
+                        "procedures.observe",
+                        "working_sets",
+                    ),
+                )
+                for area in AREAS
+            ),
+            findings=(
+                core.SetupFinding(
+                    area="history",
+                    problem="Clarify the event date",
+                    cause="The process needs a correction",
+                    blocking=True,
+                ),
+            )
+            if blocking
+            else (),
+            conclusion="Correct the whole process" if blocking else "No blocking obstacle",
+        )
+
+    retain_result(
+        report_for(core.read_activity_setup(root, setup_id, owner).state, True).model_dump_json()
+    )
+    step("start_stage", stage_kind="correction", stage_instruction=INSTRUCTIONS["correction"])
+    original_stage = core.read_activity_setup(root, setup_id, owner).state.stages[-1]
+    supplemental_text = (
+        "Use the selected fictional research; preserve event dates. Новые пожелания."
+    )
+    original_file = "# Fictional research\nExact original: разные даты и UTF-8.\n".encode()
+    (working / "research.md").write_bytes(original_file)
+    barrier = threading.Event()
+    release = threading.Event()
+    packets: list[dict[str, Any]] = []
+    old_request_seen = False
+    outer_calls = 0
+    review_calls = 0
+    selected_source: dict[str, Any] | None = None
+    bridge: Bridge
+    config: AssignedConfig
+
+    def route(body: dict[str, Any]) -> dict[str, Any]:
+        nonlocal old_request_seen, outer_calls, review_calls, selected_source
+        manifest = context(body)
+        if "work" in manifest:
+            incoming = json.loads(manifest["inputs"][0]["content_text"])
+            if not old_request_seen:
+                old_request_seen = True
+                assert incoming["input_version"] == original_stage.input_version
+                barrier.set()
+                assert release.wait(40), "The ordinary pause must reach its next tool response"
+                return {"_final_text": incoming["draft"] and json.dumps(incoming["draft"])}
+            packets.append(incoming)
+            assert incoming["input_version"] > original_stage.input_version
+            originals = [item["state"]["text"] for item in incoming["sources"]]
+            assert supplemental_text in originals
+            assert original_file.decode() in originals
+            assert "working_set" in {item["operation"] for item in incoming["supported_operations"]}
+            if incoming["result_schema"]["title"] == "ActivitySetupReviewV2":
+                review_calls += 1
+                current = core.read_activity_setup(root, setup_id, owner).state
+                assert current.draft is not None and current.manifest is not None
+                assert incoming["draft_ref"] == current.draft.model_dump(mode="json")
+                assert incoming["manifest_ref"] == current.manifest.model_dump(mode="json")
+                return {"_final_text": report_for(current, False).model_dump_json()}
+            return {"_final_text": draft("week").model_dump_json()}
+        count = outer_calls
+        outer_calls += 1
+        if count == 0:
+            assert bridge.setup_controller is not None
+            bridge.setup_controller.start(
+                setup_id,
+                {"id": "fictional-model", "provider": "fictional-local", "thinking": "off"},
+            )
+            assert barrier.wait(40), "The correction must actually send before pause"
+            return {
+                "_tool": "zara_activity",
+                "mode": "retain_file",
+                "setup_id": str(setup_id),
+                "path": "research.md",
+            }
+        if selected_source is None:
+            tools = [item for item in body["messages"] if item["role"] == "tool"]
+            selected_source = json.loads(tools[0]["content"])["selected_source"]
+        if count in (1, 3):
+            if count == 3:
+                release.set()
+            return {
+                "_tool": "zara_activity",
+                "mode": "attach_sources",
+                "setup_id": str(setup_id),
+                "source_refs": [selected_source],
+            }
+        if count == 2:
+            return {"_tool": "zara_activity", "mode": "pause", "setup_id": str(setup_id)}
+        if count == 4:
+            paused = core.read_activity_setup(root, setup_id, owner)
+            assert (
+                paused.state.phase == "paused"
+                and paused.state.input_version > original_stage.input_version
+            )
+            assert not paused.state.stages[-1].retired
+            interrupted = core.read_execution(root, original_stage.work_id, owner)
+            assert interrupted.assignments[-1].status == "stopped"
+            assert interrupted.invocations[-1].status == "unknown"
+            assert not interrupted.outputs
+            return {"_tool": "zara_activity", "mode": "status", "setup_id": str(setup_id)}
+        if count == 5:
+            return {"_tool": "zara_activity", "mode": "retry", "setup_id": str(setup_id)}
+        return {
+            "_final_text": "New originals are retained; explicit replacement runs "
+            "a fresh full preparation and review."
+        }
+
+    provider = native.Provider([route] * 10)
+    bridge = Bridge(root, owner, working)
+    config = AssignedConfig(
+        space=root,
+        workspace=working,
+        pi_cli=actual.cli,
+        pi_runtime=runtime,
+        node=shutil.which("node") or "node",
+        provider_profile="local-completions",
+        provider_base_url=f"http://127.0.0.1:{provider.server_port}/v1",
+        provider_id="fictional-local",
+        model_id="fictional-model",
+        context_window=1000000,
+        max_tokens=32768,
+        reserve_units=1000,
+        limit_units=None,
+        offline=True,
+        disable_tools=True,
+    )
+    bridge.setup_controller = SetupCoordinator(bridge, config)
+    bridge.workflow_controller = WorkflowCoordinator(bridge, config)
+    try:
+        events = native.run_process(
+            working,
+            runtime,
+            bridge,
+            provider,
+            prompt=supplemental_text,
+            skills=(activity_setup_skill(),),
+            tool_names=("read", "write", "edit", "bash", *INTERACTIVE_ZARA_TOOLS),
+            confirmation_answers=(True,),
+            expected_tool_errors=1,
+            expected_provider_calls=10,
+            wait_for=lambda: core.read_activity_setup(root, setup_id, owner).state.phase == "ready",
+            timeout_seconds=180,
+        )
+    finally:
+        release.set()
+        bridge.workflow_controller.close()
+    state = core.read_activity_setup(root, setup_id, owner).state
+    assert state.phase == "ready" and state.stages[2].retired
+    assert state.stages[0].output == original_draft
+    assert review_calls == 1 and len(packets) == 2
+    assert state.reviews_started == 2 and state.pass_boundary == 1
+    assert not any("Одинаковая ошибка" in json.dumps(event, ensure_ascii=False) for event in events)
+    interrupted = core.read_execution(root, original_stage.work_id, owner)
+    assert len(interrupted.invocations) == 1 and interrupted.invocations[0].status == "unknown"
+    assert not any(
+        work.work.state.acceptance is not None
+        for work in (
+            core.read_execution(root, identifier, owner) for identifier in state.activated_works
+        )
+    )
+    with sqlite3.connect(
+        f"{core.read_space(root).database.as_uri()}?mode=ro", uri=True
+    ) as connection:
+        ids = [
+            UUID(row[0])
+            for row in connection.execute("SELECT invocation_id FROM knowledge_delivery")
+        ]
+    deliveries = [core.read_context_delivery(root, identifier, owner) for identifier in ids]
+    assert len(ids) == len(provider.requests) == 10
+    assert sum(item["stage"] == "unknown" for item in deliveries) == 1
+    assert sum(item["stage"] == "answered" for item in deliveries) == 9
+    assert all("ZARA_MANIFEST:" in json.dumps(body) for body in provider.requests)
+    result = {
+        "module": str(Path(core.__file__).resolve()),
+        "schema": 16,
+        "pi_version": actual.version,
+        "actual_http": 10,
+        "accounted_sends": len(ids),
+        "unknown_outcomes_preserved": 1,
+        "owner_confirmations": 1,
+        "source_file_exact": True,
+        "supplemental_owner_text_exact": True,
+        "new_complete_packets": len(packets),
+        "fresh_whole_reviews": review_calls,
+        "same_activity_identity": True,
+        "automatic_acceptance": False,
+        "real_model_calls": 0,
+        "paid_api_calls": 0,
+    }
+    (directory / "report.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+    return result
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--directory", type=Path, required=True)
     parser.add_argument("--pi-runtime", type=Path, required=True)
     parser.add_argument("--blank-response", action="store_true")
+    parser.add_argument("--pause-inputs", action="store_true")
     args = parser.parse_args()
+    if args.pause_inputs:
+        print(
+            json.dumps(
+                run_pause_inputs_probe(args.directory.resolve(), args.pi_runtime.resolve()),
+                indent=2,
+            )
+        )
+        return
     print(
         json.dumps(
             run_probe(
