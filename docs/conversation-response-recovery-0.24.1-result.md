@@ -6,8 +6,9 @@ The owner-authorized schema 17 → 18 correction is implemented and checked.
 The final wheel passed the affected native gate, explicit upgrade tests and
 eight ordinary installed Pi scenarios outside checkout. The selected personal
 installation, verified backup, restore rehearsal and explicit upgrade are complete.
-Public publication is pending. These engineering checks are separate from owner
-acceptance.
+Public code was published to the authorized `ainazemtsau/zaratustra/main`, and
+authenticated GitHub readback confirmed the source commit. These engineering
+checks are separate from owner acceptance.
 
 The package corrects completed native assistant responses with no visible text
 and preserves delivery-to-Work/Attempt/session correlation through deletion.
@@ -132,6 +133,11 @@ result. It found no material finding in that scope. It did not rerun the full
 gate, mutate state or make model calls. This is neither owner acceptance nor a
 fresh Direction G5.
 
+A further bounded read-only compatibility check confirmed that an unknown legacy
+conversation delivery permits a fresh owner request, reading current facts and
+selecting an existing first Work. It blocks only a blind claim about the same
+action digest. This check did not run a real personal Activity conversation.
+
 ### Earlier checks and failed trials
 
 Earlier schema 17 candidate checks passed 1077 full-gate tests in 1003.27 seconds,
@@ -170,6 +176,9 @@ unchanged original revisions, addresses, outputs, owner acceptance, receipts and
 invocation accounting in both rehearsal and selected upgrade. The active space
 identity, epoch and configuration bytes stayed unchanged.
 
+Installed `zaratustra verify` confirmed version 0.24.1, schema 18, active selected
+space and ordinary system Pi 1.0.4 without a model request.
+
 Early rehearsal-script errors were retained in private evidence: loading SQLite
 before setting its runtime environment; including backup-maintenance rows in a
 domain baseline; copying a backup under a non-UUID directory name, correctly
@@ -195,8 +204,11 @@ Intermediate symmetric-registration artifact SHA-256:
 `43992ac14b38c2e7f0c7f2444b16b5e30528fa6b67e96f841626bb7343202110`.
 
 The final artifact is immutable; later report edits do not change its packaged
-bytes. Selected personal installation and explicit upgrade are complete; public
-publication remains pending.
+bytes. Selected personal installation and explicit upgrade are complete. Source
+commit [8fc0b0ae9f9abf131266a887c2e290a3641368ec](https://github.com/ainazemtsau/zaratustra/commit/8fc0b0ae9f9abf131266a887c2e290a3641368ec)
+was pushed as a fast-forward to the authorized public `main`. Authenticated
+GitHub API readback confirmed that exact commit and the intended public files.
+Subsequent report-only commits do not change the final wheel SHA or packaged bytes.
 
 ## Evidence limits, cost and acceptance
 
@@ -208,7 +220,8 @@ the cause of the earlier intermittent RPC EOF.
 No personal Activity deletion, export change, Git representation publication or
 automatic Work acceptance was performed by this package. The verified private
 backup, restore rehearsal, installation and selected upgrade are complete with
-preservation evidence. Public publication remains to do. Private addresses,
-receipts, paths and configuration are retained outside the public report.
+preservation evidence. Public code publication and authenticated readback are
+complete. Private addresses, receipts, paths and configuration are retained
+outside the public report.
 
 Owner acceptance pending. Next: solmax.

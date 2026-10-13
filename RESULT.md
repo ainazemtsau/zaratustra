@@ -11,7 +11,9 @@ Development history remain intact. The final wheel is checked and installed in
 the selected space. Verified private backup, public restore/recovery rehearsal
 and explicit schema 17 → 18 upgrade completed with original domain revisions,
 outputs, acceptance and accounting preserved. Identity, epoch and configuration
-bytes stayed unchanged. Public publication remains pending.
+bytes stayed unchanged. Public code was published to the authorized
+`ainazemtsau/zaratustra/main`; authenticated readback confirmed source commit
+[8fc0b0ae](https://github.com/ainazemtsau/zaratustra/commit/8fc0b0ae9f9abf131266a887c2e290a3641368ec).
 
 ## evidence
 
@@ -26,6 +28,11 @@ and rehearsal checks preserved original records and runtime dependencies. Exact
 artifact attribution, failed trials and limits are in
 [the report](docs/conversation-response-recovery-0.24.1-result.md).
 
+Installed model-free verification confirms 0.24.1/schema 18 and ordinary Pi 1.0.4.
+A bounded read-only compatibility check permits fresh owner input and current
+Work selection despite legacy unknown delivery; no real personal conversation
+was run. Report-only follow-up commits do not change the checked wheel.
+
 ## assumptions
 
 Provider completion and a visible final answer require distinct evidence.
@@ -38,7 +45,7 @@ unestablished; its unchanged diagnostic repeat and final scenarios passed.
 No export changes, new execution graph, personal deletion, automatic Work
 acceptance or real-provider calls. Schema migration is explicit and verified in
 test spaces and the selected space. No private Git update or automatic Activity
-recreation. Public publication is pending delivery.
+recreation. Public source publication and authenticated readback are complete.
 
 ## cost
 
