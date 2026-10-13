@@ -1,10 +1,28 @@
 # Core v0.1 domain foundation
 
+Schema 18 explicitly pins Work, Attempt and session correlation on observed
+context deliveries. Deleting a manifest never erases these accounting addresses.
+Migration uses only an exact retained Context or the same execution invocation;
+contradictory evidence aborts atomically. Unresolved non-prepared legacy delivery
+history marks only then-active Attempts as unable to prove no-send. This marker
+narrows guarded preflight interruption, not ordinary explicit interruption or
+other Work. New Attempts have no inherited uncertainty. No-send cleanup requires
+schema 18; old requests and schema 17 response recovery remain compatible.
+
 Schema 17 adds receipt-backed conversation delivery metadata. `conversations.py`
 derives actions from existing setup, workflow and Work authority; it owns no
 execution graph or queue. Exact context/invocation/final assistant Source proof
 acknowledges communication only, never owner acceptance. Old canonical payloads
 omit absent action and final-response fields; deletion sanitizes correlation links.
+Native terminal observations retain exact invocation, manifest and stop metadata
+on immutable Sources, including empty bytes. Response corrections use existing
+delivery operation events and receipts; their bounded count and outcome are derived,
+not execution status. Only strict nonblank UTF-8 completed-stop evidence acknowledges
+a reply or completes an ordinary Attempt. Unknown sends never become empty results.
+Ordinary preflight cleanup uses the optional `no_send_only` interruption guard
+inside the existing StopAttempt transaction. It refuses assignments, waits and
+execution or exact pinned-context sends beyond prepared; older stop requests omit
+the default field and retain their contract.
 
 Schema 16 adds immutable workflow templates and receipt-backed node mappings over
 ordinary root WorkPlan. Work/Attempt still own execution, host questions have

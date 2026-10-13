@@ -445,6 +445,43 @@ def apply_execution_change(
         ):
             raise FoundationError("assigned_attempt", "Use addressed stop for assigned Attempt")
         _attempt(connection, request.attempt_id, request.work_id, request.session_id, epoch)
+        if request.no_send_only:
+            schema = int(connection.execute("PRAGMA user_version").fetchone()[0])  # type: ignore[attr-defined]
+            if schema < 18:
+                raise FoundationError("upgrade_required", "No-send cleanup needs schema 18")
+            uncertain = connection.execute(  # type: ignore[attr-defined]
+                "SELECT legacy_delivery_correlation_uncertain FROM execution_attempts "
+                "WHERE attempt_id=?",
+                (str(request.attempt_id),),
+            ).fetchone()[0]
+            if uncertain:
+                raise FoundationError(
+                    "uncorrelated_delivery_history",
+                    f"Cannot prove no-send for legacy Attempt {request.attempt_id}",
+                )
+            if (
+                schema >= 4
+                and connection.execute(  # type: ignore[attr-defined]
+                    "SELECT 1 FROM execution_waits WHERE attempt_id=? LIMIT 1",
+                    (str(request.attempt_id),),
+                ).fetchone()
+            ):
+                raise FoundationError("attempt_wait_exists", "No-send cleanup cannot retire a wait")
+            sent = connection.execute(  # type: ignore[attr-defined]
+                "SELECT 1 FROM execution_invocations WHERE attempt_id=? AND status!='prepared' "
+                "LIMIT 1",
+                (str(request.attempt_id),),
+            ).fetchone()
+            known_send = connection.execute(  # type: ignore[attr-defined]
+                "SELECT 1 FROM knowledge_delivery WHERE correlation_state='exact' "
+                "AND context_work_id=? AND context_attempt_id=? AND context_session_id=? "
+                "AND stage!='prepared' LIMIT 1",
+                (str(request.work_id), str(request.attempt_id), str(request.session_id)),
+            ).fetchone()
+            if sent or known_send:
+                raise FoundationError(
+                    "attempt_send_observed", "No-send cleanup cannot retire an observed invocation"
+                )
         connection.execute(  # type: ignore[attr-defined]
             "UPDATE execution_invocations SET status = 'unknown', revision = revision + 1, "
             "updated_at = ? WHERE attempt_id = ? AND status IN ('admitted', 'sent')",
@@ -471,6 +508,21 @@ def apply_execution_change(
             (str(request.invocation_id),),
         ).fetchone():
             raise FoundationError("record_exists", "Invocation id is already used")
+        if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 18:  # type: ignore[attr-defined]
+            delivery_pin = connection.execute(  # type: ignore[attr-defined]
+                "SELECT context_work_id,context_attempt_id,context_session_id,correlation_state "
+                "FROM knowledge_delivery WHERE invocation_id=?",
+                (str(request.invocation_id),),
+            ).fetchone()
+            if delivery_pin is not None and delivery_pin != (
+                str(request.work_id),
+                str(request.attempt_id),
+                str(request.session_id),
+                "exact",
+            ):
+                raise FoundationError(
+                    "delivery_correlation_conflict", "Prepared context and execution pins disagree"
+                )
         connection.execute(  # type: ignore[attr-defined]
             "INSERT INTO execution_invocations(invocation_id, revision, attempt_id, work_id, "
             "session_id, purpose, provider, model, transport, request_sha256, request_bytes, "
@@ -1010,8 +1062,10 @@ def read_execution(path: Path, work_id: UUID, authority: LocalAuthority) -> Exec
         )
         attempt_rows = connection.execute(
             "SELECT attempt_id, revision, work_revision, resource_id, resource_revision, "
-            "session_id, previous_attempt_id, execution_epoch, generation, input_refs_json, status "
-            "FROM execution_attempts WHERE work_id = ? ORDER BY generation",
+            "session_id, previous_attempt_id, execution_epoch, generation, input_refs_json, "
+            "status, "
+            + ("legacy_delivery_correlation_uncertain " if info.schema_version >= 18 else "0 ")
+            + "FROM execution_attempts WHERE work_id = ? ORDER BY generation",
             (str(work_id),),
         ).fetchall()
         attempts = tuple(
@@ -1028,6 +1082,7 @@ def read_execution(path: Path, work_id: UUID, authority: LocalAuthority) -> Exec
                 generation=row[8],
                 input_refs=tuple(ArtifactRef.model_validate(item) for item in json.loads(row[9])),
                 status=row[10],
+                legacy_delivery_correlation_uncertain=bool(row[11]),
             )
             for row in attempt_rows
         )

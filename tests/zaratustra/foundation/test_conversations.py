@@ -23,6 +23,8 @@ from zaratustra.foundation import (
     ContextState,
     ConversationActionView,
     ConversationDeliveryRequest,
+    ConversationResponseProblem,
+    ConversationTerminalObservation,
     CreateActivityRequest,
     CreateArtifactRequest,
     CreateDecisionRequest,
@@ -63,11 +65,13 @@ from zaratustra.foundation import (
     read_execution,
     read_knowledge,
     read_ordinary_final_proof,
+    read_receipt,
     read_space,
     read_work,
     read_work_plan,
     restore_backup,
     upgrade_conversation_space,
+    upgrade_delivery_correlation_space,
     upgrade_structures_space,
     upgrade_workflow_space,
     validate_conversation_answer,
@@ -736,7 +740,7 @@ def _ordinary_final_case(tmp_path: Path, variant: str) -> tuple[Case, UUID, UUID
             sender="pi-assistant",
             scope_work_id=work,
             capture="full",
-            content=b"Saved final reply",
+            content=b" \t\r\n" if variant == "whitespace" else b"Saved final reply",
             media_type="text/plain",
             conversation_final=variant != "tool",
             derived_from=(manifest,),
@@ -745,7 +749,7 @@ def _ordinary_final_case(tmp_path: Path, variant: str) -> tuple[Case, UUID, UUID
     return case, work, attempt, session
 
 
-@pytest.mark.parametrize("variant", ("valid", "tool", "unknown", "other_session"))
+@pytest.mark.parametrize("variant", ("valid", "tool", "unknown", "other_session", "whitespace"))
 def test_ordinary_final_recovery_requires_exact_saved_final_proof(
     tmp_path: Path,
     variant: str,
@@ -827,3 +831,505 @@ def test_observed_final_stop_rechecks_proof_in_its_mutation_transaction(
         session_id=session,
         outcome="interrupted",
     ).model_dump(mode="json")
+
+
+def _terminal_original(
+    case: Case,
+    fields: dict[str, Any],
+    manifest: KnowledgeRef,
+    invocation: UUID,
+    content: bytes,
+    *,
+    stop_reason: str = "stop",
+    outcome: Literal["completed", "tool_call", "aborted", "error", "unknown"] = "completed",
+) -> tuple[KnowledgeRef, str]:
+    source, entry = uuid4(), str(uuid4())
+    _apply(
+        case,
+        CreateKnowledgeRequest,
+        record_id=source,
+        state=SourceState(
+            channel="conversation_assistant",
+            connection="ordinary-pi",
+            profile_revision=1,
+            sender="pi-assistant",
+            conversation_id=str(fields["session_id"]),
+            source_event_id=f"{fields['session_id']}:{entry}",
+            media_type="text/plain",
+            capture="full",
+            content=content,
+            derived_from=(manifest,),
+            conversation_final=True,
+            conversation_terminal=ConversationTerminalObservation(
+                invocation_id=invocation,
+                manifest=manifest,
+                assistant_entry_id=entry,
+                native_outcome=outcome,
+                stop_reason=stop_reason,
+            ),
+        ),
+    )
+    return KnowledgeRef(record_id=source, revision=1), entry
+
+
+@pytest.mark.parametrize(
+    "content,reason,expected",
+    (
+        (b"", "stop", "empty"),
+        (b" \t\r\n", "stop", "empty"),
+        ("\u00a0\u3000".encode(), "stop", "empty"),
+        ("Готово".encode(), "stop", "visible"),
+        (b"", "length", "attention"),
+        (b"", "toolUse", "unproven"),
+    ),
+)
+def test_native_terminal_original_is_retained_before_response_classification(
+    tmp_path: Path,
+    content: bytes,
+    reason: str,
+    expected: str,
+) -> None:
+    case, action = _question(tmp_path)
+    fields = _claim(case, action)
+    manifest, invocation = _invocation(case, action, fields, "answered")
+    source, entry = _terminal_original(
+        case, fields, manifest, invocation, content, stop_reason=reason
+    )
+    original = read_knowledge(case[0], source.record_id, case[2])
+    assert isinstance(original.state, SourceState) and original.state.content == content
+    _apply(
+        case,
+        ConversationDeliveryRequest,
+        action="observe_terminal",
+        manifest=manifest,
+        invocation_id=invocation,
+        assistant_source=source,
+        assistant_entry_id=entry,
+        **fields,
+    )
+    view = read_conversation_delivery(case[0], fields["delivery_id"], case[2])
+    assert view.response_outcome == expected and view.repair_count == 0
+    assert view.response_source == source and view.status == "included"
+    if expected == "empty":
+        with pytest.raises(FoundationError, match="invalid_conversation_response"):
+            _apply(
+                case,
+                ConversationDeliveryRequest,
+                action="respond",
+                manifest=manifest,
+                invocation_id=invocation,
+                assistant_source=source,
+                assistant_entry_id=entry,
+                **fields,
+            )
+        with pytest.raises(FoundationError, match="response_repair_required"):
+            _invocation(case, action, fields)
+    elif expected in ("attention", "unproven"):
+        with pytest.raises(FoundationError, match="response_repair_unavailable"):
+            _apply(case, ConversationDeliveryRequest, action="repair_response", **fields)
+
+
+def test_response_repairs_are_persistent_bounded_and_observation_is_idempotent(
+    tmp_path: Path,
+) -> None:
+    case, action = _question(tmp_path)
+    fields = _claim(case, action)
+    for number in range(3):
+        manifest, invocation = _invocation(case, action, fields, "answered")
+        source, entry = _terminal_original(case, fields, manifest, invocation, b"")
+        request = ConversationDeliveryRequest(
+            operation_id=uuid4(),
+            space_id=case[1],
+            actor="owner",
+            action="observe_terminal",
+            manifest=manifest,
+            invocation_id=invocation,
+            assistant_source=source,
+            assistant_entry_id=entry,
+            **fields,
+        )
+        receipt = apply_operation(case[0], request, case[2])
+        assert apply_operation(case[0], request, case[2]) == receipt
+        view = read_conversation_delivery(case[0], fields["delivery_id"], case[2])
+        assert view.repair_count == number and view.status == "included"
+        if number < 2:
+            first = _apply(case, ConversationDeliveryRequest, action="repair_response", **fields)
+            duplicate = _apply(
+                case, ConversationDeliveryRequest, action="repair_response", **fields
+            )
+            assert first.result == duplicate.result and first.result["repair_number"] == number + 1
+            _apply(
+                case,
+                ConversationDeliveryRequest,
+                action="observe_terminal",
+                manifest=manifest,
+                invocation_id=invocation,
+                assistant_source=source,
+                assistant_entry_id=entry,
+                **fields,
+            )
+            assert (
+                read_conversation_delivery(case[0], fields["delivery_id"], case[2]).response_outcome
+                == "empty"
+            )
+        else:
+            assert view.response_outcome == "attention"
+            assert view.diagnostics[0].code == "response_repair_exhausted"
+            with pytest.raises(FoundationError, match="response_repair_unavailable"):
+                _apply(case, ConversationDeliveryRequest, action="repair_response", **fields)
+    reopened = authorize_local(case[0], actor="owner", source_ref="reopened-console")
+    assert read_conversation_delivery(case[0], fields["delivery_id"], reopened).repair_count == 2
+    with pytest.raises(FoundationError, match="stale_conversation_delivery"):
+        _apply(
+            case,
+            ConversationDeliveryRequest,
+            action="repair_response",
+            **{**fields, "branch_id": "another-branch"},
+        )
+    assert read_activity_setup(case[0], case[3], case[2]).state.phase == "needs_input"
+
+
+def test_unknown_or_missing_native_evidence_never_authorizes_response_repair(
+    tmp_path: Path,
+) -> None:
+    case, action = _question(tmp_path)
+    fields = _claim(case, action)
+    manifest, invocation = _invocation(case, action, fields, "answered")
+    with pytest.raises(FoundationError, match="response_repair_unavailable"):
+        _apply(case, ConversationDeliveryRequest, action="repair_response", **fields)
+    _apply(
+        case,
+        ConversationDeliveryRequest,
+        action="response_attention",
+        response_problem=ConversationResponseProblem(
+            code="native_capture_failed", message="Original could not be retained"
+        ),
+        **fields,
+    )
+    view = read_conversation_delivery(case[0], fields["delivery_id"], case[2])
+    assert view.response_outcome == "attention" and view.response_source is None
+    _apply(
+        case,
+        ConversationDeliveryRequest,
+        action="unknown",
+        manifest=manifest,
+        invocation_id=invocation,
+        **fields,
+    )
+    assert (
+        read_conversation_delivery(case[0], fields["delivery_id"], case[2]).response_outcome
+        == "unproven"
+    )
+    with pytest.raises(FoundationError, match="terminal"):
+        _apply(case, ConversationDeliveryRequest, action="repair_response", **fields)
+
+
+def test_invalid_utf8_capture_cannot_become_empty_or_retry_permission(tmp_path: Path) -> None:
+    case, action = _question(tmp_path)
+    fields = _claim(case, action)
+    manifest, invocation = _invocation(case, action, fields, "answered")
+    with pytest.raises(FoundationError, match="invalid_content"):
+        _terminal_original(case, fields, manifest, invocation, b"\xff")
+    view = read_conversation_delivery(case[0], fields["delivery_id"], case[2])
+    assert view.response_source is None and view.response_outcome == "unproven"
+    _apply(
+        case,
+        ConversationDeliveryRequest,
+        action="response_attention",
+        response_problem=ConversationResponseProblem(
+            code="native_capture_invalid_utf8", message="Text capture rejected invalid UTF-8"
+        ),
+        **fields,
+    )
+    with pytest.raises(FoundationError, match="response_repair_unavailable"):
+        _apply(case, ConversationDeliveryRequest, action="repair_response", **fields)
+
+
+def test_terminal_source_budget_restore_and_fragment_proof_refusal(tmp_path: Path) -> None:
+    case, action = _question(tmp_path)
+    fields = _claim(case, action)
+    manifest, invocation = _invocation(case, action, fields, "answered")
+    source, entry = _terminal_original(case, fields, manifest, invocation, b" ")
+    fragment = source.model_copy(update={"start": 0, "end": 1})
+    with pytest.raises(FoundationError, match="whole Source"):
+        _apply(
+            case,
+            ConversationDeliveryRequest,
+            action="observe_terminal",
+            manifest=manifest,
+            invocation_id=invocation,
+            assistant_source=fragment,
+            assistant_entry_id=entry,
+            **fields,
+        )
+    _apply(
+        case,
+        ConversationDeliveryRequest,
+        action="observe_terminal",
+        manifest=manifest,
+        invocation_id=invocation,
+        assistant_source=source,
+        assistant_entry_id=entry,
+        **fields,
+    )
+    _apply(case, ConversationDeliveryRequest, action="repair_response", **fields)
+    backup = create_backup(case[0], uuid4(), case[2])
+    restored = tmp_path / "restored-response"
+    restored.mkdir()
+    recovery = authorize_recovery(actor="owner", source_ref="fictional-recovery")
+    restore_backup(backup.package, restored, recovery)
+    apply_operation(
+        restored,
+        RecoverRequest(
+            operation_id=uuid4(),
+            space_id=case[1],
+            actor="owner",
+            decision_id=uuid4(),
+            grant_id=uuid4(),
+        ),
+        recovery,
+    )
+    owner = authorize_local(restored, actor="owner", source_ref="fictional-reopened")
+    recovered = read_conversation_delivery(restored, fields["delivery_id"], owner)
+    assert recovered.repair_count == 1 and recovered.response_source == source
+    with pytest.raises(FoundationError, match="stale_conversation_delivery"):
+        apply_operation(
+            restored,
+            ConversationDeliveryRequest(
+                operation_id=uuid4(),
+                space_id=case[1],
+                actor="owner",
+                action="repair_response",
+                **fields,
+            ),
+            owner,
+        )
+    _apply(case, DeleteKnowledgeRequest, record_id=source.record_id, expected_revision=1)
+    assert (
+        list_conversation_deliveries(case[0], case[2], action_id=action.ref.action_id)[0].status
+        == "stale"
+    )
+    original = read_knowledge(restored, source.record_id, owner)
+    assert isinstance(original.state, SourceState) and original.state.content == b" "
+
+
+def test_duplicate_response_receipts_follow_source_deletion_without_spending_budget(
+    tmp_path: Path,
+) -> None:
+    case, action = _question(tmp_path)
+    fields = _claim(case, action)
+    manifest, invocation = _invocation(case, action, fields, "answered")
+    source, entry = _terminal_original(case, fields, manifest, invocation, b"")
+    observed = _apply(
+        case,
+        ConversationDeliveryRequest,
+        action="observe_terminal",
+        manifest=manifest,
+        invocation_id=invocation,
+        assistant_source=source,
+        assistant_entry_id=entry,
+        **fields,
+    )
+    repair = _apply(case, ConversationDeliveryRequest, action="repair_response", **fields)
+    alias_observed = _apply(
+        case,
+        ConversationDeliveryRequest,
+        action="observe_terminal",
+        manifest=manifest,
+        invocation_id=invocation,
+        assistant_source=source,
+        assistant_entry_id=entry,
+        **fields,
+    )
+    alias_repair = _apply(case, ConversationDeliveryRequest, action="repair_response", **fields)
+    assert observed.result == alias_observed.result and repair.result == alias_repair.result
+    view = read_conversation_delivery(case[0], fields["delivery_id"], case[2])
+    assert view.repair_count == 1 and view.response_outcome == "empty"
+    _apply(case, DeleteKnowledgeRequest, record_id=source.record_id, expected_revision=1)
+    for receipt in (observed, repair, alias_observed, alias_repair):
+        with pytest.raises(FoundationError, match="not_found"):
+            read_receipt(case[0], receipt.operation_id, case[2])
+    assert read_conversation_delivery(case[0], fields["delivery_id"], case[2]).status == "stale"
+
+
+def test_visible_observed_reply_cannot_be_hidden_by_another_invocation(tmp_path: Path) -> None:
+    case, action = _question(tmp_path)
+    fields = _claim(case, action)
+    manifest, invocation = _invocation(case, action, fields, "answered")
+    source, entry = _terminal_original(case, fields, manifest, invocation, b"Ready to continue")
+    _apply(
+        case,
+        ConversationDeliveryRequest,
+        action="observe_terminal",
+        manifest=manifest,
+        invocation_id=invocation,
+        assistant_source=source,
+        assistant_entry_id=entry,
+        **fields,
+    )
+    with pytest.raises(FoundationError, match="response_already_visible"):
+        _invocation(case, action, fields)
+    view = read_conversation_delivery(case[0], fields["delivery_id"], case[2])
+    assert view.response_source == source and view.response_outcome == "visible"
+    _apply(
+        case,
+        ConversationDeliveryRequest,
+        action="respond",
+        manifest=manifest,
+        invocation_id=invocation,
+        assistant_source=source,
+        assistant_entry_id=entry,
+        **fields,
+    )
+    assert read_conversation_delivery(case[0], fields["delivery_id"], case[2]).status == "responded"
+
+
+def test_native_original_before_final_accounting_remains_pending_then_can_be_observed(
+    tmp_path: Path,
+) -> None:
+    case, action = _question(tmp_path)
+    fields = _claim(case, action)
+    manifest, invocation = _invocation(case, action, fields, "sent")
+    source, entry = _terminal_original(case, fields, manifest, invocation, b"")
+    request = ConversationDeliveryRequest(
+        operation_id=uuid4(),
+        space_id=case[1],
+        actor="owner",
+        action="observe_terminal",
+        manifest=manifest,
+        invocation_id=invocation,
+        assistant_source=source,
+        assistant_entry_id=entry,
+        **fields,
+    )
+    with pytest.raises(FoundationError, match="response_accounting_pending"):
+        apply_operation(case[0], request, case[2])
+    pending = read_conversation_delivery(case[0], fields["delivery_id"], case[2])
+    assert pending.status == "included" and pending.response_outcome == "unproven"
+    _apply(
+        case,
+        RecordContextDeliveryRequest,
+        invocation_id=invocation,
+        manifest=manifest,
+        stage="answered",
+        usage_units=0,
+    )
+    receipt = apply_operation(case[0], request, case[2])
+    assert receipt.result["response_outcome"] == "empty"
+    observed = read_conversation_delivery(case[0], fields["delivery_id"], case[2])
+    assert observed.status == "included" and observed.response_source == source
+
+
+@pytest.mark.parametrize("stage", ("prepared", "sent", "answered", "unknown"))
+@pytest.mark.parametrize("manifest_deleted", (False, True))
+def test_no_send_cleanup_checks_pinned_knowledge_accounting_without_execution_send(
+    tmp_path: Path,
+    stage: str,
+    manifest_deleted: bool,
+) -> None:
+    case = _case(tmp_path)
+    _upgrade(case)
+    upgrade_delivery_correlation_space(case[0], case[2])
+    activity, work, resource, attempt, session, invocation = (uuid4() for _ in range(6))
+    workdir = tmp_path / "unsent-work"
+    workdir.mkdir()
+    _apply(
+        case,
+        CreateActivityRequest,
+        activity_id=activity,
+        state=ActivityState(title="Fictional cleanup", goal="Preserve send accounting"),
+    )
+    _apply(
+        case,
+        CreateWorkRequest,
+        work_id=work,
+        state=WorkState(
+            activity_id=activity,
+            goal="Ordinary preflight",
+            expected_outputs=(OutputContract(slot="report", media_type="text/plain"),),
+        ),
+    )
+    _apply(
+        case,
+        CreateResourceRequest,
+        resource_id=resource,
+        work_id=work,
+        state=ResourceState(label="Preflight resource", root=workdir),
+    )
+    _apply(
+        case,
+        StartAttemptRequest,
+        work_id=work,
+        attempt_id=attempt,
+        resource_id=resource,
+        expected_work_revision=1,
+        expected_resource_revision=1,
+        session_id=session,
+    )
+    manifest = KnowledgeRef(record_id=uuid4(), revision=1)
+    _apply(
+        case,
+        CreateKnowledgeRequest,
+        record_id=manifest.record_id,
+        state=ContextState(
+            purpose="Pinned ordinary preflight",
+            session_id=session,
+            work_id=work,
+            attempt_id=attempt,
+            mandatory=(KnowledgeRef(record_id=work, revision=1),),
+        ),
+    )
+    _apply(
+        case,
+        RecordContextDeliveryRequest,
+        invocation_id=invocation,
+        manifest=manifest,
+        stage="prepared",
+    )
+    if stage != "prepared":
+        _apply(
+            case,
+            RecordContextDeliveryRequest,
+            invocation_id=invocation,
+            manifest=manifest,
+            stage="sent",
+            request_sha256="A" * 64,
+            request_bytes=100,
+        )
+    if stage in ("answered", "unknown"):
+        _apply(
+            case,
+            RecordContextDeliveryRequest,
+            invocation_id=invocation,
+            manifest=manifest,
+            stage=stage,
+            usage_units=0 if stage == "answered" else None,
+        )
+    if manifest_deleted:
+        _apply(case, DeleteKnowledgeRequest, record_id=manifest.record_id, expected_revision=1)
+    before = read_execution(case[0], work, case[2])
+    assert before.invocations == ()
+    if stage == "prepared" and not manifest_deleted:
+        _apply(
+            case,
+            StopAttemptRequest,
+            work_id=work,
+            attempt_id=attempt,
+            session_id=session,
+            outcome="interrupted",
+            no_send_only=True,
+        )
+        assert read_execution(case[0], work, case[2]).attempts[-1].status == "interrupted"
+    else:
+        with pytest.raises(FoundationError, match="attempt_send_observed"):
+            _apply(
+                case,
+                StopAttemptRequest,
+                work_id=work,
+                attempt_id=attempt,
+                session_id=session,
+                outcome="interrupted",
+                no_send_only=True,
+            )
+        assert read_execution(case[0], work, case[2]) == before
+    assert read_work(case[0], work, case[2]).state.acceptance is None

@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from zaratustra import foundation as core
 from zaratustra.foundation import (
     Action,
     ActivityState,
@@ -41,6 +42,27 @@ from zaratustra.foundation import (
     upgrade_execution_space,
     upgrade_space,
 )
+
+
+def _upgrade_guard(root: Path, owner: LocalAuthority) -> None:
+    for upgrade in (
+        core.upgrade_continuation_space,
+        core.upgrade_composition_space,
+        core.upgrade_child_execution_space,
+        core.upgrade_plan_revision_space,
+        core.upgrade_parent_execution_space,
+        core.upgrade_binding_space,
+        core.upgrade_knowledge_space,
+        core.upgrade_development_space,
+        core.upgrade_change_package_space,
+        core.upgrade_memory_space,
+        core.upgrade_activity_setup_space,
+        core.upgrade_structures_space,
+        core.upgrade_workflow_space,
+        core.upgrade_conversation_space,
+        core.upgrade_delivery_correlation_space,
+    ):
+        upgrade(root, owner)
 
 
 class InvocationFields(TypedDict):
@@ -447,3 +469,129 @@ def test_current_execution_and_model_grants_are_separate(tmp_path: Path) -> None
             worker,
         )
     assert read_execution(root, work_id, owner).invocations[0].status == "prepared"
+
+
+@pytest.mark.parametrize("stage", ("none", "prepared", "admitted", "sent", "answered", "unknown"))
+def test_no_send_cleanup_is_atomic_and_preserves_observed_invocations(
+    tmp_path: Path,
+    stage: Literal["none", "prepared", "admitted", "sent", "answered", "unknown"],
+) -> None:
+    root, _, space, _, work, resource, owner = ready(tmp_path)
+    _upgrade_guard(root, owner)
+    attempt, session = start(root, space, work, resource, owner)
+    before_send = read_execution(root, work, owner)
+    assert before_send.invocations == () and before_send.attempts[-1].status == "active"
+    request = StopAttemptRequest(
+        operation_id=uuid4(),
+        space_id=space,
+        actor=owner.actor,
+        attempt_id=attempt,
+        work_id=work,
+        session_id=session,
+        outcome="interrupted",
+        no_send_only=True,
+    )
+    if stage != "none":
+        invocation_id, _ = invocation(root, space, work, attempt, session, owner, 1)
+        common: InvocationFields = dict(
+            work_id=work, attempt_id=attempt, session_id=session, invocation_id=invocation_id
+        )
+        if stage != "prepared":
+            apply_operation(
+                root,
+                AdmitInvocationRequest(
+                    operation_id=uuid4(), space_id=space, actor=owner.actor, **common
+                ),
+                owner,
+            )
+        if stage in ("sent", "answered", "unknown"):
+            apply_operation(
+                root,
+                SendInvocationRequest(
+                    operation_id=uuid4(), space_id=space, actor=owner.actor, **common
+                ),
+                owner,
+            )
+        if stage in ("answered", "unknown"):
+            apply_operation(
+                root,
+                FinishInvocationRequest(
+                    operation_id=uuid4(),
+                    space_id=space,
+                    actor=owner.actor,
+                    outcome=stage,
+                    usage_units=0 if stage == "answered" else None,
+                    **common,
+                ),
+                owner,
+            )
+    current = read_execution(root, work, owner)
+    if stage in ("none", "prepared"):
+        receipt = apply_operation(root, request, owner)
+        assert apply_operation(root, request, owner) == receipt
+        after = read_execution(root, work, owner)
+        assert (
+            after.attempts[-1].status == "interrupted" and after.invocations == current.invocations
+        )
+    else:
+        with pytest.raises(FoundationError, match="attempt_send_observed"):
+            apply_operation(root, request, owner)
+        assert read_execution(root, work, owner) == current
+    assert read_execution(root, work, owner).work.state.acceptance is None
+    assert "no_send_only" not in request.model_copy(update={"no_send_only": False}).model_dump(
+        mode="json"
+    )
+
+
+def test_no_send_cleanup_cannot_retire_assigned_wait_or_its_answer_history(tmp_path: Path) -> None:
+    from tests.zaratustra.foundation.test_continuation import ask, assign
+    from tests.zaratustra.foundation.test_continuation import ready as assigned_ready
+
+    root, _, space, artifact, work, resource = assigned_ready(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="fictional-console")
+    attempt, session, _ = assign(root, space, work, resource)
+    question = ask(root, space, artifact, work, attempt, session)
+    before = read_execution(root, work, owner)
+    with pytest.raises(FoundationError, match="assigned_attempt"):
+        apply_operation(
+            root,
+            StopAttemptRequest(
+                operation_id=uuid4(),
+                space_id=space,
+                actor=owner.actor,
+                attempt_id=attempt,
+                work_id=work,
+                session_id=session,
+                outcome="interrupted",
+                no_send_only=True,
+            ),
+            owner,
+        )
+    after = read_execution(root, work, owner)
+    assert after == before and after.waits[0].wait_id == question.wait_id
+    assert after.waits[0].status == "open" and after.work.state.acceptance is None
+
+
+def test_legacy_stop_omits_new_guard_and_keeps_manual_interruption_contract(tmp_path: Path) -> None:
+    root, _, space, _, work, resource, owner = ready(tmp_path)
+    attempt, session = start(root, space, work, resource, owner)
+    request = StopAttemptRequest(
+        operation_id=uuid4(),
+        space_id=space,
+        actor=owner.actor,
+        attempt_id=attempt,
+        work_id=work,
+        session_id=session,
+        outcome="interrupted",
+    )
+    old_payload = request.model_dump_json()
+    assert "no_send_only" not in old_payload and "observed_final" not in old_payload
+    before = read_execution(root, work, owner)
+    with pytest.raises(FoundationError, match="upgrade_required.*18"):
+        apply_operation(root, request.model_copy(update={"no_send_only": True}), owner)
+    assert read_execution(root, work, owner) == before
+    receipt = apply_operation(root, request, owner)
+    assert (
+        apply_operation(root, StopAttemptRequest.model_validate_json(old_payload), owner) == receipt
+    )
+    assert read_execution(root, work, owner).attempts[-1].status == "interrupted"

@@ -1315,7 +1315,26 @@ CONVERSATION_SCHEMA_STATEMENTS = (
 CONVERSATION_SCHEMA_SHA256 = (
     hashlib.sha256("\n".join(CONVERSATION_SCHEMA_STATEMENTS).encode()).hexdigest().upper()
 )
-SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17)
+DELIVERY_CORRELATION_SCHEMA_NAME = "core-delivery-correlation-v1"
+DELIVERY_CORRELATION_SCHEMA_STATEMENTS = (
+    "ALTER TABLE knowledge_delivery ADD COLUMN context_work_id TEXT",
+    "ALTER TABLE knowledge_delivery ADD COLUMN context_attempt_id TEXT",
+    "ALTER TABLE knowledge_delivery ADD COLUMN context_session_id TEXT",
+    "ALTER TABLE knowledge_delivery ADD COLUMN correlation_state TEXT NOT NULL "
+    "DEFAULT 'unresolved_legacy' CHECK((correlation_state='exact' AND "
+    "context_work_id IS NOT NULL AND context_attempt_id IS NOT NULL AND "
+    "context_session_id IS NOT NULL) OR (correlation_state='not_attempt' AND "
+    "context_attempt_id IS NULL) OR (correlation_state='unresolved_legacy' AND "
+    "context_work_id IS NULL AND context_attempt_id IS NULL AND context_session_id IS NULL))",
+    "ALTER TABLE execution_attempts ADD COLUMN legacy_delivery_correlation_uncertain INTEGER "
+    "NOT NULL DEFAULT 0 CHECK(legacy_delivery_correlation_uncertain IN (0,1))",
+    "CREATE INDEX knowledge_delivery_attempt ON knowledge_delivery"
+    "(context_attempt_id,context_work_id,context_session_id)",
+)
+DELIVERY_CORRELATION_SCHEMA_SHA256 = (
+    hashlib.sha256("\n".join(DELIVERY_CORRELATION_SCHEMA_STATEMENTS).encode()).hexdigest().upper()
+)
+SUPPORTED_SCHEMA_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18)
 
 
 def utc_now() -> datetime:
@@ -1508,6 +1527,8 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         expected.append((16, WORKFLOW_SCHEMA_NAME, WORKFLOW_SCHEMA_SHA256))
     if schema_version >= 17:
         expected.append((17, CONVERSATION_SCHEMA_NAME, CONVERSATION_SCHEMA_SHA256))
+    if schema_version >= 18:
+        expected.append((18, DELIVERY_CORRELATION_SCHEMA_NAME, DELIVERY_CORRELATION_SCHEMA_SHA256))
     if migration != expected:
         raise FoundationError("unsupported_schema", "Schema history does not match installed code")
     rows = _identity_read(
@@ -1524,7 +1545,8 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
         space_id=UUID(space_id),
         created_at=datetime.fromisoformat(created_at),
         schema_version=cast(
-            Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], schema_version
+            Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+            schema_version,
         ),
         state_revision=state_revision,
         execution_epoch=execution_epoch,

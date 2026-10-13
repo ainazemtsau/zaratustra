@@ -1,4 +1,4 @@
-"""Fictional schema-17 conversation continuation in ordinary Pi over localhost."""
+"""Fictional schema-18 conversation continuation in ordinary Pi over localhost."""
 
 from __future__ import annotations
 
@@ -27,6 +27,7 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     space.mkdir()
     workdir.mkdir()
     owner = _prepare_space(space, "owner", create=True)
+    assert core.read_space(space).schema_version == 18
     native, actual = harness(), read_pi_runtime(runtime)
     setup_id: UUID | None = None
     first_work: UUID | None = None
@@ -298,7 +299,7 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
         encoding="utf-8",
     )
     return {
-        "schema": 17,
+        "schema": core.read_space(space).schema_version,
         "http_requests": len(provider.requests),
         "ledger": len(ledger),
         "ordinary_calls": ordinary_calls,
@@ -329,6 +330,7 @@ def origin_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     space = directory / "space"
     space.mkdir()
     owner = _prepare_space(space, "owner", create=True)
+    assert core.read_space(space).schema_version == 18
     native = harness()
     fixture = directory / "origin-fixture.ts"
     fixture.write_text(
@@ -422,6 +424,7 @@ def stale_wake_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     space = directory / "space"
     space.mkdir()
     owner = _prepare_space(space, "owner", create=True)
+    assert core.read_space(space).schema_version == 18
     native = harness()
     fixture = directory / "stale-fixture.ts"
     fixture.write_text(
@@ -464,14 +467,20 @@ def stale_wake_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     return report
 
 
-def abrupt_final_probe(directory: Path, runtime: Path) -> dict[str, Any]:
-    """Kill native Pi after persisted final proof, before ordinary Attempt closure."""
+def abrupt_final_probe(
+    directory: Path,
+    runtime: Path,
+    *,
+    clean_close: bool = False,
+) -> dict[str, Any]:
+    """Close native Pi after saved proof, before ordinary Attempt settlement."""
     from uuid import uuid4
 
     directory.mkdir(parents=True, exist_ok=False)
     space = directory / "space"
     space.mkdir()
     owner = _prepare_space(space, "owner", create=True)
+    assert core.read_space(space).schema_version == 18
     activity, work = uuid4(), uuid4()
     for request in (
         core.CreateActivityRequest(
@@ -515,8 +524,12 @@ def abrupt_final_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     sessions = directory / "sessions"
     sessions.mkdir()
 
+    saved_proof = None
+
     def final_saved() -> bool:
-        return core.read_ordinary_final_proof(space, work, owner) is not None
+        nonlocal saved_proof
+        saved_proof = core.read_ordinary_final_proof(space, work, owner)
+        return saved_proof is not None
 
     events = native.run_process(
         directory,
@@ -528,13 +541,22 @@ def abrupt_final_probe(directory: Path, runtime: Path) -> dict[str, Any]:
         expected_provider_calls=2,
         session_directory=sessions,
         extra_extensions=(fixture,),
-        abrupt_end_predicate=final_saved,
+        abrupt_end_predicate=None if clean_close else final_saved,
+        input_eof_predicate=final_saved if clean_close else None,
     )
     proof = core.read_ordinary_final_proof(space, work, owner)
-    assert proof is not None
+    if clean_close:
+        assert proof is None
+    else:
+        assert proof is not None
     before = core.read_work(space, work, owner)
     assert before.state.linked_outputs and before.state.acceptance is None
-    assert any(item.status == "active" for item in core.read_execution(space, work, owner).attempts)
+    execution = core.read_execution(space, work, owner)
+    if clean_close:
+        assert all(item.status == "completed" for item in execution.attempts)
+    else:
+        assert any(item.status == "active" for item in execution.attempts)
+    saved_attempts = {item.attempt_id for item in execution.attempts}
 
     def resumed(body: dict[str, Any]) -> dict[str, str]:
         packet = context(body)
@@ -542,8 +564,9 @@ def abrupt_final_probe(directory: Path, runtime: Path) -> dict[str, Any]:
         assert packet["work"]["work_id"] == str(work)
         assert core.read_ordinary_final_proof(space, work, owner) is None
         assert all(
-            item.attempt_id != proof.attempt_id or item.status == "completed"
+            item.status == "completed"
             for item in core.read_execution(space, work, owner).attempts
+            if item.attempt_id in saved_attempts
         )
         return {"_final_text": "The original result is saved; continue from that result."}
 
@@ -563,18 +586,21 @@ def abrupt_final_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     assert core.read_work(space, work, owner) == before
     assert all(item.status != "active" for item in core.read_execution(space, work, owner).attempts)
     report = {
+        "schema": core.read_space(space).schema_version,
         "initial_http": 2,
         "resume_http": 1,
         "old_final_observed": True,
         "result_unchanged": True,
         "accepted": False,
         "blind_repeat": False,
+        "native_eof_close": clean_close,
     }
     for name, value in (
         ("report", report),
         ("http-requests", provider.requests + reopened.requests),
         ("native-events", events + resumed_events),
-        ("final-proof", proof.model_dump(mode="json")),
+        ("final-proof", saved_proof.model_dump(mode="json") if saved_proof else None),
+        ("closed-execution", execution.model_dump(mode="json")),
     ):
         (directory / f"{name}.json").write_text(json.dumps(value, indent=2), encoding="utf-8")
     return report
@@ -586,7 +612,7 @@ def missing_final_capture_probe(directory: Path, runtime: Path) -> dict[str, Any
 
     class FailedCaptureBridge(Bridge):
         def capture_source(self, session_id: UUID, **kwargs: Any) -> dict[str, object]:
-            if kwargs.get("conversation_final") is True:
+            if kwargs.get("conversation_terminal") is not None:
                 raise core.FoundationError("storage", "Fictional final capture failure")
             return super().capture_source(session_id, **kwargs)
 
@@ -594,6 +620,7 @@ def missing_final_capture_probe(directory: Path, runtime: Path) -> dict[str, Any
     space = directory / "space"
     space.mkdir()
     owner = _prepare_space(space, "owner", create=True)
+    assert core.read_space(space).schema_version == 18
     activity, work = uuid4(), uuid4()
     for request in (
         core.CreateActivityRequest(

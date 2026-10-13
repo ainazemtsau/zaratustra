@@ -1390,6 +1390,13 @@ class StopAttemptRequest(OperationRequest):
     observed_final: OrdinaryFinalProof | None = Field(
         default=None, exclude_if=lambda value: value is None
     )
+    no_send_only: bool = Field(default=False, exclude_if=lambda value: not value)
+
+    @model_validator(mode="after")
+    def no_send_stop_is_interruption(self) -> StopAttemptRequest:
+        if self.no_send_only and (self.outcome != "interrupted" or self.observed_final is not None):
+            raise ValueError("A no-send stop only interrupts and cannot claim final proof")
+        return self
 
 
 class AssignAttemptRequest(OperationRequest):
@@ -1502,6 +1509,27 @@ class FinishInvocationRequest(OperationRequest):
         return self
 
 
+class ConversationTerminalObservation(ContractModel):
+    invocation_id: UUID
+    manifest: KnowledgeRef
+    assistant_entry_id: str = Field(min_length=1, max_length=300)
+    native_outcome: Literal["completed", "tool_call", "aborted", "error", "unknown"]
+    stop_reason: str = Field(min_length=1, max_length=100)
+
+    @model_validator(mode="after")
+    def whole_manifest(self) -> ConversationTerminalObservation:
+        if self.manifest.start is not None or self.manifest.end is not None:
+            raise ValueError("Native terminal proof requires the whole manifest")
+        return self
+
+
+class ConversationResponseProblem(ContractModel):
+    code: str = Field(min_length=1, max_length=100)
+    path: tuple[str | int, ...] = ()
+    message: str = Field(min_length=1, max_length=2048)
+    allowed_values: tuple[str, ...] = ()
+
+
 class SourceState(ContractModel):
     kind: Literal["source"] = "source"
     channel: Literal[
@@ -1530,6 +1558,9 @@ class SourceState(ContractModel):
     limitations: tuple[str, ...] = ()
     derived_from: tuple[KnowledgeRef, ...] = ()
     conversation_final: bool = Field(default=False, exclude_if=lambda value: not value)
+    conversation_terminal: ConversationTerminalObservation | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     memory: MemoryMetadata | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
@@ -1540,6 +1571,17 @@ class SourceState(ContractModel):
             raise ValueError("A reference-only source needs a locator")
         if self.event_at is not None and not self.event_time_basis:
             raise ValueError("Event time needs its source")
+        if self.conversation_terminal is not None:
+            terminal = self.conversation_terminal
+            if (
+                self.channel != "conversation_assistant"
+                or self.sender != "pi-assistant"
+                or self.capture != "full"
+                or not self.conversation_id
+                or self.source_event_id != f"{self.conversation_id}:{terminal.assistant_entry_id}"
+                or terminal.manifest not in self.derived_from
+            ):
+                raise ValueError("Terminal observation requires exact native Source provenance")
         return self
 
 
@@ -3158,7 +3200,16 @@ class ActivitySetupRequest(OperationRequest):
 
 class ConversationDeliveryRequest(OperationRequest):
     kind: Literal["conversation_delivery"] = "conversation_delivery"
-    action: Literal["claim", "include", "respond", "unknown", "abandon"]
+    action: Literal[
+        "claim",
+        "include",
+        "respond",
+        "unknown",
+        "abandon",
+        "observe_terminal",
+        "repair_response",
+        "response_attention",
+    ]
     delivery_id: UUID
     action_ref: ConversationActionRef
     host_id: str = Field(min_length=1, max_length=300)
@@ -3169,6 +3220,9 @@ class ConversationDeliveryRequest(OperationRequest):
     invocation_id: UUID | None = None
     assistant_source: KnowledgeRef | None = None
     assistant_entry_id: str | None = Field(default=None, min_length=1, max_length=300)
+    response_problem: ConversationResponseProblem | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
 
 class ConversationDeliveryView(ContractModel):
@@ -3184,6 +3238,10 @@ class ConversationDeliveryView(ContractModel):
     invocation_id: UUID | None = None
     assistant_source: KnowledgeRef | None = None
     assistant_entry_id: str | None = None
+    response_outcome: Literal["unproven", "empty", "visible", "attention", "unknown"] = "unproven"
+    repair_count: int = Field(default=0, ge=0, le=2)
+    response_source: KnowledgeRef | None = None
+    diagnostics: tuple[ConversationResponseProblem, ...] = ()
 
 
 DomainRequest = Annotated[
@@ -3261,7 +3319,7 @@ class SpaceInfo(ContractModel):
     database: Path
     space_id: UUID
     created_at: AwareDatetime
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     recovery_state: Literal["active", "quarantined"]
@@ -3353,6 +3411,9 @@ class AttemptRecord(ContractModel):
     generation: int = Field(ge=1)
     input_refs: tuple[ArtifactRef, ...]
     status: Literal["active", "completed", "interrupted"]
+    legacy_delivery_correlation_uncertain: bool = Field(
+        default=False, exclude_if=lambda value: not value
+    )
 
 
 class InvocationRecord(ContractModel):
@@ -3638,7 +3699,7 @@ class BackupManifest(ContractModel):
     backup_id: UUID
     format_version: Literal[1, 2] = 1
     space_id: UUID
-    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+    schema_version: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
     state_revision: int = Field(ge=0)
     execution_epoch: int = Field(ge=1)
     created_at: AwareDatetime

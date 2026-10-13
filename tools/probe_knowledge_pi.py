@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import queue
@@ -12,11 +13,11 @@ import subprocess
 import tempfile
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib.resources import files
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Protocol, cast
 from uuid import UUID, uuid4
 
 from zaratustra.foundation import (
@@ -223,11 +224,31 @@ def _completed_observation(bridge: Bridge, predicate: Callable[[], bool]) -> boo
     raise AssertionError("Bounded observation must return or raise")
 
 
+class NativeProvider(Protocol):
+    @property
+    def server_port(self) -> int: ...
+
+    @property
+    def calls(self) -> int: ...
+
+    @property
+    def requests(self) -> list[dict[str, Any]]: ...
+
+    @property
+    def script(self) -> Sequence[object]: ...
+
+    def serve_forever(self, poll_interval: float = 0.5) -> None: ...
+
+    def shutdown(self) -> None: ...
+
+    def server_close(self) -> None: ...
+
+
 def run_process(
     directory: Path,
     runtime: Path,
     bridge: Bridge,
-    provider: Provider,
+    provider: NativeProvider,
     *,
     work: tuple[object, object] | None = None,
     compact: bool = False,
@@ -258,7 +279,11 @@ def run_process(
     on_event: Callable[[Any, dict[str, object]], None] | None = None,
     extra_extensions: tuple[Path, ...] = (),
     abrupt_end_predicate: Callable[[], bool] | None = None,
+    input_eof_predicate: Callable[[], bool] | None = None,
+    provider_profile: str = "local-completions",
 ) -> list[dict[str, object]]:
+    if provider_profile not in ("local-completions", "codex-sse"):
+        raise ValueError("Fictional native trials support only admitted provider profiles")
     bridge_server = BridgeServer(bridge)
     bridge_thread = threading.Thread(target=bridge_server.serve_forever, daemon=True)
     bridge_thread.start()
@@ -269,10 +294,25 @@ def run_process(
     home = directory / f"pi-home-{uuid4()}"
     home.mkdir()
     agent_home = fixture_agent_dir or home / "pi-agent"
-    if model_overrides is not None:
+    if model_overrides is not None or provider_profile == "codex-sse":
         agent_home.mkdir(parents=True, exist_ok=True)
+        fixture_config: dict[str, object] = {}
+        fixture_provider = "fictional-local"
+        if provider_profile == "codex-sse":
+            fixture_provider = "openai-codex"
+            encoded = base64.b64encode(
+                json.dumps(
+                    {"https://api.openai.com/auth": {"chatgpt_account_id": "fictional-native"}}
+                ).encode()
+            ).decode()
+            fixture_config = {
+                "baseUrl": f"http://127.0.0.1:{provider.server_port}/backend-api",
+                "apiKey": f"e30=.{encoded}.ZmljdGlvbmFs",
+            }
+        if model_overrides is not None:
+            fixture_config["modelOverrides"] = model_overrides
         (agent_home / "models.json").write_text(
-            json.dumps({"providers": {"fictional-local": {"modelOverrides": model_overrides}}}),
+            json.dumps({"providers": {fixture_provider: fixture_config}}),
             encoding="utf-8",
         )
     if compact:
@@ -301,8 +341,9 @@ def run_process(
             "ZARA_CORE_ENDPOINT": f"http://127.0.0.1:{bridge_server.server_port}",
             "ZARA_CORE_TOKEN": bridge.token,
             "ZARA_RESERVE_UNITS": "1000",
-            "ZARA_PROVIDER_PROFILE": "local-completions",
-            "ZARA_PROVIDER_BASE_URL": f"http://127.0.0.1:{provider.server_port}/v1",
+            "ZARA_PROVIDER_PROFILE": provider_profile,
+            "ZARA_PROVIDER_BASE_URL": f"http://127.0.0.1:{provider.server_port}/"
+            + ("backend-api" if provider_profile == "codex-sse" else "v1"),
             "ZARA_PROVIDER_ORIGIN": f"http://127.0.0.1:{provider.server_port}",
             "ZARA_LOCAL_PROVIDER_ID": "fictional-local",
             "ZARA_LOCAL_MODEL_ID": local_model_id,
@@ -327,7 +368,7 @@ def run_process(
         "--mode",
         "rpc",
         "--provider",
-        "openai-codex" if catalog_only else "fictional-local",
+        "openai-codex" if catalog_only or provider_profile == "codex-sse" else "fictional-local",
         "--model",
         "gpt-6.1-sol" if catalog_only else local_model_id,
         "--extension",
@@ -396,11 +437,15 @@ def run_process(
         second_turn_started = False
         continuation_started = False
         confirmations = 0
+        input_eof_sent = False
         deadline = time.monotonic() + timeout_seconds
         while time.monotonic() < deadline:
             try:
                 event = events.get(timeout=0.25)
             except queue.Empty:
+                if input_eof_predicate is not None and not input_eof_sent and input_eof_predicate():
+                    process.stdin.close()
+                    input_eof_sent = True
                 if abrupt_end_predicate is not None and abrupt_end_predicate():
                     break
                 if wait_for is not None and _completed_observation(bridge, wait_for):

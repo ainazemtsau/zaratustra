@@ -1886,7 +1886,10 @@ class Bridge:
         state_raw = prepared.get("state")
         if isinstance(state_raw, dict):
             state = dict(state_raw)
-            if state.get("conversation_final") not in (None, False):
+            if (
+                state.get("conversation_final") not in (None, False)
+                or state.get("conversation_terminal") is not None
+            ):
                 raise FoundationError(
                     "permission_denied", "Native final proof cannot be supplied by model memory"
                 )
@@ -2202,6 +2205,7 @@ class Bridge:
         replay_session_id: UUID | None = None,
         conversation_final: bool = False,
         final_manifest: KnowledgeRef | None = None,
+        conversation_terminal: dict[str, Any] | None = None,
     ) -> dict[str, object]:
         selected = self._session(session_id)
         if channel not in ("conversation_user", "conversation_assistant", "tool_result"):
@@ -2212,6 +2216,24 @@ class Bridge:
             channel != "conversation_user" or input_source != "session-resume"
         ):
             raise FoundationError("invalid_request", "Replay identity needs saved Pi user input")
+        if conversation_terminal is not None:
+            if channel != "conversation_assistant":
+                raise FoundationError(
+                    "invalid_request", "Native terminal must describe an assistant"
+                )
+            observed_manifest = KnowledgeRef.model_validate(conversation_terminal["manifest"])
+            if final_manifest is not None and final_manifest != observed_manifest:
+                raise FoundationError("invalid_request", "Terminal manifest differs from capture")
+            final_manifest = observed_manifest
+            if conversation_terminal["assistant_entry_id"] != source_event_id:
+                raise FoundationError(
+                    "invalid_request", "Terminal native entry differs from capture"
+                )
+            conversation_final = (
+                conversation_terminal["native_outcome"] == "completed"
+                and conversation_terminal["stop_reason"] == "stop"
+                and bool(content.strip())
+            )
         if conversation_final and (channel != "conversation_assistant" or not content):
             raise FoundationError("invalid_request", "Final proof needs assistant text")
         if final_manifest is not None:
@@ -2222,7 +2244,7 @@ class Bridge:
                 revision=final_manifest.revision,
             )
             if (
-                not conversation_final
+                not (conversation_final or conversation_terminal is not None)
                 or not isinstance(manifest.state, ContextState)
                 or manifest.state.session_id != session_id
             ):
@@ -2278,10 +2300,17 @@ class Bridge:
                 if channel == "conversation_assistant"
                 else "pi-tool",
                 "media_type": "text/plain; charset=utf-8",
-                "capture": "excluded" if not content else "full",
-                "content": content.encode() if content else None,
+                "capture": "full" if content or conversation_terminal is not None else "excluded",
+                "content": content.encode()
+                if content or conversation_terminal is not None
+                else None,
                 "limitations": limitations,
                 "conversation_final": conversation_final,
+                **(
+                    {"conversation_terminal": conversation_terminal}
+                    if conversation_terminal is not None
+                    else {}
+                ),
                 "derived_from": sorted(derived, key=lambda ref: (str(ref.record_id), ref.revision))
                 if channel == "conversation_assistant"
                 else (),
@@ -2503,14 +2532,61 @@ class Bridge:
                 action_page = read_conversation_actions_page(self.path, self.authority, limit=20)
                 actions = list(action_page.actions)
                 packet["conversation_next_offset"] = action_page.next_offset
-                host_ref = self.conversation_actions.get(session_id)
+                host_ref = (
+                    self.conversation_actions.get(session_id)
+                    if self.request_origins.get(session_id) == "host"
+                    else None
+                )
+                from .conversation import delivery_summaries
+
+                repair = None
                 if host_ref is not None:
                     host_action = read_conversation_action(self.path, host_ref, self.authority)
+                    host_deliveries = delivery_summaries(self, [host_action])
+                    repair = host_deliveries[0] if host_deliveries else None
+                    host = self.conversation_hosts.get(session_id)
+                    if (
+                        repair is None
+                        or repair["status"] not in ("claimed", "included")
+                        or repair["response_outcome"] not in ("unproven", "empty")
+                        or repair["diagnostics"]
+                        or repair["session_id"] != str(session_id)
+                        or host is None
+                        or any(repair[key] != host[key] for key in ("host_id", "branch_id"))
+                    ):
+                        host_ref = None
+                if host_ref is not None:
                     if all(item.ref != host_ref for item in actions):
                         actions.insert(0, host_action)
                     packet["conversation_event"] = host_action.model_dump(mode="json")
                     included_conversation.append(host_action)
                 packet["conversation_actions"] = [item.model_dump(mode="json") for item in actions]
+                packet["conversation_delivery_outcomes"] = delivery_summaries(self, actions)
+                if host_ref is not None:
+                    repair_number = int(cast(int, repair.get("repair_count", 0))) if repair else 0
+                    if repair is not None and repair_number > 0:
+                        for key in ("response_source", "manifest"):
+                            if repair.get(key) is not None:
+                                mandatory.append(KnowledgeRef.model_validate(repair[key]))
+                    packet["conversation_task"] = {
+                        "kind": "explain_saved_action",
+                        "action_ref": host_ref.model_dump(mode="json"),
+                        "response_required": True,
+                        "instruction": "Produce a visible conversational response now. Explain "
+                        "this exact saved result or question and the next useful step. "
+                        "Use the current saved facts and selected originals; do not create Work "
+                        "or act as the owner. This task is a trusted host continuation, "
+                        "not another owner message. A silent or thinking-only final is incomplete.",
+                        "repair": {
+                            "number": repair_number,
+                            "previous_source": repair["response_source"],
+                            "previous_manifest": repair["manifest"],
+                            "response_outcome": repair["response_outcome"],
+                            "diagnostics": repair["diagnostics"],
+                        }
+                        if repair is not None and repair_number > 0
+                        else None,
+                    }
                 packet["conversation_guidance"] = (
                     "These are current Core facts, not owner messages. Explain the result and next "
                     "useful step in ordinary conversation. Lost notifications do not lose results. "
@@ -3500,6 +3576,7 @@ class BridgeHandler(BaseHTTPRequestHandler):
                     final_manifest=KnowledgeRef.model_validate(body["final_manifest"])
                     if body.get("final_manifest") is not None
                     else None,
+                    conversation_terminal=body.get("conversation_terminal"),
                 )
             elif post and path.path == "/v1/request-origin":
                 result = bridge.bind_request_origin(session_id, body)

@@ -141,6 +141,18 @@ and parallel dirty work; do not publish private preparation branches merely to k
 
 ## What exists
 
+Native response recovery (0.24.1) explicitly upgrades schema 17 to 18. Durable
+delivery correlation preserves exact Work/Attempt/session identity through
+content deletion; unresolved legacy evidence cannot claim no-send cleanup.
+Exact typed terminal
+assistant observations retain visible bytes before response classification.
+Existing delivery operations/events/receipts derive response outcomes and a
+two-correction bound; unknown sends are never empty-response retries. Whitespace
+cannot acknowledge delivery or complete ordinary execution. Native boundary
+continuation preserves host origin and exact proof; Work acceptance stays separate.
+See `docs/conversation-response-recovery-plan.md`; release checks are reported
+separately from owner acceptance.
+
 Conversation continuation (0.24.0) explicitly upgrades Core 16 to 17. Current
 setup, workflow and Work state derives addressed conversation actions; typed
 delivery receipts record observed context inclusion and final replies, without

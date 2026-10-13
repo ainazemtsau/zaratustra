@@ -23,6 +23,7 @@ from .models import (
     ConversationAnswerTarget,
     ConversationDeliveryRequest,
     ConversationDeliveryView,
+    ConversationResponseProblem,
     KnowledgeRef,
     OrdinaryFinalProof,
     SourceState,
@@ -41,6 +42,100 @@ from .storage import (
     utc_now,
 )
 from .work_status import work_status
+
+
+def _visible_final(source: SourceState) -> bool:
+    if source.content is None:
+        return False
+    try:
+        visible = bool(source.content.decode("utf-8", errors="strict").strip())
+    except UnicodeDecodeError as error:
+        raise FoundationError(
+            "invalid_response_utf8", "Response original is not valid UTF-8"
+        ) from error
+    terminal = source.conversation_terminal
+    return visible and (
+        terminal is None
+        or terminal.native_outcome == "completed"
+        and terminal.stop_reason == "stop"
+    )
+
+
+def _classify_terminal(source: SourceState) -> tuple[str, tuple[ConversationResponseProblem, ...]]:
+    terminal = source.conversation_terminal
+    if terminal is None:
+        return "unproven", ()
+    if terminal.native_outcome == "unknown":
+        return "unknown", ()
+    if terminal.native_outcome == "tool_call" or terminal.stop_reason == "toolUse":
+        return "unproven", ()
+    if terminal.native_outcome in ("error", "aborted") or terminal.stop_reason != "stop":
+        code = (
+            "response_truncated"
+            if terminal.stop_reason == "length"
+            else "native_response_incomplete"
+        )
+        return "attention", (
+            ConversationResponseProblem(
+                code=code,
+                message=f"Native outcome {terminal.native_outcome}; stop {terminal.stop_reason}",
+            ),
+        )
+    try:
+        visible = _visible_final(source)
+    except FoundationError as error:
+        return "attention", (ConversationResponseProblem(code=error.code, message=error.detail),)
+    return "visible" if visible else "empty", ()
+
+
+def _response_history(
+    connection: sqlite3.Connection,
+    delivery_id: UUID,
+    invocation_id: UUID | None,
+) -> tuple[str, int, KnowledgeRef | None, tuple[ConversationResponseProblem, ...]]:
+    repairs = 0
+    last_observation = last_repair = 0
+    outcome = "unproven"
+    response_source: KnowledgeRef | None = None
+    diagnostics: tuple[ConversationResponseProblem, ...] = ()
+    for action, receipt_json, state_revision in connection.execute(
+        "SELECT e.action,r.receipt_json,o.state_revision FROM conversation_delivery_events e "
+        "JOIN operations o "
+        "ON o.operation_id=e.operation_id LEFT JOIN receipts r ON r.operation_id=e.operation_id "
+        "WHERE e.delivery_id=? ORDER BY o.state_revision",
+        (str(delivery_id),),
+    ):
+        if action == "repair_response":
+            repairs += 1
+            last_repair = state_revision
+        if receipt_json is None:
+            continue
+        result = json.loads(receipt_json)["result"]
+        if action == "observe_terminal" and result.get("observed_invocation_id") == str(
+            invocation_id
+        ):
+            last_observation = state_revision
+            response_source = KnowledgeRef.model_validate(result["response_source"])
+            row = connection.execute(
+                "SELECT payload FROM knowledge_revisions WHERE record_id=? AND revision=?",
+                (str(response_source.record_id), response_source.revision),
+            ).fetchone()
+            if row is not None and row[0] is not None:
+                outcome, diagnostics = _classify_terminal(SourceState.model_validate_json(row[0]))
+        elif action == "response_attention":
+            outcome = "attention"
+            diagnostics = (ConversationResponseProblem.model_validate(result["response_problem"]),)
+    if repairs > 2:
+        raise FoundationError("technical_state", "Conversation repair count exceeds its contract")
+    if outcome == "empty" and repairs == 2 and last_observation > last_repair:
+        outcome = "attention"
+        diagnostics = (
+            ConversationResponseProblem(
+                code="response_repair_exhausted",
+                message="Two response corrections are exhausted",
+            ),
+        )
+    return outcome, repairs, response_source, diagnostics
 
 
 def upgrade_conversation_space(path: Path, authority: LocalAuthority) -> SpaceInfo:
@@ -686,7 +781,7 @@ def ordinary_final_proof(
             or source.channel != "conversation_assistant"
             or source.sender != "pi-assistant"
             or source.capture != "full"
-            or not source.content
+            or not _visible_final(source)
             or source.conversation_id != session
             or source.scope_work_id != work_id
             or not source.source_event_id
@@ -785,6 +880,38 @@ def _delivery(connection: sqlite3.Connection, identifier: UUID) -> ConversationD
     ).fetchone()
     if row is None:
         raise FoundationError("not_found", "Conversation delivery is absent")
+    outcome, repairs, response_source, diagnostics = _response_history(
+        connection,
+        identifier,
+        UUID(row[10]) if row[10] else None,
+    )
+    if row[7] == "unknown":
+        outcome = "unknown" if response_source else "unproven"
+    elif row[7] == "responded":
+        outcome = "unproven"
+        saved = (
+            connection.execute(
+                "SELECT payload FROM knowledge_revisions WHERE record_id=? AND revision=?",
+                (row[11], row[12]),
+            ).fetchone()
+            if row[11]
+            else None
+        )
+        if saved and saved[0] is not None:
+            original = SourceState.model_validate_json(saved[0])
+            if (
+                original.conversation_final
+                and original.sender == "pi-assistant"
+                and original.conversation_id == row[5]
+                and original.source_event_id == f"{row[5]}:{row[13]}"
+            ):
+                try:
+                    outcome = "visible" if _visible_final(original) else "unproven"
+                except FoundationError as error:
+                    outcome = "attention"
+                    diagnostics = (
+                        ConversationResponseProblem(code=error.code, message=error.detail),
+                    )
     return ConversationDeliveryView(
         delivery_id=identifier,
         action_ref=ConversationActionRef(action_id=UUID(row[0]), digest=row[1]),
@@ -800,6 +927,10 @@ def _delivery(connection: sqlite3.Connection, identifier: UUID) -> ConversationD
         if row[11]
         else None,
         assistant_entry_id=row[13],
+        response_outcome=cast(Any, outcome),
+        repair_count=repairs,
+        response_source=response_source,
+        diagnostics=diagnostics,
     )
 
 
@@ -854,6 +985,17 @@ def list_conversation_deliveries(
                     continue
                 raise
             if action:
+                for target, revision in connection.execute(
+                    "SELECT target_id,target_revision FROM conversation_delivery_edges "
+                    "WHERE delivery_id=?",
+                    (str(delivery.delivery_id),),
+                ):
+                    _require_ref(
+                        connection,
+                        KnowledgeRef(record_id=UUID(target), revision=revision),
+                        authority.actor,
+                        info.execution_epoch,
+                    )
                 result.append(delivery)
         return tuple(result)
 
@@ -941,7 +1083,9 @@ def apply_conversation_change(
         )
     if delivery.epoch != authority.execution_epoch:
         raise FoundationError("stale_conversation_delivery", "Delivery epoch changed")
-    if delivery.status in ("responded", "unknown", "abandoned", "stale"):
+    if delivery.status in ("responded", "unknown", "abandoned", "stale") and not (
+        delivery.status == "unknown" and request.action == "observe_terminal"
+    ):
         raise FoundationError("invalid_transition", "Conversation delivery is terminal")
     manifest = request.manifest or delivery.manifest
     invocation_id = request.invocation_id or delivery.invocation_id
@@ -952,6 +1096,8 @@ def apply_conversation_change(
             raise FoundationError(
                 "invalid_request", "Delivery correlation needs manifest and invocation"
             )
+        if manifest.start is not None or manifest.end is not None:
+            raise FoundationError("invalid_response_proof", "Delivery requires the whole manifest")
         _require_ref(connection, manifest, authority.actor, authority.execution_epoch)
         row = connection.execute(
             "SELECT payload FROM knowledge_revisions WHERE record_id=? AND revision=?",
@@ -986,6 +1132,10 @@ def apply_conversation_change(
     if request.action == "include":
         if manifest is None or invocation_id is None:
             raise FoundationError("invalid_request", "Inclusion requires exact correlation")
+        if delivery.response_outcome == "visible" and invocation_id != delivery.invocation_id:
+            raise FoundationError(
+                "response_already_visible", "A visible native answer must be acknowledged first"
+            )
         unsettled = connection.execute(
             "SELECT 1 FROM conversation_delivery_invocations c JOIN knowledge_delivery k "
             "ON k.invocation_id=c.invocation_id WHERE c.delivery_id=? AND c.invocation_id!=? "
@@ -996,6 +1146,21 @@ def apply_conversation_change(
             raise FoundationError(
                 "unknown_conversation_delivery", "Earlier provider outcome is not confirmed"
             )
+        if (
+            delivery.response_outcome in ("empty", "attention")
+            and invocation_id != delivery.invocation_id
+        ):
+            permitted = connection.execute(
+                "SELECT 1 FROM conversation_delivery_events e JOIN receipts r "
+                "ON r.operation_id=e.operation_id WHERE e.delivery_id=? "
+                "AND e.action='repair_response' AND "
+                "json_extract(r.receipt_json,'$.result.repair_of')=? LIMIT 1",
+                (str(request.delivery_id), str(delivery.invocation_id)),
+            ).fetchone()
+            if delivery.response_outcome == "attention" or not permitted:
+                raise FoundationError(
+                    "response_repair_required", "Empty response needs a saved repair permission"
+                )
         if (
             delivery.status not in ("claimed", "included")
             or ledger is None
@@ -1028,6 +1193,18 @@ def apply_conversation_change(
             ),
         )
         status = "included"
+    elif request.action in ("observe_terminal", "repair_response", "response_attention"):
+        return _response_change(
+            connection,
+            request,
+            delivery,
+            authority=authority,
+            manifest=manifest,
+            invocation_id=invocation_id,
+            ledger=ledger,
+            refs=refs,
+            now=now,
+        )
     elif request.action == "respond":
         if (
             delivery.status != "included"
@@ -1040,6 +1217,8 @@ def apply_conversation_change(
                 "invalid_transition",
                 "Response requires answered invocation and saved final assistant evidence",
             )
+        if request.assistant_source.start is not None or request.assistant_source.end is not None:
+            raise FoundationError("invalid_response_proof", "Final proof requires a whole Source")
         _require_ref(
             connection, request.assistant_source, authority.actor, authority.execution_epoch
         )
@@ -1055,7 +1234,7 @@ def apply_conversation_change(
             or source.conversation_id != str(request.session_id)
             or source.source_event_id != f"{request.session_id}:{request.assistant_entry_id}"
             or source.capture != "full"
-            or not source.content
+            or not _visible_final(source)
             or manifest not in source.derived_from
         ):
             raise FoundationError(
@@ -1098,6 +1277,150 @@ def apply_conversation_change(
         ),
     )
     return {"delivery_id": str(request.delivery_id), "status": status}, refs
+
+
+def _response_change(
+    connection: sqlite3.Connection,
+    request: ConversationDeliveryRequest,
+    delivery: ConversationDeliveryView,
+    *,
+    authority: LocalAuthority,
+    manifest: KnowledgeRef | None,
+    invocation_id: UUID | None,
+    ledger: Any,
+    refs: list[dict[str, object]],
+    now: str,
+) -> tuple[dict[str, object], list[dict[str, object]]]:
+    result: dict[str, object] = {"delivery_id": str(request.delivery_id), "status": delivery.status}
+    if request.action == "observe_terminal":
+        if manifest is None or invocation_id is None or ledger is None:
+            raise FoundationError(
+                "invalid_response_proof", "Native observation needs exact invocation"
+            )
+        if request.assistant_source is None or request.assistant_entry_id is None:
+            raise FoundationError(
+                "invalid_response_proof", "Native observation needs a retained Source"
+            )
+        if request.assistant_source.start is not None or request.assistant_source.end is not None:
+            raise FoundationError("invalid_response_proof", "Native proof requires a whole Source")
+        _require_ref(
+            connection, request.assistant_source, authority.actor, authority.execution_epoch
+        )
+        row = connection.execute(
+            "SELECT r.payload,s.state_revision FROM knowledge_revisions r JOIN operations s "
+            "ON s.operation_id=r.operation_id WHERE r.record_id=? AND r.revision=?",
+            (str(request.assistant_source.record_id), request.assistant_source.revision),
+        ).fetchone()
+        source = SourceState.model_validate_json(row[0])
+        terminal = source.conversation_terminal
+        if (
+            terminal is None
+            or terminal.invocation_id != invocation_id
+            or terminal.manifest != manifest
+            or terminal.assistant_entry_id != request.assistant_entry_id
+            or source.conversation_id != str(request.session_id)
+            or source.source_event_id != f"{request.session_id}:{request.assistant_entry_id}"
+            or source.capture != "full"
+            or source.content is None
+            or ledger[2] not in ("answered", "unknown", "sent", "prepared")
+        ):
+            raise FoundationError(
+                "invalid_response_proof", "Native Source does not match this delivery"
+            )
+        if ledger[2] in ("prepared", "sent"):
+            raise FoundationError(
+                "response_accounting_pending",
+                "Native original is saved; provider accounting is pending",
+            )
+        included = connection.execute(
+            "SELECT o.state_revision FROM conversation_delivery_invocations i JOIN operations o "
+            "ON o.operation_id=i.operation_id WHERE i.delivery_id=? AND i.invocation_id=?",
+            (str(request.delivery_id), str(invocation_id)),
+        ).fetchone()
+        if not included or row[1] <= included[0]:
+            raise FoundationError(
+                "invalid_response_proof", "Native Source predates this invocation"
+            )
+        previous = connection.execute(
+            "SELECT r.receipt_json FROM conversation_delivery_events e JOIN receipts r "
+            "ON r.operation_id=e.operation_id WHERE e.delivery_id=? "
+            "AND e.action='observe_terminal' AND "
+            "json_extract(r.receipt_json,'$.result.observed_invocation_id')=? LIMIT 1",
+            (str(request.delivery_id), str(invocation_id)),
+        ).fetchone()
+        if previous:
+            observed = json.loads(previous[0])["result"]
+            if KnowledgeRef.model_validate(observed["response_source"]) != request.assistant_source:
+                raise FoundationError(
+                    "conflicting_response_observation", "Invocation has another native original"
+                )
+            _response_replay_event(connection, request)
+            return cast(dict[str, object], observed), refs
+        outcome, diagnostics = _classify_terminal(source)
+        if ledger[2] != "answered":
+            result["status"] = "unknown"
+            outcome = "unknown"
+        _edge(connection, request.delivery_id, "terminal", request.assistant_source)
+        refs.append(
+            {
+                "record_id": str(request.assistant_source.record_id),
+                "revision": request.assistant_source.revision,
+            }
+        )
+        result.update(
+            observed_invocation_id=str(invocation_id),
+            response_source=request.assistant_source.model_dump(mode="json"),
+            response_outcome=outcome,
+            diagnostics=[item.model_dump(mode="json") for item in diagnostics],
+        )
+    elif request.action == "repair_response":
+        prior = connection.execute(
+            "SELECT r.receipt_json FROM conversation_delivery_events e JOIN receipts r "
+            "ON r.operation_id=e.operation_id WHERE e.delivery_id=? AND e.action='repair_response' "
+            "AND json_extract(r.receipt_json,'$.result.repair_of')=? LIMIT 1",
+            (str(request.delivery_id), str(delivery.invocation_id)),
+        ).fetchone()
+        if prior:
+            _response_replay_event(connection, request)
+            return cast(dict[str, object], json.loads(prior[0])["result"]), refs
+        if delivery.response_outcome != "empty" or delivery.repair_count >= 2:
+            raise FoundationError(
+                "response_repair_unavailable", "No admitted empty response correction"
+            )
+        if ledger is None or ledger[2] != "answered" or delivery.response_source is None:
+            raise FoundationError(
+                "invalid_response_proof", "Repair needs an answered exact empty original"
+            )
+        result.update(
+            repair_number=delivery.repair_count + 1,
+            repair_of=str(delivery.invocation_id),
+            response_source=delivery.response_source.model_dump(mode="json"),
+        )
+    else:
+        if request.response_problem is None:
+            raise FoundationError("invalid_request", "Response obstacle requires a typed problem")
+        result["response_problem"] = request.response_problem.model_dump(mode="json")
+    connection.execute(
+        "INSERT INTO conversation_delivery_events VALUES (?,?,?)",
+        (str(request.delivery_id), str(request.operation_id), request.action),
+    )
+    connection.execute(
+        "UPDATE conversation_deliveries SET status=?,operation_id=?,updated_at=? "
+        "WHERE delivery_id=?",
+        (result["status"], str(request.operation_id), now, str(request.delivery_id)),
+    )
+    return result, refs
+
+
+def _response_replay_event(
+    connection: sqlite3.Connection,
+    request: ConversationDeliveryRequest,
+) -> None:
+    """Track the alias receipt for deletion without another logical response or repair."""
+    connection.execute(
+        "INSERT INTO conversation_delivery_events VALUES (?,?,?)",
+        (str(request.delivery_id), str(request.operation_id), request.action + "_replay"),
+    )
 
 
 def _abandon_delivery(

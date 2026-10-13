@@ -78,13 +78,15 @@ def _upgrade_to(root: Path, actor: str, target: int) -> None:
         core.upgrade_activity_setup_space,
         core.upgrade_structures_space,
         core.upgrade_workflow_space,
+        core.upgrade_conversation_space,
+        core.upgrade_delivery_correlation_space,
     )
     for version, upgrade in enumerate(upgrades, 2):
         if core.read_space(root).schema_version < version <= target:
             upgrade(root, owner)
 
 
-@pytest.mark.parametrize("schema", (1, 2, 6, 14, 15, 16))
+@pytest.mark.parametrize("schema", (1, 2, 6, 14, 15, 16, 17))
 def test_confirmed_upgrade_uses_the_public_chain_after_a_verified_backup(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, schema: int
 ) -> None:
@@ -119,7 +121,7 @@ def test_confirmed_upgrade_uses_the_public_chain_after_a_verified_backup(
     monkeypatch.setattr("builtins.input", confirm)
     assert release.main(["upgrade", "--config", str(selected)]) == 0
     current = core.read_space(root)
-    assert current.schema_version == 17
+    assert current.schema_version == 18
     assert current.space_id == before.space_id
     assert current.execution_epoch == before.execution_epoch
     assert len(prompts) == 1 and "verified backup" in prompts[0]
@@ -156,7 +158,7 @@ def test_declined_upgrade_preserves_the_existing_space_without_backup(
     assert core.read_execution(root, work_id, owner) == execution
 
 
-@pytest.mark.parametrize("schema", (15, 16))
+@pytest.mark.parametrize("schema", (15, 16, 17))
 def test_upgrade_keeps_exact_results_acceptance_and_send_history(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, schema: int
 ) -> None:
@@ -219,7 +221,7 @@ def test_upgrade_keeps_exact_results_acceptance_and_send_history(
     monkeypatch.setattr("builtins.input", lambda _: "UPGRADE")
     assert release.main(["upgrade", "--config", str(selected)]) == 0
     current = core.read_execution(root, work_id, owner)
-    assert core.read_space(root).schema_version == 17
+    assert core.read_space(root).schema_version == 18
     assert current.space_id == before.space_id
     assert current.activity == before.activity
     assert current.work == before.work

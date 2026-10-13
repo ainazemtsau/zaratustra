@@ -1,6 +1,19 @@
 # Interactive Pi adapter
 
+New ordinary Pi spaces explicitly initialize through schema 18; existing spaces
+need the owner-approved public upgrade before launch. Durable delivery correlation
+pins Work/Attempt/session without scanning unrelated old manifests. Schema 17
+conversation records retain their legacy reading and response protocols; automatic
+no-send cleanup requires schema 18 and otherwise reports upgrade_required.
+
 Schema 17 conversation continuation derives current actions from Core. Native
+terminal observations preserve exact visible UTF-8 bytes, including empty bytes,
+before Core classifies the response. Thinking is excluded. A checked host task
+appears in actual provider instructions. Core permits at most two repairs of known
+empty completed responses per logical delivery; native BoundaryResult commits an
+empty checked custom wake before continuation. Repair manifests pin the prior
+Source and manifest. Unknown sends, capture failures and stale rights never cause
+a blind resend. Current context and UI retain Core-derived delivery obstacles.
 followUp wakes carry empty, checked-address custom entries filtered from provider
 and compaction input; exact ContextManifest, observed invocation and persisted
 final assistant entry prove delivery. Tool-use answers are not final delivery.
@@ -23,6 +36,9 @@ StopAttempt; absent or unknown proof preserves execution and restores a free
 conversation with an addressed obstacle. Explicit interruption requires a real
 owner Source and native confirmation. Never replay a send or accept Work during
 recovery. Model memory cannot create or revise the reserved final-proof flag.
+Native failure/shutdown cleanup uses the same saved proof; only an exact Attempt
+with Core-proven absence of sends may be interrupted automatically. A terminal
+unknown delivery cannot inject its old host task into a fresh owner conversation.
 
 `workflows.py` coordinates schema-16 workflow nodes through ordinary assigned Pi/DBOS.
 WorkPlan is the actual graph; Work/Attempt and committed receipts own progress.

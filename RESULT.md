@@ -1,3 +1,61 @@
+# Native response recovery — 0.24.1, schema 18
+
+## outcome
+
+Implemented and checked on `codex/conversation-response-recovery`. Exact native
+terminal observations preserve empty visible responses before classification;
+outcomes and the two-correction bound use existing Core operations and receipts.
+The owner-authorized schema 17 → 18 upgrade preserves immutable delivery-to-Work,
+Attempt and session correlation through content deletion. Current Activity and
+Development history remain intact. The final wheel is checked and installed in
+the selected space. Verified private backup, public restore/recovery rehearsal
+and explicit schema 17 → 18 upgrade completed with original domain revisions,
+outputs, acceptance and accounting preserved. Identity, epoch and configuration
+bytes stayed unchanged. Public publication remains pending.
+
+## evidence
+
+The schema 18 full native gate passed 1111 tests and all required checks before
+the symmetric-registration and legacy optional-Attempt fixes. Subsequent affected
+native gates passed 105 and then 82 tests with the required checks on later bytes.
+The final wheel passed 11 installed upgrade tests and eight ordinary Pi localhost
+scenarios with 49 actual HTTP requests outside checkout; all 121 installed product
+files matched the wheel. Independent bounded review and evaluator follow-ups
+found no material issue in their checked scopes. Model-free selected installation
+and rehearsal checks preserved original records and runtime dependencies. Exact
+artifact attribution, failed trials and limits are in
+[the report](docs/conversation-response-recovery-0.24.1-result.md).
+
+## assumptions
+
+Provider completion and a visible final answer require distinct evidence.
+Synthetic raw Responses streams establish transport and persistence mechanisms,
+not universal future model behavior. The exact cause of an earlier RPC EOF remains
+unestablished; its unchanged diagnostic repeat and final scenarios passed.
+
+## cuts
+
+No export changes, new execution graph, personal deletion, automatic Work
+acceptance or real-provider calls. Schema migration is explicit and verified in
+test spaces and the selected space. No private Git update or automatic Activity
+recreation. Public publication is pending delivery.
+
+## cost
+
+Schema 18 full gate: 1101.18 seconds. Subsequent affected tests: 124.33 and
+109.04 seconds. Final installed upgrade tests: 17.41 seconds; ordinary Pi probes:
+49 localhost HTTP requests. Zero real model or paid API calls. Earlier failed
+fixtures and attribution limits are recorded in the report.
+
+## manual-acceptance
+
+Pending. Engineering checks and delivery authorization do not accept Activity
+results or future Work on the owner's behalf.
+
+## next
+
+solmax
+
 # Conversation continuation — 0.24.0
 
 ## outcome

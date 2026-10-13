@@ -108,6 +108,7 @@ from .knowledge import (
     read_knowledge,
     read_knowledge_neighbors,
     search_knowledge,
+    upgrade_delivery_correlation_space,
     upgrade_knowledge_space,
 )
 from .memory import (
@@ -184,6 +185,8 @@ from .models import (
     ConversationAnswerTarget,
     ConversationDeliveryRequest,
     ConversationDeliveryView,
+    ConversationResponseProblem,
+    ConversationTerminalObservation,
     CreateActivityRequest,
     CreateArtifactRequest,
     CreateBindingVersionRequest,
@@ -417,6 +420,7 @@ from .workflows import (
 )
 
 __all__ = [
+    "upgrade_delivery_correlation_space",
     "current_conversation_action",
     "ConversationActionRef",
     "ConversationActionPage",
@@ -424,6 +428,8 @@ __all__ = [
     "ConversationAnswerTarget",
     "ConversationDeliveryRequest",
     "ConversationDeliveryView",
+    "ConversationResponseProblem",
+    "ConversationTerminalObservation",
     "OrdinaryFinalProof",
     "list_conversation_actions",
     "read_conversation_action",

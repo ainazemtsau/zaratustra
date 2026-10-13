@@ -39,6 +39,9 @@ from .models import (
 )
 from .operations import LocalAuthority, _authorize, _local_space
 from .storage import (
+    DELIVERY_CORRELATION_SCHEMA_NAME,
+    DELIVERY_CORRELATION_SCHEMA_SHA256,
+    DELIVERY_CORRELATION_SCHEMA_STATEMENTS,
     KNOWLEDGE_SCHEMA_NAME,
     KNOWLEDGE_SCHEMA_SHA256,
     KNOWLEDGE_SCHEMA_STATEMENTS,
@@ -56,6 +59,109 @@ KnowledgeChange = (
     | DeleteKnowledgeRequest
     | RecordContextDeliveryRequest
 )
+
+
+def _context_correlation(context: ContextState) -> tuple[str | None, str | None, str, str]:
+    if context.attempt_id is not None and context.work_id is None:
+        raise FoundationError("invalid_delivery_correlation", "Attempt context requires its Work")
+    return (
+        str(context.work_id) if context.work_id else None,
+        str(context.attempt_id) if context.attempt_id else None,
+        str(context.session_id),
+        "exact" if context.attempt_id else "not_attempt",
+    )
+
+
+def _execution_correlation(
+    connection: sqlite3.Connection,
+    invocation: str,
+) -> tuple[str, str, str, str] | None:
+    row = connection.execute(
+        "SELECT work_id,attempt_id,session_id FROM execution_invocations WHERE invocation_id=?",
+        (invocation,),
+    ).fetchone()
+    return (*row, "exact") if row else None
+
+
+def _context_matches_exact_correlation(
+    context: ContextState,
+    pin: tuple[str | None, str | None, str | None, str],
+) -> bool:
+    """Missing legacy optional fields do not contradict exact domain accounting."""
+    return (
+        (context.work_id is None or str(context.work_id) == pin[0])
+        and (context.attempt_id is None or str(context.attempt_id) == pin[1])
+        and str(context.session_id) == pin[2]
+    )
+
+
+def upgrade_delivery_correlation_space(path: Path, authority: LocalAuthority) -> SpaceInfo:
+    """Explicit 17 to 18 upgrade; exact delivery pins survive manifest sanitation."""
+    with space_connection(path, writable=True) as (connection, info):
+        _local_space(authority, info)
+        if info.recovery_state != "active" or info.schema_version < 17:
+            raise FoundationError("upgrade_required", "Delivery correlation needs active schema 17")
+        _authorize(
+            connection,
+            actor=authority.actor,
+            action="maintenance.backup",
+            epoch=info.execution_epoch,
+        )
+        if info.schema_version == 17:
+            for statement in DELIVERY_CORRELATION_SCHEMA_STATEMENTS:
+                connection.execute(statement)
+            unresolved = False
+            for invocation, payload, stage in connection.execute(
+                "SELECT d.invocation_id,r.payload,d.stage FROM knowledge_delivery d "
+                "LEFT JOIN knowledge_revisions r ON r.record_id=d.manifest_id "
+                "AND r.revision=d.manifest_revision ORDER BY d.invocation_id",
+            ):
+                try:
+                    context = ContextState.model_validate_json(payload) if payload else None
+                except ValidationError as error:
+                    raise FoundationError(
+                        "invalid_delivery_correlation",
+                        f"Invalid retained Context for invocation {invocation}",
+                    ) from error
+                execution_pin = _execution_correlation(connection, invocation)
+                if (
+                    context is not None
+                    and execution_pin is not None
+                    and not _context_matches_exact_correlation(context, execution_pin)
+                ):
+                    raise FoundationError(
+                        "delivery_correlation_conflict", "Manifest and execution pins disagree"
+                    )
+                pin = execution_pin or (
+                    _context_correlation(context)
+                    if context is not None
+                    else (None, None, None, "unresolved_legacy")
+                )
+                connection.execute(
+                    "UPDATE knowledge_delivery SET context_work_id=?,context_attempt_id=?,"
+                    "context_session_id=?,correlation_state=? WHERE invocation_id=?",
+                    (*pin, invocation),
+                )
+                unresolved |= pin[3] == "unresolved_legacy" and stage != "prepared"
+            if unresolved:
+                connection.execute(
+                    "UPDATE execution_attempts SET legacy_delivery_correlation_uncertain=1 "
+                    "WHERE status='active'",
+                )
+            now = utc_now().isoformat()
+            connection.execute(
+                "INSERT INTO schema_migrations VALUES (18,?,?,?)",
+                (DELIVERY_CORRELATION_SCHEMA_NAME, DELIVERY_CORRELATION_SCHEMA_SHA256, now),
+            )
+            connection.execute("PRAGMA user_version=18")
+            connection.execute(
+                "UPDATE spaces SET state_revision=state_revision+1 WHERE singleton=1"
+            )
+            connection.execute(
+                "INSERT INTO maintenance_events VALUES (?,'schema_upgrade',?,?)",
+                (str(uuid4()), now, canonical_json({"from": 17, "to": 18})),
+            )
+    return read_space(path)
 
 
 def upgrade_knowledge_space(path: Path, authority: LocalAuthority) -> SpaceInfo:
@@ -801,11 +907,55 @@ def apply_knowledge_change(
                     now,
                 ),
             )
+            if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 18:
+                pin = _context_correlation(manifest)
+                execution_pin = _execution_correlation(connection, str(request.invocation_id))
+                if execution_pin is not None and pin != execution_pin:
+                    raise FoundationError(
+                        "delivery_correlation_conflict", "Manifest and execution pins disagree"
+                    )
+                if manifest.attempt_id is not None:
+                    attempt = connection.execute(
+                        "SELECT work_id,session_id,execution_epoch,status FROM execution_attempts "
+                        "WHERE attempt_id=?",
+                        (str(manifest.attempt_id),),
+                    ).fetchone()
+                    if attempt != (pin[0], pin[2], epoch, "active"):
+                        raise FoundationError(
+                            "invalid_delivery_correlation",
+                            "Context does not name its active Attempt",
+                        )
+                connection.execute(
+                    "UPDATE knowledge_delivery SET context_work_id=?,context_attempt_id=?,"
+                    "context_session_id=?,correlation_state=? WHERE invocation_id=?",
+                    (*pin, str(request.invocation_id)),
+                )
         else:
             if old[:2] != (str(request.manifest.record_id), request.manifest.revision):
                 raise FoundationError("stale_context", "Invocation cannot change its manifest")
             if bool(old[3]) != request.free_call:
                 raise FoundationError("invalid_transition", "Invocation budget class changed")
+            if int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 18:
+                pin = connection.execute(
+                    "SELECT context_work_id,context_attempt_id,context_session_id,"
+                    "correlation_state "
+                    "FROM knowledge_delivery WHERE invocation_id=?",
+                    (str(request.invocation_id),),
+                ).fetchone()
+                context_matches = (
+                    _context_matches_exact_correlation(manifest, pin)
+                    if pin[3] == "exact"
+                    else pin == _context_correlation(manifest)
+                )
+                if not context_matches:
+                    raise FoundationError(
+                        "delivery_correlation_conflict", "Pinned delivery context changed"
+                    )
+                execution_pin = _execution_correlation(connection, str(request.invocation_id))
+                if execution_pin is not None and execution_pin != pin:
+                    raise FoundationError(
+                        "delivery_correlation_conflict", "Pinned delivery and execution disagree"
+                    )
             if order[request.stage] <= order[old[2]]:
                 raise FoundationError("invalid_transition", "Delivery stage must advance")
             connection.execute(
@@ -1521,7 +1671,7 @@ def read_context_delivery(
             resource_type="artifact",
             resource_id=UUID(row[0]),
         )
-        return {
+        result: dict[str, object] = {
             "invocation_id": str(invocation_id),
             "manifest_id": row[0],
             "manifest_revision": row[1],
@@ -1529,6 +1679,25 @@ def read_context_delivery(
             "request_sha256": row[3],
             "request_bytes": row[4],
         }
+        if info.schema_version >= 18:
+            pin = connection.execute(
+                "SELECT context_work_id,context_attempt_id,context_session_id,correlation_state "
+                "FROM knowledge_delivery WHERE invocation_id=?",
+                (str(invocation_id),),
+            ).fetchone()
+            result.update(
+                zip(
+                    (
+                        "context_work_id",
+                        "context_attempt_id",
+                        "context_session_id",
+                        "correlation_state",
+                    ),
+                    pin,
+                    strict=True,
+                )
+            )
+        return result
 
 
 def read_current_rights(path: Path, authority: LocalAuthority) -> dict[str, object]:

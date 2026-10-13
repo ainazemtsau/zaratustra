@@ -31,6 +31,7 @@ from zaratustra.foundation import (
     upgrade_composition_space,
     upgrade_continuation_space,
     upgrade_conversation_space,
+    upgrade_delivery_correlation_space,
     upgrade_development_space,
     upgrade_execution_space,
     upgrade_knowledge_space,
@@ -69,7 +70,7 @@ def _prepare_space(
     if create:
         initialize_space(path)
     info = read_space(path)
-    if not create and not upgrade_existing and info.schema_version < 17:
+    if not create and not upgrade_existing and info.schema_version < 18:
         raise FoundationError(
             "upgrade_required", "Run zaratustra upgrade explicitly before opening Pi"
         )
@@ -105,6 +106,7 @@ def _prepare_space(
         (15, upgrade_structures_space),
         (16, upgrade_workflow_space),
         (17, upgrade_conversation_space),
+        (18, upgrade_delivery_correlation_space),
     ):
         if read_space(path).schema_version < version:
             upgrade(path, authority)
@@ -216,10 +218,10 @@ def main(argv: list[str] | None = None) -> int:
     if input("Type CONNECT to use these paths and local identity: ").strip() != "CONNECT":
         return 1
     current_schema = 0 if args.new_space else read_space(space).schema_version
-    if not args.new_space and current_schema < 16:
+    if not args.new_space and current_schema < 18:
         parser.error("Run zaratustra upgrade explicitly; Pi does not migrate an existing Core")
     if args.new_space:
-        print(f"Selected Core schema: {current_schema}; new Core target: 16")
+        print(f"Selected Core schema: {current_schema}; new Core target: 18")
         if input("Type UPGRADE to initialize or upgrade this space: ").strip() != "UPGRADE":
             return 1
     authority = _prepare_space(space, actor, create=args.new_space)
