@@ -185,22 +185,30 @@ def _assigned_setup_stage(case: Case) -> tuple[SetupStage, UUID, UUID]:
 
 
 @pytest.mark.parametrize("schema", (15, 16))
+@pytest.mark.parametrize("stage_kind", ("draft", "review", "correction"))
 def test_paused_stopped_stage_accepts_new_sources_and_preserves_raw_history(
-    tmp_path: Path, schema: int
+    tmp_path: Path, schema: int, stage_kind: str
 ) -> None:
-    """A stopped unfinished correction must not permanently reject new user originals."""
+    """Any stopped unfinished stage must leave the plan when owner inputs supersede it."""
     case = _recovery_case(tmp_path, schema)
     _start(case)
-    _raw(case, _proposal().model_dump_json())
-    _start(case, "review")
-    _raw(case, _report(case, blocking=True))
-    _start(case, "correction")
+    if stage_kind != "draft":
+        _raw(case, _proposal().model_dump_json())
+        _start(case, "review")
+    if stage_kind == "correction":
+        _raw(case, _report(case, blocking=True))
+        _start(case, "correction")
     raw = _raw(case, '{"unfinished":', complete=False)
     stage, attempt, session = _assigned_setup_stage(case)
     _step(case, "pause")
     _stop(case[0], case[1], case[2], stage.work_id, attempt, session)
     before = read_activity_setup(case[0], case[3], case[2])
     work_before = read_work(case[0], stage.work_id, case[2])
+    old_plan = (
+        read_work_plan(case[0], before.state.root_work_id, case[2])
+        if before.state.root_work_id
+        else None
+    )
     source = _setup_source(case, "New known facts Шаг")
     request = ActivitySetupRequest(
         operation_id=uuid4(),
@@ -219,7 +227,7 @@ def test_paused_stopped_stage_accepts_new_sources_and_preserves_raw_history(
     assert current.state.input_version == before.state.input_version + 1
     assert current.state.sources[:-1] == before.state.sources
     assert current.state.sources[-1] == source
-    assert current.state.reviews_started == before.state.reviews_started == 1
+    assert current.state.reviews_started == before.state.reviews_started
     assert current.state.draft is current.state.review is current.state.manifest is None
     if schema == 16:
         closed = read_work(case[0], stage.work_id, case[2])
@@ -231,6 +239,9 @@ def test_paused_stopped_stage_accepts_new_sources_and_preserves_raw_history(
     else:
         assert read_work(case[0], stage.work_id, case[2]) == work_before
     assert read_artifact(case[0], raw.artifact_id, case[2]).content == b'{"unfinished":'
+    with pytest.raises(FoundationError, match="stale_basis"):
+        _step(case, "complete_stage", output=raw)
+    assert read_activity_setup(case[0], case[3], case[2]) == current
     assert (
         read_activity_setup(
             case[0], case[3], authorize_local(case[0], actor="owner", source_ref="reopened")
@@ -249,7 +260,8 @@ def test_paused_stopped_stage_accepts_new_sources_and_preserves_raw_history(
         assert stage.work_id not in {
             child.work_id for child in read_work_plan(case[0], parent, case[2]).plan.children
         }
-        old_plan = read_work_plan(case[0], parent, case[2], revision=4)
+        assert old_plan is not None
+        assert read_work_plan(case[0], parent, case[2], revision=old_plan.revision) == old_plan
         assert stage.work_id in {child.work_id for child in old_plan.plan.children}
         assert next(
             node
@@ -259,7 +271,92 @@ def test_paused_stopped_stage_accepts_new_sources_and_preserves_raw_history(
     _raw(case, _proposal().model_dump_json())
     _start(case, "review")
     _raw(case, _report(case))
-    assert read_activity_setup(case[0], case[3], case[2]).state.reviews_started == 2
+    assert (
+        read_activity_setup(case[0], case[3], case[2]).state.reviews_started
+        == before.state.reviews_started + 1
+    )
+    _step(case, "finish")
+    assert read_activity_setup(case[0], case[3], case[2]).state.phase == "ready"
+
+
+@pytest.mark.parametrize("input_point", ("draft", "review", "paused_review", "review_question"))
+def test_changed_inputs_after_completed_stages_need_fresh_whole_review(
+    tmp_path: Path, input_point: str
+) -> None:
+    """New originals invalidate activation while the native graph can still finish anew."""
+    case = _recovery_case(tmp_path, 16)
+    _start(case)
+    original_draft = _raw(case, _proposal().model_dump_json())
+    original_review = None
+    if input_point != "draft":
+        _start(case, "review")
+        report = json.loads(_report(case))
+        if input_point == "review_question":
+            report["unresolved"] = ["Which day should the process review use?"]
+        original_review = _raw(case, json.dumps(report))
+    if input_point == "paused_review":
+        _step(case, "pause")
+    before = read_activity_setup(case[0], case[3], case[2])
+    if input_point == "review_question":
+        _step(case, "answer", text="Use Sunday")
+    else:
+        _step(case, "attach_sources", source_refs=(_setup_source(case),))
+    changed = read_activity_setup(case[0], case[3], case[2])
+    assert changed.state.input_version == before.state.input_version + 1
+    assert changed.state.draft is changed.state.review is changed.state.manifest is None
+    assert changed.state.reviews_started == before.state.reviews_started
+    if input_point == "paused_review":
+        assert changed.state.phase == "paused"
+        _step(case, "resume")
+    with pytest.raises(FoundationError, match="setup_not_reviewed"):
+        _step(case, "finish")
+    assert read_artifact(case[0], original_draft.artifact_id, case[2]).content is not None
+    if original_review:
+        assert read_artifact(case[0], original_review.artifact_id, case[2]).content is not None
+    packet = _start(case)
+    assert packet["input_version"] == changed.state.input_version
+    assert [item["ref"] for item in packet["sources"]] == [
+        ref.model_dump(mode="json") for ref in changed.state.sources
+    ]
+    draft = _raw(case, _proposal().model_dump_json())
+    review_packet = _start(case, "review")
+    assert review_packet["draft_ref"] == draft.model_dump(mode="json")
+    assert review_packet["sources"] == packet["sources"]
+    _raw(case, _report(case))
+    _step(case, "finish")
+    ready = read_activity_setup(case[0], case[3], case[2]).state
+    assert ready.phase == "ready" and ready.root_work_id is not None
+    assert read_work(case[0], ready.root_work_id, case[2]).state.acceptance is None
+
+
+def test_answer_retires_superseded_stopped_stage_in_native_plan(tmp_path: Path) -> None:
+    """An owner answer must retire the same obsolete native child as attachment does."""
+    case = _recovery_case(tmp_path, 16)
+    _start(case)
+    stage, attempt, session = _assigned_setup_stage(case)
+    _step(case, "question", text="Which period should the ordinary process use?")
+    _step(case, "pause")
+    _stop(case[0], case[1], case[2], stage.work_id, attempt, session)
+    before = read_activity_setup(case[0], case[3], case[2])
+    parent = before.state.root_work_id
+    assert parent is not None
+    old_plan = read_work_plan(case[0], parent, case[2])
+    _step(case, "answer", text="Use a month")
+    current = read_activity_setup(case[0], case[3], case[2])
+    assert current.state.input_version == stage.input_version + 1
+    assert current.state.stages[-1].retired and current.state.question is None
+    assert stage.work_id not in {
+        child.work_id for child in read_work_plan(case[0], parent, case[2]).plan.children
+    }
+    assert read_work_plan(case[0], parent, case[2], revision=old_plan.revision) == old_plan
+    retired = read_work(case[0], stage.work_id, case[2])
+    assert retired.state.status == "cancelled" and retired.state.acceptance is None
+    _step(case, "resume")
+    packet = _start(case)
+    assert packet["interactions"][-1]["answer"]["state"]["text"] == "Use a month"
+    _raw(case, _proposal().model_dump_json())
+    _start(case, "review")
+    _raw(case, _report(case))
     _step(case, "finish")
     assert read_activity_setup(case[0], case[3], case[2]).state.phase == "ready"
 
@@ -382,24 +479,38 @@ def test_paused_unknown_saves_inputs_without_implicit_send_or_same_work_replay(
     final = read_activity_setup(case[0], case[3], reopened)
     assert final.state.stages[-2].retired and final.state.stages[-1].work_id != stage.work_id
     resource = stopped.resources[0]
-    with pytest.raises(FoundationError, match="setup_pending"):
-        apply_operation(
-            case[0],
-            AssignAttemptRequest(
-                operation_id=uuid4(),
-                space_id=case[1],
-                actor="owner",
-                attempt_id=uuid4(),
-                work_id=stage.work_id,
-                expected_work_revision=stopped.work.revision,
-                resource_id=resource.resource_id,
-                expected_resource_revision=resource.revision,
-                session_id=uuid4(),
-                previous_attempt_id=attempt,
-                executor_version="fictional-setup",
-            ),
-            reopened,
-        )
+    late_effects = (
+        AssignAttemptRequest(
+            operation_id=uuid4(),
+            space_id=case[1],
+            actor="owner",
+            attempt_id=uuid4(),
+            work_id=stage.work_id,
+            expected_work_revision=stopped.work.revision,
+            resource_id=resource.resource_id,
+            expected_resource_revision=resource.revision,
+            session_id=uuid4(),
+            previous_attempt_id=attempt,
+            executor_version="fictional-setup",
+        ),
+        SendInvocationRequest(operation_id=uuid4(), space_id=case[1], actor="owner", **common),
+        PublishAttemptOutputRequest(
+            operation_id=uuid4(),
+            space_id=case[1],
+            actor="owner",
+            work_id=stage.work_id,
+            attempt_id=attempt,
+            session_id=session,
+            slot="report",
+            media_type="text/plain",
+            content=b'{"late": true}',
+        ),
+    )
+    for late_effect in late_effects:
+        with pytest.raises(FoundationError, match="setup_pending"):
+            apply_operation(case[0], late_effect, reopened)
+        assert read_execution(case[0], stage.work_id, reopened) == historical
+        assert read_activity_setup(case[0], case[3], reopened) == final
 
 
 @pytest.mark.parametrize("schema", (15, 16))

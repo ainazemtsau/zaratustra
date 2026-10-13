@@ -528,7 +528,16 @@ class Bridge:
             and not running
             and status != "unknown"
             and state.question is None
-            and state.phase in ("paused", "needs_attention", "collecting")
+            and state.phase
+            in (
+                "paused",
+                "needs_attention",
+                "collecting",
+                "drafting",
+                "correcting",
+                "reviewing",
+                "activating",
+            )
         )
         next_action = (
             "use_activity"
@@ -1108,8 +1117,6 @@ class Bridge:
             raise FoundationError(
                 "permission_denied", "Internal review/adoption operations are host-owned"
             )
-        if action in ("pause", "cancel") and self.setup_controller is not None:
-            self.setup_controller.close()
         fields: dict[str, Any] = {}
         if action == "begin":
             fields.update(
@@ -1227,6 +1234,8 @@ class Bridge:
                 ),
                 self.authority,
             )
+        if action in ("pause", "cancel") and self.setup_controller is not None:
+            self.setup_controller.close(identifier)
         if action in ("submit", "resume", "retry"):
             if self.setup_controller is None:
                 raise FoundationError(

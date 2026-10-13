@@ -770,7 +770,7 @@ def apply_setup_change(
                 closure=NodeClosure(
                     expected_revision=_subject_current(connection, child.work_id, "work")[0],
                     outcome="cancelled",
-                    basis="Unfinished setup preparation superseded by newly attached owner inputs",
+                    basis="Unfinished setup preparation superseded by new owner inputs",
                 )
                 if child.work_id in departing
                 else None,
@@ -989,10 +989,17 @@ def apply_setup_change(
                     )
                     answering_wait = restart_wait
                 if not answering_wait:
+                    retire_stage_nodes(state, (state.stages[-1],))
                     retired = state.stages[:-1] + (
                         state.stages[-1].model_copy(update={"retired": True}),
                     )
             answer_ref = source(request.text)
+            answered_interactions = tuple(
+                interaction.model_copy(update={"answer": answer_ref})
+                if interaction.answer is None and interaction.question == state.question
+                else interaction
+                for interaction in state.interactions
+            )
             refs = tuple(dict.fromkeys(state.sources + (answer_ref,) + request.source_refs))
             for ref in refs:
                 _basis(connection, ref, request.actor, epoch)
@@ -1037,6 +1044,16 @@ def apply_setup_change(
                 continuation_packet["sources"] = [
                     _basis(connection, ref, request.actor, epoch) for ref in refs
                 ]
+                continuation_packet["interactions"] = [
+                    {
+                        "question": item.question,
+                        "input_version": item.input_version,
+                        "answer": _basis(connection, item.answer, request.actor, epoch)
+                        if item.answer
+                        else None,
+                    }
+                    for item in answered_interactions
+                ]
                 packet_id = uuid5(request.operation_id, "continuation-packet")
                 effect(
                     CreateArtifactRequest,
@@ -1073,7 +1090,14 @@ def apply_setup_change(
                     actor=request.actor,
                     now=now,
                     status=current_work.status,
-                    state=current_work.model_copy(update={"inputs": (new_packet,)}),
+                    state=current_work.model_copy(
+                        update={
+                            "inputs": tuple(
+                                new_packet if ref == stage.packet else ref
+                                for ref in current_work.inputs
+                            )
+                        }
+                    ),
                     revision=work_revision + 1,
                 )
                 targets.append({"record_id": str(stage.work_id), "revision": work_revision + 1})
@@ -1096,12 +1120,7 @@ def apply_setup_change(
                 recovery_boundary=state.recovery_boundary
                 if saving_pending_answer or answering_wait
                 else len(retired),
-                interactions=tuple(
-                    interaction.model_copy(update={"answer": answer_ref})
-                    if interaction.answer is None and interaction.question == state.question
-                    else interaction
-                    for interaction in state.interactions
-                ),
+                interactions=answered_interactions,
             )
             if saving_pending_answer:
                 updates.update(

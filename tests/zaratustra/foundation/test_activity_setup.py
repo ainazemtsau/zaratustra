@@ -450,20 +450,34 @@ def test_derived_packet_rechecks_source_access(tmp_path: Path) -> None:
         read_activity_setup(root, setup, reader)
 
 
-def test_interrupted_review_wait_continues_same_pass_with_saved_answer(tmp_path: Path) -> None:
+@pytest.mark.parametrize("schema", (14, 16))
+def test_interrupted_review_wait_continues_same_pass_with_saved_answer(
+    tmp_path: Path, schema: int
+) -> None:
     """Risk: closing Pi loses an answer or spends a new review pass on the same Work."""
     import json
 
     from pydantic import TypeAdapter
 
-    from zaratustra.foundation import DomainRequest, read_artifact, read_execution
+    from zaratustra.foundation import (
+        DomainRequest,
+        read_artifact,
+        read_execution,
+        upgrade_structures_space,
+        upgrade_workflow_space,
+    )
 
     case = _case(tmp_path)
     root, space, owner, setup, *_ = case
+    if schema == 16:
+        upgrade_structures_space(root, owner)
+        upgrade_workflow_space(root, owner)
+        _step(case, "migrate_workflow")
     _step(case, "start_stage", stage_kind="draft", stage_instruction="Prepare whole draft")
     draft = _complete(case, _draft(case))
     _step(case, "start_stage", stage_kind="review", stage_instruction="Review whole draft")
     stage = read_activity_setup(root, setup, owner).state.stages[-1]
+    original_inputs = read_work(root, stage.work_id, owner).state.inputs
     adapter: TypeAdapter[DomainRequest] = TypeAdapter(DomainRequest)
 
     def effect(kind: str, **fields: Any) -> OperationReceipt:
@@ -489,7 +503,7 @@ def test_interrupted_review_wait_continues_same_pass_with_saved_answer(tmp_path:
         session_id=session,
         resource_id=resource,
         expected_resource_revision=1,
-        expected_work_revision=1,
+        expected_work_revision=read_work(root, stage.work_id, owner).revision,
         executor_version="fictional-setup-1",
     )
     effect(
@@ -528,10 +542,13 @@ def test_interrupted_review_wait_continues_same_pass_with_saved_answer(tmp_path:
     assert not state.stages[-1].retired and state.stages[-1].packet != stage.packet
     packet = read_artifact(root, state.stages[-1].packet.artifact_id, owner)
     assert packet.content is not None
-    sources = json.loads(packet.content)["sources"]
+    continuation = json.loads(packet.content)
+    sources = continuation["sources"]
     assert sources[-1]["state"]["text"] == "Daily notes"
-    assert read_execution(root, stage.work_id, owner).work.state.inputs == (
-        state.stages[-1].packet,
+    assert continuation["interactions"][-1]["question"] == "Choose the intake frequency"
+    assert continuation["interactions"][-1]["answer"]["state"]["text"] == "Daily notes"
+    assert read_execution(root, stage.work_id, owner).work.state.inputs == tuple(
+        state.stages[-1].packet if ref == stage.packet else ref for ref in original_inputs
     )
     _complete(case, _review(case, draft))
     _step(case, "pause")

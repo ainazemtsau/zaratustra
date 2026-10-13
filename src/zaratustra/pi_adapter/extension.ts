@@ -1225,12 +1225,20 @@ export default function (pi: any): void {
     const pending = page.items.filter((item: any) => !["ready", "cancelled"].includes(item.state.phase));
     if (pending.length === 1) {
       setupSelection = pending[0].setup_id;
-      const state = pending[0].state;
-      if (state.stages.length && (state.phase !== "paused" || state.auto_resume) && ["paused", "drafting", "correcting", "reviewing", "activating"].includes(state.phase)) {
-        await request("/v1/activity-setup", { action: "resume", setup_id: setupSelection, model: setupModel(ctx) });
-      }
       watchSetup(ctx);
-      await showSetup(ctx);
+      try {
+        const current = await request("/v1/activity-setup", { action: "status", setup_id: setupSelection });
+        const state = current.state;
+        if (current.execution?.can_resume === true && state.stages.length &&
+            (state.phase !== "paused" || state.auto_resume) &&
+            ["paused", "drafting", "correcting", "reviewing", "activating"].includes(state.phase)) {
+          await request("/v1/activity-setup", { action: "resume", setup_id: setupSelection, model: setupModel(ctx) });
+        }
+      } catch (error) {
+        ctx.ui.notify(String(error), "warning");
+      } finally {
+        await showSetup(ctx);
+      }
     } else if (pending.length > 1) {
       ctx.ui.notify("Есть несколько незавершённых настроек Activity. Выбери нужный setup_id через zara_activity.", "info");
     }

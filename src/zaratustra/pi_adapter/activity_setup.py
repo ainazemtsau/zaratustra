@@ -424,12 +424,16 @@ class SetupCoordinator:
                 authority,
             )
 
-    def close(self) -> None:
-        self.stop.set()
+    def close(self, setup_id: UUID | None = None) -> None:
+        with self.lock:
+            if setup_id is not None and self.active != setup_id:
+                return
+            self.stop.set()
+            identifier, thread = self.active, self.thread
         try:
-            if self.active is not None:
+            if identifier is not None:
                 state = _observe(
-                    read_activity_setup, self.config.space, self.active, self.bridge.authority
+                    read_activity_setup, self.config.space, identifier, self.bridge.authority
                 ).state
                 if state.stages and state.stages[-1].output is None:
                     self._stop_stage(state.stages[-1].work_id)
@@ -441,7 +445,7 @@ class SetupCoordinator:
                     "paused",
                 ):
                     self._step(
-                        self.active,
+                        identifier,
                         "pause",
                         text="Pi window closed; retained continuation",
                         auto_resume=True,
@@ -450,8 +454,8 @@ class SetupCoordinator:
             # Lost authority or deleted content cannot authorize another provider send.
             pass
         finally:
-            if self.thread is not None:
-                self.thread.join(timeout=15)
+            if thread is not None:
+                thread.join(timeout=15)
 
 
 def worker() -> int:

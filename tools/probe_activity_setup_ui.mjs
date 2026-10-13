@@ -39,6 +39,8 @@ let item = {
     activated_works: [], result: null },
 };
 let statusFails = false;
+let resumeCalls = 0;
+let refuseResume = false;
 globalThis.fetch = async (url, init) => {
   assert(String(url).startsWith("http://127.0.0.1:1/"));
   if (String(url).includes("/v1/connect")) return Response.json({
@@ -55,6 +57,14 @@ globalThis.fetch = async (url, init) => {
   const body = JSON.parse(init.body);
   if (body.action === "list") return Response.json({ items: [item] });
   if (body.action === "status" && statusFails) throw new Error("fictional read failure");
+  if (body.action === "resume") {
+    resumeCalls += 1;
+    if (refuseResume) {
+      item = {...item, execution: {...item.execution, status: "unknown", can_resume: false}};
+      return Response.json({error: "unknown_effect", detail: "Fictional interrupted outcome"}, {status: 409});
+    }
+    return Response.json(item);
+  }
   assert(["status", "question", "window_close"].includes(body.action));
   return Response.json(item);
 };
@@ -146,6 +156,38 @@ assert(declined.content[0].text.includes("not authorized"));
 assert(confirmations.at(-1).message.includes("неизвестный расход сохранятся"));
 assert(confirmations.at(-1).message.includes("не будет отправлен повторно"));
 
+// A reopened window must observe derived execution before attempting continuation.
+item = {...item, state: {...item.state, stages: [{kind: "draft"}], auto_resume: true},
+  execution: {...item.execution, can_resume: false}};
+await emit("session_start", {reason: "resume"});
+assert.equal(resumeCalls, 0);
+assert(statuses.get("zara-setup").includes("новую подготовку"));
+assert(widgets.get("zara-setup").join("\n").includes("не возобновляя прерванный запрос"));
+// A stop can race the successful status read; refusal must not hide saved status.
+item = {...item, execution: {...item.execution, status: "stopped", can_resume: true}};
+refuseResume = true;
+await emit("session_start", {reason: "resume"});
+assert.equal(resumeCalls, 1);
+assert(notifications.some(entry => entry.message.includes("unknown_effect")));
+assert(statuses.get("zara-setup").includes("новую подготовку"));
+assert(widgets.get("zara-setup").join("\n").includes("не возобновляя прерванный запрос"));
+assert.equal(aborted, 0);
+assert.equal(typeof tick, "function");
+tick();
+await new Promise(resolve => setImmediate(resolve));
+assert.equal(resumeCalls, 1);
+
+// Known completed stages and the final activation step keep automatic continuation.
+refuseResume = false;
+for (const phase of ["drafting", "reviewing", "correcting", "activating"]) {
+  item = {...item, state: {...item.state, phase, auto_resume: false},
+    execution: {...item.execution, status: "idle", can_resume: true}};
+  const before = resumeCalls;
+  await emit("session_start", {reason: "resume"});
+  assert.equal(resumeCalls, before + 1);
+  assert.equal(typeof tick, "function");
+}
+
 const failureEvent = (code, setup_id = "fictional-guard-setup") => ({toolName: "zara_activity",
   toolCallId: `fixture-${code}`, input: {mode: "attach_sources", setup_id}, isError: true,
   content: [{type: "text", text: `Core ${code}: Fictional addressed refusal`}], details: {code}});
@@ -163,6 +205,8 @@ const report = { pi: packageMetadata.version, rendered_tool: true, no_phantom_us
   legacy_history_filtered: true, compact_both_parts_filtered: true,
   resumed_question_visible: true, duplicate_notifications: false,
   observed_stop_status: true, interrupted_retry_confirmation: true,
+  unknown_reopen_does_not_resume: true, resume_refusal_keeps_saved_status: true,
+  known_stage_reopen_continues: true,
   addressed_error_guard_preserved: true, actual_provider_calls: 0 };
 writeFileSync(join(directory, "report.json"), JSON.stringify(report, null, 2) + "\n");
 console.log(JSON.stringify(report, null, 2));

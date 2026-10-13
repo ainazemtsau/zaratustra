@@ -1,3 +1,51 @@
+# Activity setup boundary audit — local candidate 0.23.4
+
+## outcome
+
+Audited the public setup recovery and adjacent transitions. Corrected stop of a
+different setup, loss of native dependency inputs and question/answer context
+after a closed wait, hidden status on refused reopening, and a retired stage
+remaining in the current WorkPlan. Version 0.23.4 is a local tested candidate;
+schema remains 16. No personal installation or publication was performed.
+
+## evidence
+
+One full native gate passed 1019 tests, Ruff, types, hygiene, 32 import contracts
+and build; final corrections passed the affected 171-test native gate and the
+final 52-test Bridge/delivery check. The wheel passed
+ordinary Pi 1.0.4 outside checkout with a localhost provider: 10 HTTP equal 10
+accounted sends, one unknown retained, exact new packets, full fresh review and
+no owner Work acceptance. Installed UI hooks cover unknown and known reopening,
+refused continuation and no phantom input. Independent bounded reviews and
+evaluator smoke informed the corrections. See
+[the audit report](docs/activity-setup-boundary-audit-0.23.4.md).
+
+## assumptions
+
+Operation/receipt and request-body evidence establishes the named mechanics.
+Synthetic replies do not prove all future model interpretations of user intent.
+
+## cuts
+
+No exporters, private Git, schema migration, queue, real-provider trial or personal
+Core access. Old history, pins and separate owner acceptance remain authoritative.
+
+## cost
+
+Local tests and fictional localhost/UI probes only; zero real-model or paid API
+calls. Earlier unknown outcomes and reserves are never replaced with guessed usage.
+
+## manual-acceptance
+
+The owner requested the stability audit and neighboring coverage. Checked fixes
+and local candidate are not owner acceptance of a recreated personal Activity.
+
+## next
+
+next: solmax
+
+---
+
 # Activity setup 0.23.3 — paused inputs and explicit recovery
 
 ## outcome

@@ -13,11 +13,19 @@ from uuid import UUID, uuid4, uuid5
 import pytest
 
 from tests.zaratustra.foundation.test_activity_setup import _case, _step
+from tests.zaratustra.foundation.test_activity_setup_recovery import (
+    _raw,
+    _recovery_case,
+    _report,
+    _start,
+)
 from tests.zaratustra.foundation.test_activity_structures import _activate, _structured_case
 from tests.zaratustra.foundation.test_execution import InvocationFields, ready
 from tests.zaratustra.foundation.test_memory import note
 from tests.zaratustra.foundation.test_workflows import _raw_node_result, _setup
+from tests.zaratustra.pi_adapter.test_child_assigned import _config
 from zaratustra.foundation import (
+    ActivitySetupRequest,
     ActivityState,
     AdmitInvocationRequest,
     ArtifactRef,
@@ -59,6 +67,7 @@ from zaratustra.foundation import (
     start_procedure,
 )
 from zaratustra.pi_adapter import Bridge, BridgeServer
+from zaratustra.pi_adapter.activity_setup import SetupCoordinator
 
 
 def _typed_publication_bridge(tmp_path: Path) -> tuple[Bridge, UUID, UUID]:
@@ -469,6 +478,121 @@ def test_repeated_answer_can_attach_sources_without_erasing_question(tmp_path: P
     current = read_activity_setup(root, setup, owner).state
     assert KnowledgeRef(record_id=source, revision=1) in current.sources
     assert current.question == "Which start date?" and current.phase == "needs_input"
+
+
+@pytest.mark.parametrize("action", ("pause", "cancel"))
+@pytest.mark.parametrize("target", ("other", "missing", "closed", "active"))
+def test_setup_stop_only_closes_its_validated_target(
+    tmp_path: Path, action: str, target: str
+) -> None:
+    """Pausing another or invalid setup must not interrupt this window's executor."""
+    case = _case(tmp_path)
+    root, space, owner, active, *_ = case
+    other = uuid4()
+    apply_operation(
+        root,
+        ActivitySetupRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            setup_id=other,
+            activity_id=uuid4(),
+            action="begin",
+            title="Other fictional workshop",
+            text="Maintain an independent observation log",
+        ),
+        owner,
+    )
+    if target == "closed":
+        detail = read_activity_setup(root, other, owner)
+        apply_operation(
+            root,
+            ActivitySetupRequest(
+                operation_id=uuid4(),
+                space_id=space,
+                actor="owner",
+                setup_id=other,
+                activity_id=detail.state.activity_id,
+                action="cancel",
+                expected_revision=detail.revision,
+            ),
+            owner,
+        )
+    _step(case, "start_stage", stage_kind="draft", stage_instruction="Prepare complete setup")
+    before = read_activity_setup(root, active, owner)
+    bridge = Bridge(root, owner, root)
+    controller = SetupCoordinator(bridge, _config(root, root, tmp_path / "runtime"))
+    controller.active = active
+    bridge.setup_controller = controller
+    session = uuid4()
+    bridge.connect(session)
+    identifier = active if target == "active" else uuid4() if target == "missing" else other
+    request = {"action": action, "setup_id": str(identifier)}
+    if target in ("missing", "closed"):
+        with pytest.raises(FoundationError, match="setup_unavailable|setup_closed"):
+            bridge.activity_setup(session, request)
+    else:
+        result = bridge.activity_setup(session, request)
+        assert cast(dict[str, Any], result["state"])["phase"] == (
+            "paused" if action == "pause" else "cancelled"
+        )
+    assert controller.stop.is_set() == (target == "active")
+    if target != "active":
+        assert read_activity_setup(root, active, owner) == before
+
+
+@pytest.mark.parametrize("phase", ("drafting", "reviewing", "correcting", "activating"))
+def test_setup_status_permits_known_stage_continuation_after_reopening(
+    tmp_path: Path, phase: str
+) -> None:
+    """A crash between known stages must not be confused with an unknown provider send."""
+    from tests.zaratustra.foundation.test_activity_structures import _proposal
+
+    case = _recovery_case(tmp_path, 16)
+    _start(case)
+    _raw(case, _proposal().model_dump_json())
+    if phase != "drafting":
+        _start(case, "review")
+    if phase in ("correcting", "activating"):
+        _raw(case, _report(case, blocking=phase == "correcting"))
+    root, _, owner, setup, *_ = case
+    bridge = Bridge(root, authorize_local(root, actor="owner", source_ref="reopen"), root)
+    session = uuid4()
+    bridge.connect(session)
+    status = bridge.activity_setup(session, {"action": "status", "setup_id": str(setup)})
+    assert cast(dict[str, Any], status["state"])["phase"] == phase
+    assert cast(dict[str, Any], status["execution"])["can_resume"] is True
+    if phase == "activating":
+        controller = SetupCoordinator(bridge, _config(root, root, tmp_path / "runtime"))
+        bridge.setup_controller = controller
+        before = read_activity_setup(root, setup, owner).state
+        bridge.activity_setup(
+            session,
+            {
+                "action": "resume",
+                "setup_id": str(setup),
+                "model": {"id": "synthetic", "provider": "synthetic", "thinking": "off"},
+            },
+        )
+        assert controller.thread is not None
+        controller.thread.join(timeout=10)
+        assert not controller.thread.is_alive()
+        ready_state = read_activity_setup(root, setup, owner).state
+        assert ready_state.phase == "ready"
+        assert ready_state.stages == before.stages
+        assert ready_state.draft == before.draft and ready_state.review == before.review
+        assert ready_state.root_work_id is not None
+        assert read_work(root, ready_state.root_work_id, owner).state.acceptance is None
+        assert all(
+            not read_execution(root, item.work_id, owner).invocations for item in before.stages
+        )
+        return
+    _step(case, "resume")
+    continued = read_activity_setup(root, setup, owner).state
+    assert continued.phase in ("drafting", "correcting", "activating")
+    assert continued.stages[-1].packet == ArtifactRef.model_validate(
+        cast(dict[str, Any], status["state"])["stages"][-1]["packet"]
+    )
 
 
 def test_begin_keeps_exact_original_request_fragment_after_later_message(tmp_path: Path) -> None:
