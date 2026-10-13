@@ -3636,31 +3636,19 @@ def sanitize_workflow_dependency(
             "IN ('packet','output','obstacle')",
             (root,),
         ):
-            connection.execute(
-                "DELETE FROM managed_content WHERE record_id=? AND revision=?",
-                (artifact_id, revision),
-            )
+            from .operations import _queue_derived_artifact_deletion
+
             origin = connection.execute(
                 "SELECT operation_id FROM record_revisions WHERE record_id=? ORDER BY revision "
                 "LIMIT 1",
                 (artifact_id,),
             ).fetchone()
             if origin:
-                connection.execute(
-                    "INSERT OR IGNORE INTO "
-                    "deletion_jobs(operation_id,record_id,status,created_at) VALUES "
-                    "(?,?,'pending',?)",
-                    (origin[0], artifact_id, now),
-                )
-                connection.execute(
-                    "INSERT OR REPLACE INTO maintenance_events VALUES "
-                    "(?,'technical_deletion_targets',?,?)",
-                    (
-                        origin[0],
-                        now,
-                        canonical_json({"artifact_id": artifact_id, "assigned": assigned}),
-                    ),
-                )
+                _queue_derived_artifact_deletion(connection, origin[0], artifact_id, assigned, now)
+            connection.execute(
+                "DELETE FROM managed_content WHERE record_id=? AND revision=?",
+                (artifact_id, revision),
+            )
         connection.execute(
             "UPDATE backup_inventory SET status='contaminated' "
             "WHERE status IN ('planned','failed','complete')"

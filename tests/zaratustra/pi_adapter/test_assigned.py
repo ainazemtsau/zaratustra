@@ -22,6 +22,9 @@ from dbos import DBOS, DBOSClient
 
 import zaratustra.foundation.storage as storage
 import zaratustra.pi_adapter.assigned as assigned_module
+from tests.zaratustra.foundation.test_activity_setup import _step
+from tests.zaratustra.foundation.test_activity_setup_recovery import _recovery_case, _start
+from tests.zaratustra.foundation.test_child_execution import _claim, _stop
 from tests.zaratustra.foundation.test_continuation import ready
 from zaratustra.foundation import (
     ALL_ACTIONS,
@@ -31,6 +34,7 @@ from zaratustra.foundation import (
     CreateGrantRequest,
     CreateResourceRequest,
     CreateWorkRequest,
+    DeleteActivityRequest,
     DeleteArtifactRequest,
     DeleteWorkRequest,
     FinishInvocationRequest,
@@ -52,6 +56,7 @@ from zaratustra.foundation import (
     complete_deletions,
     create_backup,
     inspect_space,
+    list_activity_setups,
     managed_executor_start_lock,
     managed_pi_lock,
     managed_pi_session_lock,
@@ -61,6 +66,7 @@ from zaratustra.foundation import (
     read_context_delivery,
     read_execution,
     read_knowledge,
+    read_technical_deletion_targets,
     read_work,
     restore_backup,
 )
@@ -293,6 +299,163 @@ def test_dbos_writer_blocks_deletion_before_technical_payload_is_removed(
     assert len(_workflows(root)) == 1
     assert complete_assigned_deletions(root, owner).live_store_sanitized
     assert not copy.exists()
+
+
+@pytest.mark.parametrize("corrupt_address", (False, True))
+def test_workflow_setup_deletion_cleans_grouped_packets_and_assigned_state(
+    tmp_path: Path, dbos_template: Path, corrupt_address: bool
+) -> None:
+    """Several derived packets share a creation operation but all need exact cleanup."""
+    case = _recovery_case(tmp_path, 16)
+    root, space, owner, setup, activity, *_ = case
+    _start(case)
+    stage = read_activity_setup(root, setup, owner).state.stages[-1]
+    resource = uuid4()
+    apply_operation(
+        root,
+        CreateResourceRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            work_id=stage.work_id,
+            resource_id=resource,
+            state=ResourceState(label="Fictional setup", root=root, mode="shared"),
+        ),
+        owner,
+    )
+    attempt, session = uuid4(), uuid4()
+    apply_operation(
+        root,
+        AssignAttemptRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            attempt_id=attempt,
+            work_id=stage.work_id,
+            expected_work_revision=read_work(root, stage.work_id, owner).revision,
+            resource_id=resource,
+            expected_resource_revision=1,
+            session_id=session,
+            executor_version=EXECUTOR_VERSION,
+        ),
+        owner,
+    )
+    shutil.copyfile(dbos_template, root / ".zara-core" / "executor.sqlite3")
+    deliver_outbox(root, owner)
+    _claim(root, space, owner, stage.work_id, attempt, session)
+    copy = _managed_copy(root, attempt, "Fictional setup context")
+    assert len(_workflows(root)) == 1
+    protected = {
+        row.record_id: read_work(root, row.record_id, owner)
+        for row in inspect_space(root, owner).records
+        if row.kind == "work"
+        and read_work(root, row.record_id, owner).state.activity_id != activity
+    }
+    works = {
+        row.record_id
+        for row in inspect_space(root, owner).records
+        if row.kind == "work" and row.record_id not in protected
+    }
+    with sqlite3.connect(root / ".zara-core" / "core.sqlite3") as connection:
+        grouped = connection.execute(
+            "SELECT r.operation_id,count(DISTINCT r.record_id) FROM record_revisions r "
+            "JOIN workflow_edges e ON e.target_id=r.record_id AND e.target_revision=r.revision "
+            "WHERE e.role IN ('packet','output','obstacle') GROUP BY r.operation_id "
+            "HAVING count(DISTINCT r.record_id)>1"
+        ).fetchall()
+    assert grouped, "The fixture must retain the real shared-origin packets"
+    _step(case, "cancel")
+    _stop(root, space, owner, stage.work_id, attempt, session)
+    remaining = set(works)
+    while remaining:
+        rows = {row.record_id: row for row in inspect_space(root, owner).records}
+        for identifier in sorted(remaining, key=str):
+            try:
+                apply_operation(
+                    root,
+                    DeleteWorkRequest(
+                        operation_id=uuid4(),
+                        space_id=space,
+                        actor="owner",
+                        work_id=identifier,
+                        expected_revision=rows[identifier].current_revision,
+                    ),
+                    owner,
+                )
+            except FoundationError as error:
+                if error.code == "dependent_work":
+                    continue
+                raise
+            remaining.remove(identifier)
+            break
+        else:
+            raise AssertionError("The owned Work family must be deletable leaves first")
+    row = next(row for row in inspect_space(root, owner).records if row.record_id == activity)
+    apply_operation(
+        root,
+        DeleteActivityRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor="owner",
+            activity_id=activity,
+            expected_revision=row.current_revision,
+        ),
+        owner,
+    )
+    with sqlite3.connect(root / ".zara-core" / "core.sqlite3") as connection:
+        jobs = connection.execute(
+            "SELECT j.operation_id,j.record_id,e.detail_json FROM deletion_jobs j "
+            "JOIN maintenance_events e ON e.event_id=j.operation_id WHERE j.status='pending'"
+        ).fetchall()
+        grouped_jobs = [
+            (operation, identifier, json.loads(detail))
+            for operation, identifier, detail in jobs
+            if operation in {value[0] for value in grouped}
+        ]
+        assert grouped_jobs
+        assert all(
+            {"work_id": str(stage.work_id), "attempt_id": str(attempt)} in detail["assigned"]
+            for _, _, detail in grouped_jobs
+        )
+        for operation, _, _ in grouped_jobs:
+            assert (
+                connection.execute(
+                    "SELECT count(*) FROM managed_content m JOIN record_revisions r "
+                    "ON r.record_id=m.record_id AND r.revision=m.revision WHERE r.operation_id=?",
+                    (operation,),
+                ).fetchone()[0]
+                == 0
+            )
+        assert all(
+            json.loads(detail)["artifact_id"] == identifier for _, identifier, detail in jobs
+        )
+    targets = read_technical_deletion_targets(
+        root, owner, tuple(UUID(identifier) for _, identifier, _ in jobs)
+    )
+    assert attempt in targets.attempt_ids
+    if corrupt_address:
+        operation, _, detail = jobs[0]
+        invalid = json.loads(detail)
+        invalid["artifact_id"] = str(uuid4())
+        with sqlite3.connect(root / ".zara-core" / "core.sqlite3") as connection:
+            connection.execute(
+                "UPDATE maintenance_events SET detail_json=? WHERE event_id=?",
+                (json.dumps(invalid), operation),
+            )
+        with pytest.raises(FoundationError) as refused:
+            complete_assigned_deletions(root, owner)
+        assert refused.value.code == "technical_state"
+        assert copy.exists() and _workflows(root)
+        assert {
+            identifier: read_work(root, identifier, owner) for identifier in protected
+        } == protected
+        return
+    result = complete_assigned_deletions(root, owner)
+    assert result.live_store_sanitized and result.pending_jobs == 0
+    assert not copy.exists() and not _workflows(root)
+    assert not any(item.setup_id == setup for item in list_activity_setups(root, owner))
+    assert {identifier: read_work(root, identifier, owner) for identifier in protected} == protected
+    assert complete_assigned_deletions(root, owner).pending_jobs == 0
 
 
 def test_composite_restore_preserves_question_usage_and_unknown(

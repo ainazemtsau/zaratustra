@@ -2165,21 +2165,14 @@ def sanitize_setup_dependency(connection: sqlite3.Connection, record_id: UUID, n
 
                 _sanitize_deleted(connection, UUID(target), now)
             elif role == "derived_artifact":
+                from .operations import _queue_derived_artifact_deletion
+
                 origin = connection.execute(
                     "SELECT operation_id FROM record_revisions WHERE record_id=? "
                     "ORDER BY revision LIMIT 1",
                     (target,),
                 ).fetchone()[0]
-                connection.execute(
-                    "INSERT OR IGNORE INTO deletion_jobs(operation_id,record_id,status,created_at) "
-                    "VALUES (?,?,'pending',?)",
-                    (origin, target, now),
-                )
-                connection.execute(
-                    "INSERT OR REPLACE INTO maintenance_events VALUES "
-                    "(?,'technical_deletion_targets',?,?)",
-                    (origin, now, canonical_json({"artifact_id": target, "assigned": assigned})),
-                )
+                _queue_derived_artifact_deletion(connection, origin, target, assigned, now)
                 connection.execute(
                     "DELETE FROM managed_content WHERE record_id=?",
                     (target,),

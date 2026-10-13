@@ -3321,6 +3321,63 @@ def _deletion_counts(connection: object, schema_version: int) -> tuple[int, int,
     return counts[0], counts[1], contaminated
 
 
+def _queue_derived_artifact_deletion(
+    connection: sqlite3.Connection,
+    operation_id: str,
+    artifact_id: str,
+    assigned: list[dict[str, str]],
+    now: str,
+) -> None:
+    """One creation operation may own several derived Artifacts; retain their union."""
+
+    job = connection.execute(
+        "SELECT record_id,status FROM deletion_jobs WHERE operation_id=?", (operation_id,)
+    ).fetchone()
+    canonical = artifact_id if job is None else job[0]
+    addresses: set[tuple[str, str]] = set()
+    if job is not None and job[1] == "pending":
+        # Keep the existing address invariant; corrupt saved jobs require explicit recovery.
+        _preserved_attempt_ids(connection, operation_id, canonical, "artifact_id")
+        event = connection.execute(
+            "SELECT detail_json FROM maintenance_events WHERE event_id=? "
+            "AND kind='technical_deletion_targets'",
+            (operation_id,),
+        ).fetchone()
+        addresses.update(
+            (row["work_id"], row["attempt_id"]) for row in json.loads(event[0])["assigned"]
+        )
+    elif (
+        job is not None
+        and not connection.execute(
+            "SELECT 1 FROM managed_content WHERE record_id=? LIMIT 1", (artifact_id,)
+        ).fetchone()
+    ):
+        # Repeated sanitation of already cleaned bytes must not reopen completed work.
+        return
+    addresses.update((str(UUID(row["work_id"])), str(UUID(row["attempt_id"]))) for row in assigned)
+    if job is None:
+        connection.execute(
+            "INSERT INTO deletion_jobs(operation_id,record_id,status,created_at) "
+            "VALUES (?,?,'pending',?)",
+            (operation_id, canonical, now),
+        )
+    elif job[1] == "complete":
+        connection.execute(
+            "UPDATE deletion_jobs SET status='pending',completed_at=NULL WHERE operation_id=?",
+            (operation_id,),
+        )
+    detail = {
+        "artifact_id": canonical,
+        "assigned": [
+            {"work_id": work, "attempt_id": attempt} for work, attempt in sorted(addresses)
+        ],
+    }
+    connection.execute(
+        "INSERT OR REPLACE INTO maintenance_events VALUES (?,'technical_deletion_targets',?,?)",
+        (operation_id, now, canonical_json(detail)),
+    )
+
+
 def _preserved_attempt_ids(
     connection: object, operation_id: str, record_id: str, record_key: str
 ) -> set[UUID]:

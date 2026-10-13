@@ -575,6 +575,7 @@ def index_output_bases(
 
 def retire_data_artifact(connection: sqlite3.Connection, identifier: str, now: str) -> None:
     from .composition import sanitize_deleted_dependency
+    from .operations import _queue_derived_artifact_deletion
 
     row = connection.execute(
         "SELECT status FROM records WHERE record_id=? AND kind='artifact'", (identifier,)
@@ -596,15 +597,7 @@ def retire_data_artifact(connection: sqlite3.Connection, identifier: str, now: s
         "SELECT operation_id FROM record_revisions WHERE record_id=? ORDER BY revision LIMIT 1",
         (identifier,),
     ).fetchone()[0]
-    connection.execute(
-        "INSERT OR IGNORE INTO deletion_jobs"
-        "(operation_id,record_id,status,created_at) VALUES (?,?,'pending',?)",
-        (retirement, identifier, now),
-    )
-    connection.execute(
-        "INSERT OR REPLACE INTO maintenance_events VALUES (?,'technical_deletion_targets',?,?)",
-        (retirement, now, canonical_json({"artifact_id": identifier, "assigned": assigned})),
-    )
+    _queue_derived_artifact_deletion(connection, retirement, identifier, assigned, now)
     connection.execute("DELETE FROM managed_content WHERE record_id=?", (identifier,))
     connection.execute("UPDATE records SET status='deleted' WHERE record_id=?", (identifier,))
     for (operation,) in connection.execute(

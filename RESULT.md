@@ -1,3 +1,54 @@
+# Derived Artifact cleanup — installed 0.23.5
+
+## outcome
+
+Corrected conflicting cleanup addresses when several derived Artifacts share one
+creation operation. Setup, workflow and typed-data sanitation now preserve one
+canonical job and the union of exact assigned cleanup pairs. Schema remains 16;
+the strict saved-address reader is unchanged. Selected installation and
+owner-authorized personal deletion completed with private evidence.
+
+## evidence
+
+The previous 0.23.4 installed wheel fails the new shared-origin adapter regression.
+The final 0.23.5 wheel passes both success and corrupted-address variants outside
+checkout using real DBOS queue records and managed copies. Full native gate:
+1026 tests, hygiene, Ruff, mypy, 32 import contracts, build and report structure.
+Bounded read-only review and evaluator smoke found no material changed-boundary
+defect. Fresh private restore rehearsal and live maintenance preserved independent
+Work history, original sources and send accounting; installation alone preserved
+domain state and configuration. See [the report](docs/deletion-cleanup-0.23.5.md).
+
+## assumptions
+
+Shared-origin cleanup is grouped by the existing operation key. Strict corruption
+refusal remains; malformed previously pending jobs need explicit recovery. The
+adapter regression has one assigned Attempt and does not separately exercise
+distinct-pair union or completed-group reopening. Maintenance checks do not prove
+the quality of future model conversations.
+
+## cuts
+
+No schema upgrade, exporter, private Git publication, new queue, real-provider
+trial or automatic Activity recreation. Existing owner acceptance remains separate.
+
+## cost
+
+Local tests and model-free maintenance only; zero real-model or paid API calls.
+Existing unknown outcomes and invocation accounting remain recorded.
+
+## manual-acceptance
+
+The owner authorized deletion of the current Activity and requested an update.
+The completed maintenance is not acceptance of a future Activity or Work.
+
+## next
+
+next: solmax. The owner can start a new ordinary creation in Pi. Previous answers
+remain in the private reuse package; they are not automatically imported.
+
+---
+
 # Activity setup boundary audit — local candidate 0.23.4
 
 ## outcome
