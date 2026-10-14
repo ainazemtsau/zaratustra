@@ -144,6 +144,7 @@ legacy unproven contracts yield an addressed obstacle instead of a new send.
 
 ## Status
 
-Implemented locally in the 0.25.0 candidate; final delivery checks are recorded
-in the release report. Owner authorization is distinct from owner acceptance.
+Implemented and published in the common 0.25.0 product, source commit `881958e`;
+actual delivery checks are recorded in the release report. Owner authorization
+is distinct from owner acceptance. Personal installation was not performed.
 The separate SQLite contention observation is not established or declared fixed.

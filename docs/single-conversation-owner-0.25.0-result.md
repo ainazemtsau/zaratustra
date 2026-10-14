@@ -218,8 +218,21 @@ schema 18 were rechecked without domain/provider effects.
 Final dist wheel SHA-256:
 `42366a270c1929a931f038b26e9daec9daf81cbff8203a34b678e05e3b0cc525`.
 
-Authorized public publication is pending readback. Personal installation is a
-separate action and has not been performed.
+## Public delivery
+
+Checked common code was fast-forward published to the owner-authorized public
+`ainazemtsau/zaratustra/main`, source commit
+[`881958e29c4973563acb051d0915face22e5f3e7`](https://github.com/ainazemtsau/zaratustra/commit/881958e29c4973563acb051d0915face22e5f3e7).
+Authenticated GitHub readback confirmed the exact main head and product blobs:
+
+| Published file | Verified Git blob |
+| --- | --- |
+| `pyproject.toml` (0.25.0) | `46ca0fab216f9f75a36a4f6ca57538e4a2a1a00b` |
+| Ordinary Pi `extension.ts` | `154a978fdfefd63cab900a924114bbe9595c0833` |
+| Core `response_recovery.py` | `683a7a54fcbc5133af3e54b222cef7dfb870a31f` |
+
+No private preparation branch, personal file, export or runtime data was
+published. Personal installation is a separate action and has not been performed.
 
 ## Evidence limits and owner acceptance
 

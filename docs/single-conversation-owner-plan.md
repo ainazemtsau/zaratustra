@@ -4,7 +4,9 @@
 
 Release candidate: **0.25.0**, branch **codex/single-conversation-owner** from
 public main `130fbea98d420b6301a5ec4e16ca152eef8d736f`. The one-owner replacement
-is implemented locally; publication and private installation remain pending.
+and the owner-approved completed-response recovery contract are implemented.
+Checked common code is published at `881958e` in public main; private installation
+remains a separate pending action.
 Actual evidence is recorded in
 [the implementation report](single-conversation-owner-0.25.0-result.md).
 Core remains **schema 18**: no new tables,

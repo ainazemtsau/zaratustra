@@ -14,9 +14,11 @@ contract. Setup, workflow and procedure now derive exact saved response evidence
 before dispatch; a proven completed answer can be recovered as proposed output
 without rewriting the stopped Attempt. Missing proof and unresolved old sends
 prevent blind regeneration. Genuine partial publication can continue its other
-output slots. Work acceptance remains an owner action. Final packaging is
-complete; authorized public publication is pending. No personal installation
-was made.
+output slots. Work acceptance remains an owner action. Checked common code was
+published to the authorized `ainazemtsau/zaratustra/main`, source commit
+[`881958e`](https://github.com/ainazemtsau/zaratustra/commit/881958e29c4973563acb051d0915face22e5f3e7).
+Authenticated readback confirmed that main and exact product blobs. No personal
+installation was made.
 
 ## evidence
 
@@ -82,8 +84,8 @@ authentication were not read by these checks.
 
 The owner authorized the one-owner plan and the completed-response recovery
 contract. Actual checks do not constitute owner acceptance. Public publication
-to ainazemtsau/zaratustra/main is authorized; publication/readback remains to be
-performed. Personal installation and release acceptance remain separate.
+to ainazemtsau/zaratustra/main was authorized and verified after push. Personal
+installation and release acceptance remain separate.
 
 ## next
 
