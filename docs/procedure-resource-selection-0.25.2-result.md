@@ -138,6 +138,17 @@ configuration remain. No model, procedure dispatch, Work acceptance, export or
 private Git publication was performed by maintenance. Detailed evidence stays in
 the private archive.
 
-Public publication is pending. No real Pi subscription or paid API requests have
-been made for this package. Code checking, publication, private installation and
-owner acceptance are separate facts.
+## Public publication
+
+The verified shared code is published in `ainazemtsau/zaratustra/main` at
+`c4516ce99a673e985e34c90041ae0e52c0ec5df0`. Authenticated GitHub commit readback
+and fetched Git main agree; fetched production files and 0.25.2 metadata match
+the checked source. The publication report adds no wheel bytes. Unrelated local
+untracked materials are preserved and not included. Private instance evidence,
+answers and operational receipts are not published.
+
+Final private readback again confirms preserved Health/Development history,
+results and accounting, one active procedure resource and addressable duplicate
+history. No real Pi subscription or paid API requests have been made for this
+package. Code checking, publication, private installation and owner acceptance
+are separate facts.

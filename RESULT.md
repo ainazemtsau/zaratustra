@@ -7,7 +7,9 @@ Corrected the owner-reported first configured procedure resource duplication on
 selection is consumed after commit; legacy setup pins the actual active resource,
 and selection rechecks current state after receipts. Core schema 18 and domain
 authority remain. Package verification and authorized private installation are
-complete; public publication is pending.
+complete. Shared code is published in `ainazemtsau/zaratustra/main` at
+`c4516ce99a673e985e34c90041ae0e52c0ec5df0`, verified by authenticated GitHub and
+fetched Git readback. This reporting update changes no wheel bytes.
 
 ## evidence
 
@@ -32,7 +34,8 @@ matches all 124 production files; before/after readback preserves Health,
 Development, exact Work/history/results/accounting and config. Two proven resource
 duplicates are revoked with history; the exact stopped ordinary session is
 interrupted without acceptance. No personal procedure/model was dispatched.
-Public publication is pending.
+Final private and public readbacks passed; independent Work acceptance remains
+separate. Unrelated untracked work is preserved outside the commit.
 See [evidence](docs/procedure-resource-selection-0.25.2-result.md).
 
 ## assumptions
