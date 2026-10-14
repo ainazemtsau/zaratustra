@@ -13,7 +13,10 @@ SQLite's existing FULL and normal checkpoint policy stay in force.
 Native completion now requires actual settlement, not readiness/HTTP counts.
 Existing atomic Core pause precedes local teardown; startup and refusal cleanup
 release native resources. History/schema/acceptance authority stay unchanged.
-Implementation and verification are complete; publication is the next step.
+Implementation and verification are complete. Code is published in public
+ainazemtsau/zaratustra/main at `d547b886f7c1e38aaef447f72aa0877835249239`.
+Authenticated GitHub and fetched Git main readback confirm the commit and 0.25.1;
+production source is identical. The publication report changes no wheel bytes.
 
 ## evidence
 
@@ -65,7 +68,7 @@ Native incomplete/failing observations are not reported as completed checks.
 
 Implementation/checking of this structural contract is explicitly authorized.
 Public product delivery to ainazemtsau/zaratustra/main is authorized. Checks are
-complete; publication and owner acceptance remain separate. No personal Work
+complete; publication is verified and owner acceptance remains separate. No personal Work
 or the whole Core is accepted by this engineering report.
 
 ## next

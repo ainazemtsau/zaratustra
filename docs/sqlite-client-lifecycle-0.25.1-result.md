@@ -5,7 +5,11 @@
 The owner requested correcting the repeatedly open SQLite issue and explicitly
 approved [the idle-client contract](sqlite-client-lifecycle-plan.md). Baseline:
 public `193383f`; branch `codex/sqlite-lock-lifecycle`. Product 0.25.1 keeps schema
-18. Implementation and checks are complete locally; publication is the next step.
+18. Implementation and checks are complete. Code was published to public
+`ainazemtsau/zaratustra/main` as
+`d547b886f7c1e38aaef447f72aa0877835249239`. Authenticated GitHub readback and
+fetched Git main agree with that commit; production source matches the checked
+commit and version 0.25.1. This report update changes no wheel bytes.
 
 Ordinary and assigned Pi use the same BridgeServer resource boundary. Its
 Foundation client has a physical rw handle with query_only, completes its checked

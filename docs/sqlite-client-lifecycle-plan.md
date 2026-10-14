@@ -7,8 +7,9 @@ SQLite blocking observation. Current public baseline is `193383f`, product
 0.25.0, schema 18. Branch: `codex/sqlite-lock-lifecycle`.
 
 The owner explicitly approved implementing and checking this runtime
-resource-lifetime contract. Implementation and checks are complete locally;
-publication is pending. No private installation or data operation has been
+resource-lifetime contract. Implementation and checks are complete; code is
+published to public `ainazemtsau/zaratustra/main` at `d547b88`, verified by
+authenticated GitHub and Git readback. No private installation or data operation has been
 performed. The independent probe's completion/barrier gaps and the adjacent
 pause/startup defects are corrected; exact evidence is in the 0.25.1 report.
 
