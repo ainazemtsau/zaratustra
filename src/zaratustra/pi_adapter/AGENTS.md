@@ -1,5 +1,11 @@
 # Interactive Pi adapter
 
+Configured procedure selection persists its Core resource before dispatch. Read
+the committed snapshot after selection, then pin that resource's actual ID and
+revision. Never create a fallback from the earlier empty snapshot. Legacy setup
+also selects one actual active resource; historical entries cannot supply its
+identity or revision. Keep multiple-resource refusals and owner acceptance intact.
+
 0.25.1 BridgeServer owns the checked idle Core client until native HTTP handlers
 have drained. Keep request threads joinable and inactive socket reads bounded; release
 the client/fence after native server cleanup, including constructor failure and

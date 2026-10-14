@@ -1,3 +1,69 @@
+# Procedure resource selection — verified 0.25.2
+
+## outcome
+
+Corrected the owner-reported first configured procedure resource duplication on
+`codex/procedure-resource-selection` from public 0.25.1 `9c7f358`. The configured
+selection is consumed after commit; legacy setup pins the actual active resource,
+and selection rechecks current state after receipts. Core schema 18 and domain
+authority remain. Package verification and authorized private installation are
+complete; public publication is pending.
+
+## evidence
+
+Fresh configured personal/project procedure tests failed before correction;
+legacy ID/revision tests and revoked/changed-resource selection tests likewise
+reproduced their defects. Thirty scoped recovery/workspace cases passed after
+correction; affected Ruff/format/mypy passed. One full native gate reported 1248
+passed and one abrupt-process SQLite crash/reopen failure; its addressed retry
+also failed. A separate copy preserves committed Artifact/receipt bytes and
+passes integrity. Equal retained/released-process-HANDLE probes identified test
+ownership; its scoped child lifecycle correction keeps every assertion. The
+space-file affected gate then passed 39 tests and build. The original full gate
+is not relabelled PASS; product Foundation/SQLite policy is unchanged.
+Two installed ordinary Pi probes with actual config v2 passed personal/external
+roots, native file placement, reopen/compact/first Work and fictional Development,
+55 exact accounted localhost sends each. A later affected check passed 23 tests
+and build; rebuilt wheel is byte-identical to the native-tested candidate.
+Verified private backup/restore and resource repair rehearsal preserve domain
+history/accounting. One bounded read-only evaluator confirmed 124 exact wheel
+members, schema, boundaries and both configured native reports. Installed 0.25.2
+matches all 124 production files; before/after readback preserves Health,
+Development, exact Work/history/results/accounting and config. Two proven resource
+duplicates are revoked with history; the exact stopped ordinary session is
+interrupted without acceptance. No personal procedure/model was dispatched.
+Public publication is pending.
+See [evidence](docs/procedure-resource-selection-0.25.2-result.md).
+
+## assumptions
+
+Core may legitimately store several resources. This single-root execution path
+requires an unambiguous current choice and exact Attempt pins. A historical
+receipt does not establish current resource availability.
+
+## cuts
+
+No new schema/graph/store, automatic ambiguity repair/reactivation, text parsing,
+Health-specific behavior, acceptance or provider retry expansion. Exports and
+Git representations remain outside the package.
+
+## cost
+
+Fictional Core and localhost providers only; no subscription or paid API sends.
+Source investigation, targeted regressions and bounded read-only review.
+Final wheel SHA256:
+`12c20eb3f5effc31e7c646a693e947356e38ebcd6042e53147f39c3f7201670c`.
+
+## manual-acceptance
+
+The owner's ordinary-use failure requires correction. Engineering checks and
+publication do not accept the owner's Work or whole Core. Private instance
+maintenance and actual release outcomes are recorded separately.
+
+## next
+
+solmax
+
 # SQLite client lifetime — verified 0.25.1
 
 ## outcome

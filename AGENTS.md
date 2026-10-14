@@ -141,6 +141,13 @@ and parallel dirty work; do not publish private preparation branches merely to k
 
 ## What exists
 
+Procedure-resource correction (0.25.2) keeps schema 18. The coordinator consumes
+the committed configured selection before considering fallback creation. Current
+resource choice is rechecked after receipts; a revoked history cannot masquerade
+as a successful choice. Legacy setup pins the actual active ID/revision. Core
+continues to allow explicit multiple resources; single-root adapters refuse
+ambiguity. Actual release evidence is separate from owner acceptance.
+
 Owner-approved 0.25.1 client lifetime correction keeps schema 18. The existing Pi
 bridge owns a checked idle query-only physical rw Core client until native HTTP
 drain completes, under the existing session/maintenance fence. Each operation

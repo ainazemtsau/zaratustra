@@ -538,38 +538,47 @@ def test_killed_managed_client_reopens_committed_wal_and_releases_maintenance(
         "    Path(sys.argv[2]).write_text('committed', encoding='utf-8')\n"
         "    sys.stdin.read(1)\n"
     )
-    process = subprocess.Popen(
-        [
-            sys.executable,
-            "-c",
-            script,
-            str(root),
-            str(ready_file),
-            str(artifact_id),
-            str(operation_id),
-        ],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        encoding="utf-8",
-    )
-    try:
-        deadline = time.monotonic() + 10
-        while not ready_file.is_file() and process.poll() is None and time.monotonic() < deadline:
-            time.sleep(0.01)
-        if not ready_file.is_file():
-            process.kill()
-            stdout, stderr = process.communicate(timeout=10)
-            raise AssertionError(f"Client failed before its commit barrier: {stdout}\n{stderr}")
-        assert ready_file.read_text(encoding="utf-8") == "committed"
-        assert core.read_artifact(root, artifact_id, owner).content == payload
-        with pytest.raises(FoundationError, match="history_busy"):
-            core.create_backup(root, uuid4(), owner)
-    finally:
-        if process.poll() is None:
-            process.kill()
-        process.communicate(timeout=10)
+
+    def committed_child_exit() -> None:
+        # wait/communicate observe exit but Popen still owns the process handle.
+        # Release that owning object before testing a new first WAL client.
+        process = subprocess.Popen(
+            [
+                sys.executable,
+                "-c",
+                script,
+                str(root),
+                str(ready_file),
+                str(artifact_id),
+                str(operation_id),
+            ],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+        )
+        try:
+            deadline = time.monotonic() + 10
+            while (
+                not ready_file.is_file() and process.poll() is None and time.monotonic() < deadline
+            ):
+                time.sleep(0.01)
+            if not ready_file.is_file():
+                process.kill()
+                stdout, stderr = process.communicate(timeout=10)
+                raise AssertionError(f"Client failed before its commit barrier: {stdout}\n{stderr}")
+            assert ready_file.read_text(encoding="utf-8") == "committed"
+            assert core.read_artifact(root, artifact_id, owner).content == payload
+            with pytest.raises(FoundationError, match="history_busy"):
+                core.create_backup(root, uuid4(), owner)
+        finally:
+            if process.poll() is None:
+                process.kill()
+            process.communicate(timeout=10)
+        assert process.returncode is not None
+
+    committed_child_exit()
     with core.managed_core_client(root):
         reopened = read_space(root)
         assert reopened.space_id == created.space_id

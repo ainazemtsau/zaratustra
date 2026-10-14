@@ -6,7 +6,7 @@ import json
 import subprocess
 from pathlib import Path
 from typing import Any
-from uuid import uuid4
+from uuid import uuid4, uuid5
 
 import pytest
 
@@ -15,21 +15,26 @@ from tests.zaratustra.foundation.test_memory import note, ready
 from zaratustra.foundation import (
     CreateGrantRequest,
     CreateMethodVersionRequest,
+    CreateResourceRequest,
     CreateWorkRequest,
     DeleteKnowledgeRequest,
     FoundationError,
     GrantState,
     OutputContract,
+    ResourceState,
     ReviseKnowledgeRequest,
+    ReviseResourceRequest,
     RevokeGrantRequest,
     SourceState,
     WorkState,
+    apply_operation,
     authorize_local,
     export_workspace_projection,
     initial_sleep_method,
     initial_sleep_ref,
     read_execution,
     read_knowledge,
+    read_receipt,
     read_space,
     upgrade_activity_setup_space,
     validate_workspace_projection,
@@ -49,6 +54,7 @@ from zaratustra.workspace import (
     register_project,
     remember_model,
     select_work_project,
+    selection,
     write_config,
 )
 
@@ -205,6 +211,137 @@ def test_v1_migration_and_project_resume_preserve_core(tmp_path: Path) -> None:
     register_project(path, Project(name="small", path=nested))
     assert read_config(path).project_root("small") == nested
     assert not (nested / ".git").exists()
+
+
+def test_project_selection_rejects_revoked_create_receipt(tmp_path: Path) -> None:
+    """A replayed create receipt cannot claim the revoked resource is still selected."""
+    root, space, owner, activity, _ = ready(tmp_path)
+    _, config = configuration(tmp_path, root, space)
+    work = uuid4()
+    _apply(
+        root,
+        space,
+        owner,
+        CreateWorkRequest,
+        work_id=work,
+        state=WorkState(
+            activity_id=activity,
+            goal="Select a fictional project",
+            expected_outputs=(OutputContract(slot="report", media_type="text/plain"),),
+        ),
+    )
+    select_work_project(config, owner, work, "code")
+    created = read_execution(root, work, owner).resources[0]
+    operation = uuid5(created.resource_id, "create")
+    receipt = read_receipt(root, operation, owner)
+    _apply(
+        root,
+        space,
+        owner,
+        ReviseResourceRequest,
+        resource_id=created.resource_id,
+        work_id=work,
+        expected_revision=created.revision,
+        state=created.state.model_copy(update={"status": "revoked"}),
+    )
+    before, state = read_execution(root, work, owner), read_space(root)
+    revoked = before.resources[0]
+    with pytest.raises(FoundationError) as error:
+        select_work_project(config, owner, work, "code")
+    assert error.value.code == "resource_unavailable"
+    assert f"{revoked.resource_id}@{revoked.revision}" in str(error.value)
+    assert read_execution(root, work, owner) == before and read_space(root) == state
+    assert read_receipt(root, operation, owner) == receipt
+
+
+def test_project_selection_rejects_multiple_active_resources_without_effects(
+    tmp_path: Path,
+) -> None:
+    """Core may keep multiple resources, but this single-root selector must refuse ambiguity."""
+    root, space, owner, activity, _ = ready(tmp_path)
+    _, config = configuration(tmp_path, root, space)
+    work = uuid4()
+    _apply(
+        root,
+        space,
+        owner,
+        CreateWorkRequest,
+        work_id=work,
+        state=WorkState(
+            activity_id=activity,
+            goal="Select a fictional project",
+            expected_outputs=(OutputContract(slot="report", media_type="text/plain"),),
+        ),
+    )
+    select_work_project(config, owner, work, "code")
+    _apply(
+        root,
+        space,
+        owner,
+        CreateResourceRequest,
+        resource_id=uuid4(),
+        work_id=work,
+        state=ResourceState(label="Independent resource", root=config.workspace),
+    )
+    before, state = read_execution(root, work, owner), read_space(root)
+    operation = uuid4()
+    with pytest.raises(FoundationError) as error:
+        select_work_project(config, owner, work, "code", operation_id=operation)
+    assert error.value.code == "resource_unavailable"
+    for resource in before.resources:
+        assert f"{resource.resource_id}@{resource.revision}" in str(error.value)
+    assert read_execution(root, work, owner) == before and read_space(root) == state
+    with pytest.raises(FoundationError) as missing:
+        read_receipt(root, operation, owner)
+    assert missing.value.code == "not_found"
+
+
+def test_project_selection_rechecks_current_path_after_effect(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A competing public revision after commit cannot leave a false successful root."""
+    root, space, owner, activity, _ = ready(tmp_path)
+    _, config = configuration(tmp_path, root, space)
+    work = uuid4()
+    _apply(
+        root,
+        space,
+        owner,
+        CreateWorkRequest,
+        work_id=work,
+        state=WorkState(
+            activity_id=activity,
+            goal="Select a fictional project",
+            expected_outputs=(OutputContract(slot="report", media_type="text/plain"),),
+        ),
+    )
+    ordinary_apply = apply_operation
+    revised = []
+
+    def apply_with_competing_revision(*args: Any, **kwargs: Any) -> Any:
+        receipt = ordinary_apply(*args, **kwargs)
+        resource = read_execution(root, work, owner).resources[0]
+        _apply(
+            root,
+            space,
+            owner,
+            ReviseResourceRequest,
+            resource_id=resource.resource_id,
+            work_id=work,
+            expected_revision=resource.revision,
+            state=resource.state.model_copy(update={"root": config.workspace}),
+        )
+        revised.append(read_execution(root, work, owner))
+        return receipt
+
+    monkeypatch.setattr(selection, "apply_operation", apply_with_competing_revision)
+    with pytest.raises(FoundationError) as error:
+        select_work_project(config, owner, work, "code")
+    assert error.value.code == "resource_unavailable" and len(revised) == 1
+    resource = revised[0].resources[0]
+    assert f"{resource.resource_id}@{resource.revision}" in str(error.value)
+    assert resource.state.root == config.workspace
+    assert read_execution(root, work, owner) == revised[0]
 
 
 def test_complete_unicode_projection_and_changed_basis(tmp_path: Path) -> None:

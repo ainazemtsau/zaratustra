@@ -16,9 +16,10 @@ from tests.zaratustra.foundation.test_activity_structures import (
     _proposal,
     _structured_case,
 )
-from tests.zaratustra.foundation.test_child_execution import _claim, _stop
+from tests.zaratustra.foundation.test_child_execution import _claim, _invocation, _stop
 from tests.zaratustra.foundation.test_workflows import _op, _setup
 from tests.zaratustra.pi_adapter.test_child_assigned import _config
+from tests.zaratustra.workspace.test_workspace import configuration
 from zaratustra.foundation import (
     AdmitInvocationRequest,
     AssignAttemptRequest,
@@ -26,23 +27,32 @@ from zaratustra.foundation import (
     ConversationTerminalObservation,
     CreateKnowledgeRequest,
     CreateResourceRequest,
+    CreateWorkRequest,
     DataEntryState,
     FinishInvocationRequest,
     FoundationError,
     KnowledgeRef,
+    OutputContract,
     PrepareInvocationRequest,
+    PublishAttemptOutputRequest,
     RecordContextDeliveryRequest,
     ResourceState,
+    ReviseResourceRequest,
     SendInvocationRequest,
     SourceState,
+    StartAttemptRequest,
+    StopAttemptRequest,
     WorkflowModel,
     WorkflowNode,
     WorkflowRequest,
+    WorkState,
+    authorize_local,
     create_entry,
     read_activity_setup,
     read_artifact,
     read_execution,
     read_knowledge,
+    read_ordinary_final_proof,
     read_space,
     read_work,
     read_workflow_run,
@@ -56,8 +66,299 @@ from zaratustra.pi_adapter.assigned import EXECUTOR_VERSION
 from zaratustra.pi_adapter.procedures import ProcedureCoordinator, procedure_view
 from zaratustra.pi_adapter.response_recovery import recover_response
 from zaratustra.pi_adapter.workflows import WorkflowCoordinator, workflow_view
+from zaratustra.workspace import select_work_project
 
 Target = Literal["setup", "workflow", "procedure"]
+
+
+@pytest.mark.parametrize("ambiguous", (False, True))
+def test_legacy_setup_refuses_unselected_resources_without_effects(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, ambiguous: bool
+) -> None:
+    """A revoked history or two active choices cannot silently supply an Attempt."""
+    case, identifier, work, bridge, controller = _target(tmp_path, "setup")
+    root, space, owner, *_ = case
+    _step(
+        case,
+        "bind_model",
+        stage_model=WorkflowModel(
+            provider=controller.config.provider_id,
+            model_id=controller.config.model_id,
+            profile=controller.config.provider_profile,
+            reasoning="off",
+        ),
+    )
+    _op(
+        root,
+        space,
+        owner,
+        CreateResourceRequest,
+        resource_id=UUID(int=1),
+        work_id=work,
+        state=ResourceState(label="Saved choice", root=root),
+    )
+    if ambiguous:
+        _op(
+            root,
+            space,
+            owner,
+            CreateResourceRequest,
+            resource_id=UUID(int=2),
+            work_id=work,
+            state=ResourceState(label="Other choice", root=root),
+        )
+    else:
+        _op(
+            root,
+            space,
+            owner,
+            ReviseResourceRequest,
+            resource_id=UUID(int=1),
+            work_id=work,
+            expected_revision=1,
+            state=ResourceState(label="Saved choice", root=root, status="revoked"),
+        )
+    before, stable = read_execution(root, work, owner), read_space(root)
+    monkeypatch.setattr("subprocess.Popen", lambda *a, **kw: pytest.fail("Unexpected executor"))
+    with pytest.raises(FoundationError, match="Setup needs one active resource"):
+        controller._execute_stage(identifier, work)
+    assert read_execution(root, work, owner) == before
+    assert read_space(root) == stable
+
+
+@pytest.mark.parametrize("revoked_history", (False, True))
+def test_legacy_setup_binds_actual_resource_identity_and_revision(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, revoked_history: bool
+) -> None:
+    """An existing resource need not have the setup factory's deterministic ID."""
+    case, identifier, work, bridge, controller = _target(tmp_path, "setup")
+    root, space, owner, *_ = case
+    if revoked_history:
+        _op(
+            root,
+            space,
+            owner,
+            CreateResourceRequest,
+            resource_id=UUID(int=1),
+            work_id=work,
+            state=ResourceState(label="Historical resource", root=root),
+        )
+        _op(
+            root,
+            space,
+            owner,
+            ReviseResourceRequest,
+            resource_id=UUID(int=1),
+            work_id=work,
+            expected_revision=1,
+            state=ResourceState(label="Historical resource", root=root, status="revoked"),
+        )
+    selected = UUID(int=2)
+    _op(
+        root,
+        space,
+        owner,
+        CreateResourceRequest,
+        resource_id=selected,
+        work_id=work,
+        state=ResourceState(label="Explicitly selected resource", root=root),
+    )
+    before = read_execution(root, work, owner)
+
+    class ExecutorBoundaryReached(RuntimeError):
+        pass
+
+    def observe_spawn(*args: Any, **kwargs: Any) -> None:
+        raise ExecutorBoundaryReached("Resource binding reached the native executor boundary")
+
+    monkeypatch.setattr("subprocess.Popen", observe_spawn)
+    with pytest.raises(ExecutorBoundaryReached):
+        controller._execute_stage(identifier, work)
+    after = read_execution(root, work, owner)
+    assert after.resources == before.resources
+    assert len(after.attempts) == len(after.assignments) == 1
+    assert after.attempts[0].resource_id == selected
+    assert after.attempts[0].resource_revision == 1
+    assert after.work == before.work and after.work.state.acceptance is None
+    assert not after.invocations
+
+
+@pytest.mark.parametrize("project", ("personal", "code"))
+@pytest.mark.parametrize("preselected", (False, True))
+def test_configured_procedure_assigns_the_committed_project_resource_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, project: str, preselected: bool
+) -> None:
+    """Real launch selection must not be followed by a stale-snapshot second resource."""
+    case = _structured_case(tmp_path)
+    root, space, owner, _, activity, *_ = case
+    proposal = _proposal()
+    if project != "personal":
+        procedure = proposal.procedures[0].model_copy(
+            update={"resource": "project", "project": project}
+        )
+        proposal = proposal.model_copy(update={"procedures": (procedure,)})
+    _activate(case, proposal)
+    _prepare_space(root, owner.actor, create=False, upgrade_existing=True)
+    launch = tmp_path / "launch"
+    launch.mkdir()
+    config_path, launch_config = configuration(launch, root, space)
+    run = start_procedure(root, owner, activity, "observe", "configured-first-action")
+    identifier, work = UUID(str(run["run_id"])), UUID(str(run["work_id"]))
+    bridge = Bridge(root, owner, launch_config.workspace, workspace_config=config_path)
+    assigned = replace(
+        _config(root, launch_config.workspace, tmp_path / "executor-runtime"),
+        workspace_config=config_path,
+    )
+    controller = ProcedureCoordinator(bridge, assigned)
+    if preselected:
+        select_work_project(launch_config, owner, work, project)
+    before = read_execution(root, work, owner)
+    entered, release = threading.Event(), threading.Event()
+
+    def observe_dispatch(attempt: UUID) -> None:
+        assert read_execution(root, work, owner).attempts[-1].attempt_id == attempt
+        entered.set()
+        release.wait(10)
+
+    # Stop at the native executor boundary; resource/assignment effects are real Core calls.
+    monkeypatch.setattr(controller, "_run", observe_dispatch)
+    model = {"provider": "synthetic", "id": "synthetic", "thinking": "off"}
+    try:
+        result = controller.start(identifier, model)
+        assert result["execution"] == "assigned" and entered.wait(5)
+        current = read_execution(root, work, owner)
+        assert len(current.resources) == 1
+        resource = current.resources[0]
+        assert resource.state.status == "active"
+        assert resource.state.root == launch_config.project_root(project)
+        assert controller.config.workspace == resource.state.root
+        assert current.attempts[0].resource_id == resource.resource_id
+        assert current.attempts[0].resource_revision == resource.revision
+        assert len(current.attempts) == len(current.assignments) == 1
+        if preselected:
+            assert current.resources == before.resources
+        assert controller.start(identifier, model)["execution"] == "running"
+        assert read_execution(root, work, owner) == current
+        assert current.work == before.work and current.work.state.acceptance is None
+        assert not current.invocations
+    finally:
+        release.set()
+        if controller.thread is not None:
+            controller.thread.join(timeout=5)
+
+
+def test_answered_ordinary_assessment_requires_owner_interruption_before_procedure_handoff(
+    tmp_path: Path,
+) -> None:
+    """A published proposal without final proof keeps its resource until an addressed stop."""
+    case = _structured_case(tmp_path)
+    root, space, owner, _, activity, *_ = case
+    _activate(case)
+    _prepare_space(root, owner.actor, create=False, upgrade_existing=True)
+    launch = tmp_path / "launch"
+    launch.mkdir()
+    _, config = configuration(launch, root, space)
+    assessment, attempt, session = uuid4(), uuid4(), uuid4()
+    _op(
+        root,
+        space,
+        owner,
+        CreateWorkRequest,
+        work_id=assessment,
+        state=WorkState(
+            activity_id=activity,
+            goal="Retain the fictional ordinary assessment before beginning its procedure",
+            expected_outputs=(OutputContract(slot="report", media_type="text/plain"),),
+        ),
+    )
+    select_work_project(config, owner, assessment, "personal")
+    resource = read_execution(root, assessment, owner).resources[0]
+    assert resource.state.mode == "exclusive"
+    _op(
+        root,
+        space,
+        owner,
+        StartAttemptRequest,
+        work_id=assessment,
+        attempt_id=attempt,
+        session_id=session,
+        expected_work_revision=1,
+        resource_id=resource.resource_id,
+        expected_resource_revision=resource.revision,
+    )
+    invocation = _invocation(root, space, owner, assessment, attempt, session)
+    _op(
+        root,
+        space,
+        owner,
+        PublishAttemptOutputRequest,
+        work_id=assessment,
+        attempt_id=attempt,
+        session_id=session,
+        slot="report",
+        media_type="text/plain",
+        content=b"Fictional proposed assessment; owner acceptance remains separate",
+    )
+    answered = read_execution(root, assessment, owner)
+    output = answered.work.state.linked_outputs[0].artifact
+    original = read_artifact(root, output.artifact_id, owner, revision=output.revision)
+    assert answered.attempts[0].status == "active" and not answered.assignments
+    assert answered.invocations[0].invocation_id == invocation
+    assert answered.invocations[0].status == "answered" and answered.committed_units == 3
+    assert answered.held_units == 0
+    assert answered.work.state.status == "proposed" and answered.work.state.acceptance is None
+    reopened = authorize_local(root, actor=owner.actor, source_ref="fictional-reopened-session")
+    assert read_ordinary_final_proof(root, assessment, reopened, attempt_id=attempt) is None
+    assert read_execution(root, assessment, reopened) == answered
+
+    run = start_procedure(root, reopened, activity, "observe", "ordinary-assessment-handoff")
+    procedure = UUID(str(run["work_id"]))
+    select_work_project(config, reopened, procedure, "personal")
+    pending = read_execution(root, procedure, reopened)
+    selected = pending.resources[0]
+    assert selected.state.root == resource.state.root and selected.state.mode == "exclusive"
+    successor, successor_session = uuid4(), uuid4()
+    fields = dict(
+        work_id=procedure,
+        attempt_id=successor,
+        session_id=successor_session,
+        expected_work_revision=pending.work.revision,
+        resource_id=selected.resource_id,
+        expected_resource_revision=selected.revision,
+        executor_version=EXECUTOR_VERSION,
+    )
+    before_refusal = read_space(root)
+    with pytest.raises(FoundationError) as refusal:
+        _op(root, space, reopened, AssignAttemptRequest, **fields)
+    assert refusal.value.code == "resource_busy"
+    assert read_space(root) == before_refusal
+    assert read_execution(root, assessment, reopened) == answered
+    assert read_execution(root, procedure, reopened) == pending
+
+    _op(
+        root,
+        space,
+        reopened,
+        StopAttemptRequest,
+        work_id=assessment,
+        attempt_id=attempt,
+        session_id=session,
+        outcome="interrupted",
+    )
+    interrupted = read_execution(root, assessment, reopened)
+    assert interrupted.attempts[0].status == "interrupted"
+    assert interrupted.work == answered.work and interrupted.resources == answered.resources
+    assert interrupted.invocations == answered.invocations
+    assert interrupted.committed_units == answered.committed_units and interrupted.held_units == 0
+    assert read_artifact(root, output.artifact_id, reopened, revision=output.revision) == original
+    _op(root, space, reopened, AssignAttemptRequest, **fields)
+    assigned = read_execution(root, procedure, reopened)
+    assert len(assigned.attempts) == len(assigned.assignments) == 1
+    assert assigned.attempts[0].attempt_id == successor
+    assert assigned.attempts[0].status == "active" and assigned.assignments[0].status == "assigned"
+    assert assigned.work == pending.work and assigned.work.state.acceptance is None
+    assert not assigned.invocations
+    assert read_execution(root, assessment, reopened) == interrupted
 
 
 def _target(tmp_path: Path, target: Target) -> tuple[Any, UUID, UUID, Bridge, Any]:

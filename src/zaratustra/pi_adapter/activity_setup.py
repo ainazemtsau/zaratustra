@@ -327,6 +327,16 @@ class SetupCoordinator:
                 authority,
             )
             snapshot = _observe(read_execution, self.config.space, work_id, authority)
+        resources = [item for item in snapshot.resources if item.state.status == "active"]
+        if len(resources) != 1:
+            raise FoundationError("resource_unavailable", "Setup needs one active resource")
+        resource = resources[0]
+        if resource.state.root.resolve() != config.workspace.resolve():
+            raise FoundationError(
+                "resource_unavailable",
+                "Saved setup resource differs from selected working directory",
+            )
+        resource_id = resource.resource_id
         if snapshot.assignments and snapshot.assignments[-1].status in (
             "assigned",
             "waiting",
@@ -346,7 +356,7 @@ class SetupCoordinator:
                     work_id=work_id,
                     expected_work_revision=snapshot.work.revision,
                     resource_id=resource_id,
-                    expected_resource_revision=snapshot.resources[0].revision,
+                    expected_resource_revision=resource.revision,
                     session_id=uuid4(),
                     previous_attempt_id=snapshot.attempts[-1].attempt_id
                     if snapshot.attempts

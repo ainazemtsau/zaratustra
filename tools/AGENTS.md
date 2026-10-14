@@ -1,5 +1,10 @@
 # Development tools
 
+The ordinary Activity-structure probe uses local config v2 for personal and
+registered external procedure roots. Observe one committed resource, its exact
+Attempt pin, and a native file-tool effect in the expected root before claiming
+procedure execution. Unconfigured fixtures do not establish installed selection.
+
 Native observation requires its actual completion boundary; Core readiness or
 HTTP counts alone cannot finish a free conversation. Reset native settlement
 before every new prompt/compact transition. Distinguish deliberate abrupt/EOF,

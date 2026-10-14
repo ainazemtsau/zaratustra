@@ -107,6 +107,7 @@ class ProcedureCoordinator:
                     config,
                     workspace=select_work_project(workspace, self.bridge.authority, work, project),
                 )
+                snapshot = read_execution(config.space, work, self.bridge.authority)
             elif procedure["resource"] == "project":
                 raise FoundationError("resource_unavailable", "Project must be registered locally")
             if not snapshot.resources:

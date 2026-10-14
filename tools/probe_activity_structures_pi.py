@@ -19,6 +19,7 @@ from zaratustra.pi_adapter.assigned import AssignedConfig
 from zaratustra.pi_adapter.procedures import ProcedureCoordinator
 from zaratustra.pi_adapter.skills import activity_setup_skill
 from zaratustra.pi_adapter.workflows import WorkflowCoordinator
+from zaratustra.workspace import LaunchConfig, Project, write_config
 
 from .probe_activity_setup_pi import context, harness
 
@@ -118,6 +119,7 @@ def run_probe(
     *,
     blank_response: bool = False,
     terminal_proof: bool = False,
+    procedure_project: Literal["personal", "external"] = "personal",
 ) -> dict[str, Any]:
     directory.mkdir(parents=True, exist_ok=False)
     root, working = directory / "space", directory / "work"
@@ -181,11 +183,37 @@ def run_probe(
         core.upgrade_delivery_correlation_space(root, authority)
         assert core.read_work(root, legacy_work, authority) == legacy_before
     native, actual = harness(), read_pi_runtime(runtime)
+    launch_runtime = directory / "launch-runtime"
+    launch_runtime.mkdir()
+    external = directory / "external-project"
+    external.mkdir()
+    launch_path = launch_runtime / "config.json"
     requests: list[dict[str, Any]] = []
     bridges: list[Bridge] = []
 
     def bridge_for(provider: Any) -> Bridge:
-        bridge = Bridge(root, authority, working)
+        write_config(
+            launch_path,
+            LaunchConfig(
+                version=2,
+                actor=authority.actor,
+                space_id=authority.space_id,
+                space=root,
+                workspace=working,
+                personal_root=working,
+                runtime_root=launch_runtime,
+                sqlite_dll=launch_runtime / "sqlite3.dll",
+                pi_runtime=runtime,
+                pi_source="system",
+                provider_profile="local-completions",
+                provider_base_url=f"http://127.0.0.1:{provider.server_port}/v1",
+                provider_id="fictional-local",
+                model_id="fictional-model",
+                reserve_units=1000,
+                projects=(Project(name="external", path=external),),
+            ),
+        )
+        bridge = Bridge(root, authority, working, workspace_config=launch_path)
         config = AssignedConfig(
             space=root,
             workspace=working,
@@ -202,6 +230,7 @@ def run_probe(
             limit_units=None,
             offline=True,
             disable_tools=True,
+            workspace_config=launch_path,
         )
         bridge.setup_controller = SetupCoordinator(bridge, config)
         bridge.procedure_controller = ProcedureCoordinator(bridge, config)
@@ -312,6 +341,15 @@ def run_probe(
     malformed = "" if blank_response else '{"contract_version":2,'
     cadence: Literal["day", "week", "month"] = "week"
 
+    def configured_draft() -> core.ActivitySetupDraftV2:
+        proposal = draft(cadence)
+        if procedure_project == "external":
+            procedure = proposal.procedures[0].model_copy(
+                update={"resource": "project", "project": "external"}
+            )
+            proposal = proposal.model_copy(update={"procedures": (procedure,)})
+        return proposal
+
     def stage_reply(body: dict[str, Any]) -> dict[str, Any]:
         nonlocal reviews, raw_drafts
         packet = context(body)
@@ -328,7 +366,7 @@ def run_probe(
                     return {"_final_text": malformed}
                 if raw_drafts == 2:
                     assert incoming["rejected_result"]["content_text"] == malformed
-                    invalid = json.loads(draft(cadence).model_dump_json())
+                    invalid = json.loads(configured_draft().model_dump_json())
                     invalid["procedures"][0]["operations"] = ["Preserve the original separately"]
                     return {"_final_text": json.dumps(invalid)}
                 if raw_drafts == 3:
@@ -388,7 +426,7 @@ def run_probe(
                     }
                 ).model_dump_json()
             else:
-                result = draft(cadence).model_dump_json()
+                result = configured_draft().model_dump_json()
             return {"_final_text": result}
         tools = [message for message in body["messages"] if message["role"] == "tool"]
         if not tools:
@@ -556,7 +594,19 @@ def run_probe(
             )
         input_ref = packet["work"]["state"]["inputs"][0]
         contract = packet["work"]["state"]["expected_outputs"][0]
-        if not any(message["role"] == "tool" for message in body["messages"]):
+        tools = [message for message in body["messages"] if message["role"] == "tool"]
+        assigned = core.read_execution(root, work_id, authority)
+        active = [item for item in assigned.resources if item.state.status == "active"]
+        expected_root = working if procedure_project == "personal" else external
+        assert len(active) == 1 and active[0].state.root == expected_root
+        assert assigned.attempts[-1].resource_id == active[0].resource_id
+        if not tools:
+            return {
+                "_tool": "write",
+                "path": "procedure-root-proof.txt",
+                "content": "Fictional configured procedure — exact working directory",
+            }
+        if len(tools) == 1:
             return {
                 "_tool": "zara_data",
                 "mode": "apply",
@@ -588,12 +638,18 @@ def run_probe(
     execution = native.Provider([execution_reply] * 16)
     run(
         execution,
-        expected_provider_calls=4,
+        expected_provider_calls=5,
         wait_for=lambda: bool(core.read_work(root, work_id, authority).state.linked_outputs),
         prompt="Execute the saved observation procedure",
     )
     result = core.read_work(root, work_id, authority)
     assert result.state.acceptance is None and result.state.linked_outputs
+    expected_root = working if procedure_project == "personal" else external
+    assert (expected_root / "procedure-root-proof.txt").read_text(encoding="utf-8") == (
+        "Fictional configured procedure — exact working directory"
+    )
+    other_root = external if procedure_project == "personal" else working
+    assert not (other_root / "procedure-root-proof.txt").exists()
     format_ref = result.state.expected_outputs[0].format_ref
     assert format_ref is not None
     third = native.Provider(
@@ -874,6 +930,10 @@ def run_probe(
     assert all(item["stage"] == "answered" for item in deliveries), deliveries
     report = {
         "schema": core.read_space(root).schema_version,
+        "workspace_config_version": 2,
+        "procedure_project": procedure_project,
+        "procedure_single_resource": True,
+        "native_procedure_file_root_verified": True,
         "upgrade_from_schema": 15,
         "pi_version": actual.version,
         "review_passes": reviews,
@@ -1190,6 +1250,7 @@ def main() -> None:
     parser.add_argument("--pi-runtime", type=Path, required=True)
     parser.add_argument("--blank-response", action="store_true")
     parser.add_argument("--terminal-proof", action="store_true")
+    parser.add_argument("--procedure-project", choices=("personal", "external"), default="personal")
     parser.add_argument("--pause-inputs", action="store_true")
     args = parser.parse_args()
     if args.pause_inputs:
@@ -1207,6 +1268,7 @@ def main() -> None:
                 args.pi_runtime.resolve(),
                 blank_response=args.blank_response,
                 terminal_proof=args.terminal_proof,
+                procedure_project=args.procedure_project,
             ),
             indent=2,
         )
