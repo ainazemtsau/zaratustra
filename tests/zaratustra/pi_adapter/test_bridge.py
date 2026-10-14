@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import socket
 import threading
 from pathlib import Path
 from typing import Any, cast
@@ -20,7 +21,7 @@ from tests.zaratustra.foundation.test_activity_setup_recovery import (
     _start,
 )
 from tests.zaratustra.foundation.test_activity_structures import _activate, _structured_case
-from tests.zaratustra.foundation.test_execution import InvocationFields, ready
+from tests.zaratustra.foundation.test_execution import InvocationFields, _upgrade_guard, ready
 from tests.zaratustra.foundation.test_memory import note
 from tests.zaratustra.foundation.test_workflows import _raw_node_result, _setup
 from tests.zaratustra.pi_adapter.test_child_assigned import _config
@@ -63,11 +64,209 @@ from zaratustra.foundation import (
     read_artifact,
     read_execution,
     read_knowledge,
+    read_receipt,
+    read_space,
     read_work,
     start_procedure,
 )
 from zaratustra.pi_adapter import Bridge, BridgeServer
 from zaratustra.pi_adapter.activity_setup import SetupCoordinator
+
+
+def test_bridge_server_owns_idle_core_until_idempotent_close(tmp_path: Path) -> None:
+    root, working, _, _, _, _, owner = ready(tmp_path)
+    before = read_space(root)
+    bridge = Bridge(root, owner, working)
+    server = BridgeServer(bridge)
+    try:
+        with pytest.raises(FoundationError, match="history_busy"), managed_pi_lock(root):
+            raise AssertionError("Live bridge must fence maintenance")
+        assert read_space(root) == before
+    finally:
+        server.server_close()
+    server.server_close()
+    with managed_pi_lock(root):
+        assert read_space(root) == before
+
+
+def test_bridge_bind_failure_closes_socket_and_core_scope(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, working, _, _, _, _, owner = ready(tmp_path)
+    sockets = []
+
+    def refuse_bind(server: BridgeServer) -> None:
+        sockets.append(server.socket)
+        with pytest.raises(FoundationError, match="history_busy"), managed_pi_lock(root):
+            raise AssertionError("Client must be alive during HTTP bind")
+        raise OSError("Fictional bind refusal")
+
+    monkeypatch.setattr(BridgeServer, "server_bind", refuse_bind)
+    with pytest.raises(OSError, match="Fictional bind refusal"):
+        BridgeServer(Bridge(root, owner, working))
+    assert len(sockets) == 1 and sockets[0].fileno() == -1
+    with managed_pi_lock(root):
+        assert read_space(root).space_id == owner.space_id
+
+
+def test_bridge_refuses_maintenance_owned_core_before_opening_socket(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root, working, _, _, _, _, owner = ready(tmp_path)
+    bound = []
+    monkeypatch.setattr(BridgeServer, "server_bind", lambda _: bound.append(True))
+    with managed_pi_lock(root), pytest.raises(FoundationError, match="history_busy"):
+        BridgeServer(Bridge(root, owner, working))
+    assert bound == []
+    with managed_pi_lock(root):
+        assert read_space(root).space_id == owner.space_id
+
+
+@pytest.mark.parametrize("barrier", ("before_commit", "after_commit"))
+def test_bridge_shutdown_drains_admitted_http_before_releasing_core(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, barrier: str
+) -> None:
+    """A real admitted HTTP request owns the fence until its native handler exits."""
+    root, working, _, _, _, _, owner = ready(tmp_path)
+    _upgrade_guard(root, owner)
+    session = uuid4()
+    original = "Exact pending user source: данные"
+    entered, release = threading.Event(), threading.Event()
+    opened, shutdown, joined, closed = (threading.Event() for _ in range(4))
+    handlers: list[threading.Thread] = []
+    sockets: list[socket.socket] = []
+    servers: list[BridgeServer] = []
+    retained: list[dict[str, object]] = []
+    received: list[dict[str, Any]] = []
+    failures: list[BaseException] = []
+    lease_threads: list[int] = []
+    drain_threads: list[int] = []
+
+    class ObservedBridge(Bridge):
+        def capture_source(self, session_id: UUID, **kwargs: Any) -> dict[str, object]:
+            handlers.append(threading.current_thread())
+            if barrier == "before_commit":
+                entered.set()
+                assert release.wait(timeout=10)
+            result = super().capture_source(session_id, **kwargs)
+            retained.append(result)
+            reference = KnowledgeRef.model_validate(result["source_ref"])
+            source = read_knowledge(root, reference.record_id, owner, revision=reference.revision)
+            assert isinstance(source.state, SourceState)
+            assert source.state.content == original.encode()
+            if barrier == "after_commit":
+                entered.set()
+                assert release.wait(timeout=10)
+            return result
+
+    class ObservedServer(BridgeServer):
+        def finish_request(
+            self, request: socket.socket | tuple[bytes, socket.socket], client_address: Any
+        ) -> None:
+            assert isinstance(request, socket.socket)
+            sockets.append(request)
+            super().finish_request(request, client_address)
+
+    native_join = threading.Thread.join
+
+    def observe_join(thread: threading.Thread, timeout: float | None = None) -> None:
+        if thread in handlers:
+            drain_threads.append(threading.get_ident())
+            joined.set()
+        native_join(thread, timeout)
+
+    monkeypatch.setattr(threading.Thread, "join", observe_join)
+    bridge = ObservedBridge(root, owner, working)
+    bridge.connect(session)
+
+    def host() -> None:
+        server = None
+        serving = None
+        try:
+            lease_threads.append(threading.get_ident())
+            server = ObservedServer(bridge)
+            servers.append(server)
+            serving = threading.Thread(target=server.serve_forever)
+            serving.start()
+            opened.set()
+            assert shutdown.wait(timeout=10)
+            server.shutdown()
+        except BaseException as error:
+            failures.append(error)
+            opened.set()
+        finally:
+            if server is not None:
+                try:
+                    server.server_close()
+                    assert retained and all(peer.fileno() == -1 for peer in sockets)
+                    assert server.socket.fileno() == -1
+                    with managed_pi_lock(root):
+                        reference = KnowledgeRef.model_validate(retained[0]["source_ref"])
+                        source = read_knowledge(root, reference.record_id, owner)
+                        assert isinstance(source.state, SourceState)
+                        assert source.state.content == original.encode()
+                    server.server_close()
+                    lease_threads.append(threading.get_ident())
+                except BaseException as error:
+                    failures.append(error)
+            if serving is not None:
+                serving.join(timeout=5)
+                if serving.is_alive():
+                    failures.append(AssertionError("HTTP accept loop did not stop"))
+            closed.set()
+
+    def client() -> None:
+        try:
+            server = servers[0]
+            request = Request(
+                f"http://127.0.0.1:{server.server_port}/v1/knowledge-capture",
+                data=json.dumps(
+                    {
+                        "session_id": str(session),
+                        "channel": "conversation_user",
+                        "content": original,
+                        "source_event_id": "retained-during-shutdown",
+                    }
+                ).encode(),
+                headers={
+                    "Authorization": f"Bearer {bridge.token}",
+                    "Content-Type": "application/json",
+                },
+            )
+            with urlopen(request, timeout=15) as response:
+                received.append(json.loads(response.read()))
+        except BaseException as error:
+            failures.append(error)
+
+    host_thread = threading.Thread(target=host)
+    client_thread = threading.Thread(target=client)
+    host_thread.start()
+    try:
+        assert opened.wait(timeout=5) and not failures
+        client_thread.start()
+        assert entered.wait(timeout=5) and not failures
+        assert bool(retained) is (barrier == "after_commit")
+        shutdown.set()
+        assert joined.wait(timeout=5) and not failures
+        assert not closed.is_set()
+        with pytest.raises(FoundationError, match="history_busy"), managed_pi_lock(root):
+            raise AssertionError("Handler drain must keep the Core client alive")
+    finally:
+        release.set()
+        shutdown.set()
+        if client_thread.ident is not None:
+            client_thread.join(timeout=5)
+        host_thread.join(timeout=5)
+    assert not host_thread.is_alive() and not client_thread.is_alive() and not failures
+    assert closed.is_set() and len(retained) == len(received) == len(sockets) == 1
+    assert received == retained
+    assert drain_threads == lease_threads[:1] and lease_threads[0] == lease_threads[1]
+    receipt = read_receipt(root, UUID(str(received[0]["operation_id"])), owner)
+    assert receipt.model_dump(mode="json")["operation_id"] == received[0]["operation_id"]
+    with managed_pi_lock(root):
+        reference = KnowledgeRef.model_validate(received[0]["source_ref"])
+        source = read_knowledge(root, reference.record_id, owner, revision=reference.revision)
+        assert isinstance(source.state, SourceState) and source.state.content == original.encode()
 
 
 def _typed_publication_bridge(tmp_path: Path) -> tuple[Bridge, UUID, UUID]:

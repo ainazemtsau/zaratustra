@@ -448,15 +448,12 @@ class SetupCoordinator:
         with self.lock:
             if setup_id is not None and self.active != setup_id:
                 return
-            self.stop.set()
             identifier = self.active
         try:
             if identifier is not None:
                 state = _observe(
                     read_activity_setup, self.config.space, identifier, self.bridge.authority
                 ).state
-                if state.stages and state.stages[-1].output is None:
-                    self._stop_stage(state.stages[-1].work_id)
                 if state.phase not in (
                     "ready",
                     "cancelled",
@@ -464,22 +461,28 @@ class SetupCoordinator:
                     "needs_input",
                     "paused",
                 ):
+                    # Core stores the pause and exact assignment stops together.
+                    # A separate snapshot-based stop can race its live executor
+                    # and prevent this durable pause from ever being requested.
                     self._step(
                         identifier,
                         "pause",
                         text="Pi window closed; retained continuation",
                         auto_resume=True,
                     )
-        except FoundationError:
-            # Lost authority or deleted content cannot authorize another provider send.
-            pass
+        finally:
+            # Local teardown follows the saved Core intent. Even a refused pause
+            # stops future dispatch, but its refusal remains visible to callers.
+            self.stop.set()
 
     def close(self, setup_id: UUID | None = None) -> None:
-        self.request_pause(setup_id)
-        with self.lock:
-            thread = self.thread if setup_id is None or self.active == setup_id else None
-        if thread is not None:
-            thread.join(timeout=15)
+        try:
+            self.request_pause(setup_id)
+        finally:
+            with self.lock:
+                thread = self.thread if setup_id is None or self.active == setup_id else None
+            if thread is not None:
+                thread.join(timeout=15)
 
 
 def worker() -> int:

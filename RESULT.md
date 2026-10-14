@@ -1,3 +1,77 @@
+# SQLite client lifetime — verified 0.25.1
+
+## outcome
+
+The owner requested correction of the repeatedly open SQLite observation, then
+explicitly approved the checked idle client contract. Implementation on
+`codex/sqlite-lock-lifecycle` starts from public `193383f`. Core schema 18 and
+domain transaction/rights/receipt authority stay unchanged. One existing
+ordinary/assigned BridgeServer owns a query-only physical rw client until native
+HTTP drain ends. It holds no transaction, snapshot or record-write capability.
+SQLite's existing FULL and normal checkpoint policy stay in force.
+
+Native completion now requires actual settlement, not readiness/HTTP counts.
+Existing atomic Core pause precedes local teardown; startup and refusal cleanup
+release native resources. History/schema/acceptance authority stay unchanged.
+Implementation and verification are complete; publication is the next step.
+
+## evidence
+
+Real admitted Windows SQLite 3.53.3 reproduced normal last-client close locking a
+first identity read beyond the old retries. An idle client removed that window
+with unchanged SQLite defaults. A ro last client left WAL pending; physical rw
+with query_only preserves native final checkpoint and exact committed data.
+These are mechanism observations, not the unidentified holder of the original
+small Pi failure. Its log contains no evidence identifying that holder.
+
+Full native gate passed with 1231 tests, build/hygiene/types, 32 module boundaries
+and report structure. Subsequent concrete corrections use affected repeats:
+119 scoped cases plus four HTTP cases passed (the latter repeated outside the
+socket-restricting sandbox); final wheel's eight fault/interleaving cases passed.
+Ordinary installed candidate Pi passed 54 accounted HTTP calls, exact six stage
+proofs, new session/compact/first Work/Development continuation. Final wheel's
+addressed abort/reopen passed four calls, retained a late answer/terminal proof,
+and exposed recovery without regeneration or acceptance. Historical holder and
+native timing limits are explicit in the detailed report.
+
+Final wheel SHA256:
+`36fb3ea6fa18f7d30507d4bdd24c1dee6863d016d69682d4b5d4d8c9be470fd0`.
+One bounded read-only evaluator with affected repeats verifies 124 installed
+production members, metadata/schema/export and unchanged canonical foundation.
+See [approved contract](docs/sqlite-client-lifecycle-plan.md) and
+[actual evidence](docs/sqlite-client-lifecycle-0.25.1-result.md).
+
+## assumptions
+
+An idle WAL client is a process-owned resource, never another domain authority.
+Each operation freshly checks identity, epoch, inputs and rights. An external
+exclusive owner can still cause an honest refusal. Historical uncorrelated
+failure must not be called solved by an unrelated successful repeat.
+
+## cuts
+
+No new schema, queue/service, database backend, permanent retry policy, changed
+timeouts for SQLite, live immutable reads or disabled checkpoints. No real-model
+calls, exports, private installation, Activity deletion or personal data edits.
+Local HTTP read I/O is bounded so accepted handlers can drain on shutdown.
+
+## cost
+
+Fictional SQLite/data and localhost Pi only. Read-only path/design/recovery
+audits and independent bounded code review. Zero subscription or paid API calls.
+Native incomplete/failing observations are not reported as completed checks.
+
+## manual-acceptance
+
+Implementation/checking of this structural contract is explicitly authorized.
+Public product delivery to ainazemtsau/zaratustra/main is authorized. Checks are
+complete; publication and owner acceptance remain separate. No personal Work
+or the whole Core is accepted by this engineering report.
+
+## next
+
+solmax
+
 # One conversational owner and completed-response recovery — 0.25.0
 
 ## outcome

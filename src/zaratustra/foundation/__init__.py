@@ -96,6 +96,7 @@ from .execution import (
     upgrade_execution_space,
 )
 from .history import (
+    managed_core_client,
     managed_executor_start_lock,
     managed_pi_lock,
     managed_pi_session_lock,
@@ -750,6 +751,7 @@ __all__ = [
     "GrantState",
     "InvocationRecord",
     "LocalAuthority",
+    "managed_core_client",
     "managed_pi_lock",
     "managed_executor_start_lock",
     "managed_pi_session_lock",

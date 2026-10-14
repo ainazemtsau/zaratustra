@@ -1,5 +1,15 @@
 # Development tools
 
+Native observation requires its actual completion boundary; Core readiness or
+HTTP counts alone cannot finish a free conversation. Reset native settlement
+before every new prompt/compact transition. Distinguish deliberate abrupt/EOF,
+preflight, catalog and compact observations from a settled conversation; deadline
+or unexpected process exit is not PASS. Rejected setup results are addressed by
+their exact rejection Artifact, never falsely treated as an active stage output.
+Fixture barrier observation runs independently of completion checks. A withheld
+provider response can be released only after its exact committed pause is read;
+the pure completion predicate still requires native settlement and idle execution.
+
 `probe_single_conversation_pi` uses raw localhost Codex-profile Responses and
 ordinary Pi to reproduce the original competing result wake and check one-owner
 publication, two native empty-final corrections and exhaustion. Its bridge

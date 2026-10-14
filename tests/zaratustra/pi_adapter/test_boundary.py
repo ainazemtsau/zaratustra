@@ -13,8 +13,10 @@ from tests.zaratustra.foundation import test_workflows as workflow_cases
 from tests.zaratustra.pi_adapter.test_child_assigned import _config
 from zaratustra.foundation import FoundationError, WorkflowNode, read_activity_setup, read_space
 from zaratustra.pi_adapter import Bridge
+from zaratustra.pi_adapter import activity_setup as setup_host
 from zaratustra.pi_adapter.__main__ import _prepare_space
 from zaratustra.pi_adapter.activity_setup import SetupCoordinator
+from zaratustra.pi_adapter.assigned import EXECUTOR_VERSION
 from zaratustra.pi_adapter.boundary import ProcessTarget, read_process_boundary
 from zaratustra.pi_adapter.conversation import conversation
 from zaratustra.pi_adapter.workflows import WorkflowCoordinator
@@ -167,11 +169,109 @@ def test_observation_identity_fences_retarget_and_replaced_branch(tmp_path: Path
         )
 
 
-def test_pause_records_stop_without_joining_live_worker(tmp_path: Path) -> None:
+@pytest.mark.parametrize("competing_stop", (False, True))
+def test_pause_records_stop_without_joining_live_worker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, competing_stop: bool
+) -> None:
     case, bridge, session, raw = _setup(tmp_path)
     setup_cases._step(
         case, "start_stage", stage_kind="draft", stage_instruction="Prepare structure"
     )
+    before_setup = read_activity_setup(bridge.path, case[3], bridge.authority)
+    stage = before_setup.state.stages[-1]
+    resource, attempt, assigned_session, invocation = (uuid4() for _ in range(4))
+    requests: tuple[Any, ...] = (
+        core.CreateResourceRequest(
+            operation_id=uuid4(),
+            space_id=bridge.authority.space_id,
+            actor=bridge.authority.actor,
+            resource_id=resource,
+            work_id=stage.work_id,
+            state=core.ResourceState(
+                label="Fictional setup stage", root=bridge.path, mode="shared"
+            ),
+        ),
+        core.AssignAttemptRequest(
+            operation_id=uuid4(),
+            space_id=bridge.authority.space_id,
+            actor=bridge.authority.actor,
+            attempt_id=attempt,
+            work_id=stage.work_id,
+            expected_work_revision=core.read_work(
+                bridge.path, stage.work_id, bridge.authority
+            ).revision,
+            resource_id=resource,
+            expected_resource_revision=1,
+            session_id=assigned_session,
+            executor_version=EXECUTOR_VERSION,
+        ),
+        core.PrepareInvocationRequest(
+            operation_id=uuid4(),
+            space_id=bridge.authority.space_id,
+            actor=bridge.authority.actor,
+            invocation_id=invocation,
+            attempt_id=attempt,
+            work_id=stage.work_id,
+            session_id=assigned_session,
+            purpose="content",
+            provider="fictional",
+            model="fictional",
+            transport="local",
+            request_sha256="A" * 64,
+            request_bytes=100,
+            reserve_units=3,
+        ),
+        core.AdmitInvocationRequest(
+            operation_id=uuid4(),
+            space_id=bridge.authority.space_id,
+            actor=bridge.authority.actor,
+            invocation_id=invocation,
+            attempt_id=attempt,
+            work_id=stage.work_id,
+            session_id=assigned_session,
+        ),
+    )
+    prior_receipts = [
+        core.apply_operation(bridge.path, request, bridge.authority) for request in requests
+    ]
+    before = core.read_execution(bridge.path, stage.work_id, bridge.authority)
+    assert before.assignments[0].status == "assigned" and before.held_units == 3
+    stops: list[core.OperationReceipt] = []
+    pauses: list[core.OperationReceipt] = []
+    apply = core.apply_operation
+
+    def concurrent_stop(path: Path, request: Any, authority: core.LocalAuthority) -> Any:
+        stopping = isinstance(request, core.RequestAttemptStopRequest) or (
+            isinstance(request, core.ActivitySetupRequest) and request.action == "pause"
+        )
+        if competing_stop and stopping and not stops:
+            # Commit a legitimate competing request at the real operation boundary.
+            # The forwarded old stop still carries its now-obsolete assignment revision.
+            current = core.read_execution(path, stage.work_id, authority)
+            assignment = current.assignments[0]
+            assert assignment.status == "assigned"
+            stops.append(
+                core.apply_operation(
+                    path,
+                    core.RequestAttemptStopRequest(
+                        operation_id=uuid4(),
+                        space_id=authority.space_id,
+                        actor=authority.actor,
+                        work_id=stage.work_id,
+                        attempt_id=attempt,
+                        session_id=assigned_session,
+                        expected_assignment_revision=assignment.revision,
+                        reason="Fictional executor concurrently requests stop",
+                    ),
+                    authority,
+                )
+            )
+        receipt = apply(path, request, authority)
+        if isinstance(request, core.ActivitySetupRequest) and request.action == "pause":
+            pauses.append(receipt)
+        return receipt
+
+    monkeypatch.setattr(setup_host, "apply_operation", concurrent_stop)
     controller = SetupCoordinator(bridge, _config(bridge.path, bridge.path, tmp_path / "runtime"))
     release, entered = threading.Event(), threading.Event()
 
@@ -191,11 +291,77 @@ def test_pause_records_stop_without_joining_live_worker(tmp_path: Path) -> None:
             session, {**raw, "mode": "pause", "lease_token": captured["lease_token"]}
         )
         assert controller.thread.is_alive()
+        saved = read_activity_setup(bridge.path, case[3], bridge.authority)
+        after = core.read_execution(bridge.path, stage.work_id, bridge.authority)
+        assert saved.state.phase == "paused", (
+            saved.state.phase,
+            after.assignments[0].status,
+            paused["kind"],
+        )
         assert paused["kind"] == "paused" and paused["execution"]["stop_requested"] is True
-        assert read_activity_setup(bridge.path, case[3], bridge.authority).state.phase == "paused"
+        assert saved.revision == before_setup.revision + 1
+        assert after.assignments[0].status == "stop_requested"
+        assert after.assignments[0].revision == before.assignments[0].revision + 1
+        assert after.work == before.work and after.work.state.acceptance is None
+        assert after.attempts == before.attempts and after.invocations == before.invocations
+        assert after.committed_units == before.committed_units and after.held_units == 3
+        assert len(pauses) == 1 and len(stops) == int(competing_stop)
+        for receipt in (*prior_receipts, *stops, *pauses):
+            assert core.read_receipt(bridge.path, receipt.operation_id, bridge.authority) == receipt
     finally:
         release.set()
         controller.thread.join(timeout=5)
+
+
+def test_pause_refusal_preserves_saved_state_and_requests_local_stop(tmp_path: Path) -> None:
+    """Revoked write authority is visible; local shutdown still fences the executor."""
+    case, bridge, _, _ = _setup(tmp_path)
+    setup_cases._step(
+        case, "start_stage", stage_kind="draft", stage_instruction="Prepare structure"
+    )
+    owner = bridge.authority
+    writer = uuid4()
+    grants: tuple[tuple[UUID, tuple[core.Action, ...]], ...] = (
+        (uuid4(), ("record.read", "space.inspect", "receipt.read")),
+        (writer, ("activity.write",)),
+    )
+    for grant, actions in grants:
+        core.apply_operation(
+            bridge.path,
+            core.CreateGrantRequest(
+                operation_id=uuid4(),
+                space_id=owner.space_id,
+                actor=owner.actor,
+                grant_id=grant,
+                state=core.GrantState(grantee="fictional-pauser", actions=actions),
+            ),
+            owner,
+        )
+    pauser = core.authorize_local(
+        bridge.path, actor="fictional-pauser", source_ref="fictional-console"
+    )
+    before = read_activity_setup(bridge.path, case[3], pauser)
+    revocation = core.apply_operation(
+        bridge.path,
+        core.RevokeGrantRequest(
+            operation_id=uuid4(),
+            space_id=owner.space_id,
+            actor=owner.actor,
+            grant_id=writer,
+            expected_revision=1,
+        ),
+        owner,
+    )
+    boundary = read_space(bridge.path)
+    bridge.authority = pauser
+    controller = SetupCoordinator(bridge, _config(bridge.path, bridge.path, tmp_path / "runtime"))
+    controller.active = case[3]
+    with pytest.raises(FoundationError, match="permission_denied"):
+        controller.request_pause(case[3])
+    assert controller.stop.is_set()
+    assert read_activity_setup(bridge.path, case[3], owner) == before
+    assert read_space(bridge.path) == boundary
+    assert core.read_receipt(bridge.path, revocation.operation_id, owner) == revocation
 
 
 def test_just_started_setup_remains_running_before_first_stage_commit(tmp_path: Path) -> None:

@@ -760,28 +760,28 @@ class WorkflowCoordinator:
         """Request Core stops promptly; cleanup waits belong only to close."""
         if root_id is not None and self.active != root_id:
             return
-        self.stop.set()
+        try:
+            if self.active is not None:
+                current = read_workflow_run(self.config.space, self.active, self.bridge.authority)
+                if current.control == "running" and current.next_action != "closed":
+                    # Core pauses the current family and requests its stops in
+                    # one transaction, before orphaned local processes are read.
+                    self._step(self.active, "pause")
+        finally:
+            self.stop.set()
         with self.lock:
             owned = set(self.owned_processes)
         for work in owned:
             self._stop_node(work)
-        try:
-            if self.active is not None:
-                current = read_workflow_run(self.config.space, self.active, self.bridge.authority)
-                for node in current.nodes:
-                    if node.output is None:
-                        self._stop_node(node.work_id)
-                for member in workflow_work_ids(
-                    self.config.space, self.active, self.bridge.authority
-                ):
-                    self._stop_node(member)
-                if current.control == "running" and current.next_action != "closed":
-                    self._step(self.active, "pause")
-        except FoundationError:
-            pass
 
     def close(self) -> None:
-        self.request_pause()
+        try:
+            self.request_pause()
+        finally:
+            self._close_owned()
+
+    def _close_owned(self) -> None:
+        """Drain owned processes even when current Core admission refuses pause."""
         with self.lock:
             owned = set(self.owned_processes)
         thread = self.thread

@@ -1,5 +1,16 @@
 # Interactive Pi adapter
 
+0.25.1 BridgeServer owns the checked idle Core client until native HTTP handlers
+have drained. Keep request threads joinable and inactive socket reads bounded; release
+the client/fence after native server cleanup, including constructor failure and
+repeated close. Ordinary/assigned hosts share this same server boundary. No
+domain transaction, snapshot, write lock or alternate execution authority is
+retained. SQLite's default FULL/checkpoint policy and Core schema 18 stay intact.
+Persist setup/workflow pause through the existing atomic Core domain operation
+before signalling local teardown. Do not precede it with snapshot-based duplicate
+assignment stops. Propagate admission refusals and drain every owned resource even
+if one coordinator's close refuses; native cleanup uses standard ExitStack.
+
 Setup, workflow and procedure use one public completed-response recovery before
 fresh dispatch. Native message_end retains raw assigned bytes before accounting;
 turn_end retains the actual persisted entry/protocol before interpretation.

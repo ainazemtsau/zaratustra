@@ -4,12 +4,14 @@ import os
 import sqlite3
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
 import pytest
 
+import zaratustra.foundation as core
 import zaratustra.foundation.storage as storage
 from zaratustra.foundation import (
     BootstrapRequest,
@@ -243,6 +245,340 @@ def test_failed_sqlite_configuration_closes_its_handle(
     with pytest.raises(sqlite3.OperationalError, match="synthetic configuration failure"):
         storage._connect(tmp_path / "synthetic.sqlite3", writable=False)
     assert broken.closed
+
+
+def test_managed_client_is_idle_query_only_and_preserves_operation_authority(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "space"
+    root.mkdir()
+    created, owner, bootstrap_receipt = bootstrap(root)
+    original_connect = storage._connect
+    clients: list[sqlite3.Connection] = []
+
+    def connect(database: Path, *, writable: bool) -> sqlite3.Connection:
+        connection = original_connect(database, writable=writable)
+        clients.append(connection)
+        return connection
+
+    monkeypatch.setattr(storage, "_connect", connect)
+    with core.managed_core_client(root) as handle:
+        assert handle is None
+        client = clients[0]
+        assert not client.in_transaction
+        assert client.execute("PRAGMA query_only").fetchone() == (1,)
+        assert client.execute("PRAGMA synchronous").fetchone() == (2,)
+        with pytest.raises(sqlite3.OperationalError, match="readonly"):
+            client.execute("UPDATE spaces SET state_revision = 999")
+        request = core.CreateArtifactRequest(
+            operation_id=uuid4(),
+            space_id=created.space_id,
+            actor=owner.actor,
+            artifact_id=uuid4(),
+            media_type="text/plain",
+            content="Committed while another client is idle: данные".encode(),
+        )
+        receipt = apply_operation(root, request, owner)
+        assert apply_operation(root, request, owner) == receipt
+        assert receipt.state_revision == bootstrap_receipt.state_revision + 1
+        assert core.read_artifact(root, request.artifact_id, owner).content == request.content
+        assert core.read_receipt(root, request.operation_id, owner) == receipt
+        assert client.execute("SELECT state_revision FROM spaces").fetchone() == (
+            receipt.state_revision,
+        )
+        assert not client.in_transaction
+        assert read_space(root).execution_epoch == created.execution_epoch
+        with pytest.raises(core.FoundationError, match="permission_denied"):
+            core.read_artifact(
+                root,
+                request.artifact_id,
+                authorize_local(root, actor="another-actor", source_ref="fictional-owner"),
+            )
+    with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+        client.execute("SELECT 1")
+
+
+def test_managed_clients_preserve_native_final_close_checkpoint_and_backup(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "space"
+    root.mkdir()
+    created, owner, _ = bootstrap(root)
+    wal = created.database.with_name(created.database.name + "-wal")
+    request = core.CreateArtifactRequest(
+        operation_id=uuid4(),
+        space_id=created.space_id,
+        actor=owner.actor,
+        artifact_id=uuid4(),
+        media_type="text/plain",
+        content=b"Final close must preserve this committed output",
+    )
+    with core.managed_core_client(root):
+        with core.managed_core_client(root):
+            receipt = apply_operation(root, request, owner)
+            assert wal.is_file() and wal.stat().st_size > 0
+            with pytest.raises(FoundationError, match="history_busy"):
+                core.create_backup(root, uuid4(), owner)
+        assert wal.is_file()
+        assert core.read_artifact(root, request.artifact_id, owner).content == request.content
+        with core.managed_core_client(root):
+            assert core.read_receipt(root, receipt.operation_id, owner) == receipt
+        with pytest.raises(FoundationError, match="history_busy"):
+            with core.managed_pi_lock(root):
+                raise AssertionError("The remaining client still owns the fence")
+    assert not wal.exists()
+    with storage.snapshot_connection(created.database) as snapshot:
+        assert snapshot.execute("SELECT state_revision FROM spaces").fetchone() == (
+            receipt.state_revision,
+        )
+        assert snapshot.execute(
+            "SELECT payload FROM managed_content WHERE record_id = ?",
+            (str(request.artifact_id),),
+        ).fetchone() == (request.content,)
+    snapshot.close()
+    backup = core.create_backup(root, uuid4(), owner)
+    restored = tmp_path / "restored"
+    restored.mkdir()
+    recovery = core.authorize_recovery(actor=owner.actor, source_ref="fictional-recovery")
+    restored_info = core.restore_backup(backup.package, restored, recovery)
+    assert restored_info.space_id == created.space_id
+    assert restored_info.execution_epoch == created.execution_epoch + 1
+    with storage.snapshot_connection(restored_info.database) as snapshot:
+        assert snapshot.execute(
+            "SELECT payload FROM managed_content WHERE record_id = ?",
+            (str(request.artifact_id),),
+        ).fetchone() == (request.content,)
+    snapshot.close()
+
+
+@pytest.mark.parametrize("failure_at", ["configure", "query_only", "commit"])
+def test_managed_client_start_failure_closes_handle_and_releases_fence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure_at: str
+) -> None:
+    root = tmp_path / "space"
+    root.mkdir()
+    created = initialize_space(root)
+    actual_connect = sqlite3.connect
+    actual_configure = storage._configure
+    clients: list[sqlite3.Connection] = []
+    failures = 0
+
+    class FailedConnection:
+        def __init__(self, actual: sqlite3.Connection) -> None:
+            self.actual = actual
+
+        def execute(self, statement: str, *args: Any) -> sqlite3.Cursor:
+            nonlocal failures
+            if statement == ("PRAGMA query_only = ON" if failure_at == "query_only" else "COMMIT"):
+                failures += 1
+                raise sqlite3.OperationalError("fictional client startup failure")
+            return self.actual.execute(statement, *args)
+
+        def __getattr__(self, name: str) -> Any:
+            return getattr(self.actual, name)
+
+    def connect(*args: Any, **kwargs: Any) -> sqlite3.Connection | FailedConnection:
+        actual = actual_connect(*args, **kwargs)
+        clients.append(actual)
+        return actual if failure_at == "configure" else FailedConnection(actual)
+
+    def configure(connection: sqlite3.Connection, *, writable: bool) -> None:
+        nonlocal failures
+        actual_configure(connection, writable=writable)
+        failures += 1
+        raise sqlite3.OperationalError("fictional client startup failure")
+
+    monkeypatch.setattr(sqlite3, "connect", connect)
+    if failure_at == "configure":
+        monkeypatch.setattr(storage, "_configure", configure)
+    with pytest.raises(FoundationError, match="fictional client startup failure"):
+        with core.managed_core_client(root):
+            raise AssertionError("Failed initialization cannot enter the caller body")
+    assert failures == 1 and len(clients) == 1
+    with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+        clients[0].execute("SELECT 1")
+    monkeypatch.undo()
+    with core.managed_pi_lock(root):
+        assert read_space(root) == created
+    with core.managed_core_client(root):
+        assert read_space(root) == created
+
+
+def test_managed_client_bad_identity_releases_the_maintenance_fence(tmp_path: Path) -> None:
+    root = tmp_path / "space"
+    root.mkdir()
+    created = initialize_space(root)
+    with sqlite3.connect(created.database) as connection:
+        connection.execute("PRAGMA application_id = 0")
+    connection.close()
+    with pytest.raises(FoundationError, match="unsupported_schema"):
+        with core.managed_core_client(root):
+            raise AssertionError("An unknown identity cannot enter the caller body")
+    with core.managed_pi_lock(root):
+        with sqlite3.connect(created.database) as connection:
+            assert connection.execute("PRAGMA application_id").fetchone() == (0,)
+            connection.execute(f"PRAGMA application_id = {storage.APPLICATION_ID}")
+        connection.close()
+    with core.managed_core_client(root):
+        assert read_space(root) == created
+
+
+def test_managed_client_caller_failure_and_repeated_exit_leave_no_resources(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "space"
+    root.mkdir()
+    created = initialize_space(root)
+    original_connect = storage._connect
+    clients: list[sqlite3.Connection] = []
+
+    def connect(database: Path, *, writable: bool) -> sqlite3.Connection:
+        actual = original_connect(database, writable=writable)
+        clients.append(actual)
+        return actual
+
+    monkeypatch.setattr(storage, "_connect", connect)
+    context = core.managed_core_client(root)
+    failure = ValueError("fictional caller error")
+    with pytest.raises(ValueError) as propagated:
+        with context:
+            raise failure
+    assert propagated.value is failure
+    assert context.__exit__(None, None, None) is False
+    assert len(clients) == 1
+    with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+        clients[0].execute("SELECT 1")
+    with core.managed_pi_lock(root):
+        assert read_space(root) == created
+
+
+def test_managed_client_cannot_open_during_maintenance(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "space"
+    root.mkdir()
+    created = initialize_space(root)
+    original_connect = storage._connect
+    clients: list[sqlite3.Connection] = []
+
+    def connect(database: Path, *, writable: bool) -> sqlite3.Connection:
+        actual = original_connect(database, writable=writable)
+        clients.append(actual)
+        return actual
+
+    monkeypatch.setattr(storage, "_connect", connect)
+    with core.managed_pi_lock(root):
+        with pytest.raises(FoundationError, match="history_busy"):
+            with core.managed_core_client(root):
+                raise AssertionError("Maintenance must fence a new client before SQL open")
+        assert clients == []
+    with core.managed_core_client(root):
+        assert read_space(root) == created
+
+
+def test_managed_client_retains_schema_18_history_and_epoch_without_migration(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "space"
+    root.mkdir()
+    _, owner, receipt = bootstrap(root)
+    for upgrade in (
+        core.upgrade_space,
+        core.upgrade_execution_space,
+        core.upgrade_continuation_space,
+        core.upgrade_composition_space,
+        core.upgrade_child_execution_space,
+        core.upgrade_plan_revision_space,
+        core.upgrade_parent_execution_space,
+        core.upgrade_binding_space,
+        core.upgrade_knowledge_space,
+        core.upgrade_development_space,
+        core.upgrade_change_package_space,
+        core.upgrade_memory_space,
+        core.upgrade_activity_setup_space,
+        core.upgrade_structures_space,
+        core.upgrade_workflow_space,
+        core.upgrade_conversation_space,
+        core.upgrade_delivery_correlation_space,
+    ):
+        upgrade(root, owner)
+    before = inspect_space(root, owner)
+    audit = core.read_operation_audit(root, receipt.operation_id, owner)
+    with core.managed_core_client(root):
+        assert read_space(root).schema_version == 18
+        assert inspect_space(root, owner) == before
+        assert core.read_operation_audit(root, receipt.operation_id, owner) == audit
+        assert core.read_receipt(root, receipt.operation_id, owner) == receipt
+    assert inspect_space(root, owner) == before
+
+
+def test_killed_managed_client_reopens_committed_wal_and_releases_maintenance(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "space"
+    root.mkdir()
+    created, owner, _ = bootstrap(root)
+    ready_file = tmp_path / "child-ready"
+    artifact_id, operation_id = uuid4(), uuid4()
+    payload = b"Committed before abrupt client process death"
+    script = (
+        "from pathlib import Path\n"
+        "from uuid import UUID\n"
+        "import sys\n"
+        "import zaratustra.foundation as core\n"
+        "root = Path(sys.argv[1])\n"
+        "owner = core.authorize_local(root, actor='owner-local', "
+        "source_ref='fictional-process')\n"
+        "with core.managed_core_client(root):\n"
+        "    core.apply_operation(root, core.CreateArtifactRequest(\n"
+        "        operation_id=UUID(sys.argv[4]), space_id=core.read_space(root).space_id,\n"
+        "        actor=owner.actor, artifact_id=UUID(sys.argv[3]),\n"
+        "        media_type='text/plain',\n"
+        "        content=b'Committed before abrupt client process death'), owner)\n"
+        "    Path(sys.argv[2]).write_text('committed', encoding='utf-8')\n"
+        "    sys.stdin.read(1)\n"
+    )
+    process = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            script,
+            str(root),
+            str(ready_file),
+            str(artifact_id),
+            str(operation_id),
+        ],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+    )
+    try:
+        deadline = time.monotonic() + 10
+        while not ready_file.is_file() and process.poll() is None and time.monotonic() < deadline:
+            time.sleep(0.01)
+        if not ready_file.is_file():
+            process.kill()
+            stdout, stderr = process.communicate(timeout=10)
+            raise AssertionError(f"Client failed before its commit barrier: {stdout}\n{stderr}")
+        assert ready_file.read_text(encoding="utf-8") == "committed"
+        assert core.read_artifact(root, artifact_id, owner).content == payload
+        with pytest.raises(FoundationError, match="history_busy"):
+            core.create_backup(root, uuid4(), owner)
+    finally:
+        if process.poll() is None:
+            process.kill()
+        process.communicate(timeout=10)
+    with core.managed_core_client(root):
+        reopened = read_space(root)
+        assert reopened.space_id == created.space_id
+        assert reopened.execution_epoch == created.execution_epoch
+        assert core.read_artifact(root, artifact_id, owner).content == payload
+        assert core.read_receipt(root, operation_id, owner).operation_id == operation_id
+    backup = core.create_backup(root, uuid4(), owner)
+    assert backup.manifest.space_id == created.space_id
+    assert backup.manifest.state_revision == reopened.state_revision
 
 
 def test_initialization_refuses_legacy_or_nonempty_directory_without_change(tmp_path: Path) -> None:

@@ -31,7 +31,7 @@ def test_completed_observation_leaves_a_live_coordinator_running() -> None:
         reads.append(True)
         raise FoundationError("storage", "SQLITE_BUSY at a live observation")
 
-    assert not probe._completed_observation(bridge, read)
+    assert not probe._completed_observation(bridge, read, native_settled=True)
     assert reads == [] and bridge.workflow_controller.thread is thread
 
 
@@ -49,7 +49,7 @@ def test_completed_observation_retries_only_an_idle_public_read(
             raise FoundationError("storage", "SQLite identity failed (SQLITE_BUSY)")
         return True
 
-    assert probe._completed_observation(bridge, read)
+    assert probe._completed_observation(bridge, read, native_settled=True)
     assert len(reads) == 2 and len(sleeps) == 1
     assert bridge.workflow_controller.thread is None
 
@@ -75,7 +75,7 @@ def test_completed_observation_does_not_hide_a_terminal_failure(
         raise error
 
     with pytest.raises(FoundationError) as refusal:
-        probe._completed_observation(bridge, read)
+        probe._completed_observation(bridge, read, native_settled=True)
     assert refusal.value is error and len(reads) == expected_reads
     assert bridge.workflow_controller.thread is None
 
@@ -101,7 +101,21 @@ def test_dynamic_selected_work_waits_for_durable_attempt_close(
         )
 
     monkeypatch.setattr(probe, "read_execution", execution)
-    assert not probe._completed_observation(bridge, lambda: True)
+    assert not probe._completed_observation(bridge, lambda: True, native_settled=True)
     active = False
-    assert probe._completed_observation(bridge, lambda: True)
+    assert probe._completed_observation(bridge, lambda: True, native_settled=True)
     assert len(observed) == 2
+
+
+def test_ready_free_conversation_does_not_finish_before_native_settlement() -> None:
+    bridge = _bridge()
+    reads = []
+
+    def ready() -> bool:
+        reads.append(True)
+        return True
+
+    assert not probe._completed_observation(bridge, ready, native_settled=False)
+    assert reads == []
+    assert probe._completed_observation(bridge, ready, native_settled=True)
+    assert reads == [True]

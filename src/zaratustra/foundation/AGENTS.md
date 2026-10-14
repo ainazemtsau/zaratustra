@@ -1,5 +1,13 @@
 # Core v0.1 domain foundation
 
+`managed_core_client` retains one checked query-only WAL client for a managed
+host's lifetime under the existing Pi session/maintenance fence. Its physical
+read/write connection preserves SQLite's normal final-close checkpoint; it
+exposes no SQL handle and holds no transaction, snapshot or domain write lock.
+Each public operation still owns its independent transaction and authority.
+Startup failure and caller exceptions close the handle before releasing the
+fence. Schema 18, checkpoint configuration and operation receipts are unchanged.
+
 `response_recovery.py` derives assigned response admission from exact execution,
 native terminal and immutable delivery evidence. RecoverAttemptOutputRequest
 links a proposed Artifact with protected recovered_response proof and indexed

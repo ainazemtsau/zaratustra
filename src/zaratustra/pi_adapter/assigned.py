@@ -1348,14 +1348,17 @@ def _execute_under_lock(
             with stop_lock:
                 exit_before_host_stop = process.poll()
                 observed = _terminate_pi(process)
-        if monitor is not None:
+        if monitor is not None and monitor.ident is not None:
             monitor.join(timeout=5)
-        if stderr_reader is not None:
+        if stderr_reader is not None and stderr_reader.ident is not None:
             stderr_reader.join(timeout=2)
         if server is not None:
-            server.shutdown()
-            server.server_close()
-        if thread is not None:
+            try:
+                if thread is not None and thread.ident is not None:
+                    server.shutdown()
+            finally:
+                server.server_close()
+        if thread is not None and thread.ident is not None:
             thread.join(timeout=5)
         stop_reason = None
         if bridge is not None and bridge.provider_preflight_refusal is not None:

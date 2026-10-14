@@ -431,9 +431,12 @@ def run_probe(
             if cursor is None:
                 break
         for stage in setup.state.stages:
-            assert stage.output is not None
+            retained = stage.output or (stage.rejection.artifact if stage.rejection else None)
+            assert retained is not None, "Stage lacks its completed or rejected original"
+            if stage.rejection is not None:
+                assert stage.retired and stage.output is None
             output = core.read_artifact(
-                root, stage.output.artifact_id, authority, revision=stage.output.revision
+                root, retained.artifact_id, authority, revision=retained.revision
             )
             terminal_sources = [
                 original
@@ -748,8 +751,31 @@ def run_probe(
         expected_repeated_tool_failure=True,
         prompt="Exercise the exact repeated publication failure across an unrelated contract read",
     )
-    assert not core.read_work(root, repeated_work, authority).state.linked_outputs
+    failed_publication = core.read_execution(root, repeated_work, authority)
+    assert not failed_publication.work.state.linked_outputs
+    assert failed_publication.work.state.acceptance is None
+    assert not failed_publication.assignments
+    assert len(failed_publication.attempts) == 1
+    failed_attempt = failed_publication.attempts[0]
+    assert failed_attempt.status == "active"
+    assert len(failed_publication.invocations) == 3
+    assert all(item.status == "answered" for item in failed_publication.invocations)
     assert len(repeated_publication.requests) == 3
+    # Native Pi is now closed. The fixture owner explicitly interrupts this
+    # exact failed execution; no successful final or no-send cleanup is invented.
+    operation(
+        core.StopAttemptRequest,
+        work_id=repeated_work,
+        attempt_id=failed_attempt.attempt_id,
+        session_id=failed_attempt.session_id,
+        outcome="interrupted",
+    )
+    stopped_publication = core.read_execution(root, repeated_work, authority)
+    assert stopped_publication.attempts[0].status == "interrupted"
+    assert stopped_publication.invocations == failed_publication.invocations
+    assert stopped_publication.committed_units == failed_publication.committed_units
+    assert stopped_publication.held_units == failed_publication.held_units
+    assert stopped_publication.work == failed_publication.work
     reopened_result = native.Provider([{"_final_text": "Read the preserved ordinary result"}])
     run(reopened_result, work=(activity, ordinary_work), expected_provider_calls=1)
     assert core.read_work(root, ordinary_work, authority) == ordinary_saved.work

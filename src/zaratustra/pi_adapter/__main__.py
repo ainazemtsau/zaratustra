@@ -8,6 +8,7 @@ import os
 import subprocess
 import sys
 import threading
+from contextlib import ExitStack
 from importlib.resources import files
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -275,64 +276,61 @@ def main(argv: list[str] | None = None) -> int:
         )
         bridge.procedure_controller = ProcedureCoordinator(bridge, bridge.setup_controller.config)
         bridge.workflow_controller = WorkflowCoordinator(bridge, bridge.setup_controller.config)
-        server = BridgeServer(bridge)
-        thread = threading.Thread(target=server.serve_forever, daemon=True)
-        thread.start()
-        extension = Path(str(files("zaratustra.pi_adapter").joinpath("extension.ts")))
-        environment = os.environ.copy()
-        environment["ZARA_CORE_ENDPOINT"] = f"http://127.0.0.1:{server.server_port}"
-        environment["ZARA_CORE_TOKEN"] = bridge.token
-        environment["ZARA_RESERVE_UNITS"] = str(args.reserve_units)
-        environment["ZARA_PROVIDER_PROFILE"] = args.provider_profile
-        environment["ZARA_PROVIDER_BASE_URL"] = base_url
-        if args.remember_selection:
-            environment["ZARA_REMEMBER_SELECTION"] = "1"
-        environment["ZARA_PROVIDER_ORIGIN"] = f"{parsed_url.scheme}://{parsed_url.netloc}"
-        environment["PI_SKIP_VERSION_CHECK"] = "1"
-        environment["PI_TELEMETRY"] = "0"
-        if args.subscription_agent_dir:
-            environment["PI_CODING_AGENT_DIR"] = str(args.subscription_agent_dir.resolve())
-        if args.provider_profile == "local-completions":
-            environment["PI_OFFLINE"] = "1"
-        if args.activity_id:
-            environment["ZARA_INITIAL_ACTIVITY_ID"] = str(args.activity_id)
-            environment["ZARA_INITIAL_WORK_ID"] = str(args.work_id)
-        if args.provider_profile == "local-completions":
-            environment["ZARA_LOCAL_PROVIDER_ID"] = args.local_provider_id
-            environment["ZARA_LOCAL_MODEL_ID"] = args.local_model_id
-            environment["ZARA_LOCAL_CONTEXT_WINDOW"] = str(args.local_context_window)
-            environment["ZARA_LOCAL_MAX_TOKENS"] = str(args.local_max_tokens)
-        command = [
-            args.node,
-            str(pi_cli),
-            "--provider",
-            "openai-codex" if args.provider_profile == "codex-sse" else args.local_provider_id,
-            "--extension",
-            str(extension),
-            "--no-extensions",
-            "--no-context-files",
-            "--skill",
-            str(workflow_skill),
-            "--skill",
-            str(activity_setup_skill()),
-        ]
-        if args.model:
-            command.extend(["--model", args.model])
-        if args.thinking:
-            command.extend(["--thinking", args.thinking])
-        command.extend(["--tools", active_tools])
-        command.extend(["--session-dir", str(session_dir)])
-        try:
+        with ExitStack() as cleanup:
+            server = BridgeServer(bridge)
+            cleanup.callback(server.server_close)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            cleanup.callback(thread.join, timeout=5)
+            cleanup.callback(server.shutdown)
+            cleanup.callback(bridge.workflow_controller.close)
+            cleanup.callback(bridge.procedure_controller.close)
+            cleanup.callback(bridge.setup_controller.close)
+            extension = Path(str(files("zaratustra.pi_adapter").joinpath("extension.ts")))
+            environment = os.environ.copy()
+            environment["ZARA_CORE_ENDPOINT"] = f"http://127.0.0.1:{server.server_port}"
+            environment["ZARA_CORE_TOKEN"] = bridge.token
+            environment["ZARA_RESERVE_UNITS"] = str(args.reserve_units)
+            environment["ZARA_PROVIDER_PROFILE"] = args.provider_profile
+            environment["ZARA_PROVIDER_BASE_URL"] = base_url
+            if args.remember_selection:
+                environment["ZARA_REMEMBER_SELECTION"] = "1"
+            environment["ZARA_PROVIDER_ORIGIN"] = f"{parsed_url.scheme}://{parsed_url.netloc}"
+            environment["PI_SKIP_VERSION_CHECK"] = "1"
+            environment["PI_TELEMETRY"] = "0"
+            if args.subscription_agent_dir:
+                environment["PI_CODING_AGENT_DIR"] = str(args.subscription_agent_dir.resolve())
+            if args.provider_profile == "local-completions":
+                environment["PI_OFFLINE"] = "1"
+            if args.activity_id:
+                environment["ZARA_INITIAL_ACTIVITY_ID"] = str(args.activity_id)
+                environment["ZARA_INITIAL_WORK_ID"] = str(args.work_id)
+            if args.provider_profile == "local-completions":
+                environment["ZARA_LOCAL_PROVIDER_ID"] = args.local_provider_id
+                environment["ZARA_LOCAL_MODEL_ID"] = args.local_model_id
+                environment["ZARA_LOCAL_CONTEXT_WINDOW"] = str(args.local_context_window)
+                environment["ZARA_LOCAL_MAX_TOKENS"] = str(args.local_max_tokens)
+            command = [
+                args.node,
+                str(pi_cli),
+                "--provider",
+                "openai-codex" if args.provider_profile == "codex-sse" else args.local_provider_id,
+                "--extension",
+                str(extension),
+                "--no-extensions",
+                "--no-context-files",
+                "--skill",
+                str(workflow_skill),
+                "--skill",
+                str(activity_setup_skill()),
+            ]
+            if args.model:
+                command.extend(["--model", args.model])
+            if args.thinking:
+                command.extend(["--thinking", args.thinking])
+            command.extend(["--tools", active_tools])
+            command.extend(["--session-dir", str(session_dir)])
             return subprocess.run(command, cwd=workspace, env=environment, check=False).returncode
-        finally:
-            try:
-                bridge.setup_controller.close()
-                bridge.procedure_controller.close()
-                bridge.workflow_controller.close()
-            finally:
-                server.shutdown()
-                server.server_close()
-                thread.join(timeout=5)
 
 
 if __name__ == "__main__":

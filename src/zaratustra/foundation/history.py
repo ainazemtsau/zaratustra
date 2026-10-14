@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from uuid import UUID
 
-from .storage import STATE_DIRECTORY, FoundationError, layout
+from .storage import STATE_DIRECTORY, FoundationError, _idle_core_client, layout
 
 HISTORY_DIRECTORY = "pi-sessions"
 HISTORY_MARKER = "owner.txt"
@@ -109,6 +109,18 @@ def managed_pi_session_lock(path: Path) -> Iterator[None]:
             yield
         finally:
             fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+@contextmanager
+def managed_core_client(path: Path) -> Iterator[None]:
+    """Keep one idle Core WAL client for a managed host's actual lifetime.
+
+    Maintenance remains excluded until the SQLite handle closes. No transaction,
+    snapshot or SQL handle crosses this public boundary.
+    """
+
+    with managed_pi_session_lock(path), _idle_core_client(path):
+        yield
 
 
 @contextmanager

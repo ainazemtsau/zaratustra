@@ -141,6 +141,14 @@ and parallel dirty work; do not publish private preparation branches merely to k
 
 ## What exists
 
+Owner-approved 0.25.1 client lifetime correction keeps schema 18. The existing Pi
+bridge owns a checked idle query-only physical rw Core client until native HTTP
+drain completes, under the existing session/maintenance fence. Each operation
+retains its own current identity, rights and transaction admission; no snapshot,
+write lock, queue or alternate authority is held. Native default FULL/checkpoint
+policy is unchanged. See `docs/sqlite-client-lifecycle-plan.md`; actual evidence
+and historical cause limits are reported separately from owner acceptance.
+
 Single conversational ownership (0.25.0) keeps Core schema 18. Ordinary Pi tools
 await addressed process boundaries; workers/status watchers cannot trigger a
 completion conversation. Native progress and passive startup leave continuation

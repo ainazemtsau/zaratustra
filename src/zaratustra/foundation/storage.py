@@ -1556,6 +1556,49 @@ def _space_info(connection: sqlite3.Connection, root: Path, database: Path) -> S
 
 
 @contextmanager
+def _idle_core_client(path: Path) -> Iterator[None]:
+    """Retain a checked WAL client without a transaction or a public SQL handle.
+
+    The physical client is read/write so SQLite's normal last-client close can
+    checkpoint committed WAL pages. Query-only admission forbids domain writes;
+    public operations keep their independent checked transaction boundaries.
+    """
+
+    connection: sqlite3.Connection | None = None
+    phase = "layout"
+    try:
+        try:
+            root, database, _ = layout(path)
+            phase = "connect"
+            connection = _connect(database, writable=True)
+            phase = "configure"
+            connection.execute("PRAGMA query_only = ON")
+            phase = "begin"
+            _begin(connection, writable=False)
+            phase = "identity"
+            _space_info(connection, root, database)
+            phase = "commit"
+            connection.execute("COMMIT")
+        except FoundationError:
+            raise
+        except sqlite3.Error as error:
+            name = getattr(error, "sqlite_errorname", type(error).__name__)
+            raise FoundationError(
+                "storage", f"SQLite client {phase} failed ({name}): {error}"
+            ) from error
+        except (OSError, ValueError) as error:
+            raise FoundationError("storage", str(error)) from error
+        yield
+    finally:
+        if connection is not None:
+            try:
+                if connection.in_transaction:
+                    connection.execute("ROLLBACK")
+            finally:
+                connection.close()
+
+
+@contextmanager
 def space_connection(
     path: Path, *, writable: bool = False
 ) -> Iterator[tuple[sqlite3.Connection, SpaceInfo]]:

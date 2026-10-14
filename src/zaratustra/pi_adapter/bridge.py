@@ -10,6 +10,7 @@ import secrets
 import threading
 import time
 from collections.abc import Callable
+from contextlib import ExitStack
 from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -95,6 +96,7 @@ from zaratustra.foundation import (
     list_development,
     list_knowledge,
     list_sleep_sources,
+    managed_core_client,
     memory_catalog,
     memory_history,
     memory_required_refs,
@@ -3680,15 +3682,30 @@ class Bridge:
 
 
 class BridgeServer(ThreadingHTTPServer):
-    daemon_threads = True
+    daemon_threads = False
 
     def __init__(self, bridge: Bridge) -> None:
-        super().__init__(("127.0.0.1", 0), BridgeHandler)
+        self._core_client = ExitStack()
+        self._core_client.enter_context(managed_core_client(bridge.path))
+        try:
+            super().__init__(("127.0.0.1", 0), BridgeHandler)
+        except BaseException:
+            self._core_client.close()
+            raise
         self.bridge = bridge
+
+    def server_close(self) -> None:
+        try:
+            super().server_close()
+        finally:
+            self._core_client.close()
 
 
 class BridgeHandler(BaseHTTPRequestHandler):
     server: BridgeServer
+    # Bound inactive local socket reads. The native server drains admitted
+    # handlers before releasing its Core client.
+    timeout = 20
 
     def log_message(self, format: str, *args: object) -> None:
         pass

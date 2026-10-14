@@ -232,12 +232,16 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
             abort_acknowledged = True
 
     def saved_abort() -> bool:
+        return paused.is_set() and abort_acknowledged
+
+    def observe_pause() -> None:
         # Native acknowledgement precedes completion of extension cancellation.
         # A cancelled HTTP observer may lose its reply; read the real receipt
         # through public state rather than asserting that ACK has committed it.
+        # This observation also releases the fixture provider, so it must not
+        # depend on the coordinator already being idle.
         if abort_acknowledged and not paused.is_set() and setup().state.phase == "paused":
             retain_pause()
-        return paused.is_set() and abort_acknowledged
 
     events: list[dict[str, Any]] = []
     try:
@@ -254,6 +258,7 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
             expected_provider_calls=3,
             expected_tool_errors=1,
             on_event=event,
+            on_idle_poll=observe_pause,
             on_bridge_response=bridge_response,
             wait_for=saved_abort,
             timeout_seconds=60,

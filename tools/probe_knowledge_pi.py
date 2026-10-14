@@ -14,6 +14,7 @@ import tempfile
 import threading
 import time
 from collections.abc import Callable, Sequence
+from contextlib import ExitStack
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib.resources import files
 from pathlib import Path
@@ -181,8 +182,12 @@ def apply(
     return {"mode": "apply", "intent": intent}
 
 
-def _completed_observation(bridge: Bridge, predicate: Callable[[], bool]) -> bool:
+def _completed_observation(
+    bridge: Bridge, predicate: Callable[[], bool], *, native_settled: bool
+) -> bool:
     """Observe an idle boundary; never interrupt active coordination with an unused read."""
+    if not native_settled:
+        return False
     for controller in (
         bridge.setup_controller,
         bridge.procedure_controller,
@@ -277,6 +282,7 @@ def run_process(
     remember_selection: bool = False,
     fixture_agent_dir: Path | None = None,
     on_event: Callable[[Any, dict[str, object]], None] | None = None,
+    on_idle_poll: Callable[[], None] | None = None,
     extra_extensions: tuple[Path, ...] = (),
     abrupt_end_predicate: Callable[[], bool] | None = None,
     input_eof_predicate: Callable[[], bool] | None = None,
@@ -285,132 +291,154 @@ def run_process(
 ) -> list[dict[str, object]]:
     if provider_profile not in ("local-completions", "codex-sse"):
         raise ValueError("Fictional native trials support only admitted provider profiles")
-    bridge_server = BridgeServer(bridge)
-    if on_bridge_response is not None:
-        original_handler = cast(Any, bridge_server.RequestHandlerClass)
-        original_reply = original_handler._reply
+    with ExitStack() as cleanup:
+        cleanup.callback(provider.server_close)
+        bridge_server = BridgeServer(bridge)
+        cleanup.callback(bridge_server.server_close)
+        if on_bridge_response is not None:
+            original_handler = cast(Any, bridge_server.RequestHandlerClass)
+            original_reply = original_handler._reply
 
-        def observed_reply(handler: Any, status: Any, payload: object) -> None:
-            original_reply(handler, status, payload)
-            assert on_bridge_response is not None
-            on_bridge_response(handler.path, payload)
+            def observed_reply(handler: Any, status: Any, payload: object) -> None:
+                original_reply(handler, status, payload)
+                assert on_bridge_response is not None
+                on_bridge_response(handler.path, payload)
 
-        bridge_server.RequestHandlerClass = type(
-            "ObservedBridgeHandler", (original_handler,), {"_reply": observed_reply}
+            bridge_server.RequestHandlerClass = type(
+                "ObservedBridgeHandler", (original_handler,), {"_reply": observed_reply}
+            )
+        bridge_thread = threading.Thread(target=bridge_server.serve_forever, daemon=True)
+        bridge_thread.start()
+        cleanup.callback(bridge_thread.join, timeout=5)
+        cleanup.callback(bridge_server.shutdown)
+        provider_thread = threading.Thread(target=provider.serve_forever, daemon=True)
+        provider_thread.start()
+        cleanup.callback(provider_thread.join, timeout=5)
+        cleanup.callback(provider.shutdown)
+        installed = directory / f"zaratustra-knowledge-{uuid4()}.ts"
+        cleanup.callback(installed.unlink, missing_ok=True)
+        shutil.copyfile(
+            Path(str(files("zaratustra.pi_adapter").joinpath("extension.ts"))), installed
         )
-    bridge_thread = threading.Thread(target=bridge_server.serve_forever, daemon=True)
-    bridge_thread.start()
-    provider_thread = threading.Thread(target=provider.serve_forever, daemon=True)
-    provider_thread.start()
-    installed = directory / f"zaratustra-knowledge-{uuid4()}.ts"
-    shutil.copyfile(Path(str(files("zaratustra.pi_adapter").joinpath("extension.ts"))), installed)
-    home = directory / f"pi-home-{uuid4()}"
-    home.mkdir()
-    agent_home = fixture_agent_dir or home / "pi-agent"
-    if model_overrides is not None or provider_profile == "codex-sse":
-        agent_home.mkdir(parents=True, exist_ok=True)
-        fixture_config: dict[str, object] = {}
-        fixture_provider = "fictional-local"
-        if provider_profile == "codex-sse":
-            fixture_provider = "openai-codex"
-            encoded = base64.b64encode(
+        home = directory / f"pi-home-{uuid4()}"
+        home.mkdir()
+        agent_home = fixture_agent_dir or home / "pi-agent"
+        if model_overrides is not None or provider_profile == "codex-sse":
+            agent_home.mkdir(parents=True, exist_ok=True)
+            fixture_config: dict[str, object] = {}
+            fixture_provider = "fictional-local"
+            if provider_profile == "codex-sse":
+                fixture_provider = "openai-codex"
+                encoded = base64.b64encode(
+                    json.dumps(
+                        {"https://api.openai.com/auth": {"chatgpt_account_id": "fictional-native"}}
+                    ).encode()
+                ).decode()
+                fixture_config = {
+                    "baseUrl": f"http://127.0.0.1:{provider.server_port}/backend-api",
+                    "apiKey": f"e30=.{encoded}.ZmljdGlvbmFs",
+                }
+            if model_overrides is not None:
+                fixture_config["modelOverrides"] = model_overrides
+            (agent_home / "models.json").write_text(
+                json.dumps({"providers": {fixture_provider: fixture_config}}),
+                encoding="utf-8",
+            )
+        if compact:
+            agent_home.mkdir(parents=True, exist_ok=True)
+            (agent_home / "settings.json").write_text(
                 json.dumps(
-                    {"https://api.openai.com/auth": {"chatgpt_account_id": "fictional-native"}}
-                ).encode()
-            ).decode()
-            fixture_config = {
-                "baseUrl": f"http://127.0.0.1:{provider.server_port}/backend-api",
-                "apiKey": f"e30=.{encoded}.ZmljdGlvbmFs",
-            }
-        if model_overrides is not None:
-            fixture_config["modelOverrides"] = model_overrides
-        (agent_home / "models.json").write_text(
-            json.dumps({"providers": {fixture_provider: fixture_config}}),
-            encoding="utf-8",
-        )
-    if compact:
-        agent_home.mkdir(parents=True, exist_ok=True)
-        (agent_home / "settings.json").write_text(
-            json.dumps(
-                {"compaction": {"enabled": True, "keepRecentTokens": 1, "reserveTokens": 512}}
-            ),
-            encoding="utf-8",
-        )
-    env = {
-        key: value
-        for key, value in os.environ.items()
-        if key.upper() in {"PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP"}
-    }
-    env.update(
-        {
-            "HOME": str(home),
-            "USERPROFILE": str(home),
-            "APPDATA": str(home / "AppData"),
-            "LOCALAPPDATA": str(home / "LocalAppData"),
-            "PI_CODING_AGENT_DIR": str(agent_home),
-            "PI_OFFLINE": "1",
-            "PI_SKIP_VERSION_CHECK": "1",
-            "PI_TELEMETRY": "0",
-            "ZARA_CORE_ENDPOINT": f"http://127.0.0.1:{bridge_server.server_port}",
-            "ZARA_CORE_TOKEN": bridge.token,
-            "ZARA_RESERVE_UNITS": "1000",
-            "ZARA_PROVIDER_PROFILE": provider_profile,
-            "ZARA_PROVIDER_BASE_URL": f"http://127.0.0.1:{provider.server_port}/"
-            + ("backend-api" if provider_profile == "codex-sse" else "v1"),
-            "ZARA_PROVIDER_ORIGIN": f"http://127.0.0.1:{provider.server_port}",
-            "ZARA_LOCAL_PROVIDER_ID": "fictional-local",
-            "ZARA_LOCAL_MODEL_ID": local_model_id,
-            "ZARA_LOCAL_CONTEXT_WINDOW": "16384",
-            "ZARA_LOCAL_MAX_TOKENS": "512",
+                    {"compaction": {"enabled": True, "keepRecentTokens": 1, "reserveTokens": 512}}
+                ),
+                encoding="utf-8",
+            )
+        env = {
+            key: value
+            for key, value in os.environ.items()
+            if key.upper() in {"PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP"}
         }
-    )
-    if remember_selection:
-        env["ZARA_REMEMBER_SELECTION"] = "1"
-    if work:
-        env["ZARA_INITIAL_ACTIVITY_ID"], env["ZARA_INITIAL_WORK_ID"] = map(str, work)
-    if catalog_only:
-        env["ZARA_PROVIDER_PROFILE"] = "codex-sse"
-        env["ZARA_PROVIDER_BASE_URL"] = "https://chatgpt.com/backend-api"
-        env["ZARA_PROVIDER_ORIGIN"] = "https://chatgpt.com"
-    from zaratustra.pi_adapter import read_pi_runtime
+        env.update(
+            {
+                "HOME": str(home),
+                "USERPROFILE": str(home),
+                "APPDATA": str(home / "AppData"),
+                "LOCALAPPDATA": str(home / "LocalAppData"),
+                "PI_CODING_AGENT_DIR": str(agent_home),
+                "PI_OFFLINE": "1",
+                "PI_SKIP_VERSION_CHECK": "1",
+                "PI_TELEMETRY": "0",
+                "ZARA_CORE_ENDPOINT": f"http://127.0.0.1:{bridge_server.server_port}",
+                "ZARA_CORE_TOKEN": bridge.token,
+                "ZARA_RESERVE_UNITS": "1000",
+                "ZARA_PROVIDER_PROFILE": provider_profile,
+                "ZARA_PROVIDER_BASE_URL": f"http://127.0.0.1:{provider.server_port}/"
+                + ("backend-api" if provider_profile == "codex-sse" else "v1"),
+                "ZARA_PROVIDER_ORIGIN": f"http://127.0.0.1:{provider.server_port}",
+                "ZARA_LOCAL_PROVIDER_ID": "fictional-local",
+                "ZARA_LOCAL_MODEL_ID": local_model_id,
+                "ZARA_LOCAL_CONTEXT_WINDOW": "16384",
+                "ZARA_LOCAL_MAX_TOKENS": "512",
+            }
+        )
+        if remember_selection:
+            env["ZARA_REMEMBER_SELECTION"] = "1"
+        if work:
+            env["ZARA_INITIAL_ACTIVITY_ID"], env["ZARA_INITIAL_WORK_ID"] = map(str, work)
+        if catalog_only:
+            env["ZARA_PROVIDER_PROFILE"] = "codex-sse"
+            env["ZARA_PROVIDER_BASE_URL"] = "https://chatgpt.com/backend-api"
+            env["ZARA_PROVIDER_ORIGIN"] = "https://chatgpt.com"
+        from zaratustra.pi_adapter import read_pi_runtime
 
-    cli = read_pi_runtime(runtime).cli
-    command = [
-        shutil.which("node") or "node",
-        str(cli),
-        "--mode",
-        "rpc",
-        "--provider",
-        "openai-codex" if catalog_only or provider_profile == "codex-sse" else "fictional-local",
-        "--model",
-        "gpt-6.1-sol" if catalog_only else local_model_id,
-        "--extension",
-        str(installed),
-        "--no-extensions",
-        "--no-context-files",
-        "--no-skills",
-        "--no-prompt-templates",
-        "--no-themes",
-        "--no-approve",
-        "--offline",
-    ]
-    if thinking is not None:
-        command.extend(["--thinking", thinking])
-    for extension in extra_extensions:
-        command.extend(["--extension", str(extension)])
-    for skill in skills:
-        command.extend(["--skill", str(skill)])
-    if tool_names is not None:
-        command.extend(["--tools", ",".join(tool_names)])
-    if session_directory is not None:
-        command.extend(["--session-dir", str(session_directory)])
-    elif resume_session is None or resume_via_switch:
-        command.append("--no-session")
-    if resume_session is not None and not resume_via_switch:
-        command.extend(["--session", str(resume_session)])
-    process: subprocess.Popen[bytes] | None = None
-    observed: list[dict[str, object]] = []
-    try:
+        cli = read_pi_runtime(runtime).cli
+        command = [
+            shutil.which("node") or "node",
+            str(cli),
+            "--mode",
+            "rpc",
+            "--provider",
+            "openai-codex"
+            if catalog_only or provider_profile == "codex-sse"
+            else "fictional-local",
+            "--model",
+            "gpt-6.1-sol" if catalog_only else local_model_id,
+            "--extension",
+            str(installed),
+            "--no-extensions",
+            "--no-context-files",
+            "--no-skills",
+            "--no-prompt-templates",
+            "--no-themes",
+            "--no-approve",
+            "--offline",
+        ]
+        if thinking is not None:
+            command.extend(["--thinking", thinking])
+        for extension in extra_extensions:
+            command.extend(["--extension", str(extension)])
+        for skill in skills:
+            command.extend(["--skill", str(skill)])
+        if tool_names is not None:
+            command.extend(["--tools", ",".join(tool_names)])
+        if session_directory is not None:
+            command.extend(["--session-dir", str(session_directory)])
+        elif resume_session is None or resume_via_switch:
+            command.append("--no-session")
+        if resume_session is not None and not resume_via_switch:
+            command.extend(["--session", str(resume_session)])
+        process: subprocess.Popen[bytes] | None = None
+        observed: list[dict[str, object]] = []
+
+        def close_native() -> None:
+            try:
+                if bridge.setup_controller is not None:
+                    bridge.setup_controller.close()
+            finally:
+                if process is not None:
+                    process.terminate()
+                    process.wait(timeout=10)
+
+        cleanup.callback(close_native)
         process = subprocess.Popen(
             command,
             cwd=directory,
@@ -451,28 +479,46 @@ def run_process(
         continuation_started = False
         confirmations = 0
         input_eof_sent = False
+        native_settled = False
+        termination: str | None = None
         deadline = time.monotonic() + timeout_seconds
         while time.monotonic() < deadline:
             try:
                 event = events.get(timeout=0.25)
             except queue.Empty:
+                if on_idle_poll is not None:
+                    on_idle_poll()
                 if input_eof_predicate is not None and not input_eof_sent and input_eof_predicate():
                     process.stdin.close()
                     input_eof_sent = True
                 if abrupt_end_predicate is not None and abrupt_end_predicate():
+                    termination = "addressed_abrupt_end"
                     break
-                if wait_for is not None and _completed_observation(bridge, wait_for):
+                if (
+                    not compact
+                    and wait_for is not None
+                    and _completed_observation(bridge, wait_for, native_settled=native_settled)
+                ):
+                    termination = "native_settled"
                     break
                 if process.poll() is not None:
+                    if input_eof_sent:
+                        termination = "addressed_input_eof"
                     break
                 continue
             observed.append(event)
+            if event.get("type") == "agent_start":
+                native_settled = False
+            elif event.get("type") == "agent_settled":
+                native_settled = True
             if on_event is not None:
                 on_event(process, event)
             if catalog_only and "zaratustra_models" in json.dumps(event):
+                termination = "catalog_observed"
                 break
             if event.get("type") == "response" and event.get("id") == "resume":
                 assert event.get("success") is True, event
+                native_settled = False
                 process.stdin.write(
                     (
                         json.dumps(
@@ -486,6 +532,7 @@ def run_process(
                 process.stdin.flush()
                 continue
             if expected_pre_send_failure and event.get("type") == "extension_error":
+                termination = "expected_pre_send_failure"
                 break
             if event.get("type") == "extension_ui_request" and event.get("method") == "confirm":
                 assert confirmations < len(confirmation_answers), ("Unexpected confirmation", event)
@@ -501,6 +548,7 @@ def run_process(
             if compact and event.get("type") == "agent_settled" and not compaction_started:
                 assert provider.calls >= 1, observed
                 if split_compact and not second_turn_started:
+                    native_settled = False
                     process.stdin.write(
                         b'{"id":"second","type":"prompt",'
                         b'"message":"Inspect the fictional material in a second turn."}\n'
@@ -511,6 +559,7 @@ def run_process(
                 process.stdin.write(b'{"id":"compact","type":"compact"}\n')
                 process.stdin.flush()
                 compaction_started = True
+                native_settled = False
                 continue
             if compact and event.get("type") == "response" and event.get("id") == "compact":
                 assert event.get("success") is (not expected_compact_failure), (
@@ -523,7 +572,9 @@ def run_process(
                     ],
                 )
                 if not continue_after_compact:
+                    termination = "compaction_observed"
                     break
+                native_settled = False
                 process.stdin.write(
                     b'{"id":"continue","type":"prompt","message":"Continue the fictional Work."}\n'
                 )
@@ -535,9 +586,15 @@ def run_process(
                 and event.get("type") == "agent_settled"
                 and provider.calls >= 3
             ):
+                if wait_for is not None and not _completed_observation(
+                    bridge, wait_for, native_settled=native_settled
+                ):
+                    continue
+                termination = "native_settled"
                 break
             if not compact and event.get("type") == "agent_settled":
                 if continue_work and not continuation_started:
+                    native_settled = False
                     process.stdin.write(
                         b'{"id":"continue","type":"prompt",'
                         b'"message":"Revise the fictional draft."}\n'
@@ -545,9 +602,18 @@ def run_process(
                     process.stdin.flush()
                     continuation_started = True
                     continue
-                if wait_for is not None and not _completed_observation(bridge, wait_for):
+                if wait_for is not None and not _completed_observation(
+                    bridge, wait_for, native_settled=native_settled
+                ):
                     continue
+                termination = "native_settled"
                 break
+        assert termination is not None, (
+            "Native observation ended without its required completion boundary",
+            provider.calls,
+            process.poll(),
+            observed[-5:],
+        )
         errors = [
             event
             for event in observed
@@ -585,19 +651,6 @@ def run_process(
             assert len(errors) == expected_tool_errors, errors
         assert confirmations == len(confirmation_answers), observed
         return observed
-    finally:
-        if bridge.setup_controller is not None:
-            bridge.setup_controller.close()
-        if process is not None:
-            process.terminate()
-            process.wait(timeout=10)
-        installed.unlink(missing_ok=True)
-        bridge_server.shutdown()
-        bridge_server.server_close()
-        bridge_thread.join(timeout=5)
-        provider.shutdown()
-        provider.server_close()
-        provider_thread.join(timeout=5)
 
 
 def run_probe(tmp_path: Path, runtime: Path) -> None:

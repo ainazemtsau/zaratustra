@@ -70,7 +70,7 @@ from zaratustra.foundation import (
     read_work,
     restore_backup,
 )
-from zaratustra.pi_adapter import Bridge
+from zaratustra.pi_adapter import Bridge, BridgeServer
 from zaratustra.pi_adapter.assigned import (
     EXECUTOR_VERSION,
     PI_VERSION,
@@ -773,6 +773,101 @@ def _valid_assigned_config(root: Path, workspace: Path, runtime: Path) -> Assign
         limit_units=100,
         offline=True,
     )
+
+
+@pytest.mark.parametrize("refused_thread", ("server", "stderr_reader", "monitor"))
+def test_assigned_thread_start_failure_closes_server_and_records_observed_stop(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, refused_thread: str
+) -> None:
+    root, workspace, _, work, attempt, _ = assigned(tmp_path)
+    owner = authorize_local(root, actor="owner", source_ref="fictional-console")
+    config = _valid_assigned_config(root, workspace, tmp_path / "runtime")
+    before = read_execution(root, work, owner)
+    servers: list[BridgeServer] = []
+    server_threads: list[threading.Thread] = []
+    started_threads: list[threading.Thread] = []
+    children: list[subprocess.Popen[bytes]] = []
+    failure = RuntimeError(f"Fictional assigned {refused_thread} thread start failed")
+    native_start = threading.Thread.start
+    native_popen = subprocess.Popen
+
+    def start(thread: threading.Thread) -> None:
+        target = getattr(thread, "_target", None)
+        server = getattr(target, "__self__", None)
+        if isinstance(server, BridgeServer):
+            servers.append(server)
+            server_threads.append(thread)
+        refuses = (
+            refused_thread == "server"
+            and isinstance(server, BridgeServer)
+            or refused_thread == "stderr_reader"
+            and target is assigned_module._drain_stderr
+            or refused_thread == "monitor"
+            and target is assigned_module._watch_core_stop
+        )
+        if refuses:
+            with pytest.raises(FoundationError, match="history_busy"), managed_pi_lock(root):
+                raise AssertionError("Acquired assigned server must hold the Core fence")
+            raise failure
+        native_start(thread)
+        started_threads.append(thread)
+
+    def idle_child(
+        command: object,
+        *,
+        cwd: Path,
+        env: dict[str, str],
+        stdin: int,
+        stdout: int,
+        stderr: int,
+    ) -> subprocess.Popen[bytes]:
+        assert refused_thread != "server", "A failed Bridge thread must not launch assigned Pi"
+        process = native_popen(
+            [sys.executable, "-c", "import sys; sys.stdin.buffer.read()"],
+            cwd=cwd,
+            env=env,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        children.append(process)
+        return process
+
+    monkeypatch.setattr(threading.Thread, "start", start)
+    monkeypatch.setattr(subprocess, "Popen", idle_child)
+    try:
+        with pytest.raises(RuntimeError) as refused:
+            assigned_module._execute_under_lock(
+                config, owner, work, attempt, before.execution_epoch, before.attempts[0].generation
+            )
+        assert refused.value is failure
+        assert len(servers) == 1 and servers[0].socket.fileno() == -1
+        assert len(children) == int(refused_thread != "server")
+        assert all(child.pid > 0 and child.poll() is not None for child in children)
+        assert not any(thread.is_alive() for thread in started_threads)
+        with managed_pi_lock(root):
+            after = read_execution(root, work, owner)
+            assert after.work == before.work and after.work.state.acceptance is None
+            assert after.assignments[0].status == "stopped"
+            assert after.attempts[0].status == "interrupted"
+            assert after.invocations == before.invocations == ()
+            assert not after.outputs and after.committed_units == after.held_units == 0
+    finally:
+        # Clean only this test's real children if an assertion exposed a leak.
+        # All lifecycle assertions above observe product cleanup before this fallback.
+        for child in children:
+            if child.poll() is None:
+                child.kill()
+            child.wait(timeout=5)
+            for stream in (child.stdin, child.stdout, child.stderr):
+                if stream is not None:
+                    stream.close()
+        for server, thread in zip(servers, server_threads, strict=True):
+            if thread.ident is not None:
+                server.shutdown()
+            server.server_close()
+        for thread in started_threads:
+            thread.join(timeout=5)
 
 
 def test_empty_executor_file_recovers_same_attempt_without_recreating_database(
