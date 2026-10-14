@@ -105,6 +105,43 @@ def _event(
     )
 
 
+def _has_current_publication(
+    connection: object, work_id: UUID, attempt_id: UUID, state: WorkState
+) -> bool:
+    """Match an actual publication receipt to an exact still-linked output."""
+    for output in state.linked_outputs:
+        if output.artifact.revision != 1:
+            continue
+        rows = connection.execute(  # type: ignore[attr-defined]
+            "SELECT e.kind,e.invocation_id FROM execution_events e "
+            "JOIN receipts r ON r.operation_id=e.operation_id "
+            "JOIN managed_content c ON c.record_id=? AND c.revision=? "
+            "WHERE e.work_id=? AND e.attempt_id=? "
+            "AND e.kind IN ('publish_attempt_output','recover_attempt_output') "
+            "AND json_extract(r.receipt_json,'$.result.artifact_id')=? LIMIT 1",
+            (
+                str(output.artifact.artifact_id),
+                output.artifact.revision,
+                str(work_id),
+                str(attempt_id),
+                str(output.artifact.artifact_id),
+            ),
+        ).fetchall()
+        for kind, invocation in rows:
+            # The event/receipt proves publication. Its generated address also
+            # pins the slot; relabelling a linked Artifact cannot consume a reply.
+            expected = (
+                uuid5(attempt_id, f"artifact:{output.slot}")
+                if kind == "publish_attempt_output"
+                else uuid5(UUID(invocation), f"recovered-output:{output.slot}")
+                if invocation
+                else None
+            )
+            if output.artifact.artifact_id == expected:
+                return True
+    return False
+
+
 def _work(connection: object, work_id: UUID) -> tuple[int, WorkState]:
     row = connection.execute(  # type: ignore[attr-defined]
         "SELECT s.current_revision, s.status, c.payload FROM subject_records s "
@@ -367,6 +404,32 @@ def apply_execution_change(
                 raise FoundationError(
                     "resource_busy", "Unknown assigned Attempt still owns the resource"
                 )
+        if isinstance(request, AssignAttemptRequest) and assigned_schema:
+            if connection.execute(  # type: ignore[attr-defined]
+                "SELECT 1 FROM execution_invocations WHERE work_id=? "
+                "AND status IN ('admitted','sent','unknown') LIMIT 1",
+                (str(request.work_id),),
+            ).fetchone():
+                raise FoundationError(
+                    "response_outcome_unknown", "Inspect unresolved sends before a fresh assignment"
+                )
+            if prior is not None:
+                if any(
+                    not _has_current_publication(
+                        connection, request.work_id, UUID(item[0]), work_state
+                    )
+                    for item in connection.execute(  # type: ignore[attr-defined]
+                        "SELECT DISTINCT i.attempt_id FROM execution_invocations i "
+                        "JOIN execution_assignments s "
+                        "ON s.attempt_id=i.attempt_id WHERE i.work_id=? "
+                        "AND i.status='answered'",
+                        (str(request.work_id),),
+                    ).fetchall()
+                ):
+                    raise FoundationError(
+                        "response_pending",
+                        "Recover or inspect the answered assigned response before a new dispatch",
+                    )
         busy_query = (
             "SELECT 1 FROM execution_attempts a JOIN execution_resources r "
             "ON r.resource_id = a.resource_id "

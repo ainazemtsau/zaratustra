@@ -1,4 +1,4 @@
-# Completed assigned response after pause — structural stop
+# Completed assigned response after pause — approved recovery contract
 
 ## Confirmed interruption case
 
@@ -24,7 +24,7 @@ The retained assigned Source has full content, scope and session, but no exact
 native terminal/invocation/manifest proof. The public terminal reader refuses it.
 Matching text, Work or session cannot substitute for missing producer evidence.
 
-## Required general contract, proposed for owner discussion
+## Owner-approved general contract
 
 This applies to Activity setup, ordinary workflow and procedures.
 
@@ -98,9 +98,52 @@ established during the contract review, not assumed here.
 - Ordinary installed Pi: abort, late answer, close, new owner request, recover,
   review and first Work, with HTTP/ContextManifest/receipt checks.
 
+## Implementation
+
+The owner explicitly authorized this contract. Schema 18 is sufficient: no
+DDL, migration, second graph, delivery ledger or queue was added.
+
+`RecoverAttemptOutputRequest` checks the exact native terminal Source, immutable
+invocation/manifest/session correlation, saved protocol, current Work revision,
+rights, input and resource pins. Its receipt creates a proposed Artifact with
+protected `RecoveredResponseProof` and exact Source/manifest dependency edges
+in the existing knowledge-basis index. It links through ordinary Core output
+admission. It never rewrites an interrupted Attempt, emits a normal successful
+publication event or accepts Work. Composite root output still needs its own
+genuine execution proof.
+
+Setup, workflow and procedure coordinators call the same derived response view
+before dispatch. They validate recovered bytes through their existing domain
+contracts. An answered original without sufficient terminal proof is an
+addressed obstacle. Unknown sends in earlier generations cannot be hidden by a
+later no-send Attempt or an older linked output. Fresh assignment is fenced at
+Core, independently of coordinator behavior.
+
+A publicly linked proposed output remains available through existing output
+authority; availability does not claim that an assigned response was consumed or
+that its Attempt succeeded. Fresh assignment still requires exact publication or
+recovery evidence for earlier answered invocations. A genuine first publication
+in a multi-slot Work yields `partial_output`, allowing its remaining slots to
+continue without reopening an unresolved send. Generated Artifact identity is
+checked against its actual operation event and receipt, never used alone as
+producer proof.
+
+The assigned native adapter retains original bytes before finish accounting,
+then captures the exact persisted native entry at `turn_end` before parsing or
+publication. The earlier event lacks a persisted entry ID and is honestly kept
+as a raw original, not given synthetic terminal proof. A crash between these
+captures therefore preserves data but requires inspection instead of replay.
+
+Read-only public status exposes these derived outcomes. Source/manifest deletion
+services recovered copies through the existing dependency mechanism. Restored
+incomplete replies from an old epoch remain historical obstacles; already
+recovered outputs and their history remain readable. Copying recovery is limited
+to simple Work with one supported text/typed JSON slot; Method/composite results
+require their genuine producer and ordinary validation proof. Unsupported or
+legacy unproven contracts yield an addressed obstacle instead of a new send.
+
 ## Status
 
-Proposed contract only. The owner required a stop for structural changes; the
-candidate is held locally. This document does not authorize implementation,
-accept the candidate, resolve the separate SQLite contention observation or
-publish a release.
+Implemented locally in the 0.25.0 candidate; final delivery checks are recorded
+in the release report. Owner authorization is distinct from owner acceptance.
+The separate SQLite contention observation is not established or declared fixed.

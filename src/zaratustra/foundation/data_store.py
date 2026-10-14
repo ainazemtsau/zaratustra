@@ -12,6 +12,7 @@ from uuid import UUID, uuid5
 from .data_formats import field_references, validate_format, validate_values
 from .models import (
     ActivityStructureState,
+    ArtifactRef,
     DataEntryState,
     DataFormatState,
     KnowledgeBody,
@@ -567,9 +568,21 @@ def index_output_bases(
 
     envelope = DataOutputEnvelope.model_validate_json(content)
     refs = envelope.entries + ((envelope.basis_snapshot,) if envelope.basis_snapshot else ())
+    index_artifact_knowledge_bases(
+        connection, ArtifactRef(artifact_id=artifact_id, revision=revision), refs
+    )
+
+
+def index_artifact_knowledge_bases(
+    connection: sqlite3.Connection, artifact: ArtifactRef, refs: tuple[KnowledgeRef, ...]
+) -> None:
+    # Historical name; this edge and its rights/deletion traversal cover all knowledge kinds.
     connection.executemany(
         "INSERT OR IGNORE INTO data_artifact_bases VALUES (?,?,?,?)",
-        ((str(artifact_id), revision, str(ref.record_id), ref.revision) for ref in refs),
+        (
+            (str(artifact.artifact_id), artifact.revision, str(ref.record_id), ref.revision)
+            for ref in refs
+        ),
     )
 
 

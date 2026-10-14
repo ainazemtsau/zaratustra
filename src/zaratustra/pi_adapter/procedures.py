@@ -17,6 +17,7 @@ from zaratustra.foundation import (
     CreateKnowledgeRequest,
     CreateResourceRequest,
     FoundationError,
+    LocalAuthority,
     MemoryMetadata,
     RequestAttemptStopRequest,
     ResourceState,
@@ -25,12 +26,23 @@ from zaratustra.foundation import (
     authorize_local,
     describe_structure,
     procedure_status,
+    read_attempt_response,
     read_execution,
 )
 from zaratustra.workspace import read_config, select_work_project
 
 from .assigned import EXECUTOR_VERSION, AssignedConfig, run_assigned
 from .bridge import Bridge
+from .response_recovery import missing_executor, recover_response
+
+
+def procedure_view(path: Path, authority: LocalAuthority, run_id: UUID) -> dict[str, Any]:
+    """Read saved procedure and reply admission; neither read advances its execution."""
+    status = procedure_status(path, authority, run_id)
+    status["response"] = read_attempt_response(path, UUID(status["work_id"]), authority).model_dump(
+        mode="json"
+    )
+    return status
 
 
 class ProcedureCoordinator:
@@ -57,11 +69,7 @@ class ProcedureCoordinator:
             return self._start(run_id, model)
 
     def _start(self, run_id: UUID, model: dict[str, Any]) -> dict[str, Any]:
-        if model.get("provider") != self.config.provider_id or not model.get("id"):
-            raise FoundationError(
-                "unsupported_provider", "Use the selected admitted subscription/model"
-            )
-        status = procedure_status(self.config.space, self.bridge.authority, run_id)
+        status = procedure_view(self.config.space, self.bridge.authority, run_id)
         work = UUID(status["work_id"])
         with self.lock:
             if self.thread is not None and self.thread.is_alive():
@@ -71,10 +79,18 @@ class ProcedureCoordinator:
                     "procedure_running", "Another procedure runs in this Pi window"
                 )
             snapshot = read_execution(self.config.space, work, self.bridge.authority)
-            if snapshot.work.state.linked_outputs or snapshot.work.state.status != "proposed":
-                return {**status, "execution": "result_available"}
-            if any(item.status in ("sent", "unknown") for item in snapshot.invocations):
-                return {**status, "execution": "unknown", "requires_resolution": True}
+            response = recover_response(self.config.space, work, self.bridge.authority)
+            if response.outcome == "applied" or snapshot.work.state.status != "proposed":
+                return {
+                    **procedure_view(self.config.space, self.bridge.authority, run_id),
+                    "execution": "result_available",
+                }
+            if response.outcome == "running":
+                raise missing_executor(response)
+            if model.get("provider") != self.config.provider_id or not model.get("id"):
+                raise FoundationError(
+                    "unsupported_provider", "Use the selected admitted subscription/model"
+                )
             if snapshot.assignments and snapshot.assignments[-1].status in ("unknown", "waiting"):
                 return {**status, "execution": snapshot.assignments[-1].status}
             definition = describe_structure(

@@ -1,4 +1,4 @@
-# One conversational owner — local 0.25.0 candidate, structural stop
+# One conversational owner and completed-response recovery — 0.25.0
 
 ## outcome
 
@@ -7,42 +7,53 @@ Implemented the owner-authorized one-conversation-owner architecture on
 18. Ordinary lifecycle tools observe an exact saved boundary and return to the
 same main Pi agent. Independent completion turns and startup auto-resume were
 removed. Empty-final repair continues the same native run with two persisted
-reservations, exact terminal proof and no model tools. Work acceptance remains
-an owner action.
+reservations, exact terminal proof and no model tools.
 
-The candidate is NOT released or installed in the personal space. Native
-interruption audit found a material completed-response recovery gap: an answered
-assigned response can be retained without its output, while resume would assign
-the stage again. Its retained Source lacks exact terminal producer proof.
-Publication is held under the owner's structural-stop rule.
+The owner subsequently approved the structural completed-response recovery
+contract. Setup, workflow and procedure now derive exact saved response evidence
+before dispatch; a proven completed answer can be recovered as proposed output
+without rewriting the stopped Attempt. Missing proof and unresolved old sends
+prevent blind regeneration. Genuine partial publication can continue its other
+output slots. Work acceptance remains an owner action. Final packaging is
+complete; authorized public publication is pending. No personal installation
+was made.
 
 ## evidence
 
-One full native gate passed: 1177 tests, build, hygiene, types and 32 import
-contracts. After late repair-capability findings, an affected file gate passed:
-51 tests, types, hygiene, boundaries and rebuild. The first affected attempt had
-one invalid test request, corrected by providing its required operation_key.
-Raw invalid/empty provider responses and public Core boundaries are tested.
+The pre-recovery full native gate passed 1177 tests; its later affected gate
+passed 51. Those checks belong to the earlier checkpoint. The recovery full
+gate ran once: 1212 passed, 2 failed; formatting/hygiene/types and 32 boundaries
+passed, but the full run is not claimed green. A genuine parent multi-slot
+continuation fence was corrected, and the restored unknown-send test now checks
+truthful process-stop and no regeneration. The affected native gate passed 126
+tests and rebuild. After the final assignment/slot correction, 41 affected tests
+passed. The final affected native gate passed 55 tests, formatting/hygiene/types,
+all 32 boundaries, report structure and sdist/wheel build.
 
-Ordinary native Pi 1.0.4 reproduced the competing old path (4 local HTTP, including
-1 host explanation); the corrected publication path used 3 ordinary requests,
-0 host requests and kept its output unaccepted. Complete Activity/first Work,
-reopening, old schema 14, native input origin, passive UI, obsolete custom wakes,
-empty repair and exhaustion were checked. The isolated installed wheel passed
-the ordinary path; affected final repair checks passed with an empty tool list.
-All 122 packaged members matched installed bytes. One bounded read-only evaluator
-smoke confirmed installed APIs, unchanged schema/storage and ordinary Pi.
+Ordinary installed Pi 1.0.4 passed continuation of an interrupted saved setup:
+7 new local HTTP requests, zero repeats of its original draft, two corrections,
+two full reviews, six exact terminal proofs and the same Activity ready. The
+first ordinary typed procedure Work passed (4 HTTP); its entry, snapshot and
+unaccepted result are retained. Repeated start is idempotent. Existing fictional
+Development continued (1 HTTP) with unchanged original revisions and inputs.
+The native abort/reopen probe passed (4 HTTP), preserving pause, unknown outcome
+and original bytes without replacement draft or acceptance.
 
-The interruption trace retained an exact pause, late answered original and
-truthful accounting, without output or acceptance. Public status and dispatch
-admission expose the unsafe subsequent generation path; no second provider send
-was made by that audit. A separate SQLITE_BUSY identity observation remains
-unestablished, not declared fixed by a successful repeat.
+One current bounded read-only evaluator smoke and final delta check matched all
+124 packaged/installed/source files, public recovery APIs, optional-field
+canonical bytes and unchanged storage/schema 18. Previous passive UI, input
+origin, repair/exhaustion and old-schema checks remain attributed to their earlier
+checkpoint in the report. A failed native full-path attempt encountered
+SQLITE_BUSY at identity inspection; its holder/cause is unestablished. Another
+interrupted harness run was continued from saved state rather than replayed;
+neither incomplete run is labeled PASS.
 
 See [implementation evidence](docs/single-conversation-owner-0.25.0-result.md)
 and [the structural recovery audit](docs/completed-response-recovery-audit.md).
-Final local candidate wheel SHA-256:
-`0980f22040590d292962740d781c7d16964cd0e164f528712445adfa730b3abc`.
+Final dist/installed/native-run wheel SHA-256:
+`42366a270c1929a931f038b26e9daec9daf81cbff8203a34b678e05e3b0cc525`.
+All archive members also match the native-run candidate; final packaging does
+not introduce unverified source or metadata bytes.
 
 ## assumptions
 
@@ -56,8 +67,9 @@ proof; stopping an Attempt cannot be undone by copying its text.
 No exports, Git projections, private workspace data, Activity deletion, personal
 installation or new real-model calls. No new Core schema/table, delivery ledger,
 queue, service, native runtime patch or text-based duplicate suppression.
-Completed assigned-response recovery is a newly discovered structural blocker,
-not silently excluded scope. Its proposed contract awaits owner discussion.
+The newly discovered completed-response gap is implemented under explicit owner
+approval. The separate SQLite contention observation is recorded, not silently
+declared fixed or converted into a speculative retry/queue.
 
 ## cost
 
@@ -68,9 +80,10 @@ authentication were not read by these checks.
 
 ## manual-acceptance
 
-The owner authorized implementation of the one-owner plan. The checks do not
-constitute release acceptance. The structural recovery contract is proposed,
-not approved or implemented; publication and private installation remain held.
+The owner authorized the one-owner plan and the completed-response recovery
+contract. Actual checks do not constitute owner acceptance. Public publication
+to ainazemtsau/zaratustra/main is authorized; publication/readback remains to be
+performed. Personal installation and release acceptance remain separate.
 
 ## next
 

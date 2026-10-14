@@ -12,8 +12,8 @@ from pydantic import BaseModel, Field
 from zaratustra.foundation import (
     FoundationError,
     current_conversation_action,
-    procedure_status,
     read_activity_setup,
+    read_attempt_response,
     read_execution,
     read_space,
     read_workflow_run,
@@ -101,6 +101,9 @@ def read_process_boundary(bridge: Any, target: ProcessTarget) -> ProcessBoundary
         if state.stages:
             snapshot = read_execution(bridge.path, state.stages[-1].work_id, bridge.authority)
             facts = _execution_facts(snapshot)
+            facts["response"] = read_attempt_response(
+                bridge.path, state.stages[-1].work_id, bridge.authority
+            ).model_dump(mode="json")
             waits.extend(
                 item.model_dump(mode="json") for item in snapshot.waits if item.status == "open"
             )
@@ -137,7 +140,12 @@ def read_process_boundary(bridge: Any, target: ProcessTarget) -> ProcessBoundary
             if not node.retired and node.output is None:
                 node_snapshot = read_execution(bridge.path, node.work_id, bridge.authority)
                 node_facts = _execution_facts(node_snapshot)
+                node_facts["response"] = read_attempt_response(
+                    bridge.path, node.work_id, bridge.authority
+                ).model_dump(mode="json")
                 if node_facts["unknown"] or node_facts["unresolved_invocations"]:
+                    facts.setdefault("nodes", []).append(node_facts)
+                elif node_facts["response"]["outcome"] in ("recoverable", "attention"):
                     facts.setdefault("nodes", []).append(node_facts)
         kind = (
             "cancelled"
@@ -155,7 +163,9 @@ def read_process_boundary(bridge: Any, target: ProcessTarget) -> ProcessBoundary
             else "running"
         )
     else:
-        details = procedure_status(bridge.path, bridge.authority, target.id)
+        from .procedures import procedure_view
+
+        details = procedure_view(bridge.path, bridge.authority, target.id)
         work_id = UUID(details["work_id"])
         action_subject = work_id
         snapshot = read_execution(bridge.path, work_id, bridge.authority)

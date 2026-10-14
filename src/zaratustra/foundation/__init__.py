@@ -150,6 +150,7 @@ from .models import (
     AssignAttemptRequest,
     AssignmentRecord,
     AttemptRecord,
+    AttemptResponseView,
     AuditReference,
     BackupInfo,
     BackupManifest,
@@ -283,6 +284,8 @@ from .models import (
     RecordChangeOutcomeRequest,
     RecordContextDeliveryRequest,
     RecordSummary,
+    RecoverAttemptOutputRequest,
+    RecoveredResponseProof,
     RecoverRequest,
     ReorganizeActivitiesRequest,
     RequestAttemptStopRequest,
@@ -393,6 +396,7 @@ from .projection import (
     validate_workspace_projection,
 )
 from .pulse import PulseFinding, PulseReport, pulse_space
+from .response_recovery import read_artifact_recovery_proof, read_attempt_response
 from .revalidation import read_revalidation
 from .runtime import (
     EXPECTED_SQLITE_VERSION,
@@ -757,6 +761,11 @@ __all__ = [
     "OutputContract",
     "PrepareInvocationRequest",
     "PublishAttemptOutputRequest",
+    "RecoverAttemptOutputRequest",
+    "AttemptResponseView",
+    "RecoveredResponseProof",
+    "read_attempt_response",
+    "read_artifact_recovery_proof",
     "LinkedOutput",
     "ProvenanceRef",
     "RecordSummary",

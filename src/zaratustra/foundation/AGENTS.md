@@ -1,5 +1,12 @@
 # Core v0.1 domain foundation
 
+`response_recovery.py` derives assigned response admission from exact execution,
+native terminal and immutable delivery evidence. RecoverAttemptOutputRequest
+links a proposed Artifact with protected recovered_response proof and indexed
+knowledge bases; it never changes interrupted Attempts or accepts Work. Missing
+proof and unresolved sends (including older generations) fence fresh assignment.
+Schema 18 and normal PublishAttemptOutputRequest remain unchanged.
+
 The public read-only `read_terminal_response` validates one whole retained native
 Source against its exact Context, schema-18 immutable invocation tuple and current
 rights. It classifies actual answered accounting as visible/empty or reports

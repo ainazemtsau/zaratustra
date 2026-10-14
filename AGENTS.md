@@ -150,6 +150,14 @@ and response-only tool/effect admission. Invocation pins and owner acceptance
 remain separate. See `docs/single-conversation-owner-plan.md`; release evidence
 is reported separately from owner acceptance.
 
+The same 0.25.0 package implements the owner-approved completed assigned-response
+recovery contract without changing schema 18. Exact retained terminal proof can
+produce an honestly sourced proposed output while leaving the stopped Attempt
+interrupted. Setup/workflow/procedure validators use it before dispatch. Missing
+proof and unresolved earlier sends fence regeneration; genuine partial
+publication preserves multi-slot continuation. See
+`docs/completed-response-recovery-audit.md` and the release evidence.
+
 Native response recovery (0.24.1) explicitly upgrades schema 17 to 18. Durable
 delivery correlation preserves exact Work/Attempt/session identity through
 content deletion; unresolved legacy evidence cannot claim no-send cleanup.

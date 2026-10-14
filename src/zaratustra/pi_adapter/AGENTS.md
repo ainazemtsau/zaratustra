@@ -1,5 +1,12 @@
 # Interactive Pi adapter
 
+Setup, workflow and procedure use one public completed-response recovery before
+fresh dispatch. Native message_end retains raw assigned bytes before accounting;
+turn_end retains the actual persisted entry/protocol before interpretation.
+Never invent an entry ID for early capture. Missing terminal proof or unknown
+sends stop with addressed diagnostics. Recovery precedes new model admission;
+the existing domain validators still decide whether the retained output works.
+
 Current 0.25.0 has one ordinary conversational owner. Lifecycle tools await a
 typed transient ProcessBoundary; observers receive exact target/session/branch/
 generation leases, native AbortSignal and progress. Never inject a completion

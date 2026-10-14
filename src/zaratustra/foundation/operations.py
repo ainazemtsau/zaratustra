@@ -82,6 +82,7 @@ from .models import (
     RecordChangeOutcomeRequest,
     RecordContextDeliveryRequest,
     RecordSummary,
+    RecoverAttemptOutputRequest,
     RecoverRequest,
     ReorganizeActivitiesRequest,
     RequestAttemptStopRequest,
@@ -658,7 +659,15 @@ def _operation_action(request: DomainRequest) -> tuple[Action, str, UUID | None]
         return "activity.write", "space", None
     if isinstance(request, CreateWorkRequest):
         return "work.write", "activity", request.state.activity_id
-    if isinstance(request, (LinkWorkOutputRequest, PublishAttemptOutputRequest, DeleteWorkRequest)):
+    if isinstance(
+        request,
+        (
+            LinkWorkOutputRequest,
+            PublishAttemptOutputRequest,
+            RecoverAttemptOutputRequest,
+            DeleteWorkRequest,
+        ),
+    ):
         return "work.write", "work", request.work_id
     if isinstance(request, (AcceptWorkRequest, CloseWorkRequest)):
         return "work.accept", "work", request.work_id
@@ -1603,6 +1612,19 @@ def _apply_change(
     decisions: list[dict[str, object]],
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
     from .models import WorkflowRequest
+
+    if isinstance(request, RecoverAttemptOutputRequest):
+        from .response_recovery import recover_attempt_output
+
+        return recover_attempt_output(
+            cast(sqlite3.Connection, connection),
+            request,
+            authority=authority,
+            now=now,
+            epoch=epoch,
+            grants=grants,
+            decisions=decisions,
+        )
 
     if isinstance(request, ConversationDeliveryRequest):
         from .conversations import apply_conversation_change

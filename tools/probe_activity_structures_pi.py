@@ -112,7 +112,13 @@ def draft(period: Literal["day", "week", "month"] = "week") -> core.ActivitySetu
     )
 
 
-def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -> dict[str, Any]:
+def run_probe(
+    directory: Path,
+    runtime: Path,
+    *,
+    blank_response: bool = False,
+    terminal_proof: bool = False,
+) -> dict[str, Any]:
     directory.mkdir(parents=True, exist_ok=False)
     root, working = directory / "space", directory / "work"
     root.mkdir()
@@ -170,6 +176,10 @@ def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -
     )
     legacy_before = core.read_work(root, legacy_work, authority)
     core.upgrade_workflow_space(root, authority)
+    if terminal_proof:
+        core.upgrade_conversation_space(root, authority)
+        core.upgrade_delivery_correlation_space(root, authority)
+        assert core.read_work(root, legacy_work, authority) == legacy_before
     native, actual = harness(), read_pi_runtime(runtime)
     requests: list[dict[str, Any]] = []
     bridges: list[Bridge] = []
@@ -402,6 +412,110 @@ def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -
     assert setup.state.phase == "ready", setup.model_dump_json()
     assert setup.state.reviews_completed == 2 and len(packets) == 6
     assert sum(stage.rejection is not None for stage in setup.state.stages) == 2
+    terminal_proofs: list[dict[str, Any]] = []
+    if terminal_proof:
+        stage_originals = []
+        cursor: str | None = None
+        while True:
+            source_page = core.list_knowledge(
+                root, authority, kind="source", limit=100, cursor=cursor
+            )
+            for source_item in cast(list[dict[str, Any]], source_page["items"]):
+                original = core.read_knowledge(root, UUID(source_item["record_id"]), authority)
+                if (
+                    isinstance(original.state, core.SourceState)
+                    and original.state.channel == "conversation_assistant"
+                ):
+                    stage_originals.append(original)
+            cursor = cast(str | None, source_page["next_cursor"])
+            if cursor is None:
+                break
+        for stage in setup.state.stages:
+            assert stage.output is not None
+            output = core.read_artifact(
+                root, stage.output.artifact_id, authority, revision=stage.output.revision
+            )
+            terminal_sources = [
+                original
+                for original in stage_originals
+                if isinstance(original.state, core.SourceState)
+                and original.state.scope_work_id == stage.work_id
+                and original.state.conversation_terminal is not None
+            ]
+            assert len(terminal_sources) == 1, "Stage lacks one exact native terminal original"
+            original = terminal_sources[0]
+            assert isinstance(original.state, core.SourceState)
+            observation = original.state.conversation_terminal
+            assert observation is not None and observation.result_protocol == "setup_json"
+            assert original.state.capture == "full" and original.state.content == output.content
+            proof = core.read_terminal_response(
+                root,
+                core.KnowledgeRef(record_id=original.record_id, revision=original.revision),
+                authority,
+                session_id=UUID(str(original.state.conversation_id)),
+                invocation_id=observation.invocation_id,
+                manifest=observation.manifest,
+                assistant_entry_id=observation.assistant_entry_id,
+            )
+            assert proof.work_id == stage.work_id
+            assert proof.outcome == ("visible" if output.content else "empty")
+            header = f"ZARA_MANIFEST:{proof.manifest.record_id}@{proof.manifest.revision}"
+            matching_requests = [body for body in requests if header in json.dumps(body)]
+            assert len(matching_requests) == 1, "Terminal manifest differs from actual HTTP"
+            assert context(matching_requests[0])["work"]["work_id"] == str(stage.work_id)
+            early_originals = [
+                item
+                for item in stage_originals
+                if isinstance(item.state, core.SourceState)
+                and item.state.scope_work_id == stage.work_id
+                and item.state.conversation_terminal is None
+                and item.state.capture == "full"
+                and item.state.content == output.content
+            ]
+            assert len(early_originals) == 1, "Early bytes were not retained before accounting"
+            events = core.read_execution_events(root, stage.work_id, 0, authority)
+            finish_events = [
+                event
+                for event in events
+                if event["kind"] == "finish_invocation"
+                and event["invocation_id"] == str(proof.invocation_id)
+            ]
+            publications = [
+                event
+                for event in events
+                if event["kind"] == "publish_attempt_output"
+                and event["attempt_id"] == str(proof.attempt_id)
+            ]
+            assert len(finish_events) == len(publications) == 1
+            revisions = [
+                core.read_receipt(root, operation_id, authority).state_revision
+                for operation_id in (
+                    early_originals[0].operation_id,
+                    UUID(str(finish_events[0]["operation_id"])),
+                    original.operation_id,
+                    UUID(str(publications[0]["operation_id"])),
+                )
+            ]
+            assert revisions == sorted(set(revisions)), "Capture/account/publication order differs"
+            terminal_proofs.append(
+                {
+                    **proof.model_dump(mode="json"),
+                    "result_protocol": observation.result_protocol,
+                    "raw_bytes": len(output.content or b""),
+                    "matching_actual_requests": len(matching_requests),
+                    "state_revisions": revisions,
+                    "rejected": stage.rejection is not None,
+                }
+            )
+        assert len(terminal_proofs) == len(setup.state.stages)
+        assert any(item["rejected"] for item in terminal_proofs)
+        if blank_response:
+            assert any(
+                item["outcome"] == "empty" and item["raw_bytes"] == 0 for item in terminal_proofs
+            )
+        (directory / "stage-terminal-proofs.json").write_text(
+            json.dumps(terminal_proofs, indent=2), encoding="utf-8"
+        )
     activity = setup.state.activity_id
     start = native.Provider(
         [
@@ -744,6 +858,8 @@ def run_probe(directory: Path, runtime: Path, *, blank_response: bool = False) -
         "different_missing_addresses_do_not_abort": True,
         "same_failed_operation_stops": True,
         "blank_response_retained": blank_response,
+        "native_stage_terminal_proofs": len(terminal_proofs),
+        "native_stage_protocol_bytes_and_order": terminal_proof,
         "typed_work": str(work_id),
         "typed_entry": str(entry_id),
         "activity_id": str(activity),
@@ -1047,6 +1163,7 @@ def main() -> None:
     parser.add_argument("--directory", type=Path, required=True)
     parser.add_argument("--pi-runtime", type=Path, required=True)
     parser.add_argument("--blank-response", action="store_true")
+    parser.add_argument("--terminal-proof", action="store_true")
     parser.add_argument("--pause-inputs", action="store_true")
     args = parser.parse_args()
     if args.pause_inputs:
@@ -1063,6 +1180,7 @@ def main() -> None:
                 args.directory.resolve(),
                 args.pi_runtime.resolve(),
                 blank_response=args.blank_response,
+                terminal_proof=args.terminal_proof,
             ),
             indent=2,
         )

@@ -60,6 +60,7 @@ from zaratustra.foundation import (
     complete_deletions,
     create_backup,
     read_assigned_control,
+    read_attempt_response,
     read_execution,
     read_obligation,
     read_parent_output_proof,
@@ -246,9 +247,11 @@ def test_linked_parent_attempts_complete_distinct_own_slots(tmp_path: Path) -> N
         content=b"own final",
     )
     _stop(root, space, owner, parent, first, first_session)
+    assert read_attempt_response(root, parent, owner).outcome == "partial_output"
     second, second_session, _request, _receipt = _assign(
         root, space, owner, parent, resource, previous=first
     )
+    assert read_attempt_response(root, parent, owner).outcome == "no_send"
     _claim(root, space, owner, parent, second, second_session)
     _invocation(root, space, owner, parent, second, second_session)
     extra = _apply(

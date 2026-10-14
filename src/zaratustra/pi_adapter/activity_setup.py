@@ -30,6 +30,7 @@ from zaratustra.foundation import (
 )
 
 from .assigned import EXECUTOR_VERSION, AssignedConfig, run_assigned
+from .response_recovery import missing_executor, recover_response
 
 if TYPE_CHECKING:
     from .bridge import Bridge
@@ -231,13 +232,6 @@ class SetupCoordinator:
                 snapshot = _observe(
                     read_execution, self.config.space, stage.work_id, self.bridge.authority
                 )
-                if any(item.status in ("sent", "unknown") for item in snapshot.invocations) or any(
-                    item.status == "unknown" for item in snapshot.assignments
-                ):
-                    raise FoundationError(
-                        "unknown_effect",
-                        "An earlier setup send has an unknown outcome; inspect before continuing",
-                    )
                 if not snapshot.outputs:
                     self._execute_stage(identifier, stage.work_id)
                 if self.stop.is_set():
@@ -265,6 +259,20 @@ class SetupCoordinator:
         authority = self.bridge.authority
         config = self.config
         setup = _observe(read_activity_setup, config.space, setup_id, authority)
+        response = recover_response(config.space, work_id, authority)
+        if response.outcome == "applied":
+            return
+        if response.outcome == "running":
+            if setup.state.root_work_id is None:
+                # A live legacy stage is already owned by its calling setup thread.
+                # Reopening cannot recreate an unobserved RPC process.
+                raise missing_executor(response)
+            from .workflows import WorkflowCoordinator
+
+            executor = WorkflowCoordinator(self.bridge, config)
+            executor.stop = self.stop
+            executor._execute_work(setup.state.root_work_id, work_id, config)
+            return
         stage = next(item for item in reversed(setup.state.stages) if item.work_id == work_id)
         if stage.model is None and read_space(config.space).schema_version >= 16:
             with self.lock:

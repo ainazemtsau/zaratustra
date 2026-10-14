@@ -474,18 +474,27 @@ export default function (pi: any): void {
       throw new Error("Mandatory ContextManifest is absent from the actual provider request");
     }
     if (origin.kind !== "host") await ensurePromptAttempt();
+    const manifest = currentManifest;
+    let resultProtocol: "setup_json" | "workflow_json" | "zara_envelope" | null = null;
+    if (assignedAttemptId && purpose !== "compaction-summary") {
+      const pinned = await snapshot();
+      if (pinned.work.work_id !== manifest.packet.work.work_id || attemptId !== assignedAttemptId) {
+        throw new Error("Assigned result protocol differs from the exact request Work");
+      }
+      resultProtocol = pinned.setup_result_protocol === "setup_json" ? "setup_json" :
+        pinned.workflow_result_protocol === "workflow_json" ? "workflow_json" : "zara_envelope";
+    }
     if (trialSendLimit !== null && trialSendCount >= trialSendLimit) {
       throw new Error("Local trial provider-send limit reached; no HTTP was sent");
     }
     trialSendCount += 1;
     const invocationId = randomUUID();
     if (!compactionInProgress) nextPurpose = "content";
-    const manifest = currentManifest;
     const invocationSelection = origin.kind === "host" ? null : selection;
     const invocationAttempt = origin.kind === "host" ? null : attemptId;
     invocationPins.set(invocationId, {workId: invocationSelection?.work_id ?? null, attemptId: invocationAttempt,
                                      sessionId});
-    responsePins.set(invocationId, {sessionId, generation});
+    responsePins.set(invocationId, {sessionId, generation, resultProtocol});
     responseInvocation = invocationId;
     const common = {
       invocation_id: invocationId, attempt_id: invocationAttempt, work_id: invocationSelection?.work_id,
@@ -707,8 +716,8 @@ export default function (pi: any): void {
   async function capture(channel: string, content: string, source: string,
                          limitations: string[] = [], sourceEventId?: string,
                          replaySessionId?: string, final = false, finalManifest?: any,
-                         terminal?: any): Promise<any> {
-    if (!content && !limitations.length && !finalManifest) return;
+                         terminal?: any, retainEmpty = false): Promise<any> {
+    if (!content && !limitations.length && !finalManifest && !retainEmpty) return;
     try {
       const retained = await request("/v1/knowledge-capture", {
         channel, content, source_event_id: sourceEventId ?? randomUUID(),
@@ -716,6 +725,7 @@ export default function (pi: any): void {
         conversation_final: final,
         final_manifest: finalManifest,
         conversation_terminal: terminal,
+        retain_empty: retainEmpty,
       });
       if (channel === "conversation_user") receivedPrompt = true;
       return retained.source_ref;
@@ -776,13 +786,21 @@ export default function (pi: any): void {
   pi.on("message_end", async (event: any, ctx: any) => {
     const message = event.message;
     if (message?.role !== "assistant" && message?.role !== "toolResult") return;
+    const content = (message.content ?? []).filter((x: any) => x.type === "text")
+      .map((x: any) => x.text).join("\n");
+    const limitations = (message.content ?? []).some((x: any) => x.type !== "text")
+      ? ["Non-text message parts are not retained by this profile"] : [];
     if (message.role === "assistant") {
       if (message.stopReason === "error" && lastTransportError) {
         ctx.ui.notify(lastTransportError, "error");
         lastTransportError = "";
       }
-      // Pi emits the completed message before executing its tool calls. Save
-      // actual usage now so explicit publication can use Core's atomic path.
+      // message_end precedes native session persistence. Retain the assigned
+      // original before accounting or a stop; only turn_end has a real entry ID.
+      if (assignedAttemptId) await capture("conversation_assistant", content, "pi-event", limitations,
+        undefined, undefined, false, undefined, undefined, true);
+      // Accounting remains before tools and publication. The exact terminal
+      // observation at turn_end is separate from this early original.
       const invocationId = turnQueue.shift();
       if (invocationId) {
         responseInvocations.set(message, invocationId);
@@ -791,16 +809,11 @@ export default function (pi: any): void {
         await finish(invocationId, answered ? "answered" : "unknown", answered ? units : null);
       }
     }
-    const content = (message.content ?? []).filter((x: any) => x.type === "text")
-      .map((x: any) => x.text).join("\n");
     if (message.role === "toolResult") {
       await capture("tool_result", "", "pi-event", ["Tool result body is not retained; Core receipts keep admitted actions"]);
       return;
     }
-    const limitations = (message.content ?? []).some((x: any) => x.type !== "text")
-      ? ["Non-text message parts are not retained by this profile"] : [];
-    if (!assignedAttemptId && Number(connection?.schema_version ?? 0) >= 17 &&
-        message.role === "assistant") return;
+    if (assignedAttemptId || Number(connection?.schema_version ?? 0) >= 17) return;
     await capture(message.role === "assistant" ? "conversation_assistant" : "tool_result",
                   content, "pi-event", limitations);
   });
@@ -2216,12 +2229,14 @@ export default function (pi: any): void {
     const finalPin = finalInvocation ? responsePins.get(finalInvocation) : null;
     let finalSource: any = null;
     let captureFailure: any = null;
-    if (!assignedAttemptId && finalInvocation && finalPin?.generation === generation &&
+    if ((!assignedAttemptId || Number(connection?.schema_version ?? 0) >= 17) &&
+        finalInvocation && finalPin?.generation === generation &&
         finalPin.sessionId === sessionId && typeof event.messageEntryId === "string") {
       const manifest = responseManifests.get(finalInvocation);
       const terminal = Number(connection?.schema_version ?? 0) >= 17 ? {
         invocation_id: finalInvocation, manifest, assistant_entry_id: event.messageEntryId,
         native_outcome: event.outcome, stop_reason: event.message.stopReason,
+        ...(finalPin.resultProtocol ? {result_protocol: finalPin.resultProtocol} : {}),
       } : undefined;
       try {
         if (terminal) {

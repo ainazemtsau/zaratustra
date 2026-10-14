@@ -632,6 +632,7 @@ class Bridge:
         state = current.state
         usage: list[dict[str, Any]] = []
         current_snapshot = None
+        response = None
         stage = state.stages[-1] if state.stages else None
         for item in state.stages:
             snapshot = read_execution(self.path, item.work_id, self.authority)
@@ -643,6 +644,9 @@ class Bridge:
         running = False
         if stage is not None and not stage.retired and stage.output is None:
             assert current_snapshot is not None
+            from zaratustra.foundation import read_attempt_response
+
+            response = read_attempt_response(self.path, stage.work_id, self.authority)
             assignments = current_snapshot.assignments
             running = any(
                 item.status in ("assigned", "waiting", "ready", "stop_requested")
@@ -711,6 +715,8 @@ class Bridge:
                 "activating",
             )
         )
+        if response is not None and response.outcome == "attention":
+            can_resume = can_retry = False
         next_action = (
             "use_activity"
             if state.phase == "ready"
@@ -727,6 +733,10 @@ class Bridge:
             if status == "stopping"
             else "wait"
             if status == "active"
+            else "recover_saved_reply"
+            if response is not None and response.outcome == "recoverable"
+            else "inspect_response"
+            if response is not None and response.outcome == "attention"
             else "retry_new_stage"
             if can_retry
             else "inspect_unknown"
@@ -751,6 +761,7 @@ class Bridge:
                 "can_resume": can_resume,
                 "can_retry": can_retry,
                 "next_action": next_action,
+                "response": response.model_dump(mode="json") if response is not None else None,
                 "blocking_unknown_invocations": unresolved,
                 "unknown_invocations": [
                     item["invocation_id"] for item in usage if item["status"] == "unknown"
@@ -1817,6 +1828,10 @@ class Bridge:
                 self.memory_rules.setdefault(session_id, {})[
                     json.dumps([s.model_dump(mode="json") for s in selectors], sort_keys=True)
                 ] = selectors
+        if adapter == "data" and operation == "procedure_status":
+            from .procedures import procedure_view
+
+            return procedure_view(self.path, self.authority, UUID(str(result.output["run_id"])))
         return result.output
 
     def data_operation(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, object]:
@@ -1923,6 +1938,10 @@ class Bridge:
             if operation == "query_entries":
                 ref = KnowledgeRef(record_id=UUID(str(result.output["selection_id"])), revision=1)
                 self.memory_snapshots.setdefault(session_id, set()).add(ref)
+        if operation == "procedure_status":
+            from .procedures import procedure_view
+
+            return procedure_view(self.path, self.authority, UUID(str(result.output["run_id"])))
         return result.output
 
     def manual_exchange(self, session_id: UUID, raw: dict[str, object]) -> dict[str, object]:
@@ -2324,6 +2343,7 @@ class Bridge:
         conversation_final: bool = False,
         final_manifest: KnowledgeRef | None = None,
         conversation_terminal: dict[str, Any] | None = None,
+        retain_empty: bool = False,
     ) -> dict[str, object]:
         selected = self._session(session_id)
         if channel not in ("conversation_user", "conversation_assistant", "tool_result"):
@@ -2418,9 +2438,11 @@ class Bridge:
                 if channel == "conversation_assistant"
                 else "pi-tool",
                 "media_type": "text/plain; charset=utf-8",
-                "capture": "full" if content or conversation_terminal is not None else "excluded",
+                "capture": "full"
+                if content or conversation_terminal is not None or retain_empty
+                else "excluded",
                 "content": content.encode()
-                if content or conversation_terminal is not None
+                if content or conversation_terminal is not None or retain_empty
                 else None,
                 "limitations": limitations,
                 "conversation_final": conversation_final,
@@ -3738,6 +3760,7 @@ class BridgeHandler(BaseHTTPRequestHandler):
                     if body.get("final_manifest") is not None
                     else None,
                     conversation_terminal=body.get("conversation_terminal"),
+                    retain_empty=bool(body.get("retain_empty", False)),
                 )
             elif post and path.path == "/v1/request-origin":
                 result = bridge.bind_request_origin(session_id, body)

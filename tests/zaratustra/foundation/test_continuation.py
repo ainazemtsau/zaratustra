@@ -932,9 +932,11 @@ def test_restored_unknown_stop_needs_current_owner_and_keeps_model_reserve(
     assert stopped.assignments[0].status == "stopped"
     assert stopped.attempts[0].status == "interrupted"
     assert stopped.invocations[0].status == "unknown" and stopped.held_units == 20
-    new_attempt_id, _, _ = assign(destination, space_id, work_id, resource_id, previous=attempt_id)
+    # Confirming process stop does not resolve its unknown provider outcome.
+    with pytest.raises(FoundationError, match="response_outcome_unknown"):
+        assign(destination, space_id, work_id, resource_id, previous=attempt_id)
     after = read_execution(destination, work_id, owner)
-    assert after.attempts[-1].attempt_id == new_attempt_id
+    assert after.attempts == stopped.attempts
     assert after.held_units == 20 and after.invocations[0].status == "unknown"
     with pytest.raises(FoundationError, match="stale_attempt"):
         apply_operation(

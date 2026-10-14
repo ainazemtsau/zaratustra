@@ -29,6 +29,7 @@ from zaratustra.foundation import (
     WorkflowRequest,
     apply_operation,
     authorize_local,
+    read_attempt_response,
     read_execution,
     read_workflow,
     read_workflow_method_tasks,
@@ -37,6 +38,7 @@ from zaratustra.foundation import (
 
 from .activity_setup import _observe
 from .assigned import EXECUTOR_VERSION, AssignedConfig, read_assignment_refusal, run_assigned
+from .response_recovery import missing_executor, recover_response
 
 if TYPE_CHECKING:
     from .bridge import Bridge
@@ -114,8 +116,16 @@ def workflow_work_ids(path: Path, root: UUID, authority: LocalAuthority) -> set[
 
 def workflow_view(path: Path, root: UUID, authority: LocalAuthority) -> dict[str, Any]:
     """Project native questions already derived by Core, without a second status."""
-    view = read_workflow_run(path, root, authority).model_dump(mode="json")
+    current = read_workflow_run(path, root, authority)
+    view = current.model_dump(mode="json")
     view["native_waits"] = [wait for wait in view["waits"] if wait.get("native")]
+    definition = read_workflow(path, current.workflow, authority)
+    model_nodes = {node.key for node in definition.nodes if node.kind == "model"}
+    for node in view["nodes"]:
+        if node["key"] in model_nodes and node["output"] is None and not node["retired"]:
+            node["response"] = read_attempt_response(
+                path, UUID(node["work_id"]), authority
+            ).model_dump(mode="json")
     return view
 
 
@@ -124,6 +134,7 @@ class _Executor:
     process: subprocess.Popen[bytes]
     reader: threading.Thread
     tail: bytearray
+    attempt_id: UUID
     lease_token: object | None = None
 
 
@@ -403,6 +414,15 @@ class WorkflowCoordinator:
     def _execute_node(self, identifier: UUID, node: WorkflowNodeView) -> bool:
         authority = self.bridge.authority
         config = self.config
+        run = read_workflow_run(config.space, identifier, authority)
+        definition = read_workflow(config.space, run.workflow, authority)
+        spec = next(item for item in definition.nodes if item.key == node.key)
+        if spec.method is None:
+            response = recover_response(config.space, node.work_id, authority)
+            if response.outcome == "applied":
+                return True
+            if response.outcome == "running":
+                return self._execute_work(identifier, node.work_id, config)
         pinned = node.model
         if pinned is None or (pinned.profile, pinned.provider) != (
             config.provider_profile,
@@ -419,9 +439,6 @@ class WorkflowCoordinator:
             restricted_tools=READ_TOOLS,
             pi_tools=(),
         )
-        run = read_workflow_run(config.space, identifier, authority)
-        definition = read_workflow(config.space, run.workflow, authority)
-        spec = next(item for item in definition.nodes if item.key == node.key)
         config = replace(
             config,
             restricted_tools=node_tools(spec.allowed_actions),
@@ -546,13 +563,13 @@ class WorkflowCoordinator:
             return False
         with self.pool.lock:
             active_process = self.processes.get(work_id)
-        if any(
-            item.status == "unknown" or (item.status == "sent" and active_process is None)
-            for item in snapshot.invocations
-        ) or any(item.status == "unknown" for item in snapshot.assignments):
-            raise FoundationError("unknown_effect", "Inspect the earlier send before continuation")
-        if snapshot.work.state.linked_outputs:
+        response = recover_response(config.space, work_id, authority)
+        if response.outcome == "applied":
             return True
+        if response.outcome == "running":
+            if active_process is None:
+                raise missing_executor(response)
+            return self._await_executor(work_id, active_process, config)
         resource_id = uuid5(work_id, "workflow-resource")
         if not snapshot.resources:
             apply_operation(
@@ -665,9 +682,14 @@ class WorkflowCoordinator:
 
                 reader = threading.Thread(target=drain, daemon=True)
                 reader.start()
-                executor = _Executor(process, reader, tail)
+                executor = _Executor(process, reader, tail, attempt_id)
                 self.processes[work_id] = executor
                 self._watch_executor_exit(work_id, executor)
+        return self._await_executor(work_id, executor, config)
+
+    def _await_executor(self, work_id: UUID, executor: _Executor, config: AssignedConfig) -> bool:
+        authority = self.bridge.authority
+        attempt_id = executor.attempt_id
         process = executor.process
         while process.poll() is None:
             if self.stop.wait(0.2):
@@ -682,6 +704,12 @@ class WorkflowCoordinator:
         executor.reader.join(timeout=2)
         with self.pool.lock:
             self.processes.pop(work_id, None)
+        if not self.stop.is_set():
+            response = recover_response(config.space, work_id, authority)
+            if response.outcome == "applied":
+                return True
+            if response.outcome == "running":
+                raise missing_executor(response)
         if process.returncode and not self.stop.is_set():
             saved_refusal = _observe(
                 read_assignment_refusal, config.space, work_id, attempt_id, authority

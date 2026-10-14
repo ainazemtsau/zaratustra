@@ -230,11 +230,14 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
         if observed.get("type") == "response" and observed.get("id") == "native-abort":
             assert observed.get("success") is True, observed
             abort_acknowledged = True
-            # A cancelled observation connection may have no HTTP reply. Native
-            # acknowledgement plus the exact public saved pause is sufficient;
-            # losing that response must not make us invent a second stop/send.
-            if not paused.is_set():
-                retain_pause()
+
+    def saved_abort() -> bool:
+        # Native acknowledgement precedes completion of extension cancellation.
+        # A cancelled HTTP observer may lose its reply; read the real receipt
+        # through public state rather than asserting that ACK has committed it.
+        if abort_acknowledged and not paused.is_set() and setup().state.phase == "paused":
+            retain_pause()
+        return paused.is_set() and abort_acknowledged
 
     events: list[dict[str, Any]] = []
     try:
@@ -252,7 +255,7 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
             expected_tool_errors=1,
             on_event=event,
             on_bridge_response=bridge_response,
-            wait_for=lambda: paused.is_set() and abort_acknowledged,
+            wait_for=saved_abort,
             timeout_seconds=60,
         )
     except Exception:
@@ -281,10 +284,10 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     execution = core.read_execution(space, stage.work_id, owner)
     assert len(execution.invocations) == 1
     invocation = execution.invocations[0]
-    assert invocation.status == "unknown", execution.model_dump_json(indent=2)
+    assert invocation.status in ("answered", "unknown"), execution.model_dump_json(indent=2)
     assert invocation.invocation_id == UUID(pause_snapshot["invocations"][0]["invocation_id"])
     delivery = core.read_context_delivery(space, invocation.invocation_id, owner)
-    assert delivery["stage"] == "unknown"
+    assert delivery["stage"] == invocation.status
     assert delivery["context_work_id"] == str(stage.work_id)
     assert delivery["context_attempt_id"] == str(invocation.attempt_id)
     manifest = core.read_knowledge(space, UUID(str(delivery["manifest_id"])), owner)
@@ -294,6 +297,74 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     assert manifest.state.session_id == UUID(str(delivery["context_session_id"]))
     assert not execution.outputs and execution.work.state.acceptance is None
     assert all(item.status != "active" for item in execution.attempts)
+    assigned_originals = []
+    terminal_originals = []
+    cursor: str | None = None
+    while True:
+        page = core.list_knowledge(space, owner, kind="source", limit=100, cursor=cursor)
+        for catalog_item in cast(list[dict[str, Any]], page["items"]):
+            original = core.read_knowledge(space, UUID(catalog_item["record_id"]), owner)
+            state = original.state
+            if (
+                not isinstance(state, core.SourceState)
+                or state.channel != "conversation_assistant"
+                or state.scope_work_id != stage.work_id
+            ):
+                continue
+            assigned_originals.append(original)
+            if (
+                state.conversation_terminal is not None
+                and state.conversation_terminal.invocation_id == invocation.invocation_id
+            ):
+                terminal_originals.append(original)
+        cursor = cast(str | None, page["next_cursor"])
+        if cursor is None:
+            break
+    if invocation.status == "answered":
+        assert any(
+            isinstance(original.state, core.SourceState)
+            and original.state.content == LATE_DRAFT.encode("utf-8")
+            for original in assigned_originals
+        ), "Accounted answer lost its original before native persistence"
+    assert len(terminal_originals) <= 1, "One native response gained conflicting terminal proofs"
+    terminal_proof = None
+    if terminal_originals:
+        original = terminal_originals[0]
+        assert isinstance(original.state, core.SourceState)
+        assert original.state.conversation_terminal is not None
+        terminal_proof = core.read_terminal_response(
+            space,
+            core.KnowledgeRef(record_id=original.record_id, revision=original.revision),
+            owner,
+            session_id=manifest.state.session_id,
+            invocation_id=invocation.invocation_id,
+            manifest=core.KnowledgeRef(record_id=manifest.record_id, revision=manifest.revision),
+        )
+        assert terminal_proof.work_id == stage.work_id
+        assert terminal_proof.attempt_id == invocation.attempt_id
+        assert original.state.conversation_terminal.result_protocol == "setup_json"
+        if terminal_proof.outcome == "visible":
+            assert invocation.status == "answered"
+            assert original.state.content == LATE_DRAFT.encode("utf-8")
+        else:
+            assert terminal_proof.outcome in ("unknown", "attention")
+    response_view = core.read_attempt_response(
+        space, stage.work_id, owner, attempt_id=invocation.attempt_id
+    )
+    assert response_view.work_id == stage.work_id
+    assert response_view.attempt_id == invocation.attempt_id
+    assert response_view.outcome not in ("no_send", "running", "applied")
+    if invocation.status == "unknown":
+        assert response_view.outcome == "unknown" and response_view.diagnostics
+    elif terminal_proof is not None and terminal_proof.outcome == "visible":
+        assert response_view.outcome == "recoverable", response_view.model_dump_json(indent=2)
+        assert response_view.invocation_id == invocation.invocation_id
+        assert response_view.assistant_source == terminal_proof.assistant_source
+        assert response_view.manifest == terminal_proof.manifest
+        assert response_view.result_protocol == "setup_json"
+    else:
+        assert response_view.outcome == "attention" and response_view.diagnostics
+        assert any(item.code == "response_proof_missing" for item in response_view.diagnostics)
     originals = [
         core.read_knowledge(space, ref.record_id, owner, revision=ref.revision)
         for ref in current.state.sources
@@ -321,7 +392,11 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
             item["subject_id"] == str(current.setup_id) and item["kind"] == "paused"
             for item in packet["conversation_actions"]
         )
-        return {"_final_text": "The saved preparation is paused; its provider outcome is unknown."}
+        return {
+            "_final_text": "The saved preparation is paused; its answered reply needs recovery."
+            if invocation.status == "answered"
+            else "The saved preparation is paused; its provider outcome is unknown."
+        }
 
     reopened = native.Provider([reopen_route])
     reopened_events = native.run_process(
@@ -362,7 +437,16 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
         "assigned_http": assigned_calls,
         "abort_acknowledged": abort_acknowledged,
         "saved_phase": setup().state.phase,
-        "unknown_invocation": str(invocation.invocation_id),
+        "invocation_id": str(invocation.invocation_id),
+        "invocation_outcome": invocation.status,
+        "retained_assigned_originals": len(assigned_originals),
+        "terminal_outcome": terminal_proof.outcome if terminal_proof is not None else None,
+        "response_recovery_outcome": response_view.outcome,
+        "completed_reply_interruption_controlled": False,
+        "completed_reply_interruption_limit": (
+            "The assigned child Bridge has no supported capture observer. "
+            "This probe checks its actual native outcome without runtime patches or test hooks."
+        ),
         "activated": False,
         "accepted": False,
         "real_model_calls": 0,
@@ -378,6 +462,9 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
         ("final-execution", execution.model_dump(mode="json")),
         ("assigned-delivery", delivery),
         ("assigned-manifest", manifest.model_dump(mode="json")),
+        ("assigned-originals", [item.model_dump(mode="json") for item in assigned_originals]),
+        ("assigned-terminal", terminal_proof.model_dump(mode="json") if terminal_proof else None),
+        ("assigned-response-view", response_view.model_dump(mode="json")),
         ("context-refs", context_refs),
     ):
         (directory / f"{name}.json").write_text(

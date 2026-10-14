@@ -92,7 +92,7 @@ def test_live_wait_lease_is_shared_reused_and_released_only_on_its_process_exit(
         spawned.append(process)
         reader = threading.Thread(target=lambda: None)
         reader.start()
-        executor = workflow_host._Executor(process, reader, bytearray())
+        executor = workflow_host._Executor(process, reader, bytearray(), uuid4())
         with controller.pool.lock:
             controller.processes[work] = executor
             controller._watch_executor_exit(work, executor)

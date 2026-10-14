@@ -1311,6 +1311,19 @@ class PublishAttemptOutputRequest(OperationRequest):
     content: bytes = Field(max_length=8 * 1024 * 1024)
 
 
+class RecoverAttemptOutputRequest(OperationRequest):
+    """Materialize an observed reply, never restart or complete its stopped Attempt."""
+
+    kind: Literal["recover_attempt_output"] = "recover_attempt_output"
+    work_id: UUID
+    expected_work_revision: int = Field(ge=1)
+    attempt_id: UUID
+    session_id: UUID
+    slot: str = Field(min_length=1, max_length=200)
+    assistant_source: KnowledgeRef
+    invocation_id: UUID
+
+
 class AcceptWorkRequest(OperationRequest):
     kind: Literal["accept_work"] = "accept_work"
     work_id: UUID
@@ -1515,6 +1528,9 @@ class ConversationTerminalObservation(ContractModel):
     assistant_entry_id: str = Field(min_length=1, max_length=300)
     native_outcome: Literal["completed", "tool_call", "aborted", "error", "unknown"]
     stop_reason: str = Field(min_length=1, max_length=100)
+    result_protocol: Literal["setup_json", "workflow_json", "zara_envelope"] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
     @model_validator(mode="after")
     def whole_manifest(self) -> ConversationTerminalObservation:
@@ -1542,6 +1558,41 @@ class TerminalResponseView(ContractModel):
     work_id: UUID | None = None
     attempt_id: UUID | None = None
     outcome: Literal["visible", "empty", "attention", "unknown"]
+    diagnostics: tuple[ConversationResponseProblem, ...] = ()
+
+
+class RecoveredResponseProof(ContractModel):
+    work_id: UUID
+    work_revision: int = Field(ge=1)
+    attempt_id: UUID
+    session_id: UUID
+    invocation_id: UUID
+    assistant_source: KnowledgeRef
+    manifest: KnowledgeRef
+    assistant_entry_id: str = Field(min_length=1, max_length=300)
+    result_protocol: Literal["setup_json", "workflow_json", "zara_envelope"]
+    source_sha256: str = Field(pattern=r"^[0-9A-F]{64}$")
+    content_sha256: str = Field(pattern=r"^[0-9A-F]{64}$")
+    operation_id: UUID
+
+
+class AttemptResponseView(ContractModel):
+    """Derived recovery admission; execution records remain the only execution state."""
+
+    work_id: UUID
+    work_revision: int = Field(ge=1)
+    outcome: Literal[
+        "no_send", "running", "unknown", "recoverable", "applied", "partial_output", "attention"
+    ]
+    attempt_id: UUID | None = None
+    session_id: UUID | None = None
+    invocation_id: UUID | None = None
+    assistant_source: KnowledgeRef | None = None
+    manifest: KnowledgeRef | None = None
+    assistant_entry_id: str | None = None
+    result_protocol: Literal["setup_json", "workflow_json", "zara_envelope"] | None = None
+    slot: str | None = None
+    artifact: ArtifactRef | None = None
     diagnostics: tuple[ConversationResponseProblem, ...] = ()
 
 
@@ -3308,6 +3359,7 @@ DomainRequest = Annotated[
     | ReviseActivePlanRequest
     | LinkWorkOutputRequest
     | PublishAttemptOutputRequest
+    | RecoverAttemptOutputRequest
     | AcceptWorkRequest
     | CloseWorkRequest
     | DeleteWorkRequest
@@ -3890,6 +3942,9 @@ __all__ = [
     "OperationAuditEntry",
     "PrepareInvocationRequest",
     "PublishAttemptOutputRequest",
+    "RecoverAttemptOutputRequest",
+    "AttemptResponseView",
+    "RecoveredResponseProof",
     "OutputContract",
     "ResultValidationIssue",
     "LinkedOutput",
