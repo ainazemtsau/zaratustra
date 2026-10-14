@@ -13,7 +13,9 @@ from pathlib import Path
 from typing import Any, cast
 from uuid import UUID, uuid4
 
-from .knowledge import _require_ref
+from pydantic import ValidationError
+
+from .knowledge import _context_correlation, _context_matches_exact_correlation, _require_ref
 from .models import (
     ActivityState,
     ContextState,
@@ -28,6 +30,7 @@ from .models import (
     OrdinaryFinalProof,
     SourceState,
     SpaceInfo,
+    TerminalResponseView,
     WorkState,
 )
 from .operations import LocalAuthority, _authorize, _local_space, _subject_current, _subject_state
@@ -86,6 +89,185 @@ def _classify_terminal(source: SourceState) -> tuple[str, tuple[ConversationResp
     except FoundationError as error:
         return "attention", (ConversationResponseProblem(code=error.code, message=error.detail),)
     return "visible" if visible else "empty", ()
+
+
+def read_terminal_response(
+    path: Path,
+    source_ref: KnowledgeRef,
+    authority: LocalAuthority,
+    *,
+    session_id: UUID,
+    invocation_id: UUID | None = None,
+    manifest: KnowledgeRef | None = None,
+    assistant_entry_id: str | None = None,
+) -> TerminalResponseView:
+    """Validate one retained original through exact accounted invocation evidence.
+
+    This does not claim delivery, inspect current action digests or mutate Core.
+    A visible/empty outcome proves this response only; it is not effect admission.
+    """
+    if (
+        source_ref.start is not None
+        or source_ref.end is not None
+        or (manifest is not None and (manifest.start is not None or manifest.end is not None))
+    ):
+        raise FoundationError("invalid_response_proof", "Terminal proof requires whole references")
+    with space_connection(path) as (connection, info):
+        _local_space(authority, info)
+        if info.schema_version < 18:
+            raise FoundationError("upgrade_required", "Terminal validation needs schema 18")
+        _require_ref(connection, source_ref, authority.actor, info.execution_epoch)
+        row = connection.execute(
+            "SELECT k.kind,r.payload,o.state_revision FROM knowledge_records k "
+            "JOIN knowledge_revisions r ON r.record_id=k.record_id "
+            "JOIN operations o ON o.operation_id=r.operation_id "
+            "WHERE r.record_id=? AND r.revision=?",
+            (str(source_ref.record_id), source_ref.revision),
+        ).fetchone()
+        if row is None or row[0] != "source":
+            raise FoundationError("wrong_kind", "Terminal original must be a Source")
+        try:
+            source = SourceState.model_validate_json(row[1])
+        except ValidationError as error:
+            raise FoundationError("corrupt_space", "Invalid retained terminal Source") from error
+        terminal = source.conversation_terminal
+        if terminal is None or source.content is None:
+            raise FoundationError("invalid_response_proof", "Source lacks native terminal evidence")
+        if (
+            source.conversation_id != str(session_id)
+            or invocation_id is not None
+            and terminal.invocation_id != invocation_id
+            or manifest is not None
+            and terminal.manifest != manifest
+            or assistant_entry_id is not None
+            and terminal.assistant_entry_id != assistant_entry_id
+        ):
+            raise FoundationError("invalid_response_proof", "Native response correlation differs")
+        _require_ref(connection, terminal.manifest, authority.actor, info.execution_epoch)
+        context_row = connection.execute(
+            "SELECT k.kind,r.payload FROM knowledge_records k JOIN knowledge_revisions r "
+            "ON r.record_id=k.record_id WHERE r.record_id=? AND r.revision=?",
+            (str(terminal.manifest.record_id), terminal.manifest.revision),
+        ).fetchone()
+        if context_row is None or context_row[0] != "context":
+            raise FoundationError("wrong_kind", "Terminal manifest must be a Context")
+        try:
+            context = ContextState.model_validate_json(context_row[1])
+        except ValidationError as error:
+            raise FoundationError("corrupt_space", "Invalid retained terminal Context") from error
+        if context.session_id != session_id:
+            raise FoundationError("invalid_response_proof", "Manifest belongs to another session")
+        for ref in dict.fromkeys(context.mandatory + context.optional + context.historical_memory):
+            _require_ref(connection, ref, authority.actor, info.execution_epoch)
+        ledger = connection.execute(
+            "SELECT manifest_id,manifest_revision,stage,request_sha256,request_bytes,usage_units,"
+            "context_work_id,context_attempt_id,context_session_id,correlation_state "
+            "FROM knowledge_delivery WHERE invocation_id=?",
+            (str(terminal.invocation_id),),
+        ).fetchone()
+        if ledger is None or ledger[:2] != (
+            str(terminal.manifest.record_id),
+            terminal.manifest.revision,
+        ):
+            raise FoundationError(
+                "invalid_response_proof", "Accounted invocation has another manifest"
+            )
+        pin = ledger[6:10]
+        if pin[3] not in ("exact", "not_attempt") or not (
+            _context_matches_exact_correlation(context, pin)
+            if pin[3] == "exact"
+            else pin == _context_correlation(context)
+        ):
+            raise FoundationError("invalid_response_proof", "Immutable invocation tuple differs")
+        work_id = UUID(pin[0]) if pin[0] else None
+        attempt_id = UUID(pin[1]) if pin[1] else None
+        if source.scope_work_id is not None and source.scope_work_id != work_id:
+            raise FoundationError("invalid_response_proof", "Source belongs to another Work")
+        if work_id is not None:
+            _subject(connection, work_id, "work", authority)
+        prepared = connection.execute(
+            "SELECT MIN(o.state_revision) FROM operations o JOIN receipts r "
+            "ON r.operation_id=o.operation_id WHERE o.kind='record_context_delivery' "
+            "AND json_extract(r.receipt_json,'$.result.invocation_id')=? "
+            "AND json_extract(r.receipt_json,'$.result.stage')='prepared'",
+            (str(terminal.invocation_id),),
+        ).fetchone()[0]
+        if prepared is None or row[2] <= prepared:
+            raise FoundationError(
+                "invalid_response_proof", "Native original predates accounted invocation"
+            )
+        if connection.execute(
+            "SELECT 1 FROM operations WHERE kind='recover' AND state_revision>? LIMIT 1",
+            (prepared,),
+        ).fetchone():
+            raise FoundationError(
+                "stale_response_epoch", "Response belongs to a previous execution epoch"
+            )
+        execution = None
+        if attempt_id is not None:
+            execution = connection.execute(
+                "SELECT i.work_id,i.attempt_id,i.session_id,i.status,i.request_sha256,"
+                "i.request_bytes,i.usage_units,a.execution_epoch FROM execution_invocations i "
+                "JOIN execution_attempts a ON a.attempt_id=i.attempt_id WHERE i.invocation_id=?",
+                (str(terminal.invocation_id),),
+            ).fetchone()
+            if execution is None or execution[:3] != pin[:3]:
+                raise FoundationError(
+                    "invalid_response_proof", "Work invocation tuple is not accounted"
+                )
+            if execution[7] != info.execution_epoch:
+                raise FoundationError("stale_response_epoch", "Attempt belongs to another epoch")
+        elif connection.execute(
+            "SELECT 1 FROM execution_invocations WHERE invocation_id=?",
+            (str(terminal.invocation_id),),
+        ).fetchone():
+            raise FoundationError("invalid_response_proof", "Invocation omitted its Work tuple")
+        outcome, diagnostics = _classify_terminal(source)
+        if outcome == "unproven":
+            outcome = "attention"
+            diagnostics = (
+                ConversationResponseProblem(
+                    code="native_response_not_final",
+                    message="Tool-use response is not a completed reply",
+                ),
+            )
+        elif outcome == "unknown":
+            diagnostics = (
+                ConversationResponseProblem(
+                    code="native_response_unknown", message="Native response outcome is unknown"
+                ),
+            )
+        if ledger[2] != "answered" or execution is not None and execution[3] != "answered":
+            outcome = "unknown"
+            diagnostics = (
+                ConversationResponseProblem(
+                    code="response_accounting_pending"
+                    if ledger[2] in ("prepared", "sent")
+                    else "response_send_unknown",
+                    message="Invocation has no confirmed answered accounting",
+                ),
+            )
+        elif (
+            ledger[3] is None
+            or ledger[4] is None
+            or ledger[5] is None
+            or (execution is not None and execution[4:7] != ledger[3:6])
+        ):
+            raise FoundationError(
+                "invalid_response_proof", "Answered request accounting is inconsistent"
+            )
+        return TerminalResponseView(
+            assistant_source=source_ref,
+            manifest=terminal.manifest,
+            invocation_id=terminal.invocation_id,
+            assistant_entry_id=terminal.assistant_entry_id,
+            session_id=session_id,
+            execution_epoch=info.execution_epoch,
+            work_id=work_id,
+            attempt_id=attempt_id,
+            outcome=cast(Any, outcome),
+            diagnostics=diagnostics,
+        )
 
 
 def _response_history(

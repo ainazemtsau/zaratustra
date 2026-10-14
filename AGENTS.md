@@ -141,6 +141,15 @@ and parallel dirty work; do not publish private preparation branches merely to k
 
 ## What exists
 
+Single conversational ownership (0.25.0) keeps Core schema 18. Ordinary Pi tools
+await addressed process boundaries; workers/status watchers cannot trigger a
+completion conversation. Native progress and passive startup leave continuation
+to the main agent. Known empty completed replies use two durable native repair
+reservations with append-only context omission, exact Core terminal validation
+and response-only tool/effect admission. Invocation pins and owner acceptance
+remain separate. See `docs/single-conversation-owner-plan.md`; release evidence
+is reported separately from owner acceptance.
+
 Native response recovery (0.24.1) explicitly upgrades schema 17 to 18. Durable
 delivery correlation preserves exact Work/Attempt/session identity through
 content deletion; unresolved legacy evidence cannot claim no-send cleanup.

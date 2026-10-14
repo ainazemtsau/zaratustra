@@ -195,18 +195,12 @@ export default function (pi: any): void {
   const responseManifests = new Map<string, any>();
   const responsePins = new Map<string, any>();
   let responseInvocation: string | null = null;
-  let conversationDelivery: any = null;
-  let staleWakeInContext = false;
-  const pendingWakes = new Map<string, any>();
-  const consumedWakes = new Set<string>();
-  const conversationWatch = new Set<string>();
-  const actionDigests = new Map<string, string>();
-  const activeNativeTools = new Set<string>();
+  type ReplyRoot = {entries: string[]; sources: any[]};
+  let replyRoot: ReplyRoot | null = null;
+  let responseOnly = false;
+  const activeObservers = new Map<AbortController, Promise<void>>();
   let normalToolNames: string[] = [];
   let readonlyToolsActive = false;
-  let conversationTimer: any = null;
-  let conversationPolling = false;
-  const pendingClaims = new Set<Promise<any>>();
   let connection: any = null;
   let historicalMemory: any[] = [];
   function rememberMemoryBranch(branch: any[]): void {
@@ -257,11 +251,11 @@ export default function (pi: any): void {
   let trialSendCount = 0;
   const manifests = new Map<string, any>();
 
-  async function request(path: string, data?: any, providerPreflight = false): Promise<any> {
+  async function request(path: string, data?: any, providerPreflight = false, signal?: AbortSignal): Promise<any> {
     const fence = generation;
     const requestSession = sessionId;
     const response = await fetch(`${endpoint}${path}`, {
-      method: data === undefined ? "GET" : "POST",
+      method: data === undefined ? "GET" : "POST", signal,
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: data === undefined ? undefined : JSON.stringify({ session_id: requestSession, ...data,
         ...(providerPreflight ? {provider_preflight: true} : {}) }),
@@ -295,7 +289,7 @@ export default function (pi: any): void {
     pi.registerTool({ ...definition,
       execute: async (callId: string, params: any, signal: any, onUpdate: any, ctx: any) => {
         if (!assignedAttemptId && Number(connection?.schema_version ?? 0) >= 17 &&
-            origin.kind !== "owner" && ["write", "edit", "bash", "powershell"].includes(name)) {
+            (origin.kind !== "owner" || responseOnly) && ["write", "edit", "bash", "powershell"].includes(name)) {
           throw new Error("Host/history conversation permits reads only; no file or command effect was made");
         }
         const state = await refreshWorkspace(ctx);
@@ -316,7 +310,7 @@ export default function (pi: any): void {
     });
   }
 
-  pi.registerTool({ name: "zara_workspace", label: "Zaratustra Workspace",
+  pi.registerTool({ name: "zara_workspace", executionMode: "sequential", label: "Zaratustra Workspace",
     description: "Inspect the personal workspace and registered projects; select a project for this Work. " +
       "Free personal conversation uses the personal root. Linking an Activity does not move its documents. " +
       "Use prepare after a meaningful saved piece of work, then offer Git publication with destination and composition. " +
@@ -501,12 +495,7 @@ export default function (pi: any): void {
       invocation_id: invocationId, manifest_id: manifest.manifest_id,
       manifest_revision: manifest.manifest_revision, stage: "prepared", reserve_units: reserveUnits,
     }, true);
-    if (conversationDelivery && !compactionInProgress) {
-      await request("/v1/conversation", {mode: "include", ...conversationDelivery,
-        manifest: {record_id: manifest.manifest_id, revision: manifest.manifest_revision},
-        invocation_id: invocationId});
-      conversationDelivery.invocation_id = invocationId;
-    }
+
     manifests.set(invocationId, manifest);
     responseManifests.set(invocationId, {record_id: manifest.manifest_id,
                                        revision: manifest.manifest_revision});
@@ -655,8 +644,7 @@ export default function (pi: any): void {
         historicalOwnerEntries.add(entry.id);
       if (entry.type === "custom_message") seenCustomEntries.add(entry.id);
     }
-    pendingWakes.clear(); consumedWakes.clear(); conversationDelivery = null;
-    conversationWatch.clear(); actionDigests.clear();
+    replyRoot = null; responseOnly = false;
     // A new Pi conversation has a clean context. Do not keep deleted provenance
     // from a previous conversation; assigned RPC retains its pinned identity.
     if (_event.reason === "new" && !assignedSessionId) sessionId = randomUUID();
@@ -668,8 +656,8 @@ export default function (pi: any): void {
     compactionInProgress = false;
     currentManifest = null;
     connection = await request("/v1/connect", {});
-    if (Number(connection.schema_version ?? 0) >= 17 && !assignedAttemptId) {
-      await request("/v1/conversation", {mode: "host", host_id: hostId, branch_id: branchId});
+    if (!assignedAttemptId) {
+      await request("/v1/conversation", {mode: "host", host_id: hostId, branch_id: branchId, generation});
     }
     if (read_space_is_older(connection) && !assignedAttemptId) {
       const upgrade = await ctx.ui.confirm("Upgrade this Core space to schema 10?",
@@ -709,7 +697,7 @@ export default function (pi: any): void {
       if (restored.obstacle) ctx.ui.notify("Прежнее исполнение требует проверки. Сохранённые результаты доступны; разговор можно продолжать.", "warning");
     }
     await refreshWorkspace(ctx);
-    ctx.ui.notify(`Zaratustra Core ${connection.space_id} epoch ${connection.execution_epoch}. Use /zara-work.`, "info");
+    if (!assignedAttemptId) ctx.ui.setStatus("zara-core", "Пространство подключено");
   });
 
   function read_space_is_older(connected: any): boolean {
@@ -818,7 +806,6 @@ export default function (pi: any): void {
   });
 
   pi.on("tool_result", (event: any, ctx: any) => {
-    activeNativeTools.delete(event.toolCallId);
     const input = event.input ?? {};
     const arguments_ = input.arguments ?? input;
     const operation = input.operation ?? input.mode ?? input.intent?.kind ?? "call";
@@ -909,7 +896,6 @@ export default function (pi: any): void {
       if (!work) return;
       const current = await request("/v1/select", { activity_id: activity.record_id, work_id: work.record_id });
       selection = { activity_id: activity.record_id, work_id: work.record_id };
-      watchConversation(work.record_id);
       pi.appendEntry("zara-project-selection", selection);
       await refreshWorkspace(ctx);
       attemptId = null;
@@ -1165,7 +1151,7 @@ export default function (pi: any): void {
   });
 
   pi.registerTool({
-    name: "zara_sleep",
+    name: "zara_sleep", executionMode: "sequential",
     label: "Review accumulated experience with Sleep",
     description: "Start a Sleep review only when the user explicitly asks to review " +
       "accumulated experience. Sleep is not used to create an Activity, plan a backlog, " +
@@ -1228,10 +1214,8 @@ export default function (pi: any): void {
         JSON.stringify(state.native_waits ?? []);
       if (key === workflowShown) return;
       workflowShown = key;
-      const lines = [state.explanation];
-      for (const wait of state.waits ?? []) lines.push(`${wait.question}\nДля чего: ${wait.purpose}`);
-      ctx.ui.setWidget("zara-workflow", ["Сохранённый процесс", ...lines].join("\n").split("\n"));
-    } catch (error) { ctx.ui.setStatus("zara-workflow", String(error)); }
+      ctx.ui.setWidget("zara-workflow", undefined);
+    } catch (error) { ctx.ui.setStatus("zara-workflow", "Состояние процесса недоступно; попроси проверить сохранённый процесс."); }
   }
   function watchWorkflow(ctx: any) {
     if (workflowTimer) clearInterval(workflowTimer);
@@ -1291,25 +1275,11 @@ export default function (pi: any): void {
       const execution = setupExecutionText(item.execution);
       ctx.ui.setStatus("zara-setup", `Activity: ${setupPhases[state.phase] ?? state.phase}${execution ? `; ${execution}` : ""}; ревью ${state.reviews_started - state.pass_boundary}/5${repair}`);
       ctx.ui.setWidget("zara-setup", undefined);
-      if (display && state.phase === "paused" && execution) {
-        ctx.ui.setWidget("zara-setup", [execution,
-          item.execution.can_attach_sources ? "Новые сведения можно сохранить, не возобновляя прерванный запрос." :
-            "Сведения сохранены в разговоре; дождитесь подтверждения остановки перед добавлением к настройке."]);
-      } else if (display && ["ready", "needs_input", "needs_attention"].includes(state.phase)) {
-        const text = state.phase === "ready"
-          ? "Activity готова. Сохранённый результат и следующий шаг доступны в разговоре."
-          : state.question ?? state.result ?? "Настройка требует внимания; прочитай сохранённое состояние.";
-        // UI-only: a restored/background question must not create a second model message
-        // or precede Pi's initial conversation header. Tool questions are asked by the assistant.
-        ctx.ui.setWidget("zara-setup", text.split("\n"));
-        if (state.phase !== "needs_input") ctx.ui.notify(
-          state.phase === "ready" ? "Activity готова к работе." : "Настройка требует внимания: /zara-setup",
-          state.phase === "ready" ? "info" : "warning",
-        );
-      }
+      // Passive progress only; the main agent presents saved questions/results.
     } catch (error) {
       const message = String(error);
-      if (message !== setupDisplayError) ctx.ui.notify(message, "warning");
+      if (force && message !== setupDisplayError) ctx.ui.notify(message, "warning");
+      else ctx.ui.setStatus("zara-setup", "Состояние настройки недоступно; попроси проверить Activity.");
       setupDisplayError = message;
     }
   }
@@ -1327,21 +1297,9 @@ export default function (pi: any): void {
     if (pending.length === 1) {
       setupSelection = pending[0].setup_id;
       watchSetup(ctx);
-      try {
-        const current = await request("/v1/activity-setup", { action: "status", setup_id: setupSelection });
-        const state = current.state;
-        if (current.execution?.can_resume === true && state.stages.length &&
-            (state.phase !== "paused" || state.auto_resume) &&
-            ["paused", "drafting", "correcting", "reviewing", "activating"].includes(state.phase)) {
-          await request("/v1/activity-setup", { action: "resume", setup_id: setupSelection, model: setupModel(ctx) });
-        }
-      } catch (error) {
-        ctx.ui.notify(String(error), "warning");
-      } finally {
-        await showSetup(ctx);
-      }
+      await showSetup(ctx);
     } else if (pending.length > 1) {
-      ctx.ui.notify("Есть несколько незавершённых настроек Activity. Выбери нужный setup_id через zara_activity.", "info");
+      ctx.ui.notify("Есть несколько незавершённых настроек Activity. Попроси продолжить нужную Activity по её названию.", "info");
     }
   });
   pi.on("session_shutdown", async () => {
@@ -1359,91 +1317,52 @@ export default function (pi: any): void {
     },
   });
 
-  function watchConversation(subjectId: string): void {
-    if (!subjectId || Number(connection?.schema_version ?? 0) < 17) return;
-    conversationWatch.add(subjectId);
-    if (!actionDigests.has(subjectId)) actionDigests.set(subjectId, "");
-    pi.appendEntry("zara-conversation-watch", {subject_id: subjectId});
-  }
-  async function markShownAction(subjectId: string): Promise<void> {
-    if (Number(connection?.schema_version ?? 0) < 17 || !subjectId) return;
-    const current = await request("/v1/conversation", {mode: "current", subject_id: subjectId});
-    if (current.item) actionDigests.set(subjectId, current.item.ref.digest);
-  }
-  async function pollConversation(ctx: any): Promise<void> {
-    if (conversationPolling || assignedAttemptId || Number(connection?.schema_version ?? 0) < 17 ||
-        conversationDelivery || activeNativeTools.size || !conversationWatch.size) return;
-    conversationPolling = true;
+  type ProgressSink = (result: any) => void;
+  async function awaitProcess(target: {kind: string; id: string}, callId: string,
+      signal?: AbortSignal, update?: ProgressSink): Promise<any> {
     const fence = generation;
+    const controller = new AbortController();
+    let lease: string | undefined;
+    const abort = () => controller.abort();
+    signal?.addEventListener("abort", abort, {once: true});
+    if (signal?.aborted) controller.abort();
+    let released!: () => void;
+    activeObservers.set(controller, new Promise<void>(resolve => { released = resolve; }));
     try {
-      for (const subjectId of conversationWatch) {
-        const current = await request("/v1/conversation", {mode: "current", subject_id: subjectId});
-        if (generation !== fence) return;
-        const action = current.item;
-        if (!action) continue;
-        const previous = actionDigests.get(action.subject_id);
-        actionDigests.set(action.subject_id, action.ref.digest);
-        if (previous === undefined || previous === action.ref.digest) continue;
-        if (!["ready", "question", "attention", "result"].includes(action.kind)) continue;
-        if (action.kind === "question" && !ctx.isIdle()) {
-          actionDigests.set(action.subject_id, previous);
-          continue;
-        }
-        if (action.subject_kind === "work" && action.kind === "ready") continue;
-        const delivery = {delivery_id: randomUUID(), action_ref: action.ref,
-                          host_id: hostId, branch_id: branchId};
-        pendingWakes.set(delivery.delivery_id, {...delivery, generation: fence});
-        const claiming = request("/v1/conversation", {mode: "claim", ...delivery});
-        pendingClaims.add(claiming);
-        try { await claiming; }
-        catch (error) {
-          if (generation === fence) pendingWakes.delete(delivery.delivery_id);
-          if (error instanceof CoreRequestError && ["conversation_delivery_claimed", "conflict", "stale_conversation_action"].includes(error.code)) continue;
-          throw error;
-        } finally { pendingClaims.delete(claiming); }
-        if (generation !== fence) return;
-        pendingWakes.set(delivery.delivery_id, {...delivery, generation: fence});
-        // Native sendMessage has no receipt. Only actual context inclusion and
-        // the saved final assistant entry prove delivery in Core.
-        pi.sendMessage({customType: "zara-conversation-wake", content: [], display: false,
-          details: {delivery_id: delivery.delivery_id, generation: fence}},
-          {triggerTurn: true, deliverAs: "followUp"});
-        break;
+      // Acquire the exact lease even if cancellation arrived during the start
+      // response; this read is immediate and cannot detach an unpaused execution.
+      const bound = await request("/v1/process-boundary", {mode: "observe", target,
+        generation: fence, operation_key: callId, timeout_seconds: 0});
+      lease = bound.lease_token;
+      if (bound.kind !== "running" && !controller.signal.aborted) return bound;
+      while (!controller.signal.aborted && generation === fence) {
+        const boundary = await request("/v1/process-boundary", {mode: "observe", target,
+          generation: fence, operation_key: callId, lease_token: lease, timeout_seconds: 2},
+          false, controller.signal);
+        lease = boundary.lease_token;
+        if (boundary.kind !== "running") return boundary;
+        update?.({content: [{type: "text", text: "Работа выполняется. Результат сохранится в пространстве."}],
+          details: {progress: boundary.progress, execution: boundary.execution}});
       }
-    } catch (error) {
-      if (generation === fence) ctx.ui.setStatus("zara-conversation", `Продолжение: ${String(error)}`);
-    } finally { conversationPolling = false; }
-  }
-  pi.on("session_start", async (_event: any, ctx: any) => {
-    if (conversationTimer) clearInterval(conversationTimer);
-    if (assignedAttemptId || Number(connection?.schema_version ?? 0) < 17) return;
-    for (const entry of ctx.sessionManager.getBranch()) {
-      if (entry.type === "custom" && entry.customType === "zara-conversation-watch")
-        conversationWatch.add(entry.data?.subject_id);
-    }
-    for (const subjectId of conversationWatch) {
-      const current = await request("/v1/conversation", {mode: "current", subject_id: subjectId});
-      if (current.item) actionDigests.set(subjectId, current.item.ref.digest);
-      const incomplete = current.delivery_outcomes?.find((delivery: any) =>
-        delivery.status !== "responded" && delivery.status !== "abandoned");
-      if (incomplete) renderDelivery(ctx, incomplete);
-    }
-    conversationTimer = setInterval(() => void pollConversation(ctx), 1000);
-  });
-  async function fenceConversation(): Promise<void> {
-    const oldSession = sessionId;
-    const pending = [...pendingWakes.values()];
-    generation += 1;
-    if (conversationTimer) clearInterval(conversationTimer);
-    pendingWakes.clear(); consumedWakes.clear(); conversationDelivery = null;
-    origin = {kind: "history", sources: []};
-    await Promise.allSettled([...pendingClaims]);
-    for (const delivery of pending) {
+      throw new Error("Native execution observation interrupted");
+    } finally {
+      signal?.removeEventListener("abort", abort);
       try {
-        await request("/v1/conversation", {mode: "abandon", ...delivery,
-          session_id: oldSession, fenced: true});
-      } catch { /* Core retains sent/unknown evidence; it alone decides unsent abandonment. */ }
+        if (controller.signal.aborted && generation === fence && lease)
+          await request("/v1/process-boundary", {mode: "pause", target, generation: fence,
+            operation_key: callId, lease_token: lease}, false, AbortSignal.timeout(2000));
+      } finally { activeObservers.delete(controller); released(); }
     }
+  }
+  const boundaryResult = (initial: any, boundary: any) => ({...initial, ...boundary.details,
+    process_boundary: boundary});
+  async function fenceConversation(): Promise<void> {
+    const pending = [...activeObservers.values()];
+    for (const controller of activeObservers.keys()) controller.abort();
+    await Promise.allSettled(pending);
+    generation += 1;
+    replyRoot = null; responseOnly = false;
+    origin = {kind: "history", sources: []};
   }
   pi.on("session_before_switch", fenceConversation);
   pi.on("session_before_fork", fenceConversation);
@@ -1453,20 +1372,14 @@ export default function (pi: any): void {
     nativeContext = ctx;
     branchId = `${ctx.sessionManager.getSessionId()}:${generation}`;
     historicalOwnerEntries.clear(); ownerEntries.clear(); seenCustomEntries.clear();
-    conversationWatch.clear(); actionDigests.clear();
     for (const entry of ctx.sessionManager.getBranch()) {
       if (entry.type === "message" && entry.message?.role === "user") historicalOwnerEntries.add(entry.id);
       if (entry.type === "custom_message") seenCustomEntries.add(entry.id);
-      if (entry.type === "custom" && entry.customType === "zara-conversation-watch")
-        conversationWatch.add(entry.data?.subject_id);
     }
-    if (assignedAttemptId || Number(connection?.schema_version ?? 0) < 17) return;
-    await request("/v1/conversation", {mode: "host", host_id: hostId, branch_id: branchId});
-    for (const subjectId of conversationWatch) await markShownAction(subjectId);
-    conversationTimer = setInterval(() => void pollConversation(ctx), 1000);
+    if (!assignedAttemptId)
+      await request("/v1/conversation", {mode: "host", host_id: hostId, branch_id: branchId, generation});
   });
-  pi.on("tool_call", (event: any) => { activeNativeTools.add(event.toolCallId); });
-  pi.registerTool({name: "zara_conversation", label: "Conversation continuation",
+  pi.registerTool({name: "zara_conversation", executionMode: "sequential", label: "Conversation continuation",
     description: "Read current saved processes, results and next useful steps by readable names. " +
       "catalog/read remain available after a notification was delivered. use_existing_work selects the " +
       "existing first ordinary Work for the actual owner's request; it creates no duplicate and never " +
@@ -1490,35 +1403,34 @@ export default function (pi: any): void {
         selection = result.selection;
         attemptId = null; contextReady = false; currentManifest = null;
         pi.appendEntry("zara-project-selection", selection);
-        watchConversation(selection.work_id);
         await refreshWorkspace(ctx);
       }
       return {content: [{type: "text", text: JSON.stringify(result)}], details: result};
     }});
   pi.registerTool({
-    name: "zara_data", label: "Typed Activity data",
+    name: "zara_data", executionMode: "sequential", label: "Typed Activity data",
     description: "Use contract for the exact public operation schema, then apply with arguments. " +
       "Operations: describe_structure, list_formats, read_format, create_entry, correct_entry, ingest_batch, " +
       "read_entry, history, query_entries, aggregate_entries, working_set, start_procedure, procedure_status, due_procedures. " +
       "Retain an original Source before intake; preserve explicit event identity and dates. Decimal is a string. " +
       "Correct an existing event by revision; a new event has a new address. Partial input stays visible. " +
       "A procedure request_key restores its same Work, period and input snapshot across sessions. " +
-      "Use run with the returned run_id to execute through ordinary assigned Pi/DBOS using the current model. " +
+      "Use run to wait for the saved result, question or obstacle through ordinary assigned Pi/DBOS. " +
       "Typed output publication uses DataOutputEnvelope with entries, basis_snapshot, complete, limitations and result. " +
       "No automatic Work acceptance or Git publication. Read only data needed for the task.",
     parameters: Type.Object({mode: StringEnum(["contract", "apply", "run"] as const),
       operation: Type.Optional(Type.String()), run_id: Type.Optional(Type.String()),
       arguments: Type.Optional(Type.Any()), operation_key: Type.Optional(Type.String())}),
     async execute(callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
-      const result = await request("/v1/data", {...params, operation_key: params.operation_key ?? callId,
-        model: setupModel(ctx)});
-      if (!assignedAttemptId && params.mode === "run" && result.work_id)
-        watchConversation(result.work_id);
+      let result = await request("/v1/data", {...params, operation_key: params.operation_key ?? callId,
+        generation, model: setupModel(ctx)});
+      if (!assignedAttemptId && params.mode === "run") result = boundaryResult(result,
+        await awaitProcess({kind: "procedure", id: params.run_id}, callId, _signal, _onUpdate));
       return {content: [{type: "text", text: JSON.stringify(result)}], details: result};
     },
   });
   pi.registerTool({
-    name: "zara_activity", label: "Create and set up an Activity",
+    name: "zara_activity", executionMode: "sequential", label: "Create and set up an Activity",
     description: "List/read Activities, start a new Activity setup or change_structure for one existing Activity without recreating it. " +
       "Create retains the request and authorizes this new Activity's interview, whole draft/review/correction and activation. " +
       "Use question to retain a necessary user question, answer ONLY to save a real answer to that saved question. " +
@@ -1604,7 +1516,6 @@ export default function (pi: any): void {
             mode: params.mode === "change_structure" ? "change_structure" : "create",
             activity_id: params.mode === "change_structure" ? params.record_id : randomUUID(), title: params.title, goal: params.goal, operation_id: operationId,
             source_refs: params.source_refs ?? [], request_source: params.request_source });
-          watchConversation(setupSelection);
         } catch (error) {
           try {
             await request(`/v1/receipt?session_id=${sessionId}&operation_id=${operationId}`);
@@ -1640,13 +1551,15 @@ export default function (pi: any): void {
             return { content: [{ type: "text", text: "Additional setup review passes not authorized" }] };
           }
         }
-        result = await request("/v1/activity-setup", { action: params.mode, setup_id: setupSelection,
+        result = await request("/v1/activity-setup", { action: params.mode, setup_id: setupSelection, operation_key: _callId, generation,
           question: params.question, source_refs: params.source_refs ?? [], model: setupModel(ctx),
           request_source: params.request_source,
           answer_source: params.answer_source,
           reference: params.reference, offset: params.offset, max_bytes: params.max_bytes });
-        if (params.mode === "question") await markShownAction(setupSelection);
       }
+      const target = result.setup_id ?? setupSelection;
+      if (["submit", "resume", "retry"].includes(params.mode) && !assignedAttemptId)
+        result = boundaryResult(result, await awaitProcess({kind: "setup", id: target}, _callId, _signal, _onUpdate));
       watchSetup(ctx);
       await showSetup(ctx, false);
       if (result.content_base64 && result.media_type?.startsWith("text/")) {
@@ -1657,7 +1570,7 @@ export default function (pi: any): void {
   });
 
   pi.registerTool({
-    name: "zara_workflow", label: "Saved workflow",
+    name: "zara_workflow", executionMode: "sequential", label: "Saved workflow",
     description: "Catalog/read reusable workflow definitions; propose a definition for Candidate validation, " +
       "start one active workflow in an Activity, inspect status and exact packets, answer one addressed saved question, " +
       "pause/resume/cancel or explicitly migrate a run. Each run is a Core composite Work with exact history. " +
@@ -1689,11 +1602,12 @@ export default function (pi: any): void {
       pending_only: Type.Optional(Type.Boolean()),
     }),
     async execute(callId: string, params: any, _signal: any, _update: any, ctx: any) {
-      const result = await request("/v1/workflow", {...params, operation_key: callId, model: setupModel(ctx)});
+      let result = await request("/v1/workflow", {...params, operation_key: callId, generation, model: setupModel(ctx)});
       if (!assignedAttemptId && result.root_work_id) {
         workflowSelection = result.root_work_id;
         if (["start", "resume", "answer", "correct_answer", "retry"].includes(params.mode))
-          watchConversation(result.root_work_id);
+          result = boundaryResult(result, await awaitProcess({kind: "workflow", id: result.root_work_id},
+            callId, _signal, _update));
         watchWorkflow(ctx);
         await showWorkflow(ctx);
       }
@@ -1790,7 +1704,7 @@ export default function (pi: any): void {
   });
 
   pi.registerTool({
-    name: "zara_result",
+    name: "zara_result", executionMode: "sequential",
     label: "Save Work deliverable",
     description: "Publish the prepared deliverable into one declared output slot of the selected Work. " +
       "Use the complete prepared file via path, or content_text. Publish the instruction, report or other " +
@@ -1858,7 +1772,6 @@ export default function (pi: any): void {
         // request to that new revision, retaining the producing Attempt's history.
         await operation({ kind: "stop_attempt", attempt_id: attemptId, work_id: selection.work_id,
                           session_id: sessionId, outcome: "completed" });
-        await markShownAction(selection.work_id);
         attemptId = null;
         contextReady = false;
         return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
@@ -2051,11 +1964,13 @@ export default function (pi: any): void {
       pi.setActiveTools((process.env.ZARA_RESTRICTED_TOOLS ?? "").split(",").filter(Boolean));
     } else if (process.env.ZARA_DISABLE_MODEL_TOOLS === "1") pi.setActiveTools([]);
     else if (!assignedAttemptId && Number(connection?.schema_version ?? 0) >= 17 && !reset) {
-      if (origin.kind !== "owner") {
+      if (origin.kind !== "owner" || responseOnly) {
         const readers = new Set(["read", "grep", "find", "ls", "zara_conversation", "zara_activity",
           "zara_workflow", "zara_result", "zara_development", "zara_memory", "zara_data",
           "zara_integration", "zara_workspace"]);
-        pi.setActiveTools(normalToolNames.filter(name => readers.has(name)));
+        // The completed run already supplied its result and exact context.
+        // An empty-final repair has one task: return a visible explanation.
+        pi.setActiveTools(responseOnly ? [] : normalToolNames.filter(name => readers.has(name)));
         readonlyToolsActive = true;
       } else if (readonlyToolsActive) {
         pi.setActiveTools(normalToolNames);
@@ -2093,7 +2008,7 @@ export default function (pi: any): void {
     event.systemPromptOptions.cwd = place.selected_root;
   });
   pi.on("before_provider_request", (event: any) => {
-    if (assignedAttemptId || Number(connection?.schema_version ?? 0) < 17 || origin.kind === "owner") return;
+    if (assignedAttemptId || Number(connection?.schema_version ?? 0) < 17 || (origin.kind === "owner" && !responseOnly)) return;
     const payload = event.payload;
     if (!payload || !Array.isArray(payload.tools)) return;
     const admitted = new Set(pi.getActiveTools());
@@ -2142,7 +2057,9 @@ export default function (pi: any): void {
         for (const entry of ctx.sessionManager.getBranch()) {
           if (entry.type !== "custom_message" || seenCustomEntries.has(entry.id)) continue;
           seenCustomEntries.add(entry.id);
-          if (entry.customType !== "zara-conversation-wake") origin = {kind: "history", sources: []};
+          if (!["zara-conversation-wake", "zara-setup"].includes(entry.customType))
+            throw new Error("Unsupported custom conversation origin; no HTTP was sent");
+          throw new Error("New legacy conversation wake is not an owner request; no HTTP was sent");
         }
         const freshEntries = ctx.sessionManager.getBranch().filter((entry: any) =>
           entry.type === "message" && entry.message?.role === "user" &&
@@ -2163,17 +2080,16 @@ export default function (pi: any): void {
             capturedOwnerBatch.push({entryId: entry.id, source});
           }
           origin = {kind: "owner", sources};
+          replyRoot = {entries: capturedOwnerBatch.map(item => item.entryId), sources};
+          responseOnly = false;
         } else if (assignedAttemptId) origin = {kind: "history", sources: []};
-        await request("/v1/request-origin", {origin: origin.kind, sources: origin.sources});
+        await request("/v1/request-origin", {origin: origin.kind, sources: origin.sources, fresh_owner: capturedOwnerBatch.length > 0});
         // A separately captured and bound real owner request can continue after
         // an earlier terminal capture failed. Old send evidence stays untouched.
         if (capturedOwnerBatch.length) {
           for (const entry of capturedOwnerBatch) ownerEntries.set(entry.entryId, entry.source);
           deliveredOwnerEntry = capturedOwnerBatch.at(-1)!.entryId;
           captureReady = true;
-        }
-        if (staleWakeInContext && origin.kind !== "owner" && !conversationDelivery) {
-          throw new Error("Stale native conversation wake is fenced; no HTTP was sent");
         }
       }
       await sharedPreflight(ctx, false);
@@ -2193,19 +2109,9 @@ export default function (pi: any): void {
       ["zara-setup", "zara-conversation-wake"].includes(message.customType)));
   }
   pi.on("context", (event: any) => {
-    staleWakeInContext = false;
-    for (const message of event.messages) {
-      if (message.role !== "custom" || message.customType !== "zara-conversation-wake") continue;
-      const id = message.details?.wake_id ?? message.details?.delivery_id;
-      const wake = pendingWakes.get(id);
-      if (!wake || wake.generation !== generation || wake.delivery_id !== message.details?.delivery_id) {
-        if (!consumedWakes.has(id)) staleWakeInContext = true;
-        continue;
-      }
-      if (consumedWakes.has(id)) continue;
-      consumedWakes.add(id);
-      conversationDelivery = wake;
-      origin = {kind: "host", sources: []};
+    if (event.messages.some((message: any) => message.role === "custom" &&
+        !["zara-setup", "zara-conversation-wake"].includes(message.customType))) {
+      throw new Error("Unsupported custom conversation origin; no HTTP was sent");
     }
     return {messages: withoutSetupNotices(event.messages)};
   });
@@ -2328,54 +2234,32 @@ export default function (pi: any): void {
         }
       } catch (error) { captureFailure = error; }
     }
-    if (conversationDelivery && event.message.stopReason !== "toolUse") {
-      const delivery = conversationDelivery;
-      try {
-        if (captureFailure || !finalSource || !finalInvocation || delivery.invocation_id !== finalInvocation) {
-          await request("/v1/conversation", {mode: "response_attention", ...delivery,
-            response_problem: {code: "native_response_unproven", path: ["assistant_source"],
-              message: captureFailure ? String(captureFailure) : "Exact native response proof is absent"}});
-        } else {
-          await request("/v1/conversation", {mode: "observe_terminal", ...delivery,
-            invocation_id: finalInvocation, assistant_source: finalSource, assistant_entry_id: event.messageEntryId});
-          const observed = await request("/v1/conversation", {mode: "delivery", delivery_id: delivery.delivery_id});
-          if (observed.status === "unknown") {
-            // observe_terminal already retained the uncertain invocation.
-          } else if (observed.response_outcome === "visible") {
-            await request("/v1/conversation", {mode: "respond", ...delivery,
-              invocation_id: finalInvocation, assistant_source: finalSource, assistant_entry_id: event.messageEntryId});
-          } else if (observed.response_outcome === "empty" && observed.repair_count < 2) {
-            await request("/v1/conversation", {mode: "repair_response", ...delivery});
-            contextReady = false; currentManifest = null;
-            await showDelivery(ctx, delivery);
-            const wakeId = randomUUID();
-            pendingWakes.set(wakeId, {...delivery, generation});
-            // Native commits this checked draft before its canContinue recheck.
-            return {entries: [{type: "custom_message", customType: "zara-conversation-wake",
-              content: [], display: false, details: {delivery_id: delivery.delivery_id,
-                wake_id: wakeId, generation}}], continue: true};
-          } else {
-            if (observed.response_outcome === "unknown") {
-              await request("/v1/conversation", {mode: "unknown", ...delivery});
-            } else {
-              await request("/v1/conversation", {mode: "response_attention", ...delivery,
-                response_problem: observed.diagnostics?.[0] ?? {
-                  code: observed.response_outcome === "empty" ? "response_repair_exhausted" : "native_response_incomplete",
-                  path: ["assistant_source"], message: "No validated visible final response is available"}});
-            }
-          }
+    if (!assignedAttemptId && Number(connection?.schema_version ?? 0) >= 18 && replyRoot && event.message.stopReason !== "toolUse" &&
+        finalSource && finalInvocation && !captureFailure) {
+      const checked = await request("/v1/conversation", {mode: "terminal",
+        assistant_source: finalSource, invocation_id: finalInvocation,
+        manifest: responseManifests.get(finalInvocation), assistant_entry_id: event.messageEntryId});
+      if (checked.outcome === "empty") {
+        const root = replyRoot.entries.join(":");
+        const repairs = ctx.sessionManager.getBranch().filter((entry: any) => entry.type === "custom" &&
+          entry.customType === "zara-response-repair" && entry.data?.root === root);
+        if (repairs.some((entry: any) => entry.data?.invocation_id === finalInvocation)) return;
+        const newOwnerQueued = event.context?.pendingMessages?.some((message: any) => message.role === "user");
+        if (repairs.length < 2 && !newOwnerQueued && generation === finalPin.generation) {
+          const proof = {root, entries: replyRoot.entries, owner_sources: replyRoot.sources,
+            generation, branch_id: branchId, ordinal: repairs.length + 1,
+            invocation_id: finalInvocation, manifest: checked.manifest,
+            assistant_source: finalSource, assistant_entry_id: event.messageEntryId};
+          await request("/v1/conversation", {mode: "response_only", enabled: true, ...proof});
+          responseOnly = true; contextReady = false; currentManifest = null;
+          ctx.ui.setStatus("zara-conversation", "Модель вернула пустой ответ; продолжается тот же разговор.");
+          return {entries: [
+            {type: "custom", customType: "zara-response-repair", data: proof},
+            {type: "context_edit", targetId: event.messageEntryId, replacement: null}], continue: true};
         }
-        await showDelivery(ctx, delivery);
-      } catch (error) {
-        try { await request("/v1/conversation", {mode: "response_attention", ...delivery,
-          response_problem: {code: "response_continuation_blocked", path: [], message: String(error)}}); }
-        catch { /* Core keeps the exact prior invocation and observation. Never resend blindly. */ }
-        ctx.ui.setStatus("zara-conversation", `Продолжение остановлено: ${String(error)}`);
-        ctx.ui.setWidget("zara-conversation", ["Ответ не подтверждён. Данные сохранены; продолжение требует проверки."]);
-      }
-      pendingWakes.delete(delivery.delivery_id);
-      conversationDelivery = null;
-      origin = {kind: "history", sources: []};
+        ctx.ui.setStatus("zara-conversation", "Ответ модели пустой. Данные сохранены; продолжи обычным сообщением.");
+      } else if (checked.outcome === "visible") ctx.ui.setStatus("zara-conversation", undefined);
+      else ctx.ui.setStatus("zara-conversation", "Ответ не подтверждён. Сохранённое состояние доступно.");
     }
     if (captureFailure) throw captureFailure;
   });

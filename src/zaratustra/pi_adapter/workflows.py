@@ -153,6 +153,7 @@ class WorkflowCoordinator:
         self.stop = threading.Event()
         self.wake = threading.Event()
         self.lock = threading.Lock()
+        self.control_lock = threading.Lock()
         with bridge.lock:
             if bridge.workflow_executor_pool is None:
                 bridge.workflow_executor_pool = _ExecutorPool()
@@ -174,6 +175,10 @@ class WorkflowCoordinator:
             self.selection = dict(model)
 
     def start(self, identifier: UUID, model: dict[str, Any]) -> dict[str, Any]:
+        with self.control_lock:
+            return self._start(identifier, model)
+
+    def _start(self, identifier: UUID, model: dict[str, Any]) -> dict[str, Any]:
         self.update_model(model)
         current = read_workflow_run(self.config.space, identifier, self.bridge.authority)
         with self.lock:
@@ -717,7 +722,16 @@ class WorkflowCoordinator:
                 authority,
             )
 
-    def close(self) -> None:
+    def request_pause(self, root_id: UUID | None = None, *, expected_thread: Any = ...) -> None:
+        with self.control_lock:
+            if expected_thread is not ... and self.thread not in (None, expected_thread):
+                raise FoundationError("stale_session", "A later executor owns this workflow")
+            self._request_pause(root_id)
+
+    def _request_pause(self, root_id: UUID | None = None) -> None:
+        """Request Core stops promptly; cleanup waits belong only to close."""
+        if root_id is not None and self.active != root_id:
+            return
         self.stop.set()
         with self.lock:
             owned = set(self.owned_processes)
@@ -737,6 +751,11 @@ class WorkflowCoordinator:
                     self._step(self.active, "pause")
         except FoundationError:
             pass
+
+    def close(self) -> None:
+        self.request_pause()
+        with self.lock:
+            owned = set(self.owned_processes)
         thread = self.thread
         if thread is not None:
             thread.join(timeout=15)

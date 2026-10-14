@@ -1,5 +1,13 @@
 # Development tools
 
+`probe_single_conversation_pi` uses raw localhost Codex-profile Responses and
+ordinary Pi to reproduce the original competing result wake and check one-owner
+publication, two native empty-final corrections and exhaustion. Its bridge
+response observer records actual transport facts; it never changes product
+outcomes. Preserve raw native history, manifests and receipts. No credentials or
+real model calls. The common harness waits agent_settled even if Work selection
+happened during the conversation; agent_end precedes final host cleanup.
+
 `probe_workflows_real_pi` is an explicitly authorized subscription trial, never
 an automatic test. It creates fictional Core data and uses ordinary installed
 Pi with the selected model, profile and reasoning. One Core enforces a total

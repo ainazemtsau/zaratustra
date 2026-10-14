@@ -240,7 +240,10 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
         nonlocal reviews
         packet = context(body)
         if "work" in packet:
-            assert not body.get("tools"), "Setup stages must not expose model tools"
+            assert {tool.get("function", {}).get("name") for tool in body.get("tools", [])} == {
+                "zara_memory",
+                "zara_workflow",
+            }, "Only configured Core read tools are admitted"
             input_packet = json.loads(packet["inputs"][0]["content_text"])
             seen_packets.append(input_packet)
             assert input_packet["sources"] and input_packet["result_schema"]
@@ -299,7 +302,8 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
             return {"_tool": "zara_activity", "mode": "answer", "setup_id": str(identifier)}
         if len(tools) == 1:
             return {"_tool": "zara_activity", "mode": "submit", "setup_id": str(identifier)}
-        return {"_final_text": "The fictional setup is running"}
+        assert core.read_activity_setup(root, identifier, authority).state.phase == "ready"
+        return {"_final_text": "The fictional structure is ready; the first Work can begin."}
 
     second = native.Provider([route] * 32)
 
@@ -314,18 +318,32 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
                 return False
             raise
 
-    native.run_process(
-        working,
-        runtime,
-        bridge_for(second),
-        second,
-        skills=(activity_setup_skill(),),
-        wait_for=done,
-        expected_provider_calls=7,
-        prompt=(
-            "One original text note per day; preserve previous versions and distinguish event dates"
-        ),
-    )
+    final_reply_settled = False
+
+    def settled(_process: Any, observed: dict[str, Any]) -> None:
+        nonlocal final_reply_settled
+        if observed.get("type") == "agent_settled" and done():
+            final_reply_settled = True
+
+    try:
+        native.run_process(
+            working,
+            runtime,
+            bridge_for(second),
+            second,
+            skills=(activity_setup_skill(),),
+            wait_for=lambda: final_reply_settled,
+            on_event=settled,
+            expected_provider_calls=7,
+            prompt=(
+                "One original text note per day; preserve previous versions "
+                "and distinguish event dates"
+            ),
+        )
+    finally:
+        (directory / "http-requests-setup.json").write_text(
+            json.dumps(second.requests, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
     requests.extend(second.requests)
     final = core.read_activity_setup(root, identifier, authority)
     assert final.state.phase == "ready", final.model_dump_json(indent=2)

@@ -42,6 +42,7 @@ class ProcedureCoordinator:
         self.active: UUID | None = None
         self.stop = threading.Event()
         self.lock = threading.Lock()
+        self.control_lock = threading.Lock()
 
     def update_model(self, model: dict[str, Any]) -> None:
         if model.get("provider") != self.config.provider_id or not model.get("id"):
@@ -52,6 +53,10 @@ class ProcedureCoordinator:
             )
 
     def start(self, run_id: UUID, model: dict[str, Any]) -> dict[str, Any]:
+        with self.control_lock:
+            return self._start(run_id, model)
+
+    def _start(self, run_id: UUID, model: dict[str, Any]) -> dict[str, Any]:
         if model.get("provider") != self.config.provider_id or not model.get("id"):
             raise FoundationError(
                 "unsupported_provider", "Use the selected admitted subscription/model"
@@ -224,9 +229,23 @@ class ProcedureCoordinator:
                 self.bridge.authority,
             )
 
-    def close(self) -> None:
+    def request_pause(self, run_id: UUID | None = None, *, expected_thread: Any = ...) -> None:
+        with self.control_lock:
+            if expected_thread is not ... and self.thread not in (None, expected_thread):
+                raise FoundationError("stale_session", "A later executor owns this procedure")
+            self._request_pause(run_id)
+
+    def _request_pause(self, run_id: UUID | None = None) -> None:
+        """Stop the captured procedure without waiting for its assigned process."""
+        if run_id is not None:
+            current = procedure_status(self.config.space, self.bridge.authority, run_id)
+            if self.active != UUID(current["work_id"]):
+                return
         self.stop.set()
         self._request_stop()
+
+    def close(self) -> None:
+        self.request_pause()
         if self.thread:
             self.thread.join(timeout=5)
 

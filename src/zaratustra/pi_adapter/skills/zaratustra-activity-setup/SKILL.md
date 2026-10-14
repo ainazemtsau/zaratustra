@@ -7,6 +7,13 @@ description: Design a new Activity or change the structure of an existing one th
 
 ## Conversation and durable continuation
 
+The main Pi agent leads this conversation. submit/resume/retry wait for a saved
+question, checked result or concrete obstacle and return it to this same tool
+chain. Explain the returned boundary and the next useful action in the normal
+reply. Status progress is not a separate answer. Opening Pi alone does not resume
+execution; the user's request to continue uses the saved process. Never claim
+readiness from launch, executor exit or an intermediate review result.
+
 Read the selected setup/workflow status before describing progress. Say whether
 work is running, a particular answer/material is needed, a result is ready, or a
 specific retained obstacle prevents continuation. Never promise background work

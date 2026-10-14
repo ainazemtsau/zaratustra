@@ -6,7 +6,6 @@ import argparse
 import json
 import shutil
 import sqlite3
-import time
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -32,15 +31,18 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     setup_id: UUID | None = None
     first_work: UUID | None = None
     ordinary_calls = 0
-    host_calls = 0
     submitted = False
     owner_answer_sent = False
     first_step_sent = False
+    first_work_settled = False
 
     def route(body: dict[str, Any]) -> dict[str, Any]:
-        nonlocal setup_id, first_work, ordinary_calls, host_calls, submitted
+        nonlocal setup_id, first_work, ordinary_calls, submitted
         packet = context(body)
         assert "zara-conversation-wake" not in json.dumps(body)
+        assert not packet.get("conversation_event"), (
+            "Worker completion cannot initiate conversation"
+        )
         if packet.get("work") and packet.get("inputs"):
             incoming = json.loads(packet["inputs"][0]["content_text"])
             if incoming.get("result_schema", {}).get("title") == "ActivitySetupReviewV2":
@@ -86,23 +88,6 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
                     ),
                 )
                 return {"_final_text": draft.model_dump_json()}
-        if packet.get("conversation_event"):
-            host_calls += 1
-            assert packet["request_origin"] == {"kind": "host", "sources": []}
-            assert packet["conversation_event"]["kind"] == "ready"
-            assert len(core.list_conversation_deliveries(space, owner)) == 1
-            assert all(
-                tool.get("function", {}).get("name") not in ("write", "edit", "bash", "powershell")
-                for tool in body.get("tools", [])
-            )
-            if host_calls == 1:
-                return {
-                    "_tool": "zara_conversation",
-                    "mode": "read",
-                    "action_ref": packet["conversation_event"]["ref"],
-                }
-            assert core.list_conversation_deliveries(space, owner)[0].status == "included"
-            return {"_final_text": "The activity is ready. Supply the first observation."}
         ordinary_calls += 1
         last_user = max(
             index for index, message in enumerate(body["messages"]) if message["role"] == "user"
@@ -136,8 +121,11 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
             if not submitted:
                 submitted = True
                 return {"_tool": "zara_activity", "mode": "submit", "setup_id": str(setup_id)}
-            return {"_final_text": "The structure is being prepared and reviewed."}
+            raise AssertionError("Foreground submit returned before an actionable setup boundary")
         first_work = state.activated_works[0]
+        if not first_step_sent:
+            assert submitted and tools
+            return {"_final_text": "The activity is ready. Supply the first observation."}
         if not packet.get("work"):
             action = next(
                 item
@@ -182,18 +170,19 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     )
 
     def event(process: Any, observed: dict[str, Any]) -> None:
-        nonlocal owner_answer_sent, first_step_sent
-        if observed.get("type") != "agent_end" or setup_id is None:
+        nonlocal owner_answer_sent, first_step_sent, first_work_settled
+        if observed.get("type") != "agent_settled" or setup_id is None:
             return
         state = core.read_activity_setup(space, setup_id, owner).state
         prompt = None
         if state.phase == "needs_input" and not owner_answer_sent:
-            time.sleep(1.3)  # Cross a poll tick: the normal question must not be repeated.
             owner_answer_sent = True
             prompt = "One week. Keep exact originals."
-        elif host_calls and not first_step_sent:
+        elif state.phase == "ready" and not first_step_sent:
             first_step_sent = True
             prompt = "Start the existing first Work. My fictional observation is 8."
+        elif first_work and core.read_work(space, first_work, owner).state.linked_outputs:
+            first_work_settled = True
         if prompt:
             process.stdin.write(
                 json.dumps({"id": "owner-next", "type": "prompt", "message": prompt}).encode()
@@ -205,11 +194,7 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
         return bool(
             first_work
             and core.read_work(space, first_work, owner).state.linked_outputs
-            and any(
-                item.status == "responded"
-                for item in core.list_conversation_deliveries(space, owner)
-            )
-            and first_step_sent
+            and first_work_settled
             and ordinary_calls >= 9
         )
 
@@ -228,9 +213,12 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
             on_event=event,
             session_directory=sessions,
             timeout_seconds=240,
-            expected_provider_calls=13,
+            expected_provider_calls=11,
         )
     finally:
+        (directory / "http-requests.json").write_text(
+            json.dumps(provider.requests, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
         bridge.setup_controller.close()
     assert done()
     assert setup_id is not None and first_work is not None
@@ -239,14 +227,30 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     work = core.read_work(space, first_work, owner)
     assert work.state.acceptance is None and len(work.state.linked_outputs) == 1
     deliveries = core.list_conversation_deliveries(space, owner)
-    assert len(deliveries) == 1 and deliveries[0].status == "responded"
-    assert deliveries[0].assistant_source and deliveries[0].assistant_entry_id
-    final_source = core.read_knowledge(space, deliveries[0].assistant_source.record_id, owner).state
-    assert isinstance(final_source, core.SourceState) and final_source.conversation_final
+    delivery_json = [item.model_dump(mode="json") for item in deliveries]
+    assert len(deliveries) == 0, "Ordinary conversation must not create completion delivery claims"
     with sqlite3.connect(space / ".zara-core" / "core.sqlite3") as connection:
         ledger = connection.execute(
             "SELECT invocation_id, stage FROM knowledge_delivery"
         ).fetchall()
+        final_rows = connection.execute(
+            "SELECT r.record_id,r.revision FROM knowledge_records k JOIN knowledge_revisions r "
+            "ON r.record_id=k.record_id AND r.revision=k.current_revision WHERE k.kind='source' "
+            "AND json_extract(r.payload,'$.scope_work_id')=? "
+            "AND json_extract(r.payload,'$.conversation_terminal.stop_reason')='stop'",
+            (str(first_work),),
+        ).fetchall()
+    assert len(final_rows) == 1
+    final_ref = core.KnowledgeRef(record_id=UUID(final_rows[0][0]), revision=final_rows[0][1])
+    final_source = core.read_knowledge(space, final_ref.record_id, owner).state
+    assert isinstance(final_source, core.SourceState) and final_source.conversation_final
+    final_proof = core.read_terminal_response(
+        space,
+        final_ref,
+        owner,
+        session_id=UUID(final_source.conversation_id or ""),
+    )
+    assert final_proof.work_id == first_work and final_proof.outcome == "visible"
     assert len(ledger) == len(provider.requests) and all(row[1] == "answered" for row in ledger)
     assert not any(
         event.get("type") == "tool_execution_end" and event.get("isError") for event in events
@@ -280,7 +284,7 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
         tool_names=("read", "write", "edit", "bash", *INTERACTIVE_ZARA_TOOLS),
     )
     assert core.read_work(space, first_work, owner) == before_work
-    assert len(core.list_conversation_deliveries(space, owner)) == 1
+    assert core.list_conversation_deliveries(space, owner) == ()
     with sqlite3.connect(space / ".zara-core" / "core.sqlite3") as connection:
         connection.row_factory = sqlite3.Row
         all_ledger = [dict(row) for row in connection.execute("SELECT * FROM knowledge_delivery")]
@@ -295,7 +299,7 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
         json.dumps(events, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     (directory / "delivery.json").write_text(
-        json.dumps([item.model_dump(mode="json") for item in deliveries], indent=2),
+        json.dumps(delivery_json, indent=2),
         encoding="utf-8",
     )
     return {
@@ -303,7 +307,7 @@ def run_probe(directory: Path, runtime: Path) -> dict[str, Any]:
         "http_requests": len(provider.requests),
         "ledger": len(ledger),
         "ordinary_calls": ordinary_calls,
-        "host_calls": host_calls,
+        "host_calls": 0,
         "reviews": state.reviews_completed,
         "normal_followup": True,
         "first_work_saved": True,
@@ -460,7 +464,7 @@ def stale_wake_probe(directory: Path, runtime: Path) -> dict[str, Any]:
     )
     (directory / "native-events.json").write_text(json.dumps(events, indent=2), encoding="utf-8")
     assert switched and provider.calls == 1
-    assert any("Stale native conversation wake is fenced" in str(event) for event in events)
+    assert any(event.get("type") == "extension_error" for event in events)
     report = {"original_http_requests": 1, "stale_wake_http_requests": 0, "branch_switch": True}
     (directory / "report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     (directory / "native-events.json").write_text(json.dumps(events, indent=2), encoding="utf-8")

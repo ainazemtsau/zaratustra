@@ -281,10 +281,23 @@ def run_process(
     abrupt_end_predicate: Callable[[], bool] | None = None,
     input_eof_predicate: Callable[[], bool] | None = None,
     provider_profile: str = "local-completions",
+    on_bridge_response: Callable[[str, object], None] | None = None,
 ) -> list[dict[str, object]]:
     if provider_profile not in ("local-completions", "codex-sse"):
         raise ValueError("Fictional native trials support only admitted provider profiles")
     bridge_server = BridgeServer(bridge)
+    if on_bridge_response is not None:
+        original_handler = cast(Any, bridge_server.RequestHandlerClass)
+        original_reply = original_handler._reply
+
+        def observed_reply(handler: Any, status: Any, payload: object) -> None:
+            original_reply(handler, status, payload)
+            assert on_bridge_response is not None
+            on_bridge_response(handler.path, payload)
+
+        bridge_server.RequestHandlerClass = type(
+            "ObservedBridgeHandler", (original_handler,), {"_reply": observed_reply}
+        )
     bridge_thread = threading.Thread(target=bridge_server.serve_forever, daemon=True)
     bridge_thread.start()
     provider_thread = threading.Thread(target=provider.serve_forever, daemon=True)
@@ -485,11 +498,7 @@ def run_process(
                     + b"\n"
                 )
                 process.stdin.flush()
-            if (
-                compact
-                and event.get("type") == ("agent_settled" if work else "agent_end")
-                and not compaction_started
-            ):
+            if compact and event.get("type") == "agent_settled" and not compaction_started:
                 assert provider.calls >= 1, observed
                 if split_compact and not second_turn_started:
                     process.stdin.write(
@@ -527,7 +536,7 @@ def run_process(
                 and provider.calls >= 3
             ):
                 break
-            if not compact and event.get("type") == ("agent_settled" if work else "agent_end"):
+            if not compact and event.get("type") == "agent_settled":
                 if continue_work and not continuation_started:
                     process.stdin.write(
                         b'{"id":"continue","type":"prompt",'

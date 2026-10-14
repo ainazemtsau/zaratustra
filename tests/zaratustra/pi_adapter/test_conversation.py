@@ -346,6 +346,314 @@ def test_native_terminal_capture_preserves_exact_visible_bytes(tmp_path: Path, t
     assert source.conversation_terminal.manifest == reference
 
 
+def _response_only_case(
+    tmp_path: Path, selected: bool, *, text: str = " \n"
+) -> tuple[Bridge, UUID, UUID, dict[str, Any], dict[str, Any]]:
+    bridge, session, activity, work = _case(tmp_path)
+    source = bridge.capture_source(
+        session,
+        channel="conversation_user",
+        content="Explain the saved result",
+        source_event_id="native:owner-root",
+        input_source="interactive",
+    )["source_ref"]
+    bridge.bind_request_origin(session, {"origin": "owner", "sources": [source]})
+    conversation(
+        bridge,
+        session,
+        {"mode": "host", "host_id": "main", "branch_id": "branch", "generation": 1},
+    )
+    common: dict[str, Any] = {}
+    if selected:
+        bridge.select(session, activity, work)
+        attempt = bridge.start_attempt(session, interrupt_previous=False)["attempt_id"]
+        common = {"attempt_id": attempt, "work_id": str(work), "session_id": str(session)}
+    prepared = bridge.prepare_context(session)
+    invocation = uuid4()
+    if selected:
+        bridge.operation(
+            session,
+            {
+                "kind": "prepare_invocation",
+                "operation_id": str(uuid4()),
+                "actor": bridge.authority.actor,
+                "space_id": str(bridge.authority.space_id),
+                "invocation_id": str(invocation),
+                "purpose": "content",
+                "provider": "fictional",
+                "model": "fictional",
+                "transport": "local",
+                "request_sha256": "A" * 64,
+                "request_bytes": 100,
+                "reserve_units": 1,
+                **common,
+            },
+        )
+    delivery = {
+        "invocation_id": str(invocation),
+        "manifest_id": prepared["manifest_id"],
+        "manifest_revision": 1,
+    }
+    bridge.context_delivery(
+        session,
+        {
+            **delivery,
+            "stage": "prepared",
+            "request_sha256": "A" * 64,
+            "request_bytes": 100,
+            "reserve_units": 1,
+        },
+    )
+    if selected:
+        for kind in ("admit_invocation", "send_invocation", "finish_invocation"):
+            bridge.operation(
+                session,
+                {
+                    "kind": kind,
+                    "operation_id": str(uuid4()),
+                    "actor": bridge.authority.actor,
+                    "space_id": str(bridge.authority.space_id),
+                    "invocation_id": str(invocation),
+                    **common,
+                    **(
+                        {"outcome": "answered", "usage_units": 0}
+                        if kind == "finish_invocation"
+                        else {}
+                    ),
+                },
+            )
+    bridge.context_delivery(
+        session,
+        {
+            **delivery,
+            "stage": "sent",
+            "request_sha256": "A" * 64,
+            "request_bytes": 100,
+        },
+    )
+    bridge.context_delivery(session, {**delivery, "stage": "answered", "usage_units": 0})
+    manifest = {"record_id": prepared["manifest_id"], "revision": 1}
+    captured = bridge.capture_source(
+        session,
+        channel="conversation_assistant",
+        content=text,
+        source_event_id="native-empty",
+        final_manifest=core.KnowledgeRef.model_validate(manifest),
+        conversation_terminal={
+            "invocation_id": str(invocation),
+            "manifest": manifest,
+            "assistant_entry_id": "native-empty",
+            "native_outcome": "completed",
+            "stop_reason": "stop",
+        },
+    )
+    repair = {
+        "mode": "response_only",
+        "enabled": True,
+        "generation": 1,
+        "assistant_source": captured["source_ref"],
+        "manifest": manifest,
+        "invocation_id": str(invocation),
+        "assistant_entry_id": "native-empty",
+        "owner_sources": [source],
+    }
+    return bridge, session, work, repair, common
+
+
+@pytest.mark.parametrize("selected", [False, True])
+def test_response_only_preserves_owner_roots_and_actual_work_pin(
+    tmp_path: Path,
+    selected: bool,
+) -> None:
+    bridge, session, work, repair, common = _response_only_case(tmp_path, selected)
+    before = core.read_work(bridge.path, work, bridge.authority)
+    enabled = conversation(bridge, session, repair)
+    assert enabled["enabled"] is True
+    prepared = bridge.prepare_context(session)
+    manifest = core.read_knowledge(
+        bridge.path, UUID(str(prepared["manifest_id"])), bridge.authority
+    ).state
+    assert isinstance(manifest, core.ContextState)
+    required = [repair["assistant_source"], repair["manifest"], *repair["owner_sources"]]
+    assert all(core.KnowledgeRef.model_validate(ref) in manifest.mandatory for ref in required)
+    packet = cast(dict[str, Any], prepared["packet"])
+    assert packet["request_origin"] == {"kind": "owner", "sources": repair["owner_sources"]}
+    assert packet["response_recovery"]["outcome"] == "empty"
+    assert manifest.work_id == (work if selected else None)
+    assert str(manifest.attempt_id) == str(common.get("attempt_id", None))
+    assert core.read_work(bridge.path, work, bridge.authority) == before
+
+
+def test_response_only_blocks_effects_and_answers_until_new_owner_ingress(tmp_path: Path) -> None:
+    bridge, session, work, repair, common = _response_only_case(tmp_path, True)
+    conversation(bridge, session, repair)
+    attempted = (
+        lambda: bridge._fresh_user_source(session),
+        lambda: bridge.publish(
+            session, UUID(common["attempt_id"]), "result", "text/plain", "Repeat"
+        ),
+        lambda: bridge.answer_wait(session, uuid4(), "An invented owner answer"),
+        lambda: bridge.data_operation(session, {"mode": "run", "run_id": str(uuid4())}),
+        lambda: bridge.accept(session, uuid4(), "Automatic acceptance"),
+    )
+    before = core.read_work(bridge.path, work, bridge.authority)
+    for call in attempted:
+        with pytest.raises(core.FoundationError, match="Response repair"):
+            call()
+    bridge.bind_request_origin(session, {"origin": "owner", "sources": repair["owner_sources"]})
+    with pytest.raises(core.FoundationError, match="Response repair"):
+        bridge._fresh_user_source(session)
+    new_source = bridge.capture_source(
+        session,
+        channel="conversation_user",
+        content="My next request",
+        source_event_id="native:next-owner",
+        input_source="interactive",
+    )["source_ref"]
+    bridge.bind_request_origin(
+        session, {"origin": "owner", "sources": [new_source], "fresh_owner": True}
+    )
+    assert bridge._fresh_user_source(session)[1] == "My next request"
+    assert core.read_work(bridge.path, work, bridge.authority) == before
+
+
+@pytest.mark.parametrize("interface", ["memory", "integration"])
+@pytest.mark.parametrize("operation", ["read_batch", "prepare_cache", "query_entries"])
+def test_response_repair_cannot_retain_memory_selections(
+    tmp_path: Path, interface: str, operation: str
+) -> None:
+    bridge, session, _, repair, _ = _response_only_case(tmp_path, False)
+    selectors = [{"record_ids": [repair["owner_sources"][0]["record_id"]]}]
+
+    def invoke() -> dict[str, object]:
+        if interface == "memory":
+            if operation == "query_entries":
+                return bridge.data_operation(
+                    session,
+                    {
+                        "operation": operation,
+                        "operation_key": "data-selection",
+                        "arguments": {"selectors": selectors},
+                    },
+                )
+            return bridge.knowledge_read(session, {"mode": operation, "selectors": selectors})
+        return bridge.integration(
+            session,
+            {
+                "mode": "apply",
+                "adapter": "data" if operation == "query_entries" else "memory",
+                "operation": operation,
+                "operation_key": "memory-selection",
+                "contract_version": 1,
+                "arguments": {"selectors": selectors},
+            },
+        )
+
+    conversation(bridge, session, repair)
+    before = core.list_knowledge(bridge.path, bridge.authority, kind="view", limit=100)
+    with pytest.raises(core.FoundationError, match="Response repair"):
+        invoke()
+    assert core.list_knowledge(bridge.path, bridge.authority, kind="view", limit=100) == before
+    owner = bridge.capture_source(
+        session,
+        channel="conversation_user",
+        content="Read these retained observations",
+        source_event_id="native:memory-request",
+        input_source="interactive",
+    )["source_ref"]
+    bridge.bind_request_origin(
+        session, {"origin": "owner", "sources": [owner], "fresh_owner": True}
+    )
+    result = invoke()
+    assert result["selection_id"]
+    if operation != "query_entries":
+        assert result["content_text"]
+    assert core.list_knowledge(bridge.path, bridge.authority, kind="view", limit=100) != before
+
+
+def test_response_repair_cannot_reconcile_workspace_delivery(tmp_path: Path) -> None:
+    from zaratustra.workspace import LaunchConfig, write_config
+
+    bridge, session, _, repair, _ = _response_only_case(tmp_path, False)
+    config = tmp_path / "workspace.json"
+    write_config(
+        config,
+        LaunchConfig(
+            version=1,
+            actor=bridge.authority.actor,
+            space_id=bridge.authority.space_id,
+            space=bridge.path,
+            workspace=tmp_path,
+            sqlite_dll=tmp_path / "sqlite3.dll",
+            pi_runtime=tmp_path / "pi-runtime",
+            provider_profile="local-completions",
+            provider_base_url="http://127.0.0.1:1",
+            provider_id="local",
+            model_id="fictional",
+            reserve_units=1,
+        ),
+    )
+    bridge.workspace_config = config
+    before = config.read_bytes()
+    conversation(bridge, session, repair)
+    with pytest.raises(core.FoundationError, match="Response repair"):
+        bridge.workspace_operation(session, {"mode": "check"})
+    assert config.read_bytes() == before
+    owner = bridge.capture_source(
+        session,
+        channel="conversation_user",
+        content="Check the saved workspace state",
+        source_event_id="native:workspace-request",
+        input_source="interactive",
+    )["source_ref"]
+    bridge.bind_request_origin(
+        session, {"origin": "owner", "sources": [owner], "fresh_owner": True}
+    )
+    with pytest.raises(ValueError, match="Git"):
+        bridge.workspace_operation(session, {"mode": "check"})
+    assert config.read_bytes() == before
+
+
+@pytest.mark.parametrize("change", ["visible", "owner", "branch", "entry"])
+def test_response_only_requires_exact_empty_proof_and_consumed_root(
+    tmp_path: Path,
+    change: str,
+) -> None:
+    bridge, session, _, repair, _ = _response_only_case(
+        tmp_path, False, text="Visible final" if change == "visible" else ""
+    )
+    if change == "owner":
+        repair["owner_sources"] = []
+    elif change == "branch":
+        repair["generation"] = 2
+    elif change == "entry":
+        repair["assistant_entry_id"] = "another-native-entry"
+    with pytest.raises(core.FoundationError):
+        conversation(bridge, session, repair)
+    assert session not in bridge.response_only
+
+
+def test_replaced_native_branch_clears_reply_repair_without_owner_effect_authority(
+    tmp_path: Path,
+) -> None:
+    bridge, session, _, repair, _ = _response_only_case(tmp_path, False)
+    conversation(bridge, session, repair)
+    conversation(
+        bridge,
+        session,
+        {"mode": "host", "host_id": "main", "branch_id": "replacement", "generation": 2},
+    )
+    assert session not in bridge.response_only
+    assert bridge.request_sources[session] == ()
+    assert bridge.request_origins[session] == "history"
+    with pytest.raises(core.FoundationError, match="branch"):
+        conversation(bridge, session, repair)
+    with pytest.raises(core.FoundationError, match="read-only"):
+        bridge._require_model_effect(session)
+    with pytest.raises(core.FoundationError, match="No received prompt"):
+        bridge.prepare_context(session)
+
+
 def test_duplicate_native_terminal_callbacks_reuse_receipts_and_repair_permission(
     tmp_path: Path,
 ) -> None:

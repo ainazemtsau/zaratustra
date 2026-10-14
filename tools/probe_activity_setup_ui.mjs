@@ -50,6 +50,7 @@ globalThis.fetch = async (url, init) => {
   if (String(url).includes("/v1/context-prepare")) return Response.json({
     manifest_id: "fictional-manifest", manifest_revision: 1,
   });
+  if (String(url).includes("/v1/conversation")) return Response.json({registered: true});
   if (String(url).includes("/v1/workspace")) return Response.json({
     personal_root: directory, selected_root: directory, selected_project: "personal",
     projects: [], git: { connected: false },
@@ -93,7 +94,7 @@ const emit = async (name, event) => {
   return result;
 };
 await emit("session_start", { reason: "resume" });
-assert.deepEqual(widgets.get("zara-setup"), [question]);
+assert.equal(widgets.get("zara-setup"), undefined);
 assert(!notifications.some(item => item.message === question || item.type === "warning"));
 
 const theme = { fg(_color, text) { return text; }, bold(text) { return text; } };
@@ -112,8 +113,9 @@ const legacy = { role: "custom", customType: "zara-setup", content: question, ti
 const owner = { role: "user", content: question, timestamp: 2 };
 const other = { role: "custom", customType: "another-extension", content: "keep me", timestamp: 3 };
 assert.equal(convertToLlm([legacy])[0].role, "user");
-const context = await emit("context", { messages: [owner, legacy, other] });
-assert.deepEqual(context.messages, [owner, other]);
+await assert.rejects(emit("context", { messages: [owner, legacy, other] }), /Unsupported custom/);
+const context = await emit("context", { messages: [owner, legacy] });
+assert.deepEqual(context.messages, [owner]);
 assert.deepEqual(legacy.content, question); // history is retained, only model delivery changes
 const preparation = { messagesToSummarize: [legacy, owner], turnPrefixMessages: [owner, legacy] };
 await emit("session_before_compact", { preparation, branchEntries: [] });
@@ -121,37 +123,38 @@ assert.deepEqual(preparation.messagesToSummarize, [owner]);
 assert.deepEqual(preparation.turnPrefixMessages, [owner]);
 
 await extension.commands.get("zara-setup").handler("", ctx);
-assert.deepEqual(widgets.get("zara-setup"), [question]);
+assert.equal(widgets.get("zara-setup"), undefined);
 item = { ...item, revision: 3, state: { ...item.state, phase: "ready", result: "Fictional ready result" } };
 // The watcher runs asynchronously; observe its public UI effects without any provider request.
 tick();
 await new Promise(resolve => setImmediate(resolve));
-assert.equal(widgets.get("zara-setup").length, 1);
-assert(!widgets.get("zara-setup").join("\n").includes("Fictional ready result"));
-assert.equal(notifications.filter(item => item.message === "Activity готова к работе.").length, 1);
+assert.equal(widgets.get("zara-setup"), undefined);
+assert(statuses.get("zara-setup").includes("готова"));
+assert.equal(notifications.filter(item => item.message === "Activity готова к работе.").length, 0);
 tick();
 await new Promise(resolve => setImmediate(resolve));
-assert.equal(notifications.filter(item => item.message === "Activity готова к работе.").length, 1);
+assert.equal(notifications.filter(item => item.message === "Activity готова к работе.").length, 0);
 statusFails = true;
 tick();
 await new Promise(resolve => setImmediate(resolve));
 tick();
 await new Promise(resolve => setImmediate(resolve));
-assert.equal(notifications.filter(item => item.message.includes("fictional read failure")).length, 1);
+assert.equal(notifications.filter(item => item.message.includes("fictional read failure")).length, 0);
+assert(statuses.get("zara-setup").includes("недоступно"));
 statusFails = false;
 item = {...item, revision: 4, state: {...item.state, phase: "paused"},
   execution: {status: "stopping", can_attach_sources: false, can_retry: false}};
 tick();
 await new Promise(resolve => setImmediate(resolve));
 assert(statuses.get("zara-setup").includes("исполнитель останавливается"));
-assert(widgets.get("zara-setup").join("\n").includes("дождитесь подтверждения остановки"));
+assert.equal(widgets.get("zara-setup"), undefined);
 // Assignment changes may not revise ActivitySetup; the derived status must refresh.
 item = {...item, execution: {status: "unknown", can_attach_sources: true, can_retry: true,
   blocking_unknown_invocations: ["fictional-invocation"]}};
 tick();
 await new Promise(resolve => setImmediate(resolve));
 assert(statuses.get("zara-setup").includes("новую подготовку"));
-assert(widgets.get("zara-setup").join("\n").includes("не возобновляя прерванный запрос"));
+assert.equal(widgets.get("zara-setup"), undefined);
 const declined = await tool.execute("retry-fixture", {mode: "retry", setup_id: item.setup_id},
   undefined, undefined, ctx);
 assert(declined.content[0].text.includes("not authorized"));
@@ -164,29 +167,28 @@ item = {...item, state: {...item.state, stages: [{kind: "draft"}], auto_resume: 
 await emit("session_start", {reason: "resume"});
 assert.equal(resumeCalls, 0);
 assert(statuses.get("zara-setup").includes("новую подготовку"));
-assert(widgets.get("zara-setup").join("\n").includes("не возобновляя прерванный запрос"));
+assert.equal(widgets.get("zara-setup"), undefined);
 // A stop can race the successful status read; refusal must not hide saved status.
 item = {...item, execution: {...item.execution, status: "stopped", can_resume: true}};
 refuseResume = true;
 await emit("session_start", {reason: "resume"});
-assert.equal(resumeCalls, 1);
-assert(notifications.some(entry => entry.message.includes("unknown_effect")));
-assert(statuses.get("zara-setup").includes("новую подготовку"));
-assert(widgets.get("zara-setup").join("\n").includes("не возобновляя прерванный запрос"));
+assert.equal(resumeCalls, 0);
+assert(!notifications.some(entry => entry.message.includes("unknown_effect")));
+assert.equal(widgets.get("zara-setup"), undefined);
 assert.equal(aborted, 0);
 assert.equal(typeof tick, "function");
 tick();
 await new Promise(resolve => setImmediate(resolve));
-assert.equal(resumeCalls, 1);
+assert.equal(resumeCalls, 0);
 
-// Known completed stages and the final activation step keep automatic continuation.
+// Known completed stages also wait for an actual owner conversation to resume.
 refuseResume = false;
 for (const phase of ["drafting", "reviewing", "correcting", "activating"]) {
   item = {...item, state: {...item.state, phase, auto_resume: false},
     execution: {...item.execution, status: "idle", can_resume: true}};
   const before = resumeCalls;
   await emit("session_start", {reason: "resume"});
-  assert.equal(resumeCalls, before + 1);
+  assert.equal(resumeCalls, before);
   assert.equal(typeof tick, "function");
 }
 
@@ -205,10 +207,10 @@ await emit("tool_result", failureEvent("setup_stopping"));
 assert.equal(aborted, 1); // Neither pause nor a read clears an unchanged failing call.
 const report = { pi: packageMetadata.version, rendered_tool: true, no_phantom_user_notice: true,
   legacy_history_filtered: true, compact_both_parts_filtered: true,
-  resumed_question_visible: true, duplicate_notifications: false,
+  restored_question_is_status_only: true, duplicate_notifications: false,
   observed_stop_status: true, interrupted_retry_confirmation: true,
   unknown_reopen_does_not_resume: true, resume_refusal_keeps_saved_status: true,
-  known_stage_reopen_continues: true,
+  known_stage_reopen_waits_for_owner: true,
   addressed_error_guard_preserved: true, actual_provider_calls: 0 };
 writeFileSync(join(directory, "report.json"), JSON.stringify(report, null, 2) + "\n");
 console.log(JSON.stringify(report, null, 2));

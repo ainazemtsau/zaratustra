@@ -1,5 +1,11 @@
 # Core v0.1 domain foundation
 
+The public read-only `read_terminal_response` validates one whole retained native
+Source against its exact Context, schema-18 immutable invocation tuple and current
+rights. It classifies actual answered accounting as visible/empty or reports
+attention/unknown; it never claims delivery, accepts Work or grants retry effects.
+Its historical proof does not depend on current action digests or Work revisions.
+
 Schema 18 explicitly pins Work, Attempt and session correlation on observed
 context deliveries. Deleting a manifest never erases these accounting addresses.
 Migration uses only an exact retained Context or the same execution invocation;

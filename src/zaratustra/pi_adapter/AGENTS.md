@@ -1,5 +1,24 @@
 # Interactive Pi adapter
 
+Current 0.25.0 has one ordinary conversational owner. Lifecycle tools await a
+typed transient ProcessBoundary; observers receive exact target/session/branch/
+generation leases, native AbortSignal and progress. Never inject a completion
+turn from status/executor callbacks. Startup discovers saved state without
+automatic executor/model launch. Native lifecycle tools are sequential; worker
+nodes keep their existing concurrency. Questions return without joining live
+RPC. Abort requests addressed pause/stop without waiting for cleanup joins.
+Empty final recovery stays in the same native run: exact public terminal proof,
+at most two reservations in persisted custom entries and native context edits.
+Response-only admission blocks mutations/answers/acceptance at both host and tool
+gates while preserving each provider request's actual Work/Attempt correlation.
+Its native request exposes no model tools; it formulates an explanation from the
+checked context and completed run. Retained derived selections and Git checks are
+effects, not permitted repair reads.
+New actual owner input restores normal authority. Legacy wake history is filtered;
+fresh legacy/unsupported custom messages cannot initiate another conversation.
+The schema-17 delivery contracts below remain compatibility/history, not new
+completion scheduling authority. The current plan is docs/single-conversation-owner-plan.md.
+
 New ordinary Pi spaces explicitly initialize through schema 18; existing spaces
 need the owner-approved public upgrade before launch. Durable delivery correlation
 pins Work/Attempt/session without scanning unrelated old manifests. Schema 17

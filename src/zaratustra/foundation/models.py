@@ -1530,6 +1530,21 @@ class ConversationResponseProblem(ContractModel):
     allowed_values: tuple[str, ...] = ()
 
 
+class TerminalResponseView(ContractModel):
+    """Read-only evidence for one native response, never permission to retry effects."""
+
+    assistant_source: KnowledgeRef
+    manifest: KnowledgeRef
+    invocation_id: UUID
+    assistant_entry_id: str = Field(min_length=1, max_length=300)
+    session_id: UUID
+    execution_epoch: int = Field(ge=1)
+    work_id: UUID | None = None
+    attempt_id: UUID | None = None
+    outcome: Literal["visible", "empty", "attention", "unknown"]
+    diagnostics: tuple[ConversationResponseProblem, ...] = ()
+
+
 class SourceState(ContractModel):
     kind: Literal["source"] = "source"
     channel: Literal[
@@ -3747,6 +3762,7 @@ __all__ = [
     "KnowledgeBody",
     "KnowledgeRevision",
     "SourceState",
+    "TerminalResponseView",
     "ClaimState",
     "AnalysisState",
     "MemoryLinkState",

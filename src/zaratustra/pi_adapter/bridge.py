@@ -287,6 +287,8 @@ class Bridge:
         self.request_sources: dict[UUID, tuple[KnowledgeRef, ...]] = {}
         self.request_origins: dict[UUID, str] = {}
         self.conversation_hosts: dict[UUID, dict[str, str]] = {}
+        self.process_observations: dict[tuple[UUID, str], Any] = {}
+        self.response_only: dict[UUID, dict[str, Any]] = {}
         self.conversation_actions: dict[UUID, Any] = {}
         self.recovery_obstacles: dict[UUID, UUID] = {}
         self.exposed_refs: dict[UUID, set[KnowledgeRef]] = {}
@@ -419,6 +421,10 @@ class Bridge:
     def _fresh_user_source(
         self, session_id: UUID, selected_ref: dict[str, Any] | None = None
     ) -> tuple[KnowledgeRef, str]:
+        if session_id in self.response_only:
+            raise FoundationError(
+                "permission_denied", "Response repair cannot supply an owner answer"
+            )
         original = (
             KnowledgeRef.model_validate(selected_ref)
             if selected_ref
@@ -454,6 +460,8 @@ class Bridge:
         return sources[0]
 
     def _require_model_effect(self, session_id: UUID) -> None:
+        if session_id in self.response_only:
+            raise FoundationError("permission_denied", "Response repair has read-only authority")
         if (
             self.assigned_attempt_id is None
             and read_space(self.path).schema_version >= 17
@@ -500,7 +508,91 @@ class Bridge:
         with self.lock:
             self.request_origins[session_id] = origin
             self.request_sources[session_id] = refs
+            if origin == "owner" and raw.get("fresh_owner") is True:
+                self.response_only.pop(session_id, None)
         return {"origin": origin, "sources": [ref.model_dump(mode="json") for ref in refs]}
+
+    def process_boundary(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, Any]:
+        from .boundary import process_boundary
+
+        return process_boundary(self, session_id, raw)
+
+    def native_response_mode(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, Any]:
+        """Native-only exact terminal validation and response-only admission."""
+        from zaratustra.foundation import read_terminal_response
+
+        self._session(session_id)
+        if self.assigned_attempt_id is not None:
+            raise FoundationError("permission_denied", "Assigned nodes cannot repair owner replies")
+        source = KnowledgeRef.model_validate(raw["assistant_source"])
+        manifest = KnowledgeRef.model_validate(raw["manifest"])
+        view = read_terminal_response(
+            self.path,
+            source,
+            self.authority,
+            session_id=session_id,
+            invocation_id=UUID(str(raw["invocation_id"])),
+            manifest=manifest,
+            assistant_entry_id=str(raw["assistant_entry_id"]),
+        )
+        result = view.model_dump(mode="json")
+        if raw["mode"] == "terminal":
+            return result
+        host = self.conversation_hosts.get(session_id)
+        if host is None or int(host.get("generation", -1)) != int(raw["generation"]):
+            raise FoundationError("stale_session", "Reply repair belongs to another native branch")
+        if raw.get("enabled") is not True:
+            raise FoundationError("permission_denied", "Only a fresh owner input ends reply repair")
+        if view.outcome != "empty" or view.diagnostics:
+            raise FoundationError(
+                "response_not_repairable", "Only an accounted empty stop can repair"
+            )
+        owner_sources = tuple(KnowledgeRef.model_validate(ref) for ref in raw["owner_sources"])
+        if (
+            not owner_sources
+            or len(set(owner_sources)) != len(owner_sources)
+            or self.request_origins.get(session_id) != "owner"
+            or owner_sources != self.request_sources.get(session_id, ())
+        ):
+            raise FoundationError(
+                "incomplete_context", "Reply repair needs its delivered owner roots"
+            )
+        original = read_knowledge(
+            self.path, manifest.record_id, self.authority, revision=manifest.revision
+        ).state
+        if not isinstance(original, ContextState) or any(
+            ref not in original.mandatory for ref in owner_sources
+        ):
+            raise FoundationError(
+                "incomplete_context", "Owner roots were absent from the producing context"
+            )
+        for reference in owner_sources:
+            item = read_knowledge(
+                self.path, reference.record_id, self.authority, revision=reference.revision
+            ).state
+            if (
+                reference.start is not None
+                or reference.end is not None
+                or not isinstance(item, SourceState)
+                or item.channel != "conversation_user"
+                or item.sender != self.authority.actor
+                or item.conversation_id != str(session_id)
+                or item.content is None
+            ):
+                raise FoundationError(
+                    "permission_denied", "Reply repair root is not an owner original"
+                )
+        with self.lock:
+            self.response_only[session_id] = {
+                "assistant_source": source,
+                "manifest": manifest,
+                "invocation_id": view.invocation_id,
+                "assistant_entry_id": view.assistant_entry_id,
+                "owner_sources": owner_sources,
+                "generation": int(raw["generation"]),
+                "branch_id": host["branch_id"],
+            }
+        return {"enabled": True, "terminal": result}
 
     def _setup_request_source(self, session_id: UUID, raw: dict[str, Any]) -> KnowledgeRef | None:
         """Select an original received request; never turn it into an answer."""
@@ -872,7 +964,7 @@ class Bridge:
         if action in ("pause", "cancel", "migrate", "correct_answer") and (
             self.workflow_controller is not None and self.workflow_controller.active == root_id
         ):
-            self.workflow_controller.close()
+            self.workflow_controller.request_pause(root_id)
         if action == "propose":
             fields.update(
                 workflow_id=UUID(str(raw.get("workflow_id", uuid5(operation_id, "definition")))),
@@ -966,7 +1058,9 @@ class Bridge:
         return read_config(self.workspace_config) if self.workspace_config else None
 
     def workspace_operation(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, Any]:
-        if raw.get("mode") not in ("info", "projects", "status", "check"):
+        if raw.get("mode") not in ("info", "projects", "status", "check") or (
+            session_id in self.response_only and raw.get("mode") == "check"
+        ):
             self._require_model_effect(session_id)
         self._session(session_id)
         config = self._workspace_configuration()
@@ -1336,7 +1430,7 @@ class Bridge:
                 self.authority,
             )
         if action in ("pause", "cancel") and self.setup_controller is not None:
-            self.setup_controller.close(identifier)
+            self.setup_controller.request_pause(identifier)
         if action in ("submit", "resume", "retry"):
             if self.setup_controller is None:
                 raise FoundationError(
@@ -1413,6 +1507,10 @@ class Bridge:
         return read_activity(self.path, activity_id, self.authority).model_dump(mode="json")
 
     def select(self, session_id: UUID, activity_id: UUID, work_id: UUID) -> dict[str, object]:
+        if session_id in self.response_only:
+            raise FoundationError(
+                "permission_denied", "Response repair cannot change Work selection"
+            )
         self._session(session_id)
         activity = read_activity(self.path, activity_id, self.authority)
         work = read_work(self.path, work_id, self.authority)
@@ -1499,6 +1597,8 @@ class Bridge:
             request = REQUEST_ADAPTER.validate_python(raw)
         except ValidationError as error:
             raise FoundationError("invalid_request", str(error)) from error
+        if isinstance(request, CreateResourceRequest):
+            self._require_model_effect(session_id)
         if not isinstance(
             request,
             (
@@ -1650,6 +1750,17 @@ class Bridge:
         return {"kind": kind, "schema": model.model_json_schema()}
 
     def integration(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, object]:
+        if (
+            session_id in self.response_only
+            and raw.get("mode") == "apply"
+            and (
+                raw.get("adapter") == "memory"
+                and raw.get("operation") in ("read_batch", "prepare_cache")
+                or raw.get("adapter") == "data"
+                and raw.get("operation") == "query_entries"
+            )
+        ):
+            self._require_model_effect(session_id)
         if raw.get("mode") not in ("catalog", "contract") and raw.get("operation") not in (
             "read_document",
             "product_context",
@@ -1709,6 +1820,12 @@ class Bridge:
         return result.output
 
     def data_operation(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, object]:
+        if (
+            session_id in self.response_only
+            and raw.get("mode") != "contract"
+            and raw.get("operation") == "query_entries"
+        ):
+            self._require_model_effect(session_id)
         if raw.get("mode") != "contract" and raw.get("operation", "describe_structure") not in (
             "describe_structure",
             "list_formats",
@@ -1724,6 +1841,7 @@ class Bridge:
             self._require_model_effect(session_id)
         selected = self._session(session_id)
         if raw.get("mode") == "run":
+            self._require_model_effect(session_id)
             if self.assigned_attempt_id is not None or self.procedure_controller is None:
                 raise FoundationError(
                     "permission_denied", "Procedure execution belongs to an interactive Pi window"
@@ -2338,7 +2456,9 @@ class Bridge:
     def knowledge_read(self, session_id: UUID, body: dict[str, Any]) -> dict[str, object]:
         self._session(session_id)
         mode = body.get("mode")
-        if mode == "export":
+        if mode == "export" or (
+            session_id in self.response_only and mode in ("read_batch", "prepare_cache")
+        ):
             self._require_model_effect(session_id)
         if self.restricted_core_reads and mode in ("export", "prepare_cache"):
             raise FoundationError("permission_denied", "This node cannot export or prepare caches")
@@ -2523,6 +2643,41 @@ class Bridge:
                 "kind": self.request_origins.get(session_id, "history"),
                 "sources": [ref.model_dump(mode="json") for ref in origin_sources],
             }
+            response = self.response_only.get(session_id)
+            if response is not None:
+                host = self.conversation_hosts.get(session_id)
+                if host is None or (host["branch_id"], int(host.get("generation", -1))) != (
+                    response["branch_id"],
+                    response["generation"],
+                ):
+                    raise FoundationError("stale_session", "Reply repair native branch changed")
+                from zaratustra.foundation import read_terminal_response
+
+                proof = read_terminal_response(
+                    self.path,
+                    response["assistant_source"],
+                    self.authority,
+                    session_id=session_id,
+                    invocation_id=response["invocation_id"],
+                    manifest=response["manifest"],
+                    assistant_entry_id=response["assistant_entry_id"],
+                )
+                if proof.outcome != "empty" or proof.diagnostics:
+                    raise FoundationError(
+                        "response_not_repairable", "Reply repair proof is unavailable"
+                    )
+                mandatory.extend(response["owner_sources"])
+                mandatory.extend((response["assistant_source"], response["manifest"]))
+                packet["response_recovery"] = {
+                    **proof.model_dump(mode="json"),
+                    "owner_sources": [
+                        ref.model_dump(mode="json") for ref in response["owner_sources"]
+                    ],
+                    "instruction": "Finish the same owner's conversation with a visible reply. "
+                    "Read the current saved facts and exact prior result. This request permits "
+                    "only reading and explaining: do not repeat effects, answer a user wait, "
+                    "publish a result, accept Work or start execution.",
+                }
             if purpose != "compaction-summary" and self.assigned_attempt_id is None:
                 from zaratustra.foundation import (
                     read_conversation_action,
@@ -3263,6 +3418,8 @@ class Bridge:
         return apply_operation(self.path, request, self.authority).model_dump(mode="json")
 
     def start_attempt(self, session_id: UUID, *, interrupt_previous: bool) -> dict[str, object]:
+        if interrupt_previous:
+            self._require_model_effect(session_id)
         if self.assigned_attempt_id is not None:
             raise FoundationError("permission_denied", "Assigned RPC already has an Attempt")
         selected = self._selection(session_id)
@@ -3398,6 +3555,8 @@ class Bridge:
         }
 
     def answer_wait(self, session_id: UUID, wait_id: UUID, answer: str) -> dict[str, object]:
+        if session_id in self.response_only:
+            raise FoundationError("permission_denied", "Response repair cannot answer a user wait")
         selected = self._selection(session_id)
         if self.assigned_attempt_id is not None:
             raise FoundationError("permission_denied", "RPC cannot answer its own question")
@@ -3451,6 +3610,8 @@ class Bridge:
         }
 
     def accept(self, session_id: UUID, nonce: UUID, basis: str) -> dict[str, object]:
+        if session_id in self.response_only:
+            raise FoundationError("permission_denied", "Response repair cannot accept Work")
         selected = self._selection(session_id)
         with self.lock:
             if nonce in self.accept_results:
@@ -3584,6 +3745,8 @@ class BridgeHandler(BaseHTTPRequestHandler):
                 from .conversation import conversation
 
                 result = conversation(bridge, session_id, body)
+            elif post and path.path == "/v1/process-boundary":
+                result = bridge.process_boundary(session_id, body)
             elif post and path.path == "/v1/knowledge-read":
                 result = bridge.knowledge_read(session_id, body)
             elif post and path.path == "/v1/integration":

@@ -1,3 +1,81 @@
+# One conversational owner — local 0.25.0 candidate, structural stop
+
+## outcome
+
+Implemented the owner-authorized one-conversation-owner architecture on
+`codex/single-conversation-owner` from public main `130fbea`. Core stays schema
+18. Ordinary lifecycle tools observe an exact saved boundary and return to the
+same main Pi agent. Independent completion turns and startup auto-resume were
+removed. Empty-final repair continues the same native run with two persisted
+reservations, exact terminal proof and no model tools. Work acceptance remains
+an owner action.
+
+The candidate is NOT released or installed in the personal space. Native
+interruption audit found a material completed-response recovery gap: an answered
+assigned response can be retained without its output, while resume would assign
+the stage again. Its retained Source lacks exact terminal producer proof.
+Publication is held under the owner's structural-stop rule.
+
+## evidence
+
+One full native gate passed: 1177 tests, build, hygiene, types and 32 import
+contracts. After late repair-capability findings, an affected file gate passed:
+51 tests, types, hygiene, boundaries and rebuild. The first affected attempt had
+one invalid test request, corrected by providing its required operation_key.
+Raw invalid/empty provider responses and public Core boundaries are tested.
+
+Ordinary native Pi 1.0.4 reproduced the competing old path (4 local HTTP, including
+1 host explanation); the corrected publication path used 3 ordinary requests,
+0 host requests and kept its output unaccepted. Complete Activity/first Work,
+reopening, old schema 14, native input origin, passive UI, obsolete custom wakes,
+empty repair and exhaustion were checked. The isolated installed wheel passed
+the ordinary path; affected final repair checks passed with an empty tool list.
+All 122 packaged members matched installed bytes. One bounded read-only evaluator
+smoke confirmed installed APIs, unchanged schema/storage and ordinary Pi.
+
+The interruption trace retained an exact pause, late answered original and
+truthful accounting, without output or acceptance. Public status and dispatch
+admission expose the unsafe subsequent generation path; no second provider send
+was made by that audit. A separate SQLITE_BUSY identity observation remains
+unestablished, not declared fixed by a successful repeat.
+
+See [implementation evidence](docs/single-conversation-owner-0.25.0-result.md)
+and [the structural recovery audit](docs/completed-response-recovery-audit.md).
+Final local candidate wheel SHA-256:
+`0980f22040590d292962740d781c7d16964cd0e164f528712445adfa730b3abc`.
+
+## assumptions
+
+Native Pi owns conversation turns and history. Core owns execution, exact
+versions, rights and accounting. A known model answer is distinct from a valid
+Work output or successful Attempt. Its recovery must preserve truthful producer
+proof; stopping an Attempt cannot be undone by copying its text.
+
+## cuts
+
+No exports, Git projections, private workspace data, Activity deletion, personal
+installation or new real-model calls. No new Core schema/table, delivery ledger,
+queue, service, native runtime patch or text-based duplicate suppression.
+Completed assigned-response recovery is a newly discovered structural blocker,
+not silently excluded scope. Its proposed contract awaits owner discussion.
+
+## cost
+
+Local native gate, affected checks, fictional localhost Pi scenarios, bounded
+independent review and one read-only evaluator smoke. Actual sends are listed by
+scenario in the report. Zero real-model and paid API calls. Personal Core and
+authentication were not read by these checks.
+
+## manual-acceptance
+
+The owner authorized implementation of the one-owner plan. The checks do not
+constitute release acceptance. The structural recovery contract is proposed,
+not approved or implemented; publication and private installation remain held.
+
+## next
+
+solmax
+
 # Native response recovery — 0.24.1, schema 18
 
 ## outcome

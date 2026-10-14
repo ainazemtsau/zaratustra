@@ -114,6 +114,7 @@ class SetupCoordinator:
         self.thread: threading.Thread | None = None
         self.stop = threading.Event()
         self.lock = threading.Lock()
+        self.control_lock = threading.Lock()
         self.active: UUID | None = None
         self.selection: dict[str, Any] = {
             "id": config.model_id,
@@ -148,6 +149,10 @@ class SetupCoordinator:
         )
 
     def start(self, identifier: UUID, model: dict[str, Any]) -> None:
+        with self.control_lock:
+            self._start(identifier, model)
+
+    def _start(self, identifier: UUID, model: dict[str, Any]) -> None:
         if not model.get("id") or model.get("provider") != self.config.provider_id:
             raise FoundationError(
                 "unsupported_provider", "Setup must use the selected admitted Pi provider/model"
@@ -424,12 +429,19 @@ class SetupCoordinator:
                 authority,
             )
 
-    def close(self, setup_id: UUID | None = None) -> None:
+    def request_pause(self, setup_id: UUID | None = None, *, expected_thread: Any = ...) -> None:
+        with self.control_lock:
+            if expected_thread is not ... and self.thread not in (None, expected_thread):
+                raise FoundationError("stale_session", "A later executor owns this setup")
+            self._request_pause(setup_id)
+
+    def _request_pause(self, setup_id: UUID | None = None) -> None:
+        """Persist an addressed stop request without joining a live RPC worker."""
         with self.lock:
             if setup_id is not None and self.active != setup_id:
                 return
             self.stop.set()
-            identifier, thread = self.active, self.thread
+            identifier = self.active
         try:
             if identifier is not None:
                 state = _observe(
@@ -453,9 +465,13 @@ class SetupCoordinator:
         except FoundationError:
             # Lost authority or deleted content cannot authorize another provider send.
             pass
-        finally:
-            if thread is not None:
-                thread.join(timeout=15)
+
+    def close(self, setup_id: UUID | None = None) -> None:
+        self.request_pause(setup_id)
+        with self.lock:
+            thread = self.thread if setup_id is None or self.active == setup_id else None
+        if thread is not None:
+            thread.join(timeout=15)
 
 
 def worker() -> int:
