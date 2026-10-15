@@ -1,38 +1,50 @@
-# Ordinary reading boundaries — 0.25.4 verification in progress
+# Ordinary reading boundaries — verified 0.25.4
 
 ## outcome
 
-Implemented the owner-approved common read/query contract, preserving Core
-schema 18 and existing domain histories. Verification is in progress; this entry
-is not a delivery, publication, private installation or owner-acceptance claim.
+Implemented and published the owner-approved common material/query contract at
+`f5d169964e1751891b798c57f317a673f4f2110f` in `ainazemtsau/zaratustra/main`.
+Fetched Git and authenticated GitHub readback matched. Core schema remains 18.
+Authorized private installation and exact state preservation checks passed.
 
 ## evidence
 
-Exact material/knowledge tests passed 27 cases. Four native localhost failure
-cases and reopening passed, preserving one result and unknown accounting.
-The common reading scenario, full gate and isolated wheel remain to be finished.
-See [detailed evidence](docs/read-boundaries-0.25.4-result.md) and the
-[approved contract](docs/read-boundaries-audit-plan.md).
+One full native gate passed 1,380 tests, formatting/hygiene/types, all 34 import
+boundaries and builds. The bounded evaluator found two concrete regressions;
+final corrections passed 114 affected tests, three probe checks and affected
+static checks. Counts overlap. Isolated final wheel/native Pi passed 26 actual
+localhost sends across mixed reads, populated queries, schema identity, old Work
+pins, four provider/context failures and reopening. All 127 installed production
+members matched the frozen wheel; the full-gate wheel was identical. Native UI
+hooks passed with zero sends. See [actual evidence](docs/read-boundaries-0.25.4-result.md)
+and the [approved contract](docs/read-boundaries-audit-plan.md).
+Verified private backup/restoration and install readback preserved domain history,
+answers, results, Development and accounting. Only an exact closed ordinary
+execution was interrupted through Core; its unknown response stayed unknown.
 
 ## assumptions
 
-Current rights and exact revisions stay authoritative. Navigation metadata is
-not body exposure; empty indexed search is not global absence. Unknown sends
-remain unknown and must not be blindly replayed.
+Current rights and exact revisions remain authoritative. Navigation is not body
+exposure; empty indexed search is not global absence. A fresh owner request can
+explain saved effects without blind replay or accepting Work. Scripted provider
+proof does not guarantee all future model decisions.
 
 ## cuts
 
-No domain template, intent parser, new execution graph, service, schema migration,
-exporter change, automatic acceptance or real model call.
+No domain template, intent parser, parallel execution authority, service, schema
+migration, exporter/private Git change or automatic Work acceptance. Real model
+or subscription calls: zero. Earlier failed harness trials are recorded separately.
 
 ## cost
 
-Local tests and fictional localhost requests only. Observed native error matrix:
-11 actual sends across four cases and reopening. Final totals pending.
+Local tests/builds and fictional localhost requests. Final installed verification
+paths: 26 actual localhost sends; UI smoke: zero. Wheel SHA-256:
+`c0f63c3e02357c4b81a77a8d5e6bdc5735fd92e6a5cc01376161f3268a8663e7`.
 
 ## manual-acceptance
 
-Structural implementation approved. Finished-result acceptance remains separate.
+Implementation authorized. Finished-result owner acceptance remains separate;
+actual release/maintenance checks do not accept any Work or the whole product.
 
 ## next
 

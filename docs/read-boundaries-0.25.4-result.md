@@ -4,8 +4,10 @@
 
 The owner approved `docs/read-boundaries-audit-plan.md`. Implemented common
 material reading, executable selectors, literal text search and native failure
-diagnostics. Core schema remains 18. Release verification is in progress;
-publication, private installation and owner acceptance are not yet claimed.
+diagnostics. Core schema remains 18. Verification and authorized private
+installation are complete. Shared code `f5d169964e1751891b798c57f317a673f4f2110f`
+is published in `ainazemtsau/zaratustra/main`, verified by fetched Git and
+authenticated GitHub readback. Finished-result owner acceptance stays separate.
 
 ## Confirmed original behavior
 
@@ -39,7 +41,7 @@ every cause in earlier private transcripts.
 
 See [interface documentation](read-boundaries.md) for contracts.
 
-## Observed checks so far
+## Observed checks
 
 - Material/knowledge affected tests: 27 passed.
 - Common runtime/integration/Bridge aggregate: 132 passed. The bounded read-only
@@ -66,6 +68,19 @@ See [interface documentation](read-boundaries.md) for contracts.
   histories and retained bytes matched, with live state unchanged. An initial
   comparison wrongly included the recovery's newly added Grant/Decision rows;
   it was corrected to compare domain histories separately from recovery authority.
+- The one full native gate passed: 1,380 tests in 1,263.85 seconds, formatting,
+  hygiene, types, all 34 import boundaries and wheel/source builds. The gate
+  started before the two evaluator corrections; the 114 affected repeat, three
+  probe checks, final static checks and isolated native traces cover those final
+  corrections. Full-gate and frozen-candidate wheels were byte-identical.
+- The installed personal tool matched all 127 production members. Before any
+  maintenance, every live table matched its pre-install snapshot. The previously
+  inaccessible original opened through the common reader with its exact digest.
+  One exact ordinary Attempt belonging to the owner's closed Pi was interrupted
+  through the normal Core operation. Work, Activity and Artifact histories,
+  original bytes, typed entries, receipts of prior work, Development and invocation
+  accounting remained unchanged. The unknown invocation stayed unknown, with the
+  same held/committed units. No model request or Work acceptance occurred.
 - Failed preliminary test/harness attempts are retained: missing pinned SQLite
   initialization in one direct pytest invocation; missing public exports during
   concurrent implementation; a relative probe directory caused native startup
@@ -76,12 +91,19 @@ See [interface documentation](read-boundaries.md) for contracts.
   failed trace is retained separately. No successful native case suppresses
   provider assertion failures or replaces unknown outcomes with success.
 
-## Remaining verification
+## Evidence locations and reproducibility
 
-The one full native gate remains in progress. It started before the evaluator's
-concrete corrections; final affected repeats and the isolated wheel checks above
-cover those corrections. Record its actual outcome before publication or personal
-installation. Bounded evaluator is complete; no additional review loop is added.
+Ignored local evidence includes `read-boundaries-0254-full-gate.log`,
+`read-boundaries-0254-correction-tests-b.log`, the final installed read/fault
+directories and public-byte comparison. Private backup, restore, installation
+and addressed-maintenance receipts remain outside the public product.
+
+Installed native evidence uses `tools.probe_read_boundaries_pi` and
+`tools.probe_native_read_faults_pi` with fictional localhost providers, plus
+`tools/probe_activity_setup_ui.mjs`. The detailed raw requests and snapshots are
+not packaged. Runtime dependencies match uv.lock. Published production byte
+comparison separately records the pre-existing py.typed marker line-ending
+difference; installed members exactly match the frozen wheel.
 
 ## Limits
 
