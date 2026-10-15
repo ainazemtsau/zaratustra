@@ -1,5 +1,13 @@
 # Core v0.1 domain foundation
 
+Memory relation closure resolves exact material and structural families through
+one transaction-local check. Artifacts are retained content; subject/admin
+references are address/digest anchors, never arbitrary prose imports. Full
+history preserves payload fragments and validates correspondence with indexed
+edges. Reopening rechecks rights and original availability. Corrected closure
+may stale a saved selection without rewriting it or its Work pins. Existing
+knowledge-only identities and current-mode relation semantics stay compatible.
+
 `materials` reads exact content-bearing Artifact and knowledge references through
 current rights, preserving caller fragments and actual byte exposure. Navigation
 metadata never counts as reading. The shared content representation validates

@@ -21,9 +21,12 @@ from .knowledge import (
     BODY_ADAPTER,
     _checked_read,
     _read_scope_limited,
+    _refs,
+    _require_ref,
     open_knowledge,
     read_knowledge,
 )
+from .materials import open_material
 from .models import (
     AnalysisState,
     ClaimState,
@@ -317,6 +320,115 @@ class _Reader:
     epoch: int
 
 
+@dataclass(frozen=True)
+class _SelectionMember:
+    kind: str
+    checksum: str
+    state: KnowledgeBody | None = None
+
+
+def _resolve_member(
+    connection: sqlite3.Connection, reader: _Reader, ref: KnowledgeRef
+) -> _SelectionMember:
+    """Validate one exact address, without treating structural anchors as content."""
+    from .data_store import check_data_access
+
+    _require_ref(connection, ref, reader.actor, reader.epoch)
+    check_data_access(connection, ref.record_id, ref.revision, reader.actor, reader.epoch)
+    address = str(ref.record_id), ref.revision
+    row = connection.execute(
+        "SELECT r.kind,r.status,v.payload,v.sha256 FROM knowledge_records r "
+        "JOIN knowledge_revisions v ON v.record_id=r.record_id "
+        "WHERE r.record_id=? AND v.revision=?",
+        address,
+    ).fetchone()
+    if row is not None:
+        kind, status, payload, checksum = row
+        if status == "deleted" or payload is None or checksum is None:
+            raise FoundationError("content_unavailable", "Selection knowledge basis is unavailable")
+        if hashlib.sha256(payload).hexdigest().upper() != checksum:
+            raise FoundationError("corrupt_space", "Selection knowledge digest mismatch")
+        return _SelectionMember(kind, checksum, BODY_ADAPTER.validate_json(payload))
+    row = connection.execute(
+        "SELECT r.kind,r.status,v.body_json,c.payload,c.sha256 FROM records r "
+        "JOIN record_revisions v ON v.record_id=r.record_id "
+        "LEFT JOIN managed_content c ON c.record_id=v.record_id AND c.revision=v.revision "
+        "WHERE r.record_id=? AND v.revision=?",
+        address,
+    ).fetchone()
+    if row is not None:
+        kind, status, body, payload, checksum = row
+        if status == "deleted" or (kind == "artifact" and payload is None):
+            raise FoundationError("content_unavailable", "Selection record basis is unavailable")
+        if kind == "artifact":
+            if hashlib.sha256(payload).hexdigest().upper() != checksum:
+                raise FoundationError("corrupt_space", "Selection Artifact digest mismatch")
+            return _SelectionMember(kind, checksum)
+        return _SelectionMember(kind, hashlib.sha256(body.encode("utf-8")).hexdigest().upper())
+    row = connection.execute(
+        "SELECT r.kind,r.status,c.payload,c.sha256 FROM subject_records r "
+        "JOIN subject_revisions v ON v.record_id=r.record_id "
+        "LEFT JOIN subject_content c ON c.record_id=v.record_id AND c.revision=v.revision "
+        "WHERE r.record_id=? AND v.revision=?",
+        address,
+    ).fetchone()
+    if row is None and int(connection.execute("PRAGMA user_version").fetchone()[0]) >= 11:
+        row = connection.execute(
+            "SELECT r.kind,r.status,v.payload,v.sha256 FROM development_records r "
+            "JOIN development_revisions v ON v.record_id=r.record_id "
+            "WHERE r.record_id=? AND v.revision=?",
+            address,
+        ).fetchone()
+    if row is None or row[1] in ("deleted", "unavailable") or row[2] is None or row[3] is None:
+        raise FoundationError("content_unavailable", "Selection structural basis is unavailable")
+    if hashlib.sha256(row[2]).hexdigest().upper() != row[3]:
+        raise FoundationError("corrupt_space", "Selection structural digest mismatch")
+    return _SelectionMember(row[0], row[3])
+
+
+def _member_fingerprint(ref: KnowledgeRef, checksum: str) -> bytes:
+    # Keep the established knowledge-only identity byte-for-byte. Fragments have
+    # a distinct identity because their permitted content differs from the whole.
+    value = f"{ref.record_id}:{ref.revision}:{checksum}"
+    if ref.start is not None:
+        value += f":{ref.start}:{ref.end}"
+    return value.encode()
+
+
+def _full_bases(
+    connection: sqlite3.Connection, reader: _Reader, root: KnowledgeRef
+) -> Iterator[KnowledgeRef]:
+    resolved = _resolve_member(connection, reader, root)
+    if resolved.state is None:
+        # Activity, Work and administrative records remain exact anchors. They
+        # never import ownership, rights or arbitrary subject prose into memory.
+        return
+    actual = _refs(resolved.state, connection)
+    for ordinal, identifier, revision, role, mode in connection.execute(
+        "SELECT ordinal,target_id,target_revision,role,target_mode FROM knowledge_edges "
+        "WHERE record_id=? AND revision=? ORDER BY ordinal",
+        (str(root.record_id), root.revision),
+    ):
+        if ordinal < len(actual):
+            actual_role, ref = actual[ordinal]
+            if (actual_role, str(ref.record_id), ref.revision) == (role, identifier, revision):
+                yield ref
+                continue
+            if (
+                (actual_role, str(ref.record_id)) == (role, identifier)
+                and ref.start is None
+                and (role == "data_scope" or (role == "data_current" and mode == "current"))
+            ):
+                # These relationships derive the live head in _refs; the stored
+                # edge still retains the exact revision observed when saved.
+                yield KnowledgeRef(record_id=UUID(identifier), revision=revision)
+                continue
+            raise FoundationError("corrupt_space", "Selection edge differs from its exact payload")
+        if role != "memory_scope" or ordinal != len(actual):
+            raise FoundationError("corrupt_space", "Selection has an unknown indexed basis")
+        yield KnowledgeRef(record_id=UUID(identifier), revision=revision)
+
+
 def _rows(
     connection: sqlite3.Connection,
     reader: _Reader,
@@ -519,51 +631,23 @@ def _members(
                 reference = KnowledgeRef(record_id=UUID(identifier), revision=revision)
                 if reference in seen:
                     continue
-                from .data_store import check_data_access
-                from .knowledge import _require_ref
-
-                _require_ref(connection, reference, reader.actor, reader.epoch)
-                check_data_access(
-                    connection, reference.record_id, reference.revision, reader.actor, reader.epoch
-                )
-                checksum = connection.execute(
-                    "SELECT sha256 FROM knowledge_revisions WHERE record_id=? AND revision=?",
-                    (identifier, revision),
-                ).fetchone()
-                if checksum is None or checksum[0] is None:
-                    raise FoundationError("content_unavailable", "Related definition disappeared")
+                resolved = _resolve_member(connection, reader, reference)
                 refs.append(reference)
                 seen.add(reference)
-                data_roots.append(reference)
-                digest.update(f"{identifier}:{revision}:{checksum[0]}".encode())
+                if resolved.state is not None:
+                    data_roots.append(reference)
+                digest.update(_member_fingerprint(reference, resolved.checksum))
     while full_roots:
         root = full_roots.pop()
-        for identifier, revision, checksum in connection.execute(
-            "SELECT e.target_id,e.target_revision,v.sha256 FROM knowledge_edges e "
-            "JOIN knowledge_revisions v ON v.record_id=e.target_id "
-            "AND v.revision=e.target_revision WHERE e.record_id=? AND e.revision=? "
-            "ORDER BY e.ordinal",
-            (str(root.record_id), root.revision),
-        ):
-            reference = KnowledgeRef(record_id=UUID(identifier), revision=revision)
+        for reference in _full_bases(connection, reader, root):
             if reference in seen:
                 continue
-            _authorize(
-                connection,
-                actor=reader.actor,
-                action="record.read",
-                epoch=reader.epoch,
-                resource_type="artifact",
-                resource_id=reference.record_id,
-            )
-            if checksum is None:
-                raise FoundationError(
-                    "content_unavailable", f"Full memory basis {identifier}@{revision}"
-                )
+            resolved = _resolve_member(connection, reader, reference)
             seen.add(reference)
             refs.append(reference)
-            full_roots.append(reference)
-            digest.update(f"{identifier}:{revision}:{checksum}".encode())
+            if resolved.state is not None:
+                full_roots.append(reference)
+            digest.update(_member_fingerprint(reference, resolved.checksum))
     return tuple(refs), digest.hexdigest()
 
 
@@ -674,6 +758,54 @@ def _split(text: str, size: int = 32768) -> Iterator[str]:
         yield "".join(current)
 
 
+def _member_text(path: Path, member: KnowledgeRef, authority: LocalAuthority) -> str:
+    with space_connection(path) as (connection, info):
+        _ready(info, authority)
+        resolved = _resolve_member(
+            connection, _Reader(authority.actor, info.execution_epoch), member
+        )
+    header = f"\n## {member.record_id}@{member.revision}\n"
+    if resolved.state is not None and member.start is None:
+        item = read_knowledge(path, member.record_id, authority, revision=member.revision)
+        if item.state is None:
+            raise FoundationError("content_unavailable", "Selection input disappeared")
+        metadata = getattr(item.state, "memory", None)
+        if metadata is not None:
+            header += f"{metadata.title}\nActivity: {metadata.activity_id or 'common'}\n"
+        return header + _text(item.state) + "\n"
+    if resolved.kind != "artifact" and resolved.state is None:
+        navigation = {
+            **member.model_dump(mode="json"),
+            "record_kind": resolved.kind,
+            "reader": "development" if resolved.kind in ("sleep", "candidate") else resolved.kind,
+            "content_included": False,
+        }
+        return header + "Structural reference:\n```json\n" + canonical_json(navigation) + "\n```\n"
+    chunks: list[bytes] = []
+    offset = 0
+    while True:
+        opened = open_material(path, member, authority, offset=offset, max_bytes=65536)
+        content = opened.get("content_base64")
+        if not isinstance(content, str):
+            raise FoundationError("content_unavailable", "Selection material disappeared")
+        chunks.append(base64.b64decode(content))
+        if opened["next_offset"] is None:
+            break
+        offset = int(str(opened["next_offset"]))
+    body = b"".join(chunks)
+    try:
+        text = body.decode("utf-8")
+    except UnicodeDecodeError:
+        text = "Binary content (base64): " + base64.b64encode(body).decode("ascii")
+    navigation = {
+        **member.model_dump(mode="json"),
+        "record_kind": resolved.kind,
+        "reader": "material",
+        "content_included": True,
+    }
+    return header + text + "\n\nExact material:\n```json\n" + canonical_json(navigation) + "\n```\n"
+
+
 def prepare_memory_cache(
     path: Path,
     authority: LocalAuthority,
@@ -737,14 +869,7 @@ def prepare_memory_cache(
     parts: list[KnowledgeRef] = []
     total_bytes = 0
     for member in members:
-        item = read_knowledge(path, member.record_id, authority, revision=member.revision)
-        if item.state is None:
-            raise FoundationError("content_unavailable", "Selection input disappeared")
-        header = f"\n## {member.record_id}@{member.revision}\n"
-        metadata = getattr(item.state, "memory", None)
-        if metadata is not None:
-            header += f"{metadata.title}\nActivity: {metadata.activity_id or 'common'}\n"
-        text = header + _text(item.state) + "\n"
+        text = _member_text(path, member, authority)
         for fragment in _split(text):
             total_bytes += len(fragment.encode("utf-8"))
             part_id = uuid5(selection_id, f"part:{len(parts)}")
@@ -841,6 +966,8 @@ def open_memory_selection(
     with space_connection(path) as (connection, info):
         _ready(info, authority)
         item = _checked_read(connection, info, authority, selection_id, None)
+        if item.state is None:
+            raise FoundationError("content_unavailable", "Selection is unavailable")
         if not isinstance(item.state, MemoryViewState) or item.state.selection is None:
             raise FoundationError("wrong_kind", "Read a memory selection")
         basis = item.state.selection
@@ -918,14 +1045,7 @@ def open_memory_selection(
         final = _checked_read(connection, latest, authority, selection_id, item.revision)
         result["current"] = not final.stale
         for member in basis.members:
-            available = connection.execute(
-                "SELECT r.status,v.payload IS NOT NULL FROM knowledge_records r "
-                "JOIN knowledge_revisions v ON v.record_id=r.record_id "
-                "WHERE r.record_id=? AND v.revision=?",
-                (str(member.record_id), member.revision),
-            ).fetchone()
-            if available is None or available[0] != "active" or not available[1]:
-                raise FoundationError("content_unavailable", "Selection basis became unavailable")
+            _resolve_member(connection, _Reader(authority.actor, latest.execution_epoch), member)
     return result
 
 

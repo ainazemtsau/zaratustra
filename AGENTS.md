@@ -141,6 +141,14 @@ and parallel dirty work; do not publish private preparation branches merely to k
 
 ## What exists
 
+Related-material selections (0.25.5) keep schema 18. Exact typed relations and
+full-history closure resolve Artifact, knowledge and structural anchors by
+their actual family. Composition, rendering, opening and provider admission
+share current rights/availability checks. Fragments stay bounded; subject prose
+is not imported. Corrected membership may stale old selections without changing
+saved bytes or Work input pins. See `docs/read-boundaries.md`; observed release
+verification and owner acceptance remain separate.
+
 Ordinary read boundaries (0.25.4) keep schema 18. Exact material readers span
 Artifact and knowledge families without widening fragments. Runtime query inputs
 are distinct from saved definition bindings; adapters default to literal text

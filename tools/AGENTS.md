@@ -1,5 +1,12 @@
 # Development tools
 
+`probe_related_materials_pi` reproduces the 0.25.4 context refusal after a late
+DataEntry references an existing input Artifact. The corrected path selects the
+same ordinary Work, retains its historical snapshot, reads a fresh related-material
+selection and reopens the native session. Observe actual HTTP packets and exact
+delivery pins; keep independent Development and owner acceptance unchanged.
+Localhost only, fictional data. Negative reproduction is reported separately.
+
 `probe_native_read_faults_pi` separately observes HTTP refusal, TCP loss, SSE error
 and mandatory-context failure through actual Pi. It requires native settlement,
 exactly one retained result, unchanged unknown accounting and no acceptance.

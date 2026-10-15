@@ -1,3 +1,51 @@
+# Related material selections — verified 0.25.5
+
+## outcome
+
+Implemented the missing transitive-family boundary in the approved reading
+contract. Verification and authorized private installation passed. Public
+publication is pending; finished-result owner acceptance is separate.
+Core stays schema 18.
+
+## evidence
+
+Installed 0.25.4 reproduces the reported context refusal before HTTP. The frozen
+0.25.5 wheel passes actual ordinary Pi continuation and session reopening outside
+checkout: five localhost sends, exact target delivery pins, retained historical
+snapshot and independent Development state. All 127 production files match.
+Focused coverage includes relations, fragments, rights, deletion, older snapshots,
+schema-13 identities and pre-send checks. One full native gate passed 1,398 tests,
+types, hygiene, all 34 import boundaries and builds. Full-gate and isolated tested
+wheels match exactly. Backup/restoration passed; installation readback preserved
+every live Core table and opened the actual previously blocked snapshot. See
+[correction evidence](docs/related-materials-0.25.5-result.md).
+
+## assumptions
+
+Addressed rights and retained bytes remain required. A stale historical selection
+is not rewritten or silently refreshed. Scripted provider evidence does not prove
+universal model judgement.
+
+## cuts
+
+No new schema, exporter, private Git update, real provider calls, Activity reset or
+automatic Work acceptance. Existing owner answers and independent work are retained.
+
+## cost
+
+Local validation only. Installed positive trace: five actual localhost requests;
+old negative reproduction: zero HTTP. No subscription or paid API calls.
+Wheel SHA-256: `3691e75d60a77a111cbafaf63765dd1c0b59587e4e2fbf448a8253a29d43ba4f`.
+
+## manual-acceptance
+
+Implementation correction is authorized. Finished-result owner acceptance remains
+separate from verification and release operations.
+
+## next
+
+solmax
+
 # Ordinary reading boundaries — verified 0.25.4
 
 ## outcome

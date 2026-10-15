@@ -823,27 +823,13 @@ def apply_knowledge_change(
                         isinstance(selected, MemoryViewState)
                         and selected.generation_method == "zaratustra.memory/1"
                     ):
-                        # Recheck copied originals even for an explicit historical snapshot.
-                        # Read metadata only, not all original bodies in this write transaction.
+                        from .memory import _Reader, _resolve_member
+
+                        # Recheck exact families, rights and retained originals even
+                        # for an explicit historical snapshot. A valid Artifact or
+                        # structural anchor is not a missing knowledge record.
                         for original in selected.sources:
-                            _authorize(
-                                connection,
-                                actor=request.actor,
-                                action="record.read",
-                                epoch=epoch,
-                                resource_type="artifact",
-                                resource_id=original.record_id,
-                            )
-                            available = connection.execute(
-                                "SELECT r.status,v.payload IS NOT NULL FROM knowledge_records r "
-                                "JOIN knowledge_revisions v ON v.record_id=r.record_id "
-                                "WHERE r.record_id=? AND v.revision=?",
-                                (str(original.record_id), original.revision),
-                            ).fetchone()
-                            if available is None or available[0] != "active" or not available[1]:
-                                raise FoundationError(
-                                    "content_unavailable", "Memory basis disappeared"
-                                )
+                            _resolve_member(connection, _Reader(request.actor, epoch), original)
                         if (
                             selected.selection is not None
                             and selected.selection.cache
@@ -1122,14 +1108,7 @@ def _checked_read(
                 isinstance(state, MemoryViewState)
                 and state.generation_method == "zaratustra.memory/1"
             ):
-                _authorize(
-                    connection,
-                    actor=authority.actor,
-                    action="record.read",
-                    epoch=info.execution_epoch,
-                    resource_type="artifact",
-                    resource_id=ref.record_id,
-                )
+                _require_ref(connection, ref, authority.actor, info.execution_epoch)
             target = connection.execute(
                 "SELECT status,current_revision FROM knowledge_records WHERE record_id=?",
                 (str(ref.record_id),),

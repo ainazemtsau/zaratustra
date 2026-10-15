@@ -160,6 +160,8 @@ def test_batch_union_history_and_original_scope(tmp_path: Path) -> None:
         (first, 1),
         (first, 2),
         (second, 1),
+        (activity, 1),
+        (other, 1),
     }
     assert read_knowledge(root, first, owner, revision=1).state == original.state
     revised = read_knowledge(root, first, owner).state

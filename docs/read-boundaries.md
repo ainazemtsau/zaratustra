@@ -22,6 +22,21 @@ continue with `next_material_index` and `next_offset` and the same exact refs.
 This is an addressed read, not a newly saved MemorySelection. Use selectors for
 indexed knowledge batches and caches. The two input forms are exclusive.
 
+Typed entry relations and full-history selections retain exact bases across
+material families. Existing Artifact inputs are content-bearing members, read
+through the same bounded material interface. Exact fragments remain fragments.
+Activity, Work and administrative subjects are address/digest anchors with
+explicit reader navigation; their prose is not imported as material content.
+Current-mode data relations retain their existing knowledge-only semantics.
+
+Selection composition, cache rendering, reopening and final availability checks
+use the same addressed family resolution. Current rights and retained bytes
+remain required: a cached copy cannot restore access to a revoked or deleted
+original. Missing indexed/payload correspondence is an integrity error, never
+permission to expand a fragment. Old saved selections and Work input pins remain
+unchanged. A corrected closure can mark an old selection stale while keeping its
+retained historical content readable; rebuilding creates a distinct selection.
+
 ## Runtime queries
 
 `RuntimeMemorySelector` accepts exact Activity IDs, format revisions, scopes and
