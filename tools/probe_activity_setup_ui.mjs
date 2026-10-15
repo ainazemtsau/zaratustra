@@ -25,6 +25,10 @@ const packageDir = join(runtime, "node_modules/@earendil-works/pi-coding-agent")
 const packageMetadata = JSON.parse(readFileSync(join(packageDir, "package.json"), "utf8"));
 const { discoverAndLoadExtensions } = await import(pathToFileURL(join(packageDir, "dist/index.js")).href);
 const { convertToLlm } = await import(pathToFileURL(join(packageDir, "dist/core/messages.js")).href);
+// The UI-only loader now obtains its tool contract before AgentSession starts.
+globalThis.fetch = async () => Response.json({runtime_selector_schema: {
+  type: "object", properties: {}, additionalProperties: false,
+}});
 const loaded = await discoverAndLoadExtensions([extensionPath], directory, agentDir);
 assert.deepEqual(loaded.errors, []);
 // The UI-only harness has no live AgentSession; supply its chosen thinking state.

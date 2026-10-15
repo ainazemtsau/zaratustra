@@ -141,6 +141,14 @@ and parallel dirty work; do not publish private preparation branches merely to k
 
 ## What exists
 
+Ordinary read boundaries (0.25.4) keep schema 18. Exact material readers span
+Artifact and knowledge families without widening fragments. Runtime query inputs
+are distinct from saved definition bindings; adapters default to literal text
+search with explicit advanced FTS5. Native preparation preserves the first error
+and fences automatic retry of an unknown send through its exact saved delivery.
+See `docs/read-boundaries.md` and `docs/read-boundaries-audit-plan.md`; observed
+verification and owner acceptance remain separate.
+
 Ordinary selection correction (0.25.3) keeps schema
 18. The owner approved one common Work/project/assigned-executor transition in
 `docs/ordinary-work-selection-transition-plan.md`. A native pre-tool observation

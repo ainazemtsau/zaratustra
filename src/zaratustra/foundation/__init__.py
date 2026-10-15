@@ -113,6 +113,7 @@ from .knowledge import (
     upgrade_delivery_correlation_space,
     upgrade_knowledge_space,
 )
+from .materials import describe_material_reference, open_material
 from .memory import (
     export_memory_selection,
     memory_catalog,
@@ -408,6 +409,16 @@ from .runtime import (
     SQLITE_DLL_ENV,
     RuntimeConfigurationError,
 )
+from .runtime_queries import (
+    RuntimeMemorySelector,
+    SearchMode,
+    admit_runtime_selectors,
+    current_runtime_knowledge_reference,
+    read_runtime_material_batch,
+    runtime_selectors,
+    search_expression,
+    search_runtime_knowledge,
+)
 from .sleep_method import (
     initial_sleep_method,
     initial_sleep_method_id,
@@ -430,6 +441,16 @@ from .workflows import (
 )
 
 __all__ = [
+    "describe_material_reference",
+    "open_material",
+    "RuntimeMemorySelector",
+    "SearchMode",
+    "admit_runtime_selectors",
+    "current_runtime_knowledge_reference",
+    "runtime_selectors",
+    "read_runtime_material_batch",
+    "search_expression",
+    "search_runtime_knowledge",
     "upgrade_delivery_correlation_space",
     "current_conversation_action",
     "ConversationActionRef",

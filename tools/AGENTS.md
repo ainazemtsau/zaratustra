@@ -1,5 +1,10 @@
 # Development tools
 
+`probe_native_read_faults_pi` separately observes HTTP refusal, TCP loss, SSE error
+and mandatory-context failure through actual Pi. It requires native settlement,
+exactly one retained result, unchanged unknown accounting and no acceptance.
+Reopening sends only a fresh fictional request; prior sends are never replayed.
+
 `probe_ordinary_selection_pi` exercises an active ordinary Work handoff, preserved
 outputs, actual native file placement and reopening with localhost Responses.
 Before returning the first target response, inspect the exact committed departing

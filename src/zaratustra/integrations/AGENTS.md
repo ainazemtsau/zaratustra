@@ -1,5 +1,10 @@
 # Integration boundary
 
+Runtime memory and typed queries share public RuntimeMemorySelector admission;
+definition-local aliases stay in saved definitions. Plain text search differs
+from explicit FTS5 expressions. Exact mixed material batches use common readers,
+retain byte bounds and never fabricate a saved selection identifier.
+
 The `data` adapter exposes the public typed Core formats, entries, intake,
 queries/calculations, working sets and saved procedures. It does not run a model
 or add external transport. Window-owned Pi uses ordinary assigned execution.

@@ -61,6 +61,26 @@ KnowledgeChange = (
 )
 
 
+def _material_content(state: KnowledgeBody) -> tuple[str, bytes | None, str]:
+    """One exact reader representation, shared by byte reads and fragment checks."""
+
+    if isinstance(state, SourceState):
+        return "content", state.content, state.media_type
+    if isinstance(state, HandoffState):
+        return "document", state.document, state.media_type
+    if isinstance(state, MemoryViewState):
+        return "text", state.text.encode("utf-8"), "text/plain"
+    if isinstance(state, ClaimState):
+        return "proposition", state.proposition.encode("utf-8"), "text/plain"
+    if isinstance(state, AnalysisState) and state.conclusion is not None:
+        return "conclusion", state.conclusion.encode("utf-8"), "text/plain"
+    return (
+        "structured_data",
+        canonical_json(state.model_dump(mode="json")).encode("utf-8"),
+        "application/json",
+    )
+
+
 def _context_correlation(context: ContextState) -> tuple[str | None, str | None, str, str]:
     if context.attempt_id is not None and context.work_id is None:
         raise FoundationError("invalid_delivery_correlation", "Attempt context requires its Work")
@@ -280,15 +300,7 @@ def _require_ref(connection: sqlite3.Connection, ref: KnowledgeRef, actor: str, 
                 (str(ref.record_id), ref.revision),
             ).fetchone()[0]
             referenced = BODY_ADAPTER.validate_json(payload)
-            content = (
-                referenced.content
-                if isinstance(referenced, SourceState)
-                else referenced.document
-                if isinstance(referenced, HandoffState)
-                else referenced.text.encode("utf-8")
-                if isinstance(referenced, MemoryViewState)
-                else None
-            )
+            _, content, _ = _material_content(referenced)
             if content is None or ref.end > len(content):
                 raise FoundationError("invalid_fragment", "Fragment exceeds retained source bytes")
         return
@@ -313,9 +325,21 @@ def _require_ref(connection: sqlite3.Connection, ref: KnowledgeRef, actor: str, 
     if other is None:
         raise FoundationError("not_found", f"Exact basis {ref.record_id}@{ref.revision} is absent")
     if ref.start is not None:
-        raise FoundationError(
-            "invalid_fragment", "Only retained knowledge payloads have byte fragments"
-        )
+        artifact = connection.execute(
+            "SELECT r.kind,c.payload FROM records r "
+            "JOIN record_revisions v ON v.record_id=r.record_id "
+            "LEFT JOIN managed_content c ON c.record_id=v.record_id AND c.revision=v.revision "
+            "WHERE r.record_id=? AND v.revision=?",
+            (str(ref.record_id), ref.revision),
+        ).fetchone()
+        if (
+            artifact is None
+            or artifact[0] != "artifact"
+            or artifact[1] is None
+            or ref.end is None
+            or ref.end > len(artifact[1])
+        ):
+            raise FoundationError("invalid_fragment", "Fragment exceeds retained material bytes")
 
 
 def _prior_state(connection: sqlite3.Connection, record_id: UUID) -> tuple[str, int, KnowledgeBody]:

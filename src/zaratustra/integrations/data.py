@@ -15,7 +15,8 @@ from zaratustra.foundation import (
     IntakeElement,
     KnowledgeRef,
     LocalAuthority,
-    MemorySelector,
+    RuntimeMemorySelector,
+    admit_runtime_selectors,
     aggregate_entries,
     correct_entry,
     create_entry,
@@ -69,7 +70,7 @@ class Ingest(Parameters):
 
 
 class Query(Parameters):
-    selectors: tuple[MemorySelector, ...] = Field(min_length=1)
+    selectors: tuple[RuntimeMemorySelector, ...] = Field(min_length=1)
     cache: bool = False
     max_bytes: int = Field(default=16384, ge=1, le=32768)
 
@@ -153,7 +154,9 @@ def data_operations(path: Path, authority: LocalAuthority) -> dict[str, Operatio
             )
             output = receipt.model_dump(mode="json")
         elif name == "query_entries":
-            args["selectors"] = cast(Query, parameters).selectors
+            args["selectors"] = admit_runtime_selectors(
+                path, authority, cast(Query, parameters).selectors
+            )
             output = dict(query_entries(path, authority, **args))
         elif name == "aggregate_entries":
             args["selection"] = cast(Aggregate, parameters).selection

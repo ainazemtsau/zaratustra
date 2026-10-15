@@ -1,3 +1,43 @@
+# Ordinary reading boundaries — 0.25.4 verification in progress
+
+## outcome
+
+Implemented the owner-approved common read/query contract, preserving Core
+schema 18 and existing domain histories. Verification is in progress; this entry
+is not a delivery, publication, private installation or owner-acceptance claim.
+
+## evidence
+
+Exact material/knowledge tests passed 27 cases. Four native localhost failure
+cases and reopening passed, preserving one result and unknown accounting.
+The common reading scenario, full gate and isolated wheel remain to be finished.
+See [detailed evidence](docs/read-boundaries-0.25.4-result.md) and the
+[approved contract](docs/read-boundaries-audit-plan.md).
+
+## assumptions
+
+Current rights and exact revisions stay authoritative. Navigation metadata is
+not body exposure; empty indexed search is not global absence. Unknown sends
+remain unknown and must not be blindly replayed.
+
+## cuts
+
+No domain template, intent parser, new execution graph, service, schema migration,
+exporter change, automatic acceptance or real model call.
+
+## cost
+
+Local tests and fictional localhost requests only. Observed native error matrix:
+11 actual sends across four cases and reopening. Final totals pending.
+
+## manual-acceptance
+
+Structural implementation approved. Finished-result acceptance remains separate.
+
+## next
+
+solmax
+
 # Ordinary Work selection transition — verified package 0.25.3
 
 ## outcome

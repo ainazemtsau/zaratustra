@@ -1,5 +1,14 @@
 # Core v0.1 domain foundation
 
+`materials` reads exact content-bearing Artifact and knowledge references through
+current rights, preserving caller fragments and actual byte exposure. Navigation
+metadata never counts as reading. The shared content representation validates
+ContextManifest fragments without changing old state serialization or schema 18.
+`runtime_queries` admits executable selectors separately from saved definition
+bindings. Adapter text search is literal by default; explicit FTS5 and historical
+Core/definition expressions retain their semantics. Cursors bind original text
+and mode. Exact mixed material batches are bounded reads, not saved selections.
+
 Optional selection_transition on StopAttemptRequest guards automatic ordinary
 handoff through exact native tool/UI Source provenance and current execution,
 input, resource, rights and durable delivery pins. It only interrupts an ordinary

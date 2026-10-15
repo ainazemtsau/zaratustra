@@ -176,7 +176,7 @@ function usageUnits(usage: any): number | null {
   return null;
 }
 
-export default function (pi: any): void {
+export default async function (pi: any): Promise<void> {
   if (!endpoint || !token || !allowedOrigin || !providerBaseUrl || !Number.isSafeInteger(reserveUnits) || reserveUnits < 1) {
     throw new Error("Zaratustra bridge requires endpoint, token, origin and positive reserve");
   }
@@ -246,6 +246,8 @@ export default function (pi: any): void {
     }
   }
   let lastPreflightRefusal: CoreRequestError | null = null;
+  let contextFailure: unknown = null;
+  let unresolvedResponse: {invocationId: string; manifest: any; origin: string} | null = null;
   const toolFailureCounts = new Map<string, number>();
   const publicationFailures = new Map<string, CoreRequestError>();
   const publicationTargets = new Map<string, {work_id: string; slot: string}>();
@@ -537,6 +539,9 @@ export default function (pi: any): void {
                         httpStatus: number | null = null): Promise<void> {
     const manifest = manifests.get(invocationId);
     if (manifest) {
+      if (outcome === "unknown") unresolvedResponse = {
+        invocationId, manifest, origin: responsePins.get(invocationId)?.originKey ?? JSON.stringify(origin),
+      };
       await request("/v1/context-delivery", {
         invocation_id: invocationId, manifest_id: manifest.manifest_id,
         manifest_revision: manifest.manifest_revision,
@@ -590,6 +595,7 @@ export default function (pi: any): void {
                                onInvocation: (id: string) => void): Promise<Response> {
     assertThinkingCapability(model);
     if (!captureReady || !contextReady || !currentManifest) {
+      if (contextFailure) throw contextFailure;
       throw new Error("Core capture or ContextManifest is not ready; no HTTP was sent");
     }
     const selectedProvider = profile === "codex-sse" ? "openai-codex" : localProviderId;
@@ -642,7 +648,7 @@ export default function (pi: any): void {
     const invocationAttempt = origin.kind === "host" ? null : attemptId;
     invocationPins.set(invocationId, {workId: invocationSelection?.work_id ?? null, attemptId: invocationAttempt,
                                      sessionId});
-    responsePins.set(invocationId, {sessionId, generation, resultProtocol,
+    responsePins.set(invocationId, {sessionId, generation, resultProtocol, originKey: JSON.stringify(origin),
       workId: invocationSelection?.work_id ?? null, attemptId: invocationAttempt});
     responseInvocation = invocationId;
     const common = {
@@ -1185,20 +1191,33 @@ export default function (pi: any): void {
     },
   });
 
+  // Native tool registration consumes the same public schema as integrations.
+  // Pi awaits async extension factories before it builds the tool registry.
+  const runtimeReadContract = await request("/v1/connect", {});
+  const runtimeSelectorSchema = runtimeReadContract.runtime_selector_schema;
+  if (!runtimeSelectorSchema || runtimeSelectorSchema.type !== "object")
+    throw new Error("Core executable selector contract is unavailable");
+
   pi.registerTool({
     name: "zara_memory",
     label: "Zaratustra sources and memory",
     description: "Save and read exact primary sources, form source-backed Claim, preserve analysis " +
-      "and remainder, navigate links and FTS5 search, prepare/revise a document handoff and " +
+      "and remainder, navigate links and literal text search (advanced query_mode=fts5), prepare/revise a document handoff and " +
       "compare its separately captured return. Access Grants use zara_grant, not this tool. " +
       "First use contract for the typed Core intent. " +
       "For UTF-8 source content supply state.content_text; for a handoff document supply " +
       "state.document_text. Core assigns actor and space. A saved source is not a fact, " +
       "Decision, Grant or accepted Work result. Creation and revision use current Core rights " +
       "without a confirmation prompt; interactive deletion requires owner confirmation. " +
-      "An open result has exact revision, " +
+      "Open exact Source or Artifact materials using record_id and revision; start/end are byte bounds " +
+      "and offset is relative to that fragment. An open result has exact revision, " +
       "availability and next_offset for continued reading. For shared memory use catalog, then " +
-      "read_batch with multiple selectors across common and Activity memory. full includes history " +
+      "read_batch with multiple executable selectors across common and exact Activity IDs. Resolve exact " +
+      "format_refs through zara_data describe_structure with selected work_id; local format_keys, " +
+      "current_activity and use_period belong to saved definitions, not runtime selectors. " +
+      "Alternatively read_batch material_refs reads mixed exact material fragments with material_index/offset " +
+      "continuation. Do not combine material_refs and selectors. Search covers indexed knowledge originals, " +
+      "not all Work inputs or ordinary Artifacts; an empty match does not mean an addressed input is absent. full includes history " +
       "and raw originals. prepare_cache reuses unchanged selections without a model; open_selection " +
       "continues using selection_id, next_part and next_offset. A partial window is not the full selection. " +
       "Use history for one record, then open its exact revisions. export writes a complete Markdown " +
@@ -1206,24 +1225,11 @@ export default function (pi: any): void {
     parameters: Type.Object({
       mode: StringEnum(["contract", "apply", "list", "search", "open", "neighbors",
         "catalog", "read_batch", "history", "open_selection", "prepare_cache", "export"] as const),
-      selectors: Type.Optional(Type.Array(Type.Object({
-        activity_ids: Type.Optional(Type.Array(Type.String())),
-        common: Type.Optional(Type.Boolean()),
-        record_ids: Type.Optional(Type.Array(Type.String())),
-        topics: Type.Optional(Type.Array(Type.String())),
-        query: Type.Optional(Type.String()),
-        full: Type.Optional(Type.Boolean()),
-        context_role: Type.Optional(StringEnum(["reference", "required", "legacy"] as const)),
-        kinds: Type.Optional(Type.Array(Type.String())),
-        material_roles: Type.Optional(Type.Array(StringEnum(["working", "basis", "intake", "execution", "representation"] as const))),
-        format_refs: Type.Optional(Type.Array(Type.Object({record_id: Type.String(), revision: Type.Number()}))),
-        data_filters: Type.Optional(Type.Array(Type.Any())),
-        date_from: Type.Optional(Type.String()),
-        date_until: Type.Optional(Type.String()),
-        time_from: Type.Optional(Type.String()),
-        time_until: Type.Optional(Type.String()),
-        data_statuses: Type.Optional(Type.Array(Type.String())),
-      }))),
+      selectors: Type.Optional(Type.Array(Type.Unsafe(runtimeSelectorSchema))),
+      material_refs: Type.Optional(Type.Array(Type.Object({record_id: Type.String(), revision: Type.Integer({minimum: 1}),
+        start: Type.Optional(Type.Union([Type.Integer({minimum: 0}), Type.Null()])),
+        end: Type.Optional(Type.Union([Type.Integer({minimum: 1}), Type.Null()]))}, {additionalProperties: false}))),
+      material_index: Type.Optional(Type.Integer({minimum: 0})),
       selection_id: Type.Optional(Type.String()),
       file: Type.Optional(Type.String()),
       part: Type.Optional(Type.Number()),
@@ -1233,13 +1239,16 @@ export default function (pi: any): void {
       kind: Type.Optional(Type.String()),
       intent: Type.Optional(Type.Any()),
       query: Type.Optional(Type.String()),
+      query_mode: Type.Optional(StringEnum(["text", "fts5"] as const)),
       record_id: Type.Optional(Type.String()),
       revision: Type.Optional(Type.Number()),
+      start: Type.Optional(Type.Integer({minimum: 0})),
+      end: Type.Optional(Type.Integer({minimum: 1})),
       offset: Type.Optional(Type.Number()),
       max_bytes: Type.Optional(Type.Number()),
       limit: Type.Optional(Type.Number()),
       cursor: Type.Optional(Type.String()),
-    }),
+    }, {$defs: runtimeSelectorSchema.$defs}),
     async execute(_callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
       if (!connection) connection = await request("/v1/connect", {});
       if (params.mode === "contract") {
@@ -1273,19 +1282,15 @@ export default function (pi: any): void {
       }
       const read = await request("/v1/knowledge-read", {
         mode: params.mode, kind: params.kind, query: params.query, record_id: params.record_id,
+        query_mode: params.query_mode, start: params.start, end: params.end,
         revision: params.revision, offset: params.offset, max_bytes: params.max_bytes,
         limit: params.limit, cursor: params.cursor,
         selectors: params.selectors, selection_id: params.selection_id, part: params.part,
+        material_refs: params.material_refs, material_index: params.material_index,
         file: params.file,
         toc_offset: params.toc_offset,
         after_revision: params.after_revision, full: params.full,
       });
-      if (params.mode === "open" && read.content_base64) {
-        const mediaType = read.state?.media_type ?? "text/plain";
-        if (mediaType.startsWith("text/") || ["claim", "analysis", "view"].includes(read.state?.kind)) {
-          read.content_text = Buffer.from(read.content_base64, "base64").toString("utf8");
-        }
-      }
       return { content: [{ type: "text", text: JSON.stringify(read) }], details: read };
     },
   });
@@ -2309,11 +2314,25 @@ export default function (pi: any): void {
           captureReady = true;
         }
       }
+      if (unresolvedResponse && unresolvedResponse.origin === JSON.stringify(origin)) {
+        const previous = unresolvedResponse;
+        const saved = await request("/v1/context-delivery", {mode: "read",
+          invocation_id: previous.invocationId,
+          manifest_id: previous.manifest.manifest_id,
+          manifest_revision: previous.manifest.manifest_revision}, true);
+        if (saved.stage !== "answered") throw new CoreRequestError("unknown_send",
+          `Исход обращения ${previous.invocationId} не подтверждён. Автоматический повтор остановлен; ` +
+          "сохранённые действия и расход не изменены. Продолжить разговор можно новым сообщением.", true);
+        unresolvedResponse = null;
+      }
       await sharedPreflight(ctx, false);
       if (selection && origin.kind !== "host" && !compactionInProgress) await ensurePromptAttempt();
-      return await prepareCurrentContext(event);
+      const prepared = await prepareCurrentContext(event);
+      contextFailure = null;
+      return prepared;
     }
     catch (error) {
+      contextFailure = error;
       try { await clearFailedPrompt(); } catch { /* Preserve Core state if cleanup refuses */ }
       throw error;
     }
@@ -2364,6 +2383,7 @@ export default function (pi: any): void {
       manifestMarker = `ZARA_MANIFEST:${currentManifest.manifest_id}@${currentManifest.manifest_revision}`;
       contextReady = true;
     } catch (error) {
+      contextFailure = error;
       try { await clearFailedPrompt(); } catch { /* Preserve Core state if cleanup refuses */ }
       throw error;
     }

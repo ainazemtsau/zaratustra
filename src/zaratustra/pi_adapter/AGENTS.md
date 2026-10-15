@@ -1,5 +1,13 @@
 # Interactive Pi adapter
 
+Ordinary material reads use exact common Artifact/knowledge windows and runtime
+selectors without definition-local aliases. Only returned bytes become exposed;
+navigation and index coverage cannot claim full originals were read. Native
+transport guards preserve the original context refusal through SDK hook error
+handling. After unknown delivery the same native origin cannot retry silently;
+recheck the exact durable invocation/manifest. A new owner request can explain
+saved effects without changing the old unknown outcome or accepting Work.
+
 `selection.py` is the shared native transition for ordinary Work/project selection
 and assigned process entry. Retain actual native choice/entry/invocation evidence,
 then hold Bridge's admission RLock from host validation through the exact Core

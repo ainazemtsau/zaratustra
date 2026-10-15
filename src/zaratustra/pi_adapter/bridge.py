@@ -74,6 +74,7 @@ from zaratustra.foundation import (
     ReviseDevelopmentRequest,
     ReviseKnowledgeRequest,
     ReviseWorkPlanRequest,
+    RuntimeMemorySelector,
     SetBindingStateRequest,
     SleepRemainder,
     SleepState,
@@ -83,7 +84,10 @@ from zaratustra.foundation import (
     StopCandidateRequest,
     WaiveObligationRequest,
     activity_setup_memory,
+    admit_runtime_selectors,
     apply_operation,
+    current_runtime_knowledge_reference,
+    describe_material_reference,
     export_memory_selection,
     initial_sleep_method,
     initial_sleep_ref,
@@ -100,7 +104,7 @@ from zaratustra.foundation import (
     memory_catalog,
     memory_history,
     memory_required_refs,
-    open_knowledge,
+    open_material,
     open_memory_selection,
     output_publication_contracts,
     prepare_memory_cache,
@@ -126,7 +130,8 @@ from zaratustra.foundation import (
     read_work_plan,
     read_work_status,
     read_workflow_node_for_work,
-    search_knowledge,
+    runtime_selectors,
+    search_runtime_knowledge,
     sleep_work_template,
     upgrade_binding_space,
     upgrade_change_package_space,
@@ -228,6 +233,10 @@ class ProviderPreflightRefusal(BaseModel):
     code: str = Field(min_length=1, max_length=100)
     detail: str = Field(min_length=1)
     diagnostic: KnowledgeRef | None = None
+
+
+class _RuntimeSelectors(BaseModel):
+    selectors: tuple[RuntimeMemorySelector, ...] = ()
 
 
 class Bridge:
@@ -1538,6 +1547,7 @@ class Bridge:
             "actor": self.authority.actor,
             "session_id": str(session_id),
             "records": choices,
+            "runtime_selector_schema": RuntimeMemorySelector.model_json_schema(),
             "selection": {
                 "activity_id": str(selected.activity_id),
                 "work_id": str(selected.work_id),
@@ -1816,7 +1826,13 @@ class Bridge:
             and raw.get("mode") == "apply"
             and (
                 raw.get("adapter") == "memory"
-                and raw.get("operation") in ("read_batch", "prepare_cache")
+                and (
+                    raw.get("operation") == "prepare_cache"
+                    or (
+                        raw.get("operation") == "read_batch"
+                        and "material_refs" not in raw.get("arguments", {})
+                    )
+                )
                 or raw.get("adapter") == "data"
                 and raw.get("operation") == "query_entries"
             )
@@ -1864,7 +1880,11 @@ class Bridge:
         )
         with self.lock:
             self.exposed_refs.setdefault(session_id, set()).update(result.exposed)
-            if adapter == "memory" and operation in ("read_batch", "open_selection"):
+            if (
+                adapter == "memory"
+                and operation in ("read_batch", "open_selection")
+                and "selection_id" in result.output
+            ):
                 self.memory_snapshots.setdefault(session_id, set()).add(
                     KnowledgeRef(
                         record_id=UUID(str(result.output["selection_id"])),
@@ -1872,8 +1892,8 @@ class Bridge:
                     )
                 )
             if adapter == "memory" and operation == "prepare_cache":
-                selectors = tuple(
-                    MemorySelector.model_validate(s) for s in raw["arguments"].get("selectors", [])
+                selectors = runtime_selectors(
+                    _RuntimeSelectors.model_validate(raw["arguments"]).selectors
                 )
                 self.memory_rules.setdefault(session_id, {})[
                     json.dumps([s.model_dump(mode="json") for s in selectors], sort_keys=True)
@@ -2550,7 +2570,8 @@ class Bridge:
         self._session(session_id)
         mode = body.get("mode")
         if mode == "export" or (
-            session_id in self.response_only and mode in ("read_batch", "prepare_cache")
+            session_id in self.response_only
+            and (mode == "prepare_cache" or (mode == "read_batch" and "material_refs" not in body))
         ):
             self._require_model_effect(session_id)
         if self.restricted_core_reads and mode in ("export", "prepare_cache"):
@@ -2563,10 +2584,35 @@ class Bridge:
             "prepare_cache",
             "export",
         ):
-            selectors = tuple(
-                MemorySelector.model_validate(value) for value in body.get("selectors", [])
-            )
+            try:
+                selectors = admit_runtime_selectors(
+                    self.path, self.authority, _RuntimeSelectors.model_validate(body).selectors
+                )
+            except ValidationError as error:
+                raise FoundationError("invalid_request", str(error)) from error
             maximum = int(body.get("max_bytes", 16384))
+            if "material_refs" in body:
+                if mode != "read_batch":
+                    raise FoundationError(
+                        "invalid_request", "Exact materials use read_batch or open"
+                    )
+                args: dict[str, Any] = {
+                    key: body[key]
+                    for key in (
+                        "material_refs",
+                        "material_index",
+                        "offset",
+                        "selectors",
+                        "max_bytes",
+                    )
+                    if key in body
+                }
+                batch = installed_integrations(self.path, self.authority).execute(
+                    uuid4(), "memory", "read_batch", args, contract_version=1
+                )
+                with self.lock:
+                    self.exposed_refs.setdefault(session_id, set()).update(batch.exposed)
+                return batch.output
             if mode == "export":
                 destination = (self.workspace / str(body["file"])).resolve()
                 if not destination.is_relative_to(self.workspace.resolve()):
@@ -2631,36 +2677,51 @@ class Bridge:
                 cursor=body.get("cursor"),
             )
         if mode == "search":
-            return search_knowledge(
+            try:
+                search = RuntimeMemorySelector.model_validate(
+                    {"query": body["query"], "query_mode": body.get("query_mode", "text")}
+                )
+            except ValidationError as error:
+                raise FoundationError("invalid_request", str(error)) from error
+            if search.query is None:
+                raise FoundationError("invalid_request", "query must be text")
+            return search_runtime_knowledge(
                 self.path,
                 self.authority,
-                str(body["query"]),
+                search.query,
+                query_mode=search.query_mode,
                 limit=int(body.get("limit", 25)),
                 cursor=str(body["cursor"]) if body.get("cursor") is not None else None,
             )
         record_id = UUID(str(body["record_id"]))
         if mode == "open":
-            result = open_knowledge(
+            revision = body.get("revision")
+            if revision is None:
+                revision = current_runtime_knowledge_reference(
+                    self.path, self.authority, record_id
+                ).revision
+            try:
+                ref = KnowledgeRef.model_validate(
+                    {
+                        "record_id": record_id,
+                        "revision": revision,
+                        "start": body.get("start"),
+                        "end": body.get("end"),
+                    }
+                )
+            except ValidationError as error:
+                raise FoundationError("invalid_request", str(error)) from error
+            result = open_material(
                 self.path,
-                record_id,
+                ref,
                 self.authority,
-                revision=int(body["revision"]) if body.get("revision") else None,
                 offset=int(body.get("offset", 0)),
                 max_bytes=int(body.get("max_bytes", 16384)),
             )
-            if result.get("content_base64") is not None:
-                start = int(cast(int, result["offset"]))
-                end = start + len(base64.b64decode(str(result["content_base64"])))
-                complete = start == 0 and end == result["total_bytes"]
-                reference = KnowledgeRef(
-                    record_id=record_id,
-                    revision=cast(int, result["revision"]),
-                    start=None if complete else start,
-                    end=None if complete else end,
+            with self.lock:
+                self.exposed_refs.setdefault(session_id, set()).update(
+                    KnowledgeRef.model_validate(item) for item in cast(list[Any], result["exposed"])
                 )
-                result["exposed"] = [reference.model_dump(mode="json")]
-                with self.lock:
-                    self.exposed_refs.setdefault(session_id, set()).add(reference)
             return result
         if mode == "neighbors":
             return read_knowledge_neighbors(
@@ -2686,6 +2747,7 @@ class Bridge:
         if info.schema_version < 10:
             raise FoundationError("unsupported_schema", "Context needs explicit schema 10")
         mandatory: list[KnowledgeRef] = []
+        exposed_content: set[KnowledgeRef] = set()
         structure_pin: KnowledgeRef | None = None
         procedure_snapshot: KnowledgeRef | None = None
         evidence_refs: list[KnowledgeRef] = []
@@ -2934,6 +2996,10 @@ class Bridge:
             packet["conversation_memory"] = []
             for selectors in rules.values():
                 selected_memory = prepare_memory_cache(self.path, self.authority, selectors)
+                exposed_content.update(
+                    KnowledgeRef.model_validate(ref)
+                    for ref in cast(list[Any], selected_memory["exposed"])
+                )
                 mandatory.append(
                     KnowledgeRef(
                         record_id=UUID(str(selected_memory["selection_id"])),
@@ -3008,6 +3074,10 @@ class Bridge:
                         self.path, procedure_snapshot.record_id, self.authority, max_bytes=16384
                     )
                     packet["procedure_input"] = selected_input
+                    exposed_content.update(
+                        KnowledgeRef.model_validate(ref)
+                        for ref in cast(list[Any], selected_input["exposed"])
+                    )
             packet["status"] = current.status.model_dump(mode="json") if current.status else None
             packet["composition"] = (
                 current.composition.model_dump(mode="json") if current.composition else None
@@ -3074,6 +3144,10 @@ class Bridge:
                             record_id=selection_id, revision=int(str(cached["revision"]))
                         )
                         mandatory.append(cache_ref)
+                        exposed_content.update(
+                            KnowledgeRef.model_validate(ref)
+                            for ref in cast(list[Any], cached["exposed"])
+                        )
                         cast(list[Any], packet["memory"]).append(
                             {
                                 **{key: value for key, value in cached.items() if key != "exposed"},
@@ -3111,6 +3185,7 @@ class Bridge:
                     ).model_dump(mode="json")
                     for ref in required
                 ]
+                exposed_content.update(required)
                 intake = memory_catalog(
                     self.path,
                     self.authority,
@@ -3149,6 +3224,11 @@ class Bridge:
                         "reference": continuation.model_dump(mode="json"),
                         "content_text": exact_continuation.content.decode("utf-8"),
                     }
+                    exposed_content.add(
+                        KnowledgeRef(
+                            record_id=continuation.artifact_id, revision=continuation.revision
+                        )
+                    )
                     partial_materials: list[dict[str, Any]] = []
                     for raw_partial in json.loads(exact_continuation.content)["partial_refs"]:
                         partial_ref = ArtifactRef.model_validate(raw_partial)
@@ -3173,6 +3253,11 @@ class Bridge:
                                 "content_base64": base64.b64encode(partial.content).decode("ascii"),
                             }
                         )
+                        exposed_content.add(
+                            KnowledgeRef(
+                                record_id=partial_ref.artifact_id, revision=partial_ref.revision
+                            )
+                        )
                     cast(dict[str, Any], packet["workflow_continuation"])["partials"] = (
                         partial_materials
                     )
@@ -3182,6 +3267,11 @@ class Bridge:
                 )
                 mandatory.append(KnowledgeRef(record_id=ref.artifact_id, revision=ref.revision))
                 item = exact.model_dump(mode="json", exclude={"content"})
+                item["material"] = describe_material_reference(
+                    self.path,
+                    KnowledgeRef(record_id=ref.artifact_id, revision=ref.revision),
+                    self.authority,
+                )
                 item["content_text"] = (
                     exact.content.decode("utf-8")
                     if exact.content is not None
@@ -3192,6 +3282,30 @@ class Bridge:
                     )
                     else None
                 )
+                if item["content_text"] is not None:
+                    exposed_content.add(
+                        KnowledgeRef(record_id=ref.artifact_id, revision=ref.revision)
+                    )
+                if (
+                    packet.get("procedure") is not None
+                    and exact.media_type == "application/json"
+                    and exact.content is not None
+                ):
+                    try:
+                        original_packet = json.loads(exact.content)
+                    except (ValueError, UnicodeError):
+                        original_packet = None
+                    if isinstance(original_packet, dict) and isinstance(
+                        original_packet.get("request_basis"), list
+                    ):
+                        basis = [
+                            KnowledgeRef.model_validate(value)
+                            for value in original_packet["request_basis"]
+                        ]
+                        cast(dict[str, Any], packet["procedure"])["request_basis"] = [
+                            describe_material_reference(self.path, reference, self.authority)
+                            for reference in basis
+                        ]
                 inputs.append(item)
             packet["inputs"] = inputs
             inspection = inspect_space(self.path, self.authority)
@@ -3287,6 +3401,11 @@ class Bridge:
                             )
                         )
                         claims.append(claim_item.model_dump(mode="json"))
+                        exposed_content.add(
+                            KnowledgeRef(
+                                record_id=claim_item.record_id, revision=claim_item.revision
+                            )
+                        )
                         for evidence_ref in state.evidence + state.counter_evidence:
                             mandatory.append(evidence_ref)
                             evidence_refs.append(evidence_ref)
@@ -3356,6 +3475,8 @@ class Bridge:
                 packet["prompt_text"] = (
                     source.state.content.decode("utf-8") if source.state.content else None
                 )
+                if source.state.content is not None:
+                    exposed_content.add(latest_source)
         additional: list[dict[str, object]] = []
         input_keys = (
             {(ref.artifact_id, ref.revision) for ref in work.state.inputs} if selected else set()
@@ -3400,6 +3521,9 @@ class Bridge:
                         {
                             "record_id": str(required_ref.record_id),
                             "revision": required_ref.revision,
+                            "material": describe_material_reference(
+                                self.path, required_ref, self.authority
+                            ),
                             "text": fragment.decode("utf-8")
                             if artifact.media_type and artifact.media_type.startswith("text/")
                             else None,
@@ -3409,6 +3533,7 @@ class Bridge:
                             else None,
                         }
                     )
+                    exposed_content.add(required_ref)
                     continue
                 raise
             if isinstance(required_item.state, SourceState):
@@ -3426,6 +3551,9 @@ class Bridge:
                     {
                         "record_id": str(required_ref.record_id),
                         "revision": required_ref.revision,
+                        "material": describe_material_reference(
+                            self.path, required_ref, self.authority
+                        ),
                         "fragment": {"start": required_ref.start, "end": required_ref.end},
                         "text": fragment.decode("utf-8")
                         if required_item.state.media_type.startswith("text/")
@@ -3435,6 +3563,7 @@ class Bridge:
                         else None,
                     }
                 )
+                exposed_content.add(required_ref)
         packet["primary_sources"] = additional
         rendered = json.dumps(packet, ensure_ascii=False, separators=(",", ":"))
         if (
@@ -3510,8 +3639,9 @@ class Bridge:
             self.authority,
         )
         with self.lock:
-            self.exposed_refs.setdefault(session_id, set()).update(mandatory)
-            self.exposed_refs[session_id].update(historic)
+            # Dependency pins and navigation/catalog metadata do not mean that
+            # original bytes were delivered. Only serialized bodies add exposure.
+            self.exposed_refs.setdefault(session_id, set()).update(exposed_content)
             if session_id not in self.pending_selections:
                 self.selection_barriers.pop(session_id, None)
         return {
@@ -3532,6 +3662,20 @@ class Bridge:
         )
         if not isinstance(manifest.state, ContextState) or manifest.state.session_id != session_id:
             raise FoundationError("wrong_scope", "Invocation manifest differs from native session")
+        if raw.get("mode") == "read":
+            from zaratustra.foundation import read_context_delivery
+
+            saved = read_context_delivery(
+                self.path, UUID(str(raw["invocation_id"])), self.authority
+            )
+            if (saved["manifest_id"], saved["manifest_revision"]) != (
+                str(manifest.record_id),
+                manifest.revision,
+            ):
+                raise FoundationError(
+                    "wrong_scope", "Invocation differs from exact native manifest"
+                )
+            return saved
         free_call = manifest.state.work_id is None
         request = RecordContextDeliveryRequest.model_validate(
             {

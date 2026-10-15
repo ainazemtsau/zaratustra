@@ -6,29 +6,47 @@ from pathlib import Path
 from typing import cast
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from zaratustra.foundation import (
     KnowledgeRef,
     LocalAuthority,
-    MemorySelector,
+    RuntimeMemorySelector,
+    admit_runtime_selectors,
     memory_catalog,
     memory_history,
     open_memory_selection,
     prepare_memory_cache,
     read_memory_batch,
+    read_runtime_material_batch,
 )
 
 from .registry import IntegrationResult, Operation, Parameters
 
 
 class Query(Parameters):
-    selectors: tuple[MemorySelector, ...] = ()
+    selectors: tuple[RuntimeMemorySelector, ...] = ()
     max_bytes: int = Field(default=16384, ge=1, le=32768)
 
 
+class Batch(Query):
+    material_refs: tuple[KnowledgeRef, ...] = ()
+    material_index: int = Field(default=0, ge=0)
+    offset: int = Field(default=0, ge=0)
+
+    @model_validator(mode="after")
+    def one_reader(self) -> Batch:
+        if "material_refs" in self.model_fields_set and not self.material_refs:
+            raise ValueError("Explicit material_refs must not be empty")
+        if self.material_refs and self.selectors:
+            raise ValueError("Choose exact material_refs or indexed-memory selectors, not both")
+        if not self.material_refs and (self.material_index or self.offset):
+            raise ValueError("Material continuation requires exact material_refs")
+        return self
+
+
 class Catalog(Parameters):
-    selectors: tuple[MemorySelector, ...] = ()
+    selectors: tuple[RuntimeMemorySelector, ...] = ()
     limit: int = Field(default=25, ge=1, le=100)
     cursor: str | None = None
     full: bool = False
@@ -64,7 +82,7 @@ def memory_operations(path: Path, authority: LocalAuthority) -> dict[str, Operat
             memory_catalog(
                 path,
                 authority,
-                selectors=args.selectors,
+                selectors=admit_runtime_selectors(path, authority, args.selectors),
                 limit=args.limit,
                 cursor=args.cursor,
                 full=args.full,
@@ -72,17 +90,37 @@ def memory_operations(path: Path, authority: LocalAuthority) -> dict[str, Operat
         )
 
     def batch(operation_id: UUID, parameters: BaseModel) -> IntegrationResult:
-        args = cast(Query, parameters)
+        args = cast(Batch, parameters)
+        if args.material_refs:
+            return result(
+                read_runtime_material_batch(
+                    path,
+                    authority,
+                    args.material_refs,
+                    material_index=args.material_index,
+                    offset=args.offset,
+                    max_bytes=args.max_bytes,
+                )
+            )
         return result(
             read_memory_batch(
-                path, authority, args.selectors, operation_id=operation_id, max_bytes=args.max_bytes
+                path,
+                authority,
+                admit_runtime_selectors(path, authority, args.selectors),
+                operation_id=operation_id,
+                max_bytes=args.max_bytes,
             )
         )
 
     def cache(_operation_id: UUID, parameters: BaseModel) -> IntegrationResult:
         args = cast(Query, parameters)
         return result(
-            prepare_memory_cache(path, authority, args.selectors, max_bytes=args.max_bytes)
+            prepare_memory_cache(
+                path,
+                authority,
+                admit_runtime_selectors(path, authority, args.selectors),
+                max_bytes=args.max_bytes,
+            )
         )
 
     def opened(_operation_id: UUID, parameters: BaseModel) -> IntegrationResult:
@@ -119,9 +157,9 @@ def memory_operations(path: Path, authority: LocalAuthority) -> dict[str, Operat
             catalog,
         ),
         "read_batch": Operation(
-            "Read a union of selected areas/topics/addresses, with explicit history",
-            "Retains exact source-backed selection; no external send",
-            Query,
+            "Read indexed memory selectors or exact mixed material_refs with bounded continuation",
+            "Indexed selections are retained; exact materials only read; no external send",
+            Batch,
             batch,
         ),
         "prepare_cache": Operation(
