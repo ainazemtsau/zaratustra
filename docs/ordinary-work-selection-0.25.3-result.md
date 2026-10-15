@@ -6,9 +6,10 @@ The owner-approved [common transition](ordinary-work-selection-transition-plan.m
 is implemented and checked. Core schema remains 18. The finished wheel was tested
 outside the checkout with ordinary Pi 1.0.4 and fictional localhost providers.
 Authorized private backup, restore verification, installation and addressed repair
-are complete; operational details remain private. Public publication and remote
-readback remain pending at this reporting checkpoint. Finished-result owner
-acceptance is separate.
+are complete; operational details remain private. Product commit
+`0f83cdef1b86006b728d9dcba350a1b2a02aa947` is published in
+`ainazemtsau/zaratustra/main`, verified through authenticated GitHub and fetched
+Git readback. Finished-result owner acceptance is separate.
 
 ## Cause and correction
 
@@ -109,6 +110,10 @@ native entries. Actual sends, manifests and receipts were independently read.
   the expected error count. Final installed loss traces each observed that one
   expected error; product effects were not replaced by the fixture.
 - Initial Temp/cache sandbox refusals were rerun with required host access.
+- An extra Git-blob versus wheel byte comparison found the pre-existing empty
+  `py.typed` marker as LF in Git and CRLF in the Windows checkout/package. The
+  other 124 product files matched exactly. This is not reported as a 125-file
+  Git byte-equality pass; all 125 installed files do match the tested wheel.
 - The private backup probe initially expected backup inventory to be unchanged.
   Its verified copy was retained and resumed. Only documented backup tables may
   differ; domain histories were checked separately on restore and final readback.
@@ -125,8 +130,10 @@ These trials are not counted as successful final traces.
   delivery/invocation accounting and acceptance. Only the exact execution left
   by a closed old Pi was interrupted through the public owner operation.
   Installation alone changed no Core state. No real procedure/model was run.
-- Public destination: `ainazemtsau/zaratustra/main`; publication/readback pending
-  at this checkpoint. Private Git and exporters were not updated.
+- Public destination: `ainazemtsau/zaratustra/main`, product commit
+  `0f83cdef1b86006b728d9dcba350a1b2a02aa947`, verified after push. This reporting
+  update changes no product or wheel bytes. Private Git and exporters were not
+  updated.
 
 ## Limits and acceptance
 

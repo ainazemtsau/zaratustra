@@ -6,8 +6,10 @@ Implemented the owner-approved common ordinary Work/project/assigned transition.
 Core schema remains 18. Old execution is guarded and interrupted before committing
 the rechecked target. Assigned execution leaves the main agent conversationally
 free. Results, history, accounting and owner acceptance remain independent.
-Final wheel checks, authorized private installation and addressed repair passed;
-public publication and remote readback remain pending at this checkpoint.
+Final wheel checks, authorized private installation and addressed repair passed.
+Product commit `0f83cdef1b86006b728d9dcba350a1b2a02aa947` is published in
+`ainazemtsau/zaratustra/main`, verified through authenticated GitHub and fetched
+Git readback. This reporting update changes no wheel bytes.
 
 ## evidence
 
