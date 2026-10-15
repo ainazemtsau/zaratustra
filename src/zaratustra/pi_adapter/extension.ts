@@ -198,6 +198,11 @@ export default function (pi: any): void {
   type ReplyRoot = {entries: string[]; sources: any[]};
   let replyRoot: ReplyRoot | null = null;
   let responseOnly = false;
+  let pendingSelection: any = null;
+  let inspectionWorkId: string | null = null;
+  let selectionBatchEntry: string | null = null;
+  const retainedTerminals = new Map<string, any>();
+  const completedChoices = new Map<string, any>();
   const activeObservers = new Map<AbortController, Promise<void>>();
   let normalToolNames: string[] = [];
   let readonlyToolsActive = false;
@@ -274,6 +279,144 @@ export default function (pi: any): void {
     return result;
   }
 
+  const nativeHost = () => ({host_id: hostId, branch_id: branchId, generation});
+  function toolBoundary(callId: string, name: string, params: any, ctx: any): any {
+    const entries = ctx.sessionManager.getBranch().filter((entry: any) =>
+      entry.type === "message" && entry.message?.role === "assistant" &&
+      responseInvocations.get(entry.message) === responseInvocation && entry.message.content?.some((part: any) =>
+        part.type === "toolCall" && part.id === callId && part.name === name &&
+        JSON.stringify(part.arguments) === JSON.stringify(params)));
+    if (entries.length !== 1) throw new Error("Exact native selecting tool entry is unavailable");
+    const entry = entries[0];
+    const invocation = responseInvocations.get(entry.message)!;
+    const pin = responsePins.get(invocation);
+    if (!pin || pin.sessionId !== sessionId || pin.generation !== generation)
+      throw new Error("Native selecting response changed");
+    return {content: entry.message.content.filter((part: any) => part.type === "text")
+      .map((part: any) => part.text).join("\n"), source_event_id: entry.id,
+      conversation_terminal: {invocation_id: invocation, manifest: responseManifests.get(invocation),
+        assistant_entry_id: entry.id, native_outcome: "tool_call", stop_reason: "toolUse"}};
+  }
+  async function selectionHandoff(ctx: any, request_: any, call?: {id: string; name: string; params: any}): Promise<any> {
+    if (assignedAttemptId || Number(connection?.schema_version ?? 0) < 18) return undefined;
+    if (pendingSelection) throw new Error("Resolve the saved selection before another choice");
+    let departing: any = null;
+    if (selection && attemptId) {
+      const state = await snapshot();
+      const attempt = state.attempts.find((item: any) => item.attempt_id === attemptId && item.status === "active");
+      if (attempt) {
+        const resource = state.resources.find((item: any) => item.resource_id === attempt.resource_id);
+        if (!resource) throw new Error("Departing resource is unavailable");
+        departing = {work_id: selection.work_id, attempt_id: attempt.attempt_id,
+          session_id: attempt.session_id, execution_epoch: state.execution_epoch,
+          work_revision: state.work.revision, attempt_revision: attempt.revision,
+          resource_id: resource.resource_id, resource_revision: resource.revision};
+      }
+    }
+    const id = randomUUID();
+    let handoff: any;
+    if (call) {
+      if (origin.kind !== "owner") throw new Error("Selection requires an actual owner request");
+      const owner = call.params.answer_source ?? (origin.sources.length === 1 ? origin.sources[0] : null);
+      if (!owner) throw new Error("Name the exact consumed owner Source for this selection");
+      handoff = {...nativeHost(), operation_id: id, origin: "owner_tool", departing,
+        boundary: toolBoundary(call.id, call.name, call.params, ctx), owner_source: owner,
+        tool_call_id: call.id, tool_name: call.name, arguments_json: JSON.stringify(call.params)};
+    } else {
+      handoff = {...nativeHost(), operation_id: id, origin: "native_ui", departing, choice: request_};
+      if (departing) {
+        const final = [...retainedTerminals.values()].reverse().find((item: any) =>
+          item.work_id === departing.work_id && item.attempt_id === departing.attempt_id);
+        if (final) handoff.boundary_source = final.source;
+      }
+    }
+    pendingSelection = {id, handoff, target_request: request_};
+    pi.appendEntry("zara-selection-pending", pendingSelection);
+    return handoff;
+  }
+  async function commitSelection(result: any, ctx: any): Promise<void> {
+    const disposition = result.selection_transition;
+    if (!disposition || !pendingSelection) return;
+    const pending = pendingSelection;
+    if (disposition.observation && pending.handoff.boundary) {
+      retainedTerminals.set(pending.handoff.boundary.source_event_id, {
+        source: disposition.observation,
+        invocation_id: pending.handoff.boundary.conversation_terminal.invocation_id,
+        work_id: pending.handoff.departing?.work_id,
+        attempt_id: pending.handoff.departing?.attempt_id,
+      });
+    }
+    selection = disposition.selection;
+    if (disposition.changed) {
+      inspectionWorkId = null;
+      pi.appendEntry("zara-work-inspection", {work_id: null});
+    }
+    if (!disposition.preserve_attempt) attemptId = null;
+    if (disposition.changed) selectionBatchEntry = pending.handoff.boundary?.source_event_id ?? pending.id;
+    contextReady = false; currentManifest = null;
+    pi.appendEntry("zara-selection-committed", {id: pending.id, ...disposition});
+    pi.appendEntry("zara-project-selection", selection ?? {detached: true});
+    pendingSelection = null;
+    await refreshWorkspace(ctx);
+  }
+  async function selectionRequest(path: string, body: any, ctx: any,
+      call?: {id: string; name: string; params: any}): Promise<any> {
+    const key = call && !assignedAttemptId && Number(connection?.schema_version ?? 0) >= 18
+      ? `${toolBoundary(call.id, call.name, call.params, ctx).source_event_id}:${call.id}` : null;
+    if (key && completedChoices.has(key)) return completedChoices.get(key);
+    const resolving = path === "/v1/conversation" &&
+      ["continue_selection", "cancel_selection"].includes(body.mode);
+    // Continuation resolves the retained native choice. The current tool entry
+    // identifies this delivery, while its original handoff owns the Core receipt.
+    const handoff = resolving ? pendingSelection?.handoff
+      : await selectionHandoff(ctx, {endpoint: path, body}, call);
+    try {
+      const result = await request(path, {...body,
+        ...(handoff && !resolving ? {selection_handoff: handoff} : {})});
+      await commitSelection(result, ctx);
+      if (key) completedChoices.set(key, result);
+      return result;
+    } catch (error) {
+      if (pendingSelection) {
+        const restored = await request("/v1/conversation", {mode: "selection_restore", ...nativeHost(), pending: pendingSelection});
+        if (restored.observation && handoff?.boundary) retainedTerminals.set(handoff.boundary.source_event_id, {
+          source: restored.observation, invocation_id: handoff.boundary.conversation_terminal.invocation_id,
+          work_id: handoff.departing?.work_id, attempt_id: handoff.departing?.attempt_id,
+        });
+        selection = null; attemptId = null; contextReady = false; currentManifest = null;
+        selectionBatchEntry = handoff?.boundary?.source_event_id ?? pendingSelection.id;
+      }
+      throw error;
+    }
+  }
+  async function restoreNativeChoice(ctx: any): Promise<void> {
+    const entries = ctx.sessionManager.getBranch();
+    const latest = entries.filter((entry: any) => entry.type === "custom" &&
+      entry.customType === "zara-selection-pending").at(-1)?.data;
+    pendingSelection = !assignedAttemptId && latest && !entries.some((entry: any) =>
+      entry.type === "custom" && entry.customType === "zara-selection-committed" &&
+      entry.data?.id === latest.id) ? latest : null;
+    if (pendingSelection) {
+      await request("/v1/conversation", {mode: "selection_restore", ...nativeHost(), pending: pendingSelection});
+      selection = null; attemptId = null;
+      ctx.ui.setStatus("zara-selection", "Сохранён незавершённый выбор работы. Продолжить или отменить можно в разговоре.");
+    } else {
+      ctx.ui.setStatus("zara-selection", undefined);
+      const committed = entries.filter((entry: any) => entry.type === "custom" &&
+        entry.customType === "zara-selection-committed").at(-1)?.data;
+      if (!assignedAttemptId && committed?.cancelled && committed.recovery_obstacle)
+        await request("/v1/conversation", {mode: "selection_recovery", ...nativeHost(),
+          departing: committed.recovery_obstacle});
+    }
+  }
+  pi.on("tool_call", (event: any, ctx: any) => {
+    if (!assignedAttemptId && selectionBatchEntry) return {block: true,
+      reason: "Selection changed in this tool batch; a fresh target context is required"};
+    if (!assignedAttemptId && pendingSelection && !(event.toolName === "zara_conversation" &&
+        ["catalog", "read", "continue_selection", "cancel_selection"].includes(event.input?.mode)))
+      return {block: true, reason: "Continue or cancel the saved selection before other tools"};
+  });
+
   let workspaceState: any = null;
   let gitPreview: any = null;
   async function refreshWorkspace(ctx: any): Promise<any> {
@@ -333,9 +476,12 @@ export default function (pi: any): void {
           preparation_id: gitPreview.preparation_id } : { mode: "defer", preparation_id: gitPreview.preparation_id });
         gitPreview = null;
       } else {
-        result = await request("/v1/workspace", { ...params, operation_id: randomUUID() });
+        result = params.mode === "select"
+          ? await selectionRequest("/v1/workspace", {...params, operation_id: randomUUID()}, ctx,
+              {id: _callId, name: "zara_workspace", params})
+          : await request("/v1/workspace", { ...params, operation_id: randomUUID() });
         if (params.mode === "prepare") gitPreview = result;
-        if (params.mode === "select" && selection) {
+        if (params.mode === "select" && selection && Number(connection?.schema_version ?? 0) < 18) {
           pi.appendEntry("zara-project-selection", { ...selection, project: params.name });
           if (previousRoot !== result.selected_root) attemptId = null;
           contextReady = false; currentManifest = null;
@@ -353,10 +499,12 @@ export default function (pi: any): void {
       const names = ["personal", ...state.projects.map((item: any) => item.name)];
       const name = args.trim() || await ctx.ui.select("Проект", names);
       if (!name) return;
-      await request("/v1/workspace", { mode: "select", name, operation_id: randomUUID() });
-      if (state.selected_project !== name) attemptId = null;
-      contextReady = false; currentManifest = null;
-      if (selection) pi.appendEntry("zara-project-selection", { ...selection, project: name });
+      await selectionRequest("/v1/workspace", { mode: "select", name, operation_id: randomUUID() }, ctx);
+      if (Number(connection?.schema_version ?? 0) < 18) {
+        if (state.selected_project !== name) attemptId = null;
+        contextReady = false; currentManifest = null;
+        if (selection) pi.appendEntry("zara-project-selection", { ...selection, project: name });
+      }
       await refreshWorkspace(ctx);
     } });
 
@@ -494,7 +642,8 @@ export default function (pi: any): void {
     const invocationAttempt = origin.kind === "host" ? null : attemptId;
     invocationPins.set(invocationId, {workId: invocationSelection?.work_id ?? null, attemptId: invocationAttempt,
                                      sessionId});
-    responsePins.set(invocationId, {sessionId, generation, resultProtocol});
+    responsePins.set(invocationId, {sessionId, generation, resultProtocol,
+      workId: invocationSelection?.work_id ?? null, attemptId: invocationAttempt});
     responseInvocation = invocationId;
     const common = {
       invocation_id: invocationId, attempt_id: invocationAttempt, work_id: invocationSelection?.work_id,
@@ -664,10 +813,17 @@ export default function (pi: any): void {
     receivedPrompt = false;
     compactionInProgress = false;
     currentManifest = null;
+    selectionBatchEntry = null; retainedTerminals.clear(); completedChoices.clear();
     connection = await request("/v1/connect", {});
     if (!assignedAttemptId) {
       await request("/v1/conversation", {mode: "host", host_id: hostId, branch_id: branchId, generation});
     }
+    const choiceEntries = ctx.sessionManager.getBranch();
+    await restoreNativeChoice(ctx);
+    const saved = choiceEntries.filter((entry: any) => entry.type === "custom" &&
+      entry.customType === "zara-project-selection").at(-1)?.data;
+    inspectionWorkId = choiceEntries.filter((entry: any) => entry.type === "custom" &&
+      entry.customType === "zara-work-inspection").at(-1)?.data?.work_id ?? null;
     if (read_space_is_older(connection) && !assignedAttemptId) {
       const upgrade = await ctx.ui.confirm("Upgrade this Core space to schema 10?",
         `Current schema ${connection.schema_version}; the upgrade changes the selected space.`);
@@ -680,7 +836,8 @@ export default function (pi: any): void {
       await request("/v1/model-selection", {model: {id: ctx.model?.id, provider: ctx.model?.provider,
         thinking: pi.getThinkingLevel(), profile}, persist: true});
     }
-    if (process.env.ZARA_INITIAL_ACTIVITY_ID && process.env.ZARA_INITIAL_WORK_ID) {
+    if (!pendingSelection && !saved?.detached && (!saved?.work_id || assignedAttemptId) &&
+        process.env.ZARA_INITIAL_ACTIVITY_ID && process.env.ZARA_INITIAL_WORK_ID) {
       const current = await request("/v1/select", {
         activity_id: process.env.ZARA_INITIAL_ACTIVITY_ID,
         work_id: process.env.ZARA_INITIAL_WORK_ID,
@@ -694,9 +851,7 @@ export default function (pi: any): void {
         attemptId = assignedAttemptId;
       }
     }
-    const saved = ctx.sessionManager.getBranch().filter((entry: any) => entry.type === "custom" &&
-      entry.customType === "zara-project-selection").at(-1)?.data;
-    if (!selection && saved?.work_id && saved?.activity_id) {
+    if (!pendingSelection && !selection && saved?.work_id && saved?.activity_id) {
       await request("/v1/select", { activity_id: saved.activity_id, work_id: saved.work_id });
       selection = { activity_id: saved.activity_id, work_id: saved.work_id };
     }
@@ -907,13 +1062,28 @@ export default function (pi: any): void {
       const workLabel = await ctx.ui.select("Work", works.map((row: any) => `${row.label} [${row.record_id}]`));
       const work = works.find((row: any) => `${row.label} [${row.record_id}]` === workLabel);
       if (!work) return;
-      const current = await request("/v1/select", { activity_id: activity.record_id, work_id: work.record_id });
-      selection = { activity_id: activity.record_id, work_id: work.record_id };
-      pi.appendEntry("zara-project-selection", selection);
-      await refreshWorkspace(ctx);
-      attemptId = null;
-      contextReady = false;
-      currentManifest = null;
+      let current: any;
+      if (Number(connection?.schema_version ?? 0) >= 18) {
+        current = await request(`/v1/snapshot?session_id=${sessionId}&work_id=${work.record_id}`);
+        if (current.composition || current.work.state.status !== "proposed" || current.assignments.some((x: any) =>
+            ["assigned", "waiting", "ready", "stop_requested", "unknown"].includes(x.status))) {
+          inspectionWorkId = work.record_id;
+          pi.appendEntry("zara-work-inspection", {work_id: work.record_id});
+          contextReady = false; currentManifest = null;
+          ctx.ui.notify("Открыт просмотр выбранной Work. /zara-status — её состояние; /zara-answer — ответ на её вопрос. " +
+            "Прежняя исполняемая работа сохранена; просмотр сам не запускает исполнение.", "info");
+          return;
+        }
+        const resolved = await request("/v1/conversation", {mode: "selection_target", work_id: work.record_id});
+        await selectionRequest("/v1/conversation", {mode: "selection_transition", target: resolved.target}, ctx);
+        current = await snapshot();
+      } else {
+        current = await request("/v1/select", { activity_id: activity.record_id, work_id: work.record_id });
+        selection = { activity_id: activity.record_id, work_id: work.record_id };
+        pi.appendEntry("zara-project-selection", selection);
+        await refreshWorkspace(ctx);
+        attemptId = null; contextReady = false; currentManifest = null;
+      }
       if (current.assignments.some((x: any) => ["assigned", "waiting", "ready", "stop_requested", "unknown"].includes(x.status))) {
         ctx.ui.notify("Assigned Work loaded from Core. Use /zara-status and /zara-answer for its saved question.", "info");
         return;
@@ -1389,17 +1559,25 @@ export default function (pi: any): void {
       if (entry.type === "message" && entry.message?.role === "user") historicalOwnerEntries.add(entry.id);
       if (entry.type === "custom_message") seenCustomEntries.add(entry.id);
     }
-    if (!assignedAttemptId)
+    selectionBatchEntry = null; retainedTerminals.clear(); completedChoices.clear();
+    contextReady = false; currentManifest = null;
+    inspectionWorkId = ctx.sessionManager.getBranch().filter((entry: any) => entry.type === "custom" &&
+      entry.customType === "zara-work-inspection").at(-1)?.data?.work_id ?? null;
+    if (!assignedAttemptId) {
       await request("/v1/conversation", {mode: "host", host_id: hostId, branch_id: branchId, generation});
+      await restoreNativeChoice(ctx);
+    }
   });
   pi.registerTool({name: "zara_conversation", executionMode: "sequential", label: "Conversation continuation",
     description: "Read current saved processes, results and next useful steps by readable names. " +
       "catalog/read remain available after a notification was delivered. use_existing_work selects the " +
       "existing first ordinary Work for the actual owner's request; it creates no duplicate and never " +
       "accepts a result. A host notification is not an owner answer or authorization.",
-    parameters: Type.Object({mode: StringEnum(["catalog", "read", "use_existing_work", "interrupt_execution"] as const),
+    parameters: Type.Object({mode: StringEnum(["catalog", "read", "use_existing_work", "interrupt_execution",
+      "continue_selection", "cancel_selection"] as const),
       action_ref: Type.Optional(Type.Object({action_id: Type.String(), digest: Type.String()})),
       answer_source: Type.Optional(Type.Object({record_id: Type.String(), revision: Type.Integer({minimum: 1})})),
+      pending_id: Type.Optional(Type.String()),
       limit: Type.Optional(Type.Integer({minimum: 1, maximum: 50})), offset: Type.Optional(Type.Integer({minimum: 0}))}),
     execute: async (_id: string, params: any, _signal: any, _update: any, ctx: any) => {
       if (params.mode === "interrupt_execution") {
@@ -1411,8 +1589,13 @@ export default function (pi: any): void {
         }
         params = {...params, confirmed: true};
       }
-      const result = await request("/v1/conversation", params);
-      if (params.mode === "use_existing_work") {
+      const result = ["use_existing_work", "continue_selection", "cancel_selection"].includes(params.mode)
+        ? await selectionRequest("/v1/conversation", {...params,
+            ...(["continue_selection", "cancel_selection"].includes(params.mode)
+              ? {...nativeHost(), pending_id: params.pending_id ?? pendingSelection?.id} : {})}, ctx,
+            {id: _id, name: "zara_conversation", params})
+        : await request("/v1/conversation", params);
+      if (params.mode === "use_existing_work" && Number(connection?.schema_version ?? 0) < 18) {
         selection = result.selection;
         attemptId = null; contextReady = false; currentManifest = null;
         pi.appendEntry("zara-project-selection", selection);
@@ -1435,8 +1618,10 @@ export default function (pi: any): void {
       operation: Type.Optional(Type.String()), run_id: Type.Optional(Type.String()),
       arguments: Type.Optional(Type.Any()), operation_key: Type.Optional(Type.String())}),
     async execute(callId: string, params: any, _signal: any, _onUpdate: any, ctx: any) {
-      let result = await request("/v1/data", {...params, operation_key: params.operation_key ?? callId,
-        generation, model: setupModel(ctx)});
+      const body = {...params, operation_key: params.operation_key ?? callId, generation, model: setupModel(ctx)};
+      let result = params.mode === "run"
+        ? await selectionRequest("/v1/data", body, ctx, {id: callId, name: "zara_data", params})
+        : await request("/v1/data", body);
       if (!assignedAttemptId && params.mode === "run") result = boundaryResult(result,
         await awaitProcess({kind: "procedure", id: params.run_id}, callId, _signal, _onUpdate));
       return {content: [{type: "text", text: JSON.stringify(result)}], details: result};
@@ -1564,14 +1749,19 @@ export default function (pi: any): void {
             return { content: [{ type: "text", text: "Additional setup review passes not authorized" }] };
           }
         }
-        result = await request("/v1/activity-setup", { action: params.mode, setup_id: setupSelection, operation_key: _callId, generation,
+        const body = { action: params.mode, setup_id: setupSelection, operation_key: _callId, generation,
           question: params.question, source_refs: params.source_refs ?? [], model: setupModel(ctx),
           request_source: params.request_source,
           answer_source: params.answer_source,
-          reference: params.reference, offset: params.offset, max_bytes: params.max_bytes });
+          reference: params.reference, offset: params.offset, max_bytes: params.max_bytes };
+        result = ["answer", "submit", "resume", "retry"].includes(params.mode)
+          ? await selectionRequest("/v1/activity-setup", body, ctx,
+              {id: _callId, name: "zara_activity", params})
+          : await request("/v1/activity-setup", body);
       }
       const target = result.setup_id ?? setupSelection;
-      if (["submit", "resume", "retry"].includes(params.mode) && !assignedAttemptId)
+      if ((["submit", "resume", "retry"].includes(params.mode) ||
+          params.mode === "answer" && result.selection_transition?.target?.mode === "assigned") && !assignedAttemptId)
         result = boundaryResult(result, await awaitProcess({kind: "setup", id: target}, _callId, _signal, _onUpdate));
       watchSetup(ctx);
       await showSetup(ctx, false);
@@ -1615,7 +1805,10 @@ export default function (pi: any): void {
       pending_only: Type.Optional(Type.Boolean()),
     }),
     async execute(callId: string, params: any, _signal: any, _update: any, ctx: any) {
-      let result = await request("/v1/workflow", {...params, operation_key: callId, generation, model: setupModel(ctx)});
+      const body = {...params, operation_key: callId, generation, model: setupModel(ctx)};
+      let result = ["start", "resume", "answer", "correct_answer", "retry"].includes(params.mode)
+        ? await selectionRequest("/v1/workflow", body, ctx, {id: callId, name: "zara_workflow", params})
+        : await request("/v1/workflow", body);
       if (!assignedAttemptId && result.root_work_id) {
         workflowSelection = result.root_work_id;
         if (["start", "resume", "answer", "correct_answer", "retry"].includes(params.mode))
@@ -1908,7 +2101,9 @@ export default function (pi: any): void {
   pi.registerCommand("zara-status", {
     description: "Read the saved Core result, basis, rights and model reserve",
     handler: async (_args: string, ctx: any) => {
-      const current = selection ? await snapshot() : await request("/v1/connect", {});
+      const current = inspectionWorkId
+        ? await request(`/v1/snapshot?session_id=${sessionId}&work_id=${inspectionWorkId}`)
+        : selection ? await snapshot() : await request("/v1/connect", {});
       ctx.ui.notify(`${lifecycle(current)}${JSON.stringify(current, null, 2)}`, "info");
     },
   });
@@ -1925,11 +2120,12 @@ export default function (pi: any): void {
   pi.registerCommand("zara-answer", {
     description: "Answer one saved, addressed Core question without a model call",
     handler: async (_args: string, ctx: any) => {
-      if (!selection || assignedAttemptId) {
+      if ((!selection && !inspectionWorkId) || assignedAttemptId) {
         ctx.ui.notify("Select an assigned Work with /zara-work before answering.", "warning");
         return;
       }
-      const current = await snapshot();
+      const current = inspectionWorkId
+        ? await request(`/v1/snapshot?session_id=${sessionId}&work_id=${inspectionWorkId}`) : await snapshot();
       const open = current.waits.filter((x: any) => x.status === "open");
       if (!open.length) { ctx.ui.notify("No open question for this Work.", "info"); return; }
       const labels = open.map((x: any) => `${x.question} [${x.wait_id}]`);
@@ -1940,7 +2136,13 @@ export default function (pi: any): void {
       if (!answer?.trim()) { ctx.ui.notify("Answer cancelled; no change was made.", "info"); return; }
       const yes = await ctx.ui.confirm("Answer this exact question?", `${chosen.question}\nAnswer: ${answer}`);
       if (!yes) { ctx.ui.notify("Answer cancelled; no change was made.", "info"); return; }
-      const receipt = await request("/v1/answer", { wait_id: chosen.wait_id, answer });
+      const body = {wait_id: chosen.wait_id, answer, work_id: current.work.work_id};
+      const receipt = Number(connection?.schema_version ?? 0) >= 18
+        ? await selectionRequest("/v1/answer", body, ctx) : await request("/v1/answer", body);
+      if (Number(connection?.schema_version ?? 0) >= 18) {
+        inspectionWorkId = current.work.work_id;
+        pi.appendEntry("zara-work-inspection", {work_id: inspectionWorkId});
+      }
       ctx.ui.notify(`Answer saved in Core receipt ${receipt.operation_id}.`, "info");
     },
   });
@@ -2035,6 +2237,7 @@ export default function (pi: any): void {
     if (!captureReady) throw new Error("Primary capture failed; no dependent model send");
     const prepared = await request("/v1/context-prepare", {
       purpose: nextPurpose, historical_memory: historicalMemory,
+      inspection_work_id: inspectionWorkId,
     }, true);
     currentManifest = prepared;
     manifestMarker = `ZARA_MANIFEST:${prepared.manifest_id}@${prepared.manifest_revision}`;
@@ -2067,6 +2270,7 @@ export default function (pi: any): void {
     rememberMemoryBranch(ctx.sessionManager.getBranch());
     try {
       if (Number(connection?.schema_version ?? 0) >= 17) {
+        selectionBatchEntry = null;
         for (const entry of ctx.sessionManager.getBranch()) {
           if (entry.type !== "custom_message" || seenCustomEntries.has(entry.id)) continue;
           seenCustomEntries.add(entry.id);
@@ -2239,7 +2443,10 @@ export default function (pi: any): void {
         ...(finalPin.resultProtocol ? {result_protocol: finalPin.resultProtocol} : {}),
       } : undefined;
       try {
-        if (terminal) {
+        const retained = retainedTerminals.get(event.messageEntryId);
+        if (retained?.invocation_id === finalInvocation) {
+          finalSource = retained.source;
+        } else if (terminal) {
           finalSource = await capture("conversation_assistant", lastAnswer, "pi-event",
             ["Only visible native text is retained; non-text content is excluded"],
             event.messageEntryId, undefined, false, manifest, terminal);
@@ -2247,6 +2454,8 @@ export default function (pi: any): void {
           finalSource = await capture("conversation_assistant", lastAnswer, "pi-event", [],
             event.messageEntryId, undefined, true, manifest);
         }
+        if (finalSource) retainedTerminals.set(event.messageEntryId, {source: finalSource,
+          invocation_id: finalInvocation, work_id: finalPin.workId, attempt_id: finalPin.attemptId});
       } catch (error) { captureFailure = error; }
     }
     if (!assignedAttemptId && Number(connection?.schema_version ?? 0) >= 18 && replyRoot && event.message.stopReason !== "toolUse" &&

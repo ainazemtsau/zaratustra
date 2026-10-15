@@ -1,3 +1,63 @@
+# Ordinary Work selection transition — verified package 0.25.3
+
+## outcome
+
+Implemented the owner-approved common ordinary Work/project/assigned transition.
+Core schema remains 18. Old execution is guarded and interrupted before committing
+the rechecked target. Assigned execution leaves the main agent conversationally
+free. Results, history, accounting and owner acceptance remain independent.
+Final wheel checks, authorized private installation and addressed repair passed;
+public publication and remote readback remain pending at this checkpoint.
+
+## evidence
+
+The frozen 0.25.2 native negative trace reproduced the previous resource refusal
+before target HTTP. The native pre-tool identity feasibility trace and focused
+Core regressions established the shared seam. A bounded read-only evaluator found
+two additional gaps; both were corrected and checked again. A full native gate
+reported 1287 passed and one obsolete error-text assertion, not a green full run.
+The assertion now checks stable refusal and unchanged execution. Affected native
+gates passed 81 Core and 75 Pi tests, static checks, all 33 boundaries and builds.
+Final isolated wheel traces passed 81 actual localhost requests: ordinary/project
+selection, other/same Work assignment, lost initial and continue/cancel replies,
+full setup from selected existing Work, compact and preserved continuation.
+All 125 packaged production files matched the wheel. See the detailed
+[release evidence](docs/ordinary-work-selection-0.25.3-result.md), including failed
+trials and evidence limits, and the
+[approved contract](docs/ordinary-work-selection-transition-plan.md).
+Verified private backup/restore and final readback preserved domain histories,
+answers, results, delivery/invocation accounting and acceptance; only the exact
+closed-session execution was interrupted by the public owner operation.
+
+## assumptions
+
+Historical interruption proof and current assignment admission are distinct.
+Current rights, directory identity and unknown-send fences remain authoritative.
+Native choices survive loss of their reply; passive restoration never dispatches.
+Local fictional provider evidence does not guarantee every future model response.
+
+## cuts
+
+No new execution graph, queue, service, schema, intent parsing, domain template,
+forced success, weakened resource exclusivity or automatic acceptance. Exporters,
+private Git and real procedure/model runs are outside this delivery.
+
+## cost
+
+Fictional localhost probes and local tests/builds. Final installed traces made
+81 actual localhost requests. Subscription and paid API calls: 0. Earlier failed
+harness trials are retained separately; no private operational details published.
+
+## manual-acceptance
+
+Structural implementation approval is recorded. Finished-result owner acceptance
+is separate and remains unrecorded. Work results were never automatically accepted.
+The failed complete gate and successful affected repeats remain distinct evidence.
+
+## next
+
+solmax
+
 # Procedure resource selection — verified 0.25.2
 
 ## outcome

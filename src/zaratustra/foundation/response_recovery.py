@@ -79,7 +79,7 @@ def _attempt_response(
     epoch: int,
     attempt_id: UUID | None = None,
 ) -> AttemptResponseView:
-    from .conversations import _terminal_response
+    from .conversations import _terminal_response, ordinary_assignment_handoff
     from .execution import _has_current_publication
     from .knowledge import _require_ref
 
@@ -199,7 +199,7 @@ def _attempt_response(
     answered = [UUID(call[0]) for call in calls if call[1] == "answered"]
     if answered and _has_current_publication(connection, work_id, attempt, state):
         return AttemptResponseView(**base, outcome="partial_output")
-    if not answered:
+    if not answered or (row[2] == "interrupted" and assignment is None):
         previous = connection.execute(
             "SELECT i.invocation_id,i.attempt_id FROM execution_invocations i "
             "JOIN execution_attempts a "
@@ -223,6 +223,23 @@ def _attempt_response(
                     "An earlier assigned answer has no complete output; do not dispatch again",
                 ),
             )
+    if row[2] == "interrupted" and assignment is None:
+        handoff = ordinary_assignment_handoff(
+            connection,
+            work_id,
+            attempt,
+            authority,
+            epoch=epoch,
+            grants=[],
+            decisions=[],
+        )
+        if handoff is not None:
+            return AttemptResponseView(
+                **base,
+                outcome="handoff",
+                handoff_operation_id=handoff,
+            )
+    if not answered:
         return AttemptResponseView(**base, outcome="no_send")
     if row[4] != epoch or status != "proposed" or revision != row[3]:
         return AttemptResponseView(

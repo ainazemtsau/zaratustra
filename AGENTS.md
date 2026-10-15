@@ -141,6 +141,13 @@ and parallel dirty work; do not publish private preparation branches merely to k
 
 ## What exists
 
+Ordinary selection correction (0.25.3) keeps schema
+18. The owner approved one common Work/project/assigned-executor transition in
+`docs/ordinary-work-selection-transition-plan.md`. A native pre-tool observation
+retains the actual assistant entry and accounted invocation. Guarded Core
+interruption precedes selection commit; assigned handoff detaches ordinary
+execution. It cannot complete or accept Work. Release evidence is separate.
+
 Procedure-resource correction (0.25.2) keeps schema 18. The coordinator consumes
 the committed configured selection before considering fallback creation. Current
 resource choice is rechecked after receipts; a revoked history cannot masquerade

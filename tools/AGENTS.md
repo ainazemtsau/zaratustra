@@ -1,5 +1,17 @@
 # Development tools
 
+`probe_ordinary_selection_pi` exercises an active ordinary Work handoff, preserved
+outputs, actual native file placement and reopening with localhost Responses.
+Before returning the first target response, inspect the exact committed departing
+interruption. Compare every actual send with its manifest and immutable delivery
+pin. Its supplied wheel must match every packaged production byte. No real model
+or user instance is involved; checkout and isolated installation are reported
+separately. Keep unsuccessful harness trials as failures, never release evidence.
+The native harness's optional before_bridge_response observer may withhold an
+actual committed HTTP reply to test transport loss. It cannot fabricate Core
+effects or completion; deliberate abrupt closure is reported separately from
+native settlement. Reopening must recover the real receipt and owner intent.
+
 The ordinary Activity-structure probe uses local config v2 for personal and
 registered external procedure roots. Observe one committed resource, its exact
 Attempt pin, and a native file-tool effect in the expected root before claiming

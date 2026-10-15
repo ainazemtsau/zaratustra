@@ -19,7 +19,13 @@ from zaratustra.pi_adapter.assigned import AssignedConfig
 from zaratustra.pi_adapter.procedures import ProcedureCoordinator
 from zaratustra.pi_adapter.skills import activity_setup_skill
 from zaratustra.pi_adapter.workflows import WorkflowCoordinator
-from zaratustra.workspace import LaunchConfig, Project, write_config
+from zaratustra.workspace import (
+    LaunchConfig,
+    Project,
+    read_config,
+    select_work_project,
+    write_config,
+)
 
 from .probe_activity_setup_pi import context, harness
 
@@ -120,7 +126,10 @@ def run_probe(
     blank_response: bool = False,
     terminal_proof: bool = False,
     procedure_project: Literal["personal", "external"] = "personal",
+    setup_from_work: bool = False,
 ) -> dict[str, Any]:
+    if setup_from_work and not terminal_proof:
+        raise ValueError("The ordinary setup handoff requires schema-18 terminal proof")
     directory.mkdir(parents=True, exist_ok=False)
     root, working = directory / "space", directory / "work"
     root.mkdir()
@@ -190,6 +199,7 @@ def run_probe(
     launch_path = launch_runtime / "config.json"
     requests: list[dict[str, Any]] = []
     bridges: list[Bridge] = []
+    during_setup = True
 
     def bridge_for(provider: Any) -> Bridge:
         write_config(
@@ -213,6 +223,8 @@ def run_probe(
                 projects=(Project(name="external", path=external),),
             ),
         )
+        if setup_from_work and during_setup:
+            select_work_project(read_config(launch_path), authority, legacy_work, "personal")
         bridge = Bridge(root, authority, working, workspace_config=launch_path)
         config = AssignedConfig(
             space=root,
@@ -240,6 +252,8 @@ def run_probe(
 
     def run(provider: Any, **options: Any) -> None:
         bridge = bridge_for(provider)
+        if setup_from_work and during_setup:
+            options.setdefault("work", (legacy_activity, legacy_work))
         options["tool_names"] = ("read", "write", "edit", "bash", *INTERACTIVE_ZARA_TOOLS)
         options["timeout_seconds"] = 240
         waiting = options.get("wait_for")
@@ -254,11 +268,30 @@ def run_probe(
                     raise
 
             options["wait_for"] = poll
+        observed: list[dict[str, Any]] = []
+        prior_observer = options.get("on_event")
+
+        def observe(process: Any, event: dict[str, Any]) -> None:
+            observed.append(event)
+            if prior_observer is not None:
+                prior_observer(process, event)
+
+        options["on_event"] = observe
         try:
             native.run_process(working, runtime, bridge, provider, **options)
+        except Exception as error:
+            (directory / f"failed-native-{len(bridges)}.json").write_text(
+                json.dumps(
+                    {"error": repr(error), "requests": provider.requests, "events": observed},
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+            raise
         finally:
+            requests.extend(provider.requests)
             bridge.procedure_controller.close()
-        requests.extend(provider.requests)
 
     question = "How often should the period be reviewed?"
 
@@ -353,7 +386,8 @@ def run_probe(
     def stage_reply(body: dict[str, Any]) -> dict[str, Any]:
         nonlocal reviews, raw_drafts
         packet = context(body)
-        if "work" in packet:
+        stages = core.read_activity_setup(root, setup_id, authority).state.stages
+        if packet.get("work", {}).get("work_id") in {str(stage.work_id) for stage in stages}:
             assert {item["function"]["name"] for item in body.get("tools", [])}.issubset(
                 {"zara_workflow", "zara_memory"}
             ), "Review must not expose file/command or mutation tools"
@@ -448,6 +482,13 @@ def run_probe(
     )
     setup = core.read_activity_setup(root, setup_id, authority)
     assert setup.state.phase == "ready", setup.model_dump_json()
+    during_setup = False
+    if setup_from_work:
+        assert core.read_work(root, legacy_work, authority) == legacy_before
+        departing = core.read_execution(root, legacy_work, authority)
+        assert any(item.status == "interrupted" for item in departing.attempts)
+        assert not any(item.status == "active" for item in departing.attempts)
+        assert departing.work.state.acceptance is None
     assert setup.state.reviews_completed == 2 and len(packets) == 6
     assert sum(stage.rejection is not None for stage in setup.state.stages) == 2
     terminal_proofs: list[dict[str, Any]] = []
@@ -932,6 +973,7 @@ def run_probe(
         "schema": core.read_space(root).schema_version,
         "workspace_config_version": 2,
         "procedure_project": procedure_project,
+        "setup_from_selected_ordinary_work": setup_from_work,
         "procedure_single_resource": True,
         "native_procedure_file_root_verified": True,
         "upgrade_from_schema": 15,
@@ -1252,6 +1294,7 @@ def main() -> None:
     parser.add_argument("--terminal-proof", action="store_true")
     parser.add_argument("--procedure-project", choices=("personal", "external"), default="personal")
     parser.add_argument("--pause-inputs", action="store_true")
+    parser.add_argument("--setup-from-work", action="store_true")
     args = parser.parse_args()
     if args.pause_inputs:
         print(
@@ -1269,6 +1312,7 @@ def main() -> None:
                 blank_response=args.blank_response,
                 terminal_proof=args.terminal_proof,
                 procedure_project=args.procedure_project,
+                setup_from_work=args.setup_from_work,
             ),
             indent=2,
         )

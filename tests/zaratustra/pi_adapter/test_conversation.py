@@ -284,8 +284,11 @@ def test_unproven_old_attempt_restores_free_conversation_before_selection(tmp_pa
         )
         if item["work_id"] == str(work)
     )
-    with pytest.raises(core.FoundationError, match="Old execution remains active"):
+    before = core.read_execution(bridge.path, work, bridge.authority)
+    with pytest.raises(core.FoundationError) as refusal:
         conversation(bridge, session, {"mode": "use_existing_work", "action_ref": action["ref"]})
+    assert refusal.value.code == "recovery_required"
+    assert core.read_execution(bridge.path, work, bridge.authority) == before
     assert bridge._session(session) is None
     assert any(
         item.status == "active" and str(item.attempt_id) == started["attempt_id"]

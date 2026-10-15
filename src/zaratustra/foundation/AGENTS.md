@@ -1,5 +1,21 @@
 # Core v0.1 domain foundation
 
+Optional selection_transition on StopAttemptRequest guards automatic ordinary
+handoff through exact native tool/UI Source provenance and current execution,
+input, resource, rights and durable delivery pins. It only interrupts an ordinary
+Attempt, never proves final delivery or Work acceptance. Native selection Sources
+index all owner/manifest/target Work bases through derived_from; sanitation
+invalidates dependent stop receipts without erasing the interruption event.
+Host branch freshness remains native adapter admission, not a second Core graph.
+Absent optional metadata preserves old canonical requests and schema 18.
+An exact surviving stop receipt can derive response outcome handoff for the same
+Work's assigned target; this is not no_send or recovered output. Optional
+AssignAttemptRequest.ordinary_handoff rechecks that exact receipt and its current
+bases in the assignment transaction. Explicit legacy assignment stays unchanged.
+Interrupted resource pins are checked against their exact revision history;
+current assignment policy has its own revision check. Automatic reuse requires
+the same active resource identity and directory, even after an idle mode change.
+
 `managed_core_client` retains one checked query-only WAL client for a managed
 host's lifetime under the existing Pi session/maintenance fence. Its physical
 read/write connection preserves SQLite's normal final-close checkpoint; it

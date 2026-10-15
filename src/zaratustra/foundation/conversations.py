@@ -28,12 +28,22 @@ from .models import (
     ConversationResponseProblem,
     KnowledgeRef,
     OrdinaryFinalProof,
+    OrdinarySelectionTransition,
+    ResourceState,
     SourceState,
     SpaceInfo,
+    StopAttemptRequest,
     TerminalResponseView,
     WorkState,
 )
-from .operations import LocalAuthority, _authorize, _local_space, _subject_current, _subject_state
+from .operations import (
+    LocalAuthority,
+    _authorize,
+    _local_space,
+    _subject_current,
+    _subject_state,
+    fingerprint,
+)
 from .storage import (
     CONVERSATION_SCHEMA_NAME,
     CONVERSATION_SCHEMA_SHA256,
@@ -1013,6 +1023,338 @@ def ordinary_final_proof(
     return None
 
 
+def validate_selection_transition(
+    connection: sqlite3.Connection,
+    request: StopAttemptRequest,
+    authority: LocalAuthority,
+    *,
+    epoch: int,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+    interrupted: bool = False,
+) -> list[dict[str, object]]:
+    """Recheck one host-observed ordinary handoff inside the stop transaction."""
+    from .execution import (
+        _attempt,
+        _available_resource,
+        _check_attempt_basis,
+        _current_inputs,
+        _resource,
+        _work,
+    )
+
+    proof = request.selection_transition
+    assert proof is not None
+    if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 18:
+        raise FoundationError("upgrade_required", "A guarded selection needs schema 18")
+    if proof.execution_epoch != epoch:
+        raise FoundationError("stale_attempt", "Selection belongs to another execution epoch")
+    if interrupted:
+        held_revision, resource_id, resource_revision, _ = _attempt(
+            connection,
+            request.attempt_id,
+            request.work_id,
+            request.session_id,
+            epoch,
+            active=False,
+        )
+        current_revision, work = _work(connection, request.work_id)
+        if current_revision != held_revision:
+            raise FoundationError("stale_work", "Work changed after the selection handoff")
+        _current_inputs(connection, work, actor=request.actor, epoch=epoch)
+        # The receipt proves the historical interruption, not a grant for a
+        # later assignment. A coordinator may revise the idle resource policy;
+        # assignment checks that current revision independently. Its identity
+        # and directory must still match the exact interrupted resource.
+        resource_work, current, current_resource = _resource(connection, resource_id)
+        historical = connection.execute(
+            "SELECT state_json FROM execution_resource_revisions "
+            "WHERE resource_id=? AND revision=?",
+            (str(resource_id), resource_revision),
+        ).fetchone()
+        if historical is None:
+            raise FoundationError("stale_resource", "Interrupted resource history is absent")
+        resource = ResourceState.model_validate_json(historical[0])
+        if (
+            resource_work != request.work_id
+            or resource.status != "active"
+            or current_resource.root != resource.root
+        ):
+            raise FoundationError("stale_resource", "Interrupted resource identity changed")
+        _available_resource(connection, resource_id, request.work_id, current)
+    else:
+        resource = _check_attempt_basis(
+            connection,
+            request.attempt_id,
+            request.work_id,
+            request.session_id,
+            epoch,
+            actor=request.actor,
+        )
+    held = connection.execute(
+        "SELECT revision,work_revision,resource_id,resource_revision,"
+        "legacy_delivery_correlation_uncertain,status FROM execution_attempts WHERE attempt_id=?",
+        (str(request.attempt_id),),
+    ).fetchone()
+    if held is None or held[:4] != (
+        proof.attempt_revision + int(interrupted),
+        proof.work_revision,
+        str(proof.resource_id),
+        proof.resource_revision,
+    ):
+        raise FoundationError("stale_selection", "Departing execution pins changed")
+    if interrupted and held[5] != "interrupted":
+        raise FoundationError("stale_selection", "The ordinary handoff is no longer interrupted")
+    if held[4]:
+        raise FoundationError("uncorrelated_delivery_history", "Legacy delivery is uncertain")
+    if connection.execute(
+        "SELECT 1 FROM execution_assignments WHERE attempt_id=? UNION ALL "
+        "SELECT 1 FROM execution_waits WHERE attempt_id=? LIMIT 1",
+        (str(request.attempt_id), str(request.attempt_id)),
+    ).fetchone():
+        raise FoundationError(
+            "assigned_attempt", "Automatic selection only owns ordinary execution"
+        )
+    if connection.execute(
+        "SELECT 1 FROM knowledge_delivery WHERE context_attempt_id=? AND stage='prepared' "
+        "AND free_call=1 AND reserve_units>0 LIMIT 1",
+        (str(request.attempt_id),),
+    ).fetchone():
+        raise FoundationError("attempt_reservation_open", "A prepared delivery still holds reserve")
+    if (
+        connection.execute(
+            "SELECT 1 FROM execution_invocations WHERE attempt_id=? "
+            "AND status IN ('admitted','sent','unknown') LIMIT 1",
+            (str(request.attempt_id),),
+        ).fetchone()
+        or connection.execute(
+            "SELECT 1 FROM knowledge_delivery k LEFT JOIN execution_invocations i "
+            "ON i.invocation_id=k.invocation_id WHERE k.context_attempt_id=? AND "
+            "(k.correlation_state!='exact' OR k.context_work_id!=? OR k.context_session_id!=? "
+            "OR k.stage IN ('sent','unknown') OR (k.stage='answered' AND "
+            "(i.invocation_id IS NULL OR i.status!='answered' OR i.work_id!=k.context_work_id "
+            "OR i.attempt_id!=k.context_attempt_id OR i.session_id!=k.context_session_id "
+            "OR i.request_sha256 IS NOT k.request_sha256 OR i.request_bytes IS NOT k.request_bytes "
+            "OR i.usage_units IS NOT k.usage_units))) LIMIT 1",
+            (str(request.attempt_id), str(request.work_id), str(request.session_id)),
+        ).fetchone()
+    ):
+        raise FoundationError("response_outcome_unknown", "An invocation remains unresolved")
+
+    def original(reference: KnowledgeRef) -> SourceState:
+        _require_ref(connection, reference, request.actor, epoch)
+        row = connection.execute(
+            "SELECT r.payload FROM knowledge_records k JOIN knowledge_revisions r "
+            "ON r.record_id=k.record_id WHERE k.kind='source' AND r.record_id=? "
+            "AND r.revision=?",
+            (str(reference.record_id), reference.revision),
+        ).fetchone()
+        if row is None or row[0] is None:
+            raise FoundationError("invalid_selection_proof", "Selection original is unavailable")
+        source = SourceState.model_validate_json(row[0])
+        if (
+            source.capture != "full"
+            or source.conversation_id != str(request.session_id)
+            or source.scope_work_id not in (None, request.work_id)
+        ):
+            raise FoundationError(
+                "invalid_selection_proof", "Selection original is not this session"
+            )
+        return source
+
+    observation = original(proof.observation)
+    observed_at = connection.execute(
+        "SELECT o.state_revision FROM knowledge_revisions r JOIN operations o "
+        "ON o.operation_id=r.operation_id WHERE r.record_id=? AND r.revision=?",
+        (str(proof.observation.record_id), proof.observation.revision),
+    ).fetchone()[0]
+    started_at = connection.execute(
+        "SELECT o.state_revision FROM execution_events e JOIN operations o "
+        "ON o.operation_id=e.operation_id WHERE e.attempt_id=? "
+        "AND e.kind='start_attempt' ORDER BY e.sequence LIMIT 1",
+        (str(request.attempt_id),),
+    ).fetchone()
+    if started_at is None or observed_at <= started_at[0]:
+        raise FoundationError("stale_selection", "Native choice predates the departing Attempt")
+    metadata = observation.native_selection
+    if metadata is None or metadata.target != proof.target:
+        raise FoundationError("invalid_selection_proof", "Saved native target differs")
+    if metadata.origin == "owner_tool":
+        if (
+            metadata.owner_source != proof.owner_source
+            or proof.boundary_source != proof.observation
+        ):
+            raise FoundationError("invalid_selection_proof", "Native call and owner bases differ")
+        try:
+            arguments = json.loads(metadata.arguments_json or "")
+        except (ValueError, TypeError) as error:
+            raise FoundationError(
+                "invalid_selection_proof", "Native tool arguments are invalid"
+            ) from error
+        if not isinstance(arguments, dict):
+            raise FoundationError("invalid_selection_proof", "Native tool arguments need an object")
+        owner = original(proof.owner_source)
+        if owner.channel != "conversation_user" or owner.sender != request.actor:
+            raise FoundationError(
+                "invalid_selection_proof", "Selection did not consume an owner original"
+            )
+    elif proof.owner_source != proof.observation or observation.sender != request.actor:
+        raise FoundationError(
+            "invalid_selection_proof", "UI choice must retain its own owner original"
+        )
+
+    refs = [proof.owner_source, proof.observation]
+    if proof.boundary_source is not None:
+        boundary = original(proof.boundary_source)
+        terminal = boundary.conversation_terminal
+        if terminal is None:
+            raise FoundationError(
+                "invalid_selection_proof", "Selection boundary has no native evidence"
+            )
+        checked = _terminal_response(
+            connection,
+            proof.boundary_source,
+            authority,
+            epoch=epoch,
+            session_id=request.session_id,
+        )
+        if (
+            checked.work_id != request.work_id
+            or checked.attempt_id != request.attempt_id
+            or checked.outcome == "unknown"
+            or any(item.code != "native_response_not_final" for item in checked.diagnostics)
+            or (terminal.native_outcome, terminal.stop_reason)
+            not in (("completed", "stop"), ("tool_call", "toolUse"))
+        ):
+            raise FoundationError(
+                "invalid_selection_proof", "Native boundary is not an accounted response"
+            )
+        latest = connection.execute(
+            "SELECT invocation_id FROM execution_events WHERE attempt_id=? "
+            "AND kind='prepare_invocation' ORDER BY sequence DESC LIMIT 1",
+            (str(request.attempt_id),),
+        ).fetchone()
+        if latest != (str(terminal.invocation_id),):
+            raise FoundationError("stale_selection", "A newer invocation superseded this boundary")
+        context_row = connection.execute(
+            "SELECT payload FROM knowledge_revisions WHERE record_id=? AND revision=?",
+            (str(terminal.manifest.record_id), terminal.manifest.revision),
+        ).fetchone()
+        context = ContextState.model_validate_json(context_row[0])
+        if metadata.origin == "owner_tool" and proof.owner_source not in context.mandatory:
+            raise FoundationError(
+                "invalid_selection_proof", "Owner original was absent from the response context"
+            )
+        refs += [proof.boundary_source, terminal.manifest]
+    elif (
+        metadata.origin != "native_ui"
+        or connection.execute(
+            "SELECT 1 FROM execution_invocations WHERE attempt_id=? AND status!='prepared' "
+            "UNION ALL SELECT 1 FROM knowledge_delivery WHERE context_attempt_id=? "
+            "AND stage!='prepared' LIMIT 1",
+            (str(request.attempt_id), str(request.attempt_id)),
+        ).fetchone()
+    ):
+        raise FoundationError(
+            "invalid_selection_proof", "A sent response needs its native boundary"
+        )
+
+    target = proof.target
+    if target.work_id is not None:
+        revision, _ = _work(connection, target.work_id)
+        if revision != target.work_revision:
+            raise FoundationError("stale_selection", "Target Work revision changed")
+        extra_grants, extra_decisions = _authorize(
+            connection,
+            actor=request.actor,
+            action="work.execute",
+            epoch=epoch,
+            resource_type="work",
+            resource_id=target.work_id,
+        )
+        grants.extend(extra_grants)
+        decisions.extend(extra_decisions)
+        assert target.work_revision is not None
+        refs.append(KnowledgeRef(record_id=target.work_id, revision=target.work_revision))
+        if target.mode == "ordinary" and target.work_id == request.work_id:
+            raise FoundationError(
+                "selection_unchanged", "The same ordinary target keeps its Attempt"
+            )
+    if target.root is not None and (
+        not target.root.is_dir()
+        or target.root.resolve() != target.root
+        or target.root == resource.root
+    ):
+        raise FoundationError("resource_unavailable", "Project root is unavailable or unchanged")
+    return [
+        {"record_id": str(ref.record_id), "revision": ref.revision} for ref in dict.fromkeys(refs)
+    ]
+
+
+def ordinary_assignment_handoff(
+    connection: sqlite3.Connection,
+    work_id: UUID,
+    attempt_id: UUID,
+    authority: LocalAuthority,
+    *,
+    epoch: int,
+    grants: list[dict[str, object]],
+    decisions: list[dict[str, object]],
+    operation_id: UUID | None = None,
+) -> UUID | None:
+    """Derive a same-Work assigned handoff from its surviving guarded-stop receipt."""
+    latest = connection.execute(
+        "SELECT attempt_id FROM execution_attempts WHERE work_id=? "
+        "ORDER BY generation DESC LIMIT 1",
+        (str(work_id),),
+    ).fetchone()
+    if latest != (str(attempt_id),):
+        raise FoundationError("stale_selection", "A newer execution superseded the handoff")
+    saved = connection.execute(
+        "SELECT e.operation_id,r.fingerprint,r.receipt_json,a.session_id FROM execution_events e "
+        "JOIN receipts r ON r.operation_id=e.operation_id JOIN execution_attempts a "
+        "ON a.attempt_id=e.attempt_id WHERE e.attempt_id=? AND e.work_id=? "
+        "AND e.kind='stop_attempt' AND (? IS NULL OR e.operation_id=?) AND "
+        "json_extract(r.receipt_json,'$.result.selection_transition') IS NOT NULL "
+        "ORDER BY e.sequence DESC LIMIT 1",
+        (
+            str(attempt_id),
+            str(work_id),
+            str(operation_id) if operation_id else None,
+            str(operation_id) if operation_id else None,
+        ),
+    ).fetchone()
+    if saved is None:
+        return None
+    proof = OrdinarySelectionTransition.model_validate(
+        json.loads(saved[2])["result"]["selection_transition"]
+    )
+    if proof.target.mode != "assigned" or proof.target.work_id != work_id:
+        return None
+    request = StopAttemptRequest(
+        operation_id=UUID(saved[0]),
+        space_id=authority.space_id,
+        actor=authority.actor,
+        work_id=work_id,
+        attempt_id=attempt_id,
+        session_id=UUID(saved[3]),
+        outcome="interrupted",
+        selection_transition=proof,
+    )
+    if fingerprint(request) != saved[1]:
+        raise FoundationError("invalid_selection_proof", "Handoff receipt and exact intent differ")
+    validate_selection_transition(
+        connection,
+        request,
+        authority,
+        epoch=epoch,
+        grants=grants,
+        decisions=decisions,
+        interrupted=True,
+    )
+    return UUID(saved[0])
+
+
 def read_conversation_actions_page(
     path: Path,
     authority: LocalAuthority,
@@ -1705,6 +2047,22 @@ def sanitize_conversation_dependency(
     """Remove derived correlation links when any exact basis is sanitized."""
     if int(connection.execute("PRAGMA user_version").fetchone()[0]) < 17:
         return
+    for identifier in identifiers:
+        dependent = connection.execute(
+            "SELECT a.operation_id FROM operation_audit a JOIN operations o "
+            "ON o.operation_id=a.operation_id JOIN receipts r ON r.operation_id=o.operation_id "
+            "WHERE o.kind='stop_attempt' "
+            "AND json_extract(r.receipt_json,'$.result.selection_transition') IS NOT NULL "
+            "AND EXISTS(SELECT 1 FROM json_each(a.target_refs_json) t "
+            "WHERE json_extract(t.value,'$.record_id')=?)",
+            (identifier,),
+        ).fetchall()
+        for (operation_id,) in dependent:
+            connection.execute("DELETE FROM receipts WHERE operation_id=?", (operation_id,))
+            connection.execute(
+                "UPDATE operations SET fingerprint='DELETED' WHERE operation_id=?",
+                (operation_id,),
+            )
     affected: set[str] = set()
     for identifier in identifiers:
         affected.update(

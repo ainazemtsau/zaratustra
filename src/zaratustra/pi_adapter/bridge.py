@@ -152,7 +152,6 @@ from zaratustra.workspace import (
     reconcile_git,
     register_project,
     remember_model,
-    select_work_project,
     workspace_info,
 )
 
@@ -288,6 +287,9 @@ class Bridge:
         # delivered owner entries before preparing context or executing tools.
         self.request_sources: dict[UUID, tuple[KnowledgeRef, ...]] = {}
         self.request_origins: dict[UUID, str] = {}
+        self.pending_selections: dict[UUID, dict[str, Any]] = {}
+        self.selection_barriers: dict[UUID, str] = {}
+        self.selection_results: dict[UUID, dict[str, Any]] = {}
         self.conversation_hosts: dict[UUID, dict[str, str]] = {}
         self.process_observations: dict[tuple[UUID, str], Any] = {}
         self.response_only: dict[UUID, dict[str, Any]] = {}
@@ -300,7 +302,7 @@ class Bridge:
         self.accept_previews: dict[UUID, tuple[UUID, int, UUID]] = {}
         self.accept_results: dict[UUID, dict[str, object]] = {}
         self.git_previews: dict[UUID, UUID] = {}
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         self.provider_preflight_refusal: ProviderPreflightRefusal | None = None
         self.workflow_executor_pool: Any = None
         self.setup_controller: Any = None
@@ -462,6 +464,8 @@ class Bridge:
         return sources[0]
 
     def _require_model_effect(self, session_id: UUID) -> None:
+        if session_id in self.pending_selections or session_id in self.selection_barriers:
+            raise FoundationError("selection_pending", "Build fresh context after selection")
         if session_id in self.response_only:
             raise FoundationError("permission_denied", "Response repair has read-only authority")
         if (
@@ -518,6 +522,15 @@ class Bridge:
         from .boundary import process_boundary
 
         return process_boundary(self, session_id, raw)
+
+    def _assigned_selection(self, session_id: UUID, work_id: UUID, raw: dict[str, Any]) -> None:
+        from .selection import assigned_transition
+
+        assigned_transition(self, session_id, work_id, raw)
+
+    def _selection_result(self, session_id: UUID, result: dict[str, Any]) -> dict[str, Any]:
+        selected = self.selection_results.pop(session_id, None)
+        return {**result, **({"selection_transition": selected} if selected is not None else {})}
 
     def native_response_mode(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, Any]:
         """Native-only exact terminal validation and response-only admission."""
@@ -966,13 +979,28 @@ class Bridge:
                     raise FoundationError(
                         "operation_conflict", "Call already answered another question"
                     )
-                return workflow_view(self.path, root_id, self.authority)
-            recorded_root = UUID(str(earlier.result["root_work_id"]))
+                recorded_root = root_id
+            else:
+                recorded_root = UUID(str(earlier.result["root_work_id"]))
             if root_id is not None and root_id != recorded_root:
                 raise FoundationError(
                     "operation_conflict", "Call already addressed another workflow"
                 )
-            return workflow_view(self.path, recorded_root, self.authority)
+            if raw.get("selection_handoff") is not None and action in (
+                "start",
+                "answer",
+                "correct_answer",
+                "retry",
+                "resume",
+            ):
+                self._assigned_selection(session_id, recorded_root, raw)
+                if self.deliver_answer is not None and earlier.result.get("outbox_id"):
+                    self.deliver_answer(UUID(str(earlier.result["outbox_id"])))
+                if self.workflow_controller is not None:
+                    self.workflow_controller.start(recorded_root, raw.get("model", {}))
+            return self._selection_result(
+                session_id, workflow_view(self.path, recorded_root, self.authority)
+            )
         fields: dict[str, Any] = {}
         if action in ("pause", "cancel", "migrate", "correct_answer") and (
             self.workflow_controller is not None and self.workflow_controller.active == root_id
@@ -1057,6 +1085,7 @@ class Bridge:
                     "workflow_executor_unavailable", "No window workflow executor"
                 )
             assert root_id is not None
+            self._assigned_selection(session_id, root_id, raw)
             if (
                 action == "answer"
                 and self.deliver_answer is not None
@@ -1065,14 +1094,20 @@ class Bridge:
                 self.deliver_answer(UUID(str(receipt.result["outbox_id"])))
             self.workflow_controller.start(root_id, raw.get("model", {}))
         assert root_id is not None
-        return workflow_view(self.path, root_id, self.authority)
+        return self._selection_result(session_id, workflow_view(self.path, root_id, self.authority))
 
     def _workspace_configuration(self) -> LaunchConfig | None:
         return read_config(self.workspace_config) if self.workspace_config else None
 
     def workspace_operation(self, session_id: UUID, raw: dict[str, Any]) -> dict[str, Any]:
-        if raw.get("mode") not in ("info", "projects", "status", "check") or (
-            session_id in self.response_only and raw.get("mode") == "check"
+        native_choice = raw.get("selection_handoff", {})
+        native_ui = native_choice.get("origin") == "native_ui" and all(
+            str(native_choice.get(key)) == str(self.conversation_hosts.get(session_id, {}).get(key))
+            for key in ("host_id", "branch_id", "generation")
+        )
+        if not native_ui and (
+            raw.get("mode") not in ("info", "projects", "status", "check")
+            or (session_id in self.response_only and raw.get("mode") == "check")
         ):
             self._require_model_effect(session_id)
         self._session(session_id)
@@ -1094,46 +1129,17 @@ class Bridge:
                 self.workspace_config, Project(name=str(raw["name"]), path=Path(str(raw["path"])))
             )
         elif action == "select":
+            from .selection import transition
+
             root = config.project_root(str(raw["name"]))
             if not root.is_dir():
                 raise FoundationError("resource_unavailable", "Registered project is unavailable")
             selected = self._session(session_id)
-            if selected:
-                if self.assigned_attempt_id is not None:
-                    raise FoundationError("permission_denied", "Assigned resource cannot change")
-                snapshot = read_execution(self.path, selected.work_id, self.authority)
-                active = next((item for item in snapshot.attempts if item.status == "active"), None)
-                if active and self.workspace.resolve() != root:
-                    if active.session_id != session_id or any(
-                        item.attempt_id == active.attempt_id and item.status != "answered"
-                        for item in snapshot.invocations
-                    ):
-                        raise FoundationError(
-                            "active_attempt", "Resolve the existing send before changing project"
-                        )
-                    apply_operation(
-                        self.path,
-                        StopAttemptRequest(
-                            operation_id=uuid5(active.attempt_id, f"project:{root.as_posix()}"),
-                            space_id=self.authority.space_id,
-                            actor=self.authority.actor,
-                            attempt_id=active.attempt_id,
-                            work_id=selected.work_id,
-                            session_id=session_id,
-                            outcome="interrupted",
-                        ),
-                        self.authority,
-                    )
-                select_work_project(
-                    config,
-                    self.authority,
-                    selected.work_id,
-                    str(raw["name"]),
-                    operation_id=UUID(str(raw.get("operation_id", uuid4()))),
-                )
-            elif self.assigned_attempt_id is not None:
-                raise FoundationError("permission_denied", "Assigned resource cannot change")
-            self.workspace = root
+            target: dict[str, Any] = {"mode": "project", "root": str(root)}
+            if selected is not None:
+                work = read_work(self.path, selected.work_id, self.authority)
+                target.update(work_id=str(work.work_id), work_revision=work.revision)
+            self.selection_results[session_id] = transition(self, session_id, target, raw)
         elif action in ("prepare", "publish", "defer", "check"):
             item: GitPreparation | None
             if self.assigned_attempt_id is not None:
@@ -1184,6 +1190,11 @@ class Bridge:
             **workspace_info(config),
             "selected_root": str(self.workspace),
             "selected_project": config.project_name(self.workspace),
+            **(
+                {"selection_transition": self.selection_results.pop(session_id)}
+                if action == "select" and session_id in self.selection_results
+                else {}
+            ),
             "git": git,
         }
 
@@ -1347,7 +1358,11 @@ class Bridge:
             if original in state.sources:
                 supplied = self._exposed_sources(session_id, raw)
                 if not any(ref not in state.sources for ref in supplied):
-                    return self._setup_status(identifier)
+                    if raw.get("selection_handoff") is not None:
+                        from .selection import unchanged
+
+                        self.selection_results[session_id] = unchanged(self, session_id, raw)
+                    return self._selection_result(session_id, self._setup_status(identifier))
                 action = "attach_sources"
                 fields.pop("text")
                 fields["source_refs"] = supplied
@@ -1363,6 +1378,7 @@ class Bridge:
                     or any(item.status == "unknown" for item in snapshot.assignments)
                 )
                 if opened is not None and not interrupted:
+                    self._assigned_selection(session_id, stage.work_id, raw)
                     answered = apply_operation(
                         self.path,
                         AnswerWaitRequest(
@@ -1449,10 +1465,25 @@ class Bridge:
                 raise FoundationError(
                     "setup_executor_unavailable", "The interactive host has no setup executor"
                 )
+            current = read_activity_setup(self.path, identifier, self.authority)
+            target_work = current.state.root_work_id or (
+                current.state.stages[-1].work_id if current.state.stages else None
+            )
+            if target_work is None:
+                target_work = self.setup_controller.prepare(identifier, raw.get("model", {}))
+            if target_work is not None:
+                self._assigned_selection(session_id, target_work, raw)
             self.setup_controller.start(identifier, raw.get("model", {}))
+        if action in ("answer", "attach_sources") and raw.get("selection_handoff") is not None:
+            if session_id not in self.selection_results:
+                from .selection import unchanged
+
+                self.selection_results[session_id] = unchanged(self, session_id, raw)
         from .activity_setup import _observe
 
-        return cast(dict[str, Any], _observe(self._setup_status, identifier))
+        return self._selection_result(
+            session_id, cast(dict[str, Any], _observe(self._setup_status, identifier))
+        )
 
     def connect(self, session_id: UUID) -> dict[str, object]:
         if self.assigned_session_id is not None and session_id != self.assigned_session_id:
@@ -1525,6 +1556,13 @@ class Bridge:
                 "permission_denied", "Response repair cannot change Work selection"
             )
         self._session(session_id)
+        departing = self._session(session_id)
+        if departing is not None and departing.work_id != work_id:
+            old = read_execution(self.path, departing.work_id, self.authority)
+            if any(item.status == "active" for item in old.attempts):
+                raise FoundationError(
+                    "selection_proof_required", "Stop the exact departing ordinary Attempt first"
+                )
         activity = read_activity(self.path, activity_id, self.authority)
         work = read_work(self.path, work_id, self.authority)
         if work.state.activity_id != activity.activity_id:
@@ -1591,16 +1629,26 @@ class Bridge:
             raise FoundationError("no_work", "Select an Activity and Work first")
         return selected
 
-    def snapshot(self, session_id: UUID) -> dict[str, object]:
-        selected = self._selection(session_id)
-        current = read_execution(self.path, selected.work_id, self.authority)
+    def snapshot(self, session_id: UUID, work_id: UUID | None = None) -> dict[str, object]:
+        selected = self._session(session_id)
+        addressed = work_id or self._selection(session_id).work_id
+        if self.assigned_attempt_id is not None and (
+            selected is None or addressed != selected.work_id
+        ):
+            raise FoundationError("permission_denied", "RPC can inspect only its assigned Work")
+        current = read_execution(self.path, addressed, self.authority)
         result = current.model_dump(mode="json")
         result["output_publication_contracts"] = output_publication_contracts(current.work.state)
+        if work_id is not None:
+            with self.lock:
+                self.exposed_refs.setdefault(session_id, set()).add(
+                    KnowledgeRef(record_id=current.work.work_id, revision=current.work.revision)
+                )
         if self.assigned_attempt_id is not None:
-            stage = read_setup_stage(self.path, selected.work_id, self.authority)
+            stage = read_setup_stage(self.path, addressed, self.authority)
             if stage is not None and stage.result_protocol is not None:
                 result["setup_result_protocol"] = stage.result_protocol
-            if read_workflow_node_for_work(self.path, selected.work_id, self.authority) is not None:
+            if read_workflow_node_for_work(self.path, addressed, self.authority) is not None:
                 result["workflow_result_protocol"] = "workflow_json"
         return result
 
@@ -1863,9 +1911,14 @@ class Bridge:
                 raise FoundationError(
                     "permission_denied", "Procedure execution belongs to an interactive Pi window"
                 )
-            return cast(
-                dict[str, object],
-                self.procedure_controller.start(UUID(str(raw["run_id"])), raw.get("model", {})),
+            from zaratustra.foundation import procedure_status
+
+            run_id = UUID(str(raw["run_id"]))
+            run = procedure_status(self.path, self.authority, run_id)
+            self._assigned_selection(session_id, UUID(str(run["work_id"])), raw)
+            return self._selection_result(
+                session_id,
+                cast(dict[str, Any], self.procedure_controller.start(run_id, raw.get("model", {}))),
             )
         registry = installed_integrations(self.path, self.authority)
         operation = str(raw.get("operation", "describe_structure"))
@@ -2028,6 +2081,7 @@ class Bridge:
             if (
                 state.get("conversation_final") not in (None, False)
                 or state.get("conversation_terminal") is not None
+                or state.get("native_selection") is not None
             ):
                 raise FoundationError(
                     "permission_denied", "Native final proof cannot be supplied by model memory"
@@ -2346,6 +2400,7 @@ class Bridge:
         final_manifest: KnowledgeRef | None = None,
         conversation_terminal: dict[str, Any] | None = None,
         retain_empty: bool = False,
+        native_selection: dict[str, Any] | None = None,
     ) -> dict[str, object]:
         selected = self._session(session_id)
         if channel not in ("conversation_user", "conversation_assistant", "tool_result"):
@@ -2414,6 +2469,19 @@ class Bridge:
                 source = self._request_source(session_id)
                 if source is not None:
                     derived.add(source)
+        if native_selection is not None:
+            from zaratustra.foundation import NativeSelectionObservation
+
+            choice = NativeSelectionObservation.model_validate(native_selection)
+            if choice.owner_source is not None:
+                derived.add(choice.owner_source)
+            if choice.target.work_id is not None:
+                assert choice.target.work_revision is not None
+                derived.add(
+                    KnowledgeRef(
+                        record_id=choice.target.work_id, revision=choice.target.work_revision
+                    )
+                )
         state = SourceState.model_validate(
             {
                 "channel": channel,
@@ -2453,6 +2521,7 @@ class Bridge:
                     if conversation_terminal is not None
                     else {}
                 ),
+                **({"native_selection": native_selection} if native_selection is not None else {}),
                 "derived_from": sorted(derived, key=lambda ref: (str(ref.record_id), ref.revision))
                 if channel == "conversation_assistant"
                 else (),
@@ -2608,6 +2677,7 @@ class Bridge:
         session_id: UUID,
         purpose: str = "content",
         historical_memory: tuple[KnowledgeRef, ...] = (),
+        inspection_work_id: UUID | None = None,
     ) -> dict[str, object]:
         selected = self._session(session_id)
         if self.request_origins.get(session_id) == "host":
@@ -2625,9 +2695,48 @@ class Bridge:
             "epoch": info.execution_epoch,
             "purpose": purpose,
         }
+        if inspection_work_id is not None:
+            inspected = read_execution(self.path, inspection_work_id, self.authority)
+            reference = KnowledgeRef(
+                record_id=inspected.work.work_id, revision=inspected.work.revision
+            )
+            mandatory.append(reference)
+            packet["read_focus"] = {
+                "reference": reference.model_dump(mode="json"),
+                "work": inspected.work.model_dump(mode="json"),
+                "waits": [item.model_dump(mode="json") for item in inspected.waits],
+                "guidance": "The owner inspected this Work. This is read-only focus, not an "
+                "execution selection or permission to continue another Work. Explain the "
+                "difference from the separately pinned selected Work; use an addressed "
+                "selection before executing the inspected Work.",
+            }
+        pending_selection = self.pending_selections.get(session_id)
+        if pending_selection is not None:
+            if pending_selection.get("observation") is not None:
+                mandatory.append(KnowledgeRef.model_validate(pending_selection["observation"]))
+            destination = pending_selection.get("target")
+            label = None
+            if destination and destination.get("work_id"):
+                label = read_work(
+                    self.path, UUID(destination["work_id"]), self.authority
+                ).state.goal
+            packet["selection_pending"] = {
+                "pending_id": pending_selection["handoff"]["operation_id"],
+                "target": pending_selection.get("target"),
+                "target_goal": label,
+                "requested": pending_selection.get("target_request"),
+                "departing": pending_selection["handoff"].get("departing"),
+                "next_actions": ["continue_selection", "cancel_selection"],
+                "guidance": "A native selection was interrupted. Explain the saved choice. "
+                "Use the real owner's request to continue or cancel this exact choice; "
+                "do not start another Work or repeat a model send.",
+            }
         recovery_work = self.recovery_obstacles.get(session_id)
         if recovery_work is not None:
             recovery = read_execution(self.path, recovery_work, self.authority)
+            mandatory.append(
+                KnowledgeRef(record_id=recovery.work.work_id, revision=recovery.work.revision)
+            )
             packet["recovery_obstacle"] = {
                 "work_id": str(recovery_work),
                 "goal": recovery.work.state.goal,
@@ -3403,6 +3512,8 @@ class Bridge:
         with self.lock:
             self.exposed_refs.setdefault(session_id, set()).update(mandatory)
             self.exposed_refs[session_id].update(historic)
+            if session_id not in self.pending_selections:
+                self.selection_barriers.pop(session_id, None)
         return {
             "manifest_id": str(manifest_id),
             "manifest_revision": 1,
@@ -3578,16 +3689,32 @@ class Bridge:
             "wait": opened.model_dump(mode="json"),
         }
 
-    def answer_wait(self, session_id: UUID, wait_id: UUID, answer: str) -> dict[str, object]:
+    def answer_wait(
+        self,
+        session_id: UUID,
+        wait_id: UUID,
+        answer: str,
+        *,
+        work_id: UUID | None = None,
+        native: dict[str, Any] | None = None,
+    ) -> dict[str, object]:
         if session_id in self.response_only:
             raise FoundationError("permission_denied", "Response repair cannot answer a user wait")
-        selected = self._selection(session_id)
+        self._session(session_id)
+        addressed = work_id or self._selection(session_id).work_id
         if self.assigned_attempt_id is not None:
             raise FoundationError("permission_denied", "RPC cannot answer its own question")
-        snapshot = read_execution(self.path, selected.work_id, self.authority)
+        selected = self._session(session_id)
+        if native is None and (selected is None or selected.work_id != addressed):
+            raise FoundationError(
+                "selection_proof_required", "Use the addressed native answer transition"
+            )
+        snapshot = read_execution(self.path, addressed, self.authority)
         wait = next((item for item in snapshot.waits if item.wait_id == wait_id), None)
         if wait is None:
             raise FoundationError("stale_wait", "Question is unavailable")
+        if native is not None:
+            self._assigned_selection(session_id, addressed, native)
         operation_id = uuid5(wait_id, "addressed-answer")
         if wait.status == "answered":
             if wait.answer != answer:
@@ -3605,7 +3732,7 @@ class Bridge:
                 actor=self.authority.actor,
                 wait_id=wait_id,
                 attempt_id=wait.attempt_id,
-                work_id=selected.work_id,
+                work_id=addressed,
                 session_id=attempt.session_id,
                 expected_wait_revision=wait.revision,
                 answer=answer,
@@ -3614,7 +3741,7 @@ class Bridge:
         outbox_id = UUID(str(receipt.result["outbox_id"]))
         if self.deliver_answer is not None:
             self.deliver_answer(outbox_id)
-        return receipt.model_dump(mode="json")
+        return self._selection_result(session_id, receipt.model_dump(mode="json"))
 
     def accept_preview(self, session_id: UUID) -> dict[str, object]:
         selected = self._selection(session_id)
@@ -3819,6 +3946,9 @@ class BridgeHandler(BaseHTTPRequestHandler):
                         KnowledgeRef.model_validate(ref)
                         for ref in body.get("historical_memory", [])
                     ),
+                    inspection_work_id=UUID(str(body["inspection_work_id"]))
+                    if body.get("inspection_work_id")
+                    else None,
                 )
             elif post and path.path == "/v1/context-delivery":
                 result = bridge.context_delivery(session_id, body)
@@ -3844,13 +3974,21 @@ class BridgeHandler(BaseHTTPRequestHandler):
                     str(body["remainder"]),
                 )
             elif post and path.path == "/v1/answer":
-                result = bridge.answer_wait(session_id, UUID(body["wait_id"]), str(body["answer"]))
+                result = bridge.answer_wait(
+                    session_id,
+                    UUID(body["wait_id"]),
+                    str(body["answer"]),
+                    work_id=UUID(str(body["work_id"])) if body.get("work_id") else None,
+                    native=body if body.get("selection_handoff") is not None else None,
+                )
             elif post and path.path == "/v1/accept-preview":
                 result = bridge.accept_preview(session_id)
             elif post and path.path == "/v1/accept":
                 result = bridge.accept(session_id, UUID(body["nonce"]), str(body["basis"]))
             elif not post and path.path == "/v1/snapshot":
-                result = bridge.snapshot(session_id)
+                result = bridge.snapshot(
+                    session_id, UUID(params["work_id"][0]) if params.get("work_id") else None
+                )
             elif not post and path.path == "/v1/bindings":
                 result = bridge.binding_catalog(session_id)
             elif not post and path.path == "/v1/binding-contract":

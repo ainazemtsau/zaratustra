@@ -205,12 +205,96 @@ await emit("tool_result", {toolName: "zara_activity", toolCallId: "status-fixtur
   input: {mode: "status", setup_id: "fictional-guard-setup"}, isError: false});
 await emit("tool_result", failureEvent("setup_stopping"));
 assert.equal(aborted, 1); // Neither pause nor a read clears an unchanged failing call.
+
+// Native command inspection never turns an assigned/composite/closed Work into
+// an ordinary execution pin. An answer addresses the inspected Work explicitly.
+const nativeEntries = [];
+loaded.runtime.appendEntry = (customType, data) => nativeEntries.push({type: "custom", customType, data});
+ctx.sessionManager.getBranch = () => nativeEntries;
+const workIds = {ordinary: "ordinary-a", assigned: "assigned-b", composite: "composite-c", closed: "closed-d"};
+let selectedLabel = "ordinary";
+ctx.ui.select = async (title, options) => title === "Activity" ? options[0] : title === "Work"
+  ? options.find(value => value.includes(`[${workIds[selectedLabel]}]`)) : options[0];
+ctx.ui.input = async () => "Fictional addressed answer";
+ctx.ui.confirm = async () => true;
+const reads = [], transitions = [], answers = [], recoveries = [];
+const coreSnapshot = id => ({execution_epoch: 1,
+  work: {work_id: id, revision: 1, state: {status: id === workIds.closed ? "succeeded" : "proposed",
+    linked_outputs: []}}, resources: [], attempts: [],
+  assignments: id === workIds.assigned ? [{status: "waiting"}] : [],
+  waits: id === workIds.assigned ? [{wait_id: "assigned-question", status: "open", question: "Continue?"}] : [],
+  composition: id === workIds.composite ? {plan_revision: 1, obligations: []} : null});
+globalThis.fetch = async (url, init) => {
+  const address = new URL(url);
+  const body = init?.body ? JSON.parse(init.body) : {};
+  assert.equal(address.origin, "http://127.0.0.1:1");
+  if (address.pathname === "/v1/connect") return Response.json({schema_version: 18,
+    space_id: "fictional-space", execution_epoch: 1, records: [
+      {kind: "activity", record_id: "fictional-activity", label: "Fictional activity"},
+      ...Object.entries(workIds).map(([label, record_id]) => ({kind: "work", record_id,
+        activity_id: "fictional-activity", label}))]});
+  if (address.pathname === "/v1/snapshot") {
+    const id = address.searchParams.get("work_id") ?? workIds.ordinary;
+    reads.push(id);
+    return Response.json(coreSnapshot(id));
+  }
+  if (address.pathname === "/v1/conversation") {
+    if (body.mode === "selection_recovery") recoveries.push(body.departing);
+    if (body.mode === "selection_target") return Response.json({target: {mode: "ordinary", work_id: body.work_id, work_revision: 1}});
+    if (body.mode === "selection_transition") {
+      transitions.push(body);
+      return Response.json({selection_transition: {selection: {activity_id: "fictional-activity", work_id: workIds.ordinary},
+        changed: true, preserve_attempt: false}});
+    }
+    return Response.json({registered: true});
+  }
+  if (address.pathname === "/v1/workspace") return Response.json({personal_root: directory,
+    selected_root: directory, selected_project: "personal", projects: [], git: {connected: false}});
+  if (address.pathname === "/v1/activity-setup") return Response.json(body.action === "list" ? {items: []} : item);
+  if (address.pathname === "/v1/workflow") return Response.json({items: []});
+  if (address.pathname === "/v1/answer") {
+    answers.push(body);
+    return Response.json({operation_id: "addressed-answer-receipt", selection_transition: {
+      selection: null, changed: true, preserve_attempt: false,
+      target: {mode: "assigned", work_id: body.work_id, work_revision: 1}}});
+  }
+  throw new Error(`Unexpected native UI endpoint ${address.pathname}`);
+};
+await emit("session_start", {reason: "resume"});
+await extension.commands.get("zara-work").handler("", ctx);
+assert.equal(transitions.length, 1);
+for (const mode of ["assigned", "composite", "closed"]) {
+  selectedLabel = mode;
+  await extension.commands.get("zara-work").handler("", ctx);
+  assert.equal(transitions.length, 1);
+  const count = reads.length;
+  await extension.commands.get("zara-status").handler("", ctx);
+  assert.equal(reads[count], workIds[mode]);
+  assert(notifications.at(-2).message.includes("просмотр"));
+}
+selectedLabel = "assigned";
+await extension.commands.get("zara-work").handler("", ctx);
+await extension.commands.get("zara-answer").handler("", ctx);
+assert.equal(answers.length, 1);
+assert.equal(answers[0].work_id, workIds.assigned);
+assert.equal(answers[0].wait_id, "assigned-question");
+assert.equal(answers[0].selection_handoff.origin, "native_ui");
+assert.equal(answers[0].selection_handoff.choice.body.work_id, workIds.assigned);
+assert(nativeEntries.some(entry => entry.customType === "zara-project-selection" && entry.data.detached));
+const surviving = {work_id: workIds.ordinary, attempt_id: "departing-attempt", session_id: "departing-session"};
+nativeEntries.push({type: "custom", customType: "zara-selection-committed", data: {
+  id: "cancelled-choice", cancelled: true, recovery_obstacle: surviving}});
+await emit("session_start", {reason: "resume"});
+assert.deepEqual(recoveries, [surviving]);
+assert.equal(transitions.length, 1); // Passive restoration never selects or interrupts.
 const report = { pi: packageMetadata.version, rendered_tool: true, no_phantom_user_notice: true,
   legacy_history_filtered: true, compact_both_parts_filtered: true,
   restored_question_is_status_only: true, duplicate_notifications: false,
   observed_stop_status: true, interrupted_retry_confirmation: true,
   unknown_reopen_does_not_resume: true, resume_refusal_keeps_saved_status: true,
   known_stage_reopen_waits_for_owner: true,
-  addressed_error_guard_preserved: true, actual_provider_calls: 0 };
+  addressed_error_guard_preserved: true, assigned_composite_closed_read_focus: true,
+  inspection_answer_is_addressed_transition: true, cancelled_active_work_restored_as_obstacle: true,
+  actual_provider_calls: 0 };
 writeFileSync(join(directory, "report.json"), JSON.stringify(report, null, 2) + "\n");
 console.log(JSON.stringify(report, null, 2));

@@ -1,11 +1,12 @@
 """Interrupted assigned answers resume through exact Core output recovery, not replay."""
 
+import io
 import json
 import threading
 from dataclasses import replace
 from pathlib import Path
 from typing import Any, Literal, cast
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4, uuid5
 
 import pytest
 
@@ -413,6 +414,35 @@ def _target(tmp_path: Path, target: Target) -> tuple[Any, UUID, UUID, Bridge, An
         else ProcedureCoordinator(bridge, config)
     )
     return case, identifier, work, bridge, controller
+
+
+def test_procedure_executor_failure_retains_scoped_diagnostic(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    case, _, work, bridge, controller = _target(tmp_path, "procedure")
+    root, _, owner, *_ = case
+    attempt, _ = _assign(case, work)
+    controller.active = work
+    before = read_execution(root, work, owner)
+
+    class FailedExecutor:
+        stdin = io.BytesIO()
+        stderr = io.BytesIO(b"Fictional executor transport failed")
+        returncode = 1
+
+        def poll(self) -> int:
+            return self.returncode
+
+    monkeypatch.setattr("subprocess.Popen", lambda *args, **kwargs: FailedExecutor())
+    controller._run(attempt)
+    original = read_knowledge(root, uuid5(attempt, "procedure-executor-diagnostic"), owner)
+    assert isinstance(original.state, SourceState)
+    assert original.state.content == b"Fictional executor transport failed"
+    assert original.state.scope_work_id == work
+    assert original.state.memory is not None
+    assert original.state.memory.activity_id == before.work.state.activity_id
+    assert read_execution(root, work, owner) == before
+    assert bridge.authority == owner
 
 
 def _assign(case: Any, work: UUID) -> tuple[UUID, UUID]:

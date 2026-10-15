@@ -153,6 +153,59 @@ class SetupCoordinator:
         with self.control_lock:
             self._start(identifier, model)
 
+    def prepare(self, identifier: UUID, model: dict[str, Any]) -> UUID | None:
+        """Retain the actual target graph before native selection or executor launch."""
+        if not model.get("id") or model.get("provider") != self.config.provider_id:
+            raise FoundationError(
+                "unsupported_provider", "Setup must use the selected admitted Pi provider/model"
+            )
+        with self.control_lock:
+            state = self._prepare_stage(identifier)
+            return state.root_work_id or (state.stages[-1].work_id if state.stages else None)
+
+    def _prepare_stage(self, identifier: UUID) -> Any:
+        state = _observe(
+            read_activity_setup, self.config.space, identifier, self.bridge.authority
+        ).state
+        if state.phase in (
+            "needs_input",
+            "needs_attention",
+            "cancelled",
+            "ready",
+            "paused",
+            "activating",
+        ):
+            return state
+        if not state.stages or state.stages[-1].output is not None or state.stages[-1].retired:
+            kind = (
+                state.stages[-1].kind
+                if state.stages
+                and state.stages[-1].rejection
+                and state.stages[-1].input_version == state.input_version
+                else "draft"
+                if state.draft is None
+                else "correction"
+                if state.review is not None
+                else "review"
+            )
+            self._step(
+                identifier,
+                "start_stage",
+                stage_kind=kind,
+                stage_instruction=INSTRUCTIONS[kind]
+                + (
+                    " Correct the rejected raw result using its typed diagnostics and "
+                    "supported_operations. Return the whole result matching result_schema. "
+                    "For review, inspect the whole current package again."
+                    if state.stages and state.stages[-1].rejection
+                    else ""
+                ),
+            )
+            state = _observe(
+                read_activity_setup, self.config.space, identifier, self.bridge.authority
+            ).state
+        return state
+
     def _start(self, identifier: UUID, model: dict[str, Any]) -> None:
         if not model.get("id") or model.get("provider") != self.config.provider_id:
             raise FoundationError(
@@ -196,38 +249,7 @@ class SetupCoordinator:
                 if state.phase == "activating":
                     self._step(identifier, "finish")
                     return
-                if (
-                    not state.stages
-                    or state.stages[-1].output is not None
-                    or state.stages[-1].retired
-                ):
-                    kind = (
-                        state.stages[-1].kind
-                        if state.stages
-                        and state.stages[-1].rejection
-                        and state.stages[-1].input_version == state.input_version
-                        else "draft"
-                        if state.draft is None
-                        else "correction"
-                        if state.review is not None
-                        else "review"
-                    )
-                    self._step(
-                        identifier,
-                        "start_stage",
-                        stage_kind=kind,
-                        stage_instruction=INSTRUCTIONS[kind]
-                        + (
-                            " Correct the rejected raw result using its typed diagnostics and "
-                            "supported_operations. Return the whole result matching result_schema. "
-                            "For review, inspect the whole current package again."
-                            if state.stages and state.stages[-1].rejection
-                            else ""
-                        ),
-                    )
-                    state = _observe(
-                        read_activity_setup, self.config.space, identifier, self.bridge.authority
-                    ).state
+                state = self._prepare_stage(identifier)
                 stage = state.stages[-1]
                 snapshot = _observe(
                     read_execution, self.config.space, stage.work_id, self.bridge.authority
@@ -349,6 +371,7 @@ class SetupCoordinator:
             apply_operation(
                 self.config.space,
                 AssignAttemptRequest(
+                    ordinary_handoff=response.handoff_operation_id,
                     operation_id=uuid5(attempt_id, "assign"),
                     space_id=authority.space_id,
                     actor=authority.actor,

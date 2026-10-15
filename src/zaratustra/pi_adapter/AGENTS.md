@@ -1,5 +1,22 @@
 # Interactive Pi adapter
 
+`selection.py` is the shared native transition for ordinary Work/project selection
+and assigned process entry. Retain actual native choice/entry/invocation evidence,
+then hold Bridge's admission RLock from host validation through the exact Core
+stop receipt and selection commit. No executor launch, observation or cleanup wait
+belongs inside that lock. Keep old pins in native pending entries until the
+receipt resolves; startup/tree restoration is passive and a fresh owner request
+chooses continue or cancel. Preserve no-op Attempts only with their actual current
+resource pin/root. Recheck the exact target after the stop receipt before local
+commit; later Core context/effect pins remain authoritative. A pre-stop cancel
+retains the surviving old Attempt as an addressed recovery obstacle, restored
+passively from the native committed choice after reopening. It never reselects or
+interrupts that Attempt. Sequential native tools require fresh context after a change.
+Assigned entry detaches ordinary selection before waking or launching a worker.
+Read-only command focus is a separate exact Work reference in ContextManifest;
+it never owns a resource or creates an Attempt. Addressed answers use the same
+guarded transition before their outbox can wake assigned execution.
+
 Configured procedure selection persists its Core resource before dispatch. Read
 the committed snapshot after selection, then pin that resource's actual ID and
 revision. Never create a fallback from the earlier empty snapshot. Legacy setup

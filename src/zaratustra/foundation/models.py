@@ -1404,11 +1404,18 @@ class StopAttemptRequest(OperationRequest):
         default=None, exclude_if=lambda value: value is None
     )
     no_send_only: bool = Field(default=False, exclude_if=lambda value: not value)
+    selection_transition: OrdinarySelectionTransition | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
     @model_validator(mode="after")
     def no_send_stop_is_interruption(self) -> StopAttemptRequest:
         if self.no_send_only and (self.outcome != "interrupted" or self.observed_final is not None):
             raise ValueError("A no-send stop only interrupts and cannot claim final proof")
+        if self.selection_transition is not None and (
+            self.outcome != "interrupted" or self.observed_final is not None or self.no_send_only
+        ):
+            raise ValueError("A selection transition only interrupts with its own exact proof")
         return self
 
 
@@ -1422,6 +1429,7 @@ class AssignAttemptRequest(OperationRequest):
     session_id: UUID
     previous_attempt_id: UUID | None = None
     executor_version: str = Field(min_length=1, max_length=200)
+    ordinary_handoff: UUID | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class ClaimAttemptLaunchRequest(OperationRequest):
@@ -1539,6 +1547,64 @@ class ConversationTerminalObservation(ContractModel):
         return self
 
 
+class SelectionTarget(ContractModel):
+    mode: Literal["ordinary", "assigned", "project"]
+    work_id: UUID | None = None
+    work_revision: int | None = Field(default=None, ge=1)
+    root: Path | None = None
+
+    @model_validator(mode="after")
+    def exact_target(self) -> SelectionTarget:
+        if (self.work_id is None) != (self.work_revision is None):
+            raise ValueError("Target Work and revision are one exact address")
+        if self.mode == "project":
+            if self.root is None or not self.root.is_absolute():
+                raise ValueError("A project target needs its absolute registered root")
+        elif self.work_id is None or self.root is not None:
+            raise ValueError("An execution target needs its Work, without a project root")
+        return self
+
+
+class NativeSelectionObservation(ContractModel):
+    origin: Literal["owner_tool", "native_ui"]
+    target: SelectionTarget
+    owner_source: KnowledgeRef | None = None
+    host_id: str = Field(min_length=1, max_length=300)
+    branch_id: str = Field(min_length=1, max_length=300)
+    generation: int = Field(ge=0)
+    tool_call_id: str | None = Field(default=None, min_length=1, max_length=300)
+    tool_name: str | None = Field(default=None, min_length=1, max_length=200)
+    arguments_json: str | None = Field(default=None, min_length=1, max_length=32768)
+
+    @model_validator(mode="after")
+    def exact_origin(self) -> NativeSelectionObservation:
+        fields = (self.owner_source, self.tool_call_id, self.tool_name, self.arguments_json)
+        if self.origin == "owner_tool" and any(value is None for value in fields):
+            raise ValueError("A model selection needs the consumed owner and exact native call")
+        if self.origin == "native_ui" and any(value is not None for value in fields):
+            raise ValueError("A native UI choice has its own original, not a model tool call")
+        return self
+
+
+class OrdinarySelectionTransition(ContractModel):
+    execution_epoch: int = Field(ge=1)
+    work_revision: int = Field(ge=1)
+    attempt_revision: int = Field(ge=1)
+    resource_id: UUID
+    resource_revision: int = Field(ge=1)
+    owner_source: KnowledgeRef
+    observation: KnowledgeRef
+    boundary_source: KnowledgeRef | None = None
+    target: SelectionTarget
+
+    @model_validator(mode="after")
+    def whole_sources(self) -> OrdinarySelectionTransition:
+        for ref in (self.owner_source, self.observation, self.boundary_source):
+            if ref is not None and (ref.start is not None or ref.end is not None):
+                raise ValueError("A selection transition requires whole retained originals")
+        return self
+
+
 class ConversationResponseProblem(ContractModel):
     code: str = Field(min_length=1, max_length=100)
     path: tuple[str | int, ...] = ()
@@ -1582,7 +1648,14 @@ class AttemptResponseView(ContractModel):
     work_id: UUID
     work_revision: int = Field(ge=1)
     outcome: Literal[
-        "no_send", "running", "unknown", "recoverable", "applied", "partial_output", "attention"
+        "no_send",
+        "running",
+        "unknown",
+        "recoverable",
+        "applied",
+        "partial_output",
+        "handoff",
+        "attention",
     ]
     attempt_id: UUID | None = None
     session_id: UUID | None = None
@@ -1593,6 +1666,7 @@ class AttemptResponseView(ContractModel):
     result_protocol: Literal["setup_json", "workflow_json", "zara_envelope"] | None = None
     slot: str | None = None
     artifact: ArtifactRef | None = None
+    handoff_operation_id: UUID | None = Field(default=None, exclude_if=lambda value: value is None)
     diagnostics: tuple[ConversationResponseProblem, ...] = ()
 
 
@@ -1627,6 +1701,9 @@ class SourceState(ContractModel):
     conversation_terminal: ConversationTerminalObservation | None = Field(
         default=None, exclude_if=lambda value: value is None
     )
+    native_selection: NativeSelectionObservation | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
     memory: MemoryMetadata | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
@@ -1648,6 +1725,30 @@ class SourceState(ContractModel):
                 or terminal.manifest not in self.derived_from
             ):
                 raise ValueError("Terminal observation requires exact native Source provenance")
+        if self.native_selection is not None:
+            selection = self.native_selection
+            if self.capture != "full" or not self.conversation_id or not self.source_event_id:
+                raise ValueError("Native selection requires a whole identified original")
+            if selection.origin == "owner_tool":
+                native_boundary = self.conversation_terminal
+                if (
+                    native_boundary is None
+                    or native_boundary.native_outcome != "tool_call"
+                    or native_boundary.stop_reason != "toolUse"
+                    or selection.owner_source not in self.derived_from
+                ):
+                    raise ValueError("A tool selection needs its native tool-use and owner bases")
+            elif self.channel != "core_operation" or self.conversation_terminal is not None:
+                raise ValueError("A UI selection is a native operation, not assistant or chat text")
+            if selection.target.work_id is not None:
+                assert selection.target.work_revision is not None
+                if (
+                    KnowledgeRef(
+                        record_id=selection.target.work_id, revision=selection.target.work_revision
+                    )
+                    not in self.derived_from
+                ):
+                    raise ValueError("Native selection needs its exact target Work basis")
         return self
 
 
@@ -3807,6 +3908,9 @@ class DeletionStatus(ContractModel):
 
 __all__ = [
     "MemoryMetadata",
+    "NativeSelectionObservation",
+    "OrdinarySelectionTransition",
+    "SelectionTarget",
     "MemoryRequirement",
     "MemorySelector",
     "MemorySelectionBasis",

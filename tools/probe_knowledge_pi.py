@@ -288,6 +288,7 @@ def run_process(
     input_eof_predicate: Callable[[], bool] | None = None,
     provider_profile: str = "local-completions",
     on_bridge_response: Callable[[str, object], None] | None = None,
+    before_bridge_response: Callable[[str, object], None] | None = None,
 ) -> list[dict[str, object]]:
     if provider_profile not in ("local-completions", "codex-sse"):
         raise ValueError("Fictional native trials support only admitted provider profiles")
@@ -295,14 +296,16 @@ def run_process(
         cleanup.callback(provider.server_close)
         bridge_server = BridgeServer(bridge)
         cleanup.callback(bridge_server.server_close)
-        if on_bridge_response is not None:
+        if on_bridge_response is not None or before_bridge_response is not None:
             original_handler = cast(Any, bridge_server.RequestHandlerClass)
             original_reply = original_handler._reply
 
             def observed_reply(handler: Any, status: Any, payload: object) -> None:
+                if before_bridge_response is not None:
+                    before_bridge_response(handler.path, payload)
                 original_reply(handler, status, payload)
-                assert on_bridge_response is not None
-                on_bridge_response(handler.path, payload)
+                if on_bridge_response is not None:
+                    on_bridge_response(handler.path, payload)
 
             bridge_server.RequestHandlerClass = type(
                 "ObservedBridgeHandler", (original_handler,), {"_reply": observed_reply}
@@ -821,6 +824,7 @@ def run_probe(tmp_path: Path, runtime: Path) -> None:
             session_id: UUID,
             purpose: str = "content",
             historical_memory: tuple[KnowledgeRef, ...] = (),
+            inspection_work_id: UUID | None = None,
         ) -> dict[str, object]:
             raise FoundationError("context_overflow", "Synthetic context preflight refusal")
 

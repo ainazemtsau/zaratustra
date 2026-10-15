@@ -408,6 +408,8 @@ def _write_revision(
     epoch: int,
 ) -> None:
     schema = int(connection.execute("PRAGMA user_version").fetchone()[0])
+    if isinstance(state, SourceState) and state.native_selection is not None and schema < 18:
+        raise FoundationError("upgrade_required", "Native selection evidence needs schema 18")
     if schema >= 15:
         from .data_store import validate_data_state
 

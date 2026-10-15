@@ -45,13 +45,20 @@ def conversation(bridge: Any, session_id: UUID, raw: dict[str, Any]) -> dict[str
     if mode == "host":
         native_host = {key: str(raw[key]) for key in ("host_id", "branch_id")}
         native_host["generation"] = str(int(raw.get("generation", 0)))
-        previous = bridge.conversation_hosts.get(session_id)
-        if previous is not None and previous != native_host:
-            with bridge.lock:
+        with bridge.lock:
+            previous = bridge.conversation_hosts.get(session_id)
+            if previous is not None and previous != native_host:
                 bridge.response_only.pop(session_id, None)
                 bridge.request_origins[session_id] = "history"
                 bridge.request_sources[session_id] = ()
-        bridge.conversation_hosts[session_id] = native_host
+                departed = bridge.pending_selections.pop(session_id, None)
+                bridge.selection_barriers.pop(session_id, None)
+                if departed is not None:
+                    bridge.sessions[session_id] = None
+                    old = departed["handoff"].get("departing")
+                    if old is not None:
+                        bridge.recovery_obstacles[session_id] = UUID(str(old["work_id"]))
+            bridge.conversation_hosts[session_id] = native_host
         return {"registered": True}
     if read_space(bridge.path).schema_version < 17:
         if mode == "catalog":
@@ -83,6 +90,36 @@ def conversation(bridge: Any, session_id: UUID, raw: dict[str, Any]) -> dict[str
         return delivery.model_dump(mode="json")
     if mode in ("terminal", "response_only"):
         return cast(dict[str, object], bridge.native_response_mode(session_id, raw))
+    if mode in (
+        "selection_restore",
+        "selection_recovery",
+        "continue_selection",
+        "cancel_selection",
+    ):
+        from .selection import pending_mode
+
+        result = pending_mode(bridge, session_id, raw)
+        return cast(
+            dict[str, object],
+            {
+                **result,
+                **(
+                    {"selection_transition": result}
+                    if mode in ("continue_selection", "cancel_selection")
+                    else {}
+                ),
+            },
+        )
+    if mode in ("selection_target", "selection_transition"):
+        from .selection import transition, work_target
+
+        if mode == "selection_target":
+            target = work_target(
+                bridge, UUID(str(raw["work_id"])), str(raw.get("execution_mode", "ordinary"))
+            )
+            return {"target": target.model_dump(mode="json")}
+        result = transition(bridge, session_id, raw["target"], raw)
+        return {**result, "selection_transition": result}
     if mode == "restore":
         work_id = UUID(str(raw["work_id"]))
         selected = bridge._selection(session_id)
@@ -206,15 +243,12 @@ def conversation(bridge: Any, session_id: UUID, raw: dict[str, Any]) -> dict[str
                 )
             bridge.recovery_obstacles.pop(session_id, None)
             return {"interrupted": [str(item.attempt_id) for item in active], "accepted": False}
-        if active:
-            raise FoundationError(
-                "recovery_required",
-                "Old execution remains active; inspect or interrupt it before selection",
-            )
-        snapshot = bridge.select(session_id, action.activity_id, action.work_id)
+        from .selection import transition, work_target
+
+        result = transition(bridge, session_id, work_target(bridge, action.work_id), raw)
         return {
-            "selection": {"activity_id": str(action.activity_id), "work_id": str(action.work_id)},
-            "snapshot": snapshot,
+            "selection": result["selection"],
+            "selection_transition": result,
             "accepted": False,
         }
     registered = bridge.conversation_hosts.get(session_id)

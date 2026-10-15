@@ -14,6 +14,15 @@ from tests.zaratustra.foundation.test_activity_setup import (
     _review,
     _step,
 )
+from tests.zaratustra.foundation.test_child_execution import (
+    _claim as _claim_assigned,
+)
+from tests.zaratustra.foundation.test_child_execution import (
+    _invocation as _assigned_invocation,
+)
+from tests.zaratustra.foundation.test_child_execution import (
+    _stop as _stop_assigned,
+)
 from zaratustra.foundation import (
     AcceptWorkRequest,
     ActivityState,
@@ -40,13 +49,16 @@ from zaratustra.foundation import (
     LinkedOutput,
     LinkWorkOutputRequest,
     MemoryMetadata,
+    NativeSelectionObservation,
     OpenWaitRequest,
+    OrdinarySelectionTransition,
     OutputContract,
     PrepareInvocationRequest,
     RecordContextDeliveryRequest,
     RecoverRequest,
     ResourceState,
     ReviseKnowledgeRequest,
+    SelectionTarget,
     SendInvocationRequest,
     SourceState,
     StartAttemptRequest,
@@ -64,6 +76,7 @@ from zaratustra.foundation import (
     read_conversation_delivery,
     read_execution,
     read_knowledge,
+    read_operation_audit,
     read_ordinary_final_proof,
     read_receipt,
     read_space,
@@ -773,6 +786,461 @@ def test_ordinary_final_recovery_requires_exact_saved_final_proof(
         assert proof is None
         assert read_execution(case[0], work, case[2]).attempts[-1].status == "active"
     assert read_work(case[0], work, case[2]).state.acceptance is None
+
+
+def _selection_transition_case(
+    tmp_path: Path,
+    *,
+    native_ui: bool = False,
+    assigned: bool = False,
+    target_mode: Literal["ordinary", "assigned", "project"] = "ordinary",
+    same_work: bool = False,
+    complete_output: bool = False,
+    prior_assignment: bool = False,
+) -> tuple[Case, StopAttemptRequest, KnowledgeRef, UUID | None]:
+    case = _case(tmp_path)
+    _upgrade(case)
+    upgrade_delivery_correlation_space(case[0], case[2])
+    work, target, resource, attempt, session = (uuid4() for _ in range(5))
+    activity = uuid4()
+    _apply(
+        case,
+        CreateActivityRequest,
+        activity_id=activity,
+        state=ActivityState(
+            title="Fictional selection",
+            goal="Continue between saved works",
+        ),
+    )
+    directory = tmp_path / "selection-root"
+    directory.mkdir()
+    for identifier in (work, target):
+        _apply(
+            case,
+            CreateWorkRequest,
+            work_id=identifier,
+            state=WorkState(
+                activity_id=activity,
+                goal="Fictional selected work",
+                expected_outputs=(OutputContract(slot="report", media_type="text/plain"),),
+            ),
+        )
+    if complete_output:
+        artifact = uuid4()
+        _apply(
+            case,
+            CreateArtifactRequest,
+            artifact_id=artifact,
+            media_type="text/plain",
+            content=b"Complete retained output",
+        )
+        _apply(
+            case,
+            LinkWorkOutputRequest,
+            work_id=work,
+            expected_revision=1,
+            output=LinkedOutput(
+                slot="report", artifact=ArtifactRef(artifact_id=artifact, revision=1)
+            ),
+        )
+    work_revision = read_work(case[0], work, case[2]).revision
+    _apply(
+        case,
+        CreateResourceRequest,
+        resource_id=resource,
+        work_id=work,
+        state=ResourceState(label="Selection root", root=directory),
+    )
+    previous_attempt = None
+    if prior_assignment:
+        previous_attempt, previous_session = uuid4(), uuid4()
+        _apply(
+            case,
+            AssignAttemptRequest,
+            work_id=work,
+            attempt_id=previous_attempt,
+            resource_id=resource,
+            expected_work_revision=work_revision,
+            expected_resource_revision=1,
+            session_id=previous_session,
+            executor_version="fictional",
+        )
+        _claim_assigned(case[0], case[1], case[2], work, previous_attempt, previous_session)
+        _assigned_invocation(case[0], case[1], case[2], work, previous_attempt, previous_session)
+        _stop_assigned(case[0], case[1], case[2], work, previous_attempt, previous_session)
+    _apply(
+        case,
+        AssignAttemptRequest if assigned else StartAttemptRequest,
+        work_id=work,
+        attempt_id=attempt,
+        resource_id=resource,
+        expected_work_revision=work_revision,
+        expected_resource_revision=1,
+        session_id=session,
+        previous_attempt_id=previous_attempt,
+        **({"executor_version": "fictional"} if assigned else {}),
+    )
+    project = tmp_path / "next-project"
+    if target_mode == "project":
+        project.mkdir()
+    selected = SelectionTarget(
+        mode=target_mode,
+        work_id=work if same_work else target,
+        work_revision=work_revision if same_work else 1,
+        root=project if target_mode == "project" else None,
+    )
+    owner_source = KnowledgeRef(record_id=uuid4(), revision=1)
+    observation = owner_source if native_ui else KnowledgeRef(record_id=uuid4(), revision=1)
+    manifest = KnowledgeRef(record_id=uuid4(), revision=1)
+    invocation = None if native_ui else uuid4()
+    if not native_ui:
+        _apply(
+            case,
+            CreateKnowledgeRequest,
+            record_id=owner_source.record_id,
+            state=SourceState(
+                channel="conversation_user",
+                connection="ordinary-pi",
+                profile_revision=1,
+                sender="owner",
+                conversation_id=str(session),
+                source_event_id=f"{session}:user",
+                capture="full",
+                content=b"Continue the other work",
+                media_type="text/plain",
+            ),
+        )
+        _apply(
+            case,
+            CreateKnowledgeRequest,
+            record_id=manifest.record_id,
+            state=ContextState(
+                purpose="Choose another saved work",
+                session_id=session,
+                work_id=work,
+                attempt_id=attempt,
+                mandatory=(KnowledgeRef(record_id=work, revision=work_revision), owner_source),
+            ),
+        )
+        common = dict(
+            work_id=work, attempt_id=attempt, session_id=session, invocation_id=invocation
+        )
+        _apply(
+            case,
+            PrepareInvocationRequest,
+            purpose="content",
+            provider="fictional",
+            model="fictional",
+            transport="local",
+            request_sha256="A" * 64,
+            request_bytes=100,
+            reserve_units=1,
+            **common,
+        )
+        _apply(
+            case,
+            RecordContextDeliveryRequest,
+            invocation_id=invocation,
+            manifest=manifest,
+            stage="prepared",
+        )
+        _apply(case, AdmitInvocationRequest, **common)
+        _apply(case, SendInvocationRequest, **common)
+        _apply(
+            case,
+            RecordContextDeliveryRequest,
+            invocation_id=invocation,
+            manifest=manifest,
+            stage="sent",
+            request_sha256="A" * 64,
+            request_bytes=100,
+        )
+        _apply(case, FinishInvocationRequest, outcome="answered", usage_units=0, **common)
+        _apply(
+            case,
+            RecordContextDeliveryRequest,
+            invocation_id=invocation,
+            manifest=manifest,
+            stage="answered",
+            usage_units=0,
+        )
+    metadata = NativeSelectionObservation(
+        origin="native_ui" if native_ui else "owner_tool",
+        target=selected,
+        owner_source=None if native_ui else owner_source,
+        host_id="fictional-host",
+        branch_id="main",
+        generation=1,
+        tool_call_id=None if native_ui else "native-call",
+        tool_name=None if native_ui else "zara_conversation",
+        arguments_json=None if native_ui else '{"mode":"use_existing_work"}',
+    )
+    bases: tuple[KnowledgeRef, ...] = (
+        KnowledgeRef(
+            record_id=work if same_work else target, revision=work_revision if same_work else 1
+        ),
+    )
+    if not native_ui:
+        bases += (owner_source, manifest)
+    boundary = None
+    if not native_ui:
+        assert invocation is not None
+        boundary = ConversationTerminalObservation(
+            invocation_id=invocation,
+            manifest=manifest,
+            assistant_entry_id="native-choice",
+            native_outcome="tool_call",
+            stop_reason="toolUse",
+        )
+    _apply(
+        case,
+        CreateKnowledgeRequest,
+        record_id=observation.record_id,
+        state=SourceState(
+            channel="core_operation" if native_ui else "conversation_assistant",
+            connection="ordinary-pi",
+            profile_revision=1,
+            sender="owner" if native_ui else "pi-assistant",
+            conversation_id=str(session),
+            source_event_id=f"{session}:native-choice",
+            scope_work_id=work,
+            capture="full",
+            content=b"/zara-work choice" if native_ui else b"",
+            media_type="text/plain",
+            derived_from=bases,
+            native_selection=metadata,
+            conversation_terminal=boundary,
+        ),
+    )
+    request = StopAttemptRequest(
+        operation_id=uuid4(),
+        space_id=case[1],
+        actor="owner",
+        work_id=work,
+        attempt_id=attempt,
+        session_id=session,
+        outcome="interrupted",
+        selection_transition=OrdinarySelectionTransition(
+            execution_epoch=case[2].execution_epoch,
+            work_revision=work_revision,
+            attempt_revision=1,
+            resource_id=resource,
+            resource_revision=1,
+            owner_source=owner_source,
+            observation=observation,
+            boundary_source=None if native_ui else observation,
+            target=selected,
+        ),
+    )
+    return case, request, manifest, invocation
+
+
+@pytest.mark.parametrize("native_ui", (False, True))
+def test_guarded_selection_interrupts_exact_attempt_without_final_or_acceptance(
+    tmp_path: Path, native_ui: bool
+) -> None:
+    case, request, _, _ = _selection_transition_case(tmp_path, native_ui=native_ui)
+    before = read_execution(case[0], request.work_id, case[2])
+    receipt = apply_operation(case[0], request, case[2])
+    assert apply_operation(case[0], request, case[2]) == receipt
+    after = read_execution(case[0], request.work_id, case[2])
+    assert after.attempts[-1].status == "interrupted"
+    assert after.invocations == before.invocations and after.work == before.work
+    assert after.work.state.acceptance is None
+    proof = request.selection_transition
+    assert proof is not None and receipt.result["selection_transition"] == proof.model_dump(
+        mode="json"
+    )
+    targets = read_operation_audit(case[0], request.operation_id, case[2]).target_refs
+    assert any(item.record_id == proof.observation.record_id for item in targets)
+    assert any(item.record_id == proof.target.work_id for item in targets)
+    assert "selection_transition" not in request.model_copy(
+        update={"selection_transition": None}
+    ).model_dump(mode="json")
+
+
+@pytest.mark.parametrize(
+    "changed", ("session", "epoch", "attempt", "resource", "target", "owner", "rights")
+)
+def test_guarded_selection_rechecks_current_pins_and_authority(
+    tmp_path: Path, changed: str
+) -> None:
+    case, request, _, _ = _selection_transition_case(tmp_path)
+    proof = request.selection_transition
+    assert proof is not None
+    if changed == "session":
+        request = request.model_copy(update={"session_id": uuid4()})
+    elif changed == "rights":
+        _apply(
+            case,
+            CreateDecisionRequest,
+            decision_id=uuid4(),
+            state=DecisionState(
+                statement="Revoke execution",
+                effect="deny",
+                actions=("work.execute",),
+                subjects=("owner",),
+            ),
+        )
+    else:
+        updates: dict[str, dict[str, Any]] = {
+            "epoch": {"execution_epoch": proof.execution_epoch + 1},
+            "attempt": {"attempt_revision": proof.attempt_revision + 1},
+            "resource": {"resource_revision": proof.resource_revision + 1},
+            "target": {"target": proof.target.model_copy(update={"work_revision": 2})},
+            "owner": {"owner_source": KnowledgeRef(record_id=uuid4(), revision=1)},
+        }
+        update = updates[changed]
+        request = request.model_copy(
+            update={"selection_transition": proof.model_copy(update=update)}
+        )
+    before = read_execution(case[0], request.work_id, case[2])
+    with pytest.raises(FoundationError):
+        apply_operation(case[0], request, case[2])
+    assert read_execution(case[0], request.work_id, case[2]) == before
+
+
+@pytest.mark.parametrize("deleted_manifest", (False, True))
+def test_guarded_selection_fences_delivery_race_even_without_execution_invocation(
+    tmp_path: Path, deleted_manifest: bool
+) -> None:
+    case, request, manifest, _ = _selection_transition_case(tmp_path)
+    late = uuid4()
+    _apply(
+        case, RecordContextDeliveryRequest, invocation_id=late, manifest=manifest, stage="prepared"
+    )
+    _apply(
+        case,
+        RecordContextDeliveryRequest,
+        invocation_id=late,
+        manifest=manifest,
+        stage="sent",
+        request_sha256="B" * 64,
+        request_bytes=123,
+    )
+    if deleted_manifest:
+        _apply(case, DeleteKnowledgeRequest, record_id=manifest.record_id, expected_revision=1)
+    before = read_execution(case[0], request.work_id, case[2])
+    with pytest.raises(FoundationError, match="response_outcome_unknown"):
+        apply_operation(case[0], request, case[2])
+    assert read_execution(case[0], request.work_id, case[2]) == before
+
+
+def test_complete_output_precedes_ordinary_assignment_handoff(tmp_path: Path) -> None:
+    """A handoff is not permission to regenerate an already published result."""
+    from zaratustra.foundation import read_attempt_response
+
+    case, request, _, _ = _selection_transition_case(
+        tmp_path, target_mode="assigned", same_work=True, complete_output=True
+    )
+    apply_operation(case[0], request, case[2])
+    before = read_execution(case[0], request.work_id, case[2])
+    view = read_attempt_response(case[0], request.work_id, case[2])
+    assert view.outcome == "applied" and view.handoff_operation_id is None
+    assert view.artifact == before.work.state.linked_outputs[0].artifact
+    assert read_execution(case[0], request.work_id, case[2]) == before
+    assert not before.assignments and before.work.state.acceptance is None
+    assert before.attempts[-1].status == "interrupted"
+
+
+def test_guarded_selection_receipt_deletion_and_restore_preserve_truthful_history(
+    tmp_path: Path,
+) -> None:
+    case, request, _, _ = _selection_transition_case(tmp_path)
+    receipt = apply_operation(case[0], request, case[2])
+    backup = create_backup(case[0], uuid4(), case[2])
+    restored = tmp_path / "restored-transition"
+    restored.mkdir()
+    recovery = authorize_recovery(actor="owner", source_ref="fictional-restore")
+    restored_info = restore_backup(backup.package, restored, recovery)
+    apply_operation(
+        restored,
+        RecoverRequest(
+            operation_id=uuid4(),
+            space_id=case[1],
+            actor="owner",
+            decision_id=uuid4(),
+            grant_id=uuid4(),
+        ),
+        recovery,
+    )
+    restored_owner = authorize_local(restored, actor="owner", source_ref="restored-owner")
+    assert restored_info.execution_epoch == case[2].execution_epoch + 1
+    assert (
+        read_execution(restored, request.work_id, restored_owner).attempts[-1].status
+        == "interrupted"
+    )
+    assert read_receipt(restored, request.operation_id, restored_owner) == receipt
+    proof = request.selection_transition
+    assert proof is not None
+    _apply(
+        case, DeleteKnowledgeRequest, record_id=proof.owner_source.record_id, expected_revision=1
+    )
+    with pytest.raises(FoundationError, match="history_unavailable"):
+        apply_operation(case[0], request, case[2])
+    assert read_execution(case[0], request.work_id, case[2]).attempts[-1].status == "interrupted"
+    assert proof.target.work_id is not None
+    assert read_work(case[0], proof.target.work_id, case[2]).state.acceptance is None
+
+
+@pytest.mark.parametrize("mode", ("ordinary", "assigned", "project"))
+def test_guarded_selection_distinguishes_same_work_execution_ownership(
+    tmp_path: Path, mode: Literal["ordinary", "assigned", "project"]
+) -> None:
+    case, request, _, _ = _selection_transition_case(
+        tmp_path, native_ui=True, target_mode=mode, same_work=True
+    )
+    if mode == "ordinary":
+        with pytest.raises(FoundationError, match="selection_unchanged"):
+            apply_operation(case[0], request, case[2])
+        assert read_execution(case[0], request.work_id, case[2]).attempts[-1].status == "active"
+    else:
+        apply_operation(case[0], request, case[2])
+        assert (
+            read_execution(case[0], request.work_id, case[2]).attempts[-1].status == "interrupted"
+        )
+
+
+def test_guarded_selection_refuses_assigned_ownership(tmp_path: Path) -> None:
+    case, request, _, _ = _selection_transition_case(tmp_path, native_ui=True, assigned=True)
+    before = read_execution(case[0], request.work_id, case[2])
+    with pytest.raises(FoundationError, match="assigned_attempt"):
+        apply_operation(case[0], request, case[2])
+    assert read_execution(case[0], request.work_id, case[2]) == before
+
+
+@pytest.mark.parametrize("status", ("admitted", "sent", "unknown"))
+def test_guarded_selection_refuses_new_execution_send_after_observation(
+    tmp_path: Path, status: str
+) -> None:
+    case, request, _, _ = _selection_transition_case(tmp_path)
+    common = dict(
+        work_id=request.work_id,
+        attempt_id=request.attempt_id,
+        session_id=request.session_id,
+        invocation_id=uuid4(),
+    )
+    _apply(
+        case,
+        PrepareInvocationRequest,
+        purpose="other",
+        provider="fictional",
+        model="fictional",
+        transport="local",
+        request_sha256="B" * 64,
+        request_bytes=100,
+        reserve_units=1,
+        **common,
+    )
+    _apply(case, AdmitInvocationRequest, **common)
+    if status != "admitted":
+        _apply(case, SendInvocationRequest, **common)
+    if status == "unknown":
+        _apply(case, FinishInvocationRequest, outcome="unknown", **common)
+    before = read_execution(case[0], request.work_id, case[2])
+    with pytest.raises(FoundationError, match="response_outcome_unknown"):
+        apply_operation(case[0], request, case[2])
+    assert read_execution(case[0], request.work_id, case[2]) == before
 
 
 @pytest.mark.parametrize("change", ("invocation", "source"))

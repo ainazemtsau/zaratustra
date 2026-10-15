@@ -1942,7 +1942,54 @@ def _apply_change(
                 or proof.session_id != request.session_id
             ):
                 raise FoundationError("stale_final_response", "Observed final proof changed")
+        transition_targets: list[dict[str, object]] = []
+        if isinstance(request, AssignAttemptRequest) and request.ordinary_handoff is not None:
+            from .conversations import ordinary_assignment_handoff
+
+            if (
+                request.previous_attempt_id is None
+                or ordinary_assignment_handoff(
+                    cast(sqlite3.Connection, connection),
+                    request.work_id,
+                    request.previous_attempt_id,
+                    authority,
+                    epoch=epoch,
+                    grants=grants,
+                    decisions=decisions,
+                    operation_id=request.ordinary_handoff,
+                )
+                != request.ordinary_handoff
+            ):
+                raise FoundationError(
+                    "stale_selection", "The exact ordinary handoff is unavailable"
+                )
+        if isinstance(request, StopAttemptRequest) and request.selection_transition is not None:
+            from .conversations import validate_selection_transition
+
+            transition_targets = validate_selection_transition(
+                cast(sqlite3.Connection, connection),
+                request,
+                authority,
+                epoch=epoch,
+                grants=grants,
+                decisions=decisions,
+            )
         result, targets = apply_execution_change(connection, request, now=now, epoch=epoch)
+        if isinstance(request, StopAttemptRequest) and request.selection_transition is not None:
+            result["selection_transition"] = request.selection_transition.model_dump(mode="json")
+            targets.extend(transition_targets)
+            targets.extend(
+                [
+                    {
+                        "record_id": str(request.work_id),
+                        "revision": request.selection_transition.work_revision,
+                    },
+                    {
+                        "record_id": str(request.selection_transition.resource_id),
+                        "revision": request.selection_transition.resource_revision,
+                    },
+                ]
+            )
         if isinstance(request, StopAttemptRequest) and request.observed_final is not None:
             targets.extend(
                 {"record_id": str(ref.record_id), "revision": ref.revision}

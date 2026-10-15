@@ -631,6 +631,7 @@ class WorkflowCoordinator:
             apply_operation(
                 config.space,
                 AssignAttemptRequest(
+                    ordinary_handoff=response.handoff_operation_id,
                     operation_id=uuid5(attempt_id, "assign"),
                     space_id=authority.space_id,
                     actor=authority.actor,

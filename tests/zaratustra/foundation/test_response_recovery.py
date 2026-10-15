@@ -6,7 +6,197 @@ from uuid import UUID, uuid4, uuid5
 import pytest
 
 import zaratustra.foundation as core
+from tests.zaratustra.foundation.test_conversations import _selection_transition_case
 from tests.zaratustra.pi_adapter.test_response_recovery import _assign, _capture, _target
+
+
+@pytest.mark.parametrize("change", ("mode", "root", "revoked"))
+def test_handoff_resource_history_and_current_assignment_are_separate(
+    tmp_path: Path, change: str
+) -> None:
+    case, stop, _, _ = _selection_transition_case(tmp_path, target_mode="assigned", same_work=True)
+    root, space, owner, *_ = case
+    core.apply_operation(root, stop, owner)
+    before = core.read_execution(root, stop.work_id, owner)
+    original = before.resources[0]
+    replacement = tmp_path / "replacement-root"
+    replacement.mkdir()
+    updated = original.state.model_copy(
+        update={
+            "mode": "shared",
+            **({"root": replacement} if change == "root" else {}),
+            **({"status": "revoked"} if change == "revoked" else {}),
+        }
+    )
+    core.apply_operation(
+        root,
+        core.ReviseResourceRequest(
+            operation_id=uuid4(),
+            space_id=space,
+            actor=owner.actor,
+            work_id=stop.work_id,
+            resource_id=original.resource_id,
+            expected_revision=original.revision,
+            state=updated,
+        ),
+        owner,
+    )
+    current = core.read_execution(root, stop.work_id, owner)
+    request = core.AssignAttemptRequest(
+        operation_id=uuid4(),
+        space_id=space,
+        actor=owner.actor,
+        work_id=stop.work_id,
+        expected_work_revision=current.work.revision,
+        attempt_id=uuid4(),
+        session_id=uuid4(),
+        previous_attempt_id=stop.attempt_id,
+        executor_version="fictional",
+        resource_id=original.resource_id,
+        expected_resource_revision=original.revision + 1,
+        ordinary_handoff=stop.operation_id,
+    )
+    if change == "mode":
+        response = core.read_attempt_response(root, stop.work_id, owner)
+        assert response.outcome == "handoff"
+        core.apply_operation(root, request, owner)
+        after = core.read_execution(root, stop.work_id, owner)
+        assert after.attempts[0] == before.attempts[0]
+        assert after.attempts[-1].resource_revision == original.revision + 1
+        assert after.invocations == before.invocations
+        assert after.work.state.acceptance is None
+    else:
+        with pytest.raises(core.FoundationError, match="stale_resource"):
+            core.read_attempt_response(root, stop.work_id, owner)
+        with pytest.raises(core.FoundationError, match="stale_resource"):
+            core.apply_operation(root, request, owner)
+        assert core.read_execution(root, stop.work_id, owner) == current
+
+
+@pytest.mark.parametrize("delete_proof", (False, True))
+def test_same_work_ordinary_handoff_is_addressed_and_rechecked_at_assignment(
+    tmp_path: Path, delete_proof: bool
+) -> None:
+    case, stop, _, _ = _selection_transition_case(tmp_path, target_mode="assigned", same_work=True)
+    root, space, owner, *_ = case
+    core.apply_operation(root, stop, owner)
+    before = core.read_execution(root, stop.work_id, owner)
+    view = core.read_attempt_response(root, stop.work_id, owner)
+    assert view.outcome == "handoff" and view.handoff_operation_id == stop.operation_id
+    assert before.invocations and all(item.status == "answered" for item in before.invocations)
+    request = core.AssignAttemptRequest(
+        operation_id=uuid4(),
+        space_id=space,
+        actor=owner.actor,
+        work_id=stop.work_id,
+        expected_work_revision=before.work.revision,
+        attempt_id=uuid4(),
+        session_id=uuid4(),
+        previous_attempt_id=stop.attempt_id,
+        executor_version="fictional",
+        resource_id=before.resources[0].resource_id,
+        expected_resource_revision=1,
+        ordinary_handoff=view.handoff_operation_id,
+    )
+    if delete_proof:
+        proof = stop.selection_transition
+        assert proof is not None
+        core.apply_operation(
+            root,
+            core.DeleteKnowledgeRequest(
+                operation_id=uuid4(),
+                space_id=space,
+                actor=owner.actor,
+                record_id=proof.owner_source.record_id,
+                expected_revision=1,
+            ),
+            owner,
+        )
+        with pytest.raises(core.FoundationError, match="stale_selection"):
+            core.apply_operation(root, request, owner)
+        assert core.read_execution(root, stop.work_id, owner) == before
+        assert core.read_attempt_response(root, stop.work_id, owner).outcome == "attention"
+    else:
+        receipt = core.apply_operation(root, request, owner)
+        assert core.apply_operation(root, request, owner) == receipt
+        after = core.read_execution(root, stop.work_id, owner)
+        assert len(after.attempts) == len(before.attempts) + 1
+        assert after.attempts[0] == before.attempts[0] and after.invocations == before.invocations
+        assert after.work.state.acceptance is None
+
+
+def test_an_ordinary_selection_is_not_assigned_handoff_authority(tmp_path: Path) -> None:
+    case, stop, _, _ = _selection_transition_case(tmp_path)
+    root, space, owner, *_ = case
+    core.apply_operation(root, stop, owner)
+    assert core.read_attempt_response(root, stop.work_id, owner).outcome == "attention"
+    current = core.read_execution(root, stop.work_id, owner)
+    with pytest.raises(core.FoundationError, match="stale_selection"):
+        core.apply_operation(
+            root,
+            core.AssignAttemptRequest(
+                operation_id=uuid4(),
+                space_id=space,
+                actor=owner.actor,
+                work_id=stop.work_id,
+                expected_work_revision=current.work.revision,
+                attempt_id=uuid4(),
+                session_id=uuid4(),
+                previous_attempt_id=stop.attempt_id,
+                executor_version="fictional",
+                resource_id=current.resources[0].resource_id,
+                expected_resource_revision=1,
+                ordinary_handoff=stop.operation_id,
+            ),
+            owner,
+        )
+    assert core.read_execution(root, stop.work_id, owner) == current
+
+
+def test_previous_unpublished_assigned_answer_precedes_newer_ordinary_handoff(
+    tmp_path: Path,
+) -> None:
+    """A newer answered ordinary boundary cannot hide an older assigned result."""
+    case, stop, _, current_invocation = _selection_transition_case(
+        tmp_path, target_mode="assigned", same_work=True, prior_assignment=True
+    )
+    root, space, owner, *_ = case
+    receipt = core.apply_operation(root, stop, owner)
+    before = core.read_execution(root, stop.work_id, owner)
+    previous = before.attempts[0]
+    older_call = next(call for call in before.invocations if call.attempt_id == previous.attempt_id)
+    assert len(before.attempts) == 2 and previous.status == "interrupted"
+    assert before.assignments[0].attempt_id == previous.attempt_id
+    assert before.assignments[0].status == "stopped"
+    assert older_call.status == "answered" and older_call.usage_units == 3
+    assert current_invocation is not None and older_call.invocation_id != current_invocation
+    assert not before.work.state.linked_outputs
+    view = core.read_attempt_response(root, stop.work_id, owner)
+    assert view.outcome == "attention" and view.handoff_operation_id is None
+    assert view.invocation_id == older_call.invocation_id
+    assert {item.code for item in view.diagnostics} == {"previous_response_pending"}
+    with pytest.raises(core.FoundationError, match="response_pending"):
+        core.apply_operation(
+            root,
+            core.AssignAttemptRequest(
+                operation_id=uuid4(),
+                space_id=space,
+                actor=owner.actor,
+                work_id=stop.work_id,
+                expected_work_revision=before.work.revision,
+                attempt_id=uuid4(),
+                session_id=uuid4(),
+                previous_attempt_id=stop.attempt_id,
+                executor_version="fictional",
+                resource_id=before.resources[0].resource_id,
+                expected_resource_revision=before.resources[0].revision,
+                ordinary_handoff=stop.operation_id,
+            ),
+            owner,
+        )
+    assert core.read_execution(root, stop.work_id, owner) == before
+    assert core.read_receipt(root, stop.operation_id, owner) == receipt
+    assert before.work.state.acceptance is None
 
 
 def _saved(

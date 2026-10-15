@@ -138,6 +138,7 @@ class ProcedureCoordinator:
                 apply_operation(
                     config.space,
                     AssignAttemptRequest(
+                        ordinary_handoff=response.handoff_operation_id,
                         operation_id=uuid5(attempt, "assign"),
                         space_id=self.bridge.authority.space_id,
                         actor=self.bridge.authority.actor,
@@ -214,7 +215,9 @@ class ProcedureCoordinator:
                         scope_work_id=self.active,
                         content=bytes(tail) or f"Executor exited {process.returncode}".encode(),
                         memory=MemoryMetadata(
-                            title="Procedure execution error", material_role="execution"
+                            title="Procedure execution error",
+                            material_role="execution",
+                            activity_id=snapshot.work.state.activity_id,
                         ),
                     ),
                 ),
