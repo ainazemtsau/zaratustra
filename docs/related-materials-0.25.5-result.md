@@ -4,8 +4,10 @@
 
 Correction of the owner-approved reading boundary contract in
 `read-boundaries-audit-plan.md`. Core schema stays 18. Verification and the
-authorized private installation are complete. Public publication is pending.
-Finished-result owner acceptance remains separate.
+authorized private installation are complete. Shared product commit
+`111f021796c5507cff5ae44dbda321cac88c0ead` is published in
+`ainazemtsau/zaratustra/main`, verified through fetched Git and authenticated
+GitHub commit/file readback. Finished-result owner acceptance remains separate.
 
 ## Confirmed cause and missed coverage
 
@@ -81,6 +83,10 @@ delivery. No failing trace is counted as a passing path.
   and accounting. The formerly blocked actual procedure snapshot opened through
   the public reader. It correctly remains historical (`current=False`); it was
   not rewritten. There was no Work acceptance or new model invocation.
+- Published product bytes match the frozen wheel for 126 members; the remaining
+  pre-existing `py.typed` marker differs only by LF/CRLF. Installed product bytes
+  match all 127 members exactly. This comparison proves package provenance,
+  separately from the behavioral native tests above.
 
 ## Evidence locations
 

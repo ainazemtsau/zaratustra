@@ -3,9 +3,10 @@
 ## outcome
 
 Implemented the missing transitive-family boundary in the approved reading
-contract. Verification and authorized private installation passed. Public
-publication is pending; finished-result owner acceptance is separate.
-Core stays schema 18.
+contract. Verification and authorized private installation passed. Shared commit
+`111f021796c5507cff5ae44dbda321cac88c0ead` is published in
+`ainazemtsau/zaratustra/main`, verified by fetched Git and authenticated GitHub
+readback. Finished-result owner acceptance is separate. Core stays schema 18.
 
 ## evidence
 
