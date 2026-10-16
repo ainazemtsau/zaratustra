@@ -1,0 +1,96 @@
+"""Independent public API probes; no repository test helpers or admission oracles."""
+import base64, hashlib, json, sqlite3, sys, uuid
+from pathlib import Path
+from zaratustra_core import Core, CoreError
+from zaratustra_app import Coordinator
+
+HERE=Path(__file__).resolve().parent
+RUN=HERE/'probe-runs'/uuid.uuid4().hex
+RUN.mkdir(parents=True)
+LOG=[]
+def physical(core, table):
+    with sqlite3.connect(core.path) as db:
+        db.row_factory=sqlite3.Row
+        return [dict(r) for r in db.execute('SELECT * FROM '+table)]
+def setup(name):
+    core, token=Core.initialize(RUN/name)
+    owner=core.connect(token)
+    rights=['read','apply_changes','open_work','prepare_attempt','claim_dispatch','reserve_tool','observe_attempt','commit_outcome','control_work']
+    host=core.connect(core.grant(token,'host',rights,origin='host'))
+    changes=[{'id':k,'kind':k,'key':k,'body':k} for k in ['method','profile','memory']]
+    owner.call('apply_changes',{'changes':changes},'seed',expected_heads={k:0 for k in ['method','profile','memory']})
+    ingest(owner,'e1','original')
+    owner.call('open_work',{'id':'w','conversation':'c','goal':'independent review','method_ref':{'id':'method','revision':1,'role':'must_be_current'},'inputs':[{'id':'memory','revision':1,'role':'must_be_current'}],'call_limit':6,'continuation_policy':'durable'},'open')
+    coord=Coordinator(host)
+    coord.prepare('w','a1',{'id':'profile','revision':1,'role':'must_be_current'})
+    return core,owner,host,coord
+def ingest(client,event,text,reply=None):
+    payload={'conversation':'c','event_id':event,'raw_base64':base64.b64encode(text.encode()).decode()}
+    if reply: payload['reply_to']=reply
+    return client.call('ingest_message',payload,'ingest:'+event)
+def claim(host):
+    return host.call('claim_dispatch',{'attempt_id':'a1','generation':1},'claim',action_id='action')
+def retain(host,event='terminal'):
+    return host.call('observe_attempt',{'attempt_id':'a1','event_id':event,'kind':'terminal','raw_base64':base64.b64encode(b'{"state":"completed","text":"bounded output"}').decode()},'retain:'+event)
+def outcome(host,state='completed',wait=None):
+    p={'attempt_id':'a1','generation':1,'terminal_event':'terminal','original_cursor':0,'processed_cutoff':1,'state':state,'text':'bounded output'}
+    if wait: p['wait']=wait
+    return host.call('commit_outcome',p,'outcome')
+def result(name,expected,actual,**details):
+    LOG.append(dict(name=name,expected=expected,actual=actual,**details))
+    print(json.dumps(LOG[-1],ensure_ascii=False),flush=True)
+
+def main():
+    (HERE/'probes').mkdir(exist_ok=True)
+    # Existing pre-pass claims, independently exercised with our own setup.
+    for phase in ['preclaim','wrong-executor','finished','stale-memory','stale-method','stale-profile']:
+        core,owner,host,coord=setup(phase)
+        actor=host
+        if phase!='preclaim': claim(host)
+        if phase=='wrong-executor': actor=core.connect(core.grant(owner.token,'other',['read','reserve_tool'],origin='host'))
+        if phase=='finished': retain(host);outcome(host)
+        if phase.startswith('stale-'):
+            subject=phase.split('-')[1]
+            owner.call('apply_changes',{'changes':[{'id':subject,'kind':subject,'key':subject,'body':'new'}]},'advance',expected_heads={subject:1})
+        try:
+            actor.call('reserve_tool',{'attempt_id':'a1','generation':1,'native_id':'native','command_id':'effect'},'reserve')
+            actual='committed'
+        except CoreError as e: actual=e.code
+        assert actual in {'denied','stale_basis'},(phase,actual)
+        result(phase,'denied or stale_basis',actual,ledger=physical(core,'tool_calls'))
+    # Unknown shape under empty list and absent optional field.
+    for name,schema,value in [('empty-list-schema',{'type':'list','items':{'type':'bogus'}},[]),('absent-nested-schema',{'type':'object','fields':[{'name':'x','type':'list','items':{'type':'bogus'}}]}, {})]:
+        core,owner,host,coord=setup(name)
+        owner.call('apply_changes',{'changes':[{'id':'schema','kind':'data','key':'schema','body':schema}]},'schema',expected_heads={'schema':0})
+        try:
+            reply=owner.call('apply_changes',{'changes':[{'id':'entry','kind':'data','key':'entry','body':value,'schema_ref':{'id':'schema','revision':1}}]},'invalid-entry',expected_heads={'entry':0})
+            actual='committed'
+        except CoreError as e: actual=e.code;reply=e.as_dict()
+        result(name,'invalid_request',actual,response=reply,entry=[r for r in physical(core,'records') if r['id']=='entry'])
+    # Old question after pause/resume/new question.
+    core,owner,host,coord=setup('old-wait')
+    claim(host);retain(host);outcome(host,'waiting',{'id':'q1','question':'first question'})
+    owner.call('control_work',{'work_id':'w','revision':3,'action':'pause'},'pause')
+    owner.call('control_work',{'work_id':'w','revision':4,'action':'resume'},'resume')
+    coord.prepare('w','a2',{'id':'profile','revision':1})
+    host.call('claim_dispatch',{'attempt_id':'a2','generation':2},'claim2',action_id='action2')
+    host.call('observe_attempt',{'attempt_id':'a2','event_id':'terminal','kind':'terminal','raw_base64':'e30='},'retain2')
+    host.call('commit_outcome',{'attempt_id':'a2','generation':2,'terminal_event':'terminal','original_cursor':1,'processed_cutoff':1,'state':'waiting','text':'second','wait':{'id':'q2','question':'second question'}},'outcome2')
+    before=physical(core,'works')
+    try: response=ingest(owner,'stale-answer','answer to first',{'id':'q1','revision':1});actual='committed'
+    except CoreError as e: response=e.as_dict();actual=e.code
+    after=physical(core,'works')
+    followup=coord.prepare('w','a3',{'id':'profile','revision':1})
+    result('old-wait-answer','reject old answer or keep Q2 blocking work',actual,response=response,before=before,after=after,waits=physical(core,'waits'),admitted_next_attempt=followup['attempt_id'])
+    # Actual current owner denial at the effect boundary (no direct SQL mutations).
+    core,owner,host,coord=setup('nested-rights')
+    limited=core.connect(core.grant(owner.token,'limited',['read','apply_changes']))
+    nested={'id':'nested','conversation':'nested','goal':'nested','method_ref':{'id':'method','revision':1},'call_limit':1,'continuation_policy':'durable'}
+    try:
+        limited.call('apply_changes',{'changes':[{'id':'new','kind':'activity','key':'new','body':'x'}],'initial_work':nested},'nested',expected_heads={'new':0})
+        actual='committed'
+    except CoreError as e: actual=e.code
+    assert actual=='denied' and not any(r['id']=='new' for r in physical(core,'heads'))
+    result('nested-rights','denied atomically',actual)
+    (HERE/'probe-results.json').write_text(json.dumps(LOG,ensure_ascii=False,indent=2),encoding='utf-8')
+if __name__=='__main__': main()

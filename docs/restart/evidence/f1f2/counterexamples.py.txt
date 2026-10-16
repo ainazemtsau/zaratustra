@@ -1,0 +1,31 @@
+"""Expected contract assertions: two failures on the unchanged candidate."""
+import unittest
+from probes import setup, claim, retain, outcome, ingest, physical
+from zaratustra_core import CoreError
+
+class ContractCounterexamples(unittest.TestCase):
+    def test_unknown_type_in_empty_list_is_rejected(self):
+        core, owner, _, _ = setup('minimal-schema')
+        owner.call('apply_changes',{'changes':[{'id':'schema','kind':'data','key':'schema','body':{'type':'list','items':{'type':'unknown'}}}]},'schema',expected_heads={'schema':0})
+        with self.assertRaises(CoreError, msg='C3 must reject the unknown declared nested type, even when list is empty') as error:
+            owner.call('apply_changes',{'changes':[{'id':'entry','kind':'data','key':'entry','body':[],'schema_ref':{'id':'schema','revision':1}}]},'entry',expected_heads={'entry':0})
+        self.assertEqual(error.exception.code,'invalid_request')
+
+    def test_answer_to_previous_generation_cannot_unblock_current_question(self):
+        core, owner, host, coordinator = setup('minimal-question')
+        claim(host); retain(host)
+        outcome(host,'waiting',{'id':'old','question':'Old question'})
+        owner.call('control_work',{'work_id':'w','revision':3,'action':'pause'},'pause')
+        owner.call('control_work',{'work_id':'w','revision':4,'action':'resume'},'resume')
+        coordinator.prepare('w','a2',{'id':'profile','revision':1})
+        host.call('claim_dispatch',{'attempt_id':'a2','generation':2},'claim2',action_id='action2')
+        host.call('observe_attempt',{'attempt_id':'a2','event_id':'terminal','kind':'terminal','raw_base64':'e30='},'retain2')
+        host.call('commit_outcome',{'attempt_id':'a2','generation':2,'terminal_event':'terminal','original_cursor':1,'processed_cutoff':1,'state':'waiting','text':'New question','wait':{'id':'current','question':'Current question'}},'outcome2')
+        try:
+            ingest(owner,'old-answer','Answer to the old question',{'id':'old','revision':1})
+        except CoreError as error:
+            self.assertEqual(error.code,'stale_basis')
+        self.assertEqual(next(w for w in physical(core,'waits') if w['id']=='current')['status'],'waiting')
+        self.assertEqual(physical(core,'works')[0]['status'],'waiting','G11: the current unanswered wait must still block execution')
+
+if __name__=='__main__': unittest.main(verbosity=2)

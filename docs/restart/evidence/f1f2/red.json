@@ -1,0 +1,11 @@
+{
+  "candidate": "e6277cfdeb540366ead81d61d2045485e452446a",
+  "source": "3870ac4ac1f6af1aa818c70c83e999a0f68646b1",
+  "command": ".venv/Scripts/python.exe _scratch/package-a-f1f2/counterexamples.py",
+  "exit_code": 1,
+  "assertion_failures": 2,
+  "scripts": {
+    "counterexamples.py": "94e09c20e70df71127744318d53f4d11476ea2abe214eebe0e6ddcd3f8797a1a",
+    "probes.py": "ef4ff6029304f880da8345787437cecdc19950de3cd447318b9716a91bb672d6"
+  }
+}

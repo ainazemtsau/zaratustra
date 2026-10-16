@@ -1,0 +1,1973 @@
+{
+  "status": "PENDING_RECONCILIATION",
+  "code_disposition": "F1_F2_CLOSED_NO_NEW_BLOCKERS_IN_REVIEWED_CORRECTION_SCOPE",
+  "final_readiness": null,
+  "owner_acceptance": false,
+  "thread_id": "01a142fb-ed51-78e2-83f3-e1e6822af7f2",
+  "observed_head": "3d4bcbc9acf3a6374643f8c9b72a056e188354b8",
+  "source_pin": "3d4bcbc9acf3a6374643f8c9b72a056e188354b8",
+  "production_pin": "099621ba494e5042cb2cfb81b50c13aa7479fa2f",
+  "final_candidate": null,
+  "spec_sha256": "3e279c312d20f137e2076ecd7240f6b2c039923b9ee9bfa55e9662c5df98e0cb",
+  "git_status": " M RESULT.md\n M docs/restart/PACKAGE-A-RETURN.md\n?? docs/restart/evidence/f1f2/\n",
+  "production_diff_from_099621b": "",
+  "source_files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "4a61639570fb016e4c0d778863aefeea6393092e43850595d822baf39d659a1a",
+      "expected": "4a61639570fb016e4c0d778863aefeea6393092e43850595d822baf39d659a1a",
+      "matches": true
+    },
+    {
+      "path": "packages/AGENTS.md",
+      "sha256": "1f7d90ab109a28a36a51a4d91f532596f7d836e7f8c5e5a1bdf02d4365686146",
+      "expected": "1f7d90ab109a28a36a51a4d91f532596f7d836e7f8c5e5a1bdf02d4365686146",
+      "matches": true
+    },
+    {
+      "path": "packages/app/pyproject.toml",
+      "sha256": "5a1c312944177d1e1bb99a69887c39e4ad68dbc315481ab0b444c2582b50e4b0",
+      "expected": "5a1c312944177d1e1bb99a69887c39e4ad68dbc315481ab0b444c2582b50e4b0",
+      "matches": true
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/__init__.py",
+      "sha256": "5d744ffeb43335e46ac2997d6fd0bd29a7d9d7039e0c2ba19b8f38c4fcc7f24b",
+      "expected": "5d744ffeb43335e46ac2997d6fd0bd29a7d9d7039e0c2ba19b8f38c4fcc7f24b",
+      "matches": true
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/__init__.py",
+      "sha256": "3313c92a9cdbfccae4afdf1f0a2defde08ac4a84eb166825fc21ddb9347cce20",
+      "expected": "3313c92a9cdbfccae4afdf1f0a2defde08ac4a84eb166825fc21ddb9347cce20",
+      "matches": true
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/AGENTS.md",
+      "sha256": "025c36f832a8b3d73d3c1c6cc24bcd6b8ad5ef6a048c1aedfad327ca97cddafb",
+      "expected": "025c36f832a8b3d73d3c1c6cc24bcd6b8ad5ef6a048c1aedfad327ca97cddafb",
+      "matches": true
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/__init__.py",
+      "sha256": "6de3b1e1a3155f4e8d9bb2e104473abfc7c6a10f37ff0aa537ada162cbe2aa61",
+      "expected": "6de3b1e1a3155f4e8d9bb2e104473abfc7c6a10f37ff0aa537ada162cbe2aa61",
+      "matches": true
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/AGENTS.md",
+      "sha256": "4d9590766e47a2a6a9e706015320ffd8ce865a0d1b1089659abd6f18462a1448",
+      "expected": "4d9590766e47a2a6a9e706015320ffd8ce865a0d1b1089659abd6f18462a1448",
+      "matches": true
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/bridge.py",
+      "sha256": "c5342f8fca42b64aec70315d9d14f8e47be3278af8f044c27758e2d44ddb44c9",
+      "expected": "c5342f8fca42b64aec70315d9d14f8e47be3278af8f044c27758e2d44ddb44c9",
+      "matches": true
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/extension.ts",
+      "sha256": "dfb451e22ce14af8a63fd37c5e8a0c6d75a11ead34e79eb036e8bfd78958505a",
+      "expected": "dfb451e22ce14af8a63fd37c5e8a0c6d75a11ead34e79eb036e8bfd78958505a",
+      "matches": true
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/AGENTS.md",
+      "sha256": "151ae14339f3d198310a208bf9f6cba522010f37b8c3a0cd44f9d670ce20471a",
+      "expected": "151ae14339f3d198310a208bf9f6cba522010f37b8c3a0cd44f9d670ce20471a",
+      "matches": true
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/cli.py",
+      "sha256": "5f651a9a7eb1e8de81350dba32a8f391fc979ed45d34e62aa664c4b6ab556c4d",
+      "expected": "5f651a9a7eb1e8de81350dba32a8f391fc979ed45d34e62aa664c4b6ab556c4d",
+      "matches": true
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/coordinator.py",
+      "sha256": "5dfc0f7f3c8ea795dd586a1e18c35af532e3d7d21c9a4f9a4df4b7d5b7f36285",
+      "expected": "5dfc0f7f3c8ea795dd586a1e18c35af532e3d7d21c9a4f9a4df4b7d5b7f36285",
+      "matches": true
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/executor_port.py",
+      "sha256": "a3992e14cca448b788a489190d35588701562a77ba795ce6b7d9056d4b0ef663",
+      "expected": "a3992e14cca448b788a489190d35588701562a77ba795ce6b7d9056d4b0ef663",
+      "matches": true
+    },
+    {
+      "path": "packages/core/pyproject.toml",
+      "sha256": "ab44be890c2ba2b01d9fdfc4e5a7050a1792d89c4da8c47b3873a0d81b9137c0",
+      "expected": "ab44be890c2ba2b01d9fdfc4e5a7050a1792d89c4da8c47b3873a0d81b9137c0",
+      "matches": true
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/__init__.py",
+      "sha256": "7f71419c900c0207f7e9b1e9444a8b20a1f149faa06175484a62d82f0baef7c7",
+      "expected": "7f71419c900c0207f7e9b1e9444a8b20a1f149faa06175484a62d82f0baef7c7",
+      "matches": true
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/AGENTS.md",
+      "sha256": "dfc0b62815a74d2d637d56b5c52efe4c2c638057304da2a33b4026b89f8f1ada",
+      "expected": "dfc0b62815a74d2d637d56b5c52efe4c2c638057304da2a33b4026b89f8f1ada",
+      "matches": true
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/api.py",
+      "sha256": "d795ca50982ee3dde7a5baf8ac3f266e6dba2ae4f4eb96312522c17e6ec3e59d",
+      "expected": "d795ca50982ee3dde7a5baf8ac3f266e6dba2ae4f4eb96312522c17e6ec3e59d",
+      "matches": true
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/formats.py",
+      "sha256": "4d12f1141cde7829816910604ef64fa4cade6391f6c40a31fcc294bea09a99d3",
+      "expected": "4d12f1141cde7829816910604ef64fa4cade6391f6c40a31fcc294bea09a99d3",
+      "matches": true
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/shapes.py",
+      "sha256": "fd06acb2671fdc4b00821227105b267f5f905c9d482cd5ce5b9cd1619dbcef3d",
+      "expected": "fd06acb2671fdc4b00821227105b267f5f905c9d482cd5ce5b9cd1619dbcef3d",
+      "matches": true
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/types.py",
+      "sha256": "54b8a7103b7b0ae9d924cb839acd7789bff316b8e79bcf565635b1505ab5d33f",
+      "expected": "54b8a7103b7b0ae9d924cb839acd7789bff316b8e79bcf565635b1505ab5d33f",
+      "matches": true
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "9f8df00d94129b6ed934cc446db07dd6c7c5155ba67ab1992336d653fee236a8",
+      "expected": "9f8df00d94129b6ed934cc446db07dd6c7c5155ba67ab1992336d653fee236a8",
+      "matches": true
+    },
+    {
+      "path": "tests/restart/__init__.py",
+      "sha256": "3729bf0fa2108a0592552bc4497c99b77c77e5bf5be30030646021ae9602c137",
+      "expected": "3729bf0fa2108a0592552bc4497c99b77c77e5bf5be30030646021ae9602c137",
+      "matches": true
+    },
+    {
+      "path": "tests/restart/AGENTS.md",
+      "sha256": "fbaf38381fd8667e3231726f3c327efc1288bceb0a491ffbfe3ab1cfbf53616c",
+      "expected": "fbaf38381fd8667e3231726f3c327efc1288bceb0a491ffbfe3ab1cfbf53616c",
+      "matches": true
+    },
+    {
+      "path": "tests/restart/crash_worker.py",
+      "sha256": "20a4124e9025615cfccebb572502c0e138ae9d073f14adffa41157b33718f65a",
+      "expected": "20a4124e9025615cfccebb572502c0e138ae9d073f14adffa41157b33718f65a",
+      "matches": true
+    },
+    {
+      "path": "tests/restart/support.py",
+      "sha256": "1fa45169d7a86340f49efc5d0cb5d046cb71f5d8e9175247c69ecca19cb846a1",
+      "expected": "1fa45169d7a86340f49efc5d0cb5d046cb71f5d8e9175247c69ecca19cb846a1",
+      "matches": true
+    },
+    {
+      "path": "tests/restart/test_build.py",
+      "sha256": "862ddda37ed00490f91c55542c8a6b71ab1ccb600367b2cc950abb8d4cc4f527",
+      "expected": "862ddda37ed00490f91c55542c8a6b71ab1ccb600367b2cc950abb8d4cc4f527",
+      "matches": true
+    },
+    {
+      "path": "tests/restart/test_client_parity.py",
+      "sha256": "56aa0cde9b72d0ac7d77f553a5449cdde918810d6aa70444b4397ba307c23d16",
+      "expected": "56aa0cde9b72d0ac7d77f553a5449cdde918810d6aa70444b4397ba307c23d16",
+      "matches": true
+    },
+    {
+      "path": "tests/restart/test_contract.py",
+      "sha256": "0827052d1d3bee8607b6ae1b065dc745dbbc08afb30f2c20810cbefeb77384d3",
+      "expected": "0827052d1d3bee8607b6ae1b065dc745dbbc08afb30f2c20810cbefeb77384d3",
+      "matches": true
+    },
+    {
+      "path": "tests/restart/test_crashes.py",
+      "sha256": "5f78acfad0e1574d903aa74541808b4f4c3676ef813de236b7d553afbb91ac11",
+      "expected": "5f78acfad0e1574d903aa74541808b4f4c3676ef813de236b7d553afbb91ac11",
+      "matches": true
+    },
+    {
+      "path": "tests/restart/test_isolation.py",
+      "sha256": "0d68ab3019baf0d60c464db4ce12a6d1c8f33ef131eda0935d23f5bca8228b0f",
+      "expected": "0d68ab3019baf0d60c464db4ce12a6d1c8f33ef131eda0935d23f5bca8228b0f",
+      "matches": true
+    },
+    {
+      "path": "tests/restart/test_native_and_shapes.py",
+      "sha256": "183bcce6347cb01236740cc4d9e8054e8377c8d0d78793a64d3bf555724e3af1",
+      "expected": "183bcce6347cb01236740cc4d9e8054e8377c8d0d78793a64d3bf555724e3af1",
+      "matches": true
+    },
+    {
+      "path": "tests/restart/test_negative_controls.py",
+      "sha256": "e3c8c9c4bc5c6a7f766e6c14ab19ed7c8d71811d97d72d22194bba0c304c229f",
+      "expected": "e3c8c9c4bc5c6a7f766e6c14ab19ed7c8d71811d97d72d22194bba0c304c229f",
+      "matches": true
+    },
+    {
+      "path": "tests/restart/test_review_findings.py",
+      "sha256": "abbe2d67446a94508d33afba8845f328a4a714fe8ddeba1749aa557a06ae2f2e",
+      "expected": "abbe2d67446a94508d33afba8845f328a4a714fe8ddeba1749aa557a06ae2f2e",
+      "matches": true
+    },
+    {
+      "path": "tests/restart/test_trace.py",
+      "sha256": "bfb763b595177c0656f9983846b52ed12d90429978ddea15eaae86832dfb2e4d",
+      "expected": "bfb763b595177c0656f9983846b52ed12d90429978ddea15eaae86832dfb2e4d",
+      "matches": true
+    },
+    {
+      "path": "tools/check.py",
+      "sha256": "72d266e5f8e4fb9e99933d3190722686ce25039202ba037ffc874fb45b728890",
+      "expected": "72d266e5f8e4fb9e99933d3190722686ce25039202ba037ffc874fb45b728890",
+      "matches": true
+    },
+    {
+      "path": "uv.lock",
+      "sha256": "fce37007eec2ea8c819ba9989f093c156977a0f10ccafb975d07811dbb4af72a",
+      "expected": "fce37007eec2ea8c819ba9989f093c156977a0f10ccafb975d07811dbb4af72a",
+      "matches": true
+    },
+    {
+      "path": "tests/restart/test_binding_findings.py",
+      "sha256": "9e8c979da8de265637002842ae91b7880cf45bdd5e3fe95bca89542b32b22f28",
+      "expected": "9e8c979da8de265637002842ae91b7880cf45bdd5e3fe95bca89542b32b22f28",
+      "matches": true
+    }
+  ],
+  "original_script_copies": [
+    {
+      "name": "counterexamples.py",
+      "original_sha256": "94e09c20e70df71127744318d53f4d11476ea2abe214eebe0e6ddcd3f8797a1a",
+      "copied_sha256": "94e09c20e70df71127744318d53f4d11476ea2abe214eebe0e6ddcd3f8797a1a",
+      "identical": true
+    },
+    {
+      "name": "probes.py",
+      "original_sha256": "ef4ff6029304f880da8345787437cecdc19950de3cd447318b9716a91bb672d6",
+      "copied_sha256": "ef4ff6029304f880da8345787437cecdc19950de3cd447318b9716a91bb672d6",
+      "identical": true
+    }
+  ],
+  "own_pinned_suite": {
+    "exit_code": 0,
+    "seconds": 222.1769617000009,
+    "cache_redirect_only": true,
+    "external_install_root": false
+  },
+  "faults": [
+    {
+      "seed": "C0-wire-order",
+      "test": "test_contract.py::test_wire_vectors",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\C0-wire-order.json",
+      "sha256": "f3e4b8efbde52b045eea3be225e96788802dcea368f8150d85764929bf4bbcc4"
+    },
+    {
+      "seed": "F1-skip-whole-declaration",
+      "test": "test_binding_findings.py::test_declaration_rejected_atomically",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\F1-skip-whole-declaration.json",
+      "sha256": "c0589db11f5f7dc212f80c8106efc8156638d02b19fde245a93021b209fe655c"
+    },
+    {
+      "seed": "F2-ignore-active-wait-binding",
+      "test": "test_binding_findings.py::test_old_wait_cannot_unblock_current_question",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\F2-ignore-active-wait-binding.json",
+      "sha256": "45c7a86c85b8fd3cb0f46e2e3c12831cfa963e72d53765aaa1fb9d106251bc32"
+    },
+    {
+      "seed": "G1-legacy-dependency",
+      "test": "test_isolation.py::test_import_without_legacy_or_pi",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G1-legacy-dependency.json",
+      "sha256": "6f4a6bccf73167f0a930154fdbdb06f356d42325db1453c4770aea25ef8a715e"
+    },
+    {
+      "seed": "G10-drop-retained-bytes",
+      "test": "test_contract.py::test_retained_terminal_bytes",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G10-drop-retained-bytes.json",
+      "sha256": "ae7d88f1fbff22d4d0e6dba772252a3487027e8e05f48bcb2e235546a697f8f0"
+    },
+    {
+      "seed": "G10-lose-tool-receipt",
+      "test": "test_contract.py::test_tool_before_terminal_recovery",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G10-lose-tool-receipt.json",
+      "sha256": "d5f3e6835b23eacad9d6ba0f90a14f8cbbaf33687d8405bb4cb921f7007d245c"
+    },
+    {
+      "seed": "G11-wrong-question-revision",
+      "test": "test_contract.py::test_exact_question_no_acceptance",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G11-wrong-question-revision.json",
+      "sha256": "22f41f7c7dc9922274744808351611ff1a17961768a3c545662aa44bea58b003"
+    },
+    {
+      "seed": "G2-native-callback-no-effect",
+      "test": "test_trace.py::test_fixed_trace[pi]",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G2-native-callback-no-effect.json",
+      "sha256": "3fe52725ddfaa4a9e588d06e05e34b2b5447d38acbc8f5631731eff4d7e1cb89"
+    },
+    {
+      "seed": "G3-stale-write",
+      "test": "test_contract.py::test_cas_identity_exact",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G3-stale-write.json",
+      "sha256": "aa7f1e504454aff86cdd4816d24737580e5b9b203741628c10e306b017d23711"
+    },
+    {
+      "seed": "G4-early-ingress-commit",
+      "test": "test_crashes.py::test_ingest_crash_atomic[ingest_mid]",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G4-early-ingress-commit.json",
+      "sha256": "9d225cec3d8c1da098695e1a62ac3f10b9b5dec19e0a7eba29d97109903f1548"
+    },
+    {
+      "seed": "G4-lost-input-intent",
+      "test": "test_contract.py::test_ingest_idempotency_intent",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G4-lost-input-intent.json",
+      "sha256": "8f417bfbb99bfd1b0e7e3c36f83219ad3a5ae99fe481bdb086a10922ea40aca3"
+    },
+    {
+      "seed": "G5-drop-original-input",
+      "test": "test_trace.py::test_fixed_trace[driver]",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G5-drop-original-input.json",
+      "sha256": "1a18651a32045a3eb5152c7c95076907f0723ea5232d297f57e90605c14fccfb"
+    },
+    {
+      "seed": "G6-early-outcome-commit",
+      "test": "test_crashes.py::test_outcome_crash_atomic[outcome_mid]",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G6-early-outcome-commit.json",
+      "sha256": "8179ac535a3d7479d7d09cc4977cf538cd85b981ebba9af7368723f6972418c8"
+    },
+    {
+      "seed": "G6-lost-late-continuation",
+      "test": "test_trace.py::test_fixed_trace[driver]",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G6-lost-late-continuation.json",
+      "sha256": "8e05050cb65e37a2b1c19f6789baa12548481d6bbd4fe413913a7dfb5c00c6ac"
+    },
+    {
+      "seed": "G6-skipped-M19",
+      "test": "test_contract.py::test_missing_m19_cannot_prepare_cutoff20",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G6-skipped-M19.json",
+      "sha256": "38a8fb28003675d8b415bf14437fadd7bb323bdfb6cff9e6a4598cae5d188576"
+    },
+    {
+      "seed": "G7-allow-old-generation-publication",
+      "test": "test_contract.py::test_old_generation_cannot_publish_current",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G7-allow-old-generation-publication.json",
+      "sha256": "903492475c3dc00cde5dae213345fb821ad52449963140e95cc3b34d760bab19"
+    },
+    {
+      "seed": "G7-ignore-late-fence",
+      "test": "test_contract.py::test_late_fencing",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G7-ignore-late-fence.json",
+      "sha256": "957116b153cbdf2fc0c2890fd60179be3f96e1e15c433aaef046bc004b77f6a5"
+    },
+    {
+      "seed": "G8-accept-changed-command-intent",
+      "test": "test_contract.py::test_ingest_idempotency_intent",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G8-accept-changed-command-intent.json",
+      "sha256": "1090211b6103024d5d7495b409a6d59732790f6c1a6629958a8e497d9f3bd32b"
+    },
+    {
+      "seed": "G8-replay-claim-resend",
+      "test": "test_contract.py::test_no_blind_resend_after_claim",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G8-replay-claim-resend.json",
+      "sha256": "82a636aa938103218be51b9d30d487855b75e0d8fe6ce6098f64a504e6b3e865"
+    },
+    {
+      "seed": "G9-C8-generic-grant",
+      "test": "test_contract.py::test_forbidden_delta_atomic[commit_outcome]",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G9-C8-generic-grant.json",
+      "sha256": "913d07cbba44376ceecce60f18d4683aa9e1f7ae3ee64899c4988871db5d1feb"
+    },
+    {
+      "seed": "G9-generic-grant",
+      "test": "test_contract.py::test_forbidden_delta_atomic[apply_changes]",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G9-generic-grant.json",
+      "sha256": "1558ad04d9b195706265cbc3d33166db4ae0bfefe4d8a0c6f84d6d98fd8f3055"
+    },
+    {
+      "seed": "G9-ignore-revocation",
+      "test": "test_contract.py::test_revocation_and_foreign_receipt",
+      "returncode": 1,
+      "reached": true,
+      "behavioral": true,
+      "proof": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G9-ignore-revocation.json",
+      "sha256": "2f4692dd0a87272cf2702f8ecf20a8eec626cfc73a2e004af8dc345edc7d7afc"
+    }
+  ],
+  "commands": [
+    {
+      "command": ".venv/Scripts/python.exe _scratch/binding-rereview-20261016/counterexamples.py",
+      "exit_code": 0,
+      "pin": "099621b",
+      "proof": "original-counterexamples.log"
+    },
+    {
+      "command": ".venv/Scripts/python.exe _scratch/binding-rereview-20261016/probes.py",
+      "exit_code": 1,
+      "pin": "099621b",
+      "proof": "original-probes.log",
+      "meaning": "historical observational helper assumed defective A3 admission; now correctly denied"
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m pytest tests/restart/test_trace.py -k driver --basetemp _scratch/binding-rereview-20261016/initial-driver -q -p no:cacheprovider",
+      "exit_code": 1,
+      "pin": "099621b",
+      "proof": "initial-driver.log",
+      "meaning": "reported stale exact wait oracle blocker"
+    },
+    {
+      "command": ".venv/Scripts/python.exe _scratch/binding-rereview-20261016/invariant_sweep.py",
+      "exit_code": 1,
+      "proof": "invariant-sweep-first.log",
+      "meaning": "F1 58 cases PASS; one reviewer harness read-receipt assumption failed; corrected/repeated F2 below"
+    },
+    {
+      "command": ".venv/Scripts/python.exe _scratch/binding-rereview-20261016/invariant_sweep.py Sweep.test_f2_old_current_and_receipt_replay",
+      "exit_code": 0,
+      "proof": "invariant-f2-confirmed.log"
+    },
+    {
+      "command": ".venv/Scripts/python.exe _scratch/binding-rereview-20261016/invariant_sweep.py Sweep.test_f2_two_concurrent_exact_answers",
+      "exit_code": 0,
+      "proof": "concurrent-replies.log"
+    },
+    {
+      "command": ".venv/Scripts/python.exe _scratch/binding-rereview-20261016/supplementary.py",
+      "exit_code": 0,
+      "proof": "supplementary.log"
+    },
+    {
+      "command": ".venv/Scripts/python.exe _scratch/binding-rereview-20261016/run_suite.py --unrestricted",
+      "exit_code": 1,
+      "proof": "full-scoped-suite.log",
+      "result": "121 passed,3 stale-oracle failures; exploratory through test-helper edit, not pinned acceptance"
+    },
+    {
+      "command": ".venv/Scripts/python.exe _scratch/binding-rereview-20261016/counterexamples.py",
+      "exit_code": 0,
+      "pin": "3d4bcbc",
+      "proof": "counterexamples-3d4bcbc.log"
+    },
+    {
+      "command": ".venv/Scripts/python.exe _scratch/binding-rereview-20261016/run_suite.py --run=source-3d4bcbc",
+      "exit_code": 0,
+      "pin": "3d4bcbc",
+      "proof": "scoped-3d4bcbc.log"
+    }
+  ],
+  "suite_subcommands": {
+    "unrestricted": [
+      {
+        "command": "['C:\\\\Users\\\\Anton\\\\.local\\\\bin\\\\uv.EXE', 'build', '--package', 'zaratustra-core', '--wheel', '--out-dir', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_built_wheels_are_independ0\\\\wheels']",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\Users\\\\Anton\\\\.local\\\\bin\\\\uv.EXE', 'build', '--package', 'zaratustra-next', '--wheel', '--out-dir', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_built_wheels_are_independ0\\\\wheels']",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\Users\\\\Anton\\\\.local\\\\bin\\\\uv.EXE', 'venv', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_built_wheels_are_independ0\\\\install-eb7ac0b2a5d54521a0c01a7f16e908b4\\\\env', '--python', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe']",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\Users\\\\Anton\\\\.local\\\\bin\\\\uv.EXE', 'pip', 'install', '--constraint', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_built_wheels_are_independ0\\\\install-eb7ac0b2a5d54521a0c01a7f16e908b4\\\\constraints.txt', '--index-url', 'https://pypi.org/simple', '--python', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_built_wheels_are_independ0\\\\install-eb7ac0b2a5d54521a0c01a7f16e908b4\\\\env\\\\Scripts\\\\python.exe', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_built_wheels_are_independ0\\\\wheels\\\\zaratustra_core-0.1.0-py3-none-any.whl']",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_built_wheels_are_independ0\\\\install-eb7ac0b2a5d54521a0c01a7f16e908b4\\\\env\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"\\nimport importlib.abc, importlib.util, json, sys\\nfrom pathlib import Path\\nclass Deny(importlib.abc.MetaPathFinder):\\n    def find_spec(self, fullname, path=None, target=None):\\n        if fullname.split('.')[0] in {'zaratustra','dbos','sqlalchemy','pi'}:\\n            raise AssertionError('forbidden runtime dependency: '+fullname)\\nsys.meta_path.insert(0,Deny())\\ndef restrict_environment():\\n    allowed=[Path.cwd().resolve(),Path(sys.base_prefix).resolve(),Path(sys.prefix).resolve()]\\n    def audit(event,args):\\n        if event.startswith('socket.') or event.startswith('subprocess.'):\\n            raise AssertionError('forbidden process/network access: '+event)\\n        if event in {'open','os.listdir','os.scandir','os.mkdir','sqlite3.connect'}:\\n            item=args[0]\\n            if isinstance(item,(str,bytes)):\\n                actual=Path(item).resolve()\\n                if not any(actual.is_relative_to(root) for root in allowed):\\n                    raise AssertionError('forbidden file/config access: '+str(actual))\\n    sys.addaudithook(audit)\\n\\nrestrict_environment()\\nimport zaratustra_core\\nassert importlib.util.find_spec('zaratustra_app') is None\\ncore, token = zaratustra_core.Core.initialize(Path('core-only'))\\nclient = core.connect(token)\\nassert client.call('describe_contract',{},'describe')['version']=='wire/v1'\\npayload={'conversation':'c','event_id':'e','raw_base64':'ZXhhY3QgYnl0ZXM='}\\nassert client.call('ingest_message',payload,'input')['message_sequence']==1\\nprint(json.dumps({'core':zaratustra_core.__file__,'independent':True}))\\n\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\Users\\\\Anton\\\\.local\\\\bin\\\\uv.EXE', 'pip', 'install', '--offline', '--python', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_built_wheels_are_independ0\\\\install-eb7ac0b2a5d54521a0c01a7f16e908b4\\\\env\\\\Scripts\\\\python.exe', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_built_wheels_are_independ0\\\\wheels\\\\zaratustra_next-0.1.0-py3-none-any.whl']",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_built_wheels_are_independ0\\\\install-eb7ac0b2a5d54521a0c01a7f16e908b4\\\\env\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"\\nimport importlib.abc, importlib.util, json, sys\\nfrom pathlib import Path\\nclass Deny(importlib.abc.MetaPathFinder):\\n    def find_spec(self, fullname, path=None, target=None):\\n        if fullname.split('.')[0] in {'zaratustra','dbos','sqlalchemy','pi'}:\\n            raise AssertionError('forbidden runtime dependency: '+fullname)\\nsys.meta_path.insert(0,Deny())\\ndef restrict_environment():\\n    allowed=[Path.cwd().resolve(),Path(sys.base_prefix).resolve(),Path(sys.prefix).resolve()]\\n    def audit(event,args):\\n        if event.startswith('socket.') or event.startswith('subprocess.'):\\n            raise AssertionError('forbidden process/network access: '+event)\\n        if event in {'open','os.listdir','os.scandir','os.mkdir','sqlite3.connect'}:\\n            item=args[0]\\n            if isinstance(item,(str,bytes)):\\n                actual=Path(item).resolve()\\n                if not any(actual.is_relative_to(root) for root in allowed):\\n                    raise AssertionError('forbidden file/config access: '+str(actual))\\n    sys.addaudithook(audit)\\n\\nimport importlib.util\\nrestrict_environment()\\nimport zaratustra_core, zaratustra_app\\nspec=importlib.util.spec_from_file_location('independent_trace',sys.argv[1])\\nmodule=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)\\nresult=module.trace(Path('driver-space'), 'driver')\\nassert result['conversations'][0]['cursor']==22\\nassert not Path(zaratustra_core.__file__).is_relative_to(Path(sys.argv[2]))\\nassert not Path(zaratustra_app.__file__).is_relative_to(Path(sys.argv[2]))\\nassert (Path(zaratustra_app.__file__).parent/'adapters'/'pi'/'extension.ts').is_file()\\nprint(json.dumps({'core':zaratustra_core.__file__,'app':zaratustra_app.__file__,'cursor':22,'effects':len(result['actions'])}))\\n\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_built_wheels_are_independ0\\\\install-eb7ac0b2a5d54521a0c01a7f16e908b4\\\\independent_trace.py', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\packages']",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 91
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 91
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 91
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 91
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 91
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 91
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 91
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path.insert(0,sys.argv[1]);\\nimport importlib.abc, sys\\nclass Deny(importlib.abc.MetaPathFinder):\\n    def find_spec(self, fullname, path=None, target=None):\\n        if fullname.split('.')[0] in {'zaratustra','zaratustra_app','dbos','sqlalchemy','pi'}:\\n            raise AssertionError('Forbidden runtime dependency: ' + fullname)\\nsys.meta_path.insert(0,Deny())\\nimport zaratustra_core\\nassert not list(__import__('pathlib').Path.cwd().iterdir())\\ncore, token = zaratustra_core.Core.initialize(__import__('pathlib').Path('new-space'))\\nclient=core.connect(token)\\nassert client.call('describe_contract',{},'describe')['version']=='wire/v1'\\n\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\packages\\\\core\\\\src']",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G0\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G0\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_isolation.py::test_import_without_legacy_or_pi', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G0\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_C0\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_C0\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_wire_vectors', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_C0\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G1\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G1\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_trace.py::test_fixed_trace[pi]', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G1\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G2\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G2\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_cas_identity_exact', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G2\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G3\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G3\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_ingest_idempotency_intent', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G3\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G4\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G4\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_trace.py::test_fixed_trace[driver]', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G4\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G5\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G5\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_trace.py::test_fixed_trace[driver]', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G5\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G6\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G6\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_missing_m19_cannot_prepare_cutoff20', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G6\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G7\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G7\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_late_fencing', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G7\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G8\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G8\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_no_blind_resend_after_claim', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G8\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G9\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G9\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_revocation_and_foreign_receipt', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G9\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G10\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G10\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_forbidden_delta_atomic[apply_changes]', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G10\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G11\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G11\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_forbidden_delta_atomic[commit_outcome]', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G11\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G12\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G12\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_retained_terminal_bytes', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G12\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G13\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G13\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_tool_before_terminal_recovery', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G13\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G14\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G14\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_exact_question_no_acceptance', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G14\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G15\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G15\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_crashes.py::test_ingest_crash_atomic[ingest_mid]', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G15\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G16\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G16\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_crashes.py::test_outcome_crash_atomic[outcome_mid]', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G16\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G17\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G17\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_old_generation_cannot_publish_current', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G17\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G18\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G18\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_ingest_idempotency_intent', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_G18\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_F0\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_F0\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_binding_findings.py::test_declaration_rejected_atomically', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_F0\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_F1\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\unrestricted\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_F1\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_binding_findings.py::test_old_wait_cannot_unblock_current_question', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\unrestricted\\\\pytest\\\\test_seeded_defect_is_killed_F1\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      }
+    ],
+    "source-3d4bcbc": [
+      {
+        "command": "['C:\\\\Users\\\\Anton\\\\.local\\\\bin\\\\uv.EXE', 'build', '--package', 'zaratustra-core', '--wheel', '--out-dir', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_built_wheels_are_independ0\\\\wheels']",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\Users\\\\Anton\\\\.local\\\\bin\\\\uv.EXE', 'build', '--package', 'zaratustra-next', '--wheel', '--out-dir', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_built_wheels_are_independ0\\\\wheels']",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\Users\\\\Anton\\\\.local\\\\bin\\\\uv.EXE', 'venv', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_built_wheels_are_independ0\\\\install-8250c64100634b97929c7b6a7293a3f5\\\\env', '--python', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe']",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\Users\\\\Anton\\\\.local\\\\bin\\\\uv.EXE', 'pip', 'install', '--constraint', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_built_wheels_are_independ0\\\\install-8250c64100634b97929c7b6a7293a3f5\\\\constraints.txt', '--index-url', 'https://pypi.org/simple', '--python', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_built_wheels_are_independ0\\\\install-8250c64100634b97929c7b6a7293a3f5\\\\env\\\\Scripts\\\\python.exe', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_built_wheels_are_independ0\\\\wheels\\\\zaratustra_core-0.1.0-py3-none-any.whl']",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_built_wheels_are_independ0\\\\install-8250c64100634b97929c7b6a7293a3f5\\\\env\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"\\nimport importlib.abc, importlib.util, json, sys\\nfrom pathlib import Path\\nclass Deny(importlib.abc.MetaPathFinder):\\n    def find_spec(self, fullname, path=None, target=None):\\n        if fullname.split('.')[0] in {'zaratustra','dbos','sqlalchemy','pi'}:\\n            raise AssertionError('forbidden runtime dependency: '+fullname)\\nsys.meta_path.insert(0,Deny())\\ndef restrict_environment():\\n    allowed=[Path.cwd().resolve(),Path(sys.base_prefix).resolve(),Path(sys.prefix).resolve()]\\n    def audit(event,args):\\n        if event.startswith('socket.') or event.startswith('subprocess.'):\\n            raise AssertionError('forbidden process/network access: '+event)\\n        if event in {'open','os.listdir','os.scandir','os.mkdir','sqlite3.connect'}:\\n            item=args[0]\\n            if isinstance(item,(str,bytes)):\\n                actual=Path(item).resolve()\\n                if not any(actual.is_relative_to(root) for root in allowed):\\n                    raise AssertionError('forbidden file/config access: '+str(actual))\\n    sys.addaudithook(audit)\\n\\nrestrict_environment()\\nimport zaratustra_core\\nassert importlib.util.find_spec('zaratustra_app') is None\\ncore, token = zaratustra_core.Core.initialize(Path('core-only'))\\nclient = core.connect(token)\\nassert client.call('describe_contract',{},'describe')['version']=='wire/v1'\\npayload={'conversation':'c','event_id':'e','raw_base64':'ZXhhY3QgYnl0ZXM='}\\nassert client.call('ingest_message',payload,'input')['message_sequence']==1\\nprint(json.dumps({'core':zaratustra_core.__file__,'independent':True}))\\n\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\Users\\\\Anton\\\\.local\\\\bin\\\\uv.EXE', 'pip', 'install', '--offline', '--python', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_built_wheels_are_independ0\\\\install-8250c64100634b97929c7b6a7293a3f5\\\\env\\\\Scripts\\\\python.exe', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_built_wheels_are_independ0\\\\wheels\\\\zaratustra_next-0.1.0-py3-none-any.whl']",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_built_wheels_are_independ0\\\\install-8250c64100634b97929c7b6a7293a3f5\\\\env\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"\\nimport importlib.abc, importlib.util, json, sys\\nfrom pathlib import Path\\nclass Deny(importlib.abc.MetaPathFinder):\\n    def find_spec(self, fullname, path=None, target=None):\\n        if fullname.split('.')[0] in {'zaratustra','dbos','sqlalchemy','pi'}:\\n            raise AssertionError('forbidden runtime dependency: '+fullname)\\nsys.meta_path.insert(0,Deny())\\ndef restrict_environment():\\n    allowed=[Path.cwd().resolve(),Path(sys.base_prefix).resolve(),Path(sys.prefix).resolve()]\\n    def audit(event,args):\\n        if event.startswith('socket.') or event.startswith('subprocess.'):\\n            raise AssertionError('forbidden process/network access: '+event)\\n        if event in {'open','os.listdir','os.scandir','os.mkdir','sqlite3.connect'}:\\n            item=args[0]\\n            if isinstance(item,(str,bytes)):\\n                actual=Path(item).resolve()\\n                if not any(actual.is_relative_to(root) for root in allowed):\\n                    raise AssertionError('forbidden file/config access: '+str(actual))\\n    sys.addaudithook(audit)\\n\\nimport importlib.util\\nrestrict_environment()\\nimport zaratustra_core, zaratustra_app\\nspec=importlib.util.spec_from_file_location('independent_trace',sys.argv[1])\\nmodule=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)\\nresult=module.trace(Path('driver-space'), 'driver')\\nassert result['conversations'][0]['cursor']==22\\nassert not Path(zaratustra_core.__file__).is_relative_to(Path(sys.argv[2]))\\nassert not Path(zaratustra_app.__file__).is_relative_to(Path(sys.argv[2]))\\nassert (Path(zaratustra_app.__file__).parent/'adapters'/'pi'/'extension.ts').is_file()\\nprint(json.dumps({'core':zaratustra_core.__file__,'app':zaratustra_app.__file__,'cursor':22,'effects':len(result['actions'])}))\\n\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_built_wheels_are_independ0\\\\install-8250c64100634b97929c7b6a7293a3f5\\\\independent_trace.py', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\packages']",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 91
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 91
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 91
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 91
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 91
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 91
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 91
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\packages\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];from tests.restart.crash_worker import main;main()\"]",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path.insert(0,sys.argv[1]);\\nimport importlib.abc, sys\\nclass Deny(importlib.abc.MetaPathFinder):\\n    def find_spec(self, fullname, path=None, target=None):\\n        if fullname.split('.')[0] in {'zaratustra','zaratustra_app','dbos','sqlalchemy','pi'}:\\n            raise AssertionError('Forbidden runtime dependency: ' + fullname)\\nsys.meta_path.insert(0,Deny())\\nimport zaratustra_core\\nassert not list(__import__('pathlib').Path.cwd().iterdir())\\ncore, token = zaratustra_core.Core.initialize(__import__('pathlib').Path('new-space'))\\nclient=core.connect(token)\\nassert client.call('describe_contract',{},'describe')['version']=='wire/v1'\\n\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\packages\\\\core\\\\src']",
+        "returncode": 0
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G0\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G0\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_isolation.py::test_import_without_legacy_or_pi', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G0\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_C0\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_C0\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_wire_vectors', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_C0\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G1\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G1\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_trace.py::test_fixed_trace[pi]', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G1\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G2\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G2\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_cas_identity_exact', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G2\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G3\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G3\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_ingest_idempotency_intent', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G3\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G4\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G4\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_trace.py::test_fixed_trace[driver]', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G4\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G5\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G5\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_trace.py::test_fixed_trace[driver]', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G5\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G6\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G6\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_missing_m19_cannot_prepare_cutoff20', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G6\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G7\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G7\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_late_fencing', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G7\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G8\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G8\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_no_blind_resend_after_claim', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G8\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G9\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G9\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_revocation_and_foreign_receipt', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G9\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G10\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G10\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_forbidden_delta_atomic[apply_changes]', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G10\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G11\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G11\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_forbidden_delta_atomic[commit_outcome]', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G11\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G12\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G12\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_retained_terminal_bytes', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G12\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G13\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G13\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_tool_before_terminal_recovery', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G13\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G14\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G14\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_exact_question_no_acceptance', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G14\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G15\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G15\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_crashes.py::test_ingest_crash_atomic[ingest_mid]', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G15\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G16\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G16\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_crashes.py::test_outcome_crash_atomic[outcome_mid]', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G16\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G17\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G17\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_old_generation_cannot_publish_current', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G17\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G18\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_G18\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_contract.py::test_ingest_idempotency_intent', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_G18\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_F0\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_F0\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_binding_findings.py::test_declaration_rejected_atomically', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_F0\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      },
+      {
+        "command": "['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\.venv\\\\Scripts\\\\python.exe', '-I', '-X', 'utf8', '-c', \"import sys;sys.path[:0]=['C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_F1\\\\\\\\mutant\\\\\\\\core\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release\\\\\\\\_scratch\\\\\\\\binding-rereview-20261016\\\\\\\\source-3d4bcbc\\\\\\\\pytest\\\\\\\\test_seeded_defect_is_killed_F1\\\\\\\\mutant\\\\\\\\app\\\\\\\\src', 'C:\\\\\\\\projects\\\\\\\\zaratustra\\\\\\\\.worktrees\\\\\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\", 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\tests\\\\restart\\\\test_binding_findings.py::test_old_wait_cannot_unblock_current_question', '--basetemp', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\binding-rereview-20261016\\\\source-3d4bcbc\\\\pytest\\\\test_seeded_defect_is_killed_F1\\\\run', '-q', '--tb=short']",
+        "returncode": 1
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "disposition": "CLOSED",
+      "original_counterexample": "PASS",
+      "own_negative_admissions": 42,
+      "own_valid_admissions": 16,
+      "invariant": "declaration validity independent of nullable/absent/empty values; C3/C8 atomicity"
+    },
+    {
+      "id": "F2",
+      "disposition": "CLOSED",
+      "original_counterexample": "PASS",
+      "own_neighbor_cases": 5,
+      "invariant": "only exact active wait releases execution; historical receipt replay remains stable"
+    }
+  ],
+  "inherited_matrix": {
+    "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-review-20261016\\report.md",
+    "sections": [
+      "Покрытие исходных обязанностей A",
+      "G1–G11"
+    ],
+    "changed_rows": [
+      "C2",
+      "C3",
+      "C8",
+      "control/generation",
+      "G7",
+      "G11",
+      "prior-wait fixed-trace oracle"
+    ],
+    "limits_preserved": [
+      "new own installed env within scratch, not outside-checkout",
+      "trusted synthetic host reconciliation",
+      "old epoch-envelope fixture only, no production restore",
+      "unsupported confirmation/pagination/token-money/partial-prefix features",
+      "B-D/full Sleep/live usefulness/artifact maintenance outside scope"
+    ]
+  },
+  "builder_evidence_not_yet_reconciled": {
+    "native_gate": null,
+    "final_candidate": null,
+    "note": "old provenance/native1493 must not count as new proof; executor final native running on3d4bcbc"
+  },
+  "inventory_exclusions": [
+    "verification.json self hash",
+    "all __pycache__/pyc files",
+    "pytest temporary fixtures and mutant copies",
+    "dependency caches",
+    "installed env/runtime binaries; their observed wheel proof and trace logs are retained"
+  ],
+  "files": [
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\audit_faults.py",
+      "relative_path": "audit_faults.py",
+      "bytes": 1148,
+      "sha256": "947acb54751c5df50ad2b56c36af00949a62f5ab26b39420eab205fc52001850"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\concurrent-replies.log",
+      "relative_path": "concurrent-replies.log",
+      "bytes": 201,
+      "sha256": "6612397d100c47b38809df6427c06ead168823c57581e37de4edd203bae6b73f"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\counterexamples-3d4bcbc.log",
+      "relative_path": "counterexamples-3d4bcbc.log",
+      "bytes": 411,
+      "sha256": "068d016f21c1def3ab815625f1b7109947c65b0c71e90b6c2d7209576c008d66"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\counterexamples.py",
+      "relative_path": "counterexamples.py",
+      "bytes": 2390,
+      "sha256": "94e09c20e70df71127744318d53f4d11476ea2abe214eebe0e6ddcd3f8797a1a"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\fault-audit-source-3d4bcbc.json",
+      "relative_path": "fault-audit-source-3d4bcbc.json",
+      "bytes": 83884,
+      "sha256": "5e368551cbf3e50b6592b701856bc0d5837c3ff64ff03b9a15fb73b1efd98f55"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\fault-audit-unrestricted.json",
+      "relative_path": "fault-audit-unrestricted.json",
+      "bytes": 83857,
+      "sha256": "9df4d6b2fa0a82f711c5983db78595a85cc822773d4adf18d61e26421280a375"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\full-scoped-suite.log",
+      "relative_path": "full-scoped-suite.log",
+      "bytes": 14927,
+      "sha256": "2f5fe6719e9bef92359155d1ca9ba2cb523ed0e2db18cc5de2b1782f33baa928"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\initial-driver.log",
+      "relative_path": "initial-driver.log",
+      "bytes": 4954,
+      "sha256": "58eaf8ac7e5325d04ff36cb364ac5f5eb05f916dbc321ebe64ca8ec5b892d1b2"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\interim.md",
+      "relative_path": "interim.md",
+      "bytes": 4279,
+      "sha256": "9c5c4f1f6c05e4fe4655ea12df81fcca6d292ffbbf6e288e319efaf7cab7e8c0"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\invariant-f2-confirmed.log",
+      "relative_path": "invariant-f2-confirmed.log",
+      "bytes": 205,
+      "sha256": "01c9360ca4cca1b3b3c968dc03a154a59e0ed62c1e1f437c22428112f324c4bb"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\invariant-results-corrected-f2.json",
+      "relative_path": "invariant-results-corrected-f2.json",
+      "bytes": 689,
+      "sha256": "f77da38861a29163e725005accbf50b9d50975f6ffd5579a54d22d50f6acb6f3"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\invariant-results-first.json",
+      "relative_path": "invariant-results-first.json",
+      "bytes": 15182,
+      "sha256": "2641088e950d69616be5ca154e4e69b27182ef32a4ebd8aab936eafbc5eb0bdd"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\invariant-results.json",
+      "relative_path": "invariant-results.json",
+      "bytes": 240,
+      "sha256": "e39894d4f5831a208f929c240c1ff360f6a8b322a1c426ad18d9416142c78ca5"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\invariant-sweep-first.log",
+      "relative_path": "invariant-sweep-first.log",
+      "bytes": 1341,
+      "sha256": "304de7f634f81a3452c968175dc78dc380e506147e9946073b3a6e2e76288d9e"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\invariant-sweep.log",
+      "relative_path": "invariant-sweep.log",
+      "bytes": 1341,
+      "sha256": "304de7f634f81a3452c968175dc78dc380e506147e9946073b3a6e2e76288d9e"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\invariant_sweep.py",
+      "relative_path": "invariant_sweep.py",
+      "bytes": 10227,
+      "sha256": "425aaa3ab6cd199b7531a06e1b43311c552464a9b97021af05a3ed724368a094"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\original-counterexamples-exit.json",
+      "relative_path": "original-counterexamples-exit.json",
+      "bytes": 75,
+      "sha256": "15087bb20472b176da39d2ed3d9c725d43c60efdb4bf846afa6afd718657fce5"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\original-counterexamples.log",
+      "relative_path": "original-counterexamples.log",
+      "bytes": 411,
+      "sha256": "2c14426a51d6d0a0f64dd31b0ecb4575a097d8bc5b84f0e4a5519eae8bcb98a3"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\original-probes-exit.json",
+      "relative_path": "original-probes-exit.json",
+      "bytes": 66,
+      "sha256": "0b627240cb420d930e7e1bd4c2c96cd2fdb3478c23dc45bdcd7fbbad4032e58d"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\original-probes.log",
+      "relative_path": "original-probes.log",
+      "bytes": 3265,
+      "sha256": "70d09494d50e71978e9a2d064279d4ac0f8d84fd769ddcb6faaa85a3f3f75995"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\pin-final-source.json",
+      "relative_path": "pin-final-source.json",
+      "bytes": 11751,
+      "sha256": "56209963f2e6042f98d2f388280f1eab170a80fccf42b1c088bc1ea767b3fae0"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\pin-provisional.json",
+      "relative_path": "pin-provisional.json",
+      "bytes": 11781,
+      "sha256": "aa1fa4a68992575600356a3f163023e6c81b2e71b3723fcdf19deb44c0bf8023"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\pin-scoped-end.json",
+      "relative_path": "pin-scoped-end.json",
+      "bytes": 11751,
+      "sha256": "56209963f2e6042f98d2f388280f1eab170a80fccf42b1c088bc1ea767b3fae0"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\pin_audit.py",
+      "relative_path": "pin_audit.py",
+      "bytes": 1554,
+      "sha256": "2cb7123815c2f19b23e00b94a9b15deb52fb9813f689dc97d04d5ecd75684c70"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes0\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes0/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "294d689a288802bc2701b09cfcb7e5b6568f5e3158f9ed071a7fe52882a159e0"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes1\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes1/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "1c7475288b332e4e0c8416f7ba7ab1e6f49f44c738b51aab76d2afedf5eb1fa6"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes10\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes10/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "34341ca68c36dd8d53bb24212d8eceace0d1f117cf3baa0482489884f7ca5d8c"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes11\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes11/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "31e78985a23b36e5fd637327e8cafbf131e47e63c8ac907dbcb4c519b77cd796"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes12\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes12/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "8d778b5a5cec33a03835f88de045516af8253872b8c9325834b833447c11758c"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes13\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes13/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "44e645801266c13330c4e04684ed0b8d1057a86144605c7c95425a830149fbde"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes14\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes14/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "ed21c877e1463a8f762011459a589bfae65753011d81bdd9c8dde34150f27315"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes15\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes15/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "b747ed89985c4a00a28a35ca90ffb7a38ff7b67fdc5aeacc77a70bd635eda675"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes16\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes16/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "12bb6c1824f908aa653a4ffcdf415eb2cfc89de4d5c7d895b80267767dba2904"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes17\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes17/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "24dfb1f5a9f628bb6fa11e78a280a2214694b1c09b381cb39d9343a8b87e2380"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes18\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes18/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "f01143f560ad2f1aec62107ed0f0fa263202229a26ebf10c42ab481e59de0358"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes19\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes19/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "8b9582f531ea0f1c1e32e344b0d40d3c11308fc2b2ce4f40ea30ff27041901f1"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes2\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes2/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "eb75d890585001782a7ebcc92ea0bed399ebb0c6db2fcce6277de9ab4f5e1eda"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes20\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes20/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "002de2f4b4f8227abe056fddfe3bf42a2668ee33cb8b8284ac3260e7e20dee4a"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes3\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes3/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "d37737f886be4d5f8fd550590c8bd1f15334e15c9d92888ca606cca26f2ac42a"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes4\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes4/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "1ca5bccc310504c83179ebf2ec5f6ba1cf9cb2069be05ac746c089915d385587"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes5\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes5/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "1e58e02433265eefd0cb7de382580fbb1c1beb899c36610a168c6bcbe9131940"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes6\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes6/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "42af1ac7ae823bccdeb3368b14d4b65846edc49c15dee0fb5980cbfe64836e1d"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes7\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes7/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "212efeefea344414643f4f0bb3ad242ddabb2fd52d405af3ba88e73592084905"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes8\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes8/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "eb189610d1a94df217ba6ffc0f2e0c8d48adc706a0cf4b1694dede0895d4d155"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-apply_changes9\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-apply_changes9/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "1c1e8307bccee8c008dff7a3b9407f1a5c4559db9d2ffd71c4334878c1815ae8"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome0\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome0/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "31915ce6c94c7e590b2caf83f4b4285e6a73becc8fc34678baf401434eb6d1bf"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome1\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome1/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "eef193ca160e383bfc0f6d0d74c3ea2dc43edce8ec575f6712ec4733116febeb"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome10\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome10/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "24cdce617cc14912f43946257d00be57c3db8a2209f9aa5bee94a624e375dd98"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome11\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome11/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "b37e9a04fe54bd53f2070ff748cb108b3869edbc6aa508e1b9d1ae235e003c46"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome12\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome12/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "e78d841ed4cbe23183415dff95b7e0c86cb22d1d1e3ac441d6f5358dbf819ce7"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome13\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome13/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "1c4f8585bd550f3ab63697f90e6522e7087dd4eb0af36437d46f21fbd4478841"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome14\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome14/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "294b0c7865c21c3c3aaa72a5a41bc317e7d9975f23ceffdd34f93d91fb503f8d"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome15\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome15/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "6ffa2a2782cbd4944b6639038d6ead17b976cbdf0734a2ec92f81c17842f6688"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome16\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome16/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "ea06843c45f98a0177d6abccd879ddbc056b4bea3834c959ad81985274cbc921"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome17\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome17/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "3dd0c3b7905cb86f06059c696963f10fadc77e780cad13519a2e4becf70fdd7c"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome18\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome18/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "a26dcc6eabbed905b3aa68a2bed6bfd18d608119eb5672c94dd74dc90e4c3497"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome19\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome19/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "2fc0bb06c89e0c7e7fb02f7cb0da23fb12966d5e34a8fd79f5caa8230e138496"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome2\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome2/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "037468d686e075246784b32159ac3696b7bc6a6becc969fdacbac9bd10bbe063"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome20\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome20/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "0c7c742f255e34523e0af3cedfab6c127216f8c347ab6834022fc1c40dd6a2af"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome3\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome3/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "acf66bc23784d879af9043c5c12002376430f488c6a52e890b696ff689ddaf8d"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome4\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome4/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "a75b3b919fa5f15793ab8e8a7536287180ca820333a8ee12a8dc774f85e709bb"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome5\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome5/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "e7e35cd85ff2fcef8db63ae5d38844ead63c45a262000433c69a1267dec3feac"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome6\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome6/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "1491e5fa3dcaba04750ea73bd9e9d2cb4ca583cea0af89ad4344b2d953980bf1"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome7\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome7/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "204d5d28609e475f2ab8abe2d5378a6ab8717a6c9d6ebface4d1fdde5751b8f5"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome8\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome8/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "fec4295c904c801d2ba368d6435765dd48329b335400edc7d1a343d0dcf808c3"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\invalid-commit_outcome9\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/invalid-commit_outcome9/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "2ed524316daa440b299906291055544faed5d1715769c412ac38459446305c36"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\old-receipt\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/old-receipt/core.sqlite3",
+      "bytes": 221184,
+      "sha256": "e87fffff4100afc2ee3ebd68ea3f7a7a57ff0d10b4bcb991f44e6044a1f72f17"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-apply_changes0\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-apply_changes0/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "0310df12a799be134050a17d4cc5cec073b974d3274e9a6a93a790996734bf25"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-apply_changes1\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-apply_changes1/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "a765c395dd74e2d824a751e1f8146ae6349fb9db0835dbbbe3de33897bcf986c"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-apply_changes2\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-apply_changes2/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "e92512810a25dd2c35c0c9d7ae1fa494ff867c6fc36916a7ac43ae82fce326ec"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-apply_changes3\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-apply_changes3/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "7a4fa3a7847707e1a1cd773fe4e81a0532aad5e5a9d8a47096b80f440eb5385c"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-apply_changes4\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-apply_changes4/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "61aaa411ae74be50e22cb89369aa3f81aa1460ba23a7a2aa96e2b30e108484bd"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-apply_changes5\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-apply_changes5/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "550bab549f55077c00b7bff63fc3366cf6b0baac5b7a9eda1348fe907b77334b"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-apply_changes6\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-apply_changes6/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "3bee9aee339c0a6c5c7926652b72ea611de1afae0f24c0f809e5e3b5a6bacb6d"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-apply_changes7\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-apply_changes7/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "ab444d796e53980239ba02fcfe9f8620ab97df139a8d695c65a0ca2a69c48a0f"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-commit_outcome0\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-commit_outcome0/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "09f79ef063b9fd8b9ab4cabb334828440acddb7d04406e0ed6639a97368c7bce"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-commit_outcome1\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-commit_outcome1/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "97aa7d7454774dadee064b44b82b309fd5ca6b42555e318c55708c41420ec005"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-commit_outcome2\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-commit_outcome2/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "560cf52ba81b52cb58f1bedc032ee36a955fa31e885dd6fd5359538259d4e3a4"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-commit_outcome3\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-commit_outcome3/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "507935e0e620ff070609c47d3cbb296d8d5f6246b8cc886ec7a11a49c4f57c24"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-commit_outcome4\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-commit_outcome4/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "97a60c96fdbef3251376397b499389c2c267fd0d5407945a4117ed9c6f057500"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-commit_outcome5\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-commit_outcome5/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "461dd0a9f8e91f9b9e0d7604eb0dc96a953e477255b5c80c20a935551a6b832b"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-commit_outcome6\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-commit_outcome6/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "f29ea25ee35250210ecb71ff26fbf7a389860110f2c9059f0ee538bcb4d84757"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\valid-commit_outcome7\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/valid-commit_outcome7/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "4f8a0f2c9837c34785524e1c24c2a40bc6ccfd6b9da989b29e8fc4fde0d7e492"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\wait-fenced-cancel\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/wait-fenced-cancel/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "601440fbd2cda0d30f31934839953e0e28eaca50a8b10f9d6b614c41aaa7747a"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\wait-fenced-pause\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/wait-fenced-pause/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "03bdabaf4a418cf90265c7c4e22f446466a10da0ef51c39d71435a16fcb9735d"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0afaeeb453724555a2dbac4d7e6c6bfb\\wait-generation\\core.sqlite3",
+      "relative_path": "probe-runs/0afaeeb453724555a2dbac4d7e6c6bfb/wait-generation/core.sqlite3",
+      "bytes": 237568,
+      "sha256": "400506c655ec764cf1188e3e5f009f7be3fcd5bf9687b12c029d47a97f254f6f"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0be33fd794264547add37b8ded8e1811\\minimal-question\\core.sqlite3",
+      "relative_path": "probe-runs/0be33fd794264547add37b8ded8e1811/minimal-question/core.sqlite3",
+      "bytes": 221184,
+      "sha256": "66b7bd4d9f93ae816b367f1f277b38dc5672446f2369616936f93fa1b163a3ea"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\0be33fd794264547add37b8ded8e1811\\minimal-schema\\core.sqlite3",
+      "relative_path": "probe-runs/0be33fd794264547add37b8ded8e1811/minimal-schema/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "b43dd1a47ee8b0c046dceaec4d6bbde46acedf9608eb20e2b584eb92ea89576a"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\5a56867485114bbfb52f46898e198718\\independent-c8-rights\\core.sqlite3",
+      "relative_path": "probe-runs/5a56867485114bbfb52f46898e198718/independent-c8-rights/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "f9b9dde852e8eee3f359196fbcd85c0e4f8025a29beddd45c3e14332900fb266"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\5a56867485114bbfb52f46898e198718\\independent-cancel\\core.sqlite3",
+      "relative_path": "probe-runs/5a56867485114bbfb52f46898e198718/independent-cancel/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "7dc795eaa5112a98599775c4ef075be94a6b96fff619dadf801247dd6b70ab25"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\5a56867485114bbfb52f46898e198718\\independent-epoch-envelope\\core.sqlite3",
+      "relative_path": "probe-runs/5a56867485114bbfb52f46898e198718/independent-epoch-envelope/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "6af84acc03d66ed6a1a344ec65bde4e3bcec5eeb0e076228ad5f9001380d40d2"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\5a56867485114bbfb52f46898e198718\\independent-unknown\\core.sqlite3",
+      "relative_path": "probe-runs/5a56867485114bbfb52f46898e198718/independent-unknown/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "e4b4a6b4dce4363a5640975f7dd2e965406c5e79d34225e3cc1d119d225b52bb"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\7846d2b28d6c459e98ab7f155239deeb\\minimal-question\\core.sqlite3",
+      "relative_path": "probe-runs/7846d2b28d6c459e98ab7f155239deeb/minimal-question/core.sqlite3",
+      "bytes": 221184,
+      "sha256": "2a8841d9ce01d1366ee4decdc77c7940ca1186aec89da1007fb52718b8965d92"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\7846d2b28d6c459e98ab7f155239deeb\\minimal-schema\\core.sqlite3",
+      "relative_path": "probe-runs/7846d2b28d6c459e98ab7f155239deeb/minimal-schema/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "61d5fd80c3c1ad722fa9b312c1225da5874e4da375ee966db5a40046cd569970"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\a6fa6b4ddfa64b2080c8fe5038cd2b03\\concurrent-current-answers\\core.sqlite3",
+      "relative_path": "probe-runs/a6fa6b4ddfa64b2080c8fe5038cd2b03/concurrent-current-answers/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "f4ae2a44c80b2c5c21806d179b0b81bbac4cd6001464ce0fbf6f0214583ddc12"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\b731c2bfa39d4989a31387ebb6fac017\\absent-nested-schema\\core.sqlite3",
+      "relative_path": "probe-runs/b731c2bfa39d4989a31387ebb6fac017/absent-nested-schema/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "8f4f25e99d901176be05cf5723013e99a680c29fb61544e299ed7557082682c0"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\b731c2bfa39d4989a31387ebb6fac017\\empty-list-schema\\core.sqlite3",
+      "relative_path": "probe-runs/b731c2bfa39d4989a31387ebb6fac017/empty-list-schema/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "0b510fe250914f4df7fdd993861eccbb1128a72b27ecc1892d011806c6424512"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\b731c2bfa39d4989a31387ebb6fac017\\finished\\core.sqlite3",
+      "relative_path": "probe-runs/b731c2bfa39d4989a31387ebb6fac017/finished/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "9fb8ce44fc3a24ab18527849c47dde3a9e8f0fb053fc7f8486545f540b9436f2"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\b731c2bfa39d4989a31387ebb6fac017\\old-wait\\core.sqlite3",
+      "relative_path": "probe-runs/b731c2bfa39d4989a31387ebb6fac017/old-wait/core.sqlite3",
+      "bytes": 237568,
+      "sha256": "c8e9c53fd7cdf55e59e15d379f02ec1b9a08aed1fe39c95d7b485ab3bf0da27c"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\b731c2bfa39d4989a31387ebb6fac017\\preclaim\\core.sqlite3",
+      "relative_path": "probe-runs/b731c2bfa39d4989a31387ebb6fac017/preclaim/core.sqlite3",
+      "bytes": 188416,
+      "sha256": "fec362ea017379d799eacfd145544186ce787f3a487f66608522ee0f415d82f7"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\b731c2bfa39d4989a31387ebb6fac017\\stale-memory\\core.sqlite3",
+      "relative_path": "probe-runs/b731c2bfa39d4989a31387ebb6fac017/stale-memory/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "d1170e3d5736213313e6acaf29c25496a0cbb2c1bf99388457811320af72fffb"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\b731c2bfa39d4989a31387ebb6fac017\\stale-method\\core.sqlite3",
+      "relative_path": "probe-runs/b731c2bfa39d4989a31387ebb6fac017/stale-method/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "680fafcb12c031a6af078d1bd4e5bb0e13a2ae76a2277ce53a67b7b5b742e79b"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\b731c2bfa39d4989a31387ebb6fac017\\stale-profile\\core.sqlite3",
+      "relative_path": "probe-runs/b731c2bfa39d4989a31387ebb6fac017/stale-profile/core.sqlite3",
+      "bytes": 200704,
+      "sha256": "e2c67b38b10927b07a9b153c77875a0b995ed643df32b099cf8a30ad848dd8ba"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\b731c2bfa39d4989a31387ebb6fac017\\wrong-executor\\core.sqlite3",
+      "relative_path": "probe-runs/b731c2bfa39d4989a31387ebb6fac017/wrong-executor/core.sqlite3",
+      "bytes": 196608,
+      "sha256": "52aa80173a5e354b5d6d09ccd2f9d8dbed9d1c9375dc97b0d4d065f01ecca53b"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probe-runs\\d0791d8357d04801bb8013ebc0df3748\\wait-generation\\core.sqlite3",
+      "relative_path": "probe-runs/d0791d8357d04801bb8013ebc0df3748/wait-generation/core.sqlite3",
+      "bytes": 253952,
+      "sha256": "890d7f007e4f1ae80efc42bb991ef916ae06db169d6bc0332738e132d3175b1d"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\probes.py",
+      "relative_path": "probes.py",
+      "bytes": 6821,
+      "sha256": "ef4ff6029304f880da8345787437cecdc19950de3cd447318b9716a91bb672d6"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\report.md",
+      "relative_path": "report.md",
+      "bytes": 16254,
+      "sha256": "46a2823c63f068f399e5e0f30cf8dbd18a1800dd434759b7560b2b1d4cefb53f"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\run_suite.py",
+      "relative_path": "run_suite.py",
+      "bytes": 1653,
+      "sha256": "8ae72e89db629fcd62caf109942999bad59122dd9943a9677cdb086dafa9f4cf"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\scoped-3d4bcbc.log",
+      "relative_path": "scoped-3d4bcbc.log",
+      "bytes": 195,
+      "sha256": "f50fce00d5699428449e1a9e645ed6f60828eaafeb6c0b0b1ff04986bb340daf"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-evidence\\client-parity-forbidden.json",
+      "relative_path": "source-3d4bcbc/suite-evidence/client-parity-forbidden.json",
+      "bytes": 11024,
+      "sha256": "b643ea1e9fd368a98d47fbe2b50d25787009b41b5d76c1db11add4ebe1481926"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-evidence\\client-parity-stale.json",
+      "relative_path": "source-3d4bcbc/suite-evidence/client-parity-stale.json",
+      "bytes": 11027,
+      "sha256": "6de046ab835049fb81245b93ed0d19b21f123c95705491fd5dd712e9772b86c8"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-evidence\\client-parity.json",
+      "relative_path": "source-3d4bcbc/suite-evidence/client-parity.json",
+      "bytes": 19714,
+      "sha256": "2ed06307efc6e150690b9deb6a23b95fa6b84bf6bf6ec600efb7d0fa43348366"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-evidence\\driver-trace.json",
+      "relative_path": "source-3d4bcbc/suite-evidence/driver-trace.json",
+      "bytes": 45891,
+      "sha256": "b77514dc5a68adcf61172f3decd107fe0702e8fedff401b03587cb43e621b08a"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-evidence\\pi-trace.json",
+      "relative_path": "source-3d4bcbc/suite-evidence/pi-trace.json",
+      "bytes": 184479,
+      "sha256": "6d9dda10f309524a6d8a628e51dc2ed29298ace4d556c4d3535f3d519c10f11d"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-evidence\\wheel-install.json",
+      "relative_path": "source-3d4bcbc/suite-evidence/wheel-install.json",
+      "bytes": 1427,
+      "sha256": "bcf74485c3cfbcd72324aeac4af8a1bb56565afea20dd53668e69477d242b460"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-exit.json",
+      "relative_path": "source-3d4bcbc/suite-exit.json",
+      "bytes": 107,
+      "sha256": "e83f5fe7688a700f1ba30b2b95a1e3460e1301f0608fb9fb7e775a9e27b46870"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\C0-wire-order.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/C0-wire-order.json",
+      "bytes": 1425,
+      "sha256": "f3e4b8efbde52b045eea3be225e96788802dcea368f8150d85764929bf4bbcc4"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\F1-skip-whole-declaration.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/F1-skip-whole-declaration.json",
+      "bytes": 11780,
+      "sha256": "c0589db11f5f7dc212f80c8106efc8156638d02b19fde245a93021b209fe655c"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\F2-ignore-active-wait-binding.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/F2-ignore-active-wait-binding.json",
+      "bytes": 1684,
+      "sha256": "45c7a86c85b8fd3cb0f46e2e3c12831cfa963e72d53765aaa1fb9d106251bc32"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G1-legacy-dependency.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G1-legacy-dependency.json",
+      "bytes": 2671,
+      "sha256": "6f4a6bccf73167f0a930154fdbdb06f356d42325db1453c4770aea25ef8a715e"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G10-drop-retained-bytes.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G10-drop-retained-bytes.json",
+      "bytes": 1501,
+      "sha256": "ae7d88f1fbff22d4d0e6dba772252a3487027e8e05f48bcb2e235546a697f8f0"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G10-lose-tool-receipt.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G10-lose-tool-receipt.json",
+      "bytes": 2301,
+      "sha256": "d5f3e6835b23eacad9d6ba0f90a14f8cbbaf33687d8405bb4cb921f7007d245c"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G11-wrong-question-revision.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G11-wrong-question-revision.json",
+      "bytes": 1490,
+      "sha256": "22f41f7c7dc9922274744808351611ff1a17961768a3c545662aa44bea58b003"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G2-native-callback-no-effect.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G2-native-callback-no-effect.json",
+      "bytes": 56631,
+      "sha256": "3fe52725ddfaa4a9e588d06e05e34b2b5447d38acbc8f5631731eff4d7e1cb89"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G3-stale-write.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G3-stale-write.json",
+      "bytes": 2261,
+      "sha256": "aa7f1e504454aff86cdd4816d24737580e5b9b203741628c10e306b017d23711"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G4-early-ingress-commit.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G4-early-ingress-commit.json",
+      "bytes": 2511,
+      "sha256": "9d225cec3d8c1da098695e1a62ac3f10b9b5dec19e0a7eba29d97109903f1548"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G4-lost-input-intent.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G4-lost-input-intent.json",
+      "bytes": 1870,
+      "sha256": "8f417bfbb99bfd1b0e7e3c36f83219ad3a5ae99fe481bdb086a10922ea40aca3"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G5-drop-original-input.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G5-drop-original-input.json",
+      "bytes": 1839,
+      "sha256": "1a18651a32045a3eb5152c7c95076907f0723ea5232d297f57e90605c14fccfb"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G6-early-outcome-commit.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G6-early-outcome-commit.json",
+      "bytes": 1434,
+      "sha256": "8179ac535a3d7479d7d09cc4977cf538cd85b981ebba9af7368723f6972418c8"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G6-lost-late-continuation.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G6-lost-late-continuation.json",
+      "bytes": 1541,
+      "sha256": "8e05050cb65e37a2b1c19f6789baa12548481d6bbd4fe413913a7dfb5c00c6ac"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G6-skipped-M19.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G6-skipped-M19.json",
+      "bytes": 1947,
+      "sha256": "38a8fb28003675d8b415bf14437fadd7bb323bdfb6cff9e6a4598cae5d188576"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G7-allow-old-generation-publication.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G7-allow-old-generation-publication.json",
+      "bytes": 1930,
+      "sha256": "903492475c3dc00cde5dae213345fb821ad52449963140e95cc3b34d760bab19"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G7-ignore-late-fence.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G7-ignore-late-fence.json",
+      "bytes": 1391,
+      "sha256": "957116b153cbdf2fc0c2890fd60179be3f96e1e15c433aaef046bc004b77f6a5"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G8-accept-changed-command-intent.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G8-accept-changed-command-intent.json",
+      "bytes": 1633,
+      "sha256": "1090211b6103024d5d7495b409a6d59732790f6c1a6629958a8e497d9f3bd32b"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G8-replay-claim-resend.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G8-replay-claim-resend.json",
+      "bytes": 1894,
+      "sha256": "82a636aa938103218be51b9d30d487855b75e0d8fe6ce6098f64a504e6b3e865"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G9-C8-generic-grant.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G9-C8-generic-grant.json",
+      "bytes": 1540,
+      "sha256": "913d07cbba44376ceecce60f18d4683aa9e1f7ae3ee64899c4988871db5d1feb"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G9-generic-grant.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G9-generic-grant.json",
+      "bytes": 1535,
+      "sha256": "1558ad04d9b195706265cbc3d33166db4ae0bfefe4d8a0c6f84d6d98fd8f3055"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-negatives\\G9-ignore-revocation.json",
+      "relative_path": "source-3d4bcbc/suite-negatives/G9-ignore-revocation.json",
+      "bytes": 2320,
+      "sha256": "2f4692dd0a87272cf2702f8ecf20a8eec626cfc73a2e004af8dc345edc7d7afc"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\source-3d4bcbc\\suite-subprocesses.json",
+      "relative_path": "source-3d4bcbc/suite-subprocesses.json",
+      "bytes": 44457,
+      "sha256": "a2773a18626806c175cdeb68989f6b9097257830380e497701ee1827da5850a7"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\supplementary.json",
+      "relative_path": "supplementary.json",
+      "bytes": 1902,
+      "sha256": "d3658b6de6d6e7c85453aae290df2d6bdd20a6c13eae99b4cd504aa0b184f6e3"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\supplementary.log",
+      "relative_path": "supplementary.log",
+      "bytes": 1904,
+      "sha256": "646ed99a20814fc468e1dcd5757306207b5dc19537542ff8a82f4591f67dbc6d"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\supplementary.py",
+      "relative_path": "supplementary.py",
+      "bytes": 3395,
+      "sha256": "bd0478c472532e341edc24dd948a13e8dbc77c76802e838945943730944f8e39"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-evidence\\client-parity-forbidden.json",
+      "relative_path": "unrestricted/suite-evidence/client-parity-forbidden.json",
+      "bytes": 11024,
+      "sha256": "b643ea1e9fd368a98d47fbe2b50d25787009b41b5d76c1db11add4ebe1481926"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-evidence\\client-parity-stale.json",
+      "relative_path": "unrestricted/suite-evidence/client-parity-stale.json",
+      "bytes": 11027,
+      "sha256": "6de046ab835049fb81245b93ed0d19b21f123c95705491fd5dd712e9772b86c8"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-evidence\\wheel-install.json",
+      "relative_path": "unrestricted/suite-evidence/wheel-install.json",
+      "bytes": 1419,
+      "sha256": "2681fc7a422e4ef5e9dec8ec379e9b17dc836bbf1d7d329a683b11d81ebaca6b"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-exit.json",
+      "relative_path": "unrestricted/suite-exit.json",
+      "bytes": 108,
+      "sha256": "44edc7a41ff53e87b3fcfc3cc9331ec6cf1f7a59e1cb89f14684476e082da2e7"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\C0-wire-order.json",
+      "relative_path": "unrestricted/suite-negatives/C0-wire-order.json",
+      "bytes": 1425,
+      "sha256": "5747a4c58361498da3a6b3e575124972ce4799c6d9e8e6e4fea05df8e66a94d5"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\F1-skip-whole-declaration.json",
+      "relative_path": "unrestricted/suite-negatives/F1-skip-whole-declaration.json",
+      "bytes": 11780,
+      "sha256": "e6c69e5d55ea664c9446bedd1359ee9359c2e6eef40a9d06f127caceeba385bc"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\F2-ignore-active-wait-binding.json",
+      "relative_path": "unrestricted/suite-negatives/F2-ignore-active-wait-binding.json",
+      "bytes": 1684,
+      "sha256": "42bd2f20f6fa505f949ffc3561fc480ca2b130578055be225372e5ca1c40220d"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G1-legacy-dependency.json",
+      "relative_path": "unrestricted/suite-negatives/G1-legacy-dependency.json",
+      "bytes": 2667,
+      "sha256": "3a85d3d0a2b901e99b5cc6637c46698da115f8e2df77905965d04f17569982dd"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G10-drop-retained-bytes.json",
+      "relative_path": "unrestricted/suite-negatives/G10-drop-retained-bytes.json",
+      "bytes": 1501,
+      "sha256": "ea0221b9f5c10132fa10580393fc4fba4b7d26642edbb0474ed609633980e649"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G10-lose-tool-receipt.json",
+      "relative_path": "unrestricted/suite-negatives/G10-lose-tool-receipt.json",
+      "bytes": 2301,
+      "sha256": "d49dba7fb9e3ddbae03186bead27556adc2004aa0d57ed43598e5f1a3e767e68"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G11-wrong-question-revision.json",
+      "relative_path": "unrestricted/suite-negatives/G11-wrong-question-revision.json",
+      "bytes": 1490,
+      "sha256": "f73254bc5e14fc90e60bf945d60b6eb92ae2ed73e70eff84fa372a184cb7ff87"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G2-native-callback-no-effect.json",
+      "relative_path": "unrestricted/suite-negatives/G2-native-callback-no-effect.json",
+      "bytes": 56604,
+      "sha256": "359c815e2a4ec60dbf51b9e0bb868723f517f3f88217fd9a04087a71d830b312"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G3-stale-write.json",
+      "relative_path": "unrestricted/suite-negatives/G3-stale-write.json",
+      "bytes": 2261,
+      "sha256": "e9a686db1a86a93020bd3c48d681d007cc678f0605db5c224ad1bb8845d7f5cc"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G4-early-ingress-commit.json",
+      "relative_path": "unrestricted/suite-negatives/G4-early-ingress-commit.json",
+      "bytes": 2515,
+      "sha256": "60f73f5010eeb9bb8e4f1bee1a000f6aa4439a4cde15f4e745add401b3cac9a9"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G4-lost-input-intent.json",
+      "relative_path": "unrestricted/suite-negatives/G4-lost-input-intent.json",
+      "bytes": 1870,
+      "sha256": "20106a1a26caf81827b3dab36454615f952489a94b2a5020cb131358441c4771"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G5-drop-original-input.json",
+      "relative_path": "unrestricted/suite-negatives/G5-drop-original-input.json",
+      "bytes": 1839,
+      "sha256": "0d211658b491b08c3b75940d0143b5f722b7c4a76ac4368e4067c84b6f6ad449"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G6-early-outcome-commit.json",
+      "relative_path": "unrestricted/suite-negatives/G6-early-outcome-commit.json",
+      "bytes": 1434,
+      "sha256": "92e1629608f546f7af6495e30f767d1cf4a56679959f64efcf7d0866dcdf2b2a"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G6-lost-late-continuation.json",
+      "relative_path": "unrestricted/suite-negatives/G6-lost-late-continuation.json",
+      "bytes": 1541,
+      "sha256": "40e5d04f203bd321a8103b3a3cfdd72eb29836573280d1a02ac6008331a839fb"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G6-skipped-M19.json",
+      "relative_path": "unrestricted/suite-negatives/G6-skipped-M19.json",
+      "bytes": 1947,
+      "sha256": "7d8350851461fc95e3d3cfbe6e135fd1dc0e4f6787bf187eca480f0df7e533c3"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G7-allow-old-generation-publication.json",
+      "relative_path": "unrestricted/suite-negatives/G7-allow-old-generation-publication.json",
+      "bytes": 1930,
+      "sha256": "466fc4dba192b778cdb9c00fea023ddc4be675d10c5570f334de482ec2f04571"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G7-ignore-late-fence.json",
+      "relative_path": "unrestricted/suite-negatives/G7-ignore-late-fence.json",
+      "bytes": 1391,
+      "sha256": "a1570d33440703681b06a87d92a0b577346736ab23d5ab33897e92f21cd9356f"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G8-accept-changed-command-intent.json",
+      "relative_path": "unrestricted/suite-negatives/G8-accept-changed-command-intent.json",
+      "bytes": 1633,
+      "sha256": "c88ac530a4ecaa7edebc547c199e352d8c18febdfa44cb9dda973a45b4e1bfc9"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G8-replay-claim-resend.json",
+      "relative_path": "unrestricted/suite-negatives/G8-replay-claim-resend.json",
+      "bytes": 1894,
+      "sha256": "8dd3d7c6e2d807a000ac9904c3b008a5f4b045b953efb69c20d863e8d67d22cf"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G9-C8-generic-grant.json",
+      "relative_path": "unrestricted/suite-negatives/G9-C8-generic-grant.json",
+      "bytes": 1540,
+      "sha256": "4625f6ff13735e578c9b3951a82e05e38925c376b12390b591d8e840fa28a264"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G9-generic-grant.json",
+      "relative_path": "unrestricted/suite-negatives/G9-generic-grant.json",
+      "bytes": 1535,
+      "sha256": "1fbb9a698827dc72e1031bde70d498e52721a51414a2f87ad80e582a73a92ff8"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-negatives\\G9-ignore-revocation.json",
+      "relative_path": "unrestricted/suite-negatives/G9-ignore-revocation.json",
+      "bytes": 2320,
+      "sha256": "a3b8631d0f011ff820db8f74f0da3d001af0325f2b4319522b0409aaaf40b8eb"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\unrestricted\\suite-subprocesses.json",
+      "relative_path": "unrestricted/suite-subprocesses.json",
+      "bytes": 44303,
+      "sha256": "41f3e0e1bf48bdc97214174e7559c8bceaf281b7444b33920bb4206bd293d10d"
+    },
+    {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-rereview-20261016\\verification_checkpoint.py",
+      "relative_path": "verification_checkpoint.py",
+      "bytes": 6802,
+      "sha256": "7f159304eb449d5c45d1748743f2bef60a8b5c35e34961e01c4f7396b90b733b"
+    }
+  ]
+}

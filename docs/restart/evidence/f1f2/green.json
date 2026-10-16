@@ -1,0 +1,7 @@
+{
+  "source": "3d4bcbc9acf3a6374643f8c9b72a056e188354b8",
+  "command": ".venv/Scripts/python.exe _scratch/package-a-f1f2/counterexamples.py",
+  "exit_code": 0,
+  "passed": 2,
+  "original_scripts_unchanged": true
+}

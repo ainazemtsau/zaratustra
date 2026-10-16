@@ -1,0 +1,26 @@
+{
+  "source_commit": "099621ba494e5042cb2cfb81b50c13aa7479fa2f",
+  "source_manifest_sha256": "94e47e367c529271adb9b3e6a2d2399382554f844af1363e8079d80e85477716",
+  "source_files_verified": 38,
+  "focused_command": ".venv/Scripts/python.exe -m pytest tests/restart/test_binding_findings.py tests/restart/test_review_findings.py tests/restart/test_native_and_shapes.py tests/restart/test_negative_controls.py -k \"not seeded or F1 or F2\" -q -x --basetemp _scratch/f1f2-focused-final",
+  "focused_exit_code": 0,
+  "focused_passed": 48,
+  "focused_seconds": 53.34,
+  "original_red_assertion_failures": 2,
+  "original_green_passed": 2,
+  "targeted_faults_killed": 2,
+  "new_regression_cases": 27,
+  "sandbox_interrupted_run": "23 passed then WinError10013 on existing localhost provider check; unrestricted focused repeat above completed48",
+  "original_scripts_unchanged": true,
+  "original_independent_report_unchanged": true,
+  "replacement_final_source": "3d4bcbc9acf3a6374643f8c9b72a056e188354b8",
+  "full_package_a": {
+    "source_bytes": "3d4bcbc9acf3a6374643f8c9b72a056e188354b8",
+    "command": ".venv/Scripts/python.exe -m pytest tests/restart -q -x --basetemp _scratch/pytest-a-f1f2-final",
+    "run_before_commit_on_identical_final_source_bytes": true,
+    "passed": 124,
+    "seconds": 242.03,
+    "exit_code": 0,
+    "negative_controls_killed": 22
+  }
+}

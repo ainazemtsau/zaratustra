@@ -1,8 +1,8 @@
 {
-  "source_commit": "3870ac4ac1f6af1aa818c70c83e999a0f68646b1",
+  "source_commit": "3d4bcbc9acf3a6374643f8c9b72a056e188354b8",
   "core_public_api": "zaratustra_core: Core, Client, Request, CoreError, wire, digest",
   "app_public_api": "zaratustra_app: Coordinator, Driver, Pi",
-  "installed_wheel_only_environment": "C:\\Users\\Anton\\.codex\\visualizations\\2026\\10\\15\\01a1403c-0c2e-7592-b1dc-3763a8f97fdb\\restart-package-a\\install-3311bba26b384c408cdde3bba584e26f\\env",
+  "installed_wheel_only_environment": "C:\\Users\\Anton\\.codex\\visualizations\\2026\\10\\15\\01a1403c-0c2e-7592-b1dc-3763a8f97fdb\\restart-package-a\\install-f0271b189be34e159c0acf833ce59877\\env",
   "outside_checkout": true,
   "installed_distributions": [
     {

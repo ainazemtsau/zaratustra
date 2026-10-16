@@ -1,31 +1,31 @@
-# Restart package A — local technical candidate
+# Restart package A — F1/F2 corrected technical candidate
 
 ## outcome
 
-Package A of the owner-accepted FIRST-RELEASE-PLAN.md revision 2 is implemented in independent core/app packages. Technical candidate only: fresh scoped engineering pre-pass READY; binding G5 and owner acceptance remain separate. No merge/publication or old-instance migration.
+Both independent binding findings corrected on source3d4bcbc9acf3a6374643f8c9b72a056e188354b8. F1 validates complete declarations before data; F2 admits replies only for current exact wait/Attempt/generation. Independent physical code re-review CLOSED both findings without new blockers. Final evidence reconciliation and owner acceptance remain separate; no merge/publication.
 
 ## evidence
 
-Full package A: 95 tests passed in 121.00s, including driver and actual Pi 1.0.4 native callback traces, current rights/exact inputs, fresh-process crash windows, and 20 seeded behavioral defects killed. Wheel-only core and full independent driver pass outside checkout with network/subprocess/foreign files blocked. Evidence and exact source hashes: docs/restart/evidence/package-a-check.log, docs/restart/SOURCE-MANIFEST.json, docs/restart/REUSE-MANIFEST.json. Full repository-native gate PASS: 1493 tests in 1317.12s, format/lint/types/37 import boundaries/hygiene/report plus all root/core/app builds. Exact code commit 3870ac4ac1f6af1aa818c70c83e999a0f68646b1; measured provenance/build hashes: docs/restart/evidence/GATE-PROVENANCE.json and docs/restart/BUILD-MANIFEST.json. Old required SQLite fixture is admitted only to legacy regression, separately from clean new-core evidence.
+Original unchanged counterexamples:2 RED on e6277cf→2 GREEN on final source. Focused48 PASS; full A124 PASS/242.03s,22/22 behavioral faults killed. Full required native1522 PASS/1518.47s, exit0, format/lint/types/37boundaries/hygiene/report and root/core/app builds PASS. Outside-checkout wheel-only core+driver proof; actual Pi native callback and independent driver fixed traces cursor22. Exact hashes/commands/environment: docs/restart/evidence/GATE-PROVENANCE.json, SOURCE/BUILD/DEPENDENCY/REUSE manifests. Independent own124 PASS/222.01s and extended F1/F2 public probes; checkpoint retained with pending final reconciliation. Original NOT READY unchanged.
 
 ## assumptions
 
-Explicit new data-root. Python 3.13.7, Pydantic 2.13.5, native SQLite 3.50.4 in clean new package proof. Old regression gate explicitly admits its existing pinned SQLite 3.53.3 fixture only for that gate. PROBA engineering_contract 36 remains installed; v37 prototype publication surface is absent/not opted in and publication is excluded.
+New explicit data-root, Python3.13.7/Pydantic2.13.5/native clean SQLite3.50.4; Pi1.0.4/Node22.19.0. Existing pinned SQLite3.53.3 DLL used only for legacy regression. Unbound pre-correction wait rows fail closed; old/user data migration excluded. PROBA36 unchanged, prototype publication surface absent.
 
 ## cuts
 
-Scope A only. One-shot confirmation is explicitly unsupported and refuses confirmation_ref; trusted owner grants/revokes and separate exact acceptance are available. Snapshot is bounded complete local-space read (1000 rows/table); pagination explicitly unsupported. Core supports strict optional schema_ref and same-admission preview. Full Sleep, general B–D coverage, artifact maintenance, live model usefulness and final release installation remain future packages; no A failing gate is deferred there.
+A only. One-shot confirmation/pagination/token-money accounting/partial-prefix terminal/general external reconciler/production restore/full Sleep/live usefulness remain unsupported or later scope as documented. No A defect is moved to B–D.
 
 ## cost
 
-Local Python/Pi processes, fictional localhost provider, isolated environments and finite call reservations. No real model/API, paid fallback, personal data or external service publication.
+Local synthetic processes, localhost scripted provider and disposable environments. No live/paid model, personal data, daemon, old install mutation or publication.
 
 ## manual-acceptance
 
-The owner accepted the plan and launch, not this implementation or usefulness. Fresh scoped engineering pre-pass is READY on corrected source; binding Direction G5 and owner verdict remain pending.
+Owner authorized plan/launch/correction, not implementation acceptance. Independent final evidence reconciliation is pending; no Direction close is claimed.
 
 ## next
 
-solmax — review exact local candidate, then owner demonstration/verdict; no automatic merge or publication.
+solmax — reconcile exact final candidate/proof bytes in the independent physical review, then owner verdict; no automatic merge/publication.
 
 END_OF_FILE: RESULT.md

@@ -1,32 +1,38 @@
 {
-  "source_commit": "3870ac4ac1f6af1aa818c70c83e999a0f68646b1",
+  "source_commit": "3d4bcbc9acf3a6374643f8c9b72a056e188354b8",
   "artifacts": {
     "zaratustra-0.25.5-py3-none-any.whl": {
       "sha256": "026aae3ae257a0912f12262817074016435c54b44389940ec06552384b443207",
-      "bytes": 685208
+      "bytes": 685208,
+      "path": "dist/zaratustra-0.25.5-py3-none-any.whl"
     },
     "zaratustra-0.25.5.tar.gz": {
       "sha256": "32d936a85662de27f35dd6b4ee2aa2004dc29651fe5623393f527a5c2318750f",
-      "bytes": 615143
+      "bytes": 615143,
+      "path": "dist/zaratustra-0.25.5.tar.gz"
     },
     "zaratustra_core-0.1.0-py3-none-any.whl": {
-      "sha256": "df53c2216ce7a3448e36d12fd8171a483150f85a19ca0b335f7d4b4b3241ff6e",
-      "bytes": 14745
+      "sha256": "671cd6b975fbcac685df66109efc34b4b63aeddf4ffc6b46398ca32301954651",
+      "bytes": 15372,
+      "path": "dist/zaratustra_core-0.1.0-py3-none-any.whl"
     },
     "zaratustra_core-0.1.0.tar.gz": {
-      "sha256": "0845ca29feeee5c5717a8d4f880f360ac9fef8f810f60139aec0a08c90ee3e29",
-      "bytes": 12360
+      "sha256": "f39f2c2f123d7caa16a5c964c5991e3f6db1037f1685c137c7f32e6371687fa2",
+      "bytes": 12996,
+      "path": "dist/zaratustra_core-0.1.0.tar.gz"
     },
     "zaratustra_next-0.1.0-py3-none-any.whl": {
       "sha256": "a476749b85f1dc3a5f5d31e0d6eb0bc791dc1abde644b2a616f43f008e62c9e5",
-      "bytes": 11374
+      "bytes": 11374,
+      "path": "dist/zaratustra_next-0.1.0-py3-none-any.whl"
     },
     "zaratustra_next-0.1.0.tar.gz": {
       "sha256": "88eb04e7b6247f6fda43d45e635badcf233ea641e2a937c10e1a72e00b1ec1f2",
-      "bytes": 7275
+      "bytes": 7275,
+      "path": "dist/zaratustra_next-0.1.0.tar.gz"
     }
   },
-  "wheel_only_install_proof": "evidence/wheel-install.json",
+  "wheel_only_install_proof": "evidence/f1f2/current/wheel-install.json",
   "wheel_hashes_equal_installed_proof": true,
-  "source_manifest_verified_files": 37
+  "source_manifest_verified_files": 38
 }

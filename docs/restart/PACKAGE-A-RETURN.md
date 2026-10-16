@@ -1,6 +1,14 @@
 # Пакет A: технический возврат
 
-Source: `3870ac4ac1f6af1aa818c70c83e999a0f68646b1`, база `9d903d709783601c4878b707b9618031753a6854`. Это кандидат пакета A принятой редакции 2; первая поставка целиком и полезность модели ещё не приняты.
+Source: `3d4bcbc9acf3a6374643f8c9b72a056e188354b8`, база `9d903d709783601c4878b707b9618031753a6854`. Это кандидат пакета A принятой редакции 2; первая поставка целиком и полезность модели ещё не приняты.
+
+## Коррекция F1/F2 после независимого NOT READY
+
+Независимая проверка прежнего e6277cf/source3870ac4 получила NOT READY: F1 допускал невалидные вложенные декларации при пустом/отсутствующем/nullable значении; F2 позволял старому ответу снять новое ожидание. Исходный отчёт сохранён без изменений.
+
+На final source неизменённые контрпримеры перешли из **2 RED в2 GREEN**. Исправленный пакет A: **124 PASS/242.03s**, все **22 отрицательных контроля пойманы**. Exact oracle требует настоящую привязку вопроса к A1/generation1. Полный native gate: **1522 PASS/1518.47s**. Инварианты, проверка соседних случаев и RED/GREEN evidence — `F1-F2-CORRECTION.md`, `evidence/f1f2/FOCUSED-PROVENANCE.json`.
+
+Независимый повтор закрыл F1/F2 на уровне кода: собственные124 PASS/222.01s,22/22 controls,42 negative+16 positive C3/C8 admissions и соседние F2/race проверки. **Финальная reconciliation нового evidence-only candidate ещё ожидается**. Принятие владельцем не заявлено.
 
 ## Что показано
 
@@ -12,7 +20,7 @@ Source: `3870ac4ac1f6af1aa818c70c83e999a0f68646b1`, база `9d903d709783601c48
 4. Клиент открывается заново; сохранённый terminal применяется без нового send. Отдельные fresh-process проверки воспроизводят crash/replay, а callback не повторяет subject effect.
 5. Адресный ответ закрывает именно W7@1. A2 получает M21 и ответ, а также исходную просьбу, вопрос/предыдущий final, Work goal, current catalog и tool receipt ledger. Итог — cursor=22, один final на Attempt, пустая таблица acceptance.
 
-`evidence/client-parity.json` сравнивает одинаковые доменные IDs/версии/Work/Attempt/wait/heads/tool ledger обеих трасс. `client-parity-stale.json` и `client-parity-forbidden.json` сравнивают реальные отказы native callback и driver: stale_basis и denied.
+`evidence/f1f2/current/client-parity.json` сравнивает одинаковые доменные IDs/версии/Work/Attempt/wait/heads/tool ledger обеих трасс. `evidence/f1f2/current/client-parity-stale.json` и `evidence/f1f2/current/client-parity-forbidden.json` сравнивают реальные отказы native callback и driver: stale_basis и denied.
 
 ## Контракт в A
 
@@ -20,8 +28,8 @@ Source: `3870ac4ac1f6af1aa818c70c83e999a0f68646b1`, база `9d903d709783601c48
 |---|---|
 | C0 | Strict Pydantic envelope/payload, wire/v1 vectors, сохранённые exact user bytes, текущий trusted principal, committed receipt/idempotency, exact heads/CAS, типизированные ошибки и diagnostic ID. `confirmation_ref` явно отвергается как unsupported; one-shot confirmation не объявлена работающей |
 | C1 | describe, bounded snapshot, exact read, receipt lookup; `Client.preview(Request)` исполняет тот же admission/SQL путь с rollback. Snapshot — полная ограниченная страница локального пространства, до 1000 строк/таблицу; pagination=false |
-| C2 | Message+sequence+processing intent+receipt атомарно; stable event ID и exact reply_to wait/revision, origin из credential |
-| C3 | Typed subject revisions/unique keys, strict optional neutral schema_ref, CAS/history/audit/receipt; initial_work требует open_work; tool admission требует live claimed Attempt, того же executor и текущих pinned bases |
+| C2 | Message+sequence+processing intent+receipt атомарно; stable event ID и exact active reply_to wait/revision/Attempt/generation, origin из credential |
+| C3 | Typed subject revisions/unique keys, value-independent recursive schema declaration, strict optional neutral schema_ref, CAS/history/audit/receipt; initial_work требует open_work; tool admission требует live claimed Attempt, того же executor и текущих pinned bases |
 | C4–C5 | Work+prepare intent; точные Method/inputs/profile, исходный cursor и непрерывный manifest/cutoff; один активный turn/Attempt; bounded context 1000 rows/1 MiB с предыдущей exact conversation basis и каталогом |
 | C6 | Claim/action identity и верхняя граница calls до dispatch; Pi forwarding bridge атомарно ограничивает физические sends. Повтор claim не даёт права resend. Учёт консервативный: резерв не возвращается автоматически по неполным данным |
 | C7 | Matching executor, event dedupe, исходный terminal, unknown и доверенное host reconciliation evidence, поздний fenced output только evidence. Общего live third-party reconciler нет |
@@ -45,9 +53,9 @@ Source: `3870ac4ac1f6af1aa818c70c83e999a0f68646b1`, база `9d903d709783601c48
 | G11 | PASS адресного вопроса | W7@1, wrong/stale/free reply не закрывает его; success не создаёт acceptance |
 | G12–G15 | UNRUN в A | Полный Sleep/adaptation, live usefulness и artifact maintenance принадлежат C–D; не считаются выполненными этим кандидатом |
 
-Corrected package-A suite: **95 passed in 121.00s**. Все **20 seeded defects killed**, survived=0, invalid=0; исходники мутантов компилируются, injection достигнута, failing behavioral assertion и diff сохранены отдельно. Первые ошибки test harness и отклонённый source не выдаются за предметные kills.
+Исправленный пакет A: **124 PASS/242.03s**, все **22 seeded faults killed**, survived=0, invalid=0. Source/test bytes закреплены на3d4bcbc; original independent counterexamples: 2 RED старого pin → 2 GREEN нового. Адресный F2 fault падает на actual ready Work при unanswered Q2; F1 fault — на ошибочно допущенных malformed declarations через C3/C8.
 
-Полный repository-native gate: **PASS, 1493 passed in 1317.12s**. Format, lint, types, 37 import boundaries, hygiene/report и builds root/core/app завершены успешно; terminal PASS marker и session exit=0. Лог — `evidence/native-check.log`, measured provenance — `evidence/GATE-PROVENANCE.json`, hashes шести build-артефактов — `BUILD-MANIFEST.json`. Первоначальный source4136136 был NOT READY; исправленный source прошёл свежий ограниченный инженерный pre-pass, не binding G5: `IMPLEMENTATION-REVIEW.md`.
+Полный required repository-native gate на3d4bcbc: **PASS, 1522 passed in1518.47s**, exit0, terminal PASS. Format/lint/types,37 import contracts,hygiene/report и шесть root/core/app build artifacts прошли. Новый raw log — `evidence/f1f2/native-check.log`, provenance — `evidence/GATE-PROVENANCE.json`, build hashes — `BUILD-MANIFEST.json`. Новые traces/parity/22 controls/wheel proof — `evidence/f1f2/current/`. Первоначальный native099621b сохранён как INCOMPLETE/SUPERSEDED: exact wait oracle был исправлен перед новым freeze. Исторические95/1493 PASS source3870ac4 и original20 controls сохранены; их manifests — `evidence/f1f2/previous-manifests/`.
 
 ## Воспроизведение
 
@@ -65,7 +73,7 @@ Pi checks требуют обычного установленного Pi и р�
 uv run --locked python -m tools.check --deliver
 ~~~
 
-Python 3.13.7; Pydantic 2.13.5; Node v22.19.0; Pi 1.0.4; wire/v1. Пакеты `zaratustra-core` и `zaratustra-next` 0.1.0. Новая команда требует явный `--data-root`; init/diagnostics не вызывают модель. Build hashes и фактический новый install-root — `evidence/wheel-install.json`, source hashes — `SOURCE-MANIFEST.json`, перенос/reference-only зависимости — `REUSE-MANIFEST.json`.
+Python 3.13.7; Pydantic 2.13.5; Node v22.19.0; Pi 1.0.4; wire/v1. Пакеты `zaratustra-core` и `zaratustra-next` 0.1.0. Новая команда требует явный `--data-root`; init/diagnostics не вызывают модель. Build hashes и фактический новый install-root — `evidence/f1f2/current/wheel-install.json`, source hashes — `SOURCE-MANIFEST.json`, перенос/reference-only зависимости — `REUSE-MANIFEST.json`.
 
 Scope заканчивается A. Нет real-model/API calls, paid fallback, личных данных, daemon, изменения старой установки, merge/main или публикации. PROBA36 сохранён; v37 prototype publication pipeline здесь отсутствует, Solmax opt-in=false. Ни технические gates, ни запуск владельцем не означают его принятия результата.
 

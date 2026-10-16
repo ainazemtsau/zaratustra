@@ -30,4 +30,12 @@ Scope этой проверки ограничен названными гара
 .venv/Scripts/python.exe -c "from pathlib import Path; exec(compile(Path('docs/restart/evidence/root-gate-seams.py.txt').read_text(encoding='utf-8'), 'root-gate-seams', 'exec'))"
 ~~~
 
+## Binding independent review: e6277cf/source3870ac4 — NOT READY
+
+Separate physical chat 01a142fb-ed51-78e2-83f3-e1e6822af7f2 independently ran the A suite and original controls, then found F1/F2 using its own public API reproductions: declaration validation skipped absent/empty/nullable descendants, and an answer to an old-generation wait released a new unanswered wait. Its original report is retained byte-for-byte in evidence/f1f2/original-NOT-READY.md (SHA256 6f66ca4dca61181c24e9db7d82ad3cf9a4087b356a719bb2569388937e31b086). That verdict is not overwritten by this correction.
+
+Owner authorized only this A correction and repeat independent review. Production fix source099621b adds full declaration admission and current Attempt/generation wait binding. Its first native run exposed a stale exact wait oracle and was stopped INCOMPLETE/SUPERSEDED. Final source3d4bcbc changes that oracle to require every exact binding field; production api/formats are unchanged from099621b. Full A124 PASS/242.03s and original counterexamples2 GREEN precede the final full native gate. Independent physical re-review on final3d4bcbc closed F1/F2 at code level without new blockers: its own124 PASS/222.01s,22/22 controls,42 negative and16 positive C3/C8 admissions, five adjacent F2 cases plus original assertions and concurrent replies. Its checkpoint report/verification are retained raw as evidence/f1f2/re-review-code-checkpoint.md/.json. Final readiness remains PENDING RECONCILIATION until the new native/raw manifests/evidence-only candidate are checked; no final READY or owner acceptance is inferred.
+
+Final required native gate on3d4bcbc:1522 PASS/1518.47s, exit0; format/lint/types/37boundaries/hygiene/report and root/core/app builds PASS. All38 source Git/worktree hashes and new wheel proof match. These are executor measurements; independent final reconciliation of the evidence-only candidate remains pending. No owner acceptance is claimed.
+
 END_OF_FILE: IMPLEMENTATION-REVIEW.md
