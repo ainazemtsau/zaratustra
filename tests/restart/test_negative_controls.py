@@ -248,6 +248,33 @@ SEEDS.extend(
 )
 
 
+SEEDS.extend(
+    [
+        (
+            "F1-skip-whole-declaration",
+            "core/src/zaratustra_core/formats.py",
+            [("    validate_schema(schema, path)", "    " + M)],
+            "test_binding_findings.py::test_declaration_rejected_atomically",
+        ),
+        (
+            "F2-ignore-active-wait-binding",
+            API,
+            [
+                (
+                    'binding = loads(wait["body"])',
+                    M + chr(10) + '                binding = loads(wait["body"])',
+                ),
+                (
+                    "if (" + chr(10) + "                    work is None",
+                    "if False and (" + chr(10) + "                    work is None",
+                ),
+            ],
+            "test_binding_findings.py::test_old_wait_cannot_unblock_current_question",
+        ),
+    ]
+)
+
+
 @pytest.mark.parametrize("seed", SEEDS, ids=[s[0] for s in SEEDS])
 def test_seeded_defect_is_killed(
     tmp_path: Path, seed: tuple[str, str, list[tuple[str, str]], str]

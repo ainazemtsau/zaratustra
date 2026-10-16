@@ -108,14 +108,14 @@
     {
       "path": "packages/core/src/zaratustra_core/api.py",
       "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
-      "sha256_git_blob": "222a448719c09ac65b967eb22cb4c70c206a8cf7c2dcbd5c2ec9944f351bff86",
-      "worktree_sha256": "222a448719c09ac65b967eb22cb4c70c206a8cf7c2dcbd5c2ec9944f351bff86"
+      "sha256_git_blob": "d795ca50982ee3dde7a5baf8ac3f266e6dba2ae4f4eb96312522c17e6ec3e59d",
+      "worktree_sha256": "d795ca50982ee3dde7a5baf8ac3f266e6dba2ae4f4eb96312522c17e6ec3e59d"
     },
     {
       "path": "packages/core/src/zaratustra_core/formats.py",
       "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
-      "sha256_git_blob": "30e8d73392368928a74c8f080be5da87b4114223a897f279ab0c40f3391a716d",
-      "worktree_sha256": "30e8d73392368928a74c8f080be5da87b4114223a897f279ab0c40f3391a716d"
+      "sha256_git_blob": "4d12f1141cde7829816910604ef64fa4cade6391f6c40a31fcc294bea09a99d3",
+      "worktree_sha256": "4d12f1141cde7829816910604ef64fa4cade6391f6c40a31fcc294bea09a99d3"
     },
     {
       "path": "packages/core/src/zaratustra_core/shapes.py",
@@ -198,8 +198,8 @@
     {
       "path": "tests/restart/test_negative_controls.py",
       "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
-      "sha256_git_blob": "54539cb91c91d83de1ea8a55d860cd2a64f58c27713685214ffaf939e251b388",
-      "worktree_sha256": "54539cb91c91d83de1ea8a55d860cd2a64f58c27713685214ffaf939e251b388"
+      "sha256_git_blob": "e3c8c9c4bc5c6a7f766e6c14ab19ed7c8d71811d97d72d22194bba0c304c229f",
+      "worktree_sha256": "e3c8c9c4bc5c6a7f766e6c14ab19ed7c8d71811d97d72d22194bba0c304c229f"
     },
     {
       "path": "tests/restart/test_review_findings.py",
@@ -224,6 +224,12 @@
       "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
       "sha256_git_blob": "fce37007eec2ea8c819ba9989f093c156977a0f10ccafb975d07811dbb4af72a",
       "worktree_sha256": "fce37007eec2ea8c819ba9989f093c156977a0f10ccafb975d07811dbb4af72a"
+    },
+    {
+      "path": "tests/restart/test_binding_findings.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "9e8c979da8de265637002842ae91b7880cf45bdd5e3fe95bca89542b32b22f28",
+      "worktree_sha256": "9e8c979da8de265637002842ae91b7880cf45bdd5e3fe95bca89542b32b22f28"
     }
   ],
   "frozen_artifacts": [

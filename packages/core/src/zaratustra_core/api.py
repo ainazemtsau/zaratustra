@@ -479,6 +479,22 @@ class Core:
                     or wait["conversation"] != conversation
                 ):
                     fail("stale_basis", "reply_to")
+                work = db.execute("SELECT * FROM works WHERE id=?", (wait["work"],)).fetchone()
+                latest = db.execute(
+                    "SELECT * FROM attempts WHERE work=? ORDER BY rowid DESC LIMIT 1",
+                    (wait["work"],),
+                ).fetchone()
+                binding = loads(wait["body"])
+                if (
+                    work is None
+                    or work["status"] != "waiting"
+                    or latest is None
+                    or latest["status"] != "finished"
+                    or binding.get("attempt_id") != latest["id"]
+                    or binding.get("generation") != latest["generation"]
+                    or binding.get("generation") != work["generation"]
+                ):
+                    fail("stale_basis", "reply_to.active_wait")
                 db.execute(
                     "UPDATE waits SET status='answered',revision=revision+1 WHERE id=?",
                     (reply["id"],),
@@ -764,7 +780,15 @@ class Core:
                 wait = p["wait"]
                 db.execute(
                     "INSERT INTO waits VALUES(?,1,?,?,'waiting',?)",
-                    (wait["id"], attempt["conversation"], work["id"], dumps(wait)),
+                    (
+                        wait["id"],
+                        attempt["conversation"],
+                        work["id"],
+                        dumps(
+                            wait
+                            | {"attempt_id": attempt["id"], "generation": attempt["generation"]}
+                        ),
+                    ),
                 )
             high = db.execute(
                 "SELECT COALESCE(MAX(seq),0) FROM messages WHERE conversation=?",

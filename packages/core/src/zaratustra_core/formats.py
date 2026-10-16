@@ -28,7 +28,7 @@ def invalid(path: str) -> NoReturn:
     raise CoreError("invalid_request", "schema." + path)
 
 
-def validate_value(value: Any, schema: dict[str, Any], path: str = "body") -> None:
+def validate_schema(schema: Any, path: str = "body") -> None:
     allowed = {
         "type",
         "required",
@@ -42,11 +42,77 @@ def validate_value(value: Any, schema: dict[str, Any], path: str = "body") -> No
         "values",
         "name",
     }
-    if not isinstance(schema, dict) or set(schema) - allowed or schema.get("type") not in TYPES:
+    if (
+        not isinstance(schema, dict)
+        or set(schema) - allowed
+        or type(schema.get("type")) is not str
+        or schema["type"] not in TYPES
+    ):
         invalid(path)
     for flag in ("required", "nullable"):
         if flag in schema and type(schema[flag]) is not bool:
             invalid(path + "." + flag)
+    kind = schema["type"]
+    if "name" in schema and (type(schema["name"]) is not str or not schema["name"]):
+        invalid(path + ".name")
+    for member, owner in (("fields", "object"), ("items", "list"), ("values", "enum")):
+        if member in schema and kind != owner:
+            invalid(path + "." + member)
+    if kind == "object":
+        fields = schema.get("fields")
+        if not isinstance(fields, list):
+            invalid(path + ".fields")
+        names = []
+        for field in fields:
+            if (
+                not isinstance(field, dict)
+                or type(field.get("name")) is not str
+                or not field["name"]
+            ):
+                invalid(path + ".fields")
+            names.append(field["name"])
+            validate_schema(field, path + "." + field["name"])
+        if len(set(names)) != len(names):
+            invalid(path + ".fields")
+    if kind == "list":
+        validate_schema(schema.get("items"), path + ".items")
+    if kind == "enum":
+        values = schema.get("values")
+        if not isinstance(values, list) or any(type(v) is not str for v in values):
+            invalid(path + ".values")
+        if not values or len(set(values)) != len(values):
+            invalid(path + ".values")
+    for bound in ("min_length", "max_length"):
+        if bound in schema and (
+            type(schema[bound]) is not int
+            or schema[bound] < 0
+            or kind not in {"text", "date", "datetime", "enum", "decimal-string", "list"}
+        ):
+            invalid(path + "." + bound)
+    for bound in ("min", "max"):
+        if bound not in schema:
+            continue
+        limit = schema[bound]
+        if kind == "integer":
+            if type(limit) is not int:
+                invalid(path + "." + bound)
+        elif kind == "decimal-string":
+            if type(limit) is not str or not re.fullmatch(r"[+-]?[0-9]+(?:[.][0-9]+)?", limit):
+                invalid(path + "." + bound)
+        else:
+            invalid(path + "." + bound)
+    for low, high in (("min_length", "max_length"), ("min", "max")):
+        if low in schema and high in schema:
+            lower, upper = schema[low], schema[high]
+            if low == "min" and kind == "decimal-string":
+                lower, upper = Decimal(lower), Decimal(upper)
+            if lower > upper:
+                invalid(path + "." + low)
+
+
+def validate_value(value: Any, schema: dict[str, Any], path: str = "body") -> None:
+    # Validate the whole declaration before any absent, empty or nullable value can short-circuit.
+    validate_schema(schema, path)
     if value is None:
         if not schema.get("nullable", False):
             invalid(path)

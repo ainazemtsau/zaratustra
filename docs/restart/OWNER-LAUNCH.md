@@ -6,4 +6,6 @@ Scope: FIRST-RELEASE-PLAN.md revision 2, SHA256 3E279C312D20F137E2076ECD7240F6B2
 
 This authorization supersedes the old one-package/consolidation restriction only for this restart. Frozen REVIEW.md and validation.config remain unchanged.
 
+2026-10-16 correction authorization after binding NOT READY F1/F2: «Да, запускай исполнителя на Sol 6.1, исправляй обе ошибки в пакете A и потом повторяй независимую проверку. Существенные отклонения согласуй со мной, остальное делай сам.» Scope remains A; this authorizes correction and verification, not acceptance. Prepared correction CALL: c-exec-zara-package-a-g5-fix-20261016. Original independent report and scripts remain unchanged.
+
 END_OF_FILE: OWNER-LAUNCH.md
