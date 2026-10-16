@@ -14,9 +14,18 @@ from zaratustra_core import CoreError
 
 
 class Bridge(ThreadingHTTPServer):
-    def __init__(self, endpoint: str, tool_handler: Any, limit: int):
+    def __init__(
+        self,
+        endpoint: str,
+        tool_handler: Any,
+        limit: int,
+        *,
+        bearer: str = "synthetic",
+        timeout: int = 35,
+    ):
         super().__init__(("127.0.0.1", 0), Handler)
         self.endpoint, self.tool_handler, self.limit = endpoint, tool_handler, limit
+        self.bearer, self.timeout = bearer, timeout
         self.token = secrets.token_urlsafe(32)
         self.sends = 0
         self.send_lock = threading.Lock()
@@ -66,10 +75,12 @@ class Handler(BaseHTTPRequestHandler):
             return
         url = self.server.endpoint.rstrip("/") + self.path[len("/provider/v1") :]
         request = Request(
-            url, raw, {"Content-Type": "application/json", "Authorization": "Bearer synthetic"}
+            url,
+            raw,
+            {"Content-Type": "application/json", "Authorization": "Bearer " + self.server.bearer},
         )
         try:
-            with urlopen(request, timeout=35) as response:
+            with urlopen(request, timeout=self.server.timeout) as response:
                 content = response.read()
                 self.send_response(response.status)
                 self.send_header(

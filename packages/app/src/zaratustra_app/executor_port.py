@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import threading
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol, cast
 
@@ -54,16 +55,50 @@ class Driver:
         return json.dumps(result, ensure_ascii=False).encode()
 
 
+@dataclass(frozen=True)
+class LiveProfile:
+    """Explicit supported provider access. Credential value never enters model context."""
+
+    endpoint: str
+    model: str
+    credential_env: str
+    api: str = "openai-responses"
+    max_tokens: int = 8192
+    context_window: int = 32768
+    timeout: int = 150
+
+    def __post_init__(self) -> None:
+        if (
+            not self.endpoint.startswith("https://")
+            or not self.model
+            or not self.credential_env
+            or self.api not in {"openai-responses", "openai-completions"}
+            or self.max_tokens < 1
+            or self.timeout < 1
+        ):
+            raise CoreError("invalid_request", "live_profile")
+
+    def bearer(self) -> str:
+        value = os.environ.get(self.credential_env)
+        if not value:
+            raise CoreError("denied", "live_profile.credential_unavailable")
+        return value
+
+
 class Pi:
     """Actual installed Pi process, fresh isolated profile per call, no ambient auth."""
 
     resource_upper = 2
 
-    def __init__(self, cli: Path, profile: Path, endpoint: str):
-        if not endpoint.startswith("http://127.0.0.1:"):
+    def __init__(self, cli: Path, profile: Path, endpoint: str, *, live: LiveProfile | None = None):
+        if live is None and not endpoint.startswith("http://127.0.0.1:"):
             raise CoreError("unsupported_capability", "only_explicit_localhost_profile")
-        self.cli, self.profile, self.endpoint = cli, profile, endpoint
+        if live is not None and endpoint != live.endpoint:
+            raise CoreError("invalid_request", "live_profile.endpoint")
+        self.cli, self.profile, self.endpoint = cli.resolve(), profile.resolve(), endpoint
+        self.live = live
         self.events: list[dict[str, Any]] = []
+        self.stderr: str = ""
         self.callbacks: list[dict[str, Any]] = []
         self.tool_handler: Any = None
 
@@ -71,7 +106,13 @@ class Pi:
         home = self.profile / hashlib.sha256(action_id.encode()).hexdigest()
         agent = home / "agent"
         agent.mkdir(parents=True, exist_ok=False)
-        bridge = Bridge(self.endpoint, self.tool_handler, self.resource_upper)
+        bridge = Bridge(
+            self.endpoint,
+            self.tool_handler,
+            self.resource_upper,
+            bearer=self.live.bearer() if self.live else "synthetic",
+            timeout=self.live.timeout if self.live else 35,
+        )
         bridge_thread = threading.Thread(target=bridge.serve_forever, daemon=True)
         bridge_thread.start()
         (agent / "settings.json").write_text(
@@ -84,12 +125,14 @@ class Pi:
                     "providers": {
                         "local": {
                             "baseUrl": f"http://127.0.0.1:{bridge.server_port}/provider/v1",
-                            "api": "openai-completions",
+                            "api": self.live.api if self.live else "openai-completions",
                             "apiKey": "synthetic",
                             "models": [
                                 {
-                                    "id": "scripted",
-                                    "name": "Local scripted transport",
+                                    "id": self.live.model if self.live else "scripted",
+                                    "name": self.live.model
+                                    if self.live
+                                    else "Local scripted transport",
                                     "reasoning": False,
                                     "input": ["text"],
                                     "cost": {
@@ -98,8 +141,10 @@ class Pi:
                                         "cacheRead": 0,
                                         "cacheWrite": 0,
                                     },
-                                    "contextWindow": 32768,
-                                    "maxTokens": 2048,
+                                    "contextWindow": self.live.context_window
+                                    if self.live
+                                    else 32768,
+                                    "maxTokens": self.live.max_tokens if self.live else 2048,
                                 }
                             ],
                         }
@@ -135,7 +180,7 @@ class Pi:
             "--provider",
             "local",
             "--model",
-            "scripted",
+            self.live.model if self.live else "scripted",
             "--no-session",
             "--no-builtin-tools",
             "--tools",
@@ -191,7 +236,7 @@ class Pi:
             )
             process.stdin.flush()
             terminal = None
-            deadline = time.monotonic() + 50
+            deadline = time.monotonic() + (self.live.timeout + 15 if self.live else 50)
             while time.monotonic() < deadline:
                 try:
                     packet = incoming.get(timeout=0.2)
@@ -227,6 +272,7 @@ class Pi:
                 process.communicate()
             reader.join(timeout=1)
             error_reader.join(timeout=1)
+            self.stderr = b"".join(errors).decode("utf-8", errors="replace")
             self.callbacks.extend(bridge.callbacks)
             bridge.shutdown()
             bridge.server_close()

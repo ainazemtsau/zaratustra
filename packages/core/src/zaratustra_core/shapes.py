@@ -32,12 +32,14 @@ class Change(Shape):
     source_refs: list[Ref] = Field(default_factory=list)
     schema_ref: Ref | None = None
     tombstone: bool = False
+    application: Literal["active", "proposal", "withdrawn"] = "active"
 
 
 class Work(Shape):
     id: Id
     conversation: Id
     goal: Id
+    scope: Id = "space"
     method_ref: Ref
     inputs: list[Ref] = Field(default_factory=list)
     call_limit: Positive
@@ -66,6 +68,7 @@ class Reply(Shape):
 class Message(Shape):
     conversation: Id
     event_id: Id
+    scope: Id = "space"
     raw_base64: str
     reply_to: Reply | None = None
 
@@ -145,9 +148,51 @@ class Snapshot(Shape):
     max_rows: Annotated[int, Field(ge=1, le=1000)] = 1000
 
 
+class Source(Shape):
+    sequence: Positive
+    index: Cursor
+    sha256: Annotated[str, Field(pattern="^[0-9a-f]{64}$")]
+
+
+class History(Shape):
+    high_watermark: Cursor | None = None
+    after_sequence: Cursor = 0
+    after_index: Cursor = 0
+    limit: Annotated[int, Field(ge=1, le=100)] = 32
+    scope: Id = "space"
+
+
+class Delivery(Shape):
+    attempt_id: Id
+    sha256: Annotated[str, Field(pattern="^[0-9a-f]{64}$")]
+
+
+class SleepProgress(Shape):
+    format: Literal["sleep-progress/v1"]
+    work_id: Id
+    method_ref: Ref
+    scope: Id
+    source_high_watermark: Cursor
+    enumeration_cursor: list[Cursor] = Field(min_length=2, max_length=2)
+    enumerated_source_refs: list[Source]
+    selected_source_refs: list[Source]
+    delivered_manifest_refs: list[Delivery]
+    analysis_result_refs: list[Ref]
+    unexplored_coverage_position: Any
+    applied_receipts: list[Id]
+    proposed_changes: list[Any]
+    remaining_refs: list[Source]
+    return_conditions: list[str]
+    consumed_resource: Cursor
+    unresolved_calls: list[Id]
+    stop_reason: str
+    continuation: str
+
+
 MODELS: dict[str, type[Shape]] = {
     "describe_contract": Shape,
     "read_snapshot": Snapshot,
+    "read_history": History,
     "read_exact": Ref,
     "lookup_receipt": Receipt,
     "ingest_message": Message,

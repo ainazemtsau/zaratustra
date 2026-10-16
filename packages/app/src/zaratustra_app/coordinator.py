@@ -20,6 +20,42 @@ class Coordinator:
     def snapshot(self) -> dict[str, Any]:
         return self.client.call("read_snapshot", {}, str(uuid4()))
 
+    def open_work(self, payload: dict[str, Any], *, scope: str = "space") -> dict[str, Any]:
+        """Pin current applicable memory and chosen scoped Method from fresh Core state."""
+        heads = self.snapshot()["heads"]
+        method = next(h for h in heads if h["id"] == payload["method_ref"]["id"])
+        if method["scope"] not in {"space", scope}:
+            raise CoreError("denied", "method.scope")
+        inputs = list(payload.get("inputs", []))
+        for head in heads:
+            if head["kind"] != "memory" or head["scope"] not in {"space", scope}:
+                continue
+            record = self.client.call(
+                "read_exact", {"id": head["id"], "revision": head["revision"]}, str(uuid4())
+            )
+            inputs = [r for r in inputs if r["id"] != head["id"]]
+            if (
+                not record["body"]["tombstone"]
+                and record["body"].get("application", "active") == "active"
+            ):
+                inputs.append(
+                    {"id": head["id"], "revision": head["revision"], "role": "must_be_current"}
+                )
+        return self.client.call(
+            "open_work",
+            payload
+            | {
+                "scope": scope,
+                "inputs": inputs,
+                "method_ref": {
+                    "id": method["id"],
+                    "revision": method["revision"],
+                    "role": "must_be_current",
+                },
+            },
+            str(uuid4()),
+        )
+
     def prepare(self, work_id: str, attempt_id: str, profile_ref: dict[str, Any]) -> dict[str, Any]:
         snapshot = self.snapshot()
         work = next(w for w in snapshot["works"] if w["id"] == work_id)
@@ -164,7 +200,7 @@ class Coordinator:
         )
         return raw
 
-    def recover(self, attempt_id: str, *, pi: bool = False) -> dict[str, Any]:
+    def recover(self, attempt_id: str, *, pi: bool = False, decoder: Any = None) -> dict[str, Any]:
         snapshot = self.snapshot()
         attempt = next(a for a in snapshot["attempts"] if a["id"] == attempt_id)
         observations = [
@@ -178,7 +214,14 @@ class Coordinator:
                 raise CoreError("outcome_unknown", "retained_claim", "reconcile")
             raise CoreError("invalid_request", "no_terminal")
         raw = base64.b64decode(terminal["raw_base64"])
-        output = Pi.decode(raw) if pi else json.loads(raw)
+        try:
+            output = (
+                decoder(raw) if decoder is not None else (Pi.decode(raw) if pi else json.loads(raw))
+            )
+        except (ValueError, KeyError, TypeError) as error:
+            raise CoreError(
+                "invalid_request", "retained_outcome_format", "after_refresh"
+            ) from error
         payload = {
             "attempt_id": attempt_id,
             "generation": attempt["generation"],
@@ -188,7 +231,13 @@ class Coordinator:
             "state": output["state"],
             "text": output["text"],
             "outputs": output.get("outputs", []),
+            "changes": output.get("changes", []),
         }
         if output.get("wait"):
             payload["wait"] = output["wait"]
-        return self.client.call("commit_outcome", payload, attempt_id + ":outcome")
+        return self.client.call(
+            "commit_outcome",
+            payload,
+            attempt_id + ":outcome",
+            expected_heads=output.get("expected_heads", {}),
+        )

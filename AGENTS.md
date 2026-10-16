@@ -15,6 +15,15 @@ followed by an independent review. `docs/restart/PACKAGE-B-RETURN.md` records th
 exact words and bounded continuation matrix. This extends only revision 2 §10 B;
 C/D, live/paid models, merge and publication are not authorized by that launch.
 
+The owner subsequently accepted B as a technical stage and authorized package C,
+then an independent review: «Окей, пакет B принимаю как технический этап.
+Запускай исполнителя на Sol 6.1 для пакета C, потом независимую проверку.
+Существенные отклонения согласуй со мной, остальное делай сам.» This extends
+revision 2 §10 C only. The owner separately allowed paid Luna: «можешь
+использвоать платную моджель luna сколько угодно». Each Work still requires a
+finite explicit resource limit and selected supported access. D, migration,
+merge, push and publication remain outside this authorization.
+
 ## Current product authority — Core v0.1
 - On 2026-10-01 the owner chose the latest Core/Activity implementation as the
   single main basis and authorized consolidation. Read
