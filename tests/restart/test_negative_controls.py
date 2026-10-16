@@ -170,10 +170,10 @@ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
                 "UPDATE tool_calls SET receipt=? WHERE 0 AND attempt=? AND native_id=?",
             ),
             (
-                'refs = self._changes(db, p["changes"], req.expected_heads)',
+                'refs = self._changes(db, p["changes"], req.expected_heads, actor)',
                 M
                 + chr(10)
-                + '            refs = self._changes(db, p["changes"], req.expected_heads)',
+                + '            refs = self._changes(db, p["changes"], req.expected_heads, actor)',
             ),
         ],
         "test_contract.py::test_tool_before_terminal_recovery",
@@ -209,15 +209,13 @@ SEEDS.extend(
             API,
             [
                 (
-                    'refs = self._changes(db, p["changes"], req.expected_heads) '
-                    'if p.get("changes") else []',
-                    'refs = self._changes(db, p["changes"], req.expected_heads) '
-                    'if p.get("changes") else []'
-                    + chr(10)
-                    + "            "
+                    '            for ref in p.get("outputs", []):',
+                    "            "
                     + M
                     + chr(10)
-                    + "            db.commit()",
+                    + "            db.commit()"
+                    + chr(10)
+                    + '            for ref in p.get("outputs", []):',
                 )
             ],
             "test_crashes.py::test_outcome_crash_atomic[outcome_mid]",

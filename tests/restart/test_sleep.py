@@ -286,6 +286,8 @@ def test_next_call_beyond_remaining_is_rejected(tmp_path: Path) -> None:
         sleep.run("s", PROFILE, Driver(receiver))
     assert receiver.actions == []
     assert inspect(core, "works")[0]["reserved"] == 2
+    assert inspect(core, "works")[0]["status"] == "paused"
+    assert sleep.progress("s")["body"]["value"]["stop_reason"] == "resource_exhausted"
 
 
 def test_proposal_is_not_an_applied_memory_or_method(tmp_path: Path) -> None:
@@ -412,3 +414,66 @@ def test_invalid_known_terminal_is_retained_without_regeneration(tmp_path: Path)
     result = sleep.run("s", PROFILE, Driver(MechanicalSleepReceiver()))
     assert result["state"] == "completed"
     assert len(inspect(core, "attempts")) == 2 and inspect(core, "works")[0]["reserved"] == 3
+
+
+@pytest.mark.parametrize("transition", ["open", "refresh"])
+@pytest.mark.parametrize("restriction", ["scope", "proposal", "withdrawn", "tombstone"])
+def test_core_method_application_guards(tmp_path: Path, transition: str, restriction: str) -> None:
+    core, owner, client = seed(tmp_path)
+    change: dict[str, Any] = {
+        "id": "restricted",
+        "kind": "method",
+        "key": "restricted",
+        "scope": "lab" if restriction == "scope" else "space",
+        "body": "Free method",
+    }
+    if restriction in {"proposal", "withdrawn"}:
+        change["application"] = restriction
+    elif restriction == "tombstone":
+        change["tombstone"] = True
+    save(owner, change)
+    payload = {
+        "id": "ordinary-work",
+        "conversation": "ordinary-work",
+        "goal": "Task",
+        "method_ref": {"id": "restricted", "revision": 1, "role": "exact"},
+        "scope": "other",
+        "call_limit": 2,
+        "continuation_policy": "durable",
+    }
+    before = inspect(core, "works")
+    if transition == "open":
+        operation, request = "open_work", payload
+    else:
+        client.call(
+            "open_work", payload | {"method_ref": {"id": "practice", "revision": 1}}, "open-valid"
+        )
+        before = inspect(core, "works")
+        operation, request = (
+            "control_work",
+            {
+                "work_id": payload["id"],
+                "revision": before[0]["revision"],
+                "action": "refresh",
+                "method_ref": payload["method_ref"],
+            },
+        )
+    with pytest.raises(CoreError, match="method.scope|inactive_method"):
+        client.call(operation, request, uuid4().hex)
+    assert inspect(core, "works") == before and inspect(core, "attempts") == []
+
+
+def test_exhausted_ready_outcome_persists_paused(tmp_path: Path) -> None:
+    core, _, client = seed(tmp_path)
+    sleep = Sleep(client)
+    sleep.start(work_id="s", call_limit=2)
+    result = sleep.run("s", PROFILE, Driver(MechanicalSleepReceiver(state="ready")))
+    assert result["state"] == "paused"
+    assert inspect(core, "works")[0]["status"] == "paused"
+    progress = sleep.progress("s")["body"]["value"]
+    assert progress["stop_reason"] == "resource_exhausted" and progress["consumed_resource"] == 2
+    assert progress["remaining_refs"] == []
+    assert any(
+        i["kind"] == "resource" and json.loads(i["body"])["reason"] == "resource_exhausted"
+        for i in inspect(core, "intents")
+    )

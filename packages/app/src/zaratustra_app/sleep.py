@@ -44,9 +44,9 @@ delivery from enumeration. Copy resource_state.consumed_resource. For terminal
 progress use unresolved_calls=[] only for this returned terminal; preserve others.
 Use subject changes only (data,memory,method/activity) and exact expected_heads.
 Memory and Method content are free text or objects; no prescribed subject template.
-Return only JSON: {state:'ready'|'completed'|'waiting',text:<honest result>,
-changes:[{id,kind,key,scope,body,source_refs?},...],expected_heads:{id:old_revision},
-outputs:[],wait?:{id,question}}. Put analysis changes before progress changes.
+Use the executor's response_contract for its exact wire representation. Method
+defines the obligations; the executor codec defines serialization. Persist analysis
+before progress. An analysis exact ref is an object containing id and revision.
 Use ready for a further bounded portion; completed means this bounded pass ended,
 never that all the environment is understood. Unknown/unexamined material remains.
 Do not request external tools not present. No mandatory interview or activity form.
@@ -253,6 +253,46 @@ class Sleep:
         ]
 
     def run(self, work_id: str, profile_ref: dict[str, Any], executor: Executor) -> dict[str, Any]:
+        try:
+            return self._run(work_id, profile_ref, executor)
+        except CoreError as error:
+            if error.code == "resource_exhausted":
+                self._stop_resource(work_id)
+            raise
+
+    def _stop_resource(self, work_id: str) -> None:
+        work = next(w for w in self.coordinator.snapshot()["works"] if w["id"] == work_id)
+        if work["status"] in {"ready", "running"}:
+            self.client.call(
+                "control_work",
+                {
+                    "work_id": work_id,
+                    "revision": work["revision"],
+                    "action": "pause",
+                    "reason": "resource_exhausted",
+                },
+                str(uuid4()),
+            )
+        record = self.progress(work_id)
+        body = deepcopy(record["body"]["value"])
+        self._account(body, work_id)
+        body["stop_reason"] = "resource_exhausted"
+        body["continuation"] = (
+            "Resource exhausted; preserve remainder and reservations. "
+            "Owner must choose a new finite Work."
+        )
+        self._save(
+            {
+                "id": record["id"],
+                "kind": "data",
+                "key": record["key"],
+                "scope": record["scope"],
+                "body": body,
+            },
+            record["revision"],
+        )
+
+    def _run(self, work_id: str, profile_ref: dict[str, Any], executor: Executor) -> dict[str, Any]:
         """One ordinary bounded Attempt. Reopen uses Coordinator.recover, never regeneration."""
         from .executor_port import Pi
 
@@ -318,6 +358,15 @@ class Sleep:
         if result["result"].get("refs") and receipt not in body["applied_receipts"]:
             body["applied_receipts"].append(receipt)
         self._account(body, work_id)
+        work = next(w for w in state["works"] if w["id"] == work_id)
+        if (
+            work["status"] == "paused"
+            and work["reserved"] >= json.loads(work["body"])["call_limit"]
+        ):
+            body["stop_reason"] = "resource_exhausted"
+            body["continuation"] = (
+                "Preserve remainder; no further inference within the exhausted Work."
+            )
         if body != record["body"]["value"]:
             self._save(
                 {

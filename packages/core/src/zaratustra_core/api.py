@@ -357,6 +357,16 @@ class Core:
             refs.append({"id": change["id"], "revision": revision})
         return refs
 
+    def _method(self, db: sqlite3.Connection, body: dict[str, Any]) -> dict[str, Any]:
+        method = self._exact(db, body["method_ref"])
+        if method["kind"] != "method":
+            fail("invalid_request", "method_ref.kind")
+        if method["scope"] not in {"space", body.get("scope", "space")}:
+            fail("denied", "method.scope")
+        if method["body"]["tombstone"] or method["body"].get("application", "active") != "active":
+            fail("stale_basis", "inactive_method")
+        return method
+
     def _sources(self, db: sqlite3.Connection, event: sqlite3.Row) -> list[dict[str, Any]]:
         """Immutable history material, separate from mutable heads and enumeration."""
         result = loads(event["body"])
@@ -507,11 +517,7 @@ class Core:
             fail("stale_basis", "progress.resource")
 
     def _work(self, db: sqlite3.Connection, body: dict[str, Any]) -> dict[str, Any]:
-        method = self._exact(db, body["method_ref"])
-        if method["kind"] != "method":
-            fail("invalid_request", "method_ref.kind")
-        if method["body"]["tombstone"] or method["body"].get("application", "active") != "active":
-            fail("stale_basis", "inactive_method")
+        self._method(db, body)
         for ref in body.get("inputs", []):
             self._exact(db, ref)
         if type(body["call_limit"]) is not int or body["call_limit"] < 1:
@@ -545,6 +551,7 @@ class Core:
 
     def _check_basis(self, db: sqlite3.Connection, attempt: sqlite3.Row, work: sqlite3.Row) -> None:
         body = loads(work["body"])
+        self._method(db, body)
         for ref in body.get("inputs", []) + [
             body["method_ref"],
             loads(attempt["body"])["profile_ref"],
@@ -790,7 +797,7 @@ class Core:
                 fail("stale_basis", "input_range")
             body = loads(work["body"])
             material = [self._exact(db, ref) for ref in body.get("inputs", [])]
-            method = self._exact(db, body["method_ref"])
+            method = self._method(db, body)
             profile = self._exact(db, p["profile_ref"])
             if profile["kind"] != "profile":
                 fail("invalid_request", "profile_ref.kind")
@@ -1025,6 +1032,18 @@ class Core:
             state = p["state"]
             if state not in {"waiting", "ready", "completed"}:
                 fail("invalid_request", "outcome.state")
+            if state == "ready" and work["reserved"] >= loads(work["body"])["call_limit"]:
+                state = "paused"
+                self._intent(
+                    db,
+                    "resource",
+                    work["id"],
+                    {
+                        "reason": "resource_exhausted",
+                        "reserved": work["reserved"],
+                        "call_limit": loads(work["body"])["call_limit"],
+                    },
+                )
             if state == "waiting":
                 wait = p["wait"]
                 db.execute(
@@ -1089,6 +1108,10 @@ class Core:
                 if work["status"] not in {"ready", "running", "waiting", "blocked"}:
                     fail("stale_basis", "work.status")
                 state = "paused" if action == "pause" else "cancelled"
+                if p.get("reason"):
+                    self._intent(
+                        db, "control", work["id"], {"action": action, "reason": p["reason"]}
+                    )
                 db.execute(
                     "UPDATE works SET "
                     "status=?,generation=generation+1,revision=revision+1 WHERE id=?",
@@ -1128,8 +1151,7 @@ class Core:
                         for ref in refs:
                             self._exact(db, ref)
                         body[key] = p[key]
-                if self._exact(db, body["method_ref"])["kind"] != "method":
-                    fail("invalid_request", "method_ref.kind")
+                self._method(db, body)
                 if attempt is not None:
                     db.execute(
                         "UPDATE attempts SET status='superseded' WHERE id=?", (attempt["id"],)
@@ -1163,6 +1185,7 @@ class Core:
                         fail("outcome_unknown", "fenced_running_action", "reconcile")
                     state = "ready"
                 body = loads(work["body"])
+                self._method(db, body)
                 for ref in body.get("inputs", []) + [body["method_ref"]]:
                     self._exact(db, ref)
                 if state == "ready" and work["reserved"] >= body["call_limit"]:

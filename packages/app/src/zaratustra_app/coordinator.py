@@ -145,6 +145,25 @@ class Coordinator:
         if observations or action["state"] != "claimed":
             raise CoreError("outcome_unknown", "existing_dispatch", "reconcile")
         context = dict(pinned)
+        context["response_contract"] = getattr(
+            executor,
+            "response_contract",
+            {
+                "terminal": (
+                    "JSON object: state ready/completed/waiting, text, "
+                    "optional changes, expected_heads, outputs, wait"
+                ),
+                "changes": (
+                    "C3 Change: id, kind, key, scope, body (record.body.value), "
+                    "optional source_refs/application"
+                ),
+                "expected_heads": "each changed id maps to old revision, zero for a new id",
+                "analysis": (
+                    "ordinary data body {format: sleep-analysis/v1, "
+                    "sources: [exact source_ref objects], content: free text/object}"
+                ),
+            },
+        )
         context["raw_messages"] = [
             base64.b64decode(m["raw"]).decode("utf-8") for m in pinned["messages"]
         ]

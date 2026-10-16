@@ -10,6 +10,35 @@ from .test_negative_controls import test_seeded_defect_is_killed as run_seed
 SLEEP = "app/src/zaratustra_app/sleep.py"
 SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
     (
+        "C-R1-core-cross-scope",
+        API,
+        [('fail("denied", "method.scope")', M)],
+        "test_sleep.py::test_core_method_application_guards[scope-open]",
+    ),
+    (
+        "C-R2-refresh-inactive",
+        API,
+        [('fail("stale_basis", "inactive_method")', M)],
+        "test_sleep.py::test_core_method_application_guards[proposal-refresh]",
+    ),
+    (
+        "C-R3-exhausted-ready",
+        API,
+        [
+            (
+                'if state == "ready" and work["reserved"] >= loads(work["body"])["call_limit"]:',
+                "if (" + M + " or False):",
+            )
+        ],
+        "test_sleep.py::test_exhausted_ready_outcome_persists_paused",
+    ),
+    (
+        "C-R3-residual-upper-stop",
+        SLEEP,
+        [("self._stop_resource(work_id)", M)],
+        "test_sleep.py::test_next_call_beyond_remaining_is_rejected",
+    ),
+    (
         "C-prepared-pretends-delivery",
         API,
         [('fail("invalid_request", "progress.unobserved_delivery")', M)],

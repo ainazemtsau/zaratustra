@@ -114,6 +114,12 @@ class CodexLunaExecutor:
 
     resource_upper = 1
     tool_handler: Any = None
+    response_contract = {
+        "format": "structured CLI schema",
+        "analysis": "analyses array only",
+        "edits": "memory/Method free text",
+        "progress": "complete typed progress object",
+    }
 
     def __init__(self, root: Path, evidence: Path, *, invocation_cap: int = 2):
         self.root, self.evidence = root.resolve(), evidence.resolve()

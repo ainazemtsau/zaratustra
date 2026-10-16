@@ -131,6 +131,7 @@ class Control(Shape):
     work_id: Id
     revision: Positive
     action: Literal["pause", "cancel", "resume", "refresh"]
+    reason: str | None = None
     inputs: list[Ref] | None = None
     method_ref: Ref | None = None
 

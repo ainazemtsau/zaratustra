@@ -60,6 +60,15 @@ an installed Codex adapter; CLI invocation counts are not physical model sends.
 
 ## Remaining gates
 
+Independent first-round review of a2a4469 found three blockers: Core accepted a
+Method outside its scope; C9 refresh admitted a proposal Method with exact role;
+exhausted unfinished Sleep remained ready/not_started. The unchanged independent
+three-probe suite reproduced RED, then GREEN after a shared Core execution-Method
+guard and durable resource stop. Known exhausted continuation becomes paused with
+reason/remainder; unknown external outcome remains blocked. Adjacent exact-role,
+withdrawn/tombstoned Method and residual-upper-bound cases have behavioral tests
+and reached controls. Independent recheck and final evidence are still pending.
+
 C owner acceptance, binding independent review and first-release acceptance are
 pending. D/UI/backup/production restore/migration/merge/push/publication are outside
 C. No scripted trace establishes semantic usefulness. Actual Luna reports and
