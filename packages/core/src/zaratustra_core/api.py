@@ -1218,7 +1218,17 @@ class Core:
                     fail("stale_basis", "work.status")
                 state = "paused" if action == "pause" else "cancelled"
                 self._intent(
-                    db, "control", work["id"], {"action": action, "reason": p.get("reason")}
+                    db,
+                    "control",
+                    work["id"],
+                    {
+                        "action": action,
+                        "reason": p.get("reason"),
+                        "input_watermark": db.execute(
+                            "SELECT COALESCE(MAX(seq),0) FROM messages WHERE conversation=?",
+                            (work["conversation"],),
+                        ).fetchone()[0],
+                    },
                 )
                 db.execute(
                     "UPDATE works SET "

@@ -283,5 +283,5 @@ forbidden_modules = ["zaratustra", "tests", "tools"]
 name = "Restart application imports only public Core"
 type = "forbidden"
 source_modules = ["zaratustra_app"]
-forbidden_modules = ["zaratustra_core.api", "zaratustra_core.types", "zaratustra_core.shapes", "zaratustra_core.formats"]
+forbidden_modules = ["zaratustra_core.api", "zaratustra_core.types", "zaratustra_core.shapes", "zaratustra_core.formats", "zaratustra_core.storage", "zaratustra_core.maintenance"]
 allow_indirect_imports = true

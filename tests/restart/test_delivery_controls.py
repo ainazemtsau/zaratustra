@@ -11,6 +11,28 @@ STORAGE = "core/src/zaratustra_core/storage.py"
 MAINTENANCE = "core/src/zaratustra_core/maintenance.py"
 SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
     (
+        "D-cancelled-ID-reused",
+        "app/src/zaratustra_app/conversation.py",
+        [
+            (
+                '                work_id = base_id + ":after-cancel:" + str(successor)',
+                "                " + M + chr(10) + "                break",
+            )
+        ],
+        "test_conversation.py::test_cancelled_entry_requires_new_input_then_new_work",
+    ),
+    (
+        "D-cancelled-blind-restart",
+        "app/src/zaratustra_app/conversation.py",
+        [
+            (
+                'if not any(m["seq"] > watermark for m in messages):',
+                "if (" + M + " or False):",
+            )
+        ],
+        "test_conversation.py::test_cancelled_entry_requires_new_input_then_new_work",
+    ),
+    (
         "D-outbox-published-partial",
         "app/src/zaratustra_app/conversation.py",
         [

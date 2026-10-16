@@ -166,6 +166,27 @@ class Conversation:
             if not messages:
                 return {"state": "idle", "text": "Введите запрос обычными словами."}
             work_id = "turn:" + messages[0]["event"]
+            cancelled = {w["id"] for w in works if w["status"] == "cancelled"}
+            base_id, successor = work_id, 0
+            while work_id in cancelled:
+                control = next(
+                    (
+                        i
+                        for i in snapshot["intents"]
+                        if i["kind"] == "control" and i["subject"] == work_id
+                    ),
+                    None,
+                )
+                watermark = json.loads(control["body"]).get("input_watermark") if control else None
+                if watermark is None:
+                    raise CoreError("outcome_unknown", "cancelled_input_boundary", "reconcile")
+                if not any(m["seq"] > watermark for m in messages):
+                    return {
+                        "state": "cancelled",
+                        "text": "Работа отменена. Напишите новый запрос для новой работы.",
+                    }
+                successor += 1
+                work_id = base_id + ":after-cancel:" + str(successor)
             profile = pin_profile(self.owner, work_id + ":profile", descriptor)
             method = next((h for h in snapshot["heads"] if h["id"] == "conversation-method"), None)
             if method is None:

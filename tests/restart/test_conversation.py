@@ -18,6 +18,53 @@ from zaratustra_core import Core, CoreError
 from .support import Provider, Receiver, inspect, pi_cli
 
 
+def test_cancelled_entry_requires_new_input_then_new_work(tmp_path: Path) -> None:
+    core, token = Core.initialize(tmp_path / "space")
+    session = Conversation(core, token)
+    session.submit("fictional original pending input")
+    calls: list[str] = []
+
+    def receiver(context: dict[str, Any], action_id: str) -> bytes:
+        calls.append(action_id)
+        if len(calls) == 1:
+            session.submit("fictional late input before cancellation")
+            work = session.coordinator.snapshot()["works"][0]
+            session.owner.call(
+                "control_work",
+                {"work_id": work["id"], "revision": work["revision"], "action": "cancel"},
+                "owner-cancel",
+            )
+        else:
+            assert context["raw_messages"][-1] == "fictional new request AFTER cancellation"
+        return json.dumps({"state": "completed", "text": "retained fictional response"}).encode()
+
+    with pytest.raises(CoreError, match="outcome_unknown"):
+        session.run(Driver(receiver), {"profile": "local"}, 4)
+    before = session.coordinator.snapshot()
+    old = before["works"][0]
+    assert old["status"] == "cancelled" and old["reserved"] == 2
+    assert before["actions"][0]["state"] == "claimed"
+    assert json.loads(before["observations"][0]["body"])["late"]
+    reopened = Conversation(Core(core.root), token)
+    try:
+        stopped = reopened.run(Driver(receiver), {"profile": "local"}, 4)
+    except CoreError as error:
+        stopped = {"state": "ERROR", "code": error.code}
+    assert stopped["state"] == "cancelled"
+    assert len(calls) == 1
+    reopened.submit("fictional new request AFTER cancellation")
+    try:
+        final = reopened.run(Driver(receiver), {"profile": "local"}, 4)
+    except CoreError as error:
+        final = {"state": "ERROR", "code": error.code}
+    assert final["state"] == "completed" and len(calls) == 2
+    after = reopened.coordinator.snapshot()
+    assert len(after["works"]) == 2 and len({w["id"] for w in after["works"]}) == 2
+    assert next(w for w in after["works"] if w["id"] == old["id"]) == old
+    assert after["actions"][0] == before["actions"][0]
+    assert after["conversations"][0]["cursor"] == 3 and not after["acceptance"]
+
+
 def test_new_turn_pins_current_method(tmp_path: Path) -> None:
     core, token = Core.initialize(tmp_path / "space")
     receiver = Receiver()
