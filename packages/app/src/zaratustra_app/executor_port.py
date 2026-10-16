@@ -203,6 +203,11 @@ class Pi:
                                     self.live.model: {
                                         "maxTokens": self.live.max_tokens,
                                         "contextWindow": self.live.context_window,
+                                        # The loopback bridge hides the public URL from
+                                        # Pi's automatic ChatGPT compatibility detection.
+                                        # Use its native switch: keep effective reasoning
+                                        # at request level, without unsupported input items.
+                                        "compat": {"supportsMidConvoEffort": False},
                                     }
                                 },
                             }

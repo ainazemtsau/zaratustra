@@ -281,7 +281,9 @@ def test_corrupt_partial_backups_refused(tmp_path: Path, damage: str) -> None:
         (source / "core.sqlite3").write_bytes(b"corrupt")
     elif damage == "valid_database_change":
         with sqlite3.connect(source / "core.sqlite3") as db:
-            db.execute("UPDATE events SET body=?", ('{"tampered":true}',))
+            # Change valid SQLite bytes without breaking event/reference closure:
+            # this fixture isolates the manifest SHA guard from logical integrity.
+            db.execute("PRAGMA user_version=17")
         db.close()
     elif damage == "bytes":
         (source / "artifacts" / SHA).write_bytes(RAW[:-1])

@@ -11,6 +11,17 @@ STORAGE = "core/src/zaratustra_core/storage.py"
 MAINTENANCE = "core/src/zaratustra_core/maintenance.py"
 SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
     (
+        "D-native-chatgpt-effort-compat-omitted",
+        "app/src/zaratustra_app/executor_port.py",
+        [
+            (
+                '"compat": {"supportsMidConvoEffort": False}',
+                '"compat": {"supportsMidConvoEffort": (' + M + " or True)}",
+            )
+        ],
+        "test_conversation.py::test_native_pi_oauth_launcher_controlled",
+    ),
+    (
         "D-pinned-reference-closure-skipped",
         MAINTENANCE,
         [("        verify_references(db, path)", "        " + M)],

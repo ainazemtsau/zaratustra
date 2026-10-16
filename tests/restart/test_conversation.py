@@ -313,6 +313,13 @@ def test_native_pi_oauth_launcher_controlled(
                 and payload["stream"] is True
             )
             assert payload["max_output_tokens"] == 64
+            # The native SDK must use the selected effort at request level: the
+            # ChatGPT route rejects configuration_update input items.
+            assert payload["reasoning"]["effort"] == "medium"
+            assert [item.get("role") for item in payload["input"]] == ["developer", "user"]
+            assert payload["input"][0]["content"]
+            assert "mechanical input" in payload["input"][1]["content"][0]["text"]
+            assert [tool["name"] for tool in payload["tools"]] == ["zara_change"]
             received.append(payload)
             return Response(response_events(json.dumps(terminal)))
 
@@ -338,6 +345,9 @@ def test_native_pi_oauth_launcher_controlled(
     assert b"fictional-access" not in stdout and b"fictional-refresh" not in stdout
     host = next((tmp_path / "pi").glob("*/host-stdin.bin")).read_bytes()
     assert json.loads(host)["type"] == "prompt"
+    models = json.loads(next((tmp_path / "pi").glob("*/agent/models.json")).read_bytes())
+    selected = models["providers"]["openai"]["modelOverrides"]["gpt-6-luna"]
+    assert selected["maxTokens"] == 64 and selected["contextWindow"] == 8192
 
 
 @pytest.mark.parametrize("mode", ["api-key-refused", "refresh-error"])
