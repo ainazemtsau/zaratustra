@@ -201,9 +201,25 @@ class Coordinator:
         try:
             raw = executor.run(context, action_id)
         except BaseException:
+            report = {
+                "events": [
+                    e
+                    for e in getattr(executor, "events", [])
+                    if e.get("type") in {"message_end", "response", "agent_settled"}
+                ],
+                "provider_sends": getattr(executor, "provider_sends", None),
+                "usage_complete": False,
+            }
             self.client.call(
                 "observe_attempt",
-                {"attempt_id": attempt_id, "event_id": "unknown", "kind": "unknown"},
+                {
+                    "attempt_id": attempt_id,
+                    "event_id": "unknown",
+                    "kind": "unknown",
+                    "raw_base64": base64.b64encode(
+                        json.dumps(report, ensure_ascii=False).encode()
+                    ).decode(),
+                },
                 attempt_id + ":unknown",
             )
             raise

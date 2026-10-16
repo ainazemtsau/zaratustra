@@ -1,53 +1,24 @@
-# Restart package C — technical return
+# Package D source checkpoint
 
 ## outcome
-
-Package C implements memory versions and full generic Sleep through ordinary Core
-Work/Attempt and versioned progress. Corrected source is
-3fbbf3e30cbf907ad3ea2d40686f02914c060dbf. Its 238 scoped checks and 46 reached
-behavioral controls passed, as did clean outside-source build/wheel installation
-and installed Driver/Pi adaptation traces. Independent source review returned
-READY_SOURCE_WITH_RECORDED_LIMITS, including a separate bounded positive live
-assessment. Required full native --deliver passed: 1636 tests in 1760.80 seconds,
-pipeline exit 0. Exact-candidate reconciliation remains pending.
-Actual Luna also has preserved instruction-following/format failures; consistent
-useful Sleep and G14 are not established.
+Package D implementation checkpoint on accepted C 7d211480d1dd5067bf52c3a654cc1a713368310d. Separate Core/app remain local-only. Added ordinary Pi conversation entry, diagnostics preview, durable artifacts and quarantined backup/restore. This is a source freeze for required checks, not D completion or owner acceptance.
 
 ## evidence
-
-docs/restart/PACKAGE-C-RETURN.md and PACKAGE-C-RUNTIME.md describe scope and
-reproduction. Controlled Driver/Pi traces, crash windows, raw history, unknown
-reservations and reached controls are in evidence/package-c. Final source/build/
-dependency/proof manifests and full native result are retained in the evidence-only
-candidate. Earlier A/B evidence and frozen plan/review are unchanged. Original RED,
-corrected GREEN, partial native runs and failed live attempts remain retained.
+Existing Core/physical-crash checks: 49 PASS. New ordinary Driver/actual Pi/native SDK and denied auth paths passed targeted checks. G15 baseline plus 11 reached D controls: 26 PASS. Ruff, mypy and diff hygiene pass. Full required native and outside-checkout installation are pending against this source checkpoint; exact logs and source/build manifests will follow under evidence/package-d.
 
 ## assumptions
-
-One explicit new data root; independent Core/app; Python 3.13/native SQLite.
-Content evaluation uses separately authorized Luna. Official Codex evaluation is
-test-only: finite CLI invocations, physical provider sends not exactly observed.
+Installed PROBA v36 applies to this local-only owner-authorized D. Pi remains first client. Owner allowed Luna and configured Codex access when supported; native Pi ChatGPT authorization must exist independently. Native SDK auth uses Pi-owned selected storage and public Responses, never Codex credential extraction. Every Work has finite inference-send reservations; OAuth refresh is a separate service request.
 
 ## cuts
-
-C only. No D/UI/backup/restore/migration/publication/merge/push. No semantic claim
-from scripted providers. No new product Codex adapter or automatic model fallback.
+No migration, daemon, web UI, Codex production adapter, alternate paid model, publication, merge or push. No G14 success claimed from controlled providers. Quarantined restore is inspect-only; activation is deliberately unavailable until a separate sole-active-instance shutdown/selection protocol is supplied. Old credentials, old epoch and all effect-producing commands are fenced in restored copies.
 
 ## cost
-
-Disposable state, controlled Pi localhost tests and owner-authorized Luna. API
-returned no credits; reservations never reset. Official Codex access passed;
-actual reported usage is retained. Finite CLI invocations do not establish exact
-physical provider sends or zero usage for errors. No further author retries.
+Technical local checks only. D has made no actual paid model invocation. Existing API-credit failure was not retried. Pi auth status was checked through metadata only: modern openai OAuth absent, Luna local catalog present; account access unknown. Raw failed synthetic sentinel harness runs remain separate and will be retained.
 
 ## manual-acceptance
-
-C pending. Launch and technical checks are separate from owner acceptance.
+C was accepted as a technical stage by the owner on 2026-10-16. The owner explicitly launched D and a subsequent independent review. D acceptance and first-release usefulness remain pending. Independent G14 request/rubric must be chosen after source/build freeze; no author-selected semantic substitute.
 
 ## next
-
-solmax — reconcile the exact evidence-only candidate and completed full native
-evidence with the independent reviewer, then obtain the owner verdict.
-No automatic product integration/publication or first-release closure.
+solmax
 
 END_OF_FILE: RESULT.md

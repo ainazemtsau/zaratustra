@@ -11,6 +11,7 @@ from .types import CoreError
 Id = Annotated[str, Field(min_length=1, max_length=240)]
 Positive = Annotated[int, Field(ge=1)]
 Cursor = Annotated[int, Field(ge=0)]
+Hash = Annotated[str, Field(pattern="^[0-9a-f]{64}$")]
 
 
 class Shape(BaseModel):
@@ -33,6 +34,7 @@ class Change(Shape):
     schema_ref: Ref | None = None
     tombstone: bool = False
     application: Literal["active", "proposal", "withdrawn"] = "active"
+    artifact_refs: list[Hash] = Field(default_factory=list, max_length=32)
 
 
 class Work(Shape):
@@ -145,6 +147,15 @@ class Receipt(Shape):
     command_id: Id
 
 
+class Artifact(Shape):
+    sha256: Hash
+
+
+class StageArtifact(Artifact):
+    raw_base64: str
+    content_type: Id
+
+
 class Snapshot(Shape):
     max_rows: Annotated[int, Field(ge=1, le=1000)] = 1000
 
@@ -205,6 +216,9 @@ MODELS: dict[str, type[Shape]] = {
     "commit_outcome": Outcome,
     "control_work": Control,
     "reserve_tool": ReserveTool,
+    "stage_artifact": StageArtifact,
+    "read_artifact": Artifact,
+    "export_diagnostics": Shape,
 }
 
 

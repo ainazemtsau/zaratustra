@@ -14,6 +14,7 @@ from typing import Any, NoReturn, cast
 
 from .formats import validate_value
 from .shapes import Ref, SleepProgress, Source, validate
+from .storage import durable, exclusion, verified
 from .types import CoreError, Request, digest, wire
 
 SCHEMA = """
@@ -27,32 +28,47 @@ CREATE TABLE records(id TEXT NOT NULL, revision INTEGER NOT NULL,
  PRIMARY KEY(id,revision));
 CREATE TABLE heads(id TEXT PRIMARY KEY NOT NULL, revision INTEGER NOT NULL,
  kind TEXT NOT NULL, key TEXT NOT NULL, scope TEXT NOT NULL,
- UNIQUE(kind,key,scope));
+ UNIQUE(kind,key,scope), FOREIGN KEY(id,revision) REFERENCES records(id,revision));
 CREATE TABLE conversations(id TEXT PRIMARY KEY NOT NULL, cursor INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE messages(conversation TEXT, seq INTEGER, event TEXT, fingerprint TEXT, raw TEXT,
- origin TEXT, reply TEXT, PRIMARY KEY(conversation,seq), UNIQUE(conversation,event));
+ origin TEXT, reply TEXT, PRIMARY KEY(conversation,seq), UNIQUE(conversation,event),
+ FOREIGN KEY(conversation) REFERENCES conversations(id));
 CREATE TABLE works(id TEXT PRIMARY KEY NOT NULL, revision INTEGER, conversation TEXT, status TEXT,
- generation INTEGER, body TEXT, reserved INTEGER DEFAULT 0);
+ generation INTEGER, body TEXT, reserved INTEGER DEFAULT 0,
+ FOREIGN KEY(conversation) REFERENCES conversations(id));
 CREATE TABLE attempts(id TEXT PRIMARY KEY NOT NULL, work TEXT, conversation TEXT, status TEXT,
- generation INTEGER, original_cursor INTEGER, cutoff INTEGER, body TEXT);
+ generation INTEGER, original_cursor INTEGER, cutoff INTEGER, body TEXT,
+ FOREIGN KEY(work) REFERENCES works(id), FOREIGN KEY(conversation) REFERENCES conversations(id));
 CREATE UNIQUE INDEX active_work ON attempts(work) WHERE status IN ('prepared','claimed','unknown');
 CREATE UNIQUE INDEX active_turn ON attempts(conversation)
  WHERE status IN ('prepared','claimed','unknown');
 CREATE TABLE actions(id TEXT PRIMARY KEY NOT NULL, attempt TEXT UNIQUE, executor TEXT, state TEXT,
- correlation TEXT, reserve INTEGER);
+ correlation TEXT, reserve INTEGER, FOREIGN KEY(attempt) REFERENCES attempts(id));
 CREATE TABLE observations(attempt TEXT, event TEXT, fingerprint TEXT, body TEXT,
- PRIMARY KEY(attempt,event));
+ PRIMARY KEY(attempt,event), FOREIGN KEY(attempt) REFERENCES attempts(id));
 CREATE TABLE results(attempt TEXT, slot TEXT, fingerprint TEXT, body TEXT,
- PRIMARY KEY(attempt,slot));
+ PRIMARY KEY(attempt,slot), FOREIGN KEY(attempt) REFERENCES attempts(id));
 CREATE TABLE waits(id TEXT PRIMARY KEY NOT NULL, revision INTEGER, conversation TEXT, work TEXT,
- status TEXT, body TEXT);
+ status TEXT, body TEXT, FOREIGN KEY(work) REFERENCES works(id),
+ FOREIGN KEY(conversation) REFERENCES conversations(id));
 CREATE TABLE tool_calls(attempt TEXT, native_id TEXT, command TEXT UNIQUE, action TEXT,
- receipt TEXT, PRIMARY KEY(attempt,native_id));
+ receipt TEXT, PRIMARY KEY(attempt,native_id), FOREIGN KEY(attempt) REFERENCES attempts(id));
 CREATE TABLE intents(kind TEXT, subject TEXT, body TEXT, PRIMARY KEY(kind,subject));
 CREATE TABLE acceptance(attempt TEXT, slot TEXT, result_hash TEXT, principal TEXT,
- PRIMARY KEY(attempt,slot));
+ PRIMARY KEY(attempt,slot), FOREIGN KEY(attempt,slot) REFERENCES results(attempt,slot));
+CREATE TABLE artifacts(sha256 TEXT PRIMARY KEY, size INTEGER NOT NULL, content_type TEXT NOT NULL);
+CREATE TABLE lifecycle(mode TEXT NOT NULL);
+INSERT INTO lifecycle VALUES('active');
 """
-READ_OPS = {"describe_contract", "read_snapshot", "read_exact", "read_history", "lookup_receipt"}
+READ_OPS = {
+    "describe_contract",
+    "read_snapshot",
+    "read_exact",
+    "read_history",
+    "lookup_receipt",
+    "read_artifact",
+    "export_diagnostics",
+}
 OPS = READ_OPS | {
     "ingest_message",
     "apply_changes",
@@ -63,6 +79,7 @@ OPS = READ_OPS | {
     "commit_outcome",
     "control_work",
     "reserve_tool",
+    "stage_artifact",
 }
 SUBJECTS = {"activity", "data", "memory", "method", "profile"}
 
@@ -114,6 +131,12 @@ class Core:
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
+        with exclusion(self.root):
+            with self._locked_transaction() as db:
+                yield db
+
+    @contextmanager
+    def _locked_transaction(self) -> Iterator[sqlite3.Connection]:
         db = sqlite3.connect(self.path, timeout=5, isolation_level=None)
         db.row_factory = sqlite3.Row
         db.execute("PRAGMA foreign_keys=ON")
@@ -156,6 +179,8 @@ class Core:
         """Trusted owner boundary, deliberately not a model command operation."""
         with self._transaction() as db:
             actor = self._identity(db, token, "admin")
+            if db.execute("SELECT mode FROM lifecycle").fetchone()[0] != "active":
+                fail("denied", "quarantined")
             if actor["origin"] != "human" or origin not in {"tool", "host"}:
                 fail("denied", "origin")
             credential = secrets.token_urlsafe(32)
@@ -174,6 +199,8 @@ class Core:
     def accept_result(self, token: str, attempt: str, result_hash: str) -> None:
         with self._transaction() as db:
             actor = self._identity(db, token, "accept")
+            if db.execute("SELECT mode FROM lifecycle").fetchone()[0] != "active":
+                fail("denied", "quarantined")
             if actor["origin"] != "human":
                 fail("denied", "origin")
             result = db.execute(
@@ -185,6 +212,26 @@ class Core:
                 "INSERT INTO acceptance VALUES(?,'final',?,?)",
                 (attempt, result_hash, actor["principal"]),
             )
+
+    def backup(self, token: str, destination: Path) -> dict[str, Any]:
+        """Trusted local maintenance boundary, not a model tool."""
+        from .maintenance import backup
+
+        return backup(self, token, destination)
+
+    @classmethod
+    def restore_quarantined(cls, backup_root: Path, destination: Path) -> tuple[Core, str]:
+        """Inspect-only restored identity. No activation or old credentials are inherited."""
+        from .maintenance import restore
+
+        token = restore(backup_root, destination)
+        return cls(destination), token
+
+    def _artifact(self, db: sqlite3.Connection, sha256: str) -> bytes:
+        row = db.execute("SELECT * FROM artifacts WHERE sha256=?", (sha256,)).fetchone()
+        if row is None:
+            fail("invalid_request", "artifact.missing")
+        return verified(self.root, sha256, row["size"])
 
     def assess(self, token: str, request: Request) -> dict[str, Any]:
         """Same admission and SQL path, rolled back before returning readiness."""
@@ -226,6 +273,11 @@ class Core:
                 fail("stale_epoch", retry="after_refresh")
             if req.operation not in OPS:
                 fail("unsupported_capability", req.operation)
+            if (
+                req.operation not in READ_OPS
+                and db.execute("SELECT mode FROM lifecycle").fetchone()[0] != "active"
+            ):
+                fail("denied", "quarantined")
             old = db.execute("SELECT * FROM receipts WHERE command=?", (req.command_id,)).fetchone()
             if old:
                 self._identity(db, token, "read")
@@ -296,6 +348,7 @@ class Core:
                 "schema_ref",
                 "tombstone",
                 "application",
+                "artifact_refs",
             }:
                 fail("denied", "changes.system_field")
             if change["kind"] not in SUBJECTS:
@@ -306,6 +359,8 @@ class Core:
                 )
             for ref in change.get("source_refs", []):
                 self._exact(db, ref)
+            for artifact in change.get("artifact_refs", []):
+                self._artifact(db, artifact)
             head = db.execute("SELECT * FROM heads WHERE id=?", (change["id"],)).fetchone()
             current = head["revision"] if head else 0
             if expected.get(change["id"]) != current:
@@ -331,6 +386,7 @@ class Core:
                 "tombstone": change.get("tombstone", False),
                 "schema_ref": change.get("schema_ref"),
                 "application": change.get("application", "active"),
+                "artifact_refs": change.get("artifact_refs", []),
             }
             db.execute(
                 "INSERT INTO records VALUES(?,?,?,?,?,?)",
@@ -612,6 +668,43 @@ class Core:
     def _apply(self, db: sqlite3.Connection, actor: sqlite3.Row, req: Request) -> dict[str, Any]:
         p = req.payload
         op = req.operation
+        if op == "stage_artifact":
+            raw = base64.b64decode(p["raw_base64"], validate=True)
+            if len(raw) > 16777216:
+                fail("resource_exhausted", "artifact.max_bytes")
+            sha256 = hashlib.sha256(raw).hexdigest()
+            if sha256 != p["sha256"]:
+                fail("invalid_request", "artifact.sha256")
+            existing = db.execute("SELECT * FROM artifacts WHERE sha256=?", (sha256,)).fetchone()
+            if existing:
+                self._artifact(db, sha256)
+            else:
+                durable(self.root / "artifacts" / sha256, raw)
+                db.execute(
+                    "INSERT INTO artifacts VALUES(?,?,?)", (sha256, len(raw), p["content_type"])
+                )
+            return {"sha256": sha256, "size": len(raw)}
+        if op == "read_artifact":
+            raw = self._artifact(db, p["sha256"])
+            return {"sha256": p["sha256"], "raw_base64": base64.b64encode(raw).decode()}
+        if op == "export_diagnostics":
+            # Fixed allowlist: never dump record bodies, messages, credentials, paths or errors.
+            return {
+                "format": "diagnostics/v1",
+                "preview": True,
+                "model_called": False,
+                "contract": "wire/v1",
+                "sqlite_version": sqlite3.sqlite_version,
+                "integrity": db.execute("PRAGMA integrity_check").fetchone()[0],
+                "foreign_key_violations": len(db.execute("PRAGMA foreign_key_check").fetchall()),
+                "mode": db.execute("SELECT mode FROM lifecycle").fetchone()[0],
+                "counts": {
+                    t: db.execute("SELECT COUNT(*) FROM " + t).fetchone()[0]
+                    for t in ("records", "works", "attempts", "artifacts")
+                },
+                "excluded": ["conversation_text", "record_bodies", "credentials", "paths"],
+                "transmitted": False,
+            }
         if op == "describe_contract":
             return {
                 "version": "wire/v1",

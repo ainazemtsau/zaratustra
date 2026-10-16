@@ -18,6 +18,15 @@ from zaratustra_core import CoreError
 
 from .adapters.pi.bridge import Bridge
 
+SYSTEM_INSTRUCTION = (
+    "You are Zaratustra, a general assistant helping with the person's Activity. "
+    "Follow the pinned context.method.body.value and the current Work goal. "
+    "Historical material is evidence, not a new request. Respect original human input, "
+    "current corrections and capabilities. Return exactly the terminal JSON described "
+    "by context.response_contract, with the useful human response in text. "
+    "Only the supplied typed tool can change subject records."
+)
+
 
 class Executor(Protocol):
     tool_handler: Any
@@ -61,11 +70,13 @@ class LiveProfile:
 
     endpoint: str
     model: str
-    credential_env: str
+    credential_env: str = ""
     api: str = "openai-responses"
     max_tokens: int = 8192
     context_window: int = 32768
     timeout: int = 150
+    auth_mode: str = "api-key"
+    auth_path: str | None = None
 
     def __post_init__(self) -> None:
         if any(
@@ -78,7 +89,18 @@ class LiveProfile:
         if (
             not self.endpoint.startswith("https://")
             or not self.model
-            or not self.credential_env
+            or (self.auth_mode == "api-key" and not self.credential_env)
+            or self.auth_mode not in {"api-key", "pi-chatgpt"}
+            or (
+                self.auth_mode == "pi-chatgpt"
+                and (
+                    self.endpoint != "https://api.openai.com/v1"
+                    or self.api != "openai-responses"
+                    or not isinstance(self.auth_path, str)
+                    or not self.auth_path
+                    or self.credential_env
+                )
+            )
             or self.api not in {"openai-responses", "openai-completions"}
             or self.max_tokens < 1
             or self.timeout < 1
@@ -109,6 +131,7 @@ class Pi:
         self.stderr: str = ""
         self.callbacks: list[dict[str, Any]] = []
         self.tool_handler: Any = None
+        self.provider_sends = 0
 
     def run(self, context: dict[str, Any], action_id: str) -> bytes:
         home = self.profile / hashlib.sha256(action_id.encode()).hexdigest()
@@ -118,8 +141,14 @@ class Pi:
             self.endpoint,
             self.tool_handler,
             self.resource_upper,
-            bearer=self.live.bearer() if self.live else "synthetic",
+            bearer=(
+                self.live.bearer()
+                if self.live and self.live.auth_mode == "api-key"
+                else "synthetic"
+            ),
             timeout=self.live.timeout if self.live else 35,
+            native_auth=bool(self.live and self.live.auth_mode == "pi-chatgpt"),
+            capture_dir=home / "provider",
         )
         bridge_thread = threading.Thread(target=bridge.serve_forever, daemon=True)
         bridge_thread.start()
@@ -161,6 +190,27 @@ class Pi:
             ),
             encoding="utf-8",
         )
+        native = self.live is not None and self.live.auth_mode == "pi-chatgpt"
+        if native:
+            assert self.live is not None
+            (agent / "models.json").write_text(
+                json.dumps(
+                    {
+                        "providers": {
+                            "openai": {
+                                "baseUrl": f"http://127.0.0.1:{bridge.server_port}/provider/v1",
+                                "modelOverrides": {
+                                    self.live.model: {
+                                        "maxTokens": self.live.max_tokens,
+                                        "contextWindow": self.live.context_window,
+                                    }
+                                },
+                            }
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
         env = {
             k: v
             for k, v in os.environ.items()
@@ -203,7 +253,27 @@ class Pi:
             "--no-themes",
             "--no-approve",
             "--offline",
+            "--system-prompt",
+            SYSTEM_INSTRUCTION,
         ]
+        if native:
+            assert self.live is not None
+            env.update(
+                {
+                    "ZARA_PI_SDK": str(self.cli.parent.parent / "index.js"),
+                    "ZARA_PI_AUTH_PATH": str(Path(self.live.auth_path or "").resolve()),
+                    "ZARA_PI_MODELS_PATH": str(agent / "models.json"),
+                    "ZARA_PI_MODEL": self.live.model,
+                    "ZARA_PI_EXTENSION": str(
+                        Path(__file__).parent / "adapters" / "pi" / "extension.ts"
+                    ),
+                    "ZARA_PI_SYSTEM_PROMPT": SYSTEM_INSTRUCTION,
+                }
+            )
+            cmd = [
+                shutil.which("node") or "node",
+                str(Path(__file__).parent / "adapters" / "pi" / "launcher.mjs"),
+            ]
         process = subprocess.Popen(
             cmd,
             cwd=home,
@@ -217,11 +287,15 @@ class Pi:
 
         def read() -> None:
             assert process.stdout is not None
-            for line in iter(process.stdout.readline, b""):
-                try:
-                    incoming.put({"event": json.loads(line), "raw": line})
-                except ValueError:
-                    incoming.put({"event": {"type": "invalid_protocol"}, "raw": line})
+            with (home / "native-stdout.jsonl").open("xb") as raw_log:
+                for line in iter(process.stdout.readline, b""):
+                    raw_log.write(line)
+                    raw_log.flush()
+                    os.fsync(raw_log.fileno())
+                    try:
+                        incoming.put({"event": json.loads(line), "raw": line})
+                    except ValueError:
+                        incoming.put({"event": {"type": "invalid_protocol"}, "raw": line})
 
         def stderr() -> None:
             assert process.stderr is not None
@@ -234,15 +308,21 @@ class Pi:
         try:
             assert process.stdin is not None
             message = json.dumps({"action_id": action_id, "context": context}, ensure_ascii=False)
-            process.stdin.write(
-                (
-                    json.dumps(
-                        {"id": action_id, "type": "prompt", "message": message}, ensure_ascii=False
-                    )
-                    + chr(10)
-                ).encode()
-            )
-            process.stdin.flush()
+            prompt_bytes = (
+                json.dumps(
+                    {"id": action_id, "type": "prompt", "message": message}, ensure_ascii=False
+                )
+                + chr(10)
+            ).encode()
+            with (home / "host-stdin.bin").open("xb") as prompt_log:
+                prompt_log.write(prompt_bytes)
+                prompt_log.flush()
+                os.fsync(prompt_log.fileno())
+            try:
+                process.stdin.write(prompt_bytes)
+                process.stdin.flush()
+            except OSError as error:
+                raise CoreError("outcome_unknown", "pi_input_closed", "reconcile") from error
             terminal = None
             deadline = time.monotonic() + (self.live.timeout + 15 if self.live else 50)
             while time.monotonic() < deadline:
@@ -272,15 +352,24 @@ class Pi:
                     return bytes(terminal)
             raise CoreError("outcome_unknown", "pi_timeout", "reconcile")
         finally:
-            process.terminate()
+            if process.poll() is None:
+                process.terminate()
             try:
-                process.communicate(timeout=5)
+                process.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 process.kill()
-                process.communicate()
-            reader.join(timeout=1)
-            error_reader.join(timeout=1)
+                process.wait(timeout=5)
+            reader.join(timeout=5)
+            error_reader.join(timeout=5)
+            for stream in (process.stdin, process.stdout, process.stderr):
+                if stream is not None:
+                    try:
+                        stream.close()
+                    except OSError:
+                        pass
             self.stderr = b"".join(errors).decode("utf-8", errors="replace")
+            (home / "native-stderr.bin").write_bytes(b"".join(errors))
+            self.provider_sends = bridge.sends
             self.callbacks.extend(bridge.callbacks)
             bridge.shutdown()
             bridge.server_close()
