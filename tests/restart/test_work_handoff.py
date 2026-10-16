@@ -256,3 +256,140 @@ commit(client,payload)
     commit(core.connect(token), payload)
     assert len(inspect(core, "works")) == 2
     assert inspect(core, "conversations")[0]["cursor"] == 0
+
+
+@pytest.mark.parametrize("surface", ["default", "ordinary", "sleep", "legacy-driver"])
+def test_active_model_tool_cannot_mint_independent_budget(tmp_path: Path, surface: str) -> None:
+    from zaratustra_app import Sleep
+
+    from .sleep_support import MechanicalSleepReceiver, seed
+
+    if surface == "sleep":
+        core, owner, client = seed(tmp_path)
+        sleep = Sleep(client)
+        sleep.start(work_id="sleep", call_limit=4)
+    else:
+        core, owner, client = fixture(tmp_path)
+    coordinator = Coordinator(client)
+    observed: list[Any] = []
+    mechanical = MechanicalSleepReceiver()
+
+    def receive(context: dict[str, Any], _: str) -> bytes:
+        work = context["work"]
+        independent = {
+            "id": "independent-budget",
+            "conversation": work["conversation"],
+            "scope": work.get("scope", "space"),
+            "goal": "unrequested independent execution",
+            "method_ref": work["method_ref"],
+            "inputs": [],
+            "call_limit": 1000,
+            "continuation_policy": "durable",
+        }
+        effect = {"id": "forbidden-effect", "kind": "data", "key": "effect", "body": "fictional"}
+        effect["scope"] = work.get("scope", "space")
+        intent = {
+            "changes": [effect],
+            "expected_heads": {"forbidden-effect": 0},
+            "initial_work": independent,
+        }
+        positive = effect | {"id": "allowed-update", "key": "allowed"}
+        driver.tool_handler(
+            "subject-update",
+            {"changes": [positive], "expected_heads": {"allowed-update": 0}, "initial_work": None},
+        )
+        result = json.loads(
+            mechanical(context, "fictional")
+            if surface == "sleep"
+            else b'{"state":"completed","text":"useful"}'
+        )
+        if surface == "legacy-driver":
+            result.update(
+                tool_changes=[effect],
+                expected_heads={"forbidden-effect": 0},
+                initial_work=independent,
+                native_tool_call_id="extra",
+            )
+        else:
+            try:
+                observed.append(driver.tool_handler("extra", intent))
+            except CoreError as error:
+                observed.append(error)
+        return json.dumps(result).encode()
+
+    driver = Driver(receive)
+    if surface == "ordinary":
+        cast(Any, driver).response_contract = {"version": "ordinary-execution/2"}
+    if surface == "sleep":
+        result = sleep.run("sleep", PROFILE, driver)
+    else:
+        coordinator.prepare("work", "model-attempt", PROFILE)
+        coordinator.dispatch("model-attempt", 1, driver)
+        result = coordinator.recover("model-attempt")
+    if surface == "legacy-driver":
+        observed = [driver.callbacks[0].get("error")]
+    admission = observed[0].as_dict() if isinstance(observed[0], CoreError) else observed[0]
+    assert isinstance(admission, dict) and (admission.get("code"), admission.get("field")) == (
+        "denied",
+        "native_tool.initial_work",
+    ), "Active model tool must reject independent initial_work before publication"
+    assert result["state"] == "completed"
+    assert not any(w["id"] == "independent-budget" for w in inspect(core, "works"))
+    heads = {h["id"] for h in inspect(core, "heads")}
+    assert "allowed-update" in heads and "forbidden-effect" not in heads
+    assert all(t["native_id"] != "extra" for t in inspect(core, "tool_calls"))
+    assert sum(w["reserved"] for w in inspect(core, "works")) == 2
+    core.backup(owner.token, tmp_path / "checked-backup")
+
+
+def test_correlated_c3_initial_work_is_atomically_refused(tmp_path: Path) -> None:
+    core, _, client = fixture(tmp_path)
+    coordinator = Coordinator(client)
+    coordinator.prepare("work", "model-attempt", PROFILE)
+    client.call(
+        "claim_dispatch",
+        {"attempt_id": "model-attempt", "generation": 1, "resource_upper": 2},
+        "claim",
+        action_id="model-action",
+    )
+    client.call(
+        "reserve_tool",
+        {
+            "attempt_id": "model-attempt",
+            "generation": 1,
+            "native_id": "extra",
+            "command_id": "tool-change",
+        },
+        "reserve",
+    )
+    outcome: Any = None
+    try:
+        outcome = client.call(
+            "apply_changes",
+            {
+                "changes": [
+                    {"id": "forbidden-effect", "kind": "data", "key": "effect", "body": "fictional"}
+                ],
+                "initial_work": {
+                    "id": "independent-budget",
+                    "conversation": "conversation",
+                    "goal": "unrequested",
+                    "method_ref": METHOD,
+                    "inputs": [],
+                    "call_limit": 1000,
+                    "continuation_policy": "durable",
+                },
+                "tool": {"attempt_id": "model-attempt", "generation": 1, "native_id": "extra"},
+            },
+            "tool-change",
+            expected_heads={"forbidden-effect": 0},
+        )
+    except CoreError as error:
+        outcome = error
+    assert isinstance(outcome, CoreError) and outcome.code == "denied", (
+        "Correlated model C3 must not mint an unrelated budget"
+    )
+    assert len(inspect(core, "works")) == 1
+    assert not any(h["id"] == "forbidden-effect" for h in inspect(core, "heads"))
+    assert inspect(core, "tool_calls")[0]["receipt"] is None
+    assert not any(r["command"] == "tool-change" for r in inspect(core, "receipts"))

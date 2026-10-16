@@ -324,3 +324,69 @@ def test_existing_method_adaptation_and_history_are_not_overwritten(tmp_path: Pa
     assert (
         next(h for h in inspect(core, "heads") if h["id"] == "conversation-method")["revision"] == 1
     )
+
+
+def test_scoped_execution_tool_cannot_reset_chain_budget(tmp_path: Path) -> None:
+    core, token = Core.initialize(tmp_path / "space")
+    seen: list[dict[str, Any]] = []
+    admissions: list[Any] = []
+
+    def receive(context: dict[str, Any], _: str) -> bytes:
+        seen.append(context)
+        if context["response_contract"]["version"] == "ordinary-routing/1":
+            return json.dumps(routing(context)).encode()
+        activity = next(r for r in context["catalog"] if r["id"] == context["work"]["scope"])
+        change = {
+            "id": "forbidden-effect",
+            "kind": "data",
+            "key": "effect",
+            "scope": activity["id"],
+            "body": "fictional",
+        }
+        child = {
+            "id": "independent-budget",
+            "conversation": context["work"]["conversation"],
+            "scope": activity["id"],
+            "goal": "unrequested",
+            "method_ref": context["work"]["method_ref"],
+            "inputs": [{"id": activity["id"], "revision": activity["revision"]}],
+            "call_limit": 1000,
+            "continuation_policy": "durable",
+        }
+        try:
+            admissions.append(
+                driver.tool_handler(
+                    "extra",
+                    {
+                        "changes": [change],
+                        "expected_heads": {"forbidden-effect": 0},
+                        "initial_work": child,
+                    },
+                )
+            )
+        except CoreError as error:
+            admissions.append(error)
+        return json.dumps(
+            {
+                "state": "completed",
+                "text": "useful result",
+                "outputs": [{"id": activity["id"], "revision": activity["revision"]}],
+            }
+        ).encode()
+
+    driver = Driver(receive)
+    session = Conversation(core, token)
+    session.submit("fictional finite request")
+    assert session.run(driver, {"profile": "fictional"}, 4)["text"] == "useful result"
+    assert (
+        isinstance(admissions[0], CoreError) and admissions[0].field == "native_tool.initial_work"
+    )
+    assert (
+        Conversation(Core(core.root), token).run(driver, {"profile": "fictional"}, 4)["state"]
+        == "idle"
+    )
+    assert len(seen) == 2 and all(c["raw_messages"] for c in seen)
+    assert len(inspect(core, "works")) == 2
+    assert sum(w["reserved"] for w in inspect(core, "works")) == 4
+    assert not any(h["id"] == "forbidden-effect" for h in inspect(core, "heads"))
+    assert not any(t["native_id"] == "extra" for t in inspect(core, "tool_calls"))

@@ -11,6 +11,23 @@ STORAGE = "core/src/zaratustra_core/storage.py"
 MAINTENANCE = "core/src/zaratustra_core/maintenance.py"
 SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
     (
+        "D-model-tool-independent-budget",
+        API,
+        [('                    fail("denied", "tool.initial_work")', "                    " + M)],
+        "test_work_handoff.py::test_correlated_c3_initial_work_is_atomically_refused",
+    ),
+    (
+        "D-tool-initial-work-reserved-before-denial",
+        "app/src/zaratustra_app/coordinator.py",
+        [
+            (
+                '                raise CoreError("denied", "native_tool.initial_work")',
+                "                " + M,
+            )
+        ],
+        "test_work_handoff.py::test_active_model_tool_cannot_mint_independent_budget[sleep]",
+    ),
+    (
         "D-handoff-cursor-consumed-early",
         API,
         [

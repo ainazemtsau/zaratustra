@@ -939,6 +939,8 @@ class Core:
                 self._require(db, actor["principal"], "open_work")
             correlation = p.get("tool")
             if correlation:
+                if p.get("initial_work") is not None:
+                    fail("denied", "tool.initial_work")
                 attempt, work = self._attempt(db, correlation["attempt_id"])
                 self._tool_authority(db, actor, attempt, work, correlation["generation"])
                 tool = db.execute(

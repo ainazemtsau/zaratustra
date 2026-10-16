@@ -180,6 +180,8 @@ class Coordinator:
             contract = getattr(executor, "response_contract", {})
             if contract.get("version") == "ordinary-routing/1":
                 raise CoreError("denied", "ordinary.routing_atomic_handoff")
+            if intent.get("initial_work") is not None:
+                raise CoreError("denied", "native_tool.initial_work")
             if contract.get("version") == "ordinary-execution/2":
                 from .ordinary import subject_scope
 

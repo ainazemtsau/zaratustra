@@ -89,7 +89,7 @@ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
     (
         "G6-lost-late-continuation",
         API,
-        [('if high > attempt["cutoff"]:', "if (" + M + " or False):")],
+        [("if high > processed:", "if (" + M + " or False):")],
         "test_trace.py::test_fixed_trace[driver]",
     ),
     (
