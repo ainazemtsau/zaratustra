@@ -383,7 +383,7 @@ def test_atomic_publish_windows_sharing_denial(
                 assert kernel.CloseHandle(handle)
                 closed = True
 
-            monkeypatch.setattr(storage.time, "sleep", release_reader)
+            monkeypatch.setattr(time, "sleep", release_reader)
             storage.publish_directory(staging, destination)
             assert not staging.exists() and (destination / "held.bin").read_bytes() == RAW
         else:
@@ -407,7 +407,7 @@ def test_atomic_publish_unrelated_error_is_not_retried(
         calls.append((source, destination))
         raise error
 
-    monkeypatch.setattr(storage.os, "replace", fail)
+    monkeypatch.setattr(os, "replace", fail)
     with pytest.raises(OSError) as observed:
         storage.publish_directory(tmp_path / "partial", tmp_path / "published")
     assert observed.value is error
@@ -444,7 +444,7 @@ def test_failed_backup_cleanup_preserves_publication_error(
         # Emulate rmtree's ignore_errors contract with an unremovable staging tree.
 
     monkeypatch.setattr(maintenance, "publish_directory", fail_publish)
-    monkeypatch.setattr(maintenance.shutil, "rmtree", failed_cleanup)
+    monkeypatch.setattr(shutil, "rmtree", failed_cleanup)
     with pytest.raises(PermissionError) as observed:
         core.backup(token, tmp_path / "backup")
     assert observed.value is publication_error
