@@ -1,0 +1,8 @@
+{
+  "source_commit": "f3265f5439a196282e1edfcec455b1a6d3909ce9",
+  "status": "INCOMPLETE/SUPERSEDED",
+  "reason": "Independent B finding: refresh before first Attempt refuses safe correction",
+  "stop_utc": "2026-10-16T07:09:09.434914+00:00",
+  "stopped_runner_pid": 89908,
+  "full_native_pass": false
+}

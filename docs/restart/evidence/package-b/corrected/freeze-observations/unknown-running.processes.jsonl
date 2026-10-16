@@ -1,0 +1,1 @@
+{"phase": "reopen-recover-A1", "returncode": 0, "stdout": "{\"attempt_id\": \"A1\", \"state\": \"waiting\", \"refs\": [], \"outputs\": [], \"accepted\": false, \"text\": \"Good evening. Do you have a reservation?\", \"cutoff\": 20}\n", "stderr": ""}

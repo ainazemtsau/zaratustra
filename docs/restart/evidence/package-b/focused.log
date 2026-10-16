@@ -1,0 +1,29 @@
+.................FF....F..                                               [100%]
+================================== FAILURES ===================================
+__ test_crash_reopen_reconciliation_allows_safe_progress[claim_before_send] ___
+tests\restart\test_continuation.py:235: in test_crash_reopen_reconciliation_allows_safe_progress
+    with pytest.raises(CoreError, match="outcome_unknown"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'outcome_unknown'
+E     Actual message: 'stale_basis: execution.status [201affc79c57c985]'
+_ test_crash_reopen_reconciliation_allows_safe_progress[claim_after_receiver] _
+tests\restart\test_continuation.py:235: in test_crash_reopen_reconciliation_allows_safe_progress
+    with pytest.raises(CoreError, match="outcome_unknown"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'outcome_unknown'
+E     Actual message: 'stale_basis: execution.status [201affc79c57c985]'
+____________ test_continuation_mutation[B-observe-intent-address] _____________
+tests\restart\test_continuation_controls.py:79: in test_continuation_mutation
+    run_seed(tmp_path, seed)
+tests\restart\test_negative_controls.py:349: in test_seeded_defect_is_killed
+    assert run.returncode == 1, report
+E   AssertionError: {'seed': 'B-observe-intent-address', 'test': 'test_continuation.py::test_unknown_proven_continuation_without_resend[running]', 'returncode': 0, 'injection_reached': False, ...}
+E   assert 0 == 1
+E    +  where 0 = CompletedProcess(args=['C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe', '-I'...dout='.                                                                        [100%]\n1 passed in 1.14s\n', stderr='').returncode
+=========================== short test summary info ===========================
+FAILED tests/restart/test_continuation.py::test_crash_reopen_reconciliation_allows_safe_progress[claim_before_send]
+FAILED tests/restart/test_continuation.py::test_crash_reopen_reconciliation_allows_safe_progress[claim_after_receiver]
+FAILED tests/restart/test_continuation_controls.py::test_continuation_mutation[B-observe-intent-address]
+3 failed, 23 passed in 28.87s

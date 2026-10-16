@@ -1,0 +1,86 @@
+{
+  "case": "initial-ready-memory",
+  "tables": {
+    "works": [
+      {
+        "id": "work",
+        "revision": 4,
+        "conversation": "conversation",
+        "status": "waiting",
+        "generation": 2,
+        "body": "{\"call_limit\":4,\"continuation_policy\":\"durable\",\"conversation\":\"conversation\",\"goal\":\"bounded continuation\",\"id\":\"work\",\"inputs\":[{\"id\":\"memory\",\"revision\":2,\"role\":\"must_be_current\"}],\"method_ref\":{\"id\":\"method\",\"revision\":1,\"role\":\"must_be_current\"}}",
+        "reserved": 2
+      }
+    ],
+    "attempts": [
+      {
+        "id": "A1",
+        "work": "work",
+        "conversation": "conversation",
+        "status": "finished",
+        "generation": 2,
+        "original_cursor": 0,
+        "cutoff": 1,
+        "body": "{\"catalog\":[{\"body\":\"{\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"corrected basis\\\"}\",\"id\":\"memory\",\"key\":\"memory\",\"kind\":\"memory\",\"revision\":2,\"scope\":\"space\"},{\"body\":\"{\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"initial basis\\\"}\",\"id\":\"method\",\"key\":\"method\",\"kind\":\"method\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"initial basis\\\"}\",\"id\":\"profile\",\"key\":\"profile\",\"kind\":\"profile\",\"revision\":1,\"scope\":\"space\"}],\"inputs\":[{\"body\":{\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"corrected basis\"},\"id\":\"memory\",\"key\":\"memory\",\"kind\":\"memory\",\"revision\":2,\"scope\":\"space\"}],\"manifest\":[{\"sequence\":1,\"sha256\":\"69c31b727d2018113d1a86115b025dbd36d1e0800d93e03b2026562b8c109545\"}],\"messages\":[{\"conversation\":\"conversation\",\"event\":\"original\",\"fingerprint\":\"9b877cb03faa6dc3d578b327ba42b8d7deaa1589933772ca11bdf074310117ed\",\"origin\":\"human\",\"raw\":\"UmV0YWluIGV4YWN0IGluaXRpYWwgcmVxdWVzdCBkdXJpbmcgY29ycmVjdGlvbg==\",\"reply\":\"null\",\"seq\":1}],\"method\":{\"body\":{\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"initial basis\"},\"id\":\"method\",\"key\":\"method\",\"kind\":\"method\",\"revision\":1,\"scope\":\"space\"},\"prior_messages\":[],\"prior_results\":[],\"prior_waits\":[],\"profile\":{\"body\":{\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"initial basis\"},\"id\":\"profile\",\"key\":\"profile\",\"kind\":\"profile\",\"revision\":1,\"scope\":\"space\"},\"profile_ref\":{\"id\":\"profile\",\"revision\":1},\"tool_ledger\":[],\"work\":{\"call_limit\":4,\"continuation_policy\":\"durable\",\"conversation\":\"conversation\",\"goal\":\"bounded continuation\",\"id\":\"work\",\"inputs\":[{\"id\":\"memory\",\"revision\":2,\"role\":\"must_be_current\"}],\"method_ref\":{\"id\":\"method\",\"revision\":1,\"role\":\"must_be_current\"}}}"
+      }
+    ],
+    "actions": [
+      {
+        "id": "A1:action",
+        "attempt": "A1",
+        "executor": "owner",
+        "state": "terminal",
+        "correlation": null,
+        "reserve": 2
+      }
+    ],
+    "observations": [
+      {
+        "attempt": "A1",
+        "event": "terminal",
+        "fingerprint": "1347871d8ce7833d536b522ef312e70180333cde72977393098ee9a3173d6e1f",
+        "body": "{\"attempt_id\":\"A1\",\"event_id\":\"terminal\",\"kind\":\"terminal\",\"late\":false,\"raw_base64\":\"eyJzdGF0ZSI6ICJ3YWl0aW5nIiwgInRleHQiOiAiR29vZCBldmVuaW5nLiBEbyB5b3UgaGF2ZSBhIHJlc2VydmF0aW9uPyIsICJ3YWl0IjogeyJpZCI6ICJXNyIsICJxdWVzdGlvbiI6ICJEbyB5b3UgaGF2ZSBhIHJlc2VydmF0aW9uPyJ9fQ==\"}"
+      }
+    ],
+    "results": [
+      {
+        "attempt": "A1",
+        "slot": "final",
+        "fingerprint": "2b195e909b1c83dba800d94d5780180ab33c60358ff7b9b8506b4e3dcd37357e",
+        "body": "{\"accepted\":false,\"attempt_id\":\"A1\",\"cutoff\":1,\"outputs\":[],\"refs\":[],\"state\":\"waiting\",\"text\":\"Good evening. Do you have a reservation?\"}"
+      }
+    ],
+    "waits": [
+      {
+        "id": "W7",
+        "revision": 1,
+        "conversation": "conversation",
+        "work": "work",
+        "status": "waiting",
+        "body": "{\"attempt_id\":\"A1\",\"generation\":2,\"id\":\"W7\",\"question\":\"Do you have a reservation?\"}"
+      }
+    ],
+    "tool_calls": [
+      {
+        "attempt": "A1",
+        "native_id": "create-activity",
+        "command": "A1:tool:create-activity",
+        "action": null,
+        "receipt": "A1:tool:create-activity"
+      }
+    ],
+    "conversations": [
+      {
+        "id": "conversation",
+        "cursor": 1
+      }
+    ],
+    "intents": [],
+    "acceptance": []
+  },
+  "receiver_actions": [
+    "A1:action"
+  ],
+  "processes": [],
+  "receiver_log_base64": null
+}

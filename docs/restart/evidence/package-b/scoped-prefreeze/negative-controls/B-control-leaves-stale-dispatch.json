@@ -1,0 +1,10 @@
+{
+  "seed": "B-control-leaves-stale-dispatch",
+  "test": "test_continuation.py::test_control_fences_every_supported_stage[pause-prepared]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n__________ test_control_fences_every_supported_stage[pause-prepared] __________\ntests\\restart\\test_continuation.py:144: in test_control_fences_every_supported_stage\n    assert not any(\nE   assert not True\nE    +  where True = any(<generator object test_control_fences_every_supported_stage.<locals>.<genexpr> at 0x0000026075D73D30>)\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_continuation.py::test_control_fences_every_supported_stage[pause-prepared]\n1 failed in 0.86s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -839,6 +839,7 @@\n             if action in {\"pause\", \"cancel\"}:\n                 if work[\"status\"] not in {\"ready\", \"running\", \"waiting\", \"blocked\"}:\n                     fail(\"stale_basis\", \"work.status\")\n+                print(\"MUTANT_REACHED\", flush=True)\n                 state = \"paused\" if action == \"pause\" else \"cancelled\"\n                 db.execute(\n                     \"UPDATE works SET \"\n@@ -852,7 +853,7 @@\n                 )\n                 db.execute(\"DELETE FROM intents WHERE kind='prepare' AND subject=?\", (work[\"id\"],))\n                 db.execute(\n-                    \"DELETE FROM intents WHERE kind IN ('dispatch','observe') AND subject IN \"\n+                    \"DELETE FROM intents WHERE 0 AND subject IN \"\n                     \"(SELECT id FROM attempts WHERE work=?)\",\n                     (work[\"id\"],),\n                 )\n"
+}

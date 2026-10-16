@@ -61,7 +61,11 @@ uv run --locked python -m tools.check --deliver
 
 Для полного legacy-root gate только его прежний явный `ZARATUSTRA_SQLITE_DLL`; независимое ядро и outside-checkout wheel proof используют native SQLite без bootstrap. Native Pi 1.0.4 и Node 22.19.0; только сценарный localhost provider, без personal auth/extensions/tools. `ZARA_RESTART_EVIDENCE` и `ZARA_RESTART_NEGATIVES` задаются новому `evidence/package-b/current`; `ZARA_RESTART_INSTALL_ROOT` — новому disposable каталогу `restart-package-b` вне checkout. Никакое A evidence не перезаписывается.
 
-Финальные pins, команды, результаты, source/build/dependency/proof manifests будут закреплены в `evidence/package-b/PROVENANCE.json` после полного native gate. Self-check — техническое evidence, не binding review и не принятие владельцем.
+Исправленный source: `ac608192e620f2aa18e9c1d97debd1afac1adc89`. На нём свежий полный A+B scoped: **160 PASS/290.12s**, включая прежние A124/22 и новые B30/6; все **28/28 reached behavioral controls** подтверждены raw diffs/assertions. Focused B36 PASS/33.69s. Полный required native: **1558 PASS/1629.53s**, exit0, format/lint/types,37 import contracts,hygiene/report и все шесть build artifacts PASS. Full gate заново из-за delivery-only edits не запускался.
+
+Обе новые outside-checkout wheel-only среды содержат одинаковые core/app wheels; 13 production `.py/.ts` members совпадают с source pin и installed bytes. Native SQLite3.50.4 в чистой установке; legacy DLL требуется только полному root gate. B runtime probe дополнительно подтвердил все четыре no-Attempt случая и pause/reopen/question/correction/receipt/reserve. Физические шесть artifacts удержаны в `evidence/package-b/builds/`, а не только названы hashes. Тридцать независимых физических наблюдений B, raw process/receiver logs и все исходные/корректирующие proofs сохранены.
+
+Точные команды/exits и source/build/dependency/proof manifests: `evidence/package-b/PROVENANCE.json`, raw полный log `native-check.log`, финальные raw proofs `corrected/`. Сохранённые старые `current/`, `scoped-prefreeze/`, `freeze-observations/`, `superseded-f3265f5/` относятся к прежним runs и не подменяют финальное evidence. Независимая перепроверка закрыла B-F1 и дала SOURCE READY на ac60819; финальный evidence-only candidate ещё проходит отдельную reconciliation. Self-check не является binding review или принятием владельцем.
 
 manual-acceptance: pending B. next: solmax — отдельная fresh physical review, затем owner verdict. Без merge/push/publication.
 

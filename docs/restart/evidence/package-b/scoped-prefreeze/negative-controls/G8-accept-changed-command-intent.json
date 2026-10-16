@@ -1,0 +1,10 @@
+{
+  "seed": "G8-accept-changed-command-intent",
+  "test": "test_contract.py::test_ingest_idempotency_intent",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_______________________ test_ingest_idempotency_intent ________________________\ntests\\restart\\test_contract.py:88: in test_ingest_idempotency_intent\n    with pytest.raises(CoreError, match=\"idempotency_conflict\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_contract.py::test_ingest_idempotency_intent - Faile...\n1 failed in 1.13s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -231,7 +231,7 @@\n                 self._identity(db, token, \"read\")\n                 if old[\"principal\"] != actor[\"principal\"]:\n                     fail(\"denied\", \"receipt\")\n-                if old[\"fingerprint\"] != fingerprint:\n+                if (print(\"MUTANT_REACHED\", flush=True) or False):\n                     fail(\"idempotency_conflict\", \"command_id\")\n                 return cast(dict[str, Any], loads(old[\"response\"]))\n             for subject, revision in req.expected_heads.items():\n"
+}

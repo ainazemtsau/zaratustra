@@ -1,0 +1,2 @@
+{"phase": "claim_after_receiver", "returncode": 91, "stdout": "", "stderr": ""}
+{"phase": "reopen-recover-A1", "returncode": 0, "stdout": "{\"attempt_id\": \"A1\", \"state\": \"completed\", \"refs\": [], \"outputs\": [], \"accepted\": false, \"text\": \"receiver-confirmed result\", \"cutoff\": 20}\n", "stderr": ""}

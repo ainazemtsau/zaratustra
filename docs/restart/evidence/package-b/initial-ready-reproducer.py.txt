@@ -1,0 +1,48 @@
+"""Independent public API reproduction, no product test helpers or admission imports."""
+import json, pathlib, sqlite3, traceback
+from zaratustra_core import Core, CoreError
+from zaratustra_app import Coordinator
+HERE=pathlib.Path(__file__).resolve().parent
+ROOT=HERE/'initial-ready-correction'
+core, token=Core.initialize(ROOT)
+owner=core.connect(token)
+trace=[]
+def call(op,p,c,**kw):
+    try:
+        r=owner.call(op,p,c,**kw)
+        trace.append({'op':op,'payload':p,'result':r})
+        return r
+    except CoreError as e:
+        trace.append({'op':op,'payload':p,'error':e.as_dict()})
+        raise
+def physical():
+    with sqlite3.connect(core.path) as db:
+        db.row_factory=sqlite3.Row
+        return {t:[dict(x) for x in db.execute('SELECT * FROM '+t+' ORDER BY rowid')]
+          for t in ['records','heads','works','attempts','actions','intents','conversations','results','acceptance']}
+refs=[{'id':i,'kind':k,'key':i,'body':'original'} for i,k in [('method','method'),('memory','memory'),('profile','profile')]]
+call('apply_changes',{'changes':refs},'seed',expected_heads={r['id']:0 for r in refs})
+call('open_work',{'id':'work','conversation':'conversation','goal':'Retain an explicit correction before any send',
+  'method_ref':{'id':'method','revision':1,'role':'must_be_current'},
+  'inputs':[{'id':'memory','revision':1,'role':'must_be_current'}],
+  'call_limit':4,'continuation_policy':'durable'},'open')
+call('control_work',{'work_id':'work','revision':1,'action':'pause'},'pause')
+call('apply_changes',{'changes':[{'id':'memory','kind':'memory','key':'memory','body':'owner corrected basis'}]},
+  'correction',expected_heads={'memory':1})
+before=physical()
+try:
+    call('control_work',{'work_id':'work','revision':2,'action':'resume'},'resume')
+except CoreError as e:
+    assert e.code=='stale_basis'
+assert physical()==before
+try:
+    r=Coordinator(owner).refresh_basis('work')
+    trace.append({'op':'Coordinator.refresh_basis','result':r})
+except CoreError as e:
+    trace.append({'op':'Coordinator.refresh_basis','error':e.as_dict()})
+after=physical()
+(HERE/'initial-ready-correction.json').write_text(json.dumps({'trace':trace,'before':before,'after':after},indent=2),encoding='utf-8')
+print(json.dumps({'trace':trace,'work':after['works'],'actions':after['actions']},indent=2))
+assert after['works'][0]['status']=='ready', 'Explicit correction after safe initial-ready pause must allow a fresh admission; actual paused forever, refresh.attempt stale_basis'
+assert json.loads(after['works'][0]['body'])['inputs'][0]['revision']==2
+Coordinator(owner).prepare('work','A1',{'id':'profile','revision':1})

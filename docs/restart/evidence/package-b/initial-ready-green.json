@@ -1,0 +1,291 @@
+{
+  "trace": [
+    {
+      "op": "apply_changes",
+      "payload": {
+        "changes": [
+          {
+            "id": "method",
+            "kind": "method",
+            "key": "method",
+            "body": "original"
+          },
+          {
+            "id": "memory",
+            "kind": "memory",
+            "key": "memory",
+            "body": "original"
+          },
+          {
+            "id": "profile",
+            "kind": "profile",
+            "key": "profile",
+            "body": "original"
+          }
+        ]
+      },
+      "result": {
+        "refs": [
+          {
+            "id": "method",
+            "revision": 1
+          },
+          {
+            "id": "memory",
+            "revision": 1
+          },
+          {
+            "id": "profile",
+            "revision": 1
+          }
+        ]
+      }
+    },
+    {
+      "op": "open_work",
+      "payload": {
+        "id": "work",
+        "conversation": "conversation",
+        "goal": "Retain an explicit correction before any send",
+        "method_ref": {
+          "id": "method",
+          "revision": 1,
+          "role": "must_be_current"
+        },
+        "inputs": [
+          {
+            "id": "memory",
+            "revision": 1,
+            "role": "must_be_current"
+          }
+        ],
+        "call_limit": 4,
+        "continuation_policy": "durable"
+      },
+      "result": {
+        "work_id": "work",
+        "revision": 1
+      }
+    },
+    {
+      "op": "control_work",
+      "payload": {
+        "work_id": "work",
+        "revision": 1,
+        "action": "pause"
+      },
+      "result": {
+        "status": "paused"
+      }
+    },
+    {
+      "op": "apply_changes",
+      "payload": {
+        "changes": [
+          {
+            "id": "memory",
+            "kind": "memory",
+            "key": "memory",
+            "body": "owner corrected basis"
+          }
+        ]
+      },
+      "result": {
+        "refs": [
+          {
+            "id": "memory",
+            "revision": 2
+          }
+        ]
+      }
+    },
+    {
+      "op": "control_work",
+      "payload": {
+        "work_id": "work",
+        "revision": 2,
+        "action": "resume"
+      },
+      "error": {
+        "code": "stale_basis",
+        "field": "memory",
+        "retry_policy": "after_refresh",
+        "diagnostic_id": "b5db3743ae49eb9e"
+      }
+    },
+    {
+      "op": "Coordinator.refresh_basis",
+      "result": {
+        "status": "ready"
+      }
+    }
+  ],
+  "before": {
+    "records": [
+      {
+        "id": "method",
+        "revision": 1,
+        "kind": "method",
+        "key": "method",
+        "scope": "space",
+        "body": "{\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"original\"}"
+      },
+      {
+        "id": "memory",
+        "revision": 1,
+        "kind": "memory",
+        "key": "memory",
+        "scope": "space",
+        "body": "{\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"original\"}"
+      },
+      {
+        "id": "profile",
+        "revision": 1,
+        "kind": "profile",
+        "key": "profile",
+        "scope": "space",
+        "body": "{\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"original\"}"
+      },
+      {
+        "id": "memory",
+        "revision": 2,
+        "kind": "memory",
+        "key": "memory",
+        "scope": "space",
+        "body": "{\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"owner corrected basis\"}"
+      }
+    ],
+    "heads": [
+      {
+        "id": "method",
+        "revision": 1,
+        "kind": "method",
+        "key": "method",
+        "scope": "space"
+      },
+      {
+        "id": "memory",
+        "revision": 2,
+        "kind": "memory",
+        "key": "memory",
+        "scope": "space"
+      },
+      {
+        "id": "profile",
+        "revision": 1,
+        "kind": "profile",
+        "key": "profile",
+        "scope": "space"
+      }
+    ],
+    "works": [
+      {
+        "id": "work",
+        "revision": 2,
+        "conversation": "conversation",
+        "status": "paused",
+        "generation": 2,
+        "body": "{\"call_limit\":4,\"continuation_policy\":\"durable\",\"conversation\":\"conversation\",\"goal\":\"Retain an explicit correction before any send\",\"id\":\"work\",\"inputs\":[{\"id\":\"memory\",\"revision\":1,\"role\":\"must_be_current\"}],\"method_ref\":{\"id\":\"method\",\"revision\":1,\"role\":\"must_be_current\"}}",
+        "reserved": 0
+      }
+    ],
+    "attempts": [],
+    "actions": [],
+    "intents": [],
+    "conversations": [
+      {
+        "id": "conversation",
+        "cursor": 0
+      }
+    ],
+    "results": [],
+    "acceptance": []
+  },
+  "after": {
+    "records": [
+      {
+        "id": "method",
+        "revision": 1,
+        "kind": "method",
+        "key": "method",
+        "scope": "space",
+        "body": "{\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"original\"}"
+      },
+      {
+        "id": "memory",
+        "revision": 1,
+        "kind": "memory",
+        "key": "memory",
+        "scope": "space",
+        "body": "{\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"original\"}"
+      },
+      {
+        "id": "profile",
+        "revision": 1,
+        "kind": "profile",
+        "key": "profile",
+        "scope": "space",
+        "body": "{\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"original\"}"
+      },
+      {
+        "id": "memory",
+        "revision": 2,
+        "kind": "memory",
+        "key": "memory",
+        "scope": "space",
+        "body": "{\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"owner corrected basis\"}"
+      }
+    ],
+    "heads": [
+      {
+        "id": "method",
+        "revision": 1,
+        "kind": "method",
+        "key": "method",
+        "scope": "space"
+      },
+      {
+        "id": "memory",
+        "revision": 2,
+        "kind": "memory",
+        "key": "memory",
+        "scope": "space"
+      },
+      {
+        "id": "profile",
+        "revision": 1,
+        "kind": "profile",
+        "key": "profile",
+        "scope": "space"
+      }
+    ],
+    "works": [
+      {
+        "id": "work",
+        "revision": 3,
+        "conversation": "conversation",
+        "status": "ready",
+        "generation": 3,
+        "body": "{\"call_limit\":4,\"continuation_policy\":\"durable\",\"conversation\":\"conversation\",\"goal\":\"Retain an explicit correction before any send\",\"id\":\"work\",\"inputs\":[{\"id\":\"memory\",\"revision\":2,\"role\":\"must_be_current\"}],\"method_ref\":{\"id\":\"method\",\"revision\":1,\"role\":\"must_be_current\"}}",
+        "reserved": 0
+      }
+    ],
+    "attempts": [],
+    "actions": [],
+    "intents": [
+      {
+        "kind": "prepare",
+        "subject": "work",
+        "body": "{\"reason\":\"fresh_basis\"}"
+      }
+    ],
+    "conversations": [
+      {
+        "id": "conversation",
+        "cursor": 0
+      }
+    ],
+    "results": [],
+    "acceptance": []
+  }
+}

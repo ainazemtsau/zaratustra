@@ -1,0 +1,2 @@
+{"phase": "claim_before_send", "returncode": 91, "stdout": "", "stderr": ""}
+{"phase": "reopen-recover-A2", "returncode": 0, "stdout": "{\"attempt_id\": \"A2\", \"state\": \"waiting\", \"refs\": [], \"outputs\": [], \"accepted\": false, \"text\": \"Good evening. Do you have a reservation?\", \"cutoff\": 20}\n", "stderr": ""}

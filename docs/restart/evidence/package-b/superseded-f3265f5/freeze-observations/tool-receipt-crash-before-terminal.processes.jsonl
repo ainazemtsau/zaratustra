@@ -1,0 +1,2 @@
+{"phase": "tool-committed-before-terminal", "returncode": 91, "stdout": "", "stderr": ""}
+{"phase": "reopen-recover-A1", "returncode": 0, "stdout": "{\"attempt_id\": \"A1\", \"state\": \"ready\", \"refs\": [], \"outputs\": [], \"accepted\": false, \"text\": \"continue from saved tool receipt\", \"cutoff\": 20}\n", "stderr": ""}

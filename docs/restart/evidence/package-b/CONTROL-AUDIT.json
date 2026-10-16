@@ -1,0 +1,355 @@
+{
+  "source_commit": "ac608192e620f2aa18e9c1d97debd1afac1adc89",
+  "runs": [
+    {
+      "folder": "corrected/scoped/negative-controls",
+      "count": 28,
+      "all_reached_behavioral_kills": true,
+      "cases": [
+        {
+          "seed": "B-control-leaves-stale-dispatch",
+          "test": "test_continuation.py::test_control_fences_every_supported_stage[pause-prepared]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/B-control-leaves-stale-dispatch.json"
+        },
+        {
+          "seed": "B-fenced-running-resume",
+          "test": "test_continuation.py::test_pause_unknown_requires_terminal_proof",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/B-fenced-running-resume.json"
+        },
+        {
+          "seed": "B-initial-refresh-requires-attempt",
+          "test": "test_continuation.py::test_initial_work_correction_without_attempt",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/B-initial-refresh-requires-attempt.json"
+        },
+        {
+          "seed": "B-observe-intent-address",
+          "test": "test_continuation.py::test_unknown_proven_continuation_without_resend[running]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/B-observe-intent-address.json"
+        },
+        {
+          "seed": "B-resume-exhausted-resource",
+          "test": "test_continuation.py::test_resume_preserves_exhausted_reserve",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/B-resume-exhausted-resource.json"
+        },
+        {
+          "seed": "B-resume-stale-basis",
+          "test": "test_continuation.py::test_resume_current_basis_and_explicit_correction",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/B-resume-stale-basis.json"
+        },
+        {
+          "seed": "C0-wire-order",
+          "test": "test_contract.py::test_wire_vectors",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/C0-wire-order.json"
+        },
+        {
+          "seed": "F1-skip-whole-declaration",
+          "test": "test_binding_findings.py::test_declaration_rejected_atomically",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/F1-skip-whole-declaration.json"
+        },
+        {
+          "seed": "F2-ignore-active-wait-binding",
+          "test": "test_binding_findings.py::test_old_wait_cannot_unblock_current_question",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/F2-ignore-active-wait-binding.json"
+        },
+        {
+          "seed": "G1-legacy-dependency",
+          "test": "test_isolation.py::test_import_without_legacy_or_pi",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G1-legacy-dependency.json"
+        },
+        {
+          "seed": "G10-drop-retained-bytes",
+          "test": "test_contract.py::test_retained_terminal_bytes",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G10-drop-retained-bytes.json"
+        },
+        {
+          "seed": "G10-lose-tool-receipt",
+          "test": "test_contract.py::test_tool_before_terminal_recovery",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G10-lose-tool-receipt.json"
+        },
+        {
+          "seed": "G11-wrong-question-revision",
+          "test": "test_contract.py::test_exact_question_no_acceptance",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G11-wrong-question-revision.json"
+        },
+        {
+          "seed": "G2-native-callback-no-effect",
+          "test": "test_trace.py::test_fixed_trace[pi]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G2-native-callback-no-effect.json"
+        },
+        {
+          "seed": "G3-stale-write",
+          "test": "test_contract.py::test_cas_identity_exact",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G3-stale-write.json"
+        },
+        {
+          "seed": "G4-early-ingress-commit",
+          "test": "test_crashes.py::test_ingest_crash_atomic[ingest_mid]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G4-early-ingress-commit.json"
+        },
+        {
+          "seed": "G4-lost-input-intent",
+          "test": "test_contract.py::test_ingest_idempotency_intent",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G4-lost-input-intent.json"
+        },
+        {
+          "seed": "G5-drop-original-input",
+          "test": "test_trace.py::test_fixed_trace[driver]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G5-drop-original-input.json"
+        },
+        {
+          "seed": "G6-early-outcome-commit",
+          "test": "test_crashes.py::test_outcome_crash_atomic[outcome_mid]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G6-early-outcome-commit.json"
+        },
+        {
+          "seed": "G6-lost-late-continuation",
+          "test": "test_trace.py::test_fixed_trace[driver]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G6-lost-late-continuation.json"
+        },
+        {
+          "seed": "G6-skipped-M19",
+          "test": "test_contract.py::test_missing_m19_cannot_prepare_cutoff20",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G6-skipped-M19.json"
+        },
+        {
+          "seed": "G7-allow-old-generation-publication",
+          "test": "test_contract.py::test_old_generation_cannot_publish_current",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G7-allow-old-generation-publication.json"
+        },
+        {
+          "seed": "G7-ignore-late-fence",
+          "test": "test_contract.py::test_late_fencing",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G7-ignore-late-fence.json"
+        },
+        {
+          "seed": "G8-accept-changed-command-intent",
+          "test": "test_contract.py::test_ingest_idempotency_intent",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G8-accept-changed-command-intent.json"
+        },
+        {
+          "seed": "G8-replay-claim-resend",
+          "test": "test_contract.py::test_no_blind_resend_after_claim",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G8-replay-claim-resend.json"
+        },
+        {
+          "seed": "G9-C8-generic-grant",
+          "test": "test_contract.py::test_forbidden_delta_atomic[commit_outcome]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G9-C8-generic-grant.json"
+        },
+        {
+          "seed": "G9-generic-grant",
+          "test": "test_contract.py::test_forbidden_delta_atomic[apply_changes]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G9-generic-grant.json"
+        },
+        {
+          "seed": "G9-ignore-revocation",
+          "test": "test_contract.py::test_revocation_and_foreign_receipt",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/scoped/negative-controls/G9-ignore-revocation.json"
+        }
+      ]
+    },
+    {
+      "folder": "corrected/current/negative-controls",
+      "count": 28,
+      "all_reached_behavioral_kills": true,
+      "cases": [
+        {
+          "seed": "B-control-leaves-stale-dispatch",
+          "test": "test_continuation.py::test_control_fences_every_supported_stage[pause-prepared]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/B-control-leaves-stale-dispatch.json"
+        },
+        {
+          "seed": "B-fenced-running-resume",
+          "test": "test_continuation.py::test_pause_unknown_requires_terminal_proof",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/B-fenced-running-resume.json"
+        },
+        {
+          "seed": "B-initial-refresh-requires-attempt",
+          "test": "test_continuation.py::test_initial_work_correction_without_attempt",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/B-initial-refresh-requires-attempt.json"
+        },
+        {
+          "seed": "B-observe-intent-address",
+          "test": "test_continuation.py::test_unknown_proven_continuation_without_resend[running]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/B-observe-intent-address.json"
+        },
+        {
+          "seed": "B-resume-exhausted-resource",
+          "test": "test_continuation.py::test_resume_preserves_exhausted_reserve",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/B-resume-exhausted-resource.json"
+        },
+        {
+          "seed": "B-resume-stale-basis",
+          "test": "test_continuation.py::test_resume_current_basis_and_explicit_correction",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/B-resume-stale-basis.json"
+        },
+        {
+          "seed": "C0-wire-order",
+          "test": "test_contract.py::test_wire_vectors",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/C0-wire-order.json"
+        },
+        {
+          "seed": "F1-skip-whole-declaration",
+          "test": "test_binding_findings.py::test_declaration_rejected_atomically",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/F1-skip-whole-declaration.json"
+        },
+        {
+          "seed": "F2-ignore-active-wait-binding",
+          "test": "test_binding_findings.py::test_old_wait_cannot_unblock_current_question",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/F2-ignore-active-wait-binding.json"
+        },
+        {
+          "seed": "G1-legacy-dependency",
+          "test": "test_isolation.py::test_import_without_legacy_or_pi",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G1-legacy-dependency.json"
+        },
+        {
+          "seed": "G10-drop-retained-bytes",
+          "test": "test_contract.py::test_retained_terminal_bytes",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G10-drop-retained-bytes.json"
+        },
+        {
+          "seed": "G10-lose-tool-receipt",
+          "test": "test_contract.py::test_tool_before_terminal_recovery",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G10-lose-tool-receipt.json"
+        },
+        {
+          "seed": "G11-wrong-question-revision",
+          "test": "test_contract.py::test_exact_question_no_acceptance",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G11-wrong-question-revision.json"
+        },
+        {
+          "seed": "G2-native-callback-no-effect",
+          "test": "test_trace.py::test_fixed_trace[pi]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G2-native-callback-no-effect.json"
+        },
+        {
+          "seed": "G3-stale-write",
+          "test": "test_contract.py::test_cas_identity_exact",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G3-stale-write.json"
+        },
+        {
+          "seed": "G4-early-ingress-commit",
+          "test": "test_crashes.py::test_ingest_crash_atomic[ingest_mid]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G4-early-ingress-commit.json"
+        },
+        {
+          "seed": "G4-lost-input-intent",
+          "test": "test_contract.py::test_ingest_idempotency_intent",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G4-lost-input-intent.json"
+        },
+        {
+          "seed": "G5-drop-original-input",
+          "test": "test_trace.py::test_fixed_trace[driver]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G5-drop-original-input.json"
+        },
+        {
+          "seed": "G6-early-outcome-commit",
+          "test": "test_crashes.py::test_outcome_crash_atomic[outcome_mid]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G6-early-outcome-commit.json"
+        },
+        {
+          "seed": "G6-lost-late-continuation",
+          "test": "test_trace.py::test_fixed_trace[driver]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G6-lost-late-continuation.json"
+        },
+        {
+          "seed": "G6-skipped-M19",
+          "test": "test_contract.py::test_missing_m19_cannot_prepare_cutoff20",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G6-skipped-M19.json"
+        },
+        {
+          "seed": "G7-allow-old-generation-publication",
+          "test": "test_contract.py::test_old_generation_cannot_publish_current",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G7-allow-old-generation-publication.json"
+        },
+        {
+          "seed": "G7-ignore-late-fence",
+          "test": "test_contract.py::test_late_fencing",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G7-ignore-late-fence.json"
+        },
+        {
+          "seed": "G8-accept-changed-command-intent",
+          "test": "test_contract.py::test_ingest_idempotency_intent",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G8-accept-changed-command-intent.json"
+        },
+        {
+          "seed": "G8-replay-claim-resend",
+          "test": "test_contract.py::test_no_blind_resend_after_claim",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G8-replay-claim-resend.json"
+        },
+        {
+          "seed": "G9-C8-generic-grant",
+          "test": "test_contract.py::test_forbidden_delta_atomic[commit_outcome]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G9-C8-generic-grant.json"
+        },
+        {
+          "seed": "G9-generic-grant",
+          "test": "test_contract.py::test_forbidden_delta_atomic[apply_changes]",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G9-generic-grant.json"
+        },
+        {
+          "seed": "G9-ignore-revocation",
+          "test": "test_contract.py::test_revocation_and_foreign_receipt",
+          "reached_behavioral_kill": true,
+          "raw": "corrected/current/negative-controls/G9-ignore-revocation.json"
+        }
+      ]
+    }
+  ]
+}

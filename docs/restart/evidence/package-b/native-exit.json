@@ -1,0 +1,24 @@
+{
+  "source_commit": "ac608192e620f2aa18e9c1d97debd1afac1adc89",
+  "command": [
+    "uv",
+    "run",
+    "--locked",
+    "python",
+    "-m",
+    "tools.check",
+    "--deliver"
+  ],
+  "start_utc": "2026-10-16T07:17:13.264112+00:00",
+  "environment_overrides": {
+    "UV_CACHE_DIR": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\uv-cache",
+    "ZARATUSTRA_SQLITE_DLL": "C:\\projects\\zaratustra\\_scratch\\release-installed-20260927\\runtime\\sqlite3.dll",
+    "ZARA_RESTART_EVIDENCE": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\docs\\restart\\evidence\\package-b\\corrected\\current",
+    "ZARA_RESTART_NEGATIVES": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\docs\\restart\\evidence\\package-b\\corrected\\current\\negative-controls",
+    "ZARA_RESTART_INSTALL_ROOT": "C:/Users/Anton/.codex/visualizations/2026/10/15/01a1403c-0c2e-7592-b1dc-3763a8f97fdb/restart-package-b",
+    "PYTEST_ADDOPTS": "--basetemp=_scratch/b-native-ac60819 -o cache_dir=_scratch/b-native-cache-ac60819"
+  },
+  "exit": 0,
+  "elapsed_seconds": 1636.5453751999994,
+  "end_utc": "2026-10-16T07:44:29.810114+00:00"
+}

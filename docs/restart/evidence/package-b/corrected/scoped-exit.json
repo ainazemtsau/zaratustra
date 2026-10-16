@@ -1,0 +1,5 @@
+{
+  "source_commit": "ac608192e620f2aa18e9c1d97debd1afac1adc89",
+  "exit": 0,
+  "command": "python -m pytest tests/restart -q --tb=short --basetemp _scratch/b-scoped-ac60819"
+}

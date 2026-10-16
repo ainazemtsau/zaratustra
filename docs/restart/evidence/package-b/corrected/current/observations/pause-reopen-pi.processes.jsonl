@@ -1,0 +1,3 @@
+{"phase": "reopen-recover-A2", "returncode": 0, "stdout": "{\"attempt_id\": \"A2\", \"state\": \"waiting\", \"refs\": [], \"outputs\": [], \"accepted\": false, \"text\": \"Good evening. Do you have a reservation?\", \"cutoff\": 20}\n", "stderr": ""}
+{"phase": "reopen-recover-A2", "returncode": 0, "stdout": "{\"accepted\": false, \"attempt_id\": \"A2\", \"cutoff\": 20, \"outputs\": [], \"refs\": [], \"state\": \"waiting\", \"text\": \"Good evening. Do you have a reservation?\"}\n", "stderr": ""}
+{"phase": "reopen-recover-A3", "returncode": 0, "stdout": "{\"attempt_id\": \"A3\", \"state\": \"completed\", \"refs\": [], \"outputs\": [], \"accepted\": false, \"text\": \"Welcome. Here is your key. Five-minute practice saved.\", \"cutoff\": 22}\n", "stderr": ""}

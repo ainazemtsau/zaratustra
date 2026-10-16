@@ -1,0 +1,4 @@
+{
+  "command": "python -m pytest tests/restart -q --tb=short --basetemp _scratch/b-scoped-final",
+  "exit": 0
+}

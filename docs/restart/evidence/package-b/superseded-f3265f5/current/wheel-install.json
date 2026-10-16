@@ -1,0 +1,18 @@
+{
+  "core_only": {
+    "core": "C:\\Users\\Anton\\.codex\\visualizations\\2026\\10\\15\\01a1403c-0c2e-7592-b1dc-3763a8f97fdb\\restart-package-b\\install-359cca34cd74407ab2f2df8bb2a5d6fd\\env\\Lib\\site-packages\\zaratustra_core\\__init__.py",
+    "independent": true
+  },
+  "installed_driver": {
+    "core": "C:\\Users\\Anton\\.codex\\visualizations\\2026\\10\\15\\01a1403c-0c2e-7592-b1dc-3763a8f97fdb\\restart-package-b\\install-359cca34cd74407ab2f2df8bb2a5d6fd\\env\\Lib\\site-packages\\zaratustra_core\\__init__.py",
+    "app": "C:\\Users\\Anton\\.codex\\visualizations\\2026\\10\\15\\01a1403c-0c2e-7592-b1dc-3763a8f97fdb\\restart-package-b\\install-359cca34cd74407ab2f2df8bb2a5d6fd\\env\\Lib\\site-packages\\zaratustra_app\\__init__.py",
+    "cursor": 22,
+    "effects": 2
+  },
+  "outside_checkout": true,
+  "environment": "C:\\Users\\Anton\\.codex\\visualizations\\2026\\10\\15\\01a1403c-0c2e-7592-b1dc-3763a8f97fdb\\restart-package-b\\install-359cca34cd74407ab2f2df8bb2a5d6fd\\env",
+  "wheel_sha256": {
+    "zaratustra_core-0.1.0-py3-none-any.whl": "88290b69f1939c11b6053d58e336be93bfe187162d90c6d089094d12db820d1a",
+    "zaratustra_next-0.1.0-py3-none-any.whl": "a476749b85f1dc3a5f5d31e0d6eb0bc791dc1abde644b2a616f43f008e62c9e5"
+  }
+}

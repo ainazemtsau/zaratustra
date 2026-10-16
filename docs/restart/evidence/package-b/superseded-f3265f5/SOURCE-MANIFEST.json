@@ -1,0 +1,228 @@
+{
+  "source_commit": "f3265f5439a196282e1edfcec455b1a6d3909ce9",
+  "base_candidate_a": "accb09563bf46d25020a14c91cbc58b8d6dfa57b",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "941a2058a966b0f480ff308f62fd220b88674b2f50581a9bdab3694ae41431cc",
+      "bytes": 32479
+    },
+    {
+      "path": "packages/AGENTS.md",
+      "sha256": "1f7d90ab109a28a36a51a4d91f532596f7d836e7f8c5e5a1bdf02d4365686146",
+      "bytes": 302
+    },
+    {
+      "path": "packages/app/pyproject.toml",
+      "sha256": "5a1c312944177d1e1bb99a69887c39e4ad68dbc315481ab0b444c2582b50e4b0",
+      "bytes": 319
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/AGENTS.md",
+      "sha256": "151ae14339f3d198310a208bf9f6cba522010f37b8c3a0cd44f9d670ce20471a",
+      "bytes": 296
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/__init__.py",
+      "sha256": "5d744ffeb43335e46ac2997d6fd0bd29a7d9d7039e0c2ba19b8f38c4fcc7f24b",
+      "bytes": 196
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/AGENTS.md",
+      "sha256": "025c36f832a8b3d73d3c1c6cc24bcd6b8ad5ef6a048c1aedfad327ca97cddafb",
+      "bytes": 211
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/__init__.py",
+      "sha256": "3313c92a9cdbfccae4afdf1f0a2defde08ac4a84eb166825fc21ddb9347cce20",
+      "bytes": 28
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/AGENTS.md",
+      "sha256": "4d9590766e47a2a6a9e706015320ffd8ce865a0d1b1089659abd6f18462a1448",
+      "bytes": 383
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/__init__.py",
+      "sha256": "6de3b1e1a3155f4e8d9bb2e104473abfc7c6a10f37ff0aa537ada162cbe2aa61",
+      "bytes": 37
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/bridge.py",
+      "sha256": "c5342f8fca42b64aec70315d9d14f8e47be3278af8f044c27758e2d44ddb44c9",
+      "bytes": 3324
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/extension.ts",
+      "sha256": "dfb451e22ce14af8a63fd37c5e8a0c6d75a11ead34e79eb036e8bfd78958505a",
+      "bytes": 1012
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/cli.py",
+      "sha256": "5f651a9a7eb1e8de81350dba32a8f391fc979ed45d34e62aa664c4b6ab556c4d",
+      "bytes": 1005
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/coordinator.py",
+      "sha256": "5dfc0f7f3c8ea795dd586a1e18c35af532e3d7d21c9a4f9a4df4b7d5b7f36285",
+      "bytes": 7715
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/executor_port.py",
+      "sha256": "a3992e14cca448b788a489190d35588701562a77ba795ce6b7d9056d4b0ef663",
+      "bytes": 9341
+    },
+    {
+      "path": "packages/core/pyproject.toml",
+      "sha256": "ab44be890c2ba2b01d9fdfc4e5a7050a1792d89c4da8c47b3873a0d81b9137c0",
+      "bytes": 196
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/AGENTS.md",
+      "sha256": "8cc791ad00f2db6474f37268aea8bce05d188a4900a7a83174f15de6c4322fda",
+      "bytes": 446
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/__init__.py",
+      "sha256": "7f71419c900c0207f7e9b1e9444a8b20a1f149faa06175484a62d82f0baef7c7",
+      "bytes": 206
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/api.py",
+      "sha256": "ef91588907fd89834127c50bccf3b995daa6cc766d833f176784e23c2ea6e1cd",
+      "bytes": 44989
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/formats.py",
+      "sha256": "4d12f1141cde7829816910604ef64fa4cade6391f6c40a31fcc294bea09a99d3",
+      "bytes": 7665
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/shapes.py",
+      "sha256": "fd06acb2671fdc4b00821227105b267f5f905c9d482cd5ce5b9cd1619dbcef3d",
+      "bytes": 3833
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/types.py",
+      "sha256": "54b8a7103b7b0ae9d924cb839acd7789bff316b8e79bcf565635b1505ab5d33f",
+      "bytes": 2028
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "9f8df00d94129b6ed934cc446db07dd6c7c5155ba67ab1992336d653fee236a8",
+      "bytes": 11896
+    },
+    {
+      "path": "tests/restart/AGENTS.md",
+      "sha256": "ac19ed34a84a25c1412c8a9d8f03ea45ac40bd192a611c8ef345c5819e32d4d7",
+      "bytes": 314
+    },
+    {
+      "path": "tests/restart/__init__.py",
+      "sha256": "3729bf0fa2108a0592552bc4497c99b77c77e5bf5be30030646021ae9602c137",
+      "bytes": 47
+    },
+    {
+      "path": "tests/restart/crash_worker.py",
+      "sha256": "20a4124e9025615cfccebb572502c0e138ae9d073f14adffa41157b33718f65a",
+      "bytes": 3283
+    },
+    {
+      "path": "tests/restart/support.py",
+      "sha256": "1fa45169d7a86340f49efc5d0cb5d046cb71f5d8e9175247c69ecca19cb846a1",
+      "bytes": 13695
+    },
+    {
+      "path": "tests/restart/test_binding_findings.py",
+      "sha256": "9e8c979da8de265637002842ae91b7880cf45bdd5e3fe95bca89542b32b22f28",
+      "bytes": 7511
+    },
+    {
+      "path": "tests/restart/test_build.py",
+      "sha256": "862ddda37ed00490f91c55542c8a6b71ab1ccb600367b2cc950abb8d4cc4f527",
+      "bytes": 7030
+    },
+    {
+      "path": "tests/restart/test_client_parity.py",
+      "sha256": "56aa0cde9b72d0ac7d77f553a5449cdde918810d6aa70444b4397ba307c23d16",
+      "bytes": 3517
+    },
+    {
+      "path": "tests/restart/test_continuation.py",
+      "sha256": "a461615b14c4a40602a55bd098f8d279b35f1b97f935829ee33ef39964f3c898",
+      "bytes": 18262
+    },
+    {
+      "path": "tests/restart/test_continuation_controls.py",
+      "sha256": "92cdb1951968fb57445f3b7a439a0fad6cfd40eef55ccfadc23bc66ba9dfc9b3",
+      "bytes": 2439
+    },
+    {
+      "path": "tests/restart/test_contract.py",
+      "sha256": "0827052d1d3bee8607b6ae1b065dc745dbbc08afb30f2c20810cbefeb77384d3",
+      "bytes": 21155
+    },
+    {
+      "path": "tests/restart/test_crashes.py",
+      "sha256": "5f78acfad0e1574d903aa74541808b4f4c3676ef813de236b7d553afbb91ac11",
+      "bytes": 6039
+    },
+    {
+      "path": "tests/restart/test_isolation.py",
+      "sha256": "0d68ab3019baf0d60c464db4ce12a6d1c8f33ef131eda0935d23f5bca8228b0f",
+      "bytes": 1339
+    },
+    {
+      "path": "tests/restart/test_native_and_shapes.py",
+      "sha256": "183bcce6347cb01236740cc4d9e8054e8377c8d0d78793a64d3bf555724e3af1",
+      "bytes": 5424
+    },
+    {
+      "path": "tests/restart/test_negative_controls.py",
+      "sha256": "e3c8c9c4bc5c6a7f766e6c14ab19ed7c8d71811d97d72d22194bba0c304c229f",
+      "bytes": 11358
+    },
+    {
+      "path": "tests/restart/test_review_findings.py",
+      "sha256": "abbe2d67446a94508d33afba8845f328a4a714fe8ddeba1749aa557a06ae2f2e",
+      "bytes": 6869
+    },
+    {
+      "path": "tests/restart/test_trace.py",
+      "sha256": "bfb763b595177c0656f9983846b52ed12d90429978ddea15eaae86832dfb2e4d",
+      "bytes": 416
+    },
+    {
+      "path": "tools/check.py",
+      "sha256": "72d266e5f8e4fb9e99933d3190722686ce25039202ba037ffc874fb45b728890",
+      "bytes": 7117
+    },
+    {
+      "path": "uv.lock",
+      "sha256": "fce37007eec2ea8c819ba9989f093c156977a0f10ccafb975d07811dbb4af72a",
+      "bytes": 76640
+    }
+  ],
+  "frozen": [
+    {
+      "path": "validation.config",
+      "sha256": "450f08e6af97ccd104bd84499c8fd28a213e55e8a8515b1151ce01e43e5da9db",
+      "unchanged": true
+    },
+    {
+      "path": "REVIEW.md",
+      "sha256": "19fa21d4d6c2ed8f415c4b1c806a18f6655848c891dd9a1e704644214a4b5e56",
+      "unchanged": true
+    },
+    {
+      "path": "docs/restart/FIRST-RELEASE-PLAN.md",
+      "sha256": "3e279c312d20f137e2076ecd7240f6b2c039923b9ee9bfa55e9662c5df98e0cb",
+      "unchanged": true
+    },
+    {
+      "path": "docs/restart/FIRST-RELEASE-REVIEW.md",
+      "sha256": "e7493dc10a06ce34b7f4e06efb6db55509565b46099ee51d1d6987b2aa268dcb",
+      "unchanged": true
+    }
+  ]
+}

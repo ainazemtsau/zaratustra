@@ -1,0 +1,10 @@
+{
+  "seed": "G7-allow-old-generation-publication",
+  "test": "test_contract.py::test_old_generation_cannot_publish_current",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_________________ test_old_generation_cannot_publish_current __________________\ntests\\restart\\test_contract.py:407: in test_old_generation_cannot_publish_current\n    with pytest.raises(CoreError, match=\"stale_basis\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_contract.py::test_old_generation_cannot_publish_current\n1 failed in 0.85s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -368,9 +368,9 @@\n         return attempt, work\n \n     def _fence(self, attempt: sqlite3.Row, work: sqlite3.Row, generation: int) -> None:\n-        if generation != work[\"generation\"] or attempt[\"generation\"] != generation:\n+        if (print(\"MUTANT_REACHED\", flush=True) or False):\n             fail(\"stale_basis\", \"generation\", \"after_refresh\")\n-        if work[\"status\"] != \"running\" or attempt[\"status\"] not in {\"prepared\", \"claimed\"}:\n+        if (print(\"MUTANT_REACHED\", flush=True) or False):\n             fail(\"stale_basis\", \"execution.status\", \"after_refresh\")\n \n     def _check_basis(self, db: sqlite3.Connection, attempt: sqlite3.Row, work: sqlite3.Row) -> None:\n"
+}

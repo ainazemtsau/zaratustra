@@ -1,0 +1,17 @@
+{
+  "source_commit": "ac608192e620f2aa18e9c1d97debd1afac1adc89",
+  "exit": 0,
+  "environment": "C:\\Users\\Anton\\.codex\\visualizations\\2026\\10\\15\\01a1403c-0c2e-7592-b1dc-3763a8f97fdb\\restart-package-b\\install-8c2fe87d995244ca846c06cd79da0c6f\\env",
+  "wheel_sha256": {
+    "zaratustra_core-0.1.0-py3-none-any.whl": "59bb04af75b6c2f50d6ea2e36e909df5861fa58ebaa3959e3a3d4ef492bba1b7",
+    "zaratustra_next-0.1.0-py3-none-any.whl": "a476749b85f1dc3a5f5d31e0d6eb0bc791dc1abde644b2a616f43f008e62c9e5"
+  },
+  "cwd": "C:\\Users\\Anton\\.codex\\visualizations\\2026\\10\\15\\01a1403c-0c2e-7592-b1dc-3763a8f97fdb\\restart-package-b\\install-8c2fe87d995244ca846c06cd79da0c6f",
+  "command": [
+    "C:\\Users\\Anton\\.codex\\visualizations\\2026\\10\\15\\01a1403c-0c2e-7592-b1dc-3763a8f97fdb\\restart-package-b\\install-8c2fe87d995244ca846c06cd79da0c6f\\env\\Scripts\\python.exe",
+    "-I",
+    "-X",
+    "utf8",
+    "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\docs\\restart\\evidence\\package-b\\installed_b_probe.py"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "source_commit": "ac608192e620f2aa18e9c1d97debd1afac1adc89",
+  "base_candidate_a": "accb09563bf46d25020a14c91cbc58b8d6dfa57b",
+  "full_native": {
+    "exit": 0,
+    "tests_passed": 1558,
+    "pytest_seconds": 1629.53,
+    "wall_seconds": 1636.5453751999994,
+    "raw_log": "native-check.log",
+    "command_and_environment": "native-exit.json"
+  },
+  "scoped": {
+    "exit": 0,
+    "tests_passed": 160,
+    "pytest_seconds": 290.12,
+    "raw_log": "corrected/scoped.log",
+    "command": "corrected/scoped-exit.json"
+  },
+  "focused": {
+    "tests_passed": 36,
+    "pytest_seconds": 33.69,
+    "raw_log": "corrected-focused.log"
+  },
+  "controls": {
+    "total": 28,
+    "a_preserved": 22,
+    "b_added": 6,
+    "reached_behavioral_kills": 28,
+    "raw_audit": "CONTROL-AUDIT.json"
+  },
+  "observations": {
+    "final": "corrected/current/observations",
+    "count": 30,
+    "source_freeze": "corrected/freeze-observations"
+  },
+  "installation": {
+    "runtime_probe": "corrected/installed-b.stdout.json",
+    "exit": "corrected/installed-b-exit.json",
+    "script": "installed_b_probe.py",
+    "network_process_forbidden": true
+  },
+  "b_f1": {
+    "old_source": "f3265f5439a196282e1edfcec455b1a6d3909ce9",
+    "reproducer_sha256": "1901bce3ea4e787b7f0c46fd978719d0260d0d010ffbed43cbda111b0bdda568",
+    "red_exit": 1,
+    "green_exit": 0,
+    "red": "initial-ready-red.log",
+    "green": "initial-ready-green.log",
+    "prior_native": "native-f3265f5-INCOMPLETE.log",
+    "prior_native_status": "INCOMPLETE/SUPERSEDED"
+  },
+  "manual_acceptance": "pending B",
+  "next": "solmax",
+  "candidate_policy": "final candidate adds delivery docs/evidence only; source pin remains exact",
+  "manifests": {
+    "SOURCE-MANIFEST.json": "0a9d0b1de2706019d0aef8bb5110ca4fe85996b61421018f357b0882435637f7",
+    "BUILD-MANIFEST.json": "d52ac9eb178dc119ff2c8ec5ac2df2be766be28609aa9ba5907c020d895d1892",
+    "DEPENDENCY-MANIFEST.json": "74957ef9124bf1c2f9e86ac1a5e699d309ec691b86078b455dfb4974d3875454",
+    "PROOF-MANIFEST.json": "e8bc4f6dc2eb972dba6ae5eaeead637464b9d13b048e5386f5bd60378411204a"
+  }
+}
