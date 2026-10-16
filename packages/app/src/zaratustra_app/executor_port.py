@@ -24,7 +24,8 @@ SYSTEM_INSTRUCTION = (
     "Historical material is evidence, not a new request. Respect original human input, "
     "current corrections and capabilities. Return exactly the terminal JSON described "
     "by context.response_contract, with the useful human response in text. "
-    "Only the supplied typed tool can change subject records."
+    "Subject changes may use the supplied typed tool or terminal.changes; both "
+    "are admitted atomically through Core. Never claim owner acceptance or rights."
 )
 
 
@@ -47,7 +48,12 @@ class Driver:
 
     def run(self, context: dict[str, Any], action_id: str) -> bytes:
         raw = self.receiver(context, action_id)
-        result = json.loads(raw)
+        try:
+            result = json.loads(raw)
+        except ValueError:
+            return bytes(raw)  # Known terminal bytes; Core retains before format rejection.
+        if not isinstance(result, dict):
+            return bytes(raw)
         if result.get("tool_changes"):
             native_id = result.pop("native_tool_call_id")
             intent = {
@@ -86,6 +92,8 @@ class LiveProfile:
             for v in (self.max_tokens, self.context_window, self.timeout)
         ):
             raise CoreError("invalid_request", "live_profile")
+        if self.auth_mode == "pi-chatgpt" and 0 < self.max_tokens < 16:
+            raise CoreError("unsupported_capability", "native.max_output_tokens.minimum16")
         if (
             not self.endpoint.startswith("https://")
             or not self.model

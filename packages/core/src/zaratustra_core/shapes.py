@@ -116,6 +116,12 @@ class Wait(Shape):
     question: Id
 
 
+class NextWork(Work):
+    # An exhausted continuation remains durable and paused; C3/C4 still require
+    # a positive execution budget for independently opened work.
+    call_limit: Cursor
+
+
 class Outcome(Shape):
     attempt_id: Id
     generation: Positive
@@ -127,6 +133,7 @@ class Outcome(Shape):
     outputs: list[Ref] = Field(default_factory=list)
     changes: list[Change] = Field(default_factory=list)
     wait: Wait | None = None
+    next_work: NextWork | None = None
 
 
 class Control(Shape):

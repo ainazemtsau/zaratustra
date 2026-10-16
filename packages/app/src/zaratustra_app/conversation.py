@@ -6,13 +6,20 @@ import base64
 import json
 import os
 import time
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 from zaratustra_core import Core, CoreError, digest
 
 from .coordinator import Coordinator
 from .executor_port import Executor, Pi
+from .ordinary import (
+    EXECUTION_ID,
+    EXECUTION_METHOD,
+    ROUTING_ID,
+    ROUTING_METHOD,
+    response_contract,
+)
 
 CONVERSATION_METHOD = """conversation/1
 Help the person with their original request and corrections in raw_messages.
@@ -122,6 +129,22 @@ class Conversation:
         *,
         refresh: bool = False,
     ) -> dict[str, Any]:
+        while True:
+            result = self._step(executor, descriptor, call_limit, refresh=refresh)
+            if "next_work_id" not in result:
+                return result
+            # Each handoff inherits only the parent's unspent reservation budget.
+            # Paused/unknown states stop inside _step; a new Work cannot reset it.
+            refresh = False
+
+    def _step(
+        self,
+        executor: Executor,
+        descriptor: dict[str, Any],
+        call_limit: int,
+        *,
+        refresh: bool = False,
+    ) -> dict[str, Any]:
         self.deliver_input()
         snapshot = self.coordinator.snapshot()
         works = [w for w in snapshot["works"] if w["conversation"] == self.conversation]
@@ -153,6 +176,33 @@ class Conversation:
                     "work." + work["status"],
                     "reconcile",
                 )
+            body = json.loads(work["body"])
+            link = body.get("continuation")
+            work_attempts = {a["id"] for a in snapshot["attempts"] if a["work"] == work_id}
+            dispatched = any(a["attempt"] in work_attempts for a in snapshot["actions"])
+            high = max(
+                (m["seq"] for m in snapshot["messages"] if m["conversation"] == self.conversation),
+                default=0,
+            )
+            if (
+                link
+                and not dispatched
+                and body["method_ref"]["id"] != ROUTING_ID
+                and high > link["delivered_cutoff"]
+            ):
+                # Late input must be considered before dependent Activity work.
+                # Preserve the old scope/history and the same remaining budget.
+                route = next(h for h in snapshot["heads"] if h["id"] == ROUTING_ID)
+                self.coordinator.refresh_basis(
+                    work_id,
+                    method_ref={
+                        "id": route["id"],
+                        "revision": route["revision"],
+                        "role": "must_be_current",
+                    },
+                )
+                snapshot = self.coordinator.snapshot()
+                work = next(w for w in snapshot["works"] if w["id"] == work_id)
         else:
             conversation = next(
                 (c for c in snapshot["conversations"] if c["id"] == self.conversation), None
@@ -167,59 +217,64 @@ class Conversation:
                 return {"state": "idle", "text": "Введите запрос обычными словами."}
             work_id = "turn:" + messages[0]["event"]
             cancelled = {w["id"] for w in works if w["status"] == "cancelled"}
+            controls = [
+                json.loads(i["body"])
+                for i in snapshot["intents"]
+                if i["kind"] == "control" and i["subject"] in cancelled
+            ]
+            if any(c.get("input_watermark") is None for c in controls):
+                raise CoreError("outcome_unknown", "cancelled_input_boundary", "reconcile")
+            boundary = max((c["input_watermark"] for c in controls), default=-1)
+            if boundary >= cursor and not any(
+                m["seq"] > boundary and m["origin"] == "human" for m in messages
+            ):
+                return {
+                    "state": "cancelled",
+                    "text": "Работа отменена. Напишите новый запрос для новой работы.",
+                }
+            closed = {w["id"] for w in works}
             base_id, successor = work_id, 0
-            while work_id in cancelled:
-                control = next(
-                    (
-                        i
-                        for i in snapshot["intents"]
-                        if i["kind"] == "control" and i["subject"] == work_id
-                    ),
-                    None,
-                )
-                watermark = json.loads(control["body"]).get("input_watermark") if control else None
-                if watermark is None:
-                    raise CoreError("outcome_unknown", "cancelled_input_boundary", "reconcile")
-                fresh_human_input = any(
-                    m["seq"] > watermark and m["origin"] == "human" for m in messages
-                )
-                if not fresh_human_input:
-                    return {
-                        "state": "cancelled",
-                        "text": "Работа отменена. Напишите новый запрос для новой работы.",
-                    }
+            while work_id in closed:
                 successor += 1
                 work_id = base_id + ":after-cancel:" + str(successor)
             profile = pin_profile(self.owner, work_id + ":profile", descriptor)
-            method = next((h for h in snapshot["heads"] if h["id"] == "conversation-method"), None)
-            if method is None:
-                self.owner.call(
-                    "apply_changes",
-                    {
-                        "changes": [
-                            {
-                                "id": "conversation-method",
-                                "kind": "method",
-                                "key": "conversation/1",
-                                "body": CONVERSATION_METHOD,
-                            }
-                        ]
-                    },
-                    "conversation-method:create",
-                    expected_heads={"conversation-method": 0},
-                )
+            for method_id, value in [
+                (ROUTING_ID, ROUTING_METHOD),
+                (EXECUTION_ID, EXECUTION_METHOD),
+            ]:
+                if not any(h["id"] == method_id for h in snapshot["heads"]):
+                    self.owner.call(
+                        "apply_changes",
+                        {
+                            "changes": [
+                                {
+                                    "id": method_id,
+                                    "kind": "method",
+                                    "key": value.splitlines()[0],
+                                    "body": value,
+                                }
+                            ]
+                        },
+                        method_id + ":create",
+                        expected_heads={method_id: 0},
+                    )
             self.coordinator.open_work(
                 {
                     "id": work_id,
                     "conversation": self.conversation,
-                    "goal": "Help with the original human request and its corrections.",
-                    "method_ref": {"id": "conversation-method", "revision": 1},
+                    "goal": (
+                        "Choose the Activity and scoped useful Work "
+                        "for the pending original request."
+                    ),
+                    "method_ref": {"id": ROUTING_ID, "revision": 1},
                     "call_limit": call_limit,
                     "continuation_policy": "durable",
                 }
             )
             snapshot = self.coordinator.snapshot()
             work = next(w for w in snapshot["works"] if w["id"] == work_id)
+        routing = json.loads(work["body"])["method_ref"]["id"] == ROUTING_ID
+        cast(Any, executor).response_contract = response_contract(routing)
         attempts = [
             a
             for a in snapshot["attempts"]
@@ -228,14 +283,16 @@ class Conversation:
         if attempts:
             attempt = attempts[0]
             if attempt["status"] != "prepared":
-                result = self.coordinator.recover(attempt["id"], pi=isinstance(executor, Pi))
+                result = self.coordinator.recover(
+                    attempt["id"], pi=isinstance(executor, Pi), ordinary=True
+                )
                 return self._present(result)
         else:
             attempt_id = work_id + ":attempt:" + uuid4().hex
             prepared = self.coordinator.prepare(work_id, attempt_id, profile)
             attempt = {"id": attempt_id, "generation": prepared["generation"]}
         self.coordinator.dispatch(attempt["id"], attempt["generation"], executor)
-        result = self.coordinator.recover(attempt["id"], pi=isinstance(executor, Pi))
+        result = self.coordinator.recover(attempt["id"], pi=isinstance(executor, Pi), ordinary=True)
         return self._present(result)
 
     def _present(self, result: dict[str, Any]) -> dict[str, Any]:

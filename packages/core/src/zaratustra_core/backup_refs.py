@@ -30,6 +30,7 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
     records = {(r["id"], r["revision"]): r for r in table("records")}
     works = {r["id"]: r for r in table("works")}
     attempts = {r["id"]: r for r in table("attempts")}
+    attempt_order = [r[0] for r in db.execute("SELECT id FROM attempts ORDER BY rowid")]
     messages = {(r["conversation"], r["seq"]): r for r in table("messages")}
     results = {(r["attempt"], r["slot"]): r for r in table("results")}
     waits = {r["id"]: r for r in table("waits")}
@@ -63,10 +64,79 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
         require(method["scope"] in {"space", body.get("scope", "space")})
         for ref in body.get("inputs", []):
             record(ref)
+        if "continuation" in body:
+            link = body["continuation"]
+            require(
+                set(link) - {"activity_ref"}
+                == {
+                    "attempt_id",
+                    "delivered_cutoff",
+                    "processed_cutoff",
+                    "parent_reserved",
+                    "resource_upper",
+                }
+            )
+            parent_attempt = attempts.get(link["attempt_id"])
+            require(parent_attempt is not None)
+            assert parent_attempt is not None
+            parent = works[parent_attempt["work"]]
+            parent_result = results.get((parent_attempt["id"], "final"))
+            require(parent_result is not None)
+            assert parent_result is not None
+            result_body = json.loads(parent_result["body"])
+            require(
+                all(
+                    type(link[k]) is int
+                    for k in (
+                        "delivered_cutoff",
+                        "processed_cutoff",
+                        "parent_reserved",
+                        "resource_upper",
+                    )
+                )
+                and 0 <= link["processed_cutoff"] <= link["delivered_cutoff"]
+                and link["resource_upper"] > 0
+            )
+            require(
+                result_body.get("next_work_id") == body["id"]
+                and parent["conversation"] == body["conversation"]
+                and link["delivered_cutoff"] == parent_attempt["cutoff"]
+                and link["processed_cutoff"] == result_body["cutoff"]
+            )
+            parent_actions = [a for a in actions.values() if a["attempt"] == parent_attempt["id"]]
+            require(len(parent_actions) == 1)
+            require(link["resource_upper"] == parent_actions[0]["reserve"])
+            # Reservations at the historical handoff, not the parent's later total.
+            parent_order = attempt_order.index(parent_attempt["id"])
+            prefix = set(attempt_order[: parent_order + 1])
+            reserved = sum(
+                a["reserve"]
+                for a in actions.values()
+                if a["attempt"] in prefix and attempts[a["attempt"]]["work"] == parent["id"]
+            )
+            require(type(link["parent_reserved"]) is int and link["parent_reserved"] == reserved)
+            require(
+                type(body["call_limit"]) is int
+                and 0 <= body["call_limit"] <= json.loads(parent["body"])["call_limit"] - reserved
+            )
+            scope = body.get("scope", "space")
+            if "activity_ref" in link:
+                record(link["activity_ref"], "activity")
+                require(link["activity_ref"]["id"] == scope)
+            if scope != "space":
+                require(link.get("activity_ref", {}).get("id") == scope)
 
     def result_refs(body: dict[str, Any]) -> None:
         for ref in body.get("refs", []) + body.get("outputs", []):
             record(ref)
+        if "next_work_id" in body:
+            child = works.get(body["next_work_id"])
+            require(child is not None)
+            assert child is not None
+            require(
+                json.loads(child["body"]).get("continuation", {}).get("attempt_id")
+                == body["attempt_id"]
+            )
 
     def source(ref: dict[str, Any]) -> dict[str, Any]:
         return core._source(db, ref)
@@ -77,6 +147,7 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
         for result in results.values():
             saved_result = json.loads(result["body"])
             require(saved_result["attempt_id"] == result["attempt"])
+            require(type(saved_result.get("cutoff")) is int and saved_result["cutoff"] >= 0)
             result_refs(saved_result)
         for event in events.values():
             receipt = receipts.get(event["subject"])

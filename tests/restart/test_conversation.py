@@ -15,7 +15,9 @@ from zaratustra_app import Conversation, Driver, LiveProfile, Pi
 from zaratustra_app.adapters.pi import bridge
 from zaratustra_core import Core, CoreError
 
-from .support import Provider, Receiver, inspect, pi_cli
+from .ordinary_support import OrdinaryReceiver as Receiver
+from .ordinary_support import routing
+from .support import Provider, inspect, pi_cli
 
 
 def test_cancelled_entry_requires_new_input_then_new_work(tmp_path: Path) -> None:
@@ -36,7 +38,16 @@ def test_cancelled_entry_requires_new_input_then_new_work(tmp_path: Path) -> Non
             )
         else:
             assert context["raw_messages"][-1] == "fictional new request AFTER cancellation"
-        return json.dumps({"state": "completed", "text": "retained fictional response"}).encode()
+        if context["response_contract"]["version"] == "ordinary-routing/1":
+            return json.dumps(routing(context)).encode()
+        activity = next(r for r in context["catalog"] if r["id"] == context["work"]["scope"])
+        return json.dumps(
+            {
+                "state": "completed",
+                "text": "retained fictional response",
+                "outputs": [{"id": activity["id"], "revision": activity["revision"]}],
+            }
+        ).encode()
 
     with pytest.raises(CoreError, match="outcome_unknown"):
         session.run(Driver(receiver), {"profile": "local"}, 4)
@@ -71,9 +82,9 @@ def test_cancelled_entry_requires_new_input_then_new_work(tmp_path: Path) -> Non
         final = reopened.run(Driver(receiver), {"profile": "local"}, 4)
     except CoreError as error:
         final = {"state": "ERROR", "code": error.code}
-    assert final["state"] == "completed" and len(calls) == 2
+    assert final["state"] == "completed" and len(calls) == 3
     after = reopened.coordinator.snapshot()
-    assert len(after["works"]) == 2 and len({w["id"] for w in after["works"]}) == 2
+    assert len(after["works"]) == 3 and len({w["id"] for w in after["works"]}) == 3
     assert next(w for w in after["works"] if w["id"] == old["id"]) == old
     assert after["actions"][0] == before["actions"][0]
     assert after["conversations"][0]["cursor"] == 4 and not after["acceptance"]
@@ -88,27 +99,27 @@ def test_new_turn_pins_current_method(tmp_path: Path) -> None:
     ]
     session = Conversation(core, token)
     session.submit("first arbitrary input")
-    session.run(Driver(receiver), {"profile": "test"}, 2)
+    session.run(Driver(receiver), {"profile": "test"}, 4)
     session.owner.call(
         "apply_changes",
         {
             "changes": [
                 {
-                    "id": "conversation-method",
+                    "id": "conversation-execution-method",
                     "kind": "method",
-                    "key": "conversation/1",
+                    "key": "conversation/2",
                     "body": "Current adapted method",
                 }
             ]
         },
         "adapt",
-        expected_heads={"conversation-method": 1},
+        expected_heads={"conversation-execution-method": 1},
     )
     session.submit("second arbitrary input")
-    session.run(Driver(receiver), {"profile": "test"}, 2)
-    assert receiver.received[0]["method"]["revision"] == 1
-    assert receiver.received[1]["method"]["revision"] == 2
-    assert receiver.received[1]["method"]["body"]["value"] == "Current adapted method"
+    session.run(Driver(receiver), {"profile": "test"}, 4)
+    assert receiver.received[1]["method"]["revision"] == 1
+    assert receiver.received[3]["method"]["revision"] == 2
+    assert receiver.received[3]["method"]["body"]["value"] == "Current adapted method"
 
 
 @pytest.mark.parametrize("phase", ["partial_write", "published"])
@@ -183,24 +194,25 @@ def test_ordinary_entry_correction_reopen(tmp_path: Path, mode: str) -> None:
     session = Conversation(core, token)
     try:
         session.submit(request)
-        first = session.run(executor, descriptor, 4)
+        first = session.run(executor, descriptor, 8)
         assert first["state"] == "waiting" and first["reply_to"]["id"] == "W7"
         session.submit(correction)  # Free input does not answer the last question.
         reopened = Conversation(Core(core.root), token)
-        pending = reopened.run(executor, descriptor, 4)
-        assert pending["reply_to"] == first["reply_to"] and len(receiver.actions) == 1
+        pending = reopened.run(executor, descriptor, 8)
+        assert pending["reply_to"] == first["reply_to"] and len(receiver.actions) == 2
         reopened.submit("Addressed answer", pending["reply_to"])
-        final = reopened.run(executor, descriptor, 4)
+        final = reopened.run(executor, descriptor, 8)
         assert final["state"] == "completed" and not final["accepted"]
         assert receiver.received[0]["raw_messages"] == [request]
-        assert receiver.received[1]["raw_messages"] == [correction, "Addressed answer"]
-        prior = receiver.received[1]["prior_messages"]
+        assert receiver.received[1]["raw_messages"] == [request]
+        assert receiver.received[2]["raw_messages"] == [correction, "Addressed answer"]
+        prior = receiver.received[2]["prior_messages"]
         assert base64.b64decode(prior[-1]["raw"]).decode() == request
         assert len([h for h in inspect(core, "heads") if h["kind"] == "activity"]) == 1
         assert inspect(core, "acceptance") == []
-        assert len(receiver.actions) == 2
-        idle = Conversation(Core(core.root), token).run(executor, descriptor, 4)
-        assert idle["state"] == "idle" and len(receiver.actions) == 2
+        assert len(receiver.actions) == 3
+        idle = Conversation(Core(core.root), token).run(executor, descriptor, 8)
+        assert idle["state"] == "idle" and len(receiver.actions) == 3
     finally:
         if provider:
             provider.shutdown()
@@ -265,8 +277,9 @@ def response_events(text: str) -> bytes:
     ).encode()
 
 
+@pytest.mark.parametrize("max_tokens", [16, 64])
 def test_native_pi_oauth_launcher_controlled(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, max_tokens: int
 ) -> None:
     """Actual Pi SDK with FICTIONAL OAuth; no external model or account access."""
     auth = tmp_path / "fictional-auth.json"
@@ -295,7 +308,8 @@ def test_native_pi_oauth_launcher_controlled(
                 "body": "chosen by test provider",
             }
         ],
-        "expected_heads": {"model-selected": 0},
+        "expected_heads": {"model-selected": 1},
+        "outputs": [{"id": "model-selected", "revision": 2}],
     }
 
     class Response(io.BytesIO):
@@ -312,7 +326,7 @@ def test_native_pi_oauth_launcher_controlled(
                 and payload["store"] is False
                 and payload["stream"] is True
             )
-            assert payload["max_output_tokens"] == 64
+            assert payload["max_output_tokens"] == max_tokens
             # The native SDK must use the selected effort at request level: the
             # ChatGPT route rejects configuration_update input items.
             assert payload["reasoning"]["effort"] == "medium"
@@ -321,7 +335,11 @@ def test_native_pi_oauth_launcher_controlled(
             assert "mechanical input" in payload["input"][1]["content"][0]["text"]
             assert [tool["name"] for tool in payload["tools"]] == ["zara_change"]
             received.append(payload)
-            return Response(response_events(json.dumps(terminal)))
+            supplied = json.loads(payload["input"][1]["content"][0]["text"])
+            output = (
+                routing(supplied["context"], "model-selected") if len(received) == 1 else terminal
+            )
+            return Response(response_events(json.dumps(output)))
 
     monkeypatch.setattr(bridge, "build_opener", lambda *_: ControlledTransport())
     core, token = Core.initialize(tmp_path / "space")
@@ -332,14 +350,15 @@ def test_native_pi_oauth_launcher_controlled(
         model="gpt-6-luna",
         auth_mode="pi-chatgpt",
         auth_path=str(auth),
-        max_tokens=64,
+        max_tokens=max_tokens,
         context_window=8192,
     )
     executor = Pi(pi_cli(), tmp_path / "pi", live.endpoint, live=live)
-    result = session.run(executor, {"profile": "fictional-native-oauth"}, 2)
+    result = session.run(executor, {"profile": "fictional-native-oauth"}, 4)
     assert result["text"] == terminal["text"] and result["state"] == "completed"
-    assert len(received) == executor.provider_sends == 1
-    assert inspect(core, "heads")[-1]["id"] == "model-selected"
+    assert len(received) == 2 and executor.provider_sends == 1
+    assert sum(a["reserve"] for a in inspect(core, "actions")) == 4
+    assert next(h for h in inspect(core, "heads") if h["id"] == "model-selected")["revision"] == 2
     stdout = next((tmp_path / "pi").glob("*/native-stdout.jsonl")).read_bytes()
     assert b'"message_end"' in stdout and b'"agent_settled"' in stdout
     assert b"fictional-access" not in stdout and b"fictional-refresh" not in stdout
@@ -347,7 +366,7 @@ def test_native_pi_oauth_launcher_controlled(
     assert json.loads(host)["type"] == "prompt"
     models = json.loads(next((tmp_path / "pi").glob("*/agent/models.json")).read_bytes())
     selected = models["providers"]["openai"]["modelOverrides"]["gpt-6-luna"]
-    assert selected["maxTokens"] == 64 and selected["contextWindow"] == 8192
+    assert selected["maxTokens"] == max_tokens and selected["contextWindow"] == 8192
 
 
 @pytest.mark.parametrize("mode", ["api-key-refused", "refresh-error"])

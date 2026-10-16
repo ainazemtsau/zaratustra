@@ -286,7 +286,16 @@ class Core:
                 if old["fingerprint"] != fingerprint:
                     fail("idempotency_conflict", "command_id")
                 return cast(dict[str, Any], loads(old["response"]))
-            for subject, revision in req.expected_heads.items():
+            # A retained final is an idempotent read of its slot. Its original
+            # changes already advanced heads; only a first publication uses CAS.
+            retained_final = (
+                req.operation == "commit_outcome"
+                and db.execute(
+                    "SELECT 1 FROM results WHERE attempt=? AND slot='final'",
+                    (req.payload["attempt_id"],),
+                ).fetchone()
+            )
+            for subject, revision in () if retained_final else req.expected_heads.items():
                 head = db.execute("SELECT revision FROM heads WHERE id=?", (subject,)).fetchone()
                 if (head[0] if head else 0) != revision:
                     fail("stale_basis", subject, "after_refresh")
@@ -605,22 +614,84 @@ class Core:
         ):
             fail("stale_basis", "progress.resource")
 
-    def _work(self, db: sqlite3.Connection, body: dict[str, Any]) -> dict[str, Any]:
+    def _work(
+        self,
+        db: sqlite3.Connection,
+        body: dict[str, Any],
+        *,
+        continuation: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        body = dict(body)
         self._method(db, body)
         for ref in body.get("inputs", []):
             self._exact(db, ref)
-        if type(body["call_limit"]) is not int or body["call_limit"] < 1:
+        if type(body["call_limit"]) is not int or body["call_limit"] < (0 if continuation else 1):
             fail("invalid_request", "call_limit")
         if body.get("token_limit") or body.get("money_limit"):
             fail("unsupported_capability", "resource_unit")
         db.execute("INSERT OR IGNORE INTO conversations(id) VALUES(?)", (body["conversation"],))
+        state = "ready"
+        if continuation is not None:
+            body["continuation"] = continuation
+            if body["call_limit"] < continuation["resource_upper"]:
+                state = "paused"
         db.execute(
             "INSERT INTO works(id,revision,conversation,status,generation,body) "
-            "VALUES(?,1,?,'ready',1,?)",
-            (body["id"], body["conversation"], dumps(body)),
+            "VALUES(?,1,?,?,1,?)",
+            (body["id"], body["conversation"], state, dumps(body)),
         )
-        self._intent(db, "prepare", body["id"], {})
+        if state == "ready":
+            self._intent(db, "prepare", body["id"], {})
+        else:
+            self._intent(db, "resource", body["id"], {"reason": "resource_exhausted"})
         return {"work_id": body["id"], "revision": 1}
+
+    def _next_work(
+        self,
+        db: sqlite3.Connection,
+        actor: sqlite3.Row,
+        parent: sqlite3.Row,
+        attempt: sqlite3.Row,
+        payload: dict[str, Any],
+    ) -> str | None:
+        child = payload.get("next_work")
+        if child is None:
+            return None
+        self._require(db, actor["principal"], "open_work")
+        if payload["state"] != "completed" or payload.get("wait"):
+            fail("invalid_request", "next_work.state")
+        if child["conversation"] != parent["conversation"] or child["id"] == parent["id"]:
+            fail("invalid_request", "next_work.conversation")
+        if db.execute(
+            "SELECT 1 FROM works WHERE conversation=? AND id!=? "
+            "AND status NOT IN ('completed','cancelled')",
+            (parent["conversation"], parent["id"]),
+        ).fetchone():
+            fail("identity_conflict", "next_work.active")
+        remaining = loads(parent["body"])["call_limit"] - parent["reserved"]
+        if child["call_limit"] > remaining:
+            fail("resource_exhausted", "next_work.calls")
+        scope = child.get("scope", "space")
+        selected_activity = None
+        if scope != "space":
+            activity = next((r for r in child.get("inputs", []) if r["id"] == scope), None)
+            if activity is None or self._exact(db, activity)["kind"] != "activity":
+                fail("invalid_request", "next_work.activity_scope")
+            selected_activity = {"id": activity["id"], "revision": activity["revision"]}
+        upper = db.execute(
+            "SELECT reserve FROM actions WHERE attempt=?", (attempt["id"],)
+        ).fetchone()[0]
+        link = {
+            "attempt_id": attempt["id"],
+            "delivered_cutoff": attempt["cutoff"],
+            "processed_cutoff": payload["processed_cutoff"],
+            "parent_reserved": parent["reserved"],
+            "resource_upper": upper,
+        }
+        if selected_activity is not None:
+            link["activity_ref"] = selected_activity
+        self._work(db, child, continuation=link)
+        return cast(str, child["id"])
 
     def _intent(self, db: sqlite3.Connection, kind: str, subject: str, body: Any) -> None:
         db.execute("INSERT OR REPLACE INTO intents VALUES(?,?,?)", (kind, subject, dumps(body)))
@@ -1129,10 +1200,12 @@ class Core:
             cursor = db.execute(
                 "SELECT cursor FROM conversations WHERE id=?", (attempt["conversation"],)
             ).fetchone()[0]
+            processed = p["processed_cutoff"]
+            preserved = p.get("next_work") is not None and processed == cursor
             if (
                 cursor != attempt["original_cursor"]
                 or p["original_cursor"] != cursor
-                or p["processed_cutoff"] != attempt["cutoff"]
+                or (processed != attempt["cutoff"] and not preserved)
             ):
                 fail("stale_basis", "cursor", "after_refresh")
             self._check_basis(db, attempt, work)
@@ -1145,9 +1218,12 @@ class Core:
             )
             for ref in p.get("outputs", []):
                 self._exact(db, ref)
+            next_work_id = self._next_work(db, actor, work, attempt, p)
             state = p["state"]
             if state not in {"waiting", "ready", "completed"}:
                 fail("invalid_request", "outcome.state")
+            if state == "waiting" and p.get("wait") is None:
+                fail("invalid_request", "outcome.wait")
             if state == "ready" and work["reserved"] >= loads(work["body"])["call_limit"]:
                 state = "paused"
                 self._intent(
@@ -1180,7 +1256,7 @@ class Core:
             ).fetchone()[0]
             changed = db.execute(
                 "UPDATE conversations SET cursor=? WHERE id=? AND cursor=?",
-                (attempt["cutoff"], attempt["conversation"], cursor),
+                (processed, attempt["conversation"], cursor),
             ).rowcount
             if changed != 1:
                 fail("stale_basis", "cursor")
@@ -1195,8 +1271,11 @@ class Core:
                 "outputs": p.get("outputs", []),
                 "accepted": False,
                 "text": p.get("text", ""),
-                "cutoff": attempt["cutoff"],
+                "cutoff": processed,
             }
+            if next_work_id is not None:
+                result["next_work_id"] = next_work_id
+                result["delivered_cutoff"] = attempt["cutoff"]
             db.execute(
                 "INSERT INTO results VALUES(?,'final',?,?)",
                 (attempt["id"], digest(p), dumps(result)),
@@ -1205,12 +1284,12 @@ class Core:
             db.execute(
                 "DELETE FROM intents WHERE kind='input' AND subject=?", (attempt["conversation"],)
             )
-            if high > attempt["cutoff"]:
+            if high > processed:
                 self._intent(
                     db,
                     "input",
                     attempt["conversation"],
-                    {"after": attempt["cutoff"], "high_watermark": high},
+                    {"after": processed, "high_watermark": high},
                 )
             if state == "ready":
                 self._intent(db, "prepare", work["id"], {})

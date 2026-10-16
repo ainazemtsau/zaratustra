@@ -11,6 +11,111 @@ STORAGE = "core/src/zaratustra_core/storage.py"
 MAINTENANCE = "core/src/zaratustra_core/maintenance.py"
 SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
     (
+        "D-handoff-cursor-consumed-early",
+        API,
+        [
+            (
+                '(processed, attempt["conversation"], cursor),',
+                "(" + M + ' or attempt["cutoff"], attempt["conversation"], cursor),',
+            )
+        ],
+        "test_work_handoff.py::test_handoff_preserves_raw_input_then_scoped_result",
+    ),
+    (
+        "D-handoff-child-published-partially",
+        API,
+        [
+            (
+                '        if state == "ready":'
+                + chr(10)
+                + '            self._intent(db, "prepare", body["id"], {})',
+                "        if continuation is not None:"
+                + chr(10)
+                + "            "
+                + M
+                + chr(10)
+                + "            db.commit()"
+                + chr(10)
+                + '        if state == "ready":'
+                + chr(10)
+                + '            self._intent(db, "prepare", body["id"], {})',
+            )
+        ],
+        "test_work_handoff.py::test_physical_loss_inside_child_creation_rolls_back_handoff",
+    ),
+    (
+        "D-handoff-final-replayed-as-new",
+        API,
+        [
+            (
+                "            if old:"
+                + chr(10)
+                + '                if old["fingerprint"] != digest(p):'
+                + chr(10)
+                + '                    fail("idempotency_conflict", "result_slot")',
+                "            if old and ("
+                + M
+                + " or False):"
+                + chr(10)
+                + '                if old["fingerprint"] != digest(p):'
+                + chr(10)
+                + '                    fail("idempotency_conflict", "result_slot")',
+            )
+        ],
+        "test_work_handoff.py::test_handoff_preserves_raw_input_then_scoped_result",
+    ),
+    (
+        "D-handoff-budget-reset",
+        API,
+        [('if child["call_limit"] > remaining:', "if (" + M + " or False):")],
+        "test_work_handoff.py::test_bad_handoff_rolls_back_every_boundary[budget]",
+    ),
+    (
+        "D-routing-orphan-tool-publication",
+        "app/src/zaratustra_app/coordinator.py",
+        [
+            (
+                '                raise CoreError("denied", "ordinary.routing_atomic_handoff")',
+                "                " + M,
+            )
+        ],
+        "test_ordinary_activity.py::test_discovery_tool_cannot_publish_orphan_activity",
+    ),
+    (
+        "D-scoped-memory-dropped",
+        "app/src/zaratustra_app/coordinator.py",
+        [
+            (
+                'head["scope"] not in {"space", scope}',
+                'head["scope"] not in ({"space"} if (' + M + ' or True) else {"space", scope})',
+            )
+        ],
+        "test_ordinary_activity.py::test_scoped_execution_pins_only_applicable_memory",
+    ),
+    (
+        "D-addressed-reply-rerouted",
+        "app/src/zaratustra_app/conversation.py",
+        [("                and not dispatched", "                and (" + M + " or True)")],
+        "test_ordinary_activity.py::test_addressed_reply_stays_in_existing_scoped_work",
+    ),
+    (
+        "D-handoff-reopen-rediscovery",
+        "app/src/zaratustra_app/conversation.py",
+        [("        if active:", "        if active and (" + M + " or False):")],
+        "test_ordinary_activity.py::test_handoff_reopen_uses_retained_terminal[after]",
+    ),
+    (
+        "D-native-profile-cap-below-floor",
+        "app/src/zaratustra_app/executor_port.py",
+        [
+            (
+                'if self.auth_mode == "pi-chatgpt" and 0 < self.max_tokens < 16:',
+                "if (" + M + " or False):",
+            )
+        ],
+        "test_ordinary_activity.py::test_native_cap_below_sdk_floor_refused_before_runtime[1]",
+    ),
+    (
         "D-native-chatgpt-effort-compat-omitted",
         "app/src/zaratustra_app/executor_port.py",
         [
@@ -65,8 +170,8 @@ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
         "app/src/zaratustra_app/conversation.py",
         [
             (
-                "if not fresh_human_input:",
-                "if (" + M + " or False):",
+                "if boundary >= cursor and not any(",
+                "if (" + M + " or False) and not any(",
             )
         ],
         "test_conversation.py::test_cancelled_entry_requires_new_input_then_new_work",

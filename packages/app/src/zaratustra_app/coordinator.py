@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 from zaratustra_core import Client, CoreError
@@ -26,7 +26,24 @@ class Coordinator:
         method = next(h for h in heads if h["id"] == payload["method_ref"]["id"])
         if method["scope"] not in {"space", scope}:
             raise CoreError("denied", "method.scope")
-        inputs = list(payload.get("inputs", []))
+        return self.client.call(
+            "open_work",
+            payload
+            | {
+                "scope": scope,
+                "inputs": self.scoped_inputs(scope, list(payload.get("inputs", []))),
+                "method_ref": {
+                    "id": method["id"],
+                    "revision": method["revision"],
+                    "role": "must_be_current",
+                },
+            },
+            str(uuid4()),
+        )
+
+    def scoped_inputs(self, scope: str, inputs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        inputs = list(inputs)
+        heads = self.snapshot()["heads"]
         for head in heads:
             if head["kind"] != "memory" or head["scope"] not in {"space", scope}:
                 continue
@@ -41,20 +58,7 @@ class Coordinator:
                 inputs.append(
                     {"id": head["id"], "revision": head["revision"], "role": "must_be_current"}
                 )
-        return self.client.call(
-            "open_work",
-            payload
-            | {
-                "scope": scope,
-                "inputs": inputs,
-                "method_ref": {
-                    "id": method["id"],
-                    "revision": method["revision"],
-                    "role": "must_be_current",
-                },
-            },
-            str(uuid4()),
-        )
+        return inputs
 
     def prepare(self, work_id: str, attempt_id: str, profile_ref: dict[str, Any]) -> dict[str, Any]:
         snapshot = self.snapshot()
@@ -90,7 +94,9 @@ class Coordinator:
             attempt_id + ":prepare",
         )
 
-    def refresh_basis(self, work_id: str) -> dict[str, Any]:
+    def refresh_basis(
+        self, work_id: str, *, method_ref: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Explicit new intent over freshly read current refs; old terminal remains evidence."""
         snapshot = self.snapshot()
         work = next(w for w in snapshot["works"] if w["id"] == work_id)
@@ -109,7 +115,7 @@ class Coordinator:
                 "revision": work["revision"],
                 "action": "refresh",
                 "inputs": [fresh(r) for r in body.get("inputs", [])],
-                "method_ref": fresh(body["method_ref"]),
+                "method_ref": method_ref if method_ref is not None else fresh(body["method_ref"]),
             },
             str(uuid4()),
         )
@@ -169,7 +175,19 @@ class Coordinator:
         ]
 
         def tool_handler(native_id: str, intent: dict[str, Any]) -> dict[str, Any]:
-            if set(intent) - {"changes", "expected_heads", "initial_work"}:
+            if not isinstance(intent, dict) or not isinstance(native_id, str) or not native_id:
+                raise CoreError("invalid_request", "native_tool.intent")
+            contract = getattr(executor, "response_contract", {})
+            if contract.get("version") == "ordinary-routing/1":
+                raise CoreError("denied", "ordinary.routing_atomic_handoff")
+            if contract.get("version") == "ordinary-execution/2":
+                from .ordinary import subject_scope
+
+                subject_scope(intent.get("changes"), pinned["work"].get("scope", "space"))
+            if set(intent) - {"changes", "expected_heads", "initial_work"} or not {
+                "changes",
+                "expected_heads",
+            } <= set(intent):
                 raise CoreError("invalid_request", "native_tool.intent")
             command_id = attempt_id + ":tool:" + native_id
             self.client.call(
@@ -235,9 +253,14 @@ class Coordinator:
         )
         return raw
 
-    def recover(self, attempt_id: str, *, pi: bool = False, decoder: Any = None) -> dict[str, Any]:
+    def recover(
+        self, attempt_id: str, *, pi: bool = False, decoder: Any = None, ordinary: bool = False
+    ) -> dict[str, Any]:
         snapshot = self.snapshot()
         attempt = next(a for a in snapshot["attempts"] if a["id"] == attempt_id)
+        retained = next((r for r in snapshot["results"] if r["attempt"] == attempt_id), None)
+        if retained is not None:
+            return cast(dict[str, Any], json.loads(retained["body"]))
         observations = [
             json.loads(o["body"]) for o in snapshot["observations"] if o["attempt"] == attempt_id
         ]
@@ -257,12 +280,19 @@ class Coordinator:
             raise CoreError(
                 "invalid_request", "retained_outcome_format", "after_refresh"
             ) from error
+        if ordinary:
+            from .ordinary import outcome
+
+            work = next(w for w in snapshot["works"] if w["id"] == attempt["work"])
+            output = outcome(output, attempt, work, self.scoped_inputs)
+        if not isinstance(output, dict) or "state" not in output or "text" not in output:
+            raise CoreError("invalid_request", "retained_outcome_format", "after_refresh")
         payload = {
             "attempt_id": attempt_id,
             "generation": attempt["generation"],
             "terminal_event": terminal["event_id"],
             "original_cursor": attempt["original_cursor"],
-            "processed_cutoff": attempt["cutoff"],
+            "processed_cutoff": output.get("processed_cutoff", attempt["cutoff"]),
             "state": output["state"],
             "text": output["text"],
             "outputs": output.get("outputs", []),
@@ -270,6 +300,8 @@ class Coordinator:
         }
         if output.get("wait"):
             payload["wait"] = output["wait"]
+        if output.get("next_work") is not None:
+            payload["next_work"] = output["next_work"]
         return self.client.call(
             "commit_outcome",
             payload,
