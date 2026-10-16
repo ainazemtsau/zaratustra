@@ -10,6 +10,24 @@ from .test_negative_controls import test_seeded_defect_is_killed as run_seed
 SLEEP = "app/src/zaratustra_app/sleep.py"
 SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
     (
+        "C-R7-resource-pause-cause",
+        SLEEP,
+        [("if resource_pause:", "if (" + M + " or False):")],
+        "test_sleep.py::test_resource_pause_crash_recovers_authoritative_cause[after-pause]",
+    ),
+    (
+        "C-R7-stale-control-cause",
+        API,
+        [
+            (
+                "db.execute(\"DELETE FROM intents WHERE kind='control' AND subject=?\", "
+                '(work["id"],))',
+                M,
+            )
+        ],
+        "test_sleep.py::test_owner_pause_replaces_previous_resource_cause[None-resume]",
+    ),
+    (
         "C-R4-paused-projection",
         SLEEP,
         [

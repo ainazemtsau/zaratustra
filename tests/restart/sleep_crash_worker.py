@@ -20,8 +20,15 @@ def main() -> None:
     send = Client.send
 
     def crash(self: Client, request: Request) -> dict[str, Any]:
-        result = send(self, request)
         phase = packet["phase"]
+        resource_pause = (
+            request.operation == "control_work"
+            and request.payload.get("action") == "pause"
+            and request.payload.get("reason") == "resource_exhausted"
+        )
+        if phase == "resource-before-pause" and resource_pause:
+            os._exit(91)
+        result = send(self, request)
         changes = request.payload.get("changes", [])
         if (
             (phase == "method" and request.command_id == "sleep:install:sleep-method")
@@ -34,13 +41,32 @@ def main() -> None:
                 and request.payload["kind"] == "terminal"
             )
             or (phase.startswith("outcome:") and request.operation == "commit_outcome")
+            or (phase == "resource-after-pause" and resource_pause)
+            or (
+                phase == "resource-after-projection"
+                and any(
+                    c["id"] == "s:progress"
+                    and c.get("body", {}).get("stop_reason") == "resource_exhausted"
+                    for c in changes
+                )
+            )
         ):
             os._exit(91)
         return result
 
     type.__setattr__(Client, "send", crash)
     sleep = Sleep(client)
-    if packet["phase"].startswith("outcome:"):
+    if packet["phase"].startswith("resource-"):
+
+        class CannotFit:
+            resource_upper = 3
+            tool_handler: Any = None
+
+            def run(self, context: Any, action: str) -> bytes:
+                raise AssertionError("Resource admission must reject before sending")
+
+        sleep.run("s", PROFILE, CannotFit())
+    elif packet["phase"].startswith("outcome:"):
         state = packet["phase"].split(":")[1]
 
         def receiver(context: Any, action: str) -> bytes:

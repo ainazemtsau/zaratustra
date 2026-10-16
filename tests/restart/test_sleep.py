@@ -539,6 +539,115 @@ def test_sleep_run_does_not_resume_unstarted_owner_pause(tmp_path: Path) -> None
     assert receiver.actions == [] and inspect(core, "works")[0]["status"] == "paused"
 
 
+@pytest.mark.parametrize("phase", ["before-pause", "after-pause", "after-projection"])
+def test_resource_pause_crash_recovers_authoritative_cause(tmp_path: Path, phase: str) -> None:
+    core, _, client = seed(tmp_path)
+    sleep = Sleep(client)
+    sleep.start(work_id="s", call_limit=3)
+
+    class Returned:
+        resource_upper = 1
+        tool_handler: Any = None
+
+        def run(self, context: Any, action: str) -> bytes:
+            return json.dumps(
+                {
+                    "state": "ready",
+                    "text": "Actual bounded result with honest remainder",
+                    "changes": [
+                        {
+                            "id": "learned",
+                            "kind": "memory",
+                            "key": "learned",
+                            "body": "Actual correction",
+                        }
+                    ],
+                    "expected_heads": {"learned": 0},
+                }
+            ).encode()
+
+    class CannotFit:
+        resource_upper = 3
+        tool_handler: Any = None
+        sends = 0
+
+        def run(self, context: Any, action: str) -> bytes:
+            self.sends += 1
+            raise AssertionError("New inference must not fit remaining resource")
+
+    sleep.run("s", PROFILE, Returned())
+    initial = sleep.progress("s")["body"]["value"]
+    killed = crash_sleep(core, client, "resource-" + phase)
+    assert killed.returncode == 91, killed.stderr
+    if phase == "after-pause":
+        assert inspect(core, "works")[0]["status"] == "paused"
+        assert sleep.progress("s")["body"]["value"]["stop_reason"] == "terminal_received"
+    receiver = CannotFit()
+    previous = None
+    for _ in range(2):
+        reopened = Sleep(Core(core.root).connect(client.token))
+        with pytest.raises(CoreError, match="resource_exhausted"):
+            reopened.run("s", PROFILE, receiver)
+        progress = reopened.progress("s")
+        value = progress["body"]["value"]
+        assert value["stop_reason"] == "resource_exhausted"
+        assert value["consumed_resource"] == 1 and value["unresolved_calls"] == []
+        for field in [
+            "remaining_refs",
+            "delivered_manifest_refs",
+            "applied_receipts",
+            "analysis_result_refs",
+        ]:
+            assert value[field] == initial[field]
+        assert value["remaining_refs"] and value["applied_receipts"]
+        if previous:
+            assert progress == previous
+        previous = progress
+    assert receiver.sends == 0 and inspect(core, "works")[0]["reserved"] == 1
+
+
+@pytest.mark.parametrize("continuation", ["resume", "refresh"])
+@pytest.mark.parametrize("reason", [None, "owner_review"])
+def test_owner_pause_replaces_previous_resource_cause(
+    tmp_path: Path, continuation: str, reason: str | None
+) -> None:
+    core, _, client = seed(tmp_path)
+    sleep = Sleep(client)
+    sleep.start(work_id="s", call_limit=4)
+    work = inspect(core, "works")[0]
+    client.call(
+        "control_work",
+        {
+            "work_id": "s",
+            "revision": work["revision"],
+            "action": "pause",
+            "reason": "resource_exhausted",
+        },
+        uuid4().hex,
+    )
+    work = inspect(core, "works")[0]
+    client.call(
+        "control_work",
+        {"work_id": "s", "revision": work["revision"], "action": continuation},
+        uuid4().hex,
+    )
+    assert not any(i["kind"] == "control" for i in inspect(core, "intents"))
+    work = inspect(core, "works")[0]
+    client.call(
+        "control_work",
+        {"work_id": "s", "revision": work["revision"], "action": "pause", "reason": reason},
+        uuid4().hex,
+    )
+    receiver = MechanicalSleepReceiver()
+    for _ in range(2):
+        with pytest.raises(CoreError, match="sleep.paused"):
+            Sleep(Core(core.root).connect(client.token)).run("s", PROFILE, Driver(receiver))
+    assert receiver.actions == []
+    assert sleep.progress("s")["body"]["value"]["stop_reason"] == "not_started"
+    control = next(i for i in inspect(core, "intents") if i["kind"] == "control")
+    assert json.loads(control["body"]) == {"action": "pause", "reason": reason}
+
+
 def test_enumeration_cannot_skip_to_finished_cursor(tmp_path: Path) -> None:
     core, owner, client = seed(tmp_path)
     sleep = Sleep(client)

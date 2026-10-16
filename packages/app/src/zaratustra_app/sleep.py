@@ -300,7 +300,15 @@ class Sleep:
         snapshot = self.coordinator.snapshot()
         attempts = [a for a in snapshot["attempts"] if a["work"] == work_id]
         work = next(w for w in snapshot["works"] if w["id"] == work_id)
+        resource_pause = any(
+            intent["kind"] in {"control", "resource"}
+            and intent["subject"] == work_id
+            and json.loads(intent["body"]).get("reason") == "resource_exhausted"
+            for intent in snapshot["intents"]
+        )
         if not attempts and work["status"] == "paused":
+            if resource_pause:
+                raise CoreError("resource_exhausted", "calls")
             raise CoreError("stale_basis", "sleep.paused", "after_refresh")
         if attempts:
             latest = attempts[-1]
@@ -325,8 +333,7 @@ class Sleep:
                 if work["status"] == "completed":
                     return json.loads(result["body"])  # type: ignore[no-any-return]
             if work["status"] == "paused":
-                progress = self.progress(work_id)["body"]["value"]
-                if progress["stop_reason"] == "resource_exhausted":
+                if resource_pause:
                     raise CoreError("resource_exhausted", "calls")
                 raise CoreError("stale_basis", "sleep.paused", "after_refresh")
             if latest["status"] == "prepared":

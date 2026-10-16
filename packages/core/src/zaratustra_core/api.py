@@ -1124,10 +1124,9 @@ class Core:
                 if work["status"] not in {"ready", "running", "waiting", "blocked"}:
                     fail("stale_basis", "work.status")
                 state = "paused" if action == "pause" else "cancelled"
-                if p.get("reason"):
-                    self._intent(
-                        db, "control", work["id"], {"action": action, "reason": p["reason"]}
-                    )
+                self._intent(
+                    db, "control", work["id"], {"action": action, "reason": p.get("reason")}
+                )
                 db.execute(
                     "UPDATE works SET "
                     "status=?,generation=generation+1,revision=revision+1 WHERE id=?",
@@ -1183,6 +1182,7 @@ class Core:
                         (attempt["id"],),
                     )
                 self._intent(db, "prepare", work["id"], {"reason": "fresh_basis"})
+                db.execute("DELETE FROM intents WHERE kind='control' AND subject=?", (work["id"],))
                 state = "ready"
             elif action == "resume":
                 if work["status"] not in {"blocked", "paused"}:
@@ -1227,6 +1227,7 @@ class Core:
                     last["attempt"] if state == "running" else work["id"],
                     {},
                 )
+                db.execute("DELETE FROM intents WHERE kind='control' AND subject=?", (work["id"],))
             else:
                 fail("invalid_request", "control.action")
             return {"status": state}
