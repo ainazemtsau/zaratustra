@@ -1,0 +1,10 @@
+{
+  "source_commit": "3870ac4ac1f6af1aa818c70c83e999a0f68646b1",
+  "result": "PASS",
+  "checks": [
+    "G7 cancel + late terminal retained only; C8 rejected",
+    "G8 known-running reconciliation + resume + retained terminal, one external effect",
+    "G7 external epoch fixture advance fences old envelope/C7/C8; restore API not claimed"
+  ],
+  "root": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\root-gate-seams\\tmpcw9inlc0"
+}

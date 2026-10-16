@@ -1,0 +1,64 @@
+"""Root's independent bounded probes for the corrected package A source pin."""
+import base64
+import json
+import sqlite3
+import tempfile
+from pathlib import Path
+
+from zaratustra_core import CoreError
+from zaratustra_app import Driver
+from tests.restart.test_contract import prepared, outcome
+from tests.restart.support import Receiver, inspect
+
+base = Path('_scratch/root-gate-seams')
+base.mkdir(parents=True, exist_ok=True)
+root = Path(tempfile.mkdtemp(dir=base)).resolve()
+checks = []
+
+def denied(function, code):
+    try:
+        function()
+    except CoreError as exc:
+        assert exc.code == code, (exc.code, code)
+    else:
+        raise AssertionError('missing ' + code)
+
+core, owner, executor, coordinator = prepared(root / 'cancel')
+receiver = Receiver()
+coordinator.dispatch('A1', 1, Driver(receiver))
+owner.call('control_work', {'work_id': 'work', 'revision': 2, 'action': 'cancel'}, 'cancel')
+late = executor.call('observe_attempt', {'attempt_id': 'A1', 'event_id': 'cancel-late', 'kind': 'terminal', 'raw_base64': 'e30='}, 'cancel-late')
+assert late['late'] is True
+denied(lambda: executor.call('commit_outcome', outcome(), 'cancel-outcome'), 'stale_basis')
+assert inspect(core, 'works')[0]['status'] == 'cancelled'
+assert inspect(core, 'results') == []
+checks.append('G7 cancel + late terminal retained only; C8 rejected')
+
+core, owner, executor, coordinator = prepared(root / 'running')
+executor.call('claim_dispatch', {'attempt_id': 'A1', 'generation': 1}, 'claim', action_id='A1:action')
+receiver = Receiver()
+raw = receiver({'accepted': True}, 'A1:action')
+executor.call('observe_attempt', {'attempt_id': 'A1', 'event_id': 'unknown', 'kind': 'unknown'}, 'unknown')
+executor.call('observe_attempt', {'attempt_id': 'A1', 'event_id': 'running-proof', 'kind': 'reconcile', 'evidence': {'action_id': 'A1:action', 'state': 'running', 'receiver_ref': 'receiver-log/v1#1'}}, 'running-proof')
+owner.call('control_work', {'work_id': 'work', 'revision': 2, 'action': 'resume'}, 'resume')
+assert inspect(core, 'works')[0]['status'] == 'running'
+executor.call('observe_attempt', {'attempt_id': 'A1', 'event_id': 'terminal', 'kind': 'terminal', 'raw_base64': base64.b64encode(raw).decode()}, 'terminal')
+assert coordinator.recover('A1')['state'] == 'waiting'
+assert receiver.actions == ['A1:action']
+checks.append('G8 known-running reconciliation + resume + retained terminal, one external effect')
+
+core, owner, executor, coordinator = prepared(root / 'epoch')
+coordinator.dispatch('A1', 1, Driver(Receiver()))
+old = executor.request('commit_outcome', outcome(), 'before-epoch-outcome')
+# Fixture-only simulation of an external restore epoch transition.
+# This does not implement or claim a production restore API.
+with sqlite3.connect(core.path) as db:
+    db.execute('UPDATE meta SET epoch=epoch+1')
+denied(lambda: executor.send(old), 'stale_epoch')
+denied(lambda: executor.call('observe_attempt', {'attempt_id': 'A1', 'event_id': 'epoch-late', 'kind': 'terminal', 'raw_base64': 'e30='}, 'epoch-late'), 'stale_epoch')
+assert inspect(core, 'results') == []
+checks.append('G7 external epoch fixture advance fences old envelope/C7/C8; restore API not claimed')
+
+report = {'source_commit': '3870ac4ac1f6af1aa818c70c83e999a0f68646b1', 'result': 'PASS', 'checks': checks, 'root': str(root)}
+(root / 'report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8', newline='\n')
+print(json.dumps(report, ensure_ascii=False))

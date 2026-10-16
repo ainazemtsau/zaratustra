@@ -1,0 +1,32 @@
+{
+  "source_commit": "3870ac4ac1f6af1aa818c70c83e999a0f68646b1",
+  "artifacts": {
+    "zaratustra-0.25.5-py3-none-any.whl": {
+      "sha256": "026aae3ae257a0912f12262817074016435c54b44389940ec06552384b443207",
+      "bytes": 685208
+    },
+    "zaratustra-0.25.5.tar.gz": {
+      "sha256": "32d936a85662de27f35dd6b4ee2aa2004dc29651fe5623393f527a5c2318750f",
+      "bytes": 615143
+    },
+    "zaratustra_core-0.1.0-py3-none-any.whl": {
+      "sha256": "df53c2216ce7a3448e36d12fd8171a483150f85a19ca0b335f7d4b4b3241ff6e",
+      "bytes": 14745
+    },
+    "zaratustra_core-0.1.0.tar.gz": {
+      "sha256": "0845ca29feeee5c5717a8d4f880f360ac9fef8f810f60139aec0a08c90ee3e29",
+      "bytes": 12360
+    },
+    "zaratustra_next-0.1.0-py3-none-any.whl": {
+      "sha256": "a476749b85f1dc3a5f5d31e0d6eb0bc791dc1abde644b2a616f43f008e62c9e5",
+      "bytes": 11374
+    },
+    "zaratustra_next-0.1.0.tar.gz": {
+      "sha256": "88eb04e7b6247f6fda43d45e635badcf233ea641e2a937c10e1a72e00b1ec1f2",
+      "bytes": 7275
+    }
+  },
+  "wheel_only_install_proof": "evidence/wheel-install.json",
+  "wheel_hashes_equal_installed_proof": true,
+  "source_manifest_verified_files": 37
+}
