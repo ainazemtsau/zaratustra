@@ -11,6 +11,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from .backup_refs import verify_references
 from .storage import durable, exclusion, publish_directory, verified
 from .types import CoreError, wire
 
@@ -48,6 +49,7 @@ def integrity(path: Path) -> None:
                 for r in body.get("inputs", []) + [body["method_ref"]]
             ):
                 raise CoreError("invalid_request", "backup.work_closure")
+        verify_references(db, path)
 
 
 def target(source: Path, destination: Path) -> Path:

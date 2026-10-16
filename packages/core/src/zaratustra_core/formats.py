@@ -3,12 +3,34 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any, NoReturn
 
 from .shapes import Ref
 from .types import CoreError
+
+
+def value_references(value: Any, schema: dict[str, Any]) -> Iterator[dict[str, Any]]:
+    """Validate the declaration/value, then visit only explicitly declared Ref slots."""
+    validate_value(value, schema)
+
+    def visit(item: Any, declaration: dict[str, Any]) -> Iterator[dict[str, Any]]:
+        if item is None:
+            return
+        if declaration["type"] == "exact-ref":
+            yield item
+        elif declaration["type"] == "object":
+            for field in declaration["fields"]:
+                if field["name"] in item:
+                    yield from visit(item[field["name"]], field)
+        elif declaration["type"] == "list":
+            for child in item:
+                yield from visit(child, declaration["items"])
+
+    yield from visit(value, schema)
+
 
 TYPES = {
     "text",

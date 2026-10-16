@@ -11,6 +11,34 @@ STORAGE = "core/src/zaratustra_core/storage.py"
 MAINTENANCE = "core/src/zaratustra_core/maintenance.py"
 SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
     (
+        "D-pinned-reference-closure-skipped",
+        MAINTENANCE,
+        [("        verify_references(db, path)", "        " + M)],
+        "test_backup_references.py::test_rehashed_pinned_reference_corruption_refused[profile_ref]",
+    ),
+    (
+        "D-declared-reference-admission-skipped",
+        API,
+        [
+            (
+                '                    self._exact(db, ref | {"role": "exact"})',
+                "                    " + M,
+            )
+        ],
+        "test_schema_references.py::test_dangling_schema_ref_rejects_entire_bundle[refs-commit_outcome]",
+    ),
+    (
+        "D-pinned-json-types-conflated",
+        "core/src/zaratustra_core/backup_refs.py",
+        [
+            (
+                "        return digest(left) == digest(right)",
+                "        " + M + chr(10) + "        return left == right",
+            )
+        ],
+        "test_backup_references.py::test_pinned_json_boolean_is_not_integer",
+    ),
+    (
         "D-cancelled-ID-reused",
         "app/src/zaratustra_app/conversation.py",
         [

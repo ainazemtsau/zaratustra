@@ -12,7 +12,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, NoReturn, cast
 
-from .formats import validate_value
+from .formats import value_references
 from .shapes import Ref, SleepProgress, Source, validate
 from .storage import durable, exclusion, verified
 from .types import CoreError, Request, digest, wire
@@ -373,7 +373,8 @@ class Core:
                 fail("identity_conflict", "record_identity")
             if change.get("schema_ref"):
                 schema = self._exact(db, change["schema_ref"])
-                validate_value(change["body"], schema["body"]["value"])
+                for ref in value_references(change["body"], schema["body"]["value"]):
+                    self._exact(db, ref | {"role": "exact"})
             value = change["body"]
             if isinstance(value, dict) and value.get("format") == "sleep-progress/v1":
                 if change["kind"] != "data":
@@ -1077,6 +1078,12 @@ class Core:
                 fail("invalid_request", "observation.kind")
             if p["kind"] == "terminal":
                 base64.b64decode(p["raw_base64"], validate=True)
+            if (
+                p["kind"] != "reconcile"
+                and p.get("evidence")
+                and p["evidence"]["action_id"] != action["id"]
+            ):
+                fail("invalid_request", "evidence.action_id")
             if p["kind"] == "reconcile":
                 evidence = p.get("evidence", {})
                 if (
