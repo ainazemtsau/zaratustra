@@ -70,6 +70,23 @@ def durable(path: Path, raw: bytes) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def publish_directory(staging: Path, destination: Path) -> None:
+    """Keep atomic publication; bound transient Windows sharing/access denials."""
+    deadline = time.monotonic() + 2
+    while True:
+        try:
+            os.replace(staging, destination)
+            return
+        except OSError as error:
+            if (
+                os.name != "nt"
+                or getattr(error, "winerror", None) not in {5, 32, 33}
+                or time.monotonic() >= deadline
+            ):
+                raise
+            time.sleep(0.01)
+
+
 def verified(root: Path, sha256: str, size: int) -> bytes:
     if (
         not isinstance(sha256, str)

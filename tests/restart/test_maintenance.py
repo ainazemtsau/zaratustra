@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import base64
+import ctypes
 import hashlib
 import json
+import os
 import shutil
 import sqlite3
 import subprocess
@@ -15,7 +17,7 @@ from typing import Any, cast
 
 import pytest
 import zaratustra_core
-from zaratustra_core import Core, CoreError
+from zaratustra_core import Core, CoreError, storage
 
 from .support import inspect
 from .test_contract import prepared
@@ -341,3 +343,109 @@ def test_backup_crash_and_maintenance_excludes_writer(tmp_path: Path, phase: str
         "after",
     )
     assert inspect(core, "messages")[0]["event"] == "after"
+
+
+@pytest.mark.parametrize("release", [True, False])
+def test_atomic_publish_windows_sharing_denial(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, release: bool
+) -> None:
+    staging, destination = tmp_path / "partial", tmp_path / "published"
+    staging.mkdir()
+    (staging / "held.bin").write_bytes(RAW)
+    if os.name != "nt":
+        storage.publish_directory(staging, destination)
+        assert (destination / "held.bin").read_bytes() == RAW
+        return
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.CreateFileW.restype = ctypes.c_void_p
+    kernel.CreateFileW.argtypes = [
+        ctypes.c_wchar_p,
+        ctypes.c_ulong,
+        ctypes.c_ulong,
+        ctypes.c_void_p,
+        ctypes.c_ulong,
+        ctypes.c_ulong,
+        ctypes.c_void_p,
+    ]
+    kernel.CloseHandle.argtypes = [ctypes.c_void_p]
+    # A file reader which withholds FILE_SHARE_DELETE blocks ancestor publication.
+    handle = kernel.CreateFileW(str(staging / "held.bin"), 0x80000000, 3, None, 3, 0, None)
+    assert handle != ctypes.c_void_p(-1).value
+    closed = False
+    try:
+        with pytest.raises(PermissionError) as observed:
+            os.replace(staging, destination)
+        assert observed.value.winerror in {5, 32, 33} and not destination.exists()
+        if release:
+
+            def release_reader(_: float) -> None:
+                nonlocal closed
+                assert kernel.CloseHandle(handle)
+                closed = True
+
+            monkeypatch.setattr(storage.time, "sleep", release_reader)
+            storage.publish_directory(staging, destination)
+            assert not staging.exists() and (destination / "held.bin").read_bytes() == RAW
+        else:
+            started = time.monotonic()
+            with pytest.raises(PermissionError):
+                storage.publish_directory(staging, destination)
+            assert 2 <= time.monotonic() - started < 4
+            assert not destination.exists() and (staging / "held.bin").read_bytes() == RAW
+    finally:
+        if not closed:
+            assert kernel.CloseHandle(handle)
+
+
+def test_atomic_publish_unrelated_error_is_not_retried(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[tuple[Path, Path]] = []
+    error = OSError("unrelated publication failure")
+
+    def fail(source: Path, destination: Path) -> None:
+        calls.append((source, destination))
+        raise error
+
+    monkeypatch.setattr(storage.os, "replace", fail)
+    with pytest.raises(OSError) as observed:
+        storage.publish_directory(tmp_path / "partial", tmp_path / "published")
+    assert observed.value is error
+    assert calls == [(tmp_path / "partial", tmp_path / "published")]
+
+
+def test_atomic_publish_preserves_existing_destination(tmp_path: Path) -> None:
+    staging, destination = tmp_path / "partial", tmp_path / "published"
+    staging.mkdir()
+    destination.mkdir()
+    (staging / "new.bin").write_bytes(RAW)
+    (destination / "sentinel.bin").write_bytes(b"existing destination")
+    with pytest.raises(OSError):
+        storage.publish_directory(staging, destination)
+    assert (staging / "new.bin").read_bytes() == RAW
+    assert (destination / "sentinel.bin").read_bytes() == b"existing destination"
+    assert not (destination / "new.bin").exists()
+
+
+def test_failed_backup_cleanup_preserves_publication_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from zaratustra_core import maintenance
+
+    core, token = Core.initialize(tmp_path / "space")
+    publication_error = PermissionError("publication denied")
+
+    def fail_publish(source: Path, destination: Path) -> None:
+        assert source.is_dir() and not destination.exists()
+        raise publication_error
+
+    def failed_cleanup(source: Path, *, ignore_errors: bool = False) -> None:
+        assert source.is_dir() and ignore_errors
+        # Emulate rmtree's ignore_errors contract with an unremovable staging tree.
+
+    monkeypatch.setattr(maintenance, "publish_directory", fail_publish)
+    monkeypatch.setattr(maintenance.shutil, "rmtree", failed_cleanup)
+    with pytest.raises(PermissionError) as observed:
+        core.backup(token, tmp_path / "backup")
+    assert observed.value is publication_error
+    assert not (tmp_path / "backup").exists()

@@ -1224,10 +1224,17 @@ class Core:
                     {
                         "action": action,
                         "reason": p.get("reason"),
-                        "input_watermark": db.execute(
-                            "SELECT COALESCE(MAX(seq),0) FROM messages WHERE conversation=?",
-                            (work["conversation"],),
-                        ).fetchone()[0],
+                        **(
+                            {
+                                "input_watermark": db.execute(
+                                    "SELECT COALESCE(MAX(seq),0) FROM messages "
+                                    "WHERE conversation=?",
+                                    (work["conversation"],),
+                                ).fetchone()[0]
+                            }
+                            if action == "cancel"
+                            else {}
+                        ),
                     },
                 )
                 db.execute(

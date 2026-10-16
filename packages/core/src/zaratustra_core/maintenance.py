@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import secrets
 import shutil
 import sqlite3
@@ -12,7 +11,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from .storage import durable, exclusion, verified
+from .storage import durable, exclusion, publish_directory, verified
 from .types import CoreError, wire
 
 if TYPE_CHECKING:
@@ -93,11 +92,12 @@ def backup(core: Core, token: str, destination: Path) -> dict[str, Any]:
                 "artifacts": artifacts,
             }
             durable(temporary / "manifest.json", wire(manifest))
-            os.replace(temporary, destination)
+            publish_directory(temporary, destination)
             return manifest
         finally:
             if temporary.exists():
-                shutil.rmtree(temporary)
+                # A still-held failed staging tree must not hide the publication error.
+                shutil.rmtree(temporary, ignore_errors=True)
 
 
 def restore(backup_root: Path, destination: Path) -> str:
@@ -153,8 +153,8 @@ def restore(backup_root: Path, destination: Path) -> str:
         integrity(temporary / "core.sqlite3")
         durable(temporary / "core.sqlite3", (temporary / "core.sqlite3").read_bytes())
         durable(temporary / "owner.credential", token.encode())
-        os.replace(temporary, destination)
+        publish_directory(temporary, destination)
         return token
     finally:
         if temporary.exists():
-            shutil.rmtree(temporary)
+            shutil.rmtree(temporary, ignore_errors=True)
