@@ -69,7 +69,7 @@ SCHEMA = obj(
             obj(
                 {
                     "id": TEXT,
-                    "kind": {"type": "string", "enum": ["data", "memory", "method"]},
+                    "kind": {"type": "string", "enum": ["memory", "method"]},
                     "key": TEXT,
                     "scope": TEXT,
                     "text": TEXT,
@@ -168,6 +168,10 @@ class CodexLunaExecutor:
             "Return the structured answer from the supplied schema. This test receiver "
             "losslessly maps edits.text to free-text Change.body, analyses to ordinary data "
             "sleep-analysis/v1 records, and progress to the existing progress record. "
+            "Put ALL analysis records in analyses, never as a text edit. Reference those "
+            "analysis IDs as exact objects in progress.analysis_result_refs. Edits are only "
+            "free-text memory/Method changes. Event sequence gaps can be source-less commands, "
+            "and are not evidence that a source was omitted or remains unexplored. "
             "For access or ordinary Work use progress=null and analyses=[] when not needed. "
             "For Sleep supply complete progress with exact reference OBJECTS, not ID strings. "
             "Apply the complete Method; retain all required progress fields. "
