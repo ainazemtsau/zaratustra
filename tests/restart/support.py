@@ -306,6 +306,18 @@ def trace(root: Path, mode: str) -> dict[str, Any]:
         assert inspect(core, "waits")[0]["status"] == "answered"
         evidence = {
             "client": mode,
+            "domain": {
+                t: inspect(core, t)
+                for t in (
+                    "heads",
+                    "works",
+                    "attempts",
+                    "waits",
+                    "conversations",
+                    "tool_calls",
+                    "acceptance",
+                )
+            },
             "actions": receiver.actions,
             "received": receiver.received,
             "results": inspect(core, "results"),
@@ -314,7 +326,7 @@ def trace(root: Path, mode: str) -> dict[str, Any]:
             "raw_terminal_sha256": hashlib.sha256(raw).hexdigest(),
             "native_rpc_events": port.events if isinstance(port, Pi) else [],
             "native_provider_packets": provider.packets if provider else [],
-            "native_callbacks": port.callbacks if isinstance(port, Pi) else [],
+            "native_callbacks": port.callbacks,
         }
         destination = os.environ.get("ZARA_RESTART_EVIDENCE")
         if destination:

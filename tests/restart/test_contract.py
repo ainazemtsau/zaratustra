@@ -113,13 +113,21 @@ def test_claim_rechecks_late_input(tmp_path: Path) -> None:
 def test_no_blind_resend_after_claim(tmp_path: Path) -> None:
     core, _, executor, coordinator = prepared(tmp_path)
     executor.call(
-        "claim_dispatch", {"attempt_id": "A1", "generation": 1}, "A1:claim", action_id="A1:action"
+        "claim_dispatch",
+        {"attempt_id": "A1", "generation": 1, "resource_upper": 2},
+        "A1:claim",
+        action_id="A1:action",
     )
     receiver = Receiver()
-    with pytest.raises(CoreError, match="outcome_unknown"):
+    receiver({"accepted_before_observer_crash": True}, "A1:action")
+    code = None
+    try:
         Coordinator(Core(core.root).connect(executor.token)).dispatch("A1", 1, Driver(receiver))
-    assert receiver.actions == []
-    assert inspect(core, "works")[0]["reserved"] == 1
+    except CoreError as error:
+        code = error.code
+    assert receiver.actions == ["A1:action"], "unsafe replay produced duplicate receiver effects"
+    assert code == "outcome_unknown"
+    assert inspect(core, "works")[0]["reserved"] == 2
 
 
 def test_reconcile_blocked_without_resend(tmp_path: Path) -> None:

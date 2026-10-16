@@ -231,7 +231,8 @@ SEEDS.extend(
                     "if (" + M + " or False):",
                 ),
                 (
-                    'if work["status"] in {"paused", "cancelled", "completed"}:',
+                    'if work["status"] != "running" or attempt["status"] '
+                    'not in {"prepared", "claimed"}:',
                     "if (" + M + " or False):",
                 ),
             ],

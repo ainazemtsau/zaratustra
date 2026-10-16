@@ -33,19 +33,24 @@ class Driver:
     def __init__(self, receiver: Any):
         self.receiver = receiver
         self.tool_handler: Any = None
+        self.callbacks: list[dict[str, Any]] = []
 
     def run(self, context: dict[str, Any], action_id: str) -> bytes:
         raw = self.receiver(context, action_id)
         result = json.loads(raw)
         if result.get("tool_changes"):
-            self.tool_handler(
-                result["native_tool_call_id"],
-                {
-                    "changes": result.pop("tool_changes"),
-                    "expected_heads": result.pop("expected_heads"),
-                },
-            )
-            result.pop("native_tool_call_id")
+            native_id = result.pop("native_tool_call_id")
+            intent = {
+                "changes": result.pop("tool_changes"),
+                "expected_heads": result.pop("expected_heads"),
+            }
+            if "initial_work" in result:
+                intent["initial_work"] = result.pop("initial_work")
+            try:
+                receipt = self.tool_handler(native_id, intent)
+                self.callbacks.append({"native_id": native_id, "receipt": receipt})
+            except CoreError as error:
+                self.callbacks.append({"native_id": native_id, "error": error.as_dict()})
         return json.dumps(result, ensure_ascii=False).encode()
 
 
@@ -161,9 +166,9 @@ class Pi:
             assert process.stdout is not None
             for line in iter(process.stdout.readline, b""):
                 try:
-                    incoming.put(json.loads(line))
+                    incoming.put({"event": json.loads(line), "raw": line})
                 except ValueError:
-                    incoming.put({"type": "invalid_protocol", "raw": line.hex()})
+                    incoming.put({"event": {"type": "invalid_protocol"}, "raw": line})
 
         def stderr() -> None:
             assert process.stderr is not None
@@ -189,12 +194,15 @@ class Pi:
             deadline = time.monotonic() + 50
             while time.monotonic() < deadline:
                 try:
-                    event = incoming.get(timeout=0.2)
+                    packet = incoming.get(timeout=0.2)
+                    event = packet["event"]
                 except queue.Empty:
                     if process.poll() is not None:
                         raise CoreError("outcome_unknown", "pi_exit", "reconcile") from None
                     continue
                 self.events.append(event)
+                if event.get("type") == "invalid_protocol":
+                    raise CoreError("outcome_unknown", "pi_protocol", "reconcile")
                 if event.get("type") == "response" and event.get("success") is False:
                     raise CoreError("outcome_unknown", str(event.get("error")), "reconcile")
                 if event.get("type") == "message_end":
@@ -204,11 +212,11 @@ class Pi:
                             raise CoreError(
                                 "outcome_unknown", str(msg.get("errorMessage")), "reconcile"
                             )
-                        terminal = msg
+                        terminal = packet["raw"]
                 if event.get("type") == "agent_settled":
                     if terminal is None:
                         raise CoreError("outcome_unknown", "pi_missing_terminal", "reconcile")
-                    return json.dumps(terminal, ensure_ascii=False, separators=(",", ":")).encode()
+                    return bytes(terminal)
             raise CoreError("outcome_unknown", "pi_timeout", "reconcile")
         finally:
             process.terminate()
@@ -226,7 +234,8 @@ class Pi:
 
     @staticmethod
     def decode(raw: bytes) -> dict[str, Any]:
-        message = json.loads(raw)
+        event = json.loads(raw)
+        message = event["message"] if event.get("type") == "message_end" else event
         return cast(
             dict[str, Any],
             json.loads(

@@ -134,13 +134,16 @@ class Core:
         ).fetchone()
         if identity is None:
             fail("denied", "credential")
+        self._require(db, identity["principal"], permission)
+        return cast(sqlite3.Row, identity)
+
+    def _require(self, db: sqlite3.Connection, principal: str, permission: str) -> None:
         rights = db.execute(
-            "SELECT permissions FROM rights WHERE principal=?", (identity["principal"],)
+            "SELECT permissions FROM rights WHERE principal=?", (principal,)
         ).fetchone()
         permissions = loads(rights[0]) if rights else []
         if "*" not in permissions and permission not in permissions:
             fail("denied", permission)
-        return cast(sqlite3.Row, identity)
 
     def connect(self, token: str) -> Client:
         with self._transaction() as db:
@@ -367,8 +370,35 @@ class Core:
     def _fence(self, attempt: sqlite3.Row, work: sqlite3.Row, generation: int) -> None:
         if generation != work["generation"] or attempt["generation"] != generation:
             fail("stale_basis", "generation", "after_refresh")
-        if work["status"] in {"paused", "cancelled", "completed"}:
-            fail("stale_basis", "work.status", "after_refresh")
+        if work["status"] != "running" or attempt["status"] not in {"prepared", "claimed"}:
+            fail("stale_basis", "execution.status", "after_refresh")
+
+    def _check_basis(self, db: sqlite3.Connection, attempt: sqlite3.Row, work: sqlite3.Row) -> None:
+        body = loads(work["body"])
+        for ref in body.get("inputs", []) + [
+            body["method_ref"],
+            loads(attempt["body"])["profile_ref"],
+        ]:
+            self._exact(db, ref)
+
+    def _tool_authority(
+        self,
+        db: sqlite3.Connection,
+        actor: sqlite3.Row,
+        attempt: sqlite3.Row,
+        work: sqlite3.Row,
+        generation: int,
+    ) -> None:
+        self._fence(attempt, work, generation)
+        action = db.execute("SELECT * FROM actions WHERE attempt=?", (attempt["id"],)).fetchone()
+        if (
+            attempt["status"] != "claimed"
+            or action is None
+            or action["executor"] != actor["principal"]
+            or action["state"] not in {"claimed", "running"}
+        ):
+            fail("denied", "tool.executor_claim")
+        self._check_basis(db, attempt, work)
 
     def _apply(self, db: sqlite3.Connection, actor: sqlite3.Row, req: Request) -> dict[str, Any]:
         p = req.payload
@@ -470,7 +500,7 @@ class Core:
             return {"message_sequence": seq}
         if op == "reserve_tool":
             attempt, work = self._attempt(db, p["attempt_id"])
-            self._fence(attempt, work, p["generation"])
+            self._tool_authority(db, actor, attempt, work, p["generation"])
             old = db.execute(
                 "SELECT * FROM tool_calls WHERE attempt=? AND native_id=?",
                 (attempt["id"], p["native_id"]),
@@ -483,10 +513,12 @@ class Core:
             )
             return {"command_id": p["command_id"]}
         if op == "apply_changes":
+            if p.get("initial_work"):
+                self._require(db, actor["principal"], "open_work")
             correlation = p.get("tool")
             if correlation:
                 attempt, work = self._attempt(db, correlation["attempt_id"])
-                self._fence(attempt, work, correlation["generation"])
+                self._tool_authority(db, actor, attempt, work, correlation["generation"])
                 tool = db.execute(
                     "SELECT * FROM tool_calls WHERE attempt=? AND native_id=?",
                     (attempt["id"], correlation["native_id"]),
@@ -622,10 +654,7 @@ class Core:
                 fail("idempotency_conflict", "action_id")
             pinned = loads(attempt["body"])
             body = loads(work["body"])
-            for ref in body.get("inputs", []):
-                self._exact(db, ref)
-            self._exact(db, body["method_ref"])
-            self._exact(db, pinned["profile_ref"])
+            self._check_basis(db, attempt, work)
             high = db.execute(
                 "SELECT COALESCE(MAX(seq),0) FROM messages WHERE conversation=?",
                 (attempt["conversation"],),
@@ -722,12 +751,9 @@ class Core:
                 or p["processed_cutoff"] != attempt["cutoff"]
             ):
                 fail("stale_basis", "cursor", "after_refresh")
-            body = loads(work["body"])
-            for ref in body.get("inputs", []) + [
-                body["method_ref"],
-                loads(attempt["body"])["profile_ref"],
-            ]:
-                self._exact(db, ref)
+            self._check_basis(db, attempt, work)
+            if p.get("changes"):
+                self._require(db, actor["principal"], "apply_changes")
             refs = self._changes(db, p["changes"], req.expected_heads) if p.get("changes") else []
             for ref in p.get("outputs", []):
                 self._exact(db, ref)

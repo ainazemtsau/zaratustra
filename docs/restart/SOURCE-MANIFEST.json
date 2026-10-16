@@ -1,51 +1,263 @@
 {
+  "manifest_version": 2,
+  "source_commit_pointer": "evidence/GATE-PROVENANCE.json source_commit",
   "base": "9d903d709783601c4878b707b9618031753a6854",
-  "plan_sha256": "3e279c312d20f137e2076ecd7240f6b2c039923b9ee9bfa55e9662c5df98e0cb",
-  "sources": {
-    "AGENTS.md": "fe841f5af7be3527fc36be94f48c5797dd4ef511e7acbe478947b6f1ce3efe53",
-    "packages/AGENTS.md": "f27f91b6573b96f59be150fb9234707148a620ba4e79b42b033cfb396f3be3f5",
-    "packages/app/pyproject.toml": "0e132ca2cea154ef35e80a9461f33be7fd4608f2061253ae8fe88242a4c2f80d",
-    "packages/app/src/zaratustra_app/__init__.py": "5d744ffeb43335e46ac2997d6fd0bd29a7d9d7039e0c2ba19b8f38c4fcc7f24b",
-    "packages/app/src/zaratustra_app/adapters/__init__.py": "9d137e4c91e4c1fd89eecf4d031d4f104807906951282b6d2783c950777b50b5",
-    "packages/app/src/zaratustra_app/adapters/AGENTS.md": "67e1b5f8531b23ccb73d879ca07c1b85c57c2a69904acce618b21c7454436ca9",
-    "packages/app/src/zaratustra_app/adapters/pi/__init__.py": "b811045bc60cc8ff7a3e1e875a3048806d2d2b6d5d61b51f74b2d35879e2ae0f",
-    "packages/app/src/zaratustra_app/adapters/pi/AGENTS.md": "75e3d5d27da4df738dcf52e314e5773617fef7949e96dda3e70981234b91d303",
-    "packages/app/src/zaratustra_app/adapters/pi/bridge.py": "e574d3ce5af86bdcb7e5d9d1f76c4aa03cf73a914db66a6d733f819f95969a7e",
-    "packages/app/src/zaratustra_app/adapters/pi/extension.ts": "dea8b2b418980d5d1986273a3dceb20a6aa70b26c2fd3665a2620e87b7bcf868",
-    "packages/app/src/zaratustra_app/AGENTS.md": "cca28b759813cd2b56155b2223833feb15b82333e330632cc3ea020a21166377",
-    "packages/app/src/zaratustra_app/cli.py": "5f651a9a7eb1e8de81350dba32a8f391fc979ed45d34e62aa664c4b6ab556c4d",
-    "packages/app/src/zaratustra_app/coordinator.py": "72a0860609790a0d804884f8c338ba963b835c04ffe21f035b63a6f7a31d8c73",
-    "packages/app/src/zaratustra_app/executor_port.py": "189d800e591a72b8117e5d302fca6ca60c82a627ffc6dc3c156ce9d54b95ac8d",
-    "packages/core/pyproject.toml": "6e1bf7c68e113a8d9b1d25931236440944336d1ff8ce425c3ad4804a0883d4e5",
-    "packages/core/src/zaratustra_core/__init__.py": "7f71419c900c0207f7e9b1e9444a8b20a1f149faa06175484a62d82f0baef7c7",
-    "packages/core/src/zaratustra_core/AGENTS.md": "97005af378e4fcb1d49207514b7b018928f454539725d3e499a160fff99a3f16",
-    "packages/core/src/zaratustra_core/api.py": "c1256840df8547db960279344f0b35aec4962f625b3dce618d7b8812367930d1",
-    "packages/core/src/zaratustra_core/formats.py": "034fb0f9fa222b9f0ae4b59855ece8c333654cf7e2f001d0fce4cb4edf9cee8a",
-    "packages/core/src/zaratustra_core/shapes.py": "18d062853e3954d86eb40970ce3aa038915d16d75ad8ec1ec5b4e30742588d33",
-    "packages/core/src/zaratustra_core/types.py": "54b8a7103b7b0ae9d924cb839acd7789bff316b8e79bcf565635b1505ab5d33f",
-    "pyproject.toml": "90a2a2b9ec02183841a6c1878330233cf2a8bba599134b0eefd32a2d37d24d7b",
-    "REVIEW.md": "19fa21d4d6c2ed8f415c4b1c806a18f6655848c891dd9a1e704644214a4b5e56",
-    "tests/restart/__init__.py": "9ed8fa7ee8ce67b6f48700ae2c28d611729dcf314f73398c07d2a103684a9306",
-    "tests/restart/AGENTS.md": "ea7cb7071a2aac1ede3d412b63ed73ed00fc1a80b7858c670b0ed09a6bab0cd4",
-    "tests/restart/crash_worker.py": "ba596fe131bc07994b4343fda90481b88c5b40ef2d221cc17ae318e318070550",
-    "tests/restart/support.py": "493e9e89bac3029ee66b30407720c27de8d53c4b181934d80808997f3f4de5da",
-    "tests/restart/test_build.py": "a95483b95d1e41a20c3f5bb18da6cdb16305cc46257a0131968b62f6a1db99f2",
-    "tests/restart/test_contract.py": "21a90555e8d76697f8cc192c72ea6b2e95927da87ab668fc49fba62aa7359013",
-    "tests/restart/test_crashes.py": "94d3c302704f729f3b4b374372cb10d556408304af10c14b27879f59d22a276f",
-    "tests/restart/test_isolation.py": "0d68ab3019baf0d60c464db4ce12a6d1c8f33ef131eda0935d23f5bca8228b0f",
-    "tests/restart/test_native_and_shapes.py": "ca39896d89ee86525b74d9c06d542db649d8f2e5e469132d4586d0a98d93d47b",
-    "tests/restart/test_negative_controls.py": "abfe4b5feff312ed10a9c387c7688488e68b453aa2b7e2fb18129e02a8beca6d",
-    "tests/restart/test_trace.py": "bfb763b595177c0656f9983846b52ed12d90429978ddea15eaae86832dfb2e4d",
-    "tools/check.py": "709d921b1f284d570921ebc7c87a531d0348f49384bac6075045bdcd4d960eda",
-    "uv.lock": "fce37007eec2ea8c819ba9989f093c156977a0f10ccafb975d07811dbb4af72a",
-    "validation.config": "450f08e6af97ccd104bd84499c8fd28a213e55e8a8515b1151ce01e43e5da9db"
-  },
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "4a61639570fb016e4c0d778863aefeea6393092e43850595d822baf39d659a1a",
+      "worktree_sha256": "4a61639570fb016e4c0d778863aefeea6393092e43850595d822baf39d659a1a"
+    },
+    {
+      "path": "packages/AGENTS.md",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "1f7d90ab109a28a36a51a4d91f532596f7d836e7f8c5e5a1bdf02d4365686146",
+      "worktree_sha256": "1f7d90ab109a28a36a51a4d91f532596f7d836e7f8c5e5a1bdf02d4365686146"
+    },
+    {
+      "path": "packages/app/pyproject.toml",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "5a1c312944177d1e1bb99a69887c39e4ad68dbc315481ab0b444c2582b50e4b0",
+      "worktree_sha256": "5a1c312944177d1e1bb99a69887c39e4ad68dbc315481ab0b444c2582b50e4b0"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/__init__.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "5d744ffeb43335e46ac2997d6fd0bd29a7d9d7039e0c2ba19b8f38c4fcc7f24b",
+      "worktree_sha256": "5d744ffeb43335e46ac2997d6fd0bd29a7d9d7039e0c2ba19b8f38c4fcc7f24b"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/__init__.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "3313c92a9cdbfccae4afdf1f0a2defde08ac4a84eb166825fc21ddb9347cce20",
+      "worktree_sha256": "3313c92a9cdbfccae4afdf1f0a2defde08ac4a84eb166825fc21ddb9347cce20"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/AGENTS.md",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "025c36f832a8b3d73d3c1c6cc24bcd6b8ad5ef6a048c1aedfad327ca97cddafb",
+      "worktree_sha256": "025c36f832a8b3d73d3c1c6cc24bcd6b8ad5ef6a048c1aedfad327ca97cddafb"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/__init__.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "6de3b1e1a3155f4e8d9bb2e104473abfc7c6a10f37ff0aa537ada162cbe2aa61",
+      "worktree_sha256": "6de3b1e1a3155f4e8d9bb2e104473abfc7c6a10f37ff0aa537ada162cbe2aa61"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/AGENTS.md",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "4d9590766e47a2a6a9e706015320ffd8ce865a0d1b1089659abd6f18462a1448",
+      "worktree_sha256": "4d9590766e47a2a6a9e706015320ffd8ce865a0d1b1089659abd6f18462a1448"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/bridge.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "c5342f8fca42b64aec70315d9d14f8e47be3278af8f044c27758e2d44ddb44c9",
+      "worktree_sha256": "c5342f8fca42b64aec70315d9d14f8e47be3278af8f044c27758e2d44ddb44c9"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/extension.ts",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "dfb451e22ce14af8a63fd37c5e8a0c6d75a11ead34e79eb036e8bfd78958505a",
+      "worktree_sha256": "dfb451e22ce14af8a63fd37c5e8a0c6d75a11ead34e79eb036e8bfd78958505a"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/AGENTS.md",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "151ae14339f3d198310a208bf9f6cba522010f37b8c3a0cd44f9d670ce20471a",
+      "worktree_sha256": "151ae14339f3d198310a208bf9f6cba522010f37b8c3a0cd44f9d670ce20471a"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/cli.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "5f651a9a7eb1e8de81350dba32a8f391fc979ed45d34e62aa664c4b6ab556c4d",
+      "worktree_sha256": "5f651a9a7eb1e8de81350dba32a8f391fc979ed45d34e62aa664c4b6ab556c4d"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/coordinator.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "5dfc0f7f3c8ea795dd586a1e18c35af532e3d7d21c9a4f9a4df4b7d5b7f36285",
+      "worktree_sha256": "5dfc0f7f3c8ea795dd586a1e18c35af532e3d7d21c9a4f9a4df4b7d5b7f36285"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/executor_port.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "a3992e14cca448b788a489190d35588701562a77ba795ce6b7d9056d4b0ef663",
+      "worktree_sha256": "a3992e14cca448b788a489190d35588701562a77ba795ce6b7d9056d4b0ef663"
+    },
+    {
+      "path": "packages/core/pyproject.toml",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "ab44be890c2ba2b01d9fdfc4e5a7050a1792d89c4da8c47b3873a0d81b9137c0",
+      "worktree_sha256": "ab44be890c2ba2b01d9fdfc4e5a7050a1792d89c4da8c47b3873a0d81b9137c0"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/__init__.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "7f71419c900c0207f7e9b1e9444a8b20a1f149faa06175484a62d82f0baef7c7",
+      "worktree_sha256": "7f71419c900c0207f7e9b1e9444a8b20a1f149faa06175484a62d82f0baef7c7"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/AGENTS.md",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "dfc0b62815a74d2d637d56b5c52efe4c2c638057304da2a33b4026b89f8f1ada",
+      "worktree_sha256": "dfc0b62815a74d2d637d56b5c52efe4c2c638057304da2a33b4026b89f8f1ada"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/api.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "222a448719c09ac65b967eb22cb4c70c206a8cf7c2dcbd5c2ec9944f351bff86",
+      "worktree_sha256": "222a448719c09ac65b967eb22cb4c70c206a8cf7c2dcbd5c2ec9944f351bff86"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/formats.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "30e8d73392368928a74c8f080be5da87b4114223a897f279ab0c40f3391a716d",
+      "worktree_sha256": "30e8d73392368928a74c8f080be5da87b4114223a897f279ab0c40f3391a716d"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/shapes.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "fd06acb2671fdc4b00821227105b267f5f905c9d482cd5ce5b9cd1619dbcef3d",
+      "worktree_sha256": "fd06acb2671fdc4b00821227105b267f5f905c9d482cd5ce5b9cd1619dbcef3d"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/types.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "54b8a7103b7b0ae9d924cb839acd7789bff316b8e79bcf565635b1505ab5d33f",
+      "worktree_sha256": "54b8a7103b7b0ae9d924cb839acd7789bff316b8e79bcf565635b1505ab5d33f"
+    },
+    {
+      "path": "pyproject.toml",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "9f8df00d94129b6ed934cc446db07dd6c7c5155ba67ab1992336d653fee236a8",
+      "worktree_sha256": "9f8df00d94129b6ed934cc446db07dd6c7c5155ba67ab1992336d653fee236a8"
+    },
+    {
+      "path": "tests/restart/__init__.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "3729bf0fa2108a0592552bc4497c99b77c77e5bf5be30030646021ae9602c137",
+      "worktree_sha256": "3729bf0fa2108a0592552bc4497c99b77c77e5bf5be30030646021ae9602c137"
+    },
+    {
+      "path": "tests/restart/AGENTS.md",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "fbaf38381fd8667e3231726f3c327efc1288bceb0a491ffbfe3ab1cfbf53616c",
+      "worktree_sha256": "fbaf38381fd8667e3231726f3c327efc1288bceb0a491ffbfe3ab1cfbf53616c"
+    },
+    {
+      "path": "tests/restart/crash_worker.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "20a4124e9025615cfccebb572502c0e138ae9d073f14adffa41157b33718f65a",
+      "worktree_sha256": "20a4124e9025615cfccebb572502c0e138ae9d073f14adffa41157b33718f65a"
+    },
+    {
+      "path": "tests/restart/support.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "86827be43d1e92aaf52f329804b502393f0df69265e4b03622a6128bc853f400",
+      "worktree_sha256": "86827be43d1e92aaf52f329804b502393f0df69265e4b03622a6128bc853f400"
+    },
+    {
+      "path": "tests/restart/test_build.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "862ddda37ed00490f91c55542c8a6b71ab1ccb600367b2cc950abb8d4cc4f527",
+      "worktree_sha256": "862ddda37ed00490f91c55542c8a6b71ab1ccb600367b2cc950abb8d4cc4f527"
+    },
+    {
+      "path": "tests/restart/test_client_parity.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "56aa0cde9b72d0ac7d77f553a5449cdde918810d6aa70444b4397ba307c23d16",
+      "worktree_sha256": "56aa0cde9b72d0ac7d77f553a5449cdde918810d6aa70444b4397ba307c23d16"
+    },
+    {
+      "path": "tests/restart/test_contract.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "0827052d1d3bee8607b6ae1b065dc745dbbc08afb30f2c20810cbefeb77384d3",
+      "worktree_sha256": "0827052d1d3bee8607b6ae1b065dc745dbbc08afb30f2c20810cbefeb77384d3"
+    },
+    {
+      "path": "tests/restart/test_crashes.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "5f78acfad0e1574d903aa74541808b4f4c3676ef813de236b7d553afbb91ac11",
+      "worktree_sha256": "5f78acfad0e1574d903aa74541808b4f4c3676ef813de236b7d553afbb91ac11"
+    },
+    {
+      "path": "tests/restart/test_isolation.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "0d68ab3019baf0d60c464db4ce12a6d1c8f33ef131eda0935d23f5bca8228b0f",
+      "worktree_sha256": "0d68ab3019baf0d60c464db4ce12a6d1c8f33ef131eda0935d23f5bca8228b0f"
+    },
+    {
+      "path": "tests/restart/test_native_and_shapes.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "183bcce6347cb01236740cc4d9e8054e8377c8d0d78793a64d3bf555724e3af1",
+      "worktree_sha256": "183bcce6347cb01236740cc4d9e8054e8377c8d0d78793a64d3bf555724e3af1"
+    },
+    {
+      "path": "tests/restart/test_negative_controls.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "54539cb91c91d83de1ea8a55d860cd2a64f58c27713685214ffaf939e251b388",
+      "worktree_sha256": "54539cb91c91d83de1ea8a55d860cd2a64f58c27713685214ffaf939e251b388"
+    },
+    {
+      "path": "tests/restart/test_review_findings.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "abbe2d67446a94508d33afba8845f328a4a714fe8ddeba1749aa557a06ae2f2e",
+      "worktree_sha256": "abbe2d67446a94508d33afba8845f328a4a714fe8ddeba1749aa557a06ae2f2e"
+    },
+    {
+      "path": "tests/restart/test_trace.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "bfb763b595177c0656f9983846b52ed12d90429978ddea15eaae86832dfb2e4d",
+      "worktree_sha256": "bfb763b595177c0656f9983846b52ed12d90429978ddea15eaae86832dfb2e4d"
+    },
+    {
+      "path": "tools/check.py",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "72d266e5f8e4fb9e99933d3190722686ce25039202ba037ffc874fb45b728890",
+      "worktree_sha256": "72d266e5f8e4fb9e99933d3190722686ce25039202ba037ffc874fb45b728890"
+    },
+    {
+      "path": "uv.lock",
+      "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
+      "sha256_git_blob": "fce37007eec2ea8c819ba9989f093c156977a0f10ccafb975d07811dbb4af72a",
+      "worktree_sha256": "fce37007eec2ea8c819ba9989f093c156977a0f10ccafb975d07811dbb4af72a"
+    }
+  ],
+  "frozen_artifacts": [
+    {
+      "path": "validation.config",
+      "raw_artifact_sha256": "450f08e6af97ccd104bd84499c8fd28a213e55e8a8515b1151ce01e43e5da9db",
+      "sha256_git_blob": "450f08e6af97ccd104bd84499c8fd28a213e55e8a8515b1151ce01e43e5da9db",
+      "unchanged": true
+    },
+    {
+      "path": "REVIEW.md",
+      "raw_artifact_sha256": "19fa21d4d6c2ed8f415c4b1c806a18f6655848c891dd9a1e704644214a4b5e56",
+      "sha256_git_blob": "19fa21d4d6c2ed8f415c4b1c806a18f6655848c891dd9a1e704644214a4b5e56",
+      "unchanged": true
+    },
+    {
+      "path": "docs/restart/FIRST-RELEASE-PLAN.md",
+      "raw_artifact_sha256": "3e279c312d20f137e2076ecd7240f6b2c039923b9ee9bfa55e9662c5df98e0cb",
+      "sha256_git_blob": "3e279c312d20f137e2076ecd7240f6b2c039923b9ee9bfa55e9662c5df98e0cb",
+      "unchanged": true
+    },
+    {
+      "path": "docs/restart/FIRST-RELEASE-REVIEW.md",
+      "raw_artifact_sha256": "e7493dc10a06ce34b7f4e06efb6db55509565b46099ee51d1d6987b2aa268dcb",
+      "sha256_git_blob": "e7493dc10a06ce34b7f4e06efb6db55509565b46099ee51d1d6987b2aa268dcb",
+      "unchanged": true
+    }
+  ],
   "environment": {
     "python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]",
-    "sqlite": "3.50.4",
-    "wire": "wire/v1",
-    "method": "conversation@1 fictional trace resource",
+    "sqlite_clean": "3.50.4",
+    "pydantic": "2.13.5",
     "pi": "1.0.4",
-    "node": "v22.19.0"
+    "node": "v22.19.0",
+    "contract": "wire/v1"
   }
 }

@@ -10,6 +10,8 @@ from typing import Any
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+from zaratustra_core import CoreError
+
 
 class Bridge(ThreadingHTTPServer):
     def __init__(self, endpoint: str, tool_handler: Any, limit: int):
@@ -38,8 +40,14 @@ class Handler(BaseHTTPRequestHandler):
                 result = self.server.tool_handler(payload["native_id"], payload["intent"])
                 self.server.callbacks.append({"native_id": payload["native_id"], "receipt": result})
                 self.send_response(200)
-            except Exception as exc:
-                result = {"error": str(exc)}
+            except CoreError as exc:
+                result = {"error": exc.as_dict()}
+                self.server.callbacks.append(
+                    {"native_id": payload["native_id"], "error": exc.as_dict()}
+                )
+                self.send_response(409)
+            except Exception:
+                result = {"error": {"code": "invalid_request", "field": "tool.payload"}}
                 self.send_response(409)
             self.send_header("Content-Type", "application/json")
             self.end_headers()

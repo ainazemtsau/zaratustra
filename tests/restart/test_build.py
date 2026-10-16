@@ -142,14 +142,16 @@ print(json.dumps({'core':zaratustra_core.__file__,'independent':True}))
         timeout=30,
     )
     assert install_app.returncode == 0, install_app.stderr
+    fixture_copy = target / "independent_trace.py"
+    shutil.copyfile(ROOT / "tests" / "restart" / "support.py", fixture_copy)
     driver_script = (
         guard
         + """
 import importlib.util
+restrict_environment()
 import zaratustra_core, zaratustra_app
 spec=importlib.util.spec_from_file_location('independent_trace',sys.argv[1])
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
-restrict_environment()
 result=module.trace(Path('driver-space'), 'driver')
 assert result['conversations'][0]['cursor']==22
 assert not Path(zaratustra_core.__file__).is_relative_to(Path(sys.argv[2]))
@@ -166,7 +168,7 @@ print(json.dumps({'core':zaratustra_core.__file__,'app':zaratustra_app.__file__,
             "utf8",
             "-c",
             driver_script,
-            str(ROOT / "tests" / "restart" / "support.py"),
+            str(fixture_copy),
             str(ROOT / "packages"),
         ],
         cwd=target,
