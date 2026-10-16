@@ -156,8 +156,8 @@
     {
       "path": "tests/restart/support.py",
       "basis": "raw LF bytes; sha256 of Git blob contents, not Git object ID",
-      "sha256_git_blob": "86827be43d1e92aaf52f329804b502393f0df69265e4b03622a6128bc853f400",
-      "worktree_sha256": "86827be43d1e92aaf52f329804b502393f0df69265e4b03622a6128bc853f400"
+      "sha256_git_blob": "1fa45169d7a86340f49efc5d0cb5d046cb71f5d8e9175247c69ecca19cb846a1",
+      "worktree_sha256": "1fa45169d7a86340f49efc5d0cb5d046cb71f5d8e9175247c69ecca19cb846a1"
     },
     {
       "path": "tests/restart/test_build.py",

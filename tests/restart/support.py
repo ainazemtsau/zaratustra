@@ -293,7 +293,12 @@ def trace(root: Path, mode: str) -> dict[str, Any]:
             base64.b64decode(receiver.received[1]["prior_messages"][-1]["raw"]).decode() == REQUEST
         )
         assert receiver.received[1]["prior_waits"][0]["body"] == json.dumps(
-            {"id": "W7", "question": "Do you have a reservation?"},
+            {
+                "id": "W7",
+                "question": "Do you have a reservation?",
+                "attempt_id": "A1",
+                "generation": 1,
+            },
             sort_keys=True,
             separators=(",", ":"),
         )
