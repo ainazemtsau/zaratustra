@@ -180,7 +180,10 @@ class Conversation:
                 watermark = json.loads(control["body"]).get("input_watermark") if control else None
                 if watermark is None:
                     raise CoreError("outcome_unknown", "cancelled_input_boundary", "reconcile")
-                if not any(m["seq"] > watermark for m in messages):
+                fresh_human_input = any(
+                    m["seq"] > watermark and m["origin"] == "human" for m in messages
+                )
+                if not fresh_human_input:
                     return {
                         "state": "cancelled",
                         "text": "Работа отменена. Напишите новый запрос для новой работы.",

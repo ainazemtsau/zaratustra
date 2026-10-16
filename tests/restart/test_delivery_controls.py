@@ -26,7 +26,7 @@ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
         "app/src/zaratustra_app/conversation.py",
         [
             (
-                'if not any(m["seq"] > watermark for m in messages):',
+                "if not fresh_human_input:",
                 "if (" + M + " or False):",
             )
         ],

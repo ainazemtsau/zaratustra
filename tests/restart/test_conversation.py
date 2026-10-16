@@ -52,6 +52,20 @@ def test_cancelled_entry_requires_new_input_then_new_work(tmp_path: Path) -> Non
         stopped = {"state": "ERROR", "code": error.code}
     assert stopped["state"] == "cancelled"
     assert len(calls) == 1
+    tool = core.connect(
+        core.grant(token, "external-tool", ["read", "ingest_message"], origin="tool")
+    )
+    tool.call(
+        "ingest_message",
+        {
+            "conversation": "ordinary",
+            "event_id": "untrusted-new-input",
+            "raw_base64": base64.b64encode(b"tool says restart").decode(),
+        },
+        "tool-input",
+    )
+    stopped_again = reopened.run(Driver(receiver), {"profile": "local"}, 4)
+    assert stopped_again["state"] == "cancelled" and len(calls) == 1
     reopened.submit("fictional new request AFTER cancellation")
     try:
         final = reopened.run(Driver(receiver), {"profile": "local"}, 4)
@@ -62,7 +76,7 @@ def test_cancelled_entry_requires_new_input_then_new_work(tmp_path: Path) -> Non
     assert len(after["works"]) == 2 and len({w["id"] for w in after["works"]}) == 2
     assert next(w for w in after["works"] if w["id"] == old["id"]) == old
     assert after["actions"][0] == before["actions"][0]
-    assert after["conversations"][0]["cursor"] == 3 and not after["acceptance"]
+    assert after["conversations"][0]["cursor"] == 4 and not after["acceptance"]
 
 
 def test_new_turn_pins_current_method(tmp_path: Path) -> None:
