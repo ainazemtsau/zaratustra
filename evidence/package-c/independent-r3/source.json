@@ -1,0 +1,21 @@
+{
+  "source": "3fbbf3e30cbf907ad3ea2d40686f02914c060dbf",
+  "archive_sha256": "04836e4498bc4378f49db62cd7a9bedab01fa760744ecefec469d4d07842bf6c",
+  "pythonpath": [
+    "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-review-c-r3-20261016\\frozen-source\\packages\\core\\src",
+    "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-review-c-r3-20261016\\frozen-source\\packages\\app\\src",
+    "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-review-c-r3-20261016\\frozen-source"
+  ],
+  "inherited_probe_bytes": {
+    "adapter_trace.py": "1dac76bbfc02e153daaf5bbd588800ca1dafe764eba00e94a611cd88e5eaa521",
+    "bound_codec.py": "cdb33365b2795bd4bc03152d8f8d1e617eef409b4f56cc90b3fa5798de4917e8",
+    "check_findings.py": "4f31e82d3d4cbb86a1911a4f40eda97322bc80bd0cdb2696fb3862727574c79b",
+    "codec_check_v2.py": "e3957beea59f016dfa9aab6791c4f624788d7b0f0379027d24f0484164705bd1",
+    "crash_paused.py": "deaefc2a48bbb5c17444854c20055e16e5832af073b9af81e20b3dfaa21759bd",
+    "enumeration_gap.py": "1c40cc40bb353eabc18bbfde44b6bbebf75f36fa8581dd65ce0fff57f5a93db8",
+    "live_cycle_bound.py": "2d758fee5e5d347ada0adeb0e7d44142450edac2e57065fb03e97e8bd140e2b2",
+    "probe.py": "8803df73e02c2020078e32b111e9256bb275aa091843fe823e21c81f0d785e4d",
+    "profile_cli.py": "05f8fbbb6c3a2e95cc60aa9a30f37d8d4df591f21e92f7e3a35ecd064302dce1",
+    "stop_resource_crash.py": "a5d804b5a22cf5c72d712215c015ce41152c122bc0c19f1080d08481f70cd89b"
+  }
+}

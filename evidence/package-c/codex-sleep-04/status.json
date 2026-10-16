@@ -1,0 +1,30 @@
+{
+  "success": true,
+  "outcome": {
+    "attempt_id": "sleep:de1ecc1dcc8144a6939f622ad831c6e7",
+    "state": "completed",
+    "refs": [
+      {
+        "id": "sleep-analysis-label-guidance",
+        "revision": 1
+      },
+      {
+        "id": "memory",
+        "revision": 2
+      },
+      {
+        "id": "practice",
+        "revision": 2
+      },
+      {
+        "id": "sleep:progress",
+        "revision": 2
+      }
+    ],
+    "outputs": [],
+    "accepted": false,
+    "text": "The selected sources support updating the label guidance: Trial A was approved at 42 words, the curator requested 35–50 words, and Trial B was unread at 190 words. Trial C shows that fitting the limit does not establish factual accuracy; the specimen record provides no evidence of a wild pollinator. Routine observations also suggest prioritizing the first sentence and large-print species name. I recorded the analysis and updated the memory and label method. This bounded pass leaves other coverage unexplored.",
+    "cutoff": 0
+  },
+  "semantic_verdict": "requires independent review"
+}

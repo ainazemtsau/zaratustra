@@ -1,0 +1,7 @@
+{
+  "path": "C:\\projects\\zaratustra\\_scratch\\release-installed-20260927\\runtime\\sqlite3.dll",
+  "version": "3.53.3",
+  "sha256": "79fd9ec89dba3f8bd64529a2ca8e9dde6ae6edc486c55a1d3f1ce77975a8375c",
+  "scope": "Legacy full native gate only; new Core and outside installed runtime use native SQLite3.50.4 without this DLL",
+  "draft_metadata_correction": "Collector initially transposed characters in its uncommitted expected SHA literal (db3a versus dba3). Direct file hash caught the typo; actual DLL bytes match the original authorized SHA. No product code, source pin or gate process changed."
+}

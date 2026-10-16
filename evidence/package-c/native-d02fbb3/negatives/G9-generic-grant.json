@@ -1,0 +1,10 @@
+{
+  "seed": "G9-generic-grant",
+  "test": "test_contract.py::test_forbidden_delta_atomic[apply_changes]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_________________ test_forbidden_delta_atomic[apply_changes] __________________\ntests\\restart\\test_contract.py:200: in test_forbidden_delta_atomic\n    with pytest.raises(CoreError, match=\"denied\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_contract.py::test_forbidden_delta_atomic[apply_changes]\n1 failed in 1.78s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -298,7 +298,7 @@\n                 \"application\",\n             }:\n                 fail(\"denied\", \"changes.system_field\")\n-            if change[\"kind\"] not in SUBJECTS:\n+            if (print(\"MUTANT_REACHED\", flush=True) or False):\n                 fail(\"denied\", \"changes.kind\")\n             if actor[\"origin\"] != \"human\" and change[\"kind\"] in {\"memory\", \"method\"}:\n                 self._require(\n"
+}

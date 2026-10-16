@@ -1,0 +1,13 @@
+{
+  "stage": "feedback-sleep-after-reopen",
+  "outcome": {
+    "attempt_id": "sleep-two:65ff75b07e7c45f0aaa117ad5a4ca9bb",
+    "state": "completed",
+    "refs": [],
+    "outputs": [],
+    "accepted": false,
+    "text": "The supplied records do not establish a confirmed wild pollinator for this specimen. The bounded factual request was not achieved: the available evidence describes an indoor trial where flowers opened after sunset and closed the next morning, with three of twelve buds opening. Evidence identifying a pollinator or showing pollination in the wild is missing.",
+    "cutoff": 0
+  },
+  "invocations": 1
+}

@@ -1,0 +1,88 @@
+from __future__ import annotations
+
+import argparse
+import base64
+import hashlib
+import json
+import shutil
+import sqlite3
+import sys
+from pathlib import Path
+from typing import Any
+from uuid import uuid4
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from tools.probe_restart_sleep_semantic import CodexLunaExecutor
+from zaratustra_app import Coordinator, Sleep
+from zaratustra_core import Core
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--root', type=Path, required=True)
+    parser.add_argument('--evidence', type=Path, required=True)
+    args = parser.parse_args()
+    root, evidence = args.root.resolve(), args.evidence.resolve()
+    evidence.mkdir(parents=True, exist_ok=False)
+    shutil.copyfile(Path(__file__), evidence/'runner.py.txt')
+    core, token = Core.initialize(root/'space')
+    owner = core.connect(token)
+    changes: list[dict[str, Any]] = [
+        {'id':'profile','kind':'profile','key':'codex-luna-test','body':{'model':'gpt-6-luna','resource_unit':'codex_exec','physical_provider_sends':'unknown','test_only':True}},
+        {'id':'practice','kind':'method','key':'exhibit-label','body':'Draft an informative exhibit label using current memory and supplied facts. Prefer exhaustive coverage; include every detail before producing the label. Use the executor response_contract. No acceptance claims.'},
+        {'id':'memory','kind':'memory','key':'label-length','body':'Early planning assumption: labels should be 180–200 words; not yet confirmed by curator.'},
+        {'id':'facts','kind':'data','key':'specimen','body':'Fictional exhibit: night-blooming cactus. Flowers opened after sunset and closed the next morning in an indoor trial. Three of twelve buds opened. No observation establishes a wild pollinator.'},
+        {'id':'ordinary','kind':'data','key':'routine','body':'Routine visitor observation: first sentence and large-print species name were read; the provenance appendix was usually skipped. No complaint was filed.'},
+        {'id':'success','kind':'data','key':'success','body':'Trial A: the fictional curator approved a 42-word draft containing one clear observation and asked to keep future display labels 35–50 words, with details off-label.'},
+        {'id':'error','kind':'data','key':'error','body':'Trial B: a 190-word label went unread because it did not fit the display. Trial C: a short label also failed, because it asserted a wild pollinator unsupported by observations. Length alone did not establish accuracy. No further negative trials exist.'},
+    ]
+    for change in changes:
+        owner.call('apply_changes',{'changes':[change]},uuid4().hex,expected_heads={change['id']:0})
+    permissions=['read','apply_changes','open_work','prepare_attempt','claim_dispatch','observe_attempt','commit_outcome','control_work','reserve_tool','write:memory:space','write:method:space']
+    client=core.connect(core.grant(token,'live-evaluator',permissions,origin='host'))
+    sleep=Sleep(client)
+    coordinator=Coordinator(client)
+    stages=[]
+    profile={'id':'profile','revision':1}
+    status: dict[str, Any]
+    try:
+        first=CodexLunaExecutor(root/'stage-one',evidence/'stage-one',invocation_cap=2)
+        sleep.start(work_id='sleep-one',call_limit=2,portion=32)
+        first_outcome=sleep.run('sleep-one',profile,first)
+        stages.append({'stage':'first-sleep','outcome':first_outcome,'invocations':first.invocations})
+        (evidence/'stage-one-outcome.json').write_text(json.dumps(stages[-1],indent=2,ensure_ascii=False),encoding='utf-8')
+        request=('Using the current method and supplied observations, establish the confirmed wild pollinator for this specimen. '
+                 'If the records cannot establish this factual result, state honestly that the requested factual outcome was not achieved and what evidence is missing. '
+                 'Do the bounded factual check now; no invented external observation. Use the executor response_contract.')
+        owner.call('ingest_message',{'conversation':'next','event_id':'new-request','raw_base64':base64.b64encode(request.encode()).decode()},'next:request')
+        coordinator.open_work({'id':'next','conversation':'next','goal':request,'method_ref':{'id':'practice','revision':1},'inputs':[{'id':'facts','revision':1}],'call_limit':1,'continuation_policy':'durable'})
+        second=CodexLunaExecutor(root/'stage-two',evidence/'stage-two',invocation_cap=1)
+        prepared=coordinator.prepare('next','next-attempt',profile)
+        coordinator.dispatch('next-attempt',prepared['generation'],second)
+        next_outcome=coordinator.recover('next-attempt',decoder=second.decode)
+        stages.append({'stage':'actual-next-work','outcome':next_outcome,'invocations':second.invocations,
+                       'delivered_method':prepared['pinned']['method'],'delivered_inputs':prepared['pinned']['inputs']})
+        (evidence/'stage-two-outcome.json').write_text(json.dumps(stages[-1],indent=2,ensure_ascii=False),encoding='utf-8')
+        sleep=Sleep(Core(core.root).connect(client.token))
+        third=CodexLunaExecutor(root/'stage-three',evidence/'stage-three',invocation_cap=2)
+        sleep.start(work_id='sleep-two',call_limit=2,portion=100)
+        final_outcome=sleep.run('sleep-two',profile,third)
+        stages.append({'stage':'feedback-sleep-after-reopen','outcome':final_outcome,'invocations':third.invocations})
+        (evidence/'stage-three-outcome.json').write_text(json.dumps(stages[-1],indent=2,ensure_ascii=False),encoding='utf-8')
+        status={'processing_success':True,'semantic_verdict':'requires independent assessment; no acceptance','stages':stages}
+    except Exception as error:
+        status={'processing_success':False,'error_type':type(error).__name__,'error':str(error),'stages':stages}
+    snapshot=coordinator.snapshot()
+    (evidence/'snapshot.json').write_text(json.dumps(snapshot,indent=2,ensure_ascii=False),encoding='utf-8')
+    with sqlite3.connect(core.path) as db:
+        db.row_factory=sqlite3.Row
+        physical={table:[dict(row) for row in db.execute('SELECT * FROM '+table)] for table in ['records','heads','works','attempts','actions','observations','results','intents','messages','acceptance']}
+    (evidence/'physical.json').write_text(json.dumps(physical,indent=2,ensure_ascii=False),encoding='utf-8')
+    (evidence/'status.json').write_text(json.dumps(status,indent=2,ensure_ascii=False),encoding='utf-8')
+    (evidence/'source.json').write_text(json.dumps({'source':'9c469e5aafb3661ea4b1e484c057569cecf2f348','runner_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'resource_unit':'codex_exec','per_work_caps':[2,1,2],'physical_provider_sends':'unknown','actual_provider_usage':'only CLI-reported usage; not inferred zero'}),encoding='utf-8')
+    print(json.dumps({'processing_success':status['processing_success'],'stages':len(stages),'error':status.get('error'),'evidence':str(evidence)},ensure_ascii=False))
+    return 0 if status['processing_success'] else 1
+
+
+if __name__=='__main__':
+    raise SystemExit(main())

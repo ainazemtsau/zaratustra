@@ -1,0 +1,142 @@
+{
+  "rule": "The manifest hashes the logical Python prompt string encoded as UTF-8 LF before subprocess text transport. Windows write_text stores CRLF. read_text reconstructs that logical string. Actual raw stdin transport bytes were not independently captured; text-mode transport may translate newlines.",
+  "rows": [
+    {
+      "prompt": "codex-access-01/invocation-1/prompt.txt",
+      "manifest_prompt_sha256": "ac0f5ae2081fb1f1ff5f6d287cb205f7acb8e0fa5878e87c9ac62d43ea878ae3",
+      "disk_sha256": "1f4fee5747f9af0b0dc0b99f1cf5e5889c32752c4bfa49fb13dbd90749b0037c",
+      "normalized_text_sha256": "ac0f5ae2081fb1f1ff5f6d287cb205f7acb8e0fa5878e87c9ac62d43ea878ae3",
+      "manifest_matches_logical_prompt": true,
+      "disk_equal_logical_prompt_bytes": false,
+      "logical_prompt_utf8_lf": "logical-prompt-bytes/codex-access-01/invocation-1/prompt.bin"
+    },
+    {
+      "prompt": "codex-sleep-01/invocation-1/prompt.txt",
+      "manifest_prompt_sha256": "699a556825c20720a661e690237f7f73e3c031a701099a379d56724102dbee16",
+      "disk_sha256": "94ff8be800dc3b00361165768bd54a950fcec35537790206dfcf1081776518fa",
+      "normalized_text_sha256": "699a556825c20720a661e690237f7f73e3c031a701099a379d56724102dbee16",
+      "manifest_matches_logical_prompt": true,
+      "disk_equal_logical_prompt_bytes": false,
+      "logical_prompt_utf8_lf": "logical-prompt-bytes/codex-sleep-01/invocation-1/prompt.bin"
+    },
+    {
+      "prompt": "codex-sleep-02/invocation-1/prompt.txt",
+      "manifest_prompt_sha256": "052611b29b003a2b8f845aaf7c4257cd0c5dab35532abb366c71136b465f9eb8",
+      "disk_sha256": "c0034f337b9d8738161f2feb434e99b2c460e8b04ee2cf5e2ac9c694b60c65b2",
+      "normalized_text_sha256": "052611b29b003a2b8f845aaf7c4257cd0c5dab35532abb366c71136b465f9eb8",
+      "manifest_matches_logical_prompt": true,
+      "disk_equal_logical_prompt_bytes": false,
+      "logical_prompt_utf8_lf": "logical-prompt-bytes/codex-sleep-02/invocation-1/prompt.bin"
+    },
+    {
+      "prompt": "codex-sleep-03/invocation-1/prompt.txt",
+      "manifest_prompt_sha256": "5d719cab9308dd624e8d614d617fcc8a89baf7c3c79250ab85296342bb58798e",
+      "disk_sha256": "8b753139bb8dac53b2ca72d6cbf85cea3bc56c4191c08839f0e09b054a5667b5",
+      "normalized_text_sha256": "5d719cab9308dd624e8d614d617fcc8a89baf7c3c79250ab85296342bb58798e",
+      "manifest_matches_logical_prompt": true,
+      "disk_equal_logical_prompt_bytes": false,
+      "logical_prompt_utf8_lf": "logical-prompt-bytes/codex-sleep-03/invocation-1/prompt.bin"
+    },
+    {
+      "prompt": "codex-sleep-04/invocation-1/prompt.txt",
+      "manifest_prompt_sha256": "5eb6809abc7e9174a2f94656e38257ba2791be38b25f10429d3f7f5fdf20d717",
+      "disk_sha256": "7aae93509bc4eed959e7fbfd6326bc3dfb2288edaeb8ae2ad65c553ed631026c",
+      "normalized_text_sha256": "5eb6809abc7e9174a2f94656e38257ba2791be38b25f10429d3f7f5fdf20d717",
+      "manifest_matches_logical_prompt": true,
+      "disk_equal_logical_prompt_bytes": false,
+      "logical_prompt_utf8_lf": "logical-prompt-bytes/codex-sleep-04/invocation-1/prompt.bin"
+    },
+    {
+      "prompt": "live-chain-9c469e5/stage-one/invocation-1/prompt.txt",
+      "manifest_prompt_sha256": "9b9fed08ef3b38a04f18f02525430bda4ca0e986f75f8c5db9bf1d1766b2d0cf",
+      "disk_sha256": "700d53650bd63b15488d1921c40e6ccc8fa0e339f1c13e0c208adf91e6a03112",
+      "normalized_text_sha256": "9b9fed08ef3b38a04f18f02525430bda4ca0e986f75f8c5db9bf1d1766b2d0cf",
+      "manifest_matches_logical_prompt": true,
+      "disk_equal_logical_prompt_bytes": false,
+      "logical_prompt_utf8_lf": "logical-prompt-bytes/live-chain-9c469e5/stage-one/invocation-1/prompt.bin"
+    },
+    {
+      "prompt": "live-chain-9c469e5-02/stage-one/invocation-1/prompt.txt",
+      "manifest_prompt_sha256": "38e1bbb616d964d3a288193409824b3e0cf0c045a5284ef3cc334514a857f5ed",
+      "disk_sha256": "5b933dedf5bc368ef5491fa9649bdb10251166ed1c01e1d5126f64d4be38e6af",
+      "normalized_text_sha256": "38e1bbb616d964d3a288193409824b3e0cf0c045a5284ef3cc334514a857f5ed",
+      "manifest_matches_logical_prompt": true,
+      "disk_equal_logical_prompt_bytes": false,
+      "logical_prompt_utf8_lf": "logical-prompt-bytes/live-chain-9c469e5-02/stage-one/invocation-1/prompt.bin"
+    },
+    {
+      "prompt": "live-chain-d02fbb3/stage-one/invocation-1/prompt.txt",
+      "manifest_prompt_sha256": "8e83714b17b57c5256cf02bf08ee3c816bb58e1f5189cdd0cf4e8969edc04cfb",
+      "disk_sha256": "7c58ddf50a018274dd003d9cb092b73caa2ebe46873b0d54c43b9c88da3581eb",
+      "normalized_text_sha256": "8e83714b17b57c5256cf02bf08ee3c816bb58e1f5189cdd0cf4e8969edc04cfb",
+      "manifest_matches_logical_prompt": true,
+      "disk_equal_logical_prompt_bytes": false,
+      "logical_prompt_utf8_lf": "logical-prompt-bytes/live-chain-d02fbb3/stage-one/invocation-1/prompt.bin"
+    },
+    {
+      "prompt": "live-chain-d02fbb3-02/stage-one/invocation-1/prompt.txt",
+      "manifest_prompt_sha256": "15b048cffd13617eaa5abb4eb5ab0d5f62016efd9cdf93700786bb7ca342b0c9",
+      "disk_sha256": "018b3ae345584c576a08e31c1f6350d98a7bf3c6b93feac761cb21f1a0c20825",
+      "normalized_text_sha256": "15b048cffd13617eaa5abb4eb5ab0d5f62016efd9cdf93700786bb7ca342b0c9",
+      "manifest_matches_logical_prompt": true,
+      "disk_equal_logical_prompt_bytes": false,
+      "logical_prompt_utf8_lf": "logical-prompt-bytes/live-chain-d02fbb3-02/stage-one/invocation-1/prompt.bin"
+    },
+    {
+      "prompt": "live-chain-d02fbb3-02/stage-three/invocation-1/prompt.txt",
+      "manifest_prompt_sha256": "123e5b884b5c6f321e1b28a5e07cd1673783ddba701da0373395f324d3ac760a",
+      "disk_sha256": "cb0ba343698623cdcd69baf3405fe3b0ac481bb8b110d2527b7a86baf969b0f3",
+      "normalized_text_sha256": "123e5b884b5c6f321e1b28a5e07cd1673783ddba701da0373395f324d3ac760a",
+      "manifest_matches_logical_prompt": true,
+      "disk_equal_logical_prompt_bytes": false,
+      "logical_prompt_utf8_lf": "logical-prompt-bytes/live-chain-d02fbb3-02/stage-three/invocation-1/prompt.bin"
+    },
+    {
+      "prompt": "live-chain-d02fbb3-02/stage-two/invocation-1/prompt.txt",
+      "manifest_prompt_sha256": "72cc60cdf2088c96be29fdec1ef244b48cc53a1e3365035124b1c09791583bbd",
+      "disk_sha256": "28919c91c25366918f8436d08a2b55012434f2a00b1a932f36d01bd1a2e21712",
+      "normalized_text_sha256": "72cc60cdf2088c96be29fdec1ef244b48cc53a1e3365035124b1c09791583bbd",
+      "manifest_matches_logical_prompt": true,
+      "disk_equal_logical_prompt_bytes": false,
+      "logical_prompt_utf8_lf": "logical-prompt-bytes/live-chain-d02fbb3-02/stage-two/invocation-1/prompt.bin"
+    },
+    {
+      "prompt": "live-chain-d02fbb3-four/stage-four/invocation-1/prompt.txt",
+      "manifest_prompt_sha256": "9bc85242c758a2df619789038de034b04b646333a572dc3ee974dbfc0980179d",
+      "disk_sha256": "ec7065e188d78caa7b351d858d8477b2df86974425f10111bc77f1327ae7bfff",
+      "normalized_text_sha256": "9bc85242c758a2df619789038de034b04b646333a572dc3ee974dbfc0980179d",
+      "manifest_matches_logical_prompt": true,
+      "disk_equal_logical_prompt_bytes": false,
+      "logical_prompt_utf8_lf": "logical-prompt-bytes/live-chain-d02fbb3-four/stage-four/invocation-1/prompt.bin"
+    },
+    {
+      "prompt": "live-chain-d02fbb3-four/stage-one/invocation-1/prompt.txt",
+      "manifest_prompt_sha256": "3e733077521b17e22580556c3eb1004312eab6c5e466158f93783a254d56bbcc",
+      "disk_sha256": "eaa8a224edd933cdd34b0cc7f377de9454a49196c534953bb07f534ff3239713",
+      "normalized_text_sha256": "3e733077521b17e22580556c3eb1004312eab6c5e466158f93783a254d56bbcc",
+      "manifest_matches_logical_prompt": true,
+      "disk_equal_logical_prompt_bytes": false,
+      "logical_prompt_utf8_lf": "logical-prompt-bytes/live-chain-d02fbb3-four/stage-one/invocation-1/prompt.bin"
+    },
+    {
+      "prompt": "live-chain-d02fbb3-four/stage-three/invocation-1/prompt.txt",
+      "manifest_prompt_sha256": "4c6c5d94855cc398df96a18c47a091c4181becb54795fd265af006e0bf04bafc",
+      "disk_sha256": "650ba4bb2cba4ef4befcdce443c405bfc36a558ce29b140f7e0035f15f835249",
+      "normalized_text_sha256": "4c6c5d94855cc398df96a18c47a091c4181becb54795fd265af006e0bf04bafc",
+      "manifest_matches_logical_prompt": true,
+      "disk_equal_logical_prompt_bytes": false,
+      "logical_prompt_utf8_lf": "logical-prompt-bytes/live-chain-d02fbb3-four/stage-three/invocation-1/prompt.bin"
+    },
+    {
+      "prompt": "live-chain-d02fbb3-four/stage-two/invocation-1/prompt.txt",
+      "manifest_prompt_sha256": "68b3e9890fac21932277f97399e9a192060ca55d9c2804e5745ca3448083f96b",
+      "disk_sha256": "c35bb936d668680a787bc2c26a4a6fbfd0dfc9582ea77187d942ebf7fdfa0670",
+      "normalized_text_sha256": "68b3e9890fac21932277f97399e9a192060ca55d9c2804e5745ca3448083f96b",
+      "manifest_matches_logical_prompt": true,
+      "disk_equal_logical_prompt_bytes": false,
+      "logical_prompt_utf8_lf": "logical-prompt-bytes/live-chain-d02fbb3-four/stage-two/invocation-1/prompt.bin"
+    }
+  ],
+  "witness": "Additional binary files are logical prompt UTF-8 LF matching the manifest hash. They are not independently captured physical stdin or packet-level wire evidence.",
+  "actual_raw_stdin_observation": "not separately observed"
+}

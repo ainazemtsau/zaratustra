@@ -1,0 +1,363 @@
+{
+  "schema": "binding-review/source-v1",
+  "source": "3fbbf3e30cbf907ad3ea2d40686f02914c060dbf",
+  "base_b": "05b5d0a8d24bfdc1ade4c7450d64979a398077b7",
+  "source_verdict": "READY_SOURCE_WITH_RECORDED_LIMITS",
+  "verdict_scope": "Independent technical source review of authorized package C only; not final candidate, native-delivery verdict, owner acceptance, D or whole release",
+  "candidate": null,
+  "candidate_verdict": "PENDING_EXACT_CANDIDATE_AND_FULL_NATIVE_EVIDENCE",
+  "frozen_plan_sha256": "3e279c312d20f137e2076ecd7240f6b2c039923b9ee9bfa55e9662c5df98e0cb",
+  "frozen_review_sha256": "e7493dc10a06ce34b7f4e06efb6db55509565b46099ee51d1d6987b2aa268dcb",
+  "source_archive_sha256": "04836e4498bc4378f49db62cd7a9bedab01fa760744ecefec469d4d07842bf6c",
+  "own_scoped_gate": {
+    "result": "PASS",
+    "passed": 237,
+    "seconds": 465.06,
+    "log": "native-scoped.log",
+    "source_imports": "frozen-source/packages/{core,app}/src",
+    "legacy_sqlite_dll": false
+  },
+  "reached_behavioral_controls": [
+    {
+      "seed": "B-control-leaves-stale-dispatch",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "B-fenced-running-resume",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "B-initial-refresh-requires-attempt",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "B-observe-intent-address",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "B-resume-exhausted-resource",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "B-resume-stale-basis",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-delivered-pretends-analysis",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-false-consumption",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-prepared-pretends-delivery",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-R1-core-cross-scope",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-R2-refresh-inactive",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-R3-exhausted-ready",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-R3-residual-upper-stop",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-R4-paused-projection",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-R5-profile-drift",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-R6-enumeration-gap",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-R7-resource-pause-cause",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-R7-stale-control-cause",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-read-pretends-applied",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-reset-reservation",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-retained-regenerates",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-self-expand-method-scope",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-stale-method-delivery",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C-unknown-pretends-delivery",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "C0-wire-order",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "F1-skip-whole-declaration",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "F2-ignore-active-wait-binding",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G1-legacy-dependency",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G10-drop-retained-bytes",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G10-lose-tool-receipt",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G11-wrong-question-revision",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G2-native-callback-no-effect",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G3-stale-write",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G4-early-ingress-commit",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G4-lost-input-intent",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G5-drop-original-input",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G6-early-outcome-commit",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G6-lost-late-continuation",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G6-skipped-M19",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G7-allow-old-generation-publication",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G7-ignore-late-fence",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G8-accept-changed-command-intent",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G8-replay-claim-resend",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G9-C8-generic-grant",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G9-generic-grant",
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "G9-ignore-revocation",
+      "injection_reached": true,
+      "behavioral_failure": true
+    }
+  ],
+  "own_extra_mutant": "own-c9-mutant/result.json",
+  "own_probes": [
+    "stop-resource-crash.json",
+    "crash-reopen.json",
+    "enumeration-gap.json",
+    "original-runtime",
+    "independent-driver/trace.json",
+    "independent-pi-native/trace.json",
+    "class-sweep",
+    "checkpoint-sweep",
+    "profile-sweep/summary.json",
+    "control-lifecycle-r3/results.json",
+    "codec-checks-v2/checks.json",
+    "installed-own-smoke.json"
+  ],
+  "live": {
+    "profile": "test-only official configured Codex gpt-6-luna, ChatGPT login",
+    "transport_execution": "parent normal approval; independent fixture/rubric/interpretation",
+    "actual_invocations": 4,
+    "prior_local_startup_failure": 1,
+    "physical_provider_sends": "unknown",
+    "usage_report": "live-physical-audit.json",
+    "content_assessment": "bounded positive with one retained/refused wire-invalid response, not reliability/general usefulness proof"
+  },
+  "criteria": [
+    {
+      "id": "C0-C9 / inherited G1-G11",
+      "mechanical": "PASS scoped regression plus own API/receipt/rights/reopen probes; no expansion of A/B acceptance",
+      "semantic": "not a semantic claim"
+    },
+    {
+      "id": "G12 / Sleep §7.1",
+      "mechanical": "PASS retained Work/Method/progress/reservations/control cause and public reopen",
+      "semantic": "bounded actual Luna recovery/context assessment"
+    },
+    {
+      "id": "G12 / Sleep §7.2",
+      "mechanical": "PASS fixed watermark, sparse/multiple event-source indexes, prefix enumeration, late arrivals; selection separate",
+      "semantic": "model selected a bounded comparison; remaining profile source and later unselected sources preserved"
+    },
+    {
+      "id": "G12 / Sleep §7.3",
+      "mechanical": "PASS ordinary versioned memory under delegated rights/CAS",
+      "semantic": "memory1→2 qualifies prefix hypothesis using successes and failed intake; useful scoped correction"
+    },
+    {
+      "id": "G12 / Sleep §7.4",
+      "mechanical": "PASS unlinked material delivered without fake coverage/analysis",
+      "semantic": "model compared distinct tally/item-return outcomes and unlinked cabinet note without owner complaint or prescribed conclusion"
+    },
+    {
+      "id": "G12 / Sleep §7.5",
+      "mechanical": "PASS exact immutable source SHA/version linkage; raw history/outcomes retained",
+      "semantic": "facts/assertions/hypotheses, alternatives, counterexample and failed intake remain qualified"
+    },
+    {
+      "id": "G12 / Sleep §7.6",
+      "mechanical": "PASS active/proposal/withdrawn metadata, current scope/right admission, versioned correction/rollback; source cannot alter acceptance",
+      "semantic": "new memory applied; ordinary Method unchanged with a defensible no-change conclusion"
+    },
+    {
+      "id": "G12 / Sleep §7.7 and G13",
+      "mechanical": "PASS own Driver + actual Pi Method1→2→3 traces; memory2/Method2 delivered, exact negative outcome returns; live memory2 delivered with actual Method1",
+      "semantic": "actual live two-line slip meets request; measured synthetic consumer collision returns to subsequent Sleep; model separates consumer loss from Method defect and updates memory3"
+    },
+    {
+      "id": "G12 / Sleep §7.8",
+      "mechanical": "PASS enumeration/delivery/analysis/remainder/receipts/resource distinct; C8/C9 crashes repaired without resend; unknown not released",
+      "semantic": "bounded stop and outside-coverage uncertainty explicit; no all-understood claim"
+    },
+    {
+      "id": "G12-G13 fault detection",
+      "mechanical": "PASS 46 baseline/reached/behavioral controls (22 A,6 B,18 C) plus own C9 reverted-logic mutant",
+      "semantic": "no keyword semantic validator"
+    },
+    {
+      "id": "exact source/build/dependencies",
+      "mechanical": "PASS 27 source-file hashes,4 distributions,38 source/wheel/sdist/installed members; seven locked distributions; true outside-checkout roots and native SQLite3.50.4",
+      "semantic": "independent content evaluation uses same production source; test-only Codex codec is not a production adapter"
+    },
+    {
+      "id": "D / G14-G15",
+      "mechanical": "OUT OF SCOPE",
+      "semantic": "OUT OF SCOPE; no first-release/user usefulness acceptance"
+    }
+  ],
+  "corrections": {
+    "C-R1-C-R6": "Own old probes/regression/class sweeps pass on pinned source; prior NOT READY preserved, interrupted R2 never relabeled READY",
+    "C-R7": "Own unchanged stop_resource_crash.py passes; own revert mutant reaches and fails the same behavioral assertion; owner/refresh/resume/unknown adjacent classes pass",
+    "packaging_claim": "Old install source/runtime inside original checkout; independently verified replacement OS-temp outside every checkout; no raw overwrite"
+  },
+  "raw_failures": [
+    "scoped.log: sandbox 8 failed/229 passed; localhost access failures, retained; native-scoped passes all237",
+    "own-profile_cli.log and own-adapter-pi.log: sandbox connection failures; native profile sweep and Pi trace pass",
+    "live-bound: initial Codex CLI startup denied by sandbox, raw retained, claimed reservation not released",
+    "TRANSPORT-HANDOFF.json: two auto-review denials before parent approved execution",
+    "live-bound-native invocation3: remaining index29 outside29-element enumeration, rejected before C8, raw terminal/reservation retained; explicit refresh→invocation4",
+    "control-lifecycle-r1-failure.txt and control-lifecycle-r2-failure.txt: independent runner assumption errors, scripts/spaces preserved; final third run passes",
+    "audit-live-r1-failure.txt: logical LF prompt hash differs from physical Windows CRLF file hash; both recorded"
+  ],
+  "known_gaps": [
+    "No stdin-pipe capture; logical prompt LF and physical disk CRLF hashes do not prove exact observed pipe bytes",
+    "Actual later negative trial is a measured synthetic external consumer fault with explicit attribution caution; not a real-world usefulness experiment",
+    "One meaningful live chain and mechanically scripted Method revision/rollback do not establish consistent useful Sleep",
+    "Author fourstage historical Sleep instruction-following failure remains a failure; successful new chain does not erase it",
+    "Unknown physical provider retries/sends and unreported usage/cost remain unknown",
+    "Full native --deliver is executor responsibility and still pending in this first source report",
+    "Exact docs/evidence candidate not yet supplied"
+  ],
+  "owner_acceptance": false,
+  "next": "solmax"
+}

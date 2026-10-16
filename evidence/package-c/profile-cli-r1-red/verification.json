@@ -1,0 +1,6 @@
+{
+  "returncode": 1,
+  "probe_sha256": "05f8fbbb6c3a2e95cc60aa9a30f37d8d4df591f21e92f7e3a35ecd064302dce1",
+  "copy_sha256": "05f8fbbb6c3a2e95cc60aa9a30f37d8d4df591f21e92f7e3a35ecd064302dce1",
+  "source": "9c469e5 plus pending unrelated crash recovery correction"
+}

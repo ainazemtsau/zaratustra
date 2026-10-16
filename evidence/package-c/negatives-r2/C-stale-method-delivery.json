@@ -1,0 +1,10 @@
+{
+  "seed": "C-stale-method-delivery",
+  "test": "test_sleep.py::test_sleep_adaptation_trace[driver]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_____________________ test_sleep_adaptation_trace[driver] _____________________\ntests\\restart\\test_sleep.py:84: in test_sleep_adaptation_trace\n    result = adaptation_trace(tmp_path, mode)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests\\restart\\sleep_support.py:201: in adaptation_trace\n    assert received[0][\"method\"][\"revision\"] == 2\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   AssertionError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_sleep.py::test_sleep_adaptation_trace[driver] - Ass...\n1 failed in 1.42s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -870,7 +870,7 @@\n                 \"prior_waits\": prior_waits,\n                 \"messages\": [dict(m) for m in messages],\n                 \"inputs\": material,\n-                \"method\": method,\n+                \"method\": (method | {\"revision\": (print(\"MUTANT_REACHED\", flush=True) or 1)}) if method[\"id\"] == \"practice\" else method,\n                 \"profile\": profile,\n                 \"tool_ledger\": tool_ledger,\n                 \"manifest\": p[\"manifest\"],\n"
+}

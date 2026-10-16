@@ -1,0 +1,13 @@
+{
+  "source_commit": "3fbbf3e30cbf907ad3ea2d40686f02914c060dbf",
+  "source_verdict": "READY_SOURCE_WITH_RECORDED_LIMITS",
+  "root_retention_directory": "C:/my_global_workflow_worktrees/solmax/.tmp/restart-c-receipt/source-ready",
+  "root_retention_status": "Byte-verified exportable bundle staged by root; final Solmax commit is root responsibility",
+  "exportable_files": 5795,
+  "indexed_files": 5798,
+  "local_only_credentials_excluded": 3,
+  "archive_bytes": 90899661,
+  "archive_sha256": "b58bb18128589879ea03b429d3344bf378039e4a6da10569f2f93ebe618e2f32",
+  "inventory_sha256": "382c84b05dfa2626293209f3bbf80f093c949a0d5a97021c1f08f3b550e6e4cc",
+  "not_a_final_candidate_verdict": true
+}

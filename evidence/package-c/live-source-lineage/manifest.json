@@ -1,0 +1,28 @@
+{
+  "live_source": "d02fbb301af19c4be5abdc19920ec5b089bc4783",
+  "final_source": "3fbbf3e30cbf907ad3ea2d40686f02914c060dbf",
+  "same_generic_method_sha256": "7ed58988ee0c77bfb4a60df46e9a6628137f3f69e3737999e6fb588e5bc6f606",
+  "unchanged_codec_and_transport": [
+    {
+      "path": "tools/probe_restart_sleep_semantic.py",
+      "sha256": "905982336f7b3beeef169255af9887be516551cff03dc74eb6b310b530078e40"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/coordinator.py",
+      "sha256": "d2ae2219065b36ed01e8936b2a036e7b519aed5f9127b45d861f4222314b12f3"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/executor_port.py",
+      "sha256": "c2e292a2cf7494b9405f38ee4b4584e03da1bba8f0f5d94c7cead75651ccce52"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/bridge.py",
+      "sha256": "76fe8e82a0ded14d38c6a3b02e542f032cc904b15efa30ed5b67c1080ec7f951"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/extension.ts",
+      "sha256": "dfb451e22ce14af8a63fd37c5e8a0c6d75a11ead34e79eb036e8bfd78958505a"
+    }
+  ],
+  "runtime_delta": "Authoritative control-cause lifecycle and paused recovery only. Raw semantic failures remain failures. Independent reconciliation required, not waived by the author."
+}

@@ -1,0 +1,288 @@
+{
+  "source_commit": "3fbbf3e30cbf907ad3ea2d40686f02914c060dbf",
+  "scope": "Author official Codex runs physically retained here, including errors and historical sources; independent full raw bundle is retained separately by root",
+  "resource_unit": "codex_exec",
+  "invocations": [
+    {
+      "raw": {
+        "path": "codex-access-01/invocation-1/stdout.jsonl",
+        "sha256": "af38a5d3599352143980481c96b3e40f49fef88980bdf0d2157d9fcfdeafa326",
+        "bytes": 439
+      },
+      "reported_usage": [
+        {
+          "input_tokens": 11079,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 26,
+          "reasoning_output_tokens": 0
+        }
+      ],
+      "unexpected_tool_events": [],
+      "physical_provider_sends": "unknown; process counts are not send counts"
+    },
+    {
+      "raw": {
+        "path": "codex-sleep-01/invocation-1/stdout.jsonl",
+        "sha256": "3c3e828d0a8961d753a4b602f2980589c207cce5693f72b298b2543ff9e18e5e",
+        "bytes": 10569
+      },
+      "reported_usage": [
+        {
+          "input_tokens": 17470,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2854,
+          "reasoning_output_tokens": 0
+        }
+      ],
+      "unexpected_tool_events": [],
+      "physical_provider_sends": "unknown; process counts are not send counts"
+    },
+    {
+      "raw": {
+        "path": "codex-sleep-02/invocation-1/stdout.jsonl",
+        "sha256": "a972b04734d84375eeb9d003ee7c1d0f5a8fcaa971d92e2470b1a3daf3246c40",
+        "bytes": 10952
+      },
+      "reported_usage": [
+        {
+          "input_tokens": 18128,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 3220,
+          "reasoning_output_tokens": 0
+        }
+      ],
+      "unexpected_tool_events": [],
+      "physical_provider_sends": "unknown; process counts are not send counts"
+    },
+    {
+      "raw": {
+        "path": "codex-sleep-03/invocation-1/stdout.jsonl",
+        "sha256": "4380de460ec39480de28c3510a5caac6252b1c3dc6f7849ebd2f3019def7f70f",
+        "bytes": 7468
+      },
+      "reported_usage": [
+        {
+          "input_tokens": 18128,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2111,
+          "reasoning_output_tokens": 0
+        }
+      ],
+      "unexpected_tool_events": [],
+      "physical_provider_sends": "unknown; process counts are not send counts"
+    },
+    {
+      "raw": {
+        "path": "codex-sleep-04/invocation-1/stdout.jsonl",
+        "sha256": "a29378f15e3bc2376e2e16670f7bb1c5313bf74dd278d85b1970fad33229fe3c",
+        "bytes": 7643
+      },
+      "reported_usage": [
+        {
+          "input_tokens": 18186,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2649,
+          "reasoning_output_tokens": 491
+        }
+      ],
+      "unexpected_tool_events": [],
+      "physical_provider_sends": "unknown; process counts are not send counts"
+    },
+    {
+      "raw": {
+        "path": "live-chain-9c469e5/stage-one/invocation-1/stdout.jsonl",
+        "sha256": "b5e4ace96e70bcb9015fc7e8349cea084152959a4d863fdab7e99e18b8e1484d",
+        "bytes": 7527
+      },
+      "reported_usage": [
+        {
+          "input_tokens": 18033,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2005,
+          "reasoning_output_tokens": 0
+        }
+      ],
+      "unexpected_tool_events": [],
+      "physical_provider_sends": "unknown; process counts are not send counts"
+    },
+    {
+      "raw": {
+        "path": "live-chain-9c469e5-02/stage-one/invocation-1/stdout.jsonl",
+        "sha256": "9bee9a26b2649d8e78cbe02f7f138e409c5ea5f7f86571dc6204a745aa480962",
+        "bytes": 9159
+      },
+      "reported_usage": [
+        {
+          "input_tokens": 18159,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2672,
+          "reasoning_output_tokens": 0
+        }
+      ],
+      "unexpected_tool_events": [],
+      "physical_provider_sends": "unknown; process counts are not send counts"
+    },
+    {
+      "raw": {
+        "path": "live-chain-d02fbb3/stage-one/invocation-1/stdout.jsonl",
+        "sha256": "7d9ba006d22c2764e34f968f7ea524ca34c96e596f823e5fcceec7166fef68a5",
+        "bytes": 8253
+      },
+      "reported_usage": [
+        {
+          "input_tokens": 18298,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2509,
+          "reasoning_output_tokens": 296
+        }
+      ],
+      "unexpected_tool_events": [],
+      "physical_provider_sends": "unknown; process counts are not send counts"
+    },
+    {
+      "raw": {
+        "path": "live-chain-d02fbb3-02/stage-one/invocation-1/stdout.jsonl",
+        "sha256": "3815bf117796e4fb166994bd7fab1d554a76b3a835002b66924d548dbfcf18ce",
+        "bytes": 7664
+      },
+      "reported_usage": [
+        {
+          "input_tokens": 18296,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2089,
+          "reasoning_output_tokens": 0
+        }
+      ],
+      "unexpected_tool_events": [],
+      "physical_provider_sends": "unknown; process counts are not send counts"
+    },
+    {
+      "raw": {
+        "path": "live-chain-d02fbb3-02/stage-three/invocation-1/stdout.jsonl",
+        "sha256": "a4a18e8bcef557b7a4ef149bc63df4b0afaed87f8b31d65b2494dd3b9a193588",
+        "bytes": 11388
+      },
+      "reported_usage": [
+        {
+          "input_tokens": 43305,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 3973,
+          "reasoning_output_tokens": 339
+        }
+      ],
+      "unexpected_tool_events": [],
+      "physical_provider_sends": "unknown; process counts are not send counts"
+    },
+    {
+      "raw": {
+        "path": "live-chain-d02fbb3-02/stage-two/invocation-1/stdout.jsonl",
+        "sha256": "c5737cc6afa8c2abd523cb5c14f1e5fe8a3600178ba6543337446c0dfb697c49",
+        "bytes": 725
+      },
+      "reported_usage": [
+        {
+          "input_tokens": 15781,
+          "cached_input_tokens": 8448,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 162,
+          "reasoning_output_tokens": 81
+        }
+      ],
+      "unexpected_tool_events": [],
+      "physical_provider_sends": "unknown; process counts are not send counts"
+    },
+    {
+      "raw": {
+        "path": "live-chain-d02fbb3-four/stage-four/invocation-1/stdout.jsonl",
+        "sha256": "88c7a97e03846612da5e7a08821a82821dd3124b93d3afc1aecbeb444fbdcfcd",
+        "bytes": 827
+      },
+      "reported_usage": [
+        {
+          "input_tokens": 19207,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 154,
+          "reasoning_output_tokens": 53
+        }
+      ],
+      "unexpected_tool_events": [],
+      "physical_provider_sends": "unknown; process counts are not send counts"
+    },
+    {
+      "raw": {
+        "path": "live-chain-d02fbb3-four/stage-one/invocation-1/stdout.jsonl",
+        "sha256": "95e1aaa3b066f3f110632ac87499c8476204d762639f62aa8044a41e1e29d8e5",
+        "bytes": 8155
+      },
+      "reported_usage": [
+        {
+          "input_tokens": 18288,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2433,
+          "reasoning_output_tokens": 244
+        }
+      ],
+      "unexpected_tool_events": [],
+      "physical_provider_sends": "unknown; process counts are not send counts"
+    },
+    {
+      "raw": {
+        "path": "live-chain-d02fbb3-four/stage-three/invocation-1/stdout.jsonl",
+        "sha256": "4774b4fac80933b0e879f8da96b83376dc93f624e3a847d85d0507549bd8afcc",
+        "bytes": 819
+      },
+      "reported_usage": [
+        {
+          "input_tokens": 44756,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 98,
+          "reasoning_output_tokens": 0
+        }
+      ],
+      "unexpected_tool_events": [],
+      "physical_provider_sends": "unknown; process counts are not send counts"
+    },
+    {
+      "raw": {
+        "path": "live-chain-d02fbb3-four/stage-two/invocation-1/stdout.jsonl",
+        "sha256": "cee722d7e1c080c04b63f485acde74ebcca5744e67547763e27dd7bda98bbc9b",
+        "bytes": 780
+      },
+      "reported_usage": [
+        {
+          "input_tokens": 16038,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 93,
+          "reasoning_output_tokens": 0
+        }
+      ],
+      "unexpected_tool_events": [],
+      "physical_provider_sends": "unknown; process counts are not send counts"
+    }
+  ],
+  "independent_reported_usage": {
+    "source": "independent-r3/report.md",
+    "actual_invocations": 4,
+    "prior_local_initialization_failures": 1,
+    "reported_input_tokens": 155896,
+    "reported_output_tokens": 3334,
+    "reported_reasoning_tokens": 734,
+    "physical_provider_sends": "unknown",
+    "not_complete_billing": true
+  },
+  "no_inference_of_zero_usage_for_errors": true
+}

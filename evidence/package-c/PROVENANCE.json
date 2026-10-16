@@ -1,0 +1,40 @@
+{
+  "source_commit": "3fbbf3e30cbf907ad3ea2d40686f02914c060dbf",
+  "base_candidate_b": "05b5d0a8d24bfdc1ade4c7450d64979a398077b7",
+  "candidate_policy": "Final candidate adds delivery docs/evidence/RESULT only; exact candidate Git commit is returned separately for reconciliation",
+  "full_native": {
+    "tests_passed": 1636,
+    "pytest_seconds": 1760.8
+  },
+  "scoped": {
+    "tests_passed": 238,
+    "pytest_seconds": 488.94
+  },
+  "controls": {
+    "total": 46,
+    "a": 22,
+    "b": 6,
+    "c": 18
+  },
+  "independent_source_verdict": "READY_SOURCE_WITH_RECORDED_LIMITS",
+  "independent_source_report": "independent-r3/report.md",
+  "independent_candidate_verdict": "pending exact candidate and full native reconciliation",
+  "semantic": "Independent bounded positive on exact source with retained format failure/limits; author instruction-following failure preserved; no consistent usefulness/G14 or scripted semantic claim",
+  "contract": {
+    "api": "wire/v1",
+    "method": "sleep/1",
+    "progress": "sleep-progress/v1",
+    "analysis": "sleep-analysis/v1"
+  },
+  "author_live_source_commit": "d02fbb301af19c4be5abdc19920ec5b089bc4783",
+  "independent_live_source_commit": "3fbbf3e30cbf907ad3ea2d40686f02914c060dbf",
+  "author_live_to_final_source_delta": "Only authoritative control-cause crash recovery/lifecycle and tests; Method and codec unchanged. Independent reconciliation required.",
+  "manual_acceptance": "pending C",
+  "next": "solmax",
+  "manifests": {
+    "SOURCE-MANIFEST.json": "5293f08e94ea155181e1c68811b99399c981d134c4b8cb06186f11475cc06bfc",
+    "BUILD-MANIFEST.json": "17ea6d47cb93cb97fb36372d532ef52628930973dd481cef6483e013ac9aef3a",
+    "DEPENDENCY-MANIFEST.json": "2f3618fe7389a76929c60115e9bde397a46986ea50e14679dce3747a389f8126",
+    "PROOF-MANIFEST.json": "f52031a4cde323654a896ce14b8f4b9f971c839b087c2f605e0cb497da7c5515"
+  }
+}

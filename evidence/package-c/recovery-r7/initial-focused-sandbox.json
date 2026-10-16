@@ -1,0 +1,9 @@
+{
+  "status": "47 PASS; 1 environment transport failure, not a behavioral kill",
+  "source": "d02fbb3 plus pending narrow R7 corrections",
+  "command": ".venv/Scripts/python.exe -m pytest tests/restart/test_sleep.py -q --basetemp _scratch/c-r7-focused",
+  "seconds": 42.76,
+  "failure": "test_sleep_adaptation_trace[pi]: outcome_unknown: Connection error",
+  "capture": "Initial interactive tool output; full stdout was not separately captured. Disposable runtime remains at _scratch/c-r7-focused.",
+  "continuation": "Repeat affected full focused suite with permitted scripted localhost escalation and retain raw logs. No source change for this transport failure."
+}

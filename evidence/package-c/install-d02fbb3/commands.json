@@ -1,0 +1,104 @@
+[
+  {
+    "name": "build-zaratustra-core",
+    "argv": [
+      "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+      "build",
+      "--package",
+      "zaratustra-core",
+      "--out-dir",
+      "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-c\\install-d02fbb3\\physical-builds"
+    ],
+    "cwd": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release",
+    "exit": 0,
+    "seconds": 0.06525349617004395
+  },
+  {
+    "name": "build-zaratustra-next",
+    "argv": [
+      "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+      "build",
+      "--package",
+      "zaratustra-next",
+      "--out-dir",
+      "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-c\\install-d02fbb3\\physical-builds"
+    ],
+    "cwd": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release",
+    "exit": 0,
+    "seconds": 0.06167888641357422
+  },
+  {
+    "name": "venv",
+    "argv": [
+      "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+      "venv",
+      "C:\\projects\\zaratustra\\_scratch\\c-installed-d02fbb3-7600f631441049b99e1df014369097f1\\env",
+      "--python",
+      "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe"
+    ],
+    "cwd": "C:\\projects\\zaratustra\\_scratch\\c-installed-d02fbb3-7600f631441049b99e1df014369097f1",
+    "exit": 0,
+    "seconds": 0.03098297119140625
+  },
+  {
+    "name": "install-core",
+    "argv": [
+      "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+      "pip",
+      "install",
+      "--offline",
+      "--constraint",
+      "C:\\projects\\zaratustra\\_scratch\\c-installed-d02fbb3-7600f631441049b99e1df014369097f1\\constraints.txt",
+      "--python",
+      "C:\\projects\\zaratustra\\_scratch\\c-installed-d02fbb3-7600f631441049b99e1df014369097f1\\env\\Scripts\\python.exe",
+      "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-c\\install-d02fbb3\\physical-builds\\zaratustra_core-0.1.0-py3-none-any.whl"
+    ],
+    "cwd": "C:\\projects\\zaratustra\\_scratch\\c-installed-d02fbb3-7600f631441049b99e1df014369097f1",
+    "exit": 0,
+    "seconds": 0.3535006046295166
+  },
+  {
+    "name": "core-only-smoke",
+    "argv": [
+      "C:\\projects\\zaratustra\\_scratch\\c-installed-d02fbb3-7600f631441049b99e1df014369097f1\\env\\Scripts\\python.exe",
+      "-I",
+      "-X",
+      "utf8",
+      "-c",
+      "\nimport importlib.abc, importlib.util, json, sys, sqlite3\nfrom pathlib import Path\nclass Deny(importlib.abc.MetaPathFinder):\n    def find_spec(self, fullname,path=None,target=None):\n        if fullname.split('.')[0] in {'zaratustra','dbos','sqlalchemy','pi'}:\n            raise AssertionError('forbidden legacy import: '+fullname)\nsys.meta_path.insert(0,Deny())\nallowed=[Path.cwd().resolve(),Path(sys.prefix).resolve(),Path(sys.base_prefix).resolve()]\ndef audit(event,args):\n    if event.startswith('socket.') or event.startswith('subprocess.'):\n        raise AssertionError('forbidden network/process: '+event)\n    if event in {'open','os.listdir','os.scandir','sqlite3.connect','os.mkdir'} and isinstance(args[0],(str,bytes)):\n        actual=Path(args[0]).resolve()\n        if not any(actual.is_relative_to(p) for p in allowed):\n            raise AssertionError('forbidden ambient file: '+str(actual))\nsys.addaudithook(audit)\n\nimport zaratustra_core\nassert importlib.util.find_spec('zaratustra_app') is None\nassert sqlite3.sqlite_version=='3.50.4',sqlite3.sqlite_version\ncore,token=zaratustra_core.Core.initialize(Path('core-only'))\nassert core.connect(token).call('describe_contract',{},'describe')['version']=='wire/v1'\nprint(json.dumps({'core':zaratustra_core.__file__,'sqlite':sqlite3.sqlite_version,'python':sys.version,'independent':True}))\n"
+    ],
+    "cwd": "C:\\projects\\zaratustra\\_scratch\\c-installed-d02fbb3-7600f631441049b99e1df014369097f1",
+    "exit": 0,
+    "seconds": 1.0508089065551758
+  },
+  {
+    "name": "install-app",
+    "argv": [
+      "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+      "pip",
+      "install",
+      "--offline",
+      "--python",
+      "C:\\projects\\zaratustra\\_scratch\\c-installed-d02fbb3-7600f631441049b99e1df014369097f1\\env\\Scripts\\python.exe",
+      "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-c\\install-d02fbb3\\physical-builds\\zaratustra_next-0.1.0-py3-none-any.whl"
+    ],
+    "cwd": "C:\\projects\\zaratustra\\_scratch\\c-installed-d02fbb3-7600f631441049b99e1df014369097f1",
+    "exit": 0,
+    "seconds": 0.0959939956665039
+  },
+  {
+    "name": "installed-sleep",
+    "argv": [
+      "C:\\projects\\zaratustra\\_scratch\\c-installed-d02fbb3-7600f631441049b99e1df014369097f1\\env\\Scripts\\python.exe",
+      "-I",
+      "-X",
+      "utf8",
+      "-c",
+      "\nimport importlib.abc, importlib.util, json, sys, sqlite3\nfrom pathlib import Path\nclass Deny(importlib.abc.MetaPathFinder):\n    def find_spec(self, fullname,path=None,target=None):\n        if fullname.split('.')[0] in {'zaratustra','dbos','sqlalchemy','pi'}:\n            raise AssertionError('forbidden legacy import: '+fullname)\nsys.meta_path.insert(0,Deny())\nallowed=[Path.cwd().resolve(),Path(sys.prefix).resolve(),Path(sys.base_prefix).resolve()]\ndef audit(event,args):\n    if event.startswith('socket.') or event.startswith('subprocess.'):\n        raise AssertionError('forbidden network/process: '+event)\n    if event in {'open','os.listdir','os.scandir','sqlite3.connect','os.mkdir'} and isinstance(args[0],(str,bytes)):\n        actual=Path(args[0]).resolve()\n        if not any(actual.is_relative_to(p) for p in allowed):\n            raise AssertionError('forbidden ambient file: '+str(actual))\nsys.addaudithook(audit)\n\nimport os\nsys.path.insert(0,str(Path.cwd()))\nimport zaratustra_core,zaratustra_app\nfrom fixtures.sleep_support import adaptation_trace\nassert not Path(zaratustra_core.__file__).is_relative_to(Path(sys.argv[1]))\nassert not Path(zaratustra_app.__file__).is_relative_to(Path(sys.argv[1]))\nos.environ['ZARA_RESTART_EVIDENCE']=str(Path.cwd()/'proof')\ne=adaptation_trace(Path('runtime'),'driver')\nassert e['next_work_received'][0]['method']['revision']==2\nassert next(h for h in e['physical']['heads'] if h['id']=='practice')['revision']==3\nprint(json.dumps({'core':zaratustra_core.__file__,'app':zaratustra_app.__file__,'sqlite':sqlite3.sqlite_version,'method_revision':3,'accepted':False}))\n",
+      "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\packages"
+    ],
+    "cwd": "C:\\projects\\zaratustra\\_scratch\\c-installed-d02fbb3-7600f631441049b99e1df014369097f1",
+    "exit": 0,
+    "seconds": 2.5334129333496094
+  }
+]

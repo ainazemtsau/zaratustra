@@ -1,0 +1,125 @@
+{
+  "heads": [
+    {
+      "id": "profile",
+      "revision": 1,
+      "kind": "profile",
+      "key": "codex-luna-evaluation",
+      "scope": "space"
+    },
+    {
+      "id": "practice",
+      "revision": 1,
+      "kind": "method",
+      "key": "exhibit-label",
+      "scope": "space"
+    },
+    {
+      "id": "memory",
+      "revision": 1,
+      "kind": "memory",
+      "key": "label-length",
+      "scope": "space"
+    },
+    {
+      "id": "facts",
+      "revision": 1,
+      "kind": "data",
+      "key": "specimen",
+      "scope": "space"
+    },
+    {
+      "id": "ordinary",
+      "revision": 1,
+      "kind": "data",
+      "key": "routine",
+      "scope": "space"
+    },
+    {
+      "id": "success",
+      "revision": 1,
+      "kind": "data",
+      "key": "success",
+      "scope": "space"
+    },
+    {
+      "id": "error",
+      "revision": 1,
+      "kind": "data",
+      "key": "error",
+      "scope": "space"
+    },
+    {
+      "id": "access",
+      "revision": 1,
+      "kind": "method",
+      "key": "access",
+      "scope": "space"
+    }
+  ],
+  "works": [
+    {
+      "id": "access",
+      "revision": 3,
+      "conversation": "access",
+      "status": "completed",
+      "generation": 1,
+      "body": "{\"call_limit\":1,\"continuation_policy\":\"durable\",\"conversation\":\"access\",\"goal\":\"Verify access\",\"id\":\"access\",\"inputs\":[],\"method_ref\":{\"id\":\"access\",\"revision\":1}}",
+      "reserved": 1
+    }
+  ],
+  "attempts": [
+    {
+      "id": "access-attempt",
+      "work": "access",
+      "conversation": "access",
+      "status": "finished",
+      "generation": 1,
+      "original_cursor": 0,
+      "cutoff": 0,
+      "body": "{\"capabilities\":[\"read\",\"apply_changes\",\"open_work\",\"prepare_attempt\",\"claim_dispatch\",\"observe_attempt\",\"commit_outcome\",\"control_work\",\"reserve_tool\",\"write:memory:space\",\"write:method:space\"],\"catalog\":[{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Return ONLY JSON {\\\\\\\"state\\\\\\\":\\\\\\\"completed\\\\\\\",\\\\\\\"text\\\\\\\":\\\\\\\"access established\\\\\\\"}. This fictional access check is not a usefulness evaluation.\\\"}\",\"id\":\"access\",\"key\":\"access\",\"kind\":\"method\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Trial B: a 190-word label was returned unread because it did not fit the display. A short Trial C also failed: it asserted a wild pollinator unsupported by observations. Length alone therefore did not establish accuracy. No further negative trials exist.\\\"}\",\"id\":\"error\",\"key\":\"error\",\"kind\":\"data\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Fictional exhibit: night-blooming cactus, flowers open after sunset and close next morning. In this indoor trial only 3 of 12 buds opened. No evidence establishing its wild pollinator.\\\"}\",\"id\":\"facts\",\"key\":\"specimen\",\"kind\":\"data\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Early planning assumption: labels should be 180–200 words; not yet confirmed by curator.\\\"}\",\"id\":\"memory\",\"key\":\"label-length\",\"kind\":\"memory\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Routine visitor observation: the first sentence and large-print species name were read; the provenance appendix was usually skipped. No complaint was filed.\\\"}\",\"id\":\"ordinary\",\"key\":\"routine\",\"kind\":\"data\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Draft an informative exhibit label using current memory and supplied facts. Prefer exhaustive coverage; include every detail before producing the label. Return ordinary JSON {state:'completed',text:<usable label>}. No acceptance claims.\\\"}\",\"id\":\"practice\",\"key\":\"exhibit-label\",\"kind\":\"method\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":{\\\"exact_physical_provider_sends\\\":\\\"unknown\\\",\\\"model\\\":\\\"gpt-6-luna\\\",\\\"resource_unit\\\":\\\"codex_exec\\\",\\\"test_only\\\":true}}\",\"id\":\"profile\",\"key\":\"codex-luna-evaluation\",\"kind\":\"profile\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Trial A: a 42-word draft with one clear observation was approved by the fictional curator. The curator asked to keep future display labels 35–50 words, moving detailed notes off-label.\\\"}\",\"id\":\"success\",\"key\":\"success\",\"kind\":\"data\",\"revision\":1,\"scope\":\"space\"}],\"inputs\":[],\"manifest\":[],\"messages\":[],\"method\":{\"body\":{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Return ONLY JSON {\\\"state\\\":\\\"completed\\\",\\\"text\\\":\\\"access established\\\"}. This fictional access check is not a usefulness evaluation.\"},\"id\":\"access\",\"key\":\"access\",\"kind\":\"method\",\"revision\":1,\"scope\":\"space\"},\"prior_messages\":[],\"prior_results\":[],\"prior_waits\":[],\"profile\":{\"body\":{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":{\"exact_physical_provider_sends\":\"unknown\",\"model\":\"gpt-6-luna\",\"resource_unit\":\"codex_exec\",\"test_only\":true}},\"id\":\"profile\",\"key\":\"codex-luna-evaluation\",\"kind\":\"profile\",\"revision\":1,\"scope\":\"space\"},\"profile_ref\":{\"id\":\"profile\",\"revision\":1},\"tool_ledger\":[],\"work\":{\"call_limit\":1,\"continuation_policy\":\"durable\",\"conversation\":\"access\",\"goal\":\"Verify access\",\"id\":\"access\",\"inputs\":[],\"method_ref\":{\"id\":\"access\",\"revision\":1}}}"
+    }
+  ],
+  "messages": [],
+  "conversations": [
+    {
+      "id": "access",
+      "cursor": 0
+    }
+  ],
+  "waits": [],
+  "results": [
+    {
+      "attempt": "access-attempt",
+      "slot": "final",
+      "fingerprint": "dc3484cb1d0091166d9b04b6d53eb1894f30a05499dd4b0a20c2c3c399ac884e",
+      "body": "{\"accepted\":false,\"attempt_id\":\"access-attempt\",\"cutoff\":0,\"outputs\":[],\"refs\":[],\"state\":\"completed\",\"text\":\"access established\"}"
+    }
+  ],
+  "observations": [
+    {
+      "attempt": "access-attempt",
+      "event": "terminal",
+      "fingerprint": "84e82100839f7227042e9aaefe9f2642a11ff825fe036aba58113c9b73db04e0",
+      "body": "{\"attempt_id\":\"access-attempt\",\"event_id\":\"terminal\",\"kind\":\"terminal\",\"late\":false,\"raw_base64\":\"eyJzdGF0ZSI6ICJjb21wbGV0ZWQiLCAidGV4dCI6ICJhY2Nlc3MgZXN0YWJsaXNoZWQifQ==\"}"
+    }
+  ],
+  "actions": [
+    {
+      "id": "access-attempt:action",
+      "attempt": "access-attempt",
+      "executor": "semantic-executor",
+      "state": "terminal",
+      "correlation": null,
+      "reserve": 1
+    }
+  ],
+  "intents": [],
+  "tool_calls": [],
+  "acceptance": [],
+  "snapshot_revision": 16,
+  "limit": {
+    "max_rows_per_table": 1000,
+    "truncated": false
+  }
+}

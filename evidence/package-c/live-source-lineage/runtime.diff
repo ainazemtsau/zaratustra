@@ -1,0 +1,64 @@
+diff --git a/packages/app/src/zaratustra_app/sleep.py b/packages/app/src/zaratustra_app/sleep.py
+index 73d88c4..7250d8a 100644
+--- a/packages/app/src/zaratustra_app/sleep.py
++++ b/packages/app/src/zaratustra_app/sleep.py
+@@ -300,7 +300,15 @@ class Sleep:
+         snapshot = self.coordinator.snapshot()
+         attempts = [a for a in snapshot["attempts"] if a["work"] == work_id]
+         work = next(w for w in snapshot["works"] if w["id"] == work_id)
++        resource_pause = any(
++            intent["kind"] in {"control", "resource"}
++            and intent["subject"] == work_id
++            and json.loads(intent["body"]).get("reason") == "resource_exhausted"
++            for intent in snapshot["intents"]
++        )
+         if not attempts and work["status"] == "paused":
++            if resource_pause:
++                raise CoreError("resource_exhausted", "calls")
+             raise CoreError("stale_basis", "sleep.paused", "after_refresh")
+         if attempts:
+             latest = attempts[-1]
+@@ -325,8 +333,7 @@ class Sleep:
+                 if work["status"] == "completed":
+                     return json.loads(result["body"])  # type: ignore[no-any-return]
+             if work["status"] == "paused":
+-                progress = self.progress(work_id)["body"]["value"]
+-                if progress["stop_reason"] == "resource_exhausted":
++                if resource_pause:
+                     raise CoreError("resource_exhausted", "calls")
+                 raise CoreError("stale_basis", "sleep.paused", "after_refresh")
+             if latest["status"] == "prepared":
+diff --git a/packages/core/src/zaratustra_core/api.py b/packages/core/src/zaratustra_core/api.py
+index da79752..0b4c2ad 100644
+--- a/packages/core/src/zaratustra_core/api.py
++++ b/packages/core/src/zaratustra_core/api.py
+@@ -1124,10 +1124,9 @@ class Core:
+                 if work["status"] not in {"ready", "running", "waiting", "blocked"}:
+                     fail("stale_basis", "work.status")
+                 state = "paused" if action == "pause" else "cancelled"
+-                if p.get("reason"):
+-                    self._intent(
+-                        db, "control", work["id"], {"action": action, "reason": p["reason"]}
+-                    )
++                self._intent(
++                    db, "control", work["id"], {"action": action, "reason": p.get("reason")}
++                )
+                 db.execute(
+                     "UPDATE works SET "
+                     "status=?,generation=generation+1,revision=revision+1 WHERE id=?",
+@@ -1183,6 +1182,7 @@ class Core:
+                         (attempt["id"],),
+                     )
+                 self._intent(db, "prepare", work["id"], {"reason": "fresh_basis"})
++                db.execute("DELETE FROM intents WHERE kind='control' AND subject=?", (work["id"],))
+                 state = "ready"
+             elif action == "resume":
+                 if work["status"] not in {"blocked", "paused"}:
+@@ -1227,6 +1227,7 @@ class Core:
+                     last["attempt"] if state == "running" else work["id"],
+                     {},
+                 )
++                db.execute("DELETE FROM intents WHERE kind='control' AND subject=?", (work["id"],))
+             else:
+                 fail("invalid_request", "control.action")
+             return {"status": state}

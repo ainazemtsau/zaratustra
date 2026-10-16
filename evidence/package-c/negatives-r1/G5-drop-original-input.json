@@ -1,0 +1,10 @@
+{
+  "seed": "G5-drop-original-input",
+  "test": "test_trace.py::test_fixed_trace[driver]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n__________________________ test_fixed_trace[driver] ___________________________\ntests\\restart\\test_trace.py:12: in test_fixed_trace\n    evidence = trace(tmp_path, mode)\n               ^^^^^^^^^^^^^^^^^^^^^\ntests\\restart\\support.py:253: in trace\n    assert receiver.received[0][\"raw_messages\"][-1] == REQUEST\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   AssertionError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_trace.py::test_fixed_trace[driver] - AssertionError\n1 failed in 1.00s\n",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/coordinator.py\n+++ app/src/zaratustra_app/coordinator.py.mutant\n@@ -144,6 +144,7 @@\n         observations = [o for o in snapshot[\"observations\"] if o[\"attempt\"] == attempt_id]\n         if observations or action[\"state\"] != \"claimed\":\n             raise CoreError(\"outcome_unknown\", \"existing_dispatch\", \"reconcile\")\n+        print(\"MUTANT_REACHED\", flush=True)\n         context = dict(pinned)\n         context[\"response_contract\"] = getattr(\n             executor,\n@@ -165,7 +166,7 @@\n             },\n         )\n         context[\"raw_messages\"] = [\n-            base64.b64decode(m[\"raw\"]).decode(\"utf-8\") for m in pinned[\"messages\"]\n+            base64.b64decode(m[\"raw\"]).decode(\"utf-8\") for m in pinned[\"messages\"][:-1]\n         ]\n \n         def tool_handler(native_id: str, intent: dict[str, Any]) -> dict[str, Any]:\n"
+}

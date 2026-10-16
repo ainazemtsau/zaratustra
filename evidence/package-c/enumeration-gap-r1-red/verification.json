@@ -1,0 +1,7 @@
+{
+  "returncode": 1,
+  "probe_sha256": "1c40cc40bb353eabc18bbfde44b6bbebf75f36fa8581dd65ce0fff57f5a93db8",
+  "copied_probe_sha256": "1c40cc40bb353eabc18bbfde44b6bbebf75f36fa8581dd65ce0fff57f5a93db8",
+  "source": "9c469e5 plus unrelated pending crash/profile corrections",
+  "frozen_source_paths_present": false
+}

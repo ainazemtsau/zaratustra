@@ -1,0 +1,271 @@
+{
+  "source": "9c469e5aafb3661ea4b1e484c057569cecf2f348",
+  "before": {
+    "analysis_result_refs": [],
+    "applied_receipts": [],
+    "consumed_resource": 0,
+    "continuation": "Review selected sources and explore beyond known relations",
+    "delivered_manifest_refs": [],
+    "enumerated_source_refs": [
+      {
+        "index": 0,
+        "sequence": 1,
+        "sha256": "72cb76a8d5deae668853d0d2aa1761162fa799a237ed928387404675005fbf79"
+      }
+    ],
+    "enumeration_cursor": [
+      1,
+      0
+    ],
+    "format": "sleep-progress/v1",
+    "method_ref": {
+      "id": "sleep-lab",
+      "revision": 1,
+      "role": "must_be_current"
+    },
+    "proposed_changes": [],
+    "remaining_refs": [
+      {
+        "index": 0,
+        "sequence": 1,
+        "sha256": "72cb76a8d5deae668853d0d2aa1761162fa799a237ed928387404675005fbf79"
+      }
+    ],
+    "return_conditions": [
+      "Further arrivals require a new bounded pass"
+    ],
+    "scope": "lab",
+    "selected_source_refs": [
+      {
+        "index": 0,
+        "sequence": 1,
+        "sha256": "72cb76a8d5deae668853d0d2aa1761162fa799a237ed928387404675005fbf79"
+      }
+    ],
+    "source_high_watermark": 7,
+    "stop_reason": "not_started",
+    "unexplored_coverage_position": {
+      "status": "unexplored"
+    },
+    "unresolved_calls": [],
+    "work_id": "rest"
+  },
+  "actual_bounded_history": {
+    "high_watermark": 7,
+    "cursor": [
+      7,
+      2147483647
+    ],
+    "sources": [
+      {
+        "source_ref": {
+          "sequence": 1,
+          "index": 0,
+          "sha256": "72cb76a8d5deae668853d0d2aa1761162fa799a237ed928387404675005fbf79"
+        },
+        "material": {
+          "record": {
+            "id": "first",
+            "revision": 1,
+            "kind": "data",
+            "key": "first",
+            "scope": "lab",
+            "body": {
+              "application": "active",
+              "schema_ref": null,
+              "source_refs": [],
+              "tombstone": false,
+              "value": "Exact fictional material first"
+            }
+          },
+          "scope": "lab"
+        }
+      },
+      {
+        "source_ref": {
+          "sequence": 2,
+          "index": 0,
+          "sha256": "a56905669ceaccdcd96653ee0624f95a0af84fc07fd0d03440756a3350d5f30b"
+        },
+        "material": {
+          "record": {
+            "id": "ordinary-success",
+            "revision": 1,
+            "kind": "data",
+            "key": "ordinary-success",
+            "scope": "lab",
+            "body": {
+              "application": "active",
+              "schema_ref": null,
+              "source_refs": [],
+              "tombstone": false,
+              "value": "Exact fictional material ordinary-success"
+            }
+          },
+          "scope": "lab"
+        }
+      },
+      {
+        "source_ref": {
+          "sequence": 3,
+          "index": 0,
+          "sha256": "e92be88d8888413f628f90f01612ec42dd3232e79cff2254229a1357391fcdb6"
+        },
+        "material": {
+          "record": {
+            "id": "ordinary-error",
+            "revision": 1,
+            "kind": "data",
+            "key": "ordinary-error",
+            "scope": "lab",
+            "body": {
+              "application": "active",
+              "schema_ref": null,
+              "source_refs": [],
+              "tombstone": false,
+              "value": "Exact fictional material ordinary-error"
+            }
+          },
+          "scope": "lab"
+        }
+      },
+      {
+        "source_ref": {
+          "sequence": 4,
+          "index": 0,
+          "sha256": "f5a734e269ac52ef664cce048599e3c22469e92110586d2a7235098828df9c57"
+        },
+        "material": {
+          "record": {
+            "id": "unlinked-note",
+            "revision": 1,
+            "kind": "data",
+            "key": "unlinked-note",
+            "scope": "lab",
+            "body": {
+              "application": "active",
+              "schema_ref": null,
+              "source_refs": [],
+              "tombstone": false,
+              "value": "Exact fictional material unlinked-note"
+            }
+          },
+          "scope": "lab"
+        }
+      },
+      {
+        "source_ref": {
+          "sequence": 6,
+          "index": 0,
+          "sha256": "0f44366c2cf2b0284221d3a6b866566b8e4121bed1337a57d82b1e63c756aaef"
+        },
+        "material": {
+          "record": {
+            "id": "sleep-lab",
+            "revision": 1,
+            "kind": "method",
+            "key": "sleep",
+            "scope": "lab",
+            "body": {
+              "application": "active",
+              "schema_ref": null,
+              "source_refs": [],
+              "tombstone": false,
+              "value": {
+                "instructions": "Sleep method sleep/1. Work only inside granted scope and finite calls.\nYou are the meaning-making agent; do not ask the owner to pick problems. A finding\nis not guaranteed. Use the actual source bytes in sleep_sources, not catalog titles.\n1 Recover Work, exact Method, progress, resource_state, current rights, and outcomes\nof previous changes. An unresolved send is unknown and its reservation stays spent.\n2 Examine a bounded portion at source_high_watermark. Enumeration, selection,\ndelivery and analysis are distinct. Preserve enumeration_cursor and separately\nunexplored_coverage_position for a bounded exploration outside known relations.\n3 Maintain useful memory from ordinary work, successes AND errors, not complaints\nalone. Apply necessary permitted corrections with exact provenance; preserve doubt.\n4 Choose useful questions yourself. Make a bounded comparison beyond existing\nlinks, including an ordinary or successful source. Record no finding honestly.\n5 Ground claims in exact source refs/fragments. Distinguish observation, assertion\nand hypothesis; consider alternatives, counterexamples and previous failed attempts.\n6 Apply a useful permitted memory correction, or leave a proposal when rights are\ninsufficient. Reusable improvements may create a new scoped Method revision after\nproportionate checking. Never change grants, acceptance, code or own authority.\nMethod rollback is another revision, preserving old bytes and limiting its scope.\n7 Link changes to actual later Work outcomes delivered in history, including\nnegative outcomes. New work must use current applicable memory and Method. Revisit,\nnarrow or roll back a Method if outcomes oppose it; do not invent feedback.\n8 Save a new sleep-progress/v1 data revision with all fields from its delivered\ntemplate. Preserve source_high_watermark, exact refs and honest remainder/unknown,\nstop_reason and continuation. Reaching the cursor proves enumeration only.\nAnalysis is your claim, not machine proof. Persist analysis as ordinary data with\nbody {format:'sleep-analysis/v1', sources:[source_ref,...], content:<free text/object>}.\nKeep each selected source in remaining_refs until such an analysis is retained.\nFor each actual delivery append context.sleep_delivery_manifest; do not fabricate\ndelivery from enumeration. Copy resource_state.consumed_resource. For terminal\nprogress use unresolved_calls=[] only for this returned terminal; preserve others.\nUse subject changes only (data,memory,method/activity) and exact expected_heads.\nMemory and Method content are free text or objects; no prescribed subject template.\nUse the executor's response_contract for its exact wire representation. Method\ndefines the obligations; the executor codec defines serialization. Persist analysis\nbefore progress. An analysis exact ref is an object containing id and revision.\nUse ready for a further bounded portion; completed means this bounded pass ended,\nnever that all the environment is understood. Unknown/unexamined material remains.\nDo not request external tools not present. No mandatory interview or activity form.\n",
+                "status": "active",
+                "version": "sleep/1"
+              }
+            }
+          },
+          "scope": "lab"
+        }
+      }
+    ],
+    "has_more": false
+  },
+  "claimed_change": {
+    "id": "rest:progress",
+    "kind": "data",
+    "key": "sleep-progress:rest",
+    "scope": "lab",
+    "body": {
+      "analysis_result_refs": [],
+      "applied_receipts": [],
+      "consumed_resource": 0,
+      "continuation": "Review selected sources and explore beyond known relations",
+      "delivered_manifest_refs": [],
+      "enumerated_source_refs": [
+        {
+          "index": 0,
+          "sequence": 1,
+          "sha256": "72cb76a8d5deae668853d0d2aa1761162fa799a237ed928387404675005fbf79"
+        }
+      ],
+      "enumeration_cursor": [
+        7,
+        2147483647
+      ],
+      "format": "sleep-progress/v1",
+      "method_ref": {
+        "id": "sleep-lab",
+        "revision": 1,
+        "role": "must_be_current"
+      },
+      "proposed_changes": [],
+      "remaining_refs": [
+        {
+          "index": 0,
+          "sequence": 1,
+          "sha256": "72cb76a8d5deae668853d0d2aa1761162fa799a237ed928387404675005fbf79"
+        }
+      ],
+      "return_conditions": [
+        "Further arrivals require a new bounded pass"
+      ],
+      "scope": "lab",
+      "selected_source_refs": [
+        {
+          "index": 0,
+          "sequence": 1,
+          "sha256": "72cb76a8d5deae668853d0d2aa1761162fa799a237ed928387404675005fbf79"
+        }
+      ],
+      "source_high_watermark": 7,
+      "stop_reason": "not_started",
+      "unexplored_coverage_position": {
+        "status": "unexplored"
+      },
+      "unresolved_calls": [],
+      "work_id": "rest"
+    }
+  },
+  "error": {
+    "code": "invalid_request",
+    "field": "progress.enumeration_prefix",
+    "retry_policy": "never",
+    "diagnostic_id": "2224a73319c0dc34"
+  },
+  "omitted_within_cursor": [
+    {
+      "sequence": 2,
+      "index": 0,
+      "sha256": "a56905669ceaccdcd96653ee0624f95a0af84fc07fd0d03440756a3350d5f30b"
+    },
+    {
+      "sequence": 3,
+      "index": 0,
+      "sha256": "e92be88d8888413f628f90f01612ec42dd3232e79cff2254229a1357391fcdb6"
+    },
+    {
+      "sequence": 4,
+      "index": 0,
+      "sha256": "f5a734e269ac52ef664cce048599e3c22469e92110586d2a7235098828df9c57"
+    },
+    {
+      "sequence": 6,
+      "index": 0,
+      "sha256": "0f44366c2cf2b0284221d3a6b866566b8e4121bed1337a57d82b1e63c756aaef"
+    }
+  ]
+}

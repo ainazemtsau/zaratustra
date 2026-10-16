@@ -1,0 +1,294 @@
+{
+  "source": "d02fbb301af19c4be5abdc19920ec5b089bc4783",
+  "prompt": "evidence\\package-c\\live-chain-d02fbb3-four\\stage-three\\invocation-1\\prompt.txt",
+  "prompt_sha256": "650ba4bb2cba4ef4befcdce443c405bfc36a558ce29b140f7e0035f15f835249",
+  "prompt_bytes": 92518,
+  "work": {
+    "call_limit": 2,
+    "continuation_policy": "durable",
+    "conversation": "sleep-two:conversation",
+    "goal": "Sleep",
+    "id": "sleep-two",
+    "inputs": [
+      {
+        "id": "sleep-two:progress",
+        "revision": 1,
+        "role": "must_be_current"
+      }
+    ],
+    "method_ref": {
+      "id": "sleep-method",
+      "revision": 1,
+      "role": "must_be_current"
+    },
+    "scope": "space"
+  },
+  "execution_method": {
+    "body": {
+      "application": "active",
+      "schema_ref": null,
+      "source_refs": [],
+      "tombstone": false,
+      "value": {
+        "instructions": "Sleep method sleep/1. Work only inside granted scope and finite calls.\nYou are the meaning-making agent; do not ask the owner to pick problems. A finding\nis not guaranteed. Use the actual source bytes in sleep_sources, not catalog titles.\n1 Recover Work, exact Method, progress, resource_state, current rights, and outcomes\nof previous changes. An unresolved send is unknown and its reservation stays spent.\n2 Examine a bounded portion at source_high_watermark. Enumeration, selection,\ndelivery and analysis are distinct. Preserve enumeration_cursor and separately\nunexplored_coverage_position for a bounded exploration outside known relations.\n3 Maintain useful memory from ordinary work, successes AND errors, not complaints\nalone. Apply necessary permitted corrections with exact provenance; preserve doubt.\n4 Choose useful questions yourself. Make a bounded comparison beyond existing\nlinks, including an ordinary or successful source. Record no finding honestly.\n5 Ground claims in exact source refs/fragments. Distinguish observation, assertion\nand hypothesis; consider alternatives, counterexamples and previous failed attempts.\n6 Apply a useful permitted memory correction, or leave a proposal when rights are\ninsufficient. Reusable improvements may create a new scoped Method revision after\nproportionate checking. Never change grants, acceptance, code or own authority.\nMethod rollback is another revision, preserving old bytes and limiting its scope.\n7 Link changes to actual later Work outcomes delivered in history, including\nnegative outcomes. New work must use current applicable memory and Method. Revisit,\nnarrow or roll back a Method if outcomes oppose it; do not invent feedback.\n8 Save a new sleep-progress/v1 data revision with all fields from its delivered\ntemplate. Preserve source_high_watermark, exact refs and honest remainder/unknown,\nstop_reason and continuation. Reaching the cursor proves enumeration only.\nAnalysis is your claim, not machine proof. Persist analysis as ordinary data with\nbody {format:'sleep-analysis/v1', sources:[source_ref,...], content:<free text/object>}.\nKeep each selected source in remaining_refs until such an analysis is retained.\nFor each actual delivery append context.sleep_delivery_manifest; do not fabricate\ndelivery from enumeration. Copy resource_state.consumed_resource. For terminal\nprogress use unresolved_calls=[] only for this returned terminal; preserve others.\nUse subject changes only (data,memory,method/activity) and exact expected_heads.\nMemory and Method content are free text or objects; no prescribed subject template.\nUse the executor's response_contract for its exact wire representation. Method\ndefines the obligations; the executor codec defines serialization. Persist analysis\nbefore progress. An analysis exact ref is an object containing id and revision.\nUse ready for a further bounded portion; completed means this bounded pass ended,\nnever that all the environment is understood. Unknown/unexamined material remains.\nDo not request external tools not present. No mandatory interview or activity form.\n",
+        "status": "active",
+        "version": "sleep/1"
+      }
+    },
+    "id": "sleep-method",
+    "key": "sleep",
+    "kind": "method",
+    "revision": 1,
+    "scope": "space"
+  },
+  "top_level_messages": [],
+  "top_level_raw_messages": [],
+  "source_count": 19,
+  "source_kinds": [
+    {
+      "source_ref": {
+        "index": 0,
+        "sequence": 1,
+        "sha256": "1625fcc5f45437221cc0fa599a7adc90373148d975604ca8061a0003cff555c5"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 0,
+        "sequence": 2,
+        "sha256": "4f9bad3563c034a99a79503d8d26c39fb7a6e2219122b8bd00014b846ef778a2"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 0,
+        "sequence": 3,
+        "sha256": "12fc65a586be5d47d296d0c7b5332e7d6cf3548f89516fb4d6caa00dde11fac9"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 0,
+        "sequence": 4,
+        "sha256": "45d020c42a5ddfb8819f288fef066089d92931fe1b456bcfd680f93db394883f"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 0,
+        "sequence": 5,
+        "sha256": "1ba3574fdc28673e5864272da2de78dbd381562839453da62f074bda0ed936a1"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 0,
+        "sequence": 6,
+        "sha256": "78d99d07e3a6b7ee95c88f1b7801b7763b2db52a35c55645a77e223da785ff76"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 0,
+        "sequence": 7,
+        "sha256": "2948e998223adeb70c3d19463139a0cb89c06810948a091b79a8ebaa54618e37"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 0,
+        "sequence": 9,
+        "sha256": "193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 0,
+        "sequence": 12,
+        "sha256": "47639edfc28d3dc4fb26198fa84a2bad6a911491d122fe9a80268b30fda28f44"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 0,
+        "sequence": 22,
+        "sha256": "abee774a009f8216e2329ccceb8b96898729c1fc765865374730830116e6bff7"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 0,
+        "sequence": 24,
+        "sha256": "1578049ca5d718798ea7c5466428f3fbd6ba5672ecb9fd9e4f2ea0d2959065a8"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 1,
+        "sequence": 24,
+        "sha256": "bf02cfb6d1b0a68050bde6d5b606678a6a280cc0750c692f7dec6a26ad9500f0"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 2,
+        "sequence": 24,
+        "sha256": "35a8843f426eda63a51288b2c0c440050ab8769b62b70c337c0e4df57bfaa1bd"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 3,
+        "sequence": 24,
+        "sha256": "3e25bd5f4b93b8c650f547424f65376e98d458c968b393cf66811a3c9e80b019"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 4,
+        "sequence": 24,
+        "sha256": "7ada055b4c45665d0196b649dd13c32d33311665627e1697eaeee35d930e5a81"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 0,
+        "sequence": 30,
+        "sha256": "adc3d3ca2d16033233dd84631d5be85400d049b54758b4f0ef1f2bd84e715b35"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 0,
+        "sequence": 31,
+        "sha256": "062d86b901795d3f16fe6ed4e1e8f9b0cee3225936a98cbbd4f69dc8afb02aec"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 0,
+        "sequence": 39,
+        "sha256": "fd7b14d0b8145385aeac19e6e11280a484d29a0620cd5fc00395f91b9b84d841"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    },
+    {
+      "source_ref": {
+        "index": 0,
+        "sequence": 41,
+        "sha256": "4f9ba7a22207f0728d8e8932c9819bdab566bcf8a38ad21c0a6ee4886aaa0ffb"
+      },
+      "kind": null,
+      "keys": [
+        "material",
+        "source_ref"
+      ]
+    }
+  ],
+  "answer": {
+    "state": "completed",
+    "text": "The supplied records do not establish a confirmed wild pollinator for this specimen. The bounded factual request was not achieved: the available evidence describes an indoor trial where flowers opened after sunset and closed the next morning, with three of twelve buds opening. Evidence identifying a pollinator or showing pollination in the wild is missing.",
+    "edits": [],
+    "analyses": [],
+    "progress": null,
+    "progress_record_revision": 0
+  },
+  "factual_boundary": "Top-level Work.goal=Sleep, method=sleep-method@1 active, conversation=sleep-two:conversation, actual messages/raw_messages empty. Prior factual request/outcome occur only in typed historical sleep_sources payloads. They were not promoted to current transcript roles.",
+  "limitation": "One Codex user prompt contains both current structured context and historical data. This audit proves delivery identity, not why Luna ignored the Sleep obligations. Large nested history and instruction-like source text are plausible model/codec factors; no causal attribution is established.",
+  "method_value_keys": [
+    "instructions",
+    "status",
+    "version"
+  ],
+  "method_instructions_equal_frozen_generic": true,
+  "delivered_generic_instructions_sha256": "7ed58988ee0c77bfb4a60df46e9a6628137f3f69e3737999e6fb588e5bc6f606"
+}

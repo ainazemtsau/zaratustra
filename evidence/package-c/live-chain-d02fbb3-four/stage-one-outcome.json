@@ -1,0 +1,30 @@
+{
+  "stage": "first-sleep",
+  "outcome": {
+    "attempt_id": "sleep-one:58a016f180a441118a10007147bd1bd5",
+    "state": "completed",
+    "refs": [
+      {
+        "id": "sleep-one:analysis:bounded-review",
+        "revision": 1
+      },
+      {
+        "id": "memory",
+        "revision": 2
+      },
+      {
+        "id": "practice",
+        "revision": 2
+      },
+      {
+        "id": "sleep-one:progress",
+        "revision": 2
+      }
+    ],
+    "outputs": [],
+    "accepted": false,
+    "text": "Completed this bounded Sleep pass. Reviewed all eight enumerated sources, recorded the comparison, updated the label-length memory and exhibit-label Method, and retained no selected sources as unanalyzed. Further arrivals and unexamined coverage remain outside this pass.",
+    "cutoff": 0
+  },
+  "invocations": 1
+}

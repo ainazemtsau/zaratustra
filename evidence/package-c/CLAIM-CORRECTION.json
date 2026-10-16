@@ -1,0 +1,13 @@
+{
+  "claim": "Outside-checkout source build and clean installation",
+  "correction": "Earlier C:/projects/zaratustra/_scratch source/runtime roots are outside the active restart worktree but inside the original C:/projects/zaratustra Git checkout. Path.is_relative_to(active_worktree) was insufficient. Existing manifests' outside_checkout=true must not be used as proof of absence of any checkout.",
+  "affected": ["install-9c469e5", "install-d02fbb3", "outside-build-d02fbb3", "install-3fbbf3e"],
+  "preserved_claims": "Exact source/wheel/installed byte equality, independent Core, locked dependencies, native SQLite and Driver/Pi behavior remain retained observations at those roots.",
+  "replacement": "install-3fbbf3e-external uses fresh OS temp source/runtime roots and retains actual git rev-parse --show-toplevel failures for both.",
+  "initial_temp_attempt": {
+    "status": "Sandbox filesystem failure before build or product execution",
+    "error": "PermissionError WinError 5 creating source child under sandbox-redirected OS temp",
+    "path": "C:/Users/Anton/AppData/Local/Packages/sandbox.{6f422369-2471-4890-920b-4e9fef9c165e}/AC/Temp/zaratustra-c-3fbbf3e-1recs3mz/source",
+    "continuation": "Use authorized escalation for a fresh ordinary OS temp build/install; no product change for this failure."
+  }
+}

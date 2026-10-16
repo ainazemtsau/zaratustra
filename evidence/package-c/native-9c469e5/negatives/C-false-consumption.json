@@ -1,0 +1,10 @@
+{
+  "seed": "C-false-consumption",
+  "test": "test_sleep.py::test_progress_rejects_false_claims[resource]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n________________ test_progress_rejects_false_claims[resource] _________________\ntests\\restart\\test_sleep.py:145: in test_progress_rejects_false_claims\n    with pytest.raises(CoreError):\n         ^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_sleep.py::test_progress_rejects_false_claims[resource]\n1 failed in 0.99s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -514,7 +514,7 @@\n             value[\"consumed_resource\"] != work[\"reserved\"]\n             or sorted(value[\"unresolved_calls\"]) != unresolved\n         ):\n-            fail(\"stale_basis\", \"progress.resource\")\n+            print(\"MUTANT_REACHED\", flush=True)\n \n     def _work(self, db: sqlite3.Connection, body: dict[str, Any]) -> dict[str, Any]:\n         self._method(db, body)\n"
+}

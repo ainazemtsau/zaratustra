@@ -1,0 +1,24 @@
+--- original-probe
++++ explicit-refusal-assertion
+@@ -59,7 +59,13 @@
+         (root/('profile-'+name+'.json')).write_text(json.dumps(config),encoding='utf-8')
+         sys.argv=['zaratustra-next','--data-root',str(core.root),'sleep','--work-id','repeat','--call-limit','6','--profile-file',str(profile)]
+         output=io.StringIO()
+-        with contextlib.redirect_stdout(output): result=cli.main()
++        try:
++            with contextlib.redirect_stdout(output): result=cli.main()
++        except Exception as error:
++            assert hasattr(error,'code') and error.code=='stale_basis',repr(error)
++            assert error.field=='profile.configuration'
++            observations['refusal']={'code':error.code,'field':error.field}
++            result='refused-before-dispatch' 
+         observations['cli_results'].append({'profile':name,'exit':result,'stdout':output.getvalue(),'argv':sys.argv.copy()})
+     observations['received']=receiver.received
+     observations['routes']=routes
+@@ -75,3 +81,6 @@
+     thread.join(timeout=3)
+     (root/'observations.json').write_text(json.dumps(observations,ensure_ascii=False,indent=2),encoding='utf-8')
+ assert observations['actual_models']==observations['pinned_models'],'Actual Pi sends use changed model B while Core profile remains exact revision1 model A'
++
++assert len(observations["actual_models"])==1
++assert observations["refusal"]["field"]=="profile.configuration"

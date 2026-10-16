@@ -1,0 +1,10 @@
+{
+  "seed": "C-R4-paused-projection",
+  "test": "test_sleep.py::test_post_c8_crash_registers_delivery_and_changes[ready-2]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_________ test_post_c8_crash_registers_delivery_and_changes[ready-2] __________\ntests\\restart\\test_sleep.py:519: in test_post_c8_crash_registers_delivery_and_changes\n    assert progress[\"delivered_manifest_refs\"]\nE   assert []\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_sleep.py::test_post_c8_crash_registers_delivery_and_changes[ready-2]\n1 failed in 2.23s\n",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/sleep.py\n+++ app/src/zaratustra_app/sleep.py.mutant\n@@ -320,7 +320,7 @@\n                 )\n                 self._checkpoint(work_id, latest[\"id\"])\n                 return recovered\n-            if result is not None:\n+            if result is not None and (print(\"MUTANT_REACHED\", flush=True) or work[\"status\"] == \"completed\"):\n                 self._checkpoint(work_id, latest[\"id\"])\n                 if work[\"status\"] == \"completed\":\n                     return json.loads(result[\"body\"])  # type: ignore[no-any-return]\n"
+}

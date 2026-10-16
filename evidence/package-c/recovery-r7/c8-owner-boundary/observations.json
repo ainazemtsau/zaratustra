@@ -1,0 +1,197 @@
+{
+  "source": "d02fbb3 plus narrow pending R7",
+  "actual_c8_outcome": {
+    "attempt_id": "s:ce51c0e9217a452fb06e9965c1005f44",
+    "state": "paused",
+    "refs": [
+      {
+        "id": "s:analysis",
+        "revision": 1
+      },
+      {
+        "id": "memory",
+        "revision": 2
+      },
+      {
+        "id": "practice",
+        "revision": 2
+      },
+      {
+        "id": "s:progress",
+        "revision": 2
+      }
+    ],
+    "outputs": [],
+    "accepted": false,
+    "text": "Mechanical bounded pass; unexplored material remains",
+    "cutoff": 0
+  },
+  "checks": [
+    {
+      "action": "refresh",
+      "result": {
+        "code": "resource_exhausted",
+        "field": "calls",
+        "retry_policy": "never",
+        "diagnostic_id": "eeecbb1f2c1f0ab2"
+      }
+    },
+    {
+      "action": "resume",
+      "result": {
+        "code": "stale_basis",
+        "field": "s:progress",
+        "retry_policy": "after_refresh",
+        "diagnostic_id": "2c72cf5c114bdea9"
+      }
+    },
+    {
+      "action": "pause",
+      "result": {
+        "code": "stale_basis",
+        "field": "work.status",
+        "retry_policy": "never",
+        "diagnostic_id": "76090a4c7fd510c0"
+      }
+    }
+  ],
+  "snapshot": {
+    "heads": [
+      {
+        "id": "profile",
+        "revision": 1,
+        "kind": "profile",
+        "key": "transport",
+        "scope": "space"
+      },
+      {
+        "id": "practice",
+        "revision": 2,
+        "kind": "method",
+        "key": "practice",
+        "scope": "space"
+      },
+      {
+        "id": "memory",
+        "revision": 2,
+        "kind": "memory",
+        "key": "known",
+        "scope": "space"
+      },
+      {
+        "id": "ordinary",
+        "revision": 1,
+        "kind": "data",
+        "key": "ordinary",
+        "scope": "space"
+      },
+      {
+        "id": "success",
+        "revision": 1,
+        "kind": "data",
+        "key": "success",
+        "scope": "space"
+      },
+      {
+        "id": "error",
+        "revision": 1,
+        "kind": "data",
+        "key": "error",
+        "scope": "space"
+      },
+      {
+        "id": "sleep-method",
+        "revision": 1,
+        "kind": "method",
+        "key": "sleep",
+        "scope": "space"
+      },
+      {
+        "id": "s:progress",
+        "revision": 3,
+        "kind": "data",
+        "key": "sleep-progress:s",
+        "scope": "space"
+      },
+      {
+        "id": "s:analysis",
+        "revision": 1,
+        "kind": "data",
+        "key": "s:analysis",
+        "scope": "space"
+      }
+    ],
+    "works": [
+      {
+        "id": "s",
+        "revision": 5,
+        "conversation": "s:conversation",
+        "status": "paused",
+        "generation": 3,
+        "body": "{\"call_limit\":2,\"continuation_policy\":\"durable\",\"conversation\":\"s:conversation\",\"goal\":\"Sleep\",\"id\":\"s\",\"inputs\":[{\"id\":\"s:progress\",\"revision\":1,\"role\":\"must_be_current\"}],\"method_ref\":{\"id\":\"sleep-method\",\"revision\":1,\"role\":\"must_be_current\"},\"scope\":\"space\"}",
+        "reserved": 2
+      }
+    ],
+    "attempts": [
+      {
+        "id": "s:ce51c0e9217a452fb06e9965c1005f44",
+        "work": "s",
+        "conversation": "s:conversation",
+        "status": "finished",
+        "generation": 3,
+        "original_cursor": 0,
+        "cutoff": 0,
+        "body": "{\"capabilities\":[\"read\",\"apply_changes\",\"open_work\",\"prepare_attempt\",\"claim_dispatch\",\"observe_attempt\",\"commit_outcome\",\"control_work\",\"reserve_tool\",\"write:method:space\",\"write:memory:space\"],\"catalog\":[{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Observed failed attempt, unresolved cause\\\"}\",\"id\":\"error\",\"key\":\"error\",\"kind\":\"data\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Earlier uncertain note\\\"}\",\"id\":\"memory\",\"key\":\"known\",\"kind\":\"memory\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Routine work; no complaint\\\"}\",\"id\":\"ordinary\",\"key\":\"ordinary\",\"kind\":\"data\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Original bounded method\\\"}\",\"id\":\"practice\",\"key\":\"practice\",\"kind\":\"method\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":{\\\"mode\\\":\\\"scripted\\\"}}\",\"id\":\"profile\",\"key\":\"transport\",\"kind\":\"profile\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":{\\\"analysis_result_refs\\\":[],\\\"applied_receipts\\\":[],\\\"consumed_resource\\\":0,\\\"continuation\\\":\\\"Review selected sources and explore beyond known relations\\\",\\\"delivered_manifest_refs\\\":[],\\\"enumerated_source_refs\\\":[{\\\"index\\\":0,\\\"sequence\\\":1,\\\"sha256\\\":\\\"02b15472790f35ff0eb563d4abde325d90dbe99b3708680cbaeaf8d5089d3f30\\\"},{\\\"index\\\":0,\\\"sequence\\\":2,\\\"sha256\\\":\\\"bf274cb4f3b056a1f64f1bf961a61298d08651df7e6dc65939925fc7eeb24728\\\"},{\\\"index\\\":0,\\\"sequence\\\":3,\\\"sha256\\\":\\\"c85d7a671500126b2b60579e8c806a83367ffd7de929cb53f6c336b5dfa55ac2\\\"},{\\\"index\\\":0,\\\"sequence\\\":4,\\\"sha256\\\":\\\"e74f04a70f42135718bdffe10aeda1075c05479ee1db363127ce007a670fd8ab\\\"},{\\\"index\\\":0,\\\"sequence\\\":5,\\\"sha256\\\":\\\"9a53f8a40d2c996975bb584436a8a17fa658474c3542b92148e5a3589cd6d394\\\"},{\\\"index\\\":0,\\\"sequence\\\":6,\\\"sha256\\\":\\\"4662418414f2ae85cf9471c265305c004d4ec597659c23eb1f1ec8620e7aea20\\\"},{\\\"index\\\":0,\\\"sequence\\\":8,\\\"sha256\\\":\\\"193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc\\\"}],\\\"enumeration_cursor\\\":[9,2147483647],\\\"format\\\":\\\"sleep-progress/v1\\\",\\\"method_ref\\\":{\\\"id\\\":\\\"sleep-method\\\",\\\"revision\\\":1,\\\"role\\\":\\\"must_be_current\\\"},\\\"proposed_changes\\\":[],\\\"remaining_refs\\\":[{\\\"index\\\":0,\\\"sequence\\\":1,\\\"sha256\\\":\\\"02b15472790f35ff0eb563d4abde325d90dbe99b3708680cbaeaf8d5089d3f30\\\"},{\\\"index\\\":0,\\\"sequence\\\":2,\\\"sha256\\\":\\\"bf274cb4f3b056a1f64f1bf961a61298d08651df7e6dc65939925fc7eeb24728\\\"},{\\\"index\\\":0,\\\"sequence\\\":3,\\\"sha256\\\":\\\"c85d7a671500126b2b60579e8c806a83367ffd7de929cb53f6c336b5dfa55ac2\\\"},{\\\"index\\\":0,\\\"sequence\\\":4,\\\"sha256\\\":\\\"e74f04a70f42135718bdffe10aeda1075c05479ee1db363127ce007a670fd8ab\\\"},{\\\"index\\\":0,\\\"sequence\\\":5,\\\"sha256\\\":\\\"9a53f8a40d2c996975bb584436a8a17fa658474c3542b92148e5a3589cd6d394\\\"},{\\\"index\\\":0,\\\"sequence\\\":6,\\\"sha256\\\":\\\"4662418414f2ae85cf9471c265305c004d4ec597659c23eb1f1ec8620e7aea20\\\"},{\\\"index\\\":0,\\\"sequence\\\":8,\\\"sha256\\\":\\\"193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc\\\"}],\\\"return_conditions\\\":[\\\"Further arrivals require a new bounded pass\\\"],\\\"scope\\\":\\\"space\\\",\\\"selected_source_refs\\\":[{\\\"index\\\":0,\\\"sequence\\\":1,\\\"sha256\\\":\\\"02b15472790f35ff0eb563d4abde325d90dbe99b3708680cbaeaf8d5089d3f30\\\"},{\\\"index\\\":0,\\\"sequence\\\":2,\\\"sha256\\\":\\\"bf274cb4f3b056a1f64f1bf961a61298d08651df7e6dc65939925fc7eeb24728\\\"},{\\\"index\\\":0,\\\"sequence\\\":3,\\\"sha256\\\":\\\"c85d7a671500126b2b60579e8c806a83367ffd7de929cb53f6c336b5dfa55ac2\\\"},{\\\"index\\\":0,\\\"sequence\\\":4,\\\"sha256\\\":\\\"e74f04a70f42135718bdffe10aeda1075c05479ee1db363127ce007a670fd8ab\\\"},{\\\"index\\\":0,\\\"sequence\\\":5,\\\"sha256\\\":\\\"9a53f8a40d2c996975bb584436a8a17fa658474c3542b92148e5a3589cd6d394\\\"},{\\\"index\\\":0,\\\"sequence\\\":6,\\\"sha256\\\":\\\"4662418414f2ae85cf9471c265305c004d4ec597659c23eb1f1ec8620e7aea20\\\"},{\\\"index\\\":0,\\\"sequence\\\":8,\\\"sha256\\\":\\\"193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc\\\"}],\\\"source_high_watermark\\\":9,\\\"stop_reason\\\":\\\"not_started\\\",\\\"unexplored_coverage_position\\\":{\\\"status\\\":\\\"unexplored\\\"},\\\"unresolved_calls\\\":[],\\\"work_id\\\":\\\"s\\\"}}\",\"id\":\"s:progress\",\"key\":\"sleep-progress:s\",\"kind\":\"data\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":{\\\"instructions\\\":\\\"Sleep method sleep/1. Work only inside granted scope and finite calls.\\\\nYou are the meaning-making agent; do not ask the owner to pick problems. A finding\\\\nis not guaranteed. Use the actual source bytes in sleep_sources, not catalog titles.\\\\n1 Recover Work, exact Method, progress, resource_state, current rights, and outcomes\\\\nof previous changes. An unresolved send is unknown and its reservation stays spent.\\\\n2 Examine a bounded portion at source_high_watermark. Enumeration, selection,\\\\ndelivery and analysis are distinct. Preserve enumeration_cursor and separately\\\\nunexplored_coverage_position for a bounded exploration outside known relations.\\\\n3 Maintain useful memory from ordinary work, successes AND errors, not complaints\\\\nalone. Apply necessary permitted corrections with exact provenance; preserve doubt.\\\\n4 Choose useful questions yourself. Make a bounded comparison beyond existing\\\\nlinks, including an ordinary or successful source. Record no finding honestly.\\\\n5 Ground claims in exact source refs/fragments. Distinguish observation, assertion\\\\nand hypothesis; consider alternatives, counterexamples and previous failed attempts.\\\\n6 Apply a useful permitted memory correction, or leave a proposal when rights are\\\\ninsufficient. Reusable improvements may create a new scoped Method revision after\\\\nproportionate checking. Never change grants, acceptance, code or own authority.\\\\nMethod rollback is another revision, preserving old bytes and limiting its scope.\\\\n7 Link changes to actual later Work outcomes delivered in history, including\\\\nnegative outcomes. New work must use current applicable memory and Method. Revisit,\\\\nnarrow or roll back a Method if outcomes oppose it; do not invent feedback.\\\\n8 Save a new sleep-progress/v1 data revision with all fields from its delivered\\\\ntemplate. Preserve source_high_watermark, exact refs and honest remainder/unknown,\\\\nstop_reason and continuation. Reaching the cursor proves enumeration only.\\\\nAnalysis is your claim, not machine proof. Persist analysis as ordinary data with\\\\nbody {format:'sleep-analysis/v1', sources:[source_ref,...], content:<free text/object>}.\\\\nKeep each selected source in remaining_refs until such an analysis is retained.\\\\nFor each actual delivery append context.sleep_delivery_manifest; do not fabricate\\\\ndelivery from enumeration. Copy resource_state.consumed_resource. For terminal\\\\nprogress use unresolved_calls=[] only for this returned terminal; preserve others.\\\\nUse subject changes only (data,memory,method/activity) and exact expected_heads.\\\\nMemory and Method content are free text or objects; no prescribed subject template.\\\\nUse the executor's response_contract for its exact wire representation. Method\\\\ndefines the obligations; the executor codec defines serialization. Persist analysis\\\\nbefore progress. An analysis exact ref is an object containing id and revision.\\\\nUse ready for a further bounded portion; completed means this bounded pass ended,\\\\nnever that all the environment is understood. Unknown/unexamined material remains.\\\\nDo not request external tools not present. No mandatory interview or activity form.\\\\n\\\",\\\"status\\\":\\\"active\\\",\\\"version\\\":\\\"sleep/1\\\"}}\",\"id\":\"sleep-method\",\"key\":\"sleep\",\"kind\":\"method\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Observed successful attempt\\\"}\",\"id\":\"success\",\"key\":\"success\",\"kind\":\"data\",\"revision\":1,\"scope\":\"space\"}],\"inputs\":[{\"body\":{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":{\"analysis_result_refs\":[],\"applied_receipts\":[],\"consumed_resource\":0,\"continuation\":\"Review selected sources and explore beyond known relations\",\"delivered_manifest_refs\":[],\"enumerated_source_refs\":[{\"index\":0,\"sequence\":1,\"sha256\":\"02b15472790f35ff0eb563d4abde325d90dbe99b3708680cbaeaf8d5089d3f30\"},{\"index\":0,\"sequence\":2,\"sha256\":\"bf274cb4f3b056a1f64f1bf961a61298d08651df7e6dc65939925fc7eeb24728\"},{\"index\":0,\"sequence\":3,\"sha256\":\"c85d7a671500126b2b60579e8c806a83367ffd7de929cb53f6c336b5dfa55ac2\"},{\"index\":0,\"sequence\":4,\"sha256\":\"e74f04a70f42135718bdffe10aeda1075c05479ee1db363127ce007a670fd8ab\"},{\"index\":0,\"sequence\":5,\"sha256\":\"9a53f8a40d2c996975bb584436a8a17fa658474c3542b92148e5a3589cd6d394\"},{\"index\":0,\"sequence\":6,\"sha256\":\"4662418414f2ae85cf9471c265305c004d4ec597659c23eb1f1ec8620e7aea20\"},{\"index\":0,\"sequence\":8,\"sha256\":\"193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc\"}],\"enumeration_cursor\":[9,2147483647],\"format\":\"sleep-progress/v1\",\"method_ref\":{\"id\":\"sleep-method\",\"revision\":1,\"role\":\"must_be_current\"},\"proposed_changes\":[],\"remaining_refs\":[{\"index\":0,\"sequence\":1,\"sha256\":\"02b15472790f35ff0eb563d4abde325d90dbe99b3708680cbaeaf8d5089d3f30\"},{\"index\":0,\"sequence\":2,\"sha256\":\"bf274cb4f3b056a1f64f1bf961a61298d08651df7e6dc65939925fc7eeb24728\"},{\"index\":0,\"sequence\":3,\"sha256\":\"c85d7a671500126b2b60579e8c806a83367ffd7de929cb53f6c336b5dfa55ac2\"},{\"index\":0,\"sequence\":4,\"sha256\":\"e74f04a70f42135718bdffe10aeda1075c05479ee1db363127ce007a670fd8ab\"},{\"index\":0,\"sequence\":5,\"sha256\":\"9a53f8a40d2c996975bb584436a8a17fa658474c3542b92148e5a3589cd6d394\"},{\"index\":0,\"sequence\":6,\"sha256\":\"4662418414f2ae85cf9471c265305c004d4ec597659c23eb1f1ec8620e7aea20\"},{\"index\":0,\"sequence\":8,\"sha256\":\"193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc\"}],\"return_conditions\":[\"Further arrivals require a new bounded pass\"],\"scope\":\"space\",\"selected_source_refs\":[{\"index\":0,\"sequence\":1,\"sha256\":\"02b15472790f35ff0eb563d4abde325d90dbe99b3708680cbaeaf8d5089d3f30\"},{\"index\":0,\"sequence\":2,\"sha256\":\"bf274cb4f3b056a1f64f1bf961a61298d08651df7e6dc65939925fc7eeb24728\"},{\"index\":0,\"sequence\":3,\"sha256\":\"c85d7a671500126b2b60579e8c806a83367ffd7de929cb53f6c336b5dfa55ac2\"},{\"index\":0,\"sequence\":4,\"sha256\":\"e74f04a70f42135718bdffe10aeda1075c05479ee1db363127ce007a670fd8ab\"},{\"index\":0,\"sequence\":5,\"sha256\":\"9a53f8a40d2c996975bb584436a8a17fa658474c3542b92148e5a3589cd6d394\"},{\"index\":0,\"sequence\":6,\"sha256\":\"4662418414f2ae85cf9471c265305c004d4ec597659c23eb1f1ec8620e7aea20\"},{\"index\":0,\"sequence\":8,\"sha256\":\"193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc\"}],\"source_high_watermark\":9,\"stop_reason\":\"not_started\",\"unexplored_coverage_position\":{\"status\":\"unexplored\"},\"unresolved_calls\":[],\"work_id\":\"s\"}},\"id\":\"s:progress\",\"key\":\"sleep-progress:s\",\"kind\":\"data\",\"revision\":1,\"scope\":\"space\"}],\"manifest\":[],\"messages\":[],\"method\":{\"body\":{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":{\"instructions\":\"Sleep method sleep/1. Work only inside granted scope and finite calls.\\nYou are the meaning-making agent; do not ask the owner to pick problems. A finding\\nis not guaranteed. Use the actual source bytes in sleep_sources, not catalog titles.\\n1 Recover Work, exact Method, progress, resource_state, current rights, and outcomes\\nof previous changes. An unresolved send is unknown and its reservation stays spent.\\n2 Examine a bounded portion at source_high_watermark. Enumeration, selection,\\ndelivery and analysis are distinct. Preserve enumeration_cursor and separately\\nunexplored_coverage_position for a bounded exploration outside known relations.\\n3 Maintain useful memory from ordinary work, successes AND errors, not complaints\\nalone. Apply necessary permitted corrections with exact provenance; preserve doubt.\\n4 Choose useful questions yourself. Make a bounded comparison beyond existing\\nlinks, including an ordinary or successful source. Record no finding honestly.\\n5 Ground claims in exact source refs/fragments. Distinguish observation, assertion\\nand hypothesis; consider alternatives, counterexamples and previous failed attempts.\\n6 Apply a useful permitted memory correction, or leave a proposal when rights are\\ninsufficient. Reusable improvements may create a new scoped Method revision after\\nproportionate checking. Never change grants, acceptance, code or own authority.\\nMethod rollback is another revision, preserving old bytes and limiting its scope.\\n7 Link changes to actual later Work outcomes delivered in history, including\\nnegative outcomes. New work must use current applicable memory and Method. Revisit,\\nnarrow or roll back a Method if outcomes oppose it; do not invent feedback.\\n8 Save a new sleep-progress/v1 data revision with all fields from its delivered\\ntemplate. Preserve source_high_watermark, exact refs and honest remainder/unknown,\\nstop_reason and continuation. Reaching the cursor proves enumeration only.\\nAnalysis is your claim, not machine proof. Persist analysis as ordinary data with\\nbody {format:'sleep-analysis/v1', sources:[source_ref,...], content:<free text/object>}.\\nKeep each selected source in remaining_refs until such an analysis is retained.\\nFor each actual delivery append context.sleep_delivery_manifest; do not fabricate\\ndelivery from enumeration. Copy resource_state.consumed_resource. For terminal\\nprogress use unresolved_calls=[] only for this returned terminal; preserve others.\\nUse subject changes only (data,memory,method/activity) and exact expected_heads.\\nMemory and Method content are free text or objects; no prescribed subject template.\\nUse the executor's response_contract for its exact wire representation. Method\\ndefines the obligations; the executor codec defines serialization. Persist analysis\\nbefore progress. An analysis exact ref is an object containing id and revision.\\nUse ready for a further bounded portion; completed means this bounded pass ended,\\nnever that all the environment is understood. Unknown/unexamined material remains.\\nDo not request external tools not present. No mandatory interview or activity form.\\n\",\"status\":\"active\",\"version\":\"sleep/1\"}},\"id\":\"sleep-method\",\"key\":\"sleep\",\"kind\":\"method\",\"revision\":1,\"scope\":\"space\"},\"prior_messages\":[],\"prior_results\":[],\"prior_waits\":[],\"profile\":{\"body\":{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":{\"mode\":\"scripted\"}},\"id\":\"profile\",\"key\":\"transport\",\"kind\":\"profile\",\"revision\":1,\"scope\":\"space\"},\"profile_ref\":{\"id\":\"profile\",\"revision\":1},\"sleep_delivery_manifest\":{\"attempt_id\":\"s:ce51c0e9217a452fb06e9965c1005f44\",\"sha256\":\"de03b2e261fdea862dc30b61b0e7a939ca7cf1910bf95a2df1dcc5e117308f73\"},\"sleep_sources\":[{\"material\":{\"record\":{\"body\":{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":{\"mode\":\"scripted\"}},\"id\":\"profile\",\"key\":\"transport\",\"kind\":\"profile\",\"revision\":1,\"scope\":\"space\"},\"scope\":\"space\"},\"source_ref\":{\"index\":0,\"sequence\":1,\"sha256\":\"02b15472790f35ff0eb563d4abde325d90dbe99b3708680cbaeaf8d5089d3f30\"}},{\"material\":{\"record\":{\"body\":{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Original bounded method\"},\"id\":\"practice\",\"key\":\"practice\",\"kind\":\"method\",\"revision\":1,\"scope\":\"space\"},\"scope\":\"space\"},\"source_ref\":{\"index\":0,\"sequence\":2,\"sha256\":\"bf274cb4f3b056a1f64f1bf961a61298d08651df7e6dc65939925fc7eeb24728\"}},{\"material\":{\"record\":{\"body\":{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Earlier uncertain note\"},\"id\":\"memory\",\"key\":\"known\",\"kind\":\"memory\",\"revision\":1,\"scope\":\"space\"},\"scope\":\"space\"},\"source_ref\":{\"index\":0,\"sequence\":3,\"sha256\":\"c85d7a671500126b2b60579e8c806a83367ffd7de929cb53f6c336b5dfa55ac2\"}},{\"material\":{\"record\":{\"body\":{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Routine work; no complaint\"},\"id\":\"ordinary\",\"key\":\"ordinary\",\"kind\":\"data\",\"revision\":1,\"scope\":\"space\"},\"scope\":\"space\"},\"source_ref\":{\"index\":0,\"sequence\":4,\"sha256\":\"e74f04a70f42135718bdffe10aeda1075c05479ee1db363127ce007a670fd8ab\"}},{\"material\":{\"record\":{\"body\":{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Observed successful attempt\"},\"id\":\"success\",\"key\":\"success\",\"kind\":\"data\",\"revision\":1,\"scope\":\"space\"},\"scope\":\"space\"},\"source_ref\":{\"index\":0,\"sequence\":5,\"sha256\":\"9a53f8a40d2c996975bb584436a8a17fa658474c3542b92148e5a3589cd6d394\"}},{\"material\":{\"record\":{\"body\":{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Observed failed attempt, unresolved cause\"},\"id\":\"error\",\"key\":\"error\",\"kind\":\"data\",\"revision\":1,\"scope\":\"space\"},\"scope\":\"space\"},\"source_ref\":{\"index\":0,\"sequence\":6,\"sha256\":\"4662418414f2ae85cf9471c265305c004d4ec597659c23eb1f1ec8620e7aea20\"}},{\"material\":{\"record\":{\"body\":{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":{\"instructions\":\"Sleep method sleep/1. Work only inside granted scope and finite calls.\\nYou are the meaning-making agent; do not ask the owner to pick problems. A finding\\nis not guaranteed. Use the actual source bytes in sleep_sources, not catalog titles.\\n1 Recover Work, exact Method, progress, resource_state, current rights, and outcomes\\nof previous changes. An unresolved send is unknown and its reservation stays spent.\\n2 Examine a bounded portion at source_high_watermark. Enumeration, selection,\\ndelivery and analysis are distinct. Preserve enumeration_cursor and separately\\nunexplored_coverage_position for a bounded exploration outside known relations.\\n3 Maintain useful memory from ordinary work, successes AND errors, not complaints\\nalone. Apply necessary permitted corrections with exact provenance; preserve doubt.\\n4 Choose useful questions yourself. Make a bounded comparison beyond existing\\nlinks, including an ordinary or successful source. Record no finding honestly.\\n5 Ground claims in exact source refs/fragments. Distinguish observation, assertion\\nand hypothesis; consider alternatives, counterexamples and previous failed attempts.\\n6 Apply a useful permitted memory correction, or leave a proposal when rights are\\ninsufficient. Reusable improvements may create a new scoped Method revision after\\nproportionate checking. Never change grants, acceptance, code or own authority.\\nMethod rollback is another revision, preserving old bytes and limiting its scope.\\n7 Link changes to actual later Work outcomes delivered in history, including\\nnegative outcomes. New work must use current applicable memory and Method. Revisit,\\nnarrow or roll back a Method if outcomes oppose it; do not invent feedback.\\n8 Save a new sleep-progress/v1 data revision with all fields from its delivered\\ntemplate. Preserve source_high_watermark, exact refs and honest remainder/unknown,\\nstop_reason and continuation. Reaching the cursor proves enumeration only.\\nAnalysis is your claim, not machine proof. Persist analysis as ordinary data with\\nbody {format:'sleep-analysis/v1', sources:[source_ref,...], content:<free text/object>}.\\nKeep each selected source in remaining_refs until such an analysis is retained.\\nFor each actual delivery append context.sleep_delivery_manifest; do not fabricate\\ndelivery from enumeration. Copy resource_state.consumed_resource. For terminal\\nprogress use unresolved_calls=[] only for this returned terminal; preserve others.\\nUse subject changes only (data,memory,method/activity) and exact expected_heads.\\nMemory and Method content are free text or objects; no prescribed subject template.\\nUse the executor's response_contract for its exact wire representation. Method\\ndefines the obligations; the executor codec defines serialization. Persist analysis\\nbefore progress. An analysis exact ref is an object containing id and revision.\\nUse ready for a further bounded portion; completed means this bounded pass ended,\\nnever that all the environment is understood. Unknown/unexamined material remains.\\nDo not request external tools not present. No mandatory interview or activity form.\\n\",\"status\":\"active\",\"version\":\"sleep/1\"}},\"id\":\"sleep-method\",\"key\":\"sleep\",\"kind\":\"method\",\"revision\":1,\"scope\":\"space\"},\"scope\":\"space\"},\"source_ref\":{\"index\":0,\"sequence\":8,\"sha256\":\"193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc\"}}],\"tool_ledger\":[],\"work\":{\"call_limit\":2,\"continuation_policy\":\"durable\",\"conversation\":\"s:conversation\",\"goal\":\"Sleep\",\"id\":\"s\",\"inputs\":[{\"id\":\"s:progress\",\"revision\":1,\"role\":\"must_be_current\"}],\"method_ref\":{\"id\":\"sleep-method\",\"revision\":1,\"role\":\"must_be_current\"},\"scope\":\"space\"}}"
+      }
+    ],
+    "messages": [],
+    "conversations": [
+      {
+        "id": "s:conversation",
+        "cursor": 0
+      }
+    ],
+    "waits": [],
+    "results": [
+      {
+        "attempt": "s:ce51c0e9217a452fb06e9965c1005f44",
+        "slot": "final",
+        "fingerprint": "ca1951494d6a839b8399b21b1b3cef60726f47f1dc16c53b14df508871b9f557",
+        "body": "{\"accepted\":false,\"attempt_id\":\"s:ce51c0e9217a452fb06e9965c1005f44\",\"cutoff\":0,\"outputs\":[],\"refs\":[{\"id\":\"s:analysis\",\"revision\":1},{\"id\":\"memory\",\"revision\":2},{\"id\":\"practice\",\"revision\":2},{\"id\":\"s:progress\",\"revision\":2}],\"state\":\"paused\",\"text\":\"Mechanical bounded pass; unexplored material remains\"}"
+      }
+    ],
+    "observations": [
+      {
+        "attempt": "s:ce51c0e9217a452fb06e9965c1005f44",
+        "event": "terminal",
+        "fingerprint": "9cba36d088f0c8a618484f72bc8a8db781e34a20d279e2eb849899dfa156ab91",
+        "body": "{\"attempt_id\":\"s:ce51c0e9217a452fb06e9965c1005f44\",\"event_id\":\"terminal\",\"kind\":\"terminal\",\"late\":false,\"raw_base64\":\"eyJzdGF0ZSI6ICJyZWFkeSIsICJ0ZXh0IjogIk1lY2hhbmljYWwgYm91bmRlZCBwYXNzOyB1bmV4cGxvcmVkIG1hdGVyaWFsIHJlbWFpbnMiLCAiY2hhbmdlcyI6IFt7ImlkIjogInM6YW5hbHlzaXMiLCAia2luZCI6ICJkYXRhIiwgImtleSI6ICJzOmFuYWx5c2lzIiwgImJvZHkiOiB7ImZvcm1hdCI6ICJzbGVlcC1hbmFseXNpcy92MSIsICJzb3VyY2VzIjogW3siaW5kZXgiOiAwLCAic2VxdWVuY2UiOiAxLCAic2hhMjU2IjogIjAyYjE1NDcyNzkwZjM1ZmYwZWI1NjNkNGFiZGUzMjVkOTBkYmU5OWIzNzA4NjgwY2JhZWFmOGQ1MDg5ZDNmMzAifSwgeyJpbmRleCI6IDAsICJzZXF1ZW5jZSI6IDIsICJzaGEyNTYiOiAiYmYyNzRjYjRmM2IwNTZhMWY2NGYxYmY5NjFhNjEyOThkMDg2NTFkZjdlNmRjNjU5Mzk5MjVmYzdlZWIyNDcyOCJ9LCB7ImluZGV4IjogMCwgInNlcXVlbmNlIjogMywgInNoYTI1NiI6ICJjODVkN2E2NzE1MDAxMjZiMmI2MDU3OWU4YzgwNmE4MzM2N2ZmZDdkZTkyOWNiNTNmNmMzMzZiNWRmYTU1YWMyIn0sIHsiaW5kZXgiOiAwLCAic2VxdWVuY2UiOiA0LCAic2hhMjU2IjogImU3NGYwNGE3MGY0MjEzNTcxOGJkZmZlMTBhZWRhMTA3NWMwNTQ3OWVlMWRiMzYzMTI3Y2UwMDdhNjcwZmQ4YWIifSwgeyJpbmRleCI6IDAsICJzZXF1ZW5jZSI6IDUsICJzaGEyNTYiOiAiOWE1M2Y4YTQwZDJjOTk2OTc1YmI1ODQ0MzZhOGExN2ZhNjU4NDc0YzM1NDJiOTIxNDhlNWEzNTg5Y2Q2ZDM5NCJ9LCB7ImluZGV4IjogMCwgInNlcXVlbmNlIjogNiwgInNoYTI1NiI6ICI0NjYyNDE4NDE0ZjJhZTg1Y2Y5NDcxYzI2NTMwNWMwMDRkNGVjNTk3NjU5YzIzZWIxZjFlYzg2MjBlN2FlYTIwIn0sIHsiaW5kZXgiOiAwLCAic2VxdWVuY2UiOiA4LCAic2hhMjU2IjogIjE5M2JlNjEwMDYyMmVlMmI2YmMxZWJjYmM1Y2MyMGY4YmZjZDkxYTAxYTkyNjU2OGRiNjM1ZWE0OWRiZDMyZmMifV0sICJjb250ZW50IjogeyJvYnNlcnZhdGlvbiI6ICJGaWN0aW9uYWwgc291cmNlIG9ic2VydmF0aW9ucyIsICJoeXBvdGhlc2lzIjogIlVucHJvdmVuIGltcHJvdmVtZW50IiwgImFsdGVybmF0aXZlcyI6IFsiRGlmZmVyZW50IGNhdXNlIl0sICJjb3VudGVyZXhhbXBsZXMiOiBbIlN1Y2Nlc3MiXSwgIm5lZ2F0aXZlX2F0dGVtcHRzIjogWyJQcmlvciB1bnN1Y2Nlc3NmdWwgYXBwcm9hY2giXSwgInF1ZXN0aW9uIjogIkNob3NlbiB3aXRob3V0IGEgY29tcGxhaW50In19fSwgeyJpZCI6ICJtZW1vcnkiLCAia2luZCI6ICJtZW1vcnkiLCAia2V5IjogImtub3duIiwgImJvZHkiOiAiQ29ycmVjdGVkIGJvdW5kZWQgbm90ZSIsICJzb3VyY2VfcmVmcyI6IFt7ImlkIjogInM6YW5hbHlzaXMiLCAicmV2aXNpb24iOiAxfV19LCB7ImlkIjogInByYWN0aWNlIiwgImtpbmQiOiAibWV0aG9kIiwgImtleSI6ICJwcmFjdGljZSIsICJib2R5IjogIlJldmlzZWQgYm91bmRlZCBtZXRob2QiLCAic291cmNlX3JlZnMiOiBbeyJpZCI6ICJzOmFuYWx5c2lzIiwgInJldmlzaW9uIjogMX1dfSwgeyJpZCI6ICJzOnByb2dyZXNzIiwgImtpbmQiOiAiZGF0YSIsICJrZXkiOiAic2xlZXAtcHJvZ3Jlc3M6cyIsICJzY29wZSI6ICJzcGFjZSIsICJib2R5IjogeyJhbmFseXNpc19yZXN1bHRfcmVmcyI6IFt7ImlkIjogInM6YW5hbHlzaXMiLCAicmV2aXNpb24iOiAxfV0sICJhcHBsaWVkX3JlY2VpcHRzIjogW10sICJjb25zdW1lZF9yZXNvdXJjZSI6IDIsICJjb250aW51YXRpb24iOiAiQ2hlY2sgYWN0dWFsIGxhdGVyIG91dGNvbWVzLCBub3Qgc3VtbWFyeSBjb3VudCIsICJkZWxpdmVyZWRfbWFuaWZlc3RfcmVmcyI6IFt7ImF0dGVtcHRfaWQiOiAiczpjZTUxYzBlOTIxN2E0NTJmYjA2ZTk5NjVjMTAwNWY0NCIsICJzaGEyNTYiOiAiZGUwM2IyZTI2MWZkZWE4NjJkYzMwYjYxYjBlN2E5MzljYTdjZjE5MTBiZjk1YTJkZjFkY2M1ZTExNzMwOGY3MyJ9XSwgImVudW1lcmF0ZWRfc291cmNlX3JlZnMiOiBbeyJpbmRleCI6IDAsICJzZXF1ZW5jZSI6IDEsICJzaGEyNTYiOiAiMDJiMTU0NzI3OTBmMzVmZjBlYjU2M2Q0YWJkZTMyNWQ5MGRiZTk5YjM3MDg2ODBjYmFlYWY4ZDUwODlkM2YzMCJ9LCB7ImluZGV4IjogMCwgInNlcXVlbmNlIjogMiwgInNoYTI1NiI6ICJiZjI3NGNiNGYzYjA1NmExZjY0ZjFiZjk2MWE2MTI5OGQwODY1MWRmN2U2ZGM2NTkzOTkyNWZjN2VlYjI0NzI4In0sIHsiaW5kZXgiOiAwLCAic2VxdWVuY2UiOiAzLCAic2hhMjU2IjogImM4NWQ3YTY3MTUwMDEyNmIyYjYwNTc5ZThjODA2YTgzMzY3ZmZkN2RlOTI5Y2I1M2Y2YzMzNmI1ZGZhNTVhYzIifSwgeyJpbmRleCI6IDAsICJzZXF1ZW5jZSI6IDQsICJzaGEyNTYiOiAiZTc0ZjA0YTcwZjQyMTM1NzE4YmRmZmUxMGFlZGExMDc1YzA1NDc5ZWUxZGIzNjMxMjdjZTAwN2E2NzBmZDhhYiJ9LCB7ImluZGV4IjogMCwgInNlcXVlbmNlIjogNSwgInNoYTI1NiI6ICI5YTUzZjhhNDBkMmM5OTY5NzViYjU4NDQzNmE4YTE3ZmE2NTg0NzRjMzU0MmI5MjE0OGU1YTM1ODljZDZkMzk0In0sIHsiaW5kZXgiOiAwLCAic2VxdWVuY2UiOiA2LCAic2hhMjU2IjogIjQ2NjI0MTg0MTRmMmFlODVjZjk0NzFjMjY1MzA1YzAwNGQ0ZWM1OTc2NTljMjNlYjFmMWVjODYyMGU3YWVhMjAifSwgeyJpbmRleCI6IDAsICJzZXF1ZW5jZSI6IDgsICJzaGEyNTYiOiAiMTkzYmU2MTAwNjIyZWUyYjZiYzFlYmNiYzVjYzIwZjhiZmNkOTFhMDFhOTI2NTY4ZGI2MzVlYTQ5ZGJkMzJmYyJ9XSwgImVudW1lcmF0aW9uX2N1cnNvciI6IFs5LCAyMTQ3NDgzNjQ3XSwgImZvcm1hdCI6ICJzbGVlcC1wcm9ncmVzcy92MSIsICJtZXRob2RfcmVmIjogeyJpZCI6ICJzbGVlcC1tZXRob2QiLCAicmV2aXNpb24iOiAxLCAicm9sZSI6ICJtdXN0X2JlX2N1cnJlbnQifSwgInByb3Bvc2VkX2NoYW5nZXMiOiBbXSwgInJlbWFpbmluZ19yZWZzIjogW10sICJyZXR1cm5fY29uZGl0aW9ucyI6IFsiRnVydGhlciBhcnJpdmFscyByZXF1aXJlIGEgbmV3IGJvdW5kZWQgcGFzcyJdLCAic2NvcGUiOiAic3BhY2UiLCAic2VsZWN0ZWRfc291cmNlX3JlZnMiOiBbeyJpbmRleCI6IDAsICJzZXF1ZW5jZSI6IDEsICJzaGEyNTYiOiAiMDJiMTU0NzI3OTBmMzVmZjBlYjU2M2Q0YWJkZTMyNWQ5MGRiZTk5YjM3MDg2ODBjYmFlYWY4ZDUwODlkM2YzMCJ9LCB7ImluZGV4IjogMCwgInNlcXVlbmNlIjogMiwgInNoYTI1NiI6ICJiZjI3NGNiNGYzYjA1NmExZjY0ZjFiZjk2MWE2MTI5OGQwODY1MWRmN2U2ZGM2NTkzOTkyNWZjN2VlYjI0NzI4In0sIHsiaW5kZXgiOiAwLCAic2VxdWVuY2UiOiAzLCAic2hhMjU2IjogImM4NWQ3YTY3MTUwMDEyNmIyYjYwNTc5ZThjODA2YTgzMzY3ZmZkN2RlOTI5Y2I1M2Y2YzMzNmI1ZGZhNTVhYzIifSwgeyJpbmRleCI6IDAsICJzZXF1ZW5jZSI6IDQsICJzaGEyNTYiOiAiZTc0ZjA0YTcwZjQyMTM1NzE4YmRmZmUxMGFlZGExMDc1YzA1NDc5ZWUxZGIzNjMxMjdjZTAwN2E2NzBmZDhhYiJ9LCB7ImluZGV4IjogMCwgInNlcXVlbmNlIjogNSwgInNoYTI1NiI6ICI5YTUzZjhhNDBkMmM5OTY5NzViYjU4NDQzNmE4YTE3ZmE2NTg0NzRjMzU0MmI5MjE0OGU1YTM1ODljZDZkMzk0In0sIHsiaW5kZXgiOiAwLCAic2VxdWVuY2UiOiA2LCAic2hhMjU2IjogIjQ2NjI0MTg0MTRmMmFlODVjZjk0NzFjMjY1MzA1YzAwNGQ0ZWM1OTc2NTljMjNlYjFmMWVjODYyMGU3YWVhMjAifSwgeyJpbmRleCI6IDAsICJzZXF1ZW5jZSI6IDgsICJzaGEyNTYiOiAiMTkzYmU2MTAwNjIyZWUyYjZiYzFlYmNiYzVjYzIwZjhiZmNkOTFhMDFhOTI2NTY4ZGI2MzVlYTQ5ZGJkMzJmYyJ9XSwgInNvdXJjZV9oaWdoX3dhdGVybWFyayI6IDksICJzdG9wX3JlYXNvbiI6ICJib3VuZGVkX3BvcnRpb25fZW5kZWQiLCAidW5leHBsb3JlZF9jb3ZlcmFnZV9wb3NpdGlvbiI6IHsiYXR0ZW1wdGVkIjogImJvdW5kZWQgY29tcGFyaXNvbiBvdXRzaWRlIGtub3duIGxpbmtzIiwgInVua25vd24iOiAiT3RoZXIgbWF0ZXJpYWwgcmVtYWlucyB1bmV4cGxvcmVkIn0sICJ1bnJlc29sdmVkX2NhbGxzIjogW10sICJ3b3JrX2lkIjogInMifX1dLCAiZXhwZWN0ZWRfaGVhZHMiOiB7InM6YW5hbHlzaXMiOiAwLCAibWVtb3J5IjogMSwgInByYWN0aWNlIjogMSwgInM6cHJvZ3Jlc3MiOiAxfX0=\"}"
+      }
+    ],
+    "actions": [
+      {
+        "id": "s:ce51c0e9217a452fb06e9965c1005f44:action",
+        "attempt": "s:ce51c0e9217a452fb06e9965c1005f44",
+        "executor": "sleep-executor",
+        "state": "terminal",
+        "correlation": null,
+        "reserve": 2
+      }
+    ],
+    "intents": [
+      {
+        "kind": "resource",
+        "subject": "s",
+        "body": "{\"call_limit\":2,\"reason\":\"resource_exhausted\",\"reserved\":2}"
+      }
+    ],
+    "tool_calls": [],
+    "acceptance": [],
+    "snapshot_revision": 32,
+    "limit": {
+      "max_rows_per_table": 1000,
+      "truncated": false
+    }
+  },
+  "conclusion": "Current public refresh and resume both refuse known exhausted Work, so owner pause cannot replace this C8 state through supported transitions."
+}

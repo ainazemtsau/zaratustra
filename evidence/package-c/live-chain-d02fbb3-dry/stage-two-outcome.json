@@ -1,0 +1,69 @@
+{
+  "stage": "actual-next-work",
+  "outcome": {
+    "attempt_id": "next-attempt",
+    "state": "completed",
+    "refs": [],
+    "outputs": [],
+    "accepted": false,
+    "text": "SCRIPTED DRY RUN ONLY: unavailable factual outcome",
+    "cutoff": 1
+  },
+  "invocations": 1,
+  "delivered_method": {
+    "id": "practice",
+    "revision": 2,
+    "kind": "method",
+    "key": "exhibit-label",
+    "scope": "space",
+    "body": {
+      "application": "active",
+      "schema_ref": null,
+      "source_refs": [
+        {
+          "id": "sleep-one:dry-analysis",
+          "revision": 1,
+          "role": "exact"
+        }
+      ],
+      "tombstone": false,
+      "value": "Dry revision 2"
+    }
+  },
+  "delivered_inputs": [
+    {
+      "id": "facts",
+      "revision": 1,
+      "kind": "data",
+      "key": "specimen",
+      "scope": "space",
+      "body": {
+        "application": "active",
+        "schema_ref": null,
+        "source_refs": [],
+        "tombstone": false,
+        "value": "Fictional exhibit: night-blooming cactus. Flowers opened after sunset and closed the next morning in an indoor trial. Three of twelve buds opened. No observation establishes a wild pollinator."
+      }
+    },
+    {
+      "id": "memory",
+      "revision": 2,
+      "kind": "memory",
+      "key": "label-length",
+      "scope": "space",
+      "body": {
+        "application": "active",
+        "schema_ref": null,
+        "source_refs": [
+          {
+            "id": "sleep-one:dry-analysis",
+            "revision": 1,
+            "role": "exact"
+          }
+        ],
+        "tombstone": false,
+        "value": "Dry revision 2"
+      }
+    }
+  ]
+}

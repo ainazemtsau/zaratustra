@@ -1,0 +1,20 @@
+import hashlib
+import json
+import shutil
+from pathlib import Path
+
+root = Path('evidence/package-c')
+shutil.copyfile(Path(__file__), root / 'proof-refresh.py.txt')
+proof = json.loads((root / 'PROOF-MANIFEST.json').read_text(encoding='utf-8'))
+rows = []
+for path in sorted(root.rglob('*')):
+    if path.is_file() and path.relative_to(root).as_posix() not in {'PROOF-MANIFEST.json', 'PROVENANCE.json'}:
+        data = path.read_bytes()
+        rows.append({'path': path.relative_to(root).as_posix(), 'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data)})
+proof.update(files=rows, count=len(rows), bytes=sum(p['bytes'] for p in rows))
+(root / 'PROOF-MANIFEST.json').write_text(json.dumps(proof, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+provenance = json.loads((root / 'PROVENANCE.json').read_text(encoding='utf-8'))
+provenance['manifests'] = {name: hashlib.sha256((root/name).read_bytes()).hexdigest()
+    for name in ['SOURCE-MANIFEST.json', 'BUILD-MANIFEST.json', 'DEPENDENCY-MANIFEST.json', 'PROOF-MANIFEST.json']}
+(root / 'PROVENANCE.json').write_text(json.dumps(provenance, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+print(json.dumps({'proof_files': len(rows), 'proof_bytes': proof['bytes']}))

@@ -1,0 +1,53 @@
+C:\projects\zaratustra\.worktrees\restart-first-release\_scratch\c-original-three-red-immutable\packages\core\src\zaratustra_core\__init__.py C:\projects\zaratustra\.worktrees\restart-first-release\_scratch\c-original-three-red-immutable\packages\app\src\zaratustra_app\__init__.py
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+_____________ test_public_core_enforces_method_application_scope ______________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/c-original-three-red-immutable/cases/test_public_core_enforces_meth0')
+
+    def test_public_core_enforces_method_application_scope(tmp_path):
+        obs=load(tmp_path).test_scope()
+>       assert not obs.get('received'), 'Method restricted to lab reached physical executor of other-scope Work'
+E       AssertionError: Method restricted to lab reached physical executor of other-scope Work
+E       assert not [{'action': 'outside-a:action', 'context': {'capabilities': ['read', 'apply_changes', 'open_work', 'prepare_attempt', ...urce_unit":"call"}}', 'id': 'profile', 'key': 'profile', 'kind': 'profile', ...}], 'inputs': [], 'manifest': [], ...}}]
+E        +  where [{'action': 'outside-a:action', 'context': {'capabilities': ['read', 'apply_changes', 'open_work', 'prepare_attempt', ...urce_unit":"call"}}', 'id': 'profile', 'key': 'profile', 'kind': 'profile', ...}], 'inputs': [], 'manifest': [], ...}}] = <built-in method get of dict object at 0x0000026B4EE8ED80>('received')
+E        +    where <built-in method get of dict object at 0x0000026B4EE8ED80> = {'core_open': {'work_id': 'outside', 'revision': 1}, 'received': [{'action': 'outside-a:action', 'context': {'capabili...: [{'id': 'outside-a', 'work': 'outside', 'conversation': 'outside', 'status': 'finished', ...}], 'messages': [], ...}}.get
+
+_scratch\binding-review-c-20261016\check_findings.py:21: AssertionError
+---------------------------- Captured stdout call -----------------------------
+cross-scope applied: True
+_________________ test_refresh_cannot_execute_proposal_method _________________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/c-original-three-red-immutable/cases/test_refresh_cannot_execute_pr0')
+
+    def test_refresh_cannot_execute_proposal_method(tmp_path):
+        obs=load(tmp_path).test_inactive_refresh()
+>       assert not obs.get('received'), 'proposal Method reached receiver after control_work refresh'
+E       AssertionError: proposal Method reached receiver after control_work refresh
+E       assert not [{'action': 'next-a:action', 'context': {'capabilities': ['read', 'apply_changes', 'open_work', 'prepare_attempt', 'cl...napproved method"}', 'id': 'proposed', 'key': 'proposed', 'kind': 'method', ...}], 'inputs': [], 'manifest': [], ...}}]
+E        +  where [{'action': 'next-a:action', 'context': {'capabilities': ['read', 'apply_changes', 'open_work', 'prepare_attempt', 'cl...napproved method"}', 'id': 'proposed', 'key': 'proposed', 'kind': 'method', ...}], 'inputs': [], 'manifest': [], ...}}] = <built-in method get of dict object at 0x0000026B4F04F080>('received')
+E        +    where <built-in method get of dict object at 0x0000026B4F04F080> = {'refresh': {'status': 'ready'}, 'received': [{'action': 'next-a:action', 'context': {'capabilities': ['read', 'apply_...attempts': [{'id': 'next-a', 'work': 'next', 'conversation': 'next', 'status': 'finished', ...}], 'messages': [], ...}}.get
+
+_scratch\binding-review-c-20261016\check_findings.py:26: AssertionError
+---------------------------- Captured stdout call -----------------------------
+proposal dispatched through refresh: True
+___________ test_resource_exhaustion_persists_stopped_continuation ____________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/c-original-three-red-immutable/cases/test_resource_exhaustion_persi0')
+
+    def test_resource_exhaustion_persists_stopped_continuation(tmp_path):
+        obs=load(tmp_path).test_exhausted()
+        assert len(obs['deliveries'])==1, 'Exhausted Work made an additional send'
+        assert obs['next_error']['code']=='resource_exhausted'
+>       assert obs['snapshot']['works'][0]['status'] in {'paused','blocked'}, 'Unfinished exhausted Sleep persists as ready'
+E       AssertionError: Unfinished exhausted Sleep persists as ready
+E       assert 'ready' in {'blocked', 'paused'}
+
+_scratch\binding-review-c-20261016\check_findings.py:33: AssertionError
+---------------------------- Captured stdout call -----------------------------
+exhausted persistent state: ready {'code': 'resource_exhausted', 'field': 'calls', 'retry_policy': 'never', 'diagnostic_id': 'eeecbb1f2c1f0ab2'}
+=========================== short test summary info ===========================
+FAILED _scratch/binding-review-c-20261016/check_findings.py::test_public_core_enforces_method_application_scope
+FAILED _scratch/binding-review-c-20261016/check_findings.py::test_refresh_cannot_execute_proposal_method
+FAILED _scratch/binding-review-c-20261016/check_findings.py::test_resource_exhaustion_persists_stopped_continuation
+3 failed in 3.39s

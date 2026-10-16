@@ -1,0 +1,30 @@
+from pathlib import Path
+import subprocess,hashlib,json,os,shutil,time
+from uuid import uuid4
+r=Path.cwd(); pin='d02fbb301af19c4be5abdc19920ec5b089bc4783'
+e=r/'evidence/package-c/outside-build-d02fbb3';e.mkdir(exist_ok=False)
+f=Path('C:/projects/zaratustra/_scratch')/('c-build-clean-d02fbb3-'+uuid4().hex); f.mkdir()
+paths=subprocess.check_output(['git','ls-tree','-r','--name-only',pin,'--','packages','pyproject.toml','uv.lock','.python-version','README.md'],text=True).splitlines()
+files=[]
+for p in paths:
+    b=subprocess.check_output(['git','show',pin+':'+p]); t=f/p;t.parent.mkdir(parents=True,exist_ok=True);t.write_bytes(b)
+    assert b==(r/p).read_bytes(),p
+    files.append({'path':p,'sha256':hashlib.sha256(b).hexdigest(),'bytes':len(b)})
+env=os.environ.copy()
+for k in ['ZARATUSTRA_SQLITE_DLL','PYTHONPATH','PYTEST_ADDOPTS']:env.pop(k,None)
+env['UV_CACHE_DIR']=str(r/'_scratch/uv-cache')
+cmds=[]
+for name in ['zaratustra-core','zaratustra-next']:
+    a=[shutil.which('uv'),'build','--package',name,'--out-dir',str(e/'physical-builds')]
+    t=time.time();p=subprocess.run(a,cwd=f,env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    (e/(name+'.stdout')).write_bytes(p.stdout);(e/(name+'.stderr')).write_bytes(p.stderr)
+    cmds.append({'argv':a,'cwd':str(f),'returncode':p.returncode,'seconds':time.time()-t})
+    assert p.returncode==0,p.stderr
+builds=[]
+for p in sorted((e/'physical-builds').glob('*')):
+    if p.suffix not in ['.whl','.gz']:continue
+    original=r/'evidence/package-c/install-d02fbb3/physical-builds'/p.name
+    assert p.read_bytes()==original.read_bytes(),p.name
+    builds.append({'path':str(p.relative_to(e)).replace('\\','/'),'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size,'identical_to_installed_build':str(original.relative_to(r)).replace('\\','/')})
+(e/'manifest.json').write_text(json.dumps({'source':pin,'fresh_source_root':str(f),'outside_checkout':not f.is_relative_to(r),'exact_git_blobs':files,'commands':cmds,'builds':builds,'assertion':'All four clean external-source builds byte-identical to previously wheel-only installed and exercised Driver/Pi distributions'},indent=2),encoding='utf-8')
+print(json.dumps({'outside_build':'PASS','distributions':len(builds),'files':len(files)}))

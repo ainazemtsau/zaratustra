@@ -1,0 +1,377 @@
+{
+  "state": "completed",
+  "text": "SCRIPTED DRY RUN ONLY: unavailable factual outcome",
+  "edits": [
+    {
+      "id": "memory",
+      "kind": "memory",
+      "key": "label-length",
+      "scope": "space",
+      "text": "Dry revision 3",
+      "expected_revision": 2,
+      "source_refs": [
+        {
+          "id": "sleep-two:dry-analysis",
+          "revision": 1,
+          "role": "exact"
+        }
+      ],
+      "application": "active"
+    },
+    {
+      "id": "practice",
+      "kind": "method",
+      "key": "exhibit-label",
+      "scope": "space",
+      "text": "Dry revision 3",
+      "expected_revision": 2,
+      "source_refs": [
+        {
+          "id": "sleep-two:dry-analysis",
+          "revision": 1,
+          "role": "exact"
+        }
+      ],
+      "application": "active"
+    }
+  ],
+  "analyses": [
+    {
+      "id": "sleep-two:dry-analysis",
+      "scope": "space",
+      "expected_revision": 0,
+      "content": "SCRIPTED dry analysis, no semantic proof",
+      "sources": [
+        {
+          "index": 0,
+          "sequence": 1,
+          "sha256": "1625fcc5f45437221cc0fa599a7adc90373148d975604ca8061a0003cff555c5"
+        },
+        {
+          "index": 0,
+          "sequence": 2,
+          "sha256": "4f9bad3563c034a99a79503d8d26c39fb7a6e2219122b8bd00014b846ef778a2"
+        },
+        {
+          "index": 0,
+          "sequence": 3,
+          "sha256": "12fc65a586be5d47d296d0c7b5332e7d6cf3548f89516fb4d6caa00dde11fac9"
+        },
+        {
+          "index": 0,
+          "sequence": 4,
+          "sha256": "45d020c42a5ddfb8819f288fef066089d92931fe1b456bcfd680f93db394883f"
+        },
+        {
+          "index": 0,
+          "sequence": 5,
+          "sha256": "1ba3574fdc28673e5864272da2de78dbd381562839453da62f074bda0ed936a1"
+        },
+        {
+          "index": 0,
+          "sequence": 6,
+          "sha256": "78d99d07e3a6b7ee95c88f1b7801b7763b2db52a35c55645a77e223da785ff76"
+        },
+        {
+          "index": 0,
+          "sequence": 7,
+          "sha256": "2948e998223adeb70c3d19463139a0cb89c06810948a091b79a8ebaa54618e37"
+        },
+        {
+          "index": 0,
+          "sequence": 9,
+          "sha256": "193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc"
+        },
+        {
+          "index": 0,
+          "sequence": 12,
+          "sha256": "47639edfc28d3dc4fb26198fa84a2bad6a911491d122fe9a80268b30fda28f44"
+        },
+        {
+          "index": 0,
+          "sequence": 22,
+          "sha256": "ae160ef6d7196658c63e44b20c2a5a11e5a769214619369310164eef8ea3a99e"
+        },
+        {
+          "index": 0,
+          "sequence": 24,
+          "sha256": "4377e935e074101432eaa0ea0efdee6c172e57fceedee467556e733c3e228346"
+        },
+        {
+          "index": 1,
+          "sequence": 24,
+          "sha256": "15bf4f0be6b26ea4881e17555ed565ab5426ed14b9387cfcd5f7736557c345d5"
+        },
+        {
+          "index": 2,
+          "sequence": 24,
+          "sha256": "ba1dffcba6ffe7937b09e53571e0a9b84847c350e95f610aa3ba209c53ea5b36"
+        },
+        {
+          "index": 3,
+          "sequence": 24,
+          "sha256": "4459ba8d791865e463995907e9f74d78117152f15465d61011a39946b9e1187f"
+        },
+        {
+          "index": 4,
+          "sequence": 24,
+          "sha256": "eefadeedf9a8c9de2f8da23e61ce28db0d67a50ad8cfb1cc4af4da7c84e9f132"
+        },
+        {
+          "index": 0,
+          "sequence": 30,
+          "sha256": "47f0699aa50bcb076e762268db39b551b400fd0550599c97972e5192dee5ed23"
+        },
+        {
+          "index": 0,
+          "sequence": 31,
+          "sha256": "062d86b901795d3f16fe6ed4e1e8f9b0cee3225936a98cbbd4f69dc8afb02aec"
+        },
+        {
+          "index": 0,
+          "sequence": 39,
+          "sha256": "ef908fab3320e614e9d5d358b8396e3c29dabe2bfedf7c7c9b6c42bd2aacab29"
+        },
+        {
+          "index": 0,
+          "sequence": 41,
+          "sha256": "775892b61485a9cf5a349871b353b92a90beff6c86ee2cd28a83efbdbf1216e7"
+        }
+      ]
+    }
+  ],
+  "progress": {
+    "analysis_result_refs": [
+      {
+        "id": "sleep-two:dry-analysis",
+        "revision": 1,
+        "role": "exact"
+      }
+    ],
+    "applied_receipts": [],
+    "consumed_resource": 1,
+    "continuation": "Dry only; no semantic claim",
+    "delivered_manifest_refs": [
+      {
+        "attempt_id": "sleep-two:4d244991acae4c3a99b577c8c302d3f8",
+        "sha256": "d721aee6f5338021cd28e958235dd27f58468c896646dfa595b7aace329e45ea"
+      }
+    ],
+    "enumerated_source_refs": [
+      {
+        "index": 0,
+        "sequence": 1,
+        "sha256": "1625fcc5f45437221cc0fa599a7adc90373148d975604ca8061a0003cff555c5"
+      },
+      {
+        "index": 0,
+        "sequence": 2,
+        "sha256": "4f9bad3563c034a99a79503d8d26c39fb7a6e2219122b8bd00014b846ef778a2"
+      },
+      {
+        "index": 0,
+        "sequence": 3,
+        "sha256": "12fc65a586be5d47d296d0c7b5332e7d6cf3548f89516fb4d6caa00dde11fac9"
+      },
+      {
+        "index": 0,
+        "sequence": 4,
+        "sha256": "45d020c42a5ddfb8819f288fef066089d92931fe1b456bcfd680f93db394883f"
+      },
+      {
+        "index": 0,
+        "sequence": 5,
+        "sha256": "1ba3574fdc28673e5864272da2de78dbd381562839453da62f074bda0ed936a1"
+      },
+      {
+        "index": 0,
+        "sequence": 6,
+        "sha256": "78d99d07e3a6b7ee95c88f1b7801b7763b2db52a35c55645a77e223da785ff76"
+      },
+      {
+        "index": 0,
+        "sequence": 7,
+        "sha256": "2948e998223adeb70c3d19463139a0cb89c06810948a091b79a8ebaa54618e37"
+      },
+      {
+        "index": 0,
+        "sequence": 9,
+        "sha256": "193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc"
+      },
+      {
+        "index": 0,
+        "sequence": 12,
+        "sha256": "47639edfc28d3dc4fb26198fa84a2bad6a911491d122fe9a80268b30fda28f44"
+      },
+      {
+        "index": 0,
+        "sequence": 22,
+        "sha256": "ae160ef6d7196658c63e44b20c2a5a11e5a769214619369310164eef8ea3a99e"
+      },
+      {
+        "index": 0,
+        "sequence": 24,
+        "sha256": "4377e935e074101432eaa0ea0efdee6c172e57fceedee467556e733c3e228346"
+      },
+      {
+        "index": 1,
+        "sequence": 24,
+        "sha256": "15bf4f0be6b26ea4881e17555ed565ab5426ed14b9387cfcd5f7736557c345d5"
+      },
+      {
+        "index": 2,
+        "sequence": 24,
+        "sha256": "ba1dffcba6ffe7937b09e53571e0a9b84847c350e95f610aa3ba209c53ea5b36"
+      },
+      {
+        "index": 3,
+        "sequence": 24,
+        "sha256": "4459ba8d791865e463995907e9f74d78117152f15465d61011a39946b9e1187f"
+      },
+      {
+        "index": 4,
+        "sequence": 24,
+        "sha256": "eefadeedf9a8c9de2f8da23e61ce28db0d67a50ad8cfb1cc4af4da7c84e9f132"
+      },
+      {
+        "index": 0,
+        "sequence": 30,
+        "sha256": "47f0699aa50bcb076e762268db39b551b400fd0550599c97972e5192dee5ed23"
+      },
+      {
+        "index": 0,
+        "sequence": 31,
+        "sha256": "062d86b901795d3f16fe6ed4e1e8f9b0cee3225936a98cbbd4f69dc8afb02aec"
+      },
+      {
+        "index": 0,
+        "sequence": 39,
+        "sha256": "ef908fab3320e614e9d5d358b8396e3c29dabe2bfedf7c7c9b6c42bd2aacab29"
+      },
+      {
+        "index": 0,
+        "sequence": 41,
+        "sha256": "775892b61485a9cf5a349871b353b92a90beff6c86ee2cd28a83efbdbf1216e7"
+      }
+    ],
+    "enumeration_cursor": [
+      43,
+      2147483647
+    ],
+    "format": "sleep-progress/v1",
+    "method_ref": {
+      "id": "sleep-method",
+      "revision": 1,
+      "role": "must_be_current"
+    },
+    "proposed_changes": [],
+    "remaining_refs": [],
+    "return_conditions": [
+      "Further arrivals require a new bounded pass"
+    ],
+    "scope": "space",
+    "selected_source_refs": [
+      {
+        "index": 0,
+        "sequence": 1,
+        "sha256": "1625fcc5f45437221cc0fa599a7adc90373148d975604ca8061a0003cff555c5"
+      },
+      {
+        "index": 0,
+        "sequence": 2,
+        "sha256": "4f9bad3563c034a99a79503d8d26c39fb7a6e2219122b8bd00014b846ef778a2"
+      },
+      {
+        "index": 0,
+        "sequence": 3,
+        "sha256": "12fc65a586be5d47d296d0c7b5332e7d6cf3548f89516fb4d6caa00dde11fac9"
+      },
+      {
+        "index": 0,
+        "sequence": 4,
+        "sha256": "45d020c42a5ddfb8819f288fef066089d92931fe1b456bcfd680f93db394883f"
+      },
+      {
+        "index": 0,
+        "sequence": 5,
+        "sha256": "1ba3574fdc28673e5864272da2de78dbd381562839453da62f074bda0ed936a1"
+      },
+      {
+        "index": 0,
+        "sequence": 6,
+        "sha256": "78d99d07e3a6b7ee95c88f1b7801b7763b2db52a35c55645a77e223da785ff76"
+      },
+      {
+        "index": 0,
+        "sequence": 7,
+        "sha256": "2948e998223adeb70c3d19463139a0cb89c06810948a091b79a8ebaa54618e37"
+      },
+      {
+        "index": 0,
+        "sequence": 9,
+        "sha256": "193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc"
+      },
+      {
+        "index": 0,
+        "sequence": 12,
+        "sha256": "47639edfc28d3dc4fb26198fa84a2bad6a911491d122fe9a80268b30fda28f44"
+      },
+      {
+        "index": 0,
+        "sequence": 22,
+        "sha256": "ae160ef6d7196658c63e44b20c2a5a11e5a769214619369310164eef8ea3a99e"
+      },
+      {
+        "index": 0,
+        "sequence": 24,
+        "sha256": "4377e935e074101432eaa0ea0efdee6c172e57fceedee467556e733c3e228346"
+      },
+      {
+        "index": 1,
+        "sequence": 24,
+        "sha256": "15bf4f0be6b26ea4881e17555ed565ab5426ed14b9387cfcd5f7736557c345d5"
+      },
+      {
+        "index": 2,
+        "sequence": 24,
+        "sha256": "ba1dffcba6ffe7937b09e53571e0a9b84847c350e95f610aa3ba209c53ea5b36"
+      },
+      {
+        "index": 3,
+        "sequence": 24,
+        "sha256": "4459ba8d791865e463995907e9f74d78117152f15465d61011a39946b9e1187f"
+      },
+      {
+        "index": 4,
+        "sequence": 24,
+        "sha256": "eefadeedf9a8c9de2f8da23e61ce28db0d67a50ad8cfb1cc4af4da7c84e9f132"
+      },
+      {
+        "index": 0,
+        "sequence": 30,
+        "sha256": "47f0699aa50bcb076e762268db39b551b400fd0550599c97972e5192dee5ed23"
+      },
+      {
+        "index": 0,
+        "sequence": 31,
+        "sha256": "062d86b901795d3f16fe6ed4e1e8f9b0cee3225936a98cbbd4f69dc8afb02aec"
+      },
+      {
+        "index": 0,
+        "sequence": 39,
+        "sha256": "ef908fab3320e614e9d5d358b8396e3c29dabe2bfedf7c7c9b6c42bd2aacab29"
+      },
+      {
+        "index": 0,
+        "sequence": 41,
+        "sha256": "775892b61485a9cf5a349871b353b92a90beff6c86ee2cd28a83efbdbf1216e7"
+      }
+    ],
+    "source_high_watermark": 43,
+    "stop_reason": "dry_bounded_pass",
+    "unexplored_coverage_position": "Dry-run unknown coverage",
+    "unresolved_calls": [],
+    "work_id": "sleep-two"
+  },
+  "progress_record_revision": 1
+}

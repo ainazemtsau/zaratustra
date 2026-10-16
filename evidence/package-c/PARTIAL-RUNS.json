@@ -1,0 +1,29 @@
+{
+  "policy": "Preserve original logs and nonzero process exits. None of these runs is a final gate PASS or a reached negative control.",
+  "runs": [
+    {
+      "path": "native-a2a4469",
+      "source": "a2a446975526ce046e2d43f5ea85403c69af0096",
+      "status": "INCOMPLETE",
+      "reason": "Initial PYTEST_ADDOPTS Windows backslashes were interpreted as shell escapes. Run stopped; malformed target was checked and moved to _scratch/preserved-malformed-native-a2a4469, not counted as a product defect or proof."
+    },
+    {
+      "path": "native-d4d2e73",
+      "source": "d4d2e73a1337beb14bd8d4770669e9aa37fb2b2d",
+      "status": "INCOMPLETE/SUPERSEDED",
+      "reason": "Independent Core Method scope/activation and durable exhaustion findings required a new source freeze."
+    },
+    {
+      "path": "native-9c469e5",
+      "source": "9c469e5aafb3661ea4b1e484c057569cecf2f348",
+      "status": "INCOMPLETE/SUPERSEDED",
+      "reason": "Independent C8 projection, actual profile pinning and enumeration-prefix findings required a new source freeze."
+    },
+    {
+      "path": "native-d02fbb3",
+      "source": "d02fbb301af19c4be5abdc19920ec5b089bc4783",
+      "status": "INCOMPLETE/SUPERSEDED",
+      "reason": "Independent physical C9 resource-pause crash required authoritative cause projection. Only this task's verified native process tree was stopped."
+    }
+  ]
+}

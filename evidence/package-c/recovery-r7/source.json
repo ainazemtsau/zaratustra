@@ -1,0 +1,35 @@
+{
+  "source": "3fbbf3e30cbf907ad3ea2d40686f02914c060dbf",
+  "focused": "focused/run.log",
+  "original_red": "../stop-resource-r2-red",
+  "same_probe_green": "../stop-resource-r2-green",
+  "scope": "C9 authoritative control pause cause/lifecycle and physical crash recovery only",
+  "method_and_codec_changed": false,
+  "files": [
+    {
+      "path": "packages/core/src/zaratustra_core/api.py",
+      "sha256": "63b1e1053d7623fb469a9af833ebf28e862f5f4b8f548ee73becd04be7a8d384",
+      "bytes": 58923
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/sleep.py",
+      "sha256": "e99979dcac7d34c4ebb4b299b597781a6e3b5c74ea68877dac9de96c5246d474",
+      "bytes": 18757
+    },
+    {
+      "path": "tests/restart/test_sleep.py",
+      "sha256": "cf1812d585c21b9d1fb42836c2901ebc60be6880e9e8b7226e1dd450c391640b",
+      "bytes": 27932
+    },
+    {
+      "path": "tests/restart/sleep_crash_worker.py",
+      "sha256": "f7ca550b7f6c3ec4756f9a58b193386635f00bc2d7a351ccde9033e6b881d18f",
+      "bytes": 3335
+    },
+    {
+      "path": "tests/restart/test_sleep_controls.py",
+      "sha256": "00ab3ea0cf9bee8832f6eaa6d21754d81e0b5c8ac21b8e9ee5ab27043443550e",
+      "bytes": 5092
+    }
+  ]
+}

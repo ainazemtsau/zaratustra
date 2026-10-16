@@ -1,0 +1,26 @@
+{
+  "stage": "feedback-sleep-after-reopen",
+  "outcome": {
+    "attempt_id": "sleep-two:5d81f71f8f3a4d7aa3e64c7de0122a71",
+    "state": "completed",
+    "refs": [
+      {
+        "id": "sleep-two-analysis",
+        "revision": 1
+      },
+      {
+        "id": "practice",
+        "revision": 2
+      },
+      {
+        "id": "sleep-two:progress",
+        "revision": 2
+      }
+    ],
+    "outputs": [],
+    "accepted": false,
+    "text": "Completed this bounded Sleep pass. The new request to establish a confirmed wild pollinator was not achieved: the supplied facts say no observation establishes one, and the delivered outcome records that evidence directly verifying a pollinator is missing. This outcome supports keeping exhibit claims tied to evidence. I updated the exhibit-label Method to put evidence checks before drafting and treat the 35–50 word guidance as trial-specific. No claims are made about other displays or pollinators.",
+    "cutoff": 0
+  },
+  "invocations": 1
+}

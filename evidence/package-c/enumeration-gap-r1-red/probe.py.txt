@@ -1,0 +1,37 @@
+"""Independent challenge to mechanically claimed enumeration cursor, on frozen source."""
+import copy
+import json
+import sys
+from pathlib import Path
+from uuid import uuid4
+
+HERE=Path(__file__).resolve().parent
+sys.path[:0]=[str(HERE/'frozen-source/packages/core/src'),str(HERE/'frozen-source/packages/app/src')]
+from zaratustra_app import Sleep
+from zaratustra_core import Core,CoreError
+
+core,token=Core.initialize(HERE/'enumeration-space')
+client=core.connect(token)
+for identity in ['first','ordinary-success','ordinary-error','unlinked-note']:
+    client.call('apply_changes',{'changes':[{'id':identity,'kind':'data','key':identity,'scope':'lab','body':'Exact fictional material '+identity}]},identity+':create',expected_heads={identity:0})
+sleep=Sleep(client)
+sleep.start(work_id='rest',scope='lab',method_id='sleep-lab',call_limit=4,portion=1)
+record=sleep.progress('rest')
+before=copy.deepcopy(record['body']['value'])
+history=client.call('read_history',{'scope':'lab','high_watermark':before['source_high_watermark'],'limit':100},uuid4().hex)
+body=copy.deepcopy(before)
+body['enumeration_cursor']=[body['source_high_watermark'],2147483647]
+change={'id':record['id'],'kind':'data','key':record['key'],'scope':'lab','body':body}
+obs={'source':'9c469e5aafb3661ea4b1e484c057569cecf2f348','before':before,'actual_bounded_history':history,'claimed_change':change}
+try:
+    obs['receipt']=client.call('apply_changes',{'changes':[change]},'claim-enumerated-all',expected_heads={record['id']:record['revision']})
+    reopened=Core(core.root).connect(token)
+    obs['reopen_start']=Sleep(reopened).start(work_id='rest',scope='lab',method_id='sleep-lab',call_limit=4,portion=1)
+    obs['progress']=Sleep(reopened).progress('rest')
+except CoreError as e:
+    obs['error']=e.as_dict()
+seen=before['enumerated_source_refs']
+obs['omitted_within_cursor']=[s['source_ref'] for s in history['sources'] if s['source_ref'] not in seen]
+(HERE/'enumeration-gap.json').write_text(json.dumps(obs,ensure_ascii=False,indent=2),encoding='utf-8')
+print(json.dumps({'accepted':'receipt' in obs,'has_more':obs.get('reopen_start',{}).get('has_more'),'enumerated_count':len(seen),'actual_count':len(history['sources']),'omitted':len(obs['omitted_within_cursor'])}))
+assert 'receipt' not in obs or obs['reopen_start']['has_more'],'Progress can mechanically skip sources and report no further enumeration'

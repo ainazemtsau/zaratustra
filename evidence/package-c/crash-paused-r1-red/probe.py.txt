@@ -1,0 +1,70 @@
+"""Physical crash after committed paused C8 and before Sleep checkpoint."""
+import base64
+import importlib.util
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+from zaratustra_app import Coordinator, Sleep
+from zaratustra_core import Core, CoreError
+
+HERE=Path(__file__).resolve().parent
+
+def save(client, identity, kind, body):
+    return client.call('apply_changes',{'changes':[{'id':identity,'kind':kind,'key':identity,'scope':'lab','body':body}]},identity+':create',expected_heads={identity:0})
+
+class Executor:
+    resource_upper=1
+    tool_handler=None
+    def run(self,context,action):
+        output={'state':'ready','text':'Bounded portion returned; more sources remain','changes':[{'id':'learned','kind':'memory','key':'learned','scope':'lab','body':'A permitted mechanical memory correction'}],'expected_heads':{'learned':0}}
+        (HERE/'crash-receiver.json').write_text(json.dumps({'action':action,'context':context,'output':output},indent=2),encoding='utf-8')
+        return json.dumps(output).encode()
+
+class NeverInfer:
+    resource_upper=1
+    tool_handler=None
+    sends=0
+    def run(self,context,action):
+        self.sends+=1
+        raise AssertionError('Reopen attempted inference')
+
+if '--child' in sys.argv:
+    request=json.loads(sys.stdin.read())
+    c=Core(Path(request['root'])).connect(request['token'])
+    co=Coordinator(c)
+    p=co.prepare('sleep','sleep-a',{'id':'profile','revision':1})
+    co.dispatch('sleep-a',p['generation'],Executor())
+    result=co.recover('sleep-a')
+    (HERE/'crash-committed.json').write_text(json.dumps({'result':result,'snapshot':co.snapshot()},indent=2),encoding='utf-8')
+    os._exit(91)
+
+core,token=Core.initialize(HERE/'crash-space')
+owner=core.connect(token)
+save(owner,'profile','profile',{'resource_unit':'calls'})
+save(owner,'routine','data','Ordinary successful fictional task; no complaint')
+permissions=['read','apply_changes','open_work','prepare_attempt','claim_dispatch','observe_attempt','commit_outcome','control_work','reserve_tool','write:memory:lab','write:method:lab']
+client=core.connect(core.grant(token,'review-executor',permissions,origin='host'))
+Sleep(client).start(work_id='sleep',scope='lab',method_id='sleep-lab',call_limit=1,portion=1)
+child=subprocess.run([sys.executable,'-X','utf8',str(Path(__file__).resolve()),'--child'],input=json.dumps({'root':str(core.root),'token':client.token}),capture_output=True,text=True,encoding='utf-8',timeout=30)
+receiver=NeverInfer()
+reopened=Core(core.root).connect(client.token)
+sleep=Sleep(reopened)
+observations={'source':'9c469e5aafb3661ea4b1e484c057569cecf2f348','child_exit':child.returncode,'child_stdout':child.stdout,'child_stderr':child.stderr}
+for i in range(2):
+    try:
+        observations['reopen-'+str(i)]=sleep.run('sleep',{'id':'profile','revision':1},receiver)
+    except CoreError as error:
+        observations['reopen-'+str(i)]=error.as_dict()
+observations['new_sends']=receiver.sends
+observations['progress']=sleep.progress('sleep')
+observations['snapshot']=sleep.coordinator.snapshot()
+(HERE/'crash-reopen.json').write_text(json.dumps(observations,indent=2),encoding='utf-8')
+print(json.dumps({'child_exit':child.returncode,'new_sends':receiver.sends,'progress':observations['progress']['body']['value']}))
+assert child.returncode==91
+assert receiver.sends==0
+progress=observations['progress']['body']['value']
+assert progress['delivered_manifest_refs'],'Retained terminal delivery is absent after paused C8 crash/reopen'
+assert 'sleep-a:outcome' in progress['applied_receipts'],'Applied memory receipt lost from progress after paused C8 crash/reopen'

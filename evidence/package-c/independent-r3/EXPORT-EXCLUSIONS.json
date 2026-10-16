@@ -1,0 +1,8 @@
+{
+  "do_not_export_content": [
+    "chain-dry/LOCAL-ONLY-credentials.json",
+    "live-bound/LOCAL-ONLY-credentials.json",
+    "live-bound-native/LOCAL-ONLY-credentials.json"
+  ],
+  "reason": "Disposable local reopen credentials only; inventory may record hashes/paths, exported evidence must omit credential bytes. No external-account tokens are read or stored."
+}

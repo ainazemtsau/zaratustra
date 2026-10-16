@@ -1,0 +1,10 @@
+{
+  "seed": "G7-ignore-late-fence",
+  "test": "test_contract.py::test_late_fencing",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n______________________________ test_late_fencing ______________________________\ntests\\restart\\test_contract.py:216: in test_late_fencing\n    assert late[\"late\"] is True\nE   assert False is True\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_contract.py::test_late_fencing - assert False is True\n1 failed in 1.44s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -979,7 +979,8 @@\n                 \"fenced\",\n                 \"superseded\",\n             }\n-            body[\"late\"] = fenced\n+            print(\"MUTANT_REACHED\", flush=True)\n+            body[\"late\"] = False\n             if p[\"kind\"] not in {\"terminal\", \"progress\", \"unknown\", \"reconcile\"}:\n                 fail(\"invalid_request\", \"observation.kind\")\n             if p[\"kind\"] == \"terminal\":\n"
+}

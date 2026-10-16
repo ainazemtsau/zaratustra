@@ -1,0 +1,57 @@
+"""Physical C9 resource pause commit, crash before progress save, public reopen."""
+import json,os,subprocess,sys
+from pathlib import Path
+
+HERE=Path(__file__).resolve().parent
+FROZEN=HERE/'frozen-source'
+PREFIX=[str(FROZEN/'packages/core/src'),str(FROZEN/'packages/app/src')]
+sys.path[:0]=PREFIX
+from zaratustra_app import Sleep,Coordinator
+from zaratustra_core import Core,CoreError
+
+class Returned:
+    resource_upper=1
+    tool_handler=None
+    def run(self,context,action):
+        return json.dumps({'state':'ready','text':'First bounded portion returned; more material remains','changes':[{'id':'learned','kind':'memory','key':'learned','scope':'lab','body':'A real applied memory correction from controlled terminal'}],'expected_heads':{'learned':0}}).encode()
+class CannotFit:
+    resource_upper=3
+    tool_handler=None
+    sends=0
+    def run(self,context,action):self.sends+=1;raise AssertionError('Cannot fit remaining resource')
+class CrashAfterPause:
+    def __init__(self,c):self.c=c
+    def call(self,operation,payload,*args,**kwargs):
+        result=self.c.call(operation,payload,*args,**kwargs)
+        if operation=='control_work' and payload.get('action')=='pause' and payload.get('reason')=='resource_exhausted':os._exit(91)
+        return result
+    def __getattr__(self,n):return getattr(self.c,n)
+
+if '--child' in sys.argv:
+    data=json.loads(sys.stdin.read());c=Core(Path(data['root'])).connect(data['token'])
+    Sleep(CrashAfterPause(c)).run('rest',{'id':'profile','revision':1},CannotFit())
+    raise AssertionError('Crash boundary not reached')
+
+core,token=Core.initialize(HERE/'stop-resource-space')
+c=core.connect(token)
+for identity,kind,body in [('profile','profile',{'resource_unit':'calls'}),('first','data','Ordinary material'),('second','data','Unexamined source')]:
+    c.call('apply_changes',{'changes':[{'id':identity,'kind':kind,'key':identity,'scope':'lab','body':body}]},identity+':create',expected_heads={identity:0})
+sleep=Sleep(c);sleep.start(work_id='rest',scope='lab',method_id='sleep-lab',call_limit=3,portion=100)
+first=sleep.run('rest',{'id':'profile','revision':1},Returned())
+before={'result':first,'progress':sleep.progress('rest'),'snapshot':Coordinator(c).snapshot()}
+env=os.environ.copy();env['PYTHONPATH']=os.pathsep.join(PREFIX);env['PYTHONDONTWRITEBYTECODE']='1'
+r=subprocess.run([sys.executable,'-X','utf8',str(Path(__file__).resolve()),'--child'],input=json.dumps({'root':str(core.root),'token':token}),env=env,capture_output=True,text=True,encoding='utf-8',timeout=30)
+obs={'source':'d02fbb301af19c4be5abdc19920ec5b089bc4783','before':before,'child_exit':r.returncode,'child_stdout':r.stdout,'child_stderr':r.stderr,'reopens':[]}
+receiver=CannotFit()
+for n in range(2):
+    reopened=Core(core.root).connect(token)
+    try:result=Sleep(reopened).run('rest',{'id':'profile','revision':1},receiver)
+    except CoreError as e:result=e.as_dict()
+    obs['reopens'].append({'result':result,'progress':Sleep(reopened).progress('rest'),'snapshot':Coordinator(reopened).snapshot()})
+obs['new_sends']=receiver.sends
+(HERE/'stop-resource-crash.json').write_text(json.dumps(obs,indent=2),encoding='utf-8')
+last=obs['reopens'][-1]
+print(json.dumps({'child_exit':r.returncode,'new_sends':receiver.sends,'work_status':last['snapshot']['works'][0]['status'],'stop_reason':last['progress']['body']['value']['stop_reason'],'reopen_result':last['result'],'control_intent':[i for i in last['snapshot']['intents'] if i['kind']=='control']}))
+assert r.returncode==91 and receiver.sends==0
+assert last['snapshot']['works'][0]['status']=='paused'
+assert last['progress']['body']['value']['stop_reason']=='resource_exhausted','Committed resource pause reason never reaches Sleep progress after crash/reopen'

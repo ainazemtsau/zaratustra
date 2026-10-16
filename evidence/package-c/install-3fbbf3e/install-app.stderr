@@ -1,0 +1,8 @@
+Using Python 3.13.7 environment at: env
+Resolved 7 packages in 74ms
+Prepared 1 package in 14ms
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 1 package in 27ms
+ + zaratustra-next==0.1.0 (from file:///C:/projects/zaratustra/.worktrees/restart-first-release/evidence/package-c/install-3fbbf3e/physical-builds/zaratustra_next-0.1.0-py3-none-any.whl)

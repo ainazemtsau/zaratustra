@@ -1,0 +1,13 @@
+{
+  "success": true,
+  "outcome": {
+    "attempt_id": "access-attempt",
+    "state": "completed",
+    "refs": [],
+    "outputs": [],
+    "accepted": false,
+    "text": "access established",
+    "cutoff": 0
+  },
+  "semantic_verdict": "requires independent review"
+}

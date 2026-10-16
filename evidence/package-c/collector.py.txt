@@ -1,0 +1,190 @@
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import shutil
+import subprocess
+import sys
+import zipfile
+from pathlib import Path
+
+ROOT = Path.cwd()
+E = ROOT / 'evidence/package-c'
+PIN = '3fbbf3e30cbf907ad3ea2d40686f02914c060dbf'
+BASE = '05b5d0a8d24bfdc1ade4c7450d64979a398077b7'
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def write(name, value):
+    (E / name).write_text(json.dumps(value, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+
+def read(path):
+    return json.loads((E / path).read_text(encoding='utf-8'))
+
+
+def entry(path, relative_to=E):
+    data = path.read_bytes()
+    return {'path': path.relative_to(relative_to).as_posix(), 'sha256': sha(data), 'bytes': len(data)}
+
+
+assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == PIN
+assert not subprocess.check_output(['git', 'diff', PIN, '--', 'packages', 'src', 'tools', 'tests', 'pyproject.toml', 'uv.lock'])
+
+# Retain the exact source used by the new runtime and the full native gate.
+# Explicit scopes never include archive/** or historical proof directories.
+scopes = ['AGENTS.md', '.python-version', 'pyproject.toml', 'uv.lock', 'README.md',
+          'validation.config', 'packages', 'src', 'tools', 'tests',
+          'docs/restart/FIRST-RELEASE-PLAN.md', 'docs/restart/FIRST-RELEASE-REVIEW.md']
+paths = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', PIN, '--', *scopes], text=True).splitlines()
+source = []
+with zipfile.ZipFile(E / 'source-3fbbf3e.zip', 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+    for name in paths:
+        blob = subprocess.check_output(['git', 'rev-parse', PIN + ':' + name], text=True).strip()
+        data = subprocess.check_output(['git', 'show', PIN + ':' + name])
+        assert data == (ROOT / name).read_bytes(), name
+        source.append({'path': name, 'git_blob': blob, 'sha256': sha(data), 'bytes': len(data)})
+        info = zipfile.ZipInfo(name, (2026, 10, 16, 0, 0, 0))
+        info.compress_type = zipfile.ZIP_DEFLATED
+        archive.writestr(info, data)
+frozen = {p['path']: p['sha256'] for p in source if p['path'].startswith('docs/restart/FIRST-RELEASE-')}
+assert frozen['docs/restart/FIRST-RELEASE-PLAN.md'] == '3e279c312d20f137e2076ecd7240f6b2c039923b9ee9bfa55e9662c5df98e0cb'
+assert frozen['docs/restart/FIRST-RELEASE-REVIEW.md'] == 'e7493dc10a06ce34b7f4e06efb6db55509565b46099ee51d1d6987b2aa268dcb'
+write('SOURCE-MANIFEST.json', {'source_commit': PIN, 'accepted_b_candidate': BASE,
+      'scope': scopes, 'snapshot': entry(E / 'source-3fbbf3e.zip'), 'files': source})
+if '--source-only' in sys.argv:
+    print(json.dumps({'source_commit': PIN, 'source_files': len(source)}))
+    raise SystemExit(0)
+native = read('native-3fbbf3e/exit.json')
+scoped = read('scoped-3fbbf3e/exit.json')
+assert native['returncode'] == scoped['returncode'] == 0
+
+# The four fresh outside-checkout builds are byte-identical to the distributions
+# installed and exercised outside the checkout. Keep both physical sets.
+installed = read('install-3fbbf3e-external/manifest.json')
+assert installed['source_build_outside_checkout']
+assert len([n for n in installed['builds'] if n.endswith(('.whl','.gz'))]) == 4
+assert len(installed['verified_source_wheel_installed_files']) == 14
+native_builds = E / 'native-3fbbf3e/physical-builds'
+native_builds.mkdir(exist_ok=True)
+for path in sorted((ROOT / 'dist').iterdir()):
+    if path.suffix in {'.whl', '.gz'}:
+        shutil.copyfile(path, native_builds / path.name)
+for path in (E / 'install-3fbbf3e-external/physical-builds').iterdir():
+    if path.suffix in {'.whl', '.gz'}:
+        assert path.read_bytes() == (native_builds / path.name).read_bytes(), path.name
+distributions = [p for p in sorted(E.rglob('*'))
+                 if p.is_file() and 'physical-builds' in p.parts and p.suffix in {'.whl', '.gz'}]
+write('BUILD-MANIFEST.json', {'source_commit': PIN,
+      'clean_source_build': 'install-3fbbf3e-external/manifest.json',
+      'wheel_only_install': 'install-3fbbf3e-external/manifest.json',
+      'clean_outside_source_build_bytes_equal_installed': True,
+      'native_gate_build_bytes_equal_outside_installed': True,
+      'verified_source_wheel_installed_files': installed['verified_source_wheel_installed_files'],
+      'physical_distributions': [entry(p) for p in distributions
+          if p.relative_to(E).parts[0] in {'install-3fbbf3e-external', 'native-3fbbf3e'}],
+      'historical_distributions': [entry(p) for p in distributions
+          if p.relative_to(E).parts[0] not in {'install-3fbbf3e-external', 'native-3fbbf3e'}],
+      'historical_source_linkage': 'Each historical directory retains its own manifest and source commit; its bytes are not attributed to final source.'})
+deps = read('install-3fbbf3e-external/installed-dependencies.json')
+def executable(path):
+    actual = Path(path).resolve()
+    data = actual.read_bytes()
+    return {'path': str(actual), 'sha256': sha(data), 'bytes': len(data)}
+
+
+pi_cli = 'C:/Users/Anton/AppData/Roaming/npm/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js'
+legacy_dll = executable('C:/projects/zaratustra/_scratch/release-installed-20260927/runtime/sqlite3.dll')
+assert legacy_dll['sha256'] == '79fd9ec89dba3f8bd64529a2ca8e9dde6ae6edc486c55a1d3f1ce77975a8375c'
+write('DEPENDENCY-MANIFEST.json', {'source_commit': PIN,
+      'lock': entry(ROOT / 'uv.lock', ROOT), 'python': scoped['python'],
+      'new_runtime_sqlite': scoped['sqlite'], 'installed': deps,
+      'pi': {'version': '1.0.4', 'node_version': '22.19.0',
+             'cli_bundle': executable(pi_cli), 'node_executable': executable(shutil.which('node'))},
+      'uv': {'version': subprocess.check_output(['uv', '--version'], text=True).strip(),
+             'executable': executable(shutil.which('uv'))},
+      'test_only_codex': {'version': '0.156.1', 'model': 'gpt-6-luna', 'route': 'official configured ChatGPT CLI',
+                          'launcher_only': executable(shutil.which('codex.cmd') or shutil.which('codex')),
+                          'not_installed_product_adapter': True},
+      'legacy_full_gate_only_sqlite_dll': dict(legacy_dll, version='3.53.3'),
+      'new_runtime_requires_legacy_dll': False})
+
+controls = []
+for path in sorted((E / 'scoped-3fbbf3e/negatives').glob('*.json')):
+    value = json.loads(path.read_text(encoding='utf-8'))
+    assert value['injection_reached'] and value['behavioral_failure'] and value['returncode'] != 0, path
+    assert 'MUTANT_REACHED' in value['stdout'], path
+    controls.append({'seed': value['seed'], 'test': value['test'], 'injection_reached': True,
+                     'behavioral_failure': True, 'evidence': entry(path)})
+assert len(controls) == 46
+write('CONTROL-AUDIT.json', {'source_commit': PIN, 'total': len(controls),
+      'a_preserved': 22, 'b_preserved': 6, 'c_added': 18, 'controls': controls,
+      'meaning': 'Reached behavioral counterexamples, never syntax/build failures or semantic proof'})
+
+live = []
+for path in sorted(E.rglob('stdout.jsonl')):
+    usages = []
+    invalid_tools = []
+    for line in path.read_text(encoding='utf-8', errors='replace').splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if event.get('type') == 'turn.completed':
+            usages.append(event.get('usage'))
+        item = event.get('item', {})
+        if item.get('type') in {'command_execution', 'mcp_tool_call', 'web_search', 'file_change'}:
+            invalid_tools.append(item)
+    live.append({'raw': entry(path), 'reported_usage': usages, 'unexpected_tool_events': invalid_tools,
+                 'physical_provider_sends': 'unknown; process counts are not send counts'})
+write('LIVE-USAGE.json', {'source_commit': PIN, 'scope': 'Author official Codex runs physically retained here, including errors and historical sources; independent full raw bundle is retained separately by root',
+      'resource_unit': 'codex_exec', 'invocations': live,
+      'independent_reported_usage': {'source': 'independent-r3/report.md', 'actual_invocations': 4,
+          'prior_local_initialization_failures': 1, 'reported_input_tokens': 155896,
+          'reported_output_tokens': 3334, 'reported_reasoning_tokens': 734,
+          'physical_provider_sends': 'unknown', 'not_complete_billing': True},
+      'no_inference_of_zero_usage_for_errors': True})
+
+def count_passes(path):
+    text = path.read_text(encoding='utf-8', errors='replace')
+    matches = re.findall(r'(\d+) passed in ([0-9.]+)s', text)
+    assert matches, path
+    return {'tests_passed': int(matches[-1][0]), 'pytest_seconds': float(matches[-1][1])}
+
+write('RUN-INDEX.json', {'source_commit': PIN,
+      'final_mechanical': {'full_native': dict(native, **count_passes(E/'native-3fbbf3e/run.log')),
+                           'scoped': dict(scoped, **count_passes(E/'scoped-3fbbf3e/run.log')),
+                           'controls': 'CONTROL-AUDIT.json', 'installed': 'install-3fbbf3e-external', 'outside_build': 'install-3fbbf3e-external/manifest.json'},
+      'historical_or_diagnostic': [p.name for p in sorted(E.iterdir()) if p.is_dir() and p.name not in
+          {'native-3fbbf3e', 'scoped-3fbbf3e', 'install-3fbbf3e-external', 'live-chain-d02fbb3-02', 'live-chain-d02fbb3-four'}],
+      'semantic_runs': {'live-chain-d02fbb3-02': 'Three successful processing stages: memory update, actual negative outcome, then autonomous Method revision; no following Work in that run',
+                        'live-chain-d02fbb3-four': 'Four successful processing stages and current revised Method delivery; third Sleep omitted full analysis, so this is not a full semantic PASS',
+                        'independent-r3': 'Reviewer-owned fixed fixture/rubric/assessment on exact final source; parent transport execution only. Bounded positive with one retained refused answer, not general usefulness or G14. Full exportable raw bundle retained separately by root.'},
+      'dry_runs': 'live-chain-d02fbb3-dry and live-chain-d02fbb3-four-dry are scripted harness checks, never semantic evidence',
+      'failures_preserved': True, 'owner_acceptance': 'pending'})
+
+shutil.copyfile(Path(__file__), E / 'collector.py.txt')
+excluded = {'PROOF-MANIFEST.json', 'PROVENANCE.json'}
+proof = [entry(p) for p in sorted(E.rglob('*')) if p.is_file() and p.relative_to(E).as_posix() not in excluded]
+write('PROOF-MANIFEST.json', {'source_commit': PIN,
+      'scope': 'All retained C evidence, including partial/failed/historical runs; excludes this manifest and PROVENANCE to avoid a hash cycle',
+      'files': proof, 'count': len(proof), 'bytes': sum(p['bytes'] for p in proof)})
+write('PROVENANCE.json', {'source_commit': PIN, 'base_candidate_b': BASE,
+      'candidate_policy': 'Final candidate adds delivery docs/evidence/RESULT only; exact candidate Git commit is returned separately for reconciliation',
+      'full_native': count_passes(E/'native-3fbbf3e/run.log'),
+      'scoped': count_passes(E/'scoped-3fbbf3e/run.log'), 'controls': {'total': 46, 'a': 22, 'b': 6, 'c': 18},
+      'independent_source_verdict': 'READY_SOURCE_WITH_RECORDED_LIMITS',
+      'independent_source_report': 'independent-r3/report.md',
+      'independent_candidate_verdict': 'pending exact candidate and full native reconciliation',
+      'semantic': 'Independent bounded positive on exact source with retained format failure/limits; author instruction-following failure preserved; no consistent usefulness/G14 or scripted semantic claim',
+      'contract': {'api': 'wire/v1', 'method': 'sleep/1', 'progress': 'sleep-progress/v1', 'analysis': 'sleep-analysis/v1'},
+      'author_live_source_commit': 'd02fbb301af19c4be5abdc19920ec5b089bc4783',
+      'independent_live_source_commit': PIN,
+      'author_live_to_final_source_delta': 'Only authoritative control-cause crash recovery/lifecycle and tests; Method and codec unchanged. Independent reconciliation required.',
+      'manual_acceptance': 'pending C', 'next': 'solmax',
+      'manifests': {n: sha((E/n).read_bytes()) for n in ['SOURCE-MANIFEST.json', 'BUILD-MANIFEST.json', 'DEPENDENCY-MANIFEST.json', 'PROOF-MANIFEST.json']}})
+print(json.dumps({'source': PIN, 'proof_files': len(proof), 'proof_bytes': sum(p['bytes'] for p in proof), 'controls': len(controls)}))

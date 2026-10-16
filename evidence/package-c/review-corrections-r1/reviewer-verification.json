@@ -1,0 +1,80 @@
+{
+  "source": "a2a446975526ce046e2d43f5ea85403c69af0096",
+  "accepted_b": "05b5d0a8d24bfdc1ade4c7450d64979a398077b7",
+  "candidate": null,
+  "build": null,
+  "verdict": "NOT_READY_NEEDS_CHANGES",
+  "owner_acceptance": false,
+  "review_phase": "initial source blockers; final reconciliation pending",
+  "original_probes": [
+    {
+      "path": "probe.py",
+      "sha256": "8803df73e02c2020078e32b111e9256bb275aa091843fe823e21c81f0d785e4d"
+    },
+    {
+      "path": "check_findings.py",
+      "sha256": "4f31e82d3d4cbb86a1911a4f40eda97322bc80bd0cdb2696fb3862727574c79b"
+    }
+  ],
+  "checks": [
+    {
+      "name": "independent physical admission/continuation probes",
+      "outcome": "3 reproduced behavioral failures",
+      "raw": [
+        "probe.log",
+        "assertions.log",
+        "scope-core.json",
+        "inactive-refresh.json",
+        "exhausted.json",
+        "assertion-runtime/"
+      ]
+    },
+    {
+      "name": "new-memory after work open",
+      "outcome": "observation only; current bytes delivered in catalog",
+      "raw": [
+        "new-memory.json"
+      ]
+    },
+    {
+      "name": "supporting author scoped tests",
+      "outcome": "24 passed, 2 deselected",
+      "raw": [
+        "supporting-scoped.log",
+        "supporting-scoped-exit.json"
+      ]
+    },
+    {
+      "name": "first author full native",
+      "outcome": "interrupted; not PASS",
+      "raw": [
+        "native-first-exit.json",
+        "native-first-run.log"
+      ]
+    },
+    {
+      "name": "corrected source, independent adapter traces, negative controls audit, live Luna, final builds/native",
+      "outcome": "PENDING"
+    }
+  ],
+  "findings": [
+    {
+      "id": "C-R1",
+      "priority": "P1",
+      "status": "open",
+      "summary": "public Core admits Method outside its application scope"
+    },
+    {
+      "id": "C-R2",
+      "priority": "P1",
+      "status": "open",
+      "summary": "refresh exact reference permits proposal Method execution"
+    },
+    {
+      "id": "C-R3",
+      "priority": "P2",
+      "status": "open",
+      "summary": "unfinished exhausted Sleep persists ready, not_started progress"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "seed": "C-R1-core-cross-scope",
+  "test": "test_sleep.py::test_core_method_application_guards[scope-open]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_______________ test_core_method_application_guards[scope-open] _______________\ntests\\restart\\test_sleep.py:461: in test_core_method_application_guards\n    with pytest.raises(CoreError, match=\"method.scope|inactive_method\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_sleep.py::test_core_method_application_guards[scope-open]\n1 failed in 1.12s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -362,7 +362,7 @@\n         if method[\"kind\"] != \"method\":\n             fail(\"invalid_request\", \"method_ref.kind\")\n         if method[\"scope\"] not in {\"space\", body.get(\"scope\", \"space\")}:\n-            fail(\"denied\", \"method.scope\")\n+            print(\"MUTANT_REACHED\", flush=True)\n         if method[\"body\"][\"tombstone\"] or method[\"body\"].get(\"application\", \"active\") != \"active\":\n             fail(\"stale_basis\", \"inactive_method\")\n         return method\n"
+}

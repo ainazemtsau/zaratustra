@@ -1,0 +1,214 @@
+{
+  "refresh": {
+    "status": "ready"
+  },
+  "received": [
+    {
+      "action": "next-a:action",
+      "context": {
+        "capabilities": [
+          "read",
+          "apply_changes",
+          "open_work",
+          "prepare_attempt",
+          "claim_dispatch",
+          "observe_attempt",
+          "commit_outcome",
+          "control_work",
+          "reserve_tool",
+          "write:method:lab",
+          "write:memory:lab"
+        ],
+        "catalog": [
+          {
+            "body": "{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Produce the requested bounded result.\"}",
+            "id": "ordinary",
+            "key": "ordinary",
+            "kind": "method",
+            "revision": 1,
+            "scope": "space"
+          },
+          {
+            "body": "{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":{\"executor\":\"independent-controlled\",\"resource_unit\":\"call\"}}",
+            "id": "profile",
+            "key": "profile",
+            "kind": "profile",
+            "revision": 1,
+            "scope": "space"
+          },
+          {
+            "body": "{\"application\":\"proposal\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Unapproved method\"}",
+            "id": "proposed",
+            "key": "proposed",
+            "kind": "method",
+            "revision": 1,
+            "scope": "lab"
+          }
+        ],
+        "inputs": [],
+        "manifest": [],
+        "messages": [],
+        "method": {
+          "body": {
+            "application": "proposal",
+            "schema_ref": null,
+            "source_refs": [],
+            "tombstone": false,
+            "value": "Unapproved method"
+          },
+          "id": "proposed",
+          "key": "proposed",
+          "kind": "method",
+          "revision": 1,
+          "scope": "lab"
+        },
+        "prior_messages": [],
+        "prior_results": [],
+        "prior_waits": [],
+        "profile": {
+          "body": {
+            "application": "active",
+            "schema_ref": null,
+            "source_refs": [],
+            "tombstone": false,
+            "value": {
+              "executor": "independent-controlled",
+              "resource_unit": "call"
+            }
+          },
+          "id": "profile",
+          "key": "profile",
+          "kind": "profile",
+          "revision": 1,
+          "scope": "space"
+        },
+        "profile_ref": {
+          "id": "profile",
+          "revision": 1
+        },
+        "tool_ledger": [],
+        "work": {
+          "call_limit": 3,
+          "continuation_policy": "durable",
+          "conversation": "next",
+          "goal": "Independent fictional task",
+          "id": "next",
+          "inputs": [],
+          "method_ref": {
+            "id": "proposed",
+            "revision": 1,
+            "role": "exact"
+          },
+          "scope": "lab"
+        },
+        "resource_state": {
+          "call_limit": 3,
+          "consumed_resource": 1,
+          "unresolved_calls": [
+            "next-a:action"
+          ]
+        },
+        "raw_messages": []
+      }
+    }
+  ],
+  "outcome": {
+    "attempt_id": "next-a",
+    "state": "completed",
+    "refs": [],
+    "outputs": [],
+    "accepted": false,
+    "text": "executed unapproved proposal",
+    "cutoff": 0
+  },
+  "snapshot": {
+    "heads": [
+      {
+        "id": "profile",
+        "revision": 1,
+        "kind": "profile",
+        "key": "profile",
+        "scope": "space"
+      },
+      {
+        "id": "ordinary",
+        "revision": 1,
+        "kind": "method",
+        "key": "ordinary",
+        "scope": "space"
+      },
+      {
+        "id": "proposed",
+        "revision": 1,
+        "kind": "method",
+        "key": "proposed",
+        "scope": "lab"
+      }
+    ],
+    "works": [
+      {
+        "id": "next",
+        "revision": 4,
+        "conversation": "next",
+        "status": "completed",
+        "generation": 2,
+        "body": "{\"call_limit\":3,\"continuation_policy\":\"durable\",\"conversation\":\"next\",\"goal\":\"Independent fictional task\",\"id\":\"next\",\"inputs\":[],\"method_ref\":{\"id\":\"proposed\",\"revision\":1,\"role\":\"exact\"},\"scope\":\"lab\"}",
+        "reserved": 1
+      }
+    ],
+    "attempts": [
+      {
+        "id": "next-a",
+        "work": "next",
+        "conversation": "next",
+        "status": "finished",
+        "generation": 2,
+        "original_cursor": 0,
+        "cutoff": 0,
+        "body": "{\"capabilities\":[\"read\",\"apply_changes\",\"open_work\",\"prepare_attempt\",\"claim_dispatch\",\"observe_attempt\",\"commit_outcome\",\"control_work\",\"reserve_tool\",\"write:method:lab\",\"write:memory:lab\"],\"catalog\":[{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Produce the requested bounded result.\\\"}\",\"id\":\"ordinary\",\"key\":\"ordinary\",\"kind\":\"method\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":{\\\"executor\\\":\\\"independent-controlled\\\",\\\"resource_unit\\\":\\\"call\\\"}}\",\"id\":\"profile\",\"key\":\"profile\",\"kind\":\"profile\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"proposal\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Unapproved method\\\"}\",\"id\":\"proposed\",\"key\":\"proposed\",\"kind\":\"method\",\"revision\":1,\"scope\":\"lab\"}],\"inputs\":[],\"manifest\":[],\"messages\":[],\"method\":{\"body\":{\"application\":\"proposal\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Unapproved method\"},\"id\":\"proposed\",\"key\":\"proposed\",\"kind\":\"method\",\"revision\":1,\"scope\":\"lab\"},\"prior_messages\":[],\"prior_results\":[],\"prior_waits\":[],\"profile\":{\"body\":{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":{\"executor\":\"independent-controlled\",\"resource_unit\":\"call\"}},\"id\":\"profile\",\"key\":\"profile\",\"kind\":\"profile\",\"revision\":1,\"scope\":\"space\"},\"profile_ref\":{\"id\":\"profile\",\"revision\":1},\"tool_ledger\":[],\"work\":{\"call_limit\":3,\"continuation_policy\":\"durable\",\"conversation\":\"next\",\"goal\":\"Independent fictional task\",\"id\":\"next\",\"inputs\":[],\"method_ref\":{\"id\":\"proposed\",\"revision\":1,\"role\":\"exact\"},\"scope\":\"lab\"}}"
+      }
+    ],
+    "messages": [],
+    "conversations": [
+      {
+        "id": "next",
+        "cursor": 0
+      }
+    ],
+    "waits": [],
+    "results": [
+      {
+        "attempt": "next-a",
+        "slot": "final",
+        "fingerprint": "9c9c6d3de4b69af82d52bf0171c581475a17cd733003b52d704b1db1963bd4fa",
+        "body": "{\"accepted\":false,\"attempt_id\":\"next-a\",\"cutoff\":0,\"outputs\":[],\"refs\":[],\"state\":\"completed\",\"text\":\"executed unapproved proposal\"}"
+      }
+    ],
+    "observations": [
+      {
+        "attempt": "next-a",
+        "event": "terminal",
+        "fingerprint": "41406e0485fe29b2d7aa4127c1aa3cdf68a11d7a22206f7a7c62859895bb866f",
+        "body": "{\"attempt_id\":\"next-a\",\"event_id\":\"terminal\",\"kind\":\"terminal\",\"late\":false,\"raw_base64\":\"eyJzdGF0ZSI6ICJjb21wbGV0ZWQiLCAidGV4dCI6ICJleGVjdXRlZCB1bmFwcHJvdmVkIHByb3Bvc2FsIn0=\"}"
+      }
+    ],
+    "actions": [
+      {
+        "id": "next-a:action",
+        "attempt": "next-a",
+        "executor": "review-executor",
+        "state": "terminal",
+        "correlation": null,
+        "reserve": 1
+      }
+    ],
+    "intents": [],
+    "tool_calls": [],
+    "acceptance": [],
+    "snapshot_revision": 14,
+    "limit": {
+      "max_rows_per_table": 1000,
+      "truncated": false
+    }
+  }
+}

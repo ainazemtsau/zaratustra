@@ -1,0 +1,86 @@
+"""Actual CLI/Pi model selection versus saved Core profile, with localhost routing.
+
+Only the Python outbound network connector is routed to the controlled receiver.
+No contract/admission code is changed, no external provider or real credential.
+"""
+import contextlib
+import importlib.util
+import io
+import json
+import os
+import sys
+import threading
+from http.server import ThreadingHTTPServer
+from pathlib import Path
+from urllib.request import Request,urlopen
+
+from zaratustra_app import cli
+from zaratustra_app.adapters.pi import bridge
+from zaratustra_core import Core
+
+HERE=Path(__file__).resolve().parent
+spec=importlib.util.spec_from_file_location('own_adapter',HERE/'adapter_trace.py')
+helper=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(helper)
+root=HERE/'profile-cli'
+root.mkdir(exist_ok=False)
+core,token=Core.initialize(root/'space')
+class Receiver:
+    def __init__(self): self.received=[]
+    def __call__(self,context,action):
+        self.received.append({'context':context,'action':action})
+        return json.dumps({'state':'ready' if len(self.received)==1 else 'completed','text':'Synthetic physical return, not semantic evidence'}).encode()
+
+receiver=Receiver()
+server=ThreadingHTTPServer(('127.0.0.1',0),helper.Handler)
+server.receiver=receiver
+server.raw=[]
+thread=threading.Thread(target=server.serve_forever,daemon=True)
+thread.start()
+routes=[]
+def routed(request,timeout=35):
+    assert request.full_url.startswith(('https://review-a.invalid/v1','https://review-b.invalid/v1')),request.full_url
+    routes.append({'intended_url':request.full_url,'body':request.data.decode()})
+    local=Request(f'http://127.0.0.1:{server.server_port}/v1/chat/completions',request.data,{'Content-Type':'application/json'})
+    return urlopen(local,timeout=timeout)
+bridge.urlopen=routed
+read_text=Path.read_text
+def read_local(path,*args,**kwargs):
+    if path.resolve()==(core.root/'owner.credential').resolve(): return token
+    return read_text(path,*args,**kwargs)
+Path.read_text=read_local
+os.environ['REVIEW_SYNTHETIC_CREDENTIAL']='fictional-local-transport-only'
+observations={'source':'9c469e5aafb3661ea4b1e484c057569cecf2f348','transport_scope':'Actual CLI and Pi; outbound Python URL routed to local controlled receiver only','cli_results':[]}
+try:
+    profile=root/'selected-profile.json'
+    for name in ['a','b']:
+        config={'pi_cli':'C:/Users/Anton/AppData/Roaming/npm/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js','endpoint':f'https://review-{name}.invalid/v1','model':'review-model-'+name,'credential_env':'REVIEW_SYNTHETIC_CREDENTIAL','api':'openai-completions','timeout':35}
+        profile.write_text(json.dumps(config),encoding='utf-8')
+        (root/('profile-'+name+'.json')).write_text(json.dumps(config),encoding='utf-8')
+        sys.argv=['zaratustra-next','--data-root',str(core.root),'sleep','--work-id','repeat','--call-limit','6','--profile-file',str(profile)]
+        output=io.StringIO()
+        try:
+            with contextlib.redirect_stdout(output): result=cli.main()
+        except Exception as error:
+            assert hasattr(error,'code') and error.code=='stale_basis',repr(error)
+            assert error.field=='profile.configuration'
+            observations['refusal']={'code':error.code,'field':error.field}
+            result='refused-before-dispatch' 
+        observations['cli_results'].append({'profile':name,'exit':result,'stdout':output.getvalue(),'argv':sys.argv.copy()})
+    observations['received']=receiver.received
+    observations['routes']=routes
+    observations['raw_provider_requests']=server.raw
+    observations['snapshot']=core.connect(token).call('read_snapshot',{},'after-cli')
+    observations['actual_models']=[json.loads(r['raw_utf8'])['model'] for r in server.raw]
+    observations['pinned_models']=[r['context']['profile']['body']['value']['model'] for r in receiver.received]
+    print(json.dumps({'actual_models':observations['actual_models'],'pinned_models':observations['pinned_models']}))
+finally:
+    Path.read_text=read_text
+    server.shutdown()
+    server.server_close()
+    thread.join(timeout=3)
+    (root/'observations.json').write_text(json.dumps(observations,ensure_ascii=False,indent=2),encoding='utf-8')
+assert observations['actual_models']==observations['pinned_models'],'Actual Pi sends use changed model B while Core profile remains exact revision1 model A'
+
+assert len(observations["actual_models"])==1
+assert observations["refusal"]["field"]=="profile.configuration"

@@ -1,0 +1,290 @@
+{
+  "processing_success": true,
+  "semantic_verdict": "requires independent assessment; no acceptance",
+  "stages": [
+    {
+      "stage": "first-sleep",
+      "outcome": {
+        "attempt_id": "sleep-one:58a016f180a441118a10007147bd1bd5",
+        "state": "completed",
+        "refs": [
+          {
+            "id": "sleep-one:analysis:bounded-review",
+            "revision": 1
+          },
+          {
+            "id": "memory",
+            "revision": 2
+          },
+          {
+            "id": "practice",
+            "revision": 2
+          },
+          {
+            "id": "sleep-one:progress",
+            "revision": 2
+          }
+        ],
+        "outputs": [],
+        "accepted": false,
+        "text": "Completed this bounded Sleep pass. Reviewed all eight enumerated sources, recorded the comparison, updated the label-length memory and exhibit-label Method, and retained no selected sources as unanalyzed. Further arrivals and unexamined coverage remain outside this pass.",
+        "cutoff": 0
+      },
+      "invocations": 1
+    },
+    {
+      "stage": "actual-next-work",
+      "outcome": {
+        "attempt_id": "next-attempt",
+        "state": "completed",
+        "refs": [],
+        "outputs": [],
+        "accepted": false,
+        "text": "The requested factual outcome was not achieved: the supplied observations do not establish a wild pollinator. They record an indoor trial in which flowers opened after sunset and closed the next morning, with three of twelve buds opening. Evidence identifying a pollinator or showing pollination in the wild is missing.",
+        "cutoff": 1
+      },
+      "invocations": 1,
+      "delivered_method": {
+        "id": "practice",
+        "revision": 2,
+        "kind": "method",
+        "key": "exhibit-label",
+        "scope": "space",
+        "body": {
+          "application": "active",
+          "schema_ref": null,
+          "source_refs": [
+            {
+              "id": "practice",
+              "revision": 1,
+              "role": "exact"
+            },
+            {
+              "id": "success",
+              "revision": 1,
+              "role": "exact"
+            },
+            {
+              "id": "ordinary",
+              "revision": 1,
+              "role": "exact"
+            },
+            {
+              "id": "error",
+              "revision": 1,
+              "role": "exact"
+            },
+            {
+              "id": "facts",
+              "revision": 1,
+              "role": "exact"
+            },
+            {
+              "id": "memory",
+              "revision": 1,
+              "role": "exact"
+            }
+          ],
+          "tombstone": false,
+          "value": "Draft an informative exhibit label using current memory and supplied facts. Follow the current scoped word guidance when available. Prioritize a clear, readable first sentence and the large-print species name; move supporting detail off-label. State observations accurately and distinguish observed facts from inference. Do not assert a pollinator or other fact unsupported by observations. Check both fit and factual support before producing the label. Use the executor response_contract. Make no acceptance claims."
+        }
+      },
+      "delivered_inputs": [
+        {
+          "id": "facts",
+          "revision": 1,
+          "kind": "data",
+          "key": "specimen",
+          "scope": "space",
+          "body": {
+            "application": "active",
+            "schema_ref": null,
+            "source_refs": [],
+            "tombstone": false,
+            "value": "Fictional exhibit: night-blooming cactus. Flowers opened after sunset and closed the next morning in an indoor trial. Three of twelve buds opened. No observation establishes a wild pollinator."
+          }
+        },
+        {
+          "id": "memory",
+          "revision": 2,
+          "kind": "memory",
+          "key": "label-length",
+          "scope": "space",
+          "body": {
+            "application": "active",
+            "schema_ref": null,
+            "source_refs": [
+              {
+                "id": "memory",
+                "revision": 1,
+                "role": "exact"
+              },
+              {
+                "id": "ordinary",
+                "revision": 1,
+                "role": "exact"
+              },
+              {
+                "id": "success",
+                "revision": 1,
+                "role": "exact"
+              },
+              {
+                "id": "error",
+                "revision": 1,
+                "role": "exact"
+              },
+              {
+                "id": "facts",
+                "revision": 1,
+                "role": "exact"
+              }
+            ],
+            "tombstone": false,
+            "value": "For this fictional exhibit, use 35–50 words for the display label; keep supporting details off-label. This replaces the unconfirmed 180–200-word planning assumption. The fictional curator requested the shorter range after approving a 42-word draft (Trial A). Routine visitors usually read the first sentence and large-print species name and skip the provenance appendix. A 190-word label went unread because it did not fit the display (Trial B). A short label also failed when it asserted an unsupported wild pollinator (Trial C), so brevity does not establish accuracy. Treat the range as this curator's guidance, and state only observations supported by the supplied evidence."
+          }
+        }
+      ]
+    },
+    {
+      "stage": "feedback-sleep-after-reopen",
+      "outcome": {
+        "attempt_id": "sleep-two:65ff75b07e7c45f0aaa117ad5a4ca9bb",
+        "state": "completed",
+        "refs": [],
+        "outputs": [],
+        "accepted": false,
+        "text": "The supplied records do not establish a confirmed wild pollinator for this specimen. The bounded factual request was not achieved: the available evidence describes an indoor trial where flowers opened after sunset and closed the next morning, with three of twelve buds opening. Evidence identifying a pollinator or showing pollination in the wild is missing.",
+        "cutoff": 0
+      },
+      "invocations": 1
+    },
+    {
+      "stage": "revised-method-next-work",
+      "outcome": {
+        "attempt_id": "followup-attempt",
+        "state": "completed",
+        "refs": [],
+        "outputs": [],
+        "accepted": false,
+        "text": "The requested factual outcome was not achieved. The supplied records describe an indoor trial: flowers opened after sunset and closed the next morning, and three of twelve buds opened. They contain no observation identifying a wild pollinator. Establishing one would require direct, documented observations of pollinator visits to this specimen, which are missing.",
+        "cutoff": 1
+      },
+      "invocations": 1,
+      "current_heads_before": {
+        "profile": 1,
+        "practice": 2,
+        "memory": 2,
+        "facts": 1,
+        "ordinary": 1,
+        "success": 1,
+        "error": 1,
+        "sleep-method": 1,
+        "sleep-one:progress": 3,
+        "sleep-one:analysis:bounded-review": 1,
+        "sleep-two:progress": 2
+      },
+      "delivered_method": {
+        "id": "practice",
+        "revision": 2,
+        "kind": "method",
+        "key": "exhibit-label",
+        "scope": "space",
+        "body": {
+          "application": "active",
+          "schema_ref": null,
+          "source_refs": [
+            {
+              "id": "practice",
+              "revision": 1,
+              "role": "exact"
+            },
+            {
+              "id": "success",
+              "revision": 1,
+              "role": "exact"
+            },
+            {
+              "id": "ordinary",
+              "revision": 1,
+              "role": "exact"
+            },
+            {
+              "id": "error",
+              "revision": 1,
+              "role": "exact"
+            },
+            {
+              "id": "facts",
+              "revision": 1,
+              "role": "exact"
+            },
+            {
+              "id": "memory",
+              "revision": 1,
+              "role": "exact"
+            }
+          ],
+          "tombstone": false,
+          "value": "Draft an informative exhibit label using current memory and supplied facts. Follow the current scoped word guidance when available. Prioritize a clear, readable first sentence and the large-print species name; move supporting detail off-label. State observations accurately and distinguish observed facts from inference. Do not assert a pollinator or other fact unsupported by observations. Check both fit and factual support before producing the label. Use the executor response_contract. Make no acceptance claims."
+        }
+      },
+      "delivered_inputs": [
+        {
+          "id": "facts",
+          "revision": 1,
+          "kind": "data",
+          "key": "specimen",
+          "scope": "space",
+          "body": {
+            "application": "active",
+            "schema_ref": null,
+            "source_refs": [],
+            "tombstone": false,
+            "value": "Fictional exhibit: night-blooming cactus. Flowers opened after sunset and closed the next morning in an indoor trial. Three of twelve buds opened. No observation establishes a wild pollinator."
+          }
+        },
+        {
+          "id": "memory",
+          "revision": 2,
+          "kind": "memory",
+          "key": "label-length",
+          "scope": "space",
+          "body": {
+            "application": "active",
+            "schema_ref": null,
+            "source_refs": [
+              {
+                "id": "memory",
+                "revision": 1,
+                "role": "exact"
+              },
+              {
+                "id": "ordinary",
+                "revision": 1,
+                "role": "exact"
+              },
+              {
+                "id": "success",
+                "revision": 1,
+                "role": "exact"
+              },
+              {
+                "id": "error",
+                "revision": 1,
+                "role": "exact"
+              },
+              {
+                "id": "facts",
+                "revision": 1,
+                "role": "exact"
+              }
+            ],
+            "tombstone": false,
+            "value": "For this fictional exhibit, use 35–50 words for the display label; keep supporting details off-label. This replaces the unconfirmed 180–200-word planning assumption. The fictional curator requested the shorter range after approving a 42-word draft (Trial A). Routine visitors usually read the first sentence and large-print species name and skip the provenance appendix. A 190-word label went unread because it did not fit the display (Trial B). A short label also failed when it asserted an unsupported wild pollinator (Trial C), so brevity does not establish accuracy. Treat the range as this curator's guidance, and state only observations supported by the supplied evidence."
+          }
+        }
+      ]
+    }
+  ]
+}

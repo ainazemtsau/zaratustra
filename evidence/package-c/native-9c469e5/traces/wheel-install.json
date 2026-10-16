@@ -1,0 +1,18 @@
+{
+  "core_only": {
+    "core": "C:\\projects\\zaratustra\\_scratch\\c-native-install-9c469e5\\install-a01c069ffb2d4780a85e4f8ed1070b35\\env\\Lib\\site-packages\\zaratustra_core\\__init__.py",
+    "independent": true
+  },
+  "installed_driver": {
+    "core": "C:\\projects\\zaratustra\\_scratch\\c-native-install-9c469e5\\install-a01c069ffb2d4780a85e4f8ed1070b35\\env\\Lib\\site-packages\\zaratustra_core\\__init__.py",
+    "app": "C:\\projects\\zaratustra\\_scratch\\c-native-install-9c469e5\\install-a01c069ffb2d4780a85e4f8ed1070b35\\env\\Lib\\site-packages\\zaratustra_app\\__init__.py",
+    "cursor": 22,
+    "effects": 2
+  },
+  "outside_checkout": true,
+  "environment": "C:\\projects\\zaratustra\\_scratch\\c-native-install-9c469e5\\install-a01c069ffb2d4780a85e4f8ed1070b35\\env",
+  "wheel_sha256": {
+    "zaratustra_core-0.1.0-py3-none-any.whl": "15b43b2bfcb8247097a856c8aa8e84701cadade98a0fce93a3697a391cc8fd77",
+    "zaratustra_next-0.1.0-py3-none-any.whl": "68d075083fc56815bc184f842ce4ab8350362cabdd2aa74122b335e83f909025"
+  }
+}

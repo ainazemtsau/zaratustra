@@ -1,0 +1,187 @@
+{
+  "source": "d02fbb301af19c4be5abdc19920ec5b089bc4783",
+  "fresh_source_root": "C:\\projects\\zaratustra\\_scratch\\c-build-clean-d02fbb3-1ae0cd99c82049bf8f5308c465ed88cc",
+  "outside_checkout": true,
+  "exact_git_blobs": [
+    {
+      "path": ".python-version",
+      "sha256": "3ce16e94590543a327d3e5ae412e663206e0ed1b46628ed3dd5ad29caa1ff5ac",
+      "bytes": 7
+    },
+    {
+      "path": "README.md",
+      "sha256": "c4de8d25039b3e4f4f925ec24be75df106c96608f285c7897497d04129b05538",
+      "bytes": 15029
+    },
+    {
+      "path": "packages/AGENTS.md",
+      "sha256": "1f7d90ab109a28a36a51a4d91f532596f7d836e7f8c5e5a1bdf02d4365686146",
+      "bytes": 302
+    },
+    {
+      "path": "packages/app/pyproject.toml",
+      "sha256": "5a1c312944177d1e1bb99a69887c39e4ad68dbc315481ab0b444c2582b50e4b0",
+      "bytes": 319
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/AGENTS.md",
+      "sha256": "fcc273bfb8b2fc69cb6f4e20b8dc26071327a1cd81950d04b63b25af37a17bc0",
+      "bytes": 853
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/__init__.py",
+      "sha256": "a9c0c30dc06a4f1d203fcf43a210e52276fb52c1dfee4dcabc8591f8e7b1af0c",
+      "bytes": 258
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/AGENTS.md",
+      "sha256": "025c36f832a8b3d73d3c1c6cc24bcd6b8ad5ef6a048c1aedfad327ca97cddafb",
+      "bytes": 211
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/__init__.py",
+      "sha256": "3313c92a9cdbfccae4afdf1f0a2defde08ac4a84eb166825fc21ddb9347cce20",
+      "bytes": 28
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/AGENTS.md",
+      "sha256": "4d9590766e47a2a6a9e706015320ffd8ce865a0d1b1089659abd6f18462a1448",
+      "bytes": 383
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/__init__.py",
+      "sha256": "6de3b1e1a3155f4e8d9bb2e104473abfc7c6a10f37ff0aa537ada162cbe2aa61",
+      "bytes": 37
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/bridge.py",
+      "sha256": "76fe8e82a0ded14d38c6a3b02e542f032cc904b15efa30ed5b67c1080ec7f951",
+      "bytes": 3542
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/extension.ts",
+      "sha256": "dfb451e22ce14af8a63fd37c5e8a0c6d75a11ead34e79eb036e8bfd78958505a",
+      "bytes": 1012
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/cli.py",
+      "sha256": "06e416e3de3dcc717ff1d9b8c563b724b49b98e7d89588a18aa03e9bd90a835f",
+      "bytes": 4392
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/coordinator.py",
+      "sha256": "d2ae2219065b36ed01e8936b2a036e7b519aed5f9127b45d861f4222314b12f3",
+      "bytes": 10506
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/executor_port.py",
+      "sha256": "c2e292a2cf7494b9405f38ee4b4584e03da1bba8f0f5d94c7cead75651ccce52",
+      "bytes": 11564
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/sleep.py",
+      "sha256": "beab05d3fccbacc86ff8cda27e1ee596ff477f981242cce63fbf05548ce0b810",
+      "bytes": 18497
+    },
+    {
+      "path": "packages/core/pyproject.toml",
+      "sha256": "ab44be890c2ba2b01d9fdfc4e5a7050a1792d89c4da8c47b3873a0d81b9137c0",
+      "bytes": 196
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/AGENTS.md",
+      "sha256": "3eafcc4375a89e9e9d88889115db8dace01dbbe6cbacdebf736db725e1c64b25",
+      "bytes": 921
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/__init__.py",
+      "sha256": "7f71419c900c0207f7e9b1e9444a8b20a1f149faa06175484a62d82f0baef7c7",
+      "bytes": 206
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/api.py",
+      "sha256": "c2b8a8c228fc0403b5c3211d4d368ca0b34ef01672ddcbb76e8008441150b206",
+      "bytes": 58767
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/formats.py",
+      "sha256": "4d12f1141cde7829816910604ef64fa4cade6391f6c40a31fcc294bea09a99d3",
+      "bytes": 7665
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/shapes.py",
+      "sha256": "9c5f87a20b71acd798ce65327b21f0ccb90f8910b1ff6d7483868b734d2aa0fa",
+      "bytes": 5098
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/types.py",
+      "sha256": "54b8a7103b7b0ae9d924cb839acd7789bff316b8e79bcf565635b1505ab5d33f",
+      "bytes": 2028
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "9f8df00d94129b6ed934cc446db07dd6c7c5155ba67ab1992336d653fee236a8",
+      "bytes": 11896
+    },
+    {
+      "path": "uv.lock",
+      "sha256": "fce37007eec2ea8c819ba9989f093c156977a0f10ccafb975d07811dbb4af72a",
+      "bytes": 76640
+    }
+  ],
+  "commands": [
+    {
+      "argv": [
+        "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+        "build",
+        "--package",
+        "zaratustra-core",
+        "--out-dir",
+        "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-c\\outside-build-d02fbb3\\physical-builds"
+      ],
+      "cwd": "C:\\projects\\zaratustra\\_scratch\\c-build-clean-d02fbb3-1ae0cd99c82049bf8f5308c465ed88cc",
+      "returncode": 0,
+      "seconds": 0.5824437141418457
+    },
+    {
+      "argv": [
+        "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+        "build",
+        "--package",
+        "zaratustra-next",
+        "--out-dir",
+        "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-c\\outside-build-d02fbb3\\physical-builds"
+      ],
+      "cwd": "C:\\projects\\zaratustra\\_scratch\\c-build-clean-d02fbb3-1ae0cd99c82049bf8f5308c465ed88cc",
+      "returncode": 0,
+      "seconds": 0.1550917625427246
+    }
+  ],
+  "builds": [
+    {
+      "path": "physical-builds/zaratustra_core-0.1.0-py3-none-any.whl",
+      "sha256": "4ab7d76ed521991add8be71089c4a73b33e939a6301ccb46f08968322ac997fb",
+      "bytes": 18642,
+      "identical_to_installed_build": "evidence/package-c/install-d02fbb3/physical-builds/zaratustra_core-0.1.0-py3-none-any.whl"
+    },
+    {
+      "path": "physical-builds/zaratustra_core-0.1.0.tar.gz",
+      "sha256": "d4458a344f20161d54db45e3725f429a4cbf18e2507b8769dec1b51a3644efab",
+      "bytes": 16255,
+      "identical_to_installed_build": "evidence/package-c/install-d02fbb3/physical-builds/zaratustra_core-0.1.0.tar.gz"
+    },
+    {
+      "path": "physical-builds/zaratustra_next-0.1.0-py3-none-any.whl",
+      "sha256": "652cebb074d13f5a199223cbbc0dc21306808c1d3e5e613f7261319879928d2d",
+      "bytes": 18987,
+      "identical_to_installed_build": "evidence/package-c/install-d02fbb3/physical-builds/zaratustra_next-0.1.0-py3-none-any.whl"
+    },
+    {
+      "path": "physical-builds/zaratustra_next-0.1.0.tar.gz",
+      "sha256": "26365202b19a396b0768f39b8f51d5f35b09bcbff867cba4035e282b4793857e",
+      "bytes": 13696,
+      "identical_to_installed_build": "evidence/package-c/install-d02fbb3/physical-builds/zaratustra_next-0.1.0.tar.gz"
+    }
+  ],
+  "assertion": "All four clean external-source builds byte-identical to previously wheel-only installed and exercised Driver/Pi distributions"
+}

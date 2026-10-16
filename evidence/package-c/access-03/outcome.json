@@ -1,0 +1,9 @@
+{
+  "success": false,
+  "error": {
+    "code": "outcome_unknown",
+    "field": "You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.",
+    "retry_policy": "reconcile",
+    "diagnostic_id": "d61aa52ad6c5b7a3"
+  }
+}

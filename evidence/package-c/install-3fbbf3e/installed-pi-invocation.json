@@ -1,0 +1,13 @@
+{
+  "source": "3fbbf3e30cbf907ad3ea2d40686f02914c060dbf",
+  "argv": [
+    "C:\\projects\\zaratustra\\_scratch\\c-installed-3fbbf3e-8869dfe964d547c69988e01ed90ee6ef\\env\\Scripts\\python.exe",
+    "-I",
+    "-X",
+    "utf8",
+    "-c",
+    "\nimport sys,json,importlib.abc,sqlite3,os\nfrom pathlib import Path\nclass Deny(importlib.abc.MetaPathFinder):\n    def find_spec(self,fullname,path=None,target=None):\n        if fullname.split('.')[0] in {'zaratustra','dbos','sqlalchemy'}:\n            raise AssertionError('forbidden legacy import: '+fullname)\nsys.meta_path.insert(0,Deny())\nsys.path.insert(0,str(Path.cwd()))\nimport zaratustra_core,zaratustra_app\nfrom fixtures.sleep_support import adaptation_trace\nassert sqlite3.sqlite_version=='3.50.4'\nos.environ['ZARA_RESTART_EVIDENCE']=str(Path.cwd()/'proof-pi')\ne=adaptation_trace(Path('runtime-pi'),'pi')\nassert e['next_work_received'][0]['method']['revision']==2\nprint(json.dumps({'mode':'pi','method_revision':3,'sqlite':sqlite3.sqlite_version,'acceptance':False,'native_event_count':len(e['native_events'])}))\n"
+  ],
+  "cwd": "C:\\projects\\zaratustra\\_scratch\\c-installed-3fbbf3e-8869dfe964d547c69988e01ed90ee6ef",
+  "returncode": 0
+}

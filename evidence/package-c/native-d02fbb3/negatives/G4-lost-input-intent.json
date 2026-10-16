@@ -1,0 +1,10 @@
+{
+  "seed": "G4-lost-input-intent",
+  "test": "test_contract.py::test_ingest_idempotency_intent",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_______________________ test_ingest_idempotency_intent ________________________\ntests\\restart\\test_contract.py:91: in test_ingest_idempotency_intent\n    assert any(\nE   assert False\nE    +  where False = any(<generator object test_ingest_idempotency_intent.<locals>.<genexpr> at 0x00000180C741ADC0>)\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_contract.py::test_ingest_idempotency_intent - asser...\n1 failed in 1.30s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -566,6 +566,9 @@\n         return {\"work_id\": body[\"id\"], \"revision\": 1}\n \n     def _intent(self, db: sqlite3.Connection, kind: str, subject: str, body: Any) -> None:\n+        if kind == \"input\":\n+            print(\"MUTANT_REACHED\", flush=True)\n+            return\n         db.execute(\"INSERT OR REPLACE INTO intents VALUES(?,?,?)\", (kind, subject, dumps(body)))\n \n     def _attempt(self, db: sqlite3.Connection, attempt_id: str) -> tuple[sqlite3.Row, sqlite3.Row]:\n"
+}

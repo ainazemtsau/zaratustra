@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "tests/restart",
+    "-q",
+    "--basetemp",
+    "C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/c-scoped-3fbbf3e"
+  ],
+  "source": "3fbbf3e30cbf907ad3ea2d40686f02914c060dbf",
+  "returncode": 0,
+  "seconds": 489.80388832092285,
+  "python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]",
+  "sqlite": "3.50.4",
+  "legacy_dll": false
+}

@@ -1,0 +1,7 @@
+{
+  "source": "d02fbb301af19c4be5abdc19920ec5b089bc4783",
+  "status": "INCOMPLETE/SUPERSEDED",
+  "reason": "Independent physical C9 resource-pause crash finding R7 requires corrected source and a fresh full native gate.",
+  "stopped_only_verified_gate_pid_and_descendants": [83500, 48060, 110692, 87728],
+  "not_final_or_green": true
+}

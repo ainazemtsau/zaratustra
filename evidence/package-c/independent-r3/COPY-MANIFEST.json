@@ -1,0 +1,48 @@
+{
+  "source": "3fbbf3e30cbf907ad3ea2d40686f02914c060dbf",
+  "origin": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-review-c-r3-20261016",
+  "scope": "Exact allowlisted independent source report/provenance/rubric only. Root retains the full exportable raw bundle separately in Solmax. This copy is not a new review or final candidate verdict.",
+  "credential_content_copied": false,
+  "files": [
+    {
+      "path": "report.md",
+      "sha256": "e087f5abd59aaac72a234266c93e9671054b6a05ef3bcd2c7e6cbe372d433bc0",
+      "bytes": 12393
+    },
+    {
+      "path": "verification.json",
+      "sha256": "6ca5514bbc41302886eaf78cca404785cd492743b11f14f5b8003ede85ca1dcd",
+      "bytes": 13424
+    },
+    {
+      "path": "inventory.json",
+      "sha256": "382c84b05dfa2626293209f3bbf80f093c949a0d5a97021c1f08f3b550e6e4cc",
+      "bytes": 1313643
+    },
+    {
+      "path": "EXPORT-EXCLUSIONS.json",
+      "sha256": "0f784490d45f999a89fd046e24eefa280726b5f54c807e961a9d5c4876ad6d2a",
+      "bytes": 371
+    },
+    {
+      "path": "source.json",
+      "sha256": "3104a0ef89a7d9f2728ec6b1f3b75b79677cf0605af1253faa755b53fbb562b7",
+      "bytes": 1548
+    },
+    {
+      "path": "live_rubric.md",
+      "sha256": "9dc5491fea9f9f55e21bc5ab60a7e3b0f3727ce474e1bca08586db69730f3263",
+      "bytes": 2661
+    },
+    {
+      "path": "native-scoped.json",
+      "sha256": "011c98b558f692cacf5fda8bfb00f8eb40c472133fdeef355665b61c2a60d467",
+      "bytes": 1580
+    },
+    {
+      "path": "native-scoped.log",
+      "sha256": "0ed8edc8db899f427ab78666c84718cd4931638e4f42e9fe9bf20081cd5e74fe",
+      "bytes": 671
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+"""Independent runtime assertions, with receiver/snapshot bytes in each case root."""
+import importlib.util
+from pathlib import Path
+
+def load(tmp_path):
+    spec=importlib.util.spec_from_file_location('physical_probe',Path(__file__).with_name('probe.py'))
+    module=importlib.util.module_from_spec(spec)
+    # Ignore pytest arguments, which are not probe CLI arguments.
+    import sys
+    old=sys.argv
+    sys.argv=[old[0]]
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.argv=old
+    module.HERE=tmp_path
+    return module
+
+def test_public_core_enforces_method_application_scope(tmp_path):
+    obs=load(tmp_path).test_scope()
+    assert not obs.get('received'), 'Method restricted to lab reached physical executor of other-scope Work'
+    assert obs.get('error',{}).get('code') in {'denied','stale_basis','invalid_request'}
+
+def test_refresh_cannot_execute_proposal_method(tmp_path):
+    obs=load(tmp_path).test_inactive_refresh()
+    assert not obs.get('received'), 'proposal Method reached receiver after control_work refresh'
+    assert obs.get('error',{}).get('code') in {'denied','stale_basis','invalid_request'}
+
+def test_resource_exhaustion_persists_stopped_continuation(tmp_path):
+    obs=load(tmp_path).test_exhausted()
+    assert len(obs['deliveries'])==1, 'Exhausted Work made an additional send'
+    assert obs['next_error']['code']=='resource_exhausted'
+    assert obs['snapshot']['works'][0]['status'] in {'paused','blocked'}, 'Unfinished exhausted Sleep persists as ready'

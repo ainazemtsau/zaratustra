@@ -1,0 +1,1 @@
+{"source": "d02fbb301af19c4be5abdc19920ec5b089bc4783", "runner_sha256": "fda8cbcd802a202fb28bc15bf9796c21fc96b994a2ef27fa060a872978741c6b", "resource_unit": "codex_exec", "per_work_caps": [2, 1, 2, 1], "physical_provider_sends": "unknown", "dry_run": false, "actual_provider_usage": "only CLI-reported usage; not inferred zero"}

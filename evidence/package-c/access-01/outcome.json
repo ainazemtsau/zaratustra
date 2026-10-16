@@ -1,0 +1,9 @@
+{
+  "success": false,
+  "error": {
+    "code": "outcome_unknown",
+    "field": "pi_exit",
+    "retry_policy": "reconcile",
+    "diagnostic_id": "fa6f95ffe9c16b3c"
+  }
+}

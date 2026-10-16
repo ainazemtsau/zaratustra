@@ -1,0 +1,134 @@
+"""Independent mechanical adaptation through actual Driver and Pi receivers."""
+import argparse
+import copy
+import json
+import threading
+from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
+from pathlib import Path
+from uuid import uuid4
+
+from zaratustra_app import Coordinator,Driver,Pi,Sleep
+from zaratustra_core import Core
+
+HERE=Path(__file__).resolve().parent
+
+class Receiver:
+    def __init__(self): self.received=[]
+    def __call__(self,ctx,action):
+        self.received.append(copy.deepcopy({'context':ctx,'action':action}))
+        if ctx['work']['goal']!='Sleep':
+            out={'state':'completed','text':'Controlled receiver reports negative actual outcome of this delivered revision: exact label was lost.'}
+        else:
+            progress=next(r for r in ctx['inputs'] if r['id'].endswith(':progress'))
+            body=copy.deepcopy(progress['body']['value'])
+            name=ctx['work']['id']+':analysis'
+            second=ctx['work']['id']=='sleep-two'
+            body['delivered_manifest_refs'].append(ctx['sleep_delivery_manifest'])
+            body['analysis_result_refs'].append({'id':name,'revision':1})
+            body['remaining_refs']=[]
+            body['consumed_resource']=ctx['resource_state']['consumed_resource']
+            body['unresolved_calls']=[]
+            body['unexplored_coverage_position']={'visited':'bounded comparison','unknown':'external universe not exhausted'}
+            body['stop_reason']='bounded_end'
+            body['continuation']='Inspect actual later outcomes and new arrivals'
+            changes=[
+              {'id':name,'kind':'data','key':name,'scope':'lab','body':{'format':'sleep-analysis/v1','sources':body['selected_source_refs'],'content':'Independent mechanical trace; prose is deliberately not a semantic proof.'}},
+              {'id':'remember','kind':'memory','key':'remember','scope':'lab','body':'Respect exact label after feedback' if second else 'Trial bounded note','source_refs':[{'id':name,'revision':1}]},
+              {'id':'ordinary','kind':'method','key':'ordinary','scope':'lab','body':'Original method' if second else 'Changed method','source_refs':[{'id':name,'revision':1}]},
+              {'id':progress['id'],'kind':'data','key':progress['key'],'scope':'lab','body':body},
+            ]
+            heads={r['id']:r['revision'] for r in ctx['catalog']}
+            out={'state':'completed','text':'Controlled bounded pass; remainder of environment unknown','changes':changes,'expected_heads':{r['id']:heads.get(r['id'],0) for r in changes}}
+        return json.dumps(out).encode()
+
+class Handler(BaseHTTPRequestHandler):
+    def log_message(self,*args): pass
+    def do_POST(self):
+        raw=self.rfile.read(int(self.headers['Content-Length']))
+        request=json.loads(raw)
+        self.server.raw.append({'path':self.path,'raw_utf8':raw.decode()})
+        message=next(m for m in reversed(request['messages']) if m['role']=='user')['content']
+        if isinstance(message,list): message=''.join(m.get('text','') for m in message)
+        given=json.loads(message)
+        answer=self.server.receiver(given['context'],given['action_id']).decode()
+        chunks=[{'id':'review','object':'chat.completion.chunk','choices':[{'index':0,'delta':{'role':'assistant','content':answer},'finish_reason':None}]},{'id':'review','object':'chat.completion.chunk','choices':[{'index':0,'delta':{},'finish_reason':'stop'}]},{'id':'review','object':'chat.completion.chunk','choices':[],'usage':{'prompt_tokens':17,'completion_tokens':19,'total_tokens':36}}]
+        self.send_response(200)
+        self.send_header('Content-Type','text/event-stream')
+        self.end_headers()
+        for chunk in chunks: self.wfile.write(('data: '+json.dumps(chunk)+'\n\n').encode())
+        self.wfile.write(b'data: [DONE]\n\n')
+        self.wfile.flush()
+
+def main():
+    parser=argparse.ArgumentParser()
+    parser.add_argument('mode',choices=['driver','pi'])
+    parser.add_argument('--label')
+    args=parser.parse_args()
+    mode=args.mode
+    root=HERE/('independent-'+(args.label or mode))
+    root.mkdir(exist_ok=False)
+    core,token=Core.initialize(root/'space')
+    owner=core.connect(token)
+    for identity,kind,body in [('profile','profile',{'resource_unit':'calls'}),('ordinary','method','Original method'),('remember','memory','Original memory'),('routine','data','Ordinary successful task with no complaint'),('failure','data','Earlier negative trial; cause unknown')]:
+        owner.call('apply_changes',{'changes':[{'id':identity,'kind':kind,'key':identity,'scope':'lab','body':body}]},identity+':create',expected_heads={identity:0})
+    permissions=['read','apply_changes','open_work','prepare_attempt','claim_dispatch','observe_attempt','commit_outcome','control_work','reserve_tool','write:method:lab','write:memory:lab']
+    client=core.connect(core.grant(token,'review',permissions,origin='host'))
+    receiver=Receiver()
+    server=None
+    if mode=='pi':
+        server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
+        server.receiver=receiver
+        server.raw=[]
+        thread=threading.Thread(target=server.serve_forever,daemon=True)
+        thread.start()
+        executor=Pi(Path('C:/Users/Anton/AppData/Roaming/npm/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js'),root/'pi-home',f'http://127.0.0.1:{server.server_port}/v1')
+    else: executor=Driver(receiver)
+    observations={}
+    try:
+        sleep=Sleep(client)
+        sleep.start(work_id='sleep-one',scope='lab',method_id='sleep-lab',call_limit=4,portion=100)
+        first=sleep.run('sleep-one',{'id':'profile','revision':1},executor)
+        observations['first']=first
+        assert first['accepted'] is False
+        co=Coordinator(client)
+        co.open_work({'id':'next','conversation':'next','goal':'Apply the current method to exact labels','method_ref':{'id':'ordinary','revision':1},'call_limit':2,'continuation_policy':'durable'},scope='lab')
+        p=co.prepare('next','next-a',{'id':'profile','revision':1})
+        co.dispatch('next-a',p['generation'],executor)
+        observations['negative']=co.recover('next-a',pi=mode=='pi')
+        used=receiver.received[1]['context']
+        assert used['method']['revision']==2 and used['method']['body']['value']=='Changed method'
+        assert next(r for r in used['inputs'] if r['id']=='remember')['revision']==2
+        sleep=Sleep(Core(core.root).connect(client.token))
+        sleep.start(work_id='sleep-two',scope='lab',method_id='sleep-lab',call_limit=4,portion=100)
+        observations['second']=sleep.run('sleep-two',{'id':'profile','revision':1},executor)
+        feedback=next(x['material'] for x in receiver.received[2]['context']['sleep_sources'] if x['material'].get('outcome',{}).get('attempt_id')=='next-a')
+        assert feedback['method']['revision']==2
+        assert feedback['outcome']['text']==observations['negative']['text']
+        observations['feedback']=feedback
+        observations['method_history']=[client.call('read_exact',{'id':'ordinary','revision':r},uuid4().hex) for r in [1,2,3]]
+        assert [r['body']['value'] for r in observations['method_history']]==['Original method','Changed method','Original method']
+        state=co.snapshot()
+        assert state['acceptance']==[]
+        assert len(receiver.received)==3
+        observations['snapshot']=state
+        observations['received']=receiver.received
+        if server:
+            observations['raw_provider_requests']=server.raw
+            observations['native_events']=executor.events
+            observations['native_stderr']=executor.stderr
+            assert len(server.raw)==3
+        observations['passed']=True
+        print(mode,'PASS; received 3, method revisions 1/2/3, feedback exact, acceptance empty')
+    finally:
+        if server:
+            observations['raw_provider_requests']=server.raw
+            observations['native_events']=executor.events
+            observations['native_stderr']=executor.stderr
+        if server:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=3)
+        observations['received']=receiver.received
+        (root/'trace.json').write_text(json.dumps(observations,ensure_ascii=False,indent=2),encoding='utf-8')
+
+if __name__=='__main__': main()

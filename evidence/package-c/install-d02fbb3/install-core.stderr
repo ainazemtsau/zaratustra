@@ -1,0 +1,10 @@
+Using Python 3.13.7 environment at: env
+Resolved 6 packages in 20ms
+Prepared 1 package in 10ms
+Installed 6 packages in 118ms
+ + annotated-types==0.8.0
+ + pydantic==2.13.5
+ + pydantic-core==2.46.5
+ + typing-extensions==4.16.0
+ + typing-inspection==0.4.4
+ + zaratustra-core==0.1.0 (from file:///C:/projects/zaratustra/.worktrees/restart-first-release/evidence/package-c/install-d02fbb3/physical-builds/zaratustra_core-0.1.0-py3-none-any.whl)

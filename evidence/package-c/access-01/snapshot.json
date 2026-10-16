@@ -1,0 +1,82 @@
+{
+  "heads": [
+    {
+      "id": "method",
+      "revision": 1,
+      "kind": "method",
+      "key": "probe",
+      "scope": "space"
+    },
+    {
+      "id": "profile",
+      "revision": 1,
+      "kind": "profile",
+      "key": "luna",
+      "scope": "space"
+    }
+  ],
+  "works": [
+    {
+      "id": "probe",
+      "revision": 2,
+      "conversation": "probe",
+      "status": "blocked",
+      "generation": 1,
+      "body": "{\"call_limit\":2,\"continuation_policy\":\"durable\",\"conversation\":\"probe\",\"goal\":\"Confirm authorized model access\",\"id\":\"probe\",\"inputs\":[],\"method_ref\":{\"id\":\"method\",\"revision\":1}}",
+      "reserved": 2
+    }
+  ],
+  "attempts": [
+    {
+      "id": "probe-attempt",
+      "work": "probe",
+      "conversation": "probe",
+      "status": "unknown",
+      "generation": 1,
+      "original_cursor": 0,
+      "cutoff": 0,
+      "body": "{\"capabilities\":[\"read\",\"open_work\",\"prepare_attempt\",\"claim_dispatch\",\"observe_attempt\",\"commit_outcome\",\"reserve_tool\",\"apply_changes\"],\"catalog\":[{\"body\":\"{\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":{\\\"instructions\\\":\\\"Return ONLY JSON: {\\\\\\\"state\\\\\\\":\\\\\\\"completed\\\\\\\",\\\\\\\"text\\\\\\\":\\\\\\\"access established\\\\\\\"}. This is a fictional access probe, not a usefulness evaluation.\\\"}}\",\"id\":\"method\",\"key\":\"probe\",\"kind\":\"method\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":{\\\"api\\\":\\\"openai-responses\\\",\\\"credential_env\\\":\\\"OPENAI_API_KEY\\\",\\\"endpoint\\\":\\\"https://api.openai.com/v1\\\",\\\"model\\\":\\\"gpt-6-luna\\\",\\\"provider\\\":\\\"openai\\\"}}\",\"id\":\"profile\",\"key\":\"luna\",\"kind\":\"profile\",\"revision\":1,\"scope\":\"space\"}],\"inputs\":[],\"manifest\":[],\"messages\":[],\"method\":{\"body\":{\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":{\"instructions\":\"Return ONLY JSON: {\\\"state\\\":\\\"completed\\\",\\\"text\\\":\\\"access established\\\"}. This is a fictional access probe, not a usefulness evaluation.\"}},\"id\":\"method\",\"key\":\"probe\",\"kind\":\"method\",\"revision\":1,\"scope\":\"space\"},\"prior_messages\":[],\"prior_results\":[],\"prior_waits\":[],\"profile\":{\"body\":{\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":{\"api\":\"openai-responses\",\"credential_env\":\"OPENAI_API_KEY\",\"endpoint\":\"https://api.openai.com/v1\",\"model\":\"gpt-6-luna\",\"provider\":\"openai\"}},\"id\":\"profile\",\"key\":\"luna\",\"kind\":\"profile\",\"revision\":1,\"scope\":\"space\"},\"profile_ref\":{\"id\":\"profile\",\"revision\":1},\"tool_ledger\":[],\"work\":{\"call_limit\":2,\"continuation_policy\":\"durable\",\"conversation\":\"probe\",\"goal\":\"Confirm authorized model access\",\"id\":\"probe\",\"inputs\":[],\"method_ref\":{\"id\":\"method\",\"revision\":1}}}"
+    }
+  ],
+  "messages": [],
+  "conversations": [
+    {
+      "id": "probe",
+      "cursor": 0
+    }
+  ],
+  "waits": [],
+  "results": [],
+  "observations": [
+    {
+      "attempt": "probe-attempt",
+      "event": "unknown",
+      "fingerprint": "14878bf3c5429ed776dbab00b898754b2b5dc6d68d93e139f0d942a5f677fd6c",
+      "body": "{\"attempt_id\":\"probe-attempt\",\"event_id\":\"unknown\",\"kind\":\"unknown\",\"late\":false}"
+    }
+  ],
+  "actions": [
+    {
+      "id": "probe-attempt:action",
+      "attempt": "probe-attempt",
+      "executor": "probe",
+      "state": "claimed",
+      "correlation": null,
+      "reserve": 2
+    }
+  ],
+  "intents": [
+    {
+      "kind": "observe",
+      "subject": "probe-attempt",
+      "body": "{\"event_id\":\"unknown\"}"
+    }
+  ],
+  "tool_calls": [],
+  "acceptance": [],
+  "snapshot_revision": 7,
+  "limit": {
+    "max_rows_per_table": 1000,
+    "truncated": false
+  }
+}

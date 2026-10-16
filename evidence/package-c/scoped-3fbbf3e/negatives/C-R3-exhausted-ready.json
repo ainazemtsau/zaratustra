@@ -1,0 +1,10 @@
+{
+  "seed": "C-R3-exhausted-ready",
+  "test": "test_sleep.py::test_exhausted_ready_outcome_persists_paused",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n________________ test_exhausted_ready_outcome_persists_paused _________________\ntests\\restart\\test_sleep.py:471: in test_exhausted_ready_outcome_persists_paused\n    assert result[\"state\"] == \"paused\"\nE   AssertionError: assert 'ready' == 'paused'\nE     \nE     - paused\nE     + ready\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_sleep.py::test_exhausted_ready_outcome_persists_paused\n1 failed in 1.66s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -1048,7 +1048,7 @@\n             state = p[\"state\"]\n             if state not in {\"waiting\", \"ready\", \"completed\"}:\n                 fail(\"invalid_request\", \"outcome.state\")\n-            if state == \"ready\" and work[\"reserved\"] >= loads(work[\"body\"])[\"call_limit\"]:\n+            if (print(\"MUTANT_REACHED\", flush=True) or False):\n                 state = \"paused\"\n                 self._intent(\n                     db,\n"
+}

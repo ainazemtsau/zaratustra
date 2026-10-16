@@ -1,0 +1,30 @@
+{
+  "stage": "first-sleep",
+  "outcome": {
+    "attempt_id": "sleep-one:dca8f8b6ab2a4bce8c3f3874ab46ec17",
+    "state": "completed",
+    "refs": [
+      {
+        "id": "sleep-one:analysis:1",
+        "revision": 1
+      },
+      {
+        "id": "memory",
+        "revision": 2
+      },
+      {
+        "id": "practice",
+        "revision": 2
+      },
+      {
+        "id": "sleep-one:progress",
+        "revision": 2
+      }
+    ],
+    "outputs": [],
+    "accepted": false,
+    "text": "Completed the bounded sleep pass. The selected sources were analyzed, and the label guidance was updated using the supplied observation, trial, and exhibit facts. Further arrivals and unexamined coverage remain outside this pass.",
+    "cutoff": 0
+  },
+  "invocations": 1
+}

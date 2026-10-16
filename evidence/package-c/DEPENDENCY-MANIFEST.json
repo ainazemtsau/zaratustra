@@ -1,0 +1,62 @@
+{
+  "source_commit": "3fbbf3e30cbf907ad3ea2d40686f02914c060dbf",
+  "lock": {
+    "path": "uv.lock",
+    "sha256": "fce37007eec2ea8c819ba9989f093c156977a0f10ccafb975d07811dbb4af72a",
+    "bytes": 76640
+  },
+  "python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]",
+  "new_runtime_sqlite": "3.50.4",
+  "installed": {
+    "sqlite": "3.50.4",
+    "distributions": {
+      "annotated-types": "0.8.0",
+      "pydantic": "2.13.5",
+      "pydantic_core": "2.46.5",
+      "typing_extensions": "4.16.0",
+      "typing-inspection": "0.4.4",
+      "zaratustra-core": "0.1.0",
+      "zaratustra-next": "0.1.0"
+    }
+  },
+  "pi": {
+    "version": "1.0.4",
+    "node_version": "22.19.0",
+    "cli_bundle": {
+      "path": "C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+      "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774",
+      "bytes": 160
+    },
+    "node_executable": {
+      "path": "C:\\Program Files\\nodejs\\node.exe",
+      "sha256": "995a3fb3cefad590cd3f4b321532a4b9582fb9c6575320ed2e3e894caac3e362",
+      "bytes": 85268464
+    }
+  },
+  "uv": {
+    "version": "uv 0.8.22 (ade2bdbd2 2025-09-23)",
+    "executable": {
+      "path": "C:\\Users\\Anton\\.local\\bin\\uv.exe",
+      "sha256": "d8d1494355d68435959cd297cecb0fa02a44c7ad60acad02eb82135dbbd4fa64",
+      "bytes": 60002304
+    }
+  },
+  "test_only_codex": {
+    "version": "0.156.1",
+    "model": "gpt-6-luna",
+    "route": "official configured ChatGPT CLI",
+    "launcher_only": {
+      "path": "C:\\Users\\Anton\\AppData\\Roaming\\npm\\codex.cmd",
+      "sha256": "c54db6755e710c39703f7c37512f9e35ed41042d8080558d2b84b8d2694323c3",
+      "bytes": 341
+    },
+    "not_installed_product_adapter": true
+  },
+  "legacy_full_gate_only_sqlite_dll": {
+    "path": "C:\\projects\\zaratustra\\_scratch\\release-installed-20260927\\runtime\\sqlite3.dll",
+    "sha256": "79fd9ec89dba3f8bd64529a2ca8e9dde6ae6edc486c55a1d3f1ce77975a8375c",
+    "bytes": 3290624,
+    "version": "3.53.3"
+  },
+  "new_runtime_requires_legacy_dll": false
+}

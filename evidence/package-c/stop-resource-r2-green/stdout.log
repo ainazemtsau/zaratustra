@@ -1,0 +1,1 @@
+{"child_exit": 91, "new_sends": 0, "work_status": "paused", "stop_reason": "resource_exhausted", "reopen_result": {"code": "resource_exhausted", "field": "calls", "retry_policy": "never", "diagnostic_id": "eeecbb1f2c1f0ab2"}, "control_intent": [{"kind": "control", "subject": "rest", "body": "{\"action\":\"pause\",\"reason\":\"resource_exhausted\"}"}]}

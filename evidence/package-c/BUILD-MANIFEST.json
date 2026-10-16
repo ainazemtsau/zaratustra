@@ -1,0 +1,214 @@
+{
+  "source_commit": "3fbbf3e30cbf907ad3ea2d40686f02914c060dbf",
+  "clean_source_build": "install-3fbbf3e-external/manifest.json",
+  "wheel_only_install": "install-3fbbf3e-external/manifest.json",
+  "clean_outside_source_build_bytes_equal_installed": true,
+  "native_gate_build_bytes_equal_outside_installed": true,
+  "verified_source_wheel_installed_files": [
+    {
+      "path": "zaratustra_core/__init__.py",
+      "sha256": "7f71419c900c0207f7e9b1e9444a8b20a1f149faa06175484a62d82f0baef7c7",
+      "bytes": 206
+    },
+    {
+      "path": "zaratustra_core/api.py",
+      "sha256": "63b1e1053d7623fb469a9af833ebf28e862f5f4b8f548ee73becd04be7a8d384",
+      "bytes": 58923
+    },
+    {
+      "path": "zaratustra_core/formats.py",
+      "sha256": "4d12f1141cde7829816910604ef64fa4cade6391f6c40a31fcc294bea09a99d3",
+      "bytes": 7665
+    },
+    {
+      "path": "zaratustra_core/shapes.py",
+      "sha256": "9c5f87a20b71acd798ce65327b21f0ccb90f8910b1ff6d7483868b734d2aa0fa",
+      "bytes": 5098
+    },
+    {
+      "path": "zaratustra_core/types.py",
+      "sha256": "54b8a7103b7b0ae9d924cb839acd7789bff316b8e79bcf565635b1505ab5d33f",
+      "bytes": 2028
+    },
+    {
+      "path": "zaratustra_app/__init__.py",
+      "sha256": "a9c0c30dc06a4f1d203fcf43a210e52276fb52c1dfee4dcabc8591f8e7b1af0c",
+      "bytes": 258
+    },
+    {
+      "path": "zaratustra_app/adapters/__init__.py",
+      "sha256": "3313c92a9cdbfccae4afdf1f0a2defde08ac4a84eb166825fc21ddb9347cce20",
+      "bytes": 28
+    },
+    {
+      "path": "zaratustra_app/adapters/pi/__init__.py",
+      "sha256": "6de3b1e1a3155f4e8d9bb2e104473abfc7c6a10f37ff0aa537ada162cbe2aa61",
+      "bytes": 37
+    },
+    {
+      "path": "zaratustra_app/adapters/pi/bridge.py",
+      "sha256": "76fe8e82a0ded14d38c6a3b02e542f032cc904b15efa30ed5b67c1080ec7f951",
+      "bytes": 3542
+    },
+    {
+      "path": "zaratustra_app/adapters/pi/extension.ts",
+      "sha256": "dfb451e22ce14af8a63fd37c5e8a0c6d75a11ead34e79eb036e8bfd78958505a",
+      "bytes": 1012
+    },
+    {
+      "path": "zaratustra_app/cli.py",
+      "sha256": "06e416e3de3dcc717ff1d9b8c563b724b49b98e7d89588a18aa03e9bd90a835f",
+      "bytes": 4392
+    },
+    {
+      "path": "zaratustra_app/coordinator.py",
+      "sha256": "d2ae2219065b36ed01e8936b2a036e7b519aed5f9127b45d861f4222314b12f3",
+      "bytes": 10506
+    },
+    {
+      "path": "zaratustra_app/executor_port.py",
+      "sha256": "c2e292a2cf7494b9405f38ee4b4584e03da1bba8f0f5d94c7cead75651ccce52",
+      "bytes": 11564
+    },
+    {
+      "path": "zaratustra_app/sleep.py",
+      "sha256": "e99979dcac7d34c4ebb4b299b597781a6e3b5c74ea68877dac9de96c5246d474",
+      "bytes": 18757
+    }
+  ],
+  "physical_distributions": [
+    {
+      "path": "install-3fbbf3e-external/physical-builds/zaratustra_core-0.1.0-py3-none-any.whl",
+      "sha256": "f9f9e948cbc59404d36fc15a04cdb826c841df80c332c10b7100b4ed13264c93",
+      "bytes": 18646
+    },
+    {
+      "path": "install-3fbbf3e-external/physical-builds/zaratustra_core-0.1.0.tar.gz",
+      "sha256": "a3834428caa39d24b44e68f00eb5f1d75e71772ddf360ed18520b21191b35d7c",
+      "bytes": 16267
+    },
+    {
+      "path": "install-3fbbf3e-external/physical-builds/zaratustra_next-0.1.0-py3-none-any.whl",
+      "sha256": "59658bc419e5badbcd157d748e93b4f605984fb55d959929a26466bb4d5eff30",
+      "bytes": 19047
+    },
+    {
+      "path": "install-3fbbf3e-external/physical-builds/zaratustra_next-0.1.0.tar.gz",
+      "sha256": "565775202b80e69fe4cca78fa12968518df107adfe95b179768ccb945dbe04d1",
+      "bytes": 13761
+    },
+    {
+      "path": "native-3fbbf3e/physical-builds/zaratustra-0.25.5-py3-none-any.whl",
+      "sha256": "026aae3ae257a0912f12262817074016435c54b44389940ec06552384b443207",
+      "bytes": 685208
+    },
+    {
+      "path": "native-3fbbf3e/physical-builds/zaratustra-0.25.5.tar.gz",
+      "sha256": "32d936a85662de27f35dd6b4ee2aa2004dc29651fe5623393f527a5c2318750f",
+      "bytes": 615143
+    },
+    {
+      "path": "native-3fbbf3e/physical-builds/zaratustra_core-0.1.0-py3-none-any.whl",
+      "sha256": "f9f9e948cbc59404d36fc15a04cdb826c841df80c332c10b7100b4ed13264c93",
+      "bytes": 18646
+    },
+    {
+      "path": "native-3fbbf3e/physical-builds/zaratustra_core-0.1.0.tar.gz",
+      "sha256": "a3834428caa39d24b44e68f00eb5f1d75e71772ddf360ed18520b21191b35d7c",
+      "bytes": 16267
+    },
+    {
+      "path": "native-3fbbf3e/physical-builds/zaratustra_next-0.1.0-py3-none-any.whl",
+      "sha256": "59658bc419e5badbcd157d748e93b4f605984fb55d959929a26466bb4d5eff30",
+      "bytes": 19047
+    },
+    {
+      "path": "native-3fbbf3e/physical-builds/zaratustra_next-0.1.0.tar.gz",
+      "sha256": "565775202b80e69fe4cca78fa12968518df107adfe95b179768ccb945dbe04d1",
+      "bytes": 13761
+    }
+  ],
+  "historical_distributions": [
+    {
+      "path": "install-3fbbf3e/physical-builds/zaratustra_core-0.1.0-py3-none-any.whl",
+      "sha256": "f9f9e948cbc59404d36fc15a04cdb826c841df80c332c10b7100b4ed13264c93",
+      "bytes": 18646
+    },
+    {
+      "path": "install-3fbbf3e/physical-builds/zaratustra_core-0.1.0.tar.gz",
+      "sha256": "a3834428caa39d24b44e68f00eb5f1d75e71772ddf360ed18520b21191b35d7c",
+      "bytes": 16267
+    },
+    {
+      "path": "install-3fbbf3e/physical-builds/zaratustra_next-0.1.0-py3-none-any.whl",
+      "sha256": "59658bc419e5badbcd157d748e93b4f605984fb55d959929a26466bb4d5eff30",
+      "bytes": 19047
+    },
+    {
+      "path": "install-3fbbf3e/physical-builds/zaratustra_next-0.1.0.tar.gz",
+      "sha256": "565775202b80e69fe4cca78fa12968518df107adfe95b179768ccb945dbe04d1",
+      "bytes": 13761
+    },
+    {
+      "path": "install-9c469e5/physical-builds/zaratustra_core-0.1.0-py3-none-any.whl",
+      "sha256": "15b43b2bfcb8247097a856c8aa8e84701cadade98a0fce93a3697a391cc8fd77",
+      "bytes": 18483
+    },
+    {
+      "path": "install-9c469e5/physical-builds/zaratustra_core-0.1.0.tar.gz",
+      "sha256": "2234885e91794571d491db03078936d4b765bc3ee1acd40a55e1c7d6f205994d",
+      "bytes": 16098
+    },
+    {
+      "path": "install-9c469e5/physical-builds/zaratustra_next-0.1.0-py3-none-any.whl",
+      "sha256": "68d075083fc56815bc184f842ce4ab8350362cabdd2aa74122b335e83f909025",
+      "bytes": 18578
+    },
+    {
+      "path": "install-9c469e5/physical-builds/zaratustra_next-0.1.0.tar.gz",
+      "sha256": "0dca20cb811bab6ab33ac9d4d62d4d84c639c50eda11276db812b5127fcf6daf",
+      "bytes": 13371
+    },
+    {
+      "path": "install-d02fbb3/physical-builds/zaratustra_core-0.1.0-py3-none-any.whl",
+      "sha256": "4ab7d76ed521991add8be71089c4a73b33e939a6301ccb46f08968322ac997fb",
+      "bytes": 18642
+    },
+    {
+      "path": "install-d02fbb3/physical-builds/zaratustra_core-0.1.0.tar.gz",
+      "sha256": "d4458a344f20161d54db45e3725f429a4cbf18e2507b8769dec1b51a3644efab",
+      "bytes": 16255
+    },
+    {
+      "path": "install-d02fbb3/physical-builds/zaratustra_next-0.1.0-py3-none-any.whl",
+      "sha256": "652cebb074d13f5a199223cbbc0dc21306808c1d3e5e613f7261319879928d2d",
+      "bytes": 18987
+    },
+    {
+      "path": "install-d02fbb3/physical-builds/zaratustra_next-0.1.0.tar.gz",
+      "sha256": "26365202b19a396b0768f39b8f51d5f35b09bcbff867cba4035e282b4793857e",
+      "bytes": 13696
+    },
+    {
+      "path": "outside-build-d02fbb3/physical-builds/zaratustra_core-0.1.0-py3-none-any.whl",
+      "sha256": "4ab7d76ed521991add8be71089c4a73b33e939a6301ccb46f08968322ac997fb",
+      "bytes": 18642
+    },
+    {
+      "path": "outside-build-d02fbb3/physical-builds/zaratustra_core-0.1.0.tar.gz",
+      "sha256": "d4458a344f20161d54db45e3725f429a4cbf18e2507b8769dec1b51a3644efab",
+      "bytes": 16255
+    },
+    {
+      "path": "outside-build-d02fbb3/physical-builds/zaratustra_next-0.1.0-py3-none-any.whl",
+      "sha256": "652cebb074d13f5a199223cbbc0dc21306808c1d3e5e613f7261319879928d2d",
+      "bytes": 18987
+    },
+    {
+      "path": "outside-build-d02fbb3/physical-builds/zaratustra_next-0.1.0.tar.gz",
+      "sha256": "26365202b19a396b0768f39b8f51d5f35b09bcbff867cba4035e282b4793857e",
+      "bytes": 13696
+    }
+  ],
+  "historical_source_linkage": "Each historical directory retains its own manifest and source commit; its bytes are not attributed to final source."
+}

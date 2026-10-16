@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a14429-23a3-7d83-b5d3-5180169a2ec8"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"state\":\"completed\",\"text\":\"The supplied records do not establish a confirmed wild pollinator for this specimen. The bounded factual request was not achieved: the available evidence describes an indoor trial where flowers opened after sunset and closed the next morning, with three of twelve buds opening. Evidence identifying a pollinator or showing pollination in the wild is missing.\",\"edits\":[],\"analyses\":[],\"progress\":null,\"progress_record_revision\":0}"}}
+{"type":"turn.completed","usage":{"input_tokens":44756,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":98,"reasoning_output_tokens":0}}

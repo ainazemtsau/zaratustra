@@ -1,0 +1,553 @@
+{
+  "capabilities": [
+    "read",
+    "apply_changes",
+    "open_work",
+    "prepare_attempt",
+    "claim_dispatch",
+    "observe_attempt",
+    "commit_outcome",
+    "control_work",
+    "reserve_tool",
+    "write:memory:space",
+    "write:method:space"
+  ],
+  "catalog": [
+    {
+      "body": "{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Trial B: a 190-word label went unread because it did not fit the display. Trial C: a short label also failed, because it asserted a wild pollinator unsupported by observations. Length alone did not establish accuracy. No further negative trials exist.\"}",
+      "id": "error",
+      "key": "error",
+      "kind": "data",
+      "revision": 1,
+      "scope": "space"
+    },
+    {
+      "body": "{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Fictional exhibit: night-blooming cactus. Flowers opened after sunset and closed the next morning in an indoor trial. Three of twelve buds opened. No observation establishes a wild pollinator.\"}",
+      "id": "facts",
+      "key": "specimen",
+      "kind": "data",
+      "revision": 1,
+      "scope": "space"
+    },
+    {
+      "body": "{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Early planning assumption: labels should be 180\u2013200 words; not yet confirmed by curator.\"}",
+      "id": "memory",
+      "key": "label-length",
+      "kind": "memory",
+      "revision": 1,
+      "scope": "space"
+    },
+    {
+      "body": "{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Routine visitor observation: first sentence and large-print species name were read; the provenance appendix was usually skipped. No complaint was filed.\"}",
+      "id": "ordinary",
+      "key": "routine",
+      "kind": "data",
+      "revision": 1,
+      "scope": "space"
+    },
+    {
+      "body": "{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Draft an informative exhibit label using current memory and supplied facts. Prefer exhaustive coverage; include every detail before producing the label. Use the executor response_contract. No acceptance claims.\"}",
+      "id": "practice",
+      "key": "exhibit-label",
+      "kind": "method",
+      "revision": 1,
+      "scope": "space"
+    },
+    {
+      "body": "{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":{\"model\":\"gpt-6-luna\",\"physical_provider_sends\":\"unknown\",\"resource_unit\":\"codex_exec\",\"test_only\":true}}",
+      "id": "profile",
+      "key": "codex-luna-test",
+      "kind": "profile",
+      "revision": 1,
+      "scope": "space"
+    },
+    {
+      "body": "{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":{\"instructions\":\"Sleep method sleep/1. Work only inside granted scope and finite calls.\\nYou are the meaning-making agent; do not ask the owner to pick problems. A finding\\nis not guaranteed. Use the actual source bytes in sleep_sources, not catalog titles.\\n1 Recover Work, exact Method, progress, resource_state, current rights, and outcomes\\nof previous changes. An unresolved send is unknown and its reservation stays spent.\\n2 Examine a bounded portion at source_high_watermark. Enumeration, selection,\\ndelivery and analysis are distinct. Preserve enumeration_cursor and separately\\nunexplored_coverage_position for a bounded exploration outside known relations.\\n3 Maintain useful memory from ordinary work, successes AND errors, not complaints\\nalone. Apply necessary permitted corrections with exact provenance; preserve doubt.\\n4 Choose useful questions yourself. Make a bounded comparison beyond existing\\nlinks, including an ordinary or successful source. Record no finding honestly.\\n5 Ground claims in exact source refs/fragments. Distinguish observation, assertion\\nand hypothesis; consider alternatives, counterexamples and previous failed attempts.\\n6 Apply a useful permitted memory correction, or leave a proposal when rights are\\ninsufficient. Reusable improvements may create a new scoped Method revision after\\nproportionate checking. Never change grants, acceptance, code or own authority.\\nMethod rollback is another revision, preserving old bytes and limiting its scope.\\n7 Link changes to actual later Work outcomes delivered in history, including\\nnegative outcomes. New work must use current applicable memory and Method. Revisit,\\nnarrow or roll back a Method if outcomes oppose it; do not invent feedback.\\n8 Save a new sleep-progress/v1 data revision with all fields from its delivered\\ntemplate. Preserve source_high_watermark, exact refs and honest remainder/unknown,\\nstop_reason and continuation. Reaching the cursor proves enumeration only.\\nAnalysis is your claim, not machine proof. Persist analysis as ordinary data with\\nbody {format:'sleep-analysis/v1', sources:[source_ref,...], content:<free text/object>}.\\nKeep each selected source in remaining_refs until such an analysis is retained.\\nFor each actual delivery append context.sleep_delivery_manifest; do not fabricate\\ndelivery from enumeration. Copy resource_state.consumed_resource. For terminal\\nprogress use unresolved_calls=[] only for this returned terminal; preserve others.\\nUse subject changes only (data,memory,method/activity) and exact expected_heads.\\nMemory and Method content are free text or objects; no prescribed subject template.\\nUse the executor's response_contract for its exact wire representation. Method\\ndefines the obligations; the executor codec defines serialization. Persist analysis\\nbefore progress. An analysis exact ref is an object containing id and revision.\\nUse ready for a further bounded portion; completed means this bounded pass ended,\\nnever that all the environment is understood. Unknown/unexamined material remains.\\nDo not request external tools not present. No mandatory interview or activity form.\\n\",\"status\":\"active\",\"version\":\"sleep/1\"}}",
+      "id": "sleep-method",
+      "key": "sleep",
+      "kind": "method",
+      "revision": 1,
+      "scope": "space"
+    },
+    {
+      "body": "{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":{\"analysis_result_refs\":[],\"applied_receipts\":[],\"consumed_resource\":0,\"continuation\":\"Review selected sources and explore beyond known relations\",\"delivered_manifest_refs\":[],\"enumerated_source_refs\":[{\"index\":0,\"sequence\":1,\"sha256\":\"1625fcc5f45437221cc0fa599a7adc90373148d975604ca8061a0003cff555c5\"},{\"index\":0,\"sequence\":2,\"sha256\":\"4f9bad3563c034a99a79503d8d26c39fb7a6e2219122b8bd00014b846ef778a2\"},{\"index\":0,\"sequence\":3,\"sha256\":\"12fc65a586be5d47d296d0c7b5332e7d6cf3548f89516fb4d6caa00dde11fac9\"},{\"index\":0,\"sequence\":4,\"sha256\":\"45d020c42a5ddfb8819f288fef066089d92931fe1b456bcfd680f93db394883f\"},{\"index\":0,\"sequence\":5,\"sha256\":\"1ba3574fdc28673e5864272da2de78dbd381562839453da62f074bda0ed936a1\"},{\"index\":0,\"sequence\":6,\"sha256\":\"78d99d07e3a6b7ee95c88f1b7801b7763b2db52a35c55645a77e223da785ff76\"},{\"index\":0,\"sequence\":7,\"sha256\":\"2948e998223adeb70c3d19463139a0cb89c06810948a091b79a8ebaa54618e37\"},{\"index\":0,\"sequence\":9,\"sha256\":\"193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc\"}],\"enumeration_cursor\":[10,2147483647],\"format\":\"sleep-progress/v1\",\"method_ref\":{\"id\":\"sleep-method\",\"revision\":1,\"role\":\"must_be_current\"},\"proposed_changes\":[],\"remaining_refs\":[{\"index\":0,\"sequence\":1,\"sha256\":\"1625fcc5f45437221cc0fa599a7adc90373148d975604ca8061a0003cff555c5\"},{\"index\":0,\"sequence\":2,\"sha256\":\"4f9bad3563c034a99a79503d8d26c39fb7a6e2219122b8bd00014b846ef778a2\"},{\"index\":0,\"sequence\":3,\"sha256\":\"12fc65a586be5d47d296d0c7b5332e7d6cf3548f89516fb4d6caa00dde11fac9\"},{\"index\":0,\"sequence\":4,\"sha256\":\"45d020c42a5ddfb8819f288fef066089d92931fe1b456bcfd680f93db394883f\"},{\"index\":0,\"sequence\":5,\"sha256\":\"1ba3574fdc28673e5864272da2de78dbd381562839453da62f074bda0ed936a1\"},{\"index\":0,\"sequence\":6,\"sha256\":\"78d99d07e3a6b7ee95c88f1b7801b7763b2db52a35c55645a77e223da785ff76\"},{\"index\":0,\"sequence\":7,\"sha256\":\"2948e998223adeb70c3d19463139a0cb89c06810948a091b79a8ebaa54618e37\"},{\"index\":0,\"sequence\":9,\"sha256\":\"193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc\"}],\"return_conditions\":[\"Further arrivals require a new bounded pass\"],\"scope\":\"space\",\"selected_source_refs\":[{\"index\":0,\"sequence\":1,\"sha256\":\"1625fcc5f45437221cc0fa599a7adc90373148d975604ca8061a0003cff555c5\"},{\"index\":0,\"sequence\":2,\"sha256\":\"4f9bad3563c034a99a79503d8d26c39fb7a6e2219122b8bd00014b846ef778a2\"},{\"index\":0,\"sequence\":3,\"sha256\":\"12fc65a586be5d47d296d0c7b5332e7d6cf3548f89516fb4d6caa00dde11fac9\"},{\"index\":0,\"sequence\":4,\"sha256\":\"45d020c42a5ddfb8819f288fef066089d92931fe1b456bcfd680f93db394883f\"},{\"index\":0,\"sequence\":5,\"sha256\":\"1ba3574fdc28673e5864272da2de78dbd381562839453da62f074bda0ed936a1\"},{\"index\":0,\"sequence\":6,\"sha256\":\"78d99d07e3a6b7ee95c88f1b7801b7763b2db52a35c55645a77e223da785ff76\"},{\"index\":0,\"sequence\":7,\"sha256\":\"2948e998223adeb70c3d19463139a0cb89c06810948a091b79a8ebaa54618e37\"},{\"index\":0,\"sequence\":9,\"sha256\":\"193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc\"}],\"source_high_watermark\":10,\"stop_reason\":\"not_started\",\"unexplored_coverage_position\":{\"status\":\"unexplored\"},\"unresolved_calls\":[],\"work_id\":\"sleep-one\"}}",
+      "id": "sleep-one:progress",
+      "key": "sleep-progress:sleep-one",
+      "kind": "data",
+      "revision": 1,
+      "scope": "space"
+    },
+    {
+      "body": "{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Trial A: the fictional curator approved a 42-word draft containing one clear observation and asked to keep future display labels 35\u201350 words, with details off-label.\"}",
+      "id": "success",
+      "key": "success",
+      "kind": "data",
+      "revision": 1,
+      "scope": "space"
+    }
+  ],
+  "inputs": [
+    {
+      "body": {
+        "application": "active",
+        "schema_ref": null,
+        "source_refs": [],
+        "tombstone": false,
+        "value": {
+          "analysis_result_refs": [],
+          "applied_receipts": [],
+          "consumed_resource": 0,
+          "continuation": "Review selected sources and explore beyond known relations",
+          "delivered_manifest_refs": [],
+          "enumerated_source_refs": [
+            {
+              "index": 0,
+              "sequence": 1,
+              "sha256": "1625fcc5f45437221cc0fa599a7adc90373148d975604ca8061a0003cff555c5"
+            },
+            {
+              "index": 0,
+              "sequence": 2,
+              "sha256": "4f9bad3563c034a99a79503d8d26c39fb7a6e2219122b8bd00014b846ef778a2"
+            },
+            {
+              "index": 0,
+              "sequence": 3,
+              "sha256": "12fc65a586be5d47d296d0c7b5332e7d6cf3548f89516fb4d6caa00dde11fac9"
+            },
+            {
+              "index": 0,
+              "sequence": 4,
+              "sha256": "45d020c42a5ddfb8819f288fef066089d92931fe1b456bcfd680f93db394883f"
+            },
+            {
+              "index": 0,
+              "sequence": 5,
+              "sha256": "1ba3574fdc28673e5864272da2de78dbd381562839453da62f074bda0ed936a1"
+            },
+            {
+              "index": 0,
+              "sequence": 6,
+              "sha256": "78d99d07e3a6b7ee95c88f1b7801b7763b2db52a35c55645a77e223da785ff76"
+            },
+            {
+              "index": 0,
+              "sequence": 7,
+              "sha256": "2948e998223adeb70c3d19463139a0cb89c06810948a091b79a8ebaa54618e37"
+            },
+            {
+              "index": 0,
+              "sequence": 9,
+              "sha256": "193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc"
+            }
+          ],
+          "enumeration_cursor": [
+            10,
+            2147483647
+          ],
+          "format": "sleep-progress/v1",
+          "method_ref": {
+            "id": "sleep-method",
+            "revision": 1,
+            "role": "must_be_current"
+          },
+          "proposed_changes": [],
+          "remaining_refs": [
+            {
+              "index": 0,
+              "sequence": 1,
+              "sha256": "1625fcc5f45437221cc0fa599a7adc90373148d975604ca8061a0003cff555c5"
+            },
+            {
+              "index": 0,
+              "sequence": 2,
+              "sha256": "4f9bad3563c034a99a79503d8d26c39fb7a6e2219122b8bd00014b846ef778a2"
+            },
+            {
+              "index": 0,
+              "sequence": 3,
+              "sha256": "12fc65a586be5d47d296d0c7b5332e7d6cf3548f89516fb4d6caa00dde11fac9"
+            },
+            {
+              "index": 0,
+              "sequence": 4,
+              "sha256": "45d020c42a5ddfb8819f288fef066089d92931fe1b456bcfd680f93db394883f"
+            },
+            {
+              "index": 0,
+              "sequence": 5,
+              "sha256": "1ba3574fdc28673e5864272da2de78dbd381562839453da62f074bda0ed936a1"
+            },
+            {
+              "index": 0,
+              "sequence": 6,
+              "sha256": "78d99d07e3a6b7ee95c88f1b7801b7763b2db52a35c55645a77e223da785ff76"
+            },
+            {
+              "index": 0,
+              "sequence": 7,
+              "sha256": "2948e998223adeb70c3d19463139a0cb89c06810948a091b79a8ebaa54618e37"
+            },
+            {
+              "index": 0,
+              "sequence": 9,
+              "sha256": "193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc"
+            }
+          ],
+          "return_conditions": [
+            "Further arrivals require a new bounded pass"
+          ],
+          "scope": "space",
+          "selected_source_refs": [
+            {
+              "index": 0,
+              "sequence": 1,
+              "sha256": "1625fcc5f45437221cc0fa599a7adc90373148d975604ca8061a0003cff555c5"
+            },
+            {
+              "index": 0,
+              "sequence": 2,
+              "sha256": "4f9bad3563c034a99a79503d8d26c39fb7a6e2219122b8bd00014b846ef778a2"
+            },
+            {
+              "index": 0,
+              "sequence": 3,
+              "sha256": "12fc65a586be5d47d296d0c7b5332e7d6cf3548f89516fb4d6caa00dde11fac9"
+            },
+            {
+              "index": 0,
+              "sequence": 4,
+              "sha256": "45d020c42a5ddfb8819f288fef066089d92931fe1b456bcfd680f93db394883f"
+            },
+            {
+              "index": 0,
+              "sequence": 5,
+              "sha256": "1ba3574fdc28673e5864272da2de78dbd381562839453da62f074bda0ed936a1"
+            },
+            {
+              "index": 0,
+              "sequence": 6,
+              "sha256": "78d99d07e3a6b7ee95c88f1b7801b7763b2db52a35c55645a77e223da785ff76"
+            },
+            {
+              "index": 0,
+              "sequence": 7,
+              "sha256": "2948e998223adeb70c3d19463139a0cb89c06810948a091b79a8ebaa54618e37"
+            },
+            {
+              "index": 0,
+              "sequence": 9,
+              "sha256": "193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc"
+            }
+          ],
+          "source_high_watermark": 10,
+          "stop_reason": "not_started",
+          "unexplored_coverage_position": {
+            "status": "unexplored"
+          },
+          "unresolved_calls": [],
+          "work_id": "sleep-one"
+        }
+      },
+      "id": "sleep-one:progress",
+      "key": "sleep-progress:sleep-one",
+      "kind": "data",
+      "revision": 1,
+      "scope": "space"
+    }
+  ],
+  "manifest": [],
+  "messages": [],
+  "method": {
+    "body": {
+      "application": "active",
+      "schema_ref": null,
+      "source_refs": [],
+      "tombstone": false,
+      "value": {
+        "instructions": "Sleep method sleep/1. Work only inside granted scope and finite calls.\nYou are the meaning-making agent; do not ask the owner to pick problems. A finding\nis not guaranteed. Use the actual source bytes in sleep_sources, not catalog titles.\n1 Recover Work, exact Method, progress, resource_state, current rights, and outcomes\nof previous changes. An unresolved send is unknown and its reservation stays spent.\n2 Examine a bounded portion at source_high_watermark. Enumeration, selection,\ndelivery and analysis are distinct. Preserve enumeration_cursor and separately\nunexplored_coverage_position for a bounded exploration outside known relations.\n3 Maintain useful memory from ordinary work, successes AND errors, not complaints\nalone. Apply necessary permitted corrections with exact provenance; preserve doubt.\n4 Choose useful questions yourself. Make a bounded comparison beyond existing\nlinks, including an ordinary or successful source. Record no finding honestly.\n5 Ground claims in exact source refs/fragments. Distinguish observation, assertion\nand hypothesis; consider alternatives, counterexamples and previous failed attempts.\n6 Apply a useful permitted memory correction, or leave a proposal when rights are\ninsufficient. Reusable improvements may create a new scoped Method revision after\nproportionate checking. Never change grants, acceptance, code or own authority.\nMethod rollback is another revision, preserving old bytes and limiting its scope.\n7 Link changes to actual later Work outcomes delivered in history, including\nnegative outcomes. New work must use current applicable memory and Method. Revisit,\nnarrow or roll back a Method if outcomes oppose it; do not invent feedback.\n8 Save a new sleep-progress/v1 data revision with all fields from its delivered\ntemplate. Preserve source_high_watermark, exact refs and honest remainder/unknown,\nstop_reason and continuation. Reaching the cursor proves enumeration only.\nAnalysis is your claim, not machine proof. Persist analysis as ordinary data with\nbody {format:'sleep-analysis/v1', sources:[source_ref,...], content:<free text/object>}.\nKeep each selected source in remaining_refs until such an analysis is retained.\nFor each actual delivery append context.sleep_delivery_manifest; do not fabricate\ndelivery from enumeration. Copy resource_state.consumed_resource. For terminal\nprogress use unresolved_calls=[] only for this returned terminal; preserve others.\nUse subject changes only (data,memory,method/activity) and exact expected_heads.\nMemory and Method content are free text or objects; no prescribed subject template.\nUse the executor's response_contract for its exact wire representation. Method\ndefines the obligations; the executor codec defines serialization. Persist analysis\nbefore progress. An analysis exact ref is an object containing id and revision.\nUse ready for a further bounded portion; completed means this bounded pass ended,\nnever that all the environment is understood. Unknown/unexamined material remains.\nDo not request external tools not present. No mandatory interview or activity form.\n",
+        "status": "active",
+        "version": "sleep/1"
+      }
+    },
+    "id": "sleep-method",
+    "key": "sleep",
+    "kind": "method",
+    "revision": 1,
+    "scope": "space"
+  },
+  "prior_messages": [],
+  "prior_results": [],
+  "prior_waits": [],
+  "profile": {
+    "body": {
+      "application": "active",
+      "schema_ref": null,
+      "source_refs": [],
+      "tombstone": false,
+      "value": {
+        "model": "gpt-6-luna",
+        "physical_provider_sends": "unknown",
+        "resource_unit": "codex_exec",
+        "test_only": true
+      }
+    },
+    "id": "profile",
+    "key": "codex-luna-test",
+    "kind": "profile",
+    "revision": 1,
+    "scope": "space"
+  },
+  "profile_ref": {
+    "id": "profile",
+    "revision": 1
+  },
+  "sleep_delivery_manifest": {
+    "attempt_id": "sleep-one:f5a3ad8c551944bc9a7e76789e2a0b10",
+    "sha256": "693c6145ec13b6bdb4766c0428e0055df0b12be6bd8973625a634f0fd0447e94"
+  },
+  "sleep_sources": [
+    {
+      "material": {
+        "record": {
+          "body": {
+            "application": "active",
+            "schema_ref": null,
+            "source_refs": [],
+            "tombstone": false,
+            "value": {
+              "model": "gpt-6-luna",
+              "physical_provider_sends": "unknown",
+              "resource_unit": "codex_exec",
+              "test_only": true
+            }
+          },
+          "id": "profile",
+          "key": "codex-luna-test",
+          "kind": "profile",
+          "revision": 1,
+          "scope": "space"
+        },
+        "scope": "space"
+      },
+      "source_ref": {
+        "index": 0,
+        "sequence": 1,
+        "sha256": "1625fcc5f45437221cc0fa599a7adc90373148d975604ca8061a0003cff555c5"
+      }
+    },
+    {
+      "material": {
+        "record": {
+          "body": {
+            "application": "active",
+            "schema_ref": null,
+            "source_refs": [],
+            "tombstone": false,
+            "value": "Draft an informative exhibit label using current memory and supplied facts. Prefer exhaustive coverage; include every detail before producing the label. Use the executor response_contract. No acceptance claims."
+          },
+          "id": "practice",
+          "key": "exhibit-label",
+          "kind": "method",
+          "revision": 1,
+          "scope": "space"
+        },
+        "scope": "space"
+      },
+      "source_ref": {
+        "index": 0,
+        "sequence": 2,
+        "sha256": "4f9bad3563c034a99a79503d8d26c39fb7a6e2219122b8bd00014b846ef778a2"
+      }
+    },
+    {
+      "material": {
+        "record": {
+          "body": {
+            "application": "active",
+            "schema_ref": null,
+            "source_refs": [],
+            "tombstone": false,
+            "value": "Early planning assumption: labels should be 180\u2013200 words; not yet confirmed by curator."
+          },
+          "id": "memory",
+          "key": "label-length",
+          "kind": "memory",
+          "revision": 1,
+          "scope": "space"
+        },
+        "scope": "space"
+      },
+      "source_ref": {
+        "index": 0,
+        "sequence": 3,
+        "sha256": "12fc65a586be5d47d296d0c7b5332e7d6cf3548f89516fb4d6caa00dde11fac9"
+      }
+    },
+    {
+      "material": {
+        "record": {
+          "body": {
+            "application": "active",
+            "schema_ref": null,
+            "source_refs": [],
+            "tombstone": false,
+            "value": "Fictional exhibit: night-blooming cactus. Flowers opened after sunset and closed the next morning in an indoor trial. Three of twelve buds opened. No observation establishes a wild pollinator."
+          },
+          "id": "facts",
+          "key": "specimen",
+          "kind": "data",
+          "revision": 1,
+          "scope": "space"
+        },
+        "scope": "space"
+      },
+      "source_ref": {
+        "index": 0,
+        "sequence": 4,
+        "sha256": "45d020c42a5ddfb8819f288fef066089d92931fe1b456bcfd680f93db394883f"
+      }
+    },
+    {
+      "material": {
+        "record": {
+          "body": {
+            "application": "active",
+            "schema_ref": null,
+            "source_refs": [],
+            "tombstone": false,
+            "value": "Routine visitor observation: first sentence and large-print species name were read; the provenance appendix was usually skipped. No complaint was filed."
+          },
+          "id": "ordinary",
+          "key": "routine",
+          "kind": "data",
+          "revision": 1,
+          "scope": "space"
+        },
+        "scope": "space"
+      },
+      "source_ref": {
+        "index": 0,
+        "sequence": 5,
+        "sha256": "1ba3574fdc28673e5864272da2de78dbd381562839453da62f074bda0ed936a1"
+      }
+    },
+    {
+      "material": {
+        "record": {
+          "body": {
+            "application": "active",
+            "schema_ref": null,
+            "source_refs": [],
+            "tombstone": false,
+            "value": "Trial A: the fictional curator approved a 42-word draft containing one clear observation and asked to keep future display labels 35\u201350 words, with details off-label."
+          },
+          "id": "success",
+          "key": "success",
+          "kind": "data",
+          "revision": 1,
+          "scope": "space"
+        },
+        "scope": "space"
+      },
+      "source_ref": {
+        "index": 0,
+        "sequence": 6,
+        "sha256": "78d99d07e3a6b7ee95c88f1b7801b7763b2db52a35c55645a77e223da785ff76"
+      }
+    },
+    {
+      "material": {
+        "record": {
+          "body": {
+            "application": "active",
+            "schema_ref": null,
+            "source_refs": [],
+            "tombstone": false,
+            "value": "Trial B: a 190-word label went unread because it did not fit the display. Trial C: a short label also failed, because it asserted a wild pollinator unsupported by observations. Length alone did not establish accuracy. No further negative trials exist."
+          },
+          "id": "error",
+          "key": "error",
+          "kind": "data",
+          "revision": 1,
+          "scope": "space"
+        },
+        "scope": "space"
+      },
+      "source_ref": {
+        "index": 0,
+        "sequence": 7,
+        "sha256": "2948e998223adeb70c3d19463139a0cb89c06810948a091b79a8ebaa54618e37"
+      }
+    },
+    {
+      "material": {
+        "record": {
+          "body": {
+            "application": "active",
+            "schema_ref": null,
+            "source_refs": [],
+            "tombstone": false,
+            "value": {
+              "instructions": "Sleep method sleep/1. Work only inside granted scope and finite calls.\nYou are the meaning-making agent; do not ask the owner to pick problems. A finding\nis not guaranteed. Use the actual source bytes in sleep_sources, not catalog titles.\n1 Recover Work, exact Method, progress, resource_state, current rights, and outcomes\nof previous changes. An unresolved send is unknown and its reservation stays spent.\n2 Examine a bounded portion at source_high_watermark. Enumeration, selection,\ndelivery and analysis are distinct. Preserve enumeration_cursor and separately\nunexplored_coverage_position for a bounded exploration outside known relations.\n3 Maintain useful memory from ordinary work, successes AND errors, not complaints\nalone. Apply necessary permitted corrections with exact provenance; preserve doubt.\n4 Choose useful questions yourself. Make a bounded comparison beyond existing\nlinks, including an ordinary or successful source. Record no finding honestly.\n5 Ground claims in exact source refs/fragments. Distinguish observation, assertion\nand hypothesis; consider alternatives, counterexamples and previous failed attempts.\n6 Apply a useful permitted memory correction, or leave a proposal when rights are\ninsufficient. Reusable improvements may create a new scoped Method revision after\nproportionate checking. Never change grants, acceptance, code or own authority.\nMethod rollback is another revision, preserving old bytes and limiting its scope.\n7 Link changes to actual later Work outcomes delivered in history, including\nnegative outcomes. New work must use current applicable memory and Method. Revisit,\nnarrow or roll back a Method if outcomes oppose it; do not invent feedback.\n8 Save a new sleep-progress/v1 data revision with all fields from its delivered\ntemplate. Preserve source_high_watermark, exact refs and honest remainder/unknown,\nstop_reason and continuation. Reaching the cursor proves enumeration only.\nAnalysis is your claim, not machine proof. Persist analysis as ordinary data with\nbody {format:'sleep-analysis/v1', sources:[source_ref,...], content:<free text/object>}.\nKeep each selected source in remaining_refs until such an analysis is retained.\nFor each actual delivery append context.sleep_delivery_manifest; do not fabricate\ndelivery from enumeration. Copy resource_state.consumed_resource. For terminal\nprogress use unresolved_calls=[] only for this returned terminal; preserve others.\nUse subject changes only (data,memory,method/activity) and exact expected_heads.\nMemory and Method content are free text or objects; no prescribed subject template.\nUse the executor's response_contract for its exact wire representation. Method\ndefines the obligations; the executor codec defines serialization. Persist analysis\nbefore progress. An analysis exact ref is an object containing id and revision.\nUse ready for a further bounded portion; completed means this bounded pass ended,\nnever that all the environment is understood. Unknown/unexamined material remains.\nDo not request external tools not present. No mandatory interview or activity form.\n",
+              "status": "active",
+              "version": "sleep/1"
+            }
+          },
+          "id": "sleep-method",
+          "key": "sleep",
+          "kind": "method",
+          "revision": 1,
+          "scope": "space"
+        },
+        "scope": "space"
+      },
+      "source_ref": {
+        "index": 0,
+        "sequence": 9,
+        "sha256": "193be6100622ee2b6bc1ebcbc5cc20f8bfcd91a01a926568db635ea49dbd32fc"
+      }
+    }
+  ],
+  "tool_ledger": [],
+  "work": {
+    "call_limit": 2,
+    "continuation_policy": "durable",
+    "conversation": "sleep-one:conversation",
+    "goal": "Sleep",
+    "id": "sleep-one",
+    "inputs": [
+      {
+        "id": "sleep-one:progress",
+        "revision": 1,
+        "role": "must_be_current"
+      }
+    ],
+    "method_ref": {
+      "id": "sleep-method",
+      "revision": 1,
+      "role": "must_be_current"
+    },
+    "scope": "space"
+  },
+  "resource_state": {
+    "call_limit": 2,
+    "consumed_resource": 1,
+    "unresolved_calls": [
+      "sleep-one:f5a3ad8c551944bc9a7e76789e2a0b10:action"
+    ]
+  },
+  "response_contract": {
+    "format": "structured CLI schema",
+    "analysis": "analyses array only",
+    "edits": "memory/Method free text",
+    "progress": "complete typed progress object",
+    "progress_record_revision": "The CURRENT delivered input progress record revision for CAS, NOT the proposed new revision. Copy current record.revision from context.inputs.",
+    "edits.expected_revision": "CURRENT catalog revision of the edited record, NOT its proposed new revision; zero only when record does not exist.",
+    "analyses.expected_revision": "CURRENT catalog revision of the analysis id; zero for a genuinely new analysis record.",
+    "source_refs": "Historical provenance references in edits use role=exact. Work required input roles remain must_be_current; do not copy that requirement role into historical provenance.",
+    "progress_boundary": "Copy work_id, method_ref, scope, source_high_watermark, enumeration_cursor and enumerated_source_refs exactly from the delivered progress for this portion. Selection and analysis remain your decisions; preserve all not-analysed remainder.",
+    "application": "A Method whose current application is proposal/withdrawn cannot execute. Active is an applied change under actual delegated scope rights; no self-grant or owner acceptance."
+  },
+  "raw_messages": []
+}

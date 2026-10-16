@@ -1,0 +1,164 @@
+[
+  {
+    "id": "probe-attempt:action",
+    "type": "response",
+    "command": "prompt",
+    "success": true,
+    "data": {
+      "disposition": "started"
+    }
+  },
+  {
+    "type": "agent_start"
+  },
+  {
+    "type": "turn_start"
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "system",
+      "content": "",
+      "sections": {
+        "preamble": "You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.",
+        "tools": "<tools>\n(none)\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.\n</tools>",
+        "rules": "<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>",
+        "docs": "<docs>\nPi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\README.md\n- Additional docs: C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\docs\n- Examples: C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing\n- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)\n</docs>",
+        "cwd": "<cwd>\nC:/projects/zaratustra/.worktrees/restart-first-release/_scratch/c-luna-access-03/pi/e1c0f912e8a82b139507b83f4e0c1f7fd8e497f3b542adaff03cf251f781ece9\n</cwd>"
+      },
+      "timestamp": 1792140963128,
+      "toolsAdded": [
+        {
+          "name": "zara_change",
+          "description": "Apply bounded subject changes through the current core connection.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "intent_json": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "intent_json"
+            ],
+            "additionalProperties": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "system",
+      "content": "",
+      "sections": {
+        "preamble": "You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.",
+        "tools": "<tools>\n(none)\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.\n</tools>",
+        "rules": "<rules>\n- Be concise in your responses\n- Show file paths clearly when working with files\n</rules>",
+        "docs": "<docs>\nPi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):\n- Main documentation: C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\README.md\n- Additional docs: C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\docs\n- Examples: C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\examples (extensions, custom tools, SDK)\n- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory\n- When asked about: extensions (docs/extensions.md, examples/extensions/), themes (docs/themes.md), skills (docs/skills.md), prompt templates (docs/prompt-templates.md), TUI components (docs/tui.md), keybindings (docs/keybindings.md), SDK integrations (docs/sdk.md), custom providers (docs/custom-provider.md), adding models (docs/models.md), pi packages (docs/packages.md), environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md), codemode scripts and non-LLM models such as classifiers and image models (docs/codemode.md)\n- When working on pi topics, read the docs and examples, and follow .md cross-references before implementing\n- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)\n</docs>",
+        "cwd": "<cwd>\nC:/projects/zaratustra/.worktrees/restart-first-release/_scratch/c-luna-access-03/pi/e1c0f912e8a82b139507b83f4e0c1f7fd8e497f3b542adaff03cf251f781ece9\n</cwd>"
+      },
+      "timestamp": 1792140963128,
+      "toolsAdded": [
+        {
+          "name": "zara_change",
+          "description": "Apply bounded subject changes through the current core connection.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "intent_json": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "intent_json"
+            ],
+            "additionalProperties": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"action_id\": \"probe-attempt:action\", \"context\": {\"capabilities\": [\"read\", \"open_work\", \"prepare_attempt\", \"claim_dispatch\", \"observe_attempt\", \"commit_outcome\", \"reserve_tool\", \"apply_changes\"], \"catalog\": [{\"body\": \"{\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":{\\\"instructions\\\":\\\"Return ONLY JSON: {\\\\\\\"state\\\\\\\":\\\\\\\"completed\\\\\\\",\\\\\\\"text\\\\\\\":\\\\\\\"access established\\\\\\\"}. This is a fictional access probe, not a usefulness evaluation.\\\"}}\", \"id\": \"method\", \"key\": \"probe\", \"kind\": \"method\", \"revision\": 1, \"scope\": \"space\"}, {\"body\": \"{\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":{\\\"api\\\":\\\"openai-responses\\\",\\\"credential_env\\\":\\\"OPENAI_API_KEY\\\",\\\"endpoint\\\":\\\"https://api.openai.com/v1\\\",\\\"model\\\":\\\"gpt-6-luna\\\",\\\"provider\\\":\\\"openai\\\"}}\", \"id\": \"profile\", \"key\": \"luna\", \"kind\": \"profile\", \"revision\": 1, \"scope\": \"space\"}], \"inputs\": [], \"manifest\": [], \"messages\": [], \"method\": {\"body\": {\"schema_ref\": null, \"source_refs\": [], \"tombstone\": false, \"value\": {\"instructions\": \"Return ONLY JSON: {\\\"state\\\":\\\"completed\\\",\\\"text\\\":\\\"access established\\\"}. This is a fictional access probe, not a usefulness evaluation.\"}}, \"id\": \"method\", \"key\": \"probe\", \"kind\": \"method\", \"revision\": 1, \"scope\": \"space\"}, \"prior_messages\": [], \"prior_results\": [], \"prior_waits\": [], \"profile\": {\"body\": {\"schema_ref\": null, \"source_refs\": [], \"tombstone\": false, \"value\": {\"api\": \"openai-responses\", \"credential_env\": \"OPENAI_API_KEY\", \"endpoint\": \"https://api.openai.com/v1\", \"model\": \"gpt-6-luna\", \"provider\": \"openai\"}}, \"id\": \"profile\", \"key\": \"luna\", \"kind\": \"profile\", \"revision\": 1, \"scope\": \"space\"}, \"profile_ref\": {\"id\": \"profile\", \"revision\": 1}, \"tool_ledger\": [], \"work\": {\"call_limit\": 2, \"continuation_policy\": \"durable\", \"conversation\": \"probe\", \"goal\": \"Confirm authorized model access\", \"id\": \"probe\", \"inputs\": [], \"method_ref\": {\"id\": \"method\", \"revision\": 1}}, \"resource_state\": {\"call_limit\": 2, \"consumed_resource\": 2, \"unresolved_calls\": [\"probe-attempt:action\"]}, \"raw_messages\": []}}"
+        }
+      ],
+      "timestamp": 1792140963125
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"action_id\": \"probe-attempt:action\", \"context\": {\"capabilities\": [\"read\", \"open_work\", \"prepare_attempt\", \"claim_dispatch\", \"observe_attempt\", \"commit_outcome\", \"reserve_tool\", \"apply_changes\"], \"catalog\": [{\"body\": \"{\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":{\\\"instructions\\\":\\\"Return ONLY JSON: {\\\\\\\"state\\\\\\\":\\\\\\\"completed\\\\\\\",\\\\\\\"text\\\\\\\":\\\\\\\"access established\\\\\\\"}. This is a fictional access probe, not a usefulness evaluation.\\\"}}\", \"id\": \"method\", \"key\": \"probe\", \"kind\": \"method\", \"revision\": 1, \"scope\": \"space\"}, {\"body\": \"{\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":{\\\"api\\\":\\\"openai-responses\\\",\\\"credential_env\\\":\\\"OPENAI_API_KEY\\\",\\\"endpoint\\\":\\\"https://api.openai.com/v1\\\",\\\"model\\\":\\\"gpt-6-luna\\\",\\\"provider\\\":\\\"openai\\\"}}\", \"id\": \"profile\", \"key\": \"luna\", \"kind\": \"profile\", \"revision\": 1, \"scope\": \"space\"}], \"inputs\": [], \"manifest\": [], \"messages\": [], \"method\": {\"body\": {\"schema_ref\": null, \"source_refs\": [], \"tombstone\": false, \"value\": {\"instructions\": \"Return ONLY JSON: {\\\"state\\\":\\\"completed\\\",\\\"text\\\":\\\"access established\\\"}. This is a fictional access probe, not a usefulness evaluation.\"}}, \"id\": \"method\", \"key\": \"probe\", \"kind\": \"method\", \"revision\": 1, \"scope\": \"space\"}, \"prior_messages\": [], \"prior_results\": [], \"prior_waits\": [], \"profile\": {\"body\": {\"schema_ref\": null, \"source_refs\": [], \"tombstone\": false, \"value\": {\"api\": \"openai-responses\", \"credential_env\": \"OPENAI_API_KEY\", \"endpoint\": \"https://api.openai.com/v1\", \"model\": \"gpt-6-luna\", \"provider\": \"openai\"}}, \"id\": \"profile\", \"key\": \"luna\", \"kind\": \"profile\", \"revision\": 1, \"scope\": \"space\"}, \"profile_ref\": {\"id\": \"profile\", \"revision\": 1}, \"tool_ledger\": [], \"work\": {\"call_limit\": 2, \"continuation_policy\": \"durable\", \"conversation\": \"probe\", \"goal\": \"Confirm authorized model access\", \"id\": \"probe\", \"inputs\": [], \"method_ref\": {\"id\": \"method\", \"revision\": 1}}, \"resource_state\": {\"call_limit\": 2, \"consumed_resource\": 2, \"unresolved_calls\": [\"probe-attempt:action\"]}, \"raw_messages\": []}}"
+        }
+      ],
+      "timestamp": 1792140963125
+    }
+  },
+  {
+    "type": "message_start",
+    "message": {
+      "role": "assistant",
+      "content": [],
+      "api": "openai-responses",
+      "provider": "local",
+      "model": "gpt-6-luna",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "pending",
+      "timestamp": 1792140963202
+    }
+  },
+  {
+    "type": "message_end",
+    "message": {
+      "role": "assistant",
+      "content": [],
+      "api": "openai-responses",
+      "provider": "local",
+      "model": "gpt-6-luna",
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 0,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "error",
+      "timestamp": 1792140963202,
+      "responseId": "resp_0a05c94de6bfbd8a016ad1e6a49be087d2be274c745cb1cd22",
+      "errorMessage": "You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.",
+      "thinkingLevel": "off"
+    }
+  }
+]

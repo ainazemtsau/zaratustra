@@ -1,0 +1,83 @@
+{
+  "stage": "revised-method-next-work",
+  "outcome": {
+    "attempt_id": "followup-attempt",
+    "state": "completed",
+    "refs": [],
+    "outputs": [],
+    "accepted": false,
+    "text": "SCRIPTED DRY RUN ONLY: unavailable factual outcome",
+    "cutoff": 1
+  },
+  "invocations": 1,
+  "current_heads_before": {
+    "profile": 1,
+    "practice": 3,
+    "memory": 3,
+    "facts": 1,
+    "ordinary": 1,
+    "success": 1,
+    "error": 1,
+    "sleep-method": 1,
+    "sleep-one:progress": 3,
+    "sleep-one:dry-analysis": 1,
+    "sleep-two:progress": 3,
+    "sleep-two:dry-analysis": 1
+  },
+  "delivered_method": {
+    "id": "practice",
+    "revision": 3,
+    "kind": "method",
+    "key": "exhibit-label",
+    "scope": "space",
+    "body": {
+      "application": "active",
+      "schema_ref": null,
+      "source_refs": [
+        {
+          "id": "sleep-two:dry-analysis",
+          "revision": 1,
+          "role": "exact"
+        }
+      ],
+      "tombstone": false,
+      "value": "Dry revision 3"
+    }
+  },
+  "delivered_inputs": [
+    {
+      "id": "facts",
+      "revision": 1,
+      "kind": "data",
+      "key": "specimen",
+      "scope": "space",
+      "body": {
+        "application": "active",
+        "schema_ref": null,
+        "source_refs": [],
+        "tombstone": false,
+        "value": "Fictional exhibit: night-blooming cactus. Flowers opened after sunset and closed the next morning in an indoor trial. Three of twelve buds opened. No observation establishes a wild pollinator."
+      }
+    },
+    {
+      "id": "memory",
+      "revision": 3,
+      "kind": "memory",
+      "key": "label-length",
+      "scope": "space",
+      "body": {
+        "application": "active",
+        "schema_ref": null,
+        "source_refs": [
+          {
+            "id": "sleep-two:dry-analysis",
+            "revision": 1,
+            "role": "exact"
+          }
+        ],
+        "tombstone": false,
+        "value": "Dry revision 3"
+      }
+    }
+  ]
+}

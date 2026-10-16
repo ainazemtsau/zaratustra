@@ -1,0 +1,214 @@
+{
+  "core_open": {
+    "work_id": "outside",
+    "revision": 1
+  },
+  "received": [
+    {
+      "action": "outside-a:action",
+      "context": {
+        "capabilities": [
+          "read",
+          "apply_changes",
+          "open_work",
+          "prepare_attempt",
+          "claim_dispatch",
+          "observe_attempt",
+          "commit_outcome",
+          "control_work",
+          "reserve_tool",
+          "write:method:lab",
+          "write:memory:lab"
+        ],
+        "catalog": [
+          {
+            "body": "{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Only for lab work\"}",
+            "id": "lab-method",
+            "key": "lab-method",
+            "kind": "method",
+            "revision": 1,
+            "scope": "lab"
+          },
+          {
+            "body": "{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Produce the requested bounded result.\"}",
+            "id": "ordinary",
+            "key": "ordinary",
+            "kind": "method",
+            "revision": 1,
+            "scope": "space"
+          },
+          {
+            "body": "{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":{\"executor\":\"independent-controlled\",\"resource_unit\":\"call\"}}",
+            "id": "profile",
+            "key": "profile",
+            "kind": "profile",
+            "revision": 1,
+            "scope": "space"
+          }
+        ],
+        "inputs": [],
+        "manifest": [],
+        "messages": [],
+        "method": {
+          "body": {
+            "application": "active",
+            "schema_ref": null,
+            "source_refs": [],
+            "tombstone": false,
+            "value": "Only for lab work"
+          },
+          "id": "lab-method",
+          "key": "lab-method",
+          "kind": "method",
+          "revision": 1,
+          "scope": "lab"
+        },
+        "prior_messages": [],
+        "prior_results": [],
+        "prior_waits": [],
+        "profile": {
+          "body": {
+            "application": "active",
+            "schema_ref": null,
+            "source_refs": [],
+            "tombstone": false,
+            "value": {
+              "executor": "independent-controlled",
+              "resource_unit": "call"
+            }
+          },
+          "id": "profile",
+          "key": "profile",
+          "kind": "profile",
+          "revision": 1,
+          "scope": "space"
+        },
+        "profile_ref": {
+          "id": "profile",
+          "revision": 1
+        },
+        "tool_ledger": [],
+        "work": {
+          "call_limit": 3,
+          "continuation_policy": "durable",
+          "conversation": "outside",
+          "goal": "Independent fictional task",
+          "id": "outside",
+          "inputs": [],
+          "method_ref": {
+            "id": "lab-method",
+            "revision": 1
+          },
+          "scope": "other"
+        },
+        "resource_state": {
+          "call_limit": 3,
+          "consumed_resource": 1,
+          "unresolved_calls": [
+            "outside-a:action"
+          ]
+        },
+        "raw_messages": []
+      }
+    }
+  ],
+  "outcome": {
+    "attempt_id": "outside-a",
+    "state": "completed",
+    "refs": [],
+    "outputs": [],
+    "accepted": false,
+    "text": "done",
+    "cutoff": 0
+  },
+  "snapshot": {
+    "heads": [
+      {
+        "id": "profile",
+        "revision": 1,
+        "kind": "profile",
+        "key": "profile",
+        "scope": "space"
+      },
+      {
+        "id": "ordinary",
+        "revision": 1,
+        "kind": "method",
+        "key": "ordinary",
+        "scope": "space"
+      },
+      {
+        "id": "lab-method",
+        "revision": 1,
+        "kind": "method",
+        "key": "lab-method",
+        "scope": "lab"
+      }
+    ],
+    "works": [
+      {
+        "id": "outside",
+        "revision": 3,
+        "conversation": "outside",
+        "status": "completed",
+        "generation": 1,
+        "body": "{\"call_limit\":3,\"continuation_policy\":\"durable\",\"conversation\":\"outside\",\"goal\":\"Independent fictional task\",\"id\":\"outside\",\"inputs\":[],\"method_ref\":{\"id\":\"lab-method\",\"revision\":1},\"scope\":\"other\"}",
+        "reserved": 1
+      }
+    ],
+    "attempts": [
+      {
+        "id": "outside-a",
+        "work": "outside",
+        "conversation": "outside",
+        "status": "finished",
+        "generation": 1,
+        "original_cursor": 0,
+        "cutoff": 0,
+        "body": "{\"capabilities\":[\"read\",\"apply_changes\",\"open_work\",\"prepare_attempt\",\"claim_dispatch\",\"observe_attempt\",\"commit_outcome\",\"control_work\",\"reserve_tool\",\"write:method:lab\",\"write:memory:lab\"],\"catalog\":[{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Only for lab work\\\"}\",\"id\":\"lab-method\",\"key\":\"lab-method\",\"kind\":\"method\",\"revision\":1,\"scope\":\"lab\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":\\\"Produce the requested bounded result.\\\"}\",\"id\":\"ordinary\",\"key\":\"ordinary\",\"kind\":\"method\",\"revision\":1,\"scope\":\"space\"},{\"body\":\"{\\\"application\\\":\\\"active\\\",\\\"schema_ref\\\":null,\\\"source_refs\\\":[],\\\"tombstone\\\":false,\\\"value\\\":{\\\"executor\\\":\\\"independent-controlled\\\",\\\"resource_unit\\\":\\\"call\\\"}}\",\"id\":\"profile\",\"key\":\"profile\",\"kind\":\"profile\",\"revision\":1,\"scope\":\"space\"}],\"inputs\":[],\"manifest\":[],\"messages\":[],\"method\":{\"body\":{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":\"Only for lab work\"},\"id\":\"lab-method\",\"key\":\"lab-method\",\"kind\":\"method\",\"revision\":1,\"scope\":\"lab\"},\"prior_messages\":[],\"prior_results\":[],\"prior_waits\":[],\"profile\":{\"body\":{\"application\":\"active\",\"schema_ref\":null,\"source_refs\":[],\"tombstone\":false,\"value\":{\"executor\":\"independent-controlled\",\"resource_unit\":\"call\"}},\"id\":\"profile\",\"key\":\"profile\",\"kind\":\"profile\",\"revision\":1,\"scope\":\"space\"},\"profile_ref\":{\"id\":\"profile\",\"revision\":1},\"tool_ledger\":[],\"work\":{\"call_limit\":3,\"continuation_policy\":\"durable\",\"conversation\":\"outside\",\"goal\":\"Independent fictional task\",\"id\":\"outside\",\"inputs\":[],\"method_ref\":{\"id\":\"lab-method\",\"revision\":1},\"scope\":\"other\"}}"
+      }
+    ],
+    "messages": [],
+    "conversations": [
+      {
+        "id": "outside",
+        "cursor": 0
+      }
+    ],
+    "waits": [],
+    "results": [
+      {
+        "attempt": "outside-a",
+        "slot": "final",
+        "fingerprint": "75d4f3597f26c42123154d4e6d0df61eeebdbf0c7d67543f660a2739499d5bea",
+        "body": "{\"accepted\":false,\"attempt_id\":\"outside-a\",\"cutoff\":0,\"outputs\":[],\"refs\":[],\"state\":\"completed\",\"text\":\"done\"}"
+      }
+    ],
+    "observations": [
+      {
+        "attempt": "outside-a",
+        "event": "terminal",
+        "fingerprint": "fad5a8c0a42435f7d367760a3a086d60ecd842424fd566a1bb745f37c4eeea19",
+        "body": "{\"attempt_id\":\"outside-a\",\"event_id\":\"terminal\",\"kind\":\"terminal\",\"late\":false,\"raw_base64\":\"eyJzdGF0ZSI6ICJjb21wbGV0ZWQiLCAidGV4dCI6ICJkb25lIn0=\"}"
+      }
+    ],
+    "actions": [
+      {
+        "id": "outside-a:action",
+        "attempt": "outside-a",
+        "executor": "review-executor",
+        "state": "terminal",
+        "correlation": null,
+        "reserve": 1
+      }
+    ],
+    "intents": [],
+    "tool_calls": [],
+    "acceptance": [],
+    "snapshot_revision": 11,
+    "limit": {
+      "max_rows_per_table": 1000,
+      "truncated": false
+    }
+  }
+}

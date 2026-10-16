@@ -1,0 +1,5 @@
+{
+  "success": false,
+  "error_type": "CoreError",
+  "error": "stale_basis: sleep-progress:sleep [178eeb27a6f5bd44]"
+}

@@ -1,0 +1,10 @@
+{
+  "seed": "B-resume-exhausted-resource",
+  "test": "test_continuation.py::test_resume_preserves_exhausted_reserve",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n___________________ test_resume_preserves_exhausted_reserve ___________________\ntests\\restart\\test_continuation.py:300: in test_resume_preserves_exhausted_reserve\n    with pytest.raises(CoreError, match=\"resource_exhausted\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_continuation.py::test_resume_preserves_exhausted_reserve\n1 failed in 1.26s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -1165,7 +1165,7 @@\n                 body = loads(work[\"body\"])\n                 for ref in body.get(\"inputs\", []) + [body[\"method_ref\"]]:\n                     self._exact(db, ref)\n-                if state == \"ready\" and work[\"reserved\"] >= body[\"call_limit\"]:\n+                if (print(\"MUTANT_REACHED\", flush=True) or False):\n                     fail(\"resource_exhausted\", \"calls\")\n                 if state == \"running\":\n                     active, _ = self._attempt(db, last[\"attempt\"])\n"
+}

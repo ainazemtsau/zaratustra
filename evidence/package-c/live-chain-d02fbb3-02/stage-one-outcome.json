@@ -1,0 +1,26 @@
+{
+  "stage": "first-sleep",
+  "outcome": {
+    "attempt_id": "sleep-one:c7891425c91e43859a4596d52e8e57a8",
+    "state": "completed",
+    "refs": [
+      {
+        "id": "sleep-one-analysis",
+        "revision": 1
+      },
+      {
+        "id": "memory",
+        "revision": 2
+      },
+      {
+        "id": "sleep-one:progress",
+        "revision": 2
+      }
+    ],
+    "outputs": [],
+    "accepted": false,
+    "text": "Completed this bounded Sleep pass. I reviewed the delivered sources and compared the ordinary visitor observation and successful curator trial with the failures. The existing label-length memory is contradicted by the curator’s 35–50 word guidance; accuracy still requires evidence, as the unsupported pollinator claim shows. I updated that memory with exact provenance. No actual later Work outcome was delivered in this history, so I made no outcome claim.",
+    "cutoff": 0
+  },
+  "invocations": 1
+}

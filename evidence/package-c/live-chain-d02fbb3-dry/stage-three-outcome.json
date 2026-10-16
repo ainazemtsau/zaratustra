@@ -1,0 +1,30 @@
+{
+  "stage": "feedback-sleep-after-reopen",
+  "outcome": {
+    "attempt_id": "sleep-two:00179210c7fa4a8c80bcac7d87e3c899",
+    "state": "completed",
+    "refs": [
+      {
+        "id": "sleep-two:dry-analysis",
+        "revision": 1
+      },
+      {
+        "id": "memory",
+        "revision": 3
+      },
+      {
+        "id": "practice",
+        "revision": 3
+      },
+      {
+        "id": "sleep-two:progress",
+        "revision": 2
+      }
+    ],
+    "outputs": [],
+    "accepted": false,
+    "text": "SCRIPTED DRY RUN ONLY: unavailable factual outcome",
+    "cutoff": 0
+  },
+  "invocations": 1
+}

@@ -1,0 +1,117 @@
+from __future__ import annotations
+import hashlib, json, os, shutil, subprocess, sys, time, tomllib, zipfile
+from pathlib import Path
+from uuid import uuid4
+
+checkout=Path.cwd()
+root=Path('C:/projects/zaratustra/_scratch')/('c-clean-source-3fbbf3e-'+uuid4().hex)
+root.mkdir(exist_ok=False)
+pin='3fbbf3e30cbf907ad3ea2d40686f02914c060dbf'
+paths=subprocess.check_output(['git','ls-tree','-r','--name-only',pin,'--','packages','pyproject.toml','uv.lock','.python-version','README.md','tests/restart/support.py','tests/restart/sleep_support.py'],cwd=checkout,text=True).splitlines()
+source_files=[]
+for name in paths:
+    data=subprocess.check_output(['git','show',pin+':'+name],cwd=checkout)
+    assert data==(checkout/name).read_bytes(),name
+    target_source=root/name;target_source.parent.mkdir(parents=True,exist_ok=True);target_source.write_bytes(data)
+    source_files.append({'path':name,'sha256':hashlib.sha256(data).hexdigest(),'bytes':len(data)})
+proof=checkout/'evidence/package-c/install-3fbbf3e'
+proof.mkdir(parents=True,exist_ok=False)
+target=Path('C:/projects/zaratustra/_scratch')/('c-installed-3fbbf3e-'+uuid4().hex)
+target.mkdir(parents=True,exist_ok=False)
+builds=proof/'physical-builds'
+builds.mkdir()
+uv=shutil.which('uv')
+assert uv
+env=os.environ.copy()
+for key in ['ZARATUSTRA_SQLITE_DLL','PYTHONPATH','PYTEST_ADDOPTS']:
+    env.pop(key,None)
+env['UV_CACHE_DIR']=str(checkout/'_scratch/uv-cache')
+runs=[]
+
+def run(name, argv, cwd=root, child_env=env):
+    started=time.time()
+    result=subprocess.run(argv,cwd=cwd,env=child_env,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    (proof/(name+'.stdout')).write_bytes(result.stdout)
+    (proof/(name+'.stderr')).write_bytes(result.stderr)
+    runs.append({'name':name,'argv':list(map(str,argv)),'cwd':str(cwd),'exit':result.returncode,'seconds':time.time()-started})
+    (proof/'commands.json').write_text(json.dumps(runs,indent=2),encoding='utf-8')
+    assert result.returncode==0,(name,result.stderr.decode('utf-8',errors='replace'))
+    return result
+
+for name in ['zaratustra-core','zaratustra-next']:
+    run('build-'+name,[uv,'build','--package',name,'--out-dir',str(builds)])
+run('venv',[uv,'venv',str(target/'env'),'--python',sys.executable],cwd=target)
+python=target/'env/Scripts/python.exe'
+lock=tomllib.loads((root/'uv.lock').read_text(encoding='utf-8'))
+constraints=target/'constraints.txt'
+constraints.write_text('\n'.join(p['name']+'=='+p['version'] for p in lock['package'] if 'registry' in p['source']),encoding='utf-8')
+core_wheel=next(builds.glob('zaratustra_core-*.whl'))
+app_wheel=next(builds.glob('zaratustra_next-*.whl'))
+run('install-core',[uv,'pip','install','--offline','--constraint',str(constraints),'--python',str(python),str(core_wheel)],cwd=target)
+guard='''
+import importlib.abc, importlib.util, json, sys, sqlite3
+from pathlib import Path
+class Deny(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname,path=None,target=None):
+        if fullname.split('.')[0] in {'zaratustra','dbos','sqlalchemy','pi'}:
+            raise AssertionError('forbidden legacy import: '+fullname)
+sys.meta_path.insert(0,Deny())
+allowed=[Path.cwd().resolve(),Path(sys.prefix).resolve(),Path(sys.base_prefix).resolve()]
+def audit(event,args):
+    if event.startswith('socket.') or event.startswith('subprocess.'):
+        raise AssertionError('forbidden network/process: '+event)
+    if event in {'open','os.listdir','os.scandir','sqlite3.connect','os.mkdir'} and isinstance(args[0],(str,bytes)):
+        actual=Path(args[0]).resolve()
+        if not any(actual.is_relative_to(p) for p in allowed):
+            raise AssertionError('forbidden ambient file: '+str(actual))
+sys.addaudithook(audit)
+'''
+child_env={key:value for key,value in env.items() if key.upper() in {'SYSTEMROOT','WINDIR','COMSPEC','TEMP','TMP'}}
+child_env['PATH']=''
+smoke=guard+'''
+import zaratustra_core
+assert importlib.util.find_spec('zaratustra_app') is None
+assert sqlite3.sqlite_version=='3.50.4',sqlite3.sqlite_version
+core,token=zaratustra_core.Core.initialize(Path('core-only'))
+assert core.connect(token).call('describe_contract',{},'describe')['version']=='wire/v1'
+print(json.dumps({'core':zaratustra_core.__file__,'sqlite':sqlite3.sqlite_version,'python':sys.version,'independent':True}))
+'''
+run('core-only-smoke',[str(python),'-I','-X','utf8','-c',smoke],cwd=target,child_env=child_env)
+run('install-app',[uv,'pip','install','--offline','--python',str(python),str(app_wheel)],cwd=target)
+fixtures=target/'fixtures'
+fixtures.mkdir()
+(fixtures/'__init__.py').write_text('',encoding='utf-8')
+for name in ['support.py','sleep_support.py']:
+    shutil.copyfile(root/'tests/restart'/name,fixtures/name)
+child=guard+'''
+import os
+sys.path.insert(0,str(Path.cwd()))
+import zaratustra_core,zaratustra_app
+from fixtures.sleep_support import adaptation_trace
+assert not Path(zaratustra_core.__file__).is_relative_to(Path(sys.argv[1]))
+assert not Path(zaratustra_app.__file__).is_relative_to(Path(sys.argv[1]))
+os.environ['ZARA_RESTART_EVIDENCE']=str(Path.cwd()/'proof')
+e=adaptation_trace(Path('runtime'),'driver')
+assert e['next_work_received'][0]['method']['revision']==2
+assert next(h for h in e['physical']['heads'] if h['id']=='practice')['revision']==3
+print(json.dumps({'core':zaratustra_core.__file__,'app':zaratustra_app.__file__,'sqlite':sqlite3.sqlite_version,'method_revision':3,'accepted':False}))
+'''
+run('installed-sleep',[str(python),'-I','-X','utf8','-c',child,str(root/'packages')],cwd=target,child_env=child_env)
+shutil.copyfile(target/'proof/sleep-driver.json',proof/'installed-sleep-driver.json')
+site=target/'env/Lib/site-packages'
+production=[]
+for wheel,package in [(core_wheel,'core'),(app_wheel,'app')]:
+    with zipfile.ZipFile(wheel) as archive:
+        for name in archive.namelist():
+            if not name.startswith(('zaratustra_core/','zaratustra_app/')) or not name.endswith(('.py','.ts')):
+                continue
+            built=archive.read(name)
+            installed=(site/name).read_bytes()
+            source=(root/'packages'/package/'src'/name).read_bytes()
+            assert built==installed==source,name
+            production.append({'path':name,'sha256':hashlib.sha256(built).hexdigest(),'bytes':len(built)})
+manifest={'source':pin,'fresh_source_root':str(root),'source_files':source_files,'source_build_outside_checkout':not root.is_relative_to(checkout),'outside_checkout':not target.is_relative_to(checkout),'target':str(target),'uv_lock_sha256':hashlib.sha256((root/'uv.lock').read_bytes()).hexdigest(),'builds':{p.name:{'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size} for p in builds.iterdir()},'verified_source_wheel_installed_files':production,'constraints_sha256':hashlib.sha256(constraints.read_bytes()).hexdigest(),'commands':runs}
+(proof/'manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+print(json.dumps({'success':True,'outside_root':str(target),'files':len(production),'builds':len(list(builds.iterdir()))}))
+
+shutil.copyfile(Path(__file__),proof/'runner.py.txt')

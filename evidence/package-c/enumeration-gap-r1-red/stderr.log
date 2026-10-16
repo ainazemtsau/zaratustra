@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "C:\projects\zaratustra\.worktrees\restart-first-release\_scratch\c-own-enumeration-gap-red\enumeration_gap.py", line 37, in <module>
+    assert 'receipt' not in obs or obs['reopen_start']['has_more'],'Progress can mechanically skip sources and report no further enumeration'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Progress can mechanically skip sources and report no further enumeration

@@ -1,0 +1,7 @@
+{
+  "returncode": 0,
+  "original_probe_sha256": "1c40cc40bb353eabc18bbfde44b6bbebf75f36fa8581dd65ce0fff57f5a93db8",
+  "executed_probe_sha256": "1c40cc40bb353eabc18bbfde44b6bbebf75f36fa8581dd65ce0fff57f5a93db8",
+  "source": "9c469e5 plus pending confirmed corrections",
+  "adapted_only_to_assert_allowed_refusal": false
+}

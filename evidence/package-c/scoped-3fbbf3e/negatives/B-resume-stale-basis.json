@@ -1,0 +1,10 @@
+{
+  "seed": "B-resume-stale-basis",
+  "test": "test_continuation.py::test_resume_current_basis_and_explicit_correction",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n______________ test_resume_current_basis_and_explicit_correction ______________\ntests\\restart\\test_continuation.py:211: in test_resume_current_basis_and_explicit_correction\n    with pytest.raises(CoreError, match=\"stale_basis\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_continuation.py::test_resume_current_basis_and_explicit_correction\n1 failed in 1.43s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -1202,7 +1202,7 @@\n                     state = \"ready\"\n                 body = loads(work[\"body\"])\n                 self._method(db, body)\n-                for ref in body.get(\"inputs\", []) + [body[\"method_ref\"]]:\n+                for ref in ([] if (print(\"MUTANT_REACHED\", flush=True) or True) else body.get(\"inputs\", [])):\n                     self._exact(db, ref)\n                 if state == \"ready\" and work[\"reserved\"] >= body[\"call_limit\"]:\n                     fail(\"resource_exhausted\", \"calls\")\n"
+}

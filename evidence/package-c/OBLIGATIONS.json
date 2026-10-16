@@ -1,0 +1,72 @@
+{
+  "source_commit": "3fbbf3e30cbf907ad3ea2d40686f02914c060dbf",
+  "authority": "Frozen FIRST-RELEASE-PLAN revision 2, sections 5/7/9/10; owner authorization of package C and bounded official Luna evaluation",
+  "mechanical_verdict": "Full native --deliver 1636 PASS/exit0; 78 focused and 238 final scoped checks passed, including 46 reached behavioral controls. Independent source READY_SOURCE_WITH_RECORDED_LIMITS; exact candidate reconciliation pending.",
+  "semantic_verdict": "Independent fixed-rubric bounded positive on exact final source, with a retained refused response and limits. Author instruction-following failure remains. No claim of reliable/general Sleep usefulness, G14 or owner acceptance.",
+  "independent_criteria_map": "independent-r3/verification.json:criteria; independent-r3/report.md",
+  "obligations": [
+    {
+      "section7_item": 1,
+      "requirement": "Restore Work, exact Method, progress, rights, outcomes and reservations before inference",
+      "implementation": ["packages/app/src/zaratustra_app/sleep.py:_run", "packages/app/src/zaratustra_app/coordinator.py:recover"],
+      "checks": ["test_post_c8_crash_registers_delivery_and_changes", "test_resource_pause_crash_recovers_authoritative_cause", "test_unknown_reservation_survives_reopen"],
+      "raw": ["stop-resource-r2-red", "stop-resource-r2-green", "recovery-r7", "crash-paused-r1-red", "crash-paused-r1-green"]
+    },
+    {
+      "section7_item": 2,
+      "requirement": "Bounded high watermark/enumeration/selection, distinct exploration position and exact source prefix",
+      "implementation": ["packages/core/src/zaratustra_core/api.py:_history_items", "packages/core/src/zaratustra_core/api.py:_sleep_progress", "packages/app/src/zaratustra_app/sleep.py:continue_portion"],
+      "checks": ["test_enumeration_cannot_skip_to_finished_cursor", "test_enumeration_sparse_scopes_batch_members_and_late_arrival"],
+      "raw": ["enumeration-gap-r1-red", "enumeration-gap-r1-green"],
+      "limit": "Code checks actual scoped enumeration, not whether exploration or selected questions are meaningful"
+    },
+    {
+      "section7_item": 3,
+      "requirement": "Memory from ordinary work, successes and failures, including raw messages and unknown Attempts",
+      "implementation": ["packages/core/src/zaratustra_core/api.py:read_history", "packages/app/src/zaratustra_app/sleep.py:SLEEP_INSTRUCTIONS"],
+      "checks": ["test_sleep_history_includes_raw_input_and_unknown_attempt", "test_sleep_adaptation_trace"],
+      "live": ["live-chain-d02fbb3-02/stage-one", "live-chain-d02fbb3-four/stage-one"]
+    },
+    {
+      "section7_item": 4,
+      "requirement": "Self-chosen useful questions without an owner complaint; bounded comparison beyond known relations",
+      "implementation": ["packages/app/src/zaratustra_app/sleep.py:SLEEP_INSTRUCTIONS"],
+      "live": ["live-chain-d02fbb3-02/stage-one", "live-chain-d02fbb3-four/stage-one"],
+      "limit": "No subject-specific answer table or semantic text validator. Independent assessment of content is required."
+    },
+    {
+      "section7_item": 5,
+      "requirement": "Exact grounds, observation versus hypothesis, alternatives, counterexamples and previous failed attempts",
+      "implementation": ["packages/core/src/zaratustra_core/api.py:_sleep_progress", "packages/app/src/zaratustra_app/sleep.py:SLEEP_INSTRUCTIONS"],
+      "checks": ["test_progress_rejects_false_claims", "test_prepared_unknown_is_not_delivered"],
+      "live": ["live-chain-d02fbb3-02/stage-one", "live-chain-d02fbb3-02/stage-three"],
+      "limit": "Analysis is an ordinary data record carrying a model claim; structural provenance checks do not establish truth or quality."
+    },
+    {
+      "section7_item": 6,
+      "requirement": "Permitted correction or proposal, scoped versioned Method, no authority or code self-expansion",
+      "implementation": ["packages/core/src/zaratustra_core/api.py:_changes", "packages/core/src/zaratustra_core/api.py:_method"],
+      "checks": ["test_delegated_scope_does_not_expand", "test_core_method_application_guards", "test_proposal_is_not_an_applied_memory_or_method", "test_sleep_adaptation_trace"],
+      "live": ["live-chain-d02fbb3-02/stage-three", "live-chain-d02fbb3-four/stage-one"],
+      "limit": "Rollback creates another retained revision; scripted rollback is mechanical proof, not a model usefulness claim."
+    },
+    {
+      "section7_item": 7,
+      "requirement": "Next Work gets current memory/Method; later actual outcomes return as exact feedback",
+      "implementation": ["packages/app/src/zaratustra_app/coordinator.py:open_work", "packages/core/src/zaratustra_core/api.py:read_history"],
+      "checks": ["test_sleep_adaptation_trace", "test_method_delivery_refuses_stale_current", "test_cli_profile_drift_refused"],
+      "live": ["live-chain-d02fbb3-02", "live-chain-d02fbb3-four"],
+      "limit": "Three-stage chain shows negative outcome to Method revision but lacks subsequent delivery. Four-stage chain shows revised Method delivery, but intervening Sleep omitted analysis. These are separate claims, not one full semantic PASS."
+    },
+    {
+      "section7_item": 8,
+      "requirement": "Honest remainder, unknown use, stop cause and continuation; no reset of reservation",
+      "implementation": ["packages/app/src/zaratustra_app/sleep.py:_checkpoint", "packages/app/src/zaratustra_app/sleep.py:_stop_resource", "packages/core/src/zaratustra_core/api.py:control_work"],
+      "checks": ["test_unknown_reservation_survives_reopen", "test_next_call_beyond_remaining_is_rejected", "test_exhausted_ready_outcome_persists_paused", "test_resource_pause_crash_recovers_authoritative_cause", "test_owner_pause_replaces_previous_resource_cause"],
+      "raw": ["recovery-r7", "access-03"],
+      "limit": "API Responses no-credit error remains reserved/unknown. Official Codex CLI invocation caps do not measure internal physical provider sends."
+    }
+  ],
+  "representation": "One ordinary Work/Attempt, one Core and versioned sleep-progress/v1 data; no SleepRun/current store or competing engine",
+  "outside_scope": ["D/UI", "production restore", "legacy migration", "merge", "push", "publication", "owner acceptance"]
+}

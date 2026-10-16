@@ -1,0 +1,117 @@
+import base64
+import copy
+import json
+import sys
+from pathlib import Path
+from uuid import uuid4
+
+from zaratustra_core import Core, CoreError
+from zaratustra_app import Coordinator, Sleep
+
+HERE = Path(__file__).resolve().parent
+if len(sys.argv) > 1:
+    HERE = HERE / sys.argv[1]
+    HERE.mkdir(parents=True, exist_ok=False)
+
+def dump(name, value):
+    (HERE / (name + '.json')).write_text(json.dumps(value, ensure_ascii=False, indent=2), encoding='utf-8')
+
+def save(c, identity, kind, text, scope='space', revision=0, **extra):
+    return c.call('apply_changes', {'changes': [dict(id=identity, kind=kind, key=identity, scope=scope, body=text, **extra)]}, uuid4().hex, expected_heads={identity: revision})['refs'][0]
+
+def seed(name):
+    core, token = Core.initialize(HERE / name)
+    owner = core.connect(token)
+    save(owner, 'profile', 'profile', {'executor':'independent-controlled','resource_unit':'call'})
+    save(owner, 'ordinary', 'method', 'Produce the requested bounded result.')
+    client = core.connect(core.grant(token, 'review-executor', ['read','apply_changes','open_work','prepare_attempt','claim_dispatch','observe_attempt','commit_outcome','control_work','reserve_tool','write:method:lab','write:memory:lab'], origin='host'))
+    return core, owner, client
+
+def work(identity, method='ordinary', scope='lab', limit=3):
+    return dict(id=identity, conversation=identity, goal='Independent fictional task', scope=scope, method_ref={'id':method,'revision':1}, inputs=[], call_limit=limit, continuation_policy='durable')
+
+class Receiver:
+    resource_upper=1
+    tool_handler=None
+    def __init__(self, response):
+        self.response=response
+        self.deliveries=[]
+    def run(self, context, action):
+        self.deliveries.append({'action':action,'context':context})
+        return json.dumps(self.response).encode()
+
+def test_scope():
+    _, o, c = seed('scope-core')
+    save(o, 'lab-method', 'method', 'Only for lab work', scope='lab')
+    co=Coordinator(c)
+    observations={}
+    try:
+        observations['core_open']=c.call('open_work', work('outside', 'lab-method', 'other'), 'open-cross-scope')
+        p=co.prepare('outside','outside-a',{'id':'profile','revision':1})
+        r=Receiver({'state':'completed','text':'done'})
+        co.dispatch('outside-a',p['generation'],r)
+        observations['received']=r.deliveries
+        observations['outcome']=co.recover('outside-a')
+    except CoreError as e:
+        observations['error']=e.as_dict()
+    observations['snapshot']=co.snapshot()
+    dump('scope-core',observations)
+    print('cross-scope applied:', 'outcome' in observations)
+    return observations
+
+def test_inactive_refresh():
+    _,o,c=seed('inactive-refresh')
+    save(o,'proposed','method','Unapproved method',scope='lab',application='proposal')
+    co=Coordinator(c)
+    co.open_work(work('next'),scope='lab')
+    w=next(x for x in co.snapshot()['works'] if x['id']=='next')
+    obs={}
+    try:
+        obs['refresh']=c.call('control_work',{'work_id':'next','revision':w['revision'],'action':'refresh','method_ref':{'id':'proposed','revision':1,'role':'exact'}},'refresh-to-proposal')
+        p=co.prepare('next','next-a',{'id':'profile','revision':1})
+        r=Receiver({'state':'completed','text':'executed unapproved proposal'})
+        co.dispatch('next-a',p['generation'],r)
+        obs['received']=r.deliveries
+        obs['outcome']=co.recover('next-a')
+    except CoreError as e:
+        obs['error']=e.as_dict()
+    obs['snapshot']=co.snapshot()
+    dump('inactive-refresh',obs)
+    print('proposal dispatched through refresh:', 'outcome' in obs)
+    return obs
+
+def test_exhausted():
+    _,o,c=seed('exhausted')
+    sleep=Sleep(c)
+    save(o,'ordinary-success','data','Successful task with no complaint',scope='lab')
+    sleep.start(work_id='rest',scope='lab',method_id='sleep-lab',call_limit=1,portion=1)
+    r=Receiver({'state':'ready','text':'More material remains; continue bounded analysis'})
+    obs={'first':sleep.run('rest',{'id':'profile','revision':1},r)}
+    try:
+        sleep.run('rest',{'id':'profile','revision':1},r)
+    except CoreError as e:
+        obs['next_error']=e.as_dict()
+    obs['snapshot']=sleep.coordinator.snapshot()
+    obs['progress']=sleep.progress('rest')
+    obs['deliveries']=r.deliveries
+    dump('exhausted',obs)
+    print('exhausted persistent state:',obs['snapshot']['works'][0]['status'],obs.get('next_error'))
+    return obs
+
+def test_new_memory():
+    _,o,c=seed('new-memory')
+    co=Coordinator(c)
+    co.open_work(work('next'),scope='lab')
+    save(o,'new-memory','memory','Newly learned constraint: do not substitute a summary for the requested action.',scope='lab')
+    p=co.prepare('next','next-a',{'id':'profile','revision':1})
+    r=Receiver({'state':'completed','text':'done'})
+    co.dispatch('next-a',p['generation'],r)
+    obs={'received':r.deliveries,'outcome':co.recover('next-a'),'snapshot':co.snapshot()}
+    dump('new-memory',obs)
+    print('new-memory pinned inputs:',[v['id'] for v in r.deliveries[0]['context']['inputs']])
+
+if __name__=='__main__':
+    test_scope()
+    test_inactive_refresh()
+    test_exhausted()
+    test_new_memory()
