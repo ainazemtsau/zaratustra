@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import sys
 from dataclasses import asdict
 from pathlib import Path
 from uuid import uuid4
@@ -14,6 +15,14 @@ from .sleep import Sleep
 
 
 def main() -> int:
+    try:
+        return _main()
+    except CoreError as error:
+        print(json.dumps({"error": error.as_dict()}, ensure_ascii=False), file=sys.stderr)
+        return 1
+
+
+def _main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-root", type=Path, required=True)
     parser.add_argument(

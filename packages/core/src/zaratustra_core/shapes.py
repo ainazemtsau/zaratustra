@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from .types import CoreError
 
 Id = Annotated[str, Field(min_length=1, max_length=240)]
+NonEmptyText = Annotated[str, Field(min_length=1)]
 Positive = Annotated[int, Field(ge=1)]
 Cursor = Annotated[int, Field(ge=0)]
 Hash = Annotated[str, Field(pattern="^[0-9a-f]{64}$")]
@@ -40,7 +41,7 @@ class Change(Shape):
 class Work(Shape):
     id: Id
     conversation: Id
-    goal: Id
+    goal: NonEmptyText
     scope: Id = "space"
     method_ref: Ref
     inputs: list[Ref] = Field(default_factory=list)
@@ -113,7 +114,7 @@ class Observe(Shape):
 
 class Wait(Shape):
     id: Id
-    question: Id
+    question: NonEmptyText
 
 
 class NextWork(Work):

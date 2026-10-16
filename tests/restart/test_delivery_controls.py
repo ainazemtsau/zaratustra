@@ -11,6 +11,56 @@ STORAGE = "core/src/zaratustra_core/storage.py"
 MAINTENANCE = "core/src/zaratustra_core/maintenance.py"
 SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
     (
+        "D-goal-prose-capped-as-identifier",
+        "core/src/zaratustra_core/shapes.py",
+        [
+            ("    goal: NonEmptyText", "    goal: Id"),
+            (
+                "    except ValidationError as exc:",
+                "    except ValidationError as exc:"
+                + chr(10)
+                + '        if any(error["loc"][-1] == "goal" for error in exc.errors()):'
+                + chr(10)
+                + "            "
+                + M,
+            ),
+        ],
+        "test_prose_fields.py::test_long_goal_c8_handoff_keeps_exact_prose",
+    ),
+    (
+        "D-question-prose-capped-as-identifier",
+        "core/src/zaratustra_core/shapes.py",
+        [
+            ("    question: NonEmptyText", "    question: Id"),
+            (
+                "    except ValidationError as exc:",
+                "    except ValidationError as exc:"
+                + chr(10)
+                + '        if any(error["loc"][-1] == "question" for error in exc.errors()):'
+                + chr(10)
+                + "            "
+                + M,
+            ),
+        ],
+        "test_prose_fields.py::test_long_wait_question_is_prose_and_replay_is_send_free",
+    ),
+    (
+        "D-known-core-refusal-escapes-cli",
+        "app/src/zaratustra_app/cli.py",
+        [
+            (
+                "    except CoreError as error:",
+                "    except CoreError as error:"
+                + chr(10)
+                + "        "
+                + M
+                + chr(10)
+                + "        raise",
+            )
+        ],
+        "test_prose_fields.py::test_cli_known_invalid_retains_terminal_without_resend",
+    ),
+    (
         "D-model-tool-independent-budget",
         API,
         [('                    fail("denied", "tool.initial_work")', "                    " + M)],
