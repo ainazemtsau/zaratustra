@@ -1,0 +1,173 @@
+"""Strict command shapes, separate from semantic decisions."""
+
+from __future__ import annotations
+
+from typing import Annotated, Any, Literal
+
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+from .types import CoreError
+
+Id = Annotated[str, Field(min_length=1, max_length=240)]
+Positive = Annotated[int, Field(ge=1)]
+Cursor = Annotated[int, Field(ge=0)]
+
+
+class Shape(BaseModel):
+    model_config = ConfigDict(strict=True, extra="forbid")
+
+
+class Ref(Shape):
+    id: Id
+    revision: Positive
+    role: Literal["exact", "must_be_current"] = "exact"
+
+
+class Change(Shape):
+    id: Id
+    kind: Id
+    key: Id
+    scope: Id = "space"
+    body: Any
+    source_refs: list[Ref] = Field(default_factory=list)
+    schema_ref: Ref | None = None
+    tombstone: bool = False
+
+
+class Work(Shape):
+    id: Id
+    conversation: Id
+    goal: Id
+    method_ref: Ref
+    inputs: list[Ref] = Field(default_factory=list)
+    call_limit: Positive
+    continuation_policy: Literal["durable"]
+    token_limit: Positive | None = None
+    money_limit: str | None = None
+
+
+class Tool(Shape):
+    attempt_id: Id
+    generation: Positive
+    native_id: Id
+
+
+class Changes(Shape):
+    changes: list[Change] = Field(min_length=1, max_length=32)
+    initial_work: Work | None = None
+    tool: Tool | None = None
+
+
+class Reply(Shape):
+    id: Id
+    revision: Positive
+
+
+class Message(Shape):
+    conversation: Id
+    event_id: Id
+    raw_base64: str
+    reply_to: Reply | None = None
+
+
+class Manifest(Shape):
+    sequence: Positive
+    sha256: Annotated[str, Field(pattern="^[0-9a-f]{64}$")]
+
+
+class Prepare(Shape):
+    id: Id
+    work_id: Id
+    work_revision: Positive
+    original_cursor: Cursor
+    cutoff: Cursor
+    message_sequences: list[Positive]
+    manifest: list[Manifest]
+    profile_ref: Ref
+
+
+class Claim(Shape):
+    attempt_id: Id
+    generation: Positive
+    resource_upper: Positive = 1
+
+
+class Evidence(Shape):
+    action_id: Id
+    state: Literal["running", "terminal", "not_received"]
+    receiver_ref: Id
+
+
+class Observe(Shape):
+    attempt_id: Id
+    event_id: Id
+    kind: Literal["terminal", "progress", "unknown", "reconcile"]
+    raw_base64: str | None = None
+    evidence: Evidence | None = None
+
+
+class Wait(Shape):
+    id: Id
+    question: Id
+
+
+class Outcome(Shape):
+    attempt_id: Id
+    generation: Positive
+    terminal_event: Id
+    original_cursor: Cursor
+    processed_cutoff: Cursor
+    state: Literal["waiting", "ready", "completed"]
+    text: str = ""
+    outputs: list[Ref] = Field(default_factory=list)
+    changes: list[Change] = Field(default_factory=list)
+    wait: Wait | None = None
+
+
+class Control(Shape):
+    work_id: Id
+    revision: Positive
+    action: Literal["pause", "cancel", "resume", "refresh"]
+    inputs: list[Ref] | None = None
+    method_ref: Ref | None = None
+
+
+class ReserveTool(Tool):
+    command_id: Id
+    action_id: Id | None = None
+
+
+class Receipt(Shape):
+    command_id: Id
+
+
+class Snapshot(Shape):
+    max_rows: Annotated[int, Field(ge=1, le=1000)] = 1000
+
+
+MODELS: dict[str, type[Shape]] = {
+    "describe_contract": Shape,
+    "read_snapshot": Snapshot,
+    "read_exact": Ref,
+    "lookup_receipt": Receipt,
+    "ingest_message": Message,
+    "apply_changes": Changes,
+    "open_work": Work,
+    "prepare_attempt": Prepare,
+    "claim_dispatch": Claim,
+    "observe_attempt": Observe,
+    "commit_outcome": Outcome,
+    "control_work": Control,
+    "reserve_tool": ReserveTool,
+}
+
+
+def validate(operation: str, payload: dict[str, Any]) -> None:
+    model = MODELS.get(operation)
+    if model is None:
+        raise CoreError("unsupported_capability", operation)
+    try:
+        model.model_validate(payload)
+    except ValidationError as exc:
+        location = ".".join(map(str, exc.errors()[0]["loc"]))
+        raise CoreError("invalid_request", location) from exc

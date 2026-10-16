@@ -49,6 +49,8 @@ def hygiene(root: Path) -> list[str]:
         if is_test and name.startswith("tests/"):
             module = Path(name).parts[1]
             source = root / ("tools" if module == "tools" else f"src/{module}")
+            if module == "restart":
+                source = root / "packages"
             if not source.is_dir():
                 errors.append(f"test module has no source: {name}")
         for node in ast.walk(tree):
@@ -125,7 +127,7 @@ def main() -> int:
     if errors:
         print(chr(10).join(errors))
         return 1
-    files = args.files or ["src", "tools", "tests"]
+    files = args.files or ["src", "tools", "tests", "packages"]
     for name in files:
         path = (ROOT / name).resolve()
         if not path.is_relative_to(ROOT) or not path.exists():
@@ -145,6 +147,15 @@ def main() -> int:
         print("STOP: required tool uv unavailable.")
         return 1
     run([uv, "build", "--no-sources"])
+    for package in ("core", "app"):
+        run(
+            [
+                uv,
+                "build",
+                "--package",
+                "zaratustra-core" if package == "core" else "zaratustra-next",
+            ]
+        )
     print(
         "PASS: native build, hygiene, types, boundaries, tests"
         + (", report structure" if args.deliver else "")

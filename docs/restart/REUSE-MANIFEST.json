@@ -1,0 +1,138 @@
+{
+  "base": "9d903d709783601c4878b707b9618031753a6854",
+  "copied_fragments": [],
+  "references": [
+    {
+      "source_commit": "9d903d709783601c4878b707b9618031753a6854",
+      "source_path": "src/zaratustra/foundation/storage.py",
+      "source_sha256": "719f0a5c148ab3548cf908b36e08f946ba60eebec0b811d2d594dae91137bf5c",
+      "symbols": [
+        "_configure",
+        "_begin",
+        "space_connection"
+      ],
+      "destination": "packages/core/src/zaratustra_core/api.py",
+      "decision": "reference-only independent rewrite; no copied fragment",
+      "reason": "Rewrite short transaction boundary, no old schema/layout/import admission",
+      "dependencies": "sqlite3",
+      "checks": "G3/G4/G6/crashes"
+    },
+    {
+      "source_commit": "9d903d709783601c4878b707b9618031753a6854",
+      "source_path": "src/zaratustra/foundation/operations.py",
+      "source_sha256": "50319ddc4b19e6d8f1a8092071ee873b96a596599404baffb5610fbbab4d3f77",
+      "symbols": [
+        "fingerprint",
+        "_saved_receipt",
+        "_write_receipt",
+        "apply_operation",
+        "_expect_revision",
+        "_validate_provenance",
+        "_authority_actor",
+        "_authorize"
+      ],
+      "destination": "packages/core/src/zaratustra_core/api.py;types.py",
+      "decision": "reference-only independent rewrite; no copied fragment",
+      "reason": "Independent C0, exact revisions, rights; no old dispatcher",
+      "dependencies": "Pydantic2/sqlite3",
+      "checks": "wire/G3/G8/G9"
+    },
+    {
+      "source_commit": "9d903d709783601c4878b707b9618031753a6854",
+      "source_path": "src/zaratustra/foundation/knowledge.py",
+      "source_sha256": "6b99e1256da377f6cf1016ad221c38393e04b907a87a20dfe5211bd1187ff42d",
+      "symbols": [
+        "_require_ref"
+      ],
+      "destination": "packages/core/src/zaratustra_core/api.py:_exact",
+      "decision": "reference-only independent rewrite; no copied fragment",
+      "reason": "Rewrite exact/current ref admission",
+      "dependencies": "sqlite3",
+      "checks": "G5"
+    },
+    {
+      "source_commit": "9d903d709783601c4878b707b9618031753a6854",
+      "source_path": "src/zaratustra/foundation/data_formats.py",
+      "source_sha256": "8fea0154b3e89ed7fb420798d398480996c23fc38c1bfb37a6d36d3051a48bc5",
+      "symbols": [
+        "decimal_value",
+        "canonical_decimal",
+        "validate_field",
+        "validate_values"
+      ],
+      "destination": "packages/core/src/zaratustra_core/formats.py",
+      "decision": "reference-only independent rewrite; no copied fragment",
+      "reason": "Independent neutral strict format validation, no old types/errors",
+      "dependencies": "stdlib Decimal/Pydantic2",
+      "checks": "strict-format cases"
+    },
+    {
+      "source_commit": "9d903d709783601c4878b707b9618031753a6854",
+      "source_path": "src/zaratustra/foundation/execution.py",
+      "source_sha256": "bbff8fc4c37b493660ea8b268fffce4e7601647ae9f6505f6cb369c4fca57322",
+      "symbols": [
+        "_check_attempt_basis"
+      ],
+      "destination": "packages/core/src/zaratustra_core/api.py:_fence",
+      "decision": "reference-only independent rewrite; no copied fragment",
+      "reason": "Rewrite current rights/bases/generation; no WorkPlan grammar",
+      "dependencies": "sqlite3",
+      "checks": "G5/G7/G9"
+    },
+    {
+      "source_commit": "9d903d709783601c4878b707b9618031753a6854",
+      "source_path": "src/zaratustra/pi_adapter/assigned.py",
+      "source_sha256": "be2d5240bd488bf0b22c91ed45b376cbea1278f86a8aa5da7b840fb29e9457bd",
+      "symbols": [
+        "deliver_outbox",
+        "_deliver_outbox_locked",
+        "_execute_under_lock",
+        "_record_unknown_setup_deliveries"
+      ],
+      "destination": "packages/app/src/zaratustra_app/coordinator.py",
+      "decision": "reference-only independent rewrite; no copied fragment",
+      "reason": "Independent durable claim/unknown/retained terminal; no DBOS orchestration",
+      "dependencies": "public zaratustra_core",
+      "checks": "G6/G8/G10"
+    },
+    {
+      "source_commit": "9d903d709783601c4878b707b9618031753a6854",
+      "source_path": "src/zaratustra/pi_adapter/bridge.py",
+      "source_sha256": "cd89ee140c372b30665670521147f204624e121479f30f6a22a56d35d2c0b2f6",
+      "symbols": [
+        "Bridge",
+        "BridgeServer",
+        "BridgeHandler"
+      ],
+      "destination": "packages/app/src/zaratustra_app/adapters/pi/bridge.py",
+      "decision": "reference-only independent rewrite; no copied fragment",
+      "reason": "Independent authenticated local callback and bounded provider forwarding",
+      "dependencies": "stdlib http/urllib",
+      "checks": "real Pi callback/G8/G9"
+    },
+    {
+      "source_commit": "9d903d709783601c4878b707b9618031753a6854",
+      "source_path": "src/zaratustra/pi_adapter/extension.ts",
+      "source_sha256": "0b3d8881fdc0b8ed0a33ccfc39a9658326a4ecfc656869748a9f63d73e62b58c",
+      "symbols": [
+        "default export/tool registration pattern"
+      ],
+      "destination": "packages/app/src/zaratustra_app/adapters/pi/extension.ts",
+      "decision": "reference-only independent rewrite; no copied fragment",
+      "reason": "New small native tool; no old provider/selection/UI state",
+      "dependencies": "actual installed Pi extension API",
+      "checks": "G2/G10"
+    }
+  ],
+  "not_imported": [
+    "zaratustra",
+    "DBOS",
+    "SQLAlchemy",
+    "old SQLite bootstrap",
+    "old user data"
+  ],
+  "deferred": [
+    "artifacts/backup/restore/maintenance G15 in package D",
+    "full Sleep G12/G13 in C"
+  ]
+}

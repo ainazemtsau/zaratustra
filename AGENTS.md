@@ -1,5 +1,15 @@
 # Zaratustra
 
+## Owner-authorized restart — 2026-10-16
+
+`docs/restart/OWNER-LAUNCH.md` records the exact owner acceptance of revision 2
+and implementation authorization for package A only. Its accepted plan/review
+supersede the old one-package/consolidation layout solely in this restart branch.
+`packages/core` and `packages/app` are independent installable packages; no old
+runtime imports or user-data migration. The root native check also covers these
+sources, boundaries, tests and both wheels. Frozen REVIEW.md/validation.config
+remain unchanged. Local technical evidence never means owner acceptance.
+
 ## Current product authority — Core v0.1
 - On 2026-10-01 the owner chose the latest Core/Activity implementation as the
   single main basis and authorized consolidation. Read

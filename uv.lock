@@ -2,6 +2,13 @@ version = 1
 revision = 3
 requires-python = "==3.13.*"
 
+[manifest]
+members = [
+    "zaratustra",
+    "zaratustra-core",
+    "zaratustra-next",
+]
+
 [[package]]
 name = "annotated-types"
 version = "0.8.0"
@@ -536,6 +543,8 @@ dev = [
     { name = "mypy" },
     { name = "pytest" },
     { name = "ruff" },
+    { name = "zaratustra-core" },
+    { name = "zaratustra-next" },
 ]
 
 [package.metadata]
@@ -551,4 +560,28 @@ dev = [
     { name = "mypy", specifier = "==2.3.1" },
     { name = "pytest", specifier = "==9.1.1" },
     { name = "ruff", specifier = "==0.16.6" },
+    { name = "zaratustra-core", editable = "packages/core" },
+    { name = "zaratustra-next", editable = "packages/app" },
 ]
+
+[[package]]
+name = "zaratustra-core"
+version = "0.1.0"
+source = { editable = "packages/core" }
+dependencies = [
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pydantic", specifier = "==2.13.5" }]
+
+[[package]]
+name = "zaratustra-next"
+version = "0.1.0"
+source = { editable = "packages/app" }
+dependencies = [
+    { name = "zaratustra-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "zaratustra-core", editable = "packages/core" }]

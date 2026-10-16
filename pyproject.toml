@@ -51,7 +51,7 @@ testpaths = ["tests"]
 addopts = "--import-mode=importlib"
 
 [tool.importlinter]
-root_packages = ["zaratustra", "tests", "tools"]
+root_packages = ["zaratustra", "zaratustra_core", "zaratustra_app", "tests", "tools"]
 
 [[tool.importlinter.contracts]]
 name = "Installed product never imports development tests or tools"
@@ -198,6 +198,8 @@ forbidden_modules = ["zaratustra.pi_adapter", "zaratustra.release", "zaratustra.
 
 [dependency-groups]
 dev = [
+    "zaratustra-core==0.1.0",
+    "zaratustra-next==0.1.0",
     "import-linter==2.15",
     "mypy==2.3.1",
     "pytest==9.1.1",
@@ -257,3 +259,29 @@ name = "Workspace selection uses public Core below Pi and release"
 type = "forbidden"
 source_modules = ["zaratustra.workspace"]
 forbidden_modules = ["zaratustra.pi_adapter", "zaratustra.release", "zaratustra.core", "zaratustra.cli", "tests", "tools"]
+
+[tool.uv.workspace]
+members = ["packages/core", "packages/app"]
+
+[tool.uv.sources]
+zaratustra-core = { workspace = true }
+zaratustra-next = { workspace = true }
+
+[[tool.importlinter.contracts]]
+name = "Restart Core is independent of clients and legacy"
+type = "forbidden"
+source_modules = ["zaratustra_core"]
+forbidden_modules = ["zaratustra_app", "zaratustra", "tests", "tools"]
+
+[[tool.importlinter.contracts]]
+name = "Restart application uses no legacy or development authority"
+type = "forbidden"
+source_modules = ["zaratustra_app"]
+forbidden_modules = ["zaratustra", "tests", "tools"]
+
+[[tool.importlinter.contracts]]
+name = "Restart application imports only public Core"
+type = "forbidden"
+source_modules = ["zaratustra_app"]
+forbidden_modules = ["zaratustra_core.api", "zaratustra_core.types", "zaratustra_core.shapes", "zaratustra_core.formats"]
+allow_indirect_imports = true
