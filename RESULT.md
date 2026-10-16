@@ -2,11 +2,11 @@
 
 ## outcome
 
-Package B implements accepted revision 2 §10: safe pause/cancel/resume, explicit correction after pause, exact observation intent and preserved receipts. Package A accb0956 is separately owner-accepted as a technical stage. B awaits independent physical review and owner acceptance; no merge/publication.
+Package B implements accepted revision 2 §10: safe pause/cancel/resume, explicit correction after pause, exact observation intent and preserved receipts. Independent B-F1 on first source f3265f5 is corrected: initial Work needs no prior Attempt for safe explicit refresh. Package A accb0956 is separately owner-accepted as a technical stage. Corrected B awaits independent re-review and owner acceptance; no merge/publication.
 
 ## evidence
 
-Finite matrix and exact launch words: docs/restart/PACKAGE-B-RETURN.md. Existing A 124 checks/22 controls remain. B adds 26 behavioral cases and five targeted controls. Full A+B scoped run: 155 PASS/169.25s; final focused check pending. Final source/native/build/install/proof results will be recorded in docs/restart/evidence/package-b/PROVENANCE.json. No full-native PASS claimed yet. Raw A evidence is unchanged; previous root RESULT retained under package-b.
+Finite matrix and exact launch words: docs/restart/PACKAGE-B-RETURN.md. Existing A 124 checks/22 controls remain. Corrected B adds 30 behavioral cases and six targeted controls: focused36 PASS/33.69s. Byte-identical independent B-F1 reproducer RED exit1 on f3265f5 to GREEN exit0 after correction. Earlier155 scoped PASS and interrupted full native belong only to superseded f3265f5; native is INCOMPLETE, no PASS. Fresh scoped/native/build/install/proof results will be recorded in docs/restart/evidence/package-b/PROVENANCE.json. Raw A evidence unchanged; previous root RESULT retained under package-b.
 
 ## assumptions
 

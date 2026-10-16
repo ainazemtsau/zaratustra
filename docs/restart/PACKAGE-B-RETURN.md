@@ -15,6 +15,12 @@ Scope — только §10 B принятой FIRST-RELEASE-PLAN revision 2. Fr
 
 При pause уже отправленная Attempt теряет право публиковать current. Reconcile running поэтому не возобновляет fenced публикацию; требуется доказанный terminal/not_received, затем новый безопасный admission. Сохранённый late terminal остаётся evidence. Для blocked без pause known-running/terminal возобновляет наблюдение той же Attempt и C8 без send.
 
+### Коррекция независимого B-F1
+
+Первый source `f3265f5439a196282e1edfcec455b1a6d3909ce9` получил независимый NOT READY: refresh требовал существующую Attempt. Настоящая initial ready Work после safe pause и correction до первой подготовки навсегда оставалась paused. Прежний тест ready имел ранее подготовленную Attempt и этот случай не покрывал. Независимый byte-identical reproducer SHA256 `1901bce3ea4e787b7f0c46fd978719d0260d0d010ffbed43cbda111b0bdda568` дал RED exit1 на этом source, затем GREEN exit0 после узкого исправления. Исходные report/scripts проверяющего не менялись; собственные RED/GREEN и raw observations сохранены в `evidence/package-b/`.
+
+Refresh теперь не требует Attempt, если её никогда не было: проверяет те же права/Work CAS/status/current refs/Method kind/resource, сохраняет ready и prepare intent. Supersede и удаление attempt-specific intents выполняются только для существующей Attempt. Никакие fences внешних действий не снимаются. Четыре дополнительные проверки ready/paused × memory/Method удерживают input/cursor/reserve, допускают свежую Attempt и один реальный Driver effect. Шестой targeted control возвращает старый mandatory-Attempt guard и должен упасть на предметном assertion достижимости продолжения. Начатый native gate f3265f5 остановлен как INCOMPLETE/SUPERSEDED; не считается PASS и не подменяет новые gates исправленного pin.
+
 ## Конечная матрица поддержанных случаев
 
 | Переход / окно | Обязательное наблюдение | Доказательство |
@@ -33,6 +39,7 @@ Scope — только §10 B принятой FIRST-RELEASE-PLAN revision 2. Fr
 | Retained terminal до C8 / повтор recovery | Fresh interpreter дважды получает одну receipt; sends не растут; один final | A crash cases + B Pi/Driver reopen |
 | Tool receipt сохранена, crash до terminal | Fresh lookup exact receipt, одна subject revision; после reconciliation следующий manifest содержит прежний ledger | B `test_tool_receipt_survives_crash_before_terminal` + A receipt retry |
 | Correction после pause, stale current input | Resume atomic stale_basis; explicit refresh читает revision 2, cursor прежний, fresh generation | B correction + stale-basis mutation |
+| Initial ready / paused до первой Attempt, correction memory/Method | Без claim/action/reserve refresh фиксирует новые refs; original input сохранён; fresh Attempt и один effect достижимы | Четыре B-F1 neighbor cases, byte-identical RED→GREEN, mandatory-Attempt mutation |
 | Correction после dispatch | Новая raw message остаётся pending; precise answer снимает лишь свой wait; следующий manifest содержит обе message | B оба адаптера + A fixed trace |
 | Reopen текущего wait / wrong/free/old reply / replay/race | Только exact current wait/Attempt/generation освобождается; старая receipt не снимает новый wait | A F2 regression/independent rereview и B fresh reopen exact answer |
 | Cancelled/completed/waiting → refresh | Atomic refusal без оживления или обхода адресного вопроса | B три boundary cases |
@@ -45,7 +52,7 @@ G7–G11 расширены этими конкретными случаями, 
 
 ## Проверка и воспроизведение
 
-Новые проверки находятся в `tests/restart/test_continuation.py`, пять targeted controls — `test_continuation_controls.py`. Они физически читают таблицы отдельно от production readers, считают receiver actions и используют новые subprocess для crash/reopen. Negative controls требуют валидного source, reached marker и behavioral assertion; syntax/import failure не засчитывается. Все 124 исходные A checks и 22 A controls сохраняются.
+Новые проверки находятся в `tests/restart/test_continuation.py`: 30 behavioral cases; шесть targeted controls — `test_continuation_controls.py`. Они физически читают таблицы отдельно от production readers, считают receiver actions и используют новые subprocess для crash/reopen. Negative controls требуют валидного source, reached marker и behavioral assertion; syntax/import failure не засчитывается. Все 124 исходные A checks и 22 A controls сохраняются.
 
 ~~~powershell
 .venv/Scripts/python.exe -m pytest tests/restart -q --tb=short --basetemp _scratch/new-b-check

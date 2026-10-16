@@ -219,6 +219,74 @@ def test_resume_current_basis_and_explicit_correction(tmp_path: Path) -> None:
     proof(tmp_path, core, "explicit-current-correction")
 
 
+@pytest.mark.parametrize("stage", ["ready", "paused"])
+@pytest.mark.parametrize("subject", ["memory", "method"])
+def test_initial_work_correction_without_attempt(tmp_path: Path, stage: str, subject: str) -> None:
+    core, token = Core.initialize(tmp_path / "space")
+    owner = core.connect(token)
+    changes = [
+        {"id": name, "kind": name, "key": name, "body": "initial basis"}
+        for name in ("method", "memory", "profile")
+    ]
+    owner.call(
+        "apply_changes", {"changes": changes}, "seed", expected_heads={c["id"]: 0 for c in changes}
+    )
+    ingest(owner, "original", "Retain exact initial request during correction")
+    owner.call(
+        "open_work",
+        {
+            "id": "work",
+            "conversation": "conversation",
+            "goal": "bounded continuation",
+            "method_ref": {"id": "method", "revision": 1, "role": "must_be_current"},
+            "inputs": [{"id": "memory", "revision": 1, "role": "must_be_current"}],
+            "call_limit": 4,
+            "continuation_policy": "durable",
+        },
+        "open",
+    )
+    if stage == "paused":
+        control(owner, "pause")
+    owner.call(
+        "apply_changes",
+        {"changes": [{"id": subject, "kind": subject, "key": subject, "body": "corrected basis"}]},
+        "correct",
+        expected_heads={subject: 1},
+    )
+    messages = inspect(core, "messages")
+    if stage == "paused":
+        before = inspect(core, "works")
+        with pytest.raises(CoreError, match="stale_basis"):
+            control(owner, "resume")
+        assert inspect(core, "works") == before
+    error = None
+    coordinator = Coordinator(owner)
+    try:
+        coordinator.refresh_basis("work")
+    except CoreError as failure:
+        error = failure.as_dict()
+    assert error is None, "Safe explicit correction without an Attempt must be admitted: " + str(
+        error
+    )
+    assert inspect(core, "attempts") == inspect(core, "actions") == []
+    work = inspect(core, "works")[0]
+    assert work["status"] == "ready" and work["reserved"] == 0
+    assert work["generation"] == (3 if stage == "paused" else 2)
+    assert inspect(core, "messages") == messages
+    assert inspect(core, "conversations")[0]["cursor"] == 0
+    prepared_attempt = coordinator.prepare("work", "A1", PROFILE)
+    pinned = prepared_attempt["pinned"]
+    assert pinned["inputs"][0]["revision"] == (2 if subject == "memory" else 1)
+    assert pinned["method"]["revision"] == (2 if subject == "method" else 1)
+    assert pinned["messages"][0]["raw"] == messages[0]["raw"]
+    receiver = Receiver()
+    coordinator.dispatch("A1", prepared_attempt["generation"], Driver(receiver))
+    assert coordinator.recover("A1")["state"] == "waiting"
+    assert receiver.actions == ["A1:action"]
+    assert inspect(core, "acceptance") == []
+    proof(tmp_path, core, "initial-" + stage + "-" + subject, receiver)
+
+
 def test_resume_preserves_exhausted_reserve(tmp_path: Path) -> None:
     core, owner, executor, _ = prepared(tmp_path)
     executor.call(

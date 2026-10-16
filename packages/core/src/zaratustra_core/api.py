@@ -863,11 +863,11 @@ class Core:
                     "SELECT * FROM attempts WHERE work=? ORDER BY rowid DESC LIMIT 1",
                     (work["id"],),
                 ).fetchone()
-                if attempt is None:
-                    fail("stale_basis", "refresh.attempt")
-                claimed = db.execute(
-                    "SELECT * FROM actions WHERE attempt=?", (attempt["id"],)
-                ).fetchone()
+                claimed = (
+                    db.execute("SELECT * FROM actions WHERE attempt=?", (attempt["id"],)).fetchone()
+                    if attempt is not None
+                    else None
+                )
                 if claimed and claimed["state"] not in {"terminal", "not_received"}:
                     fail("outcome_unknown", "refresh.claim", "reconcile")
                 body = loads(work["body"])
@@ -881,16 +881,20 @@ class Core:
                         body[key] = p[key]
                 if self._exact(db, body["method_ref"])["kind"] != "method":
                     fail("invalid_request", "method_ref.kind")
-                db.execute("UPDATE attempts SET status='superseded' WHERE id=?", (attempt["id"],))
+                if attempt is not None:
+                    db.execute(
+                        "UPDATE attempts SET status='superseded' WHERE id=?", (attempt["id"],)
+                    )
                 db.execute(
                     "UPDATE works SET "
                     "status='ready',revision=revision+1,generation=generation+1,body=? WHERE id=?",
                     (dumps(body), work["id"]),
                 )
-                db.execute(
-                    "DELETE FROM intents WHERE kind IN ('dispatch','observe') AND subject=?",
-                    (attempt["id"],),
-                )
+                if attempt is not None:
+                    db.execute(
+                        "DELETE FROM intents WHERE kind IN ('dispatch','observe') AND subject=?",
+                        (attempt["id"],),
+                    )
                 self._intent(db, "prepare", work["id"], {"reason": "fresh_basis"})
                 state = "ready"
             elif action == "resume":

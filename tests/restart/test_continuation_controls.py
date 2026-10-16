@@ -9,6 +9,25 @@ from .test_negative_controls import test_seeded_defect_is_killed as run_seed
 
 SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
     (
+        "B-initial-refresh-requires-attempt",
+        API,
+        [
+            (
+                '            elif action == "refresh":',
+                '            elif action == "refresh":'
+                + chr(10)
+                + '                if not db.execute("SELECT 1 FROM attempts WHERE work=?", '
+                '(work["id"],)).fetchone():'
+                + chr(10)
+                + "                    "
+                + M
+                + chr(10)
+                + '                    fail("stale_basis", "refresh.attempt")',
+            )
+        ],
+        "test_continuation.py::test_initial_work_correction_without_attempt",
+    ),
+    (
         "B-resume-stale-basis",
         API,
         [
