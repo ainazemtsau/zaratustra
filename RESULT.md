@@ -1,31 +1,31 @@
-# Restart package A — F1/F2 corrected technical candidate
+# Restart package B — continuation candidate
 
 ## outcome
 
-Both independent binding findings corrected on source3d4bcbc9acf3a6374643f8c9b72a056e188354b8. F1 validates complete declarations before data; F2 admits replies only for current exact wait/Attempt/generation. Independent physical code re-review CLOSED both findings without new blockers. Final evidence reconciliation and owner acceptance remain separate; no merge/publication.
+Package B implements accepted revision 2 §10: safe pause/cancel/resume, explicit correction after pause, exact observation intent and preserved receipts. Package A accb0956 is separately owner-accepted as a technical stage. B awaits independent physical review and owner acceptance; no merge/publication.
 
 ## evidence
 
-Original unchanged counterexamples:2 RED on e6277cf→2 GREEN on final source. Focused48 PASS; full A124 PASS/242.03s,22/22 behavioral faults killed. Full required native1522 PASS/1518.47s, exit0, format/lint/types/37boundaries/hygiene/report and root/core/app builds PASS. Outside-checkout wheel-only core+driver proof; actual Pi native callback and independent driver fixed traces cursor22. Exact hashes/commands/environment: docs/restart/evidence/GATE-PROVENANCE.json, SOURCE/BUILD/DEPENDENCY/REUSE manifests. Independent own124 PASS/222.01s and extended F1/F2 public probes; checkpoint retained with pending final reconciliation. Original NOT READY unchanged.
+Finite matrix and exact launch words: docs/restart/PACKAGE-B-RETURN.md. Existing A 124 checks/22 controls remain. B adds 26 behavioral cases and five targeted controls. Full A+B scoped run: 155 PASS/169.25s; final focused check pending. Final source/native/build/install/proof results will be recorded in docs/restart/evidence/package-b/PROVENANCE.json. No full-native PASS claimed yet. Raw A evidence is unchanged; previous root RESULT retained under package-b.
 
 ## assumptions
 
-New explicit data-root, Python3.13.7/Pydantic2.13.5/native clean SQLite3.50.4; Pi1.0.4/Node22.19.0. Existing pinned SQLite3.53.3 DLL used only for legacy regression. Unbound pre-correction wait rows fail closed; old/user data migration excluded. PROBA36 unchanged, prototype publication surface absent.
+One explicit new data-root; Python 3.13.7/Pydantic 2.13.5; actual Pi 1.0.4 with fictional localhost provider and independent Driver. Existing trusted host reconciliation, conservative calls reserve and envelope-only epoch limit. Frozen plan/review and PROBA36 unchanged.
 
 ## cuts
 
-A only. One-shot confirmation/pagination/token-money accounting/partial-prefix terminal/general external reconciler/production restore/full Sleep/live usefulness remain unsupported or later scope as documented. No A defect is moved to B–D.
+B only. No full Sleep/live usefulness/general external reconciler/old-user migration/one-shot approvals/arbitrary partial prefix/artifact restore. Unknown effects block dependent continuation; later scope does not waive A failures.
 
 ## cost
 
-Local synthetic processes, localhost scripted provider and disposable environments. No live/paid model, personal data, daemon, old install mutation or publication.
+Local fictional state, fresh crash/reopen subprocesses, native localhost transport and disposable wheel-only environment. No live/paid model or personal data.
 
 ## manual-acceptance
 
-Owner authorized plan/launch/correction, not implementation acceptance. Independent final evidence reconciliation is pending; no Direction close is claimed.
+Pending B. Launch permission and own checks are separate from result acceptance.
 
 ## next
 
-solmax — reconcile exact final candidate/proof bytes in the independent physical review, then owner verdict; no automatic merge/publication.
+solmax — fresh physical independent review of exact B source/candidate, then owner verdict. No automatic merge, push or publication.
 
 END_OF_FILE: RESULT.md

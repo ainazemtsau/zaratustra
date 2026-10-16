@@ -10,6 +10,11 @@ runtime imports or user-data migration. The root native check also covers these
 sources, boundaries, tests and both wheels. Frozen REVIEW.md/validation.config
 remain unchanged. Local technical evidence never means owner acceptance.
 
+The owner accepted A as a technical stage on 2026-10-16 and authorized package B
+followed by an independent review. `docs/restart/PACKAGE-B-RETURN.md` records the
+exact words and bounded continuation matrix. This extends only revision 2 §10 B;
+C/D, live/paid models, merge and publication are not authorized by that launch.
+
 ## Current product authority — Core v0.1
 - On 2026-10-01 the owner chose the latest Core/Activity implementation as the
   single main basis and authorized consolidation. Read

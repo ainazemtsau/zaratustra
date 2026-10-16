@@ -850,10 +850,17 @@ class Core:
                     "IN ('prepared','claimed','unknown')",
                     (work["id"],),
                 )
+                db.execute("DELETE FROM intents WHERE kind='prepare' AND subject=?", (work["id"],))
+                db.execute(
+                    "DELETE FROM intents WHERE kind IN ('dispatch','observe') AND subject IN "
+                    "(SELECT id FROM attempts WHERE work=?)",
+                    (work["id"],),
+                )
             elif action == "refresh":
+                if work["status"] not in {"ready", "running", "paused", "blocked"}:
+                    fail("stale_basis", "work.status")
                 attempt = db.execute(
-                    "SELECT * FROM attempts WHERE work=? AND status IN "
-                    "('prepared','claimed') ORDER BY rowid DESC LIMIT 1",
+                    "SELECT * FROM attempts WHERE work=? ORDER BY rowid DESC LIMIT 1",
                     (work["id"],),
                 ).fetchone()
                 if attempt is None:
@@ -861,15 +868,19 @@ class Core:
                 claimed = db.execute(
                     "SELECT * FROM actions WHERE attempt=?", (attempt["id"],)
                 ).fetchone()
-                if claimed and claimed["state"] != "terminal":
+                if claimed and claimed["state"] not in {"terminal", "not_received"}:
                     fail("outcome_unknown", "refresh.claim", "reconcile")
                 body = loads(work["body"])
+                if work["reserved"] >= body["call_limit"]:
+                    fail("resource_exhausted", "calls")
                 for key in ("inputs", "method_ref"):
                     if key in p:
                         refs = p[key] if key == "inputs" else [p[key]]
                         for ref in refs:
                             self._exact(db, ref)
                         body[key] = p[key]
+                if self._exact(db, body["method_ref"])["kind"] != "method":
+                    fail("invalid_request", "method_ref.kind")
                 db.execute("UPDATE attempts SET status='superseded' WHERE id=?", (attempt["id"],))
                 db.execute(
                     "UPDATE works SET "
@@ -898,6 +909,14 @@ class Core:
                     if last and last["state"] == "running":
                         fail("outcome_unknown", "fenced_running_action", "reconcile")
                     state = "ready"
+                body = loads(work["body"])
+                for ref in body.get("inputs", []) + [body["method_ref"]]:
+                    self._exact(db, ref)
+                if state == "ready" and work["reserved"] >= body["call_limit"]:
+                    fail("resource_exhausted", "calls")
+                if state == "running":
+                    active, _ = self._attempt(db, last["attempt"])
+                    self._check_basis(db, active, work)
                 db.execute(
                     "UPDATE works SET status=?,revision=revision+1 WHERE id=?", (state, work["id"])
                 )
@@ -910,7 +929,12 @@ class Core:
                             last["attempt"],
                         ),
                     )
-                self._intent(db, "observe" if state == "running" else "prepare", work["id"], {})
+                self._intent(
+                    db,
+                    "observe" if state == "running" else "prepare",
+                    last["attempt"] if state == "running" else work["id"],
+                    {},
+                )
             else:
                 fail("invalid_request", "control.action")
             return {"status": state}
