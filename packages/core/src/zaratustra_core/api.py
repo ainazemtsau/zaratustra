@@ -406,6 +406,27 @@ class Core:
             fail("stale_basis", "history.source")
         return cast(dict[str, Any], sources[ref["index"]])
 
+    def _history_items(
+        self, db: sqlite3.Connection, high: int, scope: str, after: list[int] | None = None
+    ) -> Iterator[dict[str, Any]]:
+        after = after or [0, 0]
+        for event in db.execute(
+            "SELECT * FROM events WHERE seq>=? AND seq<=? ORDER BY seq", (after[0], high)
+        ):
+            for index, source in enumerate(self._sources(db, event)):
+                if [event["seq"], index] <= after or (
+                    scope != "space" and source["scope"] != scope
+                ):
+                    continue
+                yield {
+                    "source_ref": {
+                        "sequence": event["seq"],
+                        "index": index,
+                        "sha256": digest(source),
+                    },
+                    "material": source,
+                }
+
     def _progress(
         self, db: sqlite3.Connection, value: dict[str, Any], scope: str, head: sqlite3.Row | None
     ) -> None:
@@ -445,6 +466,17 @@ class Core:
                 fail("stale_basis", "progress.history")
         enumerated = value["enumerated_source_refs"]
         selected = value["selected_source_refs"]
+        cursor = value["enumeration_cursor"]
+        if cursor[0] > value["source_high_watermark"]:
+            fail("invalid_request", "progress.enumeration_cursor")
+        prefix = []
+        for item in self._history_items(db, value["source_high_watermark"], scope):
+            ref = item["source_ref"]
+            if [ref["sequence"], ref["index"]] > cursor:
+                break
+            prefix.append(ref)
+        if enumerated != prefix:
+            fail("invalid_request", "progress.enumeration_prefix")
         for ref in enumerated:
             source = self._source(db, ref)
             if (
@@ -608,27 +640,11 @@ class Core:
             if high > db.execute("SELECT COALESCE(MAX(seq),0) FROM events").fetchone()[0]:
                 fail("invalid_request", "history.high_watermark")
             after = [p.get("after_sequence", 0), p.get("after_index", 0)]
+            if after[0] > high:
+                fail("invalid_request", "history.after")
             items = []
-            for event in db.execute(
-                "SELECT * FROM events WHERE seq>=? AND seq<=? ORDER BY seq", (after[0], high)
-            ):
-                for index, source in enumerate(self._sources(db, event)):
-                    if [event["seq"], index] <= after:
-                        continue
-                    if p.get("scope", "space") != "space" and source["scope"] != p["scope"]:
-                        continue
-                    items.append(
-                        {
-                            "source_ref": {
-                                "sequence": event["seq"],
-                                "index": index,
-                                "sha256": digest(source),
-                            },
-                            "material": source,
-                        }
-                    )
-                    if len(items) > p.get("limit", 32):
-                        break
+            for item in self._history_items(db, high, p.get("scope", "space"), after):
+                items.append(item)
                 if len(items) > p.get("limit", 32):
                     break
             more = len(items) > p.get("limit", 32)

@@ -69,6 +69,17 @@ reason/remainder; unknown external outcome remains blocked. Adjacent exact-role,
 withdrawn/tombstoned Method and residual-upper-bound cases have behavioral tests
 and reached controls. Independent recheck and final evidence are still pending.
 
+The completed review of 9c469e5 closed those first three findings and found three
+more: post-C8 paused crash recovery omitted delivery/change registration; repeated
+CLI profile selection could send a different model from the pinned profile; a
+forged enumeration cursor could skip unlisted sources. Corrections register every
+retained committed outcome before continuing/stopping, refuse changed CLI profile
+descriptors before dispatch, and verify the actual scoped source prefix through
+the cursor. Selection and claimed analysis remain independent. Sparse event IDs,
+several sources per event and late arrivals are covered without requiring globally
+contiguous source IDs. Original RED runs and explicit refusal assertions remain
+retained alongside GREEN. A new independent source recheck is pending.
+
 C owner acceptance, binding independent review and first-release acceptance are
 pending. D/UI/backup/production restore/migration/merge/push/publication are outside
 C. No scripted trace establishes semantic usefulness. Actual Luna reports and

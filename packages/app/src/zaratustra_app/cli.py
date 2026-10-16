@@ -2,10 +2,11 @@
 
 import argparse
 import json
+from dataclasses import asdict
 from pathlib import Path
 from uuid import uuid4
 
-from zaratustra_core import Core
+from zaratustra_core import Core, CoreError, digest
 
 from .executor_port import LiveProfile, Pi
 from .sleep import Sleep
@@ -37,13 +38,28 @@ def main() -> int:
         token = (args.data_root / "owner.credential").read_text(encoding="utf-8").strip()
         owner = core.connect(token)
         profile_id = args.work_id + ":profile"
+        descriptor = asdict(profile) | {
+            "pi_cli": str(pi_cli.resolve()),
+            "resource_upper": Pi.resource_upper,
+        }
         heads = owner.call("read_snapshot", {}, uuid4().hex)["heads"]
-        if not any(h["id"] == profile_id for h in heads):
+        existing = next((h for h in heads if h["id"] == profile_id), None)
+        if existing is not None:
+            pinned = owner.call(
+                "read_exact", {"id": profile_id, "revision": existing["revision"]}, str(uuid4())
+            )
+            if (
+                existing["kind"] != "profile"
+                or existing["revision"] != 1
+                or digest(pinned["body"]["value"]) != digest(descriptor)
+            ):
+                raise CoreError("stale_basis", "profile.configuration", "after_refresh")
+        else:
             owner.call(
                 "apply_changes",
                 {
                     "changes": [
-                        {"id": profile_id, "kind": "profile", "key": profile_id, "body": config}
+                        {"id": profile_id, "kind": "profile", "key": profile_id, "body": descriptor}
                     ]
                 },
                 profile_id + ":create",

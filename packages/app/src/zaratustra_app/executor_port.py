@@ -68,6 +68,13 @@ class LiveProfile:
     timeout: int = 150
 
     def __post_init__(self) -> None:
+        if any(
+            type(v) is not str for v in (self.endpoint, self.model, self.credential_env, self.api)
+        ) or any(
+            type(v) is not int or v < 1
+            for v in (self.max_tokens, self.context_window, self.timeout)
+        ):
+            raise CoreError("invalid_request", "live_profile")
         if (
             not self.endpoint.startswith("https://")
             or not self.model
@@ -75,6 +82,7 @@ class LiveProfile:
             or self.api not in {"openai-responses", "openai-completions"}
             or self.max_tokens < 1
             or self.timeout < 1
+            or self.max_tokens > self.context_window
         ):
             raise CoreError("invalid_request", "live_profile")
 

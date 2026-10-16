@@ -477,3 +477,124 @@ def test_exhausted_ready_outcome_persists_paused(tmp_path: Path) -> None:
         i["kind"] == "resource" and json.loads(i["body"])["reason"] == "resource_exhausted"
         for i in inspect(core, "intents")
     )
+
+
+@pytest.mark.parametrize("state,limit", [("completed", 2), ("ready", 2), ("ready", 4)])
+def test_post_c8_crash_registers_delivery_and_changes(
+    tmp_path: Path, state: str, limit: int
+) -> None:
+    core, _, client = seed(tmp_path)
+    sleep = Sleep(client)
+    sleep.start(work_id="s", call_limit=limit)
+    killed = crash_sleep(core, client, "outcome:" + state)
+    assert killed.returncode == 91, killed.stderr
+    assert any(h["id"] == "learned" for h in inspect(core, "heads"))
+    assert sleep.progress("s")["body"]["value"]["delivered_manifest_refs"] == []
+
+    class NeverInfer:
+        resource_upper = 2
+        tool_handler: Any = None
+        sends = 0
+
+        def run(self, context: Any, action: str) -> bytes:
+            self.sends += 1
+            raise AssertionError("New inference before mechanical recovery observation")
+
+    receiver = NeverInfer()
+    reopened = Sleep(Core(core.root).connect(client.token))
+    if state == "ready" and limit == 4:
+        # Retain ready as stopped while testing projection recovery independently of more execution.
+        work = inspect(core, "works")[0]
+        client.call(
+            "control_work",
+            {"work_id": "s", "revision": work["revision"], "action": "pause"},
+            uuid4().hex,
+        )
+    for _ in range(2):
+        try:
+            reopened.run("s", PROFILE, receiver)
+        except CoreError as error:
+            assert error.code in {"stale_basis", "resource_exhausted"}
+    progress = reopened.progress("s")["body"]["value"]
+    assert progress["delivered_manifest_refs"]
+    assert any(r.endswith(":outcome") for r in progress["applied_receipts"])
+    assert progress["analysis_result_refs"] == []
+    assert progress["remaining_refs"] == progress["enumerated_source_refs"]
+    assert receiver.sends == 0 and inspect(core, "works")[0]["reserved"] == 2
+
+
+def test_sleep_run_does_not_resume_unstarted_owner_pause(tmp_path: Path) -> None:
+    core, _, client = seed(tmp_path)
+    sleep = Sleep(client)
+    sleep.start(work_id="s", call_limit=4)
+    work = inspect(core, "works")[0]
+    client.call(
+        "control_work",
+        {"work_id": "s", "revision": work["revision"], "action": "pause"},
+        uuid4().hex,
+    )
+    receiver = MechanicalSleepReceiver()
+    with pytest.raises(CoreError, match="sleep.paused"):
+        sleep.run("s", PROFILE, Driver(receiver))
+    assert receiver.actions == [] and inspect(core, "works")[0]["status"] == "paused"
+
+
+def test_enumeration_cannot_skip_to_finished_cursor(tmp_path: Path) -> None:
+    core, owner, client = seed(tmp_path)
+    sleep = Sleep(client)
+    sleep.start(work_id="s", call_limit=4, portion=1)
+    change, revision = progress_change(sleep, "s")
+    change["body"]["enumeration_cursor"] = [change["body"]["source_high_watermark"], 2147483647]
+    before = inspect(core, "records")
+    with pytest.raises(CoreError, match="enumeration_prefix"):
+        save(owner, change, revision)
+    assert inspect(core, "records") == before
+    assert Sleep(Core(core.root).connect(client.token)).start(work_id="s", call_limit=4, portion=1)[
+        "has_more"
+    ]
+
+
+def test_enumeration_sparse_scopes_batch_members_and_late_arrival(tmp_path: Path) -> None:
+    _, owner, _ = seed(tmp_path)
+    changes = [
+        {"id": name, "kind": "data", "key": name, "scope": scope, "body": name}
+        for name, scope in [("a", "lab"), ("b", "other"), ("c", "lab"), ("d", "lab")]
+    ]
+    owner.call(
+        "apply_changes",
+        {"changes": changes},
+        "same-event",
+        expected_heads={c["id"]: 0 for c in changes},
+    )
+    for i in range(3):
+        owner.call("read_snapshot", {}, "sourceless-event-" + str(i))
+    sleep = Sleep(owner)
+    sleep.start(work_id="s", scope="lab", method_id="lab-method", call_limit=4, portion=1)
+    first = sleep.progress("s")["body"]["value"]
+    assert first["enumerated_source_refs"][0]["index"] == 0
+    high = first["source_high_watermark"]
+    save(
+        owner,
+        {"id": "late-lab", "kind": "data", "key": "late-lab", "scope": "lab", "body": "later"},
+    )
+    sleep.continue_portion("s", portion=1)
+    second = sleep.progress("s")["body"]["value"]
+    assert second["enumerated_source_refs"][1]["index"] == 2
+    assert (
+        second["enumerated_source_refs"][1]["sequence"]
+        == first["enumerated_source_refs"][0]["sequence"]
+    )
+    # Selection may be empty without falsifying mechanical enumeration or claiming analysis.
+    change, revision = progress_change(sleep, "s")
+    change["body"]["selected_source_refs"] = []
+    save(owner, change, revision)
+    sleep.continue_portion("s", portion=100)
+    final = sleep.progress("s")["body"]["value"]
+    bounded = owner.call(
+        "read_history", {"scope": "lab", "high_watermark": high, "limit": 100}, "bounded-history"
+    )
+    assert final["enumerated_source_refs"] == [s["source_ref"] for s in bounded["sources"]]
+    assert final["source_high_watermark"] == high
+    assert final["analysis_result_refs"] == final["delivered_manifest_refs"] == []
+    assert final["remaining_refs"] == final["enumerated_source_refs"]
+    assert "late-lab" not in {s["material"]["record"]["id"] for s in bounded["sources"]}

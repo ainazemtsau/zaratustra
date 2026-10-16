@@ -281,16 +281,17 @@ class Sleep:
             "Resource exhausted; preserve remainder and reservations. "
             "Owner must choose a new finite Work."
         )
-        self._save(
-            {
-                "id": record["id"],
-                "kind": "data",
-                "key": record["key"],
-                "scope": record["scope"],
-                "body": body,
-            },
-            record["revision"],
-        )
+        if body != record["body"]["value"]:
+            self._save(
+                {
+                    "id": record["id"],
+                    "kind": "data",
+                    "key": record["key"],
+                    "scope": record["scope"],
+                    "body": body,
+                },
+                record["revision"],
+            )
 
     def _run(self, work_id: str, profile_ref: dict[str, Any], executor: Executor) -> dict[str, Any]:
         """One ordinary bounded Attempt. Reopen uses Coordinator.recover, never regeneration."""
@@ -298,6 +299,9 @@ class Sleep:
 
         snapshot = self.coordinator.snapshot()
         attempts = [a for a in snapshot["attempts"] if a["work"] == work_id]
+        work = next(w for w in snapshot["works"] if w["id"] == work_id)
+        if not attempts and work["status"] == "paused":
+            raise CoreError("stale_basis", "sleep.paused", "after_refresh")
         if attempts:
             latest = attempts[-1]
             terminal = any(
@@ -316,9 +320,15 @@ class Sleep:
                 )
                 self._checkpoint(work_id, latest["id"])
                 return recovered
-            if result is not None and work["status"] == "completed":
+            if result is not None:
                 self._checkpoint(work_id, latest["id"])
-                return json.loads(result["body"])  # type: ignore[no-any-return]
+                if work["status"] == "completed":
+                    return json.loads(result["body"])  # type: ignore[no-any-return]
+            if work["status"] == "paused":
+                progress = self.progress(work_id)["body"]["value"]
+                if progress["stop_reason"] == "resource_exhausted":
+                    raise CoreError("resource_exhausted", "calls")
+                raise CoreError("stale_basis", "sleep.paused", "after_refresh")
             if latest["status"] == "prepared":
                 self.coordinator.dispatch(latest["id"], latest["generation"], executor)
                 recovered = self.coordinator.recover(
@@ -359,6 +369,9 @@ class Sleep:
             body["applied_receipts"].append(receipt)
         self._account(body, work_id)
         work = next(w for w in state["works"] if w["id"] == work_id)
+        if body["stop_reason"] == "not_started":
+            body["stop_reason"] = "terminal_received"
+            body["continuation"] = "Analysis progress was not reported; preserve remaining sources."
         if (
             work["status"] == "paused"
             and work["reserved"] >= json.loads(work["body"])["call_limit"]

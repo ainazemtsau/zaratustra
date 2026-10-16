@@ -33,13 +33,35 @@ def main() -> None:
                 and request.operation == "observe_attempt"
                 and request.payload["kind"] == "terminal"
             )
+            or (phase.startswith("outcome:") and request.operation == "commit_outcome")
         ):
             os._exit(91)
         return result
 
     type.__setattr__(Client, "send", crash)
     sleep = Sleep(client)
-    if packet["phase"] == "terminal":
+    if packet["phase"].startswith("outcome:"):
+        state = packet["phase"].split(":")[1]
+
+        def receiver(context: Any, action: str) -> bytes:
+            return json.dumps(
+                {
+                    "state": state,
+                    "text": "Actual retained bounded result",
+                    "changes": [
+                        {
+                            "id": "learned",
+                            "kind": "memory",
+                            "key": "learned",
+                            "body": "Actual permitted correction",
+                        }
+                    ],
+                    "expected_heads": {"learned": 0},
+                }
+            ).encode()
+
+        sleep.run("s", PROFILE, Driver(receiver))
+    elif packet["phase"] == "terminal":
         sleep.run("s", PROFILE, Driver(MechanicalSleepReceiver()))
     else:
         sleep.start(work_id="s", call_limit=4)

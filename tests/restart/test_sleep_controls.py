@@ -10,6 +10,29 @@ from .test_negative_controls import test_seeded_defect_is_killed as run_seed
 SLEEP = "app/src/zaratustra_app/sleep.py"
 SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
     (
+        "C-R4-paused-projection",
+        SLEEP,
+        [
+            (
+                "if result is not None:",
+                "if result is not None and (" + M + ' or work["status"] == "completed"):',
+            )
+        ],
+        "test_sleep.py::test_post_c8_crash_registers_delivery_and_changes[ready-2]",
+    ),
+    (
+        "C-R5-profile-drift",
+        "app/src/zaratustra_app/cli.py",
+        [('or digest(pinned["body"]["value"]) != digest(descriptor)', "or (" + M + " or False)")],
+        "test_sleep_profile.py::test_cli_profile_drift_refused[model-model-b]",
+    ),
+    (
+        "C-R6-enumeration-gap",
+        API,
+        [('fail("invalid_request", "progress.enumeration_prefix")', M)],
+        "test_sleep.py::test_enumeration_cannot_skip_to_finished_cursor",
+    ),
+    (
         "C-R1-core-cross-scope",
         API,
         [('fail("denied", "method.scope")', M)],
