@@ -77,12 +77,12 @@ def test_frozen_02_wheel_refuses_upgraded_data_before_mutation(tmp_path: Path) -
     assert core.data_protocol == 0
     before = domain(core)
     update = core.prepare_update(token, tmp_path / "snapshot")
-    assert update["upgrade"]["from"] == 0 and update["upgrade"]["to"] == 1
-    assert update["compatibility"]["required_protocol"] == 1
+    assert update["upgrade"]["from"] == 0 and update["upgrade"]["to"] == 2
+    assert update["compatibility"]["required_protocol"] == 2
     assert "required_protocol" not in update["manifest"]["compatibility"]
     assert domain(core) == before
     assert core.prepare_update(token, tmp_path / "snapshot") == update
-    assert core.data_protocol == 1
+    assert core.data_protocol == 2
     protected = hashlib.sha256(core.path.read_bytes()).hexdigest()
     script = (
         "import sys;from pathlib import Path;sys.path.insert(0,sys.argv[1]);"
@@ -123,7 +123,7 @@ original=core._locked_transaction
 def transaction():
  with original() as db:
   yield db
-  upgraded=db.execute('PRAGMA user_version').fetchone()[0]==1
+  upgraded=db.execute('PRAGMA user_version').fetchone()[0]==2
  if upgraded and sys.argv[5]=='after_commit':os._exit(91)
 core._locked_transaction=transaction
 core.prepare_update(sys.argv[3],Path(sys.argv[4]))
@@ -147,10 +147,10 @@ core.prepare_update(sys.argv[3],Path(sys.argv[4]))
     )
     assert result.returncode == 91, result.stderr
     reopened = Core(core.root)
-    assert reopened.data_protocol == (0 if phase == "before_commit" else 1)
+    assert reopened.data_protocol == (0 if phase == "before_commit" else 2)
     assert domain(reopened) == before
     report = reopened.prepare_update(token, tmp_path / "snapshot")
-    assert report["upgrade"]["from"] == 0 and reopened.data_protocol == 1
+    assert report["upgrade"]["from"] == 0 and reopened.data_protocol == 2
     assert domain(reopened) == before
     assert (
         len(
@@ -210,7 +210,7 @@ def test_protocol_one_unchanged_update_reentry_preserves_source_and_snapshot(
     source_before = core.path.read_bytes()
     snapshot = tmp_path / "normal-update"
     first = core.prepare_update(token, snapshot)
-    assert first["upgrade"] == {"from": 1, "to": 1}
+    assert first["upgrade"] == {"from": 2, "to": 2}
     snapshot_before = (snapshot / "core.sqlite3").read_bytes()
     assert Core(core.root).prepare_update(token, snapshot) == first
     assert core.path.read_bytes() == source_before
@@ -343,7 +343,7 @@ print(json.dumps({"status":result["status"],"upgrade":result["upgrade"]}))
         timeout=30,
     )
     assert resumed.returncode == 0, resumed.stdout + resumed.stderr
-    assert json.loads(resumed.stdout) == {"status": "compatible", "upgrade": {"from": 1, "to": 1}}
+    assert json.loads(resumed.stdout) == {"status": "compatible", "upgrade": {"from": 2, "to": 2}}
     assert core.path.read_bytes() == source_before
     assert (snapshot / "core.sqlite3").read_bytes() == snapshot_before
 

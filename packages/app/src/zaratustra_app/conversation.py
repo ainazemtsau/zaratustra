@@ -86,6 +86,7 @@ class Conversation:
                         "commit_outcome",
                         "control_work",
                         "reserve_tool",
+                        "renew_setup",
                     ],
                     origin="host",
                 )

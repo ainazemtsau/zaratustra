@@ -32,7 +32,7 @@ def progress_shape(value: dict[str, Any]) -> None:
 
 def protocol(db: sqlite3.Connection) -> None:
     require(
-        db.execute("PRAGMA user_version").fetchone()[0] == 1,
+        db.execute("PRAGMA user_version").fetchone()[0] in {1, 2},
         "continuation.protocol",
         "unsupported_capability",
     )

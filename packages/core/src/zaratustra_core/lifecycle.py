@@ -41,9 +41,9 @@ def compatibility(db: sqlite3.Connection) -> dict[str, Any]:
     """Admit only the exact independent restart layout; never migrate implicitly."""
     rows = schema_rows(db)
     generation = db.execute("PRAGMA user_version").fetchone()[0]
-    if rows != expected_schema() or generation not in {0, 1}:
+    if rows != expected_schema() or generation not in {0, 1, 2}:
         raise CoreError("unsupported_capability", "maintenance.schema")
-    if generation == 1:
+    if generation:
         validate_protocol(db, digest([list(row) for row in rows]))
     result = {
         "contract": "wire/v1",
@@ -188,12 +188,12 @@ def activate(core: Core, token: str, source: Core, source_token: str) -> dict[st
 
 
 def initialize_protocol(db: sqlite3.Connection) -> None:
-    db.execute("PRAGMA user_version=1")
+    db.execute("PRAGMA user_version=2")
     event(
         db,
         "protocol_initialized",
-        "1",
-        {"protocol": 1, "schema_sha256": digest([list(row) for row in schema_rows(db)])},
+        "2",
+        {"protocol": 2, "schema_sha256": digest([list(row) for row in schema_rows(db)])},
     )
 
 
@@ -209,7 +209,10 @@ def validate_protocol(db: sqlite3.Connection, schema_hash: str) -> None:
         fields = [column[0] for column in db.execute("SELECT * FROM events LIMIT 0").description]
         evidence = dict(zip(fields, row, strict=True))
         body = json.loads(evidence["body"])
-        if body.get("protocol") != 1 or body.get("schema_sha256") != schema_hash:
+        if (
+            body.get("protocol") != db.execute("PRAGMA user_version").fetchone()[0]
+            or body.get("schema_sha256") != schema_hash
+        ):
             raise ValueError("protocol evidence mismatch")
         receipt = db.execute(
             "SELECT fingerprint,response FROM receipts WHERE command=?", (evidence["subject"],)
@@ -224,7 +227,10 @@ def validate_protocol(db: sqlite3.Connection, schema_hash: str) -> None:
         ):
             raise ValueError("protocol receipt mismatch")
         if evidence["kind"] == "protocol_upgrade" and (
-            body["from"] != 0 or body["to"] != 1 or len(body["database_sha256"]) != 64
+            body["from"] not in {0, 1}
+            or body["to"] != body["protocol"]
+            or body["from"] >= body["to"]
+            or len(body["database_sha256"]) != 64
         ):
             raise ValueError("protocol upgrade mismatch")
     except (ValueError, KeyError, TypeError) as error:
@@ -290,7 +296,7 @@ def upgrade_fingerprint(db: sqlite3.Connection) -> str:
 
 
 def prepare_update(core: Core, token: str, destination: Path) -> dict[str, Any]:
-    """Snapshot before enabling protocol1. Re-entry recovers the same verified snapshot."""
+    """Snapshot before enabling protocol2. Re-entry recovers the same verified snapshot."""
     from .maintenance import backup_locked
 
     destination = destination.resolve()
@@ -310,8 +316,8 @@ def prepare_update(core: Core, token: str, destination: Path) -> dict[str, Any]:
                 snapshot_generation = snapshot.execute("PRAGMA user_version").fetchone()[0]
             if snapshot_generation != generation:
                 recovered_upgrade = (
-                    generation == 1
-                    and snapshot_generation == 0
+                    generation == 2
+                    and snapshot_generation in {0, 1}
                     and prior is not None
                     and prior["backup"] == str(destination)
                     and prior["database_sha256"] == manifest["database_sha256"]
@@ -322,26 +328,26 @@ def prepare_update(core: Core, token: str, destination: Path) -> dict[str, Any]:
         else:
             manifest = backup_locked(core, token, destination)
         with core._locked_transaction() as db:
-            if generation == 0:
+            if generation < 2:
                 evidence = {
-                    "protocol": 1,
-                    "from": 0,
-                    "to": 1,
+                    "protocol": 2,
+                    "from": generation,
+                    "to": 2,
                     "source": source,
                     "schema_sha256": digest([list(row) for row in schema_rows(db)]),
                     "backup": str(destination),
                     "database_sha256": manifest["database_sha256"],
                     "state_sha256": before,
                 }
-                db.execute("PRAGMA user_version=1")
-                receipt = event(db, "protocol_upgrade", "1", evidence)
-                upgrade = {"from": 0, "to": 1, "receipt_id": receipt}
+                db.execute("PRAGMA user_version=2")
+                receipt = event(db, "protocol_upgrade", "2", evidence)
+                upgrade = {"from": generation, "to": 2, "receipt_id": receipt}
             elif recovered_upgrade:
                 assert prior is not None
-                receipt = "maintenance:protocol_upgrade:1:" + digest(prior)
-                upgrade = {"from": 0, "to": 1, "receipt_id": receipt}
+                receipt = "maintenance:protocol_upgrade:2:" + digest(prior)
+                upgrade = {"from": prior["from"], "to": 2, "receipt_id": receipt}
             else:
-                upgrade = {"from": 1, "to": 1}
+                upgrade = {"from": 2, "to": 2}
             admitted = compatibility(db)
         return {
             "status": "compatible",

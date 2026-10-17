@@ -48,8 +48,8 @@ import zaratustra_core,zaratustra_app.pi_host
 v=json.loads(sys.argv[1])
 assert all(m.version(k)==value for k,value in v.items())
 assert sys.version_info[:2]==(3,13)
-assert zaratustra_core.Core.required_protocol==1
-assert tuple(zaratustra_core.Core.supported_read_protocols)==(0,1)
+assert zaratustra_core.Core.required_protocol==2
+assert tuple(zaratustra_core.Core.supported_read_protocols)==(0,1,2)
 `;
 const verifyData = `from pathlib import Path
 from zaratustra_core import Core
@@ -111,7 +111,7 @@ export async function bootstrap() {
   const manifest = await readFile(join(wheels, "SHA256SUMS"), "utf8");
   const release = JSON.parse(await readFile(join(base, "release.json"), "utf8"));
   const requirements = await readFile(join(base, "requirements.txt"));
-  if (release.core_required_protocol !== 1 || JSON.stringify(release.supported_read_protocols) !== "[0,1]") throw new Error("Unsupported Core protocol manifest.");
+  if (release.core_required_protocol !== 2 || JSON.stringify(release.supported_read_protocols) !== "[0,1,2]") throw new Error("Unsupported Core protocol manifest.");
   if (digest(requirements) !== release.requirements_sha256) throw new Error("Requirements integrity check failed.");
   const names = [];
   for (const line of manifest.trim().split(/\r?\n/)) {

@@ -137,7 +137,7 @@ def handle(request: dict[str, Any]) -> dict[str, Any]:
                 "verdict": value,
             }
         if command in {"attach", "context", "reopen"}:
-            return session.context()
+            return session.reopen() if command in {"attach", "reopen"} else session.context()
         if command == "input":
             return session.input(request["event_id"], request["text"])
         if command == "reply":
@@ -186,12 +186,25 @@ def handle(request: dict[str, Any]) -> dict[str, Any]:
                 ),
             }
         if command == "tool":
-            return session.tool(request["name"], request["call_id"], request["payload"])
+            return session.tool(
+                request["name"], request["call_id"], request["payload"], request.get("origin")
+            )
+        if command == "admit-setup-read":
+            context = session.tool("context", "trusted-read-admission", {}, request.get("origin"))
+            if not context["current"].get("managed_setup"):
+                raise CoreError("denied", "setup.read_profile")
+            return session.observation(
+                uuid4().hex, {"kind": "trusted_read_admission"}, request["origin"]
+            )
         if command == "observation":
-            return session.observation(request["event_id"], request["value"])
+            return session.observation(request["event_id"], request["value"], request.get("origin"))
         if command == "settled":
             return session.settled(
-                request["event_id"], request["text"], request["aborted"], request.get("terminal")
+                request["event_id"],
+                request["text"],
+                request["aborted"],
+                request.get("terminal"),
+                request.get("origin"),
             )
         raise ValueError("Unknown native command")
 

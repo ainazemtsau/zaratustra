@@ -7,10 +7,11 @@ from typing import Any
 
 from zaratustra_core import CoreError, digest
 
-ROUTING_ID = "conversation-routing-method"
+ROUTING_ID = "conversation-routing-method-v2"
+SETUP_ID = "activity-setup-method-v1"
 EXECUTION_ID = "conversation-execution-method"
 
-ROUTING_METHOD = """conversation-routing/1
+ROUTING_METHOD = """conversation-routing/2
 Choose the Activity for the exact pending human request and corrections in
 raw_messages. Read the catalog and retained conversation before choosing.
 Reuse an existing Activity only when it is the same work; preserve its identity,
@@ -27,8 +28,9 @@ object, not a record wrapper. Allowed kinds activity/data; memory and Method nee
 explicit delegation. source_refs are subject record refs, never Work/message IDs.
 Return one JSON object with state completed, text empty, changes, expected_heads,
 outputs and next_work:{scope:chosen_activity_id,goal:the actual requested useful
-work,inputs:[exact subject refs needed for that work]}. The host supplies identity,
-conversation, finite remaining budget and the pinned execution Method. Do not
+work,inputs:[exact subject refs needed for that work],setup:true when the request
+is to create/develop a usable Activity in saved steps, otherwise false}. The host supplies identity,
+conversation, current resource policy and the pinned execution Method. Do not
 start the useful work or call zara_change in this discovery phase. Core atomically
 publishes Activity + scoped continuation; the original human input stays pending
 for that Work. This intermediate result is not a user response or acceptance.
@@ -60,6 +62,28 @@ owner acceptance, proof of truth or completion of the whole Activity.
 """
 
 
+SETUP_METHOD = """activity-setup/1
+Create a useful Activity with the human, in small durable meaningful steps.
+Use the actual request, known Activity, current memory, previous checkpoint and
+replies. You decide useful structures, content and whether research is needed;
+no fixed questionnaire, daily template, mandatory number of steps or interview.
+Only trusted Core reads and zara_read_file are available in this setup profile.
+Never claim unavailable research or scripts were executed. Explain a needed
+unsupported tool and ask or finish a scoped proposal instead of pretending.
+No intermediate zara_change: stage changes + exact outputs with zara_result,
+then speak the actual useful reply. Final commit atomically retains data, Result
+and a successor or addressed wait. Need an intermediate save? Finish a small
+step with next_work:{goal:next useful step,inputs:[exact record refs]}. Omit
+next_work when the useful creation is complete; use state waiting + wait for a
+necessary human answer. A step is not owner acceptance of the whole Activity.
+Keep the same Activity identity. Allowed domain writes are Activity/data in this
+Activity. Method/memory publication requires an explicit grant, so retain a
+proposal as scoped data when needed. Do not rewrite the pinned setup Method.
+Changes use expected_heads and exact source refs; free body is your subject data.
+Avoid repeating previous completed work: retained Result/chain is authoritative.
+"""
+
+
 def response_contract(routing: bool) -> dict[str, Any]:
     return {
         "version": "ordinary-routing/1" if routing else "ordinary-execution/2",
@@ -84,7 +108,12 @@ def outcome(
 ) -> dict[str, Any]:
     """Normalize trusted identity/budget; never invent Activity or subject content."""
     body = json.loads(work["body"])
-    if body["method_ref"]["id"] not in {ROUTING_ID, EXECUTION_ID}:
+    if body["method_ref"]["id"] not in {
+        ROUTING_ID,
+        EXECUTION_ID,
+        SETUP_ID,
+        "conversation-routing-method",
+    }:
         return output  # Historical/custom Work keeps its original contract.
 
     def invalid() -> None:
@@ -120,14 +149,16 @@ def outcome(
         )
     ):
         invalid()
-    routing = body["method_ref"]["id"] == ROUTING_ID
+    routing = body["method_ref"]["id"] in {ROUTING_ID, "conversation-routing-method"}
+    setup = body["method_ref"]["id"] == SETUP_ID
     scope = body.get("scope", "space")
     if routing:
         child = output.get("next_work")
         if (
             output.get("state") != "completed"
             or not isinstance(child, dict)
-            or set(child) - {"scope", "goal", "inputs"}
+            or set(child) - {"scope", "goal", "inputs", "setup"}
+            or type(child.get("setup", False)) is not bool
             or not isinstance(child.get("scope"), str)
             or not child.get("scope")
             or child.get("scope") == "space"
@@ -137,17 +168,36 @@ def outcome(
         ):
             raise CoreError("invalid_request", "ordinary.routing_outcome", "after_refresh")
         scope = child["scope"]
-    elif output.get("next_work") is not None:
+    elif not setup and output.get("next_work") is not None:
         raise CoreError("invalid_request", "ordinary.unexpected_continuation", "after_refresh")
-    if not routing:
-        subject_scope(output.get("changes", []), scope)
+    subject_scope(output.get("changes", []), scope)
     selected = next((r for r in output.get("outputs", []) if r.get("id") == scope), None)
     if selected is None:
         raise CoreError("invalid_request", "ordinary.activity_output", "after_refresh")
-    if routing:
+    if setup and output.get("next_work") is not None:
+        child = output["next_work"]
+        if (
+            not isinstance(child, dict)
+            or set(child) - {"goal", "inputs"}
+            or not isinstance(child.get("goal"), str)
+            or not child["goal"]
+            or not refs(child.get("inputs", []))
+            or output["state"] != "completed"
+        ):
+            invalid()
+    if routing or (setup and output.get("next_work") is not None):
         assert isinstance(child, dict)
         pinned = json.loads(attempt["body"])
-        method = next((r for r in pinned["catalog"] if r["id"] == EXECUTION_ID), None)
+        new_native_activity = (
+            body.get("execution_policy") == "setup-routing/v1"
+            and output.get("expected_heads", {}).get(scope) == 0
+            and any(
+                c.get("kind") == "activity" and c.get("id") == scope
+                for c in output.get("changes", [])
+            )
+        )
+        method_id = SETUP_ID if setup or child.get("setup") or new_native_activity else EXECUTION_ID
+        method = next((r for r in pinned["catalog"] if r["id"] == method_id), None)
         if method is None:
             raise CoreError("invalid_request", "ordinary.execution_method", "after_refresh")
         requested = [r for r in child.get("inputs", []) if r["id"] != scope]
@@ -156,8 +206,8 @@ def outcome(
         # updating the Activity before the final outcome.
         requested.append(selected | {"role": "exact"})
         output = output | {
-            "text": "",
-            "processed_cutoff": attempt["original_cursor"],
+            "text": "" if routing else output["text"],
+            "processed_cutoff": attempt["original_cursor"] if routing else attempt["cutoff"],
             "next_work": {
                 "id": "continued:" + digest(attempt["id"]),
                 "conversation": body["conversation"],
@@ -175,6 +225,7 @@ def outcome(
                     else max(0, body["call_limit"] - work["reserved"])
                 ),
                 "continuation_policy": "durable",
+                "execution_policy": "setup-final-only/v1" if method_id == SETUP_ID else "standard",
             },
         }
     return output

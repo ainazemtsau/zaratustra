@@ -7,11 +7,11 @@ from typing import Any
 
 from pydantic import BaseModel, ValidationError, create_model
 
-from .shapes import Outcome, SleepProgress, SleepProgressV2
+from .shapes import Outcome, SetupNextStep, SleepProgress, SleepProgressV2
 from .types import CoreError, Request, wire
 
 
-def metadata_model() -> Any:
+def metadata_model(setup: bool = False) -> Any:
     fields: dict[str, Any] = {}
     for name in ("state", "outputs", "changes", "wait"):
         field = deepcopy(Outcome.model_fields[name])
@@ -20,10 +20,13 @@ def metadata_model() -> Any:
         fields[name] = (field.annotation, field)
     heads = deepcopy(Request.model_fields["expected_heads"])
     fields["expected_heads"] = (heads.annotation, heads)
+    if setup:
+        fields["next_work"] = (SetupNextStep | None, None)
     return create_model("OutcomeMetadata", __config__=Outcome.model_config, **fields)
 
 
 _METADATA = metadata_model()
+_SETUP_METADATA = metadata_model(True)
 _PROGRESS: dict[str, type[BaseModel]] = {
     "sleep-progress/v1": SleepProgress,
     "sleep-progress/v2": SleepProgressV2,
@@ -35,10 +38,10 @@ def shape_error(error: ValidationError, prefix: str = "") -> CoreError:
     return CoreError("invalid_request", prefix + path)
 
 
-def validate_outcome_metadata(metadata: dict[str, Any]) -> None:
+def validate_outcome_metadata(metadata: dict[str, Any], *, setup: bool = False) -> None:
     """Validate shape only, without admission, reference resolution or terminal effects."""
     try:
-        value = _METADATA.model_validate(metadata)
+        value = (_SETUP_METADATA if setup else _METADATA).model_validate(metadata)
     except ValidationError as error:
         raise shape_error(error) from error
     for index, change in enumerate(value.changes):
@@ -60,6 +63,7 @@ def outcome_metadata_contract() -> dict[str, Any]:
     """Return fresh schemas/guidance; callers cannot mutate shared validation state."""
     return {
         "metadata_schema": _METADATA.model_json_schema(),
+        "setup_metadata_schema": _SETUP_METADATA.model_json_schema(),
         "progress_schemas": {tag: model.model_json_schema() for tag, model in _PROGRESS.items()},
         "guidance": [
             "Metadata source_refs and schema_ref are record refs: id, revision, optional role.",

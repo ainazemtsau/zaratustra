@@ -81,6 +81,7 @@ OPS = READ_OPS | {
     "control_work",
     "reserve_tool",
     "stage_artifact",
+    "renew_setup",
 }
 SUBJECTS = {"activity", "data", "memory", "method", "profile"}
 
@@ -169,8 +170,8 @@ class _Preview(Exception):
 
 
 class Core:
-    required_protocol = 1
-    supported_read_protocols = (0, 1)
+    required_protocol = 2
+    supported_read_protocols = (0, 1, 2)
 
     def __init__(self, root: Path):
         self.root = Path(root)
@@ -749,6 +750,11 @@ class Core:
     ) -> dict[str, Any]:
         body = dict(body)
         body.setdefault("call_limit", None)
+        if (
+            body.get("execution_policy") in {"setup-final-only/v1", "setup-routing/v1"}
+            and db.execute("PRAGMA user_version").fetchone()[0] < 2
+        ):
+            fail("unsupported_capability", "setup.protocol")
         self._method(db, body)
         for ref in body.get("inputs", []):
             self._exact(db, ref)
@@ -789,6 +795,11 @@ class Core:
         child = payload.get("next_work")
         if child is None:
             return None
+        if loads(parent["body"]).get("execution_policy") == "setup-final-only/v1" and (
+            child.get("execution_policy") != "setup-final-only/v1"
+            or child.get("scope", "space") != loads(parent["body"]).get("scope", "space")
+        ):
+            fail("denied", "setup.successor_policy")
         from .continuation import successor
 
         if successor(db, attempt["id"]):
@@ -946,6 +957,15 @@ class Core:
                 "readiness": "Client.preview(Request): same admission, rollback",
                 "scope": "single_local_space",
                 "controls": ["pause", "cancel", "resume", "refresh"],
+                "setup": {
+                    "policies": ["setup-routing/v1", "setup-final-only/v1"],
+                    "admission_profile": "native-setup/v1",
+                    "renewal": (
+                        "renew_setup: exact attempt/generation/work_revision CAS; no terminal"
+                    ),
+                    "effects": "final commit only; intermediate reserved writes denied",
+                    "unknown": "old actions/observations/reservations retained, never not_received",
+                },
             }
         if op == "lookup_receipt":
             row = db.execute(
@@ -1094,6 +1114,11 @@ class Core:
         if op == "reserve_tool":
             attempt, work = self._attempt(db, p["attempt_id"])
             self._tool_authority(db, actor, attempt, work, p["generation"])
+            if loads(work["body"]).get("execution_policy") in {
+                "setup-final-only/v1",
+                "setup-routing/v1",
+            }:
+                fail("denied", "setup.final_only")
             old = db.execute(
                 "SELECT * FROM tool_calls WHERE attempt=? AND native_id=?",
                 (attempt["id"], p["native_id"]),
@@ -1114,6 +1139,11 @@ class Core:
                     fail("denied", "tool.initial_work")
                 attempt, work = self._attempt(db, correlation["attempt_id"])
                 self._tool_authority(db, actor, attempt, work, correlation["generation"])
+                if loads(work["body"]).get("execution_policy") in {
+                    "setup-final-only/v1",
+                    "setup-routing/v1",
+                }:
+                    fail("denied", "setup.final_only")
                 tool = db.execute(
                     "SELECT * FROM tool_calls WHERE attempt=? AND native_id=?",
                     (attempt["id"], correlation["native_id"]),
@@ -1159,6 +1189,10 @@ class Core:
             profile = self._exact(db, p["profile_ref"])
             if profile["kind"] != "profile":
                 fail("invalid_request", "profile_ref.kind")
+            if body.get("execution_policy") in {"setup-final-only/v1", "setup-routing/v1"}:
+                from .setup import profile as setup_profile
+
+                setup_profile(db, actor, work, profile)
             tool_ledger = [
                 dict(row)
                 for row in db.execute(
@@ -1515,6 +1549,10 @@ class Core:
             if state == "ready":
                 self._intent(db, "prepare", work["id"], {})
             return result
+        if op == "renew_setup":
+            from .setup import renew
+
+            return renew(self, db, actor, p)
         if op == "control_work":
             work = db.execute("SELECT * FROM works WHERE id=?", (p["work_id"],)).fetchone()
             if work is None or work["revision"] != p["revision"]:

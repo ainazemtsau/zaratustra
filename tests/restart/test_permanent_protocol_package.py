@@ -11,6 +11,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+from zaratustra_core import Core
 
 from tools.build_permanent_package import ROOT, build
 
@@ -91,9 +92,9 @@ def protected(root: Path) -> dict[str, list[tuple[object, ...]]]:
 
 def test_manifest_declares_durable_protocol(protocol_package: Path) -> None:
     release = json.loads((protocol_package / "release.json").read_text(encoding="utf-8"))
-    assert release["versions"] == {"zaratustra-core": "0.3.0", "zaratustra-next": "0.3.0"}
-    assert release["core_required_protocol"] == 1
-    assert release["supported_read_protocols"] == [0, 1]
+    assert release["versions"] == {"zaratustra-core": "0.4.0", "zaratustra-next": "0.4.0"}
+    assert release["core_required_protocol"] == 2
+    assert release["supported_read_protocols"] == [0, 1, 2]
 
 
 def test_unsupported_manifest_stops_before_runtime_or_data(
@@ -152,7 +153,7 @@ def test_actual_020_update_recovers_after_marker_before_publication(
     with sqlite3.connect(data / "core.sqlite3") as db:
         count = db.execute("SELECT COUNT(*) FROM events WHERE kind='protocol_upgrade'").fetchone()
         assert count == (1,)
-        assert db.execute("PRAGMA user_version").fetchone() == (1,)
+        assert db.execute("PRAGMA user_version").fetchone() == (2,)
     assert protected(data) == rows
     assert (data / "owner.credential").read_bytes() == credential
     # A real frozen old wheel must refuse before a command creates any receipt/event.
@@ -205,7 +206,7 @@ def test_actual_020_update_recovers_after_marker_before_publication(
     )
     assert install(protocol_package, root).exists()
     with sqlite3.connect(legacy / "core.sqlite3") as db:
-        assert db.execute("PRAGMA user_version").fetchone() == (1,)
+        assert db.execute("PRAGMA user_version").fetchone() == (2,)
     assert protected(legacy) == legacy_rows
 
 
@@ -231,7 +232,6 @@ def test_native_protocol_one_update_snapshot_reentry(
     data = root / "data"
     run_python(previous, SEED, data)
     rows = protected(data)
-    database = (data / "core.sqlite3").read_bytes()
     credential = (data / "owner.credential").read_bytes()
     selected = (root / ".current").read_bytes()
     interrupted = tmp_path / "interrupted"
@@ -255,14 +255,14 @@ def test_native_protocol_one_update_snapshot_reentry(
         assert db.execute("PRAGMA user_version").fetchone() == (1,)
     assert protected(snapshot) == rows
     assert protected(data) == rows
-    assert (data / "core.sqlite3").read_bytes() == database
+    assert Core(data).data_protocol == 2
     assert (data / "owner.credential").read_bytes() == credential
     snapshot_bytes = (snapshot / "core.sqlite3").read_bytes()
     updated = install(protocol_package, root)
     assert updated != previous
     assert install(protocol_package, root) == updated
     assert protected(data) == rows
-    assert (data / "core.sqlite3").read_bytes() == database
+    assert Core(data).data_protocol == 2
     assert (data / "owner.credential").read_bytes() == credential
     assert (snapshot / "core.sqlite3").read_bytes() == snapshot_bytes
     assert len(list((root / "backups").iterdir())) == 2

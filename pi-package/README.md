@@ -12,13 +12,16 @@ compatible dependency wheels are bundled. Pi keeps its own authentication.
 Runtime code uses Python and TypeScript without PowerShell. Windows entry is
 tested here; macOS/Linux are portable targets, not native-test claims.
 
-Core/app0.3 supports data protocols0 and1 and requires protocol1 for verified late
-Sleep succession. A compatible update verifies an exact pre-upgrade snapshot,
-then atomically records protocol1 without recreating Activity/history/refs. Old
-Core0.2 refuses the upgraded root before mutation. Interrupted runtime publication
-can be completed by re-entering through the verified new package; the committed
-data protocol is never silently downgraded. This is mechanical format evolution,
-not semantic migration of personal content.
+Core/app0.4 admits protocols0/1/2 and upgrades to protocol2 before publishing a
+new runtime. It preserves Activity/history/refs and refuses old0.3 writers.
+Setup creation uses a versioned common Method, one Work per useful saved step,
+and atomic final changes+Result+successor/wait. No intermediate zara_change or
+external write tools run in setup. New selected Activities cannot opt out by
+omitting the model setup hint. Ordinary existing Activities keep coding tools.
+On fresh entry, Core recovers retained results or safely fences an interrupted
+final-only setup Attempt; unknown inference and resource history remain retained.
+A unique waiting question accepts a normal later reply, without IDs or JSON.
+See docs/restart/ACTIVITY-CREATION.md in the source for exact scope and limits.
 
 Install this Pi package and run `/zaratustra`. First use bootstraps the two
 verified Python wheels using uv/Python; the command then returns to ordinary Pi.

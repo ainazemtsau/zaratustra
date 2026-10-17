@@ -93,8 +93,8 @@ def build(output: Path, source_dist: Path | None = None) -> Path:
                 {
                     "versions": versions,
                     "requirements_sha256": sha256(requirement_file),
-                    "core_required_protocol": 1,
-                    "supported_read_protocols": [0, 1],
+                    "core_required_protocol": 2,
+                    "supported_read_protocols": [0, 1, 2],
                 },
                 sort_keys=True,
                 indent=2,

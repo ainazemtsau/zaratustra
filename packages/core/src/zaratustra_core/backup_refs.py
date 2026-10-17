@@ -121,7 +121,7 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
                 and link["processed_cutoff"] == result_body["cutoff"]
             )
             if late:
-                require(db.execute("PRAGMA user_version").fetchone()[0] == 1)
+                require(db.execute("PRAGMA user_version").fetchone()[0] in {1, 2})
                 require(
                     result_body["state"] == "completed"
                     and "next_work_id" not in result_body
@@ -544,7 +544,7 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
             if value.get("format") == "sleep-progress/v2":
                 from .continuation import progress_proof
 
-                require(db.execute("PRAGMA user_version").fetchone()[0] == 1)
+                require(db.execute("PRAGMA user_version").fetchone()[0] in {1, 2})
                 method = record(value["method_ref"], "method")
                 require(method["scope"] in {"space", row["scope"]})
                 progress_proof(core, db, value, row["scope"])

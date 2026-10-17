@@ -295,7 +295,7 @@ owner.call('apply_changes',{'changes':[{'id':'kept-activity','kind':'activity','
         manifest_body["database_sha256"] == hashlib.sha256(backup_database.read_bytes()).hexdigest()
     )
     with sqlite3.connect(root / "data/core.sqlite3") as original:
-        assert original.execute("PRAGMA user_version").fetchone() == (1,)
+        assert original.execute("PRAGMA user_version").fetchone() == (2,)
         assert {
             table: list(original.execute('SELECT * FROM "' + table + '"')) for table in tables
         } == protected

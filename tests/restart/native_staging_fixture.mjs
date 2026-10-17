@@ -28,7 +28,7 @@ const bridge=await import(pathToFileURL(join(extensionDir,'bootstrap.mjs')).href
 const receipts=[...bridge.receipts()];
 async function request(command,fields={}){return JSON.parse(await bridge.run(python,['-m','zaratustra_app.pi_host'],JSON.stringify({data_root:await bridge.dataRoot(),session_id:session.sessionManager.getSessionId(),command,...fields})));}
 const context=await request('context');
-const results=await request('tool',{name:'read',call_id:'fictional-inspect-results',payload:{operation:'read_page',arguments:{table:'results',limit:100}}});
-const observations=await request('tool',{name:'read',call_id:'fictional-inspect-observations',payload:{operation:'read_page',arguments:{table:'observations',limit:100}}});
+const results=await request('tool',{origin:context.current?.attempt?context.current:undefined,name:'read',call_id:'fictional-inspect-results',payload:{operation:'read_page',arguments:{table:'results',limit:100}}});
+const observations=await request('tool',{origin:context.current?.attempt?context.current:undefined,name:'read',call_id:'fictional-inspect-observations',payload:{operation:'read_page',arguments:{table:'observations',limit:100}}});
 console.log(JSON.stringify({events,receipts,context,results,observations,messages:session.messages,provenance:{pi:sdk.VERSION,semanticEvidence:false,provider:'fictional-localhost-only',bootstrap:'source-interpreter seam',extensionSHA256:createHash('sha256').update(await readFile(join(extensionDir,'extension.ts'))).digest('hex')}}));
 session.dispose();

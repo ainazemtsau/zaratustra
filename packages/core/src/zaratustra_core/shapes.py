@@ -49,6 +49,7 @@ class Work(Shape):
     continuation_policy: Literal["durable"]
     token_limit: Positive | None = None
     money_limit: str | None = None
+    execution_policy: Literal["standard", "setup-final-only/v1", "setup-routing/v1"] = "standard"
 
 
 class ContinuationFrom(Shape):
@@ -142,6 +143,11 @@ class NextWork(Work):
     call_limit: Cursor | None = None
 
 
+class SetupNextStep(Shape):
+    goal: NonEmptyText
+    inputs: list[Ref] = Field(default_factory=list)
+
+
 class Outcome(Shape):
     attempt_id: Id
     generation: Positive
@@ -168,6 +174,12 @@ class Control(Shape):
 class ReserveTool(Tool):
     command_id: Id
     action_id: Id | None = None
+
+
+class RenewSetup(Shape):
+    attempt_id: Id
+    generation: Positive
+    work_revision: Positive
 
 
 class Receipt(Shape):
@@ -287,6 +299,7 @@ MODELS: dict[str, type[Shape]] = {
     "commit_outcome": Outcome,
     "control_work": Control,
     "reserve_tool": ReserveTool,
+    "renew_setup": RenewSetup,
     "stage_artifact": StageArtifact,
     "read_artifact": Artifact,
     "export_diagnostics": Shape,

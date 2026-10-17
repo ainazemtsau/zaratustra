@@ -1,5 +1,8 @@
 import { DEFAULT_MAX_BYTES, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
+import { open, realpath } from "node:fs/promises";
+import { resolve, relative, isAbsolute } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createHash, randomUUID } from "node:crypto";
 import { bootstrap, dataRoot, run } from "./bootstrap.mjs";
 
@@ -11,6 +14,9 @@ export function nativeSourceDataView(value: any, history = false) {
   for (const context of [view, view?.sleep, view?.pinned]) {
     if (Array.isArray(context?.sleep_sources)) groups.push(context.sleep_sources);
   }
+  const setupSource: any = view?.current?.managed_setup && view?.pinned
+    ? {material: {messages: view.pinned.messages, prior_messages: view.pinned.prior_messages}} : null;
+  if (setupSource) groups.push([setupSource]);
   for (const sources of groups) for (const source of sources) {
     const material = source?.material;
     if (!material || typeof material !== "object") continue;
@@ -56,6 +62,10 @@ export function nativeSourceDataView(value: any, history = false) {
       sourceSHA256: source.source_ref?.sha256, fields,
     };
   }
+  if (setupSource?.native_source_data_view) view.pinned.native_message_data_view = {
+    ...setupSource.native_source_data_view, root: "pinned", attempt_id: view.current.attempt,
+    source: "Exact Core pinned messages; original encoded bytes retained by Core",
+  };
   return view;
 }
 
@@ -65,7 +75,8 @@ export function nativeInitialContextView(context: any) {
   const view = nativeSourceDataView(context);
   const isSleep = [context, context?.sleep, context?.pinned].some(value => Array.isArray(value?.sleep_sources));
   const size = (value: any) => Buffer.byteLength(JSON.stringify(value), "utf8");
-  if (!isSleep || size(view) <= NATIVE_SLEEP_PRESENTATION_MAX_BYTES) return view;
+  const isSetup = Boolean(context?.current?.managed_setup);
+  if (!(isSleep || isSetup) || size(view) <= NATIVE_SLEEP_PRESENTATION_MAX_BYTES) return view;
   const fallback = structuredClone(context);
   fallback.native_source_data_presentation = {
     status: "decoded_NOT_DELIVERED", reason: "presentation_expansion",
@@ -74,7 +85,7 @@ export function nativeInitialContextView(context: any) {
     budgetBytes: NATIVE_SLEEP_PRESENTATION_MAX_BYTES,
   };
   if (size(fallback) > NATIVE_SLEEP_PRESENTATION_MAX_BYTES) {
-    throw new Error(`Initial Sleep source-data presentation does not fit: original encoded fallback with metadata is ${size(fallback)} bytes; boundary ${NATIVE_SLEEP_PRESENTATION_MAX_BYTES}. No source data was removed; no provider send is admitted.`);
+    throw new Error(`Initial ${isSetup ? "setup" : "Sleep"} source-data presentation does not fit: original encoded fallback with metadata is ${size(fallback)} bytes; boundary ${NATIVE_SLEEP_PRESENTATION_MAX_BYTES}. No source data was removed; no provider send is admitted.`);
   }
   return fallback;
 }
@@ -170,11 +181,26 @@ export default function (pi: ExtensionAPI) {
   let sessionId = "";
   let failed = false;
   let startLeaf: string | null = null;
+  let currentOrigin: any = null;
+  let messageOrigin: any = null;
+  let setupActive = false;
+  const callOrigins = new Map<string, any>();
+  const ownPath = resolve(fileURLToPath(import.meta.url));
+  const acceptContext = (context: any) => {
+    currentOrigin = context.current?.attempt ? structuredClone(context.current) : null;
+    setupActive = Boolean(context.current?.managed_setup);
+    return context;
+  };
+  const trustedSetupTool = (name: string) => {
+    const tool = pi.getAllTools().find(tool => tool.name === name);
+    return ["zara_context", "zara_read", "zara_route", "zara_result", "zara_read_file"].includes(name)
+      && tool && resolve(tool.sourceInfo.path) === ownPath;
+  };
   let skipNextInput = false;
   let beforeReviewTools: string[] | null = null;
   const observedResultCalls = new Set<string>();
   const executedResultCalls = new Set<string>();
-  const profile = (ctx: any) => ({adapter: "ordinary-native-pi", provider: ctx.model?.provider, model: ctx.model?.id, api: ctx.model?.api, thinking: ctx.thinkingLevel, cwd: ctx.cwd});
+  const profile = (ctx: any) => ({adapter: "ordinary-native-pi", provider: ctx.model?.provider, model: ctx.model?.id, api: ctx.model?.api, thinking: ctx.thinkingLevel, cwd: ctx.cwd, setup_admission: "native-setup/v1"});
   let requestQueue: Promise<void> = Promise.resolve();
   const request = (body: Record<string, unknown>) => {
     // Snapshot identity and raw facts before any await or queued session change.
@@ -204,7 +230,11 @@ export default function (pi: ExtensionAPI) {
     }
   };
   const applyReviewTools = (context: any) => {
-    if (context.current?.mode === "review") {
+    acceptContext(context);
+    if (setupActive) {
+      if (!beforeReviewTools) beforeReviewTools = pi.getActiveTools();
+      pi.setActiveTools(pi.getAllTools().filter(tool => trustedSetupTool(tool.name)).map(tool => tool.name));
+    } else if (context.current?.mode === "review") {
       if (!beforeReviewTools) beforeReviewTools = pi.getActiveTools();
       const permitted = new Set(["read", "grep", "find", "ls", "zara_context", "zara_read", "zara_result"]);
       pi.setActiveTools(beforeReviewTools.filter(name => permitted.has(name)));
@@ -213,8 +243,9 @@ export default function (pi: ExtensionAPI) {
     }
   };
   const attach = async (ctx: any) => {
+    await ctx.waitForIdle();
     python = await bootstrap(); sessionId = ctx.sessionManager.getSessionId();
-    const context = await request({command: "attach"});
+    const context = await request({command: "attach", profile: profile(ctx)});
     active = true; failed = false;
     observedResultCalls.clear(); executedResultCalls.clear();
     applyReviewTools(context);
@@ -238,9 +269,14 @@ export default function (pi: ExtensionAPI) {
   pi.registerCommand("zaratustra", {
     description: "Attach Core to this normal Pi session; optional first message",
     handler: async (args, ctx) => visible(ctx, async () => {
-      await attach(ctx);
-      ctx.ui.notify("Core attached. Continue in normal Pi. Builtin tools remain available.", "info");
+      const context = await attach(ctx);
+      if (context.recovered_result) pi.sendMessage({customType: "zaratustra-saved-step", content: context.recovered_result.text, display: true});
+      ctx.ui.notify("Core attached. Continue in normal Pi. Setup uses trusted reads and atomic checkpoints; ordinary coding retains its tools.", "info");
       if (args.trim()) pi.sendUserMessage(args);
+      else if (context.current?.managed_setup && context.current.attempt && !context.current.wait) {
+        skipNextInput = true;
+        pi.sendUserMessage("Continue the exact retained setup step from Core; completed checkpoints are already saved.");
+      }
     }),
   });
   pi.registerCommand("zara-status", {
@@ -254,13 +290,19 @@ export default function (pi: ExtensionAPI) {
   pi.registerCommand("reopen", {
     description: "Reload Core context without repeating previous tools",
     handler: async (_args, ctx) => visible(ctx, async () => {
+      ctx.abort(); await ctx.waitForIdle();
       python = await bootstrap(); sessionId = ctx.sessionManager.getSessionId();
-      const context = await request({ command: "reopen" });
+      const context = await request({ command: "reopen", profile: profile(ctx) });
       active = true; failed = false;
       observedResultCalls.clear(); executedResultCalls.clear();
       applyReviewTools(context);
+      if (context.recovered_result) pi.sendMessage({customType: "zaratustra-saved-step", content: context.recovered_result.text, display: true});
       pi.sendMessage({ customType: "zaratustra-context", content: JSON.stringify(nativeInitialContextView(context)), display: false });
-      ctx.ui.notify("Core context reopened. Unconfirmed prior tools require reconciliation.", "info");
+      ctx.ui.notify("Core context reopened from durable Work/Result/wait. Unknown ordinary effects require reconciliation.", "info");
+      if (context.current?.managed_setup && context.current.attempt && !context.current.wait) {
+        skipNextInput = true;
+        pi.sendUserMessage("Continue the exact retained setup step from Core. Do not repeat completed checkpoints.");
+      }
     }),
   });
   pi.registerCommand("zara-cancel", {
@@ -349,7 +391,7 @@ export default function (pi: ExtensionAPI) {
     if (!active) return;
     if (skipNextInput) { skipNextInput = false; return; }
     try {
-      await visible(ctx, () => request({ command: "input", event_id: randomUUID(), text: event.text, profile: profile(ctx) }));
+      applyReviewTools(await visible(ctx, () => request({ command: "input", event_id: randomUUID(), text: event.text, profile: profile(ctx) })));
     } catch { return {action: "handled" as const}; }
   });
   pi.on("before_agent_start", async (_event, ctx) => {
@@ -357,8 +399,13 @@ export default function (pi: ExtensionAPI) {
     if (failed) { ctx.abort(); return; }
     startLeaf = ctx.sessionManager.getLeafId();
     const context = await visible(ctx, () => request({ command: "verify-profile", profile: profile(ctx) }));
+    applyReviewTools(context);
+    if (setupActive) ctx.ui.setStatus?.("zaratustra-save", "Шаг выполняется; сохранение ещё не подтверждено Core.");
     const view = await visible(ctx, async () => nativeInitialContextView(context));
     return { message: { customType: "zaratustra-context", content: JSON.stringify(view), display: false } };
+  });
+  pi.on("message_start", async (event, _ctx) => {
+    if (active && event.message.role === "assistant") messageOrigin = currentOrigin ? structuredClone(currentOrigin) : null;
   });
   const id = Type.String({minLength: 1, maxLength: 240});
   const exact = Type.Object({
@@ -402,18 +449,18 @@ export default function (pi: ExtensionAPI) {
   const schemas: Record<string, any> = {
     context: Type.Object({}, {additionalProperties: false}),
     read: readSchemas,
-    route: Type.Object({changes: Type.Array(change), expected_heads: heads, outputs: Type.Array(exact), next_work: Type.Object({scope: Type.String(), goal: Type.String(), inputs: Type.Array(exact)}, {additionalProperties: false})}, {additionalProperties: false}),
+    route: Type.Object({changes: Type.Array(change), expected_heads: heads, outputs: Type.Array(exact), next_work: Type.Object({scope: Type.String(), goal: Type.String(), inputs: Type.Array(exact), setup: Type.Optional(Type.Boolean())}, {additionalProperties: false})}, {additionalProperties: false}),
     change: Type.Object({changes: Type.Array(change), expected_heads: heads}, {additionalProperties: false}),
-    result: Type.Object({outputs: Type.Array(exact), changes: Type.Optional(Type.Array(change)), expected_heads: Type.Optional(heads), state: Type.Optional(Type.Union([Type.Literal("completed"), Type.Literal("waiting"), Type.Literal("ready")])), wait: Type.Optional(nullable(Type.Object({id, question: Type.String({minLength: 1})}, {additionalProperties: false})))}, {additionalProperties: false}),
+    result: Type.Object({outputs: Type.Array(exact), changes: Type.Optional(Type.Array(change)), expected_heads: Type.Optional(heads), state: Type.Optional(Type.Union([Type.Literal("completed"), Type.Literal("waiting"), Type.Literal("ready")])), wait: Type.Optional(nullable(Type.Object({id, question: Type.String({minLength: 1})}, {additionalProperties: false}))), next_work: Type.Optional(nullable(Type.Object({goal: Type.String({minLength: 1}), inputs: Type.Optional(Type.Array(exact))}, {additionalProperties: false})))}, {additionalProperties: false}),
   };
   for (const name of ["context", "read", "route", "change", "result"]) {
     pi.registerTool({ executionMode: "sequential", name: `zara_${name}`, label: `Core ${name}`, parameters: Type.Object({payload: schemas[name]}, {additionalProperties: false}),
-      description: (name === "route" ? "Choose Activity atomically: payload changes, expected_heads, outputs, next_work:{scope,goal,inputs}. Required before useful work." : name === "result" ? "Stage Core METADATA only. In Sleep mode, stage real output refs or outputs:[]; no Activity output is required and no analysis is implied. In ordinary and review modes, required outputs include the current Activity exact reference. Optional changes/expected_heads/state/wait. NO text field and NO old JSON outcome envelope. A rejected response with staged:false has not staged this metadata; previous_metadata_cleared reports whether an older stage was cleared. If the SDK rejects arguments before execution, earlier metadata is invalidated before settlement; stage corrected metadata before your final reply. The original SDK error is unchanged and does not itself report host clearing flags. Correct structural arguments with a new tool call before writing your actual final reply normally in Pi; only that retained reply becomes result text." : name === "change" ? "Apply typed scoped Activity/data changes with expected_heads through Core CAS." : name === "read" ? "Read exact Core records, paged tables, or source history using the operation-specific arguments. read_history uses scope/high_watermark/after_sequence/after_index/limit; it has NO conversation argument. Native history queries have a fixed 51200-byte whole-result representation bound before Core persistence; whole sources may be withheld and coverage is explicit. This is not a total model-context or token guarantee. A rejected argument can be corrected with a new tool call; authorization or transport failures stop execution." : "Read authoritative Core context.") + (["route", "change", "result"].includes(name) ? changeGuidance : ""),
+      description: (name === "route" ? "Choose Activity atomically: payload changes, expected_heads, outputs, next_work:{scope,goal,inputs,setup?:boolean}. New Activity creation always uses durable safe setup, even when setup is omitted/false. For an existing Activity choose setup:true only for explicit setup work; otherwise ordinary coding remains available. Required before useful work." : name === "result" ? "Stage Core METADATA only. In Sleep mode, stage real output refs or outputs:[]; no Activity output is required and no analysis is implied. In ordinary and review modes, required outputs include the current Activity exact reference. Optional changes/expected_heads/state/wait. ONLY in setup mode, optional next_work:{goal,inputs} atomically opens the next saved step; no intermediate zara_change. A final staged acknowledgement is not yet a saved checkpoint. NO text field and NO old JSON outcome envelope. A rejected response with staged:false has not staged this metadata; previous_metadata_cleared reports whether an older stage was cleared. If the SDK rejects arguments before execution, earlier metadata is invalidated before settlement; stage corrected metadata before your final reply. The original SDK error is unchanged and does not itself report host clearing flags. Correct structural arguments with a new tool call before writing your actual final reply normally in Pi; only that retained reply becomes result text." : name === "change" ? "Apply typed scoped Activity/data changes with expected_heads through Core CAS." : name === "read" ? "Read exact Core records, paged tables, or source history using the operation-specific arguments. read_history uses scope/high_watermark/after_sequence/after_index/limit; it has NO conversation argument. Native history queries have a fixed 51200-byte whole-result representation bound before Core persistence; whole sources may be withheld and coverage is explicit. This is not a total model-context or token guarantee. A rejected argument can be corrected with a new tool call; authorization or transport failures stop execution." : "Read authoritative Core context.") + (["route", "change", "result"].includes(name) ? changeGuidance : ""),
       async execute(callId, params, _signal, _update, ctx) {
         if (name === "result") executedResultCalls.add(callId);
         if (!active || failed) throw new Error("Attach or reopen Core; incomplete hooks require reconciliation.");
         const result = await visible(ctx, async () => {
-          try { return await request({ command: "tool", name, call_id: callId, payload: params.payload }); }
+          try { return await request({ command: "tool", name, call_id: callId, payload: params.payload, origin: callOrigins.get(callId) ?? messageOrigin }); }
           catch (error) {
             const rejection = (error as any).coreRejection;
             if (name === "read" && rejection?.code === "invalid_request" && recoverableReadFields[params.payload.operation]?.has(rejection.field)) {
@@ -425,19 +472,52 @@ export default function (pi: ExtensionAPI) {
             throw error;
           }
         });
+        if (name === "route" && result.current) applyReviewTools(result);
         return presentNativeResult(name, params.payload, result);
       },
     });
   }
+  pi.registerTool({name: "zara_read_file", label: "Setup read file", executionMode: "sequential",
+    description: "Trusted UTF-8 regular-file read within the selected cwd. No shell, network, scripts or writes. Whole file only, maximum 51200 bytes; an unavailable file is not research performed.",
+    parameters: Type.Object({path: Type.String({minLength: 1})}, {additionalProperties: false}),
+    async execute(callId, params, _signal, _update, ctx) {
+      if (!active || failed || !setupActive || !trustedSetupTool("zara_read_file")) throw new Error("Trusted setup admission required.");
+      const origin = callOrigins.get(callId) ?? messageOrigin;
+      await visible(ctx, () => request({command: "admit-setup-read", origin}));
+      const root = await realpath(ctx.cwd), target = await realpath(resolve(root, params.path));
+      const rel = relative(root, target);
+      if (isAbsolute(rel) || rel === ".." || rel.startsWith(".." + (process.platform === "win32" ? String.fromCharCode(92) : "/"))) {
+        return {content: [{type: "text", text: "NOT_DELIVERED: file is outside the selected repository."}], details: {delivered: false}};
+      }
+      const file = await open(target, "r");
+      try {
+        const stat = await file.stat();
+        if (!stat.isFile() || stat.size > 50 * 1024) return {content: [{type: "text", text: "NOT_DELIVERED: requires a regular file of at most 51200 bytes."}], details: {delivered: false}};
+        const buffer = Buffer.alloc(50 * 1024 + 1);
+        const {bytesRead} = await file.read(buffer, 0, buffer.length, 0);
+        const raw = buffer.subarray(0, bytesRead);
+        if (raw.length > 50 * 1024) throw new Error("File changed while being read; not delivered.");
+        const text = new TextDecoder("utf-8", {fatal: true, ignoreBOM: true}).decode(raw);
+        return presentNativeResult("file-read", {}, {path: rel, sha256: createHash("sha256").update(raw).digest("hex"), text, source_data: true});
+      } finally { await file.close(); }
+    },
+  });
+  pi.on("user_bash", async (_event, _ctx) => {
+    if (active && setupActive) return {result: {output: "NOT_EXECUTED: shell is outside the trusted setup profile. Exit setup only after a saved checkpoint; ordinary coding retains shell tools.", exitCode: 1, cancelled: false, truncated: false}};
+  });
   const observe = (kind: string) => async (event: any, ctx: any) => {
     if (!active || failed) return;
-    await visible(ctx, () => request({ command: "observation", event_id: randomUUID(), value: { kind, event } }));
+    await visible(ctx, () => request({ command: "observation", event_id: randomUUID(), value: { kind, event }, origin: messageOrigin }));
   };
   pi.on("before_provider_request", (_event, ctx) => {
     if (active && failed) ctx.abort();
   });
   pi.on("tool_call", async (event, ctx) => {
     if (active && failed) return {block: true, terminate: true, reason: "Core admission failed; reconcile before execution."};
+    if (active && messageOrigin?.managed_setup && !trustedSetupTool(event.toolName)) {
+      return {block: true, reason: "Setup permits only this adapter's trusted reads and final Core checkpoint. This tool was NOT executed. Finish a small checkpoint or explain the unavailable tool."};
+    }
+    if (active) callOrigins.set(event.toolCallId, messageOrigin ? structuredClone(messageOrigin) : null);
     try {
       await observe("tool_call")(event, ctx);
       if (active && !failed && event.toolName === "zara_result") observedResultCalls.add(event.toolCallId);
@@ -454,9 +534,9 @@ export default function (pi: ExtensionAPI) {
       await visible(ctx, () => request({command: "observation", event_id: randomUUID(), value: {
         kind: "tool_execution_end", event,
         ...(sdkRejected ? {sdk_preexecution_rejected: true} : {}),
-      }}));
+      }, origin: callOrigins.get(event.toolCallId) ?? messageOrigin}));
     } finally {
-      observedResultCalls.delete(event.toolCallId); executedResultCalls.delete(event.toolCallId);
+      observedResultCalls.delete(event.toolCallId); executedResultCalls.delete(event.toolCallId); callOrigins.delete(event.toolCallId);
     }
   });
   pi.on("turn_end", async (event, ctx) => observe("turn_end")({
@@ -471,9 +551,18 @@ export default function (pi: ExtensionAPI) {
     const text = entry && entry.type === "message" && Array.isArray(entry.message.content)
       ? entry.message.content.filter((part: any) => part.type === "text").map((part: any) => part.text).join("\n") : "";
     const terminal = {stop_reason: entry?.message?.stopReason, error_message: entry?.message?.errorMessage};
-    const result = await visible(ctx, () => request({ command: "settled", event_id: entry?.id || randomUUID(), text, aborted: event.aborted, terminal }));
+    const result = await visible(ctx, () => request({ command: "settled", event_id: entry?.id || randomUUID(), text, aborted: event.aborted, terminal, origin: messageOrigin }));
     if (result.state === "incomplete") ctx.ui.notify(result.text, "warning");
-    else applyReviewTools(await request({command: "context"}));
+    else {
+      if (messageOrigin?.managed_setup && result.state !== "late") { ctx.ui.setStatus?.("zaratustra-save", "Шаг сохранён: Core receipt получен."); ctx.ui.notify("Шаг сохранён в Core.", "info"); }
+      const context = await request({command: "context"});
+      applyReviewTools(context);
+      if (result.next_work_id && context.current?.managed_setup && !context.current.attempt) {
+        applyReviewTools(await request({command: "reopen", profile: profile(ctx)}));
+        skipNextInput = true;
+        pi.sendUserMessage("Continue the exact next setup Work from Core. The previous checkpoint is already saved; do not repeat it.", {deliverAs: "followUp"});
+      }
+    }
   });
 }
 
