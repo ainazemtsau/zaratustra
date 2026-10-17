@@ -37,6 +37,8 @@ def portable(tmp_path_factory: pytest.TempPathFactory) -> Iterator[Path]:
 
 def environment(root: Path) -> dict[str, str]:
     result = dict(os.environ, ZARATUSTRA_HOME=str(root))
+    # Installed runtimes must not import the checkout through the test runner.
+    result.pop("PYTHONPATH", None)
     if os.name == "nt":
         result["ZARATUSTRA_OFFLINE"] = "1"
     return result
@@ -91,7 +93,7 @@ def initialize(python: Path, root: Path) -> None:
         "root=Path(sys.argv[1]); core,token=Core.initialize(root); "
         "(root/'owner.credential').write_text(token,encoding='utf-8')"
     )
-    subprocess.run([str(python), "-c", script, str(root)], check=True)
+    subprocess.run([str(python), "-I", "-c", script, str(root)], check=True)
 
 
 def test_real_bootstrap_and_racing_attach(portable: Path, tmp_path: Path) -> None:
@@ -273,7 +275,7 @@ owner.call('apply_changes',{'changes':[{'id':'kept-activity','kind':'activity','
  'body':'Later version preserved too','source_refs':[{'id':'kept-activity','revision':1}]}]},
  'old-revision',expected_heads={'kept-activity':1})
 """
-    subprocess.run([str(previous), "-c", seed, str(root / "data")], check=True)
+    subprocess.run([str(previous), "-I", "-c", seed, str(root / "data")], check=True)
     credential = (root / "data/owner.credential").read_bytes()
     with sqlite3.connect(root / "data/core.sqlite3") as old_database:
         old_dump = list(old_database.iterdump())

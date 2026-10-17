@@ -20,7 +20,7 @@ from .test_portable_bootstrap import install, launch
 
 def run_python(python: Path, script: str, root: Path) -> str:
     result = subprocess.run(
-        [str(python), "-c", script, str(root)],
+        [str(python), "-I", "-c", script, str(root)],
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -161,6 +161,7 @@ def test_actual_020_update_recovers_after_marker_before_publication(
     refused = subprocess.run(
         [
             str(previous),
+            "-I",
             "-c",
             "from pathlib import Path; from zaratustra_core import Core; import sys; "
             "core=Core(Path(sys.argv[1])); token=(core.root/'owner.credential').read_text(); "
