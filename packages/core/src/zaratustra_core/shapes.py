@@ -45,7 +45,7 @@ class Work(Shape):
     scope: Id = "space"
     method_ref: Ref
     inputs: list[Ref] = Field(default_factory=list)
-    call_limit: Positive
+    call_limit: Positive | None = None
     continuation_policy: Literal["durable"]
     token_limit: Positive | None = None
     money_limit: str | None = None
@@ -81,6 +81,13 @@ class Manifest(Shape):
     sha256: Annotated[str, Field(pattern="^[0-9a-f]{64}$")]
 
 
+class ContextSelection(Shape):
+    catalog_refs: list[Ref] = Field(default_factory=list, max_length=100)
+    prior_message_sequences: list[Positive] = Field(default_factory=list, max_length=100)
+    prior_result_attempts: list[Id] = Field(default_factory=list, max_length=100)
+    prior_wait_ids: list[Id] = Field(default_factory=list, max_length=100)
+
+
 class Prepare(Shape):
     id: Id
     work_id: Id
@@ -90,12 +97,13 @@ class Prepare(Shape):
     message_sequences: list[Positive]
     manifest: list[Manifest]
     profile_ref: Ref
+    context_selection: ContextSelection | None = None
 
 
 class Claim(Shape):
     attempt_id: Id
     generation: Positive
-    resource_upper: Positive = 1
+    resource_upper: Positive | None = 1
 
 
 class Evidence(Shape):
@@ -120,7 +128,7 @@ class Wait(Shape):
 class NextWork(Work):
     # An exhausted continuation remains durable and paused; C3/C4 still require
     # a positive execution budget for independently opened work.
-    call_limit: Cursor
+    call_limit: Cursor | None = None
 
 
 class Outcome(Shape):
@@ -168,6 +176,34 @@ class Snapshot(Shape):
     max_rows: Annotated[int, Field(ge=1, le=1000)] = 1000
 
 
+class PageToken(Shape):
+    high_watermark: Cursor
+    sha256: Hash
+
+
+class Page(Shape):
+    table: Literal[
+        "heads",
+        "works",
+        "attempts",
+        "messages",
+        "conversations",
+        "waits",
+        "results",
+        "observations",
+        "actions",
+        "intents",
+        "tool_calls",
+        "acceptance",
+    ]
+    cursor: Cursor = 0
+    limit: Annotated[int, Field(ge=1, le=100)] = 100
+    snapshot_revision: PageToken | None = None
+    conversation: Id | None = None
+    work: Id | None = None
+    scope: Id | None = None
+
+
 class Source(Shape):
     sequence: Positive
     index: Cursor
@@ -212,6 +248,7 @@ class SleepProgress(Shape):
 MODELS: dict[str, type[Shape]] = {
     "describe_contract": Shape,
     "read_snapshot": Snapshot,
+    "read_page": Page,
     "read_history": History,
     "read_exact": Ref,
     "lookup_receipt": Receipt,

@@ -11,3 +11,7 @@ dist/
 .env.*
 STOP
 STEER.md
+# Disposable native-adapter evaluation captures; never source or publication.
+.test-tmp-development*/
+.tmp-native-test*/
+native-transport-temp*/

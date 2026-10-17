@@ -1,0 +1,13 @@
+{
+  "name": "zaratustra-pi",
+  "version": "0.2.0",
+  "type": "module",
+  "private": true,
+  "keywords": ["pi-package"],
+  "files": ["extension.ts", "bootstrap.mjs", "README.md", "requirements.txt", "release.json", "wheels"],
+  "pi": {"extensions": ["./extension.ts"]},
+  
+  "peerDependencies": {"@earendil-works/pi-coding-agent": "*", "typebox": "*"}
+}
+
+

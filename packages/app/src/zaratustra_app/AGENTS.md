@@ -1,5 +1,12 @@
 # Restart application
 
+The authorized permanent-use delta is OWNER-PERMANENT-USE-20261017.md. The ordinary
+native Pi agent owns inference/dialogue/builtins; native_session/pi_host provide
+mechanical Core coordination only. Production has nullable unlimited resources;
+bounded profiles are explicit tests. Outside coding effects are observations.
+Native Sleep reuses Sleep and public Core; review has a fresh session and read-only
+tool selection, with separate explicit human verdicts. No ambient credential reads.
+
 Uses public zaratustra_core only. Owns context composition, executor coordination, CLI and Pi transport. No SQL or legacy runtime imports. Scripted execution is transport evidence only. Explicit data-root and isolated Pi profiles; no paid fallback.
 
 Package C adds versioned generic Sleep instructions and ordinary current-memory

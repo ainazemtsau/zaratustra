@@ -78,7 +78,7 @@ class Sleep:
         *,
         work_id: str,
         scope: str = "space",
-        call_limit: int,
+        call_limit: int | None = None,
         portion: int = 16,
         method_id: str = "sleep-method",
     ) -> dict[str, Any]:
@@ -381,6 +381,7 @@ class Sleep:
             body["continuation"] = "Analysis progress was not reported; preserve remaining sources."
         if (
             work["status"] == "paused"
+            and json.loads(work["body"])["call_limit"] is not None
             and work["reserved"] >= json.loads(work["body"])["call_limit"]
         ):
             body["stop_reason"] = "resource_exhausted"

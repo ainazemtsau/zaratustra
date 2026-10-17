@@ -43,7 +43,15 @@ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
         API,
         [
             (
-                'if state == "ready" and work["reserved"] >= body["call_limit"]:',
+                "if ("
+                + chr(10)
+                + '                    state == "ready"'
+                + chr(10)
+                + '                    and body["call_limit"] is not None'
+                + chr(10)
+                + '                    and work["reserved"] >= body["call_limit"]'
+                + chr(10)
+                + "                ):",
                 "if (" + M + " or False):",
             )
         ],

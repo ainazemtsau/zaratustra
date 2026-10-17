@@ -31,7 +31,9 @@ SYSTEM_INSTRUCTION = (
 
 class Executor(Protocol):
     tool_handler: Any
-    resource_upper: int
+
+    @property
+    def resource_upper(self) -> int | None: ...
 
     def run(self, context: dict[str, Any], action_id: str) -> bytes: ...
 
@@ -39,7 +41,7 @@ class Executor(Protocol):
 class Driver:
     """A callable technical client; receiver owns its own input/effect log."""
 
-    resource_upper = 2
+    resource_upper: int | None = 2
 
     def __init__(self, receiver: Any):
         self.receiver = receiver
@@ -138,7 +140,7 @@ class LiveProfile:
 class Pi:
     """Actual installed Pi process, fresh isolated profile per call, no ambient auth."""
 
-    resource_upper = 2
+    resource_upper: int | None = 2
 
     def __init__(self, cli: Path, profile: Path, endpoint: str, *, live: LiveProfile | None = None):
         if live is None and not endpoint.startswith("http://127.0.0.1:"):

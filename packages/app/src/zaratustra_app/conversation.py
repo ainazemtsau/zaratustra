@@ -125,7 +125,7 @@ class Conversation:
         self,
         executor: Executor,
         descriptor: dict[str, Any],
-        call_limit: int,
+        call_limit: int | None = None,
         *,
         refresh: bool = False,
     ) -> dict[str, Any]:
@@ -141,7 +141,7 @@ class Conversation:
         self,
         executor: Executor,
         descriptor: dict[str, Any],
-        call_limit: int,
+        call_limit: int | None = None,
         *,
         refresh: bool = False,
     ) -> dict[str, Any]:

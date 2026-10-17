@@ -18,7 +18,47 @@ class Coordinator:
         self.client = client
 
     def snapshot(self) -> dict[str, Any]:
-        return self.client.call("read_snapshot", {}, str(uuid4()))
+        try:
+            return self.client.call("read_snapshot", {}, str(uuid4()))
+        except CoreError as error:
+            if error.code != "resource_exhausted" or error.field != "snapshot.max_rows":
+                raise
+        result: dict[str, Any] = {}
+        for table in (
+            "heads",
+            "works",
+            "attempts",
+            "messages",
+            "conversations",
+            "waits",
+            "results",
+            "observations",
+            "actions",
+            "intents",
+            "tool_calls",
+            "acceptance",
+        ):
+            revision = None
+            cursor, rows = 0, []
+            while True:
+                payload: dict[str, Any] = {"table": table, "cursor": cursor, "limit": 100}
+                if revision is not None:
+                    payload["snapshot_revision"] = revision
+                page = self.client.call("read_page", payload, uuid4().hex)
+                revision = page["snapshot_revision"]
+                rows.extend(page["rows"])
+                if not page["has_more"]:
+                    break
+                cursor = page["next_cursor"]
+            result[table] = rows
+        result["snapshot_revision"] = None
+        result["limit"] = {
+            "pagination": True,
+            "max_rows_per_page": 100,
+            "truncated": False,
+            "consistency": "Each table has a fenced prefix; commands recheck current CAS.",
+        }
+        return result
 
     def open_work(self, payload: dict[str, Any], *, scope: str = "space") -> dict[str, Any]:
         """Pin current applicable memory and chosen scoped Method from fresh Core state."""
@@ -60,7 +100,14 @@ class Coordinator:
                 )
         return inputs
 
-    def prepare(self, work_id: str, attempt_id: str, profile_ref: dict[str, Any]) -> dict[str, Any]:
+    def prepare(
+        self,
+        work_id: str,
+        attempt_id: str,
+        profile_ref: dict[str, Any],
+        *,
+        context_selection: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         snapshot = self.snapshot()
         work = next(w for w in snapshot["works"] if w["id"] == work_id)
         cursor = next(
@@ -90,7 +137,8 @@ class Coordinator:
                 "cutoff": cutoff,
                 "message_sequences": [m["seq"] for m in messages],
                 "manifest": manifest,
-            },
+            }
+            | ({"context_selection": context_selection} if context_selection is not None else {}),
             attempt_id + ":prepare",
         )
 

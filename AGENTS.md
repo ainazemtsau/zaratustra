@@ -1,5 +1,18 @@
 # Zaratustra
 
+## Permanent use continuation — 2026-10-17
+
+`docs/restart/OWNER-PERMANENT-USE-20261017.md` records the authorized continuation
+and subsequent owner corrections. Normal `/zaratustra` attaches Core to ordinary
+Pi: Pi owns its model, dialogue and coding tools; Python is a mechanical public-API
+bridge, without a mandatory second chat or daemon. Production resource mode is
+explicitly unlimited (`call_limit: null`); finite bounds belong to selected test
+and evaluation profiles. Platform-neutral Python/TypeScript is required; native
+Mac/Linux testing is not a completion gate. Preserve frozen revision 2 plan/review.
+Core authority covers its own state and receipts, not atomicity/exactly-once of
+arbitrary Pi file/shell effects. Compatibility update preserves local data; local
+backup and paired replacement do not claim cross-device sync or lost-source recovery.
+
 ## Owner-authorized restart — 2026-10-16
 
 `docs/restart/OWNER-LAUNCH.md` records the exact owner acceptance of revision 2

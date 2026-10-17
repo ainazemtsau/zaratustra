@@ -95,7 +95,7 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
                     )
                 )
                 and 0 <= link["processed_cutoff"] <= link["delivered_cutoff"]
-                and link["resource_upper"] > 0
+                and link["resource_upper"] >= 0
             )
             require(
                 result_body.get("next_work_id") == body["id"]
@@ -115,10 +115,20 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
                 if a["attempt"] in prefix and attempts[a["attempt"]]["work"] == parent["id"]
             )
             require(type(link["parent_reserved"]) is int and link["parent_reserved"] == reserved)
+            parent_limit = json.loads(parent["body"])["call_limit"]
+            child_limit = body["call_limit"]
             require(
-                type(body["call_limit"]) is int
-                and 0 <= body["call_limit"] <= json.loads(parent["body"])["call_limit"] - reserved
+                (
+                    parent_limit is None
+                    and (child_limit is None or type(child_limit) is int and child_limit >= 0)
+                )
+                or (
+                    type(parent_limit) is int
+                    and type(child_limit) is int
+                    and 0 <= child_limit <= parent_limit - reserved
+                )
             )
+            require(link["resource_upper"] > 0 or parent_limit is None)
             scope = body.get("scope", "space")
             if "activity_ref" in link:
                 record(link["activity_ref"], "activity")

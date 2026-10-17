@@ -25,7 +25,18 @@ def _main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-root", type=Path, required=True)
     parser.add_argument(
-        "command", choices=["init", "diagnostics", "sleep", "chat", "backup", "restore", "artifact"]
+        "command",
+        choices=[
+            "init",
+            "diagnostics",
+            "sleep",
+            "chat",
+            "backup",
+            "restore",
+            "artifact",
+            "prepare-update",
+            "activate-restore",
+        ],
     )
     parser.add_argument("--profile-file", type=Path)
     parser.add_argument("--work-id")
@@ -38,6 +49,7 @@ def _main() -> int:
     parser.add_argument("--reply-to")
     parser.add_argument("--file", type=Path)
     parser.add_argument("--destination", type=Path)
+    parser.add_argument("--source-root", type=Path)
     args = parser.parse_args()
     if args.command == "init":
         core, token = Core.initialize(args.data_root)
@@ -51,12 +63,21 @@ def _main() -> int:
             )
         core, _ = Core.restore_quarantined(args.file, args.data_root)
         print("Restored for inspection only (quarantined): " + str(core.root))
-    elif args.command == "backup":
+    elif args.command == "activate-restore":
+        if args.source_root is None:
+            parser.error("activate-restore requires --source-root <accessible original>")
+        core = Core(args.data_root)
+        token = (args.data_root / "owner.credential").read_text(encoding="utf-8").strip()
+        source = Core(args.source_root)
+        source_token = (args.source_root / "owner.credential").read_text(encoding="utf-8").strip()
+        print(json.dumps(core.activate_restored(token, source, source_token), ensure_ascii=False))
+    elif args.command in {"backup", "prepare-update"}:
         if args.destination is None:
             parser.error("backup requires --destination <new directory>")
         core = Core(args.data_root)
         token = (args.data_root / "owner.credential").read_text(encoding="utf-8").strip()
-        print(json.dumps(core.backup(token, args.destination), ensure_ascii=False))
+        operation = core.backup if args.command == "backup" else core.prepare_update
+        print(json.dumps(operation(token, args.destination), ensure_ascii=False))
     elif args.command == "artifact":
         if args.file is None:
             parser.error("artifact requires --file <chosen file>")

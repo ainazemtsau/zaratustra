@@ -67,7 +67,15 @@ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
         API,
         [
             (
-                'if state == "ready" and work["reserved"] >= loads(work["body"])["call_limit"]:',
+                "if ("
+                + chr(10)
+                + '                state == "ready"'
+                + chr(10)
+                + '                and loads(work["body"])["call_limit"] is not None'
+                + chr(10)
+                + '                and work["reserved"] >= loads(work["body"])["call_limit"]'
+                + chr(10)
+                + "            ):",
                 "if (" + M + " or False):",
             )
         ],
@@ -106,7 +114,12 @@ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
     (
         "C-reset-reservation",
         API,
-        [('if work["reserved"] + upper > body["call_limit"]:', "if (" + M + " or False):")],
+        [
+            (
+                'if limit is not None and work["reserved"] + reserve > limit:',
+                "if (" + M + " or False):",
+            )
+        ],
         "test_sleep.py::test_next_call_beyond_remaining_is_rejected",
     ),
     (

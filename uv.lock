@@ -566,7 +566,7 @@ dev = [
 
 [[package]]
 name = "zaratustra-core"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "packages/core" }
 dependencies = [
     { name = "pydantic" },
@@ -577,7 +577,7 @@ requires-dist = [{ name = "pydantic", specifier = "==2.13.5" }]
 
 [[package]]
 name = "zaratustra-next"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "packages/app" }
 dependencies = [
     { name = "zaratustra-core" },

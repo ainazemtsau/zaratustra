@@ -63,6 +63,7 @@ INSERT INTO lifecycle VALUES('active');
 READ_OPS = {
     "describe_contract",
     "read_snapshot",
+    "read_page",
     "read_exact",
     "read_history",
     "lookup_receipt",
@@ -107,6 +108,8 @@ class Core:
         self.path = self.root / "core.sqlite3"
         if not self.path.is_file():
             fail("wrong_instance", "data_root")
+        with self._transaction():
+            pass
 
     @classmethod
     def initialize(cls, root: Path) -> tuple[Core, str]:
@@ -143,6 +146,9 @@ class Core:
         db.execute("PRAGMA synchronous=FULL")
         try:
             db.execute("BEGIN IMMEDIATE")
+            from .lifecycle import compatibility
+
+            compatibility(db)
             yield db
             db.commit()
         except BaseException:
@@ -194,6 +200,8 @@ class Core:
     def revoke(self, token: str, principal: str) -> None:
         with self._transaction() as db:
             self._identity(db, token, "admin")
+            if db.execute("SELECT mode FROM lifecycle").fetchone()[0] != "active":
+                fail("denied", "quarantined")
             db.execute("DELETE FROM rights WHERE principal=?", (principal,))
 
     def accept_result(self, token: str, attempt: str, result_hash: str) -> None:
@@ -221,11 +229,23 @@ class Core:
 
     @classmethod
     def restore_quarantined(cls, backup_root: Path, destination: Path) -> tuple[Core, str]:
-        """Inspect-only restored identity. No activation or old credentials are inherited."""
+        """Quarantined identity; activation requires paired retirement of its original."""
         from .maintenance import restore
 
         token = restore(backup_root, destination)
         return cls(destination), token
+
+    def activate_restored(self, token: str, source_core: Core, source_token: str) -> dict[str, Any]:
+        """Retire the exact accessible original before enabling this restored identity."""
+        from .lifecycle import activate
+
+        return activate(self, token, source_core, source_token)
+
+    def prepare_update(self, token: str, backup_destination: Path) -> dict[str, Any]:
+        """Admit this schema and create a verified backup before a package update."""
+        from .lifecycle import prepare_update
+
+        return prepare_update(self, token, backup_destination)
 
     def _artifact(self, db: sqlite3.Connection, sha256: str) -> bytes:
         row = db.execute("SELECT * FROM artifacts WHERE sha256=?", (sha256,)).fetchone()
@@ -622,10 +642,13 @@ class Core:
         continuation: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         body = dict(body)
+        body.setdefault("call_limit", None)
         self._method(db, body)
         for ref in body.get("inputs", []):
             self._exact(db, ref)
-        if type(body["call_limit"]) is not int or body["call_limit"] < (0 if continuation else 1):
+        if body["call_limit"] is not None and (
+            type(body["call_limit"]) is not int or body["call_limit"] < (0 if continuation else 1)
+        ):
             fail("invalid_request", "call_limit")
         if body.get("token_limit") or body.get("money_limit"):
             fail("unsupported_capability", "resource_unit")
@@ -633,7 +656,10 @@ class Core:
         state = "ready"
         if continuation is not None:
             body["continuation"] = continuation
-            if body["call_limit"] < continuation["resource_upper"]:
+            if (
+                body["call_limit"] is not None
+                and body["call_limit"] < continuation["resource_upper"]
+            ):
                 state = "paused"
         db.execute(
             "INSERT INTO works(id,revision,conversation,status,generation,body) "
@@ -668,8 +694,11 @@ class Core:
             (parent["conversation"], parent["id"]),
         ).fetchone():
             fail("identity_conflict", "next_work.active")
-        remaining = loads(parent["body"])["call_limit"] - parent["reserved"]
-        if child["call_limit"] > remaining:
+        parent_limit = loads(parent["body"])["call_limit"]
+        remaining = None if parent_limit is None else parent_limit - parent["reserved"]
+        if remaining is not None and (
+            child.get("call_limit") is None or child["call_limit"] > remaining
+        ):
             fail("resource_exhausted", "next_work.calls")
         scope = child.get("scope", "space")
         selected_activity = None
@@ -846,6 +875,10 @@ class Core:
             ).fetchone()[0]
             result["limit"] = {"max_rows_per_table": p.get("max_rows", 1000), "truncated": False}
             return result
+        if op == "read_page":
+            from .context import read_page
+
+            return read_page(db, p)
         if op == "ingest_message":
             raw = p["raw_base64"]
             try:
@@ -991,39 +1024,71 @@ class Core:
                     (work["id"],),
                 )
             ]
-            prior_messages = [
-                dict(row)
-                for row in db.execute(
-                    "SELECT * FROM messages WHERE conversation=? AND seq<=? ORDER BY seq",
-                    (work["conversation"], cursor),
-                )
-            ]
-            prior_results = [
-                dict(row)
-                for row in db.execute(
-                    "SELECT r.* FROM results r JOIN attempts a ON "
-                    "a.id=r.attempt WHERE a.conversation=? ORDER BY a.rowid",
-                    (work["conversation"],),
-                )
-            ]
-            prior_waits = [
-                dict(row)
-                for row in db.execute(
-                    "SELECT * FROM waits WHERE conversation=? ORDER BY rowid",
-                    (work["conversation"],),
-                )
-            ]
-            if len(prior_messages) + len(messages) > 1000 or len(prior_results) > 1000:
+            selection = p.get("context_selection")
+            prior_messages = (
+                []
+                if selection is not None
+                else [
+                    dict(row)
+                    for row in db.execute(
+                        "SELECT * FROM messages WHERE conversation=? AND seq<=? ORDER BY seq",
+                        (work["conversation"], cursor),
+                    )
+                ]
+            )
+            prior_results = (
+                []
+                if selection is not None
+                else [
+                    dict(row)
+                    for row in db.execute(
+                        "SELECT r.* FROM results r JOIN attempts a ON "
+                        "a.id=r.attempt WHERE a.conversation=? ORDER BY a.rowid",
+                        (work["conversation"],),
+                    )
+                ]
+            )
+            prior_waits = (
+                []
+                if selection is not None
+                else [
+                    dict(row)
+                    for row in db.execute(
+                        "SELECT * FROM waits WHERE conversation=? ORDER BY rowid",
+                        (work["conversation"],),
+                    )
+                ]
+            )
+            if selection is None and (
+                len(prior_messages) + len(messages) > 1000 or len(prior_results) > 1000
+            ):
                 fail("resource_exhausted", "context.max_rows")
-            catalog = [
-                dict(row)
-                for row in db.execute(
-                    "SELECT r.* FROM records r JOIN heads h ON h.id=r.id "
-                    "AND h.revision=r.revision ORDER BY r.id"
-                )
-            ]
+            catalog = (
+                []
+                if selection is not None
+                else [
+                    dict(row)
+                    for row in db.execute(
+                        "SELECT r.* FROM records r JOIN heads h ON h.id=r.id "
+                        "AND h.revision=r.revision ORDER BY r.id"
+                    )
+                ]
+            )
             if len(catalog) > 1000:
-                fail("resource_exhausted", "catalog.max_rows")
+                if p.get("context_selection") is None:
+                    fail("resource_exhausted", "catalog.max_rows")
+            coverage = None
+            if p.get("context_selection") is not None:
+                from .context import select_context
+
+                selected = select_context(
+                    db, work, p["context_selection"], cursor=cursor, exact=self._exact
+                )
+                prior_messages = selected["prior_messages"]
+                prior_results = selected["prior_results"]
+                prior_waits = selected["prior_waits"]
+                catalog = selected["catalog"]
+                coverage = selected["context_coverage"]
             pinned = {
                 "capabilities": loads(
                     db.execute(
@@ -1043,6 +1108,8 @@ class Core:
                 "manifest": p["manifest"],
                 "profile_ref": p["profile_ref"],
             }
+            if coverage is not None:
+                pinned["context_coverage"] = coverage
             progress = [
                 m["body"]["value"]
                 for m in material
@@ -1108,22 +1175,28 @@ class Core:
             if high != attempt["cutoff"]:
                 fail("stale_basis", "new_input", "after_refresh")
             upper = p.get("resource_upper", 1)
-            if type(upper) is not int or upper < 1:
+            limit = body["call_limit"]
+            if (upper is None and limit is not None) or (
+                upper is not None and (type(upper) is not int or upper < 1)
+            ):
                 fail("invalid_request", "resource_upper")
-            if work["reserved"] + upper > body["call_limit"]:
+            reserve = 0 if upper is None else upper
+            if limit is not None and work["reserved"] + reserve > limit:
                 fail("resource_exhausted", "calls")
             db.execute(
                 "INSERT INTO actions VALUES(?,?,?,'claimed',NULL,?)",
-                (req.action_id, attempt["id"], actor["principal"], upper),
+                (req.action_id, attempt["id"], actor["principal"], reserve),
             )
-            db.execute("UPDATE works SET reserved=reserved+? WHERE id=?", (upper, work["id"]))
+            db.execute("UPDATE works SET reserved=reserved+? WHERE id=?", (reserve, work["id"]))
             db.execute("UPDATE attempts SET status='claimed' WHERE id=?", (attempt["id"],))
             db.execute("DELETE FROM intents WHERE kind='dispatch' AND subject=?", (attempt["id"],))
             pinned["resource_state"] = {
                 "call_limit": body["call_limit"],
-                "consumed_resource": work["reserved"] + upper,
+                "consumed_resource": work["reserved"] + reserve,
                 "unresolved_calls": [req.action_id],
             }
+            if limit is None:
+                pinned["resource_state"].update({"mode": "unlimited", "reservation_upper": upper})
             return {"action_id": req.action_id, "pinned": pinned}
         if op == "observe_attempt":
             attempt, work = self._attempt(db, p["attempt_id"])
@@ -1226,7 +1299,11 @@ class Core:
                 fail("invalid_request", "outcome.state")
             if state == "waiting" and p.get("wait") is None:
                 fail("invalid_request", "outcome.wait")
-            if state == "ready" and work["reserved"] >= loads(work["body"])["call_limit"]:
+            if (
+                state == "ready"
+                and loads(work["body"])["call_limit"] is not None
+                and work["reserved"] >= loads(work["body"])["call_limit"]
+            ):
                 state = "paused"
                 self._intent(
                     db,
@@ -1302,7 +1379,9 @@ class Core:
                 fail("stale_basis", "work")
             action = p["action"]
             if action in {"pause", "cancel"}:
-                if work["status"] not in {"ready", "running", "waiting", "blocked"}:
+                if work["status"] not in {"ready", "running", "waiting", "blocked"} and not (
+                    action == "cancel" and work["status"] == "paused"
+                ):
                     fail("stale_basis", "work.status")
                 state = "paused" if action == "pause" else "cancelled"
                 self._intent(
@@ -1356,7 +1435,7 @@ class Core:
                 if claimed and claimed["state"] not in {"terminal", "not_received"}:
                     fail("outcome_unknown", "refresh.claim", "reconcile")
                 body = loads(work["body"])
-                if work["reserved"] >= body["call_limit"]:
+                if body["call_limit"] is not None and work["reserved"] >= body["call_limit"]:
                     fail("resource_exhausted", "calls")
                 for key in ("inputs", "method_ref"):
                     if key in p:
@@ -1402,7 +1481,11 @@ class Core:
                 self._method(db, body)
                 for ref in body.get("inputs", []) + [body["method_ref"]]:
                     self._exact(db, ref)
-                if state == "ready" and work["reserved"] >= body["call_limit"]:
+                if (
+                    state == "ready"
+                    and body["call_limit"] is not None
+                    and work["reserved"] >= body["call_limit"]
+                ):
                     fail("resource_exhausted", "calls")
                 if state == "running":
                     active, _ = self._attempt(db, last["attempt"])

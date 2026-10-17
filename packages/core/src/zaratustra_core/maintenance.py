@@ -1,4 +1,4 @@
-"""Explicit local backup and inspect-only restoration; no executor imports."""
+"""Explicit verified local backup and quarantined restoration; no executor imports."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from .backup_refs import verify_references
+from .lifecycle import compatibility, event, fence, state_fingerprint
 from .storage import durable, exclusion, publish_directory, verified
 from .types import CoreError, wire
 
@@ -27,6 +28,7 @@ def integrity(path: Path) -> None:
         ):
             raise CoreError("invalid_request", "backup.integrity")
         db.row_factory = sqlite3.Row
+        compatibility(db)
         records = {(r["id"], r["revision"]): r for r in db.execute("SELECT * FROM records")}
         artifacts = {a["sha256"] for a in db.execute("SELECT * FROM artifacts")}
         for head in db.execute("SELECT * FROM heads"):
@@ -88,6 +90,7 @@ def backup(core: Core, token: str, destination: Path) -> dict[str, Any]:
             durable(temporary / "core.sqlite3", database)
             manifest = {
                 "format": "backup/v1",
+                "compatibility": compatibility_from_path(temporary / "core.sqlite3"),
                 "source": meta,
                 "database_sha256": hashlib.sha256(database).hexdigest(),
                 "database_size": len(database),
@@ -114,6 +117,10 @@ def restore(backup_root: Path, destination: Path) -> str:
         ):
             raise CoreError("invalid_request", "backup.manifest")
         integrity(backup_root / "core.sqlite3")
+        if "compatibility" in manifest and manifest["compatibility"] != compatibility_from_path(
+            backup_root / "core.sqlite3"
+        ):
+            raise CoreError("unsupported_capability", "backup.compatibility")
         with closing(sqlite3.connect(backup_root / "core.sqlite3")) as db:
             db.row_factory = sqlite3.Row
             rows = [dict(r) for r in db.execute("SELECT * FROM artifacts ORDER BY sha256")]
@@ -131,6 +138,7 @@ def restore(backup_root: Path, destination: Path) -> str:
         token = secrets.token_urlsafe(32)
         with closing(sqlite3.connect(temporary / "core.sqlite3")) as db, db:
             db.execute("PRAGMA synchronous=FULL")
+            source_state = state_fingerprint(db)
             db.execute(
                 "UPDATE meta SET instance=?,space=?,epoch=epoch+1",
                 (secrets.token_hex(16), secrets.token_hex(16)),
@@ -143,15 +151,20 @@ def restore(backup_root: Path, destination: Path) -> str:
             )
             db.execute("INSERT INTO rights VALUES('owner', '[\"*\"]')")
             db.execute("UPDATE lifecycle SET mode='quarantined'")
-            db.execute(
-                "UPDATE works SET status='paused',generation=generation+1,revision=revision+1 "
-                "WHERE status NOT IN ('completed','cancelled')"
+            fence(db)
+            restored = dict(
+                zip(
+                    ("instance", "space", "epoch"),
+                    db.execute("SELECT * FROM meta").fetchone(),
+                    strict=True,
+                )
             )
-            db.execute(
-                "UPDATE attempts SET status='fenced' "
-                "WHERE status IN ('prepared','claimed','unknown')"
+            event(
+                db,
+                "restore_lineage",
+                restored["instance"],
+                {"source": original, "restored": restored, "snapshot_state_sha256": source_state},
             )
-            db.execute("DELETE FROM intents")
         integrity(temporary / "core.sqlite3")
         durable(temporary / "core.sqlite3", (temporary / "core.sqlite3").read_bytes())
         durable(temporary / "owner.credential", token.encode())
@@ -160,3 +173,8 @@ def restore(backup_root: Path, destination: Path) -> str:
     finally:
         if temporary.exists():
             shutil.rmtree(temporary, ignore_errors=True)
+
+
+def compatibility_from_path(path: Path) -> dict[str, Any]:
+    with closing(sqlite3.connect(path)) as db:
+        return compatibility(db)

@@ -54,7 +54,7 @@ class Bridge(ThreadingHTTPServer):
         self,
         endpoint: str,
         tool_handler: Any,
-        limit: int,
+        limit: int | None,
         *,
         bearer: str = "synthetic",
         timeout: int = 35,
@@ -118,7 +118,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
         # The native Pi process may retry internally. Each physical provider send is bounded here.
         with self.server.send_lock:
-            exhausted = self.server.sends >= self.server.limit
+            exhausted = self.server.limit is not None and self.server.sends >= self.server.limit
             if not exhausted:
                 self.server.sends += 1
             send_number = self.server.sends

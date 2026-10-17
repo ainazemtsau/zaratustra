@@ -169,7 +169,11 @@ def outcome(
                     "revision": method["revision"],
                     "role": "must_be_current",
                 },
-                "call_limit": max(0, body["call_limit"] - work["reserved"]),
+                "call_limit": (
+                    None
+                    if body["call_limit"] is None
+                    else max(0, body["call_limit"] - work["reserved"])
+                ),
                 "continuation_policy": "durable",
             },
         }

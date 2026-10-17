@@ -1,0 +1,143 @@
+"""Sleep preparation for the existing native Pi conversation, without dispatch."""
+
+from __future__ import annotations
+
+import base64
+import json
+from typing import Any, cast
+from uuid import uuid4
+
+from zaratustra_core import Core, CoreError
+
+from .conversation import pin_profile
+from .coordinator import Coordinator
+from .sleep import Sleep
+
+
+class NativeSleep:
+    def __init__(self, core: Core, token: str, scope: str):
+        self.scope = scope
+        self.owner = core.connect(token)
+        self.client = core.connect(
+            core.grant(
+                token,
+                "native-sleep:" + scope,
+                [
+                    "read",
+                    "apply_changes",
+                    "open_work",
+                    "prepare_attempt",
+                    "claim_dispatch",
+                    "observe_attempt",
+                    "commit_outcome",
+                    "control_work",
+                    "reserve_tool",
+                    "write:memory:" + scope,
+                    "write:method:" + scope,
+                ],
+                origin="host",
+            )
+        )
+        self.coordinator = Coordinator(self.client)
+        self.sleep = Sleep(self.client)
+
+    def start(self, work_id: str, profile: dict[str, Any], portion: int = 16) -> dict[str, Any]:
+        self.sleep.start(
+            work_id=work_id,
+            scope=self.scope,
+            portion=portion,
+            method_id="native-sleep-method:" + self.scope,
+        )
+        snapshot = self.coordinator.snapshot()
+        # A previous native send is never permission to regenerate or redispatch.
+        if any(a["work"] == work_id for a in snapshot["attempts"]):
+            raise CoreError("outcome_unknown", "sleep.pending_attempt", "reconcile")
+        return self._claim(work_id, profile)
+
+    def resume(self, work_id: str, profile: dict[str, Any], portion: int = 16) -> dict[str, Any]:
+        snapshot = self.coordinator.snapshot()
+        work = next(w for w in snapshot["works"] if w["id"] == work_id)
+        body = json.loads(work["body"])
+        if body.get("scope") != self.scope or body.get("goal") != "Sleep":
+            raise CoreError("denied", "sleep.resume_scope")
+        attempts = [a for a in snapshot["attempts"] if a["work"] == work_id]
+        latest = attempts[-1] if attempts else None
+        result = next(
+            (r for r in snapshot["results"] if latest and r["attempt"] == latest["id"]), None
+        )
+        if latest is None or result is None:
+            raise CoreError("outcome_unknown", "sleep.pending_attempt", "reconcile")
+        if work["status"] != "ready" or json.loads(result["body"])["state"] != "ready":
+            raise CoreError("stale_basis", "sleep.not_ready", "reconcile")
+        self.checkpoint(work_id, latest["id"])
+        progress = self.sleep.progress(work_id)["body"]["value"]
+        if progress["enumeration_cursor"][1] != 2147483647:
+            self.sleep.continue_portion(work_id, portion=portion)
+        self.coordinator.refresh_basis(work_id)
+        return self._claim(work_id, profile)
+
+    def _claim(self, work_id: str, profile: dict[str, Any]) -> dict[str, Any]:
+        snapshot = self.coordinator.snapshot()
+        attempt = work_id + ":native-attempt:" + uuid4().hex
+        profile_ref = pin_profile(self.owner, attempt + ":profile", profile)
+        selection = {
+            "catalog_refs": [
+                {"id": h["id"], "revision": h["revision"]}
+                for h in snapshot["heads"]
+                if not h["id"].startswith("native-host:")
+            ][:100],
+            "prior_message_sequences": [],
+            "prior_result_attempts": [],
+            "prior_wait_ids": [],
+        }
+        prepared = self.coordinator.prepare(
+            work_id, attempt, profile_ref, context_selection=selection
+        )
+        self.client.call(
+            "claim_dispatch",
+            {"attempt_id": attempt, "generation": prepared["generation"], "resource_upper": None},
+            attempt + ":claim",
+            action_id=attempt + ":action",
+        )
+        return {
+            "attempt": attempt,
+            "work": work_id,
+            "generation": prepared["generation"],
+            "scope": self.scope,
+            "mode": "sleep",
+            "staged": {},
+            "profile": profile,
+        }
+
+    def context(self, mapping: dict[str, Any]) -> dict[str, Any]:
+        snapshot = self.coordinator.snapshot()
+        attempt = next(a for a in snapshot["attempts"] if a["id"] == mapping["attempt"])
+        context = cast(dict[str, Any], json.loads(attempt["body"]))
+        work = next(w for w in snapshot["works"] if w["id"] == mapping["work"])
+        context["resource_state"] = {
+            "call_limit": None,
+            "mode": "unlimited",
+            "reservation_upper": None,
+            "consumed_resource": work["reserved"],
+            "unresolved_calls": [
+                a["id"]
+                for a in snapshot["actions"]
+                if a["attempt"] == attempt["id"] and a["state"] not in {"terminal", "not_received"}
+            ],
+        }
+        context["raw_messages"] = [
+            base64.b64decode(m["raw"]).decode("utf-8") for m in context["messages"]
+        ]
+        context["coverage"] = (
+            "First 100 catalog refs; exact pinned inputs and Sleep sources retained."
+        )
+        context["instructions"] = (
+            "Follow the pinned Sleep Method in ordinary Pi. Stage actual ready/completed "
+            "metadata with zara_result, then speak normally. Preserve unexamined sources. "
+            "Memory and Method writes require this Sleep scope's explicit grants. "
+            "No automatic replay of unknown tools."
+        )
+        return context
+
+    def checkpoint(self, work_id: str, attempt: str) -> None:
+        self.sleep._checkpoint(work_id, attempt)
