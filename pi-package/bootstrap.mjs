@@ -36,7 +36,7 @@ export function run(command, args, input) {
     child.stdout.on("data", chunk => { output += chunk; });
     child.stderr.resume();
     child.on("error", () => reject(new Error("Required executable unavailable: " + command)));
-    child.on("close", code => code === 0 ? resolve(output) : reject(new Error("Zaratustra runtime command failed; existing data and runtime selection retained.")));
+    child.on("close", code => code === 0 ? resolve(output) : reject(new Error(`${basename(command)} exited with ${code}; existing data and runtime selection retained.`)));
     child.stdin.on("error", () => {});
     child.stdin.end(input || "");
   });
@@ -122,7 +122,9 @@ export async function bootstrap() {
       return python;
     }
   } catch {}
-  const runtime = join(root, "runtimes", identity + "-" + randomUUID());
+  // Keep paths short for installers on Windows. Full integrity identity lives
+  // in .ready/.current, independent of this unique, immutable runtime location.
+  const runtime = join(root, "runtimes", randomUUID().replaceAll("-", ""));
   const python = interpreter(runtime);
   let published = false;
   try {

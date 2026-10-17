@@ -184,7 +184,16 @@ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
     (
         "D-handoff-budget-reset",
         API,
-        [('if child["call_limit"] > remaining:', "if (" + M + " or False):")],
+        [
+            (
+                "if remaining is not None and ("
+                + chr(10)
+                + '            child.get("call_limit") is None or child["call_limit"] > remaining'
+                + chr(10)
+                + "        ):",
+                "if (" + M + " or False):",
+            )
+        ],
         "test_work_handoff.py::test_bad_handoff_rolls_back_every_boundary[budget]",
     ),
     (

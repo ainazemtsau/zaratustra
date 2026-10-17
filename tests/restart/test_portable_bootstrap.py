@@ -61,6 +61,19 @@ def install(package: Path, root: Path) -> Path:
     return Path(stdout.strip())
 
 
+def test_long_home_uses_short_immutable_runtime(portable: Path, tmp_path: Path) -> None:
+    parent = tmp_path.parent
+    suffix = "long-home-" + "x" * max(0, 128 - len(str(parent)) - 11)
+    root = parent / suffix
+    python = install(portable, root)
+    selected = json.loads((root / ".current").read_text(encoding="utf-8"))
+    runtime = Path(selected["runtime"])
+    assert len(str(root)) >= 127
+    assert len(runtime.name) == 32
+    assert (runtime / ".ready").read_text(encoding="utf-8") == selected["identity"]
+    assert install(portable, root) == python
+
+
 def new_identity(source: Path, destination: Path) -> Path:
     shutil.copytree(source, destination)
     requirements = destination / "requirements.txt"
