@@ -1,0 +1,572 @@
+{
+  "source_commit": "20d606bce8102b6b847b30126fd964a08beacc96",
+  "base_candidate_c": "7d211480d1dd5067bf52c3a654cc1a713368310d",
+  "fresh_base": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o",
+  "source_root": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\source",
+  "installed_root": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+  "source_build_outside_all_checkouts": true,
+  "git_boundaries": [
+    {
+      "name": "source",
+      "path": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\source",
+      "returncode": 128,
+      "stdout": "",
+      "stderr": "fatal: not a git repository (or any of the parent directories): .git\n"
+    },
+    {
+      "name": "runtime",
+      "path": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 128,
+      "stdout": "",
+      "stderr": "fatal: not a git repository (or any of the parent directories): .git\n"
+    }
+  ],
+  "source_files": [
+    {
+      "path": ".python-version",
+      "sha256": "3ce16e94590543a327d3e5ae412e663206e0ed1b46628ed3dd5ad29caa1ff5ac",
+      "bytes": 7
+    },
+    {
+      "path": "README.md",
+      "sha256": "c4de8d25039b3e4f4f925ec24be75df106c96608f285c7897497d04129b05538",
+      "bytes": 15029
+    },
+    {
+      "path": "packages/AGENTS.md",
+      "sha256": "1f7d90ab109a28a36a51a4d91f532596f7d836e7f8c5e5a1bdf02d4365686146",
+      "bytes": 302
+    },
+    {
+      "path": "packages/app/pyproject.toml",
+      "sha256": "5a1c312944177d1e1bb99a69887c39e4ad68dbc315481ab0b444c2582b50e4b0",
+      "bytes": 319
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/AGENTS.md",
+      "sha256": "fcc273bfb8b2fc69cb6f4e20b8dc26071327a1cd81950d04b63b25af37a17bc0",
+      "bytes": 853
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/__init__.py",
+      "sha256": "7aa11cf5aac2b79560b79aa1da5dfce83d4ba934ec34120f422f4de067463d21",
+      "bytes": 313
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/AGENTS.md",
+      "sha256": "025c36f832a8b3d73d3c1c6cc24bcd6b8ad5ef6a048c1aedfad327ca97cddafb",
+      "bytes": 211
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/__init__.py",
+      "sha256": "3313c92a9cdbfccae4afdf1f0a2defde08ac4a84eb166825fc21ddb9347cce20",
+      "bytes": 28
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/AGENTS.md",
+      "sha256": "4d9590766e47a2a6a9e706015320ffd8ce865a0d1b1089659abd6f18462a1448",
+      "bytes": 383
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/__init__.py",
+      "sha256": "6de3b1e1a3155f4e8d9bb2e104473abfc7c6a10f37ff0aa537ada162cbe2aa61",
+      "bytes": 37
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/bridge.py",
+      "sha256": "c5462f79ff3e1d84e1e68de69314d28d2f60556f087d6418baff6025dd5ebab7",
+      "bytes": 5874
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/extension.ts",
+      "sha256": "dfb451e22ce14af8a63fd37c5e8a0c6d75a11ead34e79eb036e8bfd78958505a",
+      "bytes": 1012
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/launcher.mjs",
+      "sha256": "6d8d942d545d260a95436be6d95f5823bfa4b8f3790ea5bc0daedc5c7b64587f",
+      "bytes": 4216
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/cli.py",
+      "sha256": "7418065645f29f7f6f03f4b2fce3a58cbe7a37c1412e6c2a055c2adf36dfe5f7",
+      "bytes": 8567
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/conversation.py",
+      "sha256": "557043bf85b52e8d1b615437371b821ae307106aeedcea4cb3118980712cb0ee",
+      "bytes": 11133
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/coordinator.py",
+      "sha256": "c8d2f69a7c36b710ba01b274a45131c860de1e350f8c0bb2cd5096b1dcaad346",
+      "bytes": 11111
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/executor_port.py",
+      "sha256": "3fd0fc8419be5c68205031870eaa4b1758b07ed517d8039a11c41bdff8885fe1",
+      "bytes": 15592
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/sleep.py",
+      "sha256": "e99979dcac7d34c4ebb4b299b597781a6e3b5c74ea68877dac9de96c5246d474",
+      "bytes": 18757
+    },
+    {
+      "path": "packages/core/pyproject.toml",
+      "sha256": "ab44be890c2ba2b01d9fdfc4e5a7050a1792d89c4da8c47b3873a0d81b9137c0",
+      "bytes": 196
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/AGENTS.md",
+      "sha256": "3eafcc4375a89e9e9d88889115db8dace01dbbe6cbacdebf736db725e1c64b25",
+      "bytes": 921
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/__init__.py",
+      "sha256": "7f71419c900c0207f7e9b1e9444a8b20a1f149faa06175484a62d82f0baef7c7",
+      "bytes": 206
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/api.py",
+      "sha256": "4013e46cef83974075c965882b2c30c95a21d0485e12e4351efe53c6b92a479d",
+      "bytes": 64183
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/formats.py",
+      "sha256": "4d12f1141cde7829816910604ef64fa4cade6391f6c40a31fcc294bea09a99d3",
+      "bytes": 7665
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/maintenance.py",
+      "sha256": "6e71e79964b3de0f9a5e2ef1487dddb9313a7893e20978aedb647707ceb4d148",
+      "bytes": 7404
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/shapes.py",
+      "sha256": "6f6ce01f52d8ef5ecd6f38d12f8fc2765efed2bc60a353f8a4a76e125cbfafd9",
+      "bytes": 5445
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/storage.py",
+      "sha256": "4057453df21e71dea62d9dbee79a29d1f12cea25dc4bc1f74f619c85a4e3fc5e",
+      "bytes": 3496
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/types.py",
+      "sha256": "54b8a7103b7b0ae9d924cb839acd7789bff316b8e79bcf565635b1505ab5d33f",
+      "bytes": 2028
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "3f746eae051c4b1dcb73ac6ea5a36624b1c4f871ca6a3d802da0c99a10164ce9",
+      "bytes": 11954
+    },
+    {
+      "path": "tests/restart/sleep_support.py",
+      "sha256": "a621e33a768adc85db7c833ef28d0899bec1658298b6429ee4f3bc592f16dfbc",
+      "bytes": 10313
+    },
+    {
+      "path": "tests/restart/support.py",
+      "sha256": "1fa45169d7a86340f49efc5d0cb5d046cb71f5d8e9175247c69ecca19cb846a1",
+      "bytes": 13695
+    },
+    {
+      "path": "uv.lock",
+      "sha256": "fce37007eec2ea8c819ba9989f093c156977a0f10ccafb975d07811dbb4af72a",
+      "bytes": 76640
+    }
+  ],
+  "builds": [
+    {
+      "path": ".gitignore",
+      "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1",
+      "bytes": 1
+    },
+    {
+      "path": "zaratustra_core-0.1.0-py3-none-any.whl",
+      "sha256": "0c33e381cbb0544d2dc4610d2bf7221b9481064f56658311f200e3b4124b6d69",
+      "bytes": 23517
+    },
+    {
+      "path": "zaratustra_core-0.1.0.tar.gz",
+      "sha256": "a598bbd12842709eaac0189c424f05bf86269ec491bbb9c0b700a5441163475b",
+      "bytes": 20099
+    },
+    {
+      "path": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "sha256": "800062a86e955742bf3a66f2652591f1ddf78dccee0a682faf6dd892af56b1d3",
+      "bytes": 27210
+    },
+    {
+      "path": "zaratustra_next-0.1.0.tar.gz",
+      "sha256": "bc7e419b312f376603e9677ceaa9312d30b34462ef5c3b3a28c3579fbe5ce823",
+      "bytes": 20491
+    }
+  ],
+  "verified_source_wheel_installed_files": [
+    {
+      "path": "zaratustra_core/__init__.py",
+      "sha256": "7f71419c900c0207f7e9b1e9444a8b20a1f149faa06175484a62d82f0baef7c7",
+      "bytes": 206
+    },
+    {
+      "path": "zaratustra_core/api.py",
+      "sha256": "4013e46cef83974075c965882b2c30c95a21d0485e12e4351efe53c6b92a479d",
+      "bytes": 64183
+    },
+    {
+      "path": "zaratustra_core/formats.py",
+      "sha256": "4d12f1141cde7829816910604ef64fa4cade6391f6c40a31fcc294bea09a99d3",
+      "bytes": 7665
+    },
+    {
+      "path": "zaratustra_core/maintenance.py",
+      "sha256": "6e71e79964b3de0f9a5e2ef1487dddb9313a7893e20978aedb647707ceb4d148",
+      "bytes": 7404
+    },
+    {
+      "path": "zaratustra_core/shapes.py",
+      "sha256": "6f6ce01f52d8ef5ecd6f38d12f8fc2765efed2bc60a353f8a4a76e125cbfafd9",
+      "bytes": 5445
+    },
+    {
+      "path": "zaratustra_core/storage.py",
+      "sha256": "4057453df21e71dea62d9dbee79a29d1f12cea25dc4bc1f74f619c85a4e3fc5e",
+      "bytes": 3496
+    },
+    {
+      "path": "zaratustra_core/types.py",
+      "sha256": "54b8a7103b7b0ae9d924cb839acd7789bff316b8e79bcf565635b1505ab5d33f",
+      "bytes": 2028
+    },
+    {
+      "path": "zaratustra_app/__init__.py",
+      "sha256": "7aa11cf5aac2b79560b79aa1da5dfce83d4ba934ec34120f422f4de067463d21",
+      "bytes": 313
+    },
+    {
+      "path": "zaratustra_app/adapters/__init__.py",
+      "sha256": "3313c92a9cdbfccae4afdf1f0a2defde08ac4a84eb166825fc21ddb9347cce20",
+      "bytes": 28
+    },
+    {
+      "path": "zaratustra_app/adapters/pi/__init__.py",
+      "sha256": "6de3b1e1a3155f4e8d9bb2e104473abfc7c6a10f37ff0aa537ada162cbe2aa61",
+      "bytes": 37
+    },
+    {
+      "path": "zaratustra_app/adapters/pi/bridge.py",
+      "sha256": "c5462f79ff3e1d84e1e68de69314d28d2f60556f087d6418baff6025dd5ebab7",
+      "bytes": 5874
+    },
+    {
+      "path": "zaratustra_app/adapters/pi/extension.ts",
+      "sha256": "dfb451e22ce14af8a63fd37c5e8a0c6d75a11ead34e79eb036e8bfd78958505a",
+      "bytes": 1012
+    },
+    {
+      "path": "zaratustra_app/adapters/pi/launcher.mjs",
+      "sha256": "6d8d942d545d260a95436be6d95f5823bfa4b8f3790ea5bc0daedc5c7b64587f",
+      "bytes": 4216
+    },
+    {
+      "path": "zaratustra_app/cli.py",
+      "sha256": "7418065645f29f7f6f03f4b2fce3a58cbe7a37c1412e6c2a055c2adf36dfe5f7",
+      "bytes": 8567
+    },
+    {
+      "path": "zaratustra_app/conversation.py",
+      "sha256": "557043bf85b52e8d1b615437371b821ae307106aeedcea4cb3118980712cb0ee",
+      "bytes": 11133
+    },
+    {
+      "path": "zaratustra_app/coordinator.py",
+      "sha256": "c8d2f69a7c36b710ba01b274a45131c860de1e350f8c0bb2cd5096b1dcaad346",
+      "bytes": 11111
+    },
+    {
+      "path": "zaratustra_app/executor_port.py",
+      "sha256": "3fd0fc8419be5c68205031870eaa4b1758b07ed517d8039a11c41bdff8885fe1",
+      "bytes": 15592
+    },
+    {
+      "path": "zaratustra_app/sleep.py",
+      "sha256": "e99979dcac7d34c4ebb4b299b597781a6e3b5c74ea68877dac9de96c5246d474",
+      "bytes": 18757
+    }
+  ],
+  "clean_profile": {
+    "HOME": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\clean-profile",
+    "ambient_path": false,
+    "model_free_network_process_denied": true,
+    "controlled_chat_declared_shim": true,
+    "actual_console_entrypoint": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\zaratustra-next.exe",
+    "pi_cli": "C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+    "real_account_used": false
+  },
+  "commands": [
+    {
+      "name": "build-zaratustra-core",
+      "argv": [
+        "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+        "build",
+        "--package",
+        "zaratustra-core",
+        "--out-dir",
+        "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-d\\final-20d606b\\install-20d606b\\physical-builds"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\source",
+      "returncode": 0,
+      "seconds": 0.24311208724975586
+    },
+    {
+      "name": "build-zaratustra-next",
+      "argv": [
+        "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+        "build",
+        "--package",
+        "zaratustra-next",
+        "--out-dir",
+        "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-d\\final-20d606b\\install-20d606b\\physical-builds"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\source",
+      "returncode": 0,
+      "seconds": 0.24629545211791992
+    },
+    {
+      "name": "venv",
+      "argv": [
+        "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+        "venv",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env",
+        "--python",
+        "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 0.05858564376831055
+    },
+    {
+      "name": "install-core",
+      "argv": [
+        "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+        "pip",
+        "install",
+        "--offline",
+        "--constraint",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\constraints.txt",
+        "--python",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\python.exe",
+        "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-d\\final-20d606b\\install-20d606b\\physical-builds\\zaratustra_core-0.1.0-py3-none-any.whl"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 0.6169552803039551
+    },
+    {
+      "name": "core-only",
+      "argv": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\python.exe",
+        "-I",
+        "-X",
+        "utf8",
+        "-c",
+        "\nimport sys,importlib.abc,importlib.util,json,sqlite3\nfrom pathlib import Path\nclass Deny(importlib.abc.MetaPathFinder):\n def find_spec(self,fullname,path=None,target=None):\n  if fullname.split('.')[0] in {'zaratustra','dbos','sqlalchemy','pi'}:raise AssertionError('legacy import '+fullname)\nsys.meta_path.insert(0,Deny())\nallowed=[Path.cwd().resolve(),Path(sys.prefix).resolve(),Path(sys.base_prefix).resolve()]\ndef audit(event,args):\n if event.startswith(('socket.','subprocess.')):raise AssertionError('network/process '+event)\n if event in {'open','os.listdir','os.scandir','sqlite3.connect','os.mkdir'} and isinstance(args[0],(str,bytes)):\n  actual=Path(args[0]).resolve()\n  if not any(actual.is_relative_to(p) for p in allowed):raise AssertionError('ambient file '+str(actual))\nsys.addaudithook(audit)\n\nimport zaratustra_core\nassert importlib.util.find_spec('zaratustra_app') is None\nassert sqlite3.sqlite_version=='3.50.4'\ncore,token=zaratustra_core.Core.initialize(Path('core-alone'))\nassert core.connect(token).call('describe_contract',{},'d')['version']=='wire/v1'\nprint(json.dumps({'core':zaratustra_core.__file__,'python':sys.version,'sqlite':sqlite3.sqlite_version,'independent':True}))\n"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 1.486708641052246
+    },
+    {
+      "name": "install-app",
+      "argv": [
+        "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+        "pip",
+        "install",
+        "--offline",
+        "--python",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\python.exe",
+        "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-d\\final-20d606b\\install-20d606b\\physical-builds\\zaratustra_next-0.1.0-py3-none-any.whl"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 0.10242247581481934
+    },
+    {
+      "name": "console-init",
+      "argv": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\FICTIONAL-space",
+        "init"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 1.080134630203247
+    },
+    {
+      "name": "console-diagnostics-empty",
+      "argv": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\FICTIONAL-space",
+        "diagnostics"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 0.4965336322784424
+    },
+    {
+      "name": "console-artifact",
+      "argv": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\FICTIONAL-space",
+        "artifact",
+        "--file",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\FICTIONAL-artifact.bin"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 0.4826021194458008
+    },
+    {
+      "name": "console-chat-first",
+      "argv": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\FICTIONAL-space",
+        "chat",
+        "--profile-file",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\controlled-profile.json",
+        "--call-limit",
+        "4",
+        "--message",
+        "FICTIONAL ORIGINAL INPUT; PRIVATE_SENTINEL"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 15.283829689025879
+    },
+    {
+      "name": "console-chat-free-correction",
+      "argv": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\FICTIONAL-space",
+        "chat",
+        "--profile-file",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\controlled-profile.json",
+        "--call-limit",
+        "4",
+        "--message",
+        "FICTIONAL CORRECTION LIMIT"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 0.4362013339996338
+    },
+    {
+      "name": "console-chat-addressed-reopen",
+      "argv": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\FICTIONAL-space",
+        "chat",
+        "--profile-file",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\controlled-profile.json",
+        "--call-limit",
+        "4",
+        "--reply-to",
+        "fixture-wait",
+        "--message",
+        "FICTIONAL ANSWER"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 4.548375368118286
+    },
+    {
+      "name": "console-diagnostics-preview",
+      "argv": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\FICTIONAL-space",
+        "diagnostics",
+        "--destination",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\diagnostics-preview.json"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 0.4129505157470703
+    },
+    {
+      "name": "console-backup",
+      "argv": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\FICTIONAL-space",
+        "backup",
+        "--destination",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\backup"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 0.9972155094146729
+    },
+    {
+      "name": "console-restore",
+      "argv": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\quarantined",
+        "restore",
+        "--file",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\backup"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 0.5834071636199951
+    },
+    {
+      "name": "console-restored-diagnostics",
+      "argv": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\quarantined",
+        "diagnostics"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 0.438690185546875
+    },
+    {
+      "name": "installed-state",
+      "argv": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\python.exe",
+        "-I",
+        "-X",
+        "utf8",
+        "-c",
+        "\nimport base64,hashlib,json,sqlite3,sys\nfrom pathlib import Path\nfrom zaratustra_core import Core,CoreError\nroot=Path('FICTIONAL-space');token=(root/'owner.credential').read_text();owner=Core(root).connect(token)\nstate=owner.call('read_snapshot',{},'proof')\nassert state['conversations'][0]['cursor']==3 and not state['acceptance']\nassert len([h for h in state['heads'] if h['kind']=='activity'])==1\nassert state['works'][0]['status']=='completed' and state['works'][0]['reserved']==4\nrestored=Core(Path('quarantined'));current=restored.connect((restored.root/'owner.credential').read_text())\nassert current.meta['epoch']==owner.meta['epoch']+1 and current.meta['space']!=owner.meta['space']\ntry:restored.connect(token)\nexcept CoreError as e:assert e.code=='denied'\nelse:raise AssertionError('old credential accepted')\nsha=hashlib.sha256(Path('FICTIONAL-artifact.bin').read_bytes()).hexdigest()\nassert base64.b64decode(current.call('read_artifact',{'sha256':sha},'bytes')['raw_base64'])==Path('FICTIONAL-artifact.bin').read_bytes()\nassert current.call('export_diagnostics',{},'diag')['mode']=='quarantined'\nprint(json.dumps({'cursor':3,'activity_heads':1,'accepted':False,'reserved':4,'new_epoch':True,'old_credential_denied':True,'complete_artifact_bytes':True,'quarantined':True,'sqlite':sqlite3.sqlite_version}))\n"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 0.3726768493652344
+    },
+    {
+      "name": "dependencies",
+      "argv": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime\\env\\Scripts\\python.exe",
+        "-I",
+        "-c",
+        "import importlib.metadata as m,json,sqlite3,sys;print(json.dumps({\"packages\":sorted((d.metadata[\"Name\"],d.version) for d in m.distributions()),\"python\":sys.version,\"sqlite\":sqlite3.sqlite_version}))"
+      ],
+      "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-20d606b-11eq761o\\runtime",
+      "returncode": 0,
+      "seconds": 0.21483159065246582
+    }
+  ]
+}

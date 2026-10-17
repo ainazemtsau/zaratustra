@@ -1,0 +1,72 @@
+............F.                                                           [100%]
+================================== FAILURES ===================================
+___________ test_cli_known_invalid_retains_terminal_without_resend ____________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d11-prose-green-tmp/test_cli_known_invalid_retains0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000016FE420B230>
+capsys = <_pytest.capture.CaptureFixture object at 0x0000016FE4205E80>
+
+    def test_cli_known_invalid_retains_terminal_without_resend(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: Any
+    ) -> None:
+        from zaratustra_app import cli
+    
+        core, token = Core.initialize(tmp_path / "space")
+        (core.root / "owner.credential").write_text(token)
+        profile = tmp_path / "profile.json"
+        profile.write_text(
+            json.dumps(
+                {
+                    "pi_cli": "fictional",
+                    "endpoint": "https://api.openai.com/v1",
+                    "model": "gpt-6-luna",
+                    "credential_env": "FICTIONAL",
+                    "max_tokens": 64,
+                }
+            )
+        )
+        calls: list[dict[str, Any]] = []
+        raw = (
+            b'{"state":"completed","text":"PRIVATE_SENTINEL","outputs":[],'
+            b'"next_work":{"scope":"chosen","goal":[]}}'
+        )
+    
+        def receive(context: dict[str, Any], _: str) -> bytes:
+            calls.append(context)
+            return raw
+    
+        class FakePi(Driver):
+            def __init__(self, *_: Any, **__: Any):
+                super().__init__(receive)
+    
+        monkeypatch.setattr(cli, "Pi", FakePi)
+        args = [
+            "entry",
+            "--data-root",
+            str(core.root),
+            "chat",
+            "--profile-file",
+            str(profile),
+            "--call-limit",
+            "8",
+        ]
+        for suffix in [["--message", "fictional input"], []]:
+            monkeypatch.setattr("sys.argv", args + suffix)
+            assert cli.main() == 1
+            captured = capsys.readouterr()
+            assert json.loads(captured.err)["error"]["code"] == "invalid_request"
+            assert "Traceback" not in captured.err and "PRIVATE_SENTINEL" not in captured.err
+        assert len(calls) == 1 and len(inspect(core, "actions")) == 1
+        assert inspect(core, "works")[0]["reserved"] == 2
+        assert inspect(core, "conversations")[0]["cursor"] == 0 and not inspect(core, "results")
+        observation = json.loads(inspect(core, "observations")[0]["body"])
+>       assert base64.b64decode(observation["raw_base64"]) == raw
+E       assert b'{"state": "... "goal": []}}' == b'{"state":"c...","goal":[]}}'
+E         
+E         At index 9 diff: b' ' != b'"'
+E         Use -v to get more diff
+
+tests\restart\test_prose_fields.py:176: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/restart/test_prose_fields.py::test_cli_known_invalid_retains_terminal_without_resend
+1 failed, 13 passed in 14.03s

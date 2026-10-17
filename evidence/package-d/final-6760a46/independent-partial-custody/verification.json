@@ -1,0 +1,13 @@
+{
+  "source_commit": "6760a4665d0f02939ab8db20ab6256a91e389bd4",
+  "candidate_commit": null,
+  "verdict": "NOT_READY",
+  "authority": "Root retention checkpoint, not an independent final verdict.",
+  "review_thread": "01a144f9-df87-7250-b563-4427afc64669",
+  "status": "Independent turn failed with systemError; final review and new live G14 absent.",
+  "scoped": "375 passed, 1 failed: mutation anchor mismatch before injection; exit 1.",
+  "native": "INCOMPLETE, stopped before source edits; not PASS.",
+  "helper_finding": "Existing fictional reproduction: model tool initial_work minted independent budget; correction required.",
+  "live_calls_on_this_source": 0,
+  "credentials_read_or_copied": false
+}

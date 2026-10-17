@@ -1,0 +1,1 @@
+{"status":"INCOMPLETE","source":"09595c2c62734023a686468f569203a0fa005792","reason":"Author harness PYTEST_ADDOPTS Windows backslashes were shell-parsed into an invalid relative basetemp. Stopped owned process tree after raw traceback established this cause. No PASS claim; original bytes retained."}

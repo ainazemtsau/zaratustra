@@ -1,0 +1,16 @@
+{
+  "command": [
+    "pwsh",
+    "-NoProfile",
+    "-File",
+    "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-d\\final-1b6d1a3\\owner-bundle\\Install.ps1",
+    "-RuntimeRoot",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-1b6d1a3-tb49hv6l\\runtime",
+    "-DataRoot",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-1b6d1a3-tb49hv6l\\data"
+  ],
+  "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-1b6d1a3-tb49hv6l",
+  "source": "1b6d1a3946348a18d90cbb1a4e8d36208e242285",
+  "returncode": 0,
+  "seconds": 4.773865461349487
+}

@@ -1,0 +1,4 @@
+{
+  "included": "Explicit existing top-level review scripts/JSON/output, system stop, helper result, two gate statuses.",
+  "excluded": "Source/runtime/data directories, auth/credentials/account files, live captures, copied installations."
+}

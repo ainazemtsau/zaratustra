@@ -1,0 +1,102 @@
+{
+  "source": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+  "dependencies": [
+    {
+      "name": "annotated-types",
+      "version": "0.8.0",
+      "url": "https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl",
+      "sha256": "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0",
+      "bytes": 13427,
+      "wheel": "annotated_types-0.8.0-py3-none-any.whl"
+    },
+    {
+      "name": "pydantic",
+      "version": "2.13.5",
+      "url": "https://files.pythonhosted.org/packages/eb/47/c95ffc2009878c7aac0c5e08528022dcb885933252a88b5f170058014464/pydantic-2.13.5-py3-none-any.whl",
+      "sha256": "346a034f080da3755d8e9cb5e00e8b07de1d39e4f6e2c87d8ab7cafa0b269a73",
+      "bytes": 472589,
+      "wheel": "pydantic-2.13.5-py3-none-any.whl"
+    },
+    {
+      "name": "pydantic_core",
+      "version": "2.46.5",
+      "url": "https://files.pythonhosted.org/packages/2c/1e/1d5371213f4cc9a7ed70c0bfcc7911de22311ee99a662a56077d7292d2ac/pydantic_core-2.46.5-cp313-cp313-win_amd64.whl",
+      "sha256": "15f4a94963c95accac15b7b657bb177d3ad82bb90b0d0526d9a9b85079925db5",
+      "bytes": 2041980,
+      "wheel": "pydantic_core-2.46.5-cp313-cp313-win_amd64.whl"
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.4",
+      "url": "https://files.pythonhosted.org/packages/67/81/4add07e5172b7ac40d8ed5ff580409a7801a4fe26d529bdd915401dabfbe/typing_inspection-0.4.4-py3-none-any.whl",
+      "sha256": "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147",
+      "bytes": 14750,
+      "wheel": "typing_inspection-0.4.4-py3-none-any.whl"
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.16.0",
+      "url": "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl",
+      "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8",
+      "bytes": 45571,
+      "wheel": "typing_extensions-4.16.0-py3-none-any.whl"
+    }
+  ],
+  "files": [
+    {
+      "path": "Install.ps1",
+      "sha256": "2cf298ca443b692da69b4fd0e26e834eb9a8671efc3e8fdb0ef025f7e0aea384",
+      "bytes": 3093
+    },
+    {
+      "path": "README.txt",
+      "sha256": "3e54914aac84b14eaa7d666abd182802cf50c24184fe7433c7d681f9683e475c",
+      "bytes": 490
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "542ec74a21923b1883637ca09e7dd749c350f2cfb21db73126f6fe9a5c3f73d2",
+      "bytes": 719
+    },
+    {
+      "path": "Start.ps1",
+      "sha256": "c19c40e971128cc11bd9d9ab332997024a809d2759f5cf0926106f451218b089",
+      "bytes": 689
+    },
+    {
+      "path": "wheels/annotated_types-0.8.0-py3-none-any.whl",
+      "sha256": "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0",
+      "bytes": 13427
+    },
+    {
+      "path": "wheels/pydantic-2.13.5-py3-none-any.whl",
+      "sha256": "346a034f080da3755d8e9cb5e00e8b07de1d39e4f6e2c87d8ab7cafa0b269a73",
+      "bytes": 472589
+    },
+    {
+      "path": "wheels/pydantic_core-2.46.5-cp313-cp313-win_amd64.whl",
+      "sha256": "15f4a94963c95accac15b7b657bb177d3ad82bb90b0d0526d9a9b85079925db5",
+      "bytes": 2041980
+    },
+    {
+      "path": "wheels/typing_extensions-4.16.0-py3-none-any.whl",
+      "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8",
+      "bytes": 45571
+    },
+    {
+      "path": "wheels/typing_inspection-0.4.4-py3-none-any.whl",
+      "sha256": "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147",
+      "bytes": 14750
+    },
+    {
+      "path": "wheels/zaratustra_core-0.1.0-py3-none-any.whl",
+      "sha256": "93ff28d186def9d2f6cae4d2979cd90930f43feb11b6a9e6d3704df7403e8271",
+      "bytes": 29080
+    },
+    {
+      "path": "wheels/zaratustra_next-0.1.0-py3-none-any.whl",
+      "sha256": "3a2ffd3b713a859814246b8d4ef566e4fddf4e198b9e52047c7b277a65cb09d3",
+      "bytes": 32034
+    }
+  ]
+}

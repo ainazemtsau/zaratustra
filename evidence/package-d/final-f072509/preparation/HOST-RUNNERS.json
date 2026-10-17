@@ -1,0 +1,128 @@
+[
+  {
+    "ProcessId": 88176,
+    "ParentProcessId": 45500,
+    "CreationDate": "2026-10-16T16:47:36.50878+03:00",
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe\" -X utf8 evidence/package-d/final-f072509/run-gate.py.txt scoped"
+  },
+  {
+    "ProcessId": 114932,
+    "ParentProcessId": 88176,
+    "CreationDate": "2026-10-16T16:47:36.524429+03:00",
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe\" -X utf8 evidence/package-d/final-f072509/run-gate.py.txt scoped"
+  },
+  {
+    "ProcessId": 42332,
+    "ParentProcessId": 114932,
+    "CreationDate": "2026-10-16T16:47:36.731655+03:00",
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -m pytest tests/restart -q"
+  },
+  {
+    "ProcessId": 17084,
+    "ParentProcessId": 42332,
+    "CreationDate": "2026-10-16T16:47:36.743305+03:00",
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -m pytest tests/restart -q"
+  },
+  {
+    "ProcessId": 63464,
+    "ParentProcessId": 94000,
+    "CreationDate": "2026-10-16T16:47:38.073453+03:00",
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe\" -X utf8 evidence/package-d/final-f072509/run-gate.py.txt native"
+  },
+  {
+    "ProcessId": 39696,
+    "ParentProcessId": 63464,
+    "CreationDate": "2026-10-16T16:47:38.092155+03:00",
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe\" -X utf8 evidence/package-d/final-f072509/run-gate.py.txt native"
+  },
+  {
+    "ProcessId": 65084,
+    "ParentProcessId": 36492,
+    "CreationDate": "2026-10-16T16:47:38.547043+03:00",
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe\" -m tools.check --deliver"
+  },
+  {
+    "ProcessId": 119096,
+    "ParentProcessId": 65084,
+    "CreationDate": "2026-10-16T16:47:38.559567+03:00",
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe\" -m tools.check --deliver"
+  },
+  {
+    "ProcessId": 46768,
+    "ParentProcessId": 119096,
+    "CreationDate": "2026-10-16T16:47:43.556784+03:00",
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -m pytest tests -q"
+  },
+  {
+    "ProcessId": 66872,
+    "ParentProcessId": 46768,
+    "CreationDate": "2026-10-16T16:47:43.568911+03:00",
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -m pytest tests -q"
+  },
+  {
+    "ProcessId": 88276,
+    "ParentProcessId": 17084,
+    "CreationDate": "2026-10-16T16:51:13.555567+03:00",
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -I -X utf8 -c \"import sys;sys.path[:0]=['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-scoped\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\core\\\\src', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-scoped\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\app\\\\src', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\" C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\tests\\restart\\test_conversation.py::test_entry_outbox_physical_crash[partial_write] --basetemp C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d6-scoped\\tests\\test_delivery_defect_is_killed2\\run -q --tb=short"
+  },
+  {
+    "ProcessId": 115360,
+    "ParentProcessId": 66872,
+    "CreationDate": "2026-10-16T16:51:13.557102+03:00",
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -I -X utf8 -c \"import sys;sys.path[:0]=['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-native\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\core\\\\src', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-native\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\app\\\\src', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\" C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\tests\\restart\\test_conversation.py::test_entry_outbox_physical_crash[partial_write] --basetemp C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d6-native\\tests\\test_delivery_defect_is_killed2\\run -q --tb=short"
+  },
+  {
+    "ProcessId": 61196,
+    "ParentProcessId": 115360,
+    "CreationDate": "2026-10-16T16:51:13.570502+03:00",
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -I -X utf8 -c \"import sys;sys.path[:0]=['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-native\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\core\\\\src', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-native\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\app\\\\src', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\" C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\tests\\restart\\test_conversation.py::test_entry_outbox_physical_crash[partial_write] --basetemp C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d6-native\\tests\\test_delivery_defect_is_killed2\\run -q --tb=short"
+  },
+  {
+    "ProcessId": 68108,
+    "ParentProcessId": 88276,
+    "CreationDate": "2026-10-16T16:51:13.571593+03:00",
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -I -X utf8 -c \"import sys;sys.path[:0]=['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-scoped\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\core\\\\src', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-scoped\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\app\\\\src', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release'];import pytest;raise SystemExit(pytest.main(sys.argv[1:]))\" C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\tests\\restart\\test_conversation.py::test_entry_outbox_physical_crash[partial_write] --basetemp C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d6-scoped\\tests\\test_delivery_defect_is_killed2\\run -q --tb=short"
+  },
+  {
+    "ProcessId": 122928,
+    "ParentProcessId": 61196,
+    "CreationDate": "2026-10-16T16:51:14.869168+03:00",
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -I -X utf8 -c \"import sys;sys.path[:0]=['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-native\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\core\\\\src', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-native\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\app\\\\src'];\nimport json,os\nfrom pathlib import Path\nfrom zaratustra_core import Core\nfrom zaratustra_app import Conversation\npacket=json.load(sys.stdin)\nsession=Conversation(Core(Path(packet['root'])),packet['token'])\nif packet['phase']=='partial_write':\n    def partial(value,handle,**kwargs):\n        handle.write('{partial');handle.flush();os.fsync(handle.fileno());os._exit(91)\n    json.dump=partial\nelse:\n    Conversation.deliver_input=lambda self: os._exit(91)\nsession.submit('exact original input')\n\""
+  },
+  {
+    "ProcessId": 101180,
+    "ParentProcessId": 68108,
+    "CreationDate": "2026-10-16T16:51:14.882173+03:00",
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -I -X utf8 -c \"import sys;sys.path[:0]=['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-scoped\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\core\\\\src', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-scoped\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\app\\\\src'];\nimport json,os\nfrom pathlib import Path\nfrom zaratustra_core import Core\nfrom zaratustra_app import Conversation\npacket=json.load(sys.stdin)\nsession=Conversation(Core(Path(packet['root'])),packet['token'])\nif packet['phase']=='partial_write':\n    def partial(value,handle,**kwargs):\n        handle.write('{partial');handle.flush();os.fsync(handle.fileno());os._exit(91)\n    json.dump=partial\nelse:\n    Conversation.deliver_input=lambda self: os._exit(91)\nsession.submit('exact original input')\n\""
+  },
+  {
+    "ProcessId": 80484,
+    "ParentProcessId": 122928,
+    "CreationDate": "2026-10-16T16:51:14.885114+03:00",
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -I -X utf8 -c \"import sys;sys.path[:0]=['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-native\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\core\\\\src', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-native\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\app\\\\src'];\nimport json,os\nfrom pathlib import Path\nfrom zaratustra_core import Core\nfrom zaratustra_app import Conversation\npacket=json.load(sys.stdin)\nsession=Conversation(Core(Path(packet['root'])),packet['token'])\nif packet['phase']=='partial_write':\n    def partial(value,handle,**kwargs):\n        handle.write('{partial');handle.flush();os.fsync(handle.fileno());os._exit(91)\n    json.dump=partial\nelse:\n    Conversation.deliver_input=lambda self: os._exit(91)\nsession.submit('exact original input')\n\""
+  },
+  {
+    "ProcessId": 5508,
+    "ParentProcessId": 101180,
+    "CreationDate": "2026-10-16T16:51:14.894905+03:00",
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -I -X utf8 -c \"import sys;sys.path[:0]=['C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-scoped\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\core\\\\src', 'C:\\\\projects\\\\zaratustra\\\\.worktrees\\\\restart-first-release\\\\_scratch\\\\d6-scoped\\\\tests\\\\test_delivery_defect_is_killed2\\\\mutant\\\\app\\\\src'];\nimport json,os\nfrom pathlib import Path\nfrom zaratustra_core import Core\nfrom zaratustra_app import Conversation\npacket=json.load(sys.stdin)\nsession=Conversation(Core(Path(packet['root'])),packet['token'])\nif packet['phase']=='partial_write':\n    def partial(value,handle,**kwargs):\n        handle.write('{partial');handle.flush();os.fsync(handle.fileno());os._exit(91)\n    json.dump=partial\nelse:\n    Conversation.deliver_input=lambda self: os._exit(91)\nsession.submit('exact original input')\n\""
+  }
+]

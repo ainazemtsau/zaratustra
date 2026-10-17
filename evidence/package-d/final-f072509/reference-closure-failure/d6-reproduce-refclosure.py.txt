@@ -1,0 +1,15 @@
+import hashlib,json,tempfile,sys
+from pathlib import Path
+from zaratustra_core import Core
+
+review=Path(sys.argv[1]);destination=Path(tempfile.mkdtemp(prefix='zaratustra-d-author-refclosure-'))
+rows=[]
+for name in ['attempt-profile','attempt-method','attempt-manifest']:
+ source=review/('bad-'+name)
+ manifest=json.loads((source/'manifest.json').read_bytes());raw=(source/'core.sqlite3').read_bytes()
+ assert hashlib.sha256(raw).hexdigest()==manifest['database_sha256'] and len(raw)==manifest['database_size']
+ target=destination/('restore-'+name)
+ restored,token=Core.restore_quarantined(source,target)
+ assert restored.connect(token).call('export_diagnostics',{},'diag')['mode']=='quarantined'
+ rows.append({'damage':name,'recomputed_database_hash_valid':True,'restore_admitted':True,'destination':str(target)})
+print(json.dumps({'source':'f07250996d861404728c5892fa1f3b0a6a07bba4','installed_python':sys.executable,'rows':rows},indent=2))

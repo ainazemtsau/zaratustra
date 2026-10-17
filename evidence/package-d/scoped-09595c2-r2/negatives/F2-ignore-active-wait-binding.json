@@ -1,0 +1,10 @@
+{
+  "seed": "F2-ignore-active-wait-binding",
+  "test": "test_binding_findings.py::test_old_wait_cannot_unblock_current_question",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n________________ test_old_wait_cannot_unblock_current_question ________________\ntests\\restart\\test_binding_findings.py:183: in test_old_wait_cannot_unblock_current_question\n    assert inspect(core, \"works\")[0][\"status\"] == \"waiting\", \"old reply released unanswered Q2\"\nE   AssertionError: old reply released unanswered Q2\nE   assert 'ready' == 'waiting'\nE     \nE     - waiting\nE     + ready\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_binding_findings.py::test_old_wait_cannot_unblock_current_question\n1 failed in 1.77s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -811,8 +811,9 @@\n                     \"SELECT * FROM attempts WHERE work=? ORDER BY rowid DESC LIMIT 1\",\n                     (wait[\"work\"],),\n                 ).fetchone()\n+                print(\"MUTANT_REACHED\", flush=True)\n                 binding = loads(wait[\"body\"])\n-                if (\n+                if False and (\n                     work is None\n                     or work[\"status\"] != \"waiting\"\n                     or latest is None\n"
+}

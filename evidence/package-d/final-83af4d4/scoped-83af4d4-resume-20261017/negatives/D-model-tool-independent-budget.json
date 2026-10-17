@@ -1,0 +1,10 @@
+{
+  "seed": "D-model-tool-independent-budget",
+  "test": "test_work_handoff.py::test_correlated_c3_initial_work_is_atomically_refused",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n____________ test_correlated_c3_initial_work_is_atomically_refused ____________\ntests\\restart\\test_work_handoff.py:389: in test_correlated_c3_initial_work_is_atomically_refused\n    assert isinstance(outcome, CoreError) and outcome.code == \"denied\", (\nE   AssertionError: Correlated model C3 must not mint an unrelated budget\nE   assert (False)\nE    +  where False = isinstance({'refs': [{'id': 'forbidden-effect', 'revision': 1}]}, CoreError)\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_work_handoff.py::test_correlated_c3_initial_work_is_atomically_refused\n1 failed in 1.93s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -940,7 +940,7 @@\n             correlation = p.get(\"tool\")\n             if correlation:\n                 if p.get(\"initial_work\") is not None:\n-                    fail(\"denied\", \"tool.initial_work\")\n+                    print(\"MUTANT_REACHED\", flush=True)\n                 attempt, work = self._attempt(db, correlation[\"attempt_id\"])\n                 self._tool_authority(db, actor, attempt, work, correlation[\"generation\"])\n                 tool = db.execute(\n"
+}

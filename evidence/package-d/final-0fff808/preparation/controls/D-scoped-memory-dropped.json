@@ -1,0 +1,10 @@
+{
+  "seed": "D-scoped-memory-dropped",
+  "test": "test_ordinary_activity.py::test_scoped_execution_pins_only_applicable_memory",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n______________ test_scoped_execution_pins_only_applicable_memory ______________\ntests\\restart\\test_ordinary_activity.py:191: in test_scoped_execution_pins_only_applicable_memory\n    assert {\"activity\", \"global\", \"local\"} <= inputs and \"foreign\" not in inputs\nE   AssertionError: assert ({'activity', ...bal', 'local'} <= {'activity', 'global'}\nE     \nE     Extra items in the left set:\nE     'local')\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_ordinary_activity.py::test_scoped_execution_pins_only_applicable_memory\n1 failed in 2.14s\n",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/coordinator.py\n+++ app/src/zaratustra_app/coordinator.py.mutant\n@@ -45,7 +45,7 @@\n         inputs = list(inputs)\n         heads = self.snapshot()[\"heads\"]\n         for head in heads:\n-            if head[\"kind\"] != \"memory\" or head[\"scope\"] not in {\"space\", scope}:\n+            if head[\"kind\"] != \"memory\" or head[\"scope\"] not in ({\"space\"} if (print(\"MUTANT_REACHED\", flush=True) or True) else {\"space\", scope}):\n                 continue\n             record = self.client.call(\n                 \"read_exact\", {\"id\": head[\"id\"], \"revision\": head[\"revision\"]}, str(uuid4())\n"
+}

@@ -1,0 +1,1 @@
+{"error": {"code": "unsupported_capability", "field": "native.max_output_tokens.minimum16", "retry_policy": "never", "diagnostic_id": "4de11867c19b3141"}}

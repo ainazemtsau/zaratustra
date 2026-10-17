@@ -1,0 +1,12 @@
+import hashlib,json,shutil
+from pathlib import Path
+root=Path.cwd();proof=root/'evidence/package-d/final-83af4d4/install-83af4d4'
+manifest=json.loads((proof/'manifest.json').read_text(encoding='utf-8'));runtime=Path(manifest['installed_root'])
+destination=proof/'physical-state';destination.mkdir()
+shutil.copytree(runtime/'backup',destination/'backup')
+for name,source in [('original',runtime/'FICTIONAL-space'),('quarantined',runtime/'quarantined')]:
+ target=destination/name;target.mkdir();shutil.copyfile(source/'core.sqlite3',target/'core.sqlite3')
+ if (source/'artifacts').exists():shutil.copytree(source/'artifacts',target/'artifacts')
+rows=[{'path':p.relative_to(destination).as_posix(),'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size} for p in sorted(destination.rglob('*')) if p.is_file()]
+(destination/'manifest.json').write_text(json.dumps({'classification':'Unmodified physical SQLite and artifact bytes from disposable FICTIONAL installed trace. owner.credential and Pi auth files are excluded. SQLite contains random test credential hashes only, never actual bearer/token values. No live/personal user data.','source':manifest['source_commit'],'files':rows},indent=2),encoding='utf-8')
+print(len(rows))

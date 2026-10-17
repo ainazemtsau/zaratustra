@@ -1,0 +1,10 @@
+{
+  "seed": "C0-wire-order",
+  "test": "test_contract.py::test_wire_vectors",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n______________________________ test_wire_vectors ______________________________\ntests\\restart\\test_contract.py:39: in test_wire_vectors\n    assert wire(value) == expected.encode()\nE   assert b'{\"z\":[\"e\\xc....00\"],\"a\":20}' == b'{\"a\":20,\"z\"...cimal:1.00\"]}'\nE     \nE     At index 2 diff: b'z' != b'a'\nE     Use -v to get more diff\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_contract.py::test_wire_vectors - assert b'{\"z\":[\"e\\...\n1 failed in 0.47s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/types.py\n+++ core/src/zaratustra_core/types.py.mutant\n@@ -41,7 +41,7 @@\n \n     check(value)\n     return json.dumps(\n-        value, sort_keys=True, ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False\n+        value, sort_keys=(print(\"MUTANT_REACHED\", flush=True) or False), ensure_ascii=False, separators=(\",\", \":\"), allow_nan=False\n     ).encode(\"utf-8\")\n \n \n"
+}

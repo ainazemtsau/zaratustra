@@ -1,0 +1,41 @@
+import pathlib,json,sqlite3,hashlib,shutil,sys
+from zaratustra_core import Core,CoreError
+R=pathlib.Path(__file__).parent
+B=pathlib.Path('C:/Users/Anton/AppData/Local/Temp/zaratustra-independent-d-j7s92asp')
+baseline=B/'backup'
+P=R/'reference-corruption-evidence';P.mkdir(exist_ok=True)
+def sha(b):return hashlib.sha256(b).hexdigest()
+def dbrow(path,table):
+ with sqlite3.connect(path/'core.sqlite3') as db:
+  db.row_factory=sqlite3.Row;return [dict(r) for r in db.execute('SELECT * FROM '+table)]
+checks=[]
+try:
+ for old in ['bad-record-source','bad-work-input','bad-attempt-profile','bad-attempt-method','bad-attempt-manifest']:
+  source=B/old;dest=P/old;dest.mkdir(exist_ok=True)
+  for name in ['manifest.json','core.sqlite3']:(dest/name).write_bytes((source/name).read_bytes())
+  differences=[]
+  for table in ['records','works','attempts']:
+   a,b=dbrow(baseline,table),dbrow(source,table)
+   for x,y in zip(a,b):
+    if x!=y:differences.append(dict(table=table,before=x,after=y))
+  (dest/'mutant-diff.json').write_text(json.dumps(differences,indent=2),encoding='utf-8')
+  check=dict(case=old,baseline_good=True,sqlite_integrity=None,fk=None,rehash_matches=False,rejected=None)
+  with sqlite3.connect(source/'core.sqlite3') as db:
+   check['sqlite_integrity']=db.execute('PRAGMA integrity_check').fetchall();check['fk']=db.execute('PRAGMA foreign_key_check').fetchall()
+  manifest=json.loads((source/'manifest.json').read_bytes());check['rehash_matches']=sha((source/'core.sqlite3').read_bytes())==manifest['database_sha256']
+  target=B/(old+'-fresh-confirm')
+  try:core,token=Core.restore_quarantined(source,target)
+  except CoreError as e:check.update(rejected=True,code=e.code,field=e.field)
+  else:
+   check.update(rejected=False,new_process_read_required=True,target=str(target))
+   # Fresh Core client after restore makes the broken declared ref observable.
+   c=Core(target).connect(token);attempt=c.call('read_snapshot',{},'snapshot')['attempts'][0]
+   check['restored_attempt_body']=json.loads(attempt['body']) if isinstance(attempt['body'],str) else attempt['body']
+   if old=='bad-attempt-profile':
+    ref=check['restored_attempt_body']['profile_ref']
+    try:c.call('read_exact',ref,'broken-reference')
+    except CoreError as e:check['missing_ref_proved']=e.as_dict()
+  checks.append(check)
+ for name in ['manifest.json','core.sqlite3']:(P/('baseline-'+name)).write_bytes((baseline/name).read_bytes())
+finally:(R/'reference-class-sweep.json').write_text(json.dumps(checks,indent=2),encoding='utf-8')
+print(json.dumps({'cases':len(checks),'accepted_broken':sum(c['rejected'] is False for c in checks)}))

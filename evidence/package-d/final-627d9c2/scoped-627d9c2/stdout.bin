@@ -1,0 +1,512 @@
+........................................................................ [ 26%]
+..............................................................F......... [ 52%]
+F....F...F.............................................................. [ 78%]
+.....................FFFF..................................              [100%]
+================================== FAILURES ===================================
+_____________ test_delivery_defect_is_killed[D-retain-old-epoch] ______________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d4-scoped/tests/test_delivery_defect_is_killed9')
+seed = ('D-retain-old-epoch', 'core/src/zaratustra_core/maintenance.py', [('"UPDATE meta SET instance=?,space=?,epoch=epoch+1...=True)\n        token = secrets.token_urlsafe(32)')], 'test_maintenance.py::test_backup_complete_new_epoch_quarantine')
+
+    @pytest.mark.parametrize("seed", SEEDS, ids=[s[0] for s in SEEDS])
+    def test_delivery_defect_is_killed(
+        tmp_path: Path, seed: tuple[str, str, list[tuple[str, str]], str]
+    ) -> None:
+>       run_seed(tmp_path, seed)
+
+tests\restart\test_delivery_controls.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d4-scoped/tests/test_delivery_defect_is_killed9')
+seed = ('D-retain-old-epoch', 'core/src/zaratustra_core/maintenance.py', [('"UPDATE meta SET instance=?,space=?,epoch=epoch+1...=True)\n        token = secrets.token_urlsafe(32)')], 'test_maintenance.py::test_backup_complete_new_epoch_quarantine')
+
+    @pytest.mark.parametrize("seed", SEEDS, ids=[s[0] for s in SEEDS])
+    def test_seeded_defect_is_killed(
+        tmp_path: Path, seed: tuple[str, str, list[tuple[str, str]], str]
+    ) -> None:
+        name, source_path, replacements, node = seed
+        tree = tmp_path / "mutant"
+        for package in ("core", "app"):
+            shutil.copytree(ROOT / "packages" / package / "src", tree / package / "src")
+        path = tree / source_path
+        original = path.read_text(encoding="utf-8")
+        changed = original
+        for before, after in replacements:
+            assert before in changed, "stale mutation anchor: " + name
+            changed = changed.replace(before, after)
+        compile(changed, str(path), "exec")
+        path.write_text(changed, encoding="utf-8")
+        prefix = [str(tree / "core" / "src"), str(tree / "app" / "src"), str(ROOT)]
+        script = (
+            "import sys;sys.path[:0]="
+            + repr(prefix)
+            + ";import pytest;raise SystemExit(pytest.main(sys.argv[1:]))"
+        )
+        env = os.environ.copy()
+        env.pop("ZARA_RESTART_EVIDENCE", None)
+        run = subprocess.run(
+            [
+                sys.executable,
+                "-I",
+                "-X",
+                "utf8",
+                "-c",
+                script,
+                str(ROOT / "tests" / "restart" / node),
+                "--basetemp",
+                str(tmp_path / "run"),
+                "-q",
+                "--tb=short",
+            ],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=60,
+        )
+        report: dict[str, Any] = {
+            "seed": name,
+            "test": node,
+            "returncode": run.returncode,
+            "injection_reached": "MUTANT_REACHED" in run.stdout,
+            "behavioral_failure": "AssertionError" in run.stdout
+            or "DID NOT RAISE" in run.stdout
+            or any(line.startswith("E") and "assert " in line for line in run.stdout.splitlines()),
+            "stdout": run.stdout,
+            "stderr": run.stderr,
+            "diff": "".join(
+                difflib.unified_diff(
+                    original.splitlines(True),
+                    changed.splitlines(True),
+                    fromfile=source_path,
+                    tofile=source_path + ".mutant",
+                )
+            ),
+        }
+        destination = os.environ.get("ZARA_RESTART_NEGATIVES")
+        if destination:
+            folder = Path(destination)
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / (name + ".json")).write_text(
+                json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+        assert run.returncode == 1, report
+>       assert report["injection_reached"], report
+E       AssertionError: {'seed': 'D-retain-old-epoch', 'test': 'test_maintenance.py::test_backup_complete_new_epoch_quarantine', 'returncode': 1, 'injection_reached': False, ...}
+E       assert False
+
+tests\restart\test_negative_controls.py:348: AssertionError
+____________ test_rehashed_incoherent_backup_refused[orphan_head] _____________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d4-scoped/tests/test_rehashed_incoherent_backu0')
+damage = 'orphan_head'
+
+    @pytest.mark.parametrize("damage", ["orphan_head", "orphan_artifact_ref"])
+    def test_rehashed_incoherent_backup_refused(tmp_path: Path, damage: str) -> None:
+        core, token = Core.initialize(tmp_path / "space")
+        owner = core.connect(token)
+        stage(owner)
+        owner.call(
+            "apply_changes",
+            {
+                "changes": [
+                    {"id": "a", "kind": "data", "key": "a", "body": "held", "artifact_refs": [SHA]}
+                ]
+            },
+            "a",
+            expected_heads={"a": 0},
+        )
+        backup = tmp_path / "backup"
+>       core.backup(token, backup)
+
+tests\restart\test_maintenance.py:250: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+packages\core\src\zaratustra_core\api.py:220: in backup
+    return backup(self, token, destination)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+core = <zaratustra_core.api.Core object at 0x000002A4542F1FD0>
+token = 'HuTcSojO19S2QK5FvuEkw15qecCfrMA_L-IBJxKJrKg'
+destination = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d4-scoped/tests/test_rehashed_incoherent_backu0/backup')
+
+    def backup(core: Core, token: str, destination: Path) -> dict[str, Any]:
+        with exclusion(core.root):
+            with core._locked_transaction() as db:
+                actor = core._identity(db, token, "admin")
+                if actor["origin"] != "human":
+                    raise CoreError("denied", "maintenance.origin")
+                artifacts = [dict(r) for r in db.execute("SELECT * FROM artifacts ORDER BY sha256")]
+                meta = dict(db.execute("SELECT * FROM meta").fetchone())
+            temporary = target(core.root, destination)
+            try:
+                source = sqlite3.connect(core.path)
+                copy = sqlite3.connect(temporary / "core.sqlite3")
+                try:
+                    source.backup(copy)
+                finally:
+                    copy.close()
+                    source.close()
+                integrity(temporary / "core.sqlite3")
+                for artifact in artifacts:
+                    raw = verified(core.root, artifact["sha256"], artifact["size"])
+                    durable(temporary / "artifacts" / artifact["sha256"], raw)
+                # Rewrite through the same synchronization primitive before final publication.
+                database = (temporary / "core.sqlite3").read_bytes()
+                durable(temporary / "core.sqlite3", database)
+                manifest = {
+                    "format": "backup/v1",
+                    "source": meta,
+                    "database_sha256": hashlib.sha256(database).hexdigest(),
+                    "database_size": len(database),
+                    "artifacts": artifacts,
+                }
+                durable(temporary / "manifest.json", wire(manifest))
+>               os.replace(temporary, destination)
+E               PermissionError: [WinError 5] Отказано в доступе: 'C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d4-scoped\\tests\\test_rehashed_incoherent_backu0\\backup.partial-e44bdde76b91ee6f' -> 'C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d4-scoped\\tests\\test_rehashed_incoherent_backu0\\backup'
+
+packages\core\src\zaratustra_core\maintenance.py:96: PermissionError
+________________ test_corrupt_partial_backups_refused[missing] ________________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d4-scoped/tests/test_corrupt_partial_backups_r3')
+damage = 'missing'
+
+    @pytest.mark.parametrize(
+        "damage", ["database", "valid_database_change", "bytes", "missing", "manifest", "partial"]
+    )
+    def test_corrupt_partial_backups_refused(tmp_path: Path, damage: str) -> None:
+        core, token = Core.initialize(tmp_path / "space")
+        stage(core.connect(token))
+>       core.backup(token, tmp_path / "backup")
+
+tests\restart\test_maintenance.py:275: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+packages\core\src\zaratustra_core\api.py:220: in backup
+    return backup(self, token, destination)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+core = <zaratustra_core.api.Core object at 0x000002A4547675F0>
+token = 'leofxbwOZ94WHSUsEMu699Edu2OoMma15_m5CXNm90g'
+destination = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d4-scoped/tests/test_corrupt_partial_backups_r3/backup')
+
+    def backup(core: Core, token: str, destination: Path) -> dict[str, Any]:
+        with exclusion(core.root):
+            with core._locked_transaction() as db:
+                actor = core._identity(db, token, "admin")
+                if actor["origin"] != "human":
+                    raise CoreError("denied", "maintenance.origin")
+                artifacts = [dict(r) for r in db.execute("SELECT * FROM artifacts ORDER BY sha256")]
+                meta = dict(db.execute("SELECT * FROM meta").fetchone())
+            temporary = target(core.root, destination)
+            try:
+                source = sqlite3.connect(core.path)
+                copy = sqlite3.connect(temporary / "core.sqlite3")
+                try:
+                    source.backup(copy)
+                finally:
+                    copy.close()
+                    source.close()
+                integrity(temporary / "core.sqlite3")
+                for artifact in artifacts:
+                    raw = verified(core.root, artifact["sha256"], artifact["size"])
+                    durable(temporary / "artifacts" / artifact["sha256"], raw)
+                # Rewrite through the same synchronization primitive before final publication.
+                database = (temporary / "core.sqlite3").read_bytes()
+                durable(temporary / "core.sqlite3", database)
+                manifest = {
+                    "format": "backup/v1",
+                    "source": meta,
+                    "database_sha256": hashlib.sha256(database).hexdigest(),
+                    "database_size": len(database),
+                    "artifacts": artifacts,
+                }
+                durable(temporary / "manifest.json", wire(manifest))
+>               os.replace(temporary, destination)
+E               PermissionError: [WinError 5] Отказано в доступе: 'C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d4-scoped\\tests\\test_corrupt_partial_backups_r3\\backup.partial-184bbf24c03f00bf' -> 'C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d4-scoped\\tests\\test_corrupt_partial_backups_r3\\backup'
+
+packages\core\src\zaratustra_core\maintenance.py:96: PermissionError
+__ test_backup_crash_and_maintenance_excludes_writer[backup_hold_inventory] ___
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d4-scoped/tests/test_backup_crash_and_maintena1')
+phase = 'backup_hold_inventory'
+
+    @pytest.mark.parametrize("phase", ["backup_hold", "backup_hold_inventory"])
+    def test_backup_crash_and_maintenance_excludes_writer(tmp_path: Path, phase: str) -> None:
+        core, token = Core.initialize(tmp_path / "space")
+        owner = core.connect(token)
+        stage(owner)
+        # An idle live client owns neither a transaction nor a snapshot.
+        with sqlite3.connect(core.path, timeout=0) as independent:
+            independent.execute("BEGIN EXCLUSIVE")
+            independent.rollback()
+        common = {"root": str(core.root), "token": token, "destination": str(tmp_path / "backup")}
+        crashed = launch(common | {"phase": "backup_partial"})
+        out, err = crashed.communicate(timeout=20)
+        if "MUTANT_REACHED" in out:
+            print(out)
+        assert crashed.returncode == 91, out + err
+        assert not (tmp_path / "backup").exists()
+        partial = next(tmp_path.glob("backup.partial-*"))
+        with pytest.raises(CoreError, match="backup.invalid"):
+            Core.restore_quarantined(partial, tmp_path / "restored")
+        ready, release = tmp_path / "ready", tmp_path / "release"
+        held = launch(common | {"phase": phase, "ready": str(ready), "release": str(release)})
+        deadline = time.monotonic() + 15
+        try:
+            while not ready.exists() and time.monotonic() < deadline:
+                time.sleep(0.01)
+            assert ready.exists()
+            with pytest.raises(CoreError, match="maintenance"):
+                owner.call(
+                    "ingest_message",
+                    {"conversation": "c", "event_id": "blocked", "raw_base64": "YmxvY2tlZA=="},
+                    "blocked",
+                )
+        finally:
+            release.write_text("release", encoding="utf-8")
+            out, err = held.communicate(timeout=20)
+            if "MUTANT_REACHED" in out:
+                print(out)
+>       assert held.returncode == 0, out + err
+E       AssertionError: Traceback (most recent call last):
+E           File "<string>", line 1, in <module>
+E             import sys;sys.path[:0]=['C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\packages\\core\\src', 'C:\\projects\\zaratustra\\.worktrees\\restart-first-release'];from tests.restart.maintenance_worker import main;main()
+E                                                                                                                                                                                                                                           ~~~~^^
+E           File "C:\projects\zaratustra\.worktrees\restart-first-release\tests\restart\maintenance_worker.py", line 77, in main
+E             core.backup(packet["token"], Path(packet["destination"]))
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "C:\projects\zaratustra\.worktrees\restart-first-release\packages\core\src\zaratustra_core\api.py", line 220, in backup
+E             return backup(self, token, destination)
+E           File "C:\projects\zaratustra\.worktrees\restart-first-release\packages\core\src\zaratustra_core\maintenance.py", line 96, in backup
+E             os.replace(temporary, destination)
+E             ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+E         PermissionError: [WinError 5] Отказано в доступе: 'C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d4-scoped\\tests\\test_backup_crash_and_maintena1\\backup.partial-d9132cbe529a9c03' -> 'C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d4-scoped\\tests\\test_backup_crash_and_maintena1\\backup'
+E         
+E       assert 1 == 0
+E        +  where 1 = <Popen: returncode: 1 args: ['C:\\projects\\zaratustra\\.worktrees\\restart-...>.returncode
+
+tests\restart\test_maintenance.py:336: AssertionError
+_______ test_owner_pause_replaces_previous_resource_cause[None-resume] ________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d4-scoped/tests/test_owner_pause_replaces_prev0')
+continuation = 'resume', reason = None
+
+    @pytest.mark.parametrize("continuation", ["resume", "refresh"])
+    @pytest.mark.parametrize("reason", [None, "owner_review"])
+    def test_owner_pause_replaces_previous_resource_cause(
+        tmp_path: Path, continuation: str, reason: str | None
+    ) -> None:
+        core, _, client = seed(tmp_path)
+        sleep = Sleep(client)
+        sleep.start(work_id="s", call_limit=4)
+        work = inspect(core, "works")[0]
+        client.call(
+            "control_work",
+            {
+                "work_id": "s",
+                "revision": work["revision"],
+                "action": "pause",
+                "reason": "resource_exhausted",
+            },
+            uuid4().hex,
+        )
+        work = inspect(core, "works")[0]
+        client.call(
+            "control_work",
+            {"work_id": "s", "revision": work["revision"], "action": continuation},
+            uuid4().hex,
+        )
+        assert not any(i["kind"] == "control" for i in inspect(core, "intents"))
+        work = inspect(core, "works")[0]
+        client.call(
+            "control_work",
+            {"work_id": "s", "revision": work["revision"], "action": "pause", "reason": reason},
+            uuid4().hex,
+        )
+        receiver = MechanicalSleepReceiver()
+        for _ in range(2):
+            with pytest.raises(CoreError, match="sleep.paused"):
+                Sleep(Core(core.root).connect(client.token)).run("s", PROFILE, Driver(receiver))
+        assert receiver.actions == []
+        assert sleep.progress("s")["body"]["value"]["stop_reason"] == "not_started"
+        control = next(i for i in inspect(core, "intents") if i["kind"] == "control")
+>       assert json.loads(control["body"]) == {"action": "pause", "reason": reason}
+E       AssertionError: assert {'action': 'p...reason': None} == {'action': 'p...reason': None}
+E         
+E         Omitting 2 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'input_watermark': 0}
+E         Use -v to get more diff
+
+tests\restart\test_sleep.py:648: AssertionError
+_______ test_owner_pause_replaces_previous_resource_cause[None-refresh] _______
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d4-scoped/tests/test_owner_pause_replaces_prev1')
+continuation = 'refresh', reason = None
+
+    @pytest.mark.parametrize("continuation", ["resume", "refresh"])
+    @pytest.mark.parametrize("reason", [None, "owner_review"])
+    def test_owner_pause_replaces_previous_resource_cause(
+        tmp_path: Path, continuation: str, reason: str | None
+    ) -> None:
+        core, _, client = seed(tmp_path)
+        sleep = Sleep(client)
+        sleep.start(work_id="s", call_limit=4)
+        work = inspect(core, "works")[0]
+        client.call(
+            "control_work",
+            {
+                "work_id": "s",
+                "revision": work["revision"],
+                "action": "pause",
+                "reason": "resource_exhausted",
+            },
+            uuid4().hex,
+        )
+        work = inspect(core, "works")[0]
+        client.call(
+            "control_work",
+            {"work_id": "s", "revision": work["revision"], "action": continuation},
+            uuid4().hex,
+        )
+        assert not any(i["kind"] == "control" for i in inspect(core, "intents"))
+        work = inspect(core, "works")[0]
+        client.call(
+            "control_work",
+            {"work_id": "s", "revision": work["revision"], "action": "pause", "reason": reason},
+            uuid4().hex,
+        )
+        receiver = MechanicalSleepReceiver()
+        for _ in range(2):
+            with pytest.raises(CoreError, match="sleep.paused"):
+                Sleep(Core(core.root).connect(client.token)).run("s", PROFILE, Driver(receiver))
+        assert receiver.actions == []
+        assert sleep.progress("s")["body"]["value"]["stop_reason"] == "not_started"
+        control = next(i for i in inspect(core, "intents") if i["kind"] == "control")
+>       assert json.loads(control["body"]) == {"action": "pause", "reason": reason}
+E       AssertionError: assert {'action': 'p...reason': None} == {'action': 'p...reason': None}
+E         
+E         Omitting 2 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'input_watermark': 0}
+E         Use -v to get more diff
+
+tests\restart\test_sleep.py:648: AssertionError
+___ test_owner_pause_replaces_previous_resource_cause[owner_review-resume] ____
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d4-scoped/tests/test_owner_pause_replaces_prev2')
+continuation = 'resume', reason = 'owner_review'
+
+    @pytest.mark.parametrize("continuation", ["resume", "refresh"])
+    @pytest.mark.parametrize("reason", [None, "owner_review"])
+    def test_owner_pause_replaces_previous_resource_cause(
+        tmp_path: Path, continuation: str, reason: str | None
+    ) -> None:
+        core, _, client = seed(tmp_path)
+        sleep = Sleep(client)
+        sleep.start(work_id="s", call_limit=4)
+        work = inspect(core, "works")[0]
+        client.call(
+            "control_work",
+            {
+                "work_id": "s",
+                "revision": work["revision"],
+                "action": "pause",
+                "reason": "resource_exhausted",
+            },
+            uuid4().hex,
+        )
+        work = inspect(core, "works")[0]
+        client.call(
+            "control_work",
+            {"work_id": "s", "revision": work["revision"], "action": continuation},
+            uuid4().hex,
+        )
+        assert not any(i["kind"] == "control" for i in inspect(core, "intents"))
+        work = inspect(core, "works")[0]
+        client.call(
+            "control_work",
+            {"work_id": "s", "revision": work["revision"], "action": "pause", "reason": reason},
+            uuid4().hex,
+        )
+        receiver = MechanicalSleepReceiver()
+        for _ in range(2):
+            with pytest.raises(CoreError, match="sleep.paused"):
+                Sleep(Core(core.root).connect(client.token)).run("s", PROFILE, Driver(receiver))
+        assert receiver.actions == []
+        assert sleep.progress("s")["body"]["value"]["stop_reason"] == "not_started"
+        control = next(i for i in inspect(core, "intents") if i["kind"] == "control")
+>       assert json.loads(control["body"]) == {"action": "pause", "reason": reason}
+E       AssertionError: assert {'action': 'p...owner_review'} == {'action': 'p...owner_review'}
+E         
+E         Omitting 2 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'input_watermark': 0}
+E         Use -v to get more diff
+
+tests\restart\test_sleep.py:648: AssertionError
+___ test_owner_pause_replaces_previous_resource_cause[owner_review-refresh] ___
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d4-scoped/tests/test_owner_pause_replaces_prev3')
+continuation = 'refresh', reason = 'owner_review'
+
+    @pytest.mark.parametrize("continuation", ["resume", "refresh"])
+    @pytest.mark.parametrize("reason", [None, "owner_review"])
+    def test_owner_pause_replaces_previous_resource_cause(
+        tmp_path: Path, continuation: str, reason: str | None
+    ) -> None:
+        core, _, client = seed(tmp_path)
+        sleep = Sleep(client)
+        sleep.start(work_id="s", call_limit=4)
+        work = inspect(core, "works")[0]
+        client.call(
+            "control_work",
+            {
+                "work_id": "s",
+                "revision": work["revision"],
+                "action": "pause",
+                "reason": "resource_exhausted",
+            },
+            uuid4().hex,
+        )
+        work = inspect(core, "works")[0]
+        client.call(
+            "control_work",
+            {"work_id": "s", "revision": work["revision"], "action": continuation},
+            uuid4().hex,
+        )
+        assert not any(i["kind"] == "control" for i in inspect(core, "intents"))
+        work = inspect(core, "works")[0]
+        client.call(
+            "control_work",
+            {"work_id": "s", "revision": work["revision"], "action": "pause", "reason": reason},
+            uuid4().hex,
+        )
+        receiver = MechanicalSleepReceiver()
+        for _ in range(2):
+            with pytest.raises(CoreError, match="sleep.paused"):
+                Sleep(Core(core.root).connect(client.token)).run("s", PROFILE, Driver(receiver))
+        assert receiver.actions == []
+        assert sleep.progress("s")["body"]["value"]["stop_reason"] == "not_started"
+        control = next(i for i in inspect(core, "intents") if i["kind"] == "control")
+>       assert json.loads(control["body"]) == {"action": "pause", "reason": reason}
+E       AssertionError: assert {'action': 'p...owner_review'} == {'action': 'p...owner_review'}
+E         
+E         Omitting 2 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'input_watermark': 0}
+E         Use -v to get more diff
+
+tests\restart\test_sleep.py:648: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/restart/test_delivery_controls.py::test_delivery_defect_is_killed[D-retain-old-epoch]
+FAILED tests/restart/test_maintenance.py::test_rehashed_incoherent_backup_refused[orphan_head]
+FAILED tests/restart/test_maintenance.py::test_corrupt_partial_backups_refused[missing]
+FAILED tests/restart/test_maintenance.py::test_backup_crash_and_maintenance_excludes_writer[backup_hold_inventory]
+FAILED tests/restart/test_sleep.py::test_owner_pause_replaces_previous_resource_cause[None-resume]
+FAILED tests/restart/test_sleep.py::test_owner_pause_replaces_previous_resource_cause[None-refresh]
+FAILED tests/restart/test_sleep.py::test_owner_pause_replaces_previous_resource_cause[owner_review-resume]
+FAILED tests/restart/test_sleep.py::test_owner_pause_replaces_previous_resource_cause[owner_review-refresh]
+8 failed, 267 passed in 459.89s (0:07:39)

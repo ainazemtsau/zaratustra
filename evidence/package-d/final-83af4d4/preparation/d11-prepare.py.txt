@@ -1,0 +1,12 @@
+from pathlib import Path
+import subprocess,sys
+r=Path.cwd();old=r/'evidence/package-d/final-0fff808';p=r/'evidence/package-d/final-83af4d4';p.mkdir()
+pin='83af4d4a529ca73d06d566db62a3586f2a432af9'
+for name in ['source-manifest.py.txt','install.py.txt','bundle.py.txt','owner-install.py.txt','dependency-bytes.py.txt','export-state.py.txt','run-gate.py.txt','Install.ps1','Start.ps1']:
+ s=(old/name).read_text().replace('0fff8088f092a8ba6b32451ed5c1e03e844c233a',pin).replace('0fff808','83af4d4').replace("('d10-'+kind)","('d11-'+kind)")
+ (p/name).write_text(s,encoding='utf-8')
+for name in ['source-manifest.py.txt','install.py.txt','bundle.py.txt','owner-install.py.txt','dependency-bytes.py.txt']:
+ v=subprocess.run([sys.executable,str(p/name)],capture_output=True)
+ (p/(name+'.stdout.bin')).write_bytes(v.stdout);(p/(name+'.stderr.bin')).write_bytes(v.stderr)
+ print(name,v.returncode,v.stdout.decode(errors='replace'),flush=True)
+ if v.returncode:print(v.stderr.decode(errors='replace'));raise SystemExit(v.returncode)

@@ -1,0 +1,185 @@
+from __future__ import annotations
+import hashlib,json,os,shutil,subprocess,sys,tempfile,time,tomllib,zipfile
+from pathlib import Path
+
+CHECKOUT=Path.cwd()
+PIN='11ebf956bafc2bbca4a3685e37d117474f11c151'
+PROOF=CHECKOUT/'evidence/package-d/final-11ebf95/install-11ebf95'
+PROOF.mkdir(parents=True,exist_ok=False)
+BASE=Path(tempfile.mkdtemp(prefix='zaratustra-d-11ebf95-'))
+SOURCE=BASE/'source';SOURCE.mkdir()
+RUNTIME=BASE/'runtime';RUNTIME.mkdir()
+BUILDS=PROOF/'physical-builds';BUILDS.mkdir()
+uv=shutil.which('uv');node=shutil.which('node');assert uv and node
+pi=Path(os.environ['APPDATA'])/'npm/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js'
+assert pi.is_file()
+paths=subprocess.check_output(['git','ls-tree','-r','--name-only',PIN,'--','packages','pyproject.toml','uv.lock','.python-version','README.md','tests/restart/support.py','tests/restart/sleep_support.py'],text=True).splitlines()
+source_files=[]
+for name in paths:
+    raw=subprocess.check_output(['git','show',PIN+':'+name])
+    assert raw==(CHECKOUT/name).read_bytes(),name
+    target=SOURCE/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(raw)
+    source_files.append({'path':name,'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)})
+boundaries=[]
+for name,path in [('source',SOURCE),('runtime',RUNTIME)]:
+    result=subprocess.run(['git','-C',str(path),'rev-parse','--show-toplevel'],capture_output=True)
+    boundaries.append({'name':name,'path':str(path),'returncode':result.returncode,'stdout':result.stdout.decode(errors='replace'),'stderr':result.stderr.decode(errors='replace')})
+    assert result.returncode==128
+(PROOF/'git-boundaries.json').write_text(json.dumps(boundaries,indent=2),encoding='utf-8')
+env=os.environ.copy()
+for key in ['ZARATUSTRA_SQLITE_DLL','PYTHONPATH','PYTEST_ADDOPTS','ZARA_RESTART_EVIDENCE','ZARA_RESTART_NEGATIVES']:
+    env.pop(key,None)
+env['UV_CACHE_DIR']=str(CHECKOUT/'_scratch/uv-cache')
+runs=[]
+def run(name,argv,cwd=SOURCE,environment=env,stdin=None):
+    start=time.time();result=subprocess.run(list(map(str,argv)),cwd=cwd,env=environment,input=stdin,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    (PROOF/(name+'.stdout.bin')).write_bytes(result.stdout)
+    (PROOF/(name+'.stderr.bin')).write_bytes(result.stderr)
+    runs.append({'name':name,'argv':list(map(str,argv)),'cwd':str(cwd),'returncode':result.returncode,'seconds':time.time()-start})
+    (PROOF/'commands.json').write_text(json.dumps(runs,indent=2),encoding='utf-8')
+    assert result.returncode==0,(name,result.stdout.decode(errors='replace'),result.stderr.decode(errors='replace'))
+    return result
+for name in ['zaratustra-core','zaratustra-next']:
+    run('build-'+name,[uv,'build','--package',name,'--out-dir',BUILDS])
+assert len([p for p in BUILDS.iterdir() if p.name.endswith(('.whl','.tar.gz'))])==4
+run('venv',[uv,'venv',RUNTIME/'env','--python',sys.executable],cwd=RUNTIME)
+python=RUNTIME/'env/Scripts/python.exe';console=RUNTIME/'env/Scripts/zaratustra-next.exe'
+constraints=RUNTIME/'constraints.txt'
+lock=tomllib.loads((SOURCE/'uv.lock').read_text(encoding='utf-8'))
+constraints.write_text('\n'.join(p['name']+'=='+p['version'] for p in lock['package'] if 'registry' in p['source']),encoding='utf-8')
+core=next(BUILDS.glob('zaratustra_core-*.whl'));app=next(BUILDS.glob('zaratustra_next-*.whl'))
+run('install-core',[uv,'pip','install','--offline','--constraint',constraints,'--python',python,core],cwd=RUNTIME)
+profile=RUNTIME/'clean-profile';profile.mkdir()
+clean={k:v for k,v in env.items() if k.upper() in {'SYSTEMROOT','WINDIR','COMSPEC','TEMP','TMP'}}
+clean.update({'HOME':str(profile),'USERPROFILE':str(profile),'APPDATA':str(profile/'AppData'),'LOCALAPPDATA':str(profile/'LocalAppData'),'PATH':'','PYTHONUTF8':'1','PYTHONIOENCODING':'utf-8'})
+guard='''
+import sys,importlib.abc,importlib.util,json,sqlite3
+from pathlib import Path
+class Deny(importlib.abc.MetaPathFinder):
+ def find_spec(self,fullname,path=None,target=None):
+  if fullname.split('.')[0] in {'zaratustra','dbos','sqlalchemy','pi'}:raise AssertionError('legacy import '+fullname)
+sys.meta_path.insert(0,Deny())
+allowed=[Path.cwd().resolve(),Path(sys.prefix).resolve(),Path(sys.base_prefix).resolve()]
+def audit(event,args):
+ if event.startswith(('socket.','subprocess.')):raise AssertionError('network/process '+event)
+ if event in {'open','os.listdir','os.scandir','sqlite3.connect','os.mkdir'} and isinstance(args[0],(str,bytes)):
+  actual=Path(args[0]).resolve()
+  if not any(actual.is_relative_to(p) for p in allowed):raise AssertionError('ambient file '+str(actual))
+sys.addaudithook(audit)
+'''
+run('core-only',[python,'-I','-X','utf8','-c',guard+'''
+import zaratustra_core
+assert importlib.util.find_spec('zaratustra_app') is None
+assert sqlite3.sqlite_version=='3.50.4'
+core,token=zaratustra_core.Core.initialize(Path('core-alone'))
+assert core.connect(token).call('describe_contract',{},'d')['version']=='wire/v1'
+print(json.dumps({'core':zaratustra_core.__file__,'python':sys.version,'sqlite':sqlite3.sqlite_version,'independent':True}))
+'''],cwd=RUNTIME,environment=clean)
+run('install-app',[uv,'pip','install','--offline','--python',python,app],cwd=RUNTIME)
+safe=RUNTIME/'model-free-guard';safe.mkdir()
+(safe/'sitecustomize.py').write_text(guard,encoding='utf-8')
+model_free=dict(clean,PYTHONPATH=str(safe))
+space=RUNTIME/'FICTIONAL-space'
+def entry(name,operation,*extra,root=space,environment=model_free):
+    return run(name,[console,'--data-root',root,operation,*extra],cwd=RUNTIME,environment=environment)
+entry('console-init','init')
+entry('console-diagnostics-empty','diagnostics')
+raw=bytes(range(256))*257+b'complete trailing bytes';chosen=RUNTIME/'FICTIONAL-artifact.bin';chosen.write_bytes(raw)
+entry('console-artifact','artifact','--file',chosen)
+
+# Explicit controlled upstream fixture. Actual installed console + Pi SDK + bridge
+# run unchanged; only HTTP transport is replaced. This is NOT live usefulness.
+shim=RUNTIME/'controlled-upstream';shim.mkdir()
+(shim/'sitecustomize.py').write_text('''
+import io,json,os
+from pathlib import Path
+from zaratustra_app.adapters.pi import bridge
+root=Path(os.environ['FICTIONAL_RECEIVER_ROOT'])
+class Response(io.BytesIO):
+ status=200
+ headers={'Content-Type':'text/event-stream'}
+class Receiver:
+ def open(self,request,timeout):
+  assert request.full_url=='https://api.openai.com/v1/responses'
+  assert request.get_header('Authorization')=='Bearer fictional-access'
+  packets=sorted(root.glob('*-request.bin'));n=len(packets)+1
+  (root/(str(n)+'-request.bin')).write_bytes(request.data)
+  payload=json.loads(request.data)
+  assert payload['model']=='gpt-6-luna' and payload['store'] is False and payload['stream'] is True
+  assert payload['max_output_tokens']==512
+  terminal=({'state':'waiting','text':'Controlled question','wait':{'id':'fixture-wait','question':'Controlled question'},
+    'changes':[{'id':'fictional-activity','kind':'activity','key':'fictional','body':'controlled fixture Activity'}],
+    'expected_heads':{'fictional-activity':0}} if n==1 else {'state':'completed','text':'Controlled result after correction'})
+  text=json.dumps(terminal)
+  item={'id':'message','type':'message','role':'assistant','status':'completed','content':[{'type':'output_text','text':text,'annotations':[]}]}
+  response={'id':'response','object':'response','created_at':1,'model':'gpt-6-luna','status':'completed','output':[item],
+    'usage':{'input_tokens':20,'output_tokens':20,'total_tokens':40}}
+  events=[{'type':'response.created','response':response|{'status':'in_progress','output':[]}},
+    {'type':'response.output_item.added','output_index':0,'item':item|{'content':[],'status':'in_progress'}},
+    {'type':'response.content_part.added','item_id':'message','output_index':0,'content_index':0,'part':{'type':'output_text','text':'','annotations':[]}},
+    {'type':'response.output_text.delta','item_id':'message','output_index':0,'content_index':0,'delta':text},
+    {'type':'response.output_text.done','item_id':'message','output_index':0,'content_index':0,'text':text},
+    {'type':'response.output_item.done','output_index':0,'item':item},
+    {'type':'response.completed','response':response}]
+  body=''.join('event: '+e['type']+chr(10)+'data: '+json.dumps(e)+chr(10)*2 for e in events).encode()
+  return Response(body)
+bridge.build_opener=lambda *_:Receiver()
+''',encoding='utf-8')
+receiver=RUNTIME/'FICTIONAL-receiver';receiver.mkdir()
+auth=RUNTIME/'FICTIONAL-pi-auth.json'
+auth.write_text(json.dumps({'openai':{'type':'oauth','access':'fictional-access','refresh':'fictional-refresh','expires':int(time.time()*1000)+3600000}}),encoding='utf-8')
+selected=RUNTIME/'controlled-profile.json'
+selected.write_text(json.dumps({'pi_cli':str(pi),'endpoint':'https://api.openai.com/v1','model':'gpt-6-luna','auth_mode':'pi-chatgpt','auth_path':str(auth),'max_tokens':512,'context_window':32768,'timeout':60}),encoding='utf-8')
+pi_env=dict(clean,PYTHONPATH=str(shim),PATH=str(Path(node).parent),FICTIONAL_RECEIVER_ROOT=str(receiver))
+common=['--profile-file',selected,'--call-limit','4']
+entry('console-chat-first','chat',*common,'--message','FICTIONAL ORIGINAL INPUT; PRIVATE_SENTINEL',environment=pi_env)
+assert len(list(receiver.glob('*-request.bin')))==1
+entry('console-chat-free-correction','chat',*common,'--message','FICTIONAL CORRECTION LIMIT',environment=pi_env)
+assert len(list(receiver.glob('*-request.bin')))==1
+entry('console-chat-addressed-reopen','chat',*common,'--reply-to','fixture-wait','--message','FICTIONAL ANSWER',environment=pi_env)
+assert len(list(receiver.glob('*-request.bin')))==2
+entry('console-diagnostics-preview','diagnostics','--destination',RUNTIME/'diagnostics-preview.json')
+assert b'PRIVATE_SENTINEL' not in (RUNTIME/'diagnostics-preview.json').read_bytes()
+entry('console-backup','backup','--destination',RUNTIME/'backup')
+entry('console-restore','restore','--file',RUNTIME/'backup',root=RUNTIME/'quarantined')
+entry('console-restored-diagnostics','diagnostics',root=RUNTIME/'quarantined')
+run('installed-state',[python,'-I','-X','utf8','-c','''
+import base64,hashlib,json,sqlite3,sys
+from pathlib import Path
+from zaratustra_core import Core,CoreError
+root=Path('FICTIONAL-space');token=(root/'owner.credential').read_text();owner=Core(root).connect(token)
+state=owner.call('read_snapshot',{},'proof')
+assert state['conversations'][0]['cursor']==3 and not state['acceptance']
+assert len([h for h in state['heads'] if h['kind']=='activity'])==1
+assert state['works'][0]['status']=='completed' and state['works'][0]['reserved']==4
+restored=Core(Path('quarantined'));current=restored.connect((restored.root/'owner.credential').read_text())
+assert current.meta['epoch']==owner.meta['epoch']+1 and current.meta['space']!=owner.meta['space']
+try:restored.connect(token)
+except CoreError as e:assert e.code=='denied'
+else:raise AssertionError('old credential accepted')
+sha=hashlib.sha256(Path('FICTIONAL-artifact.bin').read_bytes()).hexdigest()
+assert base64.b64decode(current.call('read_artifact',{'sha256':sha},'bytes')['raw_base64'])==Path('FICTIONAL-artifact.bin').read_bytes()
+assert current.call('export_diagnostics',{},'diag')['mode']=='quarantined'
+print(json.dumps({'cursor':3,'activity_heads':1,'accepted':False,'reserved':4,'new_epoch':True,'old_credential_denied':True,'complete_artifact_bytes':True,'quarantined':True,'sqlite':sqlite3.sqlite_version}))
+'''],cwd=RUNTIME,environment=clean)
+site=RUNTIME/'env/Lib/site-packages';verified=[]
+for wheel,package in [(core,'core'),(app,'app')]:
+    with zipfile.ZipFile(wheel) as archive:
+        for name in archive.namelist():
+            if name.startswith(('zaratustra_core/','zaratustra_app/')) and name.endswith(('.py','.ts','.mjs')):
+                data=archive.read(name)
+                assert data==(site/name).read_bytes()==(SOURCE/'packages'/package/'src'/name).read_bytes(),name
+                verified.append({'path':name,'sha256':hashlib.sha256(data).hexdigest(),'bytes':len(data)})
+run('dependencies',[python,'-I','-c','import importlib.metadata as m,json,sqlite3,sys;print(json.dumps({"packages":sorted((d.metadata["Name"],d.version) for d in m.distributions()),"python":sys.version,"sqlite":sqlite3.sqlite_version}))'],cwd=RUNTIME,environment=clean)
+saved=PROOF/'installed-raw';saved.mkdir()
+for source,name in [(receiver,'provider'),(space/'pi','pi')]:
+    shutil.copytree(source,saved/name)
+shutil.copyfile(RUNTIME/'diagnostics-preview.json',saved/'diagnostics-preview.json')
+manifest={'source_commit':PIN,'base_candidate_c':'7d211480d1dd5067bf52c3a654cc1a713368310d','fresh_base':str(BASE),
+    'source_root':str(SOURCE),'installed_root':str(RUNTIME),'source_build_outside_all_checkouts':True,'git_boundaries':boundaries,
+    'source_files':source_files,'builds':[{'path':p.name,'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size} for p in BUILDS.iterdir()],
+    'verified_source_wheel_installed_files':verified,'clean_profile':{'HOME':str(profile),'ambient_path':False,'model_free_network_process_denied':True,
+    'controlled_chat_declared_shim':True,'actual_console_entrypoint':str(console),'pi_cli':str(pi),'real_account_used':False},
+    'commands':runs}
+(PROOF/'manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+print(json.dumps({'source':PIN,'builds':4,'verified_files':len(verified),'outside_all_checkouts':True,'actual_installed_console':True,'live_usefulness':False,'runtime':str(RUNTIME)}))

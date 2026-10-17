@@ -1,0 +1,12 @@
+import json,os,subprocess,tempfile,time
+from pathlib import Path
+root=Path.cwd();e=root/'evidence/package-d/final-11ebf95';base=Path(tempfile.mkdtemp(prefix='zaratustra-d-owner-11ebf95-'))
+cmd=['pwsh','-NoProfile','-File',str(e/'owner-bundle/Install.ps1'),'-RuntimeRoot',str(base/'runtime'),'-DataRoot',str(base/'data')]
+env=os.environ.copy()
+for k in ['ZARATUSTRA_SQLITE_DLL','PYTHONPATH','PYTEST_ADDOPTS']:env.pop(k,None)
+start=time.time()
+with (e/'owner-bundle-install.stdout.txt').open('xb') as out,(e/'owner-bundle-install.stderr.txt').open('xb') as err:
+ result=subprocess.run(cmd,cwd=base,env=env,stdout=out,stderr=err)
+(e/'OWNER-INSTALL.json').write_text(json.dumps({'command':cmd,'cwd':str(base),'source':'11ebf956bafc2bbca4a3685e37d117474f11c151','returncode':result.returncode,'seconds':time.time()-start},indent=2),encoding='utf-8')
+assert result.returncode==0,result.returncode
+print(json.dumps({'installed':str(base),'returncode':0}))

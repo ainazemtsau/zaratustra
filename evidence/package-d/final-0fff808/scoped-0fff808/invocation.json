@@ -1,0 +1,15 @@
+{
+  "source": "0fff8088f092a8ba6b32451ed5c1e03e844c233a",
+  "command": [
+    "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "tests/restart",
+    "-q"
+  ],
+  "cwd": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release",
+  "new_runtime_legacy_dll": false,
+  "full_gate_only_dll": null,
+  "parent_python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]",
+  "parent_native_sqlite": "3.50.4"
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "ProcessId": 123952,
+    "ParentProcessId": 70108,
+    "CreationDate": "2026-10-16T18:53:10.038534+03:00",
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe\" -X utf8 evidence/package-d/final-6760a46/run-gate.py.txt native"
+  },
+  {
+    "ProcessId": 55088,
+    "ParentProcessId": 123952,
+    "CreationDate": "2026-10-16T18:53:10.061972+03:00",
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe\" -X utf8 evidence/package-d/final-6760a46/run-gate.py.txt native"
+  },
+  {
+    "ProcessId": 97116,
+    "ParentProcessId": 55612,
+    "CreationDate": "2026-10-16T18:53:10.697316+03:00",
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe\" -m tools.check --deliver"
+  },
+  {
+    "ProcessId": 125888,
+    "ParentProcessId": 97116,
+    "CreationDate": "2026-10-16T18:53:10.713302+03:00",
+    "Name": "python.exe",
+    "CommandLine": "\"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe\" -m tools.check --deliver"
+  },
+  {
+    "ProcessId": 38116,
+    "ParentProcessId": 125888,
+    "CreationDate": "2026-10-16T18:53:15.667899+03:00",
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -m pytest tests -q"
+  },
+  {
+    "ProcessId": 118540,
+    "ParentProcessId": 38116,
+    "CreationDate": "2026-10-16T18:53:15.68545+03:00",
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -m pytest tests -q"
+  }
+]

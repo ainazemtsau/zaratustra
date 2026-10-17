@@ -1,0 +1,140 @@
+....F..............................                                      [100%]
+================================== FAILURES ===================================
+____________________ test_api_key_pi_retains_output_field _____________________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/calls-only-focused-green-20261017/tests/test_api_key_pi_retains_output0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000023DDF045E10>
+
+    def test_api_key_pi_retains_output_field(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        received: list[dict[str, Any]] = []
+    
+        class Response(io.BytesIO):
+            status = 200
+            headers = {"Content-Type": "text/event-stream"}
+    
+        class ControlledTransport:
+            def open(self, request: Any, timeout: int) -> Response:
+                assert request.full_url == "https://provider.invalid/v1/responses"
+                assert request.get_header("Authorization") == "Bearer fictional-api-key"
+                payload = json.loads(request.data)
+                assert payload["max_output_tokens"] == 64 and "text" not in payload
+                received.append(payload)
+                supplied = json.loads(payload["input"][1]["content"][0]["text"])
+                output = (
+                    routing(supplied["context"], "api-key-activity")
+                    if len(received) == 1
+                    else {"state": "completed", "text": "fictional API-key result"}
+                )
+                return Response(response_events(json.dumps(output)))
+    
+        monkeypatch.setattr(bridge, "build_opener", lambda *_: ControlledTransport())
+        monkeypatch.setenv("FICTIONAL_API_KEY", "fictional-api-key")
+        core, token = Core.initialize(tmp_path / "space")
+        session = Conversation(core, token)
+        session.submit("API-key mechanics only.")
+        profile = LiveProfile(
+            endpoint="https://provider.invalid/v1",
+            model="fictional-model",
+            credential_env="FICTIONAL_API_KEY",
+            max_tokens=64,
+            context_window=8192,
+        )
+        executor = Pi(pi_cli(), tmp_path / "pi", profile.endpoint, live=profile)
+        assert (
+>           session.run(executor, {"profile": "fictional-api-key"}, 4)["text"]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            == "fictional API-key result"
+        )
+
+tests\restart\test_conversation.py:470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+packages\app\src\zaratustra_app\conversation.py:133: in run
+    result = self._step(executor, descriptor, call_limit, refresh=refresh)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\app\src\zaratustra_app\conversation.py:295: in _step
+    result = self.coordinator.recover(attempt["id"], pi=isinstance(executor, Pi), ordinary=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\app\src\zaratustra_app\coordinator.py:289: in recover
+    output = outcome(output, attempt, work, self.scoped_inputs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+output = {'state': 'completed', 'text': 'fictional API-key result'}
+attempt = {'id': 'continued:79dc50d580bdb4eecf970141ad0d985bec0e69be81bb7d2015c2ce1059d075ed:attempt:f6af173010e6401a8900f23f804...9dc50d580bdb4eecf970141ad0d985bec0e69be81bb7d2015c2ce1059d075ed', 'conversation': 'ordinary', 'status': 'claimed', ...}
+work = {'id': 'continued:79dc50d580bdb4eecf970141ad0d985bec0e69be81bb7d2015c2ce1059d075ed', 'revision': 2, 'conversation': 'ordinary', 'status': 'running', ...}
+inputs = <bound method Coordinator.scoped_inputs of <zaratustra_app.coordinator.Coordinator object at 0x0000023DDF046140>>
+
+    def outcome(
+        output: dict[str, Any],
+        attempt: dict[str, Any],
+        work: dict[str, Any],
+        inputs: Any,
+    ) -> dict[str, Any]:
+        """Normalize trusted identity/budget; never invent Activity or subject content."""
+        body = json.loads(work["body"])
+        if body["method_ref"]["id"] not in {ROUTING_ID, EXECUTION_ID}:
+            return output  # Historical/custom Work keeps its original contract.
+    
+        def invalid() -> None:
+            raise CoreError("invalid_request", "ordinary.outcome_shape", "after_refresh")
+    
+        def refs(value: Any) -> bool:
+            return isinstance(value, list) and all(
+                isinstance(r, dict)
+                and isinstance(r.get("id"), str)
+                and bool(r["id"])
+                and type(r.get("revision")) is int
+                and r["revision"] > 0
+                and not set(r) - {"id", "revision", "role"}
+                and isinstance(r.get("role", "exact"), str)
+                and r.get("role", "exact") in {"exact", "must_be_current"}
+                for r in value
+            )
+    
+        if (
+            not isinstance(output, dict)
+            or set(output)
+            - {"state", "text", "changes", "expected_heads", "outputs", "wait", "next_work"}
+            or not isinstance(output.get("state"), str)
+            or output.get("state") not in {"completed", "ready", "waiting"}
+            or not isinstance(output.get("text"), str)
+            or not refs(output.get("outputs", []))
+            or not isinstance(output.get("changes", []), list)
+            or not all(isinstance(c, dict) for c in output.get("changes", []))
+            or not isinstance(output.get("expected_heads", {}), dict)
+            or not all(
+                isinstance(k, str) and type(v) is int and v >= 0
+                for k, v in output.get("expected_heads", {}).items()
+            )
+        ):
+            invalid()
+        routing = body["method_ref"]["id"] == ROUTING_ID
+        scope = body.get("scope", "space")
+        if routing:
+            child = output.get("next_work")
+            if (
+                output.get("state") != "completed"
+                or not isinstance(child, dict)
+                or set(child) - {"scope", "goal", "inputs"}
+                or not isinstance(child.get("scope"), str)
+                or not child.get("scope")
+                or child.get("scope") == "space"
+                or not isinstance(child.get("goal"), str)
+                or not child.get("goal")
+                or not refs(child.get("inputs", []))
+            ):
+                raise CoreError("invalid_request", "ordinary.routing_outcome", "after_refresh")
+            scope = child["scope"]
+        elif output.get("next_work") is not None:
+            raise CoreError("invalid_request", "ordinary.unexpected_continuation", "after_refresh")
+        if not routing:
+            subject_scope(output.get("changes", []), scope)
+        selected = next((r for r in output.get("outputs", []) if r.get("id") == scope), None)
+        if selected is None:
+>           raise CoreError("invalid_request", "ordinary.activity_output", "after_refresh")
+E           zaratustra_core.types.CoreError: invalid_request: ordinary.activity_output [d4453ea3472b9339]
+
+packages\app\src\zaratustra_app\ordinary.py:146: CoreError
+=========================== short test summary info ===========================
+FAILED tests/restart/test_conversation.py::test_api_key_pi_retains_output_field
+1 failed, 34 passed, 35 deselected in 114.41s (0:01:54)

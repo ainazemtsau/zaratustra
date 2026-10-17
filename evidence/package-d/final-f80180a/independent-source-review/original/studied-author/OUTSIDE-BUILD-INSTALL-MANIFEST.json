@@ -1,0 +1,72 @@
+{
+  "source_commit": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+  "distributions": [
+    {
+      "file": "zaratustra_core-0.1.0-py3-none-any.whl",
+      "sha256": "93ff28d186def9d2f6cae4d2979cd90930f43feb11b6a9e6d3704df7403e8271",
+      "bytes": 29080
+    },
+    {
+      "file": "zaratustra_core-0.1.0.tar.gz",
+      "sha256": "afbeed5be50920111faa218028a62edf5defaba992381d1130a213705442e6f6",
+      "bytes": 24993
+    },
+    {
+      "file": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "sha256": "3a2ffd3b713a859814246b8d4ef566e4fddf4e198b9e52047c7b277a65cb09d3",
+      "bytes": 32034
+    },
+    {
+      "file": "zaratustra_next-0.1.0.tar.gz",
+      "sha256": "aecc07726283b09ace9de5f1427edf32032e12367e586282939a4f2372216883",
+      "bytes": 24623
+    }
+  ],
+  "source_wheel_installed_files": 20,
+  "dependency_wheel_installed_files": 145,
+  "outside_source_runtime_git_probe_returncode": 128,
+  "actual_installed_console": true,
+  "first_install_recipe": "install.py.txt",
+  "second_install_recipe": "owner-install.py.txt",
+  "owner_installer_exit": {
+    "command": [
+      "pwsh",
+      "-NoProfile",
+      "-File",
+      "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-d\\final-f80180a\\owner-bundle\\Install.ps1",
+      "-RuntimeRoot",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-f80180a-ng1jcae2\\runtime",
+      "-DataRoot",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-f80180a-ng1jcae2\\data",
+      "-PiCli",
+      "C:/Users/Anton/AppData/Roaming/npm/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+      "-PiAuthPath",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-f80180a-ng1jcae2\\FICTIONAL-auth.json"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-f80180a-ng1jcae2",
+    "source": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+    "returncode": 0,
+    "seconds": 3.1343934535980225
+  },
+  "owner_Start_controlled": {
+    "source": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+    "command": [
+      "C:\\Users\\Anton\\AppData\\Local\\Programs\\PowerShell\\7.6.3\\pwsh.EXE",
+      "-NoProfile",
+      "-File",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-f80180a-ng1jcae2\\runtime\\Start.ps1",
+      "-CallLimit",
+      "8"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-f80180a-ng1jcae2",
+    "returncode": 0,
+    "seconds": 11.400126695632935,
+    "calls": 2,
+    "actual_Install_then_Start": true,
+    "live_inference": 0,
+    "credential": "FICTIONAL auth file selected by actual Install.ps1; writer does not read auth",
+    "selected_mode": "calls-only"
+  },
+  "live_inference": 0,
+  "native_build_equality": "pending completed full native gate; no inference from outside build"
+}

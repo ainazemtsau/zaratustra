@@ -1,0 +1,45 @@
+{
+  "source_commit": "0fff8088f092a8ba6b32451ed5c1e03e844c233a",
+  "previous_source": "6760a4665d0f02939ab8db20ab6256a91e389bd4",
+  "changes": {
+    "packages/core/src/zaratustra_core/api.py": "Deny initial_work in a correlated active-model C3 tool, before changes; trusted standalone C3 initial_work remains valid.",
+    "packages/app/src/zaratustra_app/coordinator.py": "Same common handler denial before reserve across ordinary/default/Sleep/Driver; null optional initial_work allowed.",
+    "tests/restart/test_negative_controls.py": "Old G6 late-input mutation now targets high>processed, preserving its original behavioral trace. Original stale-anchor RED retained.",
+    "tests": "Initial5RED; corrected5PASS plus actual ordinarychain budget/reopen regression, legitimate subject updates including null option, actualSleep/default/legacyDriver and directCore atomic rollback; two new reached controls."
+  },
+  "focused": {
+    "affected_passed": 152,
+    "seconds": 202.27,
+    "controls_passed": 29,
+    "controls_description": "28 D + original G6, all reached behavioral",
+    "control_seconds": 97.47,
+    "static": {
+      "format_files": 385,
+      "ruff": "PASS",
+      "mypy_sources": 344,
+      "boundaries": 37,
+      "hygiene_report_errors": []
+    }
+  },
+  "prior6760": {
+    "scoped": "COMPLETE RED375PASS1FAIL682.54s, only staleG6 anchor before injection",
+    "native": "INCOMPLETE1075.420729s, only verified own pytest pair stopped before edits; partial raw+exit+STOP-IDENTITY retained",
+    "model_tool_budget_escape": "Original helper3files retained only; original requestlimit4 admitted Worklimit1000, reopen withoutnewinput reserved6; firsthand5RED also retained",
+    "harness_failure": "First post-fix run4FAIL1PASS because fixture has no owner.credential file; explicit owner.token fixed, unchanged behavior5PASS. Not passed off as product defect closure."
+  },
+  "independent_review": {
+    "status": "Historical systemError interruption, then same physical chat resumed after one root clarification; current status in INDEPENDENT-REVIEW-CURRENT-STATUS.json",
+    "thread_id": "01a144f9-df87-7250-b563-4427afc64669",
+    "source_under_review": "6760a4665d0f02939ab8db20ab6256a91e389bd4",
+    "raw": "INDEPENDENT-REVIEW-SYSTEM-STOP.json",
+    "retry": "Writer made no contact/retry/reroute. Root made one supported clarification in SAME physical chat; reviewer resumed normally.",
+    "root_partial_custody": {
+      "files": 31,
+      "zip_sha256": "3423154b0cb786c82c2c58580f7f43b5f11e873ad3b8b719a7b3f58ee9601211",
+      "not_a_final_verdict": true
+    }
+  },
+  "new_live_G14": "Not yet performed; same reviewer preparing its own bounded script after local checks",
+  "writer_live_calls": 0,
+  "whole_package_ready": false
+}

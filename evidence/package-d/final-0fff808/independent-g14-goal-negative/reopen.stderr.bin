@@ -1,0 +1,58 @@
+Traceback (most recent call last):
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-paf1gr87\runtime\env\Lib\site-packages\zaratustra_core\shapes.py", line 237, in validate
+    model.model_validate(payload)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-paf1gr87\runtime\env\Lib\site-packages\pydantic\main.py", line 732, in model_validate
+    return cls.__pydantic_validator__.validate_python(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        obj,
+        ^^^^
+    ...<5 lines>...
+        by_name=by_name,
+        ^^^^^^^^^^^^^^^^
+    )
+    ^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Outcome
+next_work.goal
+  String should have at most 240 characters [type=string_too_long, input_value='Разработай в...м счётчиков.', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_too_long
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-paf1gr87\runtime\env\Scripts\zaratustra-next.exe\__main__.py", line 10, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-paf1gr87\runtime\env\Lib\site-packages\zaratustra_app\cli.py", line 107, in main
+    result = session.run(executor, descriptor, args.call_limit, refresh=args.refresh_basis)
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-paf1gr87\runtime\env\Lib\site-packages\zaratustra_app\conversation.py", line 133, in run
+    result = self._step(executor, descriptor, call_limit, refresh=refresh)
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-paf1gr87\runtime\env\Lib\site-packages\zaratustra_app\conversation.py", line 295, in _step
+    result = self.coordinator.recover(attempt["id"], pi=isinstance(executor, Pi), ordinary=True)
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-paf1gr87\runtime\env\Lib\site-packages\zaratustra_app\coordinator.py", line 307, in recover
+    return self.client.call(
+           ~~~~~~~~~~~~~~~~^
+        "commit_outcome",
+        ^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        expected_heads=output.get("expected_heads", {}),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-paf1gr87\runtime\env\Lib\site-packages\zaratustra_core\api.py", line 1482, in call
+    self.send(self.request(operation, payload, command_id, **kwargs))["result"],
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-paf1gr87\runtime\env\Lib\site-packages\zaratustra_core\api.py", line 1471, in send
+    return self.core.execute(self.token, request)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-paf1gr87\runtime\env\Lib\site-packages\zaratustra_core\api.py", line 248, in execute
+    return self._execute(token, request, _preview=_preview)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-paf1gr87\runtime\env\Lib\site-packages\zaratustra_core\api.py", line 268, in _execute
+    validate(req.operation, req.payload)
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-paf1gr87\runtime\env\Lib\site-packages\zaratustra_core\shapes.py", line 240, in validate
+    raise CoreError("invalid_request", location) from exc
+zaratustra_core.types.CoreError: invalid_request: next_work.goal [e7fe88c40a5467d3]

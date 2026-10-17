@@ -1,0 +1,62 @@
+E501 Line too long (107 > 100)
+   --> packages\app\src\zaratustra_app\conversation.py:265:101
+    |
+263 |                     "id": work_id,
+264 |                     "conversation": self.conversation,
+265 |                     "goal": "Choose the Activity and scoped useful Work for the pending original request.",
+    |                                                                                                     ^^^^^^^
+266 |                     "method_ref": {"id": ROUTING_ID, "revision": 1},
+267 |                     "call_limit": call_limit,
+    |
+
+B010 [*] Do not call `setattr` with a constant attribute value. It is not any safer than normal property access.
+   --> packages\app\src\zaratustra_app\conversation.py:274:9
+    |
+272 |             work = next(w for w in snapshot["works"] if w["id"] == work_id)
+273 |         routing = json.loads(work["body"])["method_ref"]["id"] == ROUTING_ID
+274 |         setattr(executor, "response_contract", response_contract(routing))
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+275 |         attempts = [
+276 |             a
+    |
+help: Replace `setattr` with assignment
+    |
+273 |         routing = json.loads(work["body"])["method_ref"]["id"] == ROUTING_ID
+    -         setattr(executor, "response_contract", response_contract(routing))
+274 +         executor.response_contract = response_contract(routing)
+275 |         attempts = [
+    |
+
+F841 Local variable `result` is assigned to but never used
+   --> tests\restart\test_ordinary_activity.py:123:9
+    |
+121 |         if when == "before":
+122 |             raise RuntimeError("simulated host loss after retained raw terminal")
+123 |         result = recover(*args, **kwargs)
+    |         ^^^^^^
+124 |         raise RuntimeError("simulated host loss after atomic handoff")
+    |
+help: Remove assignment to unused variable `result`
+
+I001 [*] Import block is un-sorted or un-formatted
+   --> tests\restart\test_work_handoff.py:152:5
+    |
+151 |   def test_physical_loss_inside_child_creation_rolls_back_handoff(tmp_path: Path) -> None:
+152 | /     import subprocess
+153 | |     import sys
+154 | |     import zaratustra_app
+155 | |     import zaratustra_core
+156 | |     from zaratustra_core import Core
+    | |____________________________________^
+157 |
+158 |       sources = [
+    |
+help: Organize imports
+    |
+153 |     import sys
+154 +
+155 |     import zaratustra_app
+    |
+
+Found 4 errors.
+[*] 2 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).

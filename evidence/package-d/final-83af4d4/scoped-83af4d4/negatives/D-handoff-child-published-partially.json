@@ -1,0 +1,10 @@
+{
+  "seed": "D-handoff-child-published-partially",
+  "test": "test_work_handoff.py::test_physical_loss_inside_child_creation_rolls_back_handoff",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_________ test_physical_loss_inside_child_creation_rolls_back_handoff _________\ntests\\restart\\test_work_handoff.py:251: in test_physical_loss_inside_child_creation_rolls_back_handoff\n    assert not any(h[\"id\"] == \"activity\" for h in inspect(core, \"heads\"))\nE   assert not True\nE    +  where True = any(<generator object test_physical_loss_inside_child_creation_rolls_back_handoff.<locals>.<genexpr> at 0x00000172EC5D24D0>)\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n\n\n=========================== short test summary info ===========================\nFAILED tests/restart/test_work_handoff.py::test_physical_loss_inside_child_creation_rolls_back_handoff\n1 failed in 4.82s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -640,6 +640,9 @@\n             \"VALUES(?,1,?,?,1,?)\",\n             (body[\"id\"], body[\"conversation\"], state, dumps(body)),\n         )\n+        if continuation is not None:\n+            print(\"MUTANT_REACHED\", flush=True)\n+            db.commit()\n         if state == \"ready\":\n             self._intent(db, \"prepare\", body[\"id\"], {})\n         else:\n"
+}

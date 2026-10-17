@@ -1,0 +1,25 @@
+{
+  "source_context": "calls-only-compatibility-green",
+  "path": "../calls-only-compatibility-green",
+  "actual_exit": {
+    "returncode": 0,
+    "seconds": 9.526953220367432
+  },
+  "stdout_sha256": "dfe1ecdeadea913b16665f13798391821a64f295e9cb11acf3a881cb0dc11e10",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "controls": [
+    {
+      "seed": "D-native-null-mode-leaks-api-key-profile",
+      "returncode": 1,
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "D-native-resource-mode-implicit",
+      "returncode": 1,
+      "injection_reached": true,
+      "behavioral_failure": true
+    }
+  ],
+  "failed_runs_preserved": true
+}

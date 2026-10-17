@@ -1,0 +1,11 @@
+{
+  "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-review-d-20261016\\f80180a-g14-checkpoint",
+  "files": 53,
+  "inventory_sha256": "5b0be8aead1076ec3feb3b460a9c1235ce128f21b2fd7f1f525f81cf0fba322c",
+  "bundle": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-review-d-20261016\\f80180a-g14-checkpoint.zip",
+  "bundle_sha256": "4cfed27ad475fe8eaf09ab163fe3be6a16455ab3d48f718ed70ca043b0db11f7",
+  "bundle_bytes": 907011,
+  "G14": "PASS_LIMITED_SINGLE_TRACE",
+  "source_READY": false,
+  "owner_acceptance": false
+}

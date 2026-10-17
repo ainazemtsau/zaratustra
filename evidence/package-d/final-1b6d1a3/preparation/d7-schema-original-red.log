@@ -1,0 +1,28 @@
+FFFF                                                                     [100%]
+================================== FAILURES ===================================
+_____ test_dangling_schema_ref_rejects_entire_bundle[refs-apply_changes] ______
+tests\restart\test_schema_references.py:48: in test_dangling_schema_ref_rejects_entire_bundle
+    with pytest.raises(CoreError, match="missing_ref"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE CoreError
+_____ test_dangling_schema_ref_rejects_entire_bundle[refs-commit_outcome] _____
+tests\restart\test_schema_references.py:48: in test_dangling_schema_ref_rejects_entire_bundle
+    with pytest.raises(CoreError, match="missing_ref"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE CoreError
+___ test_dangling_schema_ref_rejects_entire_bundle[optional-apply_changes] ____
+tests\restart\test_schema_references.py:48: in test_dangling_schema_ref_rejects_entire_bundle
+    with pytest.raises(CoreError, match="missing_ref"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE CoreError
+___ test_dangling_schema_ref_rejects_entire_bundle[optional-commit_outcome] ___
+tests\restart\test_schema_references.py:48: in test_dangling_schema_ref_rejects_entire_bundle
+    with pytest.raises(CoreError, match="missing_ref"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE CoreError
+=========================== short test summary info ===========================
+FAILED tests/restart/test_schema_references.py::test_dangling_schema_ref_rejects_entire_bundle[refs-apply_changes]
+FAILED tests/restart/test_schema_references.py::test_dangling_schema_ref_rejects_entire_bundle[refs-commit_outcome]
+FAILED tests/restart/test_schema_references.py::test_dangling_schema_ref_rejects_entire_bundle[optional-apply_changes]
+FAILED tests/restart/test_schema_references.py::test_dangling_schema_ref_rejects_entire_bundle[optional-commit_outcome]
+4 failed in 5.50s

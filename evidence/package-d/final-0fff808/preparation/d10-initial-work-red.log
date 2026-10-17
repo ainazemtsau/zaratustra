@@ -1,0 +1,304 @@
+FFFFF                                                                    [100%]
+================================== FAILURES ===================================
+_______ test_active_model_tool_cannot_mint_independent_budget[default] ________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d10-initial-work-red-tmp/test_active_model_tool_cannot_0')
+surface = 'default'
+
+    @pytest.mark.parametrize("surface", ["default", "ordinary", "sleep", "legacy-driver"])
+    def test_active_model_tool_cannot_mint_independent_budget(tmp_path: Path, surface: str) -> None:
+        from zaratustra_app import Sleep
+    
+        from .sleep_support import MechanicalSleepReceiver, seed
+    
+        if surface == "sleep":
+            core, _, client = seed(tmp_path)
+            sleep = Sleep(client)
+            sleep.start(work_id="sleep", call_limit=4)
+        else:
+            core, _, client = fixture(tmp_path)
+        coordinator = Coordinator(client)
+        observed: list[Any] = []
+        mechanical = MechanicalSleepReceiver()
+    
+        def receive(context: dict[str, Any], _: str) -> bytes:
+            work = context["work"]
+            independent = {
+                "id": "independent-budget",
+                "conversation": work["conversation"],
+                "scope": work.get("scope", "space"),
+                "goal": "unrequested independent execution",
+                "method_ref": work["method_ref"],
+                "inputs": [],
+                "call_limit": 1000,
+                "continuation_policy": "durable",
+            }
+            effect = {"id": "forbidden-effect", "kind": "data", "key": "effect", "body": "fictional"}
+            effect["scope"] = work.get("scope", "space")
+            intent = {"changes": [effect], "expected_heads": {"forbidden-effect": 0}, "initial_work": independent}
+            positive = effect | {"id": "allowed-update", "key": "allowed"}
+            driver.tool_handler("subject-update", {"changes": [positive], "expected_heads": {"allowed-update": 0}})
+            result = json.loads(mechanical(context, "fictional") if surface == "sleep" else b'{"state":"completed","text":"useful"}')
+            if surface == "legacy-driver":
+                result.update(tool_changes=[effect], expected_heads={"forbidden-effect": 0}, initial_work=independent, native_tool_call_id="extra")
+            else:
+                try:
+                    observed.append(driver.tool_handler("extra", intent))
+                except CoreError as error:
+                    observed.append(error)
+            return json.dumps(result).encode()
+    
+        driver = Driver(receive)
+        if surface == "ordinary":
+            driver.response_contract = {"version": "ordinary-execution/2"}  # type: ignore[attr-defined]
+        if surface == "sleep":
+            result = sleep.run("sleep", PROFILE, driver)
+        else:
+            coordinator.prepare("work", "model-attempt", PROFILE)
+            coordinator.dispatch("model-attempt", 1, driver)
+            result = coordinator.recover("model-attempt")
+        if surface == "legacy-driver":
+            observed = [driver.callbacks[0].get("error")]
+>       assert observed and (isinstance(observed[0], CoreError) or isinstance(observed[0], dict) and observed[0].get("code") == "denied"), "Active model tool must reject independent initial_work before publication"
+E       AssertionError: Active model tool must reject independent initial_work before publication
+E       assert ([{'receipt_id': 'model-attempt:tool:extra', 'command_id': 'model-attempt:tool:extra', 'outcome': 'committed', 'result': {'refs': [{'id': 'forbidden-effect', 'revision': 1}]}, ...}] and (False or (True and None == 'denied')))
+E        +  where False = isinstance({'receipt_id': 'model-attempt:tool:extra', 'command_id': 'model-attempt:tool:extra', 'outcome': 'committed', 'result': {'refs': [{'id': 'forbidden-effect', 'revision': 1}]}, ...}, CoreError)
+E        +  and   True = isinstance({'receipt_id': 'model-attempt:tool:extra', 'command_id': 'model-attempt:tool:extra', 'outcome': 'committed', 'result': {'refs': [{'id': 'forbidden-effect', 'revision': 1}]}, ...}, dict)
+E        +  and   None = <built-in method get of dict object at 0x000002299B47C340>('code')
+E        +    where <built-in method get of dict object at 0x000002299B47C340> = {'receipt_id': 'model-attempt:tool:extra', 'command_id': 'model-attempt:tool:extra', 'outcome': 'committed', 'result': {'refs': [{'id': 'forbidden-effect', 'revision': 1}]}, ...}.get
+
+tests\restart\test_work_handoff.py:314: AssertionError
+_______ test_active_model_tool_cannot_mint_independent_budget[ordinary] _______
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d10-initial-work-red-tmp/test_active_model_tool_cannot_1')
+surface = 'ordinary'
+
+    @pytest.mark.parametrize("surface", ["default", "ordinary", "sleep", "legacy-driver"])
+    def test_active_model_tool_cannot_mint_independent_budget(tmp_path: Path, surface: str) -> None:
+        from zaratustra_app import Sleep
+    
+        from .sleep_support import MechanicalSleepReceiver, seed
+    
+        if surface == "sleep":
+            core, _, client = seed(tmp_path)
+            sleep = Sleep(client)
+            sleep.start(work_id="sleep", call_limit=4)
+        else:
+            core, _, client = fixture(tmp_path)
+        coordinator = Coordinator(client)
+        observed: list[Any] = []
+        mechanical = MechanicalSleepReceiver()
+    
+        def receive(context: dict[str, Any], _: str) -> bytes:
+            work = context["work"]
+            independent = {
+                "id": "independent-budget",
+                "conversation": work["conversation"],
+                "scope": work.get("scope", "space"),
+                "goal": "unrequested independent execution",
+                "method_ref": work["method_ref"],
+                "inputs": [],
+                "call_limit": 1000,
+                "continuation_policy": "durable",
+            }
+            effect = {"id": "forbidden-effect", "kind": "data", "key": "effect", "body": "fictional"}
+            effect["scope"] = work.get("scope", "space")
+            intent = {"changes": [effect], "expected_heads": {"forbidden-effect": 0}, "initial_work": independent}
+            positive = effect | {"id": "allowed-update", "key": "allowed"}
+            driver.tool_handler("subject-update", {"changes": [positive], "expected_heads": {"allowed-update": 0}})
+            result = json.loads(mechanical(context, "fictional") if surface == "sleep" else b'{"state":"completed","text":"useful"}')
+            if surface == "legacy-driver":
+                result.update(tool_changes=[effect], expected_heads={"forbidden-effect": 0}, initial_work=independent, native_tool_call_id="extra")
+            else:
+                try:
+                    observed.append(driver.tool_handler("extra", intent))
+                except CoreError as error:
+                    observed.append(error)
+            return json.dumps(result).encode()
+    
+        driver = Driver(receive)
+        if surface == "ordinary":
+            driver.response_contract = {"version": "ordinary-execution/2"}  # type: ignore[attr-defined]
+        if surface == "sleep":
+            result = sleep.run("sleep", PROFILE, driver)
+        else:
+            coordinator.prepare("work", "model-attempt", PROFILE)
+            coordinator.dispatch("model-attempt", 1, driver)
+            result = coordinator.recover("model-attempt")
+        if surface == "legacy-driver":
+            observed = [driver.callbacks[0].get("error")]
+>       assert observed and (isinstance(observed[0], CoreError) or isinstance(observed[0], dict) and observed[0].get("code") == "denied"), "Active model tool must reject independent initial_work before publication"
+E       AssertionError: Active model tool must reject independent initial_work before publication
+E       assert ([{'receipt_id': 'model-attempt:tool:extra', 'command_id': 'model-attempt:tool:extra', 'outcome': 'committed', 'result': {'refs': [{'id': 'forbidden-effect', 'revision': 1}]}, ...}] and (False or (True and None == 'denied')))
+E        +  where False = isinstance({'receipt_id': 'model-attempt:tool:extra', 'command_id': 'model-attempt:tool:extra', 'outcome': 'committed', 'result': {'refs': [{'id': 'forbidden-effect', 'revision': 1}]}, ...}, CoreError)
+E        +  and   True = isinstance({'receipt_id': 'model-attempt:tool:extra', 'command_id': 'model-attempt:tool:extra', 'outcome': 'committed', 'result': {'refs': [{'id': 'forbidden-effect', 'revision': 1}]}, ...}, dict)
+E        +  and   None = <built-in method get of dict object at 0x000002299B4AD640>('code')
+E        +    where <built-in method get of dict object at 0x000002299B4AD640> = {'receipt_id': 'model-attempt:tool:extra', 'command_id': 'model-attempt:tool:extra', 'outcome': 'committed', 'result': {'refs': [{'id': 'forbidden-effect', 'revision': 1}]}, ...}.get
+
+tests\restart\test_work_handoff.py:314: AssertionError
+________ test_active_model_tool_cannot_mint_independent_budget[sleep] _________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d10-initial-work-red-tmp/test_active_model_tool_cannot_2')
+surface = 'sleep'
+
+    @pytest.mark.parametrize("surface", ["default", "ordinary", "sleep", "legacy-driver"])
+    def test_active_model_tool_cannot_mint_independent_budget(tmp_path: Path, surface: str) -> None:
+        from zaratustra_app import Sleep
+    
+        from .sleep_support import MechanicalSleepReceiver, seed
+    
+        if surface == "sleep":
+            core, _, client = seed(tmp_path)
+            sleep = Sleep(client)
+            sleep.start(work_id="sleep", call_limit=4)
+        else:
+            core, _, client = fixture(tmp_path)
+        coordinator = Coordinator(client)
+        observed: list[Any] = []
+        mechanical = MechanicalSleepReceiver()
+    
+        def receive(context: dict[str, Any], _: str) -> bytes:
+            work = context["work"]
+            independent = {
+                "id": "independent-budget",
+                "conversation": work["conversation"],
+                "scope": work.get("scope", "space"),
+                "goal": "unrequested independent execution",
+                "method_ref": work["method_ref"],
+                "inputs": [],
+                "call_limit": 1000,
+                "continuation_policy": "durable",
+            }
+            effect = {"id": "forbidden-effect", "kind": "data", "key": "effect", "body": "fictional"}
+            effect["scope"] = work.get("scope", "space")
+            intent = {"changes": [effect], "expected_heads": {"forbidden-effect": 0}, "initial_work": independent}
+            positive = effect | {"id": "allowed-update", "key": "allowed"}
+            driver.tool_handler("subject-update", {"changes": [positive], "expected_heads": {"allowed-update": 0}})
+            result = json.loads(mechanical(context, "fictional") if surface == "sleep" else b'{"state":"completed","text":"useful"}')
+            if surface == "legacy-driver":
+                result.update(tool_changes=[effect], expected_heads={"forbidden-effect": 0}, initial_work=independent, native_tool_call_id="extra")
+            else:
+                try:
+                    observed.append(driver.tool_handler("extra", intent))
+                except CoreError as error:
+                    observed.append(error)
+            return json.dumps(result).encode()
+    
+        driver = Driver(receive)
+        if surface == "ordinary":
+            driver.response_contract = {"version": "ordinary-execution/2"}  # type: ignore[attr-defined]
+        if surface == "sleep":
+            result = sleep.run("sleep", PROFILE, driver)
+        else:
+            coordinator.prepare("work", "model-attempt", PROFILE)
+            coordinator.dispatch("model-attempt", 1, driver)
+            result = coordinator.recover("model-attempt")
+        if surface == "legacy-driver":
+            observed = [driver.callbacks[0].get("error")]
+>       assert observed and (isinstance(observed[0], CoreError) or isinstance(observed[0], dict) and observed[0].get("code") == "denied"), "Active model tool must reject independent initial_work before publication"
+E       AssertionError: Active model tool must reject independent initial_work before publication
+E       assert ([{'receipt_id': 'sleep:e510eb7cdec24fab98f5f8bc8fb37802:tool:extra', 'command_id': 'sleep:e510eb7cdec24fab98f5f8bc8fb37802:tool:extra', 'outcome': 'committed', 'result': {'refs': [{'id': 'forbidden-effect', 'revision': 1}]}, ...}] and (False or (True and None == 'denied')))
+E        +  where False = isinstance({'receipt_id': 'sleep:e510eb7cdec24fab98f5f8bc8fb37802:tool:extra', 'command_id': 'sleep:e510eb7cdec24fab98f5f8bc8fb37802:tool:extra', 'outcome': 'committed', 'result': {'refs': [{'id': 'forbidden-effect', 'revision': 1}]}, ...}, CoreError)
+E        +  and   True = isinstance({'receipt_id': 'sleep:e510eb7cdec24fab98f5f8bc8fb37802:tool:extra', 'command_id': 'sleep:e510eb7cdec24fab98f5f8bc8fb37802:tool:extra', 'outcome': 'committed', 'result': {'refs': [{'id': 'forbidden-effect', 'revision': 1}]}, ...}, dict)
+E        +  and   None = <built-in method get of dict object at 0x000002299B4D5440>('code')
+E        +    where <built-in method get of dict object at 0x000002299B4D5440> = {'receipt_id': 'sleep:e510eb7cdec24fab98f5f8bc8fb37802:tool:extra', 'command_id': 'sleep:e510eb7cdec24fab98f5f8bc8fb37802:tool:extra', 'outcome': 'committed', 'result': {'refs': [{'id': 'forbidden-effect', 'revision': 1}]}, ...}.get
+
+tests\restart\test_work_handoff.py:314: AssertionError
+____ test_active_model_tool_cannot_mint_independent_budget[legacy-driver] _____
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d10-initial-work-red-tmp/test_active_model_tool_cannot_3')
+surface = 'legacy-driver'
+
+    @pytest.mark.parametrize("surface", ["default", "ordinary", "sleep", "legacy-driver"])
+    def test_active_model_tool_cannot_mint_independent_budget(tmp_path: Path, surface: str) -> None:
+        from zaratustra_app import Sleep
+    
+        from .sleep_support import MechanicalSleepReceiver, seed
+    
+        if surface == "sleep":
+            core, _, client = seed(tmp_path)
+            sleep = Sleep(client)
+            sleep.start(work_id="sleep", call_limit=4)
+        else:
+            core, _, client = fixture(tmp_path)
+        coordinator = Coordinator(client)
+        observed: list[Any] = []
+        mechanical = MechanicalSleepReceiver()
+    
+        def receive(context: dict[str, Any], _: str) -> bytes:
+            work = context["work"]
+            independent = {
+                "id": "independent-budget",
+                "conversation": work["conversation"],
+                "scope": work.get("scope", "space"),
+                "goal": "unrequested independent execution",
+                "method_ref": work["method_ref"],
+                "inputs": [],
+                "call_limit": 1000,
+                "continuation_policy": "durable",
+            }
+            effect = {"id": "forbidden-effect", "kind": "data", "key": "effect", "body": "fictional"}
+            effect["scope"] = work.get("scope", "space")
+            intent = {"changes": [effect], "expected_heads": {"forbidden-effect": 0}, "initial_work": independent}
+            positive = effect | {"id": "allowed-update", "key": "allowed"}
+            driver.tool_handler("subject-update", {"changes": [positive], "expected_heads": {"allowed-update": 0}})
+            result = json.loads(mechanical(context, "fictional") if surface == "sleep" else b'{"state":"completed","text":"useful"}')
+            if surface == "legacy-driver":
+                result.update(tool_changes=[effect], expected_heads={"forbidden-effect": 0}, initial_work=independent, native_tool_call_id="extra")
+            else:
+                try:
+                    observed.append(driver.tool_handler("extra", intent))
+                except CoreError as error:
+                    observed.append(error)
+            return json.dumps(result).encode()
+    
+        driver = Driver(receive)
+        if surface == "ordinary":
+            driver.response_contract = {"version": "ordinary-execution/2"}  # type: ignore[attr-defined]
+        if surface == "sleep":
+            result = sleep.run("sleep", PROFILE, driver)
+        else:
+            coordinator.prepare("work", "model-attempt", PROFILE)
+            coordinator.dispatch("model-attempt", 1, driver)
+            result = coordinator.recover("model-attempt")
+        if surface == "legacy-driver":
+            observed = [driver.callbacks[0].get("error")]
+>       assert observed and (isinstance(observed[0], CoreError) or isinstance(observed[0], dict) and observed[0].get("code") == "denied"), "Active model tool must reject independent initial_work before publication"
+E       AssertionError: Active model tool must reject independent initial_work before publication
+E       assert ([None] and (False or (False)))
+E        +  where False = isinstance(None, CoreError)
+E        +  and   False = isinstance(None, dict)
+
+tests\restart\test_work_handoff.py:314: AssertionError
+____________ test_correlated_c3_initial_work_is_atomically_refused ____________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d10-initial-work-red-tmp/test_correlated_c3_initial_wor0')
+
+    def test_correlated_c3_initial_work_is_atomically_refused(tmp_path: Path) -> None:
+        core, _, client = fixture(tmp_path)
+        coordinator = Coordinator(client)
+        coordinator.prepare("work", "model-attempt", PROFILE)
+        client.call("claim_dispatch", {"attempt_id": "model-attempt", "generation": 1, "resource_upper": 2}, "claim", action_id="model-action")
+        client.call("reserve_tool", {"attempt_id": "model-attempt", "generation": 1, "native_id": "extra", "command_id": "tool-change"}, "reserve")
+        outcome: Any = None
+        try:
+            outcome = client.call("apply_changes", {
+                "changes": [{"id": "forbidden-effect", "kind": "data", "key": "effect", "body": "fictional"}],
+                "initial_work": {"id": "independent-budget", "conversation": "conversation", "goal": "unrequested", "method_ref": METHOD, "inputs": [], "call_limit": 1000, "continuation_policy": "durable"},
+                "tool": {"attempt_id": "model-attempt", "generation": 1, "native_id": "extra"},
+            }, "tool-change", expected_heads={"forbidden-effect": 0})
+        except CoreError as error:
+            outcome = error
+>       assert isinstance(outcome, CoreError) and outcome.code == "denied", "Correlated model C3 must not mint an unrelated budget"
+E       AssertionError: Correlated model C3 must not mint an unrelated budget
+E       assert (False)
+E        +  where False = isinstance({'refs': [{'id': 'forbidden-effect', 'revision': 1}]}, CoreError)
+
+tests\restart\test_work_handoff.py:339: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/restart/test_work_handoff.py::test_active_model_tool_cannot_mint_independent_budget[default]
+FAILED tests/restart/test_work_handoff.py::test_active_model_tool_cannot_mint_independent_budget[ordinary]
+FAILED tests/restart/test_work_handoff.py::test_active_model_tool_cannot_mint_independent_budget[sleep]
+FAILED tests/restart/test_work_handoff.py::test_active_model_tool_cannot_mint_independent_budget[legacy-driver]
+FAILED tests/restart/test_work_handoff.py::test_correlated_c3_initial_work_is_atomically_refused
+5 failed, 21 deselected in 5.32s

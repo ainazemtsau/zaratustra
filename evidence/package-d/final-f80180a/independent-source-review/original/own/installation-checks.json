@@ -1,0 +1,24 @@
+[
+  {
+    "check": "exact owner archive installer",
+    "pass_": true,
+    "returncode": 0
+  },
+  {
+    "check": "outside-git:runtime",
+    "pass_": true
+  },
+  {
+    "check": "outside-git:data",
+    "pass_": true
+  },
+  {
+    "check": "outside-git:bundle",
+    "pass_": true
+  },
+  {
+    "check": "independent installed worker",
+    "pass_": true,
+    "returncode": 0
+  }
+]

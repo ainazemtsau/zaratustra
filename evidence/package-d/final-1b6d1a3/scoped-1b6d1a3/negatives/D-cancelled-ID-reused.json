@@ -1,0 +1,10 @@
+{
+  "seed": "D-cancelled-ID-reused",
+  "test": "test_conversation.py::test_cancelled_entry_requires_new_input_then_new_work",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n____________ test_cancelled_entry_requires_new_input_then_new_work ____________\ntests\\restart\\test_conversation.py:74: in test_cancelled_entry_requires_new_input_then_new_work\n    assert final[\"state\"] == \"completed\" and len(calls) == 2\nE   AssertionError: assert ('ERROR' == 'completed'\nE     \nE     - completed\nE     + ERROR)\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_conversation.py::test_cancelled_entry_requires_new_input_then_new_work\n1 failed in 1.76s\n",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/conversation.py\n+++ app/src/zaratustra_app/conversation.py.mutant\n@@ -189,7 +189,8 @@\n                         \"text\": \"Работа отменена. Напишите новый запрос для новой работы.\",\n                     }\n                 successor += 1\n-                work_id = base_id + \":after-cancel:\" + str(successor)\n+                print(\"MUTANT_REACHED\", flush=True)\n+                break\n             profile = pin_profile(self.owner, work_id + \":profile\", descriptor)\n             method = next((h for h in snapshot[\"heads\"] if h[\"id\"] == \"conversation-method\"), None)\n             if method is None:\n"
+}

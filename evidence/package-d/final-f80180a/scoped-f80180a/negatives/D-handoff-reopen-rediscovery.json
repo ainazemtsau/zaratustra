@@ -1,0 +1,10 @@
+{
+  "seed": "D-handoff-reopen-rediscovery",
+  "test": "test_ordinary_activity.py::test_handoff_reopen_uses_retained_terminal[after]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n______________ test_handoff_reopen_uses_retained_terminal[after] ______________\ntests\\restart\\test_ordinary_activity.py:136: in test_handoff_reopen_uses_retained_terminal\n    assert isinstance(result, dict), \"Reopen must continue the existing child without rediscovery\"\nE   AssertionError: Reopen must continue the existing child without rediscovery\nE   assert False\nE    +  where False = isinstance(CoreError('identity_conflict: next_work.active [76ead6cd4a86b60c]'), dict)\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_ordinary_activity.py::test_handoff_reopen_uses_retained_terminal[after]\n1 failed in 1.42s\n",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/conversation.py\n+++ app/src/zaratustra_app/conversation.py.mutant\n@@ -151,7 +151,7 @@\n         active = [w for w in works if w[\"status\"] not in {\"completed\", \"cancelled\"}]\n         if len(active) > 1:\n             raise CoreError(\"identity_conflict\", \"conversation.active_work\")\n-        if active:\n+        if active and (print(\"MUTANT_REACHED\", flush=True) or False):\n             work = active[0]\n             work_id = work[\"id\"]\n             if work[\"status\"] == \"waiting\":\n"
+}

@@ -1,0 +1,172 @@
+................FFFFFFFF..............                                   [100%]
+================================== FAILURES ===================================
+________________ test_continued_context_reference_graph[None] _________________
+tests\restart\test_backup_references.py:138: in test_continued_context_reference_graph
+    owner.call(
+packages\core\src\zaratustra_core\api.py:1397: in call
+    self.send(self.request(operation, payload, command_id, **kwargs))["result"],
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:1386: in send
+    return self.core.execute(self.token, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:248: in execute
+    return self._execute(token, request, _preview=_preview)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:293: in _execute
+    result = self._apply(db, actor, req)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:809: in _apply
+    fail("stale_basis", "reply_to")
+packages\core\src\zaratustra_core\api.py:88: in fail
+    raise CoreError(code, field, retry)
+E   zaratustra_core.types.CoreError: stale_basis: reply_to [618852ae68c515eb]
+___________ test_continued_context_reference_graph[prior_messages] ____________
+tests\restart\test_backup_references.py:138: in test_continued_context_reference_graph
+    owner.call(
+packages\core\src\zaratustra_core\api.py:1397: in call
+    self.send(self.request(operation, payload, command_id, **kwargs))["result"],
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:1386: in send
+    return self.core.execute(self.token, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:248: in execute
+    return self._execute(token, request, _preview=_preview)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:293: in _execute
+    result = self._apply(db, actor, req)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:809: in _apply
+    fail("stale_basis", "reply_to")
+packages\core\src\zaratustra_core\api.py:88: in fail
+    raise CoreError(code, field, retry)
+E   zaratustra_core.types.CoreError: stale_basis: reply_to [618852ae68c515eb]
+____________ test_continued_context_reference_graph[prior_results] ____________
+tests\restart\test_backup_references.py:138: in test_continued_context_reference_graph
+    owner.call(
+packages\core\src\zaratustra_core\api.py:1397: in call
+    self.send(self.request(operation, payload, command_id, **kwargs))["result"],
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:1386: in send
+    return self.core.execute(self.token, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:248: in execute
+    return self._execute(token, request, _preview=_preview)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:293: in _execute
+    result = self._apply(db, actor, req)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:809: in _apply
+    fail("stale_basis", "reply_to")
+packages\core\src\zaratustra_core\api.py:88: in fail
+    raise CoreError(code, field, retry)
+E   zaratustra_core.types.CoreError: stale_basis: reply_to [618852ae68c515eb]
+_____________ test_continued_context_reference_graph[prior_waits] _____________
+tests\restart\test_backup_references.py:138: in test_continued_context_reference_graph
+    owner.call(
+packages\core\src\zaratustra_core\api.py:1397: in call
+    self.send(self.request(operation, payload, command_id, **kwargs))["result"],
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:1386: in send
+    return self.core.execute(self.token, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:248: in execute
+    return self._execute(token, request, _preview=_preview)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:293: in _execute
+    result = self._apply(db, actor, req)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:809: in _apply
+    fail("stale_basis", "reply_to")
+packages\core\src\zaratustra_core\api.py:88: in fail
+    raise CoreError(code, field, retry)
+E   zaratustra_core.types.CoreError: stale_basis: reply_to [618852ae68c515eb]
+_____________ test_continued_context_reference_graph[tool_ledger] _____________
+tests\restart\test_backup_references.py:138: in test_continued_context_reference_graph
+    owner.call(
+packages\core\src\zaratustra_core\api.py:1397: in call
+    self.send(self.request(operation, payload, command_id, **kwargs))["result"],
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:1386: in send
+    return self.core.execute(self.token, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:248: in execute
+    return self._execute(token, request, _preview=_preview)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:293: in _execute
+    result = self._apply(db, actor, req)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:809: in _apply
+    fail("stale_basis", "reply_to")
+packages\core\src\zaratustra_core\api.py:88: in fail
+    raise CoreError(code, field, retry)
+E   zaratustra_core.types.CoreError: stale_basis: reply_to [618852ae68c515eb]
+___________ test_continued_context_reference_graph[result_outputs] ____________
+tests\restart\test_backup_references.py:138: in test_continued_context_reference_graph
+    owner.call(
+packages\core\src\zaratustra_core\api.py:1397: in call
+    self.send(self.request(operation, payload, command_id, **kwargs))["result"],
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:1386: in send
+    return self.core.execute(self.token, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:248: in execute
+    return self._execute(token, request, _preview=_preview)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:293: in _execute
+    result = self._apply(db, actor, req)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:809: in _apply
+    fail("stale_basis", "reply_to")
+packages\core\src\zaratustra_core\api.py:88: in fail
+    raise CoreError(code, field, retry)
+E   zaratustra_core.types.CoreError: stale_basis: reply_to [618852ae68c515eb]
+________ test_continued_context_reference_graph[observation_identity] _________
+tests\restart\test_backup_references.py:138: in test_continued_context_reference_graph
+    owner.call(
+packages\core\src\zaratustra_core\api.py:1397: in call
+    self.send(self.request(operation, payload, command_id, **kwargs))["result"],
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:1386: in send
+    return self.core.execute(self.token, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:248: in execute
+    return self._execute(token, request, _preview=_preview)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:293: in _execute
+    result = self._apply(db, actor, req)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:809: in _apply
+    fail("stale_basis", "reply_to")
+packages\core\src\zaratustra_core\api.py:88: in fail
+    raise CoreError(code, field, retry)
+E   zaratustra_core.types.CoreError: stale_basis: reply_to [618852ae68c515eb]
+_______________ test_continued_context_reference_graph[intent] ________________
+tests\restart\test_backup_references.py:138: in test_continued_context_reference_graph
+    owner.call(
+packages\core\src\zaratustra_core\api.py:1397: in call
+    self.send(self.request(operation, payload, command_id, **kwargs))["result"],
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:1386: in send
+    return self.core.execute(self.token, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:248: in execute
+    return self._execute(token, request, _preview=_preview)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:293: in _execute
+    result = self._apply(db, actor, req)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:809: in _apply
+    fail("stale_basis", "reply_to")
+packages\core\src\zaratustra_core\api.py:88: in fail
+    raise CoreError(code, field, retry)
+E   zaratustra_core.types.CoreError: stale_basis: reply_to [618852ae68c515eb]
+=========================== short test summary info ===========================
+FAILED tests/restart/test_backup_references.py::test_continued_context_reference_graph[None]
+FAILED tests/restart/test_backup_references.py::test_continued_context_reference_graph[prior_messages]
+FAILED tests/restart/test_backup_references.py::test_continued_context_reference_graph[prior_results]
+FAILED tests/restart/test_backup_references.py::test_continued_context_reference_graph[prior_waits]
+FAILED tests/restart/test_backup_references.py::test_continued_context_reference_graph[tool_ledger]
+FAILED tests/restart/test_backup_references.py::test_continued_context_reference_graph[result_outputs]
+FAILED tests/restart/test_backup_references.py::test_continued_context_reference_graph[observation_identity]
+FAILED tests/restart/test_backup_references.py::test_continued_context_reference_graph[intent]
+8 failed, 30 passed in 34.58s

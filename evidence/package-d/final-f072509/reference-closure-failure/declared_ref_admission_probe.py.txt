@@ -1,0 +1,52 @@
+"""Independent C3/C8 schema-guided reference admission and rollback oracle.
+Invoke using the selected installed Python -I; --expect-old records f072 defects.
+No source imports, model calls or test helpers.
+"""
+import pathlib,tempfile,sqlite3,json,base64,sys
+from zaratustra_core import Core,CoreError
+from zaratustra_app import Coordinator
+R=pathlib.Path(__file__).parent
+B=pathlib.Path(tempfile.mkdtemp(prefix='zaratustra-independent-declared-',dir='C:/Users/Anton/AppData/Local/Temp'))
+old='--expect-old' in sys.argv
+def state(core):
+ with sqlite3.connect(core.path) as db:
+  tables=[r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")]
+  return {t:db.execute('SELECT * FROM '+t).fetchall() for t in tables}
+REPORT=[]
+def fixture(name):
+ core,token=Core.initialize(B/name);c=core.connect(token)
+ schema={'type':'object','fields':[{'name':'r','type':'exact-ref','nullable':True},{'name':'list','type':'list','items':{'type':'exact-ref'}}]}
+ cs=[dict(id='m',kind='method',key='m',body='generic'),dict(id='p',kind='profile',key='p',body={}),dict(id='target',kind='data',key='target',body='historical'),dict(id='schema',kind='data',key='schema',body=schema)]
+ c.call('apply_changes',{'changes':cs},'setup',expected_heads={x['id']:0 for x in cs})
+ c.call('apply_changes',{'changes':[dict(id='target',kind='data',key='target',body='current')]},'advance',expected_heads={'target':1})
+ return core,c
+try:
+ for op in ['apply_changes','commit_outcome']:
+  for kind,value in [('missing-scalar',{'r':{'id':'missing','revision':1}}),('missing-list',{'list':[{'id':'missing','revision':1}]})]:
+   core,c=fixture(op+'-'+kind)
+   if op=='commit_outcome':
+    c.call('open_work',dict(id='w',conversation='c',goal='schema atomicity',method_ref={'id':'m','revision':1},inputs=[],call_limit=4,continuation_policy='durable'),'open')
+    Coordinator(c).prepare('w','a',{'id':'p','revision':1})
+    c.call('claim_dispatch',dict(attempt_id='a',generation=1),'claim',action_id='a:action')
+    c.call('observe_attempt',dict(attempt_id='a',event_id='terminal',kind='terminal',raw_base64='e30='),'observe')
+   changes=[dict(id='side',kind='data',key='side',body='must roll back'),dict(id='entry',kind='data',key='entry',body=value,schema_ref={'id':'schema','revision':1})]
+   payload={'changes':changes}
+   if op=='commit_outcome':payload.update(attempt_id='a',generation=1,terminal_event='terminal',original_cursor=0,processed_cutoff=0,state='completed',text='fictional')
+   before=state(core);error=None
+   try:c.call(op,payload,'invalid',expected_heads={'side':0,'entry':0})
+   except CoreError as e:error=e.as_dict()
+   after=state(core)
+   row=dict(operation=op,case=kind,rejected=error is not None,error=error,atomic_rollback=before==after)
+   REPORT.append(row)
+   if not old:assert error is not None and before==after,row
+ for value in [{},{'r':None},{'list':[]},{'r':{'id':'target','revision':1}},{'list':[{'id':'target','revision':1}]}]:
+  core,c=fixture('valid-'+str(len(REPORT)))
+  c.call('apply_changes',{'changes':[dict(id='entry',kind='data',key='entry',body=value,schema_ref={'id':'schema','revision':1})]},'valid',expected_heads={'entry':0})
+  assert c.call('read_exact',{'id':'entry','revision':1},'read')['body']['value']==value
+  REPORT.append(dict(case='optional-null-empty-historical-positive',value=value,pass_=True))
+ core,c=fixture('arbitrary-json')
+ value={'id':'not-a-real-record','revision':1,'notes':'prose and arbitrary JSON are not schema-declared references'}
+ c.call('apply_changes',{'changes':[dict(id='plain',kind='data',key='plain',body=value)]},'plain',expected_heads={'plain':0})
+ REPORT.append(dict(case='unbound arbitrary JSON is not inferred as ref',pass_=True))
+finally:(R/('declared-ref-admission-old.json' if old else 'declared-ref-admission.json')).write_text(json.dumps(dict(base=str(B),checks=REPORT),indent=2),encoding='utf-8')
+print(json.dumps(dict(cases=len(REPORT),accepted_invalid=sum(r.get('rejected') is False for r in REPORT),old_behavior=old)))

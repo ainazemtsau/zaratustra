@@ -1,0 +1,20 @@
+import hashlib,json,re,subprocess,zipfile
+from pathlib import Path
+root=Path.cwd();e=root/'evidence/package-d/final-f80180a'
+text=(e/'owner-bundle-install.stdout.txt').read_text(encoding='utf-8')
+data=next(json.loads(line) for line in text.splitlines() if line.startswith('{"data_root"'))
+runtime=Path(data['data_root']).parent/'runtime';site=runtime/'env/Lib/site-packages'
+rows=[]
+for wheel in sorted((e/'owner-bundle/wheels').glob('*.whl')):
+ with zipfile.ZipFile(wheel) as archive:
+  for name in archive.namelist():
+   if name.endswith('/') or '.dist-info/' in name:continue
+   raw=archive.read(name);actual=(site/name).read_bytes();assert raw==actual,(wheel.name,name)
+   rows.append({'wheel':wheel.name,'path':name,'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)})
+node=subprocess.check_output(['node','--version'],text=True).strip()
+pi=Path('C:/Users/Anton/AppData/Roaming/npm/node_modules/@earendil-works/pi-coding-agent')
+sdk=[{'path':str(pi/path),'sha256':hashlib.sha256((pi/path).read_bytes()).hexdigest(),'bytes':(pi/path).stat().st_size}
+     for path in ['package.json','dist/index.js','dist/bundle/cli.js','dist/core/auth-storage.js','dist/core/model-runtime.js']]
+manifest={'verified_installed_runtime':str(runtime),'installed_wheel_files':rows,'node_version':node,'pi_version':json.loads((pi/'package.json').read_text(encoding='utf-8'))['version'],'pi_sdk_bytes':sdk,'sqlite_new_runtime':'3.50.4','legacy_dll_used_by_new_runtime':False}
+(e/'DEPENDENCY-MANIFEST.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+print(json.dumps({'wheel_installed_files':len(rows),'node':node,'pi':manifest['pi_version']}))

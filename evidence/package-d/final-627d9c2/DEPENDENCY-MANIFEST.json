@@ -1,0 +1,894 @@
+{
+  "verified_installed_runtime": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-627d9c2-ji617m_5\\runtime",
+  "installed_wheel_files": [
+    {
+      "wheel": "annotated_types-0.8.0-py3-none-any.whl",
+      "path": "annotated_types/__init__.py",
+      "sha256": "a7104a4d439b27a9f74fc0be236b9ba1b7831e6044026802a205abc1298a9bc8",
+      "bytes": 13273
+    },
+    {
+      "wheel": "annotated_types-0.8.0-py3-none-any.whl",
+      "path": "annotated_types/py.typed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "wheel": "annotated_types-0.8.0-py3-none-any.whl",
+      "path": "annotated_types/test_cases.py",
+      "sha256": "d867472acb57b81ce97f78972828e6bc5669ca4db33fd1e6f645c6183846068e",
+      "bytes": 6310
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/__init__.py",
+      "sha256": "e62127278c07bf5384cdd2903f368a69929f3b8a524000bae4e0eb608ebf4bc6",
+      "bytes": 15812
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_migration.py",
+      "sha256": "545ef72d1094cf722b6f9c55b75de36f7340717567105e93d7e27438b7de6790",
+      "bytes": 12160
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/alias_generators.py",
+      "sha256": "28cd67deee097cb48197552e620de1a181f35c90fecaf82b9eaf2ed5c73087f0",
+      "bytes": 2124
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/aliases.py",
+      "sha256": "be1087ca84969d7f8427ec166f9aa3e31c91b2c8065a74d07f3429e06499f6e8",
+      "bytes": 4937
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/annotated_handlers.py",
+      "sha256": "59fc854aac28108157061ed3ef73f270a9682350e25f8e465a2d3e24eb024786",
+      "bytes": 4407
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/class_validators.py",
+      "sha256": "8bf5778fe3d87462d22e68ff20965e913463ba73bc488573f0b325aae3f23fb1",
+      "bytes": 148
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/color.py",
+      "sha256": "033a867d540717ddbf65cb4372e7b40cce324e9d8fead7a49304483535ab2c8a",
+      "bytes": 21481
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/config.py",
+      "sha256": "a353faec53162101befd17c6b4a8ac9641f0a38a579bfea37ec478d4ff3cbfbf",
+      "bytes": 44533
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/dataclasses.py",
+      "sha256": "e17f567b48e3d4a2f006dbd84a40055cda27e3aceba4199164035fe0b7f06d78",
+      "bytes": 18963
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/datetime_parse.py",
+      "sha256": "402f9680cc4caffc10fe6357512ec055ffb684b121befb0f6353d0ca148639d9",
+      "bytes": 150
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/decorator.py",
+      "sha256": "617fa3500a6ee4029a55628fa1a57e9fee25ed46d2ebd184b7d45ade1b3398a2",
+      "bytes": 145
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/env_settings.py",
+      "sha256": "e881de79612a9543d152fdd5f805e217f5bdd5f836270fccdced25df827f7b20",
+      "bytes": 148
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/error_wrappers.py",
+      "sha256": "44aea6a804dcf72303f8a043f48252f47a4a0a9ad61ddf30a3ce019e6fb77d1f",
+      "bytes": 150
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/errors.py",
+      "sha256": "0eb1023c25a1498ad0f016b83bc84acc800cda2f460474d75802f36850e92dfe",
+      "bytes": 6013
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/fields.py",
+      "sha256": "6bc66125f23c143e934030fbf9c58c9b5657950bdad3031d4f6132e55bd57be3",
+      "bytes": 82023
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/functional_serializers.py",
+      "sha256": "cf04408d9bac391b446edc69554db4920f05a5e9b2673e05abac099359a9c184",
+      "bytes": 18117
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/functional_validators.py",
+      "sha256": "ee9fb88ef3ffffd8d9caf71d5e289d7b9a406bf26533b7c9d41824a9b8f14963",
+      "bytes": 31724
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/generics.py",
+      "sha256": "d19a99f4ef5a9e7223ff7986051aa9b3886d7b2ddbe65575f9ddad5313cc3270",
+      "bytes": 144
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/json.py",
+      "sha256": "647f11908ee1e01cfece9f0e7530316c952856f72853e8e131d459d01fa4d317",
+      "bytes": 140
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/json_schema.py",
+      "sha256": "75ade143dbd03cb1213ecac39d49628df4357ee0825621959d4cceac064b803b",
+      "bytes": 125955
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/main.py",
+      "sha256": "35b842cfe92ef300e060b40c062ef93afee1cb075cf0b7b0037a1434867c2554",
+      "bytes": 85334
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/mypy.py",
+      "sha256": "ca99e187b867f8bfa693ab16e0272b755d82e65c8ccdc33a153063db51ae7ec1",
+      "bytes": 61074
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/networks.py",
+      "sha256": "80207dea0b741bbb625438559c97e92abd4044be6a907f923d992e364986d8ee",
+      "bytes": 42102
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/parse.py",
+      "sha256": "c2477cd9d82dbd6b43f3de54fc8e84d61b6a3251a1052604577f5cb8149ea370",
+      "bytes": 141
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/py.typed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/root_model.py",
+      "sha256": "70e328796769e77e8a17ce6e448716fa8cf53bb7791910a9c7d1d34b8fb5b9ff",
+      "bytes": 6394
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/schema.py",
+      "sha256": "56aaa3beafcb9daa5592779b51ddc1a7f275a768176599d94602f8f1b5441bba",
+      "bytes": 142
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/tools.py",
+      "sha256": "88742977c489e43093b4f5796ad015d3a4fcf5b8d268c15e659d8b5fd95ab196",
+      "bytes": 141
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/type_adapter.py",
+      "sha256": "4f4e60f1641ccc1b1553fdf945d2b1823222ed8ecb222a7aee9177348ed7e061",
+      "bytes": 36123
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/types.py",
+      "sha256": "7e961c1a702770ae108da166de366da98c31258cc1eeb2493df025f3d7a6cf24",
+      "bytes": 105961
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/typing.py",
+      "sha256": "3fb7de037e4cc1370bb11d6e2fb75bd12fa8c9d071a1b9976b9e580e80606a34",
+      "bytes": 138
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/utils.py",
+      "sha256": "d799d1d90a6a4c1165415e1336d4c8b4cc93271fdf6f257e80f988118d46a287",
+      "bytes": 141
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/validate_call_decorator.py",
+      "sha256": "54b022e21a05a630bed5e2f41e2c5869a59a1053ba86d19c0dcb60b2a6b95482",
+      "bytes": 4416
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/validators.py",
+      "sha256": "a706c825755bd42576980138c3f1067cd8fb0f0cec29a5b0fed4cbe9cbe24eeb",
+      "bytes": 146
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/version.py",
+      "sha256": "b8a3b18742e3899919d0a7cb9a5a4f611018fbf369217f228f138b0cd856f26f",
+      "bytes": 3985
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/warnings.py",
+      "sha256": "dd0c90a3a94ddf970eece5c36c511759c35a3e518245aade815640f86fa56702",
+      "bytes": 4822
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_config.py",
+      "sha256": "473cacd49a1f7e7e097331257180eab192d18018079f69585aa0d1e79a0048f0",
+      "bytes": 14839
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_core_metadata.py",
+      "sha256": "63f836b778bbba5b8afb05c266fcc97d114c3d4336dda0582df69ee05cc13f2d",
+      "bytes": 5162
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_core_utils.py",
+      "sha256": "d63aeee156c9d31eb747a76d55cb8e23e74a4130bf77f9529c9584050cc63444",
+      "bytes": 6487
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_dataclasses.py",
+      "sha256": "660a9c9b559a24b0704d0402e6618a368c23953817de67d7fc9e5edaf776e253",
+      "bytes": 13188
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_decorators.py",
+      "sha256": "443106fc96aee4d88971f3b4c60753ec43a0b14d4b816218957ef0379ad8b55b",
+      "bytes": 33620
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_decorators_v1.py",
+      "sha256": "b5f75f76940a6384765c23b0a876d97a840cbabe95362811adf86e757047c77f",
+      "bytes": 6185
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_discriminated_union.py",
+      "sha256": "24bc7f3152dea7b331975cdba5d3598ef1c3733f89dce116e9671d575f3875c3",
+      "bytes": 26255
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_docs_extraction.py",
+      "sha256": "7f2ce74801e1e40ce88675d94ad5741ef1fe9d16dabcd1cfca0fa49f1f92fc41",
+      "bytes": 4127
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_fields.py",
+      "sha256": "85779bfb3a1d1b04c3bc6f4e2b5ba6d7c3fae1bedca876f418e9e03f88eb81c6",
+      "bytes": 31557
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_forward_ref.py",
+      "sha256": "e67dd8efedc028b9fcfc54b761cecabad2e23d48725e602d90464e6859e89f03",
+      "bytes": 611
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_generate_schema.py",
+      "sha256": "3e3a2051ac085e67fc2ee2cd7bdb1e26987b58b5b8309efe181b17c02b100bd4",
+      "bytes": 136348
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_generics.py",
+      "sha256": "0978dc22796f722f157a36969f57f7f64bf401c7c92f4479db7a912c56550feb",
+      "bytes": 23393
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_git.py",
+      "sha256": "2303e1dc33df6b65eadeb06e07d371f25b91d80d62ebd41d7937d659722e0958",
+      "bytes": 809
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_import_utils.py",
+      "sha256": "4d18710f93ae63a094a2c8a805d05c254b34a26ec820e36265d60057bcd0f233",
+      "bytes": 402
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_internal_dataclass.py",
+      "sha256": "fdb79d7355dbbaeca044688b66a914930c05a506a847584a2e5479d359f2c926",
+      "bytes": 144
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_known_annotated_metadata.py",
+      "sha256": "3f29d020543ad7fff819caf39f40f910d96583b8cfabf731a0b4e6b8540163cf",
+      "bytes": 16805
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_mock_val_ser.py",
+      "sha256": "c2645115206fa9f70b6c8e353ec165881e2ed80677989a597a21116c3df1293a",
+      "bytes": 8885
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_model_construction.py",
+      "sha256": "2682a663826b0c1bb79c6fed088ac982d249135baaeafdbd4ef4f3e449471398",
+      "bytes": 38928
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_namespace_utils.py",
+      "sha256": "865dfe4d102bf365368d3c8f3f7b7e42ab2f28b8abc6d90b7cd7eb37e7e9d31f",
+      "bytes": 12878
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_repr.py",
+      "sha256": "8d07e726ec83c50a5244d846dbd208f4f5fc7b836fdaa599ac4c3696a8a1dd41",
+      "bytes": 5172
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_schema_gather.py",
+      "sha256": "f2727eb8ce98e33eb1a5ab271a89c432e6ed3555ff9b179e44316677fa8c54b0",
+      "bytes": 9052
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_schema_generation_shared.py",
+      "sha256": "17fadb41bae4a289a0c6cb24747a4fd23509ed309f7b40400c0124aba089e273",
+      "bytes": 4842
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_serializers.py",
+      "sha256": "6085af4a6011e5f9db19258239076e5add72078650638d9e02bb9cf9e9eb6fa7",
+      "bytes": 1491
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_signature.py",
+      "sha256": "8bf6fac2d96e895599461d5963c52f076519ce23f52a3a925d9802f87c70393d",
+      "bytes": 6808
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_typing_extra.py",
+      "sha256": "743c6a178ea5ceea82a0a2eb007fe4f791036dac8478a6f69478ee4c9e4e0686",
+      "bytes": 31574
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_utils.py",
+      "sha256": "80de3c06c47e143ac90e26c29a8ebdb6d420ebb59bb85addcbfd4d40bddcbcb2",
+      "bytes": 15959
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_validate_call.py",
+      "sha256": "383fc1b291da2fd14acd9f57ae7761884b8c9e3177491209507b70bfac947df5",
+      "bytes": 5366
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/_internal/_validators.py",
+      "sha256": "ec64e35d758530b89be1dc50f8779a8879406624760761bc6f2098306ae6438f",
+      "bytes": 20563
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/deprecated/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/deprecated/class_validators.py",
+      "sha256": "9f48d840e71be58422c346fb617ca2ecd3e261d57bba3591e0ac99ba68d33e89",
+      "bytes": 10281
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/deprecated/config.py",
+      "sha256": "93f96c564e7ba5ac4b24e701b9e1f4edcbb53a012059d541c66ea57da0b70825",
+      "bytes": 2663
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/deprecated/copy_internals.py",
+      "sha256": "1a177ebe431de446020a0c821ad3ca3b9f27a7d704281402eaa9017881052368",
+      "bytes": 7618
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/deprecated/decorator.py",
+      "sha256": "4c19ba6c9ef026c36287ff16ab92330dcc0fdf69bdfef7f1b3de9d7ac2ee934d",
+      "bytes": 10845
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/deprecated/json.py",
+      "sha256": "1e55821b7e5146bc72cee4d2e8b4d089907046198365699ea901fcacb5bac00f",
+      "bytes": 4657
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/deprecated/parse.py",
+      "sha256": "1b377a6ff83ccc95dcb84ed046ae5a761c7f10c25a8577dca57085d1182baaa2",
+      "bytes": 2511
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/deprecated/tools.py",
+      "sha256": "36b9bda054595a9f3e8e57ef3e02482c4b32c29e18cd90f9d972063c32f11dc2",
+      "bytes": 3330
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/experimental/__init__.py",
+      "sha256": "413eeb298743b0289327d1848e6b107561d2730a4aaeb3641aaeafa8e34fe914",
+      "bytes": 104
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/experimental/arguments_schema.py",
+      "sha256": "1059e35ffba5a7eb4fc948d05f9a6642dba0d4e14bfc071cf1b70c6cb77e7d56",
+      "bytes": 1866
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/experimental/missing_sentinel.py",
+      "sha256": "8507a382d174d3052e40c9e2f78dbd7af83e797c88c292af8ec0fca1fa9f8fec",
+      "bytes": 127
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/experimental/pipeline.py",
+      "sha256": "6aea16ea5ea0d450b8d4b7223e6b08d4cea771fd344b375ef41dc2fb2bdbf662",
+      "bytes": 23956
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/plugin/__init__.py",
+      "sha256": "6bb4f0dfae94e8ade496d08235963bea773db2cfbbb86190e344d769df4eca94",
+      "bytes": 7333
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/plugin/_loader.py",
+      "sha256": "8408e04a58e82211b1dc0569229baac3948fb6d04d35e181493aea48c9cd8899",
+      "bytes": 2213
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/plugin/_schema_validator.py",
+      "sha256": "b616d9cfffb9b183f3c6c0b9b962b91837d87269abb1e702f15c3f034da68705",
+      "bytes": 5815
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/__init__.py",
+      "sha256": "4b140f925801b385c727013a059f6aa1ec18a0688dc98527987cc414265b7e72",
+      "bytes": 2946
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/_hypothesis_plugin.py",
+      "sha256": "e444b9c56bb0d45400b3298b7b3cbc4209d5cf466955f5378e4993ef81f6ed54",
+      "bytes": 14847
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/annotated_types.py",
+      "sha256": "ba4d8d000c6a88d10b2a388787287129a20e87c1759585bf2f3ad6dd7ee86417",
+      "bytes": 3157
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/class_validators.py",
+      "sha256": "50b39a21481850306c1cbec411511aadc33e52e6ca52082837c8526c3a27b051",
+      "bytes": 14672
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/color.py",
+      "sha256": "8990012d8a7a395a28d801643fd229ae2ff049cebe2a496ef18ba149aaed7798",
+      "bytes": 16844
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/config.py",
+      "sha256": "6ba3f459eafdc7871bc0a5bb5eff29a1252a33858ff912d6c17e9832962af400",
+      "bytes": 6532
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/dataclasses.py",
+      "sha256": "efce1caaf2276f020f5abf6eb1fa57ddc87bcf8b77276b532ba374ebbff0935a",
+      "bytes": 18172
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/datetime_parse.py",
+      "sha256": "e10cb5910a6adeb3556497881de48f0e9b92d81be1a7528fb73246d71bbe1f4d",
+      "bytes": 7724
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/decorator.py",
+      "sha256": "cda6b1c71a163c29bcd7c0f56ecd3285aa518d79b7d95f06d191d609d335b970",
+      "bytes": 10339
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/env_settings.py",
+      "sha256": "03d557c2d465d36018fa31f40b4a2ecb954dc377e2e85fe9933b870e380000e3",
+      "bytes": 14105
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/error_wrappers.py",
+      "sha256": "ebadb931fc3daa40b63708ad07f2450167bc07e5efeb3054eeb2fd936f2d7f2a",
+      "bytes": 5196
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/errors.py",
+      "sha256": "988c0f103e6f18ce50e6fe02e19d493e5753447fa89af132947ea4b0c84e98fc",
+      "bytes": 17726
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/fields.py",
+      "sha256": "56a5890ab894362132a6d5eba03549e74d49a550347a7d9500d724b2a5cbd9bf",
+      "bytes": 50649
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/generics.py",
+      "sha256": "633c8a4d937ac79435446277590f6337ebb01c9c4bdd6e2aa19ab07195eac568",
+      "bytes": 17829
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/json.py",
+      "sha256": "590e47cbf848a5f751dd84bc93a37613a28c273b1d6c18bf95d58e3c9695f353",
+      "bytes": 3390
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/main.py",
+      "sha256": "bd10754dba64ccf3773f98a326573e72336e3be1dc88d3a90b86fc2b7cd99df7",
+      "bytes": 45697
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/mypy.py",
+      "sha256": "0a5f1745f0a621c544de3e40114e760bc88387c95c5fffc3de1cf68c85b1300b",
+      "bytes": 38860
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/networks.py",
+      "sha256": "1d836d2807ce98e9ca269b0383583a488923f563e153ffa2f25e5ed89281a46e",
+      "bytes": 22124
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/parse.py",
+      "sha256": "049b5daa2651b5abfd55114298ec6863e2889909a33f2f80fcda288e21546716",
+      "bytes": 1821
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/py.typed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/schema.py",
+      "sha256": "6aa06e03ef9cabc8005648a6e4124f140487cce67c745b66157fdf346afa8a9e",
+      "bytes": 47801
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/tools.py",
+      "sha256": "d650dd5c79348cbe6e3f7bb9442600bd402518296000efb8e6592af63edfc810",
+      "bytes": 2881
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/types.py",
+      "sha256": "07397e45c9e2b4f0479eac308fd8afec98c7b8dd46a67587db874a905de5f5ef",
+      "bytes": 35455
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/typing.py",
+      "sha256": "a2fc2d2e911909b9e08596877d2349ba9cdeb731cd90b5e39ffeba9204e7215e",
+      "bytes": 20102
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/utils.py",
+      "sha256": "d4fa8e225cfa3955b019db371c12a5c3812de9ab05a2ed1452902da3b8c5382b",
+      "bytes": 26014
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/validators.py",
+      "sha256": "9725249f5316847c65097e597c48058ff0801e88e888f71a41e31d10cf57be25",
+      "bytes": 22187
+    },
+    {
+      "wheel": "pydantic-2.13.5-py3-none-any.whl",
+      "path": "pydantic/v1/version.py",
+      "sha256": "6291d63902ad1a8c5fca29331ab7265c954a515601f4405da0247df784314a71",
+      "bytes": 1039
+    },
+    {
+      "wheel": "pydantic_core-2.46.5-cp313-cp313-win_amd64.whl",
+      "path": "pydantic_core/__init__.py",
+      "sha256": "e644150a9eac4372c4ff826c8f614df288a561e39250e96c58e447f17806c6bf",
+      "bytes": 5286
+    },
+    {
+      "wheel": "pydantic_core-2.46.5-cp313-cp313-win_amd64.whl",
+      "path": "pydantic_core/_pydantic_core.cp313-win_amd64.pyd",
+      "sha256": "708d468b354ecb0219d3d72242cf197915f655ab4290c5cbcf65c3076f1b9579",
+      "bytes": 5159424
+    },
+    {
+      "wheel": "pydantic_core-2.46.5-cp313-cp313-win_amd64.whl",
+      "path": "pydantic_core/_pydantic_core.pyi",
+      "sha256": "940af2cc4bf6740ca19f4d5f7fae5d7e0826bab8096faee6aa33a2d96163aa04",
+      "bytes": 46988
+    },
+    {
+      "wheel": "pydantic_core-2.46.5-cp313-cp313-win_amd64.whl",
+      "path": "pydantic_core/core_schema.py",
+      "sha256": "44207c46053d31e17b9a93bc0b6dff1ecdd427e14f49788f63da39d0bd15e562",
+      "bytes": 160035
+    },
+    {
+      "wheel": "pydantic_core-2.46.5-cp313-cp313-win_amd64.whl",
+      "path": "pydantic_core/py.typed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "wheel": "typing_extensions-4.16.0-py3-none-any.whl",
+      "path": "typing_extensions.py",
+      "sha256": "4040ca1a1ecbee00d1385c12a93084d1c5bd46f0b774f07e5ae7e91c4f55e696",
+      "bytes": 165012
+    },
+    {
+      "wheel": "typing_inspection-0.4.4-py3-none-any.whl",
+      "path": "typing_inspection/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "wheel": "typing_inspection-0.4.4-py3-none-any.whl",
+      "path": "typing_inspection/introspection.py",
+      "sha256": "5888c45bd627da692d9527699e3f549adf35651596b1656772310e12181b4396",
+      "bytes": 22550
+    },
+    {
+      "wheel": "typing_inspection-0.4.4-py3-none-any.whl",
+      "path": "typing_inspection/py.typed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "wheel": "typing_inspection-0.4.4-py3-none-any.whl",
+      "path": "typing_inspection/typing_objects.py",
+      "sha256": "a778d6290d51581c9c9a23e0263af2a4604c76def5c4d40a7cd1a375b0046ff6",
+      "bytes": 17838
+    },
+    {
+      "wheel": "typing_inspection-0.4.4-py3-none-any.whl",
+      "path": "typing_inspection/typing_objects.pyi",
+      "sha256": "3bd24dd92d0270d31d64fd40abc1ef8693f5322aab9a78aeb3c5b62f992f84be",
+      "bytes": 9635
+    },
+    {
+      "wheel": "zaratustra_core-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_core/AGENTS.md",
+      "sha256": "3eafcc4375a89e9e9d88889115db8dace01dbbe6cbacdebf736db725e1c64b25",
+      "bytes": 921
+    },
+    {
+      "wheel": "zaratustra_core-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_core/__init__.py",
+      "sha256": "7f71419c900c0207f7e9b1e9444a8b20a1f149faa06175484a62d82f0baef7c7",
+      "bytes": 206
+    },
+    {
+      "wheel": "zaratustra_core-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_core/api.py",
+      "sha256": "74a26278d3882d5f00f943eb5cac0073f67f87546ef93e157d94f6c5ddecd570",
+      "bytes": 63912
+    },
+    {
+      "wheel": "zaratustra_core-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_core/formats.py",
+      "sha256": "4d12f1141cde7829816910604ef64fa4cade6391f6c40a31fcc294bea09a99d3",
+      "bytes": 7665
+    },
+    {
+      "wheel": "zaratustra_core-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_core/maintenance.py",
+      "sha256": "eb502ba6ebccf0b55d20d3cb8657e48eb02e8f509775f1ae0659e01c0b9b2c8b",
+      "bytes": 7253
+    },
+    {
+      "wheel": "zaratustra_core-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_core/shapes.py",
+      "sha256": "6f6ce01f52d8ef5ecd6f38d12f8fc2765efed2bc60a353f8a4a76e125cbfafd9",
+      "bytes": 5445
+    },
+    {
+      "wheel": "zaratustra_core-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_core/storage.py",
+      "sha256": "cac66bf818c930216160a20deab5e7ae90b517b1532df92089eccfa07f7b1359",
+      "bytes": 2950
+    },
+    {
+      "wheel": "zaratustra_core-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_core/types.py",
+      "sha256": "54b8a7103b7b0ae9d924cb839acd7789bff316b8e79bcf565635b1505ab5d33f",
+      "bytes": 2028
+    },
+    {
+      "wheel": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_app/AGENTS.md",
+      "sha256": "fcc273bfb8b2fc69cb6f4e20b8dc26071327a1cd81950d04b63b25af37a17bc0",
+      "bytes": 853
+    },
+    {
+      "wheel": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_app/__init__.py",
+      "sha256": "7aa11cf5aac2b79560b79aa1da5dfce83d4ba934ec34120f422f4de067463d21",
+      "bytes": 313
+    },
+    {
+      "wheel": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_app/adapters/AGENTS.md",
+      "sha256": "025c36f832a8b3d73d3c1c6cc24bcd6b8ad5ef6a048c1aedfad327ca97cddafb",
+      "bytes": 211
+    },
+    {
+      "wheel": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_app/adapters/__init__.py",
+      "sha256": "3313c92a9cdbfccae4afdf1f0a2defde08ac4a84eb166825fc21ddb9347cce20",
+      "bytes": 28
+    },
+    {
+      "wheel": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_app/adapters/pi/AGENTS.md",
+      "sha256": "4d9590766e47a2a6a9e706015320ffd8ce865a0d1b1089659abd6f18462a1448",
+      "bytes": 383
+    },
+    {
+      "wheel": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_app/adapters/pi/__init__.py",
+      "sha256": "6de3b1e1a3155f4e8d9bb2e104473abfc7c6a10f37ff0aa537ada162cbe2aa61",
+      "bytes": 37
+    },
+    {
+      "wheel": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_app/adapters/pi/bridge.py",
+      "sha256": "c5462f79ff3e1d84e1e68de69314d28d2f60556f087d6418baff6025dd5ebab7",
+      "bytes": 5874
+    },
+    {
+      "wheel": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_app/adapters/pi/extension.ts",
+      "sha256": "dfb451e22ce14af8a63fd37c5e8a0c6d75a11ead34e79eb036e8bfd78958505a",
+      "bytes": 1012
+    },
+    {
+      "wheel": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_app/adapters/pi/launcher.mjs",
+      "sha256": "6d8d942d545d260a95436be6d95f5823bfa4b8f3790ea5bc0daedc5c7b64587f",
+      "bytes": 4216
+    },
+    {
+      "wheel": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_app/cli.py",
+      "sha256": "7418065645f29f7f6f03f4b2fce3a58cbe7a37c1412e6c2a055c2adf36dfe5f7",
+      "bytes": 8567
+    },
+    {
+      "wheel": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_app/conversation.py",
+      "sha256": "557043bf85b52e8d1b615437371b821ae307106aeedcea4cb3118980712cb0ee",
+      "bytes": 11133
+    },
+    {
+      "wheel": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_app/coordinator.py",
+      "sha256": "c8d2f69a7c36b710ba01b274a45131c860de1e350f8c0bb2cd5096b1dcaad346",
+      "bytes": 11111
+    },
+    {
+      "wheel": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_app/executor_port.py",
+      "sha256": "3fd0fc8419be5c68205031870eaa4b1758b07ed517d8039a11c41bdff8885fe1",
+      "bytes": 15592
+    },
+    {
+      "wheel": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "path": "zaratustra_app/sleep.py",
+      "sha256": "e99979dcac7d34c4ebb4b299b597781a6e3b5c74ea68877dac9de96c5246d474",
+      "bytes": 18757
+    }
+  ],
+  "node_version": "v22.19.0",
+  "pi_version": "1.3.0",
+  "pi_sdk_bytes": [
+    {
+      "path": "C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\package.json",
+      "sha256": "83c3bb7619f590c213cc96a24216eb29a819a3ef6dc548607cc037ed276e8dc5",
+      "bytes": 3762
+    },
+    {
+      "path": "C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\index.js",
+      "sha256": "4569157e6038be9840fa514db4b00a27fd0be9e3622cc7b49a281de6c027d7ff",
+      "bytes": 5194
+    },
+    {
+      "path": "C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\cli.js",
+      "sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774",
+      "bytes": 160
+    },
+    {
+      "path": "C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\core\\auth-storage.js",
+      "sha256": "59791d54e50bfb86f0bb9e8dcee776547ae1744fc4aeb2fe14ff6610c1f5c567",
+      "bytes": 16740
+    },
+    {
+      "path": "C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\core\\model-runtime.js",
+      "sha256": "578b742bea061fed029b8e139c6c0bcfe31e60665e9c0c6a08769761ef169dfd",
+      "bytes": 36773
+    }
+  ],
+  "sqlite_new_runtime": "3.50.4",
+  "legacy_dll_used_by_new_runtime": false
+}

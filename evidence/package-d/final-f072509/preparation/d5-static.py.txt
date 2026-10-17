@@ -1,0 +1,25 @@
+import json, shutil, subprocess, sys, time
+from pathlib import Path
+from tools.check import hygiene, report_errors, ROOT
+
+destination=ROOT/'_scratch/d5-static-results';destination.mkdir(exist_ok=False)
+errors=hygiene(ROOT)+report_errors(ROOT,required=True)
+assert not errors,errors
+commands=[
+ [sys.executable,'-m','ruff','format','--check','src','tools','tests','packages'],
+ [sys.executable,'-m','ruff','check','src','tools','tests','packages'],
+ [sys.executable,'-m','mypy','src','tools','tests','packages'],
+ [shutil.which('lint-imports'),'--no-cache'],
+]
+rows=[]
+for i, command in enumerate(commands):
+ started=time.monotonic();run=subprocess.run(command, cwd=ROOT,capture_output=True)
+ (destination/f'{i}.stdout.bin').write_bytes(run.stdout)
+ (destination/f'{i}.stderr.bin').write_bytes(run.stderr)
+ rows.append({'command':command,'returncode':run.returncode,'seconds':time.monotonic()-started})
+ print(i,run.returncode,flush=True)
+ if run.returncode:
+  print(run.stdout.decode('utf-8',errors='replace'),run.stderr.decode('utf-8',errors='replace'))
+  break
+(destination/'manifest.json').write_text(json.dumps({'hygiene':[],'report_presence':[],'runs':rows},indent=2),encoding='utf-8')
+assert len(rows)==4 and all(r['returncode']==0 for r in rows),rows

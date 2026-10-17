@@ -1,0 +1,12 @@
+E501 Line too long (102 > 100)
+   --> packages\app\src\zaratustra_app\conversation.py:266:101
+    |
+264 |                     "conversation": self.conversation,
+265 |                     "goal": (
+266 |                         "Choose the Activity and scoped useful Work for the pending original request."
+    |                                                                                                     ^^
+267 |                     ),
+268 |                     "method_ref": {"id": ROUTING_ID, "revision": 1},
+    |
+
+Found 1 error.

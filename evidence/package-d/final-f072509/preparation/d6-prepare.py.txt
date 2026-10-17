@@ -1,0 +1,24 @@
+from pathlib import Path
+import json, shutil, subprocess, sys
+
+root = Path.cwd()
+old = root / 'evidence/package-d/final-627d9c2'
+new = root / 'evidence/package-d/final-f072509'
+new.mkdir()
+pin = 'f07250996d861404728c5892fa1f3b0a6a07bba4'
+for name in ['source-manifest.py.txt','install.py.txt','bundle.py.txt','owner-install.py.txt','dependency-bytes.py.txt','export-state.py.txt','run-gate.py.txt','Install.ps1','Start.ps1']:
+    raw = (old / name).read_text(encoding='utf-8')
+    raw = raw.replace('627d9c2b1d14e521aaa28f5c222e8662c7333880', pin).replace('627d9c2', 'f072509').replace("('d4-'+kind)", "('d6-'+kind)")
+    if name == 'Start.ps1':
+        raw = raw.replace('Pi 1.0.4', 'Pi 1.3.0')
+    if name == 'bundle.py.txt':
+        raw = raw.replace('raw=urllib.request.urlopen(url,timeout=60).read()', "raw=(root/'evidence/package-d/final-627d9c2/owner-bundle/wheels'/url.rsplit('/',1)[-1]).read_bytes()")
+    (new / name).write_text(raw, encoding='utf-8')
+for name in ['source-manifest.py.txt','install.py.txt','bundle.py.txt','owner-install.py.txt','dependency-bytes.py.txt']:
+    result = subprocess.run([sys.executable, str(new/name)], capture_output=True)
+    (new/(name+'.stdout.bin')).write_bytes(result.stdout)
+    (new/(name+'.stderr.bin')).write_bytes(result.stderr)
+    print(name, result.returncode, result.stdout.decode('utf-8', errors='replace'), flush=True)
+    if result.returncode:
+        print(result.stderr.decode('utf-8', errors='replace'))
+        raise SystemExit(result.returncode)

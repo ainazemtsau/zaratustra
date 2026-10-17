@@ -1,0 +1,53 @@
+{
+  "source_commit": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+  "chosen_by": "Independent reviewer after final source/build freeze,556byte checks and own37PASS affected runtime checks; no author-selected request or ideal answer.",
+  "freeze": {
+    "source_zip_sha256": "a68676b5be8f6be31f8a1302ef602e8162a027c29c27f68d6ad0fcd146ce3beb",
+    "owner_zip_sha256": "df1e8f75ccb3e5b8454ff4e5cca85bc48cd0540d92260122c47624b5f6c5b6a5",
+    "source_files": 406,
+    "production_files": 20
+  },
+  "request": "Нужен готовый сценарий 40-минутной встречи вымышленного клуба «Городские истории» для шести подростков. Тема — как придумать убедительного персонажа. В комнате есть настенные часы; из материалов — только бумага и карандаши, без телефонов. Дай поминутный ход, ровно два разных упражнения с понятными инструкциями и готовые короткие реплики ведущего для начала и переходов. Первые пять минут — знакомство, последние пять — общий разбор. В конце покажи, какой небольшой результат каждый унесёт. Не начинай с интервью и не ограничивайся перечнем идей.",
+  "correction": "Поправка к этой же встрече: участвуют восемь взрослых, всего 25 минут, и ведущего не будет. Перестрой сценарий целиком под самостоятельную работу, сохрани два коротких упражнения и бумагу с карандашами. Первые три минуты — общее чтение инструкции, последние четыре — совместный разбор. Вместо реплик ведущего нужны готовые тексты карточек, которые группа сможет просто прочитать. Старый 40-минутный вариант и роль ведущего больше не используй.",
+  "reopen_request": "Продолжим исправленный вариант. Нас стало не восемь, а шесть, время и материалы те же. Покажи окончательный сценарий целиком и добавь к одному упражнению простой вариант для человека, которому трудно сразу выступать вслух. Новых этапов и времени не добавляй.",
+  "evaluation": "Read exact visible results and immutable subject records by human judgment. Check arithmetic, usable instructions and changed constraints by eye; no keyword, duration/linecount or ideal-answer validator. Planning is explicitly requested here, so a usable ready-to-follow scenario is the result, not a plan to create one.",
+  "criteria": [
+    "First reply is a ready-to-follow40-minute scenario for six teenagers on creating a convincing character: coherent minute intervals totaling40, first5 introduction/last5 review, exactly two distinct usable core exercises, short actual facilitator lines/transitions and a concrete take-away result. Only given materials, no mandatory interview or generic planning checklist.",
+    "Correction rewrites the full scenario for eight adults and25minutes without a facilitator, preserving the topic, paper/pencils and two usable exercises. First3 reading/last4 joint review, coherent total25; actual self-service card text replaces facilitator speeches/roles. It must not retain the obsolete40-minute/six-teen/facilitator assumptions as current.",
+    "Fresh physical-client continuation provides the whole final corrected scenario for six adults, same25minutes, first3/last4 and two exercises, no facilitator/extra stages/materials; a quiet participation alternative fits inside one existing exercise without adding time. It adapts grouping consistently rather than restarting the old version or an interview.",
+    "The installed generic path creates/selects one meaningful Activity and preserves its identity. Actual current agreement, constraints, progress and useful results survive correction/reopen in immutable Activity/data/scoped result records, not only a bare card or chat history.",
+    "Original input stays pending through routing then is consumed by the scoped useful result. Exact refs, profile and finite inherited budget are respected; no host-written subject answer, manual state correction, subject router, acceptance or heuristic JSON repair is used.",
+    "Every observed selected-native request uses JSON-object mode and omits unsupported max_output_tokens. Finite physical-call limits and usage/failures are retained separately from unknown monetary debit. No hard token/money ceiling is claimed, no repeat account preflight or automatic retry/fifth sequence."
+  ],
+  "limits": {
+    "auth_mode": "pi-chatgpt",
+    "native_resource_mode": "calls-only",
+    "model": "gpt-6-luna",
+    "endpoint": "https://api.openai.com/v1/responses",
+    "native_physical_upper_per_attempt": 2,
+    "physical_call_limit_per_root_chain": 8,
+    "free_turn_chains": 3,
+    "whole_physical_send_upper": 24,
+    "sdk_local_sizing_tokens": 4096,
+    "context_window_metadata": 128000,
+    "profile_timeout_seconds": 180,
+    "outer_timeout_per_chain_seconds": 1800,
+    "guaranteed_output_token_ceiling": false,
+    "guaranteed_money_ceiling": false,
+    "overall_substantive_trial_number": 4,
+    "fresh_admissions_in_this_continuation": 1,
+    "automatic_fifth": false
+  },
+  "authority": {
+    "owner_resource_selection_as_reported": "Да, ограничиваем число обращений — продолжай (рекомендуется)",
+    "selection_meaning": "Explicit calls-only/no hard token-money guarantee;8perchain/24total for one new G14. This is not owner acceptance ofD.",
+    "root_transport": "Leader admits/executess exact unchanged reviewer script via normal approval; reviewer selects and evaluates; no invented new account access grant."
+  },
+  "prior_history": "Old series3of3 FAIL stays immutable:11eb noActivity,0fff goal273/240reopen,83af malformed correction JSON/reopennotrun. Earlier1b6 provider capability refusal, historical system interruption, reboot/incomplete gates and approval403 remain retained separately. New proof cannot relabel those outcomes.",
+  "account_preflight": {
+    "already_complete": true,
+    "sha256": "e205605df4be5781ad0d5c072bbed4ee7e309523e00337a027435da5adb8945d",
+    "no_repeat": true
+  },
+  "interpretation": "Single positive trace is limited usefulness evidence, not sustained reliability or personal owner acceptance. Account/provider/format/process/usefulness failure stops this one fresh sequence; no retry or fifth is permitted automatically. Rubric immutable before observation; final source-ready still requires all mandatory gates."
+}

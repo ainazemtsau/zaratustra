@@ -1,0 +1,66 @@
+"""Run only after both exact-source gates complete; all counts are observed."""
+import hashlib, importlib, json, re, shutil, subprocess, sys
+from pathlib import Path
+
+root=Path.cwd();proof=root/'evidence/package-d/final-0fff808'
+sys.path.insert(0,str(root))
+pin='0fff8088f092a8ba6b32451ed5c1e03e844c233a'
+assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()==pin
+assert not subprocess.check_output(['git','diff',pin,'--','packages','tests','tools','src','pyproject.toml','uv.lock'])
+native=json.loads((proof/'native-0fff808/exit.json').read_bytes())
+scoped=json.loads((proof/'scoped-0fff808/exit.json').read_bytes())
+assert native['source']==scoped['source']==pin
+assert native['returncode']==scoped['returncode']==0
+native_text=(proof/'native-0fff808/stdout.bin').read_text(encoding='utf-8')
+scoped_text=(proof/'scoped-0fff808/stdout.bin').read_text(encoding='utf-8')
+assert 'PASS: native build, hygiene, types, boundaries, tests, report structure' in native_text
+native_count=int(re.search(r'(\d+) passed in ',native_text).group(1))
+scoped_count=int(re.search(r'(\d+) passed in ',scoped_text).group(1))
+expected={}
+for package,module in [('A','test_negative_controls'),('B','test_continuation_controls'),('C','test_sleep_controls'),('D','test_delivery_controls')]:
+    seeds=importlib.import_module('tests.restart.'+module).SEEDS
+    for seed in seeds:
+        assert seed[0] not in expected
+        expected[seed[0]]=package
+controls=[]
+for path in sorted((proof/'scoped-0fff808/negatives').glob('*.json')):
+    result=json.loads(path.read_bytes())
+    assert result['returncode']==1 and result['injection_reached'] and result['behavioral_failure'],path
+    controls.append({'seed':result['seed'],'package':expected[result['seed']],
+                     'path':path.relative_to(proof).as_posix(),'test':result['test'],
+                     'reached':True,'specific_behavioral_failure':True})
+assert {r['seed'] for r in controls}==set(expected)
+groups={package:sum(r['package']==package for r in controls) for package in 'ABCD'}
+(proof/'CONTROL-MANIFEST.json').write_text(json.dumps({'count':len(controls),'by_package':groups,'controls':controls},indent=2),encoding='utf-8')
+physical=proof/'native-0fff808/physical-builds';physical.mkdir(exist_ok=False)
+builds=[]
+for path in sorted((proof/'install-0fff808/physical-builds').iterdir()):
+    if not path.name.endswith(('.whl','.tar.gz')):continue
+    observed=(root/'dist'/path.name).read_bytes()
+    assert observed==path.read_bytes(),path
+    shutil.copyfile(root/'dist'/path.name,physical/path.name)
+    builds.append({'file':path.name,'sha256':hashlib.sha256(observed).hexdigest(),'bytes':len(observed)})
+assert len(builds)==4
+(proof/'BUILD-MANIFEST.json').write_text(json.dumps({'source_commit':pin,'distributions':builds,
+ 'native_and_outside_build_bytes_equal':True,'source_wheel_installed_mapping':'install-0fff808/manifest.json',
+ 'dependency_bytes':'DEPENDENCY-MANIFEST.json','owner_bundle':'OWNER-BUNDLE-MANIFEST.json',
+ 'outside_git_source_and_runtime':True,'actual_installed_console':True,
+ 'ordinary_trace':'Declared fictional OAuth/upstream; no semantic G14 claim.'},indent=2),encoding='utf-8')
+provenance={'source_commit':pin,'accepted_c_candidate':'7d211480d1dd5067bf52c3a654cc1a713368310d',
+ 'native':native,'native_tests':native_count,'scoped':scoped,'scoped_tests':scoped_count,
+ 'reached_behavioral_controls':len(controls),'controls_by_package':groups,
+ 'contract':'wire/v1','conversation_methods':['conversation-routing/1','conversation/2'], 'historical_conversation_method':'conversation/1 unchanged','backup':'backup/v1','diagnostics':'diagnostics/v1',
+ 'runtime':'Python3.13.7/nativeSQLite3.50.4/Pi1.3.0/Node22.19.0; declared legacy full gate only SQLiteDLL3.53.3',
+ 'live_g14':{'writer_real_model_calls':0,'current_status_file':'INDEPENDENT-G14-LAUNCH-ROOT-REPORT.json','status_at_preparation':'Root running newly chosen/frozen independent0fff G14, no verdict yet','history':'Root account preflight1HTTP200 10input/5output;1b6 G14 1HTTP400 usage unknown;11eb G14 3sends13735tokens semantic textsPASS/ActivityFAIL;6760 newG14 not run.'},
+ 'independent_review':{'status_file':'INDEPENDENT-REVIEW-CURRENT-STATUS.json','initial_interruption':'INDEPENDENT-REVIEW-SYSTEM-STOP.json unchanged','same_chat_clarification':'INDEPENDENT-REVIEW-SAME-CHAT-CLARIFICATION.json','current':json.loads((proof/'INDEPENDENT-REVIEW-CURRENT-STATUS.json').read_bytes()),'final_verdict':'Not inferred by writer'},
+ 'owner_acceptance':'D and first release pending','next':'solmax',
+ 'candidate_policy':'Evidence/docs/RESULT only after this source pin. Candidate commit is returned separately.',
+ 'prior_runs':'Original source095/786/627/20d/f072/1b6/11eb/6760 failures and incomplete runs retained/indexed, including1b6 SURVIVED checksum control and failed live G14. F072 scoped280PASS does not close independent F-D-01.',
+ 'windows_publication':'Original holder unknown. Reproduced file-sharing class mitigated with finite2s retry Windows5/32/33; permanent/unrelated failures remain errors.',
+ 'credentials':'No real credential/token values exported. Disposable FICTIONAL SQLite contains random test credential hashes only.'}
+(proof/'PROVENANCE.json').write_text(json.dumps(provenance,indent=2),encoding='utf-8')
+p=root/'docs/restart/PACKAGE-D-RETURN.md';body=p.read_text(encoding='utf-8')
+body=body.replace('Scoped exact-source gate completed 384 PASS / 873.00 s, exit0, with74 reached\nbehavioral controls (A22/B6/C18/D28), exact SEEDS inventory matched.\nFull native completion and independent review are pending.',
+ f'Exact-source full native gate passed {native_count} tests plus build, hygiene, types,\nboundaries and report structure. Scoped restart passed {scoped_count} tests with\n{len(controls)} reached behavioral controls ({", ".join(k+":"+str(v) for k,v in groups.items())}).\nAll four native distributions exactly match the outside builds. Raw invocations,\nstdout/stderr, exit receipts and manifests are retained under `final-0fff808/`.\nIndependent review/G14 and owner acceptance remain open; first systemError is retained and current review status is separately recorded.')
+p.write_text(body,encoding='utf-8')
+print(json.dumps({'native_tests':native_count,'scoped_tests':scoped_count,'controls':len(controls),'controls_by_package':groups}))

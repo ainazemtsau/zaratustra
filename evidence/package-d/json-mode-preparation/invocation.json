@@ -1,0 +1,15 @@
+{
+  "command": [
+    "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "tests/restart/test_conversation.py",
+    "tests/restart/test_delivery_controls.py",
+    "-q",
+    "-k",
+    "native_pi_oauth_launcher_controlled or native_auth_errors or D-native-json-mode"
+  ],
+  "source_diff": "83af4d4 plus bounded JSON-mode metadata/test/control changes",
+  "credentials": "fictional only; selected tests no live models",
+  "cwd": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release"
+}

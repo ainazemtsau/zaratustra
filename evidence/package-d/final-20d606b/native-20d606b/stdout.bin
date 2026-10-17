@@ -1,0 +1,9 @@
+$ C:\projects\zaratustra\.worktrees\restart-first-release\.venv\Scripts\python.exe -m ruff format --check src tools tests packages
+378 files already formatted
+$ C:\projects\zaratustra\.worktrees\restart-first-release\.venv\Scripts\python.exe -m ruff check src tools tests packages
+All checks passed!
+$ C:\projects\zaratustra\.worktrees\restart-first-release\.venv\Scripts\python.exe -m mypy src tools tests packages
+tests\restart\test_maintenance.py:386: error: Module "zaratustra_core.storage" does not explicitly export attribute "time"  [attr-defined]
+tests\restart\test_maintenance.py:410: error: Module "zaratustra_core.storage" does not explicitly export attribute "os"  [attr-defined]
+tests\restart\test_maintenance.py:447: error: Module "zaratustra_core.maintenance" does not explicitly export attribute "shutil"  [attr-defined]
+Found 3 errors in 1 file (checked 337 source files)

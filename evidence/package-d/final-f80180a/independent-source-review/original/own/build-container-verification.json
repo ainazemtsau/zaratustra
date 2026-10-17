@@ -1,0 +1,44 @@
+[
+  {
+    "path": "evidence/package-d/final-f80180a/source-f80180a.zip",
+    "sha256": "a68676b5be8f6be31f8a1302ef602e8162a027c29c27f68d6ad0fcd146ce3beb",
+    "bytes": 1693739,
+    "passed": true
+  },
+  {
+    "path": "evidence/package-d/final-f80180a/install-f80180a/physical-builds/.gitignore",
+    "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1",
+    "bytes": 1,
+    "passed": true
+  },
+  {
+    "path": "evidence/package-d/final-f80180a/install-f80180a/physical-builds/zaratustra_core-0.1.0-py3-none-any.whl",
+    "sha256": "93ff28d186def9d2f6cae4d2979cd90930f43feb11b6a9e6d3704df7403e8271",
+    "bytes": 29080,
+    "passed": true
+  },
+  {
+    "path": "evidence/package-d/final-f80180a/install-f80180a/physical-builds/zaratustra_core-0.1.0.tar.gz",
+    "sha256": "afbeed5be50920111faa218028a62edf5defaba992381d1130a213705442e6f6",
+    "bytes": 24993,
+    "passed": true
+  },
+  {
+    "path": "evidence/package-d/final-f80180a/install-f80180a/physical-builds/zaratustra_next-0.1.0-py3-none-any.whl",
+    "sha256": "3a2ffd3b713a859814246b8d4ef566e4fddf4e198b9e52047c7b277a65cb09d3",
+    "bytes": 32034,
+    "passed": true
+  },
+  {
+    "path": "evidence/package-d/final-f80180a/install-f80180a/physical-builds/zaratustra_next-0.1.0.tar.gz",
+    "sha256": "aecc07726283b09ace9de5f1427edf32032e12367e586282939a4f2372216883",
+    "bytes": 24623,
+    "passed": true
+  },
+  {
+    "path": "evidence/package-d/final-f80180a/zaratustra-next-d-f80180a-windows-x64.zip",
+    "sha256": "df1e8f75ccb3e5b8454ff4e5cca85bc48cd0540d92260122c47624b5f6c5b6a5",
+    "bytes": 2635866,
+    "passed": true
+  }
+]

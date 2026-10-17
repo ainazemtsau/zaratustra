@@ -1,0 +1,10 @@
+{
+  "seed": "C-reset-reservation",
+  "test": "test_sleep.py::test_next_call_beyond_remaining_is_rejected",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_________________ test_next_call_beyond_remaining_is_rejected _________________\ntests\\restart\\test_sleep.py:285: in test_next_call_beyond_remaining_is_rejected\n    with pytest.raises(CoreError, match=\"resource_exhausted\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_sleep.py::test_next_call_beyond_remaining_is_rejected\n1 failed in 2.66s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -1036,7 +1036,7 @@\n             upper = p.get(\"resource_upper\", 1)\n             if type(upper) is not int or upper < 1:\n                 fail(\"invalid_request\", \"resource_upper\")\n-            if work[\"reserved\"] + upper > body[\"call_limit\"]:\n+            if (print(\"MUTANT_REACHED\", flush=True) or False):\n                 fail(\"resource_exhausted\", \"calls\")\n             db.execute(\n                 \"INSERT INTO actions VALUES(?,?,?,'claimed',NULL,?)\",\n"
+}

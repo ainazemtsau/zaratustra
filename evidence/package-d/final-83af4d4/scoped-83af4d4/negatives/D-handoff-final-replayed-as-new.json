@@ -1,0 +1,10 @@
+{
+  "seed": "D-handoff-final-replayed-as-new",
+  "test": "test_work_handoff.py::test_handoff_preserves_raw_input_then_scoped_result",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_____________ test_handoff_preserves_raw_input_then_scoped_result _____________\ntests\\restart\\test_work_handoff.py:71: in test_handoff_preserves_raw_input_then_scoped_result\n    assert replay == result, \"The retained final result must replay without executing a new handoff\"\nE   AssertionError: The retained final result must replay without executing a new handoff\nE   assert CoreError('stale_basis: execution.status [201affc79c57c985]') == {'attempt_id': 'route-attempt', 'state': 'completed', 'refs': [{'id': 'activity', 'revision': 1}], 'outputs': [{'id': 'activity', 'revision': 1}], ...}\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_work_handoff.py::test_handoff_preserves_raw_input_then_scoped_result\n1 failed in 1.65s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -1188,7 +1188,7 @@\n             old = db.execute(\n                 \"SELECT * FROM results WHERE attempt=? AND slot='final'\", (attempt[\"id\"],)\n             ).fetchone()\n-            if old:\n+            if old and (print(\"MUTANT_REACHED\", flush=True) or False):\n                 if old[\"fingerprint\"] != digest(p):\n                     fail(\"idempotency_conflict\", \"result_slot\")\n                 return cast(dict[str, Any], loads(old[\"body\"]))\n"
+}

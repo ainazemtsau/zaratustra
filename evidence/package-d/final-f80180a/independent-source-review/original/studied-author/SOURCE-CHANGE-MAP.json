@@ -1,0 +1,18 @@
+{
+  "source": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+  "negative_base": "83af4d4a529ca73d06d566db62a3586f2a432af9",
+  "json_mode_commit": "ac58f9437f5122a5e8ea5ba93384b14cbb2b4563",
+  "diff_sha256": "d7ff19ac0f1a0d8654c4328bc194cca43fb2cb13a5ee16c35e8471883b669c27",
+  "changes": {
+    "executor_port.py": "native JSON-mode metadata; explicit calls-only admission; supported max-output field omission; safe local sizing error label; configuration excludes only absent native mode preserving old API-key profile bytes",
+    "cli.py": "both entrypoints use backward-compatible configuration serialization",
+    "test_conversation.py": "actual native routing/execution/tool-followup request format+omission; durable tool effect and idle no-resend; actual API-key field preserved",
+    "test_native_resource_profile.py": "explicit native admission, preserved serialized identity, unsupported token/money Core demand, API-key separation",
+    "test_sleep_profile.py": "known CLI safe stderr code/field/exit1/no effects; pre-change profile seeded via public Core and reopened twice unchanged",
+    "test_delivery_controls.py": "two JSON-mode controls, explicit mode, unsupported field, absent optional mode compatibility; original effort control kept",
+    "test_ordinary_activity.py": "cap-size fixture explicitly selects native calls-only"
+  },
+  "core_product_sources_changed": false,
+  "no_heuristic_repair_retry_or_semantic_template": true,
+  "frozen_pair_unchanged": true
+}

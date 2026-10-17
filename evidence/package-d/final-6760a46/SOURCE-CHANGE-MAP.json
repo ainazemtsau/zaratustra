@@ -1,0 +1,62 @@
+{
+  "source_commit": "6760a4665d0f02939ab8db20ab6256a91e389bd4",
+  "previous_source": "11ebf956bafc2bbca4a3685e37d117474f11c151",
+  "contract": "Completion of frozen C8 next_work/preserved-original-cursor branch; no frozen plan/review changes.",
+  "changes": {
+    "Core C8": "Atomic changes + routing result + exactly one same-conversation scoped child + intent/cursor/receipt; processed original only with durable child; finite remaining cap; exhausted child paused, no prepare.",
+    "Typed reference closure": "Historical parent/child reverse links, immutable Activity selection independent of current refreshed inputs, exact scalar types and temporal reservation prefix.",
+    "Ordinary client": "Generic model-selected discovery then scoped execution, meaningful Activity/data guidance, phase output shapes, recovery-first, late input refresh before first dependent dispatch, addressed replies keep existing Work. Old Method bytes/adaptations preserved.",
+    "Native cap": "Native-only refusal max_tokens<16 before runtime/send, no payload rewriting.",
+    "Malformed terminal": "Retained exact terminal bytes; neutral invalid_request without automatic resend.",
+    "Tool publication": "Discovery cannot publish an orphan Activity through intermediate tool; useful scoped Work supports ordinary typed changes."
+  },
+  "focused": {
+    "affected_passed": 123,
+    "affected_seconds": 145.33,
+    "additional_rehashed_closure_passed": 9,
+    "additional_seconds": 8.68,
+    "D_controls_passed": 26,
+    "D_controls_seconds": 71.85,
+    "static": {
+      "format_files": 385,
+      "ruff": "PASS",
+      "mypy_files": 344,
+      "boundaries": 37,
+      "hygiene_report": []
+    }
+  },
+  "historical_11eb": {
+    "scoped": "328 PASS/689.15s",
+    "native": "INCOMPLETE; own exact verified pytest stopped after1751.904779s before source edits; raw partial/identity/stop retained.",
+    "G14": "Three useful texts semantically PASS; overall FAIL:0Activity, changes=[] outputs=[] each step.",
+    "actual_sends": 3,
+    "tokens": 13735,
+    "independent_negative_bundle": {
+      "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-review-d-20261016\\11ebf95-negative-checkpoint",
+      "files": 194,
+      "inventory_sha256": "b26d971eeafea6305f74086d2451b3be71e466263a6b9e4e12c02fa4fb853991",
+      "bundle": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-review-d-20261016\\11ebf95-negative-checkpoint.zip",
+      "bundle_bytes": 466410,
+      "bundle_sha256": "f8c253a51e06e0aaab156a7000e2c492d7c0a7188e26238e5e1f334b7259a043"
+    }
+  },
+  "earlier_live": {
+    "root_account_preflight": {
+      "sends": 1,
+      "http": 200,
+      "input": 10,
+      "output": 5,
+      "g14": false
+    },
+    "1b6_failed_G14": {
+      "sends": 1,
+      "http": 400,
+      "code": "subscription_sharing_unsupported_capability",
+      "usage": "unknown",
+      "useful_response": false
+    }
+  },
+  "writer_live_calls": 0,
+  "new_candidate_G14": "Separate fresh independent rubric/run pending; no historical live request repeated by writer.",
+  "practical_cost": "A new free request normally needs discovery+execution; both consume the same finite inherited resource. An addressed reply continues its existing scoped Work."
+}

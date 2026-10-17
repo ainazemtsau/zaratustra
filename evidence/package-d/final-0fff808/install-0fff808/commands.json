@@ -1,0 +1,263 @@
+[
+  {
+    "name": "build-zaratustra-core",
+    "argv": [
+      "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+      "build",
+      "--package",
+      "zaratustra-core",
+      "--out-dir",
+      "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-d\\final-0fff808\\install-0fff808\\physical-builds"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\source",
+    "returncode": 0,
+    "seconds": 0.25585150718688965
+  },
+  {
+    "name": "build-zaratustra-next",
+    "argv": [
+      "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+      "build",
+      "--package",
+      "zaratustra-next",
+      "--out-dir",
+      "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-d\\final-0fff808\\install-0fff808\\physical-builds"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\source",
+    "returncode": 0,
+    "seconds": 0.17248201370239258
+  },
+  {
+    "name": "venv",
+    "argv": [
+      "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+      "venv",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env",
+      "--python",
+      "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 0.06035923957824707
+  },
+  {
+    "name": "install-core",
+    "argv": [
+      "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+      "pip",
+      "install",
+      "--offline",
+      "--constraint",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\constraints.txt",
+      "--python",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env\\Scripts\\python.exe",
+      "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-d\\final-0fff808\\install-0fff808\\physical-builds\\zaratustra_core-0.1.0-py3-none-any.whl"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 0.7301807403564453
+  },
+  {
+    "name": "core-only",
+    "argv": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env\\Scripts\\python.exe",
+      "-I",
+      "-X",
+      "utf8",
+      "-c",
+      "\nimport sys,importlib.abc,importlib.util,json,sqlite3\nfrom pathlib import Path\nclass Deny(importlib.abc.MetaPathFinder):\n def find_spec(self,fullname,path=None,target=None):\n  if fullname.split('.')[0] in {'zaratustra','dbos','sqlalchemy','pi'}:raise AssertionError('legacy import '+fullname)\nsys.meta_path.insert(0,Deny())\nallowed=[Path.cwd().resolve(),Path(sys.prefix).resolve(),Path(sys.base_prefix).resolve()]\ndef audit(event,args):\n if event.startswith(('socket.','subprocess.')):raise AssertionError('network/process '+event)\n if event in {'open','os.listdir','os.scandir','sqlite3.connect','os.mkdir'} and isinstance(args[0],(str,bytes)):\n  actual=Path(args[0]).resolve()\n  if not any(actual.is_relative_to(p) for p in allowed):raise AssertionError('ambient file '+str(actual))\nsys.addaudithook(audit)\n\nimport zaratustra_core\nassert importlib.util.find_spec('zaratustra_app') is None\nassert sqlite3.sqlite_version=='3.50.4'\ncore,token=zaratustra_core.Core.initialize(Path('core-alone'))\nassert core.connect(token).call('describe_contract',{},'d')['version']=='wire/v1'\nprint(json.dumps({'core':zaratustra_core.__file__,'python':sys.version,'sqlite':sqlite3.sqlite_version,'independent':True}))\n"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 1.8458082675933838
+  },
+  {
+    "name": "install-app",
+    "argv": [
+      "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+      "pip",
+      "install",
+      "--offline",
+      "--python",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env\\Scripts\\python.exe",
+      "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-d\\final-0fff808\\install-0fff808\\physical-builds\\zaratustra_next-0.1.0-py3-none-any.whl"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 0.13575959205627441
+  },
+  {
+    "name": "console-init",
+    "argv": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env\\Scripts\\zaratustra-next.exe",
+      "--data-root",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\FICTIONAL-space",
+      "init"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 1.547142744064331
+  },
+  {
+    "name": "console-diagnostics-empty",
+    "argv": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env\\Scripts\\zaratustra-next.exe",
+      "--data-root",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\FICTIONAL-space",
+      "diagnostics"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 0.6530184745788574
+  },
+  {
+    "name": "console-artifact",
+    "argv": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env\\Scripts\\zaratustra-next.exe",
+      "--data-root",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\FICTIONAL-space",
+      "artifact",
+      "--file",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\FICTIONAL-artifact.bin"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 0.7773301601409912
+  },
+  {
+    "name": "console-chat-first",
+    "argv": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env\\Scripts\\zaratustra-next.exe",
+      "--data-root",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\FICTIONAL-space",
+      "chat",
+      "--profile-file",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\controlled-profile.json",
+      "--call-limit",
+      "8",
+      "--message",
+      "FICTIONAL ORIGINAL INPUT; PRIVATE_SENTINEL"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 30.071731090545654
+  },
+  {
+    "name": "console-chat-free-correction",
+    "argv": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env\\Scripts\\zaratustra-next.exe",
+      "--data-root",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\FICTIONAL-space",
+      "chat",
+      "--profile-file",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\controlled-profile.json",
+      "--call-limit",
+      "8",
+      "--message",
+      "FICTIONAL CORRECTION LIMIT"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 0.8160674571990967
+  },
+  {
+    "name": "console-chat-addressed-reopen",
+    "argv": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env\\Scripts\\zaratustra-next.exe",
+      "--data-root",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\FICTIONAL-space",
+      "chat",
+      "--profile-file",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\controlled-profile.json",
+      "--call-limit",
+      "8",
+      "--reply-to",
+      "fixture-wait",
+      "--message",
+      "FICTIONAL ANSWER"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 6.291353702545166
+  },
+  {
+    "name": "console-diagnostics-preview",
+    "argv": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env\\Scripts\\zaratustra-next.exe",
+      "--data-root",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\FICTIONAL-space",
+      "diagnostics",
+      "--destination",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\diagnostics-preview.json"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 0.7072083950042725
+  },
+  {
+    "name": "console-backup",
+    "argv": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env\\Scripts\\zaratustra-next.exe",
+      "--data-root",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\FICTIONAL-space",
+      "backup",
+      "--destination",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\backup"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 0.751516580581665
+  },
+  {
+    "name": "console-restore",
+    "argv": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env\\Scripts\\zaratustra-next.exe",
+      "--data-root",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\quarantined",
+      "restore",
+      "--file",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\backup"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 0.7753589153289795
+  },
+  {
+    "name": "console-restored-diagnostics",
+    "argv": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env\\Scripts\\zaratustra-next.exe",
+      "--data-root",
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\quarantined",
+      "diagnostics"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 0.685964822769165
+  },
+  {
+    "name": "installed-state",
+    "argv": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env\\Scripts\\python.exe",
+      "-I",
+      "-X",
+      "utf8",
+      "-c",
+      "\nimport base64,hashlib,json,sqlite3,sys\nfrom pathlib import Path\nfrom zaratustra_core import Core,CoreError\nroot=Path('FICTIONAL-space');token=(root/'owner.credential').read_text();owner=Core(root).connect(token)\nstate=owner.call('read_snapshot',{},'proof')\nassert state['conversations'][0]['cursor']==3 and not state['acceptance']\nassert len([h for h in state['heads'] if h['kind']=='activity'])==1\nassert len(state['works'])==2 and all(w['status']=='completed' for w in state['works'])\nassert sum(w['reserved'] for w in state['works'])==6\nrestored=Core(Path('quarantined'));current=restored.connect((restored.root/'owner.credential').read_text())\nassert current.meta['epoch']==owner.meta['epoch']+1 and current.meta['space']!=owner.meta['space']\ntry:restored.connect(token)\nexcept CoreError as e:assert e.code=='denied'\nelse:raise AssertionError('old credential accepted')\nsha=hashlib.sha256(Path('FICTIONAL-artifact.bin').read_bytes()).hexdigest()\nassert base64.b64decode(current.call('read_artifact',{'sha256':sha},'bytes')['raw_base64'])==Path('FICTIONAL-artifact.bin').read_bytes()\nassert current.call('export_diagnostics',{},'diag')['mode']=='quarantined'\nprint(json.dumps({'cursor':3,'activity_heads':1,'accepted':False,'reserved':6,'new_epoch':True,'old_credential_denied':True,'complete_artifact_bytes':True,'quarantined':True,'sqlite':sqlite3.sqlite_version}))\n"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 0.47098588943481445
+  },
+  {
+    "name": "dependencies",
+    "argv": [
+      "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime\\env\\Scripts\\python.exe",
+      "-I",
+      "-c",
+      "import importlib.metadata as m,json,sqlite3,sys;print(json.dumps({\"packages\":sorted((d.metadata[\"Name\"],d.version) for d in m.distributions()),\"python\":sys.version,\"sqlite\":sqlite3.sqlite_version}))"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-0fff808-04geqcqn\\runtime",
+    "returncode": 0,
+    "seconds": 0.2610926628112793
+  }
+]

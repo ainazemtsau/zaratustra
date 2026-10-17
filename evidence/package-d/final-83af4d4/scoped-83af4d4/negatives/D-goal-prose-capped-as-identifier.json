@@ -1,0 +1,10 @@
+{
+  "seed": "D-goal-prose-capped-as-identifier",
+  "test": "test_prose_fields.py::test_long_goal_c8_handoff_keeps_exact_prose",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_________________ test_long_goal_c8_handoff_keeps_exact_prose _________________\ntests\\restart\\test_prose_fields.py:67: in test_long_goal_c8_handoff_keeps_exact_prose\n    assert isinstance(result, dict), \"C8 must admit nonempty prose beyond the identity length cap\"\nE   AssertionError: C8 must admit nonempty prose beyond the identity length cap\nE   assert False\nE    +  where False = isinstance(CoreError('invalid_request: next_work.goal [e7fe88c40a5467d3]'), dict)\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_prose_fields.py::test_long_goal_c8_handoff_keeps_exact_prose\n1 failed in 1.78s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/shapes.py\n+++ core/src/zaratustra_core/shapes.py.mutant\n@@ -41,7 +41,7 @@\n class Work(Shape):\n     id: Id\n     conversation: Id\n-    goal: NonEmptyText\n+    goal: Id\n     scope: Id = \"space\"\n     method_ref: Ref\n     inputs: list[Ref] = Field(default_factory=list)\n@@ -237,5 +237,7 @@\n     try:\n         model.model_validate(payload)\n     except ValidationError as exc:\n+        if any(error[\"loc\"][-1] == \"goal\" for error in exc.errors()):\n+            print(\"MUTANT_REACHED\", flush=True)\n         location = \".\".join(map(str, exc.errors()[0][\"loc\"]))\n         raise CoreError(\"invalid_request\", location) from exc\n"
+}

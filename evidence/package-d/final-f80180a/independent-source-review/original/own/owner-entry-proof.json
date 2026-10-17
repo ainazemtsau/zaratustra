@@ -1,0 +1,13 @@
+{
+  "source": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+  "fixture": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-owner-entry-review-7nrlzlma",
+  "actual_owner_zip_Install_then_generated_Start": true,
+  "selected_mode": "calls-only",
+  "start_returncode": 0,
+  "startup_with_exit_only": "idle; no Work/attempt/action/SDK home",
+  "physical_model_requests": 0,
+  "real_auth_access": false,
+  "fake_files_only": true,
+  "own_installed_prod_files": 20,
+  "scope": "Actual entry/profile wiring and model-free startup, not a useful model trace. Author separate2-call controlled Start evidence is studied separately."
+}

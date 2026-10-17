@@ -1,0 +1,35 @@
+from pathlib import Path
+import subprocess,sys
+root=Path.cwd();old=root/'evidence/package-d/final-11ebf95';new=root/'evidence/package-d/final-6760a46';new.mkdir()
+pin='6760a4665d0f02939ab8db20ab6256a91e389bd4'
+for name in ['source-manifest.py.txt','install.py.txt','bundle.py.txt','owner-install.py.txt','dependency-bytes.py.txt','export-state.py.txt','run-gate.py.txt','Install.ps1','Start.ps1']:
+ raw=(old/name).read_text().replace('11ebf956bafc2bbca4a3685e37d117474f11c151',pin).replace('11ebf95','6760a46').replace("('d8-'+kind)","('d9-'+kind)")
+ if name=='install.py.txt':
+  start=raw.index("  terminal=({'state':'waiting'")
+  end=raw.index('  text=json.dumps(terminal)',start)
+  raw=raw[:start]+'''  context=json.loads(payload['input'][1]['content'][0]['text'])['context']
+  phase=context['response_contract']['version']
+  catalog=context['catalog']
+  old=next((r for r in catalog if r['id']=='fictional-activity'),None)
+  revision=old['revision'] if old else 0
+  terminal={'state':'completed','text':'Controlled result after correction',
+    'changes':[{'id':'fictional-activity','kind':'activity','key':'fictional','body':'controlled fixture agreement '+str(n)}],
+    'expected_heads':{'fictional-activity':revision},'outputs':[{'id':'fictional-activity','revision':revision+1}]}
+  if phase=='ordinary-routing/1':
+   assert n==1
+   terminal.update(text='',next_work={'scope':'fictional-activity','goal':'Provide controlled useful result','inputs':[]})
+  elif n==2:
+   terminal.update(state='waiting',text='Controlled question',wait={'id':'fixture-wait','question':'Controlled question'})
+''' +raw[end:]
+  raw=raw.replace("common=['--profile-file',selected,'--call-limit','4']","common=['--profile-file',selected,'--call-limit','8']")
+  raw=raw.replace("==2\nentry('console-diagnostics-preview'","==3\nentry('console-diagnostics-preview'")
+  raw=raw.replace("==1\nentry('console-chat-free-correction'","==2\nentry('console-chat-free-correction'")
+  raw=raw.replace("==1\nentry('console-chat-addressed-reopen'","==2\nentry('console-chat-addressed-reopen'")
+  raw=raw.replace("assert state['works'][0]['status']=='completed' and state['works'][0]['reserved']==4","assert len(state['works'])==2 and all(w['status']=='completed' for w in state['works'])\nassert sum(w['reserved'] for w in state['works'])==6")
+  raw=raw.replace("'reserved':4","'reserved':6")
+ (new/name).write_text(raw,encoding='utf-8')
+for name in ['source-manifest.py.txt','install.py.txt','bundle.py.txt','owner-install.py.txt','dependency-bytes.py.txt']:
+ result=subprocess.run([sys.executable,str(new/name)],capture_output=True)
+ (new/(name+'.stdout.bin')).write_bytes(result.stdout);(new/(name+'.stderr.bin')).write_bytes(result.stderr)
+ print(name,result.returncode,result.stdout.decode(errors='replace'),flush=True)
+ if result.returncode:print(result.stderr.decode(errors='replace'));raise SystemExit(result.returncode)

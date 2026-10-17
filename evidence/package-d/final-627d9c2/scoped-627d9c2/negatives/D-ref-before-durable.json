@@ -1,0 +1,10 @@
+{
+  "seed": "D-ref-before-durable",
+  "test": "test_maintenance.py::test_staging_physical_crash[stage_sync]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n___________________ test_staging_physical_crash[stage_sync] ___________________\ntests\\restart\\test_maintenance.py:147: in test_staging_physical_crash\n    assert rows == []\nE   AssertionError: assert [{'sha256': '...ctet-stream'}] == []\nE     \nE     Left contains one more item: {'sha256': '1bc18ac2ec31a99a75a9fd1faca3d5d899349fb9861d84b2a03626e1973006ec', 'size': 65815, 'content_type': 'application/octet-stream'}\nE     Use -v to get more diff\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n\n=========================== short test summary info ===========================\nFAILED tests/restart/test_maintenance.py::test_staging_physical_crash[stage_sync]\n1 failed in 1.06s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -679,6 +679,9 @@\n             if existing:\n                 self._artifact(db, sha256)\n             else:\n+                print(\"MUTANT_REACHED\", flush=True)\n+                db.execute(\"INSERT INTO artifacts VALUES(?,?,?)\", (sha256, len(raw), p[\"content_type\"]))\n+                db.commit()\n                 durable(self.root / \"artifacts\" / sha256, raw)\n                 db.execute(\n                     \"INSERT INTO artifacts VALUES(?,?,?)\", (sha256, len(raw), p[\"content_type\"])\n"
+}

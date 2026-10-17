@@ -1,0 +1,5 @@
+Using Python 3.13.7 environment at: env
+Resolved 7 packages in 18ms
+Prepared 1 package in 13ms
+Installed 1 package in 32ms
+ + zaratustra-next==0.1.0 (from file:///C:/projects/zaratustra/.worktrees/restart-first-release/evidence/package-d/final-20d606b/install-20d606b/physical-builds/zaratustra_next-0.1.0-py3-none-any.whl)

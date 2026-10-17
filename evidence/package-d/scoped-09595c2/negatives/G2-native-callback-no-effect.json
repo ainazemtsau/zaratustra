@@ -1,0 +1,10 @@
+{
+  "seed": "G2-native-callback-no-effect",
+  "test": "test_trace.py::test_fixed_trace[pi]",
+  "returncode": 1,
+  "injection_reached": false,
+  "behavioral_failure": false,
+  "stdout": "",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/coordinator.py\n+++ app/src/zaratustra_app/coordinator.py.mutant\n@@ -197,7 +197,7 @@\n             )\n             return self.client.send(request)\n \n-        executor.tool_handler = tool_handler\n+        executor.tool_handler = lambda *_: (print(\"MUTANT_REACHED\", flush=True), {\"outcome\":\"committed\"})[1]\n         try:\n             raw = executor.run(context, action_id)\n         except BaseException:\n"
+}

@@ -1,0 +1,156 @@
+[
+  {
+    "check": "installed Core import",
+    "pass_": true
+  },
+  {
+    "check": "installed app import",
+    "pass_": true
+  },
+  {
+    "check": "new profile empty",
+    "pass_": true
+  },
+  {
+    "check": "entry:artifact",
+    "pass_": true,
+    "returncode": 0,
+    "log": "installed-0"
+  },
+  {
+    "check": "fresh process exact artifact",
+    "pass_": true,
+    "bytes": 133405
+  },
+  {
+    "check": "entry:diagnostics",
+    "pass_": true,
+    "returncode": 0,
+    "log": "installed-1"
+  },
+  {
+    "check": "entry:diagnostics",
+    "pass_": true,
+    "returncode": 0,
+    "log": "installed-2"
+  },
+  {
+    "check": "diagnostic actual bytes exclude sentinels/token/root",
+    "pass_": true
+  },
+  {
+    "check": "preview/export same value",
+    "pass_": true
+  },
+  {
+    "check": "idle client has no transaction",
+    "pass_": true
+  },
+  {
+    "check": "entry:backup",
+    "pass_": true,
+    "returncode": 0,
+    "log": "installed-3"
+  },
+  {
+    "check": "entry:restore",
+    "pass_": true,
+    "returncode": 0,
+    "log": "installed-4"
+  },
+  {
+    "check": "restore distinct identity epoch credential",
+    "pass_": true
+  },
+  {
+    "check": "old token refused",
+    "pass_": true,
+    "code": "denied",
+    "field": "credential"
+  },
+  {
+    "check": "old epoch new token refused",
+    "pass_": true,
+    "code": "stale_epoch",
+    "field": ""
+  },
+  {
+    "check": "valid new quarantine mutation refused",
+    "pass_": true,
+    "code": "denied",
+    "field": "quarantined"
+  },
+  {
+    "check": "unknown actions preserved",
+    "pass_": true
+  },
+  {
+    "check": "reservation preserved",
+    "pass_": true
+  },
+  {
+    "check": "unknown observation preserved",
+    "pass_": true
+  },
+  {
+    "check": "no runnable restore intents",
+    "pass_": true
+  },
+  {
+    "check": "rehashed corruption:record-source",
+    "rejected": true,
+    "code": "invalid_request",
+    "field": "backup.reference_closure"
+  },
+  {
+    "check": "rehashed corruption:work-input",
+    "rejected": true,
+    "code": "invalid_request",
+    "field": "backup.work_closure"
+  },
+  {
+    "check": "rehashed corruption:attempt-profile",
+    "rejected": false,
+    "restored": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-independent-d-j7s92asp\\restore-attempt-profile"
+  },
+  {
+    "check": "rehashed corruption:attempt-method",
+    "rejected": false,
+    "restored": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-independent-d-j7s92asp\\restore-attempt-method"
+  },
+  {
+    "check": "rehashed corruption:attempt-manifest",
+    "rejected": false,
+    "restored": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-independent-d-j7s92asp\\restore-attempt-manifest"
+  },
+  {
+    "check": "entry:init",
+    "pass_": true,
+    "returncode": 0,
+    "log": "installed-5"
+  },
+  {
+    "check": "reached physical crash:after-file",
+    "pass_": true,
+    "returncode": 91
+  },
+  {
+    "check": "no reference before durable commit",
+    "pass_": true
+  },
+  {
+    "check": "entry:init",
+    "pass_": true,
+    "returncode": 0,
+    "log": "installed-6"
+  },
+  {
+    "check": "reached physical crash:after-commit",
+    "pass_": true,
+    "returncode": 91
+  },
+  {
+    "check": "new reader after physical crash committed bytes",
+    "pass_": true
+  }
+]

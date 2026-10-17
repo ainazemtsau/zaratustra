@@ -1,0 +1,10 @@
+{
+  "seed": "D-handoff-budget-reset",
+  "test": "test_work_handoff.py::test_bad_handoff_rolls_back_every_boundary[budget]",
+  "returncode": 4294967295,
+  "injection_reached": false,
+  "behavioral_failure": false,
+  "stdout": "",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -669,7 +669,7 @@\n         ).fetchone():\n             fail(\"identity_conflict\", \"next_work.active\")\n         remaining = loads(parent[\"body\"])[\"call_limit\"] - parent[\"reserved\"]\n-        if child[\"call_limit\"] > remaining:\n+        if (print(\"MUTANT_REACHED\", flush=True) or False):\n             fail(\"resource_exhausted\", \"next_work.calls\")\n         scope = child.get(\"scope\", \"space\")\n         selected_activity = None\n"
+}

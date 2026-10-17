@@ -1,0 +1,10 @@
+{
+  "seed": "G8-replay-claim-resend",
+  "test": "test_contract.py::test_no_blind_resend_after_claim",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n______________________ test_no_blind_resend_after_claim _______________________\ntests\\restart\\test_contract.py:128: in test_no_blind_resend_after_claim\n    assert receiver.actions == [\"A1:action\"], \"unsafe replay produced duplicate receiver effects\"\nE   AssertionError: unsafe replay produced duplicate receiver effects\nE   assert ['A1:action', 'A1:action'] == ['A1:action']\nE     \nE     Left contains one more item: 'A1:action'\nE     Use -v to get more diff\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_contract.py::test_no_blind_resend_after_claim - Ass...\n1 failed in 1.58s\n",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/coordinator.py\n+++ app/src/zaratustra_app/coordinator.py.mutant\n@@ -115,6 +115,7 @@\n         )\n \n     def dispatch(self, attempt_id: str, generation: int, executor: Executor) -> bytes:\n+        print(\"MUTANT_REACHED\", flush=True)\n         action_id = attempt_id + \":action\"\n         try:\n             pinned = self.client.call(\n@@ -124,7 +125,7 @@\n                     \"generation\": generation,\n                     \"resource_upper\": getattr(executor, \"resource_upper\", 1),\n                 },\n-                attempt_id + \":claim:\" + str(uuid4()),\n+                attempt_id + \":claim\",\n                 action_id=action_id,\n             )[\"pinned\"]\n         except CoreError as exc:\n"
+}

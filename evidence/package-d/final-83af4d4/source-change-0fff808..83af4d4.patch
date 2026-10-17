@@ -1,0 +1,376 @@
+diff --git a/packages/app/src/zaratustra_app/cli.py b/packages/app/src/zaratustra_app/cli.py
+index 450c18d..9bd29e2 100644
+--- a/packages/app/src/zaratustra_app/cli.py
++++ b/packages/app/src/zaratustra_app/cli.py
+@@ -2,6 +2,7 @@
+ 
+ import argparse
+ import json
++import sys
+ from dataclasses import asdict
+ from pathlib import Path
+ from uuid import uuid4
+@@ -14,6 +15,14 @@ from .sleep import Sleep
+ 
+ 
+ def main() -> int:
++    try:
++        return _main()
++    except CoreError as error:
++        print(json.dumps({"error": error.as_dict()}, ensure_ascii=False), file=sys.stderr)
++        return 1
++
++
++def _main() -> int:
+     parser = argparse.ArgumentParser()
+     parser.add_argument("--data-root", type=Path, required=True)
+     parser.add_argument(
+diff --git a/packages/core/src/zaratustra_core/shapes.py b/packages/core/src/zaratustra_core/shapes.py
+index e702db6..7ed4b00 100644
+--- a/packages/core/src/zaratustra_core/shapes.py
++++ b/packages/core/src/zaratustra_core/shapes.py
+@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
+ from .types import CoreError
+ 
+ Id = Annotated[str, Field(min_length=1, max_length=240)]
++NonEmptyText = Annotated[str, Field(min_length=1)]
+ Positive = Annotated[int, Field(ge=1)]
+ Cursor = Annotated[int, Field(ge=0)]
+ Hash = Annotated[str, Field(pattern="^[0-9a-f]{64}$")]
+@@ -40,7 +41,7 @@ class Change(Shape):
+ class Work(Shape):
+     id: Id
+     conversation: Id
+-    goal: Id
++    goal: NonEmptyText
+     scope: Id = "space"
+     method_ref: Ref
+     inputs: list[Ref] = Field(default_factory=list)
+@@ -113,7 +114,7 @@ class Observe(Shape):
+ 
+ class Wait(Shape):
+     id: Id
+-    question: Id
++    question: NonEmptyText
+ 
+ 
+ class NextWork(Work):
+diff --git a/tests/restart/test_delivery_controls.py b/tests/restart/test_delivery_controls.py
+index 4f7519b..17cfad2 100644
+--- a/tests/restart/test_delivery_controls.py
++++ b/tests/restart/test_delivery_controls.py
+@@ -10,6 +10,56 @@ from .test_negative_controls import test_seeded_defect_is_killed as run_seed
+ STORAGE = "core/src/zaratustra_core/storage.py"
+ MAINTENANCE = "core/src/zaratustra_core/maintenance.py"
+ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
++    (
++        "D-goal-prose-capped-as-identifier",
++        "core/src/zaratustra_core/shapes.py",
++        [
++            ("    goal: NonEmptyText", "    goal: Id"),
++            (
++                "    except ValidationError as exc:",
++                "    except ValidationError as exc:"
++                + chr(10)
++                + '        if any(error["loc"][-1] == "goal" for error in exc.errors()):'
++                + chr(10)
++                + "            "
++                + M,
++            ),
++        ],
++        "test_prose_fields.py::test_long_goal_c8_handoff_keeps_exact_prose",
++    ),
++    (
++        "D-question-prose-capped-as-identifier",
++        "core/src/zaratustra_core/shapes.py",
++        [
++            ("    question: NonEmptyText", "    question: Id"),
++            (
++                "    except ValidationError as exc:",
++                "    except ValidationError as exc:"
++                + chr(10)
++                + '        if any(error["loc"][-1] == "question" for error in exc.errors()):'
++                + chr(10)
++                + "            "
++                + M,
++            ),
++        ],
++        "test_prose_fields.py::test_long_wait_question_is_prose_and_replay_is_send_free",
++    ),
++    (
++        "D-known-core-refusal-escapes-cli",
++        "app/src/zaratustra_app/cli.py",
++        [
++            (
++                "    except CoreError as error:",
++                "    except CoreError as error:"
++                + chr(10)
++                + "        "
++                + M
++                + chr(10)
++                + "        raise",
++            )
++        ],
++        "test_prose_fields.py::test_cli_known_invalid_retains_terminal_without_resend",
++    ),
+     (
+         "D-model-tool-independent-budget",
+         API,
+diff --git a/tests/restart/test_prose_fields.py b/tests/restart/test_prose_fields.py
+new file mode 100644
+index 0000000..691da8d
+--- /dev/null
++++ b/tests/restart/test_prose_fields.py
+@@ -0,0 +1,252 @@
++"""Semantic prose keeps exact bytes; identity slots retain their own limits."""
++
++from __future__ import annotations
++
++import base64
++import json
++from pathlib import Path
++from typing import Any
++
++import pytest
++from zaratustra_app import Coordinator, Driver
++from zaratustra_core import Core, CoreError
++
++from .ordinary_support import routing
++from .support import METHOD, PROFILE, fixture, inspect
++from .test_work_handoff import commit, routed
++
++LONG = "Arbitrary prose / Произвольный текст 🌊\n" * 20
++
++
++@pytest.mark.parametrize("operation", ["open_work", "apply_changes"])
++def test_long_goal_shared_admission_preserves_bytes(tmp_path: Path, operation: str) -> None:
++    core, owner, _ = fixture(tmp_path)
++    work = {
++        "id": "long-work",
++        "conversation": "other",
++        "goal": LONG,
++        "method_ref": METHOD,
++        "inputs": [],
++        "call_limit": 2,
++        "continuation_policy": "durable",
++    }
++    if operation == "apply_changes":
++        owner.call(
++            operation,
++            {
++                "changes": [
++                    {"id": "activity", "kind": "activity", "key": "long", "body": "fixture"}
++                ],
++                "initial_work": work,
++            },
++            "long",
++            expected_heads={"activity": 0},
++        )
++    else:
++        owner.call(operation, work, "long")
++    saved = next(w for w in inspect(core, "works") if w["id"] == "long-work")
++    assert json.loads(saved["body"])["goal"].encode() == LONG.encode()
++    core.backup(owner.token, tmp_path / "backup")
++    restored, token = Core.restore_quarantined(tmp_path / "backup", tmp_path / "restored")
++    state = restored.connect(token).call("read_snapshot", {}, "check")
++    assert (
++        json.loads(next(w for w in state["works"] if w["id"] == "long-work")["body"])[
++            "goal"
++        ].encode()
++        == LONG.encode()
++    )
++
++
++def test_long_goal_c8_handoff_keeps_exact_prose(tmp_path: Path) -> None:
++    core, owner, client, _, payload = routed(tmp_path)
++    payload["next_work"]["goal"] = LONG
++    try:
++        result: Any = commit(client, payload)
++    except CoreError as error:
++        result = error
++    assert isinstance(result, dict), "C8 must admit nonempty prose beyond the identity length cap"
++    child = next(w for w in inspect(core, "works") if w["id"] == result["next_work_id"])
++    assert json.loads(child["body"])["goal"].encode() == LONG.encode()
++    assert inspect(core, "conversations")[0]["cursor"] == 0
++    assert child["reserved"] == 0 and json.loads(child["body"])["call_limit"] == 2
++    core.backup(owner.token, tmp_path / "backup")
++
++
++def test_long_wait_question_is_prose_and_replay_is_send_free(tmp_path: Path) -> None:
++    core, _, client = fixture(tmp_path)
++    coordinator = Coordinator(client)
++    coordinator.prepare("work", "attempt", PROFILE)
++    calls: list[str] = []
++    raw = json.dumps(
++        {"state": "waiting", "text": "question", "wait": {"id": "wait", "question": LONG}}
++    ).encode()
++
++    def receive(_: Any, action: str) -> bytes:
++        calls.append(action)
++        return raw
++
++    coordinator.dispatch("attempt", 1, Driver(receive))
++    try:
++        result: Any = coordinator.recover("attempt")
++    except CoreError as error:
++        result = error
++    assert isinstance(result, dict), "A valid long addressed question must commit atomically"
++    assert json.loads(inspect(core, "waits")[0]["body"])["question"].encode() == LONG.encode()
++    assert Coordinator(Core(core.root).connect(client.token)).recover("attempt") == result
++    assert len(calls) == 1 and inspect(core, "works")[0]["reserved"] == 2
++
++
++@pytest.mark.parametrize("field", ["id", "scope", "method_ref.id"])
++def test_long_prose_does_not_relax_identity_limits(tmp_path: Path, field: str) -> None:
++    core, owner, _ = fixture(tmp_path)
++    work = {
++        "id": "long-work",
++        "conversation": "other",
++        "goal": LONG,
++        "method_ref": METHOD,
++        "inputs": [],
++        "call_limit": 2,
++        "continuation_policy": "durable",
++    }
++    if field == "method_ref.id":
++        work["method_ref"] = {"id": "x" * 241, "revision": 1}
++    else:
++        work[field] = "x" * 241
++    with pytest.raises(CoreError) as error:
++        owner.call("open_work", work, "invalid")
++    assert error.value.field == field and len(inspect(core, "works")) == 1
++
++
++@pytest.mark.parametrize("goal", ["", None, 7, True, []])
++def test_goal_remains_nonempty_strict_text(tmp_path: Path, goal: Any) -> None:
++    core, _, client, _, payload = routed(tmp_path)
++    payload["next_work"]["goal"] = goal
++    with pytest.raises(CoreError) as error:
++        commit(client, payload)
++    assert error.value.field == "next_work.goal" and not inspect(core, "results")
++    assert not any(h["id"] == "activity" for h in inspect(core, "heads"))
++
++
++def test_cli_known_invalid_retains_terminal_without_resend(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: Any
++) -> None:
++    from zaratustra_app import cli
++
++    core, token = Core.initialize(tmp_path / "space")
++    (core.root / "owner.credential").write_text(token)
++    profile = tmp_path / "profile.json"
++    profile.write_text(
++        json.dumps(
++            {
++                "pi_cli": "fictional",
++                "endpoint": "https://api.openai.com/v1",
++                "model": "gpt-6-luna",
++                "credential_env": "FICTIONAL",
++                "max_tokens": 64,
++            }
++        )
++    )
++    calls: list[dict[str, Any]] = []
++    raw = b"PRIVATE_SENTINEL malformed JSON"
++
++    def receive(context: dict[str, Any], _: str) -> bytes:
++        calls.append(context)
++        return raw
++
++    class FakePi(Driver):
++        def __init__(self, *_: Any, **__: Any):
++            super().__init__(receive)
++
++    monkeypatch.setattr(cli, "Pi", FakePi)
++    args = [
++        "entry",
++        "--data-root",
++        str(core.root),
++        "chat",
++        "--profile-file",
++        str(profile),
++        "--call-limit",
++        "8",
++    ]
++    for suffix in [["--message", "fictional input"], []]:
++        monkeypatch.setattr("sys.argv", args + suffix)
++        try:
++            status: Any = cli.main()
++        except CoreError as error:
++            status = error
++        assert status == 1, "Known Core refusal must return a CLI failure instead of escaping"
++        captured = capsys.readouterr()
++        assert json.loads(captured.err)["error"]["code"] == "invalid_request"
++        assert "Traceback" not in captured.err and "PRIVATE_SENTINEL" not in captured.err
++    assert len(calls) == 1 and len(inspect(core, "actions")) == 1
++    assert inspect(core, "works")[0]["reserved"] == 2
++    assert inspect(core, "conversations")[0]["cursor"] == 0 and not inspect(core, "results")
++    observation = json.loads(inspect(core, "observations")[0]["body"])
++    assert base64.b64decode(observation["raw_base64"]) == raw
++
++
++def test_cli_valid_path_unchanged_and_developer_errors_escape(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: Any
++) -> None:
++    from zaratustra_app import cli
++
++    core, token = Core.initialize(tmp_path / "space")
++    (core.root / "owner.credential").write_text(token)
++    profile = tmp_path / "profile.json"
++    profile.write_text(
++        json.dumps(
++            {
++                "pi_cli": "fictional",
++                "endpoint": "https://api.openai.com/v1",
++                "model": "gpt-6-luna",
++                "credential_env": "FICTIONAL",
++                "max_tokens": 64,
++            }
++        )
++    )
++    calls: list[dict[str, Any]] = []
++
++    def receive(context: dict[str, Any], _: str) -> bytes:
++        calls.append(context)
++        if context["response_contract"]["version"] == "ordinary-routing/1":
++            return json.dumps(routing(context)).encode()
++        activity = next(r for r in context["catalog"] if r["id"] == context["work"]["scope"])
++        return json.dumps(
++            {
++                "state": "completed",
++                "text": "useful fixture result",
++                "outputs": [{"id": activity["id"], "revision": activity["revision"]}],
++            }
++        ).encode()
++
++    class FakePi(Driver):
++        def __init__(self, *_: Any, **__: Any):
++            super().__init__(receive)
++
++    monkeypatch.setattr(cli, "Pi", FakePi)
++    monkeypatch.setattr(
++        "sys.argv",
++        [
++            "entry",
++            "--data-root",
++            str(core.root),
++            "chat",
++            "--profile-file",
++            str(profile),
++            "--call-limit",
++            "8",
++            "--message",
++            "fictional input",
++        ],
++    )
++    assert cli.main() == 0
++    output = capsys.readouterr()
++    assert output.out == "useful fixture result\n" and not output.err
++    assert len(calls) == 2
++
++    def broken() -> int:
++        raise RuntimeError("developer error")
++
++    monkeypatch.setattr(cli, "_main", broken)
++    with pytest.raises(RuntimeError, match="developer error"):
++        cli.main()

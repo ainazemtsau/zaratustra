@@ -1,0 +1,12 @@
+event: response.created
+data: {"type": "response.created", "response": {"id": "resp-fictional-tool", "status": "completed", "output": [], "usage": {"input_tokens": 20, "output_tokens": 20, "total_tokens": 40}}}
+
+event: response.output_item.added
+data: {"type": "response.output_item.added", "output_index": 0, "item": {"type": "function_call", "id": "fc_fictional", "call_id": "call_fictional", "name": "zara_change", "arguments": "{\"intent_json\": \"{\\\"changes\\\": [{\\\"id\\\": \\\"native-tool-note\\\", \\\"kind\\\": \\\"data\\\", \\\"key\\\": \\\"native-note\\\", \\\"scope\\\": \\\"model-selected\\\", \\\"body\\\": \\\"fictional durable tool effect\\\"}], \\\"expected_heads\\\": {\\\"native-tool-note\\\": 0}}\"}", "status": "completed"}}
+
+event: response.output_item.done
+data: {"type": "response.output_item.done", "output_index": 0, "item": {"type": "function_call", "id": "fc_fictional", "call_id": "call_fictional", "name": "zara_change", "arguments": "{\"intent_json\": \"{\\\"changes\\\": [{\\\"id\\\": \\\"native-tool-note\\\", \\\"kind\\\": \\\"data\\\", \\\"key\\\": \\\"native-note\\\", \\\"scope\\\": \\\"model-selected\\\", \\\"body\\\": \\\"fictional durable tool effect\\\"}], \\\"expected_heads\\\": {\\\"native-tool-note\\\": 0}}\"}", "status": "completed"}}
+
+event: response.completed
+data: {"type": "response.completed", "response": {"id": "resp-fictional-tool", "status": "completed", "output": [{"type": "function_call", "id": "fc_fictional", "call_id": "call_fictional", "name": "zara_change", "arguments": "{\"intent_json\": \"{\\\"changes\\\": [{\\\"id\\\": \\\"native-tool-note\\\", \\\"kind\\\": \\\"data\\\", \\\"key\\\": \\\"native-note\\\", \\\"scope\\\": \\\"model-selected\\\", \\\"body\\\": \\\"fictional durable tool effect\\\"}], \\\"expected_heads\\\": {\\\"native-tool-note\\\": 0}}\"}", "status": "completed"}], "usage": {"input_tokens": 20, "output_tokens": 20, "total_tokens": 40}}}
+

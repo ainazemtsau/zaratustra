@@ -1,0 +1,582 @@
+{
+  "source": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+  "author_scoped": "420PASS712.16s, actualexit0",
+  "studied_not_own_execution": true,
+  "controls": [
+    {
+      "seed": "B-control-leaves-stale-dispatch",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "0cbf7ad915d388064d40a7980fdc7bf91fd42a65203952fcea0f8826b5546fbd"
+    },
+    {
+      "seed": "B-fenced-running-resume",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "b18236fb26af9c09c39aaaeeb3ef22e4203933ea26a5ef4eb5f213b4b1e068ab"
+    },
+    {
+      "seed": "B-initial-refresh-requires-attempt",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "9b9f7465f4690579d8a72faa662f23b02d7e97853e7a9ab12319eb2f99cc0f47"
+    },
+    {
+      "seed": "B-observe-intent-address",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "63574ffdb6e7008d9f579a8cfafbc616289c9064a3ccedbf5d2de2b457f6124c"
+    },
+    {
+      "seed": "B-resume-exhausted-resource",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "5159d84393d68e3fbbb44b4776668e0b1d4afda655bdcb222914b2e70fde1688"
+    },
+    {
+      "seed": "B-resume-stale-basis",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "ae32c03b4afc8dfc47829290fe36e95801555912ce19cfa27669844f7ec1608d"
+    },
+    {
+      "seed": "C-delivered-pretends-analysis",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "5fedc60b6bc177f063594a694705d0094cdc805c211ad69e5fd85fd561850416"
+    },
+    {
+      "seed": "C-false-consumption",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "ab0622108cd6ac9a4659210d686880b15e6c7ee5510f99780caf7b3f38ebe5b9"
+    },
+    {
+      "seed": "C-prepared-pretends-delivery",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "619168235fb2acf006508665fd6fcf723f9c473c7f6d7caff00fe68730f85a1b"
+    },
+    {
+      "seed": "C-R1-core-cross-scope",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "f2cac5eca629a136e9a70cb50b79d44a6afbe2e447c2bb1f3a806ff6e3c218a6"
+    },
+    {
+      "seed": "C-R2-refresh-inactive",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "14802afae6a21763ed109870bd3b9c2314d18b7f722be05cd1cbbf4f6079b062"
+    },
+    {
+      "seed": "C-R3-exhausted-ready",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "89ad77088694204b98cc2fd41dfb02374a19fef0de659a1a74ebf597eedf7fbd"
+    },
+    {
+      "seed": "C-R3-residual-upper-stop",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "eb4c2205698556f03bee1e3ed91dbf15a3a1eca4f58164b8b204a4a9d189d636"
+    },
+    {
+      "seed": "C-R4-paused-projection",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "6c2893f0cbff48b10165c9a4b124c169ebd39f950b8603f804b5e113a995af28"
+    },
+    {
+      "seed": "C-R5-profile-drift",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "3d9322b10355084451891c34d000408502608b1545bfcdb14e70e9cc9bc03780"
+    },
+    {
+      "seed": "C-R6-enumeration-gap",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "0968bd5e708667e1085f4cacb5932485b05775114e0175103c6844006269d4f2"
+    },
+    {
+      "seed": "C-R7-resource-pause-cause",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "079395c03f7d436bc6540e0285e973d0bc5b02d171594b3704878702859b1e27"
+    },
+    {
+      "seed": "C-R7-stale-control-cause",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "2f460932edd2087fba8976b8c7aa219cf2d1b349375f8eb7191409fb6a3baaa1"
+    },
+    {
+      "seed": "C-read-pretends-applied",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "9c569e7a3b04b648b221a01ae8a3d1ab04bdcbf0034596a39bf0703ee3d611e7"
+    },
+    {
+      "seed": "C-reset-reservation",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "a3645afd75df2b05ed79ccd07310193bfce106ca07633039839be023763f433c"
+    },
+    {
+      "seed": "C-retained-regenerates",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "a93ff288e5bd012fede64a3e6f0e396e739cdeddcc56f8e8c0d5fdc608c90c6f"
+    },
+    {
+      "seed": "C-self-expand-method-scope",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "32b550c085bc2ad92c4dfe4ddc9f428abf9fc77c8e025c7a2b691dab199ae1f3"
+    },
+    {
+      "seed": "C-stale-method-delivery",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "e8330ee2e6fd0cb4bdeb5236bd2028f8bc8ac602f538c80b288d8c1cfb2a2e98"
+    },
+    {
+      "seed": "C-unknown-pretends-delivery",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "d4cc95fcd4724f2ef21480102c86a27c5e82e481dfd1f512406e7820819f60f7"
+    },
+    {
+      "seed": "C0-wire-order",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "169a3bbb6c32eb4dd9e9d509bb5a880a028bdb94d4d54a657b86496a0f7e6553"
+    },
+    {
+      "seed": "D-addressed-reply-rerouted",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "f4ac317c28d82f896f8e4cf586bdec02132516aeb891036ea6c5e7fe41d682ee"
+    },
+    {
+      "seed": "D-allow-quarantine-writes",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "d3970209c1c26568fdb392f403074028e02a8d810ff0366a19d7417b09192c57"
+    },
+    {
+      "seed": "D-cancelled-blind-restart",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "3e9ebd58a282fdbea031275b0f376a8b652f8cb8c1601330fa6ad9e63e10f16e"
+    },
+    {
+      "seed": "D-cancelled-ID-reused",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "f91ae4183aeca05eaaec71c831bb24015b51cc8487ef99e1cb993a085b6de32a"
+    },
+    {
+      "seed": "D-database-hash-ignored",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "997f00ade6372a91b91125339859fd19e9e14f3767e81d925c5d8ceb8511ad13"
+    },
+    {
+      "seed": "D-declared-reference-admission-skipped",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "d6d566480bc4f282380e5fe0381898a96d33d476f730d8ab7f66b5a6cc1cb8c3"
+    },
+    {
+      "seed": "D-diagnostics-body-leak",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "263d6fc251f24f38333fb1d237d73f5af77d9096e096786be4f73d48928f40f2"
+    },
+    {
+      "seed": "D-goal-prose-capped-as-identifier",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "d843837162c73d6f486436361a6b922f2b34d565dd23134d189b45b14560b8c3"
+    },
+    {
+      "seed": "D-handoff-budget-reset",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "589410bddbdecaac763f3aa15e5b8c6bcfede6db6b8b3ae94bc385f9e251271b"
+    },
+    {
+      "seed": "D-handoff-child-published-partially",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "c997a3e3f77c8504cc2a1ed37fc128e643d7478d361856b22a15fc81aa9eaa7b"
+    },
+    {
+      "seed": "D-handoff-cursor-consumed-early",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "4bd2aa1f69260bdf33be611cade3e074fa01536a3767856debf1bf74dfa7169a"
+    },
+    {
+      "seed": "D-handoff-final-replayed-as-new",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "1449f1885df49e2d0c44f47f537f8a0d8931b7b08b3587c39801cb5a1cd1895f"
+    },
+    {
+      "seed": "D-handoff-reopen-rediscovery",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "34d34aa7d5fe79e8ab413456c8c1a8e3b0b3d327470c4b396583f9386f2c5607"
+    },
+    {
+      "seed": "D-ignore-artifact-integrity",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "e35ddd37160c9969611633e844100d69ad083c7c0000bfeef10629a7fad09dd9"
+    },
+    {
+      "seed": "D-incomplete-inventory",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "b54f9beddcefb1c9621244687b9e0f55edd2fc0aa50297d67ea99d41655d1831"
+    },
+    {
+      "seed": "D-known-core-refusal-escapes-cli",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "d7dd1141c32a2c3a6c7042278f1bbddc5bbbeccbf8a75c748df758bb4dad6255"
+    },
+    {
+      "seed": "D-logical-integrity-skipped",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "55c9d2a26aa4c961dd09433303c071585c255769cf91072022f1e737f0b570fd"
+    },
+    {
+      "seed": "D-maintenance-fence-only-late",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "37a8b9c357416a7187d4d27d9940683bee45b327ba27021ed0c604b3fcbe5920"
+    },
+    {
+      "seed": "D-model-tool-independent-budget",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "bf8b9c73eb2ea91b859771786a1698e9b185f8815c729a39c971eed198bac7f9"
+    },
+    {
+      "seed": "D-native-chatgpt-effort-compat-omitted",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "d50312e9e5b10bf0767c33ebe1a5888a78924db7b3539596bb6b52b0b34d96f0"
+    },
+    {
+      "seed": "D-native-json-mode-omitted",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "160b08d20c80f9ebb7f1348e8180843869e10d340ecc9a802a60598c2dcc22fa"
+    },
+    {
+      "seed": "D-native-json-mode-text",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "07741f1c88bf103c169539491e74e0d904c576e6d9ebfe46f47ec6afb67837b5"
+    },
+    {
+      "seed": "D-native-null-mode-leaks-api-key-profile",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "4b61232b4389e28fe81534b44f7dd87fabbc4268d8c3a3b97f39534b87dca54d"
+    },
+    {
+      "seed": "D-native-profile-cap-below-floor",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "b24768bfa1b6b2b10312e83040e81f298a65851b26ca726d2fc0c0cc2a7557f9"
+    },
+    {
+      "seed": "D-native-resource-mode-implicit",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "8241e0921df863d5b897ec869c851a72da5c4325370565105ca15ba46c4aa4d6"
+    },
+    {
+      "seed": "D-native-unsupported-token-field-restored",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "64d895c526e969774a3c6c150f92b269baaf345f8fedd726e7c5ad26de0caeeb"
+    },
+    {
+      "seed": "D-outbox-published-partial",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "213f9aed8c3fc9c049597d0d25b95a5f6d84e9c5c95e556bea13105f2a67e717"
+    },
+    {
+      "seed": "D-pinned-json-types-conflated",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "4898840190c89a7e7ce0080d160db25bd96beb509eb07df29e24b42b1edc5bd4"
+    },
+    {
+      "seed": "D-pinned-reference-closure-skipped",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "0f961acd449378ea389f70614c97ba971039275d966fe9a37953f27cb38d9a29"
+    },
+    {
+      "seed": "D-question-prose-capped-as-identifier",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "f0dd481ed269bd5963140eb37475d3c031383c827a532f9c09e1edd164d1ea73"
+    },
+    {
+      "seed": "D-ref-before-durable",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "78a3f6694cb34f606b4648174374636cdb0bd056395f354b14ce848e7b4df082"
+    },
+    {
+      "seed": "D-retain-old-credentials",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "7dd1b1f4c8763f9a94dcc39e28c711b3fcf1554638a3f3f05976387863c2e3d0"
+    },
+    {
+      "seed": "D-retain-old-epoch",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "89c4469bf510d55bd5de9e48144f4a6b9aba4d98b0a303ce0fcbf8b7dc84cd54"
+    },
+    {
+      "seed": "D-routing-orphan-tool-publication",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "8feb4d47cf759f1bf1df5d2ac3eb0b5c5e56b7b2c986ae033662684b22d2253e"
+    },
+    {
+      "seed": "D-scoped-memory-dropped",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "c92dc198b368bc6c7abd4f622cae053ed5203cf9a69c9e39973c5113e475709c"
+    },
+    {
+      "seed": "D-tool-initial-work-reserved-before-denial",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "8953b8988e12f868b3a874fd33274aa26b812d3f3916e55d1cf6a0e8638e190d"
+    },
+    {
+      "seed": "F1-skip-whole-declaration",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "f2d03d564139afcf3c7658e42e961615cf9bbae1901f75260e8164fe9f645ff1"
+    },
+    {
+      "seed": "F2-ignore-active-wait-binding",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "33080c5121eacad5659e6bb25a603c21e2772c166d414fe2ab2599aef8873048"
+    },
+    {
+      "seed": "G1-legacy-dependency",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "37c1db2ffefba1f4615e81cdcd6f66dd0770b35118c91776cc5d2166e127b778"
+    },
+    {
+      "seed": "G10-drop-retained-bytes",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "d963c76e1a32b3cca4d0a3d05edcb2dbb3c6c631f1052fe64b7f7614575bbb29"
+    },
+    {
+      "seed": "G10-lose-tool-receipt",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "573c64e34a79f6b016184b6efd4c2319f8c198bfe2157360af387ed1e104254c"
+    },
+    {
+      "seed": "G11-wrong-question-revision",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "d62cc7979e693e3116ad838e2d71990ebd8d865bdf014c877fc632e386889733"
+    },
+    {
+      "seed": "G2-native-callback-no-effect",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "ee0d5ae1eb640a049682258ffc9450ad5808bd0758e0f840a77c02ed85fe16a5"
+    },
+    {
+      "seed": "G3-stale-write",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "0c22d3d52cacf2947e01da6b5fec37940d3f4b63886c7ef080069ae415b067fc"
+    },
+    {
+      "seed": "G4-early-ingress-commit",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "116649570d7e3b5edca2cee61e6ea8b2df3ac9d86e41879778123f1289a3b4e8"
+    },
+    {
+      "seed": "G4-lost-input-intent",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "eae532bf085f463c07ab43805e116656eff4102b28b2bfa93c11d643a7ed6fae"
+    },
+    {
+      "seed": "G5-drop-original-input",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "7518179b2da9c06655771aae473362d1e50f513b9304c7144b2322fa83cda95b"
+    },
+    {
+      "seed": "G6-early-outcome-commit",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "79ffab815c710d6b96bbda0148cbe40f3852d5293a6831709f3ab2a450df25cb"
+    },
+    {
+      "seed": "G6-lost-late-continuation",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "7db38fd7474c203261a8ab7f69d18cb4f3d661506c2ac0d6ae5b52d587fb426a"
+    },
+    {
+      "seed": "G6-skipped-M19",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "f9296a507a3dc1a23a6afbd16068237eb5d1a3dce1f52cad572c308f2e39787e"
+    },
+    {
+      "seed": "G7-allow-old-generation-publication",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "83ca9e56d2c775f90918b012420f2bd9696c02c70743b26c75db7c20bfa5a678"
+    },
+    {
+      "seed": "G7-ignore-late-fence",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "b8b1278796281b89b7879aa8ec2fe9810711dd0f9f997c788f46ad71db439efe"
+    },
+    {
+      "seed": "G8-accept-changed-command-intent",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "d2515308ea3984011c8f85c456c2815e627570b3ec115c8d0f9caa7297eefd3a"
+    },
+    {
+      "seed": "G8-replay-claim-resend",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "3f2cea8ce28ad8d4441c50b3da3fe89312cbc3e5dc9074a38ff7d10b5d8899d3"
+    },
+    {
+      "seed": "G9-C8-generic-grant",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "eddc5041c617bb3dbefea39c38102a6739d1cfee5d71259809a86616ed9871e7"
+    },
+    {
+      "seed": "G9-generic-grant",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "7d8ab8324192d408193697631bd750aa07455680c30fe006a41b563cc433754f"
+    },
+    {
+      "seed": "G9-ignore-revocation",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1,
+      "sha256": "20ffa54c994749fb802cd8afe1118eff2cf322a16c7bafa5863a2f97da6964db"
+    }
+  ],
+  "manifest_sha256": "0de46f9c70a6cb106089cbf6db06a37e953590e7d7ab879de0c4ffdeadbb464a"
+}

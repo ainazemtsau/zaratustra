@@ -1,0 +1,5 @@
+{
+  "first_run": "KeyError records: public read_snapshot intentionally does not contain full records. Chat raw-null refusal/current-vs-old CLI assertions already passed before harness error.",
+  "correction": "Use public read_exact for profile bytes/revision and compare only declared snapshot tables; product unchanged; first script/logs retained.",
+  "reexecution": "Only corrected local checker over same disposable fixture, no source/product edits or inference"
+}

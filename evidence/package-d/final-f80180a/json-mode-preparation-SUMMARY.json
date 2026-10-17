@@ -1,0 +1,25 @@
+{
+  "source_context": "json-mode-preparation",
+  "path": "../json-mode-preparation",
+  "actual_exit": {
+    "returncode": 0,
+    "seconds": 42.14513444900513
+  },
+  "stdout_sha256": "77c20175841c263f3676a3eaf2485eeb953401ac9d98431f24e02be6e93b47af",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "controls": [
+    {
+      "seed": "D-native-json-mode-omitted",
+      "returncode": 1,
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "D-native-json-mode-text",
+      "returncode": 1,
+      "injection_reached": true,
+      "behavioral_failure": true
+    }
+  ],
+  "failed_runs_preserved": true
+}

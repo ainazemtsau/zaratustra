@@ -1,0 +1,10 @@
+{
+  "seed": "D-handoff-budget-reset",
+  "test": "test_work_handoff.py::test_bad_handoff_rolls_back_every_boundary[budget]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_____________ test_bad_handoff_rolls_back_every_boundary[budget] ______________\ntests\\restart\\test_work_handoff.py:115: in test_bad_handoff_rolls_back_every_boundary\n    with pytest.raises(CoreError):\n         ^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_work_handoff.py::test_bad_handoff_rolls_back_every_boundary[budget]\n1 failed in 1.07s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -669,7 +669,7 @@\n         ).fetchone():\n             fail(\"identity_conflict\", \"next_work.active\")\n         remaining = loads(parent[\"body\"])[\"call_limit\"] - parent[\"reserved\"]\n-        if child[\"call_limit\"] > remaining:\n+        if (print(\"MUTANT_REACHED\", flush=True) or False):\n             fail(\"resource_exhausted\", \"next_work.calls\")\n         scope = child.get(\"scope\", \"space\")\n         selected_activity = None\n"
+}

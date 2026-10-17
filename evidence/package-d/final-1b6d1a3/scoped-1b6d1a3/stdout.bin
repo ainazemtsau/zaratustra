@@ -1,0 +1,103 @@
+........................................................................ [ 22%]
+........................................................................ [ 44%]
+.......................F................................................ [ 66%]
+........................................................................ [ 88%]
+.......................................                                  [100%]
+================================== FAILURES ===================================
+___________ test_delivery_defect_is_killed[D-database-hash-ignored] ___________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d7-scoped/tests/test_delivery_defect_is_killed6')
+seed = ('D-database-hash-ignored', 'core/src/zaratustra_core/maintenance.py', [('or hashlib.sha256(database).hexdigest() != m...REACHED", flush=True) or False)')], 'test_maintenance.py::test_corrupt_partial_backups_refused[valid_database_change]')
+
+    @pytest.mark.parametrize("seed", SEEDS, ids=[s[0] for s in SEEDS])
+    def test_delivery_defect_is_killed(
+        tmp_path: Path, seed: tuple[str, str, list[tuple[str, str]], str]
+    ) -> None:
+>       run_seed(tmp_path, seed)
+
+tests\restart\test_delivery_controls.py:212: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d7-scoped/tests/test_delivery_defect_is_killed6')
+seed = ('D-database-hash-ignored', 'core/src/zaratustra_core/maintenance.py', [('or hashlib.sha256(database).hexdigest() != m...REACHED", flush=True) or False)')], 'test_maintenance.py::test_corrupt_partial_backups_refused[valid_database_change]')
+
+    @pytest.mark.parametrize("seed", SEEDS, ids=[s[0] for s in SEEDS])
+    def test_seeded_defect_is_killed(
+        tmp_path: Path, seed: tuple[str, str, list[tuple[str, str]], str]
+    ) -> None:
+        name, source_path, replacements, node = seed
+        tree = tmp_path / "mutant"
+        for package in ("core", "app"):
+            shutil.copytree(ROOT / "packages" / package / "src", tree / package / "src")
+        path = tree / source_path
+        original = path.read_text(encoding="utf-8")
+        changed = original
+        for before, after in replacements:
+            assert before in changed, "stale mutation anchor: " + name
+            changed = changed.replace(before, after)
+        compile(changed, str(path), "exec")
+        path.write_text(changed, encoding="utf-8")
+        prefix = [str(tree / "core" / "src"), str(tree / "app" / "src"), str(ROOT)]
+        script = (
+            "import sys;sys.path[:0]="
+            + repr(prefix)
+            + ";import pytest;raise SystemExit(pytest.main(sys.argv[1:]))"
+        )
+        env = os.environ.copy()
+        env.pop("ZARA_RESTART_EVIDENCE", None)
+        run = subprocess.run(
+            [
+                sys.executable,
+                "-I",
+                "-X",
+                "utf8",
+                "-c",
+                script,
+                str(ROOT / "tests" / "restart" / node),
+                "--basetemp",
+                str(tmp_path / "run"),
+                "-q",
+                "--tb=short",
+            ],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=60,
+        )
+        report: dict[str, Any] = {
+            "seed": name,
+            "test": node,
+            "returncode": run.returncode,
+            "injection_reached": "MUTANT_REACHED" in run.stdout,
+            "behavioral_failure": "AssertionError" in run.stdout
+            or "DID NOT RAISE" in run.stdout
+            or any(line.startswith("E") and "assert " in line for line in run.stdout.splitlines()),
+            "stdout": run.stdout,
+            "stderr": run.stderr,
+            "diff": "".join(
+                difflib.unified_diff(
+                    original.splitlines(True),
+                    changed.splitlines(True),
+                    fromfile=source_path,
+                    tofile=source_path + ".mutant",
+                )
+            ),
+        }
+        destination = os.environ.get("ZARA_RESTART_NEGATIVES")
+        if destination:
+            folder = Path(destination)
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / (name + ".json")).write_text(
+                json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+>       assert run.returncode == 1, report
+E       AssertionError: {'seed': 'D-database-hash-ignored', 'test': 'test_maintenance.py::test_corrupt_partial_backups_refused[valid_database_change]', 'returncode': 0, 'injection_reached': False, ...}
+E       assert 0 == 1
+E        +  where 0 = CompletedProcess(args=['C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe', '-I'...dout='.                                                                        [100%]\n1 passed in 1.00s\n', stderr='').returncode
+
+tests\restart\test_negative_controls.py:347: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/restart/test_delivery_controls.py::test_delivery_defect_is_killed[D-database-hash-ignored]
+1 failed, 326 passed in 660.83s (0:11:00)

@@ -1,0 +1,24 @@
+{
+  "observed_restricted_probe": {
+    "node_returncode": 1,
+    "stdout": {
+      "name": "TypeError",
+      "message": "fetch failed",
+      "cause": {
+        "code": "EACCES",
+        "message": "connect EACCES 127.0.0.1:49226"
+      }
+    },
+    "external_network": false,
+    "credentials": false
+  },
+  "outside_probe_file": "LOCALHOST-OUTSIDE-SANDBOX-20261017.json",
+  "retained_partial_traces": {
+    "test_fixed_trace_domain_parity0": "Connection error.; zero usage; incomplete final JSONL line",
+    "test_callback_refusal_parity_f0": "Connection error.; zero usage; incomplete final JSONL line",
+    "test_callback_refusal_parity_s0": "Connection error.; zero usage; incomplete final JSONL line",
+    "test_pause_reopen_retained_que1": "Connection error.; zero usage; incomplete final JSONL line"
+  },
+  "shared_pytest_cache": "Read but shared/stale, not treated as completed current gate result.",
+  "classification": "Confirmed infrastructure denial for these local Pi transport failures; other findings require completed trace, not blanket dismissal."
+}

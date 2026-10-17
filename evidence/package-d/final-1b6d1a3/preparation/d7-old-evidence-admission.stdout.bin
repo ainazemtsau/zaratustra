@@ -1,0 +1,17 @@
+{
+  "source": "f07250996d861404728c5892fa1f3b0a6a07bba4",
+  "old_admitted_dangling_typed_action": true,
+  "verified": false,
+  "model_called": false,
+  "result": {
+    "attempt_id": "attempt",
+    "event_id": "progress",
+    "kind": "progress",
+    "evidence": {
+      "action_id": "missing",
+      "state": "running",
+      "receiver_ref": "external opaque token"
+    },
+    "late": false
+  }
+}

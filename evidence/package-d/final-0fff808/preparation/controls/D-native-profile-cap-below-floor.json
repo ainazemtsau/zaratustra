@@ -1,0 +1,10 @@
+{
+  "seed": "D-native-profile-cap-below-floor",
+  "test": "test_ordinary_activity.py::test_native_cap_below_sdk_floor_refused_before_runtime[1]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n__________ test_native_cap_below_sdk_floor_refused_before_runtime[1] __________\ntests\\restart\\test_ordinary_activity.py:236: in test_native_cap_below_sdk_floor_refused_before_runtime\n    with pytest.raises(CoreError, match=\"unsupported_capability\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_ordinary_activity.py::test_native_cap_below_sdk_floor_refused_before_runtime[1]\n1 failed in 0.47s\n",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/executor_port.py\n+++ app/src/zaratustra_app/executor_port.py.mutant\n@@ -92,7 +92,7 @@\n             for v in (self.max_tokens, self.context_window, self.timeout)\n         ):\n             raise CoreError(\"invalid_request\", \"live_profile\")\n-        if self.auth_mode == \"pi-chatgpt\" and 0 < self.max_tokens < 16:\n+        if (print(\"MUTANT_REACHED\", flush=True) or False):\n             raise CoreError(\"unsupported_capability\", \"native.max_output_tokens.minimum16\")\n         if (\n             not self.endpoint.startswith(\"https://\")\n"
+}

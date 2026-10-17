@@ -1,0 +1,10 @@
+{
+  "seed": "D-retain-old-epoch",
+  "test": "test_maintenance.py::test_backup_complete_new_epoch_quarantine",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n__________________ test_backup_complete_new_epoch_quarantine __________________\ntests\\restart\\test_maintenance.py:198: in test_backup_complete_new_epoch_quarantine\n    assert client.meta[\"epoch\"] == owner.meta[\"epoch\"] + 1\nE   assert 1 == (1 + 1)\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n{\"restored\": true, \"epoch\": 1}\n\n=========================== short test summary info ===========================\nFAILED tests/restart/test_maintenance.py::test_backup_complete_new_epoch_quarantine\n1 failed in 2.73s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/maintenance.py\n+++ core/src/zaratustra_core/maintenance.py.mutant\n@@ -128,11 +128,12 @@\n         durable(temporary / \"core.sqlite3\", database)\n         for artifact, raw in materials:\n             durable(temporary / \"artifacts\" / artifact[\"sha256\"], raw)\n+        print(\"MUTANT_REACHED\", flush=True)\n         token = secrets.token_urlsafe(32)\n         with closing(sqlite3.connect(temporary / \"core.sqlite3\")) as db, db:\n             db.execute(\"PRAGMA synchronous=FULL\")\n             db.execute(\n-                \"UPDATE meta SET instance=?,space=?,epoch=epoch+1\",\n+                \"UPDATE meta SET instance=?,space=?,epoch=epoch+0\",\n                 (secrets.token_hex(16), secrets.token_hex(16)),\n             )\n             db.execute(\"DELETE FROM credentials\")\n"
+}

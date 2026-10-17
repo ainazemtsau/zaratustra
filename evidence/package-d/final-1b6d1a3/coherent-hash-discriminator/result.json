@@ -1,0 +1,12 @@
+{
+  "source": "1b6d1a3946348a18d90cbb1a4e8d36208e242285",
+  "same_database_size": true,
+  "database_bytes_and_sha_changed": true,
+  "all_current_integrity_and_reference_checks_pass": true,
+  "ordinary_sha_guard_refused": true,
+  "only_sha_condition_disabled_restore_admitted": true,
+  "model_called": false,
+  "bytes": 192512,
+  "before_sha256": "3ff8241dc8a402babda5446bfcc5875687fd45075a731bb9eb06edc95cfd3f39",
+  "after_sha256": "b130b63e19ad03fb068e16efac4ab586fc742851cff3cb7766ca738e35310323"
+}

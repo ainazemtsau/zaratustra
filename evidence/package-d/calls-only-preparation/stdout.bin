@@ -1,0 +1,1408 @@
+.F.F.......F........FFFFFFFF....                                         [100%]
+================================== FAILURES ===================================
+______________ test_native_pi_oauth_launcher_controlled[16-True] ______________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/calls-only-focused-20261017/tests/test_native_pi_oauth_launcher_1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000297AE766FD0>
+max_tokens = 16, tool_followup = True
+
+    @pytest.mark.parametrize("tool_followup", [False, True])
+    @pytest.mark.parametrize("max_tokens", [16, 64])
+    def test_native_pi_oauth_launcher_controlled(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, max_tokens: int, tool_followup: bool
+    ) -> None:
+        """Actual Pi SDK with FICTIONAL OAuth; no external model or account access."""
+        auth = tmp_path / "fictional-auth.json"
+        auth.write_text(
+            json.dumps(
+                {
+                    "openai": {
+                        "type": "oauth",
+                        "access": "fictional-access",
+                        "refresh": "fictional-refresh",
+                        "expires": int(time.time() * 1000) + 3600000,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        received: list[dict[str, Any]] = []
+        terminal = {
+            "state": "completed",
+            "text": "controlled native path",
+            "changes": [
+                {
+                    "id": "model-selected",
+                    "kind": "activity",
+                    "key": "model-selected",
+                    "body": "chosen by test provider",
+                }
+            ],
+            "expected_heads": {"model-selected": 1},
+            "outputs": [{"id": "model-selected", "revision": 2}],
+        }
+    
+        class Response(io.BytesIO):
+            status = 200
+            headers = {"Content-Type": "text/event-stream"}
+    
+        class ControlledTransport:
+            def open(self, request: Any, timeout: int) -> Response:
+                assert request.full_url == "https://api.openai.com/v1/responses"
+                assert request.get_header("Authorization") == "Bearer fictional-access"
+                payload = json.loads(request.data)
+                assert (
+                    payload["model"] == "gpt-6-luna"
+                    and payload["store"] is False
+                    and payload["stream"] is True
+                )
+                assert "max_output_tokens" not in payload
+                assert payload["text"] == {"format": {"type": "json_object"}}
+                # The native SDK must use the selected effort at request level: the
+                # ChatGPT route rejects configuration_update input items.
+                assert payload["reasoning"]["effort"] == "medium"
+                assert [item.get("role") for item in payload["input"][:2]] == ["developer", "user"]
+                assert payload["input"][0]["content"]
+                assert "mechanical input" in payload["input"][1]["content"][0]["text"]
+                assert [tool["name"] for tool in payload["tools"]] == ["zara_change"]
+                received.append(payload)
+                if tool_followup and len(received) == 2:
+                    return Response(response_tool_events())
+                if tool_followup and len(received) == 3:
+                    assert any(i["type"] == "function_call_output" for i in payload["input"])
+                supplied = json.loads(payload["input"][1]["content"][0]["text"])
+                output = (
+                    routing(supplied["context"], "model-selected") if len(received) == 1 else terminal
+                )
+                return Response(response_events(json.dumps(output)))
+    
+        monkeypatch.setattr(bridge, "build_opener", lambda *_: ControlledTransport())
+        core, token = Core.initialize(tmp_path / "space")
+        session = Conversation(core, token)
+        session.submit("Unscripted meaning is assessed separately; this is mechanical input.")
+        live = LiveProfile(
+            endpoint="https://api.openai.com/v1",
+            model="gpt-6-luna",
+            auth_mode="pi-chatgpt",
+            native_resource_mode="calls-only",
+            auth_path=str(auth),
+            max_tokens=max_tokens,
+            context_window=8192,
+        )
+        executor = Pi(pi_cli(), tmp_path / "pi", live.endpoint, live=live)
+>       result = session.run(executor, {"profile": "fictional-native-oauth"}, 4)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\restart\test_conversation.py:402: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+packages\app\src\zaratustra_app\conversation.py:133: in run
+    result = self._step(executor, descriptor, call_limit, refresh=refresh)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\app\src\zaratustra_app\conversation.py:294: in _step
+    self.coordinator.dispatch(attempt["id"], attempt["generation"], executor)
+packages\app\src\zaratustra_app\coordinator.py:222: in dispatch
+    raw = executor.run(context, action_id)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <zaratustra_app.executor_port.Pi object at 0x00000297AE860CD0>
+context = {'capabilities': ['read', 'apply_changes', 'open_work', 'prepare_attempt', 'claim_dispatch', 'observe_attempt', ...], .....}], 'manifest': [{'sequence': 1, 'sha256': '3f398912c34501af2f34a9ddc3e42801f356cfa7c19d86a6e2fbda8a76cc3ffc'}], ...}
+action_id = 'continued:6493297416ca49aa95d7890a330032e1f0005abfc41fb0e0a9749c5848b4b63c:attempt:819b97792b9a4bf18c318c2e25b42174:action'
+
+    def run(self, context: dict[str, Any], action_id: str) -> bytes:
+        home = self.profile / hashlib.sha256(action_id.encode()).hexdigest()
+        agent = home / "agent"
+        agent.mkdir(parents=True, exist_ok=False)
+        bridge = Bridge(
+            self.endpoint,
+            self.tool_handler,
+            self.resource_upper,
+            bearer=(
+                self.live.bearer()
+                if self.live and self.live.auth_mode == "api-key"
+                else "synthetic"
+            ),
+            timeout=self.live.timeout if self.live else 35,
+            native_auth=bool(self.live and self.live.auth_mode == "pi-chatgpt"),
+            capture_dir=home / "provider",
+        )
+        bridge_thread = threading.Thread(target=bridge.serve_forever, daemon=True)
+        bridge_thread.start()
+        (agent / "settings.json").write_text(
+            json.dumps({"retry": {"enabled": False}, "compaction": {"enabled": False}}),
+            encoding="utf-8",
+        )
+        (agent / "models.json").write_text(
+            json.dumps(
+                {
+                    "providers": {
+                        "local": {
+                            "baseUrl": f"http://127.0.0.1:{bridge.server_port}/provider/v1",
+                            "api": self.live.api if self.live else "openai-completions",
+                            "apiKey": "synthetic",
+                            "models": [
+                                {
+                                    "id": self.live.model if self.live else "scripted",
+                                    "name": self.live.model
+                                    if self.live
+                                    else "Local scripted transport",
+                                    "reasoning": False,
+                                    "input": ["text"],
+                                    "cost": {
+                                        "input": 0,
+                                        "output": 0,
+                                        "cacheRead": 0,
+                                        "cacheWrite": 0,
+                                    },
+                                    "contextWindow": self.live.context_window
+                                    if self.live
+                                    else 32768,
+                                    "maxTokens": self.live.max_tokens if self.live else 2048,
+                                }
+                            ],
+                        }
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        native = self.live is not None and self.live.auth_mode == "pi-chatgpt"
+        if native:
+            assert self.live is not None
+            (agent / "models.json").write_text(
+                json.dumps(
+                    {
+                        "providers": {
+                            "openai": {
+                                "baseUrl": f"http://127.0.0.1:{bridge.server_port}/provider/v1",
+                                "modelOverrides": {
+                                    self.live.model: {
+                                        "maxTokens": self.live.max_tokens,
+                                        "contextWindow": self.live.context_window,
+                                        "samplingParams": {
+                                            "text": {"format": {"type": "json_object"}}
+                                        },
+                                        # The loopback bridge hides the public URL from
+                                        # Pi's automatic ChatGPT compatibility detection.
+                                        # Use its native switch: keep effective reasoning
+                                        # at request level, without unsupported input items.
+                                        "compat": {
+                                            "supportsMidConvoEffort": False,
+                                            "supportsMaxOutputTokens": False,
+                                        },
+                                    }
+                                },
+                            }
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if k.upper() in {"PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP"}
+        }
+        env.update(
+            {
+                "HOME": str(home),
+                "USERPROFILE": str(home),
+                "APPDATA": str(home / "AppData"),
+                "LOCALAPPDATA": str(home / "LocalAppData"),
+                "PI_CODING_AGENT_DIR": str(agent),
+                "PI_OFFLINE": "1",
+                "PI_SKIP_VERSION_CHECK": "1",
+                "PI_TELEMETRY": "0",
+                "ZARA_NEXT_TOOL_ENDPOINT": f"http://127.0.0.1:{bridge.server_port}/tool",
+                "ZARA_NEXT_TOOL_TOKEN": bridge.token,
+            }
+        )
+        cmd = [
+            shutil.which("node") or "node",
+            str(self.cli),
+            "--mode",
+            "rpc",
+            "--provider",
+            "local",
+            "--model",
+            self.live.model if self.live else "scripted",
+            "--no-session",
+            "--no-builtin-tools",
+            "--tools",
+            "zara_change",
+            "--no-mcp",
+            "--no-extensions",
+            "--extension",
+            str(Path(__file__).parent / "adapters" / "pi" / "extension.ts"),
+            "--no-context-files",
+            "--no-skills",
+            "--no-prompt-templates",
+            "--no-themes",
+            "--no-approve",
+            "--offline",
+            "--system-prompt",
+            SYSTEM_INSTRUCTION,
+        ]
+        if native:
+            assert self.live is not None
+            env.update(
+                {
+                    "ZARA_PI_SDK": str(self.cli.parent.parent / "index.js"),
+                    "ZARA_PI_AUTH_PATH": str(Path(self.live.auth_path or "").resolve()),
+                    "ZARA_PI_MODELS_PATH": str(agent / "models.json"),
+                    "ZARA_PI_MODEL": self.live.model,
+                    "ZARA_PI_EXTENSION": str(
+                        Path(__file__).parent / "adapters" / "pi" / "extension.ts"
+                    ),
+                    "ZARA_PI_SYSTEM_PROMPT": SYSTEM_INSTRUCTION,
+                }
+            )
+            cmd = [
+                shutil.which("node") or "node",
+                str(Path(__file__).parent / "adapters" / "pi" / "launcher.mjs"),
+            ]
+        process = subprocess.Popen(
+            cmd,
+            cwd=home,
+            env=env,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        incoming: queue.Queue[dict[str, Any]] = queue.Queue()
+        errors: list[bytes] = []
+    
+        def read() -> None:
+            assert process.stdout is not None
+            with (home / "native-stdout.jsonl").open("xb") as raw_log:
+                for line in iter(process.stdout.readline, b""):
+                    raw_log.write(line)
+                    raw_log.flush()
+                    os.fsync(raw_log.fileno())
+                    try:
+                        incoming.put({"event": json.loads(line), "raw": line})
+                    except ValueError:
+                        incoming.put({"event": {"type": "invalid_protocol"}, "raw": line})
+    
+        def stderr() -> None:
+            assert process.stderr is not None
+            errors.append(process.stderr.read())
+    
+        reader = threading.Thread(target=read, daemon=True)
+        error_reader = threading.Thread(target=stderr, daemon=True)
+        reader.start()
+        error_reader.start()
+        try:
+            assert process.stdin is not None
+            message = json.dumps({"action_id": action_id, "context": context}, ensure_ascii=False)
+            prompt_bytes = (
+                json.dumps(
+                    {"id": action_id, "type": "prompt", "message": message}, ensure_ascii=False
+                )
+                + chr(10)
+            ).encode()
+            with (home / "host-stdin.bin").open("xb") as prompt_log:
+                prompt_log.write(prompt_bytes)
+                prompt_log.flush()
+                os.fsync(prompt_log.fileno())
+            try:
+                process.stdin.write(prompt_bytes)
+                process.stdin.flush()
+            except OSError as error:
+                raise CoreError("outcome_unknown", "pi_input_closed", "reconcile") from error
+            terminal = None
+            deadline = time.monotonic() + (self.live.timeout + 15 if self.live else 50)
+            while time.monotonic() < deadline:
+                try:
+                    packet = incoming.get(timeout=0.2)
+                    event = packet["event"]
+                except queue.Empty:
+                    if process.poll() is not None:
+                        raise CoreError("outcome_unknown", "pi_exit", "reconcile") from None
+                    continue
+                self.events.append(event)
+                if event.get("type") == "invalid_protocol":
+                    raise CoreError("outcome_unknown", "pi_protocol", "reconcile")
+                if event.get("type") == "response" and event.get("success") is False:
+                    raise CoreError("outcome_unknown", str(event.get("error")), "reconcile")
+                if event.get("type") == "message_end":
+                    msg = event.get("message", {})
+                    if msg.get("role") == "assistant":
+                        if msg.get("stopReason") == "error":
+>                           raise CoreError(
+                                "outcome_unknown", str(msg.get("errorMessage")), "reconcile"
+                            )
+E                           zaratustra_core.types.CoreError: outcome_unknown: pi_native_error_details_withheld [166077b9f4c34672]
+
+packages\app\src\zaratustra_app\executor_port.py:369: CoreError
+---------------------------- Captured stderr call -----------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 64269)
+Traceback (most recent call last):
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\http\server.py", line 436, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\http\server.py", line 424, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "C:\projects\zaratustra\.worktrees\restart-first-release\packages\app\src\zaratustra_app\adapters\pi\bridge.py", line 136, in do_POST
+    with build_opener(NoRedirect()).open(request, timeout=self.server.timeout) as response:
+         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\zaratustra\.worktrees\restart-first-release\tests\restart\test_conversation.py", line 381, in open
+    assert any(i["type"] == "function_call_output" for i in payload["input"])
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\zaratustra\.worktrees\restart-first-release\tests\restart\test_conversation.py", line 381, in <genexpr>
+    assert any(i["type"] == "function_call_output" for i in payload["input"])
+               ~^^^^^^^^
+KeyError: 'type'
+----------------------------------------
+______________ test_native_pi_oauth_launcher_controlled[64-True] ______________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/calls-only-focused-20261017/tests/test_native_pi_oauth_launcher_3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000297AE88CAF0>
+max_tokens = 64, tool_followup = True
+
+    @pytest.mark.parametrize("tool_followup", [False, True])
+    @pytest.mark.parametrize("max_tokens", [16, 64])
+    def test_native_pi_oauth_launcher_controlled(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, max_tokens: int, tool_followup: bool
+    ) -> None:
+        """Actual Pi SDK with FICTIONAL OAuth; no external model or account access."""
+        auth = tmp_path / "fictional-auth.json"
+        auth.write_text(
+            json.dumps(
+                {
+                    "openai": {
+                        "type": "oauth",
+                        "access": "fictional-access",
+                        "refresh": "fictional-refresh",
+                        "expires": int(time.time() * 1000) + 3600000,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        received: list[dict[str, Any]] = []
+        terminal = {
+            "state": "completed",
+            "text": "controlled native path",
+            "changes": [
+                {
+                    "id": "model-selected",
+                    "kind": "activity",
+                    "key": "model-selected",
+                    "body": "chosen by test provider",
+                }
+            ],
+            "expected_heads": {"model-selected": 1},
+            "outputs": [{"id": "model-selected", "revision": 2}],
+        }
+    
+        class Response(io.BytesIO):
+            status = 200
+            headers = {"Content-Type": "text/event-stream"}
+    
+        class ControlledTransport:
+            def open(self, request: Any, timeout: int) -> Response:
+                assert request.full_url == "https://api.openai.com/v1/responses"
+                assert request.get_header("Authorization") == "Bearer fictional-access"
+                payload = json.loads(request.data)
+                assert (
+                    payload["model"] == "gpt-6-luna"
+                    and payload["store"] is False
+                    and payload["stream"] is True
+                )
+                assert "max_output_tokens" not in payload
+                assert payload["text"] == {"format": {"type": "json_object"}}
+                # The native SDK must use the selected effort at request level: the
+                # ChatGPT route rejects configuration_update input items.
+                assert payload["reasoning"]["effort"] == "medium"
+                assert [item.get("role") for item in payload["input"][:2]] == ["developer", "user"]
+                assert payload["input"][0]["content"]
+                assert "mechanical input" in payload["input"][1]["content"][0]["text"]
+                assert [tool["name"] for tool in payload["tools"]] == ["zara_change"]
+                received.append(payload)
+                if tool_followup and len(received) == 2:
+                    return Response(response_tool_events())
+                if tool_followup and len(received) == 3:
+                    assert any(i["type"] == "function_call_output" for i in payload["input"])
+                supplied = json.loads(payload["input"][1]["content"][0]["text"])
+                output = (
+                    routing(supplied["context"], "model-selected") if len(received) == 1 else terminal
+                )
+                return Response(response_events(json.dumps(output)))
+    
+        monkeypatch.setattr(bridge, "build_opener", lambda *_: ControlledTransport())
+        core, token = Core.initialize(tmp_path / "space")
+        session = Conversation(core, token)
+        session.submit("Unscripted meaning is assessed separately; this is mechanical input.")
+        live = LiveProfile(
+            endpoint="https://api.openai.com/v1",
+            model="gpt-6-luna",
+            auth_mode="pi-chatgpt",
+            native_resource_mode="calls-only",
+            auth_path=str(auth),
+            max_tokens=max_tokens,
+            context_window=8192,
+        )
+        executor = Pi(pi_cli(), tmp_path / "pi", live.endpoint, live=live)
+>       result = session.run(executor, {"profile": "fictional-native-oauth"}, 4)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\restart\test_conversation.py:402: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+packages\app\src\zaratustra_app\conversation.py:133: in run
+    result = self._step(executor, descriptor, call_limit, refresh=refresh)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\app\src\zaratustra_app\conversation.py:294: in _step
+    self.coordinator.dispatch(attempt["id"], attempt["generation"], executor)
+packages\app\src\zaratustra_app\coordinator.py:222: in dispatch
+    raw = executor.run(context, action_id)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <zaratustra_app.executor_port.Pi object at 0x00000297AEF94510>
+context = {'capabilities': ['read', 'apply_changes', 'open_work', 'prepare_attempt', 'claim_dispatch', 'observe_attempt', ...], .....}], 'manifest': [{'sequence': 1, 'sha256': '3f398912c34501af2f34a9ddc3e42801f356cfa7c19d86a6e2fbda8a76cc3ffc'}], ...}
+action_id = 'continued:e1f9525095c40f5ebeaa80ad6c27f469519e6fa107db439fd07c94a388a24b28:attempt:f8c726a6f5564ceabb20571d40f74f04:action'
+
+    def run(self, context: dict[str, Any], action_id: str) -> bytes:
+        home = self.profile / hashlib.sha256(action_id.encode()).hexdigest()
+        agent = home / "agent"
+        agent.mkdir(parents=True, exist_ok=False)
+        bridge = Bridge(
+            self.endpoint,
+            self.tool_handler,
+            self.resource_upper,
+            bearer=(
+                self.live.bearer()
+                if self.live and self.live.auth_mode == "api-key"
+                else "synthetic"
+            ),
+            timeout=self.live.timeout if self.live else 35,
+            native_auth=bool(self.live and self.live.auth_mode == "pi-chatgpt"),
+            capture_dir=home / "provider",
+        )
+        bridge_thread = threading.Thread(target=bridge.serve_forever, daemon=True)
+        bridge_thread.start()
+        (agent / "settings.json").write_text(
+            json.dumps({"retry": {"enabled": False}, "compaction": {"enabled": False}}),
+            encoding="utf-8",
+        )
+        (agent / "models.json").write_text(
+            json.dumps(
+                {
+                    "providers": {
+                        "local": {
+                            "baseUrl": f"http://127.0.0.1:{bridge.server_port}/provider/v1",
+                            "api": self.live.api if self.live else "openai-completions",
+                            "apiKey": "synthetic",
+                            "models": [
+                                {
+                                    "id": self.live.model if self.live else "scripted",
+                                    "name": self.live.model
+                                    if self.live
+                                    else "Local scripted transport",
+                                    "reasoning": False,
+                                    "input": ["text"],
+                                    "cost": {
+                                        "input": 0,
+                                        "output": 0,
+                                        "cacheRead": 0,
+                                        "cacheWrite": 0,
+                                    },
+                                    "contextWindow": self.live.context_window
+                                    if self.live
+                                    else 32768,
+                                    "maxTokens": self.live.max_tokens if self.live else 2048,
+                                }
+                            ],
+                        }
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        native = self.live is not None and self.live.auth_mode == "pi-chatgpt"
+        if native:
+            assert self.live is not None
+            (agent / "models.json").write_text(
+                json.dumps(
+                    {
+                        "providers": {
+                            "openai": {
+                                "baseUrl": f"http://127.0.0.1:{bridge.server_port}/provider/v1",
+                                "modelOverrides": {
+                                    self.live.model: {
+                                        "maxTokens": self.live.max_tokens,
+                                        "contextWindow": self.live.context_window,
+                                        "samplingParams": {
+                                            "text": {"format": {"type": "json_object"}}
+                                        },
+                                        # The loopback bridge hides the public URL from
+                                        # Pi's automatic ChatGPT compatibility detection.
+                                        # Use its native switch: keep effective reasoning
+                                        # at request level, without unsupported input items.
+                                        "compat": {
+                                            "supportsMidConvoEffort": False,
+                                            "supportsMaxOutputTokens": False,
+                                        },
+                                    }
+                                },
+                            }
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if k.upper() in {"PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP"}
+        }
+        env.update(
+            {
+                "HOME": str(home),
+                "USERPROFILE": str(home),
+                "APPDATA": str(home / "AppData"),
+                "LOCALAPPDATA": str(home / "LocalAppData"),
+                "PI_CODING_AGENT_DIR": str(agent),
+                "PI_OFFLINE": "1",
+                "PI_SKIP_VERSION_CHECK": "1",
+                "PI_TELEMETRY": "0",
+                "ZARA_NEXT_TOOL_ENDPOINT": f"http://127.0.0.1:{bridge.server_port}/tool",
+                "ZARA_NEXT_TOOL_TOKEN": bridge.token,
+            }
+        )
+        cmd = [
+            shutil.which("node") or "node",
+            str(self.cli),
+            "--mode",
+            "rpc",
+            "--provider",
+            "local",
+            "--model",
+            self.live.model if self.live else "scripted",
+            "--no-session",
+            "--no-builtin-tools",
+            "--tools",
+            "zara_change",
+            "--no-mcp",
+            "--no-extensions",
+            "--extension",
+            str(Path(__file__).parent / "adapters" / "pi" / "extension.ts"),
+            "--no-context-files",
+            "--no-skills",
+            "--no-prompt-templates",
+            "--no-themes",
+            "--no-approve",
+            "--offline",
+            "--system-prompt",
+            SYSTEM_INSTRUCTION,
+        ]
+        if native:
+            assert self.live is not None
+            env.update(
+                {
+                    "ZARA_PI_SDK": str(self.cli.parent.parent / "index.js"),
+                    "ZARA_PI_AUTH_PATH": str(Path(self.live.auth_path or "").resolve()),
+                    "ZARA_PI_MODELS_PATH": str(agent / "models.json"),
+                    "ZARA_PI_MODEL": self.live.model,
+                    "ZARA_PI_EXTENSION": str(
+                        Path(__file__).parent / "adapters" / "pi" / "extension.ts"
+                    ),
+                    "ZARA_PI_SYSTEM_PROMPT": SYSTEM_INSTRUCTION,
+                }
+            )
+            cmd = [
+                shutil.which("node") or "node",
+                str(Path(__file__).parent / "adapters" / "pi" / "launcher.mjs"),
+            ]
+        process = subprocess.Popen(
+            cmd,
+            cwd=home,
+            env=env,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        incoming: queue.Queue[dict[str, Any]] = queue.Queue()
+        errors: list[bytes] = []
+    
+        def read() -> None:
+            assert process.stdout is not None
+            with (home / "native-stdout.jsonl").open("xb") as raw_log:
+                for line in iter(process.stdout.readline, b""):
+                    raw_log.write(line)
+                    raw_log.flush()
+                    os.fsync(raw_log.fileno())
+                    try:
+                        incoming.put({"event": json.loads(line), "raw": line})
+                    except ValueError:
+                        incoming.put({"event": {"type": "invalid_protocol"}, "raw": line})
+    
+        def stderr() -> None:
+            assert process.stderr is not None
+            errors.append(process.stderr.read())
+    
+        reader = threading.Thread(target=read, daemon=True)
+        error_reader = threading.Thread(target=stderr, daemon=True)
+        reader.start()
+        error_reader.start()
+        try:
+            assert process.stdin is not None
+            message = json.dumps({"action_id": action_id, "context": context}, ensure_ascii=False)
+            prompt_bytes = (
+                json.dumps(
+                    {"id": action_id, "type": "prompt", "message": message}, ensure_ascii=False
+                )
+                + chr(10)
+            ).encode()
+            with (home / "host-stdin.bin").open("xb") as prompt_log:
+                prompt_log.write(prompt_bytes)
+                prompt_log.flush()
+                os.fsync(prompt_log.fileno())
+            try:
+                process.stdin.write(prompt_bytes)
+                process.stdin.flush()
+            except OSError as error:
+                raise CoreError("outcome_unknown", "pi_input_closed", "reconcile") from error
+            terminal = None
+            deadline = time.monotonic() + (self.live.timeout + 15 if self.live else 50)
+            while time.monotonic() < deadline:
+                try:
+                    packet = incoming.get(timeout=0.2)
+                    event = packet["event"]
+                except queue.Empty:
+                    if process.poll() is not None:
+                        raise CoreError("outcome_unknown", "pi_exit", "reconcile") from None
+                    continue
+                self.events.append(event)
+                if event.get("type") == "invalid_protocol":
+                    raise CoreError("outcome_unknown", "pi_protocol", "reconcile")
+                if event.get("type") == "response" and event.get("success") is False:
+                    raise CoreError("outcome_unknown", str(event.get("error")), "reconcile")
+                if event.get("type") == "message_end":
+                    msg = event.get("message", {})
+                    if msg.get("role") == "assistant":
+                        if msg.get("stopReason") == "error":
+>                           raise CoreError(
+                                "outcome_unknown", str(msg.get("errorMessage")), "reconcile"
+                            )
+E                           zaratustra_core.types.CoreError: outcome_unknown: pi_native_error_details_withheld [166077b9f4c34672]
+
+packages\app\src\zaratustra_app\executor_port.py:369: CoreError
+---------------------------- Captured stderr call -----------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 64386)
+Traceback (most recent call last):
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\http\server.py", line 436, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\http\server.py", line 424, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "C:\projects\zaratustra\.worktrees\restart-first-release\packages\app\src\zaratustra_app\adapters\pi\bridge.py", line 136, in do_POST
+    with build_opener(NoRedirect()).open(request, timeout=self.server.timeout) as response:
+         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\zaratustra\.worktrees\restart-first-release\tests\restart\test_conversation.py", line 381, in open
+    assert any(i["type"] == "function_call_output" for i in payload["input"])
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\zaratustra\.worktrees\restart-first-release\tests\restart\test_conversation.py", line 381, in <genexpr>
+    assert any(i["type"] == "function_call_output" for i in payload["input"])
+               ~^^^^^^^^
+KeyError: 'type'
+----------------------------------------
+___ test_delivery_defect_is_killed[D-native-chatgpt-effort-compat-omitted] ____
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/calls-only-focused-20261017/tests/test_delivery_defect_is_killed5')
+seed = ('D-native-chatgpt-effort-compat-omitted', 'app/src/zaratustra_app/executor_port.py', [('"supportsMidConvoEffort": Fal...t": (print("MUTANT_REACHED", flush=True) or True)')], 'test_conversation.py::test_native_pi_oauth_launcher_controlled')
+
+    @pytest.mark.parametrize("seed", SEEDS, ids=[s[0] for s in SEEDS])
+    def test_delivery_defect_is_killed(
+        tmp_path: Path, seed: tuple[str, str, list[tuple[str, str]], str]
+    ) -> None:
+>       run_seed(tmp_path, seed)
+
+tests\restart\test_delivery_controls.py:439: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/calls-only-focused-20261017/tests/test_delivery_defect_is_killed5')
+seed = ('D-native-chatgpt-effort-compat-omitted', 'app/src/zaratustra_app/executor_port.py', [('"supportsMidConvoEffort": Fal...t": (print("MUTANT_REACHED", flush=True) or True)')], 'test_conversation.py::test_native_pi_oauth_launcher_controlled')
+
+    @pytest.mark.parametrize("seed", SEEDS, ids=[s[0] for s in SEEDS])
+    def test_seeded_defect_is_killed(
+        tmp_path: Path, seed: tuple[str, str, list[tuple[str, str]], str]
+    ) -> None:
+        name, source_path, replacements, node = seed
+        tree = tmp_path / "mutant"
+        for package in ("core", "app"):
+            shutil.copytree(ROOT / "packages" / package / "src", tree / package / "src")
+        path = tree / source_path
+        original = path.read_text(encoding="utf-8")
+        changed = original
+        for before, after in replacements:
+            assert before in changed, "stale mutation anchor: " + name
+            changed = changed.replace(before, after)
+        compile(changed, str(path), "exec")
+        path.write_text(changed, encoding="utf-8")
+        prefix = [str(tree / "core" / "src"), str(tree / "app" / "src"), str(ROOT)]
+        script = (
+            "import sys;sys.path[:0]="
+            + repr(prefix)
+            + ";import pytest;raise SystemExit(pytest.main(sys.argv[1:]))"
+        )
+        env = os.environ.copy()
+        env.pop("ZARA_RESTART_EVIDENCE", None)
+        run = subprocess.run(
+            [
+                sys.executable,
+                "-I",
+                "-X",
+                "utf8",
+                "-c",
+                script,
+                str(ROOT / "tests" / "restart" / node),
+                "--basetemp",
+                str(tmp_path / "run"),
+                "-q",
+                "--tb=short",
+            ],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=60,
+        )
+        report: dict[str, Any] = {
+            "seed": name,
+            "test": node,
+            "returncode": run.returncode,
+            "injection_reached": "MUTANT_REACHED" in run.stdout,
+            "behavioral_failure": "AssertionError" in run.stdout
+            or "DID NOT RAISE" in run.stdout
+            or any(line.startswith("E") and "assert " in line for line in run.stdout.splitlines()),
+            "stdout": run.stdout,
+            "stderr": run.stderr,
+            "diff": "".join(
+                difflib.unified_diff(
+                    original.splitlines(True),
+                    changed.splitlines(True),
+                    fromfile=source_path,
+                    tofile=source_path + ".mutant",
+                )
+            ),
+        }
+        destination = os.environ.get("ZARA_RESTART_NEGATIVES")
+        if destination:
+            folder = Path(destination)
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / (name + ".json")).write_text(
+                json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+        assert run.returncode == 1, report
+        assert report["injection_reached"], report
+>       assert report["behavioral_failure"], report
+E       AssertionError: {'seed': 'D-native-chatgpt-effort-compat-omitted', 'test': 'test_conversation.py::test_native_pi_oauth_launcher_controlled', 'returncode': 1, 'injection_reached': True, ...}
+E       assert False
+
+tests\restart\test_negative_controls.py:349: AssertionError
+________________ test_cli_profile_drift_refused[model-model-b] ________________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/calls-only-focused-20261017/tests/test_cli_profile_drift_refused0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000297AE82B450>
+field = 'model', value = 'model-b'
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("model", "model-b"),
+            ("endpoint", "https://other.invalid/v1"),
+            ("api", "openai-completions"),
+            ("max_tokens", 4096),
+            ("context_window", 65536),
+            ("timeout", 90),
+            ("credential_env", "OTHER_SELECTED_CREDENTIAL"),
+            ("pi_cli", "other-pi.js"),
+        ],
+    )
+    def test_cli_profile_drift_refused(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str, value: Any
+    ) -> None:
+        core, token = Core.initialize(tmp_path / "space")
+        (core.root / "owner.credential").write_text(token, encoding="utf-8")
+        profile = tmp_path / "profile.json"
+        selected = {
+            "pi_cli": str(tmp_path / "pi.js"),
+            "endpoint": "https://provider.invalid/v1",
+            "model": "model-a",
+            "credential_env": "SELECTED_CREDENTIAL",
+        }
+        received: list[dict[str, Any]] = []
+    
+        def execute(
+            self: Sleep, work_id: str, profile_ref: dict[str, Any], executor: Any
+        ) -> dict[str, Any]:
+            pinned = self.client.call("read_exact", profile_ref, "capture-profile")
+            received.append({"pinned": pinned["body"]["value"], "actual": asdict(executor.live)})
+            return {"state": "ready"}
+    
+        monkeypatch.setattr(Sleep, "run", execute)
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "zaratustra-next",
+                "--data-root",
+                str(core.root),
+                "sleep",
+                "--work-id",
+                "same-work",
+                "--call-limit",
+                "6",
+                "--profile-file",
+                str(profile),
+            ],
+        )
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+        assert cli.main() == 0
+        assert len(received) == 1
+        assert all(received[0]["pinned"][key] == value for key, value in received[0]["actual"].items())
+        selected[field] = value
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+>       with pytest.raises(CoreError, match="profile.configuration"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE CoreError
+
+tests\restart\test_sleep_profile.py:71: Failed
+---------------------------- Captured stdout call -----------------------------
+{"state": "ready"}
+---------------------------- Captured stderr call -----------------------------
+{"error": {"code": "stale_basis", "field": "profile.configuration", "retry_policy": "after_refresh", "diagnostic_id": "4c36e07812fd73a7"}}
+______ test_cli_profile_drift_refused[endpoint-https://other.invalid/v1] ______
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/calls-only-focused-20261017/tests/test_cli_profile_drift_refused1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000297AE8406E0>
+field = 'endpoint', value = 'https://other.invalid/v1'
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("model", "model-b"),
+            ("endpoint", "https://other.invalid/v1"),
+            ("api", "openai-completions"),
+            ("max_tokens", 4096),
+            ("context_window", 65536),
+            ("timeout", 90),
+            ("credential_env", "OTHER_SELECTED_CREDENTIAL"),
+            ("pi_cli", "other-pi.js"),
+        ],
+    )
+    def test_cli_profile_drift_refused(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str, value: Any
+    ) -> None:
+        core, token = Core.initialize(tmp_path / "space")
+        (core.root / "owner.credential").write_text(token, encoding="utf-8")
+        profile = tmp_path / "profile.json"
+        selected = {
+            "pi_cli": str(tmp_path / "pi.js"),
+            "endpoint": "https://provider.invalid/v1",
+            "model": "model-a",
+            "credential_env": "SELECTED_CREDENTIAL",
+        }
+        received: list[dict[str, Any]] = []
+    
+        def execute(
+            self: Sleep, work_id: str, profile_ref: dict[str, Any], executor: Any
+        ) -> dict[str, Any]:
+            pinned = self.client.call("read_exact", profile_ref, "capture-profile")
+            received.append({"pinned": pinned["body"]["value"], "actual": asdict(executor.live)})
+            return {"state": "ready"}
+    
+        monkeypatch.setattr(Sleep, "run", execute)
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "zaratustra-next",
+                "--data-root",
+                str(core.root),
+                "sleep",
+                "--work-id",
+                "same-work",
+                "--call-limit",
+                "6",
+                "--profile-file",
+                str(profile),
+            ],
+        )
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+        assert cli.main() == 0
+        assert len(received) == 1
+        assert all(received[0]["pinned"][key] == value for key, value in received[0]["actual"].items())
+        selected[field] = value
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+>       with pytest.raises(CoreError, match="profile.configuration"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE CoreError
+
+tests\restart\test_sleep_profile.py:71: Failed
+---------------------------- Captured stdout call -----------------------------
+{"state": "ready"}
+---------------------------- Captured stderr call -----------------------------
+{"error": {"code": "stale_basis", "field": "profile.configuration", "retry_policy": "after_refresh", "diagnostic_id": "4c36e07812fd73a7"}}
+___________ test_cli_profile_drift_refused[api-openai-completions] ____________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/calls-only-focused-20261017/tests/test_cli_profile_drift_refused2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000297AE8407D0>
+field = 'api', value = 'openai-completions'
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("model", "model-b"),
+            ("endpoint", "https://other.invalid/v1"),
+            ("api", "openai-completions"),
+            ("max_tokens", 4096),
+            ("context_window", 65536),
+            ("timeout", 90),
+            ("credential_env", "OTHER_SELECTED_CREDENTIAL"),
+            ("pi_cli", "other-pi.js"),
+        ],
+    )
+    def test_cli_profile_drift_refused(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str, value: Any
+    ) -> None:
+        core, token = Core.initialize(tmp_path / "space")
+        (core.root / "owner.credential").write_text(token, encoding="utf-8")
+        profile = tmp_path / "profile.json"
+        selected = {
+            "pi_cli": str(tmp_path / "pi.js"),
+            "endpoint": "https://provider.invalid/v1",
+            "model": "model-a",
+            "credential_env": "SELECTED_CREDENTIAL",
+        }
+        received: list[dict[str, Any]] = []
+    
+        def execute(
+            self: Sleep, work_id: str, profile_ref: dict[str, Any], executor: Any
+        ) -> dict[str, Any]:
+            pinned = self.client.call("read_exact", profile_ref, "capture-profile")
+            received.append({"pinned": pinned["body"]["value"], "actual": asdict(executor.live)})
+            return {"state": "ready"}
+    
+        monkeypatch.setattr(Sleep, "run", execute)
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "zaratustra-next",
+                "--data-root",
+                str(core.root),
+                "sleep",
+                "--work-id",
+                "same-work",
+                "--call-limit",
+                "6",
+                "--profile-file",
+                str(profile),
+            ],
+        )
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+        assert cli.main() == 0
+        assert len(received) == 1
+        assert all(received[0]["pinned"][key] == value for key, value in received[0]["actual"].items())
+        selected[field] = value
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+>       with pytest.raises(CoreError, match="profile.configuration"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE CoreError
+
+tests\restart\test_sleep_profile.py:71: Failed
+---------------------------- Captured stdout call -----------------------------
+{"state": "ready"}
+---------------------------- Captured stderr call -----------------------------
+{"error": {"code": "stale_basis", "field": "profile.configuration", "retry_policy": "after_refresh", "diagnostic_id": "4c36e07812fd73a7"}}
+_______________ test_cli_profile_drift_refused[max_tokens-4096] _______________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/calls-only-focused-20261017/tests/test_cli_profile_drift_refused3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000297AED26350>
+field = 'max_tokens', value = 4096
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("model", "model-b"),
+            ("endpoint", "https://other.invalid/v1"),
+            ("api", "openai-completions"),
+            ("max_tokens", 4096),
+            ("context_window", 65536),
+            ("timeout", 90),
+            ("credential_env", "OTHER_SELECTED_CREDENTIAL"),
+            ("pi_cli", "other-pi.js"),
+        ],
+    )
+    def test_cli_profile_drift_refused(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str, value: Any
+    ) -> None:
+        core, token = Core.initialize(tmp_path / "space")
+        (core.root / "owner.credential").write_text(token, encoding="utf-8")
+        profile = tmp_path / "profile.json"
+        selected = {
+            "pi_cli": str(tmp_path / "pi.js"),
+            "endpoint": "https://provider.invalid/v1",
+            "model": "model-a",
+            "credential_env": "SELECTED_CREDENTIAL",
+        }
+        received: list[dict[str, Any]] = []
+    
+        def execute(
+            self: Sleep, work_id: str, profile_ref: dict[str, Any], executor: Any
+        ) -> dict[str, Any]:
+            pinned = self.client.call("read_exact", profile_ref, "capture-profile")
+            received.append({"pinned": pinned["body"]["value"], "actual": asdict(executor.live)})
+            return {"state": "ready"}
+    
+        monkeypatch.setattr(Sleep, "run", execute)
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "zaratustra-next",
+                "--data-root",
+                str(core.root),
+                "sleep",
+                "--work-id",
+                "same-work",
+                "--call-limit",
+                "6",
+                "--profile-file",
+                str(profile),
+            ],
+        )
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+        assert cli.main() == 0
+        assert len(received) == 1
+        assert all(received[0]["pinned"][key] == value for key, value in received[0]["actual"].items())
+        selected[field] = value
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+>       with pytest.raises(CoreError, match="profile.configuration"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE CoreError
+
+tests\restart\test_sleep_profile.py:71: Failed
+---------------------------- Captured stdout call -----------------------------
+{"state": "ready"}
+---------------------------- Captured stderr call -----------------------------
+{"error": {"code": "stale_basis", "field": "profile.configuration", "retry_policy": "after_refresh", "diagnostic_id": "4c36e07812fd73a7"}}
+____________ test_cli_profile_drift_refused[context_window-65536] _____________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/calls-only-focused-20261017/tests/test_cli_profile_drift_refused4')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000297AED25710>
+field = 'context_window', value = 65536
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("model", "model-b"),
+            ("endpoint", "https://other.invalid/v1"),
+            ("api", "openai-completions"),
+            ("max_tokens", 4096),
+            ("context_window", 65536),
+            ("timeout", 90),
+            ("credential_env", "OTHER_SELECTED_CREDENTIAL"),
+            ("pi_cli", "other-pi.js"),
+        ],
+    )
+    def test_cli_profile_drift_refused(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str, value: Any
+    ) -> None:
+        core, token = Core.initialize(tmp_path / "space")
+        (core.root / "owner.credential").write_text(token, encoding="utf-8")
+        profile = tmp_path / "profile.json"
+        selected = {
+            "pi_cli": str(tmp_path / "pi.js"),
+            "endpoint": "https://provider.invalid/v1",
+            "model": "model-a",
+            "credential_env": "SELECTED_CREDENTIAL",
+        }
+        received: list[dict[str, Any]] = []
+    
+        def execute(
+            self: Sleep, work_id: str, profile_ref: dict[str, Any], executor: Any
+        ) -> dict[str, Any]:
+            pinned = self.client.call("read_exact", profile_ref, "capture-profile")
+            received.append({"pinned": pinned["body"]["value"], "actual": asdict(executor.live)})
+            return {"state": "ready"}
+    
+        monkeypatch.setattr(Sleep, "run", execute)
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "zaratustra-next",
+                "--data-root",
+                str(core.root),
+                "sleep",
+                "--work-id",
+                "same-work",
+                "--call-limit",
+                "6",
+                "--profile-file",
+                str(profile),
+            ],
+        )
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+        assert cli.main() == 0
+        assert len(received) == 1
+        assert all(received[0]["pinned"][key] == value for key, value in received[0]["actual"].items())
+        selected[field] = value
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+>       with pytest.raises(CoreError, match="profile.configuration"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE CoreError
+
+tests\restart\test_sleep_profile.py:71: Failed
+---------------------------- Captured stdout call -----------------------------
+{"state": "ready"}
+---------------------------- Captured stderr call -----------------------------
+{"error": {"code": "stale_basis", "field": "profile.configuration", "retry_policy": "after_refresh", "diagnostic_id": "4c36e07812fd73a7"}}
+_________________ test_cli_profile_drift_refused[timeout-90] __________________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/calls-only-focused-20261017/tests/test_cli_profile_drift_refused5')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000297AED0F450>
+field = 'timeout', value = 90
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("model", "model-b"),
+            ("endpoint", "https://other.invalid/v1"),
+            ("api", "openai-completions"),
+            ("max_tokens", 4096),
+            ("context_window", 65536),
+            ("timeout", 90),
+            ("credential_env", "OTHER_SELECTED_CREDENTIAL"),
+            ("pi_cli", "other-pi.js"),
+        ],
+    )
+    def test_cli_profile_drift_refused(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str, value: Any
+    ) -> None:
+        core, token = Core.initialize(tmp_path / "space")
+        (core.root / "owner.credential").write_text(token, encoding="utf-8")
+        profile = tmp_path / "profile.json"
+        selected = {
+            "pi_cli": str(tmp_path / "pi.js"),
+            "endpoint": "https://provider.invalid/v1",
+            "model": "model-a",
+            "credential_env": "SELECTED_CREDENTIAL",
+        }
+        received: list[dict[str, Any]] = []
+    
+        def execute(
+            self: Sleep, work_id: str, profile_ref: dict[str, Any], executor: Any
+        ) -> dict[str, Any]:
+            pinned = self.client.call("read_exact", profile_ref, "capture-profile")
+            received.append({"pinned": pinned["body"]["value"], "actual": asdict(executor.live)})
+            return {"state": "ready"}
+    
+        monkeypatch.setattr(Sleep, "run", execute)
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "zaratustra-next",
+                "--data-root",
+                str(core.root),
+                "sleep",
+                "--work-id",
+                "same-work",
+                "--call-limit",
+                "6",
+                "--profile-file",
+                str(profile),
+            ],
+        )
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+        assert cli.main() == 0
+        assert len(received) == 1
+        assert all(received[0]["pinned"][key] == value for key, value in received[0]["actual"].items())
+        selected[field] = value
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+>       with pytest.raises(CoreError, match="profile.configuration"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE CoreError
+
+tests\restart\test_sleep_profile.py:71: Failed
+---------------------------- Captured stdout call -----------------------------
+{"state": "ready"}
+---------------------------- Captured stderr call -----------------------------
+{"error": {"code": "stale_basis", "field": "profile.configuration", "retry_policy": "after_refresh", "diagnostic_id": "4c36e07812fd73a7"}}
+__ test_cli_profile_drift_refused[credential_env-OTHER_SELECTED_CREDENTIAL] ___
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/calls-only-focused-20261017/tests/test_cli_profile_drift_refused6')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000297AE8FA990>
+field = 'credential_env', value = 'OTHER_SELECTED_CREDENTIAL'
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("model", "model-b"),
+            ("endpoint", "https://other.invalid/v1"),
+            ("api", "openai-completions"),
+            ("max_tokens", 4096),
+            ("context_window", 65536),
+            ("timeout", 90),
+            ("credential_env", "OTHER_SELECTED_CREDENTIAL"),
+            ("pi_cli", "other-pi.js"),
+        ],
+    )
+    def test_cli_profile_drift_refused(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str, value: Any
+    ) -> None:
+        core, token = Core.initialize(tmp_path / "space")
+        (core.root / "owner.credential").write_text(token, encoding="utf-8")
+        profile = tmp_path / "profile.json"
+        selected = {
+            "pi_cli": str(tmp_path / "pi.js"),
+            "endpoint": "https://provider.invalid/v1",
+            "model": "model-a",
+            "credential_env": "SELECTED_CREDENTIAL",
+        }
+        received: list[dict[str, Any]] = []
+    
+        def execute(
+            self: Sleep, work_id: str, profile_ref: dict[str, Any], executor: Any
+        ) -> dict[str, Any]:
+            pinned = self.client.call("read_exact", profile_ref, "capture-profile")
+            received.append({"pinned": pinned["body"]["value"], "actual": asdict(executor.live)})
+            return {"state": "ready"}
+    
+        monkeypatch.setattr(Sleep, "run", execute)
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "zaratustra-next",
+                "--data-root",
+                str(core.root),
+                "sleep",
+                "--work-id",
+                "same-work",
+                "--call-limit",
+                "6",
+                "--profile-file",
+                str(profile),
+            ],
+        )
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+        assert cli.main() == 0
+        assert len(received) == 1
+        assert all(received[0]["pinned"][key] == value for key, value in received[0]["actual"].items())
+        selected[field] = value
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+>       with pytest.raises(CoreError, match="profile.configuration"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE CoreError
+
+tests\restart\test_sleep_profile.py:71: Failed
+---------------------------- Captured stdout call -----------------------------
+{"state": "ready"}
+---------------------------- Captured stderr call -----------------------------
+{"error": {"code": "stale_basis", "field": "profile.configuration", "retry_policy": "after_refresh", "diagnostic_id": "4c36e07812fd73a7"}}
+_____________ test_cli_profile_drift_refused[pi_cli-other-pi.js] ______________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/calls-only-focused-20261017/tests/test_cli_profile_drift_refused7')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000297AE8FA2D0>
+field = 'pi_cli', value = 'other-pi.js'
+
+    @pytest.mark.parametrize(
+        "field,value",
+        [
+            ("model", "model-b"),
+            ("endpoint", "https://other.invalid/v1"),
+            ("api", "openai-completions"),
+            ("max_tokens", 4096),
+            ("context_window", 65536),
+            ("timeout", 90),
+            ("credential_env", "OTHER_SELECTED_CREDENTIAL"),
+            ("pi_cli", "other-pi.js"),
+        ],
+    )
+    def test_cli_profile_drift_refused(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str, value: Any
+    ) -> None:
+        core, token = Core.initialize(tmp_path / "space")
+        (core.root / "owner.credential").write_text(token, encoding="utf-8")
+        profile = tmp_path / "profile.json"
+        selected = {
+            "pi_cli": str(tmp_path / "pi.js"),
+            "endpoint": "https://provider.invalid/v1",
+            "model": "model-a",
+            "credential_env": "SELECTED_CREDENTIAL",
+        }
+        received: list[dict[str, Any]] = []
+    
+        def execute(
+            self: Sleep, work_id: str, profile_ref: dict[str, Any], executor: Any
+        ) -> dict[str, Any]:
+            pinned = self.client.call("read_exact", profile_ref, "capture-profile")
+            received.append({"pinned": pinned["body"]["value"], "actual": asdict(executor.live)})
+            return {"state": "ready"}
+    
+        monkeypatch.setattr(Sleep, "run", execute)
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "zaratustra-next",
+                "--data-root",
+                str(core.root),
+                "sleep",
+                "--work-id",
+                "same-work",
+                "--call-limit",
+                "6",
+                "--profile-file",
+                str(profile),
+            ],
+        )
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+        assert cli.main() == 0
+        assert len(received) == 1
+        assert all(received[0]["pinned"][key] == value for key, value in received[0]["actual"].items())
+        selected[field] = value
+        profile.write_text(json.dumps(selected), encoding="utf-8")
+>       with pytest.raises(CoreError, match="profile.configuration"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE CoreError
+
+tests\restart\test_sleep_profile.py:71: Failed
+---------------------------- Captured stdout call -----------------------------
+{"state": "ready"}
+---------------------------- Captured stderr call -----------------------------
+{"error": {"code": "stale_basis", "field": "profile.configuration", "retry_policy": "after_refresh", "diagnostic_id": "4c36e07812fd73a7"}}
+=========================== short test summary info ===========================
+FAILED tests/restart/test_conversation.py::test_native_pi_oauth_launcher_controlled[16-True]
+FAILED tests/restart/test_conversation.py::test_native_pi_oauth_launcher_controlled[64-True]
+FAILED tests/restart/test_delivery_controls.py::test_delivery_defect_is_killed[D-native-chatgpt-effort-compat-omitted]
+FAILED tests/restart/test_sleep_profile.py::test_cli_profile_drift_refused[model-model-b]
+FAILED tests/restart/test_sleep_profile.py::test_cli_profile_drift_refused[endpoint-https://other.invalid/v1]
+FAILED tests/restart/test_sleep_profile.py::test_cli_profile_drift_refused[api-openai-completions]
+FAILED tests/restart/test_sleep_profile.py::test_cli_profile_drift_refused[max_tokens-4096]
+FAILED tests/restart/test_sleep_profile.py::test_cli_profile_drift_refused[context_window-65536]
+FAILED tests/restart/test_sleep_profile.py::test_cli_profile_drift_refused[timeout-90]
+FAILED tests/restart/test_sleep_profile.py::test_cli_profile_drift_refused[credential_env-OTHER_SELECTED_CREDENTIAL]
+FAILED tests/restart/test_sleep_profile.py::test_cli_profile_drift_refused[pi_cli-other-pi.js]
+11 failed, 21 passed, 35 deselected in 141.16s (0:02:21)

@@ -1,0 +1,37 @@
+{
+  "source_commit": "1b6d1a3946348a18d90cbb1a4e8d36208e242285",
+  "entry": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-independent-d-ch5ibt4p\\runtime\\env\\Scripts\\zaratustra-next.exe",
+  "base": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-g14-independent-l1rw94lz",
+  "data_root": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-g14-independent-l1rw94lz\\data",
+  "rubric_sha256": "7bc557be9e82307285106d856b18e39d5f2860f567f0a045f0aae43666d47d27",
+  "transport": "Main-chat leader executes unchanged independent reviewer script with normal approval and direct owner grant; reviewer evaluates raw outputs.",
+  "calls": [
+    {
+      "label": "init",
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-independent-d-ch5ibt4p\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-g14-independent-l1rw94lz\\data",
+        "init"
+      ],
+      "returncode": 0,
+      "seconds": 1.451965093612671
+    },
+    {
+      "label": "request-and-correction",
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-independent-d-ch5ibt4p\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-g14-independent-l1rw94lz\\data",
+        "chat",
+        "--profile-file",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-g14-independent-l1rw94lz\\profile.json",
+        "--call-limit",
+        "8"
+      ],
+      "returncode": 1,
+      "seconds": 13.701024532318115
+    }
+  ],
+  "physical_provider_requests": 1
+}

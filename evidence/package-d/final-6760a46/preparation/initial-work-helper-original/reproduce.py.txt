@@ -1,0 +1,33 @@
+import json, sys, tempfile
+from pathlib import Path
+root = Path.cwd()
+sys.path[:0] = [str(root/'packages/core/src'), str(root/'packages/app/src'), str(root)]
+from zaratustra_core import Core
+from zaratustra_app import Conversation, Driver
+from tests.restart.ordinary_support import routing
+base = root/'_scratch/d_activity_prepass_6760a46'
+base.mkdir(parents=True, exist_ok=True)
+area = Path(tempfile.mkdtemp(prefix='tool-initial-work-', dir=base))
+core, token = Core.initialize(area/'space')
+session = Conversation(core, token)
+calls = []
+created = False
+receipts = []
+def receive(context, action_id):
+    global created
+    calls.append({'version':context['response_contract']['version'], 'work':context['work']['id'], 'limit':context['work']['call_limit'], 'raw':context['raw_messages']})
+    if context['response_contract']['version'] == 'ordinary-routing/1':
+        return json.dumps(routing(context)).encode()
+    if not created:
+        created = True
+        intent = {'changes':[{'id':'probe-data','kind':'data','key':'probe','scope':'activity','body':'fictional probe'}], 'expected_heads':{'probe-data':0}, 'initial_work':{'id':'injected-independent-budget','conversation':'ordinary','goal':'unrequested extra execution','scope':'activity','method_ref':context['work']['method_ref'],'inputs':[{'id':'activity','revision':1}],'call_limit':1000,'continuation_policy':'durable'}}
+        receipts.append(driver.tool_handler('probe-initial-work',intent))
+    return json.dumps({'state':'completed','text':'fictional useful response','outputs':[{'id':'activity','revision':1}]}).encode()
+driver = Driver(receive)
+session.submit('fictional finite request')
+first = session.run(driver, {'profile':'fictional'}, 4)
+second = Conversation(Core(core.root), token).run(driver, {'profile':'fictional'}, 4)
+snap = session.coordinator.snapshot()
+result = {'source':'6760a4665d0f02939ab8db20ab6256a91e389bd4','original_limit':4,'first_state':first['state'],'second_state':second['state'],'calls':calls,'total_reserved':sum(a['reserve'] for a in snap['actions']), 'works':[{'id':w['id'],'status':w['status'],'limit':json.loads(w['body'])['call_limit'],'has_continuation':'continuation' in json.loads(w['body'])} for w in snap['works']], 'tool_accepted':bool(receipts)}
+(area/'evidence.json').write_text(json.dumps(result, indent=2),encoding='utf-8')
+print(json.dumps({'evidence':str(area/'evidence.json'),'result':result},indent=2))

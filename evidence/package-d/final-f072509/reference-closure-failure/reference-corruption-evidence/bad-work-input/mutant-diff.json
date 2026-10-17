@@ -1,0 +1,23 @@
+[
+  {
+    "table": "works",
+    "before": {
+      "id": "w",
+      "revision": 2,
+      "conversation": "c",
+      "status": "blocked",
+      "generation": 1,
+      "body": "{\"call_limit\":4,\"continuation_policy\":\"durable\",\"conversation\":\"c\",\"goal\":\"Fictional review\",\"id\":\"w\",\"inputs\":[{\"id\":\"private\",\"revision\":1,\"role\":\"must_be_current\"}],\"method_ref\":{\"id\":\"method\",\"revision\":1}}",
+      "reserved": 2
+    },
+    "after": {
+      "id": "w",
+      "revision": 2,
+      "conversation": "c",
+      "status": "blocked",
+      "generation": 1,
+      "body": "{\"call_limit\": 4, \"continuation_policy\": \"durable\", \"conversation\": \"c\", \"goal\": \"Fictional review\", \"id\": \"w\", \"inputs\": [{\"id\": \"missing\", \"revision\": 1}], \"method_ref\": {\"id\": \"method\", \"revision\": 1}}",
+      "reserved": 2
+    }
+  }
+]

@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -6,7 +6,7 @@
+         if (
+             manifest["format"] != "backup/v1"
+             or len(database) != manifest["database_size"]
+-            or hashlib.sha256(database).hexdigest() != manifest["database_sha256"]
++            or False
+         ):
+             raise CoreError("invalid_request", "backup.manifest")
+         integrity(backup_root / "core.sqlite3")

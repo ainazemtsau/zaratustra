@@ -1,0 +1,32 @@
+[
+  {
+    "path": "evidence/package-d/final-83af4d4/source-83af4d4.zip",
+    "sha256": "44d2bb7c1706c1ae6e62e8fa664bf74555160d5b9319983f895a29925cf7e8d9",
+    "bytes": 1690887,
+    "passed": true
+  },
+  {
+    "path": "evidence/package-d/final-83af4d4/install-83af4d4/physical-builds/zaratustra_core-0.1.0-py3-none-any.whl",
+    "sha256": "93ff28d186def9d2f6cae4d2979cd90930f43feb11b6a9e6d3704df7403e8271",
+    "bytes": 29080,
+    "passed": true
+  },
+  {
+    "path": "evidence/package-d/final-83af4d4/install-83af4d4/physical-builds/zaratustra_next-0.1.0-py3-none-any.whl",
+    "sha256": "dcbf481e1cfbc90e8ab93678679f187df75b976bdec0cba043add71a93539d7a",
+    "bytes": 31855,
+    "passed": true
+  },
+  {
+    "path": "evidence/package-d/final-83af4d4/install-83af4d4/physical-builds/zaratustra_core-0.1.0.tar.gz",
+    "sha256": "afbeed5be50920111faa218028a62edf5defaba992381d1130a213705442e6f6",
+    "bytes": 24993,
+    "passed": true
+  },
+  {
+    "path": "evidence/package-d/final-83af4d4/install-83af4d4/physical-builds/zaratustra_next-0.1.0.tar.gz",
+    "sha256": "d9e107cc1fb85b39f33b98c6ad5f4267fdec1b9ca203d5f1ac23ea802858cfcc",
+    "bytes": 24427,
+    "passed": true
+  }
+]

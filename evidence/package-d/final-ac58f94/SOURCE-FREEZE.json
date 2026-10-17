@@ -1,0 +1,19 @@
+{
+  "source_commit": "ac58f9437f5122a5e8ea5ba93384b14cbb2b4563",
+  "base": "83af4d4a529ca73d06d566db62a3586f2a432af9",
+  "status": "JSON-mode correction frozen; resource-profile decision remains separate; no live",
+  "changes": [
+    "native model samplingParams.text.format=json_object",
+    "actual native launcher routing/execution wire assertions",
+    "two reached omission/text controls"
+  ],
+  "affected_checks": {
+    "returncode": 0,
+    "passed": 6,
+    "seconds": 41.21,
+    "proof": "../json-mode-preparation/"
+  },
+  "unchanged_token_field": true,
+  "sdk_probe": "../final-83af4d4/json-mode-sdk-offline/",
+  "mandatory_final_gates": "not yet run, pending selected deliverable profile; old83af never PASS"
+}

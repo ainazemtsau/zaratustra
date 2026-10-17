@@ -1,0 +1,16 @@
+...............FF......                                                  [100%]
+================================== FAILURES ===================================
+______________ test_atomic_publish_windows_sharing_denial[True] _______________
+tests\restart\test_maintenance.py:376: in test_atomic_publish_windows_sharing_denial
+    with pytest.raises(PermissionError) as observed:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE PermissionError
+______________ test_atomic_publish_windows_sharing_denial[False] ______________
+tests\restart\test_maintenance.py:376: in test_atomic_publish_windows_sharing_denial
+    with pytest.raises(PermissionError) as observed:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE PermissionError
+=========================== short test summary info ===========================
+FAILED tests/restart/test_maintenance.py::test_atomic_publish_windows_sharing_denial[True]
+FAILED tests/restart/test_maintenance.py::test_atomic_publish_windows_sharing_denial[False]
+2 failed, 21 passed in 28.33s

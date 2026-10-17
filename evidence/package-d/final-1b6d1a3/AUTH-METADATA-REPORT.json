@@ -1,0 +1,13 @@
+{
+  "provenance": "Parent root executed independent reviewer exact bounded Pi SDK account preflight; this writer only retains its non-secret result.",
+  "selected_auth_path": "C:/Users/Anton/.pi/agent/auth.json",
+  "modern_openai_oauth_present": true,
+  "account_luna_access": "HTTP200 confirmed by one send",
+  "model": "gpt-6-luna",
+  "input_tokens": 10,
+  "output_tokens": 5,
+  "refreshes": 0,
+  "semantic_g14": false,
+  "writer_model_calls": 0,
+  "source": "preparation/account-preflight.stdout.json"
+}

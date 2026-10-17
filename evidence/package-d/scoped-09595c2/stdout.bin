@@ -1,0 +1,224 @@
+...........................F............................................ [ 26%]
+........................................................................ [ 52%]
+....................F................................................... [ 79%]
+........................................................                 [100%]
+================================== FAILURES ===================================
+______________________ test_built_wheels_are_independent ______________________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests/test_built_wheels_are_independ0')
+
+    def test_built_wheels_are_independent(tmp_path: Path) -> None:
+        uv = shutil.which("uv")
+        assert uv is not None
+        external = os.environ.get("ZARA_RESTART_INSTALL_ROOT")
+        target = (Path(external) if external else tmp_path) / ("install-" + uuid4().hex)
+        target.mkdir(parents=True)
+        if external:
+            assert not target.is_relative_to(ROOT)
+        wheels = tmp_path / "wheels"
+        env = os.environ.copy()
+        env["UV_CACHE_DIR"] = str(ROOT / "_scratch" / "uv-cache")
+        for package in ("zaratustra-core", "zaratustra-next"):
+            build = subprocess.run(
+                [uv, "build", "--package", package, "--wheel", "--out-dir", str(wheels)],
+                cwd=ROOT,
+                env=env,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=60,
+            )
+            assert build.returncode == 0, build.stderr
+        venv = target / "env"
+        create = subprocess.run(
+            [uv, "venv", str(venv), "--python", sys.executable],
+            cwd=target,
+            env=env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=30,
+        )
+        assert create.returncode == 0, create.stderr
+        python = venv / "Scripts" / "python.exe" if os.name == "nt" else venv / "bin" / "python"
+        core_wheel = next(wheels.glob("zaratustra_core-*.whl"))
+        app_wheel = next(wheels.glob("zaratustra_next-*.whl"))
+        lock = tomllib.loads((ROOT / "uv.lock").read_text(encoding="utf-8"))
+        constraints = target / "constraints.txt"
+        constraints.write_text(
+            chr(10).join(
+                p["name"] + "==" + p["version"] for p in lock["package"] if "registry" in p["source"]
+            ),
+            encoding="utf-8",
+        )
+        install = subprocess.run(
+            [
+                uv,
+                "pip",
+                "install",
+                "--constraint",
+                str(constraints),
+                "--index-url",
+                "https://pypi.org/simple",
+                "--python",
+                str(python),
+                str(core_wheel),
+            ],
+            cwd=target,
+            env=env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=60,
+        )
+>       assert install.returncode == 0, install.stderr
+E       AssertionError: Using Python 3.13.7 environment at: env
+E         Resolved 6 packages in 19ms
+E         Prepared 1 package in 11ms
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_extensions-4.16.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\annotated_types-0.8.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_inspection-0.4.4.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic_core-2.46.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\zaratustra_core-0.1.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_extensions-4.16.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\annotated_types-0.8.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_inspection-0.4.4.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\zaratustra_core-0.1.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic_core-2.46.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_extensions-4.16.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\annotated_types-0.8.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_inspection-0.4.4.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\zaratustra_core-0.1.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic_core-2.46.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_extensions-4.16.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\annotated_types-0.8.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_inspection-0.4.4.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic_core-2.46.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\zaratustra_core-0.1.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic-2.13.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic-2.13.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_extensions-4.16.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\annotated_types-0.8.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_inspection-0.4.4.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic-2.13.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\zaratustra_core-0.1.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic_core-2.46.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic-2.13.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic-2.13.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_extensions-4.16.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\annotated_types-0.8.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_inspection-0.4.4.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic_core-2.46.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\zaratustra_core-0.1.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic-2.13.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_extensions-4.16.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\annotated_types-0.8.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_inspection-0.4.4.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic_core-2.46.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\zaratustra_core-0.1.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic-2.13.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_extensions-4.16.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\annotated_types-0.8.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_inspection-0.4.4.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic_core-2.46.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\zaratustra_core-0.1.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic-2.13.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_extensions-4.16.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\annotated_types-0.8.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\typing_inspection-0.4.4.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic_core-2.46.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\zaratustra_core-0.1.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         WARN Retrying to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\pydantic-2.13.5.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         error: Failed to install: zaratustra_core-0.1.0-py3-none-any.whl (zaratustra-core==0.1.0 (from file:///C:/projects/zaratustra/.worktrees/restart-first-release/projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests/test_built_wheels_are_independ0/wheels/zaratustra_core-0.1.0-py3-none-any.whl))
+E           Caused by: Failed to persist temporary file to C:\projects\zaratustra\.worktrees\restart-first-release\projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests\test_built_wheels_are_independ0\install-a2d39d071e1b424ebd18e356674dda49\env\Lib\site-packages\zaratustra_core-0.1.0.dist-info\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)
+E         
+E       assert 2 == 0
+E        +  where 2 = CompletedProcess(args=['C:\\Users\\Anton\\.local\\bin\\uv.EXE', 'pip', 'install', '--constraint', 'C:\\projects\\zarat...0.1.0.dist-info\\REQUESTED: failed to persist temporary file: Системе не удается найти указанный путь. (os error 3)\n').returncode
+
+tests\restart\test_build.py:82: AssertionError
+_________ test_seeded_defect_is_killed[G2-native-callback-no-effect] __________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/projectszaratustra.worktreesrestart-first-release_scratchd-scoped-09595c2tests/test_seeded_defect_is_killed_G1')
+seed = ('G2-native-callback-no-effect', 'app/src/zaratustra_app/coordinator.py', [('executor.tool_handler = tool_handler', 'e...lambda *_: (print("MUTANT_REACHED", flush=True), {"outcome":"committed"})[1]')], 'test_trace.py::test_fixed_trace[pi]')
+
+    @pytest.mark.parametrize("seed", SEEDS, ids=[s[0] for s in SEEDS])
+    def test_seeded_defect_is_killed(
+        tmp_path: Path, seed: tuple[str, str, list[tuple[str, str]], str]
+    ) -> None:
+        name, source_path, replacements, node = seed
+        tree = tmp_path / "mutant"
+        for package in ("core", "app"):
+            shutil.copytree(ROOT / "packages" / package / "src", tree / package / "src")
+        path = tree / source_path
+        original = path.read_text(encoding="utf-8")
+        changed = original
+        for before, after in replacements:
+            assert before in changed, "stale mutation anchor: " + name
+            changed = changed.replace(before, after)
+        compile(changed, str(path), "exec")
+        path.write_text(changed, encoding="utf-8")
+        prefix = [str(tree / "core" / "src"), str(tree / "app" / "src"), str(ROOT)]
+        script = (
+            "import sys;sys.path[:0]="
+            + repr(prefix)
+            + ";import pytest;raise SystemExit(pytest.main(sys.argv[1:]))"
+        )
+        env = os.environ.copy()
+        env.pop("ZARA_RESTART_EVIDENCE", None)
+        run = subprocess.run(
+            [
+                sys.executable,
+                "-I",
+                "-X",
+                "utf8",
+                "-c",
+                script,
+                str(ROOT / "tests" / "restart" / node),
+                "--basetemp",
+                str(tmp_path / "run"),
+                "-q",
+                "--tb=short",
+            ],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=60,
+        )
+        report: dict[str, Any] = {
+            "seed": name,
+            "test": node,
+            "returncode": run.returncode,
+            "injection_reached": "MUTANT_REACHED" in run.stdout,
+            "behavioral_failure": "AssertionError" in run.stdout
+            or "DID NOT RAISE" in run.stdout
+            or any(line.startswith("E") and "assert " in line for line in run.stdout.splitlines()),
+            "stdout": run.stdout,
+            "stderr": run.stderr,
+            "diff": "".join(
+                difflib.unified_diff(
+                    original.splitlines(True),
+                    changed.splitlines(True),
+                    fromfile=source_path,
+                    tofile=source_path + ".mutant",
+                )
+            ),
+        }
+        destination = os.environ.get("ZARA_RESTART_NEGATIVES")
+        if destination:
+            folder = Path(destination)
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / (name + ".json")).write_text(
+                json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+        assert run.returncode == 1, report
+>       assert report["injection_reached"], report
+E       AssertionError: {'seed': 'G2-native-callback-no-effect', 'test': 'test_trace.py::test_fixed_trace[pi]', 'returncode': 1, 'injection_reached': False, ...}
+E       assert False
+
+tests\restart\test_negative_controls.py:348: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/restart/test_build.py::test_built_wheels_are_independent - Asser...
+FAILED tests/restart/test_negative_controls.py::test_seeded_defect_is_killed[G2-native-callback-no-effect]
+2 failed, 270 passed in 548.10s (0:09:08)

@@ -1,0 +1,36 @@
+{
+  "source": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+  "native": "actual1818PASS1866.03s; exit0wrapper1874.903557s; full final pipeline PASS",
+  "scoped": "actual420PASS712.16s; exit0;82reached controls studied separately",
+  "studied_author_execution_not_own_full_suite": true,
+  "native_vs_outside_builds": [
+    {
+      "name": "zaratustra_core-0.1.0-py3-none-any.whl",
+      "native_sha256": "93ff28d186def9d2f6cae4d2979cd90930f43feb11b6a9e6d3704df7403e8271",
+      "outside_sha256": "93ff28d186def9d2f6cae4d2979cd90930f43feb11b6a9e6d3704df7403e8271",
+      "equal": true
+    },
+    {
+      "name": "zaratustra_core-0.1.0.tar.gz",
+      "native_sha256": "afbeed5be50920111faa218028a62edf5defaba992381d1130a213705442e6f6",
+      "outside_sha256": "afbeed5be50920111faa218028a62edf5defaba992381d1130a213705442e6f6",
+      "equal": true
+    },
+    {
+      "name": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "native_sha256": "3a2ffd3b713a859814246b8d4ef566e4fddf4e198b9e52047c7b277a65cb09d3",
+      "outside_sha256": "3a2ffd3b713a859814246b8d4ef566e4fddf4e198b9e52047c7b277a65cb09d3",
+      "equal": true
+    },
+    {
+      "name": "zaratustra_next-0.1.0.tar.gz",
+      "native_sha256": "aecc07726283b09ace9de5f1427edf32032e12367e586282939a4f2372216883",
+      "outside_sha256": "aecc07726283b09ace9de5f1427edf32032e12367e586282939a4f2372216883",
+      "equal": true
+    }
+  ],
+  "native_stdout_sha256": "e16986bb7f6798cb75149697ee33d662cf1444479dc6d7f4c52fbba14ef847ce",
+  "native_exit_sha256": "e11603f777f2db5cdeef4ae4ab26fb3cd9cd6f1b4798ad4051c1b9f69b61afae",
+  "build_manifest_sha256": "19419196ca55e7524bad9d82e080a1cc7c13e399d5124f3482b05af85665eb40",
+  "legacy_dll": "Explicit full-gate-only fixture environment; new installed client does not import/use legacy DLL; recorded invocation preserved"
+}

@@ -1,0 +1,31 @@
+{
+  "source_commit": "f07250996d861404728c5892fa1f3b0a6a07bba4",
+  "product_source_parent": "20d606bce8102b6b847b30126fd964a08beacc96",
+  "test_only_followup": true,
+  "all_four_distributions_equal_product_parent": true,
+  "distributions": [
+    {
+      "file": "zaratustra_core-0.1.0-py3-none-any.whl",
+      "sha256": "0c33e381cbb0544d2dc4610d2bf7221b9481064f56658311f200e3b4124b6d69",
+      "bytes": 23517
+    },
+    {
+      "file": "zaratustra_core-0.1.0.tar.gz",
+      "sha256": "a598bbd12842709eaac0189c424f05bf86269ec491bbb9c0b700a5441163475b",
+      "bytes": 20099
+    },
+    {
+      "file": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "sha256": "800062a86e955742bf3a66f2652591f1ddf78dccee0a682faf6dd892af56b1d3",
+      "bytes": 27210
+    },
+    {
+      "file": "zaratustra_next-0.1.0.tar.gz",
+      "sha256": "bc7e419b312f376603e9677ceaa9312d30b34462ef5c3b3a28c3579fbe5ce823",
+      "bytes": 20491
+    }
+  ],
+  "source_wheel_installed_mapping": "install-f072509/manifest.json",
+  "dependencies": "DEPENDENCY-MANIFEST.json",
+  "owner_bundle": "OWNER-BUNDLE-MANIFEST.json"
+}

@@ -1,0 +1,10 @@
+{
+  "seed": "C-self-expand-method-scope",
+  "test": "test_sleep.py::test_delegated_scope_does_not_expand[method-other]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_____________ test_delegated_scope_does_not_expand[method-other] ______________\ntests\\restart\\test_sleep.py:231: in test_delegated_scope_does_not_expand\n    with pytest.raises(CoreError, match=\"denied\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_sleep.py::test_delegated_scope_does_not_expand[method-other]\n1 failed in 1.08s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -364,7 +364,7 @@\n                 fail(\"denied\", \"changes.kind\")\n             if actor[\"origin\"] != \"human\" and change[\"kind\"] in {\"memory\", \"method\"}:\n                 self._require(\n-                    db, actor[\"principal\"], f\"write:{change['kind']}:{change.get('scope', 'space')}\"\n+                    db, actor[\"principal\"], (print(\"MUTANT_REACHED\", flush=True) or \"apply_changes\")\n                 )\n             for ref in change.get(\"source_refs\", []):\n                 self._exact(db, ref)\n"
+}

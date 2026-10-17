@@ -1,0 +1,51 @@
+{
+  "commands": [
+    {
+      "command": [
+        "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "format",
+        "--check",
+        "src",
+        "tools",
+        "tests",
+        "packages"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "src",
+        "tools",
+        "tests",
+        "packages"
+      ],
+      "exit": 1
+    },
+    {
+      "command": [
+        "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "src",
+        "tools",
+        "tests",
+        "packages"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\lint-imports.exe",
+        "--no-cache"
+      ],
+      "exit": 0
+    }
+  ],
+  "hygiene_report_errors": []
+}

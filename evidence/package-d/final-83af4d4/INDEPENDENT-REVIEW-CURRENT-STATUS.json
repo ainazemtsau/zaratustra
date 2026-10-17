@@ -1,0 +1,9 @@
+{
+  "status": "IN PROGRESS:555bytechecks/prose8PASS; independent installed checks complete, G14/scoped/native/finalcandidate pending",
+  "source_commit": "83af4d4a529ca73d06d566db62a3586f2a432af9",
+  "same_physical_thread": "01a144f9-df87-7250-b563-4427afc64669",
+  "trial_count": "Parent states2failedsemantictrials / limit3; root owns third/last, writer will not invoke live",
+  "writer_live_calls": 0,
+  "owner_acceptance": "pending",
+  "local_checkpoint": "independent-local-checkpoint/CHECKPOINT.json"
+}

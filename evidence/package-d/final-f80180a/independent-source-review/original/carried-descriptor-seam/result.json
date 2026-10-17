@@ -1,0 +1,69 @@
+{
+  "scope": "HEADac58 plus captured uncommitted profile.configuration fix, not final source",
+  "old_descriptor_digest": "70a6592e9f5317e0408fe6c7031c69923babd8ad94c14a519f0290abc246975d",
+  "raw_asdict_digest": "ef14ef46cceed720d0d41f6d2bcf27d612940b7b46985a386b90def20cd0fc92",
+  "fixed_descriptor_digest": "70a6592e9f5317e0408fe6c7031c69923babd8ad94c14a519f0290abc246975d",
+  "cases": [
+    {
+      "kind": "chat",
+      "raw_added_null_refused": true,
+      "configuration_matches_old_exactly": true,
+      "old_and_current_CLI_same_work_refusal": [
+        {
+          "version": "old83",
+          "error": {
+            "code": "resource_exhausted",
+            "field": "work.paused",
+            "retry_policy": "reconcile",
+            "diagnostic_id": "2c195850635e274a"
+          },
+          "returncode": 1
+        },
+        {
+          "version": "current-snapshot",
+          "error": {
+            "code": "resource_exhausted",
+            "field": "work.paused",
+            "retry_policy": "reconcile",
+            "diagnostic_id": "2c195850635e274a"
+          },
+          "returncode": 1
+        }
+      ],
+      "pinned_profile_and_execution_state_unchanged": true
+    },
+    {
+      "kind": "sleep",
+      "raw_added_null_refused": true,
+      "configuration_matches_old_exactly": true,
+      "old_and_current_CLI_same_work_refusal": [
+        {
+          "version": "old83",
+          "error": {
+            "code": "stale_basis",
+            "field": "sleep.paused",
+            "retry_policy": "after_refresh",
+            "diagnostic_id": "c18ea947bd792d2d"
+          },
+          "returncode": 1
+        },
+        {
+          "version": "current-snapshot",
+          "error": {
+            "code": "stale_basis",
+            "field": "sleep.paused",
+            "retry_policy": "after_refresh",
+            "diagnostic_id": "c18ea947bd792d2d"
+          },
+          "returncode": 1
+        }
+      ],
+      "pinned_profile_and_execution_state_unchanged": true
+    }
+  ],
+  "native_explicit_mode_retained": true,
+  "network_or_model_calls": 0,
+  "real_auth_reads": 0,
+  "product_state_edits": false,
+  "original_frozen_G14_untouched": true
+}

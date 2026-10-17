@@ -1,0 +1,53 @@
+{
+  "classification": "INCOMPLETE / SUPERSEDED by authorized narrow JSON-mode final source; never PASS",
+  "process_check": "Successful outside-sandbox CIM query found no matching Python/uv gate processes; no process killed. No exit receipt. Cause of disappearance unestablished after backend reset.",
+  "partial_observation": "native17dots/scoped23dots, no F in retained partial stdout",
+  "records": [
+    {
+      "kind": "native",
+      "started": "2026-10-17T05:43:36.896661",
+      "actual_exit": null,
+      "exit_receipt_exists": false,
+      "files": [
+        {
+          "path": "evidence/package-d/final-83af4d4/native-83af4d4-resume-loopback-20261017/invocation.json",
+          "bytes": 526,
+          "sha256": "4c83275ac2497e240626a690d412c31571c434d6e3be30d34b047d98be4125df"
+        },
+        {
+          "path": "evidence/package-d/final-83af4d4/native-83af4d4-resume-loopback-20261017/stderr.bin",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "evidence/package-d/final-83af4d4/native-83af4d4-resume-loopback-20261017/stdout.bin",
+          "bytes": 3853,
+          "sha256": "23d9a1434530f7449ab4a22cccac15fe4b3113b7436ec3852e5c721e7bf1b5ef"
+        }
+      ]
+    },
+    {
+      "kind": "scoped",
+      "started": "2026-10-17T05:43:37.573292",
+      "actual_exit": null,
+      "exit_receipt_exists": false,
+      "files": [
+        {
+          "path": "evidence/package-d/final-83af4d4/scoped-83af4d4-resume-loopback-20261017/invocation.json",
+          "bytes": 501,
+          "sha256": "e41e4283ad43cafddd6e0bfce739633af6be091b5eb8e9efa95321ffe03b99ab"
+        },
+        {
+          "path": "evidence/package-d/final-83af4d4/scoped-83af4d4-resume-loopback-20261017/stderr.bin",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "evidence/package-d/final-83af4d4/scoped-83af4d4-resume-loopback-20261017/stdout.bin",
+          "bytes": 23,
+          "sha256": "c75bbdfbbfd3ec4436b2111bf5804164f661e8a7de450c3eddfb4bd41eb57ed5"
+        }
+      ]
+    }
+  ]
+}

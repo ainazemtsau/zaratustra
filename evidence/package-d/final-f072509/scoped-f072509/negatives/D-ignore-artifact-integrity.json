@@ -1,0 +1,10 @@
+{
+  "seed": "D-ignore-artifact-integrity",
+  "test": "test_maintenance.py::test_corrupt_partial_backups_refused[bytes]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_________________ test_corrupt_partial_backups_refused[bytes] _________________\ntests\\restart\\test_maintenance.py:296: in test_corrupt_partial_backups_refused\n    with pytest.raises(CoreError, match=\"invalid_request\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_maintenance.py::test_corrupt_partial_backups_refused[bytes]\n1 failed in 1.57s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/storage.py\n+++ core/src/zaratustra_core/storage.py.mutant\n@@ -99,6 +99,6 @@\n         raw = (root / \"artifacts\" / sha256).read_bytes()\n     except OSError as error:\n         raise CoreError(\"invalid_request\", \"artifact.missing\") from error\n-    if len(raw) != size or hashlib.sha256(raw).hexdigest() != sha256:\n+    if (print(\"MUTANT_REACHED\", flush=True) or False):\n         raise CoreError(\"invalid_request\", \"artifact.integrity\")\n     return raw\n"
+}

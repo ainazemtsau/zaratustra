@@ -1,0 +1,18 @@
+{
+  "classification": "Read-only helper's reported metadata result; not independently captured raw stdout",
+  "helper": "/root/package_d_executor/pi_access",
+  "pi_version": "1.0.4",
+  "selected_auth_path": "C:/Users/Anton/.pi/agent/auth.json",
+  "hasModernOpenAIOAuth": false,
+  "hasLocalLunaCatalogEntry": true,
+  "accountAccessVerified": false,
+  "login_performed": false,
+  "model_called": false,
+  "credential_contents_output_or_copied": false,
+  "route": "Native Pi openai Sign in with ChatGPT using public api.openai.com/v1/responses; no Codex cache import",
+  "official_sources": [
+    "https://developers.openai.com/siwc/token-sharing-open-source/sign-in/",
+    "https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference/"
+  ],
+  "reproduction": "auth-status.mjs.txt uses ReadOnlyAuthStorage metadata and local catalog only; selected paths are explicit arguments"
+}

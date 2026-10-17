@@ -1,0 +1,10 @@
+{
+  "seed": "C-R5-profile-drift",
+  "test": "test_sleep_profile.py::test_cli_profile_drift_refused[model-model-b]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n________________ test_cli_profile_drift_refused[model-model-b] ________________\ntests\\restart\\test_sleep_profile.py:71: in test_cli_profile_drift_refused\n    with pytest.raises(CoreError, match=\"profile.configuration\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\n{\"state\": \"ready\"}\nMUTANT_REACHED\n{\"state\": \"ready\"}\n=========================== short test summary info ===========================\nFAILED tests/restart/test_sleep_profile.py::test_cli_profile_drift_refused[model-model-b]\n1 failed in 4.13s\n",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/cli.py\n+++ app/src/zaratustra_app/cli.py.mutant\n@@ -143,7 +143,7 @@\n             if (\n                 existing[\"kind\"] != \"profile\"\n                 or existing[\"revision\"] != 1\n-                or digest(pinned[\"body\"][\"value\"]) != digest(descriptor)\n+                or (print(\"MUTANT_REACHED\", flush=True) or False)\n             ):\n                 raise CoreError(\"stale_basis\", \"profile.configuration\", \"after_refresh\")\n         else:\n"
+}

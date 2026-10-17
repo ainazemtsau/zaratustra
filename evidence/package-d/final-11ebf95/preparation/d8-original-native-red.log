@@ -1,0 +1,341 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+__________________ test_native_pi_oauth_launcher_controlled ___________________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d8-original-native-tmp/test_native_pi_oauth_launcher_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002283D769810>
+
+    def test_native_pi_oauth_launcher_controlled(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Actual Pi SDK with FICTIONAL OAuth; no external model or account access."""
+        auth = tmp_path / "fictional-auth.json"
+        auth.write_text(
+            json.dumps(
+                {
+                    "openai": {
+                        "type": "oauth",
+                        "access": "fictional-access",
+                        "refresh": "fictional-refresh",
+                        "expires": int(time.time() * 1000) + 3600000,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        received: list[dict[str, Any]] = []
+        terminal = {
+            "state": "completed",
+            "text": "controlled native path",
+            "changes": [
+                {
+                    "id": "model-selected",
+                    "kind": "activity",
+                    "key": "model-selected",
+                    "body": "chosen by test provider",
+                }
+            ],
+            "expected_heads": {"model-selected": 0},
+        }
+    
+        class Response(io.BytesIO):
+            status = 200
+            headers = {"Content-Type": "text/event-stream"}
+    
+        class ControlledTransport:
+            def open(self, request: Any, timeout: int) -> Response:
+                assert request.full_url == "https://api.openai.com/v1/responses"
+                assert request.get_header("Authorization") == "Bearer fictional-access"
+                payload = json.loads(request.data)
+                assert (
+                    payload["model"] == "gpt-6-luna"
+                    and payload["store"] is False
+                    and payload["stream"] is True
+                )
+                assert payload["max_output_tokens"] == 64
+                # The native SDK must use the selected effort at request level: the
+                # ChatGPT route rejects configuration_update input items.
+                assert payload["reasoning"]["effort"] == "medium"
+                assert [item.get("role") for item in payload["input"]] == ["developer", "user"]
+                assert payload["input"][0]["content"]
+                assert "mechanical input" in payload["input"][1]["content"][0]["text"]
+                assert [tool["name"] for tool in payload["tools"]] == ["zara_change"]
+                received.append(payload)
+                return Response(response_events(json.dumps(terminal)))
+    
+        monkeypatch.setattr(bridge, "build_opener", lambda *_: ControlledTransport())
+        core, token = Core.initialize(tmp_path / "space")
+        session = Conversation(core, token)
+        session.submit("Unscripted meaning is assessed separately; this is mechanical input.")
+        live = LiveProfile(
+            endpoint="https://api.openai.com/v1",
+            model="gpt-6-luna",
+            auth_mode="pi-chatgpt",
+            auth_path=str(auth),
+            max_tokens=64,
+            context_window=8192,
+        )
+        executor = Pi(pi_cli(), tmp_path / "pi", live.endpoint, live=live)
+>       result = session.run(executor, {"profile": "fictional-native-oauth"}, 2)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\restart\test_conversation.py:339: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+packages\app\src\zaratustra_app\conversation.py:237: in run
+    self.coordinator.dispatch(attempt["id"], attempt["generation"], executor)
+packages\app\src\zaratustra_app\coordinator.py:202: in dispatch
+    raw = executor.run(context, action_id)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <zaratustra_app.executor_port.Pi object at 0x000002283D77E3C0>
+context = {'capabilities': ['read', 'apply_changes', 'open_work', 'prepare_attempt', 'claim_dispatch', 'observe_attempt', ...], ...: [], 'manifest': [{'sequence': 1, 'sha256': '3f398912c34501af2f34a9ddc3e42801f356cfa7c19d86a6e2fbda8a76cc3ffc'}], ...}
+action_id = 'turn:61a7b82a3b2146d78a48f4c28fa8e419:attempt:962a10c54b8b472d8f3813eff2a4a1a9:action'
+
+    def run(self, context: dict[str, Any], action_id: str) -> bytes:
+        home = self.profile / hashlib.sha256(action_id.encode()).hexdigest()
+        agent = home / "agent"
+        agent.mkdir(parents=True, exist_ok=False)
+        bridge = Bridge(
+            self.endpoint,
+            self.tool_handler,
+            self.resource_upper,
+            bearer=(
+                self.live.bearer()
+                if self.live and self.live.auth_mode == "api-key"
+                else "synthetic"
+            ),
+            timeout=self.live.timeout if self.live else 35,
+            native_auth=bool(self.live and self.live.auth_mode == "pi-chatgpt"),
+            capture_dir=home / "provider",
+        )
+        bridge_thread = threading.Thread(target=bridge.serve_forever, daemon=True)
+        bridge_thread.start()
+        (agent / "settings.json").write_text(
+            json.dumps({"retry": {"enabled": False}, "compaction": {"enabled": False}}),
+            encoding="utf-8",
+        )
+        (agent / "models.json").write_text(
+            json.dumps(
+                {
+                    "providers": {
+                        "local": {
+                            "baseUrl": f"http://127.0.0.1:{bridge.server_port}/provider/v1",
+                            "api": self.live.api if self.live else "openai-completions",
+                            "apiKey": "synthetic",
+                            "models": [
+                                {
+                                    "id": self.live.model if self.live else "scripted",
+                                    "name": self.live.model
+                                    if self.live
+                                    else "Local scripted transport",
+                                    "reasoning": False,
+                                    "input": ["text"],
+                                    "cost": {
+                                        "input": 0,
+                                        "output": 0,
+                                        "cacheRead": 0,
+                                        "cacheWrite": 0,
+                                    },
+                                    "contextWindow": self.live.context_window
+                                    if self.live
+                                    else 32768,
+                                    "maxTokens": self.live.max_tokens if self.live else 2048,
+                                }
+                            ],
+                        }
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        native = self.live is not None and self.live.auth_mode == "pi-chatgpt"
+        if native:
+            assert self.live is not None
+            (agent / "models.json").write_text(
+                json.dumps(
+                    {
+                        "providers": {
+                            "openai": {
+                                "baseUrl": f"http://127.0.0.1:{bridge.server_port}/provider/v1",
+                                "modelOverrides": {
+                                    self.live.model: {
+                                        "maxTokens": self.live.max_tokens,
+                                        "contextWindow": self.live.context_window,
+                                    }
+                                },
+                            }
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if k.upper() in {"PATH", "PATHEXT", "SYSTEMROOT", "WINDIR", "COMSPEC", "TEMP", "TMP"}
+        }
+        env.update(
+            {
+                "HOME": str(home),
+                "USERPROFILE": str(home),
+                "APPDATA": str(home / "AppData"),
+                "LOCALAPPDATA": str(home / "LocalAppData"),
+                "PI_CODING_AGENT_DIR": str(agent),
+                "PI_OFFLINE": "1",
+                "PI_SKIP_VERSION_CHECK": "1",
+                "PI_TELEMETRY": "0",
+                "ZARA_NEXT_TOOL_ENDPOINT": f"http://127.0.0.1:{bridge.server_port}/tool",
+                "ZARA_NEXT_TOOL_TOKEN": bridge.token,
+            }
+        )
+        cmd = [
+            shutil.which("node") or "node",
+            str(self.cli),
+            "--mode",
+            "rpc",
+            "--provider",
+            "local",
+            "--model",
+            self.live.model if self.live else "scripted",
+            "--no-session",
+            "--no-builtin-tools",
+            "--tools",
+            "zara_change",
+            "--no-mcp",
+            "--no-extensions",
+            "--extension",
+            str(Path(__file__).parent / "adapters" / "pi" / "extension.ts"),
+            "--no-context-files",
+            "--no-skills",
+            "--no-prompt-templates",
+            "--no-themes",
+            "--no-approve",
+            "--offline",
+            "--system-prompt",
+            SYSTEM_INSTRUCTION,
+        ]
+        if native:
+            assert self.live is not None
+            env.update(
+                {
+                    "ZARA_PI_SDK": str(self.cli.parent.parent / "index.js"),
+                    "ZARA_PI_AUTH_PATH": str(Path(self.live.auth_path or "").resolve()),
+                    "ZARA_PI_MODELS_PATH": str(agent / "models.json"),
+                    "ZARA_PI_MODEL": self.live.model,
+                    "ZARA_PI_EXTENSION": str(
+                        Path(__file__).parent / "adapters" / "pi" / "extension.ts"
+                    ),
+                    "ZARA_PI_SYSTEM_PROMPT": SYSTEM_INSTRUCTION,
+                }
+            )
+            cmd = [
+                shutil.which("node") or "node",
+                str(Path(__file__).parent / "adapters" / "pi" / "launcher.mjs"),
+            ]
+        process = subprocess.Popen(
+            cmd,
+            cwd=home,
+            env=env,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        incoming: queue.Queue[dict[str, Any]] = queue.Queue()
+        errors: list[bytes] = []
+    
+        def read() -> None:
+            assert process.stdout is not None
+            with (home / "native-stdout.jsonl").open("xb") as raw_log:
+                for line in iter(process.stdout.readline, b""):
+                    raw_log.write(line)
+                    raw_log.flush()
+                    os.fsync(raw_log.fileno())
+                    try:
+                        incoming.put({"event": json.loads(line), "raw": line})
+                    except ValueError:
+                        incoming.put({"event": {"type": "invalid_protocol"}, "raw": line})
+    
+        def stderr() -> None:
+            assert process.stderr is not None
+            errors.append(process.stderr.read())
+    
+        reader = threading.Thread(target=read, daemon=True)
+        error_reader = threading.Thread(target=stderr, daemon=True)
+        reader.start()
+        error_reader.start()
+        try:
+            assert process.stdin is not None
+            message = json.dumps({"action_id": action_id, "context": context}, ensure_ascii=False)
+            prompt_bytes = (
+                json.dumps(
+                    {"id": action_id, "type": "prompt", "message": message}, ensure_ascii=False
+                )
+                + chr(10)
+            ).encode()
+            with (home / "host-stdin.bin").open("xb") as prompt_log:
+                prompt_log.write(prompt_bytes)
+                prompt_log.flush()
+                os.fsync(prompt_log.fileno())
+            try:
+                process.stdin.write(prompt_bytes)
+                process.stdin.flush()
+            except OSError as error:
+                raise CoreError("outcome_unknown", "pi_input_closed", "reconcile") from error
+            terminal = None
+            deadline = time.monotonic() + (self.live.timeout + 15 if self.live else 50)
+            while time.monotonic() < deadline:
+                try:
+                    packet = incoming.get(timeout=0.2)
+                    event = packet["event"]
+                except queue.Empty:
+                    if process.poll() is not None:
+                        raise CoreError("outcome_unknown", "pi_exit", "reconcile") from None
+                    continue
+                self.events.append(event)
+                if event.get("type") == "invalid_protocol":
+                    raise CoreError("outcome_unknown", "pi_protocol", "reconcile")
+                if event.get("type") == "response" and event.get("success") is False:
+                    raise CoreError("outcome_unknown", str(event.get("error")), "reconcile")
+                if event.get("type") == "message_end":
+                    msg = event.get("message", {})
+                    if msg.get("role") == "assistant":
+                        if msg.get("stopReason") == "error":
+>                           raise CoreError(
+                                "outcome_unknown", str(msg.get("errorMessage")), "reconcile"
+                            )
+E                           zaratustra_core.types.CoreError: outcome_unknown: pi_native_error_details_withheld [166077b9f4c34672]
+
+packages\app\src\zaratustra_app\executor_port.py:345: CoreError
+---------------------------- Captured stderr call -----------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 51120)
+Traceback (most recent call last):
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\http\server.py", line 436, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\http\server.py", line 424, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "C:\projects\zaratustra\.worktrees\restart-first-release\packages\app\src\zaratustra_app\adapters\pi\bridge.py", line 136, in do_POST
+    with build_opener(NoRedirect()).open(request, timeout=self.server.timeout) as response:
+         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\projects\zaratustra\.worktrees\restart-first-release\tests\restart\test_conversation.py", line 319, in open
+    assert [item.get("role") for item in payload["input"]] == ["developer", "user"]
+AssertionError: assert ['developer', 'user', None] == ['developer', 'user']
+  
+  Left contains one more item: None
+  Use -v to get more diff
+----------------------------------------
+=========================== short test summary info ===========================
+FAILED tests/restart/test_conversation.py::test_native_pi_oauth_launcher_controlled
+1 failed in 18.80s

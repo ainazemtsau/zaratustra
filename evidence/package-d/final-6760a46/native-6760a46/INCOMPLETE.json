@@ -1,0 +1,8 @@
+{
+  "source": "6760a4665d0f02939ab8db20ab6256a91e389bd4",
+  "status": "INCOMPLETE",
+  "seconds": 1075.420729637146,
+  "reason": "Stopped only verified native pytest pair before source edits: known G6 stale mutation anchor and separately reproduced active-model initial_work resource escape. Partial stdout/stderr and wrapper exit1 retained; not full gate PASS or testFAIL.",
+  "stop_identity": "STOP-IDENTITY.json",
+  "scoped": "COMPLETE RED375passed1failed682.54s; one stale anchor before injection"
+}

@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "original_native_terminal_sha256": "7800737e8fd1d992a35f78abaeceb47297811efd025184faf4a7b43634ec0072",
+  "whole_actual_terminal_C8_admission": "PASS, all original changes/expected_heads/refs against copied public original state",
+  "actual_goal_length": 273,
+  "actual_goal_bytes_preserved": true,
+  "atomic_continuation_created": true,
+  "pending_original_cursor_preserved": true,
+  "backup_reference_closure": "PASS",
+  "source_credentials_or_grants_selected": false,
+  "credential_files_or_OAuth_read": false,
+  "original_data_modified": false,
+  "model_calls": 0,
+  "fixture_root": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d11-actual-terminal-c8-5yi24t8a"
+}

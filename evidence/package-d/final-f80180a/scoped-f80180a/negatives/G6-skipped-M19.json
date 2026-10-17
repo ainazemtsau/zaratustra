@@ -1,0 +1,10 @@
+{
+  "seed": "G6-skipped-M19",
+  "test": "test_contract.py::test_missing_m19_cannot_prepare_cutoff20",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n__________________ test_missing_m19_cannot_prepare_cutoff20 ___________________\ntests\\restart\\test_contract.py:397: in test_missing_m19_cannot_prepare_cutoff20\n    with pytest.raises(CoreError, match=\"stale_basis\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_contract.py::test_missing_m19_cannot_prepare_cutoff20\n1 failed in 1.22s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -975,7 +975,7 @@\n                 p[\"original_cursor\"] != cursor\n                 or p[\"cutoff\"] < cursor\n                 or [m[\"seq\"] for m in messages] != list(range(cursor + 1, p[\"cutoff\"] + 1))\n-                or p[\"message_sequences\"] != [m[\"seq\"] for m in messages]\n+                or (print(\"MUTANT_REACHED\", flush=True) or False)\n             ):\n                 fail(\"stale_basis\", \"input_range\")\n             body = loads(work[\"body\"])\n@@ -1069,7 +1069,7 @@\n                 }\n                 for m in messages\n             ]\n-            if p[\"manifest\"] != expected_manifest:\n+            if (print(\"MUTANT_REACHED\", flush=True) or False):\n                 fail(\"stale_basis\", \"input_manifest\")\n             db.execute(\n                 \"INSERT INTO attempts VALUES(?,?,?,'prepared',?,?,?,?)\",\n"
+}

@@ -1,0 +1,744 @@
+{
+  "sdk": "C:/Users/Anton/AppData/Roaming/npm/node_modules/@earendil-works/pi-coding-agent/dist/index.js",
+  "physical_network_requests": 0,
+  "live_inference": 0,
+  "credentials": "fictional object only; no credential files read",
+  "captures": 12,
+  "exact_deltas": true,
+  "current_product_source_unchanged": true,
+  "calls_only": "proposal only, not activated in product",
+  "runs": [
+    {
+      "mode": "baseline",
+      "effort": "medium",
+      "phase": "initial",
+      "payload": {
+        "model": "gpt-6-luna",
+        "input": [
+          {
+            "role": "developer",
+            "content": "Return a useful final JSON object; fictional transport capture only."
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Fictional activity with open subject body."
+              }
+            ]
+          }
+        ],
+        "stream": true,
+        "store": false,
+        "max_output_tokens": 64,
+        "tools": [
+          {
+            "type": "function",
+            "name": "zara_change",
+            "description": "Fictional typed tool.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value"
+              ]
+            },
+            "strict": false
+          }
+        ],
+        "reasoning": {
+          "effort": "medium",
+          "summary": "auto"
+        },
+        "include": [
+          "reasoning.encrypted_content"
+        ]
+      }
+    },
+    {
+      "mode": "baseline",
+      "effort": "medium",
+      "phase": "tool-followup",
+      "payload": {
+        "model": "gpt-6-luna",
+        "input": [
+          {
+            "role": "developer",
+            "content": "Return a useful final JSON object; fictional transport capture only."
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Fictional activity with open subject body."
+              }
+            ]
+          },
+          {
+            "type": "function_call",
+            "id": "fc_fiction",
+            "call_id": "call_fiction",
+            "name": "zara_change",
+            "arguments": "{\"value\":\"fictional\"}"
+          },
+          {
+            "type": "function_call_output",
+            "call_id": "call_fiction",
+            "output": "fictional exact receipt"
+          }
+        ],
+        "stream": true,
+        "store": false,
+        "max_output_tokens": 64,
+        "tools": [
+          {
+            "type": "function",
+            "name": "zara_change",
+            "description": "Fictional typed tool.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value"
+              ]
+            },
+            "strict": false
+          }
+        ],
+        "reasoning": {
+          "effort": "medium",
+          "summary": "auto"
+        },
+        "include": [
+          "reasoning.encrypted_content"
+        ]
+      }
+    },
+    {
+      "mode": "baseline",
+      "effort": "high",
+      "phase": "initial",
+      "payload": {
+        "model": "gpt-6-luna",
+        "input": [
+          {
+            "role": "developer",
+            "content": "Return a useful final JSON object; fictional transport capture only."
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Fictional activity with open subject body."
+              }
+            ]
+          }
+        ],
+        "stream": true,
+        "store": false,
+        "max_output_tokens": 64,
+        "tools": [
+          {
+            "type": "function",
+            "name": "zara_change",
+            "description": "Fictional typed tool.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value"
+              ]
+            },
+            "strict": false
+          }
+        ],
+        "reasoning": {
+          "effort": "high",
+          "summary": "auto"
+        },
+        "include": [
+          "reasoning.encrypted_content"
+        ]
+      }
+    },
+    {
+      "mode": "baseline",
+      "effort": "high",
+      "phase": "tool-followup",
+      "payload": {
+        "model": "gpt-6-luna",
+        "input": [
+          {
+            "role": "developer",
+            "content": "Return a useful final JSON object; fictional transport capture only."
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Fictional activity with open subject body."
+              }
+            ]
+          },
+          {
+            "type": "function_call",
+            "id": "fc_fiction",
+            "call_id": "call_fiction",
+            "name": "zara_change",
+            "arguments": "{\"value\":\"fictional\"}"
+          },
+          {
+            "type": "function_call_output",
+            "call_id": "call_fiction",
+            "output": "fictional exact receipt"
+          }
+        ],
+        "stream": true,
+        "store": false,
+        "max_output_tokens": 64,
+        "tools": [
+          {
+            "type": "function",
+            "name": "zara_change",
+            "description": "Fictional typed tool.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value"
+              ]
+            },
+            "strict": false
+          }
+        ],
+        "reasoning": {
+          "effort": "high",
+          "summary": "auto"
+        },
+        "include": [
+          "reasoning.encrypted_content"
+        ]
+      }
+    },
+    {
+      "mode": "json-mode",
+      "effort": "medium",
+      "phase": "initial",
+      "payload": {
+        "model": "gpt-6-luna",
+        "input": [
+          {
+            "role": "developer",
+            "content": "Return a useful final JSON object; fictional transport capture only."
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Fictional activity with open subject body."
+              }
+            ]
+          }
+        ],
+        "stream": true,
+        "store": false,
+        "max_output_tokens": 64,
+        "tools": [
+          {
+            "type": "function",
+            "name": "zara_change",
+            "description": "Fictional typed tool.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value"
+              ]
+            },
+            "strict": false
+          }
+        ],
+        "reasoning": {
+          "effort": "medium",
+          "summary": "auto"
+        },
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      }
+    },
+    {
+      "mode": "json-mode",
+      "effort": "medium",
+      "phase": "tool-followup",
+      "payload": {
+        "model": "gpt-6-luna",
+        "input": [
+          {
+            "role": "developer",
+            "content": "Return a useful final JSON object; fictional transport capture only."
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Fictional activity with open subject body."
+              }
+            ]
+          },
+          {
+            "type": "function_call",
+            "id": "fc_fiction",
+            "call_id": "call_fiction",
+            "name": "zara_change",
+            "arguments": "{\"value\":\"fictional\"}"
+          },
+          {
+            "type": "function_call_output",
+            "call_id": "call_fiction",
+            "output": "fictional exact receipt"
+          }
+        ],
+        "stream": true,
+        "store": false,
+        "max_output_tokens": 64,
+        "tools": [
+          {
+            "type": "function",
+            "name": "zara_change",
+            "description": "Fictional typed tool.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value"
+              ]
+            },
+            "strict": false
+          }
+        ],
+        "reasoning": {
+          "effort": "medium",
+          "summary": "auto"
+        },
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      }
+    },
+    {
+      "mode": "json-mode",
+      "effort": "high",
+      "phase": "initial",
+      "payload": {
+        "model": "gpt-6-luna",
+        "input": [
+          {
+            "role": "developer",
+            "content": "Return a useful final JSON object; fictional transport capture only."
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Fictional activity with open subject body."
+              }
+            ]
+          }
+        ],
+        "stream": true,
+        "store": false,
+        "max_output_tokens": 64,
+        "tools": [
+          {
+            "type": "function",
+            "name": "zara_change",
+            "description": "Fictional typed tool.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value"
+              ]
+            },
+            "strict": false
+          }
+        ],
+        "reasoning": {
+          "effort": "high",
+          "summary": "auto"
+        },
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      }
+    },
+    {
+      "mode": "json-mode",
+      "effort": "high",
+      "phase": "tool-followup",
+      "payload": {
+        "model": "gpt-6-luna",
+        "input": [
+          {
+            "role": "developer",
+            "content": "Return a useful final JSON object; fictional transport capture only."
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Fictional activity with open subject body."
+              }
+            ]
+          },
+          {
+            "type": "function_call",
+            "id": "fc_fiction",
+            "call_id": "call_fiction",
+            "name": "zara_change",
+            "arguments": "{\"value\":\"fictional\"}"
+          },
+          {
+            "type": "function_call_output",
+            "call_id": "call_fiction",
+            "output": "fictional exact receipt"
+          }
+        ],
+        "stream": true,
+        "store": false,
+        "max_output_tokens": 64,
+        "tools": [
+          {
+            "type": "function",
+            "name": "zara_change",
+            "description": "Fictional typed tool.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value"
+              ]
+            },
+            "strict": false
+          }
+        ],
+        "reasoning": {
+          "effort": "high",
+          "summary": "auto"
+        },
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      }
+    },
+    {
+      "mode": "proposal-calls-only",
+      "effort": "medium",
+      "phase": "initial",
+      "payload": {
+        "model": "gpt-6-luna",
+        "input": [
+          {
+            "role": "developer",
+            "content": "Return a useful final JSON object; fictional transport capture only."
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Fictional activity with open subject body."
+              }
+            ]
+          }
+        ],
+        "stream": true,
+        "store": false,
+        "tools": [
+          {
+            "type": "function",
+            "name": "zara_change",
+            "description": "Fictional typed tool.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value"
+              ]
+            },
+            "strict": false
+          }
+        ],
+        "reasoning": {
+          "effort": "medium",
+          "summary": "auto"
+        },
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      }
+    },
+    {
+      "mode": "proposal-calls-only",
+      "effort": "medium",
+      "phase": "tool-followup",
+      "payload": {
+        "model": "gpt-6-luna",
+        "input": [
+          {
+            "role": "developer",
+            "content": "Return a useful final JSON object; fictional transport capture only."
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Fictional activity with open subject body."
+              }
+            ]
+          },
+          {
+            "type": "function_call",
+            "id": "fc_fiction",
+            "call_id": "call_fiction",
+            "name": "zara_change",
+            "arguments": "{\"value\":\"fictional\"}"
+          },
+          {
+            "type": "function_call_output",
+            "call_id": "call_fiction",
+            "output": "fictional exact receipt"
+          }
+        ],
+        "stream": true,
+        "store": false,
+        "tools": [
+          {
+            "type": "function",
+            "name": "zara_change",
+            "description": "Fictional typed tool.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value"
+              ]
+            },
+            "strict": false
+          }
+        ],
+        "reasoning": {
+          "effort": "medium",
+          "summary": "auto"
+        },
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      }
+    },
+    {
+      "mode": "proposal-calls-only",
+      "effort": "high",
+      "phase": "initial",
+      "payload": {
+        "model": "gpt-6-luna",
+        "input": [
+          {
+            "role": "developer",
+            "content": "Return a useful final JSON object; fictional transport capture only."
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Fictional activity with open subject body."
+              }
+            ]
+          }
+        ],
+        "stream": true,
+        "store": false,
+        "tools": [
+          {
+            "type": "function",
+            "name": "zara_change",
+            "description": "Fictional typed tool.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value"
+              ]
+            },
+            "strict": false
+          }
+        ],
+        "reasoning": {
+          "effort": "high",
+          "summary": "auto"
+        },
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      }
+    },
+    {
+      "mode": "proposal-calls-only",
+      "effort": "high",
+      "phase": "tool-followup",
+      "payload": {
+        "model": "gpt-6-luna",
+        "input": [
+          {
+            "role": "developer",
+            "content": "Return a useful final JSON object; fictional transport capture only."
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Fictional activity with open subject body."
+              }
+            ]
+          },
+          {
+            "type": "function_call",
+            "id": "fc_fiction",
+            "call_id": "call_fiction",
+            "name": "zara_change",
+            "arguments": "{\"value\":\"fictional\"}"
+          },
+          {
+            "type": "function_call_output",
+            "call_id": "call_fiction",
+            "output": "fictional exact receipt"
+          }
+        ],
+        "stream": true,
+        "store": false,
+        "tools": [
+          {
+            "type": "function",
+            "name": "zara_change",
+            "description": "Fictional typed tool.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "value"
+              ]
+            },
+            "strict": false
+          }
+        ],
+        "reasoning": {
+          "effort": "high",
+          "summary": "auto"
+        },
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      }
+    }
+  ]
+}

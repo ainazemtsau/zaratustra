@@ -1,0 +1,10 @@
+{
+  "seed": "C-R6-enumeration-gap",
+  "test": "test_sleep.py::test_enumeration_cannot_skip_to_finished_cursor",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_______________ test_enumeration_cannot_skip_to_finished_cursor _______________\ntests\\restart\\test_sleep.py:658: in test_enumeration_cannot_skip_to_finished_cursor\n    with pytest.raises(CoreError, match=\"enumeration_prefix\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_sleep.py::test_enumeration_cannot_skip_to_finished_cursor\n1 failed in 1.93s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -542,7 +542,7 @@\n                 break\n             prefix.append(ref)\n         if enumerated != prefix:\n-            fail(\"invalid_request\", \"progress.enumeration_prefix\")\n+            print(\"MUTANT_REACHED\", flush=True)\n         for ref in enumerated:\n             source = self._source(db, ref)\n             if (\n"
+}

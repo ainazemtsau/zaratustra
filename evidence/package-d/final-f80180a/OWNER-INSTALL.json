@@ -1,0 +1,20 @@
+{
+  "command": [
+    "pwsh",
+    "-NoProfile",
+    "-File",
+    "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-d\\final-f80180a\\owner-bundle\\Install.ps1",
+    "-RuntimeRoot",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-f80180a-ng1jcae2\\runtime",
+    "-DataRoot",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-f80180a-ng1jcae2\\data",
+    "-PiCli",
+    "C:/Users/Anton/AppData/Roaming/npm/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+    "-PiAuthPath",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-f80180a-ng1jcae2\\FICTIONAL-auth.json"
+  ],
+  "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-f80180a-ng1jcae2",
+  "source": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+  "returncode": 0,
+  "seconds": 3.1343934535980225
+}

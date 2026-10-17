@@ -1,0 +1,10 @@
+{
+  "seed": "C-prepared-pretends-delivery",
+  "test": "test_sleep.py::test_prepared_unknown_is_not_delivered[prepared]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n______________ test_prepared_unknown_is_not_delivered[prepared] _______________\ntests\\restart\\test_sleep.py:173: in test_prepared_unknown_is_not_delivered\n    with pytest.raises(CoreError, match=\"unobserved_delivery\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_sleep.py::test_prepared_unknown_is_not_delivered[prepared]\n1 failed in 1.14s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -555,7 +555,7 @@\n                 loads(o[\"body\"])[\"kind\"] == \"terminal\" and not loads(o[\"body\"])[\"late\"]\n                 for o in observed\n             ):\n-                fail(\"invalid_request\", \"progress.unobserved_delivery\")\n+                print(\"MUTANT_REACHED\", flush=True)\n             if source_work[\"id\"] != work[\"id\"] or digest(materials) != manifest[\"sha256\"]:\n                 fail(\"stale_basis\", \"progress.delivery\")\n             delivered.extend(m[\"source_ref\"] for m in materials)\n"
+}

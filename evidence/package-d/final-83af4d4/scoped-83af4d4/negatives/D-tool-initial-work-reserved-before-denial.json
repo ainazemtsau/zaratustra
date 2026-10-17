@@ -1,0 +1,10 @@
+{
+  "seed": "D-tool-initial-work-reserved-before-denial",
+  "test": "test_work_handoff.py::test_active_model_tool_cannot_mint_independent_budget[sleep]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n________ test_active_model_tool_cannot_mint_independent_budget[sleep] _________\ntests\\restart\\test_work_handoff.py:332: in test_active_model_tool_cannot_mint_independent_budget\n    assert isinstance(admission, dict) and (admission.get(\"code\"), admission.get(\"field\")) == (\nE   AssertionError: Active model tool must reject independent initial_work before publication\nE   assert (True and ('denied', 't...initial_work') == ('denied', 'n...initial_work')\nE    +  where True = isinstance({'code': 'denied', 'field': 'tool.initial_work', 'retry_policy': 'never', 'diagnostic_id': 'bb7ad8e7a2d40b98'}, dict)\nE     \nE     At index 1 diff: 'tool.initial_work' != 'native_tool.initial_work'\nE     Use -v to get more diff)\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_work_handoff.py::test_active_model_tool_cannot_mint_independent_budget[sleep]\n1 failed in 5.13s\n",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/coordinator.py\n+++ app/src/zaratustra_app/coordinator.py.mutant\n@@ -181,7 +181,7 @@\n             if contract.get(\"version\") == \"ordinary-routing/1\":\n                 raise CoreError(\"denied\", \"ordinary.routing_atomic_handoff\")\n             if intent.get(\"initial_work\") is not None:\n-                raise CoreError(\"denied\", \"native_tool.initial_work\")\n+                print(\"MUTANT_REACHED\", flush=True)\n             if contract.get(\"version\") == \"ordinary-execution/2\":\n                 from .ordinary import subject_scope\n \n"
+}

@@ -1,0 +1,10 @@
+{
+  "seed": "D-declared-reference-admission-skipped",
+  "test": "test_schema_references.py::test_dangling_schema_ref_rejects_entire_bundle[refs-commit_outcome]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_____ test_dangling_schema_ref_rejects_entire_bundle[refs-commit_outcome] _____\ntests\\restart\\test_schema_references.py:69: in test_dangling_schema_ref_rejects_entire_bundle\n    with pytest.raises(CoreError, match=\"missing_ref\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_schema_references.py::test_dangling_schema_ref_rejects_entire_bundle[refs-commit_outcome]\n1 failed in 1.64s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -374,7 +374,7 @@\n             if change.get(\"schema_ref\"):\n                 schema = self._exact(db, change[\"schema_ref\"])\n                 for ref in value_references(change[\"body\"], schema[\"body\"][\"value\"]):\n-                    self._exact(db, ref | {\"role\": \"exact\"})\n+                    print(\"MUTANT_REACHED\", flush=True)\n             value = change[\"body\"]\n             if isinstance(value, dict) and value.get(\"format\") == \"sleep-progress/v1\":\n                 if change[\"kind\"] != \"data\":\n"
+}

@@ -1,0 +1,57 @@
+{
+  "kind": "Package D final evidence/document-only candidate export",
+  "source_commit": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+  "candidate_commit": "Returned separately after committing this immutable inventory; no self-referential commit field",
+  "allowed_changed_paths": [
+    "RESULT.md",
+    "docs/restart/PACKAGE-D-RETURN.md",
+    "docs/restart/PACKAGE-D-RUNTIME.md",
+    "docs/restart/PACKAGE-D-NEXT-PROPOSAL.md",
+    "docs/restart/PACKAGE-D-RESOURCE-PROFILE-PROPOSAL.md",
+    "evidence/package-d/**"
+  ],
+  "source_tests_tools_changed": false,
+  "source_review": "READY_FOR_CANDIDATE_RECONCILIATION",
+  "owner_acceptance": false,
+  "gates": {
+    "native": {
+      "passed": 1818,
+      "pytest_seconds": 1866.03,
+      "actual_exit": 0
+    },
+    "scoped": {
+      "passed": 420,
+      "pytest_seconds": 712.16,
+      "actual_exit": 0
+    },
+    "reached_controls": 82
+  },
+  "source_archive_sha256": "a68676b5be8f6be31f8a1302ef602e8162a027c29c27f68d6ad0fcd146ce3beb",
+  "owner_archive_sha256": "df1e8f75ccb3e5b8454ff4e5cca85bc48cd0540d92260122c47624b5f6c5b6a5",
+  "independent_review_zip_sha256": "a62be75bf017fb778493a386328dace0af29bd229ad63562c805b01ce3d1756f",
+  "independent_review_original_inventory_sha256": "eaf74b349d137fd543a4a185855ea2ff966f3da98e2a6872035011dccd9d1346",
+  "review_custody_verification": "final-f80180a/independent-source-review/INDEPENDENT-REVIEW-VERIFICATION.json",
+  "evidence_inventory": "FINAL-EVIDENCE-INVENTORY.json",
+  "inventory_excludes": [
+    "FINAL-EVIDENCE-INVENTORY.json itself"
+  ],
+  "export_excludes": [
+    "real account credential file contents",
+    "actual owner credentials/grants",
+    "OS temp runtime and data trees",
+    "ignored scratch and environment trees"
+  ],
+  "negative_history": "Original failures, interrupted/superseded runs and immutable independent negative checkpoints retained as evidence, not relabelled PASS",
+  "live": {
+    "writer_sends": 0,
+    "fourth_overall_trace_sends": 7,
+    "limit_per_chain": 8,
+    "total_limit": 24,
+    "assessment": "PASS_LIMITED_SINGLE_TRACE",
+    "known_tokens": 58597,
+    "actual_billing": "unknown",
+    "hard_token_or_money_ceiling": false,
+    "fifth": false
+  },
+  "scope": "No push, merge, publication, source mutation, new suite or live retry in candidate reconciliation"
+}

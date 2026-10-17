@@ -1,0 +1,40 @@
+{
+  "scope": "Immutable original independent negative review exports; original product raw histories remain separate",
+  "files": [
+    {
+      "path": "1b6d1a3-checkpoint-retention.json",
+      "bytes": 512,
+      "sha256": "1a7876a5e7110fb72d492cf55ecd4f162843f2af4223d9fa43115baf4ae019ed"
+    },
+    {
+      "path": "1b6d1a3-negative-checkpoint.zip",
+      "bytes": 398633,
+      "sha256": "876b401995f499ab6d3c74fbe3c4eaee646a4f354bc2b5dfaf0ddb94103d711d"
+    },
+    {
+      "path": "83af4d4-checkpoint-retention.json",
+      "bytes": 514,
+      "sha256": "1e8006dd034c40be14345ad85ea8ad038cdd8407a0f3dc4a1a3bf3b3d1a4f982"
+    },
+    {
+      "path": "83af4d4-checkpoint-verification.json",
+      "bytes": 231,
+      "sha256": "5e21980ca70cae7537b40709a3e83f01b76941a7b98b05396831968a11717993"
+    },
+    {
+      "path": "83af4d4-negative-checkpoint.zip",
+      "bytes": 742947,
+      "sha256": "dfbcc93344d661d945274eac9f9612ae1a1cea2d728eeb62979a9b42c016d224"
+    },
+    {
+      "path": "f072-checkpoint-retention.json",
+      "bytes": 506,
+      "sha256": "b9bfb875c2847e02a7284e1eb8b055fed7e793e849e1a5aa5645ff9f9dc58040"
+    },
+    {
+      "path": "f072-negative-checkpoint.zip",
+      "bytes": 554878,
+      "sha256": "b36507317c06d826c440a618b110863769194f4febc27c4745637f069108c888"
+    }
+  ]
+}

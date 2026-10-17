@@ -1,0 +1,10 @@
+{
+  "seed": "D-native-null-mode-leaks-api-key-profile",
+  "test": "test_sleep_profile.py::test_api_key_preexisting_profile_reopens_unchanged",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_____________ test_api_key_preexisting_profile_reopens_unchanged ______________\ntests\\restart\\test_sleep_profile.py:167: in test_api_key_preexisting_profile_reopens_unchanged\n    assert cli.main() == 0 and cli.main() == 0\nE   assert (1 == 0)\nE    +  where 1 = <function main at 0x0000020A1FF2C4A0>()\nE    +    where <function main at 0x0000020A1FF2C4A0> = cli.main\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n---------------------------- Captured stderr call -----------------------------\n{\"error\": {\"code\": \"stale_basis\", \"field\": \"profile.configuration\", \"retry_policy\": \"after_refresh\", \"diagnostic_id\": \"4c36e07812fd73a7\"}}\n=========================== short test summary info ===========================\nFAILED tests/restart/test_sleep_profile.py::test_api_key_preexisting_profile_reopens_unchanged\n1 failed in 1.09s\n",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/executor_port.py\n+++ app/src/zaratustra_app/executor_port.py.mutant\n@@ -124,7 +124,7 @@\n \n     def configuration(self) -> dict[str, Any]:\n         value = asdict(self)\n-        if self.native_resource_mode is None:\n+        if (print(\"MUTANT_REACHED\", flush=True) or False):\n             del value[\"native_resource_mode\"]\n         return value\n \n"
+}

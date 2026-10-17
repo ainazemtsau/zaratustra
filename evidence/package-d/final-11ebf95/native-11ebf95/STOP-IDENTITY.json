@@ -1,0 +1,14 @@
+[
+  {
+    "ProcessId": 58528,
+    "ParentProcessId": 87276,
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -m pytest tests -q"
+  },
+  {
+    "ProcessId": 105540,
+    "ParentProcessId": 58528,
+    "Name": "python.exe",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -m pytest tests -q"
+  }
+]

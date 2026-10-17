@@ -1,0 +1,9 @@
+{
+  "immutable": {
+    "f072-negative-checkpoint.zip": "b36507317c06d826c440a618b110863769194f4febc27c4745637f069108c888",
+    "11ebf95-negative-checkpoint.zip": "f8c253a51e06e0aaab156a7000e2c492d7c0a7188e26238e5e1f334b7259a043",
+    "0fff808-negative-checkpoint.zip": "20ddacb1c4914c4ab8d05ebc4b405d81ee1e63d86df7e9b26bb9f803693cdc22",
+    "83af4d4-negative-checkpoint.zip": "dfbcc93344d661d945274eac9f9612ae1a1cea2d728eeb62979a9b42c016d224"
+  },
+  "other_history": "1b6d1a4 technical failure ZIP SHA876b401995f499ab6d3c74fbe3c4eaee646a4f354bc2b5dfaf0ddb94103d711d; source6760 no live; ac58 interim SDK proof studied. Negative history and findings remain retained at original locations; none is relabeled PASS."
+}

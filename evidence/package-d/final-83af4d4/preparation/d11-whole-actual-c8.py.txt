@@ -1,0 +1,21 @@
+from pathlib import Path
+import hashlib,json,sqlite3,tempfile,sys
+sys.path.insert(0,str(Path.cwd()))
+from zaratustra_core import Core,wire
+from zaratustra_app import Pi
+from zaratustra_app.ordinary import outcome
+r=Path.cwd();p=r/'_scratch/binding-review-d-20261016/review-0fff808/g14-installed';info=json.loads((p/'execution.json').read_bytes());original=Path(info['data_root'])/'core.sqlite3';base=Path(tempfile.mkdtemp(prefix='d11-actual-terminal-c8-',dir=r/'_scratch'));core,token=Core.initialize(base/'space')
+# Public owned-local fixture rows only. Never SELECT/copy source credentials or grants,
+# never open owner.credential/OAuth, and never mutate the original G14 data.
+with sqlite3.connect('file:'+original.as_posix()+'?mode=ro',uri=True) as src,sqlite3.connect(core.root/'core.sqlite3') as dst:
+ dst.execute('PRAGMA foreign_keys=OFF')
+ tables=[row[0] for row in src.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'") if row[0] not in {'credentials','grants'}]
+ for name in tables:
+  assert name.replace('_','').isalnum();rows=src.execute('SELECT * FROM "'+name+'"').fetchall();dst.execute('DELETE FROM "'+name+'"')
+  if rows:dst.executemany('INSERT INTO "'+name+'" VALUES('+','.join('?' for _ in rows[0])+')',rows)
+ assert not dst.execute('SELECT * FROM artifacts').fetchall()
+ dst.commit();assert not dst.execute('PRAGMA foreign_key_check').fetchall()
+client=core.connect(token);state=client.call('read_snapshot',{},'offline-before');held=next(a for a in state['attempts'] if a['status']=='claimed');work=next(w for w in state['works'] if w['id']==held['work']);decoded=Pi.decode((p/'reopen-retained-terminal.bin').read_bytes());normalized=outcome(decoded,held,work,lambda scope,refs:refs)
+payload={'attempt_id':held['id'],'generation':held['generation'],'terminal_event':'terminal','original_cursor':held['original_cursor'],'processed_cutoff':normalized['processed_cutoff'],'state':normalized['state'],'text':normalized['text'],'outputs':normalized['outputs'],'changes':normalized['changes'],'next_work':normalized['next_work']}
+result=client.call('commit_outcome',payload,'offline-original-terminal',expected_heads=decoded['expected_heads']);after=client.call('read_snapshot',{},'offline-after');child=next(w for w in after['works'] if w['id']==result['next_work_id']);assert json.loads(child['body'])['goal'].encode()==decoded['next_work']['goal'].encode();assert after['conversations'][0]['cursor']==held['original_cursor'];core.backup(token,base/'backup')
+v={'status':'PASS','original_native_terminal_sha256':hashlib.sha256((p/'reopen-retained-terminal.bin').read_bytes()).hexdigest(),'whole_actual_terminal_C8_admission':'PASS, all original changes/expected_heads/refs against copied public original state','actual_goal_length':len(decoded['next_work']['goal']),'actual_goal_bytes_preserved':True,'atomic_continuation_created':True,'pending_original_cursor_preserved':True,'backup_reference_closure':'PASS','source_credentials_or_grants_selected':False,'credential_files_or_OAuth_read':False,'original_data_modified':False,'model_calls':0,'fixture_root':str(base)};(r/'_scratch/d11-whole-actual-c8.json').write_text(json.dumps(v,indent=2));print(json.dumps(v,indent=2))

@@ -1,0 +1,34 @@
+import hashlib,json,shutil,subprocess,sys,tempfile,tomllib,urllib.request,urllib.parse,zipfile
+from pathlib import Path
+root=Path.cwd();e=root/'evidence/package-d/final-7862c33';bundle=e/'owner-bundle';bundle.mkdir()
+wheels=bundle/'wheels';wheels.mkdir()
+builds=e/'install-7862c33/physical-builds'
+for path in builds.glob('*.whl'):shutil.copyfile(path,wheels/path.name)
+installed=json.loads((e/'install-7862c33/dependencies.stdout.bin').read_bytes())['packages']
+lock=tomllib.loads((root/'uv.lock').read_text(encoding='utf-8'))
+def normalized(name):return name.replace('_','-').lower()
+rows=[]
+for name,version in installed:
+ if normalized(name) in {'zaratustra-core','zaratustra-next'}:continue
+ package=next(p for p in lock['package'] if normalized(p['name'])==normalized(name) and p['version']==version)
+ candidates=[w for w in package['wheels'] if w['url'].endswith(('py3-none-any.whl','py2.py3-none-any.whl','cp313-cp313-win_amd64.whl'))]
+ assert len(candidates)==1,(name,candidates)
+ selected=candidates[0];url=selected['url'];assert urllib.parse.urlparse(url).hostname=='files.pythonhosted.org'
+ raw=urllib.request.urlopen(url,timeout=60).read()
+ assert 'sha256:'+hashlib.sha256(raw).hexdigest()==selected['hash']
+ target=wheels/url.rsplit('/',1)[-1];target.write_bytes(raw)
+ rows.append({'name':name,'version':version,'url':url,'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw),'wheel':target.name})
+requirements=[]
+for name,version in installed:
+ candidates=[p for p in wheels.glob('*.whl') if p.name.split('-')[0].replace('_','-')==normalized(name)]
+ assert len(candidates)==1,(name,candidates)
+ requirements.append(name+'=='+version+' --hash=sha256:'+hashlib.sha256(candidates[0].read_bytes()).hexdigest())
+(bundle/'requirements.txt').write_text('\n'.join(requirements)+'\n',encoding='utf-8')
+for name in ['Install.ps1','Start.ps1']:shutil.copyfile(e/name,bundle/name)
+(bundle/'README.txt').write_text('Package D source 7862c3353ec87eee0a7d00ec6e051134d27d07fa. Technical checkpoint; independent review/live G14/owner acceptance pending. Requires Windows x64, PowerShell 7, uv and Python 3.13.7. Pi 1.0.4 + Node 22.19.0 + its own OpenAI ChatGPT consent are declared separately for conversation. Core/app wheels and all Python runtime dependency wheels are included with hashes. No fictional Activity or personal data is seeded. See docs/restart/PACKAGE-D-RUNTIME.md for exact use and limits.\n',encoding='utf-8')
+manifest={'source':'7862c3353ec87eee0a7d00ec6e051134d27d07fa','dependencies':rows,'files':[{'path':p.relative_to(bundle).as_posix(),'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size} for p in sorted(bundle.rglob('*')) if p.is_file()]}
+(e/'OWNER-BUNDLE-MANIFEST.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+with zipfile.ZipFile(e/'zaratustra-next-d-7862c33-windows-x64.zip','w',compression=zipfile.ZIP_DEFLATED) as archive:
+ for path in sorted(bundle.rglob('*')):
+  if path.is_file():archive.write(path,path.relative_to(bundle))
+print(json.dumps({'wheels':len(list(wheels.glob('*.whl'))),'offline_python_dependencies':True}))

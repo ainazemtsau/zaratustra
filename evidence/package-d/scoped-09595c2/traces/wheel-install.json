@@ -1,0 +1,18 @@
+{
+  "core_only": {
+    "core": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d-build-env-10\\test_built_wheels_are_independ0\\install-843512bdc01048eabe61917253da2ac8\\env\\Lib\\site-packages\\zaratustra_core\\__init__.py",
+    "independent": true
+  },
+  "installed_driver": {
+    "core": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d-build-env-10\\test_built_wheels_are_independ0\\install-843512bdc01048eabe61917253da2ac8\\env\\Lib\\site-packages\\zaratustra_core\\__init__.py",
+    "app": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d-build-env-10\\test_built_wheels_are_independ0\\install-843512bdc01048eabe61917253da2ac8\\env\\Lib\\site-packages\\zaratustra_app\\__init__.py",
+    "cursor": 22,
+    "effects": 2
+  },
+  "outside_checkout": false,
+  "environment": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d-build-env-10\\test_built_wheels_are_independ0\\install-843512bdc01048eabe61917253da2ac8\\env",
+  "wheel_sha256": {
+    "zaratustra_core-0.1.0-py3-none-any.whl": "c92ab0deb4c87c987717160f8f5ed12149febf300aada59dcee28ad116ddb9a0",
+    "zaratustra_next-0.1.0-py3-none-any.whl": "bde1adc1017f09e51dc745c2f9be70fb48250bd72f8fd4830eb7be6e5abd8c70"
+  }
+}

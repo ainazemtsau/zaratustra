@@ -1,0 +1,565 @@
+diff --git a/packages/app/src/zaratustra_app/cli.py b/packages/app/src/zaratustra_app/cli.py
+index 9bd29e2..bb9b4af 100644
+--- a/packages/app/src/zaratustra_app/cli.py
++++ b/packages/app/src/zaratustra_app/cli.py
+@@ -3,7 +3,6 @@
+ import argparse
+ import json
+ import sys
+-from dataclasses import asdict
+ from pathlib import Path
+ from uuid import uuid4
+ 
+@@ -89,7 +88,7 @@ def _main() -> int:
+         core = Core(args.data_root)
+         token = (args.data_root / "owner.credential").read_text(encoding="utf-8").strip()
+         session = Conversation(core, token, args.conversation)
+-        descriptor = asdict(profile) | {
++        descriptor = profile.configuration() | {
+             "pi_cli": str(pi_cli.resolve()),
+             "resource_upper": Pi.resource_upper,
+         }
+@@ -139,7 +138,7 @@ def _main() -> int:
+         token = (args.data_root / "owner.credential").read_text(encoding="utf-8").strip()
+         owner = core.connect(token)
+         profile_id = args.work_id + ":profile"
+-        descriptor = asdict(profile) | {
++        descriptor = profile.configuration() | {
+             "pi_cli": str(pi_cli.resolve()),
+             "resource_upper": Pi.resource_upper,
+         }
+diff --git a/packages/app/src/zaratustra_app/executor_port.py b/packages/app/src/zaratustra_app/executor_port.py
+index fd07e96..a89cdf1 100644
+--- a/packages/app/src/zaratustra_app/executor_port.py
++++ b/packages/app/src/zaratustra_app/executor_port.py
+@@ -10,7 +10,7 @@ import shutil
+ import subprocess
+ import threading
+ import time
+-from dataclasses import dataclass
++from dataclasses import asdict, dataclass
+ from pathlib import Path
+ from typing import Any, Protocol, cast
+ 
+@@ -83,6 +83,7 @@ class LiveProfile:
+     timeout: int = 150
+     auth_mode: str = "api-key"
+     auth_path: str | None = None
++    native_resource_mode: str | None = None
+ 
+     def __post_init__(self) -> None:
+         if any(
+@@ -92,8 +93,13 @@ class LiveProfile:
+             for v in (self.max_tokens, self.context_window, self.timeout)
+         ):
+             raise CoreError("invalid_request", "live_profile")
++        if self.auth_mode == "pi-chatgpt" and self.native_resource_mode != "calls-only":
++            raise CoreError("unsupported_capability", "native.resource_mode.calls_only_required")
++        if self.auth_mode != "pi-chatgpt" and self.native_resource_mode is not None:
++            raise CoreError("invalid_request", "live_profile.native_resource_mode")
+         if self.auth_mode == "pi-chatgpt" and 0 < self.max_tokens < 16:
+-            raise CoreError("unsupported_capability", "native.max_output_tokens.minimum16")
++            # Retained local SDK sizing admission; native has no hard token bound.
++            raise CoreError("unsupported_capability", "native.local_context_sizing.minimum16")
+         if (
+             not self.endpoint.startswith("https://")
+             or not self.model
+@@ -116,6 +122,12 @@ class LiveProfile:
+         ):
+             raise CoreError("invalid_request", "live_profile")
+ 
++    def configuration(self) -> dict[str, Any]:
++        value = asdict(self)
++        if self.native_resource_mode is None:
++            del value["native_resource_mode"]
++        return value
++
+     def bearer(self) -> str:
+         value = os.environ.get(self.credential_env)
+         if not value:
+@@ -211,11 +223,17 @@ class Pi:
+                                     self.live.model: {
+                                         "maxTokens": self.live.max_tokens,
+                                         "contextWindow": self.live.context_window,
++                                        "samplingParams": {
++                                            "text": {"format": {"type": "json_object"}}
++                                        },
+                                         # The loopback bridge hides the public URL from
+                                         # Pi's automatic ChatGPT compatibility detection.
+                                         # Use its native switch: keep effective reasoning
+                                         # at request level, without unsupported input items.
+-                                        "compat": {"supportsMidConvoEffort": False},
++                                        "compat": {
++                                            "supportsMidConvoEffort": False,
++                                            "supportsMaxOutputTokens": False,
++                                        },
+                                     }
+                                 },
+                             }
+diff --git a/tests/restart/test_conversation.py b/tests/restart/test_conversation.py
+index 594aaa0..fe91db9 100644
+--- a/tests/restart/test_conversation.py
++++ b/tests/restart/test_conversation.py
+@@ -277,9 +277,48 @@ def response_events(text: str) -> bytes:
+     ).encode()
+ 
+ 
++def response_tool_events() -> bytes:
++    intent = {
++        "changes": [
++            {
++                "id": "native-tool-note",
++                "kind": "data",
++                "key": "native-note",
++                "scope": "model-selected",
++                "body": "fictional durable tool effect",
++            }
++        ],
++        "expected_heads": {"native-tool-note": 0},
++    }
++    item: dict[str, Any] = {
++        "type": "function_call",
++        "id": "fc_fictional",
++        "call_id": "call_fictional",
++        "name": "zara_change",
++        "arguments": json.dumps({"intent_json": json.dumps(intent)}),
++        "status": "completed",
++    }
++    response: dict[str, Any] = {
++        "id": "resp-fictional-tool",
++        "status": "completed",
++        "output": [item],
++        "usage": {"input_tokens": 20, "output_tokens": 20, "total_tokens": 40},
++    }
++    events: list[dict[str, Any]] = [
++        {"type": "response.created", "response": response | {"output": []}},
++        {"type": "response.output_item.added", "output_index": 0, "item": item},
++        {"type": "response.output_item.done", "output_index": 0, "item": item},
++        {"type": "response.completed", "response": response},
++    ]
++    return "".join(
++        "event: " + e["type"] + chr(10) + "data: " + json.dumps(e) + chr(10) * 2 for e in events
++    ).encode()
++
++
++@pytest.mark.parametrize("tool_followup", [False, True])
+ @pytest.mark.parametrize("max_tokens", [16, 64])
+ def test_native_pi_oauth_launcher_controlled(
+-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, max_tokens: int
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, max_tokens: int, tool_followup: bool
+ ) -> None:
+     """Actual Pi SDK with FICTIONAL OAuth; no external model or account access."""
+     auth = tmp_path / "fictional-auth.json"
+@@ -326,15 +365,21 @@ def test_native_pi_oauth_launcher_controlled(
+                 and payload["store"] is False
+                 and payload["stream"] is True
+             )
+-            assert payload["max_output_tokens"] == max_tokens
++            assert "max_output_tokens" not in payload
++            assert payload["text"] == {"format": {"type": "json_object"}}
+             # The native SDK must use the selected effort at request level: the
+             # ChatGPT route rejects configuration_update input items.
+             assert payload["reasoning"]["effort"] == "medium"
+-            assert [item.get("role") for item in payload["input"]] == ["developer", "user"]
++            assert not any(i.get("type") == "configuration_update" for i in payload["input"])
++            assert [item.get("role") for item in payload["input"][:2]] == ["developer", "user"]
+             assert payload["input"][0]["content"]
+             assert "mechanical input" in payload["input"][1]["content"][0]["text"]
+             assert [tool["name"] for tool in payload["tools"]] == ["zara_change"]
+             received.append(payload)
++            if tool_followup and len(received) == 2:
++                return Response(response_tool_events())
++            if tool_followup and len(received) == 3:
++                assert any(i.get("type") == "function_call_output" for i in payload["input"])
+             supplied = json.loads(payload["input"][1]["content"][0]["text"])
+             output = (
+                 routing(supplied["context"], "model-selected") if len(received) == 1 else terminal
+@@ -349,6 +394,7 @@ def test_native_pi_oauth_launcher_controlled(
+         endpoint="https://api.openai.com/v1",
+         model="gpt-6-luna",
+         auth_mode="pi-chatgpt",
++        native_resource_mode="calls-only",
+         auth_path=str(auth),
+         max_tokens=max_tokens,
+         context_window=8192,
+@@ -356,7 +402,8 @@ def test_native_pi_oauth_launcher_controlled(
+     executor = Pi(pi_cli(), tmp_path / "pi", live.endpoint, live=live)
+     result = session.run(executor, {"profile": "fictional-native-oauth"}, 4)
+     assert result["text"] == terminal["text"] and result["state"] == "completed"
+-    assert len(received) == 2 and executor.provider_sends == 1
++    assert len(received) == (3 if tool_followup else 2)
++    assert executor.provider_sends == (2 if tool_followup else 1)
+     assert sum(a["reserve"] for a in inspect(core, "actions")) == 4
+     assert next(h for h in inspect(core, "heads") if h["id"] == "model-selected")["revision"] == 2
+     stdout = next((tmp_path / "pi").glob("*/native-stdout.jsonl")).read_bytes()
+@@ -367,6 +414,67 @@ def test_native_pi_oauth_launcher_controlled(
+     models = json.loads(next((tmp_path / "pi").glob("*/agent/models.json")).read_bytes())
+     selected = models["providers"]["openai"]["modelOverrides"]["gpt-6-luna"]
+     assert selected["maxTokens"] == max_tokens and selected["contextWindow"] == 8192
++    assert selected["samplingParams"] == {"text": {"format": {"type": "json_object"}}}
++    assert selected["compat"]["supportsMaxOutputTokens"] is False
++    if tool_followup:
++        assert (
++            next(h for h in inspect(core, "heads") if h["id"] == "native-tool-note")["revision"]
++            == 1
++        )
++        assert len(inspect(core, "tool_calls")) == 1
++        assert (
++            Conversation(Core(core.root), token).run(
++                executor, {"profile": "fictional-native-oauth"}, 4
++            )["state"]
++            == "idle"
++        )
++        assert len(received) == 3
++
++
++def test_api_key_pi_retains_output_field(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
++    received: list[dict[str, Any]] = []
++
++    class Response(io.BytesIO):
++        status = 200
++        headers = {"Content-Type": "text/event-stream"}
++
++    class ControlledTransport:
++        def open(self, request: Any, timeout: int) -> Response:
++            assert request.full_url == "https://provider.invalid/v1/responses"
++            assert request.get_header("Authorization") == "Bearer fictional-api-key"
++            payload = json.loads(request.data)
++            assert payload["max_output_tokens"] == 64 and "text" not in payload
++            received.append(payload)
++            supplied = json.loads(payload["input"][1]["content"][0]["text"])
++            output = (
++                routing(supplied["context"], "api-key-activity")
++                if len(received) == 1
++                else {
++                    "state": "completed",
++                    "text": "fictional API-key result",
++                    "outputs": [{"id": "api-key-activity", "revision": 1}],
++                }
++            )
++            return Response(response_events(json.dumps(output)))
++
++    monkeypatch.setattr(bridge, "build_opener", lambda *_: ControlledTransport())
++    monkeypatch.setenv("FICTIONAL_API_KEY", "fictional-api-key")
++    core, token = Core.initialize(tmp_path / "space")
++    session = Conversation(core, token)
++    session.submit("API-key mechanics only.")
++    profile = LiveProfile(
++        endpoint="https://provider.invalid/v1",
++        model="fictional-model",
++        credential_env="FICTIONAL_API_KEY",
++        max_tokens=64,
++        context_window=8192,
++    )
++    executor = Pi(pi_cli(), tmp_path / "pi", profile.endpoint, live=profile)
++    assert (
++        session.run(executor, {"profile": "fictional-api-key"}, 4)["text"]
++        == "fictional API-key result"
++    )
++    assert len(received) == 2
+ 
+ 
+ @pytest.mark.parametrize("mode", ["api-key-refused", "refresh-error"])
+@@ -420,6 +528,7 @@ def test_native_auth_errors_never_fallback_or_leak(
+         endpoint="https://api.openai.com/v1",
+         model="gpt-6-luna",
+         auth_mode="pi-chatgpt",
++        native_resource_mode="calls-only",
+         auth_path=str(auth),
+         timeout=30,
+     )
+diff --git a/tests/restart/test_delivery_controls.py b/tests/restart/test_delivery_controls.py
+index 17cfad2..513b81b 100644
+--- a/tests/restart/test_delivery_controls.py
++++ b/tests/restart/test_delivery_controls.py
+@@ -10,6 +10,56 @@ from .test_negative_controls import test_seeded_defect_is_killed as run_seed
+ STORAGE = "core/src/zaratustra_core/storage.py"
+ MAINTENANCE = "core/src/zaratustra_core/maintenance.py"
+ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
++    (
++        "D-native-null-mode-leaks-api-key-profile",
++        "app/src/zaratustra_app/executor_port.py",
++        [("if self.native_resource_mode is None:", "if (" + M + " or False):")],
++        "test_sleep_profile.py::test_api_key_preexisting_profile_reopens_unchanged",
++    ),
++    (
++        "D-native-unsupported-token-field-restored",
++        "app/src/zaratustra_app/executor_port.py",
++        [
++            (
++                '"supportsMaxOutputTokens": False',
++                '"supportsMaxOutputTokens": (' + M + " or True)",
++            )
++        ],
++        "test_conversation.py::test_native_pi_oauth_launcher_controlled",
++    ),
++    (
++        "D-native-resource-mode-implicit",
++        "app/src/zaratustra_app/executor_port.py",
++        [
++            (
++                'if self.auth_mode == "pi-chatgpt" and self.native_resource_mode != "calls-only":',
++                "if (" + M + " or False):",
++            )
++        ],
++        "test_native_resource_profile.py::test_native_resource_mode_must_be_explicit",
++    ),
++    (
++        "D-native-json-mode-omitted",
++        "app/src/zaratustra_app/executor_port.py",
++        [
++            (
++                '"text": {"format": {"type": "json_object"}}',
++                '"text": (' + M + " or {})",
++            )
++        ],
++        "test_conversation.py::test_native_pi_oauth_launcher_controlled",
++    ),
++    (
++        "D-native-json-mode-text",
++        "app/src/zaratustra_app/executor_port.py",
++        [
++            (
++                '"type": "json_object"',
++                '"type": (' + M + ' or "text")',
++            )
++        ],
++        "test_conversation.py::test_native_pi_oauth_launcher_controlled",
++    ),
+     (
+         "D-goal-prose-capped-as-identifier",
+         "core/src/zaratustra_core/shapes.py",
+@@ -187,8 +237,8 @@ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
+         "app/src/zaratustra_app/executor_port.py",
+         [
+             (
+-                '"compat": {"supportsMidConvoEffort": False}',
+-                '"compat": {"supportsMidConvoEffort": (' + M + " or True)}",
++                '"supportsMidConvoEffort": False',
++                '"supportsMidConvoEffort": (' + M + " or True)",
+             )
+         ],
+         "test_conversation.py::test_native_pi_oauth_launcher_controlled",
+diff --git a/tests/restart/test_native_resource_profile.py b/tests/restart/test_native_resource_profile.py
+new file mode 100644
+index 0000000..843c99f
+--- /dev/null
++++ b/tests/restart/test_native_resource_profile.py
+@@ -0,0 +1,80 @@
++"""Native subscription resource choice is explicit; no credential access for admission."""
++
++from dataclasses import asdict
++from pathlib import Path
++from typing import Any
++
++import pytest
++from zaratustra_app import LiveProfile
++from zaratustra_core import CoreError
++
++from .support import METHOD, fixture, inspect
++
++
++@pytest.mark.parametrize("mode", [None, "token-limit", "money-limit", True, 8, {}])
++def test_native_resource_mode_must_be_explicit(tmp_path: Path, mode: Any) -> None:
++    with pytest.raises(CoreError, match="unsupported_capability"):
++        LiveProfile(
++            endpoint="https://api.openai.com/v1",
++            model="gpt-6-luna",
++            auth_mode="pi-chatgpt",
++            auth_path=str(tmp_path / "nonexistent-auth.json"),
++            native_resource_mode=mode,
++        )
++    assert not list(tmp_path.iterdir())
++
++
++def test_native_calls_only_identity_is_retained_without_auth_read(tmp_path: Path) -> None:
++    profile = LiveProfile(
++        endpoint="https://api.openai.com/v1",
++        model="gpt-6-luna",
++        auth_mode="pi-chatgpt",
++        auth_path=str(tmp_path / "nonexistent-auth.json"),
++        native_resource_mode="calls-only",
++        max_tokens=64,
++    )
++    assert asdict(profile)["native_resource_mode"] == "calls-only"
++    assert profile.configuration()["native_resource_mode"] == "calls-only"
++    assert profile.max_tokens == 64 and not list(tmp_path.iterdir())
++
++
++def test_api_key_profile_retains_requested_output_configuration() -> None:
++    profile = LiveProfile(
++        endpoint="https://provider.invalid/v1",
++        model="selected-model",
++        credential_env="FICTIONAL_SELECTED_KEY",
++        max_tokens=64,
++    )
++    assert profile.max_tokens == 64 and profile.native_resource_mode is None
++    assert "native_resource_mode" not in profile.configuration()
++    with pytest.raises(CoreError, match="live_profile.native_resource_mode"):
++        LiveProfile(
++            endpoint=profile.endpoint,
++            model=profile.model,
++            credential_env=profile.credential_env,
++            native_resource_mode="calls-only",
++        )
++
++
++@pytest.mark.parametrize("limit", [{"token_limit": 64}, {"money_limit": "1.00"}])
++def test_core_noncall_resource_demand_remains_unsupported(
++    tmp_path: Path, limit: dict[str, Any]
++) -> None:
++    core, owner, _ = fixture(tmp_path)
++    assert owner.call("describe_contract", {}, "contract")["resource_units"] == ["calls"]
++    before = inspect(core, "works")
++    with pytest.raises(CoreError, match="unsupported_capability"):
++        owner.call(
++            "open_work",
++            {
++                "id": "unsupported-work",
++                "conversation": "conversation",
++                "goal": "fictional bounded demand",
++                "method_ref": METHOD,
++                "call_limit": 8,
++                "continuation_policy": "durable",
++            }
++            | limit,
++            "unsupported-demand",
++        )
++    assert inspect(core, "works") == before and inspect(core, "actions") == []
+diff --git a/tests/restart/test_ordinary_activity.py b/tests/restart/test_ordinary_activity.py
+index 3d3f092..f7b434f 100644
+--- a/tests/restart/test_ordinary_activity.py
++++ b/tests/restart/test_ordinary_activity.py
+@@ -238,6 +238,7 @@ def test_native_cap_below_sdk_floor_refused_before_runtime(tmp_path: Path, cap:
+             endpoint="https://api.openai.com/v1",
+             model="gpt-6-luna",
+             auth_mode="pi-chatgpt",
++            native_resource_mode="calls-only",
+             auth_path=str(tmp_path / "unused-auth.json"),
+             max_tokens=cap,
+             context_window=8192,
+diff --git a/tests/restart/test_sleep_profile.py b/tests/restart/test_sleep_profile.py
+index b571ba3..2150148 100644
+--- a/tests/restart/test_sleep_profile.py
++++ b/tests/restart/test_sleep_profile.py
+@@ -26,7 +26,11 @@ from zaratustra_core import Core, CoreError
+     ],
+ )
+ def test_cli_profile_drift_refused(
+-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str, value: Any
++    tmp_path: Path,
++    monkeypatch: pytest.MonkeyPatch,
++    capsys: pytest.CaptureFixture[str],
++    field: str,
++    value: Any,
+ ) -> None:
+     core, token = Core.initialize(tmp_path / "space")
+     (core.root / "owner.credential").write_text(token, encoding="utf-8")
+@@ -43,7 +47,10 @@ def test_cli_profile_drift_refused(
+         self: Sleep, work_id: str, profile_ref: dict[str, Any], executor: Any
+     ) -> dict[str, Any]:
+         pinned = self.client.call("read_exact", profile_ref, "capture-profile")
+-        received.append({"pinned": pinned["body"]["value"], "actual": asdict(executor.live)})
++        actual = asdict(executor.live)
++        if actual["native_resource_mode"] is None:
++            del actual["native_resource_mode"]
++        received.append({"pinned": pinned["body"]["value"], "actual": actual})
+         return {"state": "ready"}
+ 
+     monkeypatch.setattr(Sleep, "run", execute)
+@@ -66,10 +73,14 @@ def test_cli_profile_drift_refused(
+     assert cli.main() == 0
+     assert len(received) == 1
+     assert all(received[0]["pinned"][key] == value for key, value in received[0]["actual"].items())
++    capsys.readouterr()
+     selected[field] = value
+     profile.write_text(json.dumps(selected), encoding="utf-8")
+-    with pytest.raises(CoreError, match="profile.configuration"):
+-        cli.main()
++    assert cli.main() == 1
++    output = capsys.readouterr()
++    error = json.loads(output.err)["error"]
++    assert error["code"] == "stale_basis" and error["field"] == "profile.configuration"
++    assert not output.out
+     assert len(received) == 1
+     snapshot = core.connect(token).call("read_snapshot", {}, "after-refusal")
+     assert len(snapshot["works"]) == 1 and snapshot["actions"] == []
+@@ -83,3 +94,78 @@ def test_live_profile_resource_types_are_exact(field: str, value: Any) -> None:
+     options = {"endpoint": "https://provider.invalid/v1", "model": "m", "credential_env": "KEY"}
+     with pytest.raises(CoreError, match="live_profile"):
+         LiveProfile(**(options | {field: value}))
++
++
++def test_api_key_preexisting_profile_reopens_unchanged(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    core, token = Core.initialize(tmp_path / "space")
++    (core.root / "owner.credential").write_text(token, encoding="utf-8")
++    profile_file = tmp_path / "api-profile.json"
++    pi_cli = tmp_path / "unused-pi.js"
++    old_descriptor = {
++        "endpoint": "https://provider.invalid/v1",
++        "model": "model-a",
++        "credential_env": "SELECTED_CREDENTIAL",
++        "api": "openai-responses",
++        "max_tokens": 8192,
++        "context_window": 32768,
++        "timeout": 150,
++        "auth_mode": "api-key",
++        "auth_path": None,
++        "pi_cli": str(pi_cli.resolve()),
++        "resource_upper": 2,
++    }
++    profile_file.write_text(
++        json.dumps(
++            {
++                "pi_cli": str(pi_cli),
++                "endpoint": old_descriptor["endpoint"],
++                "model": old_descriptor["model"],
++                "credential_env": old_descriptor["credential_env"],
++            }
++        ),
++        encoding="utf-8",
++    )
++    owner = core.connect(token)
++    ref = {"id": "legacy-work:profile", "revision": 1}
++    owner.call(
++        "apply_changes",
++        {
++            "changes": [
++                {"id": ref["id"], "kind": "profile", "key": ref["id"], "body": old_descriptor}
++            ]
++        },
++        "prechange-profile",
++        expected_heads={str(ref["id"]): 0},
++    )
++    before = owner.call("read_exact", ref, "before")
++    executions: list[dict[str, Any]] = []
++
++    def execute(
++        self: Sleep, work_id: str, profile_ref: dict[str, Any], executor: Any
++    ) -> dict[str, Any]:
++        executions.append(self.client.call("read_exact", profile_ref, "during")["body"]["value"])
++        return {"state": "ready"}
++
++    monkeypatch.setattr(Sleep, "run", execute)
++    monkeypatch.setattr(
++        "sys.argv",
++        [
++            "zaratustra-next",
++            "--data-root",
++            str(core.root),
++            "sleep",
++            "--work-id",
++            "legacy-work",
++            "--call-limit",
++            "6",
++            "--profile-file",
++            str(profile_file),
++        ],
++    )
++    assert cli.main() == 0 and cli.main() == 0
++    assert executions == [old_descriptor, old_descriptor]
++    assert owner.call("read_exact", ref, "after") == before
++    snapshot = owner.call("read_snapshot", {}, "after-state")
++    assert len(snapshot["works"]) == 1 and snapshot["actions"] == []

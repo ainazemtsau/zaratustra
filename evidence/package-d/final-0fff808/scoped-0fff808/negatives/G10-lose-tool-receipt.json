@@ -1,0 +1,10 @@
+{
+  "seed": "G10-lose-tool-receipt",
+  "test": "test_contract.py::test_tool_before_terminal_recovery",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_____________________ test_tool_before_terminal_recovery ______________________\ntests\\restart\\test_contract.py:268: in test_tool_before_terminal_recovery\n    assert inspect(core, \"tool_calls\")[0][\"receipt\"] == \"tool1:command\"\nE   AssertionError: assert None == 'tool1:command'\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_contract.py::test_tool_before_terminal_recovery - A...\n1 failed in 1.79s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -949,12 +949,13 @@\n                 ).fetchone()\n                 if tool is None or tool[\"command\"] != req.command_id:\n                     fail(\"identity_conflict\", \"tool_call\")\n+            print(\"MUTANT_REACHED\", flush=True)\n             refs = self._changes(db, p[\"changes\"], req.expected_heads, actor)\n             if p.get(\"initial_work\"):\n                 self._work(db, p[\"initial_work\"])\n             if correlation:\n                 db.execute(\n-                    \"UPDATE tool_calls SET receipt=? WHERE attempt=? AND native_id=?\",\n+                    \"UPDATE tool_calls SET receipt=? WHERE 0 AND attempt=? AND native_id=?\",\n                     (req.command_id, attempt[\"id\"], correlation[\"native_id\"]),\n                 )\n             return {\"refs\": refs}\n"
+}

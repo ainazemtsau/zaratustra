@@ -1,0 +1,33 @@
+{
+  "source_commit": "83af4d4a529ca73d06d566db62a3586f2a432af9",
+  "scope": "F-D-07 bounded class sweep and shared A\u2013C/D guarantees",
+  "finding": "F-D-07: semantic prose used identifier max240; coupled known CLI refusal escaped as chained traceback",
+  "original_negative": "../final-0fff808/0fff808-negative-checkpoint.zip, untouched; ZIP20ddacb1..., inventory9ca66647...",
+  "changed_surfaces": [
+    "C3 initial_work.goal",
+    "C4 Work.goal",
+    "C8 next_work.goal",
+    "C8 wait.question",
+    "CLI CoreError boundary"
+  ],
+  "prose_invariants": [
+    "strict nonempty str, arbitrary semantic text",
+    "exact Unicode/bytes retained",
+    "no identifier-length inheritance, truncation, regeneration or semantic check",
+    "IDs/keys/scopes/correlations unchanged; aggregate context1MiB unchanged"
+  ],
+  "sweep_tests": {
+    "test_prose_fields.py": "14cases: all shared admissions, long question/replay, IDs241refused, empty/nonstring, malformed retained no resend and safe stderr, valid CLI/developer exception unchanged",
+    "affected": "166PASS274.01s",
+    "D_controls": "31PASS120.25s, reached and behavioral",
+    "actual_terminal": "preparation/d11-whole-actual-c8.json: whole original changes/heads/refs admitted against copied public original state; no sourcecredentials/grants or auth files read, no original modification/live send"
+  },
+  "new_controls": [
+    "D-goal-prose-capped-as-identifier",
+    "D-question-prose-capped-as-identifier",
+    "D-known-core-refusal-escapes-cli"
+  ],
+  "full_native_scoped": "pending exact frozen runs; actual counts/exits in final provenance only",
+  "independent": "same separate physical reviewer owns fresh postfreeze rubric and third/last trial; author does not choose scenario or response",
+  "whole_D_ready": false
+}

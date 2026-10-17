@@ -1,0 +1,19 @@
+import subprocess,os,json,time,shutil
+from pathlib import Path
+r=Path.cwd();e=r/'evidence/package-d/final-f80180a';d=json.loads((e/'OWNER-INSTALL.json').read_text());base=Path(d['cwd']);runtime=base/'runtime';data=base/'data'
+first=Path(json.loads((e/'install-f80180a/manifest.json').read_text())['installed_root']);receiver=base/'FICTIONAL-start-receiver'
+env=os.environ.copy()
+for k in ['ZARATUSTRA_SQLITE_DLL','PYTEST_ADDOPTS']:env.pop(k,None)
+env['PYTHONPATH']=str(first/'controlled-upstream');env['FICTIONAL_RECEIVER_ROOT']=str(receiver)
+cmd=[shutil.which('pwsh'),'-NoProfile','-File',str(runtime/'Start.ps1'),'-CallLimit','8']
+start=time.time();res=subprocess.run(cmd,cwd=base,env=env,input=b'FICTIONAL Start entry mechanics only\n/exit\n',stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=180)
+(e/'owner-start-controlled.stdout.bin').write_bytes(res.stdout);(e/'owner-start-controlled.stderr.bin').write_bytes(res.stderr)
+packets=[json.loads(p.read_bytes()) for p in sorted(receiver.glob('*-request.bin'))]
+record={'source':'f80180a950ce7a3e21d30c86e610ae4a935320e3','command':cmd,'cwd':str(base),'returncode':res.returncode,'seconds':time.time()-start,'calls':len(packets),'actual_Install_then_Start':True,'live_inference':0,'credential':'FICTIONAL auth file selected by actual Install.ps1; writer does not read auth','selected_mode':json.loads((runtime/'pi-profile.json').read_text(encoding='utf-8-sig'))['native_resource_mode']}
+(e/'OWNER-START-CONTROLLED.json').write_text(json.dumps(record,indent=2),encoding='utf-8')
+assert res.returncode==0,(res.stdout,res.stderr)
+assert len(packets)==2
+assert all('max_output_tokens' not in p and p['text']=={'format':{'type':'json_object'}} for p in packets)
+assert b'no guaranteed token or money maximum' in res.stdout
+out=e/'owner-start-controlled-raw';out.mkdir();shutil.copytree(receiver,out/'provider');shutil.copytree(data/'pi',out/'pi')
+print(json.dumps(record))

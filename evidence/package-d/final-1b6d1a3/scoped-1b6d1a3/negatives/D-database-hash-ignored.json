@@ -1,0 +1,10 @@
+{
+  "seed": "D-database-hash-ignored",
+  "test": "test_maintenance.py::test_corrupt_partial_backups_refused[valid_database_change]",
+  "returncode": 0,
+  "injection_reached": false,
+  "behavioral_failure": false,
+  "stdout": ".                                                                        [100%]\n1 passed in 1.00s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/maintenance.py\n+++ core/src/zaratustra_core/maintenance.py.mutant\n@@ -110,7 +110,7 @@\n         if (\n             manifest[\"format\"] != \"backup/v1\"\n             or len(database) != manifest[\"database_size\"]\n-            or hashlib.sha256(database).hexdigest() != manifest[\"database_sha256\"]\n+            or (print(\"MUTANT_REACHED\", flush=True) or False)\n         ):\n             raise CoreError(\"invalid_request\", \"backup.manifest\")\n         integrity(backup_root / \"core.sqlite3\")\n"
+}

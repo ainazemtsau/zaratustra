@@ -1,0 +1,464 @@
+FFFF.                                                                    [100%]
+================================== FAILURES ===================================
+_______ test_active_model_tool_cannot_mint_independent_budget[default] ________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d10-initial-work-green-tmp/test_active_model_tool_cannot_0')
+surface = 'default'
+
+    @pytest.mark.parametrize("surface", ["default", "ordinary", "sleep", "legacy-driver"])
+    def test_active_model_tool_cannot_mint_independent_budget(tmp_path: Path, surface: str) -> None:
+        from zaratustra_app import Sleep
+    
+        from .sleep_support import MechanicalSleepReceiver, seed
+    
+        if surface == "sleep":
+            core, _, client = seed(tmp_path)
+            sleep = Sleep(client)
+            sleep.start(work_id="sleep", call_limit=4)
+        else:
+            core, _, client = fixture(tmp_path)
+        coordinator = Coordinator(client)
+        observed: list[Any] = []
+        mechanical = MechanicalSleepReceiver()
+    
+        def receive(context: dict[str, Any], _: str) -> bytes:
+            work = context["work"]
+            independent = {
+                "id": "independent-budget",
+                "conversation": work["conversation"],
+                "scope": work.get("scope", "space"),
+                "goal": "unrequested independent execution",
+                "method_ref": work["method_ref"],
+                "inputs": [],
+                "call_limit": 1000,
+                "continuation_policy": "durable",
+            }
+            effect = {"id": "forbidden-effect", "kind": "data", "key": "effect", "body": "fictional"}
+            effect["scope"] = work.get("scope", "space")
+            intent = {
+                "changes": [effect],
+                "expected_heads": {"forbidden-effect": 0},
+                "initial_work": independent,
+            }
+            positive = effect | {"id": "allowed-update", "key": "allowed"}
+            driver.tool_handler(
+                "subject-update", {"changes": [positive], "expected_heads": {"allowed-update": 0}}
+            )
+            result = json.loads(
+                mechanical(context, "fictional")
+                if surface == "sleep"
+                else b'{"state":"completed","text":"useful"}'
+            )
+            if surface == "legacy-driver":
+                result.update(
+                    tool_changes=[effect],
+                    expected_heads={"forbidden-effect": 0},
+                    initial_work=independent,
+                    native_tool_call_id="extra",
+                )
+            else:
+                try:
+                    observed.append(driver.tool_handler("extra", intent))
+                except CoreError as error:
+                    observed.append(error)
+            return json.dumps(result).encode()
+    
+        driver = Driver(receive)
+        if surface == "ordinary":
+            driver.response_contract = {"version": "ordinary-execution/2"}  # type: ignore[attr-defined]
+        if surface == "sleep":
+            result = sleep.run("sleep", PROFILE, driver)
+        else:
+            coordinator.prepare("work", "model-attempt", PROFILE)
+            coordinator.dispatch("model-attempt", 1, driver)
+            result = coordinator.recover("model-attempt")
+        if surface == "legacy-driver":
+            observed = [driver.callbacks[0].get("error")]
+        assert observed and (
+            isinstance(observed[0], CoreError)
+            or isinstance(observed[0], dict)
+            and observed[0].get("code") == "denied"
+        ), "Active model tool must reject independent initial_work before publication"
+        assert result["state"] == "completed"
+        assert not any(w["id"] == "independent-budget" for w in inspect(core, "works"))
+        heads = {h["id"] for h in inspect(core, "heads")}
+        assert "allowed-update" in heads and "forbidden-effect" not in heads
+        assert all(t["native_id"] != "extra" for t in inspect(core, "tool_calls"))
+        assert sum(w["reserved"] for w in inspect(core, "works")) == 2
+>       core.backup((core.root / "owner.credential").read_text(), tmp_path / "checked-backup")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\restart\test_work_handoff.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d10-initial-work-green-tmp/test_active_model_tool_cannot_0/space/owner.credential')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: 'C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d10-initial-work-green-tmp\\test_active_model_tool_cannot_0\\space\\owner.credential'
+
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:537: FileNotFoundError
+_______ test_active_model_tool_cannot_mint_independent_budget[ordinary] _______
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d10-initial-work-green-tmp/test_active_model_tool_cannot_1')
+surface = 'ordinary'
+
+    @pytest.mark.parametrize("surface", ["default", "ordinary", "sleep", "legacy-driver"])
+    def test_active_model_tool_cannot_mint_independent_budget(tmp_path: Path, surface: str) -> None:
+        from zaratustra_app import Sleep
+    
+        from .sleep_support import MechanicalSleepReceiver, seed
+    
+        if surface == "sleep":
+            core, _, client = seed(tmp_path)
+            sleep = Sleep(client)
+            sleep.start(work_id="sleep", call_limit=4)
+        else:
+            core, _, client = fixture(tmp_path)
+        coordinator = Coordinator(client)
+        observed: list[Any] = []
+        mechanical = MechanicalSleepReceiver()
+    
+        def receive(context: dict[str, Any], _: str) -> bytes:
+            work = context["work"]
+            independent = {
+                "id": "independent-budget",
+                "conversation": work["conversation"],
+                "scope": work.get("scope", "space"),
+                "goal": "unrequested independent execution",
+                "method_ref": work["method_ref"],
+                "inputs": [],
+                "call_limit": 1000,
+                "continuation_policy": "durable",
+            }
+            effect = {"id": "forbidden-effect", "kind": "data", "key": "effect", "body": "fictional"}
+            effect["scope"] = work.get("scope", "space")
+            intent = {
+                "changes": [effect],
+                "expected_heads": {"forbidden-effect": 0},
+                "initial_work": independent,
+            }
+            positive = effect | {"id": "allowed-update", "key": "allowed"}
+            driver.tool_handler(
+                "subject-update", {"changes": [positive], "expected_heads": {"allowed-update": 0}}
+            )
+            result = json.loads(
+                mechanical(context, "fictional")
+                if surface == "sleep"
+                else b'{"state":"completed","text":"useful"}'
+            )
+            if surface == "legacy-driver":
+                result.update(
+                    tool_changes=[effect],
+                    expected_heads={"forbidden-effect": 0},
+                    initial_work=independent,
+                    native_tool_call_id="extra",
+                )
+            else:
+                try:
+                    observed.append(driver.tool_handler("extra", intent))
+                except CoreError as error:
+                    observed.append(error)
+            return json.dumps(result).encode()
+    
+        driver = Driver(receive)
+        if surface == "ordinary":
+            driver.response_contract = {"version": "ordinary-execution/2"}  # type: ignore[attr-defined]
+        if surface == "sleep":
+            result = sleep.run("sleep", PROFILE, driver)
+        else:
+            coordinator.prepare("work", "model-attempt", PROFILE)
+            coordinator.dispatch("model-attempt", 1, driver)
+            result = coordinator.recover("model-attempt")
+        if surface == "legacy-driver":
+            observed = [driver.callbacks[0].get("error")]
+        assert observed and (
+            isinstance(observed[0], CoreError)
+            or isinstance(observed[0], dict)
+            and observed[0].get("code") == "denied"
+        ), "Active model tool must reject independent initial_work before publication"
+        assert result["state"] == "completed"
+        assert not any(w["id"] == "independent-budget" for w in inspect(core, "works"))
+        heads = {h["id"] for h in inspect(core, "heads")}
+        assert "allowed-update" in heads and "forbidden-effect" not in heads
+        assert all(t["native_id"] != "extra" for t in inspect(core, "tool_calls"))
+        assert sum(w["reserved"] for w in inspect(core, "works")) == 2
+>       core.backup((core.root / "owner.credential").read_text(), tmp_path / "checked-backup")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\restart\test_work_handoff.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d10-initial-work-green-tmp/test_active_model_tool_cannot_1/space/owner.credential')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: 'C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d10-initial-work-green-tmp\\test_active_model_tool_cannot_1\\space\\owner.credential'
+
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:537: FileNotFoundError
+________ test_active_model_tool_cannot_mint_independent_budget[sleep] _________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d10-initial-work-green-tmp/test_active_model_tool_cannot_2')
+surface = 'sleep'
+
+    @pytest.mark.parametrize("surface", ["default", "ordinary", "sleep", "legacy-driver"])
+    def test_active_model_tool_cannot_mint_independent_budget(tmp_path: Path, surface: str) -> None:
+        from zaratustra_app import Sleep
+    
+        from .sleep_support import MechanicalSleepReceiver, seed
+    
+        if surface == "sleep":
+            core, _, client = seed(tmp_path)
+            sleep = Sleep(client)
+            sleep.start(work_id="sleep", call_limit=4)
+        else:
+            core, _, client = fixture(tmp_path)
+        coordinator = Coordinator(client)
+        observed: list[Any] = []
+        mechanical = MechanicalSleepReceiver()
+    
+        def receive(context: dict[str, Any], _: str) -> bytes:
+            work = context["work"]
+            independent = {
+                "id": "independent-budget",
+                "conversation": work["conversation"],
+                "scope": work.get("scope", "space"),
+                "goal": "unrequested independent execution",
+                "method_ref": work["method_ref"],
+                "inputs": [],
+                "call_limit": 1000,
+                "continuation_policy": "durable",
+            }
+            effect = {"id": "forbidden-effect", "kind": "data", "key": "effect", "body": "fictional"}
+            effect["scope"] = work.get("scope", "space")
+            intent = {
+                "changes": [effect],
+                "expected_heads": {"forbidden-effect": 0},
+                "initial_work": independent,
+            }
+            positive = effect | {"id": "allowed-update", "key": "allowed"}
+            driver.tool_handler(
+                "subject-update", {"changes": [positive], "expected_heads": {"allowed-update": 0}}
+            )
+            result = json.loads(
+                mechanical(context, "fictional")
+                if surface == "sleep"
+                else b'{"state":"completed","text":"useful"}'
+            )
+            if surface == "legacy-driver":
+                result.update(
+                    tool_changes=[effect],
+                    expected_heads={"forbidden-effect": 0},
+                    initial_work=independent,
+                    native_tool_call_id="extra",
+                )
+            else:
+                try:
+                    observed.append(driver.tool_handler("extra", intent))
+                except CoreError as error:
+                    observed.append(error)
+            return json.dumps(result).encode()
+    
+        driver = Driver(receive)
+        if surface == "ordinary":
+            driver.response_contract = {"version": "ordinary-execution/2"}  # type: ignore[attr-defined]
+        if surface == "sleep":
+            result = sleep.run("sleep", PROFILE, driver)
+        else:
+            coordinator.prepare("work", "model-attempt", PROFILE)
+            coordinator.dispatch("model-attempt", 1, driver)
+            result = coordinator.recover("model-attempt")
+        if surface == "legacy-driver":
+            observed = [driver.callbacks[0].get("error")]
+        assert observed and (
+            isinstance(observed[0], CoreError)
+            or isinstance(observed[0], dict)
+            and observed[0].get("code") == "denied"
+        ), "Active model tool must reject independent initial_work before publication"
+        assert result["state"] == "completed"
+        assert not any(w["id"] == "independent-budget" for w in inspect(core, "works"))
+        heads = {h["id"] for h in inspect(core, "heads")}
+        assert "allowed-update" in heads and "forbidden-effect" not in heads
+        assert all(t["native_id"] != "extra" for t in inspect(core, "tool_calls"))
+        assert sum(w["reserved"] for w in inspect(core, "works")) == 2
+>       core.backup((core.root / "owner.credential").read_text(), tmp_path / "checked-backup")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\restart\test_work_handoff.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d10-initial-work-green-tmp/test_active_model_tool_cannot_2/space/owner.credential')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: 'C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d10-initial-work-green-tmp\\test_active_model_tool_cannot_2\\space\\owner.credential'
+
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:537: FileNotFoundError
+____ test_active_model_tool_cannot_mint_independent_budget[legacy-driver] _____
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d10-initial-work-green-tmp/test_active_model_tool_cannot_3')
+surface = 'legacy-driver'
+
+    @pytest.mark.parametrize("surface", ["default", "ordinary", "sleep", "legacy-driver"])
+    def test_active_model_tool_cannot_mint_independent_budget(tmp_path: Path, surface: str) -> None:
+        from zaratustra_app import Sleep
+    
+        from .sleep_support import MechanicalSleepReceiver, seed
+    
+        if surface == "sleep":
+            core, _, client = seed(tmp_path)
+            sleep = Sleep(client)
+            sleep.start(work_id="sleep", call_limit=4)
+        else:
+            core, _, client = fixture(tmp_path)
+        coordinator = Coordinator(client)
+        observed: list[Any] = []
+        mechanical = MechanicalSleepReceiver()
+    
+        def receive(context: dict[str, Any], _: str) -> bytes:
+            work = context["work"]
+            independent = {
+                "id": "independent-budget",
+                "conversation": work["conversation"],
+                "scope": work.get("scope", "space"),
+                "goal": "unrequested independent execution",
+                "method_ref": work["method_ref"],
+                "inputs": [],
+                "call_limit": 1000,
+                "continuation_policy": "durable",
+            }
+            effect = {"id": "forbidden-effect", "kind": "data", "key": "effect", "body": "fictional"}
+            effect["scope"] = work.get("scope", "space")
+            intent = {
+                "changes": [effect],
+                "expected_heads": {"forbidden-effect": 0},
+                "initial_work": independent,
+            }
+            positive = effect | {"id": "allowed-update", "key": "allowed"}
+            driver.tool_handler(
+                "subject-update", {"changes": [positive], "expected_heads": {"allowed-update": 0}}
+            )
+            result = json.loads(
+                mechanical(context, "fictional")
+                if surface == "sleep"
+                else b'{"state":"completed","text":"useful"}'
+            )
+            if surface == "legacy-driver":
+                result.update(
+                    tool_changes=[effect],
+                    expected_heads={"forbidden-effect": 0},
+                    initial_work=independent,
+                    native_tool_call_id="extra",
+                )
+            else:
+                try:
+                    observed.append(driver.tool_handler("extra", intent))
+                except CoreError as error:
+                    observed.append(error)
+            return json.dumps(result).encode()
+    
+        driver = Driver(receive)
+        if surface == "ordinary":
+            driver.response_contract = {"version": "ordinary-execution/2"}  # type: ignore[attr-defined]
+        if surface == "sleep":
+            result = sleep.run("sleep", PROFILE, driver)
+        else:
+            coordinator.prepare("work", "model-attempt", PROFILE)
+            coordinator.dispatch("model-attempt", 1, driver)
+            result = coordinator.recover("model-attempt")
+        if surface == "legacy-driver":
+            observed = [driver.callbacks[0].get("error")]
+        assert observed and (
+            isinstance(observed[0], CoreError)
+            or isinstance(observed[0], dict)
+            and observed[0].get("code") == "denied"
+        ), "Active model tool must reject independent initial_work before publication"
+        assert result["state"] == "completed"
+        assert not any(w["id"] == "independent-budget" for w in inspect(core, "works"))
+        heads = {h["id"] for h in inspect(core, "heads")}
+        assert "allowed-update" in heads and "forbidden-effect" not in heads
+        assert all(t["native_id"] != "extra" for t in inspect(core, "tool_calls"))
+        assert sum(w["reserved"] for w in inspect(core, "works")) == 2
+>       core.backup((core.root / "owner.credential").read_text(), tmp_path / "checked-backup")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\restart\test_work_handoff.py:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d10-initial-work-green-tmp/test_active_model_tool_cannot_3/space/owner.credential')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: 'C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d10-initial-work-green-tmp\\test_active_model_tool_cannot_3\\space\\owner.credential'
+
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:537: FileNotFoundError
+=========================== short test summary info ===========================
+FAILED tests/restart/test_work_handoff.py::test_active_model_tool_cannot_mint_independent_budget[default]
+FAILED tests/restart/test_work_handoff.py::test_active_model_tool_cannot_mint_independent_budget[ordinary]
+FAILED tests/restart/test_work_handoff.py::test_active_model_tool_cannot_mint_independent_budget[sleep]
+FAILED tests/restart/test_work_handoff.py::test_active_model_tool_cannot_mint_independent_budget[legacy-driver]
+4 failed, 1 passed, 21 deselected in 4.71s

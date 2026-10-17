@@ -1,0 +1,11 @@
+from pathlib import Path
+import subprocess,sys,os,json,time
+r=Path.cwd();p=r/'evidence/package-d/json-mode-preparation';t=r/'_scratch/json-mode-focused-20261017';t.mkdir(exist_ok=False)
+e=os.environ.copy()
+for k in ['ZARATUSTRA_SQLITE_DLL','PYTHONPATH','PYTEST_ADDOPTS','ZARA_RESTART_EVIDENCE','ZARA_RESTART_NEGATIVES']:e.pop(k,None)
+e['TEMP']=e['TMP']=str(t);e['ZARA_RESTART_NEGATIVES']=str(p/'negatives');e['PYTEST_ADDOPTS']='--basetemp='+(t/'tests').as_posix()
+c=[sys.executable,'-m','pytest','tests/restart/test_conversation.py','tests/restart/test_delivery_controls.py','-q','-k','native_pi_oauth_launcher_controlled or native_auth_errors or D-native-json-mode']
+(p/'invocation.json').write_text(json.dumps({'command':c,'source_diff':'83af4d4 plus bounded JSON-mode metadata/test/control changes','credentials':'fictional only; selected tests no live models','cwd':str(r)},indent=2),encoding='utf-8')
+a=time.time()
+with (p/'stdout.bin').open('xb') as o,(p/'stderr.bin').open('xb') as err:res=subprocess.run(c,env=e,stdout=o,stderr=err)
+(p/'exit.json').write_text(json.dumps({'returncode':res.returncode,'seconds':time.time()-a},indent=2),encoding='utf-8');print(res.returncode);raise SystemExit(res.returncode)

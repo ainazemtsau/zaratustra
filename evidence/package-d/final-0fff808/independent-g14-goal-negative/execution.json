@@ -1,0 +1,76 @@
+{
+  "source_commit": "0fff8088f092a8ba6b32451ed5c1e03e844c233a",
+  "entry": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-independent-d-paf1gr87\\runtime\\env\\Scripts\\zaratustra-next.exe",
+  "base": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-g14-independent-prmovdiv",
+  "data_root": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-g14-independent-prmovdiv\\data",
+  "rubric_sha256": "d3e7fb833c26d534307f0f7afd2c26335691999e561a45e16f42de16e8dc95ef",
+  "physical_send_upper": 24,
+  "per_chain_limit": 8,
+  "outer_timeout_per_chain_seconds": 1800,
+  "transport": "Original owner chat leader executes unchanged reviewer script with normal approval under direct owner grant; reviewer evaluates exact retained outputs.",
+  "calls": [
+    {
+      "label": "init",
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-independent-d-paf1gr87\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-g14-independent-prmovdiv\\data",
+        "init"
+      ],
+      "returncode": 0,
+      "seconds": 1.0762953758239746
+    },
+    {
+      "label": "request",
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-independent-d-paf1gr87\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-g14-independent-prmovdiv\\data",
+        "chat",
+        "--profile-file",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-g14-independent-prmovdiv\\profile.json",
+        "--call-limit",
+        "8",
+        "--message",
+        "Придумай для двух людей кооперативную игру на бумаге на пять минут. Есть один обычный шестигранный кубик. Тема — два смотрителя спасают маяк во время шторма. Дай название, компактные правила и сразу пример одного полного раунда с конкретными бросками. В игре не должно быть ведущего; оба должны влиять на исход. Не начинай с вопросов и плана разработки."
+      ],
+      "returncode": 0,
+      "seconds": 50.749961376190186
+    },
+    {
+      "label": "correction",
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-independent-d-paf1gr87\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-g14-independent-prmovdiv\\data",
+        "chat",
+        "--profile-file",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-g14-independent-prmovdiv\\profile.json",
+        "--call-limit",
+        "8",
+        "--message",
+        "Поправка: кубик потеряли, осталась одна монета, а времени всего три минуты. Сохрани тему и сотрудничество, переделай игру целиком под это и снова покажи один полный раунд. Не оставляй броски кубика или скрытого ведущего."
+      ],
+      "returncode": 0,
+      "seconds": 61.19662857055664
+    },
+    {
+      "label": "reopen",
+      "command": [
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-independent-d-paf1gr87\\runtime\\env\\Scripts\\zaratustra-next.exe",
+        "--data-root",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-g14-independent-prmovdiv\\data",
+        "chat",
+        "--profile-file",
+        "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-g14-independent-prmovdiv\\profile.json",
+        "--call-limit",
+        "8",
+        "--message",
+        "Продолжим нашу игру: придумай второй уровень с одной новой трудностью и покажи первый раунд. Пользуйся уже согласованным набором вещей и временем; не начинай всё заново."
+      ],
+      "returncode": 1,
+      "seconds": 23.24978733062744
+    }
+  ],
+  "physical_provider_requests": 5
+}

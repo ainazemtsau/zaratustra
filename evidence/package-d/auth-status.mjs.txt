@@ -1,0 +1,10 @@
+// Read-only Pi-owned metadata; no refresh, login, inference or secret output.
+import {pathToFileURL} from 'node:url';
+const [sdkPath,authPath]=process.argv.slice(2);
+const sdkUrl=pathToFileURL(sdkPath);
+const {ModelRuntime}=await import(sdkUrl.href);
+const {ReadOnlyAuthStorage}=await import(new URL('./core/auth-storage.js',sdkUrl));
+const credentials=new ReadOnlyAuthStorage(authPath);
+const metadata=await credentials.list();
+const runtime=await ModelRuntime.create({credentials,modelsPath:null,refreshOnCreate:false,allowModelNetwork:false});
+process.stdout.write(JSON.stringify({hasModernOpenAIOAuth:metadata.some(x=>x.providerId==='openai'&&x.type==='oauth'),hasLocalLunaCatalogEntry:!!runtime.getModel('openai','gpt-6-luna'),accountAccessVerified:false})+'\n');

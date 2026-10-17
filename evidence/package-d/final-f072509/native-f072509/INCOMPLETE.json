@@ -1,0 +1,6 @@
+{
+  "status": "INCOMPLETE",
+  "source": "f07250996d861404728c5892fa1f3b0a6a07bba4",
+  "reason": "Stopped exact pytest PID46768 and child66872 after independent G15 pinned-reference closure failure was reproduced in installed runtime. Exit1 is wrapper CalledProcessError from stopped pytest, not completed suite result. No source edit before stop.",
+  "scoped": "Complete280PASS with59reachedcontrols; does not close the independent reference defect."
+}

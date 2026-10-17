@@ -1,0 +1,58 @@
+{
+  "source_commit": "83af4d4a529ca73d06d566db62a3586f2a432af9",
+  "previous_source": "0fff8088f092a8ba6b32451ed5c1e03e844c233a",
+  "bounded_changes": {
+    "Core": "Work.goal and Wait.question use shared strict NonEmptyText(min1), no identifier max240. C3/C4/C8 share goal through Work/NextWork. All identifier/key/scope/correlation limits and aggregate context1MiB unchanged. No truncation, prompt workaround, semantic validator or retry-to-fit.",
+    "CLI": "Catch CoreError only, structured error.as_dict() to stderr, return1; no chained traceback/raw input, retry/refresh/state change. Developer exceptions remain actual errors.",
+    "tests": "Long generic Unicode prose through C3/C4/C8/wait, exact bytes and restore, IDs241 rejected, empty/nonstring rejected; known retained malformed terminal no extra send and valid CLI/developer exception unchanged;3new reached controls."
+  },
+  "actual_retained_terminal_offline": {
+    "whole_original_C8_admission": "PASS against copied PUBLIC original G14 state; exact original changes/expected_heads/refs, child created, goal273bytes exact, cursor preserved, backup reference closure PASS",
+    "source_credentials_or_grants_selected": false,
+    "OAuth_or_owner_credential_files_read": false,
+    "original_data_modified": false,
+    "model_calls": 0,
+    "proof": "preparation/d11-whole-actual-c8.json"
+  },
+  "verification": {
+    "prose_cli_passed": 14,
+    "prose_cli_seconds": 11.2,
+    "affected_passed": 166,
+    "affected_seconds": 274.01,
+    "D_reached_controls_passed": 31,
+    "D_controls_seconds": 120.25,
+    "static": {
+      "format_files": 386,
+      "ruff": "PASS",
+      "mypy_sources": 345,
+      "boundaries": 37,
+      "hygiene_report": []
+    }
+  },
+  "original_0fff": {
+    "independent_verdict": "NOT_READY/F-D-07, goal273>240 at reopen",
+    "first_two_answers": "Independent positive; meaningful Activity4revisions, minor coin-rule ambiguity reported separately",
+    "actual_provider_sends": 5,
+    "tokens": {
+      "input": 27076,
+      "output": 3251,
+      "total": 30327,
+      "reasoning_subset": 459
+    },
+    "SDK_estimate": 0.0043331,
+    "actual_billing": "not established by SDK estimate",
+    "negative_zip": "../final-0fff808/0fff808-negative-checkpoint.zip",
+    "negative_zip_sha256": "20ddacb1c4914c4ab8d05ebc4b405d81ee1e63d86df7e9b26bb9f803693cdc22",
+    "files": 224,
+    "scoped": "Author384PASS873.00s/74controls; independent384PASS883.62s/74controls",
+    "native": "INCOMPLETE1325.958199s; exact own pytest pair stopped before source edits; originalpartial/exit/STOP-IDENTITY retained"
+  },
+  "development_failure_retention": {
+    "initial_new_tests": "8FAIL6PASS, including unavailable _main seam and goal-order identity assertions; raw kept, not claimed as8independent defects",
+    "first_green": "13PASS1FAIL: Driver input JSON vs its emitted reserialization in fixture; corrected to actual malformed bytes for exact terminal test",
+    "offline_first_run": "Missing tests package import path; original log retained, explicit ROOT path corrected"
+  },
+  "independent_review": "Pending fresh review of new source/build; same physical reviewer, historical systemError retained under0fff/6760 proof; root owns third/last authorized substantive trial",
+  "writer_live_calls": 0,
+  "whole_package_ready": false
+}

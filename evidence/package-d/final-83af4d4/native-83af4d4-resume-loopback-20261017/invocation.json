@@ -1,0 +1,17 @@
+{
+  "source": "83af4d4a529ca73d06d566db62a3586f2a432af9",
+  "command": [
+    "uv",
+    "run",
+    "--locked",
+    "python",
+    "-m",
+    "tools.check",
+    "--deliver"
+  ],
+  "cwd": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release",
+  "new_runtime_legacy_dll": false,
+  "full_gate_only_dll": "C:/projects/zaratustra/_scratch/release-installed-20260927/runtime/sqlite3.dll",
+  "parent_python": "3.13.7 (main, Sep 18 2025, 19:43:45) [MSC v.1944 64 bit (AMD64)]",
+  "parent_native_sqlite": "3.50.4"
+}

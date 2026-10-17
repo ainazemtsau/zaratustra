@@ -1,0 +1,65 @@
+{
+  "classification": "INFRA_STOP: restricted sandbox denies localhost; retained partial failures not final product verdict",
+  "verified_roots": {
+    "12376": "C:/projects/zaratustra/.worktrees/restart-first-release/.venv/Scripts/python.exe -m pytest tests/restart -q",
+    "2780": "C:/projects/zaratustra/.worktrees/restart-first-release/.venv/Scripts/python.exe -m pytest tests -q"
+  },
+  "own_tree": [
+    {
+      "pid": 12376,
+      "parent_pid": 6232,
+      "name": "python.exe",
+      "creation_date": "2026-10-17T05:38:24.714390+03:00",
+      "depth": 0
+    },
+    {
+      "pid": 2780,
+      "parent_pid": 34128,
+      "name": "python.exe",
+      "creation_date": "2026-10-17T05:39:07.679223+03:00",
+      "depth": 0
+    },
+    {
+      "pid": 4560,
+      "parent_pid": 12376,
+      "name": "python.exe",
+      "creation_date": "2026-10-17T05:38:24.721859+03:00",
+      "depth": 1
+    },
+    {
+      "pid": 25396,
+      "parent_pid": 2780,
+      "name": "python.exe",
+      "creation_date": "2026-10-17T05:39:07.686256+03:00",
+      "depth": 1
+    },
+    {
+      "pid": 37784,
+      "parent_pid": 25396,
+      "name": "node.exe",
+      "creation_date": "2026-10-17T05:43:11.971889+03:00",
+      "depth": 2
+    },
+    {
+      "pid": 26532,
+      "parent_pid": 4560,
+      "name": "python.exe",
+      "creation_date": "2026-10-17T05:43:12.096785+03:00",
+      "depth": 2
+    },
+    {
+      "pid": 24208,
+      "parent_pid": 26532,
+      "name": "python.exe",
+      "creation_date": "2026-10-17T05:43:12.104705+03:00",
+      "depth": 3
+    }
+  ],
+  "identity_validation": "Before stop: exact root command equality; before each Stop-Process: fresh CreationDate and ParentProcessId equality. Killed deepest first.",
+  "protected_reviewer_roots": [
+    9292,
+    3740
+  ],
+  "harness_error": "Initial pre-stop JSON serialization failed because PowerShell hashtable had integer keys; stop still ran. This record is recovered immediately from exact tool output. No identity re-inference.",
+  "diagnosis": "LOCALHOST-SANDBOX-DIAGNOSIS-20261017.json"
+}

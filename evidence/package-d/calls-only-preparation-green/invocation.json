@@ -1,0 +1,17 @@
+{
+  "command": [
+    "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "tests/restart/test_conversation.py",
+    "tests/restart/test_delivery_controls.py",
+    "tests/restart/test_native_resource_profile.py",
+    "tests/restart/test_sleep_profile.py",
+    "-q",
+    "-k",
+    "native or resource or cli_profile_drift or api_key_pi"
+  ],
+  "source_diff": "ac58f94 plus owner-selected calls-only native compatibility/profile/test changes",
+  "credentials": "fictional only; selected tests no live models",
+  "cwd": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release"
+}

@@ -1,0 +1,47 @@
+{
+  "controls": 7,
+  "checks": [
+    {
+      "seed": "D-native-chatgpt-effort-compat-omitted",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1
+    },
+    {
+      "seed": "D-native-json-mode-omitted",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1
+    },
+    {
+      "seed": "D-native-json-mode-text",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1
+    },
+    {
+      "seed": "D-native-null-mode-leaks-api-key-profile",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1
+    },
+    {
+      "seed": "D-native-profile-cap-below-floor",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1
+    },
+    {
+      "seed": "D-native-resource-mode-implicit",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1
+    },
+    {
+      "seed": "D-native-unsupported-token-field-restored",
+      "reached": true,
+      "behavioral_failure": true,
+      "returncode": 1
+    }
+  ]
+}

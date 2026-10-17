@@ -1,0 +1,35 @@
+{
+  "model": "gpt-6-luna",
+  "endpoint": "https://api.openai.com/v1/responses",
+  "max_tokens": 64,
+  "inference_cap": 2,
+  "account_specific_inference": true,
+  "credential_values_output": false,
+  "oauth_metadata_present": true,
+  "stopReason": "stop",
+  "text": "OK",
+  "usage": {
+    "input": 10,
+    "output": 5,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "reasoning": 0,
+    "totalTokens": 15,
+    "cost": {
+      "input": 0.0000010000000000000002,
+      "output": 0.0000024999999999999998,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "total": 0.0000035
+    }
+  },
+  "error_details_withheld": false,
+  "sends": 1,
+  "refreshes": 0,
+  "statuses": [
+    {
+      "kind": "inference",
+      "status": 200
+    }
+  ]
+}

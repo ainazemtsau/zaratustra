@@ -1,0 +1,1 @@
+{"providers": {"openai": {"baseUrl": "http://127.0.0.1:52658/provider/v1", "modelOverrides": {"gpt-6-luna": {"maxTokens": 512, "contextWindow": 32768}}}}}

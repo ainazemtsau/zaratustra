@@ -1,0 +1,10 @@
+{
+  "seed": "B-observe-intent-address",
+  "test": "test_continuation.py::test_unknown_proven_continuation_without_resend[running]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n__________ test_unknown_proven_continuation_without_resend[running] ___________\ntests\\restart\\test_continuation.py:182: in test_unknown_proven_continuation_without_resend\n    assert [i[\"subject\"] for i in inspect(core, \"intents\") if i[\"kind\"] == \"observe\"] == [\"A1\"]\nE   AssertionError: assert ['A1', 'work'] == ['A1']\nE     \nE     Left contains one more item: 'work'\nE     Use -v to get more diff\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_continuation.py::test_unknown_proven_continuation_without_resend[running]\n1 failed in 1.29s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -1422,7 +1422,7 @@\n                 self._intent(\n                     db,\n                     \"observe\" if state == \"running\" else \"prepare\",\n-                    last[\"attempt\"] if state == \"running\" else work[\"id\"],\n+                    (print(\"MUTANT_REACHED\", flush=True) or work[\"id\"]),\n                     {},\n                 )\n                 db.execute(\"DELETE FROM intents WHERE kind='control' AND subject=?\", (work[\"id\"],))\n"
+}

@@ -1,0 +1,10 @@
+{
+  "seed": "D-known-core-refusal-escapes-cli",
+  "test": "test_prose_fields.py::test_cli_known_invalid_retains_terminal_without_resend",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n___________ test_cli_known_invalid_retains_terminal_without_resend ____________\ntests\\restart\\test_prose_fields.py:177: in test_cli_known_invalid_retains_terminal_without_resend\n    assert status == 1, \"Known Core refusal must return a CLI failure instead of escaping\"\nE   AssertionError: Known Core refusal must return a CLI failure instead of escaping\nE   assert CoreError('invalid_request: retained_outcome_format [3d03def53e40d4e7]') == 1\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_prose_fields.py::test_cli_known_invalid_retains_terminal_without_resend\n1 failed in 1.42s\n",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/cli.py\n+++ app/src/zaratustra_app/cli.py.mutant\n@@ -18,6 +18,8 @@\n     try:\n         return _main()\n     except CoreError as error:\n+        print(\"MUTANT_REACHED\", flush=True)\n+        raise\n         print(json.dumps({\"error\": error.as_dict()}, ensure_ascii=False), file=sys.stderr)\n         return 1\n \n"
+}

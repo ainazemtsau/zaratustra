@@ -1,0 +1,7 @@
+{
+  "source": "1b6d1a3946348a18d90cbb1a4e8d36208e242285",
+  "status": "INCOMPLETE",
+  "reason": "Known checksum negative control SURVIVED because old corruption also violated newly added reference closure; exact verified runner stopped before edits. Raw wrapper exit1 retained. Not a passing full native run.",
+  "verified_stop": "STOP-IDENTITY.json",
+  "scoped": "COMPLETE RED:326passed1failed,660.83seconds"
+}

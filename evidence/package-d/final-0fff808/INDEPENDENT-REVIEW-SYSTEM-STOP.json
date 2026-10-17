@@ -1,0 +1,16 @@
+{
+  "thread_id": "01a144f9-df87-7250-b563-4427afc64669",
+  "host_id": "local",
+  "title": "Независимая проверка пакета D Zaratustra",
+  "turn_id": "01a144f9-e4c5-7793-a80a-9ac89fd0f6b9",
+  "cursor": "79822c7b-cd3e-4980-a8a3-5e3c032b93f0:63",
+  "thread_status": "systemError",
+  "turn_status": "failed",
+  "completed_at_unix": 1792167052,
+  "error_message": "This content was flagged for possible cybersecurity risk. If this seems wrong, try rephrasing your request. If you’re doing authorized security work that requires more cyber permissive safeguards, apply for Daybreak access via https://platform.openai.com/settings/organization/status-and-access before retrying.",
+  "last_commentary": "В новом кандидате полный авторский прогон пока показывает сбой; живой G14 остаётся на паузе. Продолжаю сверку сборок и проверки границ без обращений к модели.",
+  "latest_source_under_review": "6760a4665d0f02939ab8db20ab6256a91e389bd4",
+  "new_source_live_requests": 0,
+  "independent_final_verdict": "not available",
+  "disposition": "Retain original review artifacts and failed status. Continue unaffected authorized correctness fixes and local checks. Do not route the flagged review around the filter or claim the independent gate completed."
+}

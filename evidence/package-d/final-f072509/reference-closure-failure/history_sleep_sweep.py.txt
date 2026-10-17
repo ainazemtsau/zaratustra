@@ -1,0 +1,51 @@
+import pathlib,json,sqlite3,hashlib,shutil,tempfile
+from zaratustra_core import Core,CoreError
+from zaratustra_app import Coordinator
+from zaratustra_app.sleep import Sleep
+R=pathlib.Path(__file__).parent
+B=pathlib.Path(tempfile.mkdtemp(prefix='zaratustra-independent-closure-',dir='C:/Users/Anton/AppData/Local/Temp'))
+REPORT=[]
+def change(c,items,heads,cmd):return c.call('apply_changes',{'changes':items},cmd,expected_heads=heads)
+def backup(core,token,dest):return core.backup(token,dest)
+def mutate_copy(source,label,table,id_,fn):
+ bad=B/label;shutil.copytree(source,bad)
+ with sqlite3.connect(bad/'core.sqlite3') as db:
+  rows=db.execute('SELECT body FROM '+table+' WHERE id=?',(id_,)).fetchall();assert len(rows)==1
+  before=json.loads(rows[0][0]);after=json.loads(rows[0][0]);fn(after)
+  db.execute('UPDATE '+table+' SET body=? WHERE id=?',(json.dumps(after),id_))
+ raw=(bad/'core.sqlite3').read_bytes();m=json.loads((bad/'manifest.json').read_bytes());m.update(database_sha256=hashlib.sha256(raw).hexdigest(),database_size=len(raw));(bad/'manifest.json').write_text(json.dumps(m),encoding='utf-8')
+ out=R/'closure-sweep-evidence'/label;out.mkdir(parents=True,exist_ok=True)
+ for name in ['core.sqlite3','manifest.json']:(out/name).write_bytes((bad/name).read_bytes())
+ (out/'mutant-diff.json').write_text(json.dumps(dict(table=table,id=id_,before=before,after=after),indent=2),encoding='utf-8')
+ check={'case':label,'injection_reached':before!=after,'rehash_valid':True}
+ try:Core.restore_quarantined(bad,B/('restored-'+label))
+ except CoreError as e:check.update(rejected=True,code=e.code,field=e.field)
+ else:check.update(rejected=False)
+ REPORT.append(check)
+try:
+ # Legitimate historical pins must remain restorable after heads advance.
+ core,token=Core.initialize(B/'history');c=core.connect(token)
+ items=[dict(id='m',kind='method',key='m',body='method one'),dict(id='p',kind='profile',key='p',body='profile one'),dict(id='d',kind='data',key='d',body='data one')]
+ change(c,items,{x['id']:0 for x in items},'create')
+ c.call('open_work',dict(id='w',conversation='c',goal='Historical pins',method_ref={'id':'m','revision':1},inputs=[{'id':'d','revision':1}],call_limit=4,continuation_policy='durable'),'open')
+ Coordinator(c).prepare('w','a',{'id':'p','revision':1})
+ change(c,[x|{'body':'revision two'} for x in items],{x['id']:1 for x in items},'advance')
+ source=B/'historical-backup';backup(core,token,source)
+ rc,rt=Core.restore_quarantined(source,B/'historical-restored');reader=rc.connect(rt)
+ assert all(reader.call('read_exact',{'id':x,'revision':1},'old-'+x)['body']['value']==v for x,v in [('m','method one'),('p','profile one'),('d','data one')])
+ with sqlite3.connect(rc.path) as db:
+  assert db.execute('SELECT MIN(revision) FROM heads').fetchone()[0]==2
+  pinned=json.loads(db.execute('SELECT body FROM attempts').fetchone()[0]);assert pinned['method']['revision']==1 and pinned['profile_ref']['revision']==1
+ REPORT.append(dict(case='historical pins with heads advanced',pass_=True))
+ # Typed Sleep progress retains source and analysis references in its record value.
+ core,token=Core.initialize(B/'sleep');c=core.connect(token)
+ change(c,[dict(id='source',kind='data',key='source',body='fictional source')],{'source':0},'source')
+ Sleep(c).start(work_id='s',call_limit=4)
+ source=B/'sleep-backup';backup(core,token,source)
+ Core.restore_quarantined(source,B/'sleep-baseline-restored')
+ REPORT.append(dict(case='Sleep backup baseline',pass_=True))
+ mutate_copy(source,'sleep-method-ref','records','s:progress',lambda b:b['value'].update(method_ref={'id':'missing','revision':999}))
+ mutate_copy(source,'sleep-analysis-ref','records','s:progress',lambda b:b['value'].update(analysis_result_refs=[{'id':'missing','revision':999}]))
+ mutate_copy(source,'sleep-source-ref','records','s:progress',lambda b:b['value']['selected_source_refs'][0].update(sequence=999999))
+finally:(R/'history-sleep-class-sweep.json').write_text(json.dumps(dict(base=str(B),checks=REPORT),indent=2),encoding='utf-8')
+print(json.dumps(REPORT))

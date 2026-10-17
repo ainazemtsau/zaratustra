@@ -1,0 +1,10 @@
+{
+  "seed": "D-pinned-reference-closure-skipped",
+  "test": "test_backup_references.py::test_rehashed_pinned_reference_corruption_refused[profile_ref]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_______ test_rehashed_pinned_reference_corruption_refused[profile_ref] ________\ntests\\restart\\test_backup_references.py:117: in test_rehashed_pinned_reference_corruption_refused\n    with pytest.raises(CoreError, match=\"backup.*closure\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_backup_references.py::test_rehashed_pinned_reference_corruption_refused[profile_ref]\n1 failed in 1.37s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/maintenance.py\n+++ core/src/zaratustra_core/maintenance.py.mutant\n@@ -49,7 +49,7 @@\n                 for r in body.get(\"inputs\", []) + [body[\"method_ref\"]]\n             ):\n                 raise CoreError(\"invalid_request\", \"backup.work_closure\")\n-        verify_references(db, path)\n+        print(\"MUTANT_REACHED\", flush=True)\n \n \n def target(source: Path, destination: Path) -> Path:\n"
+}

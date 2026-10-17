@@ -1,0 +1,9 @@
+Original execution: this exact Python source was passed through a PowerShell single-quoted here-string to stdin:
+  $probe | .venv/Scripts/python.exe -B -X utf8 -
+
+Runnable equivalent, from C:/projects/zaratustra/.worktrees/restart-first-release at frozen source 6760a4665d0f02939ab8db20ab6256a91e389bd4:
+  .venv/Scripts/python.exe -B -X utf8 _scratch/d_activity_prepass_6760a46/reproduce.py
+
+The already-observed sanitized result is tool-initial-work-p2l7m9h2/evidence.json.
+The source was saved after the original stdin execution without rerunning it.
+Preserve only reproduce.py, command.txt, and evidence.json; exclude the disposable space/database and any credential files.

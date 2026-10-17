@@ -1,0 +1,19 @@
+{
+  "source": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+  "command": [
+    "C:\\Users\\Anton\\AppData\\Local\\Programs\\PowerShell\\7.6.3\\pwsh.EXE",
+    "-NoProfile",
+    "-File",
+    "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-f80180a-ng1jcae2\\runtime\\Start.ps1",
+    "-CallLimit",
+    "8"
+  ],
+  "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-f80180a-ng1jcae2",
+  "returncode": 0,
+  "seconds": 11.400126695632935,
+  "calls": 2,
+  "actual_Install_then_Start": true,
+  "live_inference": 0,
+  "credential": "FICTIONAL auth file selected by actual Install.ps1; writer does not read auth",
+  "selected_mode": "calls-only"
+}

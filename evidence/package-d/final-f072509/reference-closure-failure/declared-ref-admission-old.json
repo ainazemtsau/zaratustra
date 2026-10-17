@@ -1,0 +1,78 @@
+{
+  "base": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-independent-declared-pd8fc19k",
+  "checks": [
+    {
+      "operation": "apply_changes",
+      "case": "missing-scalar",
+      "rejected": false,
+      "error": null,
+      "atomic_rollback": false
+    },
+    {
+      "operation": "apply_changes",
+      "case": "missing-list",
+      "rejected": false,
+      "error": null,
+      "atomic_rollback": false
+    },
+    {
+      "operation": "commit_outcome",
+      "case": "missing-scalar",
+      "rejected": false,
+      "error": null,
+      "atomic_rollback": false
+    },
+    {
+      "operation": "commit_outcome",
+      "case": "missing-list",
+      "rejected": false,
+      "error": null,
+      "atomic_rollback": false
+    },
+    {
+      "case": "optional-null-empty-historical-positive",
+      "value": {},
+      "pass_": true
+    },
+    {
+      "case": "optional-null-empty-historical-positive",
+      "value": {
+        "r": null
+      },
+      "pass_": true
+    },
+    {
+      "case": "optional-null-empty-historical-positive",
+      "value": {
+        "list": []
+      },
+      "pass_": true
+    },
+    {
+      "case": "optional-null-empty-historical-positive",
+      "value": {
+        "r": {
+          "id": "target",
+          "revision": 1
+        }
+      },
+      "pass_": true
+    },
+    {
+      "case": "optional-null-empty-historical-positive",
+      "value": {
+        "list": [
+          {
+            "id": "target",
+            "revision": 1
+          }
+        ]
+      },
+      "pass_": true
+    },
+    {
+      "case": "unbound arbitrary JSON is not inferred as ref",
+      "pass_": true
+    }
+  ]
+}

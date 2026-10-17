@@ -1,0 +1,64 @@
+{
+  "status": "read-only SDK inspection, no source edit or model call; selected route capability unproven",
+  "sdk": "Pi1.3.0",
+  "sources": [
+    {
+      "path": "C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\package.json",
+      "sha256": "83c3bb7619f590c213cc96a24216eb29a819a3ef6dc548607cc037ed276e8dc5",
+      "bytes": 3762,
+      "first_line": 1,
+      "last_line": 10,
+      "excerpt": "{\n\t\"name\": \"@earendil-works/pi-coding-agent\",\n\t\"version\": \"1.3.0\",\n\t\"description\": \"Coding agent CLI with read, bash, edit, write tools and session management\",\n\t\"type\": \"module\",\n\t\"piConfig\": {\n\t\t\"configDir\": \".pi\"\n\t},\n\t\"bin\": {\n\t\t\"pi\": \"dist/bundle/cli.js\""
+    },
+    {
+      "path": "C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\docs\\models.md",
+      "sha256": "d5bd0d886f0e1541648081ae01da91e1a218cd454713336d5100fc820f6c1527",
+      "bytes": 12614,
+      "first_line": 104,
+      "last_line": 129,
+      "excerpt": "OpenAI-compatible APIs support free-form `samplingParams` model defaults and `samplingParamsByThinkingLevel` overrides. The latter uses Pi thinking-level keys (`off`, `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`), not provider values from `thinkingLevelMap`:\n\n```json\n{\n  \"id\": \"qwen-thinking-model\",\n  \"reasoning\": true,\n  \"samplingParams\": {\n    \"temperature\": 1.0,\n    \"top_p\": 0.95\n  },\n  \"samplingParamsByThinkingLevel\": {\n    \"off\": {\n      \"temperature\": 0.7,\n      \"top_p\": 0.8\n    },\n    \"high\": {\n      \"top_k\": 20\n    }\n  }\n}\n```\n\nPi first clamps unsupported thinking levels, then merges model `samplingParams`, the effective level's override, and request-level `samplingParams` in that order. Later values win per key. Missing levels inherit the model defaults. `modelOverrides` merges per-level entries per key with the base model. These fields apply only to `openai-completions`, `openai-responses`, and `azure-openai-responses`; other APIs ignore them.\n\nCompatibility settings should describe verified differences in the endpoint's request or response behavior. Do not enable them based only on an endpoint advertising OpenAI or Anthropic compatibility.\n"
+    },
+    {
+      "path": "C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\schemas\\models.schema.json",
+      "sha256": "2548101f94ac38e673e7b41eee9b86fb21b509192efd40d155340ab8270cdae8",
+      "bytes": 41984,
+      "first_line": 270,
+      "last_line": 284,
+      "excerpt": "                      \"exclusiveMinimum\": 0\n                    },\n                    \"maxTokens\": {\n                      \"type\": \"number\",\n                      \"exclusiveMinimum\": 0\n                    },\n                    \"samplingParams\": {\n                      \"type\": \"object\",\n                      \"patternProperties\": {\n                        \"^.*$\": {}\n                      }\n                    },\n                    \"samplingParamsByThinkingLevel\": {\n                      \"type\": \"object\",\n                      \"properties\": {"
+    },
+    {
+      "path": "C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\core\\provider-composer.js",
+      "sha256": "b088d1babb75360da6bf1bcbe8e140ce600e1db15f51345f1965d3d1e9f267ef",
+      "bytes": 24395,
+      "first_line": 72,
+      "last_line": 81,
+      "excerpt": "            : model.cost,\n        promptCache: override.promptCache ? { ...model.promptCache, ...override.promptCache } : model.promptCache,\n        contextWindow: override.contextWindow ?? model.contextWindow,\n        maxTokens: override.maxTokens ?? model.maxTokens,\n        samplingParams: override.samplingParams\n            ? { ...model.samplingParams, ...override.samplingParams }\n            : model.samplingParams,\n        samplingParamsByThinkingLevel: mergeSamplingParamsByThinkingLevel(model.samplingParamsByThinkingLevel, override.samplingParamsByThinkingLevel),\n        compat: mergeCompat(model.compat, override.compat),\n    };"
+    },
+    {
+      "path": "C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\node_modules\\@earendil-works\\pi-ai\\dist\\api\\simple-options.js",
+      "sha256": "9b3cc0ae6daa86fdc050bc0cb0f3f986401e64ccddbde6757183c9f8ad411be2",
+      "bytes": 3485,
+      "first_line": 12,
+      "last_line": 21,
+      "excerpt": "    const effectiveThinkingLevel = clampThinkingLevel(model, thinkingLevel);\n    const thinkingLevelParams = model.samplingParamsByThinkingLevel?.[effectiveThinkingLevel];\n    return model.samplingParams || thinkingLevelParams || requestParams\n        ? { ...model.samplingParams, ...thinkingLevelParams, ...requestParams }\n        : undefined;\n}\nexport function buildBaseOptions(model, context, options, apiKey) {\n    const samplingParams = resolveSamplingParams(model, options?.reasoning ?? \"off\", options?.samplingParams);\n    return {\n        temperature: options?.temperature,"
+    },
+    {
+      "path": "C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\node_modules\\@earendil-works\\pi-ai\\dist\\api\\openai-responses.js",
+      "sha256": "abb110a531362658ce21c478a782bcac936ef41e922a80b067f444ccf3c39f7e",
+      "bytes": 15726,
+      "first_line": 298,
+      "last_line": 310,
+      "excerpt": "            };\n        }\n        if (model.provider === \"xai\")\n            params.include = [\"reasoning.encrypted_content\"];\n    }\n    // Last so model and request sampling parameters override named request fields.\n    const samplingParams = resolveSamplingParams(model, reasoningEffort ?? \"off\", options?.samplingParams);\n    if (samplingParams) {\n        Object.assign(params, samplingParams);\n    }\n    return params;\n}\nfunction getServiceTierCostMultiplier(model, serviceTier) {"
+    },
+    {
+      "path": "C:\\Users\\Anton\\AppData\\Roaming\\npm\\node_modules\\@earendil-works\\pi-coding-agent\\dist\\bundle\\chunks\\openai-responses-KCCCXI3B.js",
+      "sha256": "b4c9700a670c19f6fb3d0cfab82d29a5de7a765123d98615e4e06d4e2cfbcd55",
+      "bytes": 10899,
+      "excerpt": "let samplingParams=resolveSamplingParams(model,reasoningEffort??\"off\",options?.samplingParams);return samplingParams&&Object.assign(params,samplingParams),params}function getServiceTierCostMultiplier(model,serviceTier){s"
+    }
+  ],
+  "official_sources": [
+    "https://developers.openai.com/api/docs/guides/structured-outputs#json-mode",
+    "https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations"
+  ]
+}

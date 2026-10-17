@@ -1,0 +1,4 @@
+import pathlib,sys
+sys.path.insert(0,str(pathlib.Path(__file__).parent/'source'))
+from zaratustra_app.cli import main
+raise SystemExit(main())

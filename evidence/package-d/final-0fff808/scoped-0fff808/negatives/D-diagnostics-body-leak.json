@@ -1,0 +1,10 @@
+{
+  "seed": "D-diagnostics-body-leak",
+  "test": "test_maintenance.py::test_artifact_bytes_refs_and_diagnostics",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n__________________ test_artifact_bytes_refs_and_diagnostics ___________________\ntests\\restart\\test_maintenance.py:115: in test_artifact_bytes_refs_and_diagnostics\n    assert (\nE   assert ('PRIVATE CONVERSATION' not in '{\"format\": ...ted\": false}'\nE     \nE     'PRIVATE CONVERSATION' is contained here:\nE       value\\\":\\\"PRIVATE CONVERSATION AND SECRET VALUE\\\"}\", \"excluded\": [\"conversation_text\", \"record_bodies\", \"credentials\", \"paths\"], \"transmitted\": false}\nE     ?           ++++++++++++++++++++)\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_maintenance.py::test_artifact_bytes_refs_and_diagnostics\n1 failed in 1.18s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -774,6 +774,7 @@\n                     t: db.execute(\"SELECT COUNT(*) FROM \" + t).fetchone()[0]\n                     for t in (\"records\", \"works\", \"attempts\", \"artifacts\")\n                 },\n+                \"leak\": (print(\"MUTANT_REACHED\", flush=True) or db.execute(\"SELECT body FROM records LIMIT 1\").fetchone()[0]),\n                 \"excluded\": [\"conversation_text\", \"record_bodies\", \"credentials\", \"paths\"],\n                 \"transmitted\": False,\n             }\n"
+}

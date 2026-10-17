@@ -1,0 +1,22 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+_______ test_rehashed_pinned_reference_corruption_refused[profile_ref] ________
+tests\restart\test_backup_references.py:72: in test_rehashed_pinned_reference_corruption_refused
+    with pytest.raises(CoreError, match="backup.*closure"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE CoreError
+__________ test_rehashed_pinned_reference_corruption_refused[method] __________
+tests\restart\test_backup_references.py:72: in test_rehashed_pinned_reference_corruption_refused
+    with pytest.raises(CoreError, match="backup.*closure"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE CoreError
+____ test_rehashed_pinned_reference_corruption_refused[manifest_sequence] _____
+tests\restart\test_backup_references.py:72: in test_rehashed_pinned_reference_corruption_refused
+    with pytest.raises(CoreError, match="backup.*closure"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE CoreError
+=========================== short test summary info ===========================
+FAILED tests/restart/test_backup_references.py::test_rehashed_pinned_reference_corruption_refused[profile_ref]
+FAILED tests/restart/test_backup_references.py::test_rehashed_pinned_reference_corruption_refused[method]
+FAILED tests/restart/test_backup_references.py::test_rehashed_pinned_reference_corruption_refused[manifest_sequence]
+3 failed in 3.45s

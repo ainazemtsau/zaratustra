@@ -1,0 +1,153 @@
+{
+  "table": "records",
+  "id": "s:progress",
+  "before": {
+    "application": "active",
+    "artifact_refs": [],
+    "schema_ref": null,
+    "source_refs": [],
+    "tombstone": false,
+    "value": {
+      "analysis_result_refs": [],
+      "applied_receipts": [],
+      "consumed_resource": 0,
+      "continuation": "Review selected sources and explore beyond known relations",
+      "delivered_manifest_refs": [],
+      "enumerated_source_refs": [
+        {
+          "index": 0,
+          "sequence": 1,
+          "sha256": "27d069afe468d9398b4d014da65c3add692e908f21826e8c972b4c6d12b85113"
+        },
+        {
+          "index": 0,
+          "sequence": 3,
+          "sha256": "8ca58755c5256fceb2959711575b7fcb7939bfec280cc63544f825ff5854a4b2"
+        }
+      ],
+      "enumeration_cursor": [
+        4,
+        2147483647
+      ],
+      "format": "sleep-progress/v1",
+      "method_ref": {
+        "id": "sleep-method",
+        "revision": 1,
+        "role": "must_be_current"
+      },
+      "proposed_changes": [],
+      "remaining_refs": [
+        {
+          "index": 0,
+          "sequence": 1,
+          "sha256": "27d069afe468d9398b4d014da65c3add692e908f21826e8c972b4c6d12b85113"
+        },
+        {
+          "index": 0,
+          "sequence": 3,
+          "sha256": "8ca58755c5256fceb2959711575b7fcb7939bfec280cc63544f825ff5854a4b2"
+        }
+      ],
+      "return_conditions": [
+        "Further arrivals require a new bounded pass"
+      ],
+      "scope": "space",
+      "selected_source_refs": [
+        {
+          "index": 0,
+          "sequence": 1,
+          "sha256": "27d069afe468d9398b4d014da65c3add692e908f21826e8c972b4c6d12b85113"
+        },
+        {
+          "index": 0,
+          "sequence": 3,
+          "sha256": "8ca58755c5256fceb2959711575b7fcb7939bfec280cc63544f825ff5854a4b2"
+        }
+      ],
+      "source_high_watermark": 4,
+      "stop_reason": "not_started",
+      "unexplored_coverage_position": {
+        "status": "unexplored"
+      },
+      "unresolved_calls": [],
+      "work_id": "s"
+    }
+  },
+  "after": {
+    "application": "active",
+    "artifact_refs": [],
+    "schema_ref": null,
+    "source_refs": [],
+    "tombstone": false,
+    "value": {
+      "analysis_result_refs": [
+        {
+          "id": "missing",
+          "revision": 999
+        }
+      ],
+      "applied_receipts": [],
+      "consumed_resource": 0,
+      "continuation": "Review selected sources and explore beyond known relations",
+      "delivered_manifest_refs": [],
+      "enumerated_source_refs": [
+        {
+          "index": 0,
+          "sequence": 1,
+          "sha256": "27d069afe468d9398b4d014da65c3add692e908f21826e8c972b4c6d12b85113"
+        },
+        {
+          "index": 0,
+          "sequence": 3,
+          "sha256": "8ca58755c5256fceb2959711575b7fcb7939bfec280cc63544f825ff5854a4b2"
+        }
+      ],
+      "enumeration_cursor": [
+        4,
+        2147483647
+      ],
+      "format": "sleep-progress/v1",
+      "method_ref": {
+        "id": "sleep-method",
+        "revision": 1,
+        "role": "must_be_current"
+      },
+      "proposed_changes": [],
+      "remaining_refs": [
+        {
+          "index": 0,
+          "sequence": 1,
+          "sha256": "27d069afe468d9398b4d014da65c3add692e908f21826e8c972b4c6d12b85113"
+        },
+        {
+          "index": 0,
+          "sequence": 3,
+          "sha256": "8ca58755c5256fceb2959711575b7fcb7939bfec280cc63544f825ff5854a4b2"
+        }
+      ],
+      "return_conditions": [
+        "Further arrivals require a new bounded pass"
+      ],
+      "scope": "space",
+      "selected_source_refs": [
+        {
+          "index": 0,
+          "sequence": 1,
+          "sha256": "27d069afe468d9398b4d014da65c3add692e908f21826e8c972b4c6d12b85113"
+        },
+        {
+          "index": 0,
+          "sequence": 3,
+          "sha256": "8ca58755c5256fceb2959711575b7fcb7939bfec280cc63544f825ff5854a4b2"
+        }
+      ],
+      "source_high_watermark": 4,
+      "stop_reason": "not_started",
+      "unexplored_coverage_position": {
+        "status": "unexplored"
+      },
+      "unresolved_calls": [],
+      "work_id": "s"
+    }
+  }
+}

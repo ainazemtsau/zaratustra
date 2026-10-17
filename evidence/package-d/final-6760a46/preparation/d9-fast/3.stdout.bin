@@ -1,0 +1,57 @@
+
+╔══╗─────────▶╔╗ ╔╗      ╔╗◀───┐
+╚╣╠╝◀─────┐  ╔╝╚╗║║────▶╔╝╚╗   │
+ ║║   ╔══╦══╦╩╗╔╝║║  ╔╦═╩╗╔╝╔═╦══╗
+ ║║╔══╣╔╗║╔╗║╔╣║ ║║ ╔╬╣╔╗║║ ║│║╔═╝
+╔╣╠╣║║║╚╝║╚╝║║║╚╗║╚═╝║║║║║╚╗║═╣║
+╚══╩╩╩╣╔═╩══╩╝╚═╝╚═══╩╩╝╚╩═╩╩═╩╝
+  └──▶║║                    ▲ 
+      ╚╝────────────────────┘
+
+
+---------
+Contracts
+---------
+
+Analyzed 230 files, 812 dependencies.
+-------------------------------------
+
+Standard connection resources have no product authority dependency KEPT
+Installed product never imports development tests or tools KEPT
+CLI may depend on Core, Core cannot depend on CLI KEPT
+Core has no surface dependency KEPT
+Core v0.1 foundation is independent of legacy product surfaces KEPT
+Pi adapter uses Core foundation, not legacy product surfaces KEPT
+Native selection composes public Core without release or development authority KEPT
+Manual exchange uses Core, not the release entry or development fixtures KEPT
+Installed release entry is above Core and Pi KEPT
+Installed release entry has no legacy or development dependency KEPT
+Binding domain stays below Pi and legacy surfaces KEPT
+Knowledge domain stays below Pi and legacy surfaces KEPT
+Material and executable query boundaries remain below adapters KEPT
+Development domain stays below Pi and legacy surfaces KEPT
+Activity setup domain stays below its Pi coordinator KEPT
+Workflow domain stays below Pi and release KEPT
+Entry catalog depends only on Core KEPT
+Incoming material coordinator depends only on Core KEPT
+First use has no trusted adapter, Pack or development dependency KEPT
+Process creation has no trusted adapter or development dependency KEPT
+Process change has no trusted adapter or development dependency KEPT
+Public onboarding has no trusted adapter or development dependency KEPT
+Process probe uses Core; Core has no process-rule dependency KEPT
+Process rules have no trusted adapter dependency KEPT
+Integrations depend on public Core, never on agent, release or legacy surfaces KEPT
+Core has no external pack dependency KEPT
+Packs have no trusted adapter or fictional probe dependency KEPT
+Core and generic packs do not depend on fictional signal rules KEPT
+Fictional signal has no trusted surface or other fixture dependency KEPT
+Core and generic packs do not depend on fictional lot rules KEPT
+Fictional lot has no trusted surface or probe dependency KEPT
+Process construction inputs stay development-only and untrusted KEPT
+Shared memory remains inside independent Core KEPT
+Workspace selection uses public Core below Pi and release KEPT
+Restart Core is independent of clients and legacy KEPT
+Restart application uses no legacy or development authority KEPT
+Restart application imports only public Core KEPT
+
+Contracts: 37 kept, 0 broken.

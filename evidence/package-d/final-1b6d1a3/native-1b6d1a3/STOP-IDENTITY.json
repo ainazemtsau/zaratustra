@@ -1,0 +1,14 @@
+[
+  {
+    "ProcessId": 22564,
+    "ParentProcessId": 33176,
+    "CreationDate": "2026-10-16T17:23:40.607539+03:00",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -m pytest tests -q"
+  },
+  {
+    "ProcessId": 26104,
+    "ParentProcessId": 22564,
+    "CreationDate": "2026-10-16T17:23:40.620169+03:00",
+    "CommandLine": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\.venv\\Scripts\\python.exe -m pytest tests -q"
+  }
+]

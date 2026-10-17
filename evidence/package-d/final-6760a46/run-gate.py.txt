@@ -1,0 +1,37 @@
+from __future__ import annotations
+import json,os,sqlite3,subprocess,sys,time
+from pathlib import Path
+
+ROOT=Path.cwd()
+PIN='6760a4665d0f02939ab8db20ab6256a91e389bd4'
+kind=sys.argv[1]
+assert kind in {'native','scoped'}
+assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()==PIN
+assert not subprocess.check_output(['git','diff',PIN,'--','packages','tests','tools','src','pyproject.toml','uv.lock'])
+proof=ROOT/'evidence/package-d/final-6760a46'/(kind+'-6760a46')
+proof.mkdir(parents=True,exist_ok=False)
+temp=ROOT/'_scratch'/('d9-'+kind)
+temp.mkdir(parents=True,exist_ok=False)
+env=os.environ.copy()
+for key in ['ZARATUSTRA_SQLITE_DLL','PYTHONPATH','PYTEST_ADDOPTS','ZARA_RESTART_EVIDENCE','ZARA_RESTART_NEGATIVES']:
+    env.pop(key,None)
+env['TEMP']=env['TMP']=str(temp)
+env['PYTEST_ADDOPTS']='--basetemp='+(temp/'tests').as_posix()
+if kind=='native':
+    env['ZARATUSTRA_SQLITE_DLL']='C:/projects/zaratustra/_scratch/release-installed-20260927/runtime/sqlite3.dll'
+    command=['uv','run','--locked','python','-m','tools.check','--deliver']
+else:
+    command=[sys.executable,'-m','pytest','tests/restart','-q']
+    (proof/'traces').mkdir()
+    env['ZARA_RESTART_EVIDENCE']=str(proof/'traces')
+    env['ZARA_RESTART_NEGATIVES']=str(proof/'negatives')
+started=time.time()
+(proof/'invocation.json').write_text(json.dumps({'source':PIN,'command':command,'cwd':str(ROOT),
+    'new_runtime_legacy_dll':False,'full_gate_only_dll':env.get('ZARATUSTRA_SQLITE_DLL'),
+    'parent_python':sys.version,'parent_native_sqlite':sqlite3.sqlite_version},indent=2),encoding='utf-8')
+with (proof/'stdout.bin').open('xb') as out,(proof/'stderr.bin').open('xb') as err:
+    result=subprocess.run(command,cwd=ROOT,env=env,stdout=out,stderr=err)
+(proof/'exit.json').write_text(json.dumps({'source':PIN,'returncode':result.returncode,
+    'seconds':time.time()-started},indent=2),encoding='utf-8')
+print(json.dumps({'kind':kind,'returncode':result.returncode,'seconds':time.time()-started}))
+raise SystemExit(result.returncode)

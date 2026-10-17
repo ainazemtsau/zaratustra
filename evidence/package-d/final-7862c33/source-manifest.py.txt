@@ -1,0 +1,18 @@
+import hashlib,json,subprocess,zipfile
+from pathlib import Path
+root=Path.cwd();proof=root/'evidence/package-d/final-7862c33';pin='7862c3353ec87eee0a7d00ec6e051134d27d07fa'
+scopes=['AGENTS.md','.python-version','pyproject.toml','uv.lock','README.md','validation.config','packages','src','tools','tests','docs/restart/FIRST-RELEASE-PLAN.md','docs/restart/FIRST-RELEASE-REVIEW.md']
+paths=subprocess.check_output(['git','ls-tree','-r','--name-only',pin,'--',*scopes],text=True).splitlines()
+rows=[]
+with zipfile.ZipFile(proof/'source-7862c33.zip','w',compression=zipfile.ZIP_DEFLATED) as archive:
+ for path in paths:
+  raw=subprocess.check_output(['git','show',pin+':'+path]);assert raw==(root/path).read_bytes(),path
+  blob=subprocess.check_output(['git','rev-parse',pin+':'+path],text=True).strip()
+  rows.append({'path':path,'git_blob':blob,'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)})
+  info=zipfile.ZipInfo(path,(2026,10,16,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;archive.writestr(info,raw)
+manifest={'source_commit':pin,'accepted_c_candidate':'7d211480d1dd5067bf52c3a654cc1a713368310d','scope':scopes,'files':rows}
+frozen={r['path']:r['sha256'] for r in rows}
+assert frozen['docs/restart/FIRST-RELEASE-PLAN.md']=='3e279c312d20f137e2076ecd7240f6b2c039923b9ee9bfa55e9662c5df98e0cb'
+assert frozen['docs/restart/FIRST-RELEASE-REVIEW.md']=='e7493dc10a06ce34b7f4e06efb6db55509565b46099ee51d1d6987b2aa268dcb'
+(proof/'SOURCE-MANIFEST.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+print(json.dumps({'source':pin,'files':len(rows)}))

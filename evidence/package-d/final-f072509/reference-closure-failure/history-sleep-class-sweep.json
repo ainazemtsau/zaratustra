@@ -1,0 +1,31 @@
+{
+  "base": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-independent-closure-1iu_y608",
+  "checks": [
+    {
+      "case": "historical pins with heads advanced",
+      "pass_": true
+    },
+    {
+      "case": "Sleep backup baseline",
+      "pass_": true
+    },
+    {
+      "case": "sleep-method-ref",
+      "injection_reached": true,
+      "rehash_valid": true,
+      "rejected": false
+    },
+    {
+      "case": "sleep-analysis-ref",
+      "injection_reached": true,
+      "rehash_valid": true,
+      "rejected": false
+    },
+    {
+      "case": "sleep-source-ref",
+      "injection_reached": true,
+      "rehash_valid": true,
+      "rejected": false
+    }
+  ]
+}

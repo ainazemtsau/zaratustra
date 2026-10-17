@@ -1,0 +1,10 @@
+{
+  "seed": "D-addressed-reply-rerouted",
+  "test": "test_ordinary_activity.py::test_addressed_reply_stays_in_existing_scoped_work",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_____________ test_addressed_reply_stays_in_existing_scoped_work ______________\ntests\\restart\\test_ordinary_activity.py:96: in test_addressed_reply_stays_in_existing_scoped_work\n    assert result[\"state\"] == \"completed\" and len(receiver.actions) == 3\nE   AssertionError: assert ('completed' == 'completed'\nE     \nE       completed and 4 == 3)\nE    +  where 4 = len(['turn:6bf3b4ffc22e4ebeab1121e4a49aae6d:attempt:e6ee44910626452a92b582ca0132f9e8:action', 'continued:a7c76bf25ba2e5579...nued:c8eb16b56f6808b84b67eab65eb51177f11a6a0d51cd70ba7f377689c207aba3:attempt:70b8672c336d4538a274c783e902517f:action'])\nE    +    where ['turn:6bf3b4ffc22e4ebeab1121e4a49aae6d:attempt:e6ee44910626452a92b582ca0132f9e8:action', 'continued:a7c76bf25ba2e5579...nued:c8eb16b56f6808b84b67eab65eb51177f11a6a0d51cd70ba7f377689c207aba3:attempt:70b8672c336d4538a274c783e902517f:action'] = <tests.restart.ordinary_support.OrdinaryReceiver object at 0x0000021F6F45A270>.actions\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_ordinary_activity.py::test_addressed_reply_stays_in_existing_scoped_work\n1 failed in 1.86s\n",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/conversation.py\n+++ app/src/zaratustra_app/conversation.py.mutant\n@@ -186,7 +186,7 @@\n             )\n             if (\n                 link\n-                and not dispatched\n+                and (print(\"MUTANT_REACHED\", flush=True) or True)\n                 and body[\"method_ref\"][\"id\"] != ROUTING_ID\n                 and high > link[\"delivered_cutoff\"]\n             ):\n"
+}

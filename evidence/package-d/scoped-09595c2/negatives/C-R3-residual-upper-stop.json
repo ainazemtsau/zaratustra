@@ -1,0 +1,10 @@
+{
+  "seed": "C-R3-residual-upper-stop",
+  "test": "test_sleep.py::test_next_call_beyond_remaining_is_rejected",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_________________ test_next_call_beyond_remaining_is_rejected _________________\ntests\\restart\\test_sleep.py:289: in test_next_call_beyond_remaining_is_rejected\n    assert inspect(core, \"works\")[0][\"status\"] == \"paused\"\nE   AssertionError: assert 'running' == 'paused'\nE     \nE     - paused\nE     + running\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_sleep.py::test_next_call_beyond_remaining_is_rejected\n1 failed in 1.41s\n",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/sleep.py\n+++ app/src/zaratustra_app/sleep.py.mutant\n@@ -257,7 +257,7 @@\n             return self._run(work_id, profile_ref, executor)\n         except CoreError as error:\n             if error.code == \"resource_exhausted\":\n-                self._stop_resource(work_id)\n+                print(\"MUTANT_REACHED\", flush=True)\n             raise\n \n     def _stop_resource(self, work_id: str) -> None:\n"
+}

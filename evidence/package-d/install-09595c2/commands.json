@@ -1,0 +1,30 @@
+[
+  {
+    "name": "build-zaratustra-core",
+    "argv": [
+      "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+      "build",
+      "--package",
+      "zaratustra-core",
+      "--out-dir",
+      "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-d\\install-09595c2\\physical-builds"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-09595c2-51h5ei80\\source",
+    "returncode": 0,
+    "seconds": 0.18694305419921875
+  },
+  {
+    "name": "build-zaratustra-next",
+    "argv": [
+      "C:\\Users\\Anton\\.local\\bin\\uv.EXE",
+      "build",
+      "--package",
+      "zaratustra-next",
+      "--out-dir",
+      "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\evidence\\package-d\\install-09595c2\\physical-builds"
+    ],
+    "cwd": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-09595c2-51h5ei80\\source",
+    "returncode": 0,
+    "seconds": 0.20870018005371094
+  }
+]

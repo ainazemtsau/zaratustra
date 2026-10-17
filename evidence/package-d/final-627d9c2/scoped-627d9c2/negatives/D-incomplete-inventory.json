@@ -1,0 +1,10 @@
+{
+  "seed": "D-incomplete-inventory",
+  "test": "test_maintenance.py::test_corrupt_partial_backups_refused[manifest]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_______________ test_corrupt_partial_backups_refused[manifest] ________________\ntests\\restart\\test_maintenance.py:294: in test_corrupt_partial_backups_refused\n    with pytest.raises(CoreError, match=\"invalid_request\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_maintenance.py::test_corrupt_partial_backups_refused[manifest]\n1 failed in 0.95s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/maintenance.py\n+++ core/src/zaratustra_core/maintenance.py.mutant\n@@ -116,7 +116,7 @@\n             db.row_factory = sqlite3.Row\n             rows = [dict(r) for r in db.execute(\"SELECT * FROM artifacts ORDER BY sha256\")]\n             original = dict(db.execute(\"SELECT * FROM meta\").fetchone())\n-            if rows != manifest[\"artifacts\"] or original != manifest[\"source\"]:\n+            if (print(\"MUTANT_REACHED\", flush=True) or False):\n                 raise CoreError(\"invalid_request\", \"backup.complete_manifest\")\n         materials = [(a, verified(backup_root, a[\"sha256\"], a[\"size\"])) for a in rows]\n     except (OSError, ValueError, KeyError, TypeError, sqlite3.DatabaseError) as error:\n"
+}

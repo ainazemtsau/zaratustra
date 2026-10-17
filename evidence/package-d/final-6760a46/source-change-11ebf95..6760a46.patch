@@ -1,0 +1,1860 @@
+diff --git a/packages/app/src/zaratustra_app/conversation.py b/packages/app/src/zaratustra_app/conversation.py
+index c3dc919..2309bd4 100644
+--- a/packages/app/src/zaratustra_app/conversation.py
++++ b/packages/app/src/zaratustra_app/conversation.py
+@@ -6,13 +6,20 @@ import base64
+ import json
+ import os
+ import time
+-from typing import Any
++from typing import Any, cast
+ from uuid import uuid4
+ 
+ from zaratustra_core import Core, CoreError, digest
+ 
+ from .coordinator import Coordinator
+ from .executor_port import Executor, Pi
++from .ordinary import (
++    EXECUTION_ID,
++    EXECUTION_METHOD,
++    ROUTING_ID,
++    ROUTING_METHOD,
++    response_contract,
++)
+ 
+ CONVERSATION_METHOD = """conversation/1
+ Help the person with their original request and corrections in raw_messages.
+@@ -121,6 +128,22 @@ class Conversation:
+         call_limit: int,
+         *,
+         refresh: bool = False,
++    ) -> dict[str, Any]:
++        while True:
++            result = self._step(executor, descriptor, call_limit, refresh=refresh)
++            if "next_work_id" not in result:
++                return result
++            # Each handoff inherits only the parent's unspent reservation budget.
++            # Paused/unknown states stop inside _step; a new Work cannot reset it.
++            refresh = False
++
++    def _step(
++        self,
++        executor: Executor,
++        descriptor: dict[str, Any],
++        call_limit: int,
++        *,
++        refresh: bool = False,
+     ) -> dict[str, Any]:
+         self.deliver_input()
+         snapshot = self.coordinator.snapshot()
+@@ -153,6 +176,33 @@ class Conversation:
+                     "work." + work["status"],
+                     "reconcile",
+                 )
++            body = json.loads(work["body"])
++            link = body.get("continuation")
++            work_attempts = {a["id"] for a in snapshot["attempts"] if a["work"] == work_id}
++            dispatched = any(a["attempt"] in work_attempts for a in snapshot["actions"])
++            high = max(
++                (m["seq"] for m in snapshot["messages"] if m["conversation"] == self.conversation),
++                default=0,
++            )
++            if (
++                link
++                and not dispatched
++                and body["method_ref"]["id"] != ROUTING_ID
++                and high > link["delivered_cutoff"]
++            ):
++                # Late input must be considered before dependent Activity work.
++                # Preserve the old scope/history and the same remaining budget.
++                route = next(h for h in snapshot["heads"] if h["id"] == ROUTING_ID)
++                self.coordinator.refresh_basis(
++                    work_id,
++                    method_ref={
++                        "id": route["id"],
++                        "revision": route["revision"],
++                        "role": "must_be_current",
++                    },
++                )
++                snapshot = self.coordinator.snapshot()
++                work = next(w for w in snapshot["works"] if w["id"] == work_id)
+         else:
+             conversation = next(
+                 (c for c in snapshot["conversations"] if c["id"] == self.conversation), None
+@@ -167,59 +217,64 @@ class Conversation:
+                 return {"state": "idle", "text": "Введите запрос обычными словами."}
+             work_id = "turn:" + messages[0]["event"]
+             cancelled = {w["id"] for w in works if w["status"] == "cancelled"}
++            controls = [
++                json.loads(i["body"])
++                for i in snapshot["intents"]
++                if i["kind"] == "control" and i["subject"] in cancelled
++            ]
++            if any(c.get("input_watermark") is None for c in controls):
++                raise CoreError("outcome_unknown", "cancelled_input_boundary", "reconcile")
++            boundary = max((c["input_watermark"] for c in controls), default=-1)
++            if boundary >= cursor and not any(
++                m["seq"] > boundary and m["origin"] == "human" for m in messages
++            ):
++                return {
++                    "state": "cancelled",
++                    "text": "Работа отменена. Напишите новый запрос для новой работы.",
++                }
++            closed = {w["id"] for w in works}
+             base_id, successor = work_id, 0
+-            while work_id in cancelled:
+-                control = next(
+-                    (
+-                        i
+-                        for i in snapshot["intents"]
+-                        if i["kind"] == "control" and i["subject"] == work_id
+-                    ),
+-                    None,
+-                )
+-                watermark = json.loads(control["body"]).get("input_watermark") if control else None
+-                if watermark is None:
+-                    raise CoreError("outcome_unknown", "cancelled_input_boundary", "reconcile")
+-                fresh_human_input = any(
+-                    m["seq"] > watermark and m["origin"] == "human" for m in messages
+-                )
+-                if not fresh_human_input:
+-                    return {
+-                        "state": "cancelled",
+-                        "text": "Работа отменена. Напишите новый запрос для новой работы.",
+-                    }
++            while work_id in closed:
+                 successor += 1
+                 work_id = base_id + ":after-cancel:" + str(successor)
+             profile = pin_profile(self.owner, work_id + ":profile", descriptor)
+-            method = next((h for h in snapshot["heads"] if h["id"] == "conversation-method"), None)
+-            if method is None:
+-                self.owner.call(
+-                    "apply_changes",
+-                    {
+-                        "changes": [
+-                            {
+-                                "id": "conversation-method",
+-                                "kind": "method",
+-                                "key": "conversation/1",
+-                                "body": CONVERSATION_METHOD,
+-                            }
+-                        ]
+-                    },
+-                    "conversation-method:create",
+-                    expected_heads={"conversation-method": 0},
+-                )
++            for method_id, value in [
++                (ROUTING_ID, ROUTING_METHOD),
++                (EXECUTION_ID, EXECUTION_METHOD),
++            ]:
++                if not any(h["id"] == method_id for h in snapshot["heads"]):
++                    self.owner.call(
++                        "apply_changes",
++                        {
++                            "changes": [
++                                {
++                                    "id": method_id,
++                                    "kind": "method",
++                                    "key": value.splitlines()[0],
++                                    "body": value,
++                                }
++                            ]
++                        },
++                        method_id + ":create",
++                        expected_heads={method_id: 0},
++                    )
+             self.coordinator.open_work(
+                 {
+                     "id": work_id,
+                     "conversation": self.conversation,
+-                    "goal": "Help with the original human request and its corrections.",
+-                    "method_ref": {"id": "conversation-method", "revision": 1},
++                    "goal": (
++                        "Choose the Activity and scoped useful Work "
++                        "for the pending original request."
++                    ),
++                    "method_ref": {"id": ROUTING_ID, "revision": 1},
+                     "call_limit": call_limit,
+                     "continuation_policy": "durable",
+                 }
+             )
+             snapshot = self.coordinator.snapshot()
+             work = next(w for w in snapshot["works"] if w["id"] == work_id)
++        routing = json.loads(work["body"])["method_ref"]["id"] == ROUTING_ID
++        cast(Any, executor).response_contract = response_contract(routing)
+         attempts = [
+             a
+             for a in snapshot["attempts"]
+@@ -228,14 +283,16 @@ class Conversation:
+         if attempts:
+             attempt = attempts[0]
+             if attempt["status"] != "prepared":
+-                result = self.coordinator.recover(attempt["id"], pi=isinstance(executor, Pi))
++                result = self.coordinator.recover(
++                    attempt["id"], pi=isinstance(executor, Pi), ordinary=True
++                )
+                 return self._present(result)
+         else:
+             attempt_id = work_id + ":attempt:" + uuid4().hex
+             prepared = self.coordinator.prepare(work_id, attempt_id, profile)
+             attempt = {"id": attempt_id, "generation": prepared["generation"]}
+         self.coordinator.dispatch(attempt["id"], attempt["generation"], executor)
+-        result = self.coordinator.recover(attempt["id"], pi=isinstance(executor, Pi))
++        result = self.coordinator.recover(attempt["id"], pi=isinstance(executor, Pi), ordinary=True)
+         return self._present(result)
+ 
+     def _present(self, result: dict[str, Any]) -> dict[str, Any]:
+diff --git a/packages/app/src/zaratustra_app/coordinator.py b/packages/app/src/zaratustra_app/coordinator.py
+index d79db73..4db4859 100644
+--- a/packages/app/src/zaratustra_app/coordinator.py
++++ b/packages/app/src/zaratustra_app/coordinator.py
+@@ -5,7 +5,7 @@ from __future__ import annotations
+ import base64
+ import hashlib
+ import json
+-from typing import Any
++from typing import Any, cast
+ from uuid import uuid4
+ 
+ from zaratustra_core import Client, CoreError
+@@ -26,7 +26,24 @@ class Coordinator:
+         method = next(h for h in heads if h["id"] == payload["method_ref"]["id"])
+         if method["scope"] not in {"space", scope}:
+             raise CoreError("denied", "method.scope")
+-        inputs = list(payload.get("inputs", []))
++        return self.client.call(
++            "open_work",
++            payload
++            | {
++                "scope": scope,
++                "inputs": self.scoped_inputs(scope, list(payload.get("inputs", []))),
++                "method_ref": {
++                    "id": method["id"],
++                    "revision": method["revision"],
++                    "role": "must_be_current",
++                },
++            },
++            str(uuid4()),
++        )
++
++    def scoped_inputs(self, scope: str, inputs: list[dict[str, Any]]) -> list[dict[str, Any]]:
++        inputs = list(inputs)
++        heads = self.snapshot()["heads"]
+         for head in heads:
+             if head["kind"] != "memory" or head["scope"] not in {"space", scope}:
+                 continue
+@@ -41,20 +58,7 @@ class Coordinator:
+                 inputs.append(
+                     {"id": head["id"], "revision": head["revision"], "role": "must_be_current"}
+                 )
+-        return self.client.call(
+-            "open_work",
+-            payload
+-            | {
+-                "scope": scope,
+-                "inputs": inputs,
+-                "method_ref": {
+-                    "id": method["id"],
+-                    "revision": method["revision"],
+-                    "role": "must_be_current",
+-                },
+-            },
+-            str(uuid4()),
+-        )
++        return inputs
+ 
+     def prepare(self, work_id: str, attempt_id: str, profile_ref: dict[str, Any]) -> dict[str, Any]:
+         snapshot = self.snapshot()
+@@ -90,7 +94,9 @@ class Coordinator:
+             attempt_id + ":prepare",
+         )
+ 
+-    def refresh_basis(self, work_id: str) -> dict[str, Any]:
++    def refresh_basis(
++        self, work_id: str, *, method_ref: dict[str, Any] | None = None
++    ) -> dict[str, Any]:
+         """Explicit new intent over freshly read current refs; old terminal remains evidence."""
+         snapshot = self.snapshot()
+         work = next(w for w in snapshot["works"] if w["id"] == work_id)
+@@ -109,7 +115,7 @@ class Coordinator:
+                 "revision": work["revision"],
+                 "action": "refresh",
+                 "inputs": [fresh(r) for r in body.get("inputs", [])],
+-                "method_ref": fresh(body["method_ref"]),
++                "method_ref": method_ref if method_ref is not None else fresh(body["method_ref"]),
+             },
+             str(uuid4()),
+         )
+@@ -169,7 +175,19 @@ class Coordinator:
+         ]
+ 
+         def tool_handler(native_id: str, intent: dict[str, Any]) -> dict[str, Any]:
+-            if set(intent) - {"changes", "expected_heads", "initial_work"}:
++            if not isinstance(intent, dict) or not isinstance(native_id, str) or not native_id:
++                raise CoreError("invalid_request", "native_tool.intent")
++            contract = getattr(executor, "response_contract", {})
++            if contract.get("version") == "ordinary-routing/1":
++                raise CoreError("denied", "ordinary.routing_atomic_handoff")
++            if contract.get("version") == "ordinary-execution/2":
++                from .ordinary import subject_scope
++
++                subject_scope(intent.get("changes"), pinned["work"].get("scope", "space"))
++            if set(intent) - {"changes", "expected_heads", "initial_work"} or not {
++                "changes",
++                "expected_heads",
++            } <= set(intent):
+                 raise CoreError("invalid_request", "native_tool.intent")
+             command_id = attempt_id + ":tool:" + native_id
+             self.client.call(
+@@ -235,9 +253,14 @@ class Coordinator:
+         )
+         return raw
+ 
+-    def recover(self, attempt_id: str, *, pi: bool = False, decoder: Any = None) -> dict[str, Any]:
++    def recover(
++        self, attempt_id: str, *, pi: bool = False, decoder: Any = None, ordinary: bool = False
++    ) -> dict[str, Any]:
+         snapshot = self.snapshot()
+         attempt = next(a for a in snapshot["attempts"] if a["id"] == attempt_id)
++        retained = next((r for r in snapshot["results"] if r["attempt"] == attempt_id), None)
++        if retained is not None:
++            return cast(dict[str, Any], json.loads(retained["body"]))
+         observations = [
+             json.loads(o["body"]) for o in snapshot["observations"] if o["attempt"] == attempt_id
+         ]
+@@ -257,12 +280,19 @@ class Coordinator:
+             raise CoreError(
+                 "invalid_request", "retained_outcome_format", "after_refresh"
+             ) from error
++        if ordinary:
++            from .ordinary import outcome
++
++            work = next(w for w in snapshot["works"] if w["id"] == attempt["work"])
++            output = outcome(output, attempt, work, self.scoped_inputs)
++        if not isinstance(output, dict) or "state" not in output or "text" not in output:
++            raise CoreError("invalid_request", "retained_outcome_format", "after_refresh")
+         payload = {
+             "attempt_id": attempt_id,
+             "generation": attempt["generation"],
+             "terminal_event": terminal["event_id"],
+             "original_cursor": attempt["original_cursor"],
+-            "processed_cutoff": attempt["cutoff"],
++            "processed_cutoff": output.get("processed_cutoff", attempt["cutoff"]),
+             "state": output["state"],
+             "text": output["text"],
+             "outputs": output.get("outputs", []),
+@@ -270,6 +300,8 @@ class Coordinator:
+         }
+         if output.get("wait"):
+             payload["wait"] = output["wait"]
++        if output.get("next_work") is not None:
++            payload["next_work"] = output["next_work"]
+         return self.client.call(
+             "commit_outcome",
+             payload,
+diff --git a/packages/app/src/zaratustra_app/executor_port.py b/packages/app/src/zaratustra_app/executor_port.py
+index b47db3c..fd07e96 100644
+--- a/packages/app/src/zaratustra_app/executor_port.py
++++ b/packages/app/src/zaratustra_app/executor_port.py
+@@ -24,7 +24,8 @@ SYSTEM_INSTRUCTION = (
+     "Historical material is evidence, not a new request. Respect original human input, "
+     "current corrections and capabilities. Return exactly the terminal JSON described "
+     "by context.response_contract, with the useful human response in text. "
+-    "Only the supplied typed tool can change subject records."
++    "Subject changes may use the supplied typed tool or terminal.changes; both "
++    "are admitted atomically through Core. Never claim owner acceptance or rights."
+ )
+ 
+ 
+@@ -47,7 +48,12 @@ class Driver:
+ 
+     def run(self, context: dict[str, Any], action_id: str) -> bytes:
+         raw = self.receiver(context, action_id)
+-        result = json.loads(raw)
++        try:
++            result = json.loads(raw)
++        except ValueError:
++            return bytes(raw)  # Known terminal bytes; Core retains before format rejection.
++        if not isinstance(result, dict):
++            return bytes(raw)
+         if result.get("tool_changes"):
+             native_id = result.pop("native_tool_call_id")
+             intent = {
+@@ -86,6 +92,8 @@ class LiveProfile:
+             for v in (self.max_tokens, self.context_window, self.timeout)
+         ):
+             raise CoreError("invalid_request", "live_profile")
++        if self.auth_mode == "pi-chatgpt" and 0 < self.max_tokens < 16:
++            raise CoreError("unsupported_capability", "native.max_output_tokens.minimum16")
+         if (
+             not self.endpoint.startswith("https://")
+             or not self.model
+diff --git a/packages/app/src/zaratustra_app/ordinary.py b/packages/app/src/zaratustra_app/ordinary.py
+new file mode 100644
+index 0000000..35ecea1
+--- /dev/null
++++ b/packages/app/src/zaratustra_app/ordinary.py
+@@ -0,0 +1,187 @@
++"""Versioned ordinary Activity protocol; meaning stays with the executor."""
++
++from __future__ import annotations
++
++import json
++from typing import Any
++
++from zaratustra_core import CoreError, digest
++
++ROUTING_ID = "conversation-routing-method"
++EXECUTION_ID = "conversation-execution-method"
++
++ROUTING_METHOD = """conversation-routing/1
++Choose the Activity for the exact pending human request and corrections in
++raw_messages. Read the catalog and retained conversation before choosing.
++Reuse an existing Activity only when it is the same work; preserve its identity,
++kind/key/scope and exact current revision. A different request may need another
++Activity in the same conversation. You choose all subject meaning and useful
++organization; no domain router, compulsory interview or fixed project template.
++Create or update a meaningful minimal Activity holding the actual agreed goal,
++constraints and working arrangement. Internal durable bookkeeping does not mean
++asking the person to create cards or delaying their requested practice.
++Return typed changes and expected_heads, plus exact outputs containing the chosen
++Activity ref. New IDs use expected_heads[id]=0; updates use the catalog revision.
++Change shape: {id,kind,key,scope,body,source_refs?}. Body is the actual free text or
++object, not a record wrapper. Allowed kinds activity/data; memory and Method need
++explicit delegation. source_refs are subject record refs, never Work/message IDs.
++Return one JSON object with state completed, text empty, changes, expected_heads,
++outputs and next_work:{scope:chosen_activity_id,goal:the actual requested useful
++work,inputs:[exact subject refs needed for that work]}. The host supplies identity,
++conversation, finite remaining budget and the pinned execution Method. Do not
++start the useful work or call zara_change in this discovery phase. Core atomically
++publishes Activity + scoped continuation; the original human input stays pending
++for that Work. This intermediate result is not a user response or acceptance.
++"""
++
++EXECUTION_METHOD = """conversation/2
++Help with the original human request and corrections in raw_messages now, using
++the Activity pinned in inputs and this Work's scope. Read applicable memory,
++catalog, prior results/messages and exact versions. Choose the smallest useful
++organization; do not impose an interview, setup project, planning document or
++fixed template. Ask only questions needed for the requested result.
++Preserve the Activity's stable identity and retain its actual current agreement,
++constraints, progress and useful results in versioned Activity/data where needed
++for continuation. A bare card with the real work only in chat is insufficient.
++You choose the meaning and free text/object structure; no prescribed subject
++fields or number of sections. The scoped final itself is also retained by Core.
++Use zara_change for intermediate changes only when needed, or include changes
++atomically with the terminal response. Allowed kinds activity/data; memory and
++Method require explicit delegation. New IDs use expected_heads[id]=0; existing
++IDs use their catalog revision, identical kind/key/scope, and a new body value.
++Change shape: {id,kind,key,scope,body,source_refs?}; never record wrappers as body
++or Work/message IDs as source_refs. Never mutate rights or execution status.
++Return exactly one JSON object (no Markdown fences): state completed, text the
++actual useful response, changes, expected_heads and outputs. Outputs must include
++the exact chosen Activity revision and any useful subject data refs. For a needed
++addressed question use state waiting and wait:{id:unique_id,question:text}, still
++retaining the Activity/output refs. completed ends this bounded Work; it is not
++owner acceptance, proof of truth or completion of the whole Activity.
++"""
++
++
++def response_contract(routing: bool) -> dict[str, Any]:
++    return {
++        "version": "ordinary-routing/1" if routing else "ordinary-execution/2",
++        "terminal": (
++            "JSON: state completed, text empty, changes, expected_heads, outputs, "
++            "next_work:{scope:Activity ID,goal:text,inputs:[exact record refs]}"
++            if routing
++            else "JSON: state completed/waiting, useful text, changes, expected_heads, "
++            "outputs:[chosen Activity ref and any data refs], optional wait"
++        ),
++        "changes": "C3 Change: id,kind,key,scope,body (value only), optional source_refs",
++        "expected_heads": "each changed ID maps to its old revision; zero for a new ID",
++        "identity": "the model chooses subject meaning; Core checks refs, scope, CAS and rights",
++    }
++
++
++def outcome(
++    output: dict[str, Any],
++    attempt: dict[str, Any],
++    work: dict[str, Any],
++    inputs: Any,
++) -> dict[str, Any]:
++    """Normalize trusted identity/budget; never invent Activity or subject content."""
++    body = json.loads(work["body"])
++    if body["method_ref"]["id"] not in {ROUTING_ID, EXECUTION_ID}:
++        return output  # Historical/custom Work keeps its original contract.
++
++    def invalid() -> None:
++        raise CoreError("invalid_request", "ordinary.outcome_shape", "after_refresh")
++
++    def refs(value: Any) -> bool:
++        return isinstance(value, list) and all(
++            isinstance(r, dict)
++            and isinstance(r.get("id"), str)
++            and bool(r["id"])
++            and type(r.get("revision")) is int
++            and r["revision"] > 0
++            and not set(r) - {"id", "revision", "role"}
++            and isinstance(r.get("role", "exact"), str)
++            and r.get("role", "exact") in {"exact", "must_be_current"}
++            for r in value
++        )
++
++    if (
++        not isinstance(output, dict)
++        or set(output)
++        - {"state", "text", "changes", "expected_heads", "outputs", "wait", "next_work"}
++        or not isinstance(output.get("state"), str)
++        or output.get("state") not in {"completed", "ready", "waiting"}
++        or not isinstance(output.get("text"), str)
++        or not refs(output.get("outputs", []))
++        or not isinstance(output.get("changes", []), list)
++        or not all(isinstance(c, dict) for c in output.get("changes", []))
++        or not isinstance(output.get("expected_heads", {}), dict)
++        or not all(
++            isinstance(k, str) and type(v) is int and v >= 0
++            for k, v in output.get("expected_heads", {}).items()
++        )
++    ):
++        invalid()
++    routing = body["method_ref"]["id"] == ROUTING_ID
++    scope = body.get("scope", "space")
++    if routing:
++        child = output.get("next_work")
++        if (
++            output.get("state") != "completed"
++            or not isinstance(child, dict)
++            or set(child) - {"scope", "goal", "inputs"}
++            or not isinstance(child.get("scope"), str)
++            or not child.get("scope")
++            or child.get("scope") == "space"
++            or not isinstance(child.get("goal"), str)
++            or not child.get("goal")
++            or not refs(child.get("inputs", []))
++        ):
++            raise CoreError("invalid_request", "ordinary.routing_outcome", "after_refresh")
++        scope = child["scope"]
++    elif output.get("next_work") is not None:
++        raise CoreError("invalid_request", "ordinary.unexpected_continuation", "after_refresh")
++    if not routing:
++        subject_scope(output.get("changes", []), scope)
++    selected = next((r for r in output.get("outputs", []) if r.get("id") == scope), None)
++    if selected is None:
++        raise CoreError("invalid_request", "ordinary.activity_output", "after_refresh")
++    if routing:
++        assert isinstance(child, dict)
++        pinned = json.loads(attempt["body"])
++        method = next((r for r in pinned["catalog"] if r["id"] == EXECUTION_ID), None)
++        if method is None:
++            raise CoreError("invalid_request", "ordinary.execution_method", "after_refresh")
++        requested = [r for r in child.get("inputs", []) if r["id"] != scope]
++        # Subject versions are immutable inputs; mutations use their own CAS.
++        # Requiring this head to remain current would reject our own typed tool
++        # updating the Activity before the final outcome.
++        requested.append(selected | {"role": "exact"})
++        output = output | {
++            "text": "",
++            "processed_cutoff": attempt["original_cursor"],
++            "next_work": {
++                "id": "continued:" + digest(attempt["id"]),
++                "conversation": body["conversation"],
++                "scope": scope,
++                "goal": child["goal"],
++                "inputs": inputs(scope, requested),
++                "method_ref": {
++                    "id": method["id"],
++                    "revision": method["revision"],
++                    "role": "must_be_current",
++                },
++                "call_limit": max(0, body["call_limit"] - work["reserved"]),
++                "continuation_policy": "durable",
++            },
++        }
++    return output
++
++
++def subject_scope(changes: Any, scope: str) -> None:
++    if not isinstance(changes, list) or any(not isinstance(c, dict) for c in changes):
++        raise CoreError("invalid_request", "ordinary.changes")
++    if any(
++        (c.get("kind") == "activity" and c.get("id") != scope)
++        or (c.get("kind") == "data" and c.get("scope", "space") != scope)
++        for c in changes
++    ):
++        raise CoreError("denied", "ordinary.activity_scope")
+diff --git a/packages/core/src/zaratustra_core/api.py b/packages/core/src/zaratustra_core/api.py
+index d10fb81..3aba754 100644
+--- a/packages/core/src/zaratustra_core/api.py
++++ b/packages/core/src/zaratustra_core/api.py
+@@ -286,7 +286,16 @@ class Core:
+                 if old["fingerprint"] != fingerprint:
+                     fail("idempotency_conflict", "command_id")
+                 return cast(dict[str, Any], loads(old["response"]))
+-            for subject, revision in req.expected_heads.items():
++            # A retained final is an idempotent read of its slot. Its original
++            # changes already advanced heads; only a first publication uses CAS.
++            retained_final = (
++                req.operation == "commit_outcome"
++                and db.execute(
++                    "SELECT 1 FROM results WHERE attempt=? AND slot='final'",
++                    (req.payload["attempt_id"],),
++                ).fetchone()
++            )
++            for subject, revision in () if retained_final else req.expected_heads.items():
+                 head = db.execute("SELECT revision FROM heads WHERE id=?", (subject,)).fetchone()
+                 if (head[0] if head else 0) != revision:
+                     fail("stale_basis", subject, "after_refresh")
+@@ -605,23 +614,85 @@ class Core:
+         ):
+             fail("stale_basis", "progress.resource")
+ 
+-    def _work(self, db: sqlite3.Connection, body: dict[str, Any]) -> dict[str, Any]:
++    def _work(
++        self,
++        db: sqlite3.Connection,
++        body: dict[str, Any],
++        *,
++        continuation: dict[str, Any] | None = None,
++    ) -> dict[str, Any]:
++        body = dict(body)
+         self._method(db, body)
+         for ref in body.get("inputs", []):
+             self._exact(db, ref)
+-        if type(body["call_limit"]) is not int or body["call_limit"] < 1:
++        if type(body["call_limit"]) is not int or body["call_limit"] < (0 if continuation else 1):
+             fail("invalid_request", "call_limit")
+         if body.get("token_limit") or body.get("money_limit"):
+             fail("unsupported_capability", "resource_unit")
+         db.execute("INSERT OR IGNORE INTO conversations(id) VALUES(?)", (body["conversation"],))
++        state = "ready"
++        if continuation is not None:
++            body["continuation"] = continuation
++            if body["call_limit"] < continuation["resource_upper"]:
++                state = "paused"
+         db.execute(
+             "INSERT INTO works(id,revision,conversation,status,generation,body) "
+-            "VALUES(?,1,?,'ready',1,?)",
+-            (body["id"], body["conversation"], dumps(body)),
++            "VALUES(?,1,?,?,1,?)",
++            (body["id"], body["conversation"], state, dumps(body)),
+         )
+-        self._intent(db, "prepare", body["id"], {})
++        if state == "ready":
++            self._intent(db, "prepare", body["id"], {})
++        else:
++            self._intent(db, "resource", body["id"], {"reason": "resource_exhausted"})
+         return {"work_id": body["id"], "revision": 1}
+ 
++    def _next_work(
++        self,
++        db: sqlite3.Connection,
++        actor: sqlite3.Row,
++        parent: sqlite3.Row,
++        attempt: sqlite3.Row,
++        payload: dict[str, Any],
++    ) -> str | None:
++        child = payload.get("next_work")
++        if child is None:
++            return None
++        self._require(db, actor["principal"], "open_work")
++        if payload["state"] != "completed" or payload.get("wait"):
++            fail("invalid_request", "next_work.state")
++        if child["conversation"] != parent["conversation"] or child["id"] == parent["id"]:
++            fail("invalid_request", "next_work.conversation")
++        if db.execute(
++            "SELECT 1 FROM works WHERE conversation=? AND id!=? "
++            "AND status NOT IN ('completed','cancelled')",
++            (parent["conversation"], parent["id"]),
++        ).fetchone():
++            fail("identity_conflict", "next_work.active")
++        remaining = loads(parent["body"])["call_limit"] - parent["reserved"]
++        if child["call_limit"] > remaining:
++            fail("resource_exhausted", "next_work.calls")
++        scope = child.get("scope", "space")
++        selected_activity = None
++        if scope != "space":
++            activity = next((r for r in child.get("inputs", []) if r["id"] == scope), None)
++            if activity is None or self._exact(db, activity)["kind"] != "activity":
++                fail("invalid_request", "next_work.activity_scope")
++            selected_activity = {"id": activity["id"], "revision": activity["revision"]}
++        upper = db.execute(
++            "SELECT reserve FROM actions WHERE attempt=?", (attempt["id"],)
++        ).fetchone()[0]
++        link = {
++            "attempt_id": attempt["id"],
++            "delivered_cutoff": attempt["cutoff"],
++            "processed_cutoff": payload["processed_cutoff"],
++            "parent_reserved": parent["reserved"],
++            "resource_upper": upper,
++        }
++        if selected_activity is not None:
++            link["activity_ref"] = selected_activity
++        self._work(db, child, continuation=link)
++        return cast(str, child["id"])
++
+     def _intent(self, db: sqlite3.Connection, kind: str, subject: str, body: Any) -> None:
+         db.execute("INSERT OR REPLACE INTO intents VALUES(?,?,?)", (kind, subject, dumps(body)))
+ 
+@@ -1129,10 +1200,12 @@ class Core:
+             cursor = db.execute(
+                 "SELECT cursor FROM conversations WHERE id=?", (attempt["conversation"],)
+             ).fetchone()[0]
++            processed = p["processed_cutoff"]
++            preserved = p.get("next_work") is not None and processed == cursor
+             if (
+                 cursor != attempt["original_cursor"]
+                 or p["original_cursor"] != cursor
+-                or p["processed_cutoff"] != attempt["cutoff"]
++                or (processed != attempt["cutoff"] and not preserved)
+             ):
+                 fail("stale_basis", "cursor", "after_refresh")
+             self._check_basis(db, attempt, work)
+@@ -1145,9 +1218,12 @@ class Core:
+             )
+             for ref in p.get("outputs", []):
+                 self._exact(db, ref)
++            next_work_id = self._next_work(db, actor, work, attempt, p)
+             state = p["state"]
+             if state not in {"waiting", "ready", "completed"}:
+                 fail("invalid_request", "outcome.state")
++            if state == "waiting" and p.get("wait") is None:
++                fail("invalid_request", "outcome.wait")
+             if state == "ready" and work["reserved"] >= loads(work["body"])["call_limit"]:
+                 state = "paused"
+                 self._intent(
+@@ -1180,7 +1256,7 @@ class Core:
+             ).fetchone()[0]
+             changed = db.execute(
+                 "UPDATE conversations SET cursor=? WHERE id=? AND cursor=?",
+-                (attempt["cutoff"], attempt["conversation"], cursor),
++                (processed, attempt["conversation"], cursor),
+             ).rowcount
+             if changed != 1:
+                 fail("stale_basis", "cursor")
+@@ -1195,8 +1271,11 @@ class Core:
+                 "outputs": p.get("outputs", []),
+                 "accepted": False,
+                 "text": p.get("text", ""),
+-                "cutoff": attempt["cutoff"],
++                "cutoff": processed,
+             }
++            if next_work_id is not None:
++                result["next_work_id"] = next_work_id
++                result["delivered_cutoff"] = attempt["cutoff"]
+             db.execute(
+                 "INSERT INTO results VALUES(?,'final',?,?)",
+                 (attempt["id"], digest(p), dumps(result)),
+@@ -1205,12 +1284,12 @@ class Core:
+             db.execute(
+                 "DELETE FROM intents WHERE kind='input' AND subject=?", (attempt["conversation"],)
+             )
+-            if high > attempt["cutoff"]:
++            if high > processed:
+                 self._intent(
+                     db,
+                     "input",
+                     attempt["conversation"],
+-                    {"after": attempt["cutoff"], "high_watermark": high},
++                    {"after": processed, "high_watermark": high},
+                 )
+             if state == "ready":
+                 self._intent(db, "prepare", work["id"], {})
+diff --git a/packages/core/src/zaratustra_core/backup_refs.py b/packages/core/src/zaratustra_core/backup_refs.py
+index 53fef9e..e06f414 100644
+--- a/packages/core/src/zaratustra_core/backup_refs.py
++++ b/packages/core/src/zaratustra_core/backup_refs.py
+@@ -30,6 +30,7 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
+     records = {(r["id"], r["revision"]): r for r in table("records")}
+     works = {r["id"]: r for r in table("works")}
+     attempts = {r["id"]: r for r in table("attempts")}
++    attempt_order = [r[0] for r in db.execute("SELECT id FROM attempts ORDER BY rowid")]
+     messages = {(r["conversation"], r["seq"]): r for r in table("messages")}
+     results = {(r["attempt"], r["slot"]): r for r in table("results")}
+     waits = {r["id"]: r for r in table("waits")}
+@@ -63,10 +64,79 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
+         require(method["scope"] in {"space", body.get("scope", "space")})
+         for ref in body.get("inputs", []):
+             record(ref)
++        if "continuation" in body:
++            link = body["continuation"]
++            require(
++                set(link) - {"activity_ref"}
++                == {
++                    "attempt_id",
++                    "delivered_cutoff",
++                    "processed_cutoff",
++                    "parent_reserved",
++                    "resource_upper",
++                }
++            )
++            parent_attempt = attempts.get(link["attempt_id"])
++            require(parent_attempt is not None)
++            assert parent_attempt is not None
++            parent = works[parent_attempt["work"]]
++            parent_result = results.get((parent_attempt["id"], "final"))
++            require(parent_result is not None)
++            assert parent_result is not None
++            result_body = json.loads(parent_result["body"])
++            require(
++                all(
++                    type(link[k]) is int
++                    for k in (
++                        "delivered_cutoff",
++                        "processed_cutoff",
++                        "parent_reserved",
++                        "resource_upper",
++                    )
++                )
++                and 0 <= link["processed_cutoff"] <= link["delivered_cutoff"]
++                and link["resource_upper"] > 0
++            )
++            require(
++                result_body.get("next_work_id") == body["id"]
++                and parent["conversation"] == body["conversation"]
++                and link["delivered_cutoff"] == parent_attempt["cutoff"]
++                and link["processed_cutoff"] == result_body["cutoff"]
++            )
++            parent_actions = [a for a in actions.values() if a["attempt"] == parent_attempt["id"]]
++            require(len(parent_actions) == 1)
++            require(link["resource_upper"] == parent_actions[0]["reserve"])
++            # Reservations at the historical handoff, not the parent's later total.
++            parent_order = attempt_order.index(parent_attempt["id"])
++            prefix = set(attempt_order[: parent_order + 1])
++            reserved = sum(
++                a["reserve"]
++                for a in actions.values()
++                if a["attempt"] in prefix and attempts[a["attempt"]]["work"] == parent["id"]
++            )
++            require(type(link["parent_reserved"]) is int and link["parent_reserved"] == reserved)
++            require(
++                type(body["call_limit"]) is int
++                and 0 <= body["call_limit"] <= json.loads(parent["body"])["call_limit"] - reserved
++            )
++            scope = body.get("scope", "space")
++            if "activity_ref" in link:
++                record(link["activity_ref"], "activity")
++                require(link["activity_ref"]["id"] == scope)
++            if scope != "space":
++                require(link.get("activity_ref", {}).get("id") == scope)
+ 
+     def result_refs(body: dict[str, Any]) -> None:
+         for ref in body.get("refs", []) + body.get("outputs", []):
+             record(ref)
++        if "next_work_id" in body:
++            child = works.get(body["next_work_id"])
++            require(child is not None)
++            assert child is not None
++            require(
++                json.loads(child["body"]).get("continuation", {}).get("attempt_id")
++                == body["attempt_id"]
++            )
+ 
+     def source(ref: dict[str, Any]) -> dict[str, Any]:
+         return core._source(db, ref)
+@@ -77,6 +147,7 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
+         for result in results.values():
+             saved_result = json.loads(result["body"])
+             require(saved_result["attempt_id"] == result["attempt"])
++            require(type(saved_result.get("cutoff")) is int and saved_result["cutoff"] >= 0)
+             result_refs(saved_result)
+         for event in events.values():
+             receipt = receipts.get(event["subject"])
+diff --git a/packages/core/src/zaratustra_core/shapes.py b/packages/core/src/zaratustra_core/shapes.py
+index f94f94c..e702db6 100644
+--- a/packages/core/src/zaratustra_core/shapes.py
++++ b/packages/core/src/zaratustra_core/shapes.py
+@@ -116,6 +116,12 @@ class Wait(Shape):
+     question: Id
+ 
+ 
++class NextWork(Work):
++    # An exhausted continuation remains durable and paused; C3/C4 still require
++    # a positive execution budget for independently opened work.
++    call_limit: Cursor
++
++
+ class Outcome(Shape):
+     attempt_id: Id
+     generation: Positive
+@@ -127,6 +133,7 @@ class Outcome(Shape):
+     outputs: list[Ref] = Field(default_factory=list)
+     changes: list[Change] = Field(default_factory=list)
+     wait: Wait | None = None
++    next_work: NextWork | None = None
+ 
+ 
+ class Control(Shape):
+diff --git a/tests/restart/ordinary_support.py b/tests/restart/ordinary_support.py
+new file mode 100644
+index 0000000..1bd58e0
+--- /dev/null
++++ b/tests/restart/ordinary_support.py
+@@ -0,0 +1,57 @@
++"""Explicit fictional Activity choices; never used by product code or live G14."""
++
++from __future__ import annotations
++
++import json
++from typing import Any
++
++from .support import Receiver
++
++
++def routing(context: dict[str, Any], activity: str = "activity") -> dict[str, Any]:
++    old = next((r for r in context["catalog"] if r["id"] == activity), None)
++    revision = old["revision"] if old else 0
++    return {
++        "state": "completed",
++        "text": "",
++        "changes": [
++            {
++                "id": activity,
++                "kind": "activity",
++                "key": "practice" if activity == "activity" else activity,
++                "body": {"agreement": context["raw_messages"][-1]},
++            }
++        ],
++        "expected_heads": {activity: revision},
++        "outputs": [{"id": activity, "revision": revision + 1}],
++        "next_work": {
++            "scope": activity,
++            "goal": "Carry out the exact fictional request",
++            "inputs": [],
++        },
++    }
++
++
++class OrdinaryReceiver(Receiver):
++    def __init__(self) -> None:
++        super().__init__()
++        self.useful = 0
++
++    def __call__(self, context: dict[str, Any], action_id: str) -> bytes:
++        self.received.append(context)
++        self.actions.append(action_id)
++        if context["response_contract"]["version"] == "ordinary-routing/1":
++            return json.dumps(routing(context), ensure_ascii=False).encode()
++        output = dict(self.outputs[self.useful])
++        self.useful += 1
++        activity = next(r for r in context["catalog"] if r["id"] == context["work"]["scope"])
++        revision = activity["revision"]
++        if output.get("tool_changes"):
++            for change in output["tool_changes"]:
++                if change["id"] == activity["id"]:
++                    output["expected_heads"][change["id"]] = revision
++                    revision += 1
++        output["outputs"] = [{"id": activity["id"], "revision": revision}]
++        # The controlled Pi upstream's tool-return leg reads this exact terminal.
++        self.outputs[self.useful - 1] = output
++        return json.dumps(output, ensure_ascii=False).encode()
+diff --git a/tests/restart/test_conversation.py b/tests/restart/test_conversation.py
+index 256e594..594aaa0 100644
+--- a/tests/restart/test_conversation.py
++++ b/tests/restart/test_conversation.py
+@@ -15,7 +15,9 @@ from zaratustra_app import Conversation, Driver, LiveProfile, Pi
+ from zaratustra_app.adapters.pi import bridge
+ from zaratustra_core import Core, CoreError
+ 
+-from .support import Provider, Receiver, inspect, pi_cli
++from .ordinary_support import OrdinaryReceiver as Receiver
++from .ordinary_support import routing
++from .support import Provider, inspect, pi_cli
+ 
+ 
+ def test_cancelled_entry_requires_new_input_then_new_work(tmp_path: Path) -> None:
+@@ -36,7 +38,16 @@ def test_cancelled_entry_requires_new_input_then_new_work(tmp_path: Path) -> Non
+             )
+         else:
+             assert context["raw_messages"][-1] == "fictional new request AFTER cancellation"
+-        return json.dumps({"state": "completed", "text": "retained fictional response"}).encode()
++        if context["response_contract"]["version"] == "ordinary-routing/1":
++            return json.dumps(routing(context)).encode()
++        activity = next(r for r in context["catalog"] if r["id"] == context["work"]["scope"])
++        return json.dumps(
++            {
++                "state": "completed",
++                "text": "retained fictional response",
++                "outputs": [{"id": activity["id"], "revision": activity["revision"]}],
++            }
++        ).encode()
+ 
+     with pytest.raises(CoreError, match="outcome_unknown"):
+         session.run(Driver(receiver), {"profile": "local"}, 4)
+@@ -71,9 +82,9 @@ def test_cancelled_entry_requires_new_input_then_new_work(tmp_path: Path) -> Non
+         final = reopened.run(Driver(receiver), {"profile": "local"}, 4)
+     except CoreError as error:
+         final = {"state": "ERROR", "code": error.code}
+-    assert final["state"] == "completed" and len(calls) == 2
++    assert final["state"] == "completed" and len(calls) == 3
+     after = reopened.coordinator.snapshot()
+-    assert len(after["works"]) == 2 and len({w["id"] for w in after["works"]}) == 2
++    assert len(after["works"]) == 3 and len({w["id"] for w in after["works"]}) == 3
+     assert next(w for w in after["works"] if w["id"] == old["id"]) == old
+     assert after["actions"][0] == before["actions"][0]
+     assert after["conversations"][0]["cursor"] == 4 and not after["acceptance"]
+@@ -88,27 +99,27 @@ def test_new_turn_pins_current_method(tmp_path: Path) -> None:
+     ]
+     session = Conversation(core, token)
+     session.submit("first arbitrary input")
+-    session.run(Driver(receiver), {"profile": "test"}, 2)
++    session.run(Driver(receiver), {"profile": "test"}, 4)
+     session.owner.call(
+         "apply_changes",
+         {
+             "changes": [
+                 {
+-                    "id": "conversation-method",
++                    "id": "conversation-execution-method",
+                     "kind": "method",
+-                    "key": "conversation/1",
++                    "key": "conversation/2",
+                     "body": "Current adapted method",
+                 }
+             ]
+         },
+         "adapt",
+-        expected_heads={"conversation-method": 1},
++        expected_heads={"conversation-execution-method": 1},
+     )
+     session.submit("second arbitrary input")
+-    session.run(Driver(receiver), {"profile": "test"}, 2)
+-    assert receiver.received[0]["method"]["revision"] == 1
+-    assert receiver.received[1]["method"]["revision"] == 2
+-    assert receiver.received[1]["method"]["body"]["value"] == "Current adapted method"
++    session.run(Driver(receiver), {"profile": "test"}, 4)
++    assert receiver.received[1]["method"]["revision"] == 1
++    assert receiver.received[3]["method"]["revision"] == 2
++    assert receiver.received[3]["method"]["body"]["value"] == "Current adapted method"
+ 
+ 
+ @pytest.mark.parametrize("phase", ["partial_write", "published"])
+@@ -183,24 +194,25 @@ def test_ordinary_entry_correction_reopen(tmp_path: Path, mode: str) -> None:
+     session = Conversation(core, token)
+     try:
+         session.submit(request)
+-        first = session.run(executor, descriptor, 4)
++        first = session.run(executor, descriptor, 8)
+         assert first["state"] == "waiting" and first["reply_to"]["id"] == "W7"
+         session.submit(correction)  # Free input does not answer the last question.
+         reopened = Conversation(Core(core.root), token)
+-        pending = reopened.run(executor, descriptor, 4)
+-        assert pending["reply_to"] == first["reply_to"] and len(receiver.actions) == 1
++        pending = reopened.run(executor, descriptor, 8)
++        assert pending["reply_to"] == first["reply_to"] and len(receiver.actions) == 2
+         reopened.submit("Addressed answer", pending["reply_to"])
+-        final = reopened.run(executor, descriptor, 4)
++        final = reopened.run(executor, descriptor, 8)
+         assert final["state"] == "completed" and not final["accepted"]
+         assert receiver.received[0]["raw_messages"] == [request]
+-        assert receiver.received[1]["raw_messages"] == [correction, "Addressed answer"]
+-        prior = receiver.received[1]["prior_messages"]
++        assert receiver.received[1]["raw_messages"] == [request]
++        assert receiver.received[2]["raw_messages"] == [correction, "Addressed answer"]
++        prior = receiver.received[2]["prior_messages"]
+         assert base64.b64decode(prior[-1]["raw"]).decode() == request
+         assert len([h for h in inspect(core, "heads") if h["kind"] == "activity"]) == 1
+         assert inspect(core, "acceptance") == []
+-        assert len(receiver.actions) == 2
+-        idle = Conversation(Core(core.root), token).run(executor, descriptor, 4)
+-        assert idle["state"] == "idle" and len(receiver.actions) == 2
++        assert len(receiver.actions) == 3
++        idle = Conversation(Core(core.root), token).run(executor, descriptor, 8)
++        assert idle["state"] == "idle" and len(receiver.actions) == 3
+     finally:
+         if provider:
+             provider.shutdown()
+@@ -265,8 +277,9 @@ def response_events(text: str) -> bytes:
+     ).encode()
+ 
+ 
++@pytest.mark.parametrize("max_tokens", [16, 64])
+ def test_native_pi_oauth_launcher_controlled(
+-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, max_tokens: int
+ ) -> None:
+     """Actual Pi SDK with FICTIONAL OAuth; no external model or account access."""
+     auth = tmp_path / "fictional-auth.json"
+@@ -295,7 +308,8 @@ def test_native_pi_oauth_launcher_controlled(
+                 "body": "chosen by test provider",
+             }
+         ],
+-        "expected_heads": {"model-selected": 0},
++        "expected_heads": {"model-selected": 1},
++        "outputs": [{"id": "model-selected", "revision": 2}],
+     }
+ 
+     class Response(io.BytesIO):
+@@ -312,7 +326,7 @@ def test_native_pi_oauth_launcher_controlled(
+                 and payload["store"] is False
+                 and payload["stream"] is True
+             )
+-            assert payload["max_output_tokens"] == 64
++            assert payload["max_output_tokens"] == max_tokens
+             # The native SDK must use the selected effort at request level: the
+             # ChatGPT route rejects configuration_update input items.
+             assert payload["reasoning"]["effort"] == "medium"
+@@ -321,7 +335,11 @@ def test_native_pi_oauth_launcher_controlled(
+             assert "mechanical input" in payload["input"][1]["content"][0]["text"]
+             assert [tool["name"] for tool in payload["tools"]] == ["zara_change"]
+             received.append(payload)
+-            return Response(response_events(json.dumps(terminal)))
++            supplied = json.loads(payload["input"][1]["content"][0]["text"])
++            output = (
++                routing(supplied["context"], "model-selected") if len(received) == 1 else terminal
++            )
++            return Response(response_events(json.dumps(output)))
+ 
+     monkeypatch.setattr(bridge, "build_opener", lambda *_: ControlledTransport())
+     core, token = Core.initialize(tmp_path / "space")
+@@ -332,14 +350,15 @@ def test_native_pi_oauth_launcher_controlled(
+         model="gpt-6-luna",
+         auth_mode="pi-chatgpt",
+         auth_path=str(auth),
+-        max_tokens=64,
++        max_tokens=max_tokens,
+         context_window=8192,
+     )
+     executor = Pi(pi_cli(), tmp_path / "pi", live.endpoint, live=live)
+-    result = session.run(executor, {"profile": "fictional-native-oauth"}, 2)
++    result = session.run(executor, {"profile": "fictional-native-oauth"}, 4)
+     assert result["text"] == terminal["text"] and result["state"] == "completed"
+-    assert len(received) == executor.provider_sends == 1
+-    assert inspect(core, "heads")[-1]["id"] == "model-selected"
++    assert len(received) == 2 and executor.provider_sends == 1
++    assert sum(a["reserve"] for a in inspect(core, "actions")) == 4
++    assert next(h for h in inspect(core, "heads") if h["id"] == "model-selected")["revision"] == 2
+     stdout = next((tmp_path / "pi").glob("*/native-stdout.jsonl")).read_bytes()
+     assert b'"message_end"' in stdout and b'"agent_settled"' in stdout
+     assert b"fictional-access" not in stdout and b"fictional-refresh" not in stdout
+@@ -347,7 +366,7 @@ def test_native_pi_oauth_launcher_controlled(
+     assert json.loads(host)["type"] == "prompt"
+     models = json.loads(next((tmp_path / "pi").glob("*/agent/models.json")).read_bytes())
+     selected = models["providers"]["openai"]["modelOverrides"]["gpt-6-luna"]
+-    assert selected["maxTokens"] == 64 and selected["contextWindow"] == 8192
++    assert selected["maxTokens"] == max_tokens and selected["contextWindow"] == 8192
+ 
+ 
+ @pytest.mark.parametrize("mode", ["api-key-refused", "refresh-error"])
+diff --git a/tests/restart/test_delivery_controls.py b/tests/restart/test_delivery_controls.py
+index 662888f..6ebb3ed 100644
+--- a/tests/restart/test_delivery_controls.py
++++ b/tests/restart/test_delivery_controls.py
+@@ -10,6 +10,111 @@ from .test_negative_controls import test_seeded_defect_is_killed as run_seed
+ STORAGE = "core/src/zaratustra_core/storage.py"
+ MAINTENANCE = "core/src/zaratustra_core/maintenance.py"
+ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
++    (
++        "D-handoff-cursor-consumed-early",
++        API,
++        [
++            (
++                '(processed, attempt["conversation"], cursor),',
++                "(" + M + ' or attempt["cutoff"], attempt["conversation"], cursor),',
++            )
++        ],
++        "test_work_handoff.py::test_handoff_preserves_raw_input_then_scoped_result",
++    ),
++    (
++        "D-handoff-child-published-partially",
++        API,
++        [
++            (
++                '        if state == "ready":'
++                + chr(10)
++                + '            self._intent(db, "prepare", body["id"], {})',
++                "        if continuation is not None:"
++                + chr(10)
++                + "            "
++                + M
++                + chr(10)
++                + "            db.commit()"
++                + chr(10)
++                + '        if state == "ready":'
++                + chr(10)
++                + '            self._intent(db, "prepare", body["id"], {})',
++            )
++        ],
++        "test_work_handoff.py::test_physical_loss_inside_child_creation_rolls_back_handoff",
++    ),
++    (
++        "D-handoff-final-replayed-as-new",
++        API,
++        [
++            (
++                "            if old:"
++                + chr(10)
++                + '                if old["fingerprint"] != digest(p):'
++                + chr(10)
++                + '                    fail("idempotency_conflict", "result_slot")',
++                "            if old and ("
++                + M
++                + " or False):"
++                + chr(10)
++                + '                if old["fingerprint"] != digest(p):'
++                + chr(10)
++                + '                    fail("idempotency_conflict", "result_slot")',
++            )
++        ],
++        "test_work_handoff.py::test_handoff_preserves_raw_input_then_scoped_result",
++    ),
++    (
++        "D-handoff-budget-reset",
++        API,
++        [('if child["call_limit"] > remaining:', "if (" + M + " or False):")],
++        "test_work_handoff.py::test_bad_handoff_rolls_back_every_boundary[budget]",
++    ),
++    (
++        "D-routing-orphan-tool-publication",
++        "app/src/zaratustra_app/coordinator.py",
++        [
++            (
++                '                raise CoreError("denied", "ordinary.routing_atomic_handoff")',
++                "                " + M,
++            )
++        ],
++        "test_ordinary_activity.py::test_discovery_tool_cannot_publish_orphan_activity",
++    ),
++    (
++        "D-scoped-memory-dropped",
++        "app/src/zaratustra_app/coordinator.py",
++        [
++            (
++                'head["scope"] not in {"space", scope}',
++                'head["scope"] not in ({"space"} if (' + M + ' or True) else {"space", scope})',
++            )
++        ],
++        "test_ordinary_activity.py::test_scoped_execution_pins_only_applicable_memory",
++    ),
++    (
++        "D-addressed-reply-rerouted",
++        "app/src/zaratustra_app/conversation.py",
++        [("                and not dispatched", "                and (" + M + " or True)")],
++        "test_ordinary_activity.py::test_addressed_reply_stays_in_existing_scoped_work",
++    ),
++    (
++        "D-handoff-reopen-rediscovery",
++        "app/src/zaratustra_app/conversation.py",
++        [("        if active:", "        if active and (" + M + " or False):")],
++        "test_ordinary_activity.py::test_handoff_reopen_uses_retained_terminal[after]",
++    ),
++    (
++        "D-native-profile-cap-below-floor",
++        "app/src/zaratustra_app/executor_port.py",
++        [
++            (
++                'if self.auth_mode == "pi-chatgpt" and 0 < self.max_tokens < 16:',
++                "if (" + M + " or False):",
++            )
++        ],
++        "test_ordinary_activity.py::test_native_cap_below_sdk_floor_refused_before_runtime[1]",
++    ),
+     (
+         "D-native-chatgpt-effort-compat-omitted",
+         "app/src/zaratustra_app/executor_port.py",
+@@ -65,8 +170,8 @@ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
+         "app/src/zaratustra_app/conversation.py",
+         [
+             (
+-                "if not fresh_human_input:",
+-                "if (" + M + " or False):",
++                "if boundary >= cursor and not any(",
++                "if (" + M + " or False) and not any(",
+             )
+         ],
+         "test_conversation.py::test_cancelled_entry_requires_new_input_then_new_work",
+diff --git a/tests/restart/test_ordinary_activity.py b/tests/restart/test_ordinary_activity.py
+new file mode 100644
+index 0000000..c244be4
+--- /dev/null
++++ b/tests/restart/test_ordinary_activity.py
+@@ -0,0 +1,326 @@
++"""General Activity lifecycle mechanics with explicit fictional executor choices."""
++
++from __future__ import annotations
++
++import json
++from pathlib import Path
++from typing import Any
++
++import pytest
++from zaratustra_app import Conversation, Driver
++from zaratustra_core import Core, CoreError
++
++from .ordinary_support import OrdinaryReceiver, routing
++from .support import inspect
++
++
++def test_multi_activity_correction_and_reopen(tmp_path: Path) -> None:
++    core, token = Core.initialize(tmp_path / "space")
++    selected = ["first-activity", "first-activity", "other-activity"]
++    calls: list[dict[str, Any]] = []
++    phases: list[str] = []
++
++    def receive(context: dict[str, Any], _: str) -> bytes:
++        calls.append(context)
++        phase = context["response_contract"]["version"]
++        phases.append(phase)
++        if phase == "ordinary-routing/1":
++            result = routing(context, selected.pop(0))
++        else:
++            scope = context["work"]["scope"]
++            activity = next(r for r in context["catalog"] if r["id"] == scope)
++            data_id = scope + ":result"
++            old = next((r for r in context["catalog"] if r["id"] == data_id), None)
++            revision = old["revision"] if old else 0
++            result = {
++                "state": "completed",
++                "text": "Useful result: " + context["raw_messages"][-1],
++                "changes": [
++                    {
++                        "id": data_id,
++                        "kind": "data",
++                        "key": "result",
++                        "scope": scope,
++                        "body": context["raw_messages"][-1],
++                    }
++                ],
++                "expected_heads": {data_id: revision},
++                "outputs": [
++                    {"id": scope, "revision": activity["revision"]},
++                    {"id": data_id, "revision": revision + 1},
++                ],
++            }
++        return json.dumps(result).encode()
++
++    driver = Driver(receive)
++    for text in ["fictional first task", "fictional correction", "different fictional task"]:
++        session = Conversation(Core(core.root), token)
++        session.submit(text)
++        result = session.run(driver, {"profile": "fictional"}, 8)
++        assert result["text"] == "Useful result: " + text
++        before = len(calls)
++        assert (
++            Conversation(Core(core.root), token).run(driver, {"profile": "fictional"}, 8)["state"]
++            == "idle"
++        )
++        assert len(calls) == before
++    assert phases == ["ordinary-routing/1", "ordinary-execution/2"] * 3
++    heads = inspect(core, "heads")
++    assert {r["id"] for r in heads if r["kind"] == "activity"} == {
++        "first-activity",
++        "other-activity",
++    }
++    assert next(r for r in heads if r["id"] == "first-activity")["revision"] == 2
++    for context in calls:
++        if context["response_contract"]["version"] == "ordinary-execution/2":
++            assert context["work"]["scope"] in {"first-activity", "other-activity"}
++            assert context["raw_messages"]  # Original pending bytes, not copied prior text.
++    assert inspect(core, "conversations")[0]["cursor"] == 3
++    assert not inspect(core, "acceptance")
++
++
++def test_addressed_reply_stays_in_existing_scoped_work(tmp_path: Path) -> None:
++    core, token = Core.initialize(tmp_path / "space")
++    receiver = OrdinaryReceiver()
++    driver = Driver(receiver)
++    session = Conversation(core, token)
++    session.submit("fictional practice")
++    first = session.run(driver, {"profile": "fictional"}, 8)
++    assert first["state"] == "waiting" and len(receiver.actions) == 2
++    waiting = next(w for w in inspect(core, "works") if w["status"] == "waiting")
++    session.submit("free correction")
++    assert session.run(driver, {"profile": "fictional"}, 8)["reply_to"] == first["reply_to"]
++    assert len(receiver.actions) == 2
++    session.submit("addressed answer", first["reply_to"])
++    result = session.run(driver, {"profile": "fictional"}, 8)
++    assert result["state"] == "completed" and len(receiver.actions) == 3
++    assert receiver.received[-1]["work"]["id"] == waiting["id"]
++    assert receiver.received[-1]["response_contract"]["version"] == "ordinary-execution/2"
++    assert len(inspect(core, "works")) == 2
++    before = len(receiver.actions)
++    assert (
++        Conversation(Core(core.root), token).run(driver, {"profile": "fictional"}, 8)["state"]
++        == "idle"
++    )
++    assert len(receiver.actions) == before
++
++
++@pytest.mark.parametrize("when", ["before", "after"])
++def test_handoff_reopen_uses_retained_terminal(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, when: str
++) -> None:
++    core, token = Core.initialize(tmp_path / "space")
++    receiver = OrdinaryReceiver()
++    receiver.outputs = [{"state": "completed", "text": "actual result"}]
++    driver = Driver(receiver)
++    session = Conversation(core, token)
++    session.submit("fictional pending input")
++    recover = session.coordinator.recover
++
++    def crash(*args: Any, **kwargs: Any) -> dict[str, Any]:
++        if when == "before":
++            raise RuntimeError("simulated host loss after retained raw terminal")
++        recover(*args, **kwargs)
++        raise RuntimeError("simulated host loss after atomic handoff")
++
++    monkeypatch.setattr(session.coordinator, "recover", crash)
++    with pytest.raises(RuntimeError, match="simulated host loss"):
++        session.run(driver, {"profile": "fictional"}, 8)
++    assert len(receiver.actions) == 1
++    assert inspect(core, "conversations")[0]["cursor"] == 0
++    reopened = Conversation(Core(core.root), token)
++    try:
++        result: Any = reopened.run(driver, {"profile": "fictional"}, 8)
++    except CoreError as error:
++        result = error
++    assert isinstance(result, dict), "Reopen must continue the existing child without rediscovery"
++    assert result["text"] == "actual result" and len(receiver.actions) == 2
++    assert len(inspect(core, "works")) == 2
++    assert inspect(core, "conversations")[0]["cursor"] == 1
++
++
++def test_discovery_tool_cannot_publish_orphan_activity(tmp_path: Path) -> None:
++    core, token = Core.initialize(tmp_path / "space")
++    calls = []
++
++    def receive(context: dict[str, Any], _: str) -> bytes:
++        calls.append(context)
++        try:
++            driver.tool_handler(
++                "early-publication",
++                {
++                    "changes": [
++                        {"id": "orphan", "kind": "activity", "key": "orphan", "body": "fictional"}
++                    ],
++                    "expected_heads": {"orphan": 0},
++                },
++            )
++        except CoreError as error:
++            assert error.field == "ordinary.routing_atomic_handoff"
++        raise RuntimeError("fictional provider failure before handoff")
++
++    driver = Driver(receive)
++    session = Conversation(core, token)
++    session.submit("fictional task")
++    with pytest.raises(RuntimeError):
++        session.run(driver, {"profile": "fictional"}, 8)
++    assert len(calls) == 1
++    assert not any(r["kind"] == "activity" for r in inspect(core, "heads"))
++    assert not inspect(core, "tool_calls") and not inspect(core, "results")
++    assert len(inspect(core, "works")) == 1 and inspect(core, "works")[0]["status"] == "blocked"
++
++
++def test_scoped_execution_pins_only_applicable_memory(tmp_path: Path) -> None:
++    core, token = Core.initialize(tmp_path / "space")
++    session = Conversation(core, token)
++    changes = [
++        {"id": key, "kind": "memory", "key": key, "scope": scope, "body": key}
++        for key, scope in [("global", "space"), ("local", "activity"), ("foreign", "other")]
++    ]
++    session.owner.call(
++        "apply_changes",
++        {"changes": changes},
++        "memory",
++        expected_heads={c["id"]: 0 for c in changes},
++    )
++    receiver = OrdinaryReceiver()
++    receiver.outputs = [{"state": "completed", "text": "useful"}]
++    session.submit("fictional task")
++    session.run(Driver(receiver), {"profile": "fictional"}, 8)
++    inputs = {r["id"] for r in receiver.received[-1]["inputs"]}
++    assert {"activity", "global", "local"} <= inputs and "foreign" not in inputs
++    assert "local" not in {r["id"] for r in receiver.received[0]["inputs"]}
++
++
++@pytest.mark.parametrize("damage", ["json", "list", "state", "output", "role", "input", "goal"])
++def test_malformed_terminal_is_retained_without_resend(tmp_path: Path, damage: str) -> None:
++    core, token = Core.initialize(tmp_path / "space")
++    calls = []
++
++    def receive(context: dict[str, Any], _: str) -> bytes:
++        calls.append(context)
++        value: Any = routing(context)
++        if damage == "json":
++            return b"{unfinished"
++        if damage == "list":
++            value = []
++        elif damage == "state":
++            value["state"] = []
++        elif damage == "output":
++            value["outputs"] = ["bad"]
++        elif damage == "role":
++            value["outputs"][0]["role"] = []
++        elif damage == "input":
++            value["next_work"]["inputs"] = [None]
++        elif damage == "goal":
++            value["next_work"].pop("goal")
++        return json.dumps(value).encode()
++
++    driver = Driver(receive)
++    session = Conversation(core, token)
++    session.submit("fictional task")
++    for current in [session, Conversation(Core(core.root), token)]:
++        with pytest.raises(CoreError, match="invalid_request"):
++            current.run(driver, {"profile": "fictional"}, 8)
++    assert len(calls) == 1
++    observations = [json.loads(o["body"]) for o in inspect(core, "observations")]
++    assert [o["kind"] for o in observations] == ["terminal"]
++    assert not inspect(core, "results")
++    assert not any(r["kind"] == "activity" for r in inspect(core, "heads"))
++
++
++@pytest.mark.parametrize("cap", [1, 15])
++def test_native_cap_below_sdk_floor_refused_before_runtime(tmp_path: Path, cap: int) -> None:
++    from zaratustra_app import LiveProfile
++
++    with pytest.raises(CoreError, match="unsupported_capability"):
++        LiveProfile(
++            endpoint="https://api.openai.com/v1",
++            model="gpt-6-luna",
++            auth_mode="pi-chatgpt",
++            auth_path=str(tmp_path / "unused-auth.json"),
++            max_tokens=cap,
++            context_window=8192,
++        )
++    assert not list(tmp_path.iterdir())
++
++
++def test_late_input_reroutes_before_first_dependent_dispatch(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    core, token = Core.initialize(tmp_path / "space")
++    session = Conversation(core, token)
++    calls: list[dict[str, Any]] = []
++    choices = ["old-activity", "new-activity"]
++
++    def receive(context: dict[str, Any], _: str) -> bytes:
++        calls.append(context)
++        if context["response_contract"]["version"] == "ordinary-routing/1":
++            return json.dumps(routing(context, choices.pop(0))).encode()
++        activity = next(r for r in context["catalog"] if r["id"] == context["work"]["scope"])
++        return json.dumps(
++            {
++                "state": "completed",
++                "text": "useful corrected result",
++                "outputs": [{"id": activity["id"], "revision": activity["revision"]}],
++            }
++        ).encode()
++
++    recover = session.coordinator.recover
++    injected = False
++
++    def late(*args: Any, **kwargs: Any) -> dict[str, Any]:
++        nonlocal injected
++        result = recover(*args, **kwargs)
++        if not injected and "next_work_id" in result:
++            injected = True
++            session.submit("late change before dependent dispatch")
++        return result
++
++    monkeypatch.setattr(session.coordinator, "recover", late)
++    session.submit("initial request")
++    result = session.run(Driver(receive), {"profile": "fictional"}, 8)
++    assert result["text"] == "useful corrected result"
++    assert [c["response_contract"]["version"] for c in calls] == [
++        "ordinary-routing/1",
++        "ordinary-routing/1",
++        "ordinary-execution/2",
++    ]
++    assert calls[-1]["work"]["scope"] == "new-activity"
++    assert calls[-1]["raw_messages"] == ["initial request", "late change before dependent dispatch"]
++    assert calls[1]["work"]["scope"] == "old-activity"  # Old scope/history was not relabelled.
++    assert sum(a["reserve"] for a in inspect(core, "actions")) == 6
++    assert inspect(core, "conversations")[0]["cursor"] == 2
++    core.backup(token, tmp_path / "backup")
++
++
++def test_existing_method_adaptation_and_history_are_not_overwritten(tmp_path: Path) -> None:
++    from zaratustra_app.conversation import CONVERSATION_METHOD
++
++    core, token = Core.initialize(tmp_path / "space")
++    owner = core.connect(token)
++    owner.call(
++        "apply_changes",
++        {
++            "changes": [
++                {
++                    "id": "conversation-method",
++                    "kind": "method",
++                    "key": "conversation/1",
++                    "body": CONVERSATION_METHOD,
++                }
++            ]
++        },
++        "legacy",
++        expected_heads={"conversation-method": 0},
++    )
++    receiver = OrdinaryReceiver()
++    receiver.outputs = [{"state": "completed", "text": "useful"}]
++    session = Conversation(core, token)
++    session.submit("new fictional request")
++    session.run(Driver(receiver), {"profile": "fictional"}, 8)
++    legacy = owner.call("read_exact", {"id": "conversation-method", "revision": 1}, "read-legacy")
++    assert legacy["body"]["value"] == CONVERSATION_METHOD
++    assert (
++        next(h for h in inspect(core, "heads") if h["id"] == "conversation-method")["revision"] == 1
++    )
+diff --git a/tests/restart/test_work_handoff.py b/tests/restart/test_work_handoff.py
+new file mode 100644
+index 0000000..c72d4e7
+--- /dev/null
++++ b/tests/restart/test_work_handoff.py
+@@ -0,0 +1,258 @@
++"""Atomic scoped continuation, observed through Core and physical state."""
++
++from __future__ import annotations
++
++import json
++from pathlib import Path
++from typing import Any, cast
++
++import pytest
++from zaratustra_app import Coordinator, Driver
++from zaratustra_core import CoreError
++
++from .support import MEMORY, METHOD, PROFILE, fixture, ingest, inspect
++
++
++def routed(root: Path, upper: int = 2) -> tuple[Any, Any, Any, Any, dict[str, Any]]:
++    core, owner, client = fixture(root)
++    coordinator = Coordinator(client)
++    coordinator.prepare("work", "route-attempt", PROFILE)
++    driver = Driver(lambda *_: b'{"state":"completed","text":"routing only"}')
++    driver.resource_upper = upper
++    coordinator.dispatch("route-attempt", 1, driver)
++    payload = {
++        "attempt_id": "route-attempt",
++        "generation": 1,
++        "terminal_event": "terminal",
++        "original_cursor": 0,
++        "processed_cutoff": 0,
++        "state": "completed",
++        "text": "",
++        "changes": [
++            {"id": "activity", "kind": "activity", "key": "practice", "body": "Agreed practice"}
++        ],
++        "outputs": [{"id": "activity", "revision": 1}],
++        "next_work": {
++            "id": "scoped-work",
++            "conversation": "conversation",
++            "goal": "Perform the agreed practice",
++            "scope": "activity",
++            "method_ref": METHOD,
++            "inputs": [{"id": "activity", "revision": 1}, MEMORY],
++            "call_limit": 4 - upper,
++            "continuation_policy": "durable",
++        },
++    }
++    return core, owner, client, coordinator, payload
++
++
++def commit(client: Any, payload: dict[str, Any], command: str = "handoff") -> dict[str, Any]:
++    return cast(
++        dict[str, Any],
++        client.call("commit_outcome", payload, command, expected_heads={"activity": 0}),
++    )
++
++
++def test_handoff_preserves_raw_input_then_scoped_result(tmp_path: Path) -> None:
++    core, owner, client, coordinator, payload = routed(tmp_path)
++    result = commit(client, payload)
++    assert result["cutoff"] == 0 and result["delivered_cutoff"] == 20
++    assert result["next_work_id"] == "scoped-work"
++    assert inspect(core, "conversations")[0]["cursor"] == 0
++    works = {w["id"]: w for w in inspect(core, "works")}
++    assert works["work"]["status"] == "completed" and works["scoped-work"]["status"] == "ready"
++    assert len([w for w in works.values() if w["status"] not in {"completed", "cancelled"}]) == 1
++    pending = [i for i in inspect(core, "intents") if i["kind"] == "input"]
++    assert json.loads(pending[0]["body"])["after"] == 0
++    try:
++        replay: Any = commit(client, payload, "same-terminal-other-command")
++    except CoreError as error:
++        replay = error
++    assert replay == result, "The retained final result must replay without executing a new handoff"
++    assert len(inspect(core, "works")) == 2
++    ingest(owner, "21", "A late correction remains pending")
++    prepared = coordinator.prepare("scoped-work", "useful-attempt", PROFILE)
++    assert prepared["pinned"]["messages"][-1]["seq"] == 21
++    assert prepared["pinned"]["work"]["scope"] == "activity"
++    assert len(prepared["pinned"]["messages"]) == 21
++    driver = Driver(lambda *_: b'{"state":"completed","text":"actual useful response"}')
++    coordinator.dispatch("useful-attempt", 1, driver)
++    useful = coordinator.recover("useful-attempt")
++    assert useful["text"] == "actual useful response" and useful["cutoff"] == 21
++    assert inspect(core, "conversations")[0]["cursor"] == 21
++    core.backup(owner.token, tmp_path / "backup")
++
++
++@pytest.mark.parametrize("upper", [3, 4])
++def test_exhausted_continuation_is_paused_not_lost(tmp_path: Path, upper: int) -> None:
++    core, _, client, coordinator, payload = routed(tmp_path, upper)
++    result = commit(client, payload)
++    child = next(w for w in inspect(core, "works") if w["id"] == result["next_work_id"])
++    assert child["status"] == "paused" and child["reserved"] == 0
++    assert json.loads(child["body"])["call_limit"] == 4 - upper
++    assert json.loads(child["body"])["continuation"]["resource_upper"] == upper
++    assert not any(
++        i["kind"] == "prepare" and i["subject"] == child["id"] for i in inspect(core, "intents")
++    )
++    assert inspect(core, "conversations")[0]["cursor"] == 0
++    with pytest.raises(CoreError):
++        coordinator.prepare(child["id"], "must-not-prepare", PROFILE)
++    assert len(inspect(core, "attempts")) == 1
++
++
++@pytest.mark.parametrize("damage", ["budget", "scope", "conversation", "wait", "partial", "upper"])
++def test_bad_handoff_rolls_back_every_boundary(tmp_path: Path, damage: str) -> None:
++    core, _, client, _, payload = routed(tmp_path)
++    if damage == "budget":
++        payload["next_work"]["call_limit"] = 3
++    elif damage == "scope":
++        payload["next_work"]["scope"] = "missing"
++    elif damage == "conversation":
++        payload["next_work"]["conversation"] = "other"
++    elif damage == "wait":
++        payload["state"] = "waiting"
++        payload["wait"] = {"id": "wait", "question": "bad combination"}
++    elif damage == "upper":
++        payload["next_work"]["resource_upper"] = 1
++    else:
++        payload["processed_cutoff"] = 10
++    with pytest.raises(CoreError):
++        commit(client, payload)
++    assert len(inspect(core, "works")) == 1
++    assert not inspect(core, "results")
++    assert not any(h["id"] == "activity" for h in inspect(core, "heads"))
++    assert inspect(core, "conversations")[0]["cursor"] == 0
++    assert not any(r["command"] == "handoff" for r in inspect(core, "receipts"))
++
++
++def test_preserved_cursor_without_next_work_is_refused(tmp_path: Path) -> None:
++    core, _, client, _, payload = routed(tmp_path)
++    payload.pop("next_work")
++    with pytest.raises(CoreError, match="stale_basis"):
++        commit(client, payload)
++    assert not inspect(core, "results") and inspect(core, "conversations")[0]["cursor"] == 0
++
++
++def test_refresh_can_drop_inputs_without_losing_historical_activity(tmp_path: Path) -> None:
++    core, owner, client, _, payload = routed(tmp_path)
++    commit(client, payload)
++    owner.call(
++        "control_work",
++        {"work_id": "scoped-work", "revision": 1, "action": "refresh", "inputs": []},
++        "refresh-inputs",
++    )
++    child = next(w for w in inspect(core, "works") if w["id"] == "scoped-work")
++    body = json.loads(child["body"])
++    assert body["inputs"] == []
++    assert body["continuation"]["activity_ref"] == {"id": "activity", "revision": 1}
++    core.backup(owner.token, tmp_path / "refreshed-backup")
++    from zaratustra_core import Core
++
++    Core.restore_quarantined(tmp_path / "refreshed-backup", tmp_path / "restored")
++    assert (tmp_path / "restored/core.sqlite3").is_file()
++
++
++@pytest.mark.parametrize(
++    "damage",
++    [
++        "parent",
++        "scope",
++        "activity",
++        "delivered_bool",
++        "processed_bool",
++        "reserve_bool",
++        "upper_bool",
++        "budget",
++        "reverse",
++    ],
++)
++def test_rehashed_handoff_reference_corruption_is_refused(tmp_path: Path, damage: str) -> None:
++    import sqlite3
++
++    from zaratustra_core import Core
++
++    from .test_backup_references import rehash
++
++    core, owner, client, _, payload = routed(tmp_path)
++    commit(client, payload)
++    backup = tmp_path / "backup"
++    core.backup(owner.token, backup)
++    with sqlite3.connect(backup / "core.sqlite3") as db:
++        body = json.loads(db.execute("SELECT body FROM works WHERE id='scoped-work'").fetchone()[0])
++        link = body["continuation"]
++        if damage == "parent":
++            link["attempt_id"] = "missing"
++        elif damage == "scope":
++            body["scope"] = "different-activity"
++        elif damage == "activity":
++            link["activity_ref"] = MEMORY
++        elif damage.endswith("_bool"):
++            field = {
++                "delivered": "delivered_cutoff",
++                "processed": "processed_cutoff",
++                "reserve": "parent_reserved",
++                "upper": "resource_upper",
++            }[damage.removesuffix("_bool")]
++            link[field] = bool(link[field])
++        elif damage == "budget":
++            body["call_limit"] = 99
++        else:
++            result = json.loads(db.execute("SELECT body FROM results").fetchone()[0])
++            result["next_work_id"] = "missing"
++            db.execute("UPDATE results SET body=?", (json.dumps(result),))
++        db.execute("UPDATE works SET body=? WHERE id='scoped-work'", (json.dumps(body),))
++    rehash(backup)
++    with pytest.raises(CoreError, match="backup.reference_closure"):
++        Core.restore_quarantined(backup, tmp_path / "restored")
++    assert not (tmp_path / "restored").exists()
++
++
++def test_physical_loss_inside_child_creation_rolls_back_handoff(tmp_path: Path) -> None:
++    import subprocess
++    import sys
++
++    import zaratustra_app
++    import zaratustra_core
++    from zaratustra_core import Core
++
++    sources = [
++        str(Path(zaratustra_core.__file__).parents[1]),
++        str(Path(zaratustra_app.__file__).parents[1]),
++        str(Path(__file__).resolve().parents[2]),
++    ]
++    script = (
++        "import sys;sys.path[:0]="
++        + repr(sources)
++        + ";"
++        + """
++import json,os
++from pathlib import Path
++from zaratustra_core import Core
++from tests.restart.test_work_handoff import routed,commit
++root=Path(sys.argv[1]);core,owner,client,coord,payload=routed(root)
++(root/'payload.json').write_text(json.dumps(payload))
++(root/'test-token').write_text(owner.token)
++original=Core._work
++def crash(self,*args,**kwargs):
++    result=original(self,*args,**kwargs)
++    if kwargs.get('continuation') is not None:os._exit(77)
++    return result
++Core._work=crash
++commit(client,payload)
++"""
++    )
++    run = subprocess.run(
++        [sys.executable, "-X", "utf8", "-c", script, str(tmp_path)], capture_output=True, timeout=30
++    )
++    if b"MUTANT_REACHED" in run.stdout:
++        print(run.stdout.decode())
++    assert run.returncode == 77, run.stdout + run.stderr
++    core = Core(tmp_path / "space")
++    assert not any(h["id"] == "activity" for h in inspect(core, "heads"))
++    assert len(inspect(core, "works")) == 1 and not inspect(core, "results")
++    assert inspect(core, "conversations")[0]["cursor"] == 0
++    token = (tmp_path / "test-token").read_text().strip()
++    payload = json.loads((tmp_path / "payload.json").read_bytes())
++    commit(core.connect(token), payload)
++    assert len(inspect(core, "works")) == 2
++    assert inspect(core, "conversations")[0]["cursor"] == 0

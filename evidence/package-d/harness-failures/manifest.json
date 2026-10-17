@@ -1,0 +1,25 @@
+{
+  "classification": "Failed synthetic sentinel harness; Node rejected Windows --import C: path before launcher/fetch. Neither run reached fake token endpoint; no semantic/model claim. Fixed by file URL after fresh read-only diagnosis.",
+  "files": [
+    {
+      "path": "d-entry-controls-04/native-stderr.bin",
+      "sha256": "b028179e4b4932a6acb529b17876c958a17bfa9cd30bcc83d592cd7ab2b9d7a0",
+      "bytes": 988
+    },
+    {
+      "path": "d-entry-controls-04/native-stdout.jsonl",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "d-entry-controls-05/native-stderr.bin",
+      "sha256": "b028179e4b4932a6acb529b17876c958a17bfa9cd30bcc83d592cd7ab2b9d7a0",
+      "bytes": 988
+    },
+    {
+      "path": "d-entry-controls-05/native-stdout.jsonl",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ]
+}

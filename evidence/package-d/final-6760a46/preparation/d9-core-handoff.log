@@ -1,0 +1,48 @@
+F.................................................                       [100%]
+================================== FAILURES ===================================
+_____________ test_handoff_preserves_raw_input_then_scoped_result _____________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d9-core-handoff-tmp/test_handoff_preserves_raw_inp0')
+
+    def test_handoff_preserves_raw_input_then_scoped_result(tmp_path: Path) -> None:
+        core, owner, client, coordinator, payload = routed(tmp_path)
+        result = commit(client, payload)
+        assert result["cutoff"] == 0 and result["delivered_cutoff"] == 20
+        assert result["next_work_id"] == "scoped-work"
+        assert inspect(core, "conversations")[0]["cursor"] == 0
+        works = {w["id"]: w for w in inspect(core, "works")}
+        assert works["work"]["status"] == "completed" and works["scoped-work"]["status"] == "ready"
+        assert len([w for w in works.values() if w["status"] not in {"completed", "cancelled"}]) == 1
+        pending = [i for i in inspect(core, "intents") if i["kind"] == "input"]
+        assert json.loads(pending[0]["body"])["after"] == 0
+>       assert commit(client, payload, "same-terminal-other-command") == result
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\restart\test_work_handoff.py:64: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\restart\test_work_handoff.py:50: in commit
+    return client.call("commit_outcome", payload, command, expected_heads={"activity": 0})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:1468: in call
+    self.send(self.request(operation, payload, command_id, **kwargs))["result"],
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:1457: in send
+    return self.core.execute(self.token, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:248: in execute
+    return self._execute(token, request, _preview=_preview)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:292: in _execute
+    fail("stale_basis", subject, "after_refresh")
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+code = 'stale_basis', field = 'activity', retry = 'after_refresh'
+
+    def fail(code: str, field: str = "", retry: str = "never") -> NoReturn:
+>       raise CoreError(code, field, retry)
+E       zaratustra_core.types.CoreError: stale_basis: activity [e616e3900f7180d2]
+
+packages\core\src\zaratustra_core\api.py:88: CoreError
+=========================== short test summary info ===========================
+FAILED tests/restart/test_work_handoff.py::test_handoff_preserves_raw_input_then_scoped_result
+1 failed, 49 passed in 36.81s

@@ -1,0 +1,12 @@
+{
+  "source_commit": "1b6d1a3946348a18d90cbb1a4e8d36208e242285",
+  "previous_source": "f07250996d861404728c5892fa1f3b0a6a07bba4",
+  "finding": "Independent F-D-01: installed rehashed backups admitted broken Attempt and Sleep references; original negative checkpoint preserved unchanged.",
+  "backup_refs": "Historical record versions and immutable typed snapshots; message/range/hash manifests; prior result/wait/tool copies with mutable exceptions; event/receipt consistency; action/acceptance/intent graph; known Sleep source/delivery/analysis/receipt/action references and same-Work lineage; canonical wire equality distinguishes bool/int.",
+  "formats_api": "Schema-guided exact-ref enumeration only inside the exact declared schema; shared C3/C8 existence admission atomically rolls back invalid bundles. Optional/nullable/empty values, historical versions, prior batch refs and arbitrary undeclared JSON/text remain valid.",
+  "c7": "Explicit typed evidence.action_id must own the claimed Attempt action, including progress/terminal. Existing reconcile rejection path remains unchanged; receiver_ref and optional ReserveTool.action_id remain opaque correlation tokens. Progress evidence stays unverified.",
+  "affected": "64 PASS; 3 new reached behavioral controls PASS; full quick gate381format/mypy340/boundaries37/hygiene/report PASS.",
+  "prior_f072": "Scoped280PASS/59reached controls; full native deliberately stoppedINCOMPLETE on independently confirmed F-D-01, exit1 is terminated-child wrapper failure. Not whole-candidate PASS.",
+  "paid": "Writer0real calls. Root executed independent exact bounded account preflight1Luna send/HTTP200/input10/output5/no refresh. Auth proof only, not G14.",
+  "semantic": "Fresh rubric and G14 execution belong to separate physical reviewer after this build freeze. No owner verdict invented."
+}

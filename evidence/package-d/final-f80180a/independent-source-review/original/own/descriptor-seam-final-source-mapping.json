@@ -1,0 +1,87 @@
+{
+  "final_source": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+  "all20_seam_snapshot_files_equal_final": true,
+  "checks": [
+    {
+      "file": "zaratustra_app\\cli.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_app\\conversation.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_app\\coordinator.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_app\\executor_port.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_app\\ordinary.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_app\\sleep.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_app\\__init__.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_core\\api.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_core\\backup_refs.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_core\\formats.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_core\\maintenance.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_core\\shapes.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_core\\storage.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_core\\types.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_core\\__init__.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_app\\adapters\\__init__.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_app\\adapters\\pi\\bridge.py",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_app\\adapters\\pi\\extension.ts",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_app\\adapters\\pi\\launcher.mjs",
+      "same_as_final_git": true
+    },
+    {
+      "file": "zaratustra_app\\adapters\\pi\\__init__.py",
+      "same_as_final_git": true
+    }
+  ],
+  "carried_proof": "inspection-ac58f94/descriptor-seam/result.json; own old83af vs corrected CLI fixtures, not rerun"
+}

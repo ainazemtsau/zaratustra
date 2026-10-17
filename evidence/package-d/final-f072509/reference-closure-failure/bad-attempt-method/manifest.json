@@ -1,0 +1,17 @@
+{
+  "artifacts": [
+    {
+      "content_type": "application/octet-stream",
+      "sha256": "2720346bc0c13849c4df3caeeb422b7a4a48d019efc4d0b53afc6d7c6f20a46f",
+      "size": 133405
+    }
+  ],
+  "database_sha256": "731e561397008c0f75ab6b016ed0c3be3f190aa58d5b0c07fc0a0bb69661a25f",
+  "database_size": 573440,
+  "format": "backup/v1",
+  "source": {
+    "epoch": 1,
+    "instance": "7cdc757b39ec25876aaed1bcfb735624",
+    "space": "903bb4a96abbf42a3b16f47ea84fb59f"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "seed": "C-delivered-pretends-analysis",
+  "test": "test_sleep.py::test_progress_rejects_false_claims[remainder]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n________________ test_progress_rejects_false_claims[remainder] ________________\ntests\\restart\\test_sleep.py:145: in test_progress_rejects_false_claims\n    with pytest.raises(CoreError):\n         ^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_sleep.py::test_progress_rejects_false_claims[remainder]\n1 failed in 1.22s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -579,7 +579,7 @@\n                     fail(\"invalid_request\", \"progress.analysis_delivery\")\n                 analysed.append(source)\n         if any(ref not in analysed and ref not in value[\"remaining_refs\"] for ref in enumerated):\n-            fail(\"invalid_request\", \"progress.remainder\")\n+            print(\"MUTANT_REACHED\", flush=True)\n         for receipt in value[\"applied_receipts\"]:\n             event = db.execute(\n                 \"SELECT * FROM events WHERE subject=? AND kind IN \"\n"
+}

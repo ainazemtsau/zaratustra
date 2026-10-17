@@ -1,0 +1,7 @@
+{
+  "kind": "outside sandbox localhost-only fictional transport probe",
+  "node_returncode": 0,
+  "stdout": "{\"status\":200,\"body\":\"fictional-local-check\"}\n",
+  "stderr": "",
+  "time": "2026-10-17T02:42:06.145589+00:00"
+}

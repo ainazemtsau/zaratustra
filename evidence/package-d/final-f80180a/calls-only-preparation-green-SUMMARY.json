@@ -1,0 +1,49 @@
+{
+  "source_context": "calls-only-preparation-green",
+  "path": "../calls-only-preparation-green",
+  "actual_exit": {
+    "returncode": 1,
+    "seconds": 115.0240228176117
+  },
+  "stdout_sha256": "d6529d3c83c0b94ae488ca286f238443baf706e3d92655ea5919e645a855cf12",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "controls": [
+    {
+      "seed": "D-native-chatgpt-effort-compat-omitted",
+      "returncode": 1,
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "D-native-json-mode-omitted",
+      "returncode": 1,
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "D-native-json-mode-text",
+      "returncode": 1,
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "D-native-profile-cap-below-floor",
+      "returncode": 1,
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "D-native-resource-mode-implicit",
+      "returncode": 1,
+      "injection_reached": true,
+      "behavioral_failure": true
+    },
+    {
+      "seed": "D-native-unsupported-token-field-restored",
+      "returncode": 1,
+      "injection_reached": true,
+      "behavioral_failure": true
+    }
+  ],
+  "failed_runs_preserved": true
+}

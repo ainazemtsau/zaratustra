@@ -1,0 +1,2280 @@
+{
+  "checks": [
+    {
+      "name": "pin:source-f80180a.zip",
+      "pass_": true,
+      "sha256": "a68676b5be8f6be31f8a1302ef602e8162a027c29c27f68d6ad0fcd146ce3beb"
+    },
+    {
+      "name": "pin:zaratustra-next-d-f80180a-windows-x64.zip",
+      "pass_": true,
+      "sha256": "df1e8f75ccb3e5b8454ff4e5cca85bc48cd0540d92260122c47624b5f6c5b6a5"
+    },
+    {
+      "name": "pin:install-f80180a/manifest.json",
+      "pass_": true,
+      "sha256": "bdc4b1cf8c015ed63d43cc91b152a635e3b79069dc63a5a46d72082d77c8eda7"
+    },
+    {
+      "name": "pin:SOURCE-MANIFEST.json",
+      "pass_": true,
+      "sha256": "9e892b11a191c9f1ec13a0a1d41ea00dcf1aaccf4030f03b5e632018736e7e2e"
+    },
+    {
+      "name": "source:.python-version",
+      "pass_": true
+    },
+    {
+      "name": "source:AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:README.md",
+      "pass_": true
+    },
+    {
+      "name": "source:docs/restart/FIRST-RELEASE-PLAN.md",
+      "pass_": true
+    },
+    {
+      "name": "source:docs/restart/FIRST-RELEASE-REVIEW.md",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/pyproject.toml",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/src/zaratustra_app/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/src/zaratustra_app/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/src/zaratustra_app/adapters/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/src/zaratustra_app/adapters/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/src/zaratustra_app/adapters/pi/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/src/zaratustra_app/adapters/pi/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/src/zaratustra_app/adapters/pi/bridge.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/src/zaratustra_app/adapters/pi/extension.ts",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/src/zaratustra_app/adapters/pi/launcher.mjs",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/src/zaratustra_app/cli.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/src/zaratustra_app/conversation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/src/zaratustra_app/coordinator.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/src/zaratustra_app/executor_port.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/src/zaratustra_app/ordinary.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/app/src/zaratustra_app/sleep.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/core/pyproject.toml",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/core/src/zaratustra_core/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/core/src/zaratustra_core/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/core/src/zaratustra_core/api.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/core/src/zaratustra_core/backup_refs.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/core/src/zaratustra_core/formats.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/core/src/zaratustra_core/maintenance.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/core/src/zaratustra_core/shapes.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/core/src/zaratustra_core/storage.py",
+      "pass_": true
+    },
+    {
+      "name": "source:packages/core/src/zaratustra_core/types.py",
+      "pass_": true
+    },
+    {
+      "name": "source:pyproject.toml",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/__main__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/cli/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/cli/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/connections/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/connections/SKILL.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/connections/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/artifacts.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/context.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/handoffs.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/migration_v2.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/migration_v3.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/migration_v4.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/migration_v5.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/migration_v6.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/migration_v7.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/migration_v8.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/migration_v9.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/migrations.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/mutations.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/process_read.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/projections.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/protocol.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/records.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/results.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/core/workspace.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/entry/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/entry/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/first_use/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/first_use/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/active_plan.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/activity_setup.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/binding.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/capabilities.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/choices.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/composition.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/conversations.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/data.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/data_formats.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/data_migration.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/data_store.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/development.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/execution.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/history.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/knowledge.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/materials.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/memory.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/models.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/operations.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/projection.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/pulse.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/response_recovery.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/revalidation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/runtime.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/runtime_queries.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/setup_validation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/sleep_method.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/storage.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/structure_change.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/structure_setup.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/waivers.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/work_status.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/foundation/workflows.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/intake/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/intake/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/integrations/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/integrations/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/integrations/adapters.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/integrations/data.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/integrations/manual.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/integrations/memory.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/integrations/product-context.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/integrations/registry.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/local/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/local/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/onboarding/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/onboarding/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/__main__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/activity_setup.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/assigned.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/boundary.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/bridge.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/conversation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/extension.ts",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/manual_exchange.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/procedures.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/response_recovery.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/runtime.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/selection.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/skills.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/skills/zaratustra-activity-setup/SKILL.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/skills/zaratustra-external/SKILL.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/skills/zaratustra-external/chatgpt-web.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/skills/zaratustra-external/intake.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/skills/zaratustra-external/outgoing.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/pi_adapter/workflows.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/process_change/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/process_change/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/process_creation/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/process_creation/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/process_packs/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/process_packs/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/process_packs/capabilities.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/process_packs/capability_models.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/process_packs/construction.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/process_packs/lifecycle.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/process_packs/overview.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/process_packs/runner.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/process_packs/work_creation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/py.typed",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/release.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/trusted_chat/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/trusted_chat/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/trusted_chat/__main__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/trusted_chat/agent.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/workspace/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/workspace/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/workspace/config.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/workspace/delivery.py",
+      "pass_": true
+    },
+    {
+      "name": "source:src/zaratustra/workspace/selection.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/fictional_lot/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/fictional_lot/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/fictional_lot/pack.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/fictional_signal/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/fictional_signal/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/fictional_signal/pack.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/process_creation/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/process_creation/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/process_creation/pre_fix_unicode_request.json",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/process_creation/project.json",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/process_creation/small.json",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/process_probe/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/process_probe/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/process_probe/batch.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/process_probe/cycle.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/fixtures/process_probe/runner.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/crash_worker.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/maintenance_worker.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/ordinary_support.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/sleep_crash_worker.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/sleep_support.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/support.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_backup_references.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_binding_findings.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_build.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_client_parity.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_continuation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_continuation_controls.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_contract.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_conversation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_crashes.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_delivery_controls.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_isolation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_maintenance.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_native_and_shapes.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_native_resource_profile.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_negative_controls.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_ordinary_activity.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_prose_fields.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_review_findings.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_schema_references.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_sleep.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_sleep_controls.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_sleep_profile.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_trace.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/restart/test_work_handoff.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_check.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_entry_t1.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_entry_t3.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_entry_t4.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_entry_t5.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_first_process.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_probe_knowledge_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_probe_process_creation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_probe_process_t2.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_probe_process_t3.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_probe_read_boundaries_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_probe_related_materials_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_probe_stage6_rpc.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_probe_workflows_real_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_process_probe.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_public_onboarding_r2_t3.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_public_onboarding_r2_t3_correction.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_public_onboarding_r2_t4.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_public_onboarding_r2_t4_hosts.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_public_onboarding_t1.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_retain_trial.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_second_process.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/tools/test_technical_baseline.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/cli/test_readiness.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/connections/test_connections.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/core/test_artifacts.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/core/test_basic_process.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/core/test_context.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/core/test_handoffs.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/core/test_mutations.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/core/test_pack_bindings.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/core/test_records.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/core/test_results.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/core/test_terminal_materials.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/core/test_workspace.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/entry/test_catalog.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/first_use/test_first_use.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_active_plan.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_active_plan_review_939c27d.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_activity_reorganization.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_activity_setup.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_activity_setup_recovery.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_activity_structures.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_activity_work.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_applicability.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_binding.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_change_package.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_child_execution.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_composition.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_continuation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_conversations.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_delivery_correlation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_development.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_execution.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_knowledge.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_maintenance.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_materials.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_memory.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_memory_related.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_method_transition.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_method_transition_review_907a739.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_nested_composition.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_nested_deletion.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_operations.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_outcome_bases.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_parallel_branches.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_parent_execution.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_pass4_core_windows.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_pass4_maintenance.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_plan_transfers.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_pulse.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_response_recovery.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_revalidation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_runtime_queries.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_space.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_terminal_response.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_waivers.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_work_outcomes.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/foundation/test_workflows.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/intake/test_material.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/integrations/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/integrations/test_integrations.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/integrations/test_runtime_queries.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/local/test_confirmation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/local/test_handoff_delivery.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/onboarding/test_onboarding.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_assigned.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_boundary.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_bridge.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_child_assigned.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_conversation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_entry.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_knowledge_capture.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_manual_exchange.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_preflight_refusal.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_read_boundaries.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_response_recovery.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_runtime.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_selection.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_shared_memory.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_skills.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_tool_surface.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/pi_adapter/test_workflows.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/process_change/test_process_change.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/process_creation/test_creation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/process_packs/test_capabilities.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/process_packs/test_construction.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/process_packs/test_lifecycle.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/process_packs/test_overview.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/process_packs/test_work_creation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/test_integration_cli.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/test_release.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/trusted_chat/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/trusted_chat/test_trusted_chat.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tests/zaratustra/workspace/test_workspace.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/check.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/installed_stage5_case.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_activity_setup_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_activity_setup_ui.mjs",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_activity_structures_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_artifacts.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_binding_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_capabilities.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_context.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_conversation_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_conversation_responses_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_development_autonomy_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_development_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_entry_t1.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_entry_t2.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_entry_t3.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_entry_t4.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_entry_t5.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_external_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_first_process.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_foundation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_handoffs.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_install.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_install_stage5.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_install_stage6.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_knowledge_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_m1.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_memory_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_mutations.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_native_read_faults_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_ordinary_selection_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_overview.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_packs.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_process_creation.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_process_host.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_process_t2.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_process_t2_install.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_process_t3.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_process_t3_install.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_public_onboarding_r2_t3.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_public_onboarding_r2_t3_correction.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_public_onboarding_r2_t4.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_public_onboarding_r2_t4_hosts.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_public_onboarding_t1.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_read_boundaries_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_records.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_related_materials_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_restart_luna.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_restart_sleep_semantic.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_result.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_second_install.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_second_process.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_single_conversation_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_single_owner_abort_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_stage3.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_stage4_manual.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_stage5_faults.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_stage5_rpc.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_stage5_stop.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_stage6_pass3.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_stage6_pass4.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_stage6_rpc.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_workflow_models_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_workflows_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_workflows_real_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/probe_workspace_pi.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/retain_trial.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/sqlite_bootstrap/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/sqlite_bootstrap/sitecustomize.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/technical_baseline/AGENTS.md",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/technical_baseline/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/technical_baseline/common.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/technical_baseline/durable_execution_probe.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/technical_baseline/pi_integration_probe.py",
+      "pass_": true
+    },
+    {
+      "name": "source:tools/technical_baseline/pi_probe_extension.ts",
+      "pass_": true
+    },
+    {
+      "name": "source:uv.lock",
+      "pass_": true
+    },
+    {
+      "name": "source:validation.config",
+      "pass_": true
+    },
+    {
+      "name": "distribution:zaratustra_core/api.py",
+      "pass_": true,
+      "sha256": "aefda7657481a7d4953ac41f471473db2703a70613e31958286489f45c09fe27",
+      "bytes": 68123
+    },
+    {
+      "name": "distribution:zaratustra_core/backup_refs.py",
+      "pass_": true,
+      "sha256": "72f09adcbb1800c0ad634219db7bd69a780310329620302442a306bb4f3e6082",
+      "bytes": 18474
+    },
+    {
+      "name": "distribution:zaratustra_core/formats.py",
+      "pass_": true,
+      "sha256": "81eedd00061f1254fbeaf1d9946f2c32a29ed77200c3705b27d434e7b8ada64e",
+      "bytes": 8487
+    },
+    {
+      "name": "distribution:zaratustra_core/maintenance.py",
+      "pass_": true,
+      "sha256": "171edb85b09b6509cb4fa6a9eccac9edf5c344a060d16116348eb14480ef5937",
+      "bytes": 7483
+    },
+    {
+      "name": "distribution:zaratustra_core/shapes.py",
+      "pass_": true,
+      "sha256": "496d67a7ef9ccfe38f444792961bfcb0f9ffcb4215d964aa79b11e2941812d3c",
+      "bytes": 5746
+    },
+    {
+      "name": "distribution:zaratustra_core/storage.py",
+      "pass_": true,
+      "sha256": "4057453df21e71dea62d9dbee79a29d1f12cea25dc4bc1f74f619c85a4e3fc5e",
+      "bytes": 3496
+    },
+    {
+      "name": "distribution:zaratustra_core/types.py",
+      "pass_": true,
+      "sha256": "54b8a7103b7b0ae9d924cb839acd7789bff316b8e79bcf565635b1505ab5d33f",
+      "bytes": 2028
+    },
+    {
+      "name": "distribution:zaratustra_core/__init__.py",
+      "pass_": true,
+      "sha256": "7f71419c900c0207f7e9b1e9444a8b20a1f149faa06175484a62d82f0baef7c7",
+      "bytes": 206
+    },
+    {
+      "name": "distribution:zaratustra_app/cli.py",
+      "pass_": true,
+      "sha256": "5b639505453087a38f4687db6cdae2c64b839093ca6efd4e6622bd1b2f1bd25b",
+      "bytes": 8756
+    },
+    {
+      "name": "distribution:zaratustra_app/conversation.py",
+      "pass_": true,
+      "sha256": "6225f16b4632b743c65e1d4f327349f92c0376faaf1031713e5b246fd082c462",
+      "bytes": 13461
+    },
+    {
+      "name": "distribution:zaratustra_app/coordinator.py",
+      "pass_": true,
+      "sha256": "3f902c66cdec4975abde2cece3e637c7c0e254f1f8e09a9dde08acd3a866f792",
+      "bytes": 12991
+    },
+    {
+      "name": "distribution:zaratustra_app/executor_port.py",
+      "pass_": true,
+      "sha256": "6588346099d48c28b4931b383dc99b49e98315d7abf3fe0ff08896df460dfd62",
+      "bytes": 17552
+    },
+    {
+      "name": "distribution:zaratustra_app/ordinary.py",
+      "pass_": true,
+      "sha256": "208e775c2adef3714c32e6207d03b6a1a1a6adaab916a207dabab0a2fd6898fc",
+      "bytes": 9356
+    },
+    {
+      "name": "distribution:zaratustra_app/sleep.py",
+      "pass_": true,
+      "sha256": "e99979dcac7d34c4ebb4b299b597781a6e3b5c74ea68877dac9de96c5246d474",
+      "bytes": 18757
+    },
+    {
+      "name": "distribution:zaratustra_app/__init__.py",
+      "pass_": true,
+      "sha256": "7aa11cf5aac2b79560b79aa1da5dfce83d4ba934ec34120f422f4de067463d21",
+      "bytes": 313
+    },
+    {
+      "name": "distribution:zaratustra_app/adapters/__init__.py",
+      "pass_": true,
+      "sha256": "3313c92a9cdbfccae4afdf1f0a2defde08ac4a84eb166825fc21ddb9347cce20",
+      "bytes": 28
+    },
+    {
+      "name": "distribution:zaratustra_app/adapters/pi/bridge.py",
+      "pass_": true,
+      "sha256": "c5462f79ff3e1d84e1e68de69314d28d2f60556f087d6418baff6025dd5ebab7",
+      "bytes": 5874
+    },
+    {
+      "name": "distribution:zaratustra_app/adapters/pi/extension.ts",
+      "pass_": true,
+      "sha256": "dfb451e22ce14af8a63fd37c5e8a0c6d75a11ead34e79eb036e8bfd78958505a",
+      "bytes": 1012
+    },
+    {
+      "name": "distribution:zaratustra_app/adapters/pi/launcher.mjs",
+      "pass_": true,
+      "sha256": "6d8d942d545d260a95436be6d95f5823bfa4b8f3790ea5bc0daedc5c7b64587f",
+      "bytes": 4216
+    },
+    {
+      "name": "distribution:zaratustra_app/adapters/pi/__init__.py",
+      "pass_": true,
+      "sha256": "6de3b1e1a3155f4e8d9bb2e104473abfc7c6a10f37ff0aa537ada162cbe2aa61",
+      "bytes": 37
+    },
+    {
+      "name": "dependency-lock:annotated_types-0.8.0-py3-none-any.whl",
+      "pass_": true,
+      "sha256": "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0"
+    },
+    {
+      "name": "installed-dependency:annotated_types/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:annotated_types/py.typed",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:annotated_types/test_cases.py",
+      "pass_": true
+    },
+    {
+      "name": "dependency-lock:pydantic-2.13.5-py3-none-any.whl",
+      "pass_": true,
+      "sha256": "346a034f080da3755d8e9cb5e00e8b07de1d39e4f6e2c87d8ab7cafa0b269a73"
+    },
+    {
+      "name": "installed-dependency:pydantic/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_migration.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/alias_generators.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/aliases.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/annotated_handlers.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/class_validators.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/color.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/config.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/dataclasses.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/datetime_parse.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/decorator.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/env_settings.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/error_wrappers.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/errors.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/fields.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/functional_serializers.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/functional_validators.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/generics.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/json.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/json_schema.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/main.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/mypy.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/networks.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/parse.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/py.typed",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/root_model.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/schema.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/tools.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/type_adapter.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/types.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/typing.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/utils.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/validate_call_decorator.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/validators.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/version.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/warnings.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_config.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_core_metadata.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_core_utils.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_dataclasses.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_decorators.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_decorators_v1.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_discriminated_union.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_docs_extraction.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_fields.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_forward_ref.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_generate_schema.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_generics.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_git.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_import_utils.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_internal_dataclass.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_known_annotated_metadata.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_mock_val_ser.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_model_construction.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_namespace_utils.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_repr.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_schema_gather.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_schema_generation_shared.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_serializers.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_signature.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_typing_extra.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_utils.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_validate_call.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/_internal/_validators.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/deprecated/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/deprecated/class_validators.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/deprecated/config.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/deprecated/copy_internals.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/deprecated/decorator.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/deprecated/json.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/deprecated/parse.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/deprecated/tools.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/experimental/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/experimental/arguments_schema.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/experimental/missing_sentinel.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/experimental/pipeline.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/plugin/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/plugin/_loader.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/plugin/_schema_validator.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/_hypothesis_plugin.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/annotated_types.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/class_validators.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/color.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/config.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/dataclasses.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/datetime_parse.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/decorator.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/env_settings.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/error_wrappers.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/errors.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/fields.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/generics.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/json.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/main.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/mypy.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/networks.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/parse.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/py.typed",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/schema.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/tools.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/types.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/typing.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/utils.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/validators.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic/v1/version.py",
+      "pass_": true
+    },
+    {
+      "name": "dependency-lock:pydantic_core-2.46.5-cp313-cp313-win_amd64.whl",
+      "pass_": true,
+      "sha256": "15f4a94963c95accac15b7b657bb177d3ad82bb90b0d0526d9a9b85079925db5"
+    },
+    {
+      "name": "installed-dependency:pydantic_core/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic_core/_pydantic_core.cp313-win_amd64.pyd",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic_core/_pydantic_core.pyi",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic_core/core_schema.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:pydantic_core/py.typed",
+      "pass_": true
+    },
+    {
+      "name": "dependency-lock:typing_extensions-4.16.0-py3-none-any.whl",
+      "pass_": true,
+      "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
+    },
+    {
+      "name": "installed-dependency:typing_extensions.py",
+      "pass_": true
+    },
+    {
+      "name": "dependency-lock:typing_inspection-0.4.4-py3-none-any.whl",
+      "pass_": true,
+      "sha256": "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147"
+    },
+    {
+      "name": "installed-dependency:typing_inspection/__init__.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:typing_inspection/introspection.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:typing_inspection/py.typed",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:typing_inspection/typing_objects.py",
+      "pass_": true
+    },
+    {
+      "name": "installed-dependency:typing_inspection/typing_objects.pyi",
+      "pass_": true
+    }
+  ],
+  "production_files": 20,
+  "source_files": 406,
+  "archive_note": "Own git archive zip container differs from author custom zip; all 406 scope file contents compared exactly, no LF normalization."
+}

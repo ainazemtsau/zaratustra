@@ -1,0 +1,64 @@
+{
+  "source": "11ebf956bafc2bbca4a3685e37d117474f11c151",
+  "previous_source": "1b6d1a3946348a18d90cbb1a4e8d36208e242285",
+  "changes": {
+    "packages/app/src/zaratustra_app/executor_port.py": "Native selected ChatGPT model compat.supportsMidConvoEffort=false through official SDK model override; same effective effort/request content/tools/caps. Loopback URL prevented SDK automatic ChatGPT detection.",
+    "tests/restart/test_conversation.py": "Actual native SDK with fictional OAuth verifies no unsupported inputitem, same medium effort, typedtool and profile output/context caps.",
+    "tests/restart/test_delivery_controls.py": "Reached compatibility mutant restores old configuration_update shape and fails behavior.",
+    "tests/restart/test_maintenance.py": "Valid SQLite user_version metadata change isolates SHA guard from reference closure; old SURVIVED control retained."
+  },
+  "live_inference": {
+    "root_account_preflight": {
+      "sends": 1,
+      "http": 200,
+      "input_tokens": 10,
+      "output_tokens": 5,
+      "g14": false
+    },
+    "independent_g14_1b6": {
+      "sends": 1,
+      "http": 400,
+      "code": "subscription_sharing_unsupported_capability",
+      "param": "input",
+      "response_delivered": false,
+      "correction_or_reopen_reached": false,
+      "usage": "unknown; no assumption of zero charge"
+    },
+    "writer_real_model_calls": 0
+  },
+  "sdk_offline_equivalence": {
+    "fictional_capture_calls": 4,
+    "live_inference": 0,
+    "efforts": [
+      "medium",
+      "high"
+    ],
+    "exact_content_tools_caps": true
+  },
+  "official_sources": [
+    "https://developers.openai.com/siwc/token-sharing-open-source/errors-and-recovery/",
+    "https://developers.openai.com/api/docs/guides/reasoning#change-reasoning-mid-conversation"
+  ],
+  "affected_tests": {
+    "passed": 73,
+    "seconds": 96.03
+  },
+  "all_D_controls": {
+    "passed": 17,
+    "seconds": 41.93
+  },
+  "static": {
+    "format_files": 381,
+    "ruff": "PASS",
+    "mypy_files": 340,
+    "boundaries_kept": 37,
+    "hygiene_report_errors": [],
+    "original_quote_format_failure_retained": true
+  },
+  "readiness": "Full native/scoped and independent corrected build G14/review still pending.",
+  "root_historical_negative_retention_report": {
+    "files": 194,
+    "zip_sha256": "876b401995f499ab6d3c74fbe3c4eaee646a4f354bc2b5dfaf0ddb94103d711d",
+    "authority": "Parent reported independent original1b6 negative retained separately; child did not claim first-hand ZIP hash verification."
+  }
+}

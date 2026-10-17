@@ -1,0 +1,16 @@
+[
+  {
+    "name": "source",
+    "path": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-1b6d1a3-hqfgwtbu\\source",
+    "returncode": 128,
+    "stdout": "",
+    "stderr": "fatal: not a git repository (or any of the parent directories): .git\n"
+  },
+  {
+    "name": "runtime",
+    "path": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-1b6d1a3-hqfgwtbu\\runtime",
+    "returncode": 128,
+    "stdout": "",
+    "stderr": "fatal: not a git repository (or any of the parent directories): .git\n"
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "basis": "Parent/root direct report; writer did not choose request, contact review, invoke live inference or read credentials",
+  "status": "RUNNING, no verdict/usage yet",
+  "source_commit": "0fff8088f092a8ba6b32451ed5c1e03e844c233a",
+  "executor": "Exact independent installed-client script, root normal approval",
+  "root_session": 21265,
+  "script_sha256": "cfaf3665af98378daaf96a162aee84e5d8e89c6e5496b79e8f1cbdbbe146306b",
+  "rubric_sha256": "d3e7fb833c26d534307f0f7afd2c26335691999e561a45e16f42de16e8dc95ef",
+  "model": "same gpt-6-luna/Pi",
+  "limits": {
+    "physical_sends_per_chain": 8,
+    "total_physical_sends_upper": 24,
+    "profile_timeout_seconds": 180,
+    "outer_chain_timeout_seconds": 1800
+  },
+  "preflight_repeated": false,
+  "writer_live_calls": 0,
+  "recorded_at_utc": "2026-10-16T16:41:14.449088+00:00"
+}

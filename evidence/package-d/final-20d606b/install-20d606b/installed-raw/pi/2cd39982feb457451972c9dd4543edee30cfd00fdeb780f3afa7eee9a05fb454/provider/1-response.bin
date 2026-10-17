@@ -1,0 +1,21 @@
+event: response.created
+data: {"type": "response.created", "response": {"id": "response", "object": "response", "created_at": 1, "model": "gpt-6-luna", "status": "in_progress", "output": [], "usage": {"input_tokens": 20, "output_tokens": 20, "total_tokens": 40}}}
+
+event: response.output_item.added
+data: {"type": "response.output_item.added", "output_index": 0, "item": {"id": "message", "type": "message", "role": "assistant", "status": "in_progress", "content": []}}
+
+event: response.content_part.added
+data: {"type": "response.content_part.added", "item_id": "message", "output_index": 0, "content_index": 0, "part": {"type": "output_text", "text": "", "annotations": []}}
+
+event: response.output_text.delta
+data: {"type": "response.output_text.delta", "item_id": "message", "output_index": 0, "content_index": 0, "delta": "{\"state\": \"waiting\", \"text\": \"Controlled question\", \"wait\": {\"id\": \"fixture-wait\", \"question\": \"Controlled question\"}, \"changes\": [{\"id\": \"fictional-activity\", \"kind\": \"activity\", \"key\": \"fictional\", \"body\": \"controlled fixture Activity\"}], \"expected_heads\": {\"fictional-activity\": 0}}"}
+
+event: response.output_text.done
+data: {"type": "response.output_text.done", "item_id": "message", "output_index": 0, "content_index": 0, "text": "{\"state\": \"waiting\", \"text\": \"Controlled question\", \"wait\": {\"id\": \"fixture-wait\", \"question\": \"Controlled question\"}, \"changes\": [{\"id\": \"fictional-activity\", \"kind\": \"activity\", \"key\": \"fictional\", \"body\": \"controlled fixture Activity\"}], \"expected_heads\": {\"fictional-activity\": 0}}"}
+
+event: response.output_item.done
+data: {"type": "response.output_item.done", "output_index": 0, "item": {"id": "message", "type": "message", "role": "assistant", "status": "completed", "content": [{"type": "output_text", "text": "{\"state\": \"waiting\", \"text\": \"Controlled question\", \"wait\": {\"id\": \"fixture-wait\", \"question\": \"Controlled question\"}, \"changes\": [{\"id\": \"fictional-activity\", \"kind\": \"activity\", \"key\": \"fictional\", \"body\": \"controlled fixture Activity\"}], \"expected_heads\": {\"fictional-activity\": 0}}", "annotations": []}]}}
+
+event: response.completed
+data: {"type": "response.completed", "response": {"id": "response", "object": "response", "created_at": 1, "model": "gpt-6-luna", "status": "completed", "output": [{"id": "message", "type": "message", "role": "assistant", "status": "completed", "content": [{"type": "output_text", "text": "{\"state\": \"waiting\", \"text\": \"Controlled question\", \"wait\": {\"id\": \"fixture-wait\", \"question\": \"Controlled question\"}, \"changes\": [{\"id\": \"fictional-activity\", \"kind\": \"activity\", \"key\": \"fictional\", \"body\": \"controlled fixture Activity\"}], \"expected_heads\": {\"fictional-activity\": 0}}", "annotations": []}]}], "usage": {"input_tokens": 20, "output_tokens": 20, "total_tokens": 40}}}
+

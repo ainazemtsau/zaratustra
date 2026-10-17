@@ -1,0 +1,11 @@
+from pathlib import Path
+import subprocess,sys,os,json,time
+r=Path.cwd();p=r/'evidence/package-d/calls-only-compatibility-green';t=r/'_scratch/calls-only-compat-green-20261017';t.mkdir(exist_ok=False)
+e=os.environ.copy()
+for k in ['ZARATUSTRA_SQLITE_DLL','PYTHONPATH','PYTEST_ADDOPTS','ZARA_RESTART_EVIDENCE','ZARA_RESTART_NEGATIVES']:e.pop(k,None)
+e['TEMP']=e['TMP']=str(t);e['ZARA_RESTART_NEGATIVES']=str(p/'negatives');e['PYTEST_ADDOPTS']='--basetemp='+(t/'tests').as_posix()
+c=[sys.executable,'-m','pytest','tests/restart/test_conversation.py','tests/restart/test_delivery_controls.py','tests/restart/test_native_resource_profile.py','tests/restart/test_sleep_profile.py','-q','-k','api_key or resource or cli_profile_drift or D-native-null-mode']
+(p/'invocation.json').write_text(json.dumps({'command':c,'source_diff':'ac58f94 plus owner-selected calls-only native compatibility/profile/test changes','credentials':'fictional only; selected tests no live models','cwd':str(r)},indent=2),encoding='utf-8')
+a=time.time()
+with (p/'stdout.bin').open('xb') as o,(p/'stderr.bin').open('xb') as err:res=subprocess.run(c,env=e,stdout=o,stderr=err)
+(p/'exit.json').write_text(json.dumps({'returncode':res.returncode,'seconds':time.time()-a},indent=2),encoding='utf-8');print(res.returncode);raise SystemExit(res.returncode)

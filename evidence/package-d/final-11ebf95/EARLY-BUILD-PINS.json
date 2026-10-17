@@ -1,0 +1,37 @@
+{
+  "source": "11ebf956bafc2bbca4a3685e37d117474f11c151",
+  "files": [
+    {
+      "path": "evidence\\package-d\\final-11ebf95\\source-11ebf95.zip",
+      "bytes": 1671363,
+      "sha256": "2b58def9e487d57d71fe8cde3febcea66d5ef7c702db1af666bf2876973037ac"
+    },
+    {
+      "path": "evidence\\package-d\\final-11ebf95\\install-11ebf95\\physical-builds\\zaratustra_core-0.1.0-py3-none-any.whl",
+      "bytes": 27518,
+      "sha256": "639336667691ab3f1c5d16c30eeed48c8fa23f54d638d6ac4baf27d6f1ee9511"
+    },
+    {
+      "path": "evidence\\package-d\\final-11ebf95\\install-11ebf95\\physical-builds\\zaratustra_next-0.1.0-py3-none-any.whl",
+      "bytes": 27349,
+      "sha256": "72895eb23cbfede5c9800c36d059c5680d72db492ef675133310088e79d054c1"
+    },
+    {
+      "path": "evidence\\package-d\\final-11ebf95\\install-11ebf95\\physical-builds\\zaratustra_core-0.1.0.tar.gz",
+      "bytes": 23358,
+      "sha256": "4a635f39995e657d1ffac9f95ff7ee3219c7dd12dce88c051827fc3acda3a677"
+    },
+    {
+      "path": "evidence\\package-d\\final-11ebf95\\install-11ebf95\\physical-builds\\zaratustra_next-0.1.0.tar.gz",
+      "bytes": 20636,
+      "sha256": "4601e2320d99036b7caf8d8bc81082797f6c54a25323ae6c345f2e3dc9348085"
+    },
+    {
+      "path": "evidence\\package-d\\final-11ebf95\\zaratustra-next-d-11ebf95-windows-x64.zip",
+      "bytes": 2629638,
+      "sha256": "5efe5b0c9b92f0c458740171691d0aa09c49abf8c99f05f6d847bcad206d65ee"
+    }
+  ],
+  "native_scoped": "RUNNING",
+  "review_g14": "PENDING"
+}

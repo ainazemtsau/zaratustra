@@ -1,0 +1,15 @@
+from pathlib import Path
+import hashlib,json,tempfile,sys
+sys.path.insert(0,str(Path.cwd()))
+from zaratustra_app import Pi
+from zaratustra_app.ordinary import outcome
+from zaratustra_core import wire
+from zaratustra_core.shapes import Outcome
+from tests.restart.test_work_handoff import routed,commit
+from tests.restart.support import inspect
+r=Path.cwd();p=r/'_scratch/binding-review-d-20261016/review-0fff808/g14-installed';raw=(p/'reopen-retained-terminal.bin').read_bytes();decoded=Pi.decode(raw);reference=json.loads((p/'reopen-decoded-outcome.json').read_bytes());assert wire(decoded)==wire(reference)
+state=json.loads((p/'retained-state.json').read_bytes());held=next(a for a in state['attempts'] if a['status']=='claimed');work=next(w for w in state['works'] if w['id']==held['work']);normalized=outcome(decoded,held,work,lambda scope,refs:refs)
+payload={'attempt_id':held['id'],'generation':held['generation'],'terminal_event':'terminal','original_cursor':held['original_cursor'],'processed_cutoff':normalized['processed_cutoff'],'state':normalized['state'],'text':normalized['text'],'outputs':normalized['outputs'],'changes':normalized['changes'],'next_work':normalized['next_work']};Outcome.model_validate(payload)
+base=Path(tempfile.mkdtemp(prefix='d11-goal-offline-',dir=r/'_scratch'));core,owner,client,_,fixture=routed(base);goal=reference['next_work']['goal'];fixture['next_work']['goal']=goal;result=commit(client,fixture);child=next(w for w in inspect(core,'works') if w['id']==result['next_work_id']);assert json.loads(child['body'])['goal'].encode()==goal.encode();core.backup(owner.token,base/'backup')
+v={'original_terminal_sha256':hashlib.sha256(raw).hexdigest(),'original_decoded_sha256':hashlib.sha256((p/'reopen-decoded-outcome.json').read_bytes()).hexdigest(),'exact_native_decode_matches':True,'actual_goal_characters':len(goal),'actual_goal_sha256':hashlib.sha256(goal.encode()).hexdigest(),'whole_retained_normalized_C8_shape':'PASS','legitimate_controlled_C8_atomic_handoff':'PASS','goal_bytes_preserved':True,'cursor_preserved':inspect(core,'conversations')[0]['cursor']==0,'backup_reference_closure':'PASS','fixture_root':str(base),'live_calls':0,'auth_reads':0};(r/'_scratch/d11-retained-goal-offline.json').write_text(json.dumps(v,indent=2));print(json.dumps(v,indent=2))
+

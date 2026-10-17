@@ -1,0 +1,947 @@
+diff --git a/packages/core/src/zaratustra_core/api.py b/packages/core/src/zaratustra_core/api.py
+index 08638bc..d10fb81 100644
+--- a/packages/core/src/zaratustra_core/api.py
++++ b/packages/core/src/zaratustra_core/api.py
+@@ -12,7 +12,7 @@ from contextlib import contextmanager
+ from pathlib import Path
+ from typing import Any, NoReturn, cast
+ 
+-from .formats import validate_value
++from .formats import value_references
+ from .shapes import Ref, SleepProgress, Source, validate
+ from .storage import durable, exclusion, verified
+ from .types import CoreError, Request, digest, wire
+@@ -373,7 +373,8 @@ class Core:
+                 fail("identity_conflict", "record_identity")
+             if change.get("schema_ref"):
+                 schema = self._exact(db, change["schema_ref"])
+-                validate_value(change["body"], schema["body"]["value"])
++                for ref in value_references(change["body"], schema["body"]["value"]):
++                    self._exact(db, ref | {"role": "exact"})
+             value = change["body"]
+             if isinstance(value, dict) and value.get("format") == "sleep-progress/v1":
+                 if change["kind"] != "data":
+@@ -1077,6 +1078,12 @@ class Core:
+                 fail("invalid_request", "observation.kind")
+             if p["kind"] == "terminal":
+                 base64.b64decode(p["raw_base64"], validate=True)
++            if (
++                p["kind"] != "reconcile"
++                and p.get("evidence")
++                and p["evidence"]["action_id"] != action["id"]
++            ):
++                fail("invalid_request", "evidence.action_id")
+             if p["kind"] == "reconcile":
+                 evidence = p.get("evidence", {})
+                 if (
+diff --git a/packages/core/src/zaratustra_core/backup_refs.py b/packages/core/src/zaratustra_core/backup_refs.py
+new file mode 100644
+index 0000000..53fef9e
+--- /dev/null
++++ b/packages/core/src/zaratustra_core/backup_refs.py
+@@ -0,0 +1,318 @@
++"""Historical typed-reference closure; never interpret arbitrary record prose."""
++
++from __future__ import annotations
++
++import base64
++import hashlib
++import json
++import sqlite3
++from pathlib import Path
++from typing import Any
++
++from .formats import value_references
++from .shapes import Ref, SleepProgress
++from .types import CoreError, digest
++
++
++def verify_references(db: sqlite3.Connection, path: Path) -> None:
++    # Local import avoids an API/maintenance import cycle; these helpers only read db.
++    from .api import Core
++
++    core = Core(path.parent)
++
++    def require(condition: bool) -> None:
++        if not condition:
++            raise CoreError("invalid_request", "backup.reference_closure")
++
++    def table(name: str) -> list[dict[str, Any]]:
++        return [dict(row) for row in db.execute("SELECT * FROM " + name)]
++
++    records = {(r["id"], r["revision"]): r for r in table("records")}
++    works = {r["id"]: r for r in table("works")}
++    attempts = {r["id"]: r for r in table("attempts")}
++    messages = {(r["conversation"], r["seq"]): r for r in table("messages")}
++    results = {(r["attempt"], r["slot"]): r for r in table("results")}
++    waits = {r["id"]: r for r in table("waits")}
++    tools = {(r["attempt"], r["native_id"]): r for r in table("tool_calls")}
++    receipts = {r["command"]: r for r in table("receipts")}
++    actions = {r["id"]: r for r in table("actions")}
++    events = {r["seq"]: r for r in table("events")}
++
++    def equal(left: Any, right: Any) -> bool:
++        # Python equality conflates JSON booleans and integers; wire/v1 does not.
++        return digest(left) == digest(right)
++
++    def record(ref: dict[str, Any], kind: str | None = None) -> dict[str, Any]:
++        Ref.model_validate(ref)
++        row = records.get((ref["id"], ref["revision"]))
++        require(row is not None)
++        assert row is not None
++        require(kind is None or row["kind"] == kind)
++        return row | {"body": json.loads(row["body"])}
++
++    def snapshot(saved: dict[str, Any]) -> dict[str, Any]:
++        actual = record({"id": saved["id"], "revision": saved["revision"]})
++        normalized = saved | {
++            "body": json.loads(saved["body"]) if isinstance(saved["body"], str) else saved["body"]
++        }
++        require(equal(normalized, actual))
++        return actual
++
++    def work_refs(body: dict[str, Any]) -> None:
++        method = record(body["method_ref"], "method")
++        require(method["scope"] in {"space", body.get("scope", "space")})
++        for ref in body.get("inputs", []):
++            record(ref)
++
++    def result_refs(body: dict[str, Any]) -> None:
++        for ref in body.get("refs", []) + body.get("outputs", []):
++            record(ref)
++
++    def source(ref: dict[str, Any]) -> dict[str, Any]:
++        return core._source(db, ref)
++
++    try:
++        for work in works.values():
++            work_refs(json.loads(work["body"]))
++        for result in results.values():
++            saved_result = json.loads(result["body"])
++            require(saved_result["attempt_id"] == result["attempt"])
++            result_refs(saved_result)
++        for event in events.values():
++            receipt = receipts.get(event["subject"])
++            require(receipt is not None)
++            assert receipt is not None
++            response = json.loads(receipt["response"])
++            require(type(response["sequence"]) is int and response["sequence"] == event["seq"])
++            require(response["command_id"] == response["receipt_id"] == receipt["command"])
++            require(equal(response["result"], json.loads(event["body"])))
++            if event["kind"] in {"apply_changes", "commit_outcome"}:
++                result_refs(response["result"])
++            if event["kind"] in {"prepare_attempt", "claim_dispatch"}:
++                result = response["result"]
++                saved_pin = dict(result["pinned"])
++                resource = saved_pin.pop("resource_state", None)
++                if event["kind"] == "claim_dispatch":
++                    action = actions[result["action_id"]]
++                    attempt_id = action["attempt"]
++                    require(resource is not None)
++                    require(
++                        all(
++                            key in actions
++                            and attempts[actions[key]["attempt"]]["work"]
++                            == attempts[attempt_id]["work"]
++                            for key in resource["unresolved_calls"]
++                        )
++                    )
++                else:
++                    attempt_id = result["attempt_id"]
++                require(equal(saved_pin, json.loads(attempts[attempt_id]["body"])))
++        for receipt in receipts.values():
++            response = json.loads(receipt["response"])
++            receipt_event = events.get(response["sequence"])
++            require(receipt_event is not None and receipt_event["subject"] == receipt["command"])
++        for tool in tools.values():
++            if tool["receipt"] is not None:
++                require(tool["receipt"] == tool["command"] and tool["receipt"] in receipts)
++        for acceptance in table("acceptance"):
++            accepted_result = results.get((acceptance["attempt"], acceptance["slot"]))
++            require(
++                accepted_result is not None
++                and accepted_result["fingerprint"] == acceptance["result_hash"]
++            )
++        conversations = {r["id"] for r in table("conversations")}
++        targets: dict[str, Any] = {
++            "input": conversations,
++            "prepare": works,
++            "control": works,
++            "dispatch": attempts,
++            "observe": attempts,
++            "resource": works,
++        }
++        for intent in table("intents"):
++            require(intent["kind"] in targets and intent["subject"] in targets[intent["kind"]])
++            saved_intent = json.loads(intent["body"])
++            if "reply_to" in saved_intent:
++                reply = saved_intent["reply_to"]
++                reply_wait = waits.get(reply["id"])
++                require(reply_wait is not None and reply_wait["work"] == intent["subject"])
++                require(reply_wait is not None and 1 <= reply["revision"] <= reply_wait["revision"])
++            if intent["kind"] == "observe" and "event_id" in saved_intent:
++                require(
++                    db.execute(
++                        "SELECT 1 FROM observations WHERE attempt=? AND event=?",
++                        (intent["subject"], saved_intent["event_id"]),
++                    ).fetchone()
++                    is not None
++                )
++        for action in actions.values():
++            if action["correlation"] is not None:
++                require(json.loads(action["correlation"])["action_id"] == action["id"])
++        for wait in waits.values():
++            bound = attempts.get(json.loads(wait["body"])["attempt_id"])
++            require(bound is not None and bound["work"] == wait["work"])
++            require(bound is not None and bound["conversation"] == wait["conversation"])
++        for message in messages.values():
++            reply = json.loads(message["reply"])
++            if reply:
++                reply_wait = waits.get(reply["id"])
++                require(
++                    reply_wait is not None and reply_wait["conversation"] == message["conversation"]
++                )
++                require(reply_wait is not None and 1 <= reply["revision"] <= reply_wait["revision"])
++        for observation in table("observations"):
++            saved_observation = json.loads(observation["body"])
++            require(saved_observation["attempt_id"] == observation["attempt"])
++            require(saved_observation["event_id"] == observation["event"])
++            evidence = saved_observation.get("evidence")
++            if evidence:
++                observed_action = actions.get(evidence["action_id"])
++                require(
++                    observed_action is not None
++                    and observed_action["attempt"] == observation["attempt"]
++                )
++        for attempt in attempts.values():
++            body = json.loads(attempt["body"])
++            work_refs(body["work"])
++            require(body["work"]["id"] == attempt["work"])
++            require(body["work"]["conversation"] == attempt["conversation"])
++            require(works[attempt["work"]]["conversation"] == attempt["conversation"])
++            require(snapshot(body["method"]) == record(body["work"]["method_ref"], "method"))
++            require(snapshot(body["profile"]) == record(body["profile_ref"], "profile"))
++            require(
++                equal(
++                    [snapshot(r) for r in body["inputs"]],
++                    [record(r) for r in body["work"].get("inputs", [])],
++                )
++            )
++            for saved in body["catalog"]:
++                snapshot(saved)
++            conversation = attempt["conversation"]
++            start, cutoff = attempt["original_cursor"], attempt["cutoff"]
++            require(type(start) is int and type(cutoff) is int and 0 <= start <= cutoff)
++            current = sorted(
++                (
++                    m
++                    for m in messages.values()
++                    if m["conversation"] == conversation and start < m["seq"] <= cutoff
++                ),
++                key=lambda m: m["seq"],
++            )
++            require(len(current) == cutoff - start)
++            require(all(m["seq"] == start + i + 1 for i, m in enumerate(current)))
++            require(equal(body["messages"], current))
++            prior = sorted(
++                (
++                    m
++                    for m in messages.values()
++                    if m["conversation"] == conversation and m["seq"] <= start
++                ),
++                key=lambda m: m["seq"],
++            )
++            require(equal(body["prior_messages"], prior))
++            require(
++                equal(
++                    body["manifest"],
++                    [
++                        {
++                            "sequence": m["seq"],
++                            "sha256": hashlib.sha256(
++                                base64.b64decode(m["raw"], validate=True)
++                            ).hexdigest(),
++                        }
++                        for m in body["messages"]
++                    ],
++                )
++            )
++            for saved in body["prior_results"]:
++                require(equal(results.get((saved["attempt"], saved["slot"])), saved))
++                require(attempts[saved["attempt"]]["conversation"] == conversation)
++            for saved in body["prior_waits"]:
++                saved_wait = waits.get(saved["id"])
++                require(saved_wait is not None and saved_wait["body"] == saved["body"])
++                require(
++                    saved_wait is not None
++                    and saved_wait["work"] == saved["work"]
++                    and saved_wait["conversation"] == saved["conversation"] == conversation
++                )
++                require(
++                    saved_wait is not None
++                    and type(saved["revision"]) is int
++                    and 1 <= saved["revision"] <= saved_wait["revision"]
++                )
++            for saved in body["tool_ledger"]:
++                saved_tool = tools.get((saved["attempt"], saved["native_id"]))
++                require(
++                    saved_tool is not None
++                    and all(
++                        saved_tool[k] == saved[k]
++                        for k in ("attempt", "native_id", "command", "action")
++                    )
++                )
++                require(
++                    saved_tool is not None
++                    and (saved["receipt"] is None or saved_tool["receipt"] == saved["receipt"])
++                )
++                require(attempts[saved["attempt"]]["work"] == attempt["work"])
++            for saved in body.get("sleep_sources", []):
++                require(equal(source(saved["source_ref"]), saved["material"]))
++            if "sleep_delivery_manifest" in body:
++                require(
++                    body["sleep_delivery_manifest"]
++                    == {"attempt_id": attempt["id"], "sha256": digest(body["sleep_sources"])}
++                )
++        for row in records.values():
++            wrapper = json.loads(row["body"])
++            value = wrapper["value"]
++            if wrapper.get("schema_ref"):
++                schema = record(wrapper["schema_ref"])["body"]["value"]
++                for ref in value_references(value, schema):
++                    record(ref)
++            if not isinstance(value, dict) or value.get("format") != "sleep-progress/v1":
++                continue
++            SleepProgress.model_validate(value)
++            require(value["work_id"] in works)
++            record(value["method_ref"], "method")
++            high, cursor = value["source_high_watermark"], value["enumeration_cursor"]
++            require(0 <= cursor[0] <= high <= max(events, default=0))
++            for key in ("enumerated_source_refs", "selected_source_refs", "remaining_refs"):
++                for ref in value[key]:
++                    source(ref)
++                    require(ref["sequence"] <= high and [ref["sequence"], ref["index"]] <= cursor)
++            require(
++                all(
++                    any(equal(ref, enumerated) for enumerated in value["enumerated_source_refs"])
++                    for ref in value["selected_source_refs"] + value["remaining_refs"]
++                )
++            )
++            for delivery in value["delivered_manifest_refs"]:
++                require(delivery["attempt_id"] in attempts)
++                require(attempts[delivery["attempt_id"]]["work"] == value["work_id"])
++                pinned = json.loads(attempts[delivery["attempt_id"]]["body"])
++                require(delivery["sha256"] == digest(pinned.get("sleep_sources", [])))
++            for ref in value["analysis_result_refs"]:
++                analysis = record(ref)["body"]["value"]
++                require(
++                    isinstance(analysis, dict) and analysis.get("format") == "sleep-analysis/v1"
++                )
++                for ref in analysis["sources"]:
++                    source(ref)
++            for key in value["applied_receipts"]:
++                require(key in receipts)
++                applied = events[json.loads(receipts[key]["response"])["sequence"]]
++                result = json.loads(applied["body"])
++                outcome_work = (
++                    attempts[result["attempt_id"]]["work"]
++                    if applied["kind"] == "commit_outcome"
++                    else None
++                )
++                tool_works = {
++                    attempts[t["attempt"]]["work"] for t in tools.values() if t["receipt"] == key
++                }
++                require(outcome_work == value["work_id"] or value["work_id"] in tool_works)
++            for key in value["unresolved_calls"]:
++                require(
++                    key in actions and attempts[actions[key]["attempt"]]["work"] == value["work_id"]
++                )
++    except (KeyError, TypeError, ValueError, CoreError) as error:
++        raise CoreError("invalid_request", "backup.reference_closure") from error
+diff --git a/packages/core/src/zaratustra_core/formats.py b/packages/core/src/zaratustra_core/formats.py
+index 93beb4c..513cc0b 100644
+--- a/packages/core/src/zaratustra_core/formats.py
++++ b/packages/core/src/zaratustra_core/formats.py
+@@ -3,6 +3,7 @@
+ from __future__ import annotations
+ 
+ import re
++from collections.abc import Iterator
+ from datetime import date, datetime
+ from decimal import Decimal, InvalidOperation
+ from typing import Any, NoReturn
+@@ -10,6 +11,27 @@ from typing import Any, NoReturn
+ from .shapes import Ref
+ from .types import CoreError
+ 
++
++def value_references(value: Any, schema: dict[str, Any]) -> Iterator[dict[str, Any]]:
++    """Validate the declaration/value, then visit only explicitly declared Ref slots."""
++    validate_value(value, schema)
++
++    def visit(item: Any, declaration: dict[str, Any]) -> Iterator[dict[str, Any]]:
++        if item is None:
++            return
++        if declaration["type"] == "exact-ref":
++            yield item
++        elif declaration["type"] == "object":
++            for field in declaration["fields"]:
++                if field["name"] in item:
++                    yield from visit(item[field["name"]], field)
++        elif declaration["type"] == "list":
++            for child in item:
++                yield from visit(child, declaration["items"])
++
++    yield from visit(value, schema)
++
++
+ TYPES = {
+     "text",
+     "boolean",
+diff --git a/packages/core/src/zaratustra_core/maintenance.py b/packages/core/src/zaratustra_core/maintenance.py
+index dcc6608..f9ea882 100644
+--- a/packages/core/src/zaratustra_core/maintenance.py
++++ b/packages/core/src/zaratustra_core/maintenance.py
+@@ -11,6 +11,7 @@ from contextlib import closing
+ from pathlib import Path
+ from typing import TYPE_CHECKING, Any
+ 
++from .backup_refs import verify_references
+ from .storage import durable, exclusion, publish_directory, verified
+ from .types import CoreError, wire
+ 
+@@ -48,6 +49,7 @@ def integrity(path: Path) -> None:
+                 for r in body.get("inputs", []) + [body["method_ref"]]
+             ):
+                 raise CoreError("invalid_request", "backup.work_closure")
++        verify_references(db, path)
+ 
+ 
+ def target(source: Path, destination: Path) -> Path:
+diff --git a/tests/restart/test_backup_references.py b/tests/restart/test_backup_references.py
+new file mode 100644
+index 0000000..dfe8b58
+--- /dev/null
++++ b/tests/restart/test_backup_references.py
+@@ -0,0 +1,295 @@
++"""Rehashed corruption must not break the retained typed reference graph."""
++
++from __future__ import annotations
++
++import base64
++import hashlib
++import json
++import sqlite3
++from pathlib import Path
++from typing import Any
++
++import pytest
++from zaratustra_app import Coordinator, Driver, Sleep
++from zaratustra_core import Core, CoreError
++
++from .sleep_support import PROFILE as SLEEP_PROFILE
++from .sleep_support import MechanicalSleepReceiver, seed
++from .support import PROFILE, Receiver, fixture
++from .test_contract import prepared
++
++
++def rehash(backup: Path) -> None:
++    raw = (backup / "core.sqlite3").read_bytes()
++    manifest = json.loads((backup / "manifest.json").read_bytes())
++    manifest.update(database_sha256=hashlib.sha256(raw).hexdigest(), database_size=len(raw))
++    (backup / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
++
++
++def test_pinned_json_boolean_is_not_integer(tmp_path: Path) -> None:
++    core, owner, executor = fixture(tmp_path)
++    old = owner.call("read_exact", PROFILE, "profile")
++    owner.call(
++        "apply_changes",
++        {
++            "changes": [
++                {"id": "profile", "kind": "profile", "key": old["key"], "body": {"flag": True}}
++            ]
++        },
++        "advance",
++        expected_heads={"profile": 1},
++    )
++    Coordinator(executor).prepare("work", "A1", {"id": "profile", "revision": 2})
++    core.backup(owner.token, tmp_path / "backup")
++    with sqlite3.connect(tmp_path / "backup/core.sqlite3") as db:
++        body = json.loads(db.execute("SELECT body FROM attempts").fetchone()[0])
++        body["profile"]["body"]["value"]["flag"] = 1
++        db.execute("UPDATE attempts SET body=?", (json.dumps(body),))
++    rehash(tmp_path / "backup")
++    with pytest.raises(CoreError, match="backup.reference_closure"):
++        Core.restore_quarantined(tmp_path / "backup", tmp_path / "restored")
++    assert not (tmp_path / "restored").exists()
++
++
++@pytest.mark.parametrize(
++    "damage",
++    [
++        "profile_ref",
++        "wrong_profile_ref",
++        "method",
++        "method_bytes",
++        "profile",
++        "inputs",
++        "catalog",
++        "work_method",
++        "work_inputs",
++        "manifest_sequence",
++        "manifest_hash",
++        "message_bytes",
++        "message_range",
++        "receipt_result",
++        "result_ref",
++    ],
++)
++def test_rehashed_pinned_reference_corruption_refused(tmp_path: Path, damage: str) -> None:
++    core, owner, _, _ = prepared(tmp_path)
++    backup = tmp_path / "backup"
++    core.backup(owner.token, backup)
++    with sqlite3.connect(backup / "core.sqlite3") as db:
++        body = json.loads(db.execute("SELECT body FROM attempts").fetchone()[0])
++        if damage == "profile_ref":
++            body["profile_ref"] = {"id": "missing", "revision": 999}
++        elif damage == "wrong_profile_ref":
++            body["profile_ref"] = {"id": "method", "revision": 1}
++        elif damage in {"method", "profile", "inputs", "catalog"}:
++            item = body[damage][0] if isinstance(body[damage], list) else body[damage]
++            item["id"], item["revision"] = "missing", 999
++        elif damage == "method_bytes":
++            body["method"]["body"]["value"] = "changed pinned bytes"
++        elif damage == "work_method":
++            body["work"]["method_ref"] = {"id": "missing", "revision": 999}
++        elif damage == "work_inputs":
++            body["work"]["inputs"] = [{"id": "missing", "revision": 999}]
++        elif damage == "manifest_sequence":
++            body["manifest"][0]["sequence"] = 999
++        elif damage == "manifest_hash":
++            body["manifest"][0]["sha256"] = "0" * 64
++        elif damage == "message_bytes":
++            body["messages"][0]["raw"] = base64.b64encode(b"different input").decode()
++        elif damage == "message_range":
++            body["messages"] = body["messages"][1:]
++        elif damage == "receipt_result":
++            receipt = db.execute("SELECT command,response FROM receipts LIMIT 1").fetchone()
++            response = json.loads(receipt[1])
++            response["result"] = {"different": "saved result"}
++            db.execute(
++                "UPDATE receipts SET response=? WHERE command=?", (json.dumps(response), receipt[0])
++            )
++        else:
++            event = db.execute(
++                "SELECT seq,body FROM events WHERE kind='apply_changes' LIMIT 1"
++            ).fetchone()
++            result = json.loads(event[1])
++            result["refs"] = [{"id": "missing", "revision": 999}]
++            db.execute("UPDATE events SET body=? WHERE seq=?", (json.dumps(result), event[0]))
++        db.execute("UPDATE attempts SET body=?", (json.dumps(body),))
++    rehash(backup)
++    with pytest.raises(CoreError, match="backup.*closure"):
++        Core.restore_quarantined(backup, tmp_path / "restored")
++    assert not (tmp_path / "restored").exists()
++
++
++def test_historical_pins_remain_restorable(tmp_path: Path) -> None:
++    core, owner, _, _ = prepared(tmp_path)
++    changes: list[dict[str, Any]] = [
++        {"id": "method", "kind": "method", "key": "conversation", "body": "new method"},
++        {"id": "profile", "kind": "profile", "key": "local", "body": "new profile"},
++    ]
++    # Preserve established identities, while advancing heads beyond the pinned versions.
++    for change in changes:
++        old = owner.call("read_exact", {"id": change["id"], "revision": 1}, "old-" + change["id"])
++        change["key"] = old["key"]
++        owner.call(
++            "apply_changes",
++            {"changes": [change]},
++            "advance-" + change["id"],
++            expected_heads={change["id"]: 1},
++        )
++    core.backup(owner.token, tmp_path / "backup")
++    restored, token = Core.restore_quarantined(tmp_path / "backup", tmp_path / "restored")
++    snapshot = restored.connect(token).call("read_snapshot", {}, "history")
++    assert snapshot["attempts"][0]["status"] == "fenced"
++    pinned = json.loads(snapshot["attempts"][0]["body"])
++    assert pinned["method"]["revision"] == pinned["profile"]["revision"] == 1
++
++
++@pytest.mark.parametrize(
++    "damage",
++    [
++        None,
++        "prior_messages",
++        "prior_results",
++        "prior_waits",
++        "tool_ledger",
++        "result_outputs",
++        "observation_identity",
++        "intent",
++        "acceptance",
++    ],
++)
++def test_continued_context_reference_graph(tmp_path: Path, damage: str | None) -> None:
++    core, owner, _, coordinator = prepared(tmp_path)
++    coordinator.dispatch("A1", 1, Driver(Receiver()))
++    coordinator.recover("A1")
++    with sqlite3.connect(core.path) as db:
++        fingerprint = db.execute("SELECT fingerprint FROM results WHERE attempt='A1'").fetchone()[0]
++    core.accept_result(owner.token, "A1", fingerprint)
++    owner.call(
++        "ingest_message",
++        {
++            "conversation": "conversation",
++            "event_id": "answer",
++            "raw_base64": "eA==",
++            "reply_to": {"id": "W7", "revision": 1},
++        },
++        "answer",
++    )
++    coordinator.prepare("work", "A2", PROFILE)
++    core.backup(owner.token, tmp_path / "backup")
++    if damage:
++        with sqlite3.connect(tmp_path / "backup/core.sqlite3") as db:
++            body = json.loads(db.execute("SELECT body FROM attempts WHERE id='A2'").fetchone()[0])
++            if damage == "prior_messages":
++                body[damage][0]["raw"] = "eA=="
++            elif damage == "prior_results":
++                body[damage][0]["attempt"] = "missing"
++            elif damage == "prior_waits":
++                body[damage][0]["id"] = "missing"
++            elif damage == "tool_ledger":
++                body[damage][0]["command"] = "missing"
++            elif damage == "result_outputs":
++                result = json.loads(db.execute("SELECT body FROM results LIMIT 1").fetchone()[0])
++                result["outputs"] = [{"id": "missing", "revision": 999}]
++                db.execute("UPDATE results SET body=?", (json.dumps(result),))
++            elif damage == "observation_identity":
++                result = json.loads(
++                    db.execute("SELECT body FROM observations LIMIT 1").fetchone()[0]
++                )
++                result["attempt_id"] = "missing"
++                db.execute("UPDATE observations SET body=?", (json.dumps(result),))
++            elif damage == "intent":
++                db.execute("UPDATE intents SET subject='missing'")
++            else:
++                db.execute("UPDATE acceptance SET result_hash=?", ("0" * 64,))
++            db.execute("UPDATE attempts SET body=? WHERE id='A2'", (json.dumps(body),))
++        rehash(tmp_path / "backup")
++        with pytest.raises(CoreError, match="backup.*closure"):
++            Core.restore_quarantined(tmp_path / "backup", tmp_path / "restored")
++        assert not (tmp_path / "restored").exists()
++    else:
++        restored, token = Core.restore_quarantined(tmp_path / "backup", tmp_path / "restored")
++        assert (
++            restored.connect(token).call("export_diagnostics", {}, "diag")["mode"] == "quarantined"
++        )
++
++
++@pytest.mark.parametrize(
++    "damage",
++    [
++        None,
++        "method_ref",
++        "analysis_result_refs",
++        "selected_source_refs",
++        "delivered_manifest_refs",
++        "applied_receipts",
++        "unresolved_calls",
++        "wrong_delivery",
++        "wrong_receipt",
++        "wrong_action",
++    ],
++)
++def test_sleep_reference_graph(tmp_path: Path, damage: str | None) -> None:
++    core, owner, client = seed(tmp_path)
++    owner.call(
++        "open_work",
++        {
++            "id": "other",
++            "conversation": "other",
++            "goal": "other lineage",
++            "method_ref": {"id": "practice", "revision": 1},
++            "inputs": [],
++            "call_limit": 2,
++            "continuation_policy": "durable",
++        },
++        "other-open",
++    )
++    Coordinator(client).prepare("other", "other-attempt", SLEEP_PROFILE)
++    client.call(
++        "claim_dispatch",
++        {"attempt_id": "other-attempt", "generation": 1},
++        "other-claim",
++        action_id="other-action",
++    )
++    sleep = Sleep(client)
++    sleep.start(work_id="sleep", call_limit=4, portion=100)
++    sleep.run("sleep", SLEEP_PROFILE, Driver(MechanicalSleepReceiver()))
++    core.backup(owner.token, tmp_path / "backup")
++    if damage:
++        with sqlite3.connect(tmp_path / "backup/core.sqlite3") as db:
++            row = db.execute(
++                "SELECT id,revision,body FROM records WHERE key='sleep-progress:sleep' "
++                "ORDER BY revision DESC LIMIT 1"
++            ).fetchone()
++            wrapper = json.loads(row[2])
++            value = wrapper["value"]
++            if damage == "method_ref":
++                value[damage] = {"id": "missing", "revision": 999}
++            elif damage == "analysis_result_refs":
++                value[damage] = [{"id": "missing", "revision": 999}]
++            elif damage == "selected_source_refs":
++                value[damage] = [{"sequence": 999999, "index": 0, "sha256": "0" * 64}]
++            elif damage == "delivered_manifest_refs":
++                value[damage] = [{"attempt_id": "missing", "sha256": "0" * 64}]
++            elif damage == "wrong_delivery":
++                value["delivered_manifest_refs"] = [
++                    {"attempt_id": "other-attempt", "sha256": hashlib.sha256(b"[]").hexdigest()}
++                ]
++            elif damage == "wrong_receipt":
++                value["applied_receipts"] = ["other-open"]
++            elif damage == "wrong_action":
++                value["unresolved_calls"] = ["other-action"]
++            else:
++                value[damage] = ["missing"]
++            db.execute(
++                "UPDATE records SET body=? WHERE id=? AND revision=?",
++                (json.dumps(wrapper), row[0], row[1]),
++            )
++        rehash(tmp_path / "backup")
++        with pytest.raises(CoreError, match="backup.*closure"):
++            Core.restore_quarantined(tmp_path / "backup", tmp_path / "restored")
++        assert not (tmp_path / "restored").exists()
++    else:
++        restored, token = Core.restore_quarantined(tmp_path / "backup", tmp_path / "restored")
++        assert (
++            restored.connect(token).call("export_diagnostics", {}, "diag")["mode"] == "quarantined"
++        )
+diff --git a/tests/restart/test_delivery_controls.py b/tests/restart/test_delivery_controls.py
+index d776e8d..e6d3d78 100644
+--- a/tests/restart/test_delivery_controls.py
++++ b/tests/restart/test_delivery_controls.py
+@@ -10,6 +10,34 @@ from .test_negative_controls import test_seeded_defect_is_killed as run_seed
+ STORAGE = "core/src/zaratustra_core/storage.py"
+ MAINTENANCE = "core/src/zaratustra_core/maintenance.py"
+ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
++    (
++        "D-pinned-reference-closure-skipped",
++        MAINTENANCE,
++        [("        verify_references(db, path)", "        " + M)],
++        "test_backup_references.py::test_rehashed_pinned_reference_corruption_refused[profile_ref]",
++    ),
++    (
++        "D-declared-reference-admission-skipped",
++        API,
++        [
++            (
++                '                    self._exact(db, ref | {"role": "exact"})',
++                "                    " + M,
++            )
++        ],
++        "test_schema_references.py::test_dangling_schema_ref_rejects_entire_bundle[refs-commit_outcome]",
++    ),
++    (
++        "D-pinned-json-types-conflated",
++        "core/src/zaratustra_core/backup_refs.py",
++        [
++            (
++                "        return digest(left) == digest(right)",
++                "        " + M + chr(10) + "        return left == right",
++            )
++        ],
++        "test_backup_references.py::test_pinned_json_boolean_is_not_integer",
++    ),
+     (
+         "D-cancelled-ID-reused",
+         "app/src/zaratustra_app/conversation.py",
+diff --git a/tests/restart/test_schema_references.py b/tests/restart/test_schema_references.py
+new file mode 100644
+index 0000000..c6dc381
+--- /dev/null
++++ b/tests/restart/test_schema_references.py
+@@ -0,0 +1,181 @@
++"""Declared reference fields share C3/C8 atomic admission and backup closure."""
++
++from __future__ import annotations
++
++import json
++import sqlite3
++from pathlib import Path
++from typing import Any
++
++import pytest
++from zaratustra_core import Core, CoreError
++
++from .test_backup_references import rehash
++from .test_binding_findings import domain
++from .test_contract import outcome, prepared
++
++SCHEMA = {
++    "type": "object",
++    "fields": [
++        {"name": "refs", "type": "list", "items": {"type": "exact-ref"}},
++        {"name": "optional", "type": "exact-ref", "nullable": True},
++        {"name": "text", "type": "text"},
++    ],
++}
++
++
++def setup(tmp_path: Path, operation: str) -> tuple[Any, Any, Any]:
++    core, owner, executor, _ = prepared(tmp_path)
++    owner.call(
++        "apply_changes",
++        {"changes": [{"id": "schema", "kind": "data", "key": "schema", "body": SCHEMA}]},
++        "schema",
++        expected_heads={"schema": 0},
++    )
++    if operation == "commit_outcome":
++        executor.call(
++            "claim_dispatch", {"attempt_id": "A1", "generation": 1}, "claim", action_id="action"
++        )
++        executor.call(
++            "observe_attempt",
++            {"attempt_id": "A1", "event_id": "terminal", "kind": "terminal", "raw_base64": "e30="},
++            "retain",
++        )
++    return core, owner, executor
++
++
++@pytest.mark.parametrize("operation", ["apply_changes", "commit_outcome"])
++@pytest.mark.parametrize("location", ["refs", "optional"])
++def test_dangling_schema_ref_rejects_entire_bundle(
++    tmp_path: Path, operation: str, location: str
++) -> None:
++    core, _, executor = setup(tmp_path, operation)
++    missing = {"id": "missing", "revision": 999}
++    value = {location: [missing] if location == "refs" else missing}
++    changes = [
++        {"id": "first", "kind": "data", "key": "first", "body": "must roll back"},
++        {
++            "id": "entry",
++            "kind": "data",
++            "key": "entry",
++            "body": value,
++            "schema_ref": {"id": "schema", "revision": 1},
++        },
++    ]
++    payload = (
++        {"changes": changes} if operation == "apply_changes" else outcome() | {"changes": changes}
++    )
++    before = domain(core)
++    with pytest.raises(CoreError, match="missing_ref"):
++        executor.call(operation, payload, "dangling", expected_heads={"first": 0, "entry": 0})
++    assert domain(core) == before
++
++
++@pytest.mark.parametrize("operation", ["apply_changes", "commit_outcome"])
++def test_schema_historical_optional_and_prior_batch_refs(tmp_path: Path, operation: str) -> None:
++    core, owner, executor = setup(tmp_path, operation)
++    owner.call(
++        "apply_changes",
++        {"changes": [{"id": "target", "kind": "data", "key": "target", "body": "historical"}]},
++        "target",
++        expected_heads={"target": 0},
++    )
++    owner.call(
++        "apply_changes",
++        {"changes": [{"id": "target", "kind": "data", "key": "target", "body": "new revision"}]},
++        "advance",
++        expected_heads={"target": 1},
++    )
++    changes = [
++        {
++            "id": "first",
++            "kind": "data",
++            "key": "first",
++            "body": {"id": "not-a-declared-ref", "revision": 999},
++        },
++        {
++            "id": "entry",
++            "kind": "data",
++            "key": "entry",
++            "body": {
++                "refs": [
++                    {"id": "target", "revision": 1, "role": "must_be_current"},
++                    {"id": "first", "revision": 1},
++                ],
++                "optional": None,
++                "text": "missing/999 is ordinary text",
++            },
++            "schema_ref": {"id": "schema", "revision": 1},
++        },
++        {
++            "id": "empty",
++            "kind": "data",
++            "key": "empty",
++            "body": {},
++            "schema_ref": {"id": "schema", "revision": 1},
++        },
++    ]
++    payload = (
++        {"changes": changes} if operation == "apply_changes" else outcome() | {"changes": changes}
++    )
++    executor.call(operation, payload, "valid", expected_heads={"first": 0, "entry": 0, "empty": 0})
++    core.backup(owner.token, tmp_path / "backup")
++    restored, token = Core.restore_quarantined(tmp_path / "backup", tmp_path / "restored")
++    saved = restored.connect(token).call("read_exact", {"id": "entry", "revision": 1}, "entry")
++    assert saved["body"]["value"]["refs"][0]["revision"] == 1
++
++
++def test_rehashed_schema_value_ref_is_closed(tmp_path: Path) -> None:
++    core, owner, _ = setup(tmp_path, "apply_changes")
++    owner.call(
++        "apply_changes",
++        {
++            "changes": [
++                {
++                    "id": "entry",
++                    "kind": "data",
++                    "key": "entry",
++                    "body": {"refs": [{"id": "memory", "revision": 1}]},
++                    "schema_ref": {"id": "schema", "revision": 1},
++                }
++            ]
++        },
++        "entry",
++        expected_heads={"entry": 0},
++    )
++    core.backup(owner.token, tmp_path / "backup")
++    with sqlite3.connect(tmp_path / "backup/core.sqlite3") as db:
++        body = json.loads(db.execute("SELECT body FROM records WHERE id='entry'").fetchone()[0])
++        body["value"]["refs"] = [{"id": "missing", "revision": 999}]
++        db.execute("UPDATE records SET body=? WHERE id='entry'", (json.dumps(body),))
++    rehash(tmp_path / "backup")
++    with pytest.raises(CoreError, match="backup.reference_closure"):
++        Core.restore_quarantined(tmp_path / "backup", tmp_path / "restored")
++    assert not (tmp_path / "restored").exists()
++
++
++def test_observation_evidence_keeps_local_action_identity(tmp_path: Path) -> None:
++    core, owner, executor, _ = prepared(tmp_path)
++    executor.call(
++        "claim_dispatch", {"attempt_id": "A1", "generation": 1}, "claim", action_id="action"
++    )
++    payload: dict[str, Any] = {
++        "attempt_id": "A1",
++        "event_id": "progress",
++        "kind": "progress",
++        "evidence": {
++            "action_id": "missing",
++            "state": "running",
++            "receiver_ref": "external opaque receiver token",
++        },
++    }
++    before = domain(core)
++    with pytest.raises(CoreError, match="evidence.action_id"):
++        executor.call("observe_attempt", payload, "wrong-action")
++    assert domain(core) == before
++    payload["evidence"]["action_id"] = "action"
++    result = executor.call("observe_attempt", payload, "correct-action")
++    assert not result.get("verified", False)
++    core.backup(owner.token, tmp_path / "backup")
++    restored, token = Core.restore_quarantined(tmp_path / "backup", tmp_path / "restored")
++    assert restored.connect(token).call("export_diagnostics", {}, "diag")["mode"] == "quarantined"

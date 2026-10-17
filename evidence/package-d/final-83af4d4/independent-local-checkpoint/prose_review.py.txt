@@ -1,0 +1,80 @@
+"""Public-API-only offline refutation of the original retained text boundary."""
+import base64,hashlib,json,pathlib,subprocess,sys,tempfile
+from zaratustra_core import Core,CoreError
+from zaratustra_app import Coordinator,Driver,Pi
+R=pathlib.Path(__file__).parent
+OLD=R.parent/'0fff808-negative-checkpoint/g14-installed'
+saved=json.loads((OLD/'retained-state.json').read_bytes())
+native=(OLD/'reopen-retained-terminal.bin').read_bytes()
+decoded=Pi.decode(native)
+assert len(decoded['next_work']['goal'])==273
+B=pathlib.Path(tempfile.mkdtemp(prefix='zaratustra-independent-prose-'))
+core,token=Core.initialize(B/'fixture');c=core.connect(token);co=Coordinator(c)
+checks=[]
+def change(item,old,command):c.call('apply_changes',{'changes':[item]},command,expected_heads={item['id']:old})
+for row in sorted(saved['records'],key=lambda x:(x['id'],x['revision'])):
+    if row['kind'] not in {'method','activity'}:continue
+    body=json.loads(row['body'])
+    item={k:row[k] for k in ['id','kind','key','scope']}
+    item.update(body=body['value'],source_refs=body['source_refs'],artifact_refs=body['artifact_refs'],schema_ref=body['schema_ref'],application=body['application'],tombstone=body['tombstone'])
+    change(item,row['revision']-1,'record:'+row['id']+':'+str(row['revision']))
+for item in [{'id':'fixture-method','kind':'method','key':'fixture','body':'Mechanical fixture only'},{'id':'fixture-profile','kind':'profile','key':'fixture','body':{'resource_unit':'calls'}}]:
+    change(item,0,'create:'+item['id'])
+profile={'id':'fixture-profile','revision':1}
+def ingest(m):c.call('ingest_message',{'conversation':'ordinary','event_id':m['event'],'raw_base64':m['raw']},'input:'+m['event'])
+for m in saved['messages'][:2]:ingest(m)
+co.open_work({'id':'earlier-fixture','conversation':'ordinary','goal':'Consume only the first two fictional messages','method_ref':{'id':'fixture-method','revision':1},'inputs':[],'call_limit':2,'continuation_policy':'durable'})
+co.prepare('earlier-fixture','earlier-attempt',profile)
+co.dispatch('earlier-attempt',1,Driver(lambda *_:b'{"state":"completed","text":"Earlier fixture completed"}'))
+co.recover('earlier-attempt')
+ingest(saved['messages'][2])
+co.open_work({'id':'retained-route','conversation':'ordinary','goal':'Use the exact retained routing terminal','method_ref':{'id':'conversation-routing-method','revision':1},'inputs':[],'call_limit':8,'continuation_policy':'durable'})
+co.prepare('retained-route','retained-attempt',profile)
+class RecordedTerminal:
+    resource_upper=2
+    def run(self,context,action):return native
+co.dispatch('retained-attempt',1,RecordedTerminal())
+result=co.recover('retained-attempt',pi=True,ordinary=True)
+s=co.snapshot();child=next(w for w in s['works'] if w['id']==result['next_work_id'])
+body=json.loads(child['body'])
+assert body['goal'].encode('utf-8')==decoded['next_work']['goal'].encode('utf-8')
+assert s['conversations'][0]['cursor']==2 and body['call_limit']==6
+activity=c.call('read_exact',{'id':'activity:lighthouse-coop-game','revision':5},'fifth')
+assert activity['body']['value']==decoded['changes'][0]['body']
+prepared=co.prepare(child['id'],'scoped-after-retained',profile)
+assert prepared['pinned']['messages'][0]['raw']==saved['messages'][2]['raw']
+assert prepared['pinned']['work']['goal']==decoded['next_work']['goal']
+checks.append({'case':'original273-character terminal through public C7/C8','pass':True,'goal_sha256':hashlib.sha256(body['goal'].encode()).hexdigest(),'activity_revision':5,'cursor':2,'child_remaining_limit':6,'original_raw_input_preserved':True})
+long='Произвольный вопрос 🌊\nСохраняем CRLF\r\n'+decoded['next_work']['goal']*3
+co.open_work({'id':'question-work','conversation':'question-conversation','goal':long,'method_ref':{'id':'fixture-method','revision':1},'inputs':[],'call_limit':2,'continuation_policy':'durable'})
+co.prepare('question-work','question-attempt',profile)
+co.dispatch('question-attempt',1,Driver(lambda *_:json.dumps({'state':'waiting','text':'Addressed question','wait':{'id':'question','question':long}}).encode()))
+wait=co.recover('question-attempt');assert co.recover('question-attempt')==wait
+s=co.snapshot();assert json.loads(next(w for w in s['waits'] if w['id']=='question')['body'])['question'].encode()==long.encode()
+checks.append({'case':'long Unicode/CRLF goal and addressed question exact, replay stable','pass':True,'characters':len(long)})
+for key in ['id','scope','conversation','method_ref.id']:
+    request={'id':'invalid-'+key,'conversation':'invalid','goal':long,'method_ref':{'id':'fixture-method','revision':1},'inputs':[],'call_limit':2,'continuation_policy':'durable'}
+    if key=='method_ref.id':request['method_ref']={'id':'x'*241,'revision':1}
+    else:request[key]='x'*241
+    try:c.call('open_work',request,'invalid:'+key)
+    except CoreError as e:assert e.code=='invalid_request' and e.field==key
+    else:raise AssertionError('Actual identity bound relaxed: '+key)
+    checks.append({'case':'oversize identity '+key,'pass':True})
+huge='🌊'*270000
+co.open_work({'id':'large-goal','conversation':'large','goal':huge,'method_ref':{'id':'fixture-method','revision':1},'inputs':[],'call_limit':2,'continuation_policy':'durable'})
+before=co.snapshot()
+try:co.prepare('large-goal','must-not-prepare',profile)
+except CoreError as e:assert (e.code,e.field)==('resource_exhausted','context.max_bytes')
+else:raise AssertionError('Aggregate context bound lost')
+after=co.snapshot();assert before['attempts']==after['attempts'] and before['actions']==after['actions']
+checks.append({'case':'aggregate context bound still refuses oversized prose atomically','pass':True})
+core.backup(token,B/'backup')
+restored,newtoken=Core.restore_quarantined(B/'backup',B/'restored')
+restored_state=restored.connect(newtoken).call('read_snapshot',{},'restored')
+restored_child=next(w for w in restored_state['works'] if w['id']==child['id'])
+assert json.loads(restored_child['body'])['goal'].encode()==body['goal'].encode()
+assert json.loads(next(w for w in restored_state['waits'] if w['id']=='question')['body'])['question'].encode()==long.encode()
+checks.append({'case':'backup closure and quarantined restore preserve exact long text','pass':True})
+report={'source':'83af4d4a529ca73d06d566db62a3586f2a432af9','fixture':str(B),'construction':'All copied subject revisions/messages entered through public API; no SQL writes, source credentials/grants or original instance changes','original_terminal_sha256':hashlib.sha256(native).hexdigest(),'model_calls':0,'checks':checks}
+(R/'prose-review.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+print(json.dumps({'checks':len(checks),'all_pass':True,'model_calls':0}))

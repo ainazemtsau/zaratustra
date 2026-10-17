@@ -1,0 +1,75 @@
+............................F........................................... [ 91%]
+.......                                                                  [100%]
+================================== FAILURES ===================================
+_________ test_physical_loss_inside_child_creation_rolls_back_handoff _________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d9-affected-r2-tmp/test_physical_loss_inside_chil0')
+
+    def test_physical_loss_inside_child_creation_rolls_back_handoff(tmp_path: Path) -> None:
+        import subprocess
+        import sys
+        from zaratustra_core import Core
+    
+        source = str(Path(__file__).resolve().parents[2])
+        script = (
+            "import sys;sys.path.insert(0,"
+            + repr(source)
+            + ");"
+            + """
+    import json,os
+    from pathlib import Path
+    from zaratustra_core import Core
+    from tests.restart.test_work_handoff import routed,commit
+    root=Path(sys.argv[1]);core,owner,client,coord,payload=routed(root)
+    (root/'payload.json').write_text(json.dumps(payload))
+    original=Core._work
+    def crash(self,*args,**kwargs):
+        result=original(self,*args,**kwargs)
+        if kwargs.get('continuation') is not None:os._exit(77)
+        return result
+    Core._work=crash
+    commit(client,payload)
+    """
+        )
+        run = subprocess.run(
+            [sys.executable, "-X", "utf8", "-c", script, str(tmp_path)], capture_output=True, timeout=30
+        )
+        if b"MUTANT_REACHED" in run.stdout:
+            print(run.stdout.decode())
+        assert run.returncode == 77, run.stdout + run.stderr
+        core = Core(tmp_path / "space")
+        assert not any(h["id"] == "activity" for h in inspect(core, "heads"))
+        assert len(inspect(core, "works")) == 1 and not inspect(core, "results")
+        assert inspect(core, "conversations")[0]["cursor"] == 0
+>       token = (core.root / "owner.credential").read_text().strip()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\restart\test_work_handoff.py:187: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d9-affected-r2-tmp/test_physical_loss_inside_chil0/space/owner.credential')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: 'C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\d9-affected-r2-tmp\\test_physical_loss_inside_chil0\\space\\owner.credential'
+
+C:\Users\Anton\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:537: FileNotFoundError
+=========================== short test summary info ===========================
+FAILED tests/restart/test_work_handoff.py::test_physical_loss_inside_child_creation_rolls_back_handoff
+1 failed, 78 passed in 98.06s (0:01:38)

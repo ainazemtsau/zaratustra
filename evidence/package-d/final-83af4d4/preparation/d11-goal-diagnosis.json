@@ -1,0 +1,29 @@
+{
+  "source": "0fff8088f092a8ba6b32451ed5c1e03e844c233a",
+  "retained_terminal_sha256": "7800737e8fd1d992a35f78abaeceb47297811efd025184faf4a7b43634ec0072",
+  "decoded_sha256": "aaff63ceec2e998c271848c3258639def899e5a6fb52357ec9ca240b275064ba",
+  "goal_characters": 273,
+  "goal_sha256": "0d7a7572ccc8142ff4874e173840cc0fb2b9e63e926c056f4d0f1a70d51030df",
+  "current_errors": [
+    {
+      "location": [
+        "goal"
+      ],
+      "type": "string_too_long",
+      "limit": 240
+    }
+  ],
+  "work_goal_schema": {
+    "maxLength": 240,
+    "minLength": 1,
+    "title": "Goal",
+    "type": "string"
+  },
+  "wait_question_schema": {
+    "maxLength": 240,
+    "minLength": 1,
+    "title": "Question",
+    "type": "string"
+  },
+  "model_or_auth_calls": 0
+}

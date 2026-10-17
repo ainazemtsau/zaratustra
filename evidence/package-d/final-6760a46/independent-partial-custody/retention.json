@@ -1,0 +1,19 @@
+{
+  "source_commit": "6760a4665d0f02939ab8db20ab6256a91e389bd4",
+  "candidate_commit": null,
+  "verdict": "NOT_READY",
+  "authority": "Root retention checkpoint, not an independent final verdict.",
+  "review_thread": "01a144f9-df87-7250-b563-4427afc64669",
+  "status": "Independent turn failed with systemError; final review and new live G14 absent.",
+  "scoped": "375 passed, 1 failed: mutation anchor mismatch before injection; exit 1.",
+  "native": "INCOMPLETE, stopped before source edits; not PASS.",
+  "helper_finding": "Existing fictional reproduction: model tool initial_work minted independent budget; correction required.",
+  "live_calls_on_this_source": 0,
+  "credentials_read_or_copied": false,
+  "files_verified": 31,
+  "archive_sha256": "3423154b0cb786c82c2c58580f7f43b5f11e873ad3b8b719a7b3f58ee9601211",
+  "archive_bytes": 23151,
+  "inventory_sha256": "5399f96b80575f662a14e0aee550c280340f3bb08262f43dac7a30900e009c2f",
+  "retained_at": "C:\\my_global_workflow_worktrees\\solmax\\.tmp\\restart-d-receipt\\6760-interrupted",
+  "original_selected_bytes_preserved": true
+}

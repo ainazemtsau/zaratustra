@@ -1,0 +1,10 @@
+{
+  "seed": "G10-drop-retained-bytes",
+  "test": "test_contract.py::test_retained_terminal_bytes",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n________________________ test_retained_terminal_bytes _________________________\ntests\\restart\\test_contract.py:241: in test_retained_terminal_bytes\n    assert base64.b64decode(terminal[\"raw_base64\"]) == raw\nE   assert b'' == b'{\"state\": \"...servation?\"}}'\nE     \nE     Use -v to get more diff\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_contract.py::test_retained_terminal_bytes - assert ...\n1 failed in 1.62s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -1068,6 +1068,8 @@\n                     fail(\"idempotency_conflict\", \"event_id\")\n                 return cast(dict[str, Any], loads(old[\"body\"]))\n             body = dict(p)\n+            print(\"MUTANT_REACHED\", flush=True)\n+            body[\"raw_base64\"] = \"\"\n             fenced = attempt[\"generation\"] != work[\"generation\"] or attempt[\"status\"] in {\n                 \"finished\",\n                 \"fenced\",\n"
+}

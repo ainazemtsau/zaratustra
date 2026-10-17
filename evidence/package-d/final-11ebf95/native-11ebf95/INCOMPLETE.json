@@ -1,0 +1,9 @@
+{
+  "source": "11ebf956bafc2bbca4a3685e37d117474f11c151",
+  "status": "INCOMPLETE",
+  "reason": "Writer stopped verified native pytest tree at79percent for independently established F-D-04 Activity persistence and F-D-05 native maxTokens boundary; no source edits occurred during run. Partial stdout/stderr and wrapper returncode1 are retained. Not a full gate PASS or test FAIL.",
+  "seconds": 1751.9047791957855,
+  "stop_identity": "STOP-IDENTITY.json",
+  "scoped": "COMPLETE328PASS689.15seconds",
+  "independent_live": "3sends13735tokens; semantic textPASS but overallG14FAIL:0Activity"
+}

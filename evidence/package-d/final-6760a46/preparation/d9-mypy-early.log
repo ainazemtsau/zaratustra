@@ -1,0 +1,4 @@
+packages\app\src\zaratustra_app\ordinary.py:106: error: Item "None" of "Any | None" has no attribute "get"  [union-attr]
+packages\app\src\zaratustra_app\ordinary.py:115: error: Value of type "Any | None" is not indexable  [index]
+tests\restart\test_work_handoff.py:50: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+Found 3 errors in 2 files (checked 19 source files)

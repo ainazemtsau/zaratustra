@@ -1,0 +1,31 @@
+{
+  "source_commit": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+  "distributions": [
+    {
+      "file": "zaratustra_core-0.1.0-py3-none-any.whl",
+      "sha256": "93ff28d186def9d2f6cae4d2979cd90930f43feb11b6a9e6d3704df7403e8271",
+      "bytes": 29080
+    },
+    {
+      "file": "zaratustra_core-0.1.0.tar.gz",
+      "sha256": "afbeed5be50920111faa218028a62edf5defaba992381d1130a213705442e6f6",
+      "bytes": 24993
+    },
+    {
+      "file": "zaratustra_next-0.1.0-py3-none-any.whl",
+      "sha256": "3a2ffd3b713a859814246b8d4ef566e4fddf4e198b9e52047c7b277a65cb09d3",
+      "bytes": 32034
+    },
+    {
+      "file": "zaratustra_next-0.1.0.tar.gz",
+      "sha256": "aecc07726283b09ace9de5f1427edf32032e12367e586282939a4f2372216883",
+      "bytes": 24623
+    }
+  ],
+  "native_and_outside_build_bytes_equal": true,
+  "source_wheel_installed_files": 20,
+  "dependency_installed_files": 145,
+  "installation": "OUTSIDE-BUILD-INSTALL-MANIFEST.json",
+  "owner_archive": "OWNER-BUNDLE-MANIFEST.json",
+  "real_owner_entry_mechanics": "OWNER-START-CONTROLLED.json"
+}

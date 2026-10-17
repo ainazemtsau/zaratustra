@@ -1,0 +1,30 @@
+{
+  "status": "Independent NOT_READY/F-D-07, technical failure at third scene; first2 answers positive and one meaningful Activity4revisions",
+  "basis": "Parent/root direct report; independent semantic grading pending",
+  "source": "0fff8088f092a8ba6b32451ed5c1e03e844c233a",
+  "provider_sends": 5,
+  "request_exit": 0,
+  "request_seconds": 50.75,
+  "correction_exit": 0,
+  "correction_seconds": 61.2,
+  "reopen_exit": 1,
+  "reopen_seconds": 23.25,
+  "failure": "Known invalid_request:next_work.goal, actual goal273 exceeds accidental Id max240",
+  "tokens": {
+    "input": 27076,
+    "output": 3251,
+    "total": 30327,
+    "reasoning": 459,
+    "reasoning_is_subset": true
+  },
+  "writer_live_calls": 0,
+  "retained_originals": "independent-g14-goal-negative/",
+  "sdk_cost_estimate": 0.0043331,
+  "actual_billing": "not established by SDK estimate",
+  "independent_scoped": {
+    "passed": 384,
+    "seconds": 883.62,
+    "controls": 74
+  },
+  "trial_accounting": "Parent says two failed semantic trials / limit3; writer will not launch another"
+}

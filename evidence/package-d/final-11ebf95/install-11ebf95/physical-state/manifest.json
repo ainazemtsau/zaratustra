@@ -1,0 +1,41 @@
+{
+  "classification": "Unmodified physical SQLite and artifact bytes from disposable FICTIONAL installed trace. owner.credential and Pi auth files are excluded. SQLite contains random test credential hashes only, never actual bearer/token values. No live/personal user data.",
+  "source": "11ebf956bafc2bbca4a3685e37d117474f11c151",
+  "files": [
+    {
+      "path": "backup/artifacts/1bc18ac2ec31a99a75a9fd1faca3d5d899349fb9861d84b2a03626e1973006ec",
+      "sha256": "1bc18ac2ec31a99a75a9fd1faca3d5d899349fb9861d84b2a03626e1973006ec",
+      "bytes": 65815
+    },
+    {
+      "path": "backup/core.sqlite3",
+      "sha256": "f67e33323178820cbe9bf7330b4f3c69fc847607d7f45c8091c6a68c7dd23ebc",
+      "bytes": 593920
+    },
+    {
+      "path": "backup/manifest.json",
+      "sha256": "969a0c5f8d87bd0cc96402b74b1e57434ee7bd07dd51a8dd30cb1eb39c2749d3",
+      "bytes": 387
+    },
+    {
+      "path": "original/artifacts/1bc18ac2ec31a99a75a9fd1faca3d5d899349fb9861d84b2a03626e1973006ec",
+      "sha256": "1bc18ac2ec31a99a75a9fd1faca3d5d899349fb9861d84b2a03626e1973006ec",
+      "bytes": 65815
+    },
+    {
+      "path": "original/core.sqlite3",
+      "sha256": "0c30610d02099830528ffbd68b888c1cc49b0b44ab0b183ffb74c3c69aa5e371",
+      "bytes": 638976
+    },
+    {
+      "path": "quarantined/artifacts/1bc18ac2ec31a99a75a9fd1faca3d5d899349fb9861d84b2a03626e1973006ec",
+      "sha256": "1bc18ac2ec31a99a75a9fd1faca3d5d899349fb9861d84b2a03626e1973006ec",
+      "bytes": 65815
+    },
+    {
+      "path": "quarantined/core.sqlite3",
+      "sha256": "41bb3837d300ca76ed22a21bc0a8c4f8041e08295c2c9cd788c82bc4ca51a2e3",
+      "bytes": 770048
+    }
+  ]
+}

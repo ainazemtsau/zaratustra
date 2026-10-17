@@ -1,0 +1,1 @@
+{"providers": {"local": {"baseUrl": "http://127.0.0.1:65179/provider/v1", "api": "openai-responses", "apiKey": "synthetic", "models": [{"id": "fictional-model", "name": "fictional-model", "reasoning": false, "input": ["text"], "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0}, "contextWindow": 8192, "maxTokens": 64}]}}}

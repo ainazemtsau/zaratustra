@@ -1,0 +1,135 @@
+import os,sys,json,hashlib,subprocess,tempfile,pathlib,zipfile,sqlite3,base64,shutil,time
+R=pathlib.Path(__file__).parent
+W=R.parents[2]
+E=W/'evidence/package-d/final-f80180a'
+def dump(p,v): p.write_text(json.dumps(v,indent=2,ensure_ascii=False),encoding='utf-8')
+def sha(b): return hashlib.sha256(b).hexdigest()
+def check(ok,label,**kw):
+ row=dict(check=label,pass_=bool(ok),**kw); CHECKS.append(row)
+ if not ok: raise AssertionError(row)
+def call(entry,root,*args):
+ p=subprocess.run([str(entry),'--data-root',str(root),*map(str,args)],capture_output=True,timeout=60)
+ log=R/('installed-'+str(len(list(R.glob('installed-*.stdout.bin')))))
+ log.with_suffix('.stdout.bin').write_bytes(p.stdout);log.with_suffix('.stderr.bin').write_bytes(p.stderr)
+ check(p.returncode==0,'entry:'+str(args[0]),returncode=p.returncode,log=log.name)
+ return p.stdout
+def sql(root,q,args=()):
+ with sqlite3.connect(root/'core.sqlite3') as db:
+  db.row_factory=sqlite3.Row
+  return [dict(x) for x in db.execute(q,args)]
+CHECKS=[]
+if len(sys.argv)==1:
+ base=pathlib.Path(tempfile.mkdtemp(prefix='zaratustra-independent-d-',dir='C:/Users/Anton/AppData/Local/Temp'))
+ dump(R/'installed-locations.json',dict(base=str(base),installation=str(base/'runtime'),data=str(base/'data'),secrets='Only generated disposable Core credentials; never exported'))
+ bundle=base/'bundle'
+ with zipfile.ZipFile(E/'zaratustra-next-d-f80180a-windows-x64.zip') as z: z.extractall(bundle)
+ installer=next(bundle.rglob('Install.ps1'))
+ cmd=['pwsh','-NoProfile','-File',str(installer),'-RuntimeRoot',str(base/'runtime'),'-DataRoot',str(base/'data')]
+ env=os.environ.copy()
+ for k in ['PYTHONPATH','ZARATUSTRA_SQLITE_DLL','OPENAI_API_KEY','PI_CODING_AGENT_DIR']:env.pop(k,None)
+ home=base/'clean-home';home.mkdir()
+ env.update(HOME=str(home),USERPROFILE=str(home),APPDATA=str(home/'AppData'),LOCALAPPDATA=str(home/'LocalAppData'))
+ p=subprocess.run(cmd,cwd=base,env=env,capture_output=True,timeout=180)
+ (R/'installer.stdout.bin').write_bytes(p.stdout);(R/'installer.stderr.bin').write_bytes(p.stderr)
+ check(p.returncode==0,'exact owner archive installer',returncode=p.returncode)
+ py=base/'runtime/env/Scripts/python.exe'
+ for where in ['runtime','data','bundle']:
+  p=subprocess.run(['git','-C',str(base/where),'rev-parse','--show-toplevel'],capture_output=True)
+  check(p.returncode==128,'outside-git:'+where)
+ p=subprocess.run([str(py),'-I','-X','utf8',str(__file__),'worker',str(base)],cwd=base,env=env,capture_output=True,timeout=240)
+ (R/'installed-worker.stdout.bin').write_bytes(p.stdout);(R/'installed-worker.stderr.bin').write_bytes(p.stderr)
+ check(p.returncode==0,'independent installed worker',returncode=p.returncode)
+ dump(R/'installation-checks.json',CHECKS)
+ print(json.dumps(dict(base=str(base),returncode=p.returncode)))
+ sys.exit(p.returncode)
+
+from zaratustra_core import Core,CoreError
+from zaratustra_app import Coordinator
+mode=sys.argv[1];base=pathlib.Path(sys.argv[2]);entry=base/'runtime/env/Scripts/zaratustra-next.exe';root=base/'data'
+def owner(r): return Core(r).connect((r/'owner.credential').read_text(encoding='utf-8'))
+def new(r): call(entry,r,'init');return owner(r)
+RAW=bytes(range(256))*521+b'\x00\xffindependent trailing CRLF\r\n';SHA=sha(RAW)
+if mode=='crash':
+ from zaratustra_core import api,storage
+ r=pathlib.Path(sys.argv[3]);phase=sys.argv[4];c=owner(r)
+ original=api.durable
+ def interrupted(path,raw):
+  original(path,raw)
+  if phase=='after-file':os._exit(91)
+ api.durable=interrupted
+ c.call('stage_artifact',dict(sha256=SHA,raw_base64=base64.b64encode(RAW).decode(),content_type='application/octet-stream'),'crash-stage')
+ os._exit(91)
+if mode=='read':
+ c=owner(pathlib.Path(sys.argv[3]));raw=base64.b64decode(c.call('read_artifact',{'sha256':SHA},'new-reader')['raw_base64'])
+ print(json.dumps(dict(sha256=sha(raw),bytes=len(raw))));sys.exit(0)
+
+try:
+ c=owner(root);core=Core(root)
+ # This process imports installed code only, not the source checkout.
+ import zaratustra_core,zaratustra_app
+ check(str(base/'runtime/env/Lib/site-packages') in zaratustra_core.__file__,'installed Core import')
+ check(str(base/'runtime/env/Lib/site-packages') in zaratustra_app.__file__,'installed app import')
+ check(sql(root,'SELECT * FROM records')==[] and sql(root,'SELECT * FROM works')==[],'new profile empty')
+ source=base/'chosen.bin';source.write_bytes(RAW)
+ call(entry,root,'artifact','--file',source)
+ p=subprocess.run([sys.executable,'-I','-X','utf8',str(__file__),'read',str(base),str(root)],capture_output=True,timeout=20)
+ check(p.returncode==0 and json.loads(p.stdout)['sha256']==SHA,'fresh process exact artifact',bytes=len(RAW))
+ # All records are fictional independent mechanical fixtures.
+ changes=[{'id':'method','kind':'method','key':'independent','body':'Respond usefully'}, {'id':'profile','kind':'profile','key':'selected','body':{'resource_unit':'calls'}}, {'id':'private','kind':'memory','key':'privacy-sentinel','body':'PRIVATE_SENTINEL_NEVER_EXPORT_D_9107','artifact_refs':[SHA]}]
+ c.call('apply_changes',{'changes':changes},'setup',expected_heads={x['id']:0 for x in changes})
+ c.call('ingest_message',dict(conversation='c',event_id='event',raw_base64=base64.b64encode(b'PRIVATE_RAW_SENTINEL_D_5517').decode()),'input')
+ c.call('open_work',dict(id='w',conversation='c',goal='Fictional review',method_ref={'id':'method','revision':1},inputs=[{'id':'private','revision':1,'role':'must_be_current'}],call_limit=4,continuation_policy='durable'),'open')
+ coord=Coordinator(c);coord.prepare('w','attempt',{'id':'profile','revision':1})
+ c.call('claim_dispatch',dict(attempt_id='attempt',generation=1,resource_upper=2),'claim',action_id='a')
+ c.call('observe_attempt',dict(attempt_id='attempt',event_id='unknown',kind='unknown'),'unknown')
+ preview=call(entry,root,'diagnostics');dest=base/'preview.json';export=call(entry,root,'diagnostics','--destination',dest)
+ forbidden=[b'PRIVATE_SENTINEL_NEVER_EXPORT_D_9107',b'PRIVATE_RAW_SENTINEL_D_5517',c.token.encode(),str(root).encode()]
+ check(all(x not in preview+export+dest.read_bytes() for x in forbidden),'diagnostic actual bytes exclude sentinels/token/root')
+ check(json.loads(preview)==json.loads(dest.read_bytes()),'preview/export same value')
+ # Idle client: independent exclusive transaction is available.
+ with sqlite3.connect(core.path,timeout=0) as db:db.execute('BEGIN EXCLUSIVE');db.rollback()
+ check(True,'idle client has no transaction')
+ backup=base/'backup';call(entry,root,'backup','--destination',backup)
+ restored=base/'restored';call(entry,restored,'restore','--file',backup);r=owner(restored)
+ check(r.meta['instance']!=c.meta['instance'] and r.meta['space']!=c.meta['space'] and r.meta['epoch']==c.meta['epoch']+1 and r.token!=c.token,'restore distinct identity epoch credential')
+ def refusal(fn,code,label):
+  try:fn()
+  except CoreError as e: check(e.code==code,label,code=e.code,field=e.field);return
+  raise AssertionError(label+' admitted')
+ refusal(lambda:Core(restored).connect(c.token),'denied','old token refused')
+ stale=r.request('describe_contract',{},'old-epoch').model_copy(update={'recovery_epoch':c.meta['epoch']})
+ refusal(lambda:r.send(stale),'stale_epoch','old epoch new token refused')
+ refusal(lambda:r.call('ingest_message',dict(conversation='new',event_id='new',raw_base64='eA=='),'quarantine'),'denied','valid new quarantine mutation refused')
+ check(sql(restored,'SELECT state,reserve FROM actions')==sql(root,'SELECT state,reserve FROM actions'),'unknown actions preserved')
+ check(sql(restored,'SELECT reserved FROM works')==sql(root,'SELECT reserved FROM works'),'reservation preserved')
+ check(sql(restored,'SELECT * FROM observations')==sql(root,'SELECT * FROM observations'),'unknown observation preserved')
+ check(sql(restored,'SELECT * FROM intents')==[] and all(a['status']=='fenced' for a in sql(restored,'SELECT status FROM attempts')),'no runnable restore intents')
+ for damage in ['record-source','work-input','attempt-profile','attempt-method','attempt-manifest']:
+  bad=base/('bad-'+damage);shutil.copytree(backup,bad)
+  with sqlite3.connect(bad/'core.sqlite3') as db:
+   if damage=='record-source':
+    row=db.execute("SELECT body FROM records WHERE id='private'").fetchone();b=json.loads(row[0]);b['source_refs']=[{'id':'missing','revision':1}];db.execute("UPDATE records SET body=? WHERE id='private'",(json.dumps(b),))
+   elif damage=='work-input':
+    b=json.loads(db.execute('SELECT body FROM works').fetchone()[0]);b['inputs']=[{'id':'missing','revision':1}];db.execute('UPDATE works SET body=?',(json.dumps(b),))
+   else:
+    b=json.loads(db.execute('SELECT body FROM attempts').fetchone()[0])
+    if damage=='attempt-profile':b['profile_ref']={'id':'missing','revision':999}
+    elif damage=='attempt-method':b['method']['id']='missing';b['method']['revision']=999
+    else:b['manifest'][0]['sequence']=999
+    db.execute('UPDATE attempts SET body=?',(json.dumps(b),))
+  manifest=json.loads((bad/'manifest.json').read_bytes());raw=(bad/'core.sqlite3').read_bytes();manifest.update(database_sha256=sha(raw),database_size=len(raw));dump(bad/'manifest.json',manifest)
+  target=base/('restore-'+damage)
+  try:Core.restore_quarantined(bad,target)
+  except CoreError as e:CHECKS.append(dict(check='rehashed corruption:'+damage,rejected=True,code=e.code,field=e.field))
+  else:CHECKS.append(dict(check='rehashed corruption:'+damage,rejected=False,restored=str(target)))
+ for phase in ['after-file','after-commit']:
+  crashroot=base/('crash-'+phase);new(crashroot)
+  p=subprocess.run([sys.executable,'-I','-X','utf8',str(__file__),'crash',str(base),str(crashroot),phase],capture_output=True,timeout=20)
+  check(p.returncode==91,'reached physical crash:'+phase,returncode=p.returncode)
+  rows=sql(crashroot,'SELECT * FROM artifacts')
+  if phase=='after-file':check(rows==[],'no reference before durable commit')
+  else:
+   p=subprocess.run([sys.executable,'-I','-X','utf8',str(__file__),'read',str(base),str(crashroot)],capture_output=True,timeout=20)
+   check(p.returncode==0 and json.loads(p.stdout)['sha256']==SHA,'new reader after physical crash committed bytes')
+finally:dump(R/'independent-installed-checks.json',CHECKS)
+print(json.dumps(CHECKS,ensure_ascii=False))

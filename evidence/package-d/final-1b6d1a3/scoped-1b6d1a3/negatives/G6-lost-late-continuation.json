@@ -1,0 +1,10 @@
+{
+  "seed": "G6-lost-late-continuation",
+  "test": "test_trace.py::test_fixed_trace[driver]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n__________________________ test_fixed_trace[driver] ___________________________\ntests\\restart\\test_trace.py:12: in test_fixed_trace\n    evidence = trace(tmp_path, mode)\n               ^^^^^^^^^^^^^^^^^^^^^\ntests\\restart\\support.py:267: in trace\n    assert any(i[\"kind\"] == \"input\" for i in inspect(core, \"intents\"))\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   AssertionError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_trace.py::test_fixed_trace[driver] - AssertionError\n1 failed in 1.89s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -1205,7 +1205,7 @@\n             db.execute(\n                 \"DELETE FROM intents WHERE kind='input' AND subject=?\", (attempt[\"conversation\"],)\n             )\n-            if high > attempt[\"cutoff\"]:\n+            if (print(\"MUTANT_REACHED\", flush=True) or False):\n                 self._intent(\n                     db,\n                     \"input\",\n"
+}

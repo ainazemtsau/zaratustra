@@ -1,0 +1,42 @@
+import hashlib,json,zipfile,tarfile,pathlib,subprocess,sys,tomllib
+R=pathlib.Path(__file__).parent
+W=R.parents[2]
+E=W/'evidence/package-d/final-f80180a'
+S=R/'source'
+def h(b): return hashlib.sha256(b).hexdigest()
+def write(n,o): (R/n).write_text(json.dumps(o,indent=2),encoding='utf-8')
+report={'checks':[]}
+def ck(name,ok,**kw):
+ report['checks'].append(dict(name=name,pass_=bool(ok),**kw))
+ assert ok,(name,kw)
+pins={'source-f80180a.zip': 'a68676b5be8f6be31f8a1302ef602e8162a027c29c27f68d6ad0fcd146ce3beb', 'zaratustra-next-d-f80180a-windows-x64.zip': 'df1e8f75ccb3e5b8454ff4e5cca85bc48cd0540d92260122c47624b5f6c5b6a5', 'install-f80180a/manifest.json': 'bdc4b1cf8c015ed63d43cc91b152a635e3b79069dc63a5a46d72082d77c8eda7', 'SOURCE-MANIFEST.json': '9e892b11a191c9f1ec13a0a1d41ea00dcf1aaccf4030f03b5e632018736e7e2e'}
+try:
+ for p,v in pins.items(): ck('pin:'+p,h((E/p).read_bytes())==v,sha256=h((E/p).read_bytes()))
+ manifest=json.loads((E/'SOURCE-MANIFEST.json').read_bytes())
+ with zipfile.ZipFile(E/'source-f80180a.zip') as z:
+  for f in manifest['files']:
+   raw=(S/f['path']).read_bytes()
+   ck('source:'+f['path'],len(raw)==f['bytes'] and h(raw)==f['sha256'] and z.read(f['path'])==raw)
+ build=E/'install-f80180a/physical-builds'
+ installed=pathlib.Path('C:/Users/Anton/AppData/Local/Temp/zaratustra-d-f80180a-v06f824j/runtime/env/Lib/site-packages')
+ installed_owner=pathlib.Path('C:/Users/Anton/AppData/Local/Temp/zaratustra-d-owner-f80180a-ng1jcae2/runtime/env/Lib/site-packages')
+ prod=[]
+ for pkg,mod,dist in [('core','zaratustra_core','zaratustra_core'),('app','zaratustra_app','zaratustra_next')]:
+  with zipfile.ZipFile(build/(dist+'-0.1.0-py3-none-any.whl')) as z,tarfile.open(build/(dist+'-0.1.0.tar.gz')) as t:
+   for p in (S/'packages'/pkg/'src'/mod).rglob('*'):
+    if p.suffix not in {'.py','.ts','.mjs'}: continue
+    rel=p.relative_to(S/'packages'/pkg/'src').as_posix()
+    raw=p.read_bytes()
+    ck('distribution:'+rel,z.read(rel)==raw and t.extractfile(dist+'-0.1.0/src/'+rel).read()==raw and (installed/rel).read_bytes()==raw and (installed_owner/rel).read_bytes()==raw,sha256=h(raw),bytes=len(raw))
+    prod.append(rel)
+ lock=(S/'uv.lock').read_text(encoding='utf-8')
+ for wh in (E/'owner-bundle/wheels').glob('*.whl'):
+  if wh.name.startswith(('zaratustra_core','zaratustra_next')): continue
+  ck('dependency-lock:'+wh.name,h(wh.read_bytes()) in lock,sha256=h(wh.read_bytes()))
+  with zipfile.ZipFile(wh) as z:
+   for name in z.namelist():
+    if name.endswith('/') or '.dist-info/' in name: continue
+    ck('installed-dependency:'+name,(installed_owner/name).read_bytes()==z.read(name))
+ report.update(production_files=len(prod),source_files=len(manifest['files']),archive_note='Own git archive zip container differs from author custom zip; all 406 scope file contents compared exactly, no LF normalization.')
+finally: write('byte-verification.json',report)
+print(json.dumps({'checks':len(report['checks']),'production_files':len(prod),'all_pass':all(c['pass_'] for c in report['checks'])}))

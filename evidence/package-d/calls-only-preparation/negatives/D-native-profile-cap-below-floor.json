@@ -1,0 +1,10 @@
+{
+  "seed": "D-native-profile-cap-below-floor",
+  "test": "test_ordinary_activity.py::test_native_cap_below_sdk_floor_refused_before_runtime[1]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n__________ test_native_cap_below_sdk_floor_refused_before_runtime[1] __________\ntests\\restart\\test_ordinary_activity.py:236: in test_native_cap_below_sdk_floor_refused_before_runtime\n    with pytest.raises(CoreError, match=\"unsupported_capability\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_ordinary_activity.py::test_native_cap_below_sdk_floor_refused_before_runtime[1]\n1 failed in 0.46s\n",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/executor_port.py\n+++ app/src/zaratustra_app/executor_port.py.mutant\n@@ -97,7 +97,7 @@\n             raise CoreError(\"unsupported_capability\", \"native.resource_mode.calls_only_required\")\n         if self.auth_mode != \"pi-chatgpt\" and self.native_resource_mode is not None:\n             raise CoreError(\"invalid_request\", \"live_profile.native_resource_mode\")\n-        if self.auth_mode == \"pi-chatgpt\" and 0 < self.max_tokens < 16:\n+        if (print(\"MUTANT_REACHED\", flush=True) or False):\n             raise CoreError(\"unsupported_capability\", \"native.max_output_tokens.minimum16\")\n         if (\n             not self.endpoint.startswith(\"https://\")\n"
+}

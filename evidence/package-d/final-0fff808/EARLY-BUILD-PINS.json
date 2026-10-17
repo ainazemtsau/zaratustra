@@ -1,0 +1,34 @@
+{
+  "source_commit": "0fff8088f092a8ba6b32451ed5c1e03e844c233a",
+  "source_manifest": "SOURCE-MANIFEST.json",
+  "build_recipe": "install.py.txt",
+  "commands": "install-0fff808/commands.json",
+  "files": [
+    {
+      "path": "evidence/package-d/final-0fff808/source-0fff808.zip",
+      "sha256": "66e4652092ed03cc8e59a252565aad7e10e7fb08c18282aaec31ef82c180a43f",
+      "bytes": 1687744
+    },
+    {
+      "path": "evidence/package-d/final-0fff808/install-0fff808/physical-builds/zaratustra_core-0.1.0-py3-none-any.whl",
+      "sha256": "e61106c7f151ad48b8256886cb21252a9e9e0ff9304fe170a3c3ae9ff0f543f3",
+      "bytes": 29062
+    },
+    {
+      "path": "evidence/package-d/final-0fff808/install-0fff808/physical-builds/zaratustra_next-0.1.0-py3-none-any.whl",
+      "sha256": "293635cf8d5669520b0e7d0de6cc13f0e611b118d5c4c5c4b0c8758822980599",
+      "bytes": 31789
+    },
+    {
+      "path": "evidence/package-d/final-0fff808/install-0fff808/physical-builds/zaratustra_core-0.1.0.tar.gz",
+      "sha256": "0d571429307b663973da3cbdb5772cfae7f9640e197f9d0cb6300efe1bc942e9",
+      "bytes": 24971
+    },
+    {
+      "path": "evidence/package-d/final-0fff808/install-0fff808/physical-builds/zaratustra_next-0.1.0.tar.gz",
+      "sha256": "7eed9e8225997b531438e2f78fc5ca61186c5844cce63f01ea76e9be9fb1a82d",
+      "bytes": 24377
+    }
+  ],
+  "status": "Exact archive/builds ready; required native/scoped running; independent review unavailable, no live retry; no READY"
+}

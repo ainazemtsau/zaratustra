@@ -1,0 +1,30 @@
+.........FF..................                                            [100%]
+================================== FAILURES ===================================
+__________________ test_ordinary_entry_correction_reopen[pi] __________________
+tests\restart\test_conversation.py:186: in test_ordinary_entry_correction_reopen
+    first = session.run(executor, descriptor, 4)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\app\src\zaratustra_app\conversation.py:237: in run
+    self.coordinator.dispatch(attempt["id"], attempt["generation"], executor)
+packages\app\src\zaratustra_app\coordinator.py:202: in dispatch
+    raw = executor.run(context, action_id)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\app\src\zaratustra_app\executor_port.py:345: in run
+    raise CoreError(
+E   zaratustra_core.types.CoreError: outcome_unknown: Connection error. [8e4ce6dba2c21939]
+__________________ test_native_pi_oauth_launcher_controlled ___________________
+tests\restart\test_conversation.py:332: in test_native_pi_oauth_launcher_controlled
+    result = session.run(executor, {"profile": "fictional-native-oauth"}, 2)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\app\src\zaratustra_app\conversation.py:237: in run
+    self.coordinator.dispatch(attempt["id"], attempt["generation"], executor)
+packages\app\src\zaratustra_app\coordinator.py:202: in dispatch
+    raw = executor.run(context, action_id)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\app\src\zaratustra_app\executor_port.py:345: in run
+    raise CoreError(
+E   zaratustra_core.types.CoreError: outcome_unknown: pi_native_error_details_withheld [166077b9f4c34672]
+=========================== short test summary info ===========================
+FAILED tests/restart/test_conversation.py::test_ordinary_entry_correction_reopen[pi]
+FAILED tests/restart/test_conversation.py::test_native_pi_oauth_launcher_controlled
+2 failed, 27 passed in 61.45s (0:01:01)

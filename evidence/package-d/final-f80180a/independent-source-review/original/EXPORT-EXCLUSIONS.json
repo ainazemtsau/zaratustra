@@ -1,0 +1,14 @@
+{
+  "excluded": [
+    "actual account auth-file contents",
+    "LOCAL-ONLY-credentials.json",
+    "owner.credential",
+    "auth.json",
+    "fictional-auth.json",
+    "Core credential/grant tables",
+    "OS-temp runtime and data trees",
+    "full source snapshots and source archives already separately pinned",
+    "old-fixtures.json"
+  ],
+  "scope": "Proof-only explicit selections plus frozen G14 ZIP. Private operational path metadata may be retained; no account files copied."
+}

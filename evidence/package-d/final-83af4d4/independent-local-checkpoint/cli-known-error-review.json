@@ -1,0 +1,13 @@
+{
+  "returncode": 1,
+  "structured_error": {
+    "code": "unsupported_capability",
+    "field": "native.max_output_tokens.minimum16",
+    "retry_policy": "never",
+    "diagnostic_id": "4de11867c19b3141"
+  },
+  "no_raw_message_or_traceback": true,
+  "no_core_initialized": true,
+  "physical_calls": 0,
+  "fixture": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-cli-prose-review-f3k7o5wn"
+}

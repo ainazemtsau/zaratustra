@@ -1,0 +1,85 @@
+{
+  "basis": "HEADac58f94 plus current uncommitted calls-only draft, captured for bounded descriptor seam; not final source pins",
+  "files": [
+    {
+      "path": "packages\\core\\src\\zaratustra_core\\api.py",
+      "sha256": "aefda7657481a7d4953ac41f471473db2703a70613e31958286489f45c09fe27"
+    },
+    {
+      "path": "packages\\core\\src\\zaratustra_core\\backup_refs.py",
+      "sha256": "72f09adcbb1800c0ad634219db7bd69a780310329620302442a306bb4f3e6082"
+    },
+    {
+      "path": "packages\\core\\src\\zaratustra_core\\formats.py",
+      "sha256": "81eedd00061f1254fbeaf1d9946f2c32a29ed77200c3705b27d434e7b8ada64e"
+    },
+    {
+      "path": "packages\\core\\src\\zaratustra_core\\maintenance.py",
+      "sha256": "171edb85b09b6509cb4fa6a9eccac9edf5c344a060d16116348eb14480ef5937"
+    },
+    {
+      "path": "packages\\core\\src\\zaratustra_core\\shapes.py",
+      "sha256": "496d67a7ef9ccfe38f444792961bfcb0f9ffcb4215d964aa79b11e2941812d3c"
+    },
+    {
+      "path": "packages\\core\\src\\zaratustra_core\\storage.py",
+      "sha256": "4057453df21e71dea62d9dbee79a29d1f12cea25dc4bc1f74f619c85a4e3fc5e"
+    },
+    {
+      "path": "packages\\core\\src\\zaratustra_core\\types.py",
+      "sha256": "54b8a7103b7b0ae9d924cb839acd7789bff316b8e79bcf565635b1505ab5d33f"
+    },
+    {
+      "path": "packages\\core\\src\\zaratustra_core\\__init__.py",
+      "sha256": "7f71419c900c0207f7e9b1e9444a8b20a1f149faa06175484a62d82f0baef7c7"
+    },
+    {
+      "path": "packages\\app\\src\\zaratustra_app\\cli.py",
+      "sha256": "5b639505453087a38f4687db6cdae2c64b839093ca6efd4e6622bd1b2f1bd25b"
+    },
+    {
+      "path": "packages\\app\\src\\zaratustra_app\\conversation.py",
+      "sha256": "6225f16b4632b743c65e1d4f327349f92c0376faaf1031713e5b246fd082c462"
+    },
+    {
+      "path": "packages\\app\\src\\zaratustra_app\\coordinator.py",
+      "sha256": "3f902c66cdec4975abde2cece3e637c7c0e254f1f8e09a9dde08acd3a866f792"
+    },
+    {
+      "path": "packages\\app\\src\\zaratustra_app\\executor_port.py",
+      "sha256": "6588346099d48c28b4931b383dc99b49e98315d7abf3fe0ff08896df460dfd62"
+    },
+    {
+      "path": "packages\\app\\src\\zaratustra_app\\ordinary.py",
+      "sha256": "208e775c2adef3714c32e6207d03b6a1a1a6adaab916a207dabab0a2fd6898fc"
+    },
+    {
+      "path": "packages\\app\\src\\zaratustra_app\\sleep.py",
+      "sha256": "e99979dcac7d34c4ebb4b299b597781a6e3b5c74ea68877dac9de96c5246d474"
+    },
+    {
+      "path": "packages\\app\\src\\zaratustra_app\\__init__.py",
+      "sha256": "7aa11cf5aac2b79560b79aa1da5dfce83d4ba934ec34120f422f4de067463d21"
+    },
+    {
+      "path": "packages\\app\\src\\zaratustra_app\\adapters\\__init__.py",
+      "sha256": "3313c92a9cdbfccae4afdf1f0a2defde08ac4a84eb166825fc21ddb9347cce20"
+    },
+    {
+      "path": "packages\\app\\src\\zaratustra_app\\adapters\\pi\\bridge.py",
+      "sha256": "c5462f79ff3e1d84e1e68de69314d28d2f60556f087d6418baff6025dd5ebab7"
+    },
+    {
+      "path": "packages\\app\\src\\zaratustra_app\\adapters\\pi\\extension.ts",
+      "sha256": "dfb451e22ce14af8a63fd37c5e8a0c6d75a11ead34e79eb036e8bfd78958505a"
+    },
+    {
+      "path": "packages\\app\\src\\zaratustra_app\\adapters\\pi\\launcher.mjs",
+      "sha256": "6d8d942d545d260a95436be6d95f5823bfa4b8f3790ea5bc0daedc5c7b64587f"
+    },
+    {
+      "path": "packages\\app\\src\\zaratustra_app\\adapters\\pi\\__init__.py",
+      "sha256": "6de3b1e1a3155f4e8d9bb2e104473abfc7c6a10f37ff0aa537ada162cbe2aa61"
+    }
+  ]
+}

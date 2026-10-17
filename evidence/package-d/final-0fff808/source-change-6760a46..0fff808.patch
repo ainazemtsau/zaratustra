@@ -1,0 +1,286 @@
+diff --git a/packages/app/src/zaratustra_app/coordinator.py b/packages/app/src/zaratustra_app/coordinator.py
+index 4db4859..258cc37 100644
+--- a/packages/app/src/zaratustra_app/coordinator.py
++++ b/packages/app/src/zaratustra_app/coordinator.py
+@@ -180,6 +180,8 @@ class Coordinator:
+             contract = getattr(executor, "response_contract", {})
+             if contract.get("version") == "ordinary-routing/1":
+                 raise CoreError("denied", "ordinary.routing_atomic_handoff")
++            if intent.get("initial_work") is not None:
++                raise CoreError("denied", "native_tool.initial_work")
+             if contract.get("version") == "ordinary-execution/2":
+                 from .ordinary import subject_scope
+ 
+diff --git a/packages/core/src/zaratustra_core/api.py b/packages/core/src/zaratustra_core/api.py
+index 3aba754..6c57d33 100644
+--- a/packages/core/src/zaratustra_core/api.py
++++ b/packages/core/src/zaratustra_core/api.py
+@@ -939,6 +939,8 @@ class Core:
+                 self._require(db, actor["principal"], "open_work")
+             correlation = p.get("tool")
+             if correlation:
++                if p.get("initial_work") is not None:
++                    fail("denied", "tool.initial_work")
+                 attempt, work = self._attempt(db, correlation["attempt_id"])
+                 self._tool_authority(db, actor, attempt, work, correlation["generation"])
+                 tool = db.execute(
+diff --git a/tests/restart/test_delivery_controls.py b/tests/restart/test_delivery_controls.py
+index 6ebb3ed..4f7519b 100644
+--- a/tests/restart/test_delivery_controls.py
++++ b/tests/restart/test_delivery_controls.py
+@@ -10,6 +10,23 @@ from .test_negative_controls import test_seeded_defect_is_killed as run_seed
+ STORAGE = "core/src/zaratustra_core/storage.py"
+ MAINTENANCE = "core/src/zaratustra_core/maintenance.py"
+ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
++    (
++        "D-model-tool-independent-budget",
++        API,
++        [('                    fail("denied", "tool.initial_work")', "                    " + M)],
++        "test_work_handoff.py::test_correlated_c3_initial_work_is_atomically_refused",
++    ),
++    (
++        "D-tool-initial-work-reserved-before-denial",
++        "app/src/zaratustra_app/coordinator.py",
++        [
++            (
++                '                raise CoreError("denied", "native_tool.initial_work")',
++                "                " + M,
++            )
++        ],
++        "test_work_handoff.py::test_active_model_tool_cannot_mint_independent_budget[sleep]",
++    ),
+     (
+         "D-handoff-cursor-consumed-early",
+         API,
+diff --git a/tests/restart/test_negative_controls.py b/tests/restart/test_negative_controls.py
+index fc88108..0d51960 100644
+--- a/tests/restart/test_negative_controls.py
++++ b/tests/restart/test_negative_controls.py
+@@ -89,7 +89,7 @@ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
+     (
+         "G6-lost-late-continuation",
+         API,
+-        [('if high > attempt["cutoff"]:', "if (" + M + " or False):")],
++        [("if high > processed:", "if (" + M + " or False):")],
+         "test_trace.py::test_fixed_trace[driver]",
+     ),
+     (
+diff --git a/tests/restart/test_ordinary_activity.py b/tests/restart/test_ordinary_activity.py
+index c244be4..3d3f092 100644
+--- a/tests/restart/test_ordinary_activity.py
++++ b/tests/restart/test_ordinary_activity.py
+@@ -324,3 +324,69 @@ def test_existing_method_adaptation_and_history_are_not_overwritten(tmp_path: Pa
+     assert (
+         next(h for h in inspect(core, "heads") if h["id"] == "conversation-method")["revision"] == 1
+     )
++
++
++def test_scoped_execution_tool_cannot_reset_chain_budget(tmp_path: Path) -> None:
++    core, token = Core.initialize(tmp_path / "space")
++    seen: list[dict[str, Any]] = []
++    admissions: list[Any] = []
++
++    def receive(context: dict[str, Any], _: str) -> bytes:
++        seen.append(context)
++        if context["response_contract"]["version"] == "ordinary-routing/1":
++            return json.dumps(routing(context)).encode()
++        activity = next(r for r in context["catalog"] if r["id"] == context["work"]["scope"])
++        change = {
++            "id": "forbidden-effect",
++            "kind": "data",
++            "key": "effect",
++            "scope": activity["id"],
++            "body": "fictional",
++        }
++        child = {
++            "id": "independent-budget",
++            "conversation": context["work"]["conversation"],
++            "scope": activity["id"],
++            "goal": "unrequested",
++            "method_ref": context["work"]["method_ref"],
++            "inputs": [{"id": activity["id"], "revision": activity["revision"]}],
++            "call_limit": 1000,
++            "continuation_policy": "durable",
++        }
++        try:
++            admissions.append(
++                driver.tool_handler(
++                    "extra",
++                    {
++                        "changes": [change],
++                        "expected_heads": {"forbidden-effect": 0},
++                        "initial_work": child,
++                    },
++                )
++            )
++        except CoreError as error:
++            admissions.append(error)
++        return json.dumps(
++            {
++                "state": "completed",
++                "text": "useful result",
++                "outputs": [{"id": activity["id"], "revision": activity["revision"]}],
++            }
++        ).encode()
++
++    driver = Driver(receive)
++    session = Conversation(core, token)
++    session.submit("fictional finite request")
++    assert session.run(driver, {"profile": "fictional"}, 4)["text"] == "useful result"
++    assert (
++        isinstance(admissions[0], CoreError) and admissions[0].field == "native_tool.initial_work"
++    )
++    assert (
++        Conversation(Core(core.root), token).run(driver, {"profile": "fictional"}, 4)["state"]
++        == "idle"
++    )
++    assert len(seen) == 2 and all(c["raw_messages"] for c in seen)
++    assert len(inspect(core, "works")) == 2
++    assert sum(w["reserved"] for w in inspect(core, "works")) == 4
++    assert not any(h["id"] == "forbidden-effect" for h in inspect(core, "heads"))
++    assert not any(t["native_id"] == "extra" for t in inspect(core, "tool_calls"))
+diff --git a/tests/restart/test_work_handoff.py b/tests/restart/test_work_handoff.py
+index c72d4e7..f586f1e 100644
+--- a/tests/restart/test_work_handoff.py
++++ b/tests/restart/test_work_handoff.py
+@@ -256,3 +256,140 @@ commit(client,payload)
+     commit(core.connect(token), payload)
+     assert len(inspect(core, "works")) == 2
+     assert inspect(core, "conversations")[0]["cursor"] == 0
++
++
++@pytest.mark.parametrize("surface", ["default", "ordinary", "sleep", "legacy-driver"])
++def test_active_model_tool_cannot_mint_independent_budget(tmp_path: Path, surface: str) -> None:
++    from zaratustra_app import Sleep
++
++    from .sleep_support import MechanicalSleepReceiver, seed
++
++    if surface == "sleep":
++        core, owner, client = seed(tmp_path)
++        sleep = Sleep(client)
++        sleep.start(work_id="sleep", call_limit=4)
++    else:
++        core, owner, client = fixture(tmp_path)
++    coordinator = Coordinator(client)
++    observed: list[Any] = []
++    mechanical = MechanicalSleepReceiver()
++
++    def receive(context: dict[str, Any], _: str) -> bytes:
++        work = context["work"]
++        independent = {
++            "id": "independent-budget",
++            "conversation": work["conversation"],
++            "scope": work.get("scope", "space"),
++            "goal": "unrequested independent execution",
++            "method_ref": work["method_ref"],
++            "inputs": [],
++            "call_limit": 1000,
++            "continuation_policy": "durable",
++        }
++        effect = {"id": "forbidden-effect", "kind": "data", "key": "effect", "body": "fictional"}
++        effect["scope"] = work.get("scope", "space")
++        intent = {
++            "changes": [effect],
++            "expected_heads": {"forbidden-effect": 0},
++            "initial_work": independent,
++        }
++        positive = effect | {"id": "allowed-update", "key": "allowed"}
++        driver.tool_handler(
++            "subject-update",
++            {"changes": [positive], "expected_heads": {"allowed-update": 0}, "initial_work": None},
++        )
++        result = json.loads(
++            mechanical(context, "fictional")
++            if surface == "sleep"
++            else b'{"state":"completed","text":"useful"}'
++        )
++        if surface == "legacy-driver":
++            result.update(
++                tool_changes=[effect],
++                expected_heads={"forbidden-effect": 0},
++                initial_work=independent,
++                native_tool_call_id="extra",
++            )
++        else:
++            try:
++                observed.append(driver.tool_handler("extra", intent))
++            except CoreError as error:
++                observed.append(error)
++        return json.dumps(result).encode()
++
++    driver = Driver(receive)
++    if surface == "ordinary":
++        cast(Any, driver).response_contract = {"version": "ordinary-execution/2"}
++    if surface == "sleep":
++        result = sleep.run("sleep", PROFILE, driver)
++    else:
++        coordinator.prepare("work", "model-attempt", PROFILE)
++        coordinator.dispatch("model-attempt", 1, driver)
++        result = coordinator.recover("model-attempt")
++    if surface == "legacy-driver":
++        observed = [driver.callbacks[0].get("error")]
++    admission = observed[0].as_dict() if isinstance(observed[0], CoreError) else observed[0]
++    assert isinstance(admission, dict) and (admission.get("code"), admission.get("field")) == (
++        "denied",
++        "native_tool.initial_work",
++    ), "Active model tool must reject independent initial_work before publication"
++    assert result["state"] == "completed"
++    assert not any(w["id"] == "independent-budget" for w in inspect(core, "works"))
++    heads = {h["id"] for h in inspect(core, "heads")}
++    assert "allowed-update" in heads and "forbidden-effect" not in heads
++    assert all(t["native_id"] != "extra" for t in inspect(core, "tool_calls"))
++    assert sum(w["reserved"] for w in inspect(core, "works")) == 2
++    core.backup(owner.token, tmp_path / "checked-backup")
++
++
++def test_correlated_c3_initial_work_is_atomically_refused(tmp_path: Path) -> None:
++    core, _, client = fixture(tmp_path)
++    coordinator = Coordinator(client)
++    coordinator.prepare("work", "model-attempt", PROFILE)
++    client.call(
++        "claim_dispatch",
++        {"attempt_id": "model-attempt", "generation": 1, "resource_upper": 2},
++        "claim",
++        action_id="model-action",
++    )
++    client.call(
++        "reserve_tool",
++        {
++            "attempt_id": "model-attempt",
++            "generation": 1,
++            "native_id": "extra",
++            "command_id": "tool-change",
++        },
++        "reserve",
++    )
++    outcome: Any = None
++    try:
++        outcome = client.call(
++            "apply_changes",
++            {
++                "changes": [
++                    {"id": "forbidden-effect", "kind": "data", "key": "effect", "body": "fictional"}
++                ],
++                "initial_work": {
++                    "id": "independent-budget",
++                    "conversation": "conversation",
++                    "goal": "unrequested",
++                    "method_ref": METHOD,
++                    "inputs": [],
++                    "call_limit": 1000,
++                    "continuation_policy": "durable",
++                },
++                "tool": {"attempt_id": "model-attempt", "generation": 1, "native_id": "extra"},
++            },
++            "tool-change",
++            expected_heads={"forbidden-effect": 0},
++        )
++    except CoreError as error:
++        outcome = error
++    assert isinstance(outcome, CoreError) and outcome.code == "denied", (
++        "Correlated model C3 must not mint an unrelated budget"
++    )
++    assert len(inspect(core, "works")) == 1
++    assert not any(h["id"] == "forbidden-effect" for h in inspect(core, "heads"))
++    assert inspect(core, "tool_calls")[0]["receipt"] is None
++    assert not any(r["command"] == "tool-change" for r in inspect(core, "receipts"))

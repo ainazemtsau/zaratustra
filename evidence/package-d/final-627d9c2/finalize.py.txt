@@ -1,0 +1,45 @@
+import hashlib,json,re,shutil,subprocess
+from pathlib import Path
+root=Path.cwd();e=root/'evidence/package-d/final-627d9c2';pin='627d9c2b1d14e521aaa28f5c222e8662c7333880'
+assert not subprocess.check_output(['git','diff',pin,'--','packages','tests','src','tools','pyproject.toml','uv.lock'])
+native=json.loads((e/'native-627d9c2/exit.json').read_bytes());scoped=json.loads((e/'scoped-627d9c2/exit.json').read_bytes())
+assert native['returncode']==scoped['returncode']==0
+text=(e/'native-627d9c2/stdout.bin').read_text(encoding='utf-8')
+count=int(re.search(r'(\d+) passed in ',text).group(1));assert count==1673,count
+assert 'PASS: native build, hygiene, types, boundaries, tests, report structure' in text
+controls=[]
+for path in sorted((e/'scoped-627d9c2/negatives').glob('*.json')):
+ result=json.loads(path.read_bytes());assert result['returncode']==1 and result['injection_reached'] and result['behavioral_failure'],path
+ controls.append({'seed':result['seed'],'path':path.relative_to(e).as_posix(),'test':result['test'],'reached':True,'specific_behavioral_failure':True})
+assert len(controls)==59
+(e/'CONTROL-MANIFEST.json').write_text(json.dumps({'count':59,'A':22,'B':6,'C':18,'D':13,'controls':controls},indent=2),encoding='utf-8')
+physical=e/'native-627d9c2/physical-builds';physical.mkdir()
+rows=[]
+for path in sorted((e/'install-627d9c2/physical-builds').iterdir()):
+ if not path.name.endswith(('.whl','.tar.gz')):continue
+ observed=(root/'dist'/path.name).read_bytes();assert observed==path.read_bytes(),path.name
+ shutil.copyfile(root/'dist'/path.name,physical/path.name)
+ rows.append({'file':path.name,'sha256':hashlib.sha256(observed).hexdigest(),'bytes':len(observed)})
+assert len(rows)==4
+(e/'BUILD-MANIFEST.json').write_text(json.dumps({'source_commit':pin,'distributions':rows,'native_and_outside_build_bytes_equal':True,
+ 'source_wheel_installed_verification':'install-627d9c2/manifest.json','dependency_bytes':'DEPENDENCY-MANIFEST.json',
+ 'owner_bundle':'OWNER-BUNDLE-MANIFEST.json','outside_git_source_and_runtime':True,'actual_installed_console':True,
+ 'ordinary_trace':'declared fictional OAuth/upstream transport; not live G14'},indent=2),encoding='utf-8')
+(e/'PROVENANCE.json').write_text(json.dumps({'source_commit':pin,'accepted_c_candidate':'7d211480d1dd5067bf52c3a654cc1a713368310d',
+ 'native':native,'native_tests':count,'scoped':scoped,'scoped_tests':275,'controls':59,
+ 'contract':'wire/v1','conversation_method':'conversation/1','backup':'backup/v1','diagnostics':'diagnostics/v1',
+ 'runtime':'Python3.13.7 nativeSQLite3.50.4; full old gate only declaredSQLiteDLL3.53.3',
+ 'live_g14':'pending separate fresh physical reviewer and actual Pi auth; no D real inference',
+ 'owner_acceptance':'pending D and first release','next':'solmax','candidate_policy':'final candidate adds docs/evidence/RESULT only; returned separately',
+ 'partial_runs':{'native-627d9c2':'INCOMPLETE stopped author Windows PYTEST_ADDOPTS harness',
+ 'scoped-627d9c2':'270PASS/2failed author Windows PYTEST_ADDOPTS harness; G2 not reached',
+ 'install-627d9c2':'4 distributions built; author counter included generated.gitignore',
+ 'harness-failures':'synthetic refresh harness Node --import used Windowspath instead of fileURL; never reached endpoint'},
+ 'credentials':'No real credential/token contents exported. Physical-state SQLite contains random fictional credential hashes only.'},indent=2),encoding='utf-8')
+files=[]
+for path in sorted(e.rglob('*')):
+ if not path.is_file() or path.name=='PROOF-MANIFEST.json':continue
+ raw=path.read_bytes();blob=hashlib.sha1(('blob '+str(len(raw))+chr(0)).encode()+raw).hexdigest()
+ files.append({'path':path.relative_to(root).as_posix(),'sha256':hashlib.sha256(raw).hexdigest(),'git_blob_sha1':blob,'bytes':len(raw)})
+(e/'PROOF-MANIFEST.json').write_text(json.dumps({'source_commit':pin,'files':files},indent=2),encoding='utf-8')
+print(json.dumps({'source':pin,'native_tests':count,'scoped_tests':275,'controls':59,'proof_files':len(files)}))

@@ -1,0 +1,104 @@
+{
+  "own_runtime_test_execution": "37PASS, subset all native/APIkey cases physically captured from actualPi into controlled upstream",
+  "requests": [
+    {
+      "case": "test_api_key_pi_retains_output0",
+      "packet": "controlled-native-captures\\test_api_key_pi_retains_output0\\pi\\7a56bc9633b0fa311d2c2caf9c08094e3df3690474e8ee775e919219672736f6\\provider\\1-request.bin",
+      "native": false,
+      "tool_followup": false,
+      "expected_request_shape": true,
+      "sha256": "c3c893b0bc3b61167b1d4ecad1b547e93977568960f31fc5bcf3da9e864f27ab"
+    },
+    {
+      "case": "test_api_key_pi_retains_output0",
+      "packet": "controlled-native-captures\\test_api_key_pi_retains_output0\\pi\\12a409b9b69e2fdfea3e693daa3be9ab8042e391b713a66d2f76cf5dc0b484d0\\provider\\1-request.bin",
+      "native": false,
+      "tool_followup": false,
+      "expected_request_shape": true,
+      "sha256": "dec682527f20f91a775ef6a70e8522708a608d73ed39d96ac1acfeac854ad8ef"
+    },
+    {
+      "case": "test_native_pi_oauth_launcher_0",
+      "packet": "controlled-native-captures\\test_native_pi_oauth_launcher_0\\pi\\6d6df1ca985aa39ebea755d8285c0fc9efcdd341a63fab0365b8ade8b559a67c\\provider\\1-request.bin",
+      "native": true,
+      "tool_followup": false,
+      "expected_request_shape": true,
+      "sha256": "65ae79412bce0230b0fcb5042f282e742eea52baec7977f419691ba61e6af2cf"
+    },
+    {
+      "case": "test_native_pi_oauth_launcher_0",
+      "packet": "controlled-native-captures\\test_native_pi_oauth_launcher_0\\pi\\4dae38490f2aebc7a7fefeaaa073c1f41f09e01c93658dab13f749fc0ab076fd\\provider\\1-request.bin",
+      "native": true,
+      "tool_followup": false,
+      "expected_request_shape": true,
+      "sha256": "59862972d44715be97db9ea0abd9692e1c095ef919c117a86fb17825614e6551"
+    },
+    {
+      "case": "test_native_pi_oauth_launcher_1",
+      "packet": "controlled-native-captures\\test_native_pi_oauth_launcher_1\\pi\\299014b15610d940cf5c2fc1115a8af0a23e3b5c656f79c6c5cafa727e2ece03\\provider\\1-request.bin",
+      "native": true,
+      "tool_followup": false,
+      "expected_request_shape": true,
+      "sha256": "b417647fbb9a1849698de3d463402cee7e750d9400abe4898910ca36f740785c"
+    },
+    {
+      "case": "test_native_pi_oauth_launcher_1",
+      "packet": "controlled-native-captures\\test_native_pi_oauth_launcher_1\\pi\\1bcc00ba310fe0413ce932dcb938f1fa515a532219d5ea3a93f36595472b6029\\provider\\1-request.bin",
+      "native": true,
+      "tool_followup": false,
+      "expected_request_shape": true,
+      "sha256": "7d1c5598e56dd00b89560fc64ab7b0db9e57f34a745b3afea988ed46b3818fc7"
+    },
+    {
+      "case": "test_native_pi_oauth_launcher_1",
+      "packet": "controlled-native-captures\\test_native_pi_oauth_launcher_1\\pi\\1bcc00ba310fe0413ce932dcb938f1fa515a532219d5ea3a93f36595472b6029\\provider\\2-request.bin",
+      "native": true,
+      "tool_followup": true,
+      "expected_request_shape": true,
+      "sha256": "3288176a04ce08bb7cc95e1fc59bcd0f4397ca6a934d1c2bae6e613e8b21e2bb"
+    },
+    {
+      "case": "test_native_pi_oauth_launcher_2",
+      "packet": "controlled-native-captures\\test_native_pi_oauth_launcher_2\\pi\\69a9f25f0d03f85612ad14207b88094923d2ae036b87da47085c3756f451742e\\provider\\1-request.bin",
+      "native": true,
+      "tool_followup": false,
+      "expected_request_shape": true,
+      "sha256": "38725053d689bddec3b5e7afb7ec3146097a32abc7fa6ebb1fcdcfbae530ab5a"
+    },
+    {
+      "case": "test_native_pi_oauth_launcher_2",
+      "packet": "controlled-native-captures\\test_native_pi_oauth_launcher_2\\pi\\34f9897e48f187d6df30097375dbc5c474fd15dd7e0827483983072a9aa5a01c\\provider\\1-request.bin",
+      "native": true,
+      "tool_followup": false,
+      "expected_request_shape": true,
+      "sha256": "3af478f76c7822a5ef667bd747022dd287ffbd5ddcd519b232e2978307e8780f"
+    },
+    {
+      "case": "test_native_pi_oauth_launcher_3",
+      "packet": "controlled-native-captures\\test_native_pi_oauth_launcher_3\\pi\\7d172fac94af8d4827c601b8c6d743aacdf3a74ac5b73ba44a6dfe6a1c597723\\provider\\1-request.bin",
+      "native": true,
+      "tool_followup": false,
+      "expected_request_shape": true,
+      "sha256": "b13bbc225ca9f09f3ede0a80e176f0c560e26d560f02f317f1640e59b9a60818"
+    },
+    {
+      "case": "test_native_pi_oauth_launcher_3",
+      "packet": "controlled-native-captures\\test_native_pi_oauth_launcher_3\\pi\\4ab1f6830d3a67cd55973d4fc965c4b83836c079c9d5f4e5f6765f6bbaf79617\\provider\\1-request.bin",
+      "native": true,
+      "tool_followup": false,
+      "expected_request_shape": true,
+      "sha256": "4715d30ef6ef9074a5d134d23d918dd48a393e4abac4a078a99393a44f20b95e"
+    },
+    {
+      "case": "test_native_pi_oauth_launcher_3",
+      "packet": "controlled-native-captures\\test_native_pi_oauth_launcher_3\\pi\\4ab1f6830d3a67cd55973d4fc965c4b83836c079c9d5f4e5f6765f6bbaf79617\\provider\\2-request.bin",
+      "native": true,
+      "tool_followup": true,
+      "expected_request_shape": true,
+      "sha256": "b3c34023ae613d13c559d8997ccf0fd51bd11bd32126ccaf3a26aceb4ee6fda8"
+    }
+  ],
+  "real_external_inference": 0,
+  "real_credentials": false,
+  "meaning": "Actual installed SDK/product launcher request shape and local tool round, not selected-account acceptance or semantics"
+}

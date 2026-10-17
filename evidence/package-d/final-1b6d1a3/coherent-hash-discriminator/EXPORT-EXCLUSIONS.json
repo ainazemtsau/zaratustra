@@ -1,0 +1,4 @@
+{
+  "excluded": "unguarded/owner.credential",
+  "reason": "Fresh synthetic restore fixture secret omitted from exported evidence; original scratch fixture untouched. No owner account authentication resource was read."
+}

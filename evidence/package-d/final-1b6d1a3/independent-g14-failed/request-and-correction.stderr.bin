@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-ch5ibt4p\runtime\env\Scripts\zaratustra-next.exe\__main__.py", line 10, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-ch5ibt4p\runtime\env\Lib\site-packages\zaratustra_app\cli.py", line 107, in main
+    result = session.run(executor, descriptor, args.call_limit, refresh=args.refresh_basis)
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-ch5ibt4p\runtime\env\Lib\site-packages\zaratustra_app\conversation.py", line 237, in run
+    self.coordinator.dispatch(attempt["id"], attempt["generation"], executor)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-ch5ibt4p\runtime\env\Lib\site-packages\zaratustra_app\coordinator.py", line 202, in dispatch
+    raw = executor.run(context, action_id)
+  File "C:\Users\Anton\AppData\Local\Temp\zaratustra-independent-d-ch5ibt4p\runtime\env\Lib\site-packages\zaratustra_app\executor_port.py", line 345, in run
+    raise CoreError(
+        "outcome_unknown", str(msg.get("errorMessage")), "reconcile"
+    )
+zaratustra_core.types.CoreError: outcome_unknown: pi_native_error_details_withheld [166077b9f4c34672]

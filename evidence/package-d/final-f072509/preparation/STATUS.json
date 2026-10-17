@@ -1,0 +1,15 @@
+{
+  "source_commit": "f07250996d861404728c5892fa1f3b0a6a07bba4",
+  "earlier_627_native": "INCOMPLETE: no exit receipt; stdout stops at47% with four visible failures. Termination cause unestablished. Initial restricted .NET inventory was insufficient; later escalated host CIM inventory16:51 confirms only newly started f072509 runners and their children, with no older worktree runner. HOST-RUNNERS.json retains the host inventory.",
+  "earlier_627_scoped": "RED: 267 passed, 8 failed; four pause-body regressions plus four WinError5 atomic backup publication errors, including unreached old-epoch control. Original files unchanged.",
+  "unchanged_maintenance": "16 passed; does not establish original holder or erase prior failures.",
+  "windows_probe_initial": "Directory handle with desired access zero did not deny rename; initial two probe tests failed. File-reader probe replaced this incorrect harness assumption.",
+  "windows_probe_corrected": "2 passed: actual GENERIC_READ handle without FILE_SHARE_DELETE denies ancestor rename; transient release publishes same bytes, permanent denial fails within finite bound.",
+  "final_focused_before_test_typing_fix": "24 passed: full maintenance20 plus preserved Sleep pause4; product source bytes equal final f072509.",
+  "sandbox_fictional_pi_failures": "d5-focused retained: two fictional transport failures under network sandbox. Same two tests rerun with loopback permitted passed2/2 in9.74s; no real account/model. Tool transcript retains command/result.",
+  "static": "Ruff format378/lint PASS; mypy337 PASS after explicit imported-module typing fix; hygiene and report presence PASS. Static harness could not find lint-imports from direct shell PATH; exact .venv/Scripts/lint-imports.exe then passed37 kept/0broken. No product dependency missing.",
+  "20d_native": "RED before tests: three strict mypy implicit reexport errors in new fixtures, fixed only by using already imported time/os/shutil. Product bytes unchanged to finalf072509.",
+  "20d_scoped": "INCOMPLETE: exact verified pytest PID84552 and descendants stopped before test-only typing correction; original exit receipt4294967295 retained. Not a scoped PASS.",
+  "windows_original_holder": "Unknown. Bounded Windows5/32/33 mitigation is proved for the reproduced class; no Defender/indexer attribution.",
+  "cleanup": "Failed publication may leave blocked staging bytes; cleanup never masks the primary publication error. No final directory is claimed published."
+}

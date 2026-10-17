@@ -1,0 +1,9 @@
+{
+  "source": "Parent root read-only Pi SDK metadata report, after owner reported login; not a credential read by this writer.",
+  "selected_auth_path": "C:/Users/Anton/.pi/agent/auth.json",
+  "hasModernOpenAIOAuth": true,
+  "hasLegacyCodexOAuth": true,
+  "modelCalled": false,
+  "account_specific_luna_access": "unknown until independently authorized actual inference",
+  "secrets_read_copied_or_logged_by_writer": false
+}

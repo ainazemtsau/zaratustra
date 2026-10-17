@@ -1,0 +1,117 @@
+{
+  "source_commit": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+  "accepted_c": "7d211480d1dd5067bf52c3a654cc1a713368310d",
+  "exits": {
+    "native": {
+      "source": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+      "returncode": 0,
+      "seconds": 1874.903557062149
+    },
+    "scoped": {
+      "source": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+      "returncode": 0,
+      "seconds": 712.852388381958
+    }
+  },
+  "test_counts": {
+    "native": 1818,
+    "scoped": 420
+  },
+  "reached_controls": 82,
+  "controls_by_package": {
+    "A": 22,
+    "B": 6,
+    "C": 18,
+    "D": 36
+  },
+  "production_files": 20,
+  "dependency_files": 145,
+  "core_contract": "wire/v1",
+  "methods": [
+    "conversation-routing/1",
+    "conversation/2"
+  ],
+  "runtime": "Python3.13.7/SQLite3.50.4/Pi1.3.0/Node22.19.0; legacy full gate only declared SQLite3.53.3 DLL",
+  "native_resource": {
+    "mode": "calls-only",
+    "finite_shared_call_reservation": true,
+    "hard_output_token_or_money_maximum": false,
+    "unsupported_field_omitted": true,
+    "owner_quote": "Да, ограничиваем число обращений — продолжай (рекомендуется)",
+    "prospective_g14_chain_limit": 8,
+    "prospective_g14_total_upper": 24
+  },
+  "writer_live_calls": 0,
+  "prior_g14": {
+    "source": "83af4d4a529ca73d06d566db62a3586f2a432af9",
+    "verdict": "NOT_READY/F-D-08",
+    "requests": 4,
+    "tokens": 21790,
+    "prior_series": "3/3 exhausted, immutable",
+    "requested4096": "not verified enforcement"
+  },
+  "review_and_new_g14": "Independent source READY_FOR_CANDIDATE_RECONCILIATION and G14 PASS_LIMITED_SINGLE_TRACE; owner acceptance remains pending",
+  "owner_acceptance": "D and first release pending; resource-choice acceptance only",
+  "negative_history": "All original failures, INFRA_STOP and incomplete/superseded runs retained; no status substitution",
+  "next": "solmax",
+  "current_g14": {
+    "source": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+    "custody_kind": "Immutable G14 checkpoint ZIP nested in retained original independent source checkpoint; assessment retains its historical earlier source_READY=false",
+    "assessment": "PASS_LIMITED_SINGLE_TRACE",
+    "assessment_sha256": "6e55143e54024fbcd6f6e128733247056e86bb6e560acb9a274e1a9103bc7bd9",
+    "physical_requests": 7,
+    "input_tokens": 52896,
+    "output_tokens": 5701,
+    "known_total_tokens": 58597,
+    "actual_billing": "unknown",
+    "minor_quality_notes": [
+      "Intermediate card-range clarity",
+      "Final subject value nesting"
+    ],
+    "seventh_request": "Empty zara_change refused before reserve/effect, normal cap2 follow-up; no new resource authority",
+    "timing": "Launched in parallel after scoped420/82 and independent37/556; full native remained mandatory and incomplete at launch",
+    "previous_series": "3/3 exhausted, all failures retained; this separately acknowledged fourth overall bounded trace only",
+    "fifth_or_auto_retry": false,
+    "owner_acceptance": false,
+    "historical_D": {
+      "total_requests_including_HTTP400": 21,
+      "requests_with_known_completed_usage": 20,
+      "known_total_tokens": 124464,
+      "one_HTTP400_usage": "unknown, not zero"
+    },
+    "writer_live_calls": 0
+  },
+  "independent_source_review": {
+    "kind": "custody-only verification derived from immutable independent RESULT and retention sidecar",
+    "source_commit": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+    "review_outcome": "READY_FOR_CANDIDATE_RECONCILIATION",
+    "source_technically_ready": true,
+    "owner_acceptance": false,
+    "original_report": "original/RESULT.md",
+    "report_sha256": "c5bbf1bf825e36d7bdc6b2a5788a559f035a32dd57da14a7c3c8c3487ad3d570",
+    "report_alias_byte_identical": true,
+    "original_zip": "f80180a-source-checkpoint.zip",
+    "original_zip_sha256": "a62be75bf017fb778493a386328dace0af29bd229ad63562c805b01ce3d1756f",
+    "original_zip_bytes": 1003522,
+    "original_inventory": "original/inventory.json",
+    "original_inventory_sha256": "eaf74b349d137fd543a4a185855ea2ff966f3da98e2a6872035011dccd9d1346",
+    "inventory_rows": 236,
+    "retained_original_files_including_inventory": 237,
+    "all_original_inventory_bytes_verified": true,
+    "original_exclusions": "original/EXPORT-EXCLUSIONS.json",
+    "reviewer": "separate physical review chat 01a144f9-df87-7250-b563-4427afc64669",
+    "scope": "No review rerun or reinterpretation; original ZIP, RESULT, assessment and inventory immutable",
+    "loose_export_path_map": {
+      "carried-descriptor-seam/check.first.py": "carried-descriptor-seam/check.first.py.txt",
+      "carried-descriptor-seam/check.py": "carried-descriptor-seam/check.py.txt",
+      "carried-descriptor-seam/run_snapshot_cli.py": "carried-descriptor-seam/run_snapshot_cli.py.txt",
+      "carried-descriptor-seam/seed_old.py": "carried-descriptor-seam/seed_old.py.txt",
+      "own/g14-installed-run.py": "own/g14-installed-run.py.txt",
+      "own/installed_probe.py": "own/installed_probe.py.txt",
+      "own/owner_entry_probe.py": "own/owner_entry_probe.py.txt",
+      "own/run_affected.py": "own/run_affected.py.txt",
+      "own/verify_bytes.py": "own/verify_bytes.py.txt"
+    },
+    "loose_export_path_note": "Immutable original ZIP/inventory retain original filenames. Only loose operational script filenames gain .txt for non-executable evidence export; bytes identical. Inventory paths resolve through this explicit map."
+  }
+}

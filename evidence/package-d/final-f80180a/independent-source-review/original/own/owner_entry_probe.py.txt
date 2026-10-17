@@ -1,0 +1,38 @@
+import hashlib,json,os,pathlib,subprocess,tempfile
+from zaratustra_core import Core
+R=pathlib.Path(__file__).parent
+locations=json.loads((R/'installed-locations.json').read_bytes())
+bundle=pathlib.Path(locations['base'])/'bundle'
+installer=next(bundle.rglob('Install.ps1'))
+B=pathlib.Path(tempfile.mkdtemp(prefix='zaratustra-owner-entry-review-'))
+fake=B/'fictional-cli.js';fake.write_text("throw Error('No SDK launch permitted in idle entry probe');",encoding='utf-8')
+auth=B/'fictional-auth.json';auth.write_text('FICTIONAL FILE; not a usable account',encoding='utf-8')
+runtime=B/'runtime';data=B/'data'
+env=os.environ.copy()
+for key in ['PYTHONPATH','OPENAI_API_KEY','PI_CODING_AGENT_DIR','ZARATUSTRA_SQLITE_DLL']:env.pop(key,None)
+home=B/'clean-home';home.mkdir();env.update(HOME=str(home),USERPROFILE=str(home),APPDATA=str(home/'AppData'),LOCALAPPDATA=str(home/'LocalAppData'))
+install=['pwsh','-NoProfile','-File',str(installer),'-RuntimeRoot',str(runtime),'-DataRoot',str(data),'-PiCli',str(fake),'-PiAuthPath',str(auth)]
+p=subprocess.run(install,cwd=B,env=env,capture_output=True,timeout=120)
+(R/'owner-entry-install.stdout.bin').write_bytes(p.stdout);(R/'owner-entry-install.stderr.bin').write_bytes(p.stderr)
+assert p.returncode==0,p.stderr
+settings=json.loads((runtime/'entry.json').read_bytes());profile=json.loads(pathlib.Path(settings['profile']).read_bytes())
+assert profile['native_resource_mode']=='calls-only' and profile['auth_mode']=='pi-chatgpt'
+assert profile['auth_path']==str(auth.resolve()) and profile['pi_cli']==str(fake.resolve())
+cmd=['pwsh','-NoProfile','-File',str(runtime/'Start.ps1'),'-CallLimit','8']
+p=subprocess.run(cmd,input=b'/exit\n',cwd=B,env=env,capture_output=True,timeout=30)
+(R/'owner-entry-start.stdout.bin').write_bytes(p.stdout);(R/'owner-entry-start.stderr.bin').write_bytes(p.stderr)
+assert p.returncode==0,p.stderr
+client=Core(data).connect((data/'owner.credential').read_text(encoding='utf-8'));s=client.call('read_snapshot',{},'idle-entry-check')
+assert not s['heads'] and not s['works'] and not s['attempts'] and not s['actions'] and not s['acceptance']
+assert not (data/'pi').exists()
+site=pathlib.Path(locations['installation'])/'env/Lib/site-packages';checks=[]
+for pkg in ['core','app']:
+    root=R/'source/packages'/pkg/'src'
+    for f in root.rglob('*'):
+        if f.suffix not in {'.py','.mjs','.ts'}:continue
+        rel=f.relative_to(root);checks.append({'file':str(rel),'sha256':hashlib.sha256(f.read_bytes()).hexdigest(),'same':f.read_bytes()==(site/rel).read_bytes()})
+assert len(checks)==20 and all(x['same'] for x in checks)
+(R/'own-install-byte-verification.json').write_text(json.dumps(checks,indent=2),encoding='utf-8')
+out={'source':'f80180a950ce7a3e21d30c86e610ae4a935320e3','fixture':str(B),'actual_owner_zip_Install_then_generated_Start':True,'selected_mode':profile['native_resource_mode'],'start_returncode':p.returncode,'startup_with_exit_only':'idle; no Work/attempt/action/SDK home','physical_model_requests':0,'real_auth_access':False,'fake_files_only':True,'own_installed_prod_files':20,'scope':'Actual entry/profile wiring and model-free startup, not a useful model trace. Author separate2-call controlled Start evidence is studied separately.'}
+(R/'owner-entry-proof.json').write_text(json.dumps(out,indent=2),encoding='utf-8')
+print(json.dumps(out))

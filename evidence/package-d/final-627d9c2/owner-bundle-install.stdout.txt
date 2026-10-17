@@ -1,0 +1,26 @@
+{"data_root": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-627d9c2-ji617m_5\\data", "credential_file": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-d-owner-627d9c2-ji617m_5\\data\\owner.credential"}
+{
+  "format": "diagnostics/v1",
+  "preview": true,
+  "model_called": false,
+  "contract": "wire/v1",
+  "sqlite_version": "3.50.4",
+  "integrity": "ok",
+  "foreign_key_violations": 0,
+  "mode": "active",
+  "counts": {
+    "records": 0,
+    "works": 0,
+    "attempts": 0,
+    "artifacts": 0
+  },
+  "excluded": [
+    "conversation_text",
+    "record_bodies",
+    "credentials",
+    "paths"
+  ],
+  "transmitted": false
+}
+Installed. Start ordinary conversation: & 'C:\Users\Anton\AppData\Local\Temp\zaratustra-d-owner-627d9c2-ji617m_5\runtime/Start.ps1'
+No personal data was imported. The data root is new and empty.

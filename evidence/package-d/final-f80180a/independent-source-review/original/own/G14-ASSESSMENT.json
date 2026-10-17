@@ -1,0 +1,78 @@
+{
+  "source": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+  "G14_verdict": "PASS_LIMITED_SINGLE_TRACE",
+  "overall_source_READY": false,
+  "remaining_for_source_READY": "Required full native gate actual completed PASS and final reconciliation; this document is only G14 assessment.",
+  "method": "Independent human reading of exact three visible texts, immutable Activity revisions and scoped results against unchanged frozen rubric. No semantic validator, output rewriting or further inference.",
+  "criteria": [
+    {
+      "number": 1,
+      "status": "PASS",
+      "basis": "Ready40-minute scenario for6teenagers on convincing character; human arithmetic:5+3+12+2+13+5=40. Exactly2named core exercises with concrete writing/sharing instructions, actual facilitator lines and2-sheet take-away. First5/last5 and given materials respected."
+    },
+    {
+      "number": 2,
+      "status": "PASS_WITH_MINOR_CLARITY_NOTE",
+      "basis": "Full self-service25-minute rewrite for8adults:3reading+8first+3continuation-of-first+7second+4review=25;4pairs, no facilitator, actual card texts and same topic/materials.11-14 is explicitly same first exercise, not a third exercise. Card1label3-11 could more clearly include that continuation; not a lost constraint."
+    },
+    {
+      "number": 3,
+      "status": "PASS",
+      "basis": "New physical client gives whole final25-minute scenario for6adults/3pairs:3+9+9+4=25. Two exercises, no facilitator; notes/partner-reading alternative fits inside first exercise4-minute pair exchange. No added stage/time/material or return to40minutes/teenagers."
+    },
+    {
+      "number": 4,
+      "status": "PASS_WITH_DATA_ORGANIZATION_NOTE",
+      "basis": "One stable Activity ID/kind/key/scope has revisions1..6 with actual agreement/constraints/useful-result summaries changing40/sixteens to25/eightadults to25/sixadults+quietvariant. Full usable texts retained in Activity-scoped results. Revision6adds one extra value nesting; actual current content remains present/readable in free subject JSON, no data removed or host unwrapping."
+    },
+    {
+      "number": 5,
+      "status": "PASS",
+      "basis": "Three root routing results retain cursor0/1/2 and delivered1/2/3; three scoped useful results consume1/2/3. Six completed Work/Attempt/actions/results, terminal observations, Activity outputs exact1..6, acceptance0. Host supplied only technical identity/budget/method, no subject answer or heuristic repair."
+    },
+    {
+      "number": 6,
+      "status": "PASS_CALLS_ONLY",
+      "basis": "All7actual request bodies JSON-object mode, no max_output_tokens, selectedgpt-6-luna, stream/store correct. PerAttempt≤2; root8/child6, reserve2each and4perchain, physical2/2/3≤8 and7≤24. One refused{}tool and normal feedback counted fully; no unknown/effect, sequence retry, preflight or fifth. No hard token/money claim."
+    }
+  ],
+  "quality_observations": [
+    "Correction card1 range3-11 versus explicit11-14 continuation could be clearer; total schedule and exercise count remain coherent.",
+    "Last Activity subject value has extra value nesting; arbitrary subject shape is allowed and current meaning is retained. Not repaired or hidden.",
+    "Invalid empty zara_change intent was safely refused before Core effect; normal withinAttempt follow-up completed response within existing reservation. Not a successful subject tool write."
+  ],
+  "facts": {
+    "activity_id": "activity:urban-stories-character-session",
+    "activity_revisions": 6,
+    "works": 6,
+    "attempts": 6,
+    "actions": 6,
+    "results": 6,
+    "messages": 3,
+    "cursor": 3,
+    "tool_calls": 0,
+    "acceptance": 0,
+    "physical_requests": 7,
+    "native_tool_feedback_rounds": 1,
+    "unknown_observations": 0
+  },
+  "usage": {
+    "total": {
+      "input_tokens": 52896,
+      "output_tokens": 5701,
+      "total_tokens": 58597,
+      "reasoning_tokens": 514
+    },
+    "sdk_cost_estimate_including_toolUse_response": 0.0081401,
+    "actual_billing_or_quota_debit": "unknown"
+  },
+  "rubric_sha256": "261540200c0e455a56028359a7a9142b99f4259dc7e9b05d66213d03654bcaeb",
+  "script_sha256": "b4165c1b43979af7a655a2afdaf48fdcae4159a36dd72750d02380120fd85525",
+  "execution_sha256": "fce345a6b8a84238e852a1c864e829640c115c74773fc55e5b11749bccf849f4",
+  "overall_substantive_trial": 4,
+  "old_series3of3_failures_preserved": true,
+  "renewed_finite_calls_only_admission": true,
+  "additional_live_retry": false,
+  "owner_acceptance": false,
+  "stability_or_personal_usefulness_claim": false
+}

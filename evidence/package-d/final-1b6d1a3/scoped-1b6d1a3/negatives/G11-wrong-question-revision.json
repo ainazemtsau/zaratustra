@@ -1,0 +1,10 @@
+{
+  "seed": "G11-wrong-question-revision",
+  "test": "test_contract.py::test_exact_question_no_acceptance",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n______________________ test_exact_question_no_acceptance ______________________\ntests\\restart\\test_contract.py:227: in test_exact_question_no_acceptance\n    with pytest.raises(CoreError, match=\"stale_basis\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_contract.py::test_exact_question_no_acceptance - Fa...\n1 failed in 4.57s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -802,7 +802,7 @@\n                 if (\n                     actor[\"origin\"] != \"human\"\n                     or wait is None\n-                    or wait[\"revision\"] != reply[\"revision\"]\n+                    or (print(\"MUTANT_REACHED\", flush=True) or False)\n                     or wait[\"status\"] != \"waiting\"\n                     or wait[\"conversation\"] != conversation\n                 ):\n"
+}

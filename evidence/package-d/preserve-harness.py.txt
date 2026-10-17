@@ -1,0 +1,11 @@
+import hashlib,json,shutil
+from pathlib import Path
+root=Path.cwd();proof=root/'evidence/package-d/harness-failures';proof.mkdir(exist_ok=False)
+rows=[]
+for run in ['d-entry-controls-04','d-entry-controls-05']:
+ for raw in (root/'_scratch'/run).glob('test_native_auth_errors_never_1/pi/*/native-*'):
+  if not raw.is_file():continue
+  target=proof/run/raw.name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(raw,target)
+  data=target.read_bytes();rows.append({'path':target.relative_to(proof).as_posix(),'sha256':hashlib.sha256(data).hexdigest(),'bytes':len(data)})
+(proof/'manifest.json').write_text(json.dumps({'classification':'Failed synthetic sentinel harness; Node rejected Windows --import C: path before launcher/fetch. Neither run reached fake token endpoint; no semantic/model claim. Fixed by file URL after fresh read-only diagnosis.','files':rows},indent=2),encoding='utf-8')
+print(len(rows))

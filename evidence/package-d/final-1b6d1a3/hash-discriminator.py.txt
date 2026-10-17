@@ -1,0 +1,29 @@
+import difflib,hashlib,inspect,json,shutil,sqlite3
+from pathlib import Path
+from zaratustra_core import Core,CoreError,maintenance
+
+base=Path.cwd()/'_scratch/d8-hash-discriminator';base.mkdir()
+core,token=Core.initialize(base/'space')
+core.backup(token,base/'original')
+shutil.copytree(base/'original',base/'coherent-changed')
+changed=base/'coherent-changed';database=changed/'core.sqlite3'
+old=database.read_bytes()
+with sqlite3.connect(database) as db:db.execute('PRAGMA user_version=17')
+new=database.read_bytes()
+assert len(new)==len(old) and hashlib.sha256(new).digest()!=hashlib.sha256(old).digest()
+maintenance.integrity(database)
+try:Core.restore_quarantined(changed,base/'guarded')
+except CoreError as error:assert error.field=='backup.manifest'
+else:raise AssertionError('real checksum guard admitted changed bytes')
+source=inspect.getsource(maintenance.restore)
+anchor='or hashlib.sha256(database).hexdigest() != manifest["database_sha256"]'
+assert source.count(anchor)==1
+mutated=source.replace(anchor,'or False')
+namespace=dict(maintenance.__dict__)
+exec(compile(mutated,'checksum-only-guard-disabled','exec'),namespace)
+new_token=namespace['restore'](changed,base/'unguarded')
+assert Core(base/'unguarded').connect(new_token).call('export_diagnostics',{},'diag')['mode']=='quarantined'
+(base/'guard-only.diff').write_text(''.join(difflib.unified_diff(source.splitlines(True),mutated.splitlines(True))),encoding='utf-8')
+result={'source':'1b6d1a3946348a18d90cbb1a4e8d36208e242285','same_database_size':True,'database_bytes_and_sha_changed':True,'all_current_integrity_and_reference_checks_pass':True,'ordinary_sha_guard_refused':True,'only_sha_condition_disabled_restore_admitted':True,'model_called':False,'bytes':len(new),'before_sha256':hashlib.sha256(old).hexdigest(),'after_sha256':hashlib.sha256(new).hexdigest()}
+(base/'result.json').write_text(json.dumps(result,indent=2),encoding='utf-8')
+print(json.dumps(result,indent=2))

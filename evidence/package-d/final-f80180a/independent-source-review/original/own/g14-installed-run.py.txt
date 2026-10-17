@@ -1,0 +1,70 @@
+"""Exact reviewer-authored ordinary usefulness check; root approval transport only.
+
+Do not execute before root acknowledges this file and its SHA256. Real user grant
+is handled in the original owner chat; this script does not read credentials.
+Three free user turns, each a new actual installed client, at most eight physical
+requests across its discovery/execution chain; whole check at most 24. Each child
+inherits only the remaining reservation budget. Per-chain outer deadline 1800s
+allows eight 180s provider windows plus host overhead. No automatic retry. This is fourth overall, one fresh admitted continuation; no automatic fifth.
+"""
+import hashlib,json,os,pathlib,sqlite3,subprocess,tempfile,time
+R=pathlib.Path(__file__).parent
+ENTRY=pathlib.Path('C:/Users/Anton/AppData/Local/Temp/zaratustra-independent-d-0qwave4u/runtime/env/Scripts/zaratustra-next.exe')
+PIN='f80180a950ce7a3e21d30c86e610ae4a935320e3'
+RUBRIC_HASH='261540200c0e455a56028359a7a9142b99f4259dc7e9b05d66213d03654bcaeb'
+rubric_raw=(R/'g14-rubric.json').read_bytes()
+assert hashlib.sha256(rubric_raw).hexdigest()==RUBRIC_HASH
+rubric=json.loads(rubric_raw)
+preflight_raw=(R.parent/'account-preflight.stdout.json').read_bytes()
+assert hashlib.sha256(preflight_raw).hexdigest()=='e205605df4be5781ad0d5c072bbed4ee7e309523e00337a027435da5adb8945d'
+preflight=json.loads(preflight_raw)
+assert preflight['account_specific_inference'] and preflight['model']=='gpt-6-luna'
+assert all(c['pass_'] for c in json.loads((R/'byte-verification.json').read_bytes())['checks'])
+assert json.loads((R/'own-affected/exit.json').read_bytes())['returncode']==0
+assert json.loads((R/'owner-entry-proof.json').read_bytes())['selected_mode']=='calls-only'
+proof=R/'g14-installed';proof.mkdir(exist_ok=False)
+base=pathlib.Path(tempfile.mkdtemp(prefix='zaratustra-g14-independent-',dir='C:/Users/Anton/AppData/Local/Temp'))
+root=base/'data';home=base/'home';home.mkdir();profile=base/'profile.json'
+profile.write_text(json.dumps(dict(pi_cli='C:/Users/Anton/AppData/Roaming/npm/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js',endpoint='https://api.openai.com/v1',model='gpt-6-luna',auth_mode='pi-chatgpt',native_resource_mode='calls-only',auth_path='C:/Users/Anton/.pi/agent/auth.json',max_tokens=4096,context_window=128000,timeout=180)),encoding='utf-8')
+env={k:v for k,v in os.environ.items() if k.upper() in {'PATH','PATHEXT','SYSTEMROOT','WINDIR','COMSPEC','TEMP','TMP'}}
+env.update(HOME=str(home),USERPROFILE=str(home),APPDATA=str(home/'AppData'),LOCALAPPDATA=str(home/'LocalAppData'),PYTHONUTF8='1')
+manifest=dict(source_commit=PIN,entry=str(ENTRY),base=str(base),data_root=str(root),rubric_sha256=RUBRIC_HASH,physical_send_upper=24,per_chain_limit=8,outer_timeout_per_chain_seconds=1800,transport='Original owner chat leader executes unchanged reviewer script with normal approval under direct owner grant; reviewer evaluates exact retained outputs.',substantive_trial_number=4,old_series_failures=3,one_fresh_continuation=True,no_automatic_fifth=True,calls=[])
+def save():
+    (proof/'execution.json').write_text(json.dumps(manifest,indent=2,ensure_ascii=False),encoding='utf-8')
+def run(label,args,deadline):
+    cmd=[str(ENTRY),'--data-root',str(root),*args]
+    start=time.time();out=b'';err=b'';code=None
+    try:
+        p=subprocess.run(cmd,cwd=base,env=env,capture_output=True,timeout=deadline)
+        out,err,code=p.stdout,p.stderr,p.returncode
+    except subprocess.TimeoutExpired as e:
+        out,err=e.stdout or b'',e.stderr or b'';code='timeout'
+    finally:
+        (proof/(label+'.stdout.bin')).write_bytes(out)
+        (proof/(label+'.stderr.bin')).write_bytes(err)
+        manifest['calls'].append(dict(label=label,command=cmd,returncode=code,seconds=time.time()-start));save()
+    if code!=0:
+        raise RuntimeError('Installed client failed; retain result and stop without retry: '+label)
+    return out
+try:
+    run('init',['init'],60)
+    for label,key in [('request','request'),('correction','correction'),('reopen','reopen_request')]:
+        message=rubric[key]
+        (proof/(label+'.input.bin')).write_bytes(message.encode('utf-8'))
+        run(label,['chat','--profile-file',str(profile),'--call-limit','8','--message',message],1800)
+    manifest['mechanical_processes_completed']=True
+finally:
+    # Only existing redacted provider/SDK logs. Never copy any credential file.
+    if (root/'pi').exists():
+        for p in (root/'pi').rglob('*'):
+            if p.is_file() and (p.suffix in {'.bin','.jsonl'} or p.name.endswith('.redaction.json')):
+                target=proof/'native'/p.relative_to(root/'pi')
+                target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(p.read_bytes())
+    if (root/'core.sqlite3').exists():
+        with sqlite3.connect('file:'+str(root/'core.sqlite3').replace('\\','/')+'?mode=ro',uri=True) as db:
+            db.row_factory=sqlite3.Row
+            state={table:[dict(x) for x in db.execute('SELECT * FROM '+table)] for table in ['works','attempts','actions','results','observations','messages','heads','records','acceptance','intents','conversations','tool_calls']}
+        (proof/'retained-state.json').write_text(json.dumps(state,indent=2,ensure_ascii=False),encoding='utf-8')
+        manifest['physical_provider_requests']=len(list((proof/'native').rglob('*-request.bin')))
+    save()
+print(json.dumps({'proof':str(proof),'calls':manifest['calls'],'evaluation':'Independent reading of useful answers and Activity versions required; no automated semantic validator'},ensure_ascii=False))

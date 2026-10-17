@@ -1,0 +1,42 @@
+import {pathToFileURL} from 'node:url';
+const base='C:/Users/Anton/AppData/Roaming/npm/node_modules/@earendil-works/pi-coding-agent/dist/';
+const {ModelRuntime}=await import(pathToFileURL(base+'index.js'));
+const {AuthStorage}=await import(pathToFileURL(base+'core/auth-storage.js'));
+const storage=AuthStorage.create('C:/Users/Anton/.pi/agent/auth.json');
+const requireOAuth=c=>{if(c?.type!=='oauth')throw Error('selected_oauth_unavailable');return c;};
+const credentials={
+ read:async(p,o)=>p==='openai'?requireOAuth(await storage.read(p,o)):undefined,
+ list:async(o)=>(await storage.list(o)).filter(x=>x.providerId==='openai'&&x.type==='oauth'),
+ modify:async(p,fn,o)=>{if(p!=='openai')throw Error('provider_refused');return storage.modify(p,async c=>{const n=await fn(requireOAuth(c));return n===undefined?undefined:requireOAuth(n);},o);},
+ delete:async()=>{throw Error('deletion_refused');}
+};
+const fetchOriginal=globalThis.fetch;
+let sends=0,refreshes=0,statuses=[];
+globalThis.fetch=async(input,init)=>{
+ const url=typeof input==='string'?input:input.url||String(input);
+ if(url==='https://api.openai.com/v1/responses'){
+  if(++sends>2)throw Error('finite_send_cap');
+ }else if(url==='https://auth.openai.com/api/accounts/oauth/token'){
+  if(++refreshes>2)throw Error('finite_refresh_cap');
+ }else throw Error('endpoint_refused');
+ const r=await fetchOriginal(input,{...init,redirect:'error',signal:AbortSignal.timeout(90000)});
+ statuses.push({kind:url.endsWith('/responses')?'inference':'refresh',status:r.status});
+ return r;
+};
+console.error=()=>{};
+const result={model:'gpt-6-luna',endpoint:'https://api.openai.com/v1/responses',max_tokens:64,inference_cap:2,account_specific_inference:false,credential_values_output:false};
+try{
+ result.oauth_metadata_present=(await credentials.list()).length>0;
+ const runtime=await ModelRuntime.create({credentials,modelsPath:null,modelsStorePath:null,allowModelNetwork:false,refreshOnCreate:false});
+ const model=runtime.getModel('openai','gpt-6-luna');
+ if(!model)throw Error('selected_model_unavailable');
+ const message=await runtime.complete({...model,maxTokens:64},{messages:[{role:'user',content:'Reply only OK.',timestamp:Date.now()}]},{maxTokens:64,signal:AbortSignal.timeout(90000),maxRetries:0});
+ result.stopReason=message.stopReason;
+ result.account_specific_inference=message.stopReason!=='error'&&message.content.some(x=>x.type==='text'&&x.text.trim());
+ result.text=message.content.filter(x=>x.type==='text').map(x=>x.text).join('');
+ result.usage=message.usage;
+ result.error_details_withheld=message.stopReason==='error';
+}catch{result.error='preflight_failed_details_withheld';}
+result.sends=sends;result.refreshes=refreshes;result.statuses=statuses;
+process.stdout.write(JSON.stringify(result,null,2)+'\n');
+process.exitCode=result.account_specific_inference?0:1;

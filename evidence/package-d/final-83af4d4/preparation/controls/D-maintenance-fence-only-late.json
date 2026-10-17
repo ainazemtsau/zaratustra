@@ -1,0 +1,10 @@
+{
+  "seed": "D-maintenance-fence-only-late",
+  "test": "test_maintenance.py::test_backup_crash_and_maintenance_excludes_writer[backup_hold_inventory]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n__ test_backup_crash_and_maintenance_excludes_writer[backup_hold_inventory] ___\ntests\\restart\\test_maintenance.py:329: in test_backup_crash_and_maintenance_excludes_writer\n    with pytest.raises(CoreError, match=\"maintenance\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n\nMUTANT_REACHED\n\n=========================== short test summary info ===========================\nFAILED tests/restart/test_maintenance.py::test_backup_crash_and_maintenance_excludes_writer[backup_hold_inventory]\n1 failed in 5.27s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/maintenance.py\n+++ core/src/zaratustra_core/maintenance.py.mutant\n@@ -7,7 +7,7 @@\n import secrets\n import shutil\n import sqlite3\n-from contextlib import closing\n+from contextlib import closing, nullcontext\n from pathlib import Path\n from typing import TYPE_CHECKING, Any\n \n@@ -63,7 +63,7 @@\n \n \n def backup(core: Core, token: str, destination: Path) -> dict[str, Any]:\n-    with exclusion(core.root):\n+    with (print(\"MUTANT_REACHED\", flush=True) or nullcontext()):\n         with core._locked_transaction() as db:\n             actor = core._identity(db, token, \"admin\")\n             if actor[\"origin\"] != \"human\":\n"
+}

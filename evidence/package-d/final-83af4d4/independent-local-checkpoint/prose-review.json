@@ -1,0 +1,47 @@
+{
+  "source": "83af4d4a529ca73d06d566db62a3586f2a432af9",
+  "fixture": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zaratustra-independent-prose-z5f17bmd",
+  "construction": "All copied subject revisions/messages entered through public API; no SQL writes, source credentials/grants or original instance changes",
+  "original_terminal_sha256": "7800737e8fd1d992a35f78abaeceb47297811efd025184faf4a7b43634ec0072",
+  "model_calls": 0,
+  "checks": [
+    {
+      "case": "original273-character terminal through public C7/C8",
+      "pass": true,
+      "goal_sha256": "0d7a7572ccc8142ff4874e173840cc0fb2b9e63e926c056f4d0f1a70d51030df",
+      "activity_revision": 5,
+      "cursor": 2,
+      "child_remaining_limit": 6,
+      "original_raw_input_preserved": true
+    },
+    {
+      "case": "long Unicode/CRLF goal and addressed question exact, replay stable",
+      "pass": true,
+      "characters": 857
+    },
+    {
+      "case": "oversize identity id",
+      "pass": true
+    },
+    {
+      "case": "oversize identity scope",
+      "pass": true
+    },
+    {
+      "case": "oversize identity conversation",
+      "pass": true
+    },
+    {
+      "case": "oversize identity method_ref.id",
+      "pass": true
+    },
+    {
+      "case": "aggregate context bound still refuses oversized prose atomically",
+      "pass": true
+    },
+    {
+      "case": "backup closure and quarantined restore preserve exact long text",
+      "pass": true
+    }
+  ]
+}

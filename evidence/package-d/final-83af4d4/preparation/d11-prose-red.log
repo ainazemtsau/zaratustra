@@ -1,0 +1,570 @@
+FFFF.FF.....FF                                                           [100%]
+================================== FAILURES ===================================
+_________ test_long_goal_shared_admission_preserves_bytes[open_work] __________
+
+operation = 'open_work'
+payload = {'id': 'long-work', 'conversation': 'other', 'goal': 'Arbitrary prose / Произвольный текст 🌊\nArbitrary prose / Произв... / Произвольный текст 🌊\nArbitrary prose / Произвольный текст 🌊\n', 'method_ref': {'id': 'method', 'revision': 1}, ...}
+
+    def validate(operation: str, payload: dict[str, Any]) -> None:
+        model = MODELS.get(operation)
+        if model is None:
+            raise CoreError("unsupported_capability", operation)
+        try:
+>           model.model_validate(payload)
+E           pydantic_core._pydantic_core.ValidationError: 1 validation error for Work
+E           goal
+E             String should have at most 240 characters [type=string_too_long, input_value='Arbitrary prose / Про...ый текст 🌊\n', input_type=str]
+E               For further information visit https://errors.pydantic.dev/2.13/v/string_too_long
+
+packages\core\src\zaratustra_core\shapes.py:237: ValidationError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d11-prose-red-tmp/test_long_goal_shared_admissio0')
+operation = 'open_work'
+
+    @pytest.mark.parametrize("operation", ["open_work", "apply_changes"])
+    def test_long_goal_shared_admission_preserves_bytes(tmp_path: Path, operation: str) -> None:
+        core, owner, _ = fixture(tmp_path)
+        work = {
+            "id": "long-work",
+            "conversation": "other",
+            "goal": LONG,
+            "method_ref": METHOD,
+            "inputs": [],
+            "call_limit": 2,
+            "continuation_policy": "durable",
+        }
+        if operation == "apply_changes":
+            owner.call(
+                operation,
+                {
+                    "changes": [
+                        {"id": "activity", "kind": "activity", "key": "long", "body": "fixture"}
+                    ],
+                    "initial_work": work,
+                },
+                "long",
+                expected_heads={"activity": 0},
+            )
+        else:
+>           owner.call(operation, work, "long")
+
+tests\restart\test_prose_fields.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+packages\core\src\zaratustra_core\api.py:1482: in call
+    self.send(self.request(operation, payload, command_id, **kwargs))["result"],
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:1471: in send
+    return self.core.execute(self.token, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:248: in execute
+    return self._execute(token, request, _preview=_preview)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:268: in _execute
+    validate(req.operation, req.payload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+operation = 'open_work'
+payload = {'id': 'long-work', 'conversation': 'other', 'goal': 'Arbitrary prose / Произвольный текст 🌊\nArbitrary prose / Произв... / Произвольный текст 🌊\nArbitrary prose / Произвольный текст 🌊\n', 'method_ref': {'id': 'method', 'revision': 1}, ...}
+
+    def validate(operation: str, payload: dict[str, Any]) -> None:
+        model = MODELS.get(operation)
+        if model is None:
+            raise CoreError("unsupported_capability", operation)
+        try:
+            model.model_validate(payload)
+        except ValidationError as exc:
+            location = ".".join(map(str, exc.errors()[0]["loc"]))
+>           raise CoreError("invalid_request", location) from exc
+E           zaratustra_core.types.CoreError: invalid_request: goal [25ba9538c08bfb78]
+
+packages\core\src\zaratustra_core\shapes.py:240: CoreError
+_______ test_long_goal_shared_admission_preserves_bytes[apply_changes] ________
+
+operation = 'apply_changes'
+payload = {'changes': [{'id': 'activity', 'kind': 'activity', 'key': 'long', 'body': 'fixture'}], 'initial_work': {'id': 'long-w.../ Произвольный текст 🌊\nArbitrary prose / Произвольный текст 🌊\n', 'method_ref': {'id': 'method', 'revision': 1}, ...}}
+
+    def validate(operation: str, payload: dict[str, Any]) -> None:
+        model = MODELS.get(operation)
+        if model is None:
+            raise CoreError("unsupported_capability", operation)
+        try:
+>           model.model_validate(payload)
+E           pydantic_core._pydantic_core.ValidationError: 1 validation error for Changes
+E           initial_work.goal
+E             String should have at most 240 characters [type=string_too_long, input_value='Arbitrary prose / Про...ый текст 🌊\n', input_type=str]
+E               For further information visit https://errors.pydantic.dev/2.13/v/string_too_long
+
+packages\core\src\zaratustra_core\shapes.py:237: ValidationError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d11-prose-red-tmp/test_long_goal_shared_admissio1')
+operation = 'apply_changes'
+
+    @pytest.mark.parametrize("operation", ["open_work", "apply_changes"])
+    def test_long_goal_shared_admission_preserves_bytes(tmp_path: Path, operation: str) -> None:
+        core, owner, _ = fixture(tmp_path)
+        work = {
+            "id": "long-work",
+            "conversation": "other",
+            "goal": LONG,
+            "method_ref": METHOD,
+            "inputs": [],
+            "call_limit": 2,
+            "continuation_policy": "durable",
+        }
+        if operation == "apply_changes":
+>           owner.call(
+                operation,
+                {
+                    "changes": [
+                        {"id": "activity", "kind": "activity", "key": "long", "body": "fixture"}
+                    ],
+                    "initial_work": work,
+                },
+                "long",
+                expected_heads={"activity": 0},
+            )
+
+tests\restart\test_prose_fields.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+packages\core\src\zaratustra_core\api.py:1482: in call
+    self.send(self.request(operation, payload, command_id, **kwargs))["result"],
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:1471: in send
+    return self.core.execute(self.token, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:248: in execute
+    return self._execute(token, request, _preview=_preview)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:268: in _execute
+    validate(req.operation, req.payload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+operation = 'apply_changes'
+payload = {'changes': [{'id': 'activity', 'kind': 'activity', 'key': 'long', 'body': 'fixture'}], 'initial_work': {'id': 'long-w.../ Произвольный текст 🌊\nArbitrary prose / Произвольный текст 🌊\n', 'method_ref': {'id': 'method', 'revision': 1}, ...}}
+
+    def validate(operation: str, payload: dict[str, Any]) -> None:
+        model = MODELS.get(operation)
+        if model is None:
+            raise CoreError("unsupported_capability", operation)
+        try:
+            model.model_validate(payload)
+        except ValidationError as exc:
+            location = ".".join(map(str, exc.errors()[0]["loc"]))
+>           raise CoreError("invalid_request", location) from exc
+E           zaratustra_core.types.CoreError: invalid_request: initial_work.goal [08e207e325a37a69]
+
+packages\core\src\zaratustra_core\shapes.py:240: CoreError
+_________________ test_long_goal_c8_handoff_keeps_exact_prose _________________
+
+operation = 'commit_outcome'
+payload = {'attempt_id': 'route-attempt', 'generation': 1, 'terminal_event': 'terminal', 'original_cursor': 0, ...}
+
+    def validate(operation: str, payload: dict[str, Any]) -> None:
+        model = MODELS.get(operation)
+        if model is None:
+            raise CoreError("unsupported_capability", operation)
+        try:
+>           model.model_validate(payload)
+E           pydantic_core._pydantic_core.ValidationError: 1 validation error for Outcome
+E           next_work.goal
+E             String should have at most 240 characters [type=string_too_long, input_value='Arbitrary prose / Про...ый текст 🌊\n', input_type=str]
+E               For further information visit https://errors.pydantic.dev/2.13/v/string_too_long
+
+packages\core\src\zaratustra_core\shapes.py:237: ValidationError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d11-prose-red-tmp/test_long_goal_c8_handoff_keep0')
+
+    def test_long_goal_c8_handoff_keeps_exact_prose(tmp_path: Path) -> None:
+        core, owner, client, _, payload = routed(tmp_path)
+        payload["next_work"]["goal"] = LONG
+>       result = commit(client, payload)
+                 ^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\restart\test_prose_fields.py:63: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\restart\test_work_handoff.py:52: in commit
+    client.call("commit_outcome", payload, command, expected_heads={"activity": 0}),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:1482: in call
+    self.send(self.request(operation, payload, command_id, **kwargs))["result"],
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:1471: in send
+    return self.core.execute(self.token, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:248: in execute
+    return self._execute(token, request, _preview=_preview)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:268: in _execute
+    validate(req.operation, req.payload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+operation = 'commit_outcome'
+payload = {'attempt_id': 'route-attempt', 'generation': 1, 'terminal_event': 'terminal', 'original_cursor': 0, ...}
+
+    def validate(operation: str, payload: dict[str, Any]) -> None:
+        model = MODELS.get(operation)
+        if model is None:
+            raise CoreError("unsupported_capability", operation)
+        try:
+            model.model_validate(payload)
+        except ValidationError as exc:
+            location = ".".join(map(str, exc.errors()[0]["loc"]))
+>           raise CoreError("invalid_request", location) from exc
+E           zaratustra_core.types.CoreError: invalid_request: next_work.goal [e7fe88c40a5467d3]
+
+packages\core\src\zaratustra_core\shapes.py:240: CoreError
+__________ test_long_wait_question_is_prose_and_replay_is_send_free ___________
+
+operation = 'commit_outcome'
+payload = {'attempt_id': 'attempt', 'generation': 1, 'terminal_event': 'terminal', 'original_cursor': 0, ...}
+
+    def validate(operation: str, payload: dict[str, Any]) -> None:
+        model = MODELS.get(operation)
+        if model is None:
+            raise CoreError("unsupported_capability", operation)
+        try:
+>           model.model_validate(payload)
+E           pydantic_core._pydantic_core.ValidationError: 1 validation error for Outcome
+E           wait.question
+E             String should have at most 240 characters [type=string_too_long, input_value='Arbitrary prose / Про...ый текст 🌊\n', input_type=str]
+E               For further information visit https://errors.pydantic.dev/2.13/v/string_too_long
+
+packages\core\src\zaratustra_core\shapes.py:237: ValidationError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d11-prose-red-tmp/test_long_wait_question_is_pro0')
+
+    def test_long_wait_question_is_prose_and_replay_is_send_free(tmp_path: Path) -> None:
+        core, _, client = fixture(tmp_path)
+        coordinator = Coordinator(client)
+        coordinator.prepare("work", "attempt", PROFILE)
+        calls: list[str] = []
+        raw = json.dumps(
+            {"state": "waiting", "text": "question", "wait": {"id": "wait", "question": LONG}}
+        ).encode()
+    
+        def receive(_: Any, action: str) -> bytes:
+            calls.append(action)
+            return raw
+    
+        coordinator.dispatch("attempt", 1, Driver(receive))
+>       result = coordinator.recover("attempt")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\restart\test_prose_fields.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+packages\app\src\zaratustra_app\coordinator.py:307: in recover
+    return self.client.call(
+packages\core\src\zaratustra_core\api.py:1482: in call
+    self.send(self.request(operation, payload, command_id, **kwargs))["result"],
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:1471: in send
+    return self.core.execute(self.token, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:248: in execute
+    return self._execute(token, request, _preview=_preview)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:268: in _execute
+    validate(req.operation, req.payload)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+operation = 'commit_outcome'
+payload = {'attempt_id': 'attempt', 'generation': 1, 'terminal_event': 'terminal', 'original_cursor': 0, ...}
+
+    def validate(operation: str, payload: dict[str, Any]) -> None:
+        model = MODELS.get(operation)
+        if model is None:
+            raise CoreError("unsupported_capability", operation)
+        try:
+            model.model_validate(payload)
+        except ValidationError as exc:
+            location = ".".join(map(str, exc.errors()[0]["loc"]))
+>           raise CoreError("invalid_request", location) from exc
+E           zaratustra_core.types.CoreError: invalid_request: wait.question [f34603b7b4bfc149]
+
+packages\core\src\zaratustra_core\shapes.py:240: CoreError
+____________ test_long_prose_does_not_relax_identity_limits[scope] ____________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d11-prose-red-tmp/test_long_prose_does_not_relax1')
+field = 'scope'
+
+    @pytest.mark.parametrize("field", ["id", "scope", "method_ref.id"])
+    def test_long_prose_does_not_relax_identity_limits(tmp_path: Path, field: str) -> None:
+        core, owner, _ = fixture(tmp_path)
+        work = {
+            "id": "long-work",
+            "conversation": "other",
+            "goal": LONG,
+            "method_ref": METHOD,
+            "inputs": [],
+            "call_limit": 2,
+            "continuation_policy": "durable",
+        }
+        if field == "method_ref.id":
+            work["method_ref"] = {"id": "x" * 241, "revision": 1}
+        else:
+            work[field] = "x" * 241
+        with pytest.raises(CoreError) as error:
+            owner.call("open_work", work, "invalid")
+>       assert error.value.field == field and len(inspect(core, "works")) == 1
+E       AssertionError: assert ('goal' == 'scope'
+E         
+E         - scope
+E         + goal)
+
+tests\restart\test_prose_fields.py:109: AssertionError
+________ test_long_prose_does_not_relax_identity_limits[method_ref.id] ________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d11-prose-red-tmp/test_long_prose_does_not_relax2')
+field = 'method_ref.id'
+
+    @pytest.mark.parametrize("field", ["id", "scope", "method_ref.id"])
+    def test_long_prose_does_not_relax_identity_limits(tmp_path: Path, field: str) -> None:
+        core, owner, _ = fixture(tmp_path)
+        work = {
+            "id": "long-work",
+            "conversation": "other",
+            "goal": LONG,
+            "method_ref": METHOD,
+            "inputs": [],
+            "call_limit": 2,
+            "continuation_policy": "durable",
+        }
+        if field == "method_ref.id":
+            work["method_ref"] = {"id": "x" * 241, "revision": 1}
+        else:
+            work[field] = "x" * 241
+        with pytest.raises(CoreError) as error:
+            owner.call("open_work", work, "invalid")
+>       assert error.value.field == field and len(inspect(core, "works")) == 1
+E       AssertionError: assert ('goal' == 'method_ref.id'
+E         
+E         - method_ref.id
+E         + goal)
+
+tests\restart\test_prose_fields.py:109: AssertionError
+___________ test_cli_known_invalid_retains_terminal_without_resend ____________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d11-prose-red-tmp/test_cli_known_invalid_retains0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000021FA2AB50F0>
+capsys = <_pytest.capture.CaptureFixture object at 0x0000021FA2905D30>
+
+    def test_cli_known_invalid_retains_terminal_without_resend(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: Any
+    ) -> None:
+        from zaratustra_app import cli
+    
+        core, token = Core.initialize(tmp_path / "space")
+        (core.root / "owner.credential").write_text(token)
+        profile = tmp_path / "profile.json"
+        profile.write_text(
+            json.dumps(
+                {
+                    "pi_cli": "fictional",
+                    "endpoint": "https://api.openai.com/v1",
+                    "model": "gpt-6-luna",
+                    "credential_env": "FICTIONAL",
+                    "max_tokens": 64,
+                }
+            )
+        )
+        calls: list[dict[str, Any]] = []
+        raw = b'{"state":"completed","text":"PRIVATE_SENTINEL","outputs":[],"next_work":{"scope":"chosen","goal":[]}}'
+    
+        def receive(context: dict[str, Any], _: str) -> bytes:
+            calls.append(context)
+            return raw
+    
+        class FakePi(Driver):
+            def __init__(self, *_: Any, **__: Any):
+                super().__init__(receive)
+    
+        monkeypatch.setattr(cli, "Pi", FakePi)
+        args = [
+            "entry",
+            "--data-root",
+            str(core.root),
+            "chat",
+            "--profile-file",
+            str(profile),
+            "--call-limit",
+            "8",
+        ]
+        for suffix in [["--message", "fictional input"], []]:
+            monkeypatch.setattr("sys.argv", args + suffix)
+>           assert cli.main() == 1
+                   ^^^^^^^^^^
+
+tests\restart\test_prose_fields.py:165: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+packages\app\src\zaratustra_app\cli.py:107: in main
+    result = session.run(executor, descriptor, args.call_limit, refresh=args.refresh_basis)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\app\src\zaratustra_app\conversation.py:133: in run
+    result = self._step(executor, descriptor, call_limit, refresh=refresh)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\app\src\zaratustra_app\conversation.py:295: in _step
+    result = self.coordinator.recover(attempt["id"], pi=isinstance(executor, Pi), ordinary=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\app\src\zaratustra_app\coordinator.py:289: in recover
+    output = outcome(output, attempt, work, self.scoped_inputs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+output = {'state': 'completed', 'text': 'PRIVATE_SENTINEL', 'outputs': [], 'next_work': {'scope': 'chosen', 'goal': []}}
+attempt = {'id': 'turn:7a008b32fe7b4f21a2fb4b399c0d2f9c:attempt:2b80cb6356e74202a9c458c94782cbe1', 'work': 'turn:7a008b32fe7b4f21a2fb4b399c0d2f9c', 'conversation': 'ordinary', 'status': 'claimed', ...}
+work = {'id': 'turn:7a008b32fe7b4f21a2fb4b399c0d2f9c', 'revision': 2, 'conversation': 'ordinary', 'status': 'running', ...}
+inputs = <bound method Coordinator.scoped_inputs of <zaratustra_app.coordinator.Coordinator object at 0x0000021FA2A22F10>>
+
+    def outcome(
+        output: dict[str, Any],
+        attempt: dict[str, Any],
+        work: dict[str, Any],
+        inputs: Any,
+    ) -> dict[str, Any]:
+        """Normalize trusted identity/budget; never invent Activity or subject content."""
+        body = json.loads(work["body"])
+        if body["method_ref"]["id"] not in {ROUTING_ID, EXECUTION_ID}:
+            return output  # Historical/custom Work keeps its original contract.
+    
+        def invalid() -> None:
+            raise CoreError("invalid_request", "ordinary.outcome_shape", "after_refresh")
+    
+        def refs(value: Any) -> bool:
+            return isinstance(value, list) and all(
+                isinstance(r, dict)
+                and isinstance(r.get("id"), str)
+                and bool(r["id"])
+                and type(r.get("revision")) is int
+                and r["revision"] > 0
+                and not set(r) - {"id", "revision", "role"}
+                and isinstance(r.get("role", "exact"), str)
+                and r.get("role", "exact") in {"exact", "must_be_current"}
+                for r in value
+            )
+    
+        if (
+            not isinstance(output, dict)
+            or set(output)
+            - {"state", "text", "changes", "expected_heads", "outputs", "wait", "next_work"}
+            or not isinstance(output.get("state"), str)
+            or output.get("state") not in {"completed", "ready", "waiting"}
+            or not isinstance(output.get("text"), str)
+            or not refs(output.get("outputs", []))
+            or not isinstance(output.get("changes", []), list)
+            or not all(isinstance(c, dict) for c in output.get("changes", []))
+            or not isinstance(output.get("expected_heads", {}), dict)
+            or not all(
+                isinstance(k, str) and type(v) is int and v >= 0
+                for k, v in output.get("expected_heads", {}).items()
+            )
+        ):
+            invalid()
+        routing = body["method_ref"]["id"] == ROUTING_ID
+        scope = body.get("scope", "space")
+        if routing:
+            child = output.get("next_work")
+            if (
+                output.get("state") != "completed"
+                or not isinstance(child, dict)
+                or set(child) - {"scope", "goal", "inputs"}
+                or not isinstance(child.get("scope"), str)
+                or not child.get("scope")
+                or child.get("scope") == "space"
+                or not isinstance(child.get("goal"), str)
+                or not child.get("goal")
+                or not refs(child.get("inputs", []))
+            ):
+>               raise CoreError("invalid_request", "ordinary.routing_outcome", "after_refresh")
+E               zaratustra_core.types.CoreError: invalid_request: ordinary.routing_outcome [73eb6bb6ff079ce0]
+
+packages\app\src\zaratustra_app\ordinary.py:138: CoreError
+__________ test_cli_valid_path_unchanged_and_developer_errors_escape __________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d11-prose-red-tmp/test_cli_valid_path_unchanged_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000021FA290BE10>
+capsys = <_pytest.capture.CaptureFixture object at 0x0000021FA2AE4B90>
+
+    def test_cli_valid_path_unchanged_and_developer_errors_escape(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: Any
+    ) -> None:
+        from zaratustra_app import cli
+    
+        core, token = Core.initialize(tmp_path / "space")
+        (core.root / "owner.credential").write_text(token)
+        profile = tmp_path / "profile.json"
+        profile.write_text(
+            json.dumps(
+                {
+                    "pi_cli": "fictional",
+                    "endpoint": "https://api.openai.com/v1",
+                    "model": "gpt-6-luna",
+                    "credential_env": "FICTIONAL",
+                    "max_tokens": 64,
+                }
+            )
+        )
+        calls: list[dict[str, Any]] = []
+    
+        def receive(context: dict[str, Any], _: str) -> bytes:
+            calls.append(context)
+            if context["response_contract"]["version"] == "ordinary-routing/1":
+                return json.dumps(routing(context)).encode()
+            activity = next(r for r in context["catalog"] if r["id"] == context["work"]["scope"])
+            return json.dumps(
+                {
+                    "state": "completed",
+                    "text": "useful fixture result",
+                    "outputs": [{"id": activity["id"], "revision": activity["revision"]}],
+                }
+            ).encode()
+    
+        class FakePi(Driver):
+            def __init__(self, *_: Any, **__: Any):
+                super().__init__(receive)
+    
+        monkeypatch.setattr(cli, "Pi", FakePi)
+        monkeypatch.setattr(
+            "sys.argv",
+            [
+                "entry",
+                "--data-root",
+                str(core.root),
+                "chat",
+                "--profile-file",
+                str(profile),
+                "--call-limit",
+                "8",
+                "--message",
+                "fictional input",
+            ],
+        )
+        assert cli.main() == 0
+        output = capsys.readouterr()
+        assert output.out == "useful fixture result\n" and not output.err
+        assert len(calls) == 2
+    
+        def broken() -> int:
+            raise RuntimeError("developer error")
+    
+>       monkeypatch.setattr(cli, "_main", broken)
+E       AttributeError: <module 'zaratustra_app.cli' from 'C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\packages\\app\\src\\zaratustra_app\\cli.py'> has no attribute '_main'
+
+tests\restart\test_prose_fields.py:238: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/restart/test_prose_fields.py::test_long_goal_shared_admission_preserves_bytes[open_work]
+FAILED tests/restart/test_prose_fields.py::test_long_goal_shared_admission_preserves_bytes[apply_changes]
+FAILED tests/restart/test_prose_fields.py::test_long_goal_c8_handoff_keeps_exact_prose
+FAILED tests/restart/test_prose_fields.py::test_long_wait_question_is_prose_and_replay_is_send_free
+FAILED tests/restart/test_prose_fields.py::test_long_prose_does_not_relax_identity_limits[scope]
+FAILED tests/restart/test_prose_fields.py::test_long_prose_does_not_relax_identity_limits[method_ref.id]
+FAILED tests/restart/test_prose_fields.py::test_cli_known_invalid_retains_terminal_without_resend
+FAILED tests/restart/test_prose_fields.py::test_cli_valid_path_unchanged_and_developer_errors_escape
+8 failed, 6 passed in 12.51s

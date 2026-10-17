@@ -1,0 +1,15 @@
+import json,tempfile
+from pathlib import Path
+from zaratustra_core import Core
+from zaratustra_app import Coordinator
+
+root=Path(tempfile.mkdtemp(prefix='d7-old-evidence-',dir=Path.cwd()/'_scratch'))
+core,token=Core.initialize(root/'space');owner=core.connect(token)
+owner.call('apply_changes',{'changes':[{'id':'method','kind':'method','key':'method','body':'Fictional method'},{'id':'profile','kind':'profile','key':'profile','body':{}}]},'seed',expected_heads={'method':0,'profile':0})
+owner.call('ingest_message',{'conversation':'c','event_id':'input','raw_base64':'eA=='},'input')
+owner.call('open_work',{'id':'work','conversation':'c','goal':'Fictional mechanical proof','method_ref':{'id':'method','revision':1},'call_limit':2,'continuation_policy':'durable'},'open')
+Coordinator(owner).prepare('work','attempt',{'id':'profile','revision':1})
+owner.call('claim_dispatch',{'attempt_id':'attempt','generation':1},'claim',action_id='actual-action')
+result=owner.call('observe_attempt',{'attempt_id':'attempt','event_id':'progress','kind':'progress','evidence':{'action_id':'missing','state':'running','receiver_ref':'external opaque token'}},'observation')
+assert result['evidence']['action_id']=='missing' and not result.get('verified',False)
+print(json.dumps({'source':'f07250996d861404728c5892fa1f3b0a6a07bba4','old_admitted_dangling_typed_action':True,'verified':False,'model_called':False,'result':result},indent=2))

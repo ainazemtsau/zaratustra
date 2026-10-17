@@ -1,0 +1,40 @@
+import {pathToFileURL} from 'node:url';
+import {writeFileSync, mkdirSync} from 'node:fs';
+import assert from 'node:assert/strict';
+const sdk='C:/Users/Anton/AppData/Roaming/npm/node_modules/@earendil-works/pi-coding-agent/dist/index.js';
+const {ModelRuntime}=await import(pathToFileURL(sdk));
+const out='_scratch/d-json-mode-sdk-probe-20261017'; mkdirSync(out);
+const credentials={read:async()=>({type:'oauth',access:'FICTIONAL_ACCESS',refresh:'FICTIONAL_REFRESH',expires:Date.now()+3600000}),list:async()=>[{providerId:'openai',type:'oauth'}],modify:async()=>{throw Error('no_refresh')},delete:async()=>{throw Error('no_delete')}};
+let captures=0,current;
+globalThis.fetch=async(input,init)=>{assert.equal(String(input),'http://127.0.0.1:1/v1/responses');assert(++captures<=12);current=JSON.parse(init.body);return new Response(JSON.stringify({error:{message:'offline_capture_only',type:'invalid_request_error'}}),{status:400,headers:{'Content-Type':'application/json'}})};
+const tool={name:'zara_change',description:'Fictional typed tool.',parameters:{type:'object',properties:{value:{type:'string'}},required:['value']}};
+const baseContext={systemPrompt:'Return a useful final JSON object; fictional transport capture only.',messages:[{role:'user',content:'Fictional activity with open subject body.',timestamp:1}],tools:[tool]};
+const usage={input:0,output:0,cacheRead:0,cacheWrite:0,totalTokens:0,cost:{input:0,output:0,cacheRead:0,cacheWrite:0,total:0}};
+const followup=structuredClone(baseContext);
+followup.messages.push({role:'assistant',content:[{type:'toolCall',id:'call_fiction|fc_fiction',name:'zara_change',arguments:{value:'fictional'}}],api:'openai-responses',provider:'openai',model:'gpt-6-luna',usage,stopReason:'toolUse',timestamp:2});
+followup.messages.push({role:'toolResult',toolCallId:'call_fiction|fc_fiction',toolName:'zara_change',content:[{type:'text',text:'fictional exact receipt'}],isError:false,timestamp:3});
+const runs=[];
+for(const mode of ['baseline','json-mode','proposal-calls-only']){
+ const override={maxTokens:64,contextWindow:8192,compat:{supportsMidConvoEffort:false}};
+ if(mode!=='baseline')override.samplingParams={text:{format:{type:'json_object'}}};
+ if(mode==='proposal-calls-only')override.compat.supportsMaxOutputTokens=false;
+ const configPath=out+'/'+mode+'-models.json';writeFileSync(configPath,JSON.stringify({providers:{openai:{baseUrl:'http://127.0.0.1:1/v1',modelOverrides:{'gpt-6-luna':override}}}}));
+ const runtime=await ModelRuntime.create({credentials,modelsPath:configPath,modelsStorePath:null,allowModelNetwork:false,refreshOnCreate:false});
+ assert(!runtime.getError?.());const model=runtime.getModel('openai','gpt-6-luna');assert(model);
+ for(const effort of ['medium','high'])for(const [phase,context] of [['initial',baseContext],['tool-followup',followup]]){
+  current=undefined;await runtime.complete(model,context,{reasoningEffort:effort,maxTokens:64,maxRetries:0,signal:AbortSignal.timeout(10000)});assert(current);
+  assert.equal(current.reasoning.effort,effort);assert(!current.input.some(x=>x.type==='configuration_update'));
+  if(mode==='baseline')assert(!('text' in current));else assert.deepEqual(current.text,{format:{type:'json_object'}});
+  if(mode==='proposal-calls-only')assert(!('max_output_tokens' in current));else assert.equal(current.max_output_tokens,64);
+  if(phase==='tool-followup')assert(current.input.some(x=>x.type==='function_call_output'));
+  runs.push({mode,effort,phase,payload:current});
+ }
+}
+for(const run of runs.filter(x=>x.mode!=='baseline')){
+ const before=runs.find(x=>x.mode==='baseline'&&x.effort===run.effort&&x.phase===run.phase);
+ const expected=structuredClone(before.payload);expected.text={format:{type:'json_object'}};
+ if(run.mode==='proposal-calls-only')delete expected.max_output_tokens;
+ assert.deepEqual(run.payload,expected);
+}
+writeFileSync(out+'/result.json',JSON.stringify({sdk,physical_network_requests:0,live_inference:0,credentials:'fictional object only; no credential files read',captures,exact_deltas:true,current_product_source_unchanged:true,calls_only:'proposal only, not activated in product',runs},null,2));
+console.log(JSON.stringify({captures,physical_network_requests:0,live_inference:0,efforts:['medium','high'],phases:['initial','tool-followup'],exact_deltas:true}));

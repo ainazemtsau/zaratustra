@@ -1,0 +1,12 @@
+{
+  "source": "f80180a950ce7a3e21d30c86e610ae4a935320e3",
+  "verdict": "READY_FOR_CANDIDATE_RECONCILIATION",
+  "owner_acceptance": false,
+  "path": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-review-d-20261016\\f80180a-source-checkpoint",
+  "files": 237,
+  "bundle": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\binding-review-d-20261016\\f80180a-source-checkpoint.zip",
+  "bundle_bytes": 1003522,
+  "bundle_sha256": "a62be75bf017fb778493a386328dace0af29bd229ad63562c805b01ce3d1756f",
+  "inventory_sha256": "eaf74b349d137fd543a4a185855ea2ff966f3da98e2a6872035011dccd9d1346",
+  "every_zip_row_verified": true
+}

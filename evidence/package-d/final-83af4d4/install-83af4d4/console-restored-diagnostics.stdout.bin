@@ -1,0 +1,23 @@
+{
+  "format": "diagnostics/v1",
+  "preview": true,
+  "model_called": false,
+  "contract": "wire/v1",
+  "sqlite_version": "3.50.4",
+  "integrity": "ok",
+  "foreign_key_violations": 0,
+  "mode": "quarantined",
+  "counts": {
+    "records": 7,
+    "works": 2,
+    "attempts": 3,
+    "artifacts": 1
+  },
+  "excluded": [
+    "conversation_text",
+    "record_bodies",
+    "credentials",
+    "paths"
+  ],
+  "transmitted": false
+}

@@ -1,0 +1,25 @@
+import json,pathlib,sys,tempfile
+from dataclasses import asdict
+from zaratustra_core import Core
+from zaratustra_app import LiveProfile,Pi,Sleep
+R=pathlib.Path(__file__).parent
+B=pathlib.Path(tempfile.mkdtemp(prefix='zaratustra-old-profile-seam-'))
+config={'pi_cli':str(B/'nonexistent-fixture-pi.js'),'endpoint':'https://example.invalid/v1','model':'fictional','credential_env':'ZARA_INDEPENDENT_FAKE','max_tokens':64,'context_window':8192,'timeout':15}
+p=B/'profile.json';p.write_text(json.dumps(config),encoding='utf-8')
+profile=LiveProfile(**{k:v for k,v in config.items() if k!='pi_cli'})
+descriptor=asdict(profile)|{'pi_cli':str(pathlib.Path(config['pi_cli']).resolve()),'resource_upper':Pi.resource_upper}
+assert 'native_resource_mode' not in descriptor
+fixtures=[]
+for kind in ['chat','sleep']:
+    core,t=Core.initialize(B/kind);(core.root/'owner.credential').write_text(t,encoding='utf-8');c=core.connect(t)
+    wid='existing-'+kind;pid=wid+':profile'
+    changes=[{'id':pid,'kind':'profile','key':pid,'body':descriptor}]
+    if kind=='chat':changes.append({'id':'method','kind':'method','key':'fixture','body':'Mechanical paused work'})
+    c.call('apply_changes',{'changes':changes},'seed',expected_heads={x['id']:0 for x in changes})
+    if kind=='sleep':Sleep(c).start(work_id=wid,call_limit=4,method_id='sleep-method:space')
+    else:c.call('open_work',{'id':wid,'conversation':'ordinary','goal':'Fictional saved work','method_ref':{'id':'method','revision':1},'inputs':[],'call_limit':4,'continuation_policy':'durable'},'work')
+    work=next(w for w in c.call('read_snapshot',{},'before-pause')['works'] if w['id']==wid)
+    c.call('control_work',{'work_id':wid,'revision':work['revision'],'action':'pause','reason':'fixture pause'},'pause')
+    fixtures.append({'kind':kind,'root':str(core.root),'work_id':wid,'profile_id':pid})
+(R/'old-fixtures.json').write_text(json.dumps({'base':str(B),'profile':str(p),'old_descriptor':descriptor,'fixtures':fixtures},indent=2),encoding='utf-8')
+print(json.dumps({'fixtures':2,'source':'actual installed83af','network_or_auth_reads':0}))

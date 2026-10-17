@@ -1,0 +1,50 @@
+import dataclasses,json,os,pathlib,subprocess,sys
+R=pathlib.Path(__file__).parent
+sys.path.insert(0,str(R/'source'))
+from zaratustra_app import LiveProfile,Pi
+from zaratustra_app.conversation import pin_profile
+from zaratustra_core import Core,CoreError,digest
+x=json.loads((R/'old-fixtures.json').read_bytes());config=json.loads(pathlib.Path(x['profile']).read_bytes())
+profile=LiveProfile(**{k:v for k,v in config.items() if k!='pi_cli'})
+fixed=profile.configuration()|{'pi_cli':str(pathlib.Path(config['pi_cli']).resolve()),'resource_upper':Pi.resource_upper}
+raw=dataclasses.asdict(profile)|{'pi_cli':fixed['pi_cli'],'resource_upper':Pi.resource_upper}
+assert fixed==x['old_descriptor'] and 'native_resource_mode' not in fixed and raw['native_resource_mode'] is None
+env=os.environ.copy();env.pop('ZARA_INDEPENDENT_FAKE',None)
+old_entry='C:/Users/Anton/AppData/Local/Temp/zaratustra-independent-d-7_dmrrvq/runtime/env/Scripts/zaratustra-next.exe'
+cases=[]
+for item in x['fixtures']:
+    root=pathlib.Path(item['root']);c=Core(root).connect((root/'owner.credential').read_text(encoding='utf-8'))
+    before=c.call('read_snapshot',{},'before')
+    pinned_before=c.call('read_exact',{'id':item['profile_id'],'revision':1},'pinned-before')
+    pin_profile(c,item['profile_id'],x['old_descriptor'])
+    try:pin_profile(c,item['profile_id'],raw)
+    except CoreError as e:assert (e.code,e.field)==('stale_basis','profile.configuration')
+    else:raise AssertionError('Raw None addition must reproduce the identity change')
+    pin_profile(c,item['profile_id'],fixed)
+    changed=dict(fixed,model='different-fixture')
+    try:pin_profile(c,item['profile_id'],changed)
+    except CoreError as e:assert e.field=='profile.configuration'
+    else:raise AssertionError('Real profile change was not fenced')
+    args=['--data-root',str(root),item['kind'],'--profile-file',x['profile'],'--call-limit','4']
+    if item['kind']=='sleep':args+=['--work-id',item['work_id']]
+    errors=[]
+    for label,command in [('old83',[old_entry]),('current-snapshot',[sys.executable,'-I','-X','utf8',str(R/'run_snapshot_cli.py')])]:
+        p=subprocess.run(command+args,input=b'',capture_output=True,timeout=20,env=env,cwd=x['base'])
+        (R/(item['kind']+'-'+label+'.stdout.bin')).write_bytes(p.stdout)
+        (R/(item['kind']+'-'+label+'.stderr.bin')).write_bytes(p.stderr)
+        e=json.loads(p.stderr)['error'];assert p.returncode==1
+        expected=('resource_exhausted','work.paused') if item['kind']=='chat' else ('stale_basis','sleep.paused')
+        assert (e['code'],e['field'])==expected,(item['kind'],label,e)
+        errors.append({'version':label,'error':e,'returncode':p.returncode})
+    after=c.call('read_snapshot',{},'after')
+    pinned_after=c.call('read_exact',{'id':item['profile_id'],'revision':1},'pinned-after')
+    assert pinned_after==pinned_before
+    for table in ['heads','works','attempts','actions','observations']:
+        assert after[table]==before[table],table
+    assert not after['actions'] and not after['attempts']
+    cases.append({'kind':item['kind'],'raw_added_null_refused':True,'configuration_matches_old_exactly':True,'old_and_current_CLI_same_work_refusal':errors,'pinned_profile_and_execution_state_unchanged':True})
+native=LiveProfile(endpoint='https://api.openai.com/v1',model='gpt-6-luna',auth_mode='pi-chatgpt',auth_path='absent-fictional-auth.json',native_resource_mode='calls-only',max_tokens=64)
+assert native.configuration()['native_resource_mode']=='calls-only'
+out={'scope':'HEADac58 plus captured uncommitted profile.configuration fix, not final source','old_descriptor_digest':digest(x['old_descriptor']),'raw_asdict_digest':digest(raw),'fixed_descriptor_digest':digest(fixed),'cases':cases,'native_explicit_mode_retained':True,'network_or_model_calls':0,'real_auth_reads':0,'product_state_edits':False,'original_frozen_G14_untouched':True}
+(R/'result.json').write_text(json.dumps(out,indent=2),encoding='utf-8')
+print(json.dumps({'cases':2,'fixed_configuration_exact_old_bytes':True,'raw_null_regression_reproduced':True,'native_mode_retained':True,'network_or_model_calls':0}))

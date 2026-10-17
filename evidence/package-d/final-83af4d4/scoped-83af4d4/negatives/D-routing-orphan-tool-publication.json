@@ -1,0 +1,10 @@
+{
+  "seed": "D-routing-orphan-tool-publication",
+  "test": "test_ordinary_activity.py::test_discovery_tool_cannot_publish_orphan_activity",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_____________ test_discovery_tool_cannot_publish_orphan_activity ______________\ntests\\restart\\test_ordinary_activity.py:168: in test_discovery_tool_cannot_publish_orphan_activity\n    assert not any(r[\"kind\"] == \"activity\" for r in inspect(core, \"heads\"))\nE   assert not True\nE    +  where True = any(<generator object test_discovery_tool_cannot_publish_orphan_activity.<locals>.<genexpr> at 0x000001EBBABA7100>)\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_ordinary_activity.py::test_discovery_tool_cannot_publish_orphan_activity\n1 failed in 1.40s\n",
+  "stderr": "",
+  "diff": "--- app/src/zaratustra_app/coordinator.py\n+++ app/src/zaratustra_app/coordinator.py.mutant\n@@ -179,7 +179,7 @@\n                 raise CoreError(\"invalid_request\", \"native_tool.intent\")\n             contract = getattr(executor, \"response_contract\", {})\n             if contract.get(\"version\") == \"ordinary-routing/1\":\n-                raise CoreError(\"denied\", \"ordinary.routing_atomic_handoff\")\n+                print(\"MUTANT_REACHED\", flush=True)\n             if intent.get(\"initial_work\") is not None:\n                 raise CoreError(\"denied\", \"native_tool.initial_work\")\n             if contract.get(\"version\") == \"ordinary-execution/2\":\n"
+}

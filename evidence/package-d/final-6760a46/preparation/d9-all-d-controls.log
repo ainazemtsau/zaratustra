@@ -1,0 +1,196 @@
+..F....F..................                                               [100%]
+================================== FAILURES ===================================
+_______ test_delivery_defect_is_killed[D-handoff-final-replayed-as-new] _______
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d9-controls/tmp/test_delivery_defect_is_killed2')
+seed = ('D-handoff-final-replayed-as-new', 'core/src/zaratustra_core/api.py', [('            if old:\n                if old[..."idempotency_conflict", "result_slot")')], 'test_work_handoff.py::test_handoff_preserves_raw_input_then_scoped_result')
+
+    @pytest.mark.parametrize("seed", SEEDS, ids=[s[0] for s in SEEDS])
+    def test_delivery_defect_is_killed(
+        tmp_path: Path, seed: tuple[str, str, list[tuple[str, str]], str]
+    ) -> None:
+>       run_seed(tmp_path, seed)
+
+tests\restart\test_delivery_controls.py:328: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d9-controls/tmp/test_delivery_defect_is_killed2')
+seed = ('D-handoff-final-replayed-as-new', 'core/src/zaratustra_core/api.py', [('            if old:\n                if old[..."idempotency_conflict", "result_slot")')], 'test_work_handoff.py::test_handoff_preserves_raw_input_then_scoped_result')
+
+    @pytest.mark.parametrize("seed", SEEDS, ids=[s[0] for s in SEEDS])
+    def test_seeded_defect_is_killed(
+        tmp_path: Path, seed: tuple[str, str, list[tuple[str, str]], str]
+    ) -> None:
+        name, source_path, replacements, node = seed
+        tree = tmp_path / "mutant"
+        for package in ("core", "app"):
+            shutil.copytree(ROOT / "packages" / package / "src", tree / package / "src")
+        path = tree / source_path
+        original = path.read_text(encoding="utf-8")
+        changed = original
+        for before, after in replacements:
+            assert before in changed, "stale mutation anchor: " + name
+            changed = changed.replace(before, after)
+        compile(changed, str(path), "exec")
+        path.write_text(changed, encoding="utf-8")
+        prefix = [str(tree / "core" / "src"), str(tree / "app" / "src"), str(ROOT)]
+        script = (
+            "import sys;sys.path[:0]="
+            + repr(prefix)
+            + ";import pytest;raise SystemExit(pytest.main(sys.argv[1:]))"
+        )
+        env = os.environ.copy()
+        env.pop("ZARA_RESTART_EVIDENCE", None)
+        run = subprocess.run(
+            [
+                sys.executable,
+                "-I",
+                "-X",
+                "utf8",
+                "-c",
+                script,
+                str(ROOT / "tests" / "restart" / node),
+                "--basetemp",
+                str(tmp_path / "run"),
+                "-q",
+                "--tb=short",
+            ],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=60,
+        )
+        report: dict[str, Any] = {
+            "seed": name,
+            "test": node,
+            "returncode": run.returncode,
+            "injection_reached": "MUTANT_REACHED" in run.stdout,
+            "behavioral_failure": "AssertionError" in run.stdout
+            or "DID NOT RAISE" in run.stdout
+            or any(line.startswith("E") and "assert " in line for line in run.stdout.splitlines()),
+            "stdout": run.stdout,
+            "stderr": run.stderr,
+            "diff": "".join(
+                difflib.unified_diff(
+                    original.splitlines(True),
+                    changed.splitlines(True),
+                    fromfile=source_path,
+                    tofile=source_path + ".mutant",
+                )
+            ),
+        }
+        destination = os.environ.get("ZARA_RESTART_NEGATIVES")
+        if destination:
+            folder = Path(destination)
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / (name + ".json")).write_text(
+                json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+        assert run.returncode == 1, report
+        assert report["injection_reached"], report
+>       assert report["behavioral_failure"], report
+E       AssertionError: {'seed': 'D-handoff-final-replayed-as-new', 'test': 'test_work_handoff.py::test_handoff_preserves_raw_input_then_scoped_result', 'returncode': 1, 'injection_reached': True, ...}
+E       assert False
+
+tests\restart\test_negative_controls.py:349: AssertionError
+________ test_delivery_defect_is_killed[D-handoff-reopen-rediscovery] _________
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d9-controls/tmp/test_delivery_defect_is_killed7')
+seed = ('D-handoff-reopen-rediscovery', 'app/src/zaratustra_app/conversation.py', [('        if active:', '        if active ...NT_REACHED", flush=True) or False):')], 'test_ordinary_activity.py::test_handoff_reopen_uses_retained_terminal[after]')
+
+    @pytest.mark.parametrize("seed", SEEDS, ids=[s[0] for s in SEEDS])
+    def test_delivery_defect_is_killed(
+        tmp_path: Path, seed: tuple[str, str, list[tuple[str, str]], str]
+    ) -> None:
+>       run_seed(tmp_path, seed)
+
+tests\restart\test_delivery_controls.py:328: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('C:/projects/zaratustra/.worktrees/restart-first-release/_scratch/d9-controls/tmp/test_delivery_defect_is_killed7')
+seed = ('D-handoff-reopen-rediscovery', 'app/src/zaratustra_app/conversation.py', [('        if active:', '        if active ...NT_REACHED", flush=True) or False):')], 'test_ordinary_activity.py::test_handoff_reopen_uses_retained_terminal[after]')
+
+    @pytest.mark.parametrize("seed", SEEDS, ids=[s[0] for s in SEEDS])
+    def test_seeded_defect_is_killed(
+        tmp_path: Path, seed: tuple[str, str, list[tuple[str, str]], str]
+    ) -> None:
+        name, source_path, replacements, node = seed
+        tree = tmp_path / "mutant"
+        for package in ("core", "app"):
+            shutil.copytree(ROOT / "packages" / package / "src", tree / package / "src")
+        path = tree / source_path
+        original = path.read_text(encoding="utf-8")
+        changed = original
+        for before, after in replacements:
+            assert before in changed, "stale mutation anchor: " + name
+            changed = changed.replace(before, after)
+        compile(changed, str(path), "exec")
+        path.write_text(changed, encoding="utf-8")
+        prefix = [str(tree / "core" / "src"), str(tree / "app" / "src"), str(ROOT)]
+        script = (
+            "import sys;sys.path[:0]="
+            + repr(prefix)
+            + ";import pytest;raise SystemExit(pytest.main(sys.argv[1:]))"
+        )
+        env = os.environ.copy()
+        env.pop("ZARA_RESTART_EVIDENCE", None)
+        run = subprocess.run(
+            [
+                sys.executable,
+                "-I",
+                "-X",
+                "utf8",
+                "-c",
+                script,
+                str(ROOT / "tests" / "restart" / node),
+                "--basetemp",
+                str(tmp_path / "run"),
+                "-q",
+                "--tb=short",
+            ],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=60,
+        )
+        report: dict[str, Any] = {
+            "seed": name,
+            "test": node,
+            "returncode": run.returncode,
+            "injection_reached": "MUTANT_REACHED" in run.stdout,
+            "behavioral_failure": "AssertionError" in run.stdout
+            or "DID NOT RAISE" in run.stdout
+            or any(line.startswith("E") and "assert " in line for line in run.stdout.splitlines()),
+            "stdout": run.stdout,
+            "stderr": run.stderr,
+            "diff": "".join(
+                difflib.unified_diff(
+                    original.splitlines(True),
+                    changed.splitlines(True),
+                    fromfile=source_path,
+                    tofile=source_path + ".mutant",
+                )
+            ),
+        }
+        destination = os.environ.get("ZARA_RESTART_NEGATIVES")
+        if destination:
+            folder = Path(destination)
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / (name + ".json")).write_text(
+                json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+        assert run.returncode == 1, report
+        assert report["injection_reached"], report
+>       assert report["behavioral_failure"], report
+E       AssertionError: {'seed': 'D-handoff-reopen-rediscovery', 'test': 'test_ordinary_activity.py::test_handoff_reopen_uses_retained_terminal[after]', 'returncode': 1, 'injection_reached': True, ...}
+E       assert False
+
+tests\restart\test_negative_controls.py:349: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/restart/test_delivery_controls.py::test_delivery_defect_is_killed[D-handoff-final-replayed-as-new]
+FAILED tests/restart/test_delivery_controls.py::test_delivery_defect_is_killed[D-handoff-reopen-rediscovery]
+2 failed, 24 passed in 64.09s (0:01:04)

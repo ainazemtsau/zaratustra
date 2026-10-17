@@ -1,0 +1,52 @@
+{
+  "source": "6760a4665d0f02939ab8db20ab6256a91e389bd4",
+  "original_limit": 4,
+  "first_state": "completed",
+  "second_state": "completed",
+  "calls": [
+    {
+      "version": "ordinary-routing/1",
+      "work": "turn:fe1e5ffd12604c7f808eddee32b2668a",
+      "limit": 4,
+      "raw": [
+        "fictional finite request"
+      ]
+    },
+    {
+      "version": "ordinary-execution/2",
+      "work": "continued:71d5acebb7a3bbdc86d4c88ab731d37bdfa7b89c3feeb3e0920378803f9d231f",
+      "limit": 2,
+      "raw": [
+        "fictional finite request"
+      ]
+    },
+    {
+      "version": "ordinary-execution/2",
+      "work": "injected-independent-budget",
+      "limit": 1000,
+      "raw": []
+    }
+  ],
+  "total_reserved": 6,
+  "works": [
+    {
+      "id": "turn:fe1e5ffd12604c7f808eddee32b2668a",
+      "status": "completed",
+      "limit": 4,
+      "has_continuation": false
+    },
+    {
+      "id": "continued:71d5acebb7a3bbdc86d4c88ab731d37bdfa7b89c3feeb3e0920378803f9d231f",
+      "status": "completed",
+      "limit": 2,
+      "has_continuation": true
+    },
+    {
+      "id": "injected-independent-budget",
+      "status": "completed",
+      "limit": 1000,
+      "has_continuation": false
+    }
+  ],
+  "tool_accepted": true
+}

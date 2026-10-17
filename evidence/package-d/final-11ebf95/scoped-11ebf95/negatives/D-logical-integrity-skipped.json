@@ -1,0 +1,10 @@
+{
+  "seed": "D-logical-integrity-skipped",
+  "test": "test_maintenance.py::test_rehashed_incoherent_backup_refused[orphan_head]",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n____________ test_rehashed_incoherent_backup_refused[orphan_head] _____________\ntests\\restart\\test_maintenance.py:266: in test_rehashed_incoherent_backup_refused\n    with pytest.raises(CoreError, match=\"backup.(integrity|reference_closure)\"):\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   Failed: DID NOT RAISE CoreError\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\nMUTANT_REACHED\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_maintenance.py::test_rehashed_incoherent_backup_refused[orphan_head]\n1 failed in 1.24s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/maintenance.py\n+++ core/src/zaratustra_core/maintenance.py.mutant\n@@ -20,6 +20,8 @@\n \n \n def integrity(path: Path) -> None:\n+    print(\"MUTANT_REACHED\", flush=True)\n+    return\n     with closing(sqlite3.connect(path)) as db:\n         if (\n             db.execute(\"PRAGMA integrity_check\").fetchall() != [(\"ok\",)]\n"
+}

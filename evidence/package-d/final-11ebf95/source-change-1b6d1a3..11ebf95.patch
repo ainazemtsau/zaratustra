@@ -1,0 +1,81 @@
+diff --git a/packages/app/src/zaratustra_app/executor_port.py b/packages/app/src/zaratustra_app/executor_port.py
+index 685f18a..b47db3c 100644
+--- a/packages/app/src/zaratustra_app/executor_port.py
++++ b/packages/app/src/zaratustra_app/executor_port.py
+@@ -203,6 +203,11 @@ class Pi:
+                                     self.live.model: {
+                                         "maxTokens": self.live.max_tokens,
+                                         "contextWindow": self.live.context_window,
++                                        # The loopback bridge hides the public URL from
++                                        # Pi's automatic ChatGPT compatibility detection.
++                                        # Use its native switch: keep effective reasoning
++                                        # at request level, without unsupported input items.
++                                        "compat": {"supportsMidConvoEffort": False},
+                                     }
+                                 },
+                             }
+diff --git a/tests/restart/test_conversation.py b/tests/restart/test_conversation.py
+index 03c1fba..256e594 100644
+--- a/tests/restart/test_conversation.py
++++ b/tests/restart/test_conversation.py
+@@ -313,6 +313,13 @@ def test_native_pi_oauth_launcher_controlled(
+                 and payload["stream"] is True
+             )
+             assert payload["max_output_tokens"] == 64
++            # The native SDK must use the selected effort at request level: the
++            # ChatGPT route rejects configuration_update input items.
++            assert payload["reasoning"]["effort"] == "medium"
++            assert [item.get("role") for item in payload["input"]] == ["developer", "user"]
++            assert payload["input"][0]["content"]
++            assert "mechanical input" in payload["input"][1]["content"][0]["text"]
++            assert [tool["name"] for tool in payload["tools"]] == ["zara_change"]
+             received.append(payload)
+             return Response(response_events(json.dumps(terminal)))
+ 
+@@ -338,6 +345,9 @@ def test_native_pi_oauth_launcher_controlled(
+     assert b"fictional-access" not in stdout and b"fictional-refresh" not in stdout
+     host = next((tmp_path / "pi").glob("*/host-stdin.bin")).read_bytes()
+     assert json.loads(host)["type"] == "prompt"
++    models = json.loads(next((tmp_path / "pi").glob("*/agent/models.json")).read_bytes())
++    selected = models["providers"]["openai"]["modelOverrides"]["gpt-6-luna"]
++    assert selected["maxTokens"] == 64 and selected["contextWindow"] == 8192
+ 
+ 
+ @pytest.mark.parametrize("mode", ["api-key-refused", "refresh-error"])
+diff --git a/tests/restart/test_delivery_controls.py b/tests/restart/test_delivery_controls.py
+index e6d3d78..662888f 100644
+--- a/tests/restart/test_delivery_controls.py
++++ b/tests/restart/test_delivery_controls.py
+@@ -10,6 +10,17 @@ from .test_negative_controls import test_seeded_defect_is_killed as run_seed
+ STORAGE = "core/src/zaratustra_core/storage.py"
+ MAINTENANCE = "core/src/zaratustra_core/maintenance.py"
+ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
++    (
++        "D-native-chatgpt-effort-compat-omitted",
++        "app/src/zaratustra_app/executor_port.py",
++        [
++            (
++                '"compat": {"supportsMidConvoEffort": False}',
++                '"compat": {"supportsMidConvoEffort": (' + M + " or True)}",
++            )
++        ],
++        "test_conversation.py::test_native_pi_oauth_launcher_controlled",
++    ),
+     (
+         "D-pinned-reference-closure-skipped",
+         MAINTENANCE,
+diff --git a/tests/restart/test_maintenance.py b/tests/restart/test_maintenance.py
+index d31b073..d3c3442 100644
+--- a/tests/restart/test_maintenance.py
++++ b/tests/restart/test_maintenance.py
+@@ -281,7 +281,9 @@ def test_corrupt_partial_backups_refused(tmp_path: Path, damage: str) -> None:
+         (source / "core.sqlite3").write_bytes(b"corrupt")
+     elif damage == "valid_database_change":
+         with sqlite3.connect(source / "core.sqlite3") as db:
+-            db.execute("UPDATE events SET body=?", ('{"tampered":true}',))
++            # Change valid SQLite bytes without breaking event/reference closure:
++            # this fixture isolates the manifest SHA guard from logical integrity.
++            db.execute("PRAGMA user_version=17")
+         db.close()
+     elif damage == "bytes":
+         (source / "artifacts" / SHA).write_bytes(RAW[:-1])

@@ -1,0 +1,10 @@
+{
+  "seed": "D-handoff-cursor-consumed-early",
+  "test": "test_work_handoff.py::test_handoff_preserves_raw_input_then_scoped_result",
+  "returncode": 1,
+  "injection_reached": true,
+  "behavioral_failure": true,
+  "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n_____________ test_handoff_preserves_raw_input_then_scoped_result _____________\ntests\\restart\\test_work_handoff.py:61: in test_handoff_preserves_raw_input_then_scoped_result\n    assert inspect(core, \"conversations\")[0][\"cursor\"] == 0\nE   assert 20 == 0\n---------------------------- Captured stdout call -----------------------------\nMUTANT_REACHED\n=========================== short test summary info ===========================\nFAILED tests/restart/test_work_handoff.py::test_handoff_preserves_raw_input_then_scoped_result\n1 failed in 1.29s\n",
+  "stderr": "",
+  "diff": "--- core/src/zaratustra_core/api.py\n+++ core/src/zaratustra_core/api.py.mutant\n@@ -1256,7 +1256,7 @@\n             ).fetchone()[0]\n             changed = db.execute(\n                 \"UPDATE conversations SET cursor=? WHERE id=? AND cursor=?\",\n-                (processed, attempt[\"conversation\"], cursor),\n+                (print(\"MUTANT_REACHED\", flush=True) or attempt[\"cutoff\"], attempt[\"conversation\"], cursor),\n             ).rowcount\n             if changed != 1:\n                 fail(\"stale_basis\", \"cursor\")\n"
+}

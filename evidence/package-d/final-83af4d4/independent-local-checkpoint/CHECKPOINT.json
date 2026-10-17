@@ -1,0 +1,124 @@
+{
+  "basis": "Parent/root firsthand report and copied completed local evidence; intermediate, not final verdict",
+  "source": "83af4d4a529ca73d06d566db62a3586f2a432af9",
+  "independent_prose_checks_passed": 8,
+  "byte_checks_passed": 555,
+  "source_files": 405,
+  "production_files": 20,
+  "G14": "not yet run at this checkpoint",
+  "full_native_scoped": "pending",
+  "files": [
+    {
+      "path": "build-container-verification.json",
+      "sha256": "942f2681636b6ad42998c8de30954c6144622b8fb9ba3482043a622d3b609feb"
+    },
+    {
+      "path": "byte-verification.json",
+      "sha256": "b3e7fb19017a7cc77c751105761b412cddd52d33eb5f2176b0801a3c7049387d"
+    },
+    {
+      "path": "cli-known-error-review.json",
+      "sha256": "413b1cbe9ad05d73138be69c6c5b393b4823f304f438ecfc2ad9d6c46148d872"
+    },
+    {
+      "path": "cli-known-error.stderr.bin",
+      "sha256": "e74e9b9ab8a581515ded0800f2f4d0c2012579d3a3c8e2f29a21c4fb9ddf922f"
+    },
+    {
+      "path": "cli-known-error.stdout.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "independent-installed-checks.json",
+      "sha256": "c6b849208ee1731714213152d884a101c4f9593e26f6f8f25b2d358a1c60240f"
+    },
+    {
+      "path": "installation-checks.json",
+      "sha256": "a86e9cb73c707310053263c2a7ad95825783e2624b540693df8ccbd0af300641"
+    },
+    {
+      "path": "own-install-byte-verification.json",
+      "sha256": "9b33ed120241a71f2f58c261f122b41b585c4eb4d7653dc0ed50ca5887974a6f"
+    },
+    {
+      "path": "prose-review.json",
+      "sha256": "d6a6ece7910aca612725eef6673311f2c3e23091079877401d2efc0053642676"
+    },
+    {
+      "path": "prose_review.py",
+      "sha256": "492ebc169f5950fec34115c2fdb0519acab0c8fa7b56d7e62d218de04b7c88b7"
+    },
+    {
+      "path": "installed_probe.py",
+      "sha256": "f6995017423e92a8e24d9217e8cc066d98ea710a39da899ca79c2b21751474cc"
+    },
+    {
+      "path": "verify_bytes.py",
+      "sha256": "150dcd67104992a00b75700c337bc98a1a06bda5827755d41b1df95e46b4ccba"
+    },
+    {
+      "path": "installed-0.stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "installed-0.stdout.bin",
+      "sha256": "f6857495de8d10c7c13e035f6eac725371544713dc1913201dbe1c57a4d840cf"
+    },
+    {
+      "path": "installed-1.stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "installed-1.stdout.bin",
+      "sha256": "907e59eebbb56847b02cb87b25a876272a7d6d5cb0275edd88209b8c0fa5dda0"
+    },
+    {
+      "path": "installed-2.stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "installed-2.stdout.bin",
+      "sha256": "907e59eebbb56847b02cb87b25a876272a7d6d5cb0275edd88209b8c0fa5dda0"
+    },
+    {
+      "path": "installed-3.stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "installed-3.stdout.bin",
+      "sha256": "59465855f4acccbb7a14789a57445cbf0ff2cb8dc5ea55149b98737ccca1879c"
+    },
+    {
+      "path": "installed-4.stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "installed-4.stdout.bin",
+      "sha256": "ae280ebc7fddbbaf807597e6f74ecbb9ccffdcf9584c8e628f7e0a507299b98f"
+    },
+    {
+      "path": "installed-5.stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "installed-5.stdout.bin",
+      "sha256": "0545ebbd31016f94966d6094ece1cd779ff28c7386e8dfc3de841938e83c6cf8"
+    },
+    {
+      "path": "installed-6.stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "installed-6.stdout.bin",
+      "sha256": "cdd39724cc5150fc044b54709511815c13f59501981ab7f8b8a6fab456a0bac8"
+    },
+    {
+      "path": "installed-worker.stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "installed-worker.stdout.bin",
+      "sha256": "113fe8f6ee8fd7f01b6dff90f156a96f7e4635ec164859268b97a7ce157a69af"
+    }
+  ]
+}
