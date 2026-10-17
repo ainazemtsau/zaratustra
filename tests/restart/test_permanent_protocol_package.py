@@ -207,3 +207,74 @@ def test_actual_020_update_recovers_after_marker_before_publication(
     with sqlite3.connect(legacy / "core.sqlite3") as db:
         assert db.execute("PRAGMA user_version").fetchone() == (1,)
     assert protected(legacy) == legacy_rows
+
+
+def test_native_protocol_one_update_snapshot_reentry(
+    protocol_package: Path, tmp_path: Path
+) -> None:
+    """Actual publication death and reentry with production random snapshot names."""
+    frozen = ROOT / "delivery/zaratustra-pi-0.3.0-4e1d5ea"
+    baseline = tmp_path / "baseline"
+    shutil.copytree(frozen, baseline)
+    for wheel in (protocol_package / "wheels").glob("*.whl"):
+        if not wheel.name.startswith("zaratustra_"):
+            shutil.copyfile(wheel, baseline / "wheels" / wheel.name)
+    (baseline / "wheels/SHA256SUMS").write_text(
+        "".join(
+            hashlib.sha256(wheel.read_bytes()).hexdigest() + "  " + wheel.name + "\n"
+            for wheel in sorted((baseline / "wheels").glob("*.whl"))
+        ),
+        encoding="utf-8",
+    )
+    root = tmp_path / "home"
+    previous = install(baseline, root)
+    data = root / "data"
+    run_python(previous, SEED, data)
+    rows = protected(data)
+    database = (data / "core.sqlite3").read_bytes()
+    credential = (data / "owner.credential").read_bytes()
+    selected = (root / ".current").read_bytes()
+    interrupted = tmp_path / "interrupted"
+    shutil.copytree(protocol_package, interrupted)
+    script = interrupted / "bootstrap.mjs"
+    content = script.read_text(encoding="utf-8")
+    assert content.count("os.replace(temporary,current)") == 1
+    script.write_text(
+        content.replace("os.replace(temporary,current)", "os._exit(73)"), encoding="utf-8"
+    )
+    process = launch(interrupted, root)
+    stdout, stderr = process.communicate(timeout=180)
+    assert process.returncode != 0, (stdout, stderr)
+    interrupted_exit = process.returncode
+    assert (root / ".current").read_bytes() == selected
+    snapshots = list((root / "backups").iterdir())
+    assert len(snapshots) == 1
+    snapshot = snapshots[0]
+    assert (snapshot / "manifest.json").exists()
+    with sqlite3.connect(snapshot / "core.sqlite3") as db:
+        assert db.execute("PRAGMA user_version").fetchone() == (1,)
+    assert protected(snapshot) == rows
+    assert protected(data) == rows
+    assert (data / "core.sqlite3").read_bytes() == database
+    assert (data / "owner.credential").read_bytes() == credential
+    snapshot_bytes = (snapshot / "core.sqlite3").read_bytes()
+    updated = install(protocol_package, root)
+    assert updated != previous
+    assert install(protocol_package, root) == updated
+    assert protected(data) == rows
+    assert (data / "core.sqlite3").read_bytes() == database
+    assert (data / "owner.credential").read_bytes() == credential
+    assert (snapshot / "core.sqlite3").read_bytes() == snapshot_bytes
+    assert len(list((root / "backups").iterdir())) == 2
+    (tmp_path / "native-publication-results.json").write_text(
+        json.dumps(
+            {
+                "interrupted_exit": interrupted_exit,
+                "reentry_exit": 0,
+                "scope": "Production random snapshot destination; publication crash only",
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )

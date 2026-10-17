@@ -261,11 +261,30 @@ def checked_snapshot(destination: Path) -> dict[str, Any]:
 
 
 def upgrade_fingerprint(db: sqlite3.Connection) -> str:
+    from .api import READ_OPS
+
+    ignored = sorted(READ_OPS | {"protocol_upgrade"})
+    placeholders = ",".join("?" for _ in ignored)
     return digest(
         {
             "state": state_fingerprint(db),
             "credentials": sorted([list(r) for r in db.execute("SELECT * FROM credentials")]),
             "meta": list(db.execute("SELECT * FROM meta").fetchone()),
+            "history": [
+                list(r)
+                for r in db.execute(
+                    "SELECT * FROM events WHERE kind NOT IN (" + placeholders + ") ORDER BY seq",
+                    ignored,
+                )
+            ],
+            "receipts": [
+                list(r)
+                for r in db.execute(
+                    "SELECT r.* FROM receipts r JOIN events e ON e.subject=r.command "
+                    "WHERE e.kind NOT IN (" + placeholders + ") ORDER BY e.seq",
+                    ignored,
+                )
+            ],
         }
     )
 
@@ -281,22 +300,25 @@ def prepare_update(core: Core, token: str, destination: Path) -> dict[str, Any]:
             generation = db.execute("PRAGMA user_version").fetchone()[0]
             source = dict(db.execute("SELECT * FROM meta").fetchone())
             prior = latest(db, "protocol_upgrade")
-            if generation == 0:
-                before = upgrade_fingerprint(db)
+            before = upgrade_fingerprint(db)
+            recovered_upgrade = False
         if destination.exists():
             manifest = checked_snapshot(destination)
-            if generation == 1:
-                if (
-                    prior is None
-                    or prior["backup"] != str(destination)
-                    or prior["database_sha256"] != manifest["database_sha256"]
-                    or prior["source"] != source
-                ):
+            with closing(sqlite3.connect(destination / "core.sqlite3")) as snapshot:
+                if manifest["source"] != source or upgrade_fingerprint(snapshot) != before:
+                    raise CoreError("stale_basis", "maintenance.update_snapshot")
+                snapshot_generation = snapshot.execute("PRAGMA user_version").fetchone()[0]
+            if snapshot_generation != generation:
+                recovered_upgrade = (
+                    generation == 1
+                    and snapshot_generation == 0
+                    and prior is not None
+                    and prior["backup"] == str(destination)
+                    and prior["database_sha256"] == manifest["database_sha256"]
+                    and prior["source"] == source
+                )
+                if not recovered_upgrade:
                     raise CoreError("invalid_request", "maintenance.destination")
-            else:
-                with closing(sqlite3.connect(destination / "core.sqlite3")) as snapshot:
-                    if manifest["source"] != source or upgrade_fingerprint(snapshot) != before:
-                        raise CoreError("stale_basis", "maintenance.update_snapshot")
         else:
             manifest = backup_locked(core, token, destination)
         with core._locked_transaction() as db:
@@ -314,7 +336,8 @@ def prepare_update(core: Core, token: str, destination: Path) -> dict[str, Any]:
                 db.execute("PRAGMA user_version=1")
                 receipt = event(db, "protocol_upgrade", "1", evidence)
                 upgrade = {"from": 0, "to": 1, "receipt_id": receipt}
-            elif prior is not None and prior["backup"] == str(destination):
+            elif recovered_upgrade:
+                assert prior is not None
                 receipt = "maintenance:protocol_upgrade:1:" + digest(prior)
                 upgrade = {"from": 0, "to": 1, "receipt_id": receipt}
             else:

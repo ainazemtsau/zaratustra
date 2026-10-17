@@ -33,7 +33,14 @@ predecessor, unavailable progress or an unknown claimed Attempt require explicit
 reconciliation. Cancelled historical roots remain visible with no analysed-boundary
 credit. They do not prevent following a unique completed checkpoint, do not become
 resolved effects, and never authorize resetting an established Activity to zero.
-Only a genuinely new Activity starts at zero.
+Only an Activity with no established eligible Sleep checkpoint/lineage starts an
+initial range at zero; an existing ordinary Activity's first Sleep is supported.
+
+Current limitation: a cancelled-only Sleep history or a cancelled successor can
+leave no eligible public continuation. Cancellation preserves old fences and
+uncertainty; it does not itself supply a completed checkpoint. A separate proposed
+cancelled-parent restart contract is not implemented in this version. Do not treat
+the completed-successor checks as proof of general cancellation recovery.
 
 Child creation, initial progress CAS0, progress binding and native mapping have
 separate crash controls. A crash after dispatch claim cannot trigger another
