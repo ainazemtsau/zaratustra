@@ -115,4 +115,38 @@ implementation checks have passed. The implementation is described in
 review, meaningful live Sleep followed by ordinary work, and the required full
 gate remain pending; the public source/evidence checkpoint is explicitly NOT_READY.
 
+The owner subsequently clarified the default Sleep domain (reply to
+`call_3705c9987c5f470ca287e9c8c31b8a1e`, item0):
+
+> Что значит по той же activity? То есть Sleep, он запускается в общем над всеми activity. Можно там где-то выбрать, можно несколько activity связать, но это возможно потом, но это не к одной activity относится. Типа теоретически я могу запустить, чтобы одно это было? Я имею в виду, ну может там типа... В общем я хочу в общем, да, чтобы это всё рассматривалось и activity, то есть это же для этого-то строится. Ну, может есть какие-то кейсы, когда я с одной конкретной хочу. Но я думаю, по умолчанию должно настроено в общем, в общем смотреть данные, анализирует их, выстраивает, развивает дальше.
+
+This corrects the native single-Activity default; it is not approval of the
+cancelled-parent restart proposal or protocol2. The approved successor mechanism
+and historical evidence remain intact. Bare Sleep uses an ordinary workspace-owned
+Work and the existing global source selector, without an Activity picker or
+prerequisite. Reading all Activities does not move their sources, assignments,
+goals or rights into that Work. Earlier local progress supplies no global analysed
+boundary. Optional group/target selection, permission widening, delegated development
+orchestration and cancellation restart are not implemented by this correction.
+Existing global memory/Method grants remain; a local adaptation without destination
+authority stays a targeted proposal instead of being stored as universal truth.
+This restores the default domain, not proof of meaningful adaptation or overall
+readiness. Current technical checkpoints remain explicitly NOT_READY.
+
+The owner then clarified cancellation (reply to
+`call_2efb14717f8242018134e45f4659cd86`):
+
+> Так, всё равно не понимаю, что значит перевод отменили. Ну, при отмене отменить. То есть потом не продолжать, потом заново новую начать. Я не понимаю. Ты либо плохо этот вопрос ставишь, так что я не могу понять, почему он вообще возникает. Либо у нас что-то формальное, мы смотрим по-разному. Тогда надо засинтез.
+
+Cancellation terminates that pass. A later explicit Sleep request means a new
+global analysis using current history and memory, without an obligation to finish
+the cancelled queue. Prior results, memory, cancelled Work and unknown-effect
+evidence remain; cancellation does not prove an old effect absent or successful.
+The linked cancelled-parent restart proposal and REV2 are withdrawn, not approved.
+No `restart_from`, protocol2 or restricted-descendant policy is implemented.
+The current global-default correction does not yet repair the existing
+fresh-after-cancel admission limitation; that minimal correction requires review
+and checks before it can be claimed. It must preserve missing/ambiguous live-frontier
+guards and never automatically resend an old invocation.
+
 END_OF_FILE: OWNER-PERMANENT-USE-20261017.md

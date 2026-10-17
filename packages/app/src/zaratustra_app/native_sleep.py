@@ -340,6 +340,28 @@ class NativeSleep:
             " Copy the delivered progress template's exact format (v1 or v2), predecessor, "
             "transition and range_start; inherited evidence remains attributed to its predecessor."
         )
+        if self.scope == "space":
+            context["scope_contract"] = {
+                "work_ownership": "workspace (space)",
+                "source_read_domain": "all permitted Activities and unassigned/global history",
+                "source_provenance": "Each source keeps its original scope, IDs and ownership.",
+                "write_authority": (
+                    "Global memory/Method grants only; local destinations need explicit grants."
+                ),
+            }
+            context["instructions"] += (
+                " This Work belongs to the workspace; its read domain spans all permitted "
+                "Activities and unassigned/global sources. Work ownership is not source ownership. "
+                "Preserve each material's original scope, IDs, goals and assignments. "
+                "Global reading grants no local write authority. "
+                "Use the existing global memory/Method grants only. "
+                "For an intended local correction without a destination grant, retain a targeted "
+                "proposal naming that local destination; never store local truth as universal "
+                "memory or move a local record into space to bypass rights. Shared applicability "
+                "requires your supported judgment, not an inference from global read access. "
+                "Sleep needs no Activity output: stage real output refs or outputs:[] and then "
+                "the honest final response. No Activity, finding or analysed coverage is invented."
+            )
         return context
 
     def checkpoint(self, work_id: str, attempt: str) -> None:

@@ -273,12 +273,14 @@ export default function (pi: ExtensionAPI) {
     }),
   });
   pi.registerCommand("zara-sleep", {
-    description: "Run Core Sleep for an explicit Activity scope in normal Pi",
+    description: "Run workspace-wide Core Sleep; optional explicit existing Activity target",
     handler: async (args, ctx) => visible(ctx, async () => {
       if (!active) await attach(ctx);
-      const scope = await scopeFor(ctx, args);
+      const targeted = Boolean(args.trim());
+      const scope = targeted ? await scopeFor(ctx, args) : "space";
       if (!scope) return;
       await request({command: "sleep", scope, profile: profile(ctx)});
+      ctx.ui.notify(targeted ? `Targeted Sleep for Activity ${scope}.` : "Global Sleep: workspace scope space; sources retain their original ownership.", "info");
       skipNextInput = true;
       pi.sendUserMessage("Run the exact pinned Sleep Method for retained sources now. Use Core tools and stage its result metadata; speak normally.");
     }),
@@ -391,7 +393,7 @@ export default function (pi: ExtensionAPI) {
   };
   for (const name of ["context", "read", "route", "change", "result"]) {
     pi.registerTool({ executionMode: "sequential", name: `zara_${name}`, label: `Core ${name}`, parameters: Type.Object({payload: schemas[name]}, {additionalProperties: false}),
-      description: name === "route" ? "Choose Activity atomically: payload changes, expected_heads, outputs, next_work:{scope,goal,inputs}. Required before useful work." : name === "result" ? "Stage Core METADATA only. Required outputs include the current Activity exact reference. Optional changes/expected_heads/state/wait. NO text field and NO old JSON outcome envelope. After this tool, write your actual final reply normally in Pi; only that retained reply becomes result text." : name === "change" ? "Apply typed scoped Activity/data changes with expected_heads through Core CAS." : name === "read" ? "Read exact Core records, paged tables, or source history using the operation-specific arguments. read_history uses scope/high_watermark/after_sequence/after_index/limit; it has NO conversation argument. Native history queries have a fixed 51200-byte whole-result representation bound before Core persistence; whole sources may be withheld and coverage is explicit. This is not a total model-context or token guarantee. A rejected argument can be corrected with a new tool call; authorization or transport failures stop execution." : "Read authoritative Core context.",
+      description: name === "route" ? "Choose Activity atomically: payload changes, expected_heads, outputs, next_work:{scope,goal,inputs}. Required before useful work." : name === "result" ? "Stage Core METADATA only. In Sleep mode, stage real output refs or outputs:[]; no Activity output is required and no analysis is implied. In ordinary and review modes, required outputs include the current Activity exact reference. Optional changes/expected_heads/state/wait. NO text field and NO old JSON outcome envelope. After this tool, write your actual final reply normally in Pi; only that retained reply becomes result text." : name === "change" ? "Apply typed scoped Activity/data changes with expected_heads through Core CAS." : name === "read" ? "Read exact Core records, paged tables, or source history using the operation-specific arguments. read_history uses scope/high_watermark/after_sequence/after_index/limit; it has NO conversation argument. Native history queries have a fixed 51200-byte whole-result representation bound before Core persistence; whole sources may be withheld and coverage is explicit. This is not a total model-context or token guarantee. A rejected argument can be corrected with a new tool call; authorization or transport failures stop execution." : "Read authoritative Core context.",
       async execute(callId, params, _signal, _update, ctx) {
         if (!active || failed) throw new Error("Attach or reopen Core; incomplete hooks require reconciliation.");
         const result = await visible(ctx, async () => {

@@ -31,7 +31,7 @@ Core context, and exposes `zara_context`, `zara_route`, `zara_change` and
 Result stages outputs/changes only; the actual assistant final is retained and
 committed at Pi's stable `agent_settled` boundary. Plaintext stays plaintext.
 
-`/reopen` in a fresh Pi session reloads the same Core conversation without replaying tools. `/zara-reply TEXT` addresses the exact current Core question; ordinary input never consumes a pending wait. `/zara-sleep` selects the current Activity or offers readable choices, then examines retained outcomes and adapts its memory/methods. `/zara-cancel` explicitly cancels an incomplete Core Work while preserving uncertainty about external effects. Hook failures are visible and
+`/reopen` in a fresh Pi session reloads the same Core conversation without replaying tools. `/zara-reply TEXT` addresses the exact current Core question; ordinary input never consumes a pending wait. Bare `/zara-sleep` considers retained sources across all Activities and unassigned work, without an Activity prerequisite or picker. Its ordinary Work belongs to the workspace; source ownership, goals and rights stay where they were. Global memory and chosen Methods can support subsequent work. A correction intended for a local Activity without destination permission stays a targeted proposal; it is not silently made universal. `/zara-cancel` explicitly cancels an incomplete Core Work while preserving uncertainty about external effects. Hook failures are visible and
 leave incomplete Work open. Unknown previous tool effects require reconciliation;
 this adapter never automatically retries them. Core protects its own mutations
 with CAS, fencing and receipts. Pi builtin file/shell effects are retained as

@@ -27,20 +27,34 @@ its cutoff, no remainder and valid declared analysis coverage. The next range
 begins after that boundary, including later arrivals without re-enumerating all
 history. Analysis remains the model's explicit declaration; no finding is forced.
 
-The native adapter follows the unique eligible completed checkpoint, or recovers
-its known unclaimed child through Core. Several eligible checkpoints, a missing
+Bare native Sleep reads globally through the existing `space` selector. Its
+ordinary Work is workspace-owned; reading Activity sources does not transfer
+their ownership, goals, assignments or rights. There is one global continuation
+lineage. Earlier Activity-local Sleep histories remain exact sources, and their
+analysed boundaries are never merged or relabelled as global coverage. Global
+memory/Method writes retain their current destination grants; a local correction
+without its destination grant remains a targeted proposal.
+
+The native adapter follows the unique eligible completed checkpoint in its
+selected lineage, or recovers its known unclaimed child through Core. Several eligible checkpoints, a missing
 predecessor, unavailable progress or an unknown claimed Attempt require explicit
 reconciliation. Cancelled historical roots remain visible with no analysed-boundary
 credit. They do not prevent following a unique completed checkpoint, do not become
-resolved effects, and never authorize resetting an established Activity to zero.
-Only an Activity with no established eligible Sleep checkpoint/lineage starts an
-initial range at zero; an existing ordinary Activity's first Sleep is supported.
+resolved effects, and never authorize resetting an established lineage to zero.
+Only a scope with no established eligible Sleep checkpoint/lineage starts an
+initial range at zero. An initial global pass considers the retained global
+history even when local Activity passes already exist; it does not inherit their
+coverage. An existing ordinary Activity's first explicitly targeted pass remains
+supported.
 
 Current limitation: a cancelled-only Sleep history or a cancelled successor can
 leave no eligible public continuation. Cancellation preserves old fences and
-uncertainty; it does not itself supply a completed checkpoint. A separate proposed
-cancelled-parent restart contract is not implemented in this version. Do not treat
-the completed-successor checks as proof of general cancellation recovery.
+uncertainty; it does not itself supply a completed checkpoint. The owner clarified
+that cancellation ends the pass and a later explicit Sleep is a new global
+analysis, with current memory/history and no cancelled-queue obligation. The
+linked cancelled-parent restart proposal is withdrawn. Fresh-after-cancel admission
+still needs its bounded correction; do not treat completed-successor checks as
+proof that this usability gap is closed.
 
 Child creation, initial progress CAS0, progress binding and native mapping have
 separate crash controls. A crash after dispatch claim cannot trigger another
