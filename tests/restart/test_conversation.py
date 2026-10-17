@@ -327,6 +327,7 @@ def test_native_pi_oauth_launcher_controlled(
                 and payload["stream"] is True
             )
             assert payload["max_output_tokens"] == max_tokens
+            assert payload["text"] == {"format": {"type": "json_object"}}
             # The native SDK must use the selected effort at request level: the
             # ChatGPT route rejects configuration_update input items.
             assert payload["reasoning"]["effort"] == "medium"
@@ -367,6 +368,7 @@ def test_native_pi_oauth_launcher_controlled(
     models = json.loads(next((tmp_path / "pi").glob("*/agent/models.json")).read_bytes())
     selected = models["providers"]["openai"]["modelOverrides"]["gpt-6-luna"]
     assert selected["maxTokens"] == max_tokens and selected["contextWindow"] == 8192
+    assert selected["samplingParams"] == {"text": {"format": {"type": "json_object"}}}
 
 
 @pytest.mark.parametrize("mode", ["api-key-refused", "refresh-error"])

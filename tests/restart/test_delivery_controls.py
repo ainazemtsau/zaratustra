@@ -11,6 +11,28 @@ STORAGE = "core/src/zaratustra_core/storage.py"
 MAINTENANCE = "core/src/zaratustra_core/maintenance.py"
 SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
     (
+        "D-native-json-mode-omitted",
+        "app/src/zaratustra_app/executor_port.py",
+        [
+            (
+                '"text": {"format": {"type": "json_object"}}',
+                '"text": (' + M + " or {})",
+            )
+        ],
+        "test_conversation.py::test_native_pi_oauth_launcher_controlled",
+    ),
+    (
+        "D-native-json-mode-text",
+        "app/src/zaratustra_app/executor_port.py",
+        [
+            (
+                '"type": "json_object"',
+                '"type": (' + M + ' or "text")',
+            )
+        ],
+        "test_conversation.py::test_native_pi_oauth_launcher_controlled",
+    ),
+    (
         "D-goal-prose-capped-as-identifier",
         "core/src/zaratustra_core/shapes.py",
         [
