@@ -115,7 +115,7 @@ def record(
     work_id = next(a["work"] for a in snapshot["attempts"] if a["id"] == attempt)
     work = next(w for w in snapshot["works"] if w["id"] == work_id)
     body = json.loads(work["body"])
-    if body["method_ref"]["id"] != EXECUTION_ID or body["scope"] == "space":
+    if body["method_ref"]["id"] not in {EXECUTION_ID, SETUP_ID} or body["scope"] == "space":
         raise CoreError("denied", "native.owner_result_kind")
     value = {
         "format": "owner-verdict/v1",

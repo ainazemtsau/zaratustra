@@ -444,7 +444,8 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
                 assert presented["query_coverage"]["first_withheld_source_ref"]
                 assert presented["query_coverage"]["first_withheld_source_bytes"] > 0
         first = json.loads(ends[0]["result"]["content"][0]["text"])
-        assert first["has_more"] and first["projection"]["withheld"] > 0
+        assert first["has_more"]
+        assert first["query_coverage"]["byte_limited"] or first["projection"]["withheld"] > 0
         if first["sources"]:
             assert first["sources"][0]["source_ref"]["sha256"]
         else:

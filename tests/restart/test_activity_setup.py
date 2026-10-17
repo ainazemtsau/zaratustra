@@ -250,3 +250,36 @@ def test_duplicate_terminal_and_cancel_do_not_repeat_saved_step(tmp_path: Path) 
     )
     assert session(core, token, "fresh").reopen()["current"] == {}
     assert len(inspect(core, "attempts")) == 3
+
+
+def test_setup_owner_verdict_uses_exact_result_without_implicit_acceptance(tmp_path: Path) -> None:
+    from zaratustra_app.native_verdict import delivery, record
+
+    core, token = Core.initialize(tmp_path / "core")
+    native = session(core, token, "pi")
+    routing = native.input("human", "Create a fictional Activity")["current"]
+    origin = route(native)["current"]
+    routing_result = next(r for r in inspect(core, "results") if r["attempt"] == routing["attempt"])
+    with pytest.raises(CoreError, match="native.owner_result_kind"):
+        record(
+            core, token, routing["attempt"], routing_result["fingerprint"], "revised", "Change it"
+        )
+    native.tool("result", "stage", {"outputs": [{"id": "fictional", "revision": 1}]}, origin)
+    native.settled("actual", "The useful saved step.", False, origin=origin)
+    shown = delivery(core, token, "fictional")
+    with pytest.raises(CoreError, match="stale_basis"):
+        record(core, token, origin["attempt"], "wrong", "accepted", "Explicit fictional words")
+    args = (
+        core,
+        token,
+        origin["attempt"],
+        shown["result_hash"],
+        "revised",
+        "Keep the saved journal",
+    )
+    verdict = record(*args)
+    assert record(*args) == verdict
+    assert verdict["activity_id"] == "fictional" and verdict["verdict"] == "revised"
+    assert inspect(core, "acceptance") == []
+    heads = [h for h in inspect(core, "heads") if h["id"].startswith("owner-verdict:")]
+    assert len(heads) == 1 and heads[0]["scope"] == "fictional"
