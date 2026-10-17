@@ -37,6 +37,9 @@ SOURCE = Path(__file__).resolve().parents[2]
         "read-transport",
         "read-payload",
         "read-wire",
+        "history-large",
+        "page-large",
+        "exact-large",
     ],
 )
 def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
@@ -123,6 +126,57 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
             ("zara_result", result),
             ("text", "Exact corrected read final"),
         ]
+    if scenario == "history-large":
+        script = script[:1] + [
+            (
+                "zara_read",
+                {
+                    "payload": {
+                        "operation": "read_history",
+                        "arguments": {"scope": "fictional", "limit": 100},
+                    }
+                },
+            ),
+            (
+                "zara_read",
+                {
+                    "payload": {
+                        "operation": "read_history",
+                        "arguments": {"scope": "fictional", "limit": 1},
+                    }
+                },
+            ),
+            ("zara_result", result),
+            ("text", "Exact bounded history final; withheld source unexamined"),
+        ]
+    if scenario in {"page-large", "exact-large"}:
+        first = (
+            {
+                "operation": "read_page",
+                "arguments": {
+                    "table": "messages",
+                    "conversation": "fictional-large-page",
+                    "limit": 1,
+                },
+            }
+            if scenario == "page-large"
+            else {"operation": "read_exact", "arguments": {"id": "huge-history", "revision": 1}}
+        )
+        second = {
+            "operation": "read_page",
+            "arguments": {
+                "table": "messages",
+                "conversation": "fictional-large-page",
+                "limit": 1,
+                "columns": ["seq", "event"],
+            },
+        }
+        script = script[:1] + [
+            ("zara_read", {"payload": first}),
+            ("zara_read", {"payload": second}),
+            ("zara_result", result),
+            ("text", "Exact bounded read final"),
+        ]
     calls: list[Any] = []
 
     class Handler(BaseHTTPRequestHandler):
@@ -132,6 +186,16 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
         def do_POST(self) -> None:
             calls.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
             index = len(calls) - 1
+            if scenario == "history-large" and len(json.dumps(calls[-1]).encode("utf-8")) > 256000:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(
+                    b'{"error":{"message":"Fictional provider context window exceeded",'
+                    b'"type":"invalid_request_error"}}'
+                )
+                return
+
             if index >= len(script):
                 self.send_response(429)
                 self.end_headers()
@@ -303,6 +367,53 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
             assert ends[1]["result"]["state"] == "observed"
             assert value["context"]["current"]["attempt"]
             assert value["delivery"]["state"] == "error"
+    elif scenario == "history-large":
+        assert len(calls) == 5
+        assert (
+            value["delivery"]["result"]["text"]
+            == "Exact bounded history final; withheld source unexamined"
+        )
+        ends = [
+            e
+            for e in value["events"]
+            if e.get("type") == "tool_execution_end" and e.get("toolName") == "zara_read"
+        ]
+        assert len(ends) == 2 and not any(e["isError"] for e in ends)
+        for event in ends:
+            assert (
+                len(
+                    json.dumps(event["result"], ensure_ascii=False, separators=(",", ":")).encode(
+                        "utf-8"
+                    )
+                )
+                <= 50 * 1024
+            )
+        first = json.loads(ends[0]["result"]["content"][0]["text"])
+        assert first["has_more"] and first["projection"]["withheld"] > 0
+        assert first["sources"] and first["sources"][0]["source_ref"]["sha256"]
+    elif scenario in {"page-large", "exact-large"}:
+        assert len(calls) == 5
+        assert value["delivery"]["result"]["text"] == "Exact bounded read final"
+        ends = [
+            e
+            for e in value["events"]
+            if e.get("type") == "tool_execution_end" and e.get("toolName") == "zara_read"
+        ]
+        first = json.loads(ends[0]["result"]["content"][0]["text"])
+        assert first["state"] == "NOT_DELIVERED" and not ends[0]["isError"]
+        if scenario == "exact-large":
+            assert first["ref"] == {"id": "huge-history", "revision": 1}
+        assert "rows" in json.loads(ends[1]["result"]["content"][0]["text"])
+        for event in ends:
+            assert (
+                len(
+                    json.dumps(event["result"], ensure_ascii=False, separators=(",", ":")).encode(
+                        "utf-8"
+                    )
+                )
+                <= 50 * 1024
+            )
+            assert "rows" not in event["result"]["details"]
     elif scenario.startswith("read-"):
         if scenario in {"read-shape-correction", "read-admission-correction"}:
             assert len(calls) == 5

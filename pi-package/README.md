@@ -42,6 +42,18 @@ Neither a successful check nor a model review constitutes owner acceptance.
 durable context after reopening. Normal production work has no artificial model
 call/token/money cap; finite bounds are explicit evaluation settings only.
 
+Native tool replies use Pi's public 50 KiB presentation budget, including UTF-8,
+JSON escaping and reply metadata. History replies expose an explicit projection
+of whole sources: the cutoff and source hashes stay exact, the cursor advances
+only across delivered sources, and `has_more` includes withheld material. A single
+source that cannot fit is `NOT_DELIVERED`; a smaller page cannot split it. Other
+oversized reads report missing delivery explicitly. Successful mutations retain
+their actual acknowledgement even when accompanying context cannot be presented.
+This changes no Core record or receipt and claims no analysis of omitted material.
+It is not a total-context or token guarantee: repeated bounded reads can still
+fill the model context. Provider failures remain incomplete; no automatic retry
+is performed. Required pinned context supplied before execution is not truncated.
+
 Keep the same data home across code updates. Let Pi become idle before reloading
 the extension; retained Work and waits remain in Core. Pi identifies a local package by its
 absolute registered path: installing another version in a new folder does not

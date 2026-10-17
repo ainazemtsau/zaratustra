@@ -1,0 +1,72 @@
+// Pure production presenter exercised through the installed Pi TypeScript loader.
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+const [sdk,source]=process.argv.slice(2);
+const {createJiti}=await import(pathToFileURL(join(sdk,'node_modules/jiti/lib/jiti.mjs')).href);
+const resolve=createRequire(join(sdk,'package.json')).resolve;
+const jiti=createJiti(import.meta.url,{alias:{'@earendil-works/pi-coding-agent':join(sdk,'dist/index.js'),'typebox':resolve('typebox')}});
+const {presentNativeResult}=await jiti.import(join(source,'pi-package/extension.ts'));
+const {DEFAULT_MAX_BYTES}=await import(pathToFileURL(join(sdk,'dist/index.js')).href);
+process.stdin.setEncoding('utf8');let text='';for await(const chunk of process.stdin)text+=chunk;
+const input=JSON.parse(text);
+const size=value=>Buffer.byteLength(JSON.stringify(value),'utf8');
+const unpack=value=>JSON.parse(value.content[0].text);
+if(input.mode==='project'){
+ const before=JSON.stringify(input.result);
+ const envelope=presentNativeResult(input.name,input.payload,input.result);
+ assert.equal(JSON.stringify(input.result),before);
+ assert.ok(size(envelope)<=DEFAULT_MAX_BYTES);
+ console.log(JSON.stringify({envelope,bytes:size(envelope),budget:DEFAULT_MAX_BYTES}));
+}else{
+ const ref=(index)=>({sequence:7,index,sha256:String(index).padStart(64,'0')});
+ const source=(index,body)=>({source_ref:ref(index),material:{body}});
+ const args={operation:'read_history',arguments:{limit:100,after_sequence:6,after_index:9}};
+ const original={high_watermark:10,cursor:[10,2147483647],has_more:false,sources:[source(0,'Ж🙂"\\\n'.repeat(100)),source(1,'x'.repeat(100000))]};
+ const snapshot=JSON.stringify(original);
+ const projected=presentNativeResult('read',args,original),value=unpack(projected);
+ assert.equal(JSON.stringify(original),snapshot);
+ assert.deepEqual(value.sources,[original.sources[0]]);
+ assert.deepEqual(value.cursor,[7,0]);assert.equal(value.high_watermark,10);
+ assert.equal(value.has_more,true);assert.equal(value.projection.withheld,1);
+ assert.deepEqual(value.projection.core_cursor,original.cursor);
+ assert.ok(size(projected)<=DEFAULT_MAX_BYTES);
+ assert.equal(projected.details.sources,undefined);
+ const tooBig=unpack(presentNativeResult('read',args,{...original,sources:[original.sources[1]]}));
+ assert.equal(tooBig.state,'NOT_DELIVERED');assert.equal(tooBig.reason,'single_source_too_large');
+ assert.deepEqual(tooBig.source_ref,ref(1));assert.deepEqual(tooBig.cursor,[6,9]);
+ assert.equal(tooBig.sources.length,0);assert.equal(tooBig.has_more,true);
+ const empty=unpack(presentNativeResult('read',args,{...original,sources:[],has_more:true}));
+ assert.deepEqual(empty.cursor,[6,9]);assert.equal(empty.has_more,true);
+ const small=unpack(presentNativeResult('read',args,{...original,sources:[original.sources[0]],has_more:false}));
+ assert.equal(small.has_more,false);assert.deepEqual(small.sources[0].source_ref,ref(0));
+ const sample=n=>({body:'Ж🙂"\\\n'.repeat(n)});
+ const direct=n=>presentNativeResult('read',{operation:'read_exact',arguments:{id:'fictional',revision:1}},sample(n));
+ let low=0,high=100000;
+ while(low<high){const mid=Math.ceil((low+high)/2);if(unpack(direct(mid)).state==='NOT_DELIVERED')high=mid-1;else low=mid;}
+ assert.deepEqual(unpack(direct(low)),sample(low));assert.ok(size(direct(low))<=DEFAULT_MAX_BYTES);
+ assert.equal(unpack(direct(low+1)).state,'NOT_DELIVERED');
+ // ASCII exercises an exact 50 KiB serialized-envelope boundary, not an approximate byte cut.
+ const ascii=n=>presentNativeResult('context',{}, {body:'x'.repeat(n)});
+ let n=0;const overhead=size(ascii(0));n=DEFAULT_MAX_BYTES-overhead;
+ assert.equal(size(ascii(n)),DEFAULT_MAX_BYTES);assert.equal(unpack(ascii(n)).body.length,n);
+ assert.equal(unpack(ascii(n+1)).state,'NOT_DELIVERED');
+ const huge={state:'attached',current:{work:'actual-work',attempt:'actual-attempt',scope:'actual-scope'},core:{body:'x'.repeat(100000)}};
+ const ack=unpack(presentNativeResult('route',{},huge));
+ assert.equal(ack.committed,undefined);assert.equal(ack.current.work,'actual-work');
+ assert.equal(ack.context_not_delivered,true);assert.notEqual(ack.state,'NOT_DELIVERED');
+ const changed={refs:[{id:'actual-change',revision:2}],body:'x'.repeat(100000)};
+ assert.deepEqual(unpack(presentNativeResult('change',{},changed)).refs,changed.refs);
+ const staged=unpack(presentNativeResult('result',{}, {state:'staged',completed:false,body:'x'.repeat(100000)}));
+ assert.equal(staged.state,'staged');assert.equal(staged.completed,false);assert.equal(staged.committed,undefined);
+ const giantAck=presentNativeResult('change',{}, {refs:[{id:'x'.repeat(100000),revision:1}],current:{work:'x'.repeat(100000)}});
+ assert.ok(size(giantAck)<=DEFAULT_MAX_BYTES);assert.equal(unpack(giantAck).committed,undefined);
+ assert.ok(unpack(giantAck).omissions.includes('refs'));
+ const giantRef=presentNativeResult('read',{operation:'read_exact',arguments:{id:'x'.repeat(100000),revision:1}},{body:'x'.repeat(100000)});
+ assert.ok(size(giantRef)<=DEFAULT_MAX_BYTES);assert.equal(unpack(giantRef).metadata_not_delivered,true);
+ assert.equal(unpack(presentNativeResult('read',{operation:'read_page',arguments:{table:'messages'}},{rows:['x'.repeat(100000)]})).state,'NOT_DELIVERED');
+ const rejected={state:'rejected',rejection:{code:'invalid_request',field:'history.after'}};
+ assert.deepEqual(presentNativeResult('read',{},rejected).details.rejection,rejected.rejection);
+ console.log(JSON.stringify({passed:true,budget:DEFAULT_MAX_BYTES,utf8Boundary:low,asciiBoundary:n}));
+}

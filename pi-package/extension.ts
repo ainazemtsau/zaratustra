@@ -1,7 +1,82 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { DEFAULT_MAX_BYTES, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { randomUUID } from "node:crypto";
 import { bootstrap, dataRoot, run } from "./bootstrap.mjs";
+
+// Pi's public default is a presentation budget, never a Core data or model-call limit.
+export function presentNativeResult(name: string, payload: any, result: any) {
+  const bytes = (value: any) => Buffer.byteLength(JSON.stringify(value), "utf8");
+  const envelope = (value: any) => ({
+    content: [{type: "text" as const, text: JSON.stringify(value)}],
+    details: {
+      ...(value.state !== undefined ? {state: value.state} : {}),
+      ...(value.completed !== undefined ? {completed: value.completed} : {}),
+      ...(value.rejection !== undefined ? {rejection: value.rejection} : {}),
+      ...(value.projection !== undefined ? {projection: value.projection} : {}),
+    },
+  });
+  const fits = (value: any) => bytes(envelope(value)) <= DEFAULT_MAX_BYTES;
+  const finish = (value: any) => fits(value) ? envelope(value) : envelope({
+    state: "NOT_DELIVERED", reason: "presentation_metadata_exceeds_budget",
+    original_bytes: bytes(value), metadata_not_delivered: true,
+  });
+  if (name === "read" && payload.operation === "read_history" && Array.isArray(result.sources)) {
+    const original = result.sources;
+    const inputCursor = [payload.arguments.after_sequence ?? 0, payload.arguments.after_index ?? 0];
+    const page = (sources: any[]) => ({
+      high_watermark: result.high_watermark,
+      sources,
+      cursor: sources.length ? [sources[sources.length - 1].source_ref.sequence,
+        sources[sources.length - 1].source_ref.index] : inputCursor,
+      has_more: Boolean(result.has_more || sources.length < original.length),
+      projection: {kind: "whole_source_prefix", budget_bytes: DEFAULT_MAX_BYTES,
+        requested: payload.arguments.limit ?? 32, core_returned: original.length,
+        returned: sources.length, withheld: original.length - sources.length,
+        core_cursor: result.cursor, coverage: "Not delivered by this tool call; no analysis is asserted."},
+    });
+    const selected: any[] = [];
+    for (const source of original) {
+      if (!fits(page([...selected, source]))) break;
+      selected.push(source);
+    }
+    let presented: any = page(selected);
+    if (!selected.length && original.length) {
+      presented = {...presented, state: "NOT_DELIVERED", reason: "single_source_too_large",
+        source_ref: original[0].source_ref, source_bytes: bytes(original[0]),
+        required_tool_result_bytes: bytes(envelope(page([original[0]]))),
+        advice: "A lower limit cannot split this source. Use any already pinned sleep_sources if available; this read did not deliver or analyse it."};
+    }
+    return finish(presented);
+  }
+  if (fits(result)) return envelope(result);
+  const originalBytes = bytes(result);
+  if (["route", "change", "result"].includes(name) && result.state !== "rejected") {
+    const current = result.current ?? {};
+    const fields: any = {};
+    for (const key of ["state", "completed", "accepted", "staged", "refs"]) {
+      if (Object.hasOwn(result, key)) fields[key] = result[key];
+    }
+    if (current.work || current.attempt || current.scope) fields.current = {
+      ...(current.work ? {work: current.work} : {}),
+      ...(current.attempt ? {attempt: current.attempt} : {}),
+      ...(current.scope ? {scope: current.scope} : {}),
+    };
+    let acknowledgement: any = {presentation: "ACKNOWLEDGEMENT_ONLY", operation: name,
+      context_not_delivered: true, original_bytes: originalBytes,
+      omissions: ["non_acknowledgement_fields", ...Object.keys(fields)]};
+    for (const [key, value] of Object.entries(fields)) {
+      const candidate = {...acknowledgement, [key]: value,
+        omissions: acknowledgement.omissions.filter((field: string) => field !== key)};
+      if (fits(candidate)) acknowledgement = candidate;
+    }
+    return envelope(acknowledgement);
+  }
+  return finish({state: "NOT_DELIVERED", operation: payload.operation ?? name,
+    original_bytes: originalBytes,
+    ...(payload.operation === "read_exact" ? {ref: payload.arguments} : {}),
+    ...(payload.operation === "read_page" ? {query: payload.arguments} : {}),
+    reason: "presentation_budget", advice: "Request fewer whole records or supported columns. No material was truncated or analysed."});
+}
 
 export default function (pi: ExtensionAPI) {
   let active = false;
@@ -245,7 +320,7 @@ export default function (pi: ExtensionAPI) {
             throw error;
           }
         });
-        return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
+        return presentNativeResult(name, params.payload, result);
       },
     });
   }
