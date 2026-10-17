@@ -154,4 +154,21 @@ invocations are never automatically resent. Exact-package independent checks,
 meaningful live use and the mandatory full gate remain distinct from this source
 implementation; no overall readiness or owner acceptance is implied.
 
+The actual ce07210 global Sleep trial exposed a structural staging defect:
+history-source references were accepted as staged record-reference metadata and
+rejected only after the visible final. No analysis, Result or Memory commit is
+credited. The bounded correction reuses Core's existing typed contracts before
+staging and makes only known structural argument rejection correctable. It adds
+no semantic acceptance rule, new protocol, grants or automatic retry. An invalid
+replacement clears any prior staged metadata through CAS and explicitly reports
+that clearing; final Core admission and atomicity remain authoritative. See
+[structural staging](STRUCTURAL-STAGING.md) for the exact boundary.
+
+The detailed owner report saved at Solmax `3fb3cd0d1` described gate03 as running
+at its historical cut. Root subsequently stopped that obsolete ce baseline for
+this confirmed source fix. Gate01's dependency-DNS failure, gate02's interruption
+with unknown exit, and gate03's controlled superseded stop are retained separately;
+none is a completed full-gate PASS. A new exact freeze, affected checks,
+independent review and a separately authorized full gate remain required.
+
 END_OF_FILE: OWNER-PERMANENT-USE-20261017.md

@@ -172,6 +172,8 @@ export default function (pi: ExtensionAPI) {
   let startLeaf: string | null = null;
   let skipNextInput = false;
   let beforeReviewTools: string[] | null = null;
+  const observedResultCalls = new Set<string>();
+  const executedResultCalls = new Set<string>();
   const profile = (ctx: any) => ({adapter: "ordinary-native-pi", provider: ctx.model?.provider, model: ctx.model?.id, api: ctx.model?.api, thinking: ctx.thinkingLevel, cwd: ctx.cwd});
   let requestQueue: Promise<void> = Promise.resolve();
   const request = (body: Record<string, unknown>) => {
@@ -214,6 +216,7 @@ export default function (pi: ExtensionAPI) {
     python = await bootstrap(); sessionId = ctx.sessionManager.getSessionId();
     const context = await request({command: "attach"});
     active = true; failed = false;
+    observedResultCalls.clear(); executedResultCalls.clear();
     applyReviewTools(context);
     return context;
   };
@@ -254,6 +257,7 @@ export default function (pi: ExtensionAPI) {
       python = await bootstrap(); sessionId = ctx.sessionManager.getSessionId();
       const context = await request({ command: "reopen" });
       active = true; failed = false;
+      observedResultCalls.clear(); executedResultCalls.clear();
       applyReviewTools(context);
       pi.sendMessage({ customType: "zaratustra-context", content: JSON.stringify(nativeInitialContextView(context)), display: false });
       ctx.ui.notify("Core context reopened. Unconfirmed prior tools require reconciliation.", "info");
@@ -356,11 +360,22 @@ export default function (pi: ExtensionAPI) {
     const view = await visible(ctx, async () => nativeInitialContextView(context));
     return { message: { customType: "zaratustra-context", content: JSON.stringify(view), display: false } };
   });
-  const exact = Type.Object({id: Type.String(), revision: Type.Integer({minimum: 1})}, {additionalProperties: false});
-  const heads = Type.Record(Type.String(), Type.Integer({minimum: 0}));
   const id = Type.String({minLength: 1, maxLength: 240});
+  const exact = Type.Object({
+    id, revision: Type.Integer({minimum: 1}),
+    role: Type.Optional(Type.Union([Type.Literal("exact"), Type.Literal("must_be_current")])),
+  }, {additionalProperties: false});
+  const heads = Type.Record(Type.String(), Type.Integer({minimum: 0}));
   const cursor = Type.Integer({minimum: 0});
   const nullable = (schema: any) => Type.Union([schema, Type.Null()]);
+  const change = Type.Object({
+    id, kind: id, key: id, scope: Type.Optional(id), body: Type.Any(),
+    source_refs: Type.Optional(Type.Array(exact)), schema_ref: Type.Optional(nullable(exact)),
+    tombstone: Type.Optional(Type.Boolean()),
+    application: Type.Optional(Type.Union(["active", "proposal", "withdrawn"].map(value => Type.Literal(value)))),
+    artifact_refs: Type.Optional(Type.Array(Type.String({pattern: "^[0-9a-f]{64}$"}), {maxItems: 32})),
+  }, {additionalProperties: false});
+  const changeGuidance = " Change.body is the free record value, without a stored record wrapper. Metadata source_refs/schema_ref use record references {id,revision,role?}; history {sequence,index,sha256} references belong inside free analysis body.sources. For tagged sleep-progress/v1 or v2 bodies, follow the exact corresponding schema in context.outcome_metadata_contract.progress_schemas; required scope and version-specific fields must match. Do not add v2 predecessor_ref/range_start/transition fields to v1 or automatically change the version. Structural staging does not prove rights, current references or meaning; final Core admission still rechecks them.";
   const pageToken = Type.Object({high_watermark: cursor, sha256: Type.String({pattern: "^[0-9a-f]{64}$"})}, {additionalProperties: false});
   const readSchemas = Type.Union([
     Type.Object({operation: Type.Literal("read_exact"), arguments: Type.Object({
@@ -387,14 +402,15 @@ export default function (pi: ExtensionAPI) {
   const schemas: Record<string, any> = {
     context: Type.Object({}, {additionalProperties: false}),
     read: readSchemas,
-    route: Type.Object({changes: Type.Array(Type.Any()), expected_heads: heads, outputs: Type.Array(exact), next_work: Type.Object({scope: Type.String(), goal: Type.String(), inputs: Type.Array(exact)}, {additionalProperties: false})}, {additionalProperties: false}),
-    change: Type.Object({changes: Type.Array(Type.Any()), expected_heads: heads}, {additionalProperties: false}),
-    result: Type.Object({outputs: Type.Array(exact), changes: Type.Optional(Type.Array(Type.Any())), expected_heads: Type.Optional(heads), state: Type.Optional(Type.Union([Type.Literal("completed"), Type.Literal("waiting"), Type.Literal("ready")])), wait: Type.Optional(Type.Any())}, {additionalProperties: false}),
+    route: Type.Object({changes: Type.Array(change), expected_heads: heads, outputs: Type.Array(exact), next_work: Type.Object({scope: Type.String(), goal: Type.String(), inputs: Type.Array(exact)}, {additionalProperties: false})}, {additionalProperties: false}),
+    change: Type.Object({changes: Type.Array(change), expected_heads: heads}, {additionalProperties: false}),
+    result: Type.Object({outputs: Type.Array(exact), changes: Type.Optional(Type.Array(change)), expected_heads: Type.Optional(heads), state: Type.Optional(Type.Union([Type.Literal("completed"), Type.Literal("waiting"), Type.Literal("ready")])), wait: Type.Optional(nullable(Type.Object({id, question: Type.String({minLength: 1})}, {additionalProperties: false})))}, {additionalProperties: false}),
   };
   for (const name of ["context", "read", "route", "change", "result"]) {
     pi.registerTool({ executionMode: "sequential", name: `zara_${name}`, label: `Core ${name}`, parameters: Type.Object({payload: schemas[name]}, {additionalProperties: false}),
-      description: name === "route" ? "Choose Activity atomically: payload changes, expected_heads, outputs, next_work:{scope,goal,inputs}. Required before useful work." : name === "result" ? "Stage Core METADATA only. In Sleep mode, stage real output refs or outputs:[]; no Activity output is required and no analysis is implied. In ordinary and review modes, required outputs include the current Activity exact reference. Optional changes/expected_heads/state/wait. NO text field and NO old JSON outcome envelope. After this tool, write your actual final reply normally in Pi; only that retained reply becomes result text." : name === "change" ? "Apply typed scoped Activity/data changes with expected_heads through Core CAS." : name === "read" ? "Read exact Core records, paged tables, or source history using the operation-specific arguments. read_history uses scope/high_watermark/after_sequence/after_index/limit; it has NO conversation argument. Native history queries have a fixed 51200-byte whole-result representation bound before Core persistence; whole sources may be withheld and coverage is explicit. This is not a total model-context or token guarantee. A rejected argument can be corrected with a new tool call; authorization or transport failures stop execution." : "Read authoritative Core context.",
+      description: (name === "route" ? "Choose Activity atomically: payload changes, expected_heads, outputs, next_work:{scope,goal,inputs}. Required before useful work." : name === "result" ? "Stage Core METADATA only. In Sleep mode, stage real output refs or outputs:[]; no Activity output is required and no analysis is implied. In ordinary and review modes, required outputs include the current Activity exact reference. Optional changes/expected_heads/state/wait. NO text field and NO old JSON outcome envelope. A rejected response with staged:false has not staged this metadata; previous_metadata_cleared reports whether an older stage was cleared. If the SDK rejects arguments before execution, earlier metadata is invalidated before settlement; stage corrected metadata before your final reply. The original SDK error is unchanged and does not itself report host clearing flags. Correct structural arguments with a new tool call before writing your actual final reply normally in Pi; only that retained reply becomes result text." : name === "change" ? "Apply typed scoped Activity/data changes with expected_heads through Core CAS." : name === "read" ? "Read exact Core records, paged tables, or source history using the operation-specific arguments. read_history uses scope/high_watermark/after_sequence/after_index/limit; it has NO conversation argument. Native history queries have a fixed 51200-byte whole-result representation bound before Core persistence; whole sources may be withheld and coverage is explicit. This is not a total model-context or token guarantee. A rejected argument can be corrected with a new tool call; authorization or transport failures stop execution." : "Read authoritative Core context.") + (["route", "change", "result"].includes(name) ? changeGuidance : ""),
       async execute(callId, params, _signal, _update, ctx) {
+        if (name === "result") executedResultCalls.add(callId);
         if (!active || failed) throw new Error("Attach or reopen Core; incomplete hooks require reconciliation.");
         const result = await visible(ctx, async () => {
           try { return await request({ command: "tool", name, call_id: callId, payload: params.payload }); }
@@ -422,10 +438,27 @@ export default function (pi: ExtensionAPI) {
   });
   pi.on("tool_call", async (event, ctx) => {
     if (active && failed) return {block: true, terminate: true, reason: "Core admission failed; reconcile before execution."};
-    try { await observe("tool_call")(event, ctx); }
+    try {
+      await observe("tool_call")(event, ctx);
+      if (active && !failed && event.toolName === "zara_result") observedResultCalls.add(event.toolCallId);
+    }
     catch { return {block: true, terminate: true, reason: "Core tool observation failed before execution."}; }
   });
-  pi.on("tool_execution_end", observe("tool_execution_end"));
+  pi.on("tool_execution_end", async (event, ctx) => {
+    try {
+      if (!active || failed) return;
+      // The installed SDK validates arguments before its tool_call hook and execute.
+      // A failed result call reaching neither boundary is a known preexecution rejection.
+      const sdkRejected = event.toolName === "zara_result" && event.isError === true
+        && !observedResultCalls.has(event.toolCallId) && !executedResultCalls.has(event.toolCallId);
+      await visible(ctx, () => request({command: "observation", event_id: randomUUID(), value: {
+        kind: "tool_execution_end", event,
+        ...(sdkRejected ? {sdk_preexecution_rejected: true} : {}),
+      }}));
+    } finally {
+      observedResultCalls.delete(event.toolCallId); executedResultCalls.delete(event.toolCallId);
+    }
+  });
   pi.on("turn_end", async (event, ctx) => observe("turn_end")({
     turnIndex: event.turnIndex, messageEntryId: event.messageEntryId,
     toolResultEntryIds: event.toolResultEntryIds, message: event.message,

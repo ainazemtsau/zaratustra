@@ -7,7 +7,7 @@ import json
 from typing import Any
 from uuid import uuid4
 
-from zaratustra_core import Core, CoreError
+from zaratustra_core import Core, CoreError, outcome_metadata_contract, validate_outcome_metadata
 
 from .conversation import Conversation, pin_profile
 from .ordinary import EXECUTION_ID, EXECUTION_METHOD, ROUTING_ID, ROUTING_METHOD, subject_scope
@@ -97,6 +97,7 @@ class NativeSession:
             return {
                 "state": "attached",
                 "current": mapping,
+                "outcome_metadata_contract": outcome_metadata_contract(),
                 "sleep": self._sleep(mapping["scope"]).context(mapping),
                 "waiting": [],
             }
@@ -104,6 +105,7 @@ class NativeSession:
             return {
                 "state": "attached",
                 "current": mapping,
+                "outcome_metadata_contract": outcome_metadata_contract(),
                 "waiting": [],
                 "review": self._review(mapping["scope"]).context(mapping),
             }
@@ -176,6 +178,9 @@ class NativeSession:
             ],
             "core": snapshot,
             "pinned": pinned,
+            "outcome_metadata_contract": (
+                outcome_metadata_contract() if mapping.get("attempt") else None
+            ),
             "latest_delivery": latest_delivery,
             "coverage": (
                 "First 100 non-host heads; first 100 conversation Works and latest 100 "
@@ -429,6 +434,43 @@ class NativeSession:
             or payload.get("state", "completed") != "completed"
         ):
             raise CoreError("denied", "native.read_only_review")
+        if name == "result":
+            if not mapping.get("scope"):
+                raise CoreError("denied", "native.choose_activity_first")
+            shape_rejection = None
+            try:
+                if set(payload) - {"changes", "expected_heads", "outputs", "state", "wait"}:
+                    raise CoreError("invalid_request", "native.result_metadata")
+                states = {"ready", "completed"} if sleep else {"completed", "waiting"}
+                state = payload.get("state", "completed")
+                if isinstance(state, str) and state not in states:
+                    raise CoreError("invalid_request", "native.result_state")
+                validate_outcome_metadata(payload)
+                if review and not any(
+                    r.get("id") == mapping["scope"] for r in payload.get("outputs", [])
+                ):
+                    raise CoreError("invalid_request", "native.review_activity_output")
+            except CoreError as error:
+                # Only known local argument checks and the pure validator are inside this catch.
+                shape_rejection = error.as_dict()
+            if shape_rejection is not None:
+                previous_metadata_cleared = bool(mapping.get("staged"))
+                if previous_metadata_cleared:
+                    # Housekeeping CAS can fail; never translate that failure as an argument error.
+                    self._save(revision, mapping | {"staged": {}})
+                return {
+                    "state": "rejected",
+                    "completed": False,
+                    "staged": False,
+                    "previous_metadata_cleared": previous_metadata_cleared,
+                    "rejection": shape_rejection,
+                    "text": (
+                        "Metadata shape rejected before staging or terminal retention. "
+                        "Correct the exact field using outcome_metadata_contract, then issue "
+                        "a new zara_result call. No prior metadata remains staged; no outcome "
+                        "was committed. Speak the actual final reply only after valid staging."
+                    ),
+                }
         self._validate_changes(payload, mapping.get("scope"), sleep)
         if name == "route":
             if mapping.get("scope"):
@@ -444,15 +486,6 @@ class NativeSession:
         if not mapping.get("scope"):
             raise CoreError("denied", "native.choose_activity_first")
         if name == "result":
-            if set(payload) - {"changes", "expected_heads", "outputs", "state", "wait"}:
-                raise CoreError("invalid_request", "native.result_metadata")
-            states = {"ready", "completed"} if sleep else {"completed", "waiting"}
-            if payload.get("state", "completed") not in states:
-                raise CoreError("invalid_request", "native.result_state")
-            if review and not any(
-                r.get("id") == mapping["scope"] for r in payload.get("outputs", [])
-            ):
-                raise CoreError("invalid_request", "native.review_activity_output")
             self._save(revision, mapping | {"staged": payload})
             return {"state": "staged", "completed": False}
         if name == "change":
@@ -483,10 +516,29 @@ class NativeSession:
         raise ValueError("Unknown native tool")
 
     def observation(self, event_id: str, value: Any) -> dict[str, Any]:
-        _, mapping = self._load()
+        revision, mapping = self._load()
         self._assert_session(mapping)
         if mapping.get("attempt"):
             self._observe(mapping, event_id, "progress", value)
+            event = value.get("event") if isinstance(value, dict) else None
+            sdk_rejected_result = (
+                isinstance(value, dict)
+                and value.get("sdk_preexecution_rejected") is True
+                and value.get("kind") == "tool_execution_end"
+                and isinstance(event, dict)
+                and event.get("toolName") == "zara_result"
+                and event.get("isError") is True
+            )
+            if sdk_rejected_result:
+                previous_metadata_cleared = bool(mapping.get("staged"))
+                if previous_metadata_cleared:
+                    self._save(revision, mapping | {"staged": {}})
+                return {
+                    "state": "observed",
+                    "outside_effects": "unconfirmed",
+                    "staged": False,
+                    "previous_metadata_cleared": previous_metadata_cleared,
+                }
         return {"state": "observed", "outside_effects": "unconfirmed"}
 
     def settled(

@@ -111,9 +111,11 @@ an already running Pi, use `!pi install "/absolute/path/to/package"`, then
 
 Bootstrap checks exact schema compatibility,
 preserves a technical pre-update snapshot, and only then selects the new runtime.
-Activities, history, waits, credentials and references stay in place. The supported
-update is schema-compatible 0.1.0 to 0.2.0; an incompatible schema refuses before
-rewriting existing data. Future schema migrations are not claimed implemented.
+Activities, history, waits, credentials and references stay in place. Current
+Core0.3 accepts admitted protocol0 data through its preserved
+transactional marker upgrade to protocol1, and supports verified protocol1 code
+update re-entry. Incompatible protocols refuse before data mutation; arbitrary
+future schema migrations are not claimed implemented.
 
 Backup/recovery setup is outside the current minimal user flow. Continuing the
 same Activities on several computers, synchronization and lost-source recovery
