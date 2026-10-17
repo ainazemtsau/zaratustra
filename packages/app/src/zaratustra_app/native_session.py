@@ -345,6 +345,13 @@ class NativeSession:
 
     def start_sleep(self, scope: str, portion: int = 16) -> dict[str, Any]:
         revision, mapping = self._load()
+        if mapping.get("mode") == "sleep" and mapping.get("attempt"):
+            cancelled = self._sleep(mapping["scope"]).verified_cancelled_work(mapping["work"])
+            if cancelled:
+                # Explicit new Sleep only: detach proven cancelled state with mapping CAS.
+                # Unknown external actions remain retained and fenced on their old Work.
+                self._save(revision, {})
+                revision, mapping = self._load()
         resume = (
             mapping.get("mode") == "sleep" and mapping.get("ready") and mapping["scope"] == scope
         )

@@ -30,6 +30,10 @@ Core context, and exposes `zara_context`, `zara_route`, `zara_change` and
 `zara_result`. Route chooses a versioned Activity and scoped Work atomically.
 Result stages outputs/changes only; the actual assistant final is retained and
 committed at Pi's stable `agent_settled` boundary. Plaintext stays plaintext.
+Updates to pinned memory or the selected Method are staged with the final result
+for atomic basis checking and application. An intermediate write has its own
+retained receipt; if it makes the attempt stale, failed settlement does not undo
+that write or imply completion.
 
 `/reopen` in a fresh Pi session reloads the same Core conversation without replaying tools. `/zara-reply TEXT` addresses the exact current Core question; ordinary input never consumes a pending wait. Bare `/zara-sleep` considers retained sources across all Activities and unassigned work, without an Activity prerequisite or picker. Its ordinary Work belongs to the workspace; source ownership, goals and rights stay where they were. Global memory and chosen Methods can support subsequent work. A correction intended for a local Activity without destination permission stays a targeted proposal; it is not silently made universal. `/zara-cancel` explicitly cancels an incomplete Core Work while preserving uncertainty about external effects. Hook failures are visible and
 leave incomplete Work open. Unknown previous tool effects require reconciliation;
@@ -37,6 +41,11 @@ this adapter never automatically retries them. Core protects its own mutations
 with CAS, fencing and receipts. Pi builtin file/shell effects are retained as
 observations only: they are not Core transactions or exactly-once effects.
 An interrupted run may need explicit reconciliation before another Core Work.
+After explicit `/zara-cancel`, a later `/zara-sleep` starts a new global pass
+with current memory/history. It does not resume the cancelled queue, undo saved
+memory/results, resolve old unknown effects or resend their tools. Pause, an
+unknown outcome and a test limit are not cancellation. Missing or ambiguous live
+lineage evidence remains an explicit blocker.
 
 Data lives in the selected `ZARATUSTRA_HOME` (or platform application data).
 Host correlation is stored as reserved Core data, not a second authority file.

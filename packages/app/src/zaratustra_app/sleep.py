@@ -127,7 +127,7 @@ class Sleep:
                     "goal": "Sleep",
                     "scope": scope,
                     "method_ref": ref,
-                    "inputs": [],
+                    "inputs": self.coordinator.scoped_inputs(scope, []),
                     "call_limit": call_limit,
                     "continuation_policy": "durable",
                 },
@@ -188,7 +188,13 @@ class Sleep:
     def _bind_progress(self, work_id: str, progress: dict[str, Any]) -> None:
         state = {"works": self.coordinator.rows("works", work=work_id)}
         work = next(w for w in state["works"] if w["id"] == work_id)
-        if json.loads(work["body"])["inputs"] == [progress | {"role": "must_be_current"}]:
+        descriptor = json.loads(work["body"])
+        inputs = self.coordinator.scoped_inputs(
+            descriptor.get("scope", "space"),
+            [ref for ref in descriptor["inputs"] if ref["id"] != work_id + ":progress"],
+        )
+        inputs.append(progress | {"role": "must_be_current"})
+        if descriptor["inputs"] == inputs:
             return
         self.client.call(
             "control_work",
@@ -196,7 +202,7 @@ class Sleep:
                 "work_id": work_id,
                 "revision": work["revision"],
                 "action": "refresh",
-                "inputs": [progress | {"role": "must_be_current"}],
+                "inputs": inputs,
             },
             str(uuid4()),
         )

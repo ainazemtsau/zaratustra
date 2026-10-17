@@ -41,38 +41,137 @@ class NativeSleep:
         self.coordinator = Coordinator(self.client)
         self.sleep = Sleep(self.client)
 
-    def follow(self, profile: dict[str, Any], portion: int = 16) -> dict[str, Any]:
-        """An explicit owner request follows the unique retained Sleep frontier."""
-        if type(portion) is not int or not 1 <= portion <= 100:
-            raise CoreError("invalid_request", "sleep.portion")
-        works = {}
+    def _cancelled_fact(self, work: dict[str, Any]) -> bool:
+        if work["status"] != "cancelled":
+            return False
+        control = next(
+            (
+                i
+                for i in self.coordinator.rows("intents")
+                if i["kind"] == "control" and i["subject"] == work["id"]
+            ),
+            None,
+        )
+        attempts = self.coordinator.rows(
+            "attempts", work=work["id"], columns=["id", "status", "generation"]
+        )
+        if (
+            control is None
+            or json.loads(control["body"]).get("action") != "cancel"
+            or work["generation"] < 2
+            or any(
+                a["generation"] >= work["generation"]
+                or a["status"] not in {"fenced", "finished", "superseded"}
+                for a in attempts
+            )
+        ):
+            raise CoreError("stale_basis", "sleep.cancellation_proof", "reconcile")
+        return True
+
+    def _components(self) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+        """Validate lineage before retiring any component; old effects remain untouched."""
+        works: dict[str, Any] = {}
         for work in self.coordinator.rows("works"):
             body = json.loads(work["body"])
             if body.get("scope") == self.scope and body.get("goal") == "Sleep":
                 if body["method_ref"]["id"] != "native-sleep-method:" + self.scope:
                     raise CoreError("stale_basis", "sleep.method_lineage", "reconcile")
                 works[work["id"]] = work
-        if not works:
-            return self.start("native-sleep-work:" + uuid4().hex, profile, portion)
-        parents = set()
+        children: dict[str, str] = {}
         roots = []
-        for work in works.values():
-            link = json.loads(work["body"]).get("continuation")
+        for identity, work in works.items():
+            body = json.loads(work["body"])
+            link = body.get("continuation")
             if link is None:
-                if work["status"] != "cancelled":
-                    roots.append(work["id"])
-            elif link.get("parent_work_id") in works:
-                parents.add(link["parent_work_id"])
-            else:
+                roots.append(identity)
+                continue
+            parent_id = link.get("parent_work_id")
+            if parent_id not in works:
                 raise CoreError("stale_basis", "sleep.missing_predecessor", "reconcile")
-        # Cancellation contributes no analysed boundary. It does not erase its
-        # sources, reservations or unknown effects, nor permit a fresh zero range.
-        frontier = [
-            w for key, w in works.items() if key not in parents and w["status"] != "cancelled"
-        ]
-        if not roots or not frontier:
-            raise CoreError("stale_basis", "sleep.no_eligible_predecessor", "reconcile")
-        if len(roots) != 1 or len(frontier) != 1:
+            parent = works[parent_id]
+            attempts = self.coordinator.rows(
+                "attempts", work=parent_id, columns=["id", "status", "generation"]
+            )
+            attempt = next((a for a in attempts if a["id"] == link.get("attempt_id")), None)
+            result = next(
+                (
+                    r
+                    for r in self.coordinator.rows("results", work=parent_id)
+                    if r["attempt"] == link.get("attempt_id")
+                ),
+                None,
+            )
+            if (
+                link.get("kind") != "late"
+                or parent["status"] != "completed"
+                or body["conversation"] != json.loads(parent["body"])["conversation"]
+                or attempt is None
+                or attempt["status"] != "finished"
+                or not attempts
+                or attempts[-1]["id"] != attempt["id"]
+                or result is None
+                or result["fingerprint"] != link.get("result_hash")
+                or json.loads(result["body"])["state"] != "completed"
+            ):
+                raise CoreError("stale_basis", "sleep.invalid_predecessor", "reconcile")
+            if parent_id in children:
+                raise CoreError("stale_basis", "sleep.lineage_fork", "reconcile")
+            predecessor_records = []
+            for ref in link.get("basis_refs", []):
+                if ref.get("role") != "exact":
+                    raise CoreError("stale_basis", "sleep.invalid_predecessor", "reconcile")
+                record = self.client.call("read_exact", ref, uuid4().hex)
+                value = record["body"]["value"]
+                if (
+                    record["scope"] == self.scope
+                    and isinstance(value, dict)
+                    and value.get("format") in {"sleep-progress/v1", "sleep-progress/v2"}
+                    and value.get("work_id") == parent_id
+                ):
+                    predecessor_records.append(record)
+            if (
+                len(predecessor_records) != 1
+                or link.get("parent_work_revision") != parent["revision"]
+            ):
+                raise CoreError("stale_basis", "sleep.invalid_predecessor", "reconcile")
+            children[parent_id] = identity
+        visited: set[str] = set()
+        frontier = []
+        for root in roots:
+            identity = root
+            while True:
+                if identity in visited:
+                    raise CoreError("stale_basis", "sleep.lineage_cycle", "reconcile")
+                visited.add(identity)
+                if identity not in children:
+                    break
+                identity = children[identity]
+            leaf = works[identity]
+            if not self._cancelled_fact(leaf):
+                frontier.append(leaf)
+        if len(visited) != len(works):
+            raise CoreError("stale_basis", "sleep.lineage_cycle", "reconcile")
+        return works, frontier
+
+    def verified_cancelled_work(self, work_id: str) -> bool:
+        """Explicit-start mapping recovery seam; never resolves or reactivates old effects."""
+        works, _ = self._components()
+        if work_id not in works:
+            raise CoreError("stale_basis", "sleep.cancellation_work", "reconcile")
+        return self._cancelled_fact(works[work_id])
+
+    def follow(
+        self, profile: dict[str, Any], portion: int = 16, *, call_limit: int | None = None
+    ) -> dict[str, Any]:
+        """An explicit owner request follows the unique retained Sleep frontier."""
+        if type(portion) is not int or not 1 <= portion <= 100:
+            raise CoreError("invalid_request", "sleep.portion")
+        _, frontier = self._components()
+        if not frontier:
+            return self.start(
+                "native-sleep-work:" + uuid4().hex, profile, portion, call_limit=call_limit
+            )
+        if len(frontier) != 1:
             raise CoreError("stale_basis", "native.ambiguous_unclaimed_sleep", "reconcile")
         work = frontier[0]
         body = json.loads(work["body"])
@@ -165,11 +264,19 @@ class NativeSleep:
         self.sleep.initialize_successor(work_id, portion=portion)
         return self._claim(work_id, profile)
 
-    def start(self, work_id: str, profile: dict[str, Any], portion: int = 16) -> dict[str, Any]:
+    def start(
+        self,
+        work_id: str,
+        profile: dict[str, Any],
+        portion: int = 16,
+        *,
+        call_limit: int | None = None,
+    ) -> dict[str, Any]:
         self.sleep.start(
             work_id=work_id,
             scope=self.scope,
             portion=portion,
+            call_limit=call_limit,
             method_id="native-sleep-method:" + self.scope,
         )
         snapshot = {"attempts": self.coordinator.rows("attempts", work=work_id)}
@@ -336,7 +443,10 @@ class NativeSleep:
             "Follow the pinned Sleep Method in ordinary Pi. Stage actual ready/completed "
             "metadata with zara_result, then speak normally. Preserve unexamined sources. "
             "Memory and Method writes require this Sleep scope's explicit grants. "
-            "No automatic replay of unknown tools."
+            "No automatic replay of unknown tools. "
+            "Stage changes to pinned memory or Method in zara_result for atomic completion. "
+            "An intermediate memory or Method revision makes the exact basis stale; "
+            "do not claim completion or rebase it automatically."
             " Copy the delivered progress template's exact format (v1 or v2), predecessor, "
             "transition and range_start; inherited evidence remains attributed to its predecessor."
         )
@@ -361,6 +471,13 @@ class NativeSleep:
                 "requires your supported judgment, not an inference from global read access. "
                 "Sleep needs no Activity output: stage real output refs or outputs:[] and then "
                 "the honest final response. No Activity, finding or analysed coverage is invented."
+            )
+        if "continuation" not in context["work"] and context["cancelled_history"]:
+            context["instructions"] += (
+                " This is a fresh pass after explicit cancellation, not continuation of a "
+                "cancelled queue. Use current history and current memory. Old successful changes "
+                "remain; old unknown effects stay unknown. "
+                "Never replay an old action automatically."
             )
         return context
 

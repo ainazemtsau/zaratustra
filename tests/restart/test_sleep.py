@@ -54,7 +54,8 @@ def test_sleep_start_recovers_each_commit_window(tmp_path: Path, phase: str) -> 
     assert len([h for h in inspect(core, "heads") if h["key"] == "sleep-progress:s"]) == 1
     assert len([h for h in inspect(core, "heads") if h["key"] == "sleep"]) == 1
     assert json.loads(inspect(core, "works")[0]["body"])["inputs"] == [
-        first["progress_ref"] | {"role": "must_be_current"}
+        {"id": "memory", "revision": 1, "role": "must_be_current"},
+        first["progress_ref"] | {"role": "must_be_current"},
     ]
 
 

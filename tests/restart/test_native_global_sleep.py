@@ -189,14 +189,20 @@ def test_global_adaptation_propagates_but_local_destinations_stay_guarded(tmp_pa
         },
     ]
     session.tool(
-        "change",
+        "result",
         "shared-and-proposal",
         {
+            "outputs": [],
             "changes": changes,
             "expected_heads": {"shared": 1, "practice": 1, "unrelated": 0, "local-proposal": 0},
         },
     )
-    assert settle(session)["accepted"] is False
+    assert (
+        session.settled("shared-final", "Fictional adaptations staged atomically.", False)[
+            "accepted"
+        ]
+        is False
+    )
     co = Coordinator(owner)
     profile_ref = ctx["sleep"]["profile_ref"]
     for scope in ("A", "B"):
@@ -292,7 +298,9 @@ def test_global_request_preserves_active_native_guards(tmp_path: Path, mode: str
 
 
 @pytest.mark.parametrize("condition", ["cancelled", "missing", "ambiguous"])
-def test_global_frontier_blockers_never_restart_zero(tmp_path: Path, condition: str) -> None:
+def test_explicit_cancel_is_fresh_but_invalid_global_frontiers_never_restart_zero(
+    tmp_path: Path, condition: str
+) -> None:
     core, token = Core.initialize(tmp_path / "core")
     helper = NativeSleep(core, token, "space")
     for work_id in ["one", "two"] if condition == "ambiguous" else ["one"]:
@@ -336,12 +344,51 @@ def test_global_frontier_blockers_never_restart_zero(tmp_path: Path, condition: 
             },
             record["revision"],
         )
+    before = helper.coordinator.rows("works")
+    if condition == "cancelled":
+        fresh = NativeSession(core, token, "next").start_sleep("space")
+        assert fresh["current"]["work"] != "one"
+        assert "continuation" not in fresh["sleep"]["work"]
+        assert (
+            helper.sleep.progress(fresh["current"]["work"])["body"]["value"]["format"]
+            == "sleep-progress/v1"
+        )
+        assert helper.coordinator.rows("works", work="one") == before
+        return
     expected = {
-        "cancelled": "no_eligible_predecessor",
         "missing": "progress_unavailable",
         "ambiguous": "ambiguous_unclaimed_sleep",
     }[condition]
-    before = helper.coordinator.rows("works")
     with pytest.raises(CoreError, match=expected):
         NativeSession(core, token, "next").start_sleep("space")
     assert helper.coordinator.rows("works") == before
+
+
+@pytest.mark.parametrize("kind", ["memory", "method"])
+def test_intermediate_change_to_pinned_basis_keeps_stale_guard(tmp_path: Path, kind: str) -> None:
+    core, token = Core.initialize(tmp_path / "core")
+    if kind == "memory":
+        save(
+            core.connect(token),
+            {"id": "shared", "kind": "memory", "key": "shared", "body": "Before"},
+        )
+    session = NativeSession(core, token, "global")
+    ctx = session.start_sleep("space")
+    assert "Stage changes to pinned memory or Method in zara_result" in ctx["sleep"]["instructions"]
+    identity = "shared" if kind == "memory" else ctx["sleep"]["method"]["id"]
+    revision = 1 if kind == "memory" else ctx["sleep"]["method"]["revision"]
+    record = core.connect(token).call("read_exact", {"id": identity, "revision": revision}, "basis")
+    session.tool(
+        "change",
+        "intermediate",
+        {
+            "changes": [{"id": identity, "kind": kind, "key": record["key"], "body": "After"}],
+            "expected_heads": {identity: revision},
+        },
+    )
+    with pytest.raises(CoreError, match="stale_basis"):
+        settle(session)
+    co = Coordinator(core.connect(token))
+    assert next(h for h in co.rows("heads") if h["id"] == identity)["revision"] == revision + 1
+    assert not co.rows("results", work=ctx["current"]["work"])
+    assert co.rows("observations", work=ctx["current"]["work"])

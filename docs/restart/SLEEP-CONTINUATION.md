@@ -35,32 +35,48 @@ analysed boundaries are never merged or relabelled as global coverage. Global
 memory/Method writes retain their current destination grants; a local correction
 without its destination grant remains a targeted proposal.
 
-The native adapter follows the unique eligible completed checkpoint in its
-selected lineage, or recovers its known unclaimed child through Core. Several eligible checkpoints, a missing
-predecessor, unavailable progress or an unknown claimed Attempt require explicit
-reconciliation. Cancelled historical roots remain visible with no analysed-boundary
-credit. They do not prevent following a unique completed checkpoint, do not become
-resolved effects, and never authorize resetting an established lineage to zero.
-Only a scope with no established eligible Sleep checkpoint/lineage starts an
-initial range at zero. An initial global pass considers the retained global
-history even when local Activity passes already exist; it does not inherit their
-coverage. An existing ordinary Activity's first explicitly targeted pass remains
-supported.
+The adapter validates whole lineage components before choosing their frontier.
+A terminal leaf with an authoritative cancellation/control fact and fenced
+generation closes that entire component, including completed ancestors. Every
+old Work, result, progress, reservation and unknown effect remains unchanged;
+none supplies an automatic analysed boundary for a new pass.
 
-Current limitation: a cancelled-only Sleep history or a cancelled successor can
-leave no eligible public continuation. Cancellation preserves old fences and
-uncertainty; it does not itself supply a completed checkpoint. The owner clarified
-that cancellation ends the pass and a later explicit Sleep is a new global
-analysis, with current memory/history and no cancelled-queue obligation. The
-linked cancelled-parent restart proposal is withdrawn. Fresh-after-cancel admission
-still needs its bounded correction; do not treat completed-successor checks as
-proof that this usability gap is closed.
+If no global Sleep history exists, or every validated global component ended in
+explicit cancellation, the next explicit Sleep starts a new independent ordinary
+Work and conversation with initial v1 progress and a current global cutoff. It
+has no predecessor link and no obligation to finish the cancelled queue. Current
+active global memory is pinned through the existing scoped-input selection;
+progress binding preserves those exact current revisions and other mandatory
+inputs. The currently chosen Method stays versioned. Reading all retained history
+again does not erase previous analysis or undo successful memory changes.
+Updates to pinned memory or the selected Method use the existing final staged
+changes path so basis validation and changes commit atomically. An intermediate
+write is already retained and can make the attempt's current-version basis stale;
+a rejected later settlement neither rolls that write back nor completes the Work.
+
+One non-cancelled completed frontier uses the approved successor path; a known
+unclaimed Work is recovered, and ready/resume keeps its existing identity and
+cutoff. Missing/invalid parent evidence, forks/cycles, unavailable progress,
+multiple non-cancelled frontiers or an unknown claimed Attempt remain blockers.
+The mere presence of a cancelled row never authorizes a fresh fallback. A local
+Activity pass is not a global predecessor or global coverage; an explicitly
+targeted Activity's first pass is still supported.
+
+Only an explicit Sleep start may CAS-detach a mapping proven to refer to a
+cancelled Sleep Work. Attach/reopen does not start analysis. An old ready flag,
+pause or test-cap/provider error is not cancellation. Old invocations are never
+automatically resent or relabelled successful/not-received. The linked
+cancelled-parent restart drafts REV1 through REV3 are withdrawn; this fresh pass
+uses existing operations without a restart link, protocol2 or new state store.
 
 Child creation, initial progress CAS0, progress binding and native mapping have
 separate crash controls. A crash after dispatch claim cannot trigger another
-automatic dispatch. Finite optional resource policy conserves the parent's
-remainder; zero remainder creates no child/send. Normal production policy remains
-unlimited (`None`), without a sentinel integer or new inference cap.
+automatic dispatch. Completed-successor finite policy conserves the parent's
+remainder; zero remainder creates no child/send. A fresh pass after cancellation
+uses its current authorized policy rather than inheriting cancelled spend or
+queue. Old reservations remain; cumulative evaluation limits are not reset.
+Normal production policy remains unlimited (`None`), without a sentinel integer
+or new inference cap.
 
 Data protocol1 uses the existing SQLite `user_version` plus durable matching audit
 and receipt, without another table or sidecar authority. New roots initialize

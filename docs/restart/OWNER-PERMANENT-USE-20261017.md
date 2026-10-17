@@ -142,11 +142,16 @@ Cancellation terminates that pass. A later explicit Sleep request means a new
 global analysis using current history and memory, without an obligation to finish
 the cancelled queue. Prior results, memory, cancelled Work and unknown-effect
 evidence remain; cancellation does not prove an old effect absent or successful.
-The linked cancelled-parent restart proposal and REV2 are withdrawn, not approved.
+All linked cancelled-parent restart drafts, REV1 through REV3, are withdrawn,
+not approved.
 No `restart_from`, protocol2 or restricted-descendant policy is implemented.
-The current global-default correction does not yet repair the existing
-fresh-after-cancel admission limitation; that minimal correction requires review
-and checks before it can be claimed. It must preserve missing/ambiguous live-frontier
-guards and never automatically resend an old invocation.
+The bounded App correction uses existing ordinary new-Work operations after
+validating that whole prior components ended in explicit cancellation. It does
+not link to or reopen a cancelled parent, inherit its queue, or reset cumulative
+evaluation limits. Current active global memory stays pinned through progress
+binding. Missing/ambiguous non-cancelled frontiers remain blockers, and old
+invocations are never automatically resent. Exact-package independent checks,
+meaningful live use and the mandatory full gate remain distinct from this source
+implementation; no overall readiness or owner acceptance is implied.
 
 END_OF_FILE: OWNER-PERMANENT-USE-20261017.md

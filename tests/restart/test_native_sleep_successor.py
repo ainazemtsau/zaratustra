@@ -467,7 +467,7 @@ def test_two_eligible_completed_roots_require_choice(tmp_path: Path) -> None:
     )
 
 
-def test_only_cancelled_history_does_not_authorize_initial_zero(tmp_path: Path) -> None:
+def test_new_explicit_sleep_after_cancel_starts_fresh_without_old_queue(tmp_path: Path) -> None:
     from zaratustra_app.native_sleep import NativeSleep
 
     core, token = seed(tmp_path)
@@ -476,6 +476,13 @@ def test_only_cancelled_history_does_not_authorize_initial_zero(tmp_path: Path) 
         work_id="cancelled", scope="subject", method_id="native-sleep-method:subject"
     )
     cancel_root(helper, "cancelled")
-    with pytest.raises(CoreError, match="no_eligible_predecessor|outcome_unknown"):
-        NativeSession(core, token, "next").start_sleep("subject")
+    old = helper.coordinator.rows("works", work="cancelled")
+    fresh = NativeSession(core, token, "next").start_sleep("subject")
+    assert fresh["current"]["work"] != "cancelled"
+    assert "continuation" not in fresh["sleep"]["work"]
+    assert (
+        helper.sleep.progress(fresh["current"]["work"])["body"]["value"]["format"]
+        == "sleep-progress/v1"
+    )
+    assert helper.coordinator.rows("works", work="cancelled") == old
     assert not helper.coordinator.rows("attempts", work="cancelled")
