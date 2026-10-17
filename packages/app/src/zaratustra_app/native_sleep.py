@@ -55,6 +55,8 @@ class NativeSleep:
         return self._claim(work_id, profile)
 
     def resume(self, work_id: str, profile: dict[str, Any], portion: int = 16) -> dict[str, Any]:
+        if type(portion) is not int or not 1 <= portion <= 100:
+            raise CoreError("invalid_request", "sleep.portion")
         snapshot = {
             table: self.coordinator.rows(table, work=work_id)
             for table in ("works", "attempts", "results")
@@ -73,13 +75,69 @@ class NativeSleep:
         if work["status"] != "ready" or json.loads(result["body"])["state"] != "ready":
             raise CoreError("stale_basis", "sleep.not_ready", "reconcile")
         self.checkpoint(work_id, latest["id"])
-        progress = self.sleep.progress(work_id)["body"]["value"]
-        if progress["enumeration_cursor"][1] != 2147483647:
+        record = self.sleep.progress(work_id)
+        progress = record["body"]["value"]
+        if progress["remaining_refs"]:
+            self.sleep.select_sources(
+                work_id, progress["remaining_refs"][:portion], expected_revision=record["revision"]
+            )
+        elif progress["enumeration_cursor"][1] != 2147483647:
             self.sleep.continue_portion(work_id, portion=portion)
         self.coordinator.refresh_basis(work_id)
         return self._claim(work_id, profile)
 
     def _claim(self, work_id: str, profile: dict[str, Any]) -> dict[str, Any]:
+        previous_attempts = self.coordinator.rows("attempts", work=work_id)
+        previous_actions = self.coordinator.rows("actions", work=work_id)
+        finished = {r["attempt"] for r in self.coordinator.rows("results", work=work_id)}
+        if any(
+            a["status"] not in {"finished", "superseded"} or a["id"] not in finished
+            for a in previous_attempts
+        ) or any(a["state"] not in {"terminal", "not_received"} for a in previous_actions):
+            raise CoreError("outcome_unknown", "sleep.pending_attempt", "reconcile")
+        attempt_ids = {a["id"] for a in previous_attempts}
+        action_ids = {a["id"] for a in previous_actions}
+        while True:
+            basis = self.sleep.progress(work_id)
+            try:
+                return self._prepare_claim(work_id, profile)
+            except CoreError as error:
+                if error.code != "resource_exhausted" or error.field != "context.max_bytes":
+                    raise
+                # Only this proven pre-dispatch rejection permits another preparation.
+                # Every retry gets fresh Attempt/profile/command identities.
+                work = self.coordinator.rows("works", work=work_id)[0]
+                if (
+                    work["status"] != "ready"
+                    or {a["id"] for a in self.coordinator.rows("attempts", work=work_id)}
+                    != attempt_ids
+                    or {a["id"] for a in self.coordinator.rows("actions", work=work_id)}
+                    != action_ids
+                ):
+                    raise CoreError(
+                        "outcome_unknown", "sleep.pending_attempt", "reconcile"
+                    ) from error
+                record = self.sleep.progress(work_id)
+                if record["revision"] != basis["revision"]:
+                    raise CoreError(
+                        "stale_basis", "sleep.progress_revision", "after_refresh"
+                    ) from error
+                selected = record["body"]["value"]["selected_source_refs"]
+                if len(selected) <= 1:
+                    self.sleep.select_sources(
+                        work_id,
+                        selected,
+                        context_blocked=True,
+                        expected_revision=record["revision"],
+                    )
+                    raise
+                self.sleep.select_sources(
+                    work_id,
+                    selected[: max(1, len(selected) // 2)],
+                    expected_revision=record["revision"],
+                )
+
+    def _prepare_claim(self, work_id: str, profile: dict[str, Any]) -> dict[str, Any]:
         snapshot = self.coordinator.tables("heads")
         attempt = work_id + ":native-attempt:" + uuid4().hex
         profile_ref = pin_profile(self.owner, attempt + ":profile", profile)

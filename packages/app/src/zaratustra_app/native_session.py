@@ -352,15 +352,39 @@ class NativeSession:
             raise CoreError("outcome_unknown", "native.previous_attempt", "reconcile")
         helper = self._sleep(scope)
         actual_profile = self.profile | {"session_id": self.session_id}
+        pending = None if resume else self._unclaimed_sleep(scope)
         mapping = (
             helper.resume(mapping["work"], actual_profile, portion)
             if resume
-            else helper.start("native-sleep-work:" + uuid4().hex, actual_profile, portion)
+            else helper.start(
+                pending or "native-sleep-work:" + uuid4().hex, actual_profile, portion
+            )
         )
         mapping["session_id"] = self.session_id
         mapping["profile"] = self.profile
         self._save(revision, mapping)
         return self.context()
+
+    def _unclaimed_sleep(self, scope: str) -> str | None:
+        candidates = []
+        for work in self.coordinator.rows("works"):
+            body = json.loads(work["body"])
+            if (
+                body.get("scope") == scope
+                and body.get("goal") == "Sleep"
+                and body["method_ref"]["id"] == "native-sleep-method:" + scope
+                and work["status"] not in {"completed", "cancelled"}
+            ):
+                if self.coordinator.rows("attempts", work=work["id"]) or self.coordinator.rows(
+                    "actions", work=work["id"]
+                ):
+                    raise CoreError("outcome_unknown", "native.unmapped_sleep_attempt", "reconcile")
+                if work["status"] != "ready":
+                    raise CoreError("stale_basis", "native.unclaimed_sleep_not_ready", "reconcile")
+                candidates.append(work["id"])
+        if len(candidates) > 1:
+            raise CoreError("stale_basis", "native.ambiguous_unclaimed_sleep", "reconcile")
+        return candidates[0] if candidates else None
 
     def _observe(self, mapping: dict[str, Any], event: str, kind: str, value: Any) -> None:
         self.coordinator.client.call(

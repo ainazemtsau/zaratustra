@@ -12,7 +12,8 @@ from zaratustra_core import Client, CoreError
 from .coordinator import Coordinator
 from .executor_port import Executor
 
-SLEEP_INSTRUCTIONS = """Sleep method sleep/1. Work only inside granted scope and finite calls.
+SLEEP_INSTRUCTIONS = """Sleep method sleep/1.
+Work only inside granted scope and the current resource policy.
 You are the meaning-making agent; do not ask the owner to pick problems. A finding
 is not guaranteed. Use the actual source bytes in sleep_sources, not catalog titles.
 1 Recover Work, exact Method, progress, resource_state, current rights, and outcomes
@@ -240,6 +241,40 @@ class Sleep:
         )
         self.coordinator.refresh_basis(work_id)
         return result
+
+    def select_sources(
+        self,
+        work_id: str,
+        refs: list[dict[str, Any]],
+        *,
+        context_blocked: bool = False,
+        expected_revision: int | None = None,
+    ) -> None:
+        """Select whole remaining sources; never change enumeration or analysis evidence."""
+        record = self.progress(work_id)
+        if expected_revision is not None and record["revision"] != expected_revision:
+            raise CoreError("stale_basis", "sleep.progress_revision", "after_refresh")
+        body = deepcopy(record["body"]["value"])
+        if any(ref not in body["remaining_refs"] for ref in refs):
+            raise CoreError("stale_basis", "sleep.remaining_selection", "after_refresh")
+        body["selected_source_refs"] = refs
+        if context_blocked:
+            body["stop_reason"] = "context_max_bytes"
+            body["continuation"] = (
+                "A complete source or mandatory context exceeds Core admission. "
+                "No dispatch occurred; all remaining sources are retained."
+            )
+        self._save(
+            {
+                "id": record["id"],
+                "kind": record["kind"],
+                "key": record["key"],
+                "scope": record["scope"],
+                "body": body,
+            },
+            record["revision"],
+        )
+        self.coordinator.refresh_basis(work_id)
 
     def _account(self, body: dict[str, Any], work_id: str) -> None:
         snapshot = {
