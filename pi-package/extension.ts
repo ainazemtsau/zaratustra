@@ -194,22 +194,51 @@ export default function (pi: ExtensionAPI) {
   });
   const exact = Type.Object({id: Type.String(), revision: Type.Integer({minimum: 1})}, {additionalProperties: false});
   const heads = Type.Record(Type.String(), Type.Integer({minimum: 0}));
+  const id = Type.String({minLength: 1, maxLength: 240});
+  const cursor = Type.Integer({minimum: 0});
+  const nullable = (schema: any) => Type.Union([schema, Type.Null()]);
+  const pageToken = Type.Object({high_watermark: cursor, sha256: Type.String({pattern: "^[0-9a-f]{64}$"})}, {additionalProperties: false});
+  const readSchemas = Type.Union([
+    Type.Object({operation: Type.Literal("read_exact"), arguments: Type.Object({
+      id, revision: Type.Integer({minimum: 1}),
+      role: Type.Optional(Type.Union([Type.Literal("exact"), Type.Literal("must_be_current")])),
+    }, {additionalProperties: false})}, {additionalProperties: false}),
+    Type.Object({operation: Type.Literal("read_page"), arguments: Type.Object({
+      table: Type.Union(["heads", "works", "attempts", "messages", "conversations", "waits", "results", "observations", "actions", "intents", "tool_calls", "acceptance"].map(table => Type.Literal(table))),
+      cursor: Type.Optional(cursor), limit: Type.Optional(Type.Integer({minimum: 1, maximum: 100})),
+      snapshot_revision: Type.Optional(nullable(pageToken)),
+      conversation: Type.Optional(nullable(id)), work: Type.Optional(nullable(id)), scope: Type.Optional(nullable(id)),
+      columns: Type.Optional(nullable(Type.Array(id, {minItems: 1, maxItems: 8}))),
+    }, {additionalProperties: false})}, {additionalProperties: false}),
+    Type.Object({operation: Type.Literal("read_history"), arguments: Type.Object({
+      scope: Type.Optional(id), high_watermark: Type.Optional(nullable(cursor)),
+      after_sequence: Type.Optional(cursor), after_index: Type.Optional(cursor),
+      limit: Type.Optional(Type.Integer({minimum: 1, maximum: 100})),
+    }, {additionalProperties: false})}, {additionalProperties: false}),
+  ]);
+  const recoverableReadFields: Record<string, Set<string>> = {
+    read_history: new Set(["history.high_watermark", "history.after"]),
+    read_page: new Set(["columns", "conversation.table", "work.table", "scope.table", "snapshot_revision"]),
+  };
   const schemas: Record<string, any> = {
     context: Type.Object({}, {additionalProperties: false}),
-    read: Type.Object({operation: Type.Union([Type.Literal("read_page"), Type.Literal("read_exact"), Type.Literal("read_history")]), arguments: Type.Any()}, {additionalProperties: false}),
+    read: readSchemas,
     route: Type.Object({changes: Type.Array(Type.Any()), expected_heads: heads, outputs: Type.Array(exact), next_work: Type.Object({scope: Type.String(), goal: Type.String(), inputs: Type.Array(exact)}, {additionalProperties: false})}, {additionalProperties: false}),
     change: Type.Object({changes: Type.Array(Type.Any()), expected_heads: heads}, {additionalProperties: false}),
     result: Type.Object({outputs: Type.Array(exact), changes: Type.Optional(Type.Array(Type.Any())), expected_heads: Type.Optional(heads), state: Type.Optional(Type.Union([Type.Literal("completed"), Type.Literal("waiting"), Type.Literal("ready")])), wait: Type.Optional(Type.Any())}, {additionalProperties: false}),
   };
   for (const name of ["context", "read", "route", "change", "result"]) {
     pi.registerTool({ executionMode: "sequential", name: `zara_${name}`, label: `Core ${name}`, parameters: Type.Object({payload: schemas[name]}, {additionalProperties: false}),
-      description: name === "route" ? "Choose Activity atomically: payload changes, expected_heads, outputs, next_work:{scope,goal,inputs}. Required before useful work." : name === "result" ? "Stage Core METADATA only. Required outputs include the current Activity exact reference. Optional changes/expected_heads/state/wait. NO text field and NO old JSON outcome envelope. After this tool, write your actual final reply normally in Pi; only that retained reply becomes result text." : name === "change" ? "Apply typed scoped Activity/data changes with expected_heads through Core CAS." : "Read authoritative Core context.",
+      description: name === "route" ? "Choose Activity atomically: payload changes, expected_heads, outputs, next_work:{scope,goal,inputs}. Required before useful work." : name === "result" ? "Stage Core METADATA only. Required outputs include the current Activity exact reference. Optional changes/expected_heads/state/wait. NO text field and NO old JSON outcome envelope. After this tool, write your actual final reply normally in Pi; only that retained reply becomes result text." : name === "change" ? "Apply typed scoped Activity/data changes with expected_heads through Core CAS." : name === "read" ? "Read exact Core records, paged tables, or source history using the operation-specific arguments. read_history uses scope/high_watermark/after_sequence/after_index/limit; it has NO conversation argument. A rejected argument can be corrected with a new tool call; authorization or transport failures stop execution." : "Read authoritative Core context.",
       async execute(callId, params, _signal, _update, ctx) {
         if (!active || failed) throw new Error("Attach or reopen Core; incomplete hooks require reconciliation.");
         const result = await visible(ctx, async () => {
           try { return await request({ command: "tool", name, call_id: callId, payload: params.payload }); }
           catch (error) {
             const rejection = (error as any).coreRejection;
+            if (name === "read" && rejection?.code === "invalid_request" && recoverableReadFields[params.payload.operation]?.has(rejection.field)) {
+              return {state: "rejected", rejection, text: "Read arguments rejected before a read result was returned. No work was completed. Issue a NEW corrected zara_read call using its operation-specific schema; read_history takes scope, not conversation. Do not repeat unknown effects."};
+            }
             if (name === "result" && rejection?.code === "invalid_request" && ["native.result_metadata", "native.result_state", "native.review_activity_output"].includes(rejection.field)) {
               return {state: "rejected", rejection, text: "Metadata rejected before staging; no outcome committed. Correct the tool arguments using its schema. Do not pass text; write the actual final reply normally after staging."};
             }

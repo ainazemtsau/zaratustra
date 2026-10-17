@@ -31,6 +31,12 @@ SOURCE = Path(__file__).resolve().parents[2]
         "cancel-stream",
         "parallel-lifecycle",
         "parallel-rejection",
+        "read-shape-correction",
+        "read-admission-correction",
+        "read-revoked",
+        "read-transport",
+        "read-payload",
+        "read-wire",
     ],
 )
 def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
@@ -94,6 +100,28 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
             ("parallel-read", {}),
             ("zara_result", result),
             ("text", "Exact fictional parallel final"),
+        ]
+    if scenario.startswith("read-"):
+        invalid_args = (
+            {"conversation": "fictional-sleep-conversation"}
+            if scenario == "read-shape-correction"
+            else {"scope": "space", "high_watermark": 2147483647}
+        )
+        if scenario in {"read-revoked", "read-transport", "read-payload", "read-wire"}:
+            invalid_args = {"scope": "space"}
+        script = script[:1] + [
+            ("zara_read", {"payload": {"operation": "read_history", "arguments": invalid_args}}),
+            (
+                "zara_read",
+                {
+                    "payload": {
+                        "operation": "read_history",
+                        "arguments": {"scope": "space", "limit": 1},
+                    }
+                },
+            ),
+            ("zara_result", result),
+            ("text", "Exact corrected read final"),
         ]
     calls: list[Any] = []
 
@@ -275,6 +303,65 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
             assert ends[1]["result"]["state"] == "observed"
             assert value["context"]["current"]["attempt"]
             assert value["delivery"]["state"] == "error"
+    elif scenario.startswith("read-"):
+        if scenario in {"read-shape-correction", "read-admission-correction"}:
+            assert len(calls) == 5
+            assert value["delivery"]["result"]["text"] == "Exact corrected read final"
+            ends = [
+                e
+                for e in value["events"]
+                if e.get("type") == "tool_execution_end" and e.get("toolName") == "zara_read"
+            ]
+            assert [e["toolCallId"] for e in ends] == ["fictional-1", "fictional-2"]
+            assert (
+                ends[0]["isError"]
+                or ends[0]["result"].get("details", {}).get("state") == "rejected"
+            )
+            assert not ends[1]["isError"]
+            import base64
+
+            retained_calls: set[str] = set()
+            retained_ends: set[str] = set()
+            for observation in value["observations"]["rows"]:
+                raw = json.loads(base64.b64decode(json.loads(observation["body"])["raw_base64"]))
+                event = raw.get("event", {})
+                if raw.get("kind") == "tool_call":
+                    retained_calls.add(event["toolCallId"])
+                elif raw.get("kind") == "tool_execution_end":
+                    retained_ends.add(event["toolCallId"])
+                elif raw.get("kind") == "turn_end":
+                    retained_calls.update(
+                        part["id"]
+                        for part in event.get("message", {}).get("content", [])
+                        if part.get("type") == "toolCall"
+                    )
+            assert {"fictional-1", "fictional-2"} <= retained_calls
+            assert {"fictional-1", "fictional-2"} <= retained_ends
+
+            if scenario == "read-admission-correction":
+                assert (
+                    ends[0]["result"]["details"]["rejection"]["field"] == "history.high_watermark"
+                )
+        else:
+            assert len(calls) == 2
+            assert value["delivery"]["state"] == "error"
+            assert value["context"]["current"]["attempt"]
+            failures = [
+                e
+                for e in value["events"]
+                if e.get("type") == "tool_execution_end" and e.get("toolName") == "zara_read"
+            ]
+            assert len(failures) == 1 and failures[0]["isError"]
+            assert failures[0]["result"].get("details", {}).get("state") != "rejected"
+            text = failures[0]["result"]["content"][0]["text"]
+            expected = {
+                "read-revoked": "denied/read",
+                "read-transport": "exited with 23",
+                "read-payload": "invalid_request/payload",
+                "read-wire": "invalid_request/wire",
+            }
+            assert expected[scenario] in text
+
     elif scenario == "failed-input":
         assert len(calls) == 2
         assert len(value["messages"]["rows"]) == 1
