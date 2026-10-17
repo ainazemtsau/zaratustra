@@ -70,6 +70,19 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
             record(ref)
         if "continuation" in body:
             link = body["continuation"]
+            late = link.get("kind") == "late"
+            extra = (
+                {
+                    "kind",
+                    "parent_work_id",
+                    "parent_work_revision",
+                    "result_hash",
+                    "basis_refs",
+                    "receipt_id",
+                }
+                if late
+                else set()
+            )
             require(
                 set(link) - {"activity_ref"}
                 == {
@@ -79,6 +92,7 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
                     "parent_reserved",
                     "resource_upper",
                 }
+                | extra
             )
             parent_attempt = attempts.get(link["attempt_id"])
             require(parent_attempt is not None)
@@ -102,11 +116,56 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
                 and link["resource_upper"] >= 0
             )
             require(
-                result_body.get("next_work_id") == body["id"]
-                and parent["conversation"] == body["conversation"]
+                parent["conversation"] == body["conversation"]
                 and link["delivered_cutoff"] == parent_attempt["cutoff"]
                 and link["processed_cutoff"] == result_body["cutoff"]
             )
+            if late:
+                require(db.execute("PRAGMA user_version").fetchone()[0] == 1)
+                require(
+                    result_body["state"] == "completed"
+                    and "next_work_id" not in result_body
+                    and parent["status"] == "completed"
+                    and parent_attempt["id"]
+                    == [
+                        identifier
+                        for identifier in attempt_order
+                        if attempts[identifier]["work"] == parent["id"]
+                    ][-1]
+                    and link["parent_work_id"] == parent["id"]
+                    and type(link["parent_work_revision"]) is int
+                    and link["parent_work_revision"] == parent["revision"]
+                    and equal(link["result_hash"], parent_result["fingerprint"])
+                    and body.get("scope", "space")
+                    == json.loads(parent["body"]).get("scope", "space")
+                )
+                admission = receipts[link["receipt_id"]]
+                response = json.loads(admission["response"])
+                admitted_event = events[response["sequence"]]
+                require(
+                    admitted_event["kind"] == "open_work"
+                    and admitted_event["subject"] == link["receipt_id"]
+                    and response["result"]["work_id"] == body["id"]
+                    and equal(response["result"]["continuation"], link)
+                    and results_at[parent_attempt["id"]] < admitted_event["seq"]
+                )
+                historical_heads: dict[str, int] = {}
+                for (identifier, revision), sequence in records_at.items():
+                    if sequence < admitted_event["seq"]:
+                        historical_heads[identifier] = max(
+                            historical_heads.get(identifier, 0), revision
+                        )
+                basis = link["basis_refs"]
+                require(isinstance(basis, list) and bool(basis))
+                require(len({ref["id"] for ref in basis}) == len(basis))
+                for ref in basis:
+                    Ref.model_validate(ref)
+                    require(ref.get("role") == "exact")
+                    basis_record = record(ref)
+                    require(basis_record["scope"] in {"space", body.get("scope", "space")})
+                    require(historical_heads.get(ref["id"]) == ref["revision"])
+            else:
+                require(result_body.get("next_work_id") == body["id"])
             parent_actions = [a for a in actions.values() if a["attempt"] == parent_attempt["id"]]
             require(len(parent_actions) == 1)
             require(link["resource_upper"] == parent_actions[0]["reserve"])
@@ -121,6 +180,9 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
             require(type(link["parent_reserved"]) is int and link["parent_reserved"] == reserved)
             parent_limit = json.loads(parent["body"])["call_limit"]
             child_limit = body["call_limit"]
+            if late:
+                require(child_limit is None or type(child_limit) is int and child_limit > 0)
+                require(parent_limit is None or parent_limit - reserved > 0)
             require(
                 (
                     parent_limit is None
@@ -156,8 +218,21 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
         return core._source(db, ref)
 
     try:
+        parents: dict[str, str] = {}
+        successors: dict[str, list[str]] = {}
         for work in works.values():
-            work_refs(json.loads(work["body"]))
+            link = json.loads(work["body"]).get("continuation")
+            if link:
+                parent_id = attempts[link["attempt_id"]]["work"]
+                parents[work["id"]] = parent_id
+                successors.setdefault(parent_id, []).append(work["id"])
+        require(all(len(children) == 1 for children in successors.values()))
+        for child in parents:
+            visited: set[str] = set()
+            while child in parents:
+                require(child not in visited)
+                visited.add(child)
+                child = parents[child]
         for result in results.values():
             saved_result = json.loads(result["body"])
             require(saved_result["attempt_id"] == result["attempt"])
@@ -203,6 +278,8 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
                     attempt_id = result["attempt_id"]
                     prepared_at.setdefault(attempt_id, []).append(event["seq"])
                 require(equal(saved_pin, json.loads(attempts[attempt_id]["body"])))
+        for work in works.values():
+            work_refs(json.loads(work["body"]))
         for receipt in receipts.values():
             response = json.loads(receipt["response"])
             receipt_event = events.get(response["sequence"])
@@ -462,7 +539,22 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
                 schema = record(wrapper["schema_ref"])["body"]["value"]
                 for ref in value_references(value, schema):
                     record(ref)
-            if not isinstance(value, dict) or value.get("format") != "sleep-progress/v1":
+            if not isinstance(value, dict):
+                continue
+            if value.get("format") == "sleep-progress/v2":
+                from .continuation import progress_proof
+
+                require(db.execute("PRAGMA user_version").fetchone()[0] == 1)
+                method = record(value["method_ref"], "method")
+                require(method["scope"] in {"space", row["scope"]})
+                progress_proof(core, db, value, row["scope"])
+                for action_id in value["unresolved_calls"]:
+                    require(
+                        action_id in actions
+                        and attempts[actions[action_id]["attempt"]]["work"] == value["work_id"]
+                    )
+                continue
+            if value.get("format") != "sleep-progress/v1":
                 continue
             SleepProgress.model_validate(value)
             require(value["work_id"] in works)

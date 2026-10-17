@@ -51,6 +51,17 @@ class Work(Shape):
     money_limit: str | None = None
 
 
+class ContinuationFrom(Shape):
+    attempt_id: Id
+    result_hash: Hash
+    work_revision: Positive
+    basis_refs: list[Ref] = Field(min_length=1, max_length=32)
+
+
+class OpenWork(Work):
+    continuation_from: ContinuationFrom | None = None
+
+
 class Tool(Shape):
     attempt_id: Id
     generation: Positive
@@ -252,6 +263,13 @@ class SleepProgress(Shape):
     continuation: str
 
 
+class SleepProgressV2(SleepProgress):
+    format: Literal["sleep-progress/v2"]  # type: ignore[assignment]
+    predecessor_ref: Ref
+    transition: Literal["same_window", "new_window"]
+    range_start: list[Cursor] = Field(min_length=2, max_length=2)
+
+
 MODELS: dict[str, type[Shape]] = {
     "describe_contract": Shape,
     "read_snapshot": Snapshot,
@@ -261,7 +279,7 @@ MODELS: dict[str, type[Shape]] = {
     "lookup_receipt": Receipt,
     "ingest_message": Message,
     "apply_changes": Changes,
-    "open_work": Work,
+    "open_work": OpenWork,
     "prepare_attempt": Prepare,
     "claim_dispatch": Claim,
     "observe_attempt": Observe,

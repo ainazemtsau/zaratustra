@@ -198,8 +198,8 @@ forbidden_modules = ["zaratustra.pi_adapter", "zaratustra.release", "zaratustra.
 
 [dependency-groups]
 dev = [
-    "zaratustra-core==0.1.0",
-    "zaratustra-next==0.1.0",
+    "zaratustra-core==0.3.0",
+    "zaratustra-next==0.3.0",
     "import-linter==2.15",
     "mypy==2.3.1",
     "pytest==9.1.1",

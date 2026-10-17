@@ -66,43 +66,48 @@ def target(source: Path, destination: Path) -> Path:
 
 def backup(core: Core, token: str, destination: Path) -> dict[str, Any]:
     with exclusion(core.root):
-        with core._locked_transaction() as db:
-            actor = core._identity(db, token, "admin")
-            if actor["origin"] != "human":
-                raise CoreError("denied", "maintenance.origin")
-            artifacts = [dict(r) for r in db.execute("SELECT * FROM artifacts ORDER BY sha256")]
-            meta = dict(db.execute("SELECT * FROM meta").fetchone())
-        temporary = target(core.root, destination)
+        return backup_locked(core, token, destination)
+
+
+def backup_locked(core: Core, token: str, destination: Path) -> dict[str, Any]:
+    """Caller holds root exclusion; run before opening an upgrade write transaction."""
+    with core._locked_transaction() as db:
+        actor = core._identity(db, token, "admin")
+        if actor["origin"] != "human":
+            raise CoreError("denied", "maintenance.origin")
+        artifacts = [dict(r) for r in db.execute("SELECT * FROM artifacts ORDER BY sha256")]
+        meta = dict(db.execute("SELECT * FROM meta").fetchone())
+    temporary = target(core.root, destination)
+    try:
+        source = sqlite3.connect(core.path)
+        copy = sqlite3.connect(temporary / "core.sqlite3")
         try:
-            source = sqlite3.connect(core.path)
-            copy = sqlite3.connect(temporary / "core.sqlite3")
-            try:
-                source.backup(copy)
-            finally:
-                copy.close()
-                source.close()
-            integrity(temporary / "core.sqlite3")
-            for artifact in artifacts:
-                raw = verified(core.root, artifact["sha256"], artifact["size"])
-                durable(temporary / "artifacts" / artifact["sha256"], raw)
-            # Rewrite through the same synchronization primitive before final publication.
-            database = (temporary / "core.sqlite3").read_bytes()
-            durable(temporary / "core.sqlite3", database)
-            manifest = {
-                "format": "backup/v1",
-                "compatibility": compatibility_from_path(temporary / "core.sqlite3"),
-                "source": meta,
-                "database_sha256": hashlib.sha256(database).hexdigest(),
-                "database_size": len(database),
-                "artifacts": artifacts,
-            }
-            durable(temporary / "manifest.json", wire(manifest))
-            publish_directory(temporary, destination)
-            return manifest
+            source.backup(copy)
         finally:
-            if temporary.exists():
-                # A still-held failed staging tree must not hide the publication error.
-                shutil.rmtree(temporary, ignore_errors=True)
+            copy.close()
+            source.close()
+        integrity(temporary / "core.sqlite3")
+        for artifact in artifacts:
+            raw = verified(core.root, artifact["sha256"], artifact["size"])
+            durable(temporary / "artifacts" / artifact["sha256"], raw)
+        # Rewrite through the same synchronization primitive before final publication.
+        database = (temporary / "core.sqlite3").read_bytes()
+        durable(temporary / "core.sqlite3", database)
+        manifest = {
+            "format": "backup/v1",
+            "compatibility": compatibility_from_path(temporary / "core.sqlite3"),
+            "source": meta,
+            "database_sha256": hashlib.sha256(database).hexdigest(),
+            "database_size": len(database),
+            "artifacts": artifacts,
+        }
+        durable(temporary / "manifest.json", wire(manifest))
+        publish_directory(temporary, destination)
+        return manifest
+    finally:
+        if temporary.exists():
+            # A still-held failed staging tree must not hide the publication error.
+            shutil.rmtree(temporary, ignore_errors=True)
 
 
 def restore(backup_root: Path, destination: Path) -> str:

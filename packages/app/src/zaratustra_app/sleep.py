@@ -34,7 +34,7 @@ Method rollback is another revision, preserving old bytes and limiting its scope
 7 Link changes to actual later Work outcomes delivered in history, including
 negative outcomes. New work must use current applicable memory and Method. Revisit,
 narrow or roll back a Method if outcomes oppose it; do not invent feedback.
-8 Save a new sleep-progress/v1 data revision with all fields from its delivered
+8 Save a new progress data revision using the exact format and all fields from its delivered
 template. Preserve source_high_watermark, exact refs and honest remainder/unknown,
 stop_reason and continuation. Reaching the cursor proves enumeration only.
 Analysis is your claim, not machine proof. Persist analysis as ordinary data with
@@ -201,12 +201,131 @@ class Sleep:
             str(uuid4()),
         )
 
+    def initialize_successor(self, work_id: str, *, portion: int = 16) -> dict[str, Any]:
+        """Adopt the Core-frozen predecessor without relabelling its evidence."""
+        work = self.coordinator.rows("works", work=work_id)[0]
+        descriptor = json.loads(work["body"])
+        link = descriptor.get("continuation", {})
+        if link.get("kind") != "late":
+            raise CoreError("invalid_request", "sleep.successor_lineage")
+        predecessors = []
+        for ref in link["basis_refs"]:
+            record = self.client.call("read_exact", ref, uuid4().hex)
+            value = record["body"]["value"]
+            if (
+                isinstance(value, dict)
+                and value.get("format") in {"sleep-progress/v1", "sleep-progress/v2"}
+                and value.get("work_id") == link["parent_work_id"]
+            ):
+                predecessors.append(record)
+        if len(predecessors) != 1:
+            raise CoreError("stale_basis", "sleep.successor_predecessor")
+        predecessor = predecessors[0]
+        predecessor_ref = {
+            "id": predecessor["id"],
+            "revision": predecessor["revision"],
+            "role": "exact",
+        }
+        head = next(
+            (h for h in self.coordinator.rows("heads") if h["id"] == work_id + ":progress"), None
+        )
+        if head is None:
+            old = predecessor["body"]["value"]
+            body = deepcopy(old)
+            same = bool(old["remaining_refs"]) or old["enumeration_cursor"][1] != 2147483647
+            body.update(
+                {
+                    "format": "sleep-progress/v2",
+                    "work_id": work_id,
+                    "method_ref": descriptor["method_ref"],
+                    "predecessor_ref": predecessor_ref,
+                    "transition": "same_window" if same else "new_window",
+                    "range_start": old.get("range_start", [0, 0])
+                    if same
+                    else [old["source_high_watermark"], 2147483647],
+                    "delivered_manifest_refs": [],
+                    "analysis_result_refs": [],
+                    "applied_receipts": [],
+                    "consumed_resource": work["reserved"],
+                    "unresolved_calls": [],
+                    "stop_reason": "not_started",
+                }
+            )
+            if same and old["remaining_refs"]:
+                body["selected_source_refs"] = old["remaining_refs"][:portion]
+            else:
+                after = old["enumeration_cursor"] if same else body["range_start"]
+                history = self.client.call(
+                    "read_history",
+                    {
+                        "scope": descriptor["scope"],
+                        "limit": portion,
+                        "after_sequence": after[0],
+                        "after_index": after[1],
+                    }
+                    | ({"high_watermark": old["source_high_watermark"]} if same else {}),
+                    uuid4().hex,
+                )
+                refs = [s["source_ref"] for s in history["sources"]]
+                body["source_high_watermark"] = history["high_watermark"]
+                body["enumeration_cursor"] = history["cursor"]
+                body["enumerated_source_refs"] = (
+                    old["enumerated_source_refs"] + refs if same else refs
+                )
+                body["remaining_refs"] = old["remaining_refs"] + refs if same else refs
+                body["selected_source_refs"] = refs
+            try:
+                progress = self._save(
+                    {
+                        "id": work_id + ":progress",
+                        "kind": "data",
+                        "key": "sleep-progress:" + work_id,
+                        "scope": descriptor["scope"],
+                        "body": body,
+                    },
+                    0,
+                    work_id + ":progress:create",
+                )
+            except CoreError as error:
+                if error.code not in {"stale_basis", "idempotency_conflict"}:
+                    raise
+                # A known competing CAS0 winner is read and verified below.
+                existing = next(
+                    (h for h in self.coordinator.rows("heads") if h["id"] == work_id + ":progress"),
+                    None,
+                )
+                if existing is None:
+                    raise
+                progress = {"id": existing["id"], "revision": existing["revision"]}
+        else:
+            progress = {"id": head["id"], "revision": head["revision"]}
+        current = self.client.call("read_exact", progress, uuid4().hex)["body"]["value"]
+        if (
+            current.get("format") != "sleep-progress/v2"
+            or current["work_id"] != work_id
+            or current.get("predecessor_ref") != predecessor_ref
+        ):
+            raise CoreError("stale_basis", "sleep.successor_progress")
+        self._bind_progress(work_id, progress)
+        return progress
+
     def progress(self, work_id: str) -> dict[str, Any]:
         state = self.coordinator.tables("heads")
-        head = next(h for h in state["heads"] if h["id"] == work_id + ":progress")
-        return self.client.call(
+        head = next((h for h in state["heads"] if h["id"] == work_id + ":progress"), None)
+        if head is None:
+            raise CoreError("stale_basis", "sleep.progress_unavailable", "reconcile")
+        record = self.client.call(
             "read_exact", {"id": head["id"], "revision": head["revision"]}, str(uuid4())
         )
+        value = record["body"]["value"]
+        if (
+            record["body"]["tombstone"]
+            or not isinstance(value, dict)
+            or value.get("format") not in {"sleep-progress/v1", "sleep-progress/v2"}
+            or value.get("work_id") != work_id
+        ):
+            raise CoreError("stale_basis", "sleep.progress_unavailable", "reconcile")
+        return record
 
     def continue_portion(self, work_id: str, *, portion: int = 16) -> dict[str, Any]:
         """Enumerate more at the SAME cutoff; never derive analysis or exploration coverage."""

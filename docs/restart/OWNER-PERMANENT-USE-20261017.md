@@ -109,7 +109,10 @@ It authorizes verified successor Works, exact predecessor evidence and a durable
 data-protocol upgrade that refuses old writers while preserving existing Activity,
 IDs, history and immutable v1 bytes. It does not authorize reopening completed
 results, automatic analysis, a required finding, a new server/table/sidecar truth,
-production model caps or semantic content migration. Implementation and checks
-remain pending; the public source/evidence checkpoint is explicitly NOT_READY.
+production model caps or semantic content migration. Focused mechanical
+implementation checks have passed. The implementation is described in
+[the continuation contract](SLEEP-CONTINUATION.md). Exact-package independent
+review, meaningful live Sleep followed by ordinary work, and the required full
+gate remain pending; the public source/evidence checkpoint is explicitly NOT_READY.
 
 END_OF_FILE: OWNER-PERMANENT-USE-20261017.md

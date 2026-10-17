@@ -1,8 +1,8 @@
 [project]
 name = "zaratustra-next"
-version = "0.2.0"
+version = "0.3.0"
 requires-python = ">=3.13,<3.14"
-dependencies = ["zaratustra-core==0.2.0"]
+dependencies = ["zaratustra-core==0.3.0"]
 [project.scripts]
 zaratustra-next = "zaratustra_app.cli:main"
 [build-system]

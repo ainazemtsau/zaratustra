@@ -99,7 +99,11 @@ def test_rehashed_pinned_reference_corruption_refused(tmp_path: Path, damage: st
         elif damage == "message_range":
             body["messages"] = body["messages"][1:]
         elif damage == "receipt_result":
-            receipt = db.execute("SELECT command,response FROM receipts LIMIT 1").fetchone()
+            # Keep this closure control independent of the protocol audit guard.
+            receipt = db.execute(
+                "SELECT command,response FROM receipts "
+                "WHERE command NOT LIKE 'maintenance:protocol_%' LIMIT 1"
+            ).fetchone()
             response = json.loads(receipt[1])
             response["result"] = {"different": "saved result"}
             db.execute(

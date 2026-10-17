@@ -7,7 +7,7 @@ import json
 from typing import Any, cast
 from uuid import uuid4
 
-from zaratustra_core import Core, CoreError
+from zaratustra_core import Core, CoreError, digest
 
 from .conversation import pin_profile
 from .coordinator import Coordinator
@@ -40,6 +40,130 @@ class NativeSleep:
         )
         self.coordinator = Coordinator(self.client)
         self.sleep = Sleep(self.client)
+
+    def follow(self, profile: dict[str, Any], portion: int = 16) -> dict[str, Any]:
+        """An explicit owner request follows the unique retained Sleep frontier."""
+        if type(portion) is not int or not 1 <= portion <= 100:
+            raise CoreError("invalid_request", "sleep.portion")
+        works = {}
+        for work in self.coordinator.rows("works"):
+            body = json.loads(work["body"])
+            if body.get("scope") == self.scope and body.get("goal") == "Sleep":
+                if body["method_ref"]["id"] != "native-sleep-method:" + self.scope:
+                    raise CoreError("stale_basis", "sleep.method_lineage", "reconcile")
+                works[work["id"]] = work
+        if not works:
+            return self.start("native-sleep-work:" + uuid4().hex, profile, portion)
+        parents = set()
+        roots = []
+        for work in works.values():
+            link = json.loads(work["body"]).get("continuation")
+            if link is None:
+                if work["status"] != "cancelled":
+                    roots.append(work["id"])
+            elif link.get("parent_work_id") in works:
+                parents.add(link["parent_work_id"])
+            else:
+                raise CoreError("stale_basis", "sleep.missing_predecessor", "reconcile")
+        # Cancellation contributes no analysed boundary. It does not erase its
+        # sources, reservations or unknown effects, nor permit a fresh zero range.
+        frontier = [
+            w for key, w in works.items() if key not in parents and w["status"] != "cancelled"
+        ]
+        if not roots or not frontier:
+            raise CoreError("stale_basis", "sleep.no_eligible_predecessor", "reconcile")
+        if len(roots) != 1 or len(frontier) != 1:
+            raise CoreError("stale_basis", "native.ambiguous_unclaimed_sleep", "reconcile")
+        work = frontier[0]
+        body = json.loads(work["body"])
+        attempts = self.coordinator.rows("attempts", work=work["id"])
+        if not attempts:
+            if work["status"] != "ready" or self.coordinator.rows("actions", work=work["id"]):
+                raise CoreError("outcome_unknown", "sleep.pending_attempt", "reconcile")
+            if body.get("continuation", {}).get("kind") == "late":
+                self.sleep.initialize_successor(work["id"], portion=portion)
+            else:
+                self.sleep.start(
+                    work_id=work["id"],
+                    scope=self.scope,
+                    portion=portion,
+                    call_limit=body["call_limit"],
+                    method_id=body["method_ref"]["id"],
+                )
+            return self._claim(work["id"], profile)
+        latest = attempts[-1]
+        result = next(
+            (
+                r
+                for r in self.coordinator.rows("results", work=work["id"])
+                if r["attempt"] == latest["id"]
+            ),
+            None,
+        )
+        if (
+            result is None
+            or latest["status"] not in {"finished", "superseded"}
+            or any(
+                a["state"] not in {"terminal", "not_received"}
+                for a in self.coordinator.rows("actions", work=work["id"])
+            )
+        ):
+            raise CoreError("outcome_unknown", "sleep.pending_attempt", "reconcile")
+        if work["status"] == "ready" and json.loads(result["body"])["state"] == "ready":
+            return self.resume(work["id"], profile, portion)
+        if work["status"] != "completed" or json.loads(result["body"])["state"] != "completed":
+            raise CoreError("stale_basis", "sleep.terminal_predecessor", "reconcile")
+        self.checkpoint(work["id"], latest["id"])
+        return self._successor(work["id"], latest["id"], result["fingerprint"], profile, portion)
+
+    def _successor(
+        self,
+        parent_id: str,
+        attempt_id: str,
+        result_hash: str,
+        profile: dict[str, Any],
+        portion: int,
+    ) -> dict[str, Any]:
+        parent = self.coordinator.rows("works", work=parent_id)[0]
+        body = json.loads(parent["body"])
+        progress = self.sleep.progress(parent_id)
+        basis = {
+            "attempt_id": attempt_id,
+            "result_hash": result_hash,
+            "work_revision": parent["revision"],
+            "basis_refs": [
+                {"id": progress["id"], "revision": progress["revision"], "role": "must_be_current"}
+            ],
+        }
+        limit = body["call_limit"]
+        remainder = None if limit is None else limit - parent["reserved"]
+        if remainder is not None and remainder <= 0:
+            raise CoreError("resource_exhausted", "continuation.calls")
+        method = next(
+            h for h in self.coordinator.rows("heads") if h["id"] == body["method_ref"]["id"]
+        )
+        work_id = "native-sleep-work:" + digest(basis)
+        self.client.call(
+            "open_work",
+            {
+                "id": work_id,
+                "conversation": body["conversation"],
+                "goal": "Sleep",
+                "scope": self.scope,
+                "inputs": [],
+                "call_limit": remainder,
+                "continuation_policy": "durable",
+                "method_ref": {
+                    "id": method["id"],
+                    "revision": method["revision"],
+                    "role": "must_be_current",
+                },
+                "continuation_from": basis,
+            },
+            work_id + ":open",
+        )
+        self.sleep.initialize_successor(work_id, portion=portion)
+        return self._claim(work_id, profile)
 
     def start(self, work_id: str, profile: dict[str, Any], portion: int = 16) -> dict[str, Any]:
         self.sleep.start(
@@ -154,9 +278,14 @@ class NativeSleep:
         prepared = self.coordinator.prepare(
             work_id, attempt, profile_ref, context_selection=selection
         )
+        policy = json.loads(self.coordinator.rows("works", work=work_id)[0]["body"])["call_limit"]
         self.client.call(
             "claim_dispatch",
-            {"attempt_id": attempt, "generation": prepared["generation"], "resource_upper": None},
+            {
+                "attempt_id": attempt,
+                "generation": prepared["generation"],
+                "resource_upper": None if policy is None else 1,
+            },
             attempt + ":claim",
             action_id=attempt + ":action",
         )
@@ -178,10 +307,11 @@ class NativeSleep:
         attempt = next(a for a in snapshot["attempts"] if a["id"] == mapping["attempt"])
         context = cast(dict[str, Any], json.loads(attempt["body"]))
         work = next(w for w in snapshot["works"] if w["id"] == mapping["work"])
+        policy = json.loads(work["body"])["call_limit"]
         context["resource_state"] = {
-            "call_limit": None,
-            "mode": "unlimited",
-            "reservation_upper": None,
+            "call_limit": policy,
+            "mode": "unlimited" if policy is None else "finite",
+            "reservation_upper": None if policy is None else 1,
             "consumed_resource": work["reserved"],
             "unresolved_calls": [
                 a["id"]
@@ -192,6 +322,13 @@ class NativeSleep:
         context["raw_messages"] = [
             base64.b64decode(m["raw"]).decode("utf-8") for m in context["messages"]
         ]
+        context["cancelled_history"] = [
+            {"work_id": w["id"], "status": "cancelled", "analysed_boundary_credit": False}
+            for w in self.coordinator.rows("works")
+            if w["status"] == "cancelled"
+            and json.loads(w["body"]).get("goal") == "Sleep"
+            and json.loads(w["body"]).get("scope") == self.scope
+        ]
         context["coverage"] = (
             "First 100 catalog refs; exact pinned inputs and Sleep sources retained."
         )
@@ -200,6 +337,8 @@ class NativeSleep:
             "metadata with zara_result, then speak normally. Preserve unexamined sources. "
             "Memory and Method writes require this Sleep scope's explicit grants. "
             "No automatic replay of unknown tools."
+            " Copy the delivered progress template's exact format (v1 or v2), predecessor, "
+            "transition and range_start; inherited evidence remains attributed to its predecessor."
         )
         return context
 

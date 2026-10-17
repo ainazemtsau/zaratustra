@@ -1,12 +1,14 @@
 # Zaratustra
 
 Текущий вход в этой ветке — **обычный Pi с расширением Zaratustra**, пакеты
-`zaratustra-core` и `zaratustra-next` версии **0.2.0**. Это проверяемый кандидат;
+`zaratustra-core` и `zaratustra-next` версии **0.3.0**. Это проверяемый кандидат;
 окончательная техническая проверка и живой рабочий цикл ещё выполняются.
 
 Точный сохранённый пакет, SHA и текущие ограничения приведены в
 [индексе поставки](delivery/README.md). Это checkpoint **NOT_READY**: согласованное
-продолжение Sleep и итоговая проверка ещё выполняются. Для пробной установки
+продолжение Sleep реализовано и прошло целевые механические проверки; независимая
+проверка нового пакета, живой цикл и итоговый gate ещё требуются. Индекс сохраняет
+предыдущий точный checkpoint, пока новый пакет не зафиксирован. Для пробной установки
 распакуйте указанный ZIP в постоянную папку и зарегистрируйте извлечённый каталог:
 
 ```text
@@ -24,7 +26,7 @@ pi install "/absolute/path/to/extracted-package"
 
 ```text
 uv sync --locked
-uv run --locked python -m tools.build_permanent_package --output delivery/zaratustra-pi-0.2.0
+uv run --locked python -m tools.build_permanent_package --output /absolute/path/to/new-package
 ```
 
 Папка данных находится вне репозитория и поставки. При обновлении в новую папку

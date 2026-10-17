@@ -1,6 +1,6 @@
 [project]
 name = "zaratustra-core"
-version = "0.2.0"
+version = "0.3.0"
 requires-python = ">=3.13,<3.14"
 dependencies = ["pydantic==2.13.5"]
 [build-system]

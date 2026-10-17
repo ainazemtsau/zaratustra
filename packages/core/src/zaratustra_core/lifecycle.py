@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sqlite3
 from contextlib import ExitStack, closing
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
-from .storage import exclusion
+from .storage import exclusion, verified
 from .types import CoreError, digest, wire
 
 if TYPE_CHECKING:
@@ -39,13 +40,19 @@ def expected_schema() -> list[tuple[Any, ...]]:
 def compatibility(db: sqlite3.Connection) -> dict[str, Any]:
     """Admit only the exact independent restart layout; never migrate implicitly."""
     rows = schema_rows(db)
-    if rows != expected_schema() or db.execute("PRAGMA user_version").fetchone()[0] != 0:
+    generation = db.execute("PRAGMA user_version").fetchone()[0]
+    if rows != expected_schema() or generation not in {0, 1}:
         raise CoreError("unsupported_capability", "maintenance.schema")
-    return {
+    if generation == 1:
+        validate_protocol(db, digest([list(row) for row in rows]))
+    result = {
         "contract": "wire/v1",
         "schema": "restart/v1",
         "schema_sha256": digest([list(row) for row in rows]),
     }
+    if generation:
+        result["required_protocol"] = generation
+    return result
 
 
 def human(core: Core, db: sqlite3.Connection, token: str) -> None:
@@ -53,7 +60,7 @@ def human(core: Core, db: sqlite3.Connection, token: str) -> None:
         raise CoreError("denied", "maintenance.origin")
 
 
-def event(db: sqlite3.Connection, kind: str, subject: str, body: dict[str, Any]) -> None:
+def event(db: sqlite3.Connection, kind: str, subject: str, body: dict[str, Any]) -> str:
     command = "maintenance:" + kind + ":" + subject + ":" + digest(body)
     seq = db.execute(
         "INSERT INTO events(kind,subject,body) VALUES(?,?,?)", (kind, command, wire(body).decode())
@@ -70,6 +77,7 @@ def event(db: sqlite3.Connection, kind: str, subject: str, body: dict[str, Any])
         "INSERT INTO receipts VALUES(?,?,?,?)",
         (command, "owner", digest(body), wire(response).decode()),
     )
+    return command
 
 
 def latest(db: sqlite3.Connection, kind: str) -> dict[str, Any] | None:
@@ -179,13 +187,144 @@ def activate(core: Core, token: str, source: Core, source_token: str) -> dict[st
             return evidence
 
 
+def initialize_protocol(db: sqlite3.Connection) -> None:
+    db.execute("PRAGMA user_version=1")
+    event(
+        db,
+        "protocol_initialized",
+        "1",
+        {"protocol": 1, "schema_sha256": digest([list(row) for row in schema_rows(db)])},
+    )
+
+
+def validate_protocol(db: sqlite3.Connection, schema_hash: str) -> None:
+    row = db.execute(
+        "SELECT * FROM events WHERE kind IN ('protocol_initialized','protocol_upgrade') "
+        "ORDER BY seq DESC LIMIT 1"
+    ).fetchone()
+    try:
+        if row is None:
+            raise ValueError("missing protocol evidence")
+        # Connections used by backup metadata do not necessarily have a Row factory.
+        fields = [column[0] for column in db.execute("SELECT * FROM events LIMIT 0").description]
+        evidence = dict(zip(fields, row, strict=True))
+        body = json.loads(evidence["body"])
+        if body.get("protocol") != 1 or body.get("schema_sha256") != schema_hash:
+            raise ValueError("protocol evidence mismatch")
+        receipt = db.execute(
+            "SELECT fingerprint,response FROM receipts WHERE command=?", (evidence["subject"],)
+        ).fetchone()
+        if receipt is None:
+            raise ValueError("missing protocol receipt")
+        response = json.loads(receipt[1])
+        if (
+            receipt[0] != digest(body)
+            or response["result"] != body
+            or response["sequence"] != evidence["seq"]
+        ):
+            raise ValueError("protocol receipt mismatch")
+        if evidence["kind"] == "protocol_upgrade" and (
+            body["from"] != 0 or body["to"] != 1 or len(body["database_sha256"]) != 64
+        ):
+            raise ValueError("protocol upgrade mismatch")
+    except (ValueError, KeyError, TypeError) as error:
+        raise CoreError("unsupported_capability", "maintenance.protocol_evidence") from error
+
+
+def checked_snapshot(destination: Path) -> dict[str, Any]:
+    from .maintenance import integrity
+
+    try:
+        manifest = json.loads((destination / "manifest.json").read_bytes())
+        raw = (destination / "core.sqlite3").read_bytes()
+        if (
+            manifest["format"] != "backup/v1"
+            or manifest["database_size"] != len(raw)
+            or manifest["database_sha256"] != hashlib.sha256(raw).hexdigest()
+        ):
+            raise ValueError("snapshot hash")
+        integrity(destination / "core.sqlite3")
+        with closing(sqlite3.connect(destination / "core.sqlite3")) as db:
+            db.row_factory = sqlite3.Row
+            if dict(db.execute("SELECT * FROM meta").fetchone()) != manifest["source"]:
+                raise ValueError("snapshot source")
+            artifacts = [dict(r) for r in db.execute("SELECT * FROM artifacts ORDER BY sha256")]
+            if artifacts != manifest["artifacts"] or compatibility(db) != manifest.get(
+                "compatibility"
+            ):
+                raise ValueError("snapshot manifest")
+        for artifact in artifacts:
+            verified(destination, artifact["sha256"], artifact["size"])
+        return cast(dict[str, Any], manifest)
+    except (OSError, ValueError, KeyError, TypeError, sqlite3.DatabaseError) as error:
+        raise CoreError("invalid_request", "maintenance.update_snapshot") from error
+
+
+def upgrade_fingerprint(db: sqlite3.Connection) -> str:
+    return digest(
+        {
+            "state": state_fingerprint(db),
+            "credentials": sorted([list(r) for r in db.execute("SELECT * FROM credentials")]),
+            "meta": list(db.execute("SELECT * FROM meta").fetchone()),
+        }
+    )
+
+
 def prepare_update(core: Core, token: str, destination: Path) -> dict[str, Any]:
-    """Pre-update verified backup. Current compatible updates perform no data rewrite."""
-    manifest = core.backup(token, destination)
-    return {
-        "status": "compatible",
-        "compatibility": manifest["compatibility"],
-        "source": manifest["source"],
-        "backup": str(destination.resolve()),
-        "manifest": manifest,
-    }
+    """Snapshot before enabling protocol1. Re-entry recovers the same verified snapshot."""
+    from .maintenance import backup_locked
+
+    destination = destination.resolve()
+    with exclusion(core.root):
+        with core._locked_transaction() as db:
+            human(core, db, token)
+            generation = db.execute("PRAGMA user_version").fetchone()[0]
+            source = dict(db.execute("SELECT * FROM meta").fetchone())
+            prior = latest(db, "protocol_upgrade")
+            if generation == 0:
+                before = upgrade_fingerprint(db)
+        if destination.exists():
+            manifest = checked_snapshot(destination)
+            if generation == 1:
+                if (
+                    prior is None
+                    or prior["backup"] != str(destination)
+                    or prior["database_sha256"] != manifest["database_sha256"]
+                    or prior["source"] != source
+                ):
+                    raise CoreError("invalid_request", "maintenance.destination")
+            else:
+                with closing(sqlite3.connect(destination / "core.sqlite3")) as snapshot:
+                    if manifest["source"] != source or upgrade_fingerprint(snapshot) != before:
+                        raise CoreError("stale_basis", "maintenance.update_snapshot")
+        else:
+            manifest = backup_locked(core, token, destination)
+        with core._locked_transaction() as db:
+            if generation == 0:
+                evidence = {
+                    "protocol": 1,
+                    "from": 0,
+                    "to": 1,
+                    "source": source,
+                    "schema_sha256": digest([list(row) for row in schema_rows(db)]),
+                    "backup": str(destination),
+                    "database_sha256": manifest["database_sha256"],
+                    "state_sha256": before,
+                }
+                db.execute("PRAGMA user_version=1")
+                receipt = event(db, "protocol_upgrade", "1", evidence)
+                upgrade = {"from": 0, "to": 1, "receipt_id": receipt}
+            elif prior is not None and prior["backup"] == str(destination):
+                receipt = "maintenance:protocol_upgrade:1:" + digest(prior)
+                upgrade = {"from": 0, "to": 1, "receipt_id": receipt}
+            else:
+                upgrade = {"from": 1, "to": 1}
+            admitted = compatibility(db)
+        return {
+            "status": "compatible",
+            "compatibility": admitted,
+            "source": source,
+            "backup": str(destination),
+            "manifest": manifest,
+            "upgrade": upgrade,
+        }

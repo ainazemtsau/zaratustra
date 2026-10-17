@@ -90,7 +90,12 @@ def build(output: Path, source_dist: Path | None = None) -> Path:
         requirement_file.write_text("\n".join(requirements) + "\n", encoding="utf-8")
         (package_root / "release.json").write_text(
             json.dumps(
-                {"versions": versions, "requirements_sha256": sha256(requirement_file)},
+                {
+                    "versions": versions,
+                    "requirements_sha256": sha256(requirement_file),
+                    "core_required_protocol": 1,
+                    "supported_read_protocols": [0, 1],
+                },
                 sort_keys=True,
                 indent=2,
             )

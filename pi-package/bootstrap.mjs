@@ -36,7 +36,7 @@ export function run(command, args, input) {
     child.stdout.on("data", chunk => { output += chunk; });
     child.stderr.resume();
     child.on("error", () => reject(new Error("Required executable unavailable: " + command)));
-    child.on("close", code => code === 0 ? resolve(output) : reject(new Error(`${basename(command)} exited with ${code}; existing data and runtime selection retained.`)));
+    child.on("close", code => code === 0 ? resolve(output) : reject(new Error(`${basename(command)} exited with ${code}; no automatic retry. A committed protocol upgrade is retained even if runtime publication was interrupted.`)));
     child.stdin.on("error", () => {});
     child.stdin.end(input || "");
   });
@@ -48,6 +48,15 @@ import zaratustra_core,zaratustra_app.pi_host
 v=json.loads(sys.argv[1])
 assert all(m.version(k)==value for k,value in v.items())
 assert sys.version_info[:2]==(3,13)
+assert zaratustra_core.Core.required_protocol==1
+assert tuple(zaratustra_core.Core.supported_read_protocols)==(0,1)
+`;
+const verifyData = `from pathlib import Path
+from zaratustra_core import Core
+import sys
+root=Path(sys.argv[1])
+if root.exists():
+ assert Core(root).data_protocol==Core.required_protocol
 `;
 // Environments are created at unique final paths: console launchers retain valid absolute paths.
 // Publication alone is serialized with an OS lock, automatically released after process death.
@@ -72,6 +81,7 @@ for attempt in range(1200):
      executable=chosen/('Scripts/python.exe' if os.name=='nt' else 'bin/python')
      assert (chosen/'.ready').read_text(encoding='utf-8')==identity
      subprocess.run([str(executable),'-c',sys.argv[5],sys.argv[6]],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+     subprocess.run([str(executable),'-c',sys.argv[7],sys.argv[4]],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     except (OSError,AssertionError,subprocess.CalledProcessError): pass
     else:
      print(str(chosen)); break
@@ -81,6 +91,7 @@ for attempt in range(1200):
     backup.parent.mkdir(parents=True,exist_ok=True)
     result=handle({'command':'prepare-update','data_root':str(data),'destination':str(backup)})
     if result.get('state')!='compatible': raise RuntimeError('Incompatible Core update')
+    subprocess.run([sys.executable,'-c',sys.argv[7],str(data)],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
    (candidate/'.ready').write_text(identity,encoding='utf-8')
    temporary=root/('.current-'+uuid.uuid4().hex)
    with temporary.open('x',encoding='utf-8') as stream:
@@ -100,6 +111,7 @@ export async function bootstrap() {
   const manifest = await readFile(join(wheels, "SHA256SUMS"), "utf8");
   const release = JSON.parse(await readFile(join(base, "release.json"), "utf8"));
   const requirements = await readFile(join(base, "requirements.txt"));
+  if (release.core_required_protocol !== 1 || JSON.stringify(release.supported_read_protocols) !== "[0,1]") throw new Error("Unsupported Core protocol manifest.");
   if (digest(requirements) !== release.requirements_sha256) throw new Error("Requirements integrity check failed.");
   const names = [];
   for (const line of manifest.trim().split(/\r?\n/)) {
@@ -111,7 +123,7 @@ export async function bootstrap() {
   for (const name of ["zaratustra_core", "zaratustra_next"]) {
     if (names.filter(n => n.startsWith(name + "-") && n.endsWith("-py3-none-any.whl")).length !== 1) throw new Error("Both universal product wheels are required exactly once.");
   }
-  const identity = digest(manifest + requirements.toString() + JSON.stringify(release.versions));
+  const identity = digest(manifest + requirements.toString() + JSON.stringify(release));
   const root = home();
   await mkdir(join(root, "runtimes"), { recursive: true });
   try {
@@ -119,6 +131,7 @@ export async function bootstrap() {
     if (selected.identity === identity && await readFile(join(selected.runtime, ".ready"), "utf8") === identity) {
       const python = interpreter(selected.runtime);
       await run(python, ["-c", verify, JSON.stringify(release.versions)]);
+      await run(python, ["-c", verifyData, await dataRoot()]);
       return python;
     }
   } catch {}
@@ -132,7 +145,7 @@ export async function bootstrap() {
     const offline = process.env.ZARATUSTRA_OFFLINE === "1" ? ["--no-index"] : [];
     await run("uv", ["pip", "install", "--python", python, "--require-hashes", ...offline, "--find-links", wheels, "-r", join(base, "requirements.txt")]);
     await run(python, ["-c", verify, JSON.stringify(release.versions)]);
-    const chosen = (await run(python, ["-c", publish, root, runtime, identity, await dataRoot(), verify, JSON.stringify(release.versions)])).trim();
+    const chosen = (await run(python, ["-c", publish, root, runtime, identity, await dataRoot(), verify, JSON.stringify(release.versions), verifyData])).trim();
     published = chosen === runtime;
     await run(interpreter(chosen), ["-c", verify, JSON.stringify(release.versions)]);
     return interpreter(chosen);

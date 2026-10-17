@@ -103,6 +103,9 @@ class _Preview(Exception):
 
 
 class Core:
+    required_protocol = 1
+    supported_read_protocols = (0, 1)
+
     def __init__(self, root: Path):
         self.root = Path(root)
         self.path = self.root / "core.sqlite3"
@@ -110,6 +113,12 @@ class Core:
             fail("wrong_instance", "data_root")
         with self._transaction():
             pass
+
+    @property
+    def data_protocol(self) -> int:
+        """Current admitted data protocol, without an event or command receipt."""
+        with self._transaction() as db:
+            return int(db.execute("PRAGMA user_version").fetchone()[0])
 
     @classmethod
     def initialize(cls, root: Path) -> tuple[Core, str]:
@@ -127,6 +136,9 @@ class Core:
                 (hashlib.sha256(token.encode()).hexdigest(), "owner", "human"),
             )
             connection.execute("INSERT INTO rights VALUES(?,?)", ("owner", dumps(["*"])))
+            from .lifecycle import initialize_protocol
+
+            initialize_protocol(connection)
             connection.commit()
         finally:
             connection.close()
@@ -336,6 +348,13 @@ class Core:
                 "INSERT INTO receipts VALUES(?,?,?,?)",
                 (req.command_id, actor["principal"], fingerprint, dumps(response)),
             )
+            for ref in result.get("refs", []):
+                record = self._exact(db, ref)
+                value = record["body"]["value"]
+                if isinstance(value, dict) and value.get("format") == "sleep-progress/v2":
+                    from .continuation import progress_proof
+
+                    progress_proof(self, db, value, record["scope"])
             if _preview:
                 raise _Preview(response)
             return response
@@ -405,7 +424,10 @@ class Core:
                 for ref in value_references(change["body"], schema["body"]["value"]):
                     self._exact(db, ref | {"role": "exact"})
             value = change["body"]
-            if isinstance(value, dict) and value.get("format") == "sleep-progress/v1":
+            if isinstance(value, dict) and value.get("format") in {
+                "sleep-progress/v1",
+                "sleep-progress/v2",
+            }:
                 if change["kind"] != "data":
                     fail("invalid_request", "progress.kind")
                 self._progress(db, value, change.get("scope", "space"), head)
@@ -455,6 +477,13 @@ class Core:
 
     def _sources(self, db: sqlite3.Connection, event: sqlite3.Row) -> list[dict[str, Any]]:
         """Immutable history material, separate from mutable heads and enumeration."""
+        if event["kind"] not in {
+            "apply_changes",
+            "commit_outcome",
+            "observe_attempt",
+            "ingest_message",
+        }:
+            return []
         result = loads(event["body"])
         sources = []
         if event["kind"] in {"apply_changes", "commit_outcome"}:
@@ -497,7 +526,9 @@ class Core:
     ) -> Iterator[dict[str, Any]]:
         after = after or [0, 0]
         for event in db.execute(
-            "SELECT * FROM events WHERE seq>=? AND seq<=? ORDER BY seq", (after[0], high)
+            "SELECT * FROM events WHERE seq>=? AND seq<=? AND kind IN "
+            "('apply_changes','commit_outcome','observe_attempt','ingest_message') ORDER BY seq",
+            (after[0], high),
         ):
             for index, source in enumerate(self._sources(db, event)):
                 if [event["seq"], index] <= after or (
@@ -516,6 +547,11 @@ class Core:
     def _progress(
         self, db: sqlite3.Connection, value: dict[str, Any], scope: str, head: sqlite3.Row | None
     ) -> None:
+        if value.get("format") == "sleep-progress/v2":
+            from .continuation import current_progress
+
+            current_progress(self, db, value, scope, head)
+            return
         SleepProgress.model_validate(value)
         work = db.execute("SELECT * FROM works WHERE id=?", (value["work_id"],)).fetchone()
         if (
@@ -524,6 +560,8 @@ class Core:
             or loads(work["body"]).get("scope", "space") != scope
         ):
             fail("invalid_request", "progress.work_scope")
+        if loads(work["body"]).get("continuation", {}).get("kind") == "late":
+            fail("invalid_request", "progress.predecessor_required")
         method = loads(work["body"])["method_ref"]
         if value["method_ref"] != method:
             fail("stale_basis", "progress.method")
@@ -533,6 +571,8 @@ class Core:
             fail("invalid_request", "progress.high_watermark")
         if head:
             old = self._exact(db, {"id": head["id"], "revision": head["revision"]})["body"]["value"]
+            if old.get("format") == "sleep-progress/v2":
+                fail("invalid_request", "progress.format")
             if old.get("format") == "sleep-progress/v1" and (
                 old["work_id"] != value["work_id"]
                 or old["source_high_watermark"] != value["source_high_watermark"]
@@ -683,6 +723,10 @@ class Core:
         child = payload.get("next_work")
         if child is None:
             return None
+        from .continuation import successor
+
+        if successor(db, attempt["id"]):
+            fail("identity_conflict", "next_work.successor")
         self._require(db, actor["principal"], "open_work")
         if payload["state"] != "completed" or payload.get("wait"):
             fail("invalid_request", "next_work.state")
@@ -811,6 +855,10 @@ class Core:
 
             return {
                 "version": "wire/v1",
+                "required_protocol": self.required_protocol,
+                "data_protocol": db.execute("PRAGMA user_version").fetchone()[0],
+                "late_continuation": True,
+                "sleep_progress_formats": ["sleep-progress/v1", "sleep-progress/v2"],
                 "operations": sorted(OPS),
                 "resource_units": ["calls"],
                 "snapshot": {"max_rows_per_table": 1000, "pagination": False},
@@ -1002,6 +1050,10 @@ class Core:
                 )
             return {"refs": refs}
         if op == "open_work":
+            if p.get("continuation_from") is not None:
+                from .continuation import late_work
+
+                return late_work(self, db, p, req.command_id)
             return self._work(db, p)
         if op == "prepare_attempt":
             work = db.execute("SELECT * FROM works WHERE id=?", (p["work_id"],)).fetchone()
@@ -1124,7 +1176,7 @@ class Core:
                 m["body"]["value"]
                 for m in material
                 if isinstance(m["body"]["value"], dict)
-                and m["body"]["value"].get("format") == "sleep-progress/v1"
+                and m["body"]["value"].get("format") in {"sleep-progress/v1", "sleep-progress/v2"}
             ]
             if progress:
                 if len(progress) != 1 or progress[0]["work_id"] != work["id"]:

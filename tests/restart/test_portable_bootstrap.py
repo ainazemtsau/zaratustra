@@ -275,11 +275,19 @@ owner.call('apply_changes',{'changes':[{'id':'kept-activity','kind':'activity','
 """
     subprocess.run([str(previous), "-c", seed, str(root / "data")], check=True)
     credential = (root / "data/owner.credential").read_bytes()
-    database = (root / "data/core.sqlite3").read_bytes()
+    with sqlite3.connect(root / "data/core.sqlite3") as old_database:
+        old_dump = list(old_database.iterdump())
+        tables = [
+            row[0]
+            for row in old_database.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            if row[0] not in {"events", "receipts", "sqlite_sequence"}
+        ]
+        protected = {
+            table: list(old_database.execute('SELECT * FROM "' + table + '"')) for table in tables
+        }
     updated = install(portable, root)
     assert updated != previous
     assert (root / "data/owner.credential").read_bytes() == credential
-    assert (root / "data/core.sqlite3").read_bytes() == database
     backup = next((root / "backups").iterdir())
     manifest_body = json.loads((backup / "manifest.json").read_text(encoding="utf-8"))
     backup_database = backup / "core.sqlite3"
@@ -287,7 +295,10 @@ owner.call('apply_changes',{'changes':[{'id':'kept-activity','kind':'activity','
         manifest_body["database_sha256"] == hashlib.sha256(backup_database.read_bytes()).hexdigest()
     )
     with sqlite3.connect(root / "data/core.sqlite3") as original:
-        original_rows = list(original.iterdump())
+        assert original.execute("PRAGMA user_version").fetchone() == (1,)
+        assert {
+            table: list(original.execute('SELECT * FROM "' + table + '"')) for table in tables
+        } == protected
         assert original.execute("SELECT status FROM works WHERE id='old-work'").fetchone() == (
             "waiting",
         )
@@ -298,4 +309,5 @@ owner.call('apply_changes',{'changes':[{'id':'kept-activity','kind':'activity','
             "SELECT COUNT(*) FROM records WHERE id='kept-activity'"
         ).fetchone() == (2,)
     with sqlite3.connect(backup_database) as restored:
-        assert list(restored.iterdump()) == original_rows
+        assert list(restored.iterdump()) == old_dump
+        assert restored.execute("PRAGMA user_version").fetchone() == (0,)
