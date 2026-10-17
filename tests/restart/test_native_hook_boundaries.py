@@ -40,6 +40,9 @@ SOURCE = Path(__file__).resolve().parents[2]
         "history-large",
         "page-large",
         "exact-large",
+        "codec-readable",
+        "codec-fallback",
+        "codec-unfit",
     ],
 )
 def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
@@ -177,6 +180,28 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
             ("zara_result", result),
             ("text", "Exact bounded read final"),
         ]
+    if scenario == "codec-readable":
+        script = script[:1] + [
+            ("zara_result", result),
+            ("text", "Fictional builder final"),
+            (
+                "zara_read",
+                {
+                    "payload": {
+                        "operation": "read_history",
+                        "arguments": {"scope": "fictional", "limit": 100},
+                    }
+                },
+            ),
+            ("text", "Readability protocol only; no Sleep analysis or adaptation asserted"),
+        ]
+    if scenario in {"codec-fallback", "codec-unfit"}:
+        script = [
+            (
+                "text",
+                "Encoded source retained; decoded text not delivered; no analysis asserted",
+            )
+        ]
     calls: list[Any] = []
 
     class Handler(BaseHTTPRequestHandler):
@@ -186,6 +211,20 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
         def do_POST(self) -> None:
             calls.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
             index = len(calls) - 1
+            if (
+                scenario == "codec-readable"
+                and index >= 3
+                and "CODEC_FACT_7F4A" not in json.dumps(calls[-1], ensure_ascii=False)
+            ):
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(
+                    b'{"error":{"message":"Fixture source fact is not readable",'
+                    b'"type":"invalid_request_error"}}'
+                )
+                return
+
             if scenario == "history-large" and len(json.dumps(calls[-1]).encode("utf-8")) > 256000:
                 self.send_response(400)
                 self.send_header("Content-Type", "application/json")
@@ -390,7 +429,14 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
             )
         first = json.loads(ends[0]["result"]["content"][0]["text"])
         assert first["has_more"] and first["projection"]["withheld"] > 0
-        assert first["sources"] and first["sources"][0]["source_ref"]["sha256"]
+        if first["sources"]:
+            assert first["sources"][0]["source_ref"]["sha256"]
+        else:
+            assert first["state"] == "NOT_DELIVERED"
+            assert first["reason"] == "single_source_too_large"
+            assert first["cursor"] == [0, 0]
+            assert first["source_bytes"] > 0 and first["source_view_bytes"] > 0
+            assert first["required_tool_result_bytes"] > 50 * 1024
     elif scenario in {"page-large", "exact-large"}:
         assert len(calls) == 5
         assert value["delivery"]["result"]["text"] == "Exact bounded read final"
@@ -414,6 +460,48 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
                 <= 50 * 1024
             )
             assert "rows" not in event["result"]["details"]
+    elif scenario in {"codec-fallback", "codec-unfit"}:
+        assert value["context"]["current"]["mode"] == "sleep"
+        assert value["context"]["current"]["attempt"]
+        assert value["delivery"]["state"] == "error"
+        if scenario == "codec-unfit":
+            assert not calls
+            assert "presentation does not fit" in json.dumps(value["notifications"])
+        else:
+            assert len(calls) == 1
+            contexts = [
+                json.loads(message["content"])
+                for message in value["afterSecond"]
+                if message.get("customType") == "zaratustra-context"
+            ]
+            fallback = contexts[-1]
+            assert fallback["native_source_data_presentation"]["status"] == "decoded_NOT_DELIVERED"
+            assert fallback["native_source_data_presentation"]["analysisAsserted"] is False
+            assert fallback["sleep"] == value["context"]["sleep"]
+            assert (
+                len(json.dumps(fallback, ensure_ascii=False, separators=(",", ":")).encode())
+                <= 1048576
+            )
+            import base64
+
+            encoded = base64.b64encode(b"FALLBACK_SOURCE_9C2D:" + bytes(262144)).decode()
+            assert json.dumps(fallback).count(encoded) == 1
+            assert json.dumps(calls[0]).count(encoded) == 1
+            assert "FALLBACK_SOURCE_9C2D" not in json.dumps(calls[0])
+            assert "raw_utf8" not in json.dumps(fallback)
+            assert "decoded_NOT_DELIVERED" in json.dumps(calls[0])
+    elif scenario == "codec-readable":
+        assert len(calls) == 5
+        assert "CODEC_FACT_7F4A" in json.dumps(calls[3], ensure_ascii=False)
+        reads = [
+            e
+            for e in value["events"]
+            if e.get("type") == "tool_execution_end" and e.get("toolName") == "zara_read"
+        ]
+        assert "CODEC_FACT_7F4A" in reads[0]["result"]["content"][0]["text"]
+        assert "CODEC_FACT_7F4A" in json.dumps(value["afterSecond"], ensure_ascii=False)
+        assert value["context"]["current"]["mode"] == "sleep"
+        assert value["context"]["current"]["attempt"]
     elif scenario.startswith("read-"):
         if scenario in {"read-shape-correction", "read-admission-correction"}:
             assert len(calls) == 5
@@ -489,7 +577,10 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
         import base64
 
         observation = json.loads(row["body"])
-        raw = json.loads(base64.b64decode(observation["raw_base64"]))
+        source_text = base64.b64decode(observation["raw_base64"]).decode("utf-8")
+        if source_text == "CODEC_FACT_7F4A: Ж🙂 source data only":
+            continue
+        raw = json.loads(source_text)
         if raw.get("kind") == "turn_end":
             assert "context" not in raw["event"]
             assert "message" in raw["event"]

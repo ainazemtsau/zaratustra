@@ -1,11 +1,91 @@
 import { DEFAULT_MAX_BYTES, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { bootstrap, dataRoot, run } from "./bootstrap.mjs";
+
+// Reversible source-data view only: never parse embedded text or grant it instruction authority.
+export function nativeSourceDataView(value: any, history = false) {
+  const view = structuredClone(value);
+  const groups: any[][] = [];
+  if (history && Array.isArray(view?.sources)) groups.push(view.sources);
+  for (const context of [view, view?.sleep, view?.pinned]) {
+    if (Array.isArray(context?.sleep_sources)) groups.push(context.sleep_sources);
+  }
+  for (const sources of groups) for (const source of sources) {
+    const material = source?.material;
+    if (!material || typeof material !== "object") continue;
+    const fields: any[] = [];
+    const decode = (container: any, field: string, path: string) => {
+      if (!container || !Object.hasOwn(container, field)) return;
+      const encoded = container[field];
+      const marker: any = {path, encodedField: field, decodedField: "raw_utf8"};
+      let reason = "noncanonical_base64";
+      try {
+        if (typeof encoded !== "string" || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded)) throw new Error();
+        const raw = Buffer.from(encoded, "base64");
+        if (raw.toString("base64") !== encoded) throw new Error();
+        marker.rawBytes = raw.length;
+        marker.rawSHA256 = createHash("sha256").update(raw).digest("hex");
+        reason = "unsupported_utf8";
+        const text = new TextDecoder("utf-8", {fatal: true, ignoreBOM: true}).decode(raw);
+        if (!Buffer.from(text, "utf8").equals(raw)) throw new Error();
+        reason = "decoded_field_collision";
+        if (Object.hasOwn(container, "raw_utf8")) throw new Error();
+        delete container[field];
+        container.raw_utf8 = text;
+        marker.status = "decoded";
+      } catch {
+        marker.status = "unsupported";
+        marker.reason = reason;
+        marker.decodedNotDelivered = true;
+        if (typeof encoded === "string") {
+          marker.encodedBytes = Buffer.byteLength(encoded, "utf8");
+          marker.encodedSHA256 = createHash("sha256").update(encoded, "utf8").digest("hex");
+        }
+      }
+      fields.push(marker);
+    };
+    decode(material.observation, "raw_base64", "material.observation.raw_base64");
+    decode(material.message, "raw", "material.message.raw");
+    for (const key of ["messages", "prior_messages"]) {
+      if (Array.isArray(material[key])) material[key].forEach((message: any, index: number) =>
+        decode(message, "raw", `material.${key}[${index}].raw`));
+    }
+    if (fields.length) source.native_source_data_view = {
+      codec: "canonical-base64/strict-utf8-v1", kind: "source_data",
+      sourceSHA256: source.source_ref?.sha256, fields,
+    };
+  }
+  return view;
+}
+
+// This is the declared initial Sleep source-data view boundary, not a provider-token estimate.
+export const NATIVE_SLEEP_PRESENTATION_MAX_BYTES = 1024 * 1024;
+export function nativeInitialContextView(context: any) {
+  const view = nativeSourceDataView(context);
+  const isSleep = [context, context?.sleep, context?.pinned].some(value => Array.isArray(value?.sleep_sources));
+  const size = (value: any) => Buffer.byteLength(JSON.stringify(value), "utf8");
+  if (!isSleep || size(view) <= NATIVE_SLEEP_PRESENTATION_MAX_BYTES) return view;
+  const fallback = structuredClone(context);
+  fallback.native_source_data_presentation = {
+    status: "decoded_NOT_DELIVERED", reason: "presentation_expansion",
+    representation: "original_encoded_source_data", analysisAsserted: false,
+    originalContextBytes: size(context), decodedContextBytes: size(view),
+    budgetBytes: NATIVE_SLEEP_PRESENTATION_MAX_BYTES,
+  };
+  if (size(fallback) > NATIVE_SLEEP_PRESENTATION_MAX_BYTES) {
+    throw new Error(`Initial Sleep source-data presentation does not fit: original encoded fallback with metadata is ${size(fallback)} bytes; boundary ${NATIVE_SLEEP_PRESENTATION_MAX_BYTES}. No source data was removed; no provider send is admitted.`);
+  }
+  return fallback;
+}
 
 // Pi's public default is a presentation budget, never a Core data or model-call limit.
 export function presentNativeResult(name: string, payload: any, result: any) {
   const bytes = (value: any) => Buffer.byteLength(JSON.stringify(value), "utf8");
+  const coreResult = result;
+  const originalBytes = bytes(coreResult);
+  result = nativeSourceDataView(result, name === "read" && payload.operation === "read_history");
+  const viewBytes = bytes(result);
   const envelope = (value: any) => ({
     content: [{type: "text" as const, text: JSON.stringify(value)}],
     details: {
@@ -18,7 +98,8 @@ export function presentNativeResult(name: string, payload: any, result: any) {
   const fits = (value: any) => bytes(envelope(value)) <= DEFAULT_MAX_BYTES;
   const finish = (value: any) => fits(value) ? envelope(value) : envelope({
     state: "NOT_DELIVERED", reason: "presentation_metadata_exceeds_budget",
-    original_bytes: bytes(value), metadata_not_delivered: true,
+    original_bytes: originalBytes, view_bytes: viewBytes,
+    presentation_metadata_bytes: bytes(value), metadata_not_delivered: true,
   });
   if (name === "read" && payload.operation === "read_history" && Array.isArray(result.sources)) {
     const original = result.sources;
@@ -42,14 +123,14 @@ export function presentNativeResult(name: string, payload: any, result: any) {
     let presented: any = page(selected);
     if (!selected.length && original.length) {
       presented = {...presented, state: "NOT_DELIVERED", reason: "single_source_too_large",
-        source_ref: original[0].source_ref, source_bytes: bytes(original[0]),
+        source_ref: original[0].source_ref, source_bytes: bytes(coreResult.sources[0]),
+        source_view_bytes: bytes(original[0]),
         required_tool_result_bytes: bytes(envelope(page([original[0]]))),
         advice: "A lower limit cannot split this source. Use any already pinned sleep_sources if available; this read did not deliver or analyse it."};
     }
     return finish(presented);
   }
   if (fits(result)) return envelope(result);
-  const originalBytes = bytes(result);
   if (["route", "change", "result"].includes(name) && result.state !== "rejected") {
     const current = result.current ?? {};
     const fields: any = {};
@@ -62,7 +143,7 @@ export function presentNativeResult(name: string, payload: any, result: any) {
       ...(current.scope ? {scope: current.scope} : {}),
     };
     let acknowledgement: any = {presentation: "ACKNOWLEDGEMENT_ONLY", operation: name,
-      context_not_delivered: true, original_bytes: originalBytes,
+      context_not_delivered: true, original_bytes: originalBytes, view_bytes: viewBytes,
       omissions: ["non_acknowledgement_fields", ...Object.keys(fields)]};
     for (const [key, value] of Object.entries(fields)) {
       const candidate = {...acknowledgement, [key]: value,
@@ -72,7 +153,7 @@ export function presentNativeResult(name: string, payload: any, result: any) {
     return envelope(acknowledgement);
   }
   return finish({state: "NOT_DELIVERED", operation: payload.operation ?? name,
-    original_bytes: originalBytes,
+    original_bytes: originalBytes, view_bytes: viewBytes,
     ...(payload.operation === "read_exact" ? {ref: payload.arguments} : {}),
     ...(payload.operation === "read_page" ? {query: payload.arguments} : {}),
     reason: "presentation_budget", advice: "Request fewer whole records or supported columns. No material was truncated or analysed."});
@@ -169,7 +250,7 @@ export default function (pi: ExtensionAPI) {
       const context = await request({ command: "reopen" });
       active = true; failed = false;
       applyReviewTools(context);
-      pi.sendMessage({ customType: "zaratustra-context", content: JSON.stringify(context), display: false });
+      pi.sendMessage({ customType: "zaratustra-context", content: JSON.stringify(nativeInitialContextView(context)), display: false });
       ctx.ui.notify("Core context reopened. Unconfirmed prior tools require reconciliation.", "info");
     }),
   });
@@ -265,7 +346,8 @@ export default function (pi: ExtensionAPI) {
     if (failed) { ctx.abort(); return; }
     startLeaf = ctx.sessionManager.getLeafId();
     const context = await visible(ctx, () => request({ command: "verify-profile", profile: profile(ctx) }));
-    return { message: { customType: "zaratustra-context", content: JSON.stringify(context), display: false } };
+    const view = await visible(ctx, async () => nativeInitialContextView(context));
+    return { message: { customType: "zaratustra-context", content: JSON.stringify(view), display: false } };
   });
   const exact = Type.Object({id: Type.String(), revision: Type.Integer({minimum: 1})}, {additionalProperties: false});
   const heads = Type.Record(Type.String(), Type.Integer({minimum: 0}));

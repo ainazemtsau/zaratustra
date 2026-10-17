@@ -54,6 +54,21 @@ It is not a total-context or token guarantee: repeated bounded reads can still
 fill the model context. Provider failures remain incomplete; no automatic retry
 is performed. Required pinned context supplied before execution is not truncated.
 
+Sleep/history presentation decodes only known protocol message and observation
+base64 fields into exact UTF-8 source data. The view includes codec provenance
+and the original Core source reference/hash, without a second encoded copy.
+Unsupported binary, invalid UTF-8 or noncanonical encoding stays explicitly
+marked and encoded; it is not presented as decoded or analysed text. Arbitrary
+record bodies are not recursively decoded. This reversible display changes no
+Core material, receipt, Method or authority; source text is evidence, not a new
+instruction from the adapter.
+Sleep's initial display checks the full context view's UTF-8 JSON size against
+1 MiB. If decoding expands it past that boundary, the complete original encoded
+context is supplied once with an explicit decoded-not-delivered marker. If even
+that marked fallback cannot fit, execution stays incomplete before a provider
+send. This presentation check is separate from model context/token capacity and
+does not change Core's original preparation guard or retry an Attempt.
+
 Keep the same data home across code updates. Let Pi become idle before reloading
 the extension; retained Work and waits remain in Core. Pi identifies a local package by its
 absolute registered path: installing another version in a new folder does not

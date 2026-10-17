@@ -78,3 +78,12 @@ def test_core_history_receipt_and_replay_unchanged_after_presentation(tmp_path: 
     )
     receipt = owner.call("lookup_receipt", {"command_id": "immutable-read"}, "inspect-receipt")
     assert receipt == original
+
+
+def test_canonical_utf8_source_codec_roundtrip_fallback_and_projection() -> None:
+    assert present({"mode": "codec"})["passed"] is True
+
+
+def test_utf8_source_view_can_expand_without_changing_core_guard() -> None:
+    sizes = present({"mode": "expansion"})
+    assert sizes["originalContextTextBytes"] < 1048576 < sizes["decodedContextTextBytes"]
