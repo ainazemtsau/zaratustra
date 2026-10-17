@@ -86,4 +86,15 @@ private Activity/authentication upload, a server or data synchronization. Earlie
 launch restrictions remain historical evidence, superseded only in this narrow
 source-preservation boundary.
 
+The owner then explicitly confirmed the public product/private personal-work
+separation:
+
+> Ну да, у нас эта философия остается у нас. сама Заратустра — это публично, но я, и может любой пользоваться. И я условно как третий человек для себя заведу приватный репозиторий, в котором буду вести уже свои условно дела, так сказать.
+
+This confirms permission to preserve Zaratustra product source and technical
+documentation in its existing public repository. The owner's future private
+repository for personal work is separate; this does not create that repository,
+implement synchronization, or authorize uploading Activity data or authentication.
+Main merge and release publication remain outside this delivery.
+
 END_OF_FILE: OWNER-PERMANENT-USE-20261017.md

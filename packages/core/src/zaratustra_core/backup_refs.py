@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .formats import value_references
-from .shapes import Ref, SleepProgress
+from .shapes import ContextSelection, Ref, SleepProgress
 from .types import CoreError, digest
 
 
@@ -38,6 +38,10 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
     receipts = {r["command"]: r for r in table("receipts")}
     actions = {r["id"]: r for r in table("actions")}
     events = {r["seq"]: r for r in table("events")}
+    prepared_at: dict[str, list[int]] = {}
+    records_at: dict[tuple[str, int], int] = {}
+    results_at: dict[str, int] = {}
+    result_order = [tuple(r) for r in db.execute("SELECT attempt,slot FROM results ORDER BY rowid")]
 
     def equal(left: Any, right: Any) -> bool:
         # Python equality conflates JSON booleans and integers; wire/v1 does not.
@@ -169,6 +173,16 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
             require(equal(response["result"], json.loads(event["body"])))
             if event["kind"] in {"apply_changes", "commit_outcome"}:
                 result_refs(response["result"])
+                for ref in response["result"].get("refs", []):
+                    record_key = (ref["id"], ref["revision"])
+                    records_at[record_key] = min(
+                        records_at.get(record_key, event["seq"]), event["seq"]
+                    )
+            if event["kind"] == "commit_outcome":
+                result_attempt = response["result"]["attempt_id"]
+                results_at[result_attempt] = min(
+                    results_at.get(result_attempt, event["seq"]), event["seq"]
+                )
             if event["kind"] in {"prepare_attempt", "claim_dispatch"}:
                 result = response["result"]
                 saved_pin = dict(result["pinned"])
@@ -187,6 +201,7 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
                     )
                 else:
                     attempt_id = result["attempt_id"]
+                    prepared_at.setdefault(attempt_id, []).append(event["seq"])
                 require(equal(saved_pin, json.loads(attempts[attempt_id]["body"])))
         for receipt in receipts.values():
             response = json.loads(receipt["response"])
@@ -290,7 +305,105 @@ def verify_references(db: sqlite3.Connection, path: Path) -> None:
                 ),
                 key=lambda m: m["seq"],
             )
-            require(equal(body["prior_messages"], prior))
+            if "context_coverage" not in body:
+                require(equal(body["prior_messages"], prior))
+            else:
+                coverage = body["context_coverage"]
+                require(isinstance(coverage, dict))
+                selection = ContextSelection.model_validate(coverage["selection"])
+                require(len(prepared_at.get(attempt["id"], [])) == 1)
+                prepare_sequence = prepared_at[attempt["id"]][0]
+                refs = selection.catalog_refs
+                catalog_keys = [(ref.id, ref.revision) for ref in refs]
+                require(len(set(catalog_keys)) == len(catalog_keys))
+                heads: dict[str, int] = {}
+                for (identifier, revision), sequence in records_at.items():
+                    if sequence < prepare_sequence:
+                        heads[identifier] = max(heads.get(identifier, 0), revision)
+                require(all(heads.get(ref.id) == ref.revision for ref in refs))
+                require(
+                    equal(
+                        [snapshot(row) for row in body["catalog"]],
+                        [record(ref.model_dump()) for ref in refs],
+                    )
+                )
+                sequences = selection.prior_message_sequences
+                require(len(set(sequences)) == len(sequences))
+                require(all(0 < seq <= start for seq in sequences))
+                require(
+                    equal(
+                        body["prior_messages"], [messages[(conversation, seq)] for seq in sequences]
+                    )
+                )
+                selected_attempts = selection.prior_result_attempts
+                require(len(set(selected_attempts)) == len(selected_attempts))
+                require(
+                    all(
+                        identifier in attempts
+                        and attempts[identifier]["conversation"] == conversation
+                        and attempts[identifier]["cutoff"] <= start
+                        and results_at.get(identifier, prepare_sequence) < prepare_sequence
+                        for identifier in selected_attempts
+                    )
+                )
+                expected_results = [
+                    results[key]
+                    for identifier in selected_attempts
+                    for key in result_order
+                    if key[0] == identifier
+                ]
+                require(equal(body["prior_results"], expected_results))
+                selected_waits = selection.prior_wait_ids
+                require(len(set(selected_waits)) == len(selected_waits))
+                require(equal([row["id"] for row in body["prior_waits"]], selected_waits))
+                for identifier in selected_waits:
+                    selected_wait = waits[identifier]
+                    wait_attempt = json.loads(selected_wait["body"])["attempt_id"]
+                    require(
+                        selected_wait["conversation"] == conversation
+                        and attempts[wait_attempt]["cutoff"] <= start
+                        and results_at.get(wait_attempt, prepare_sequence) < prepare_sequence
+                    )
+                historical_results = [
+                    row
+                    for row in results.values()
+                    if attempts[row["attempt"]]["conversation"] == conversation
+                    and attempts[row["attempt"]]["cutoff"] <= start
+                    and results_at.get(row["attempt"], prepare_sequence) < prepare_sequence
+                ]
+                historical_waits = [
+                    row
+                    for row in waits.values()
+                    if row["conversation"] == conversation
+                    and results_at.get(json.loads(row["body"])["attempt_id"], prepare_sequence)
+                    < prepare_sequence
+                ]
+                names = ("catalog", "prior_messages", "prior_results", "prior_waits")
+                require(
+                    equal(
+                        coverage,
+                        {
+                            "mode": "explicit",
+                            "selection": coverage["selection"],
+                            "total_rows": dict(
+                                zip(
+                                    names,
+                                    (
+                                        len(heads),
+                                        len(prior),
+                                        len(historical_results),
+                                        len(historical_waits),
+                                    ),
+                                    strict=True,
+                                )
+                            ),
+                            "selected_rows": {name: len(body[name]) for name in names},
+                            "excluded_history": (
+                                "retained; not inspected or summarized by this selection"
+                            ),
+                        },
+                    )
+                )
             require(
                 equal(
                     body["manifest"],
