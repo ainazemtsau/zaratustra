@@ -427,6 +427,29 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
                 )
                 <= 50 * 1024
             )
+        core_reads = [
+            row["result"]
+            for row in value["transport"]["trace"]
+            if row["packet"].get("name") == "read"
+            and row["packet"].get("payload", {}).get("operation") == "read_history"
+        ]
+        assert len(core_reads) == 2
+        for event, core_read in zip(ends, core_reads, strict=True):
+            assert (
+                len(json.dumps(core_read, ensure_ascii=False, separators=(",", ":")).encode())
+                <= 51200
+            )
+            presented = json.loads(event["result"]["content"][0]["text"])
+            assert presented["query_coverage"] == core_read["query_coverage"]
+            assert presented["query_coverage"]["byte_limit"] == 51200
+            assert presented["query_coverage"]["returned"] == len(core_read["sources"])
+            assert presented["projection"]["core_returned"] == len(core_read["sources"])
+            assert "no analysis is asserted" in presented["projection"]["coverage"]
+            assert "sources" not in event["result"]["details"]
+            if not core_read["sources"] and core_read.get("state") == "NOT_DELIVERED":
+                assert presented["state"] == "NOT_DELIVERED"
+                assert presented["query_coverage"]["first_withheld_source_ref"]
+                assert presented["query_coverage"]["first_withheld_source_bytes"] > 0
         first = json.loads(ends[0]["result"]["content"][0]["text"])
         assert first["has_more"] and first["projection"]["withheld"] > 0
         if first["sources"]:

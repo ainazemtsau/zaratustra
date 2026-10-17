@@ -14,7 +14,29 @@ process.stdin.setEncoding('utf8');let text='';for await(const chunk of process.s
 const input=JSON.parse(text);
 const size=value=>Buffer.byteLength(JSON.stringify(value),'utf8');
 const unpack=value=>JSON.parse(value.content[0].text);
-if(input.mode==='expansion'){
+if(input.mode==='query-coverage'){
+ const ref={sequence:9,index:0,sha256:'a'.repeat(64)};
+ const coverage={kind:'whole_source_prefix',byte_limit:51200,returned:0,byte_limited:true,first_withheld_source_ref:ref,first_withheld_source_bytes:170003};
+ const empty={state:'NOT_DELIVERED',reason:'single_source_too_large',source_ref:ref,source_bytes:170003,high_watermark:20,sources:[],cursor:[5,2],has_more:true,query_coverage:coverage};
+ const args={operation:'read_history',arguments:{after_sequence:5,after_index:2,limit:100}};
+ const out=presentNativeResult('read',args,empty),value=unpack(out);
+ assert.deepEqual(value.query_coverage,coverage);assert.deepEqual(value.cursor,[5,2]);
+ for(const key of ['state','reason','source_ref','source_bytes'])assert.deepEqual(value[key],empty[key]);
+ assert.equal(value.has_more,true);assert.equal(value.projection.returned,0);assert.equal(value.projection.withheld,0);
+ assert.equal(value.projection.core_returned,0);assert.equal(out.details.query_coverage,undefined);assert.ok(size(out)<=DEFAULT_MAX_BYTES);
+ const raw=Buffer.from(('Ж🙂'+String.fromCharCode(0,34,92,10)).repeat(2800),'utf8');
+ const source={source_ref:ref,material:{observation:{raw_base64:raw.toString('base64')}}};
+ const page={high_watermark:20,sources:[source],cursor:[9,0],has_more:false,query_coverage:{kind:'whole_source_prefix',byte_limit:51200,returned:1,byte_limited:false}};
+ assert.ok(size(page)<=51200);
+ const expanded=presentNativeResult('read',args,page),projected=unpack(expanded);
+ assert.deepEqual(projected.query_coverage,page.query_coverage);
+ assert.equal(projected.state,'NOT_DELIVERED');assert.equal(projected.projection.returned,0);
+ assert.equal(projected.projection.core_returned,1);assert.equal(projected.projection.withheld,1);
+ assert.deepEqual(projected.cursor,[5,2]);assert.equal(projected.has_more,true);
+ assert.equal(projected.source_bytes,size(source));assert.ok(projected.source_view_bytes>size(source));
+ assert.ok(size(expanded)<=DEFAULT_MAX_BYTES);assert.equal(expanded.details.sources,undefined);
+ console.log(JSON.stringify({passed:true,coreBytes:size(page),presentedBytes:size(expanded)}));
+}else if(input.mode==='expansion'){
  const raw=Buffer.alloc(262144),source={source_ref:{sequence:7,index:0,sha256:'a'.repeat(64)},material:{observation:{raw_base64:raw.toString('base64')}}};
  const context={sleep:{sleep_sources:[source],sleep_delivery_manifest:{attempt_id:'original',sha256:'b'.repeat(64)}}};
  const view=nativeSourceDataView(context),viewSource=view.sleep.sleep_sources[0];

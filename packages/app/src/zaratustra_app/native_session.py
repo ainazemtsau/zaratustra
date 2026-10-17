@@ -397,7 +397,11 @@ class NativeSession:
                 raise CoreError("denied", "native.read_operation")
             if str(payload.get("arguments", {}).get("id", "")).startswith(PREFIX):
                 raise CoreError("denied", "native.host_namespace")
-            return self.owner.call(operation, payload.get("arguments", {}), uuid4().hex)
+            arguments = payload.get("arguments", {})
+            if operation == "read_history":
+                # Native query representation bound, before Core persistence; never a model cap.
+                arguments = {**arguments, "byte_limit": 50 * 1024}
+            return self.owner.call(operation, arguments, uuid4().hex)
         if name == "context":
             return self.context()
         revision, mapping = self._load()

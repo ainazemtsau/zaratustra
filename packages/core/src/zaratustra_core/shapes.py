@@ -234,6 +234,7 @@ class History(Shape):
     after_index: Cursor = 0
     limit: Annotated[int, Field(ge=1, le=100)] = 32
     scope: Id = "space"
+    byte_limit: Positive | None = None
 
 
 class Delivery(Shape):

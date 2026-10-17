@@ -40,4 +40,33 @@ snapshot. No source rows, old receipts or retained history are removed.
 projection. Callers that need a body must explicitly read it using the applicable
 public API; a compact row is not evidence of inspecting omitted content.
 
+## History result byte boundary
+
+`read_history` accepts optional positive integer `byte_limit`. Omit it or pass
+`null` for the existing count-bounded response. An explicit value bounds the
+entire canonical UTF-8 JSON result, including `query_coverage`, before Core saves
+its event and receipt. The normal receipt envelope adds its command metadata.
+Existing receipts and same-command replay remain unchanged; changing this field
+while reusing a command id is an identity conflict.
+
+The bounded response contains a whole-source prefix with original material,
+source refs/hashes and high watermark. `query_coverage` identifies its budget,
+returned count, whether bytes withheld a source, and the first withheld source's
+exact ref and canonical whole-source byte size. A withheld source keeps
+`has_more: true`; the cursor remains at the last returned source, or at the input
+cursor if none fit. No omitted source is skipped or counted as analysed. A truly
+exhausted range retains the existing terminal cursor behavior.
+
+If the first source cannot fit, `state: NOT_DELIVERED` and
+`reason: single_source_too_large` explain the unchanged cursor. A smaller row
+count cannot split that source. A budget too small even for the response metadata
+is rejected before persistence. There is no automatic retry or source truncation.
+
+The native Pi port supplies a fixed 50 KiB query boundary for `zara_read`
+`read_history`. Its later whole-tool-envelope presentation guard remains separate:
+escaping and decoded source-data views can expand the model-facing representation.
+Core query coverage and Pi presentation coverage identify those two stages.
+This does not bound all other Core reads, the total model context, calls or cost,
+and does not establish analysis or a completed Sleep result.
+
 END_OF_FILE: docs/restart/PUBLIC-READ-PROJECTIONS.md

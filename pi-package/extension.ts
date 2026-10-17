@@ -104,7 +104,12 @@ export function presentNativeResult(name: string, payload: any, result: any) {
   if (name === "read" && payload.operation === "read_history" && Array.isArray(result.sources)) {
     const original = result.sources;
     const inputCursor = [payload.arguments.after_sequence ?? 0, payload.arguments.after_index ?? 0];
+    const coreMarkers: any = {};
+    for (const key of ["query_coverage", "state", "reason", "source_ref", "source_bytes"]) {
+      if (Object.hasOwn(result, key)) coreMarkers[key] = result[key];
+    }
     const page = (sources: any[]) => ({
+      ...coreMarkers,
       high_watermark: result.high_watermark,
       sources,
       cursor: sources.length ? [sources[sources.length - 1].source_ref.sequence,
@@ -386,7 +391,7 @@ export default function (pi: ExtensionAPI) {
   };
   for (const name of ["context", "read", "route", "change", "result"]) {
     pi.registerTool({ executionMode: "sequential", name: `zara_${name}`, label: `Core ${name}`, parameters: Type.Object({payload: schemas[name]}, {additionalProperties: false}),
-      description: name === "route" ? "Choose Activity atomically: payload changes, expected_heads, outputs, next_work:{scope,goal,inputs}. Required before useful work." : name === "result" ? "Stage Core METADATA only. Required outputs include the current Activity exact reference. Optional changes/expected_heads/state/wait. NO text field and NO old JSON outcome envelope. After this tool, write your actual final reply normally in Pi; only that retained reply becomes result text." : name === "change" ? "Apply typed scoped Activity/data changes with expected_heads through Core CAS." : name === "read" ? "Read exact Core records, paged tables, or source history using the operation-specific arguments. read_history uses scope/high_watermark/after_sequence/after_index/limit; it has NO conversation argument. A rejected argument can be corrected with a new tool call; authorization or transport failures stop execution." : "Read authoritative Core context.",
+      description: name === "route" ? "Choose Activity atomically: payload changes, expected_heads, outputs, next_work:{scope,goal,inputs}. Required before useful work." : name === "result" ? "Stage Core METADATA only. Required outputs include the current Activity exact reference. Optional changes/expected_heads/state/wait. NO text field and NO old JSON outcome envelope. After this tool, write your actual final reply normally in Pi; only that retained reply becomes result text." : name === "change" ? "Apply typed scoped Activity/data changes with expected_heads through Core CAS." : name === "read" ? "Read exact Core records, paged tables, or source history using the operation-specific arguments. read_history uses scope/high_watermark/after_sequence/after_index/limit; it has NO conversation argument. Native history queries have a fixed 51200-byte whole-result representation bound before Core persistence; whole sources may be withheld and coverage is explicit. This is not a total model-context or token guarantee. A rejected argument can be corrected with a new tool call; authorization or transport failures stop execution." : "Read authoritative Core context.",
       async execute(callId, params, _signal, _update, ctx) {
         if (!active || failed) throw new Error("Attach or reopen Core; incomplete hooks require reconciliation.");
         const result = await visible(ctx, async () => {

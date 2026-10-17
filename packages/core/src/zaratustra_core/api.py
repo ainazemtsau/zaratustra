@@ -97,6 +97,72 @@ def dumps(value: Any) -> str:
     return wire(value).decode("utf-8")
 
 
+def bounded_history(
+    sources: Iterator[dict[str, Any]], high: int, after: list[int], limit: int, budget: int
+) -> dict[str, Any]:
+    """Bound the entire canonical response, retaining an exact whole-source prefix."""
+    items: list[dict[str, Any]] = []
+    sizes: list[int] = []
+    withheld: dict[str, Any] | None = None
+    withheld_size = 0
+    byte_limited = False
+
+    def response() -> dict[str, Any]:
+        more = withheld is not None
+        cursor = (
+            [items[-1]["source_ref"]["sequence"], items[-1]["source_ref"]["index"]]
+            if more and items
+            else after
+            if more
+            else [high, 2147483647]
+        )
+        coverage: dict[str, Any] = {
+            "kind": "whole_source_prefix",
+            "byte_limit": budget,
+            "returned": len(items),
+            "byte_limited": byte_limited,
+        }
+        result: dict[str, Any] = {
+            "high_watermark": high,
+            "cursor": cursor,
+            "sources": items,
+            "has_more": more,
+            "query_coverage": coverage,
+        }
+        if withheld is not None:
+            coverage.update(
+                first_withheld_source_ref=withheld["source_ref"],
+                first_withheld_source_bytes=withheld_size,
+            )
+            if not items:
+                result.update(state="NOT_DELIVERED", reason="single_source_too_large")
+        return result
+
+    def size(result: dict[str, Any]) -> int:
+        # Replacing the empty array by canonical items adds only their bytes/commas.
+        return len(wire(result | {"sources": []})) + sum(sizes) + max(0, len(items) - 1)
+
+    for item in sources:
+        item_size = len(wire(item))
+        if len(items) == limit:
+            withheld, withheld_size = item, item_size
+            break
+        items.append(item)
+        sizes.append(item_size)
+        if size(response()) > budget:
+            withheld, withheld_size = items.pop(), sizes.pop()
+            byte_limited = True
+            break
+    result = response()
+    while size(result) > budget:
+        if not items:
+            fail("invalid_request", "history.byte_limit")
+        withheld, withheld_size = items.pop(), sizes.pop()
+        byte_limited = True
+        result = response()
+    return result
+
+
 class _Preview(Exception):
     def __init__(self, response: dict[str, Any]):
         self.response = response
@@ -870,6 +936,12 @@ class Core:
                     },
                     "snapshot_scope": "table, filters and optional ordered columns; fenced prefix",
                 },
+                "read_history": {
+                    "byte_limit_optional": True,
+                    "byte_limit_scope": "entire canonical UTF-8 result including query_coverage",
+                    "selection": "ordered whole-source prefix; cursor never skips withheld sources",
+                    "absent_or_null": "legacy result unchanged",
+                },
                 "one_shot_confirmation": False,
                 "readiness": "Client.preview(Request): same admission, rollback",
                 "scope": "single_local_space",
@@ -894,6 +966,14 @@ class Core:
             after = [p.get("after_sequence", 0), p.get("after_index", 0)]
             if after[0] > high:
                 fail("invalid_request", "history.after")
+            if p.get("byte_limit") is not None:
+                return bounded_history(
+                    self._history_items(db, high, p.get("scope", "space"), after),
+                    high,
+                    after,
+                    p.get("limit", 32),
+                    p["byte_limit"],
+                )
             items = []
             for item in self._history_items(db, high, p.get("scope", "space"), after):
                 items.append(item)
