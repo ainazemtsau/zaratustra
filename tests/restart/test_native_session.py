@@ -198,12 +198,17 @@ def test_cancel_unknown_then_fresh_request_keeps_activity(tmp_path: Path) -> Non
     first.settled("lost", "", True)
     fresh = NativeSession(core, token, "fresh-pi")
     assert fresh.context()["current"]["scope"] == "kept"
+    retained_before = {a["id"] for a in fresh.coordinator.rows("actions")}
+    assert len(retained_before) == 2
     (core.root / "owner.credential").write_text(token, encoding="utf-8")
     cancelled = handle({"data_root": str(core.root), "session_id": "fresh-pi", "command": "cancel"})
     assert cancelled["state"] == "cancelled"
     next_turn = fresh.input("new-input", "A new fictional task")
     assert any(h["id"] == "kept" for h in next_turn["core"]["heads"])
-    assert len(next_turn["core"]["actions"]) == 3
+    assert len(next_turn["core"]["actions"]) == 1
+    retained_after = {a["id"] for a in fresh.coordinator.rows("actions")}
+    assert len(retained_after) == 3 and retained_before < retained_after
+    assert next_turn["projection"]["attempts_actions_work"] == next_turn["current"]["work"]
     assert any(w["status"] == "cancelled" for w in next_turn["core"]["works"])
 
 
@@ -248,7 +253,23 @@ handle(base | {"command": "tool", "name": "route", "call_id": "route-before-kill
     fresh = {"data_root": str(root), "session_id": "fresh-pi"}
     reopened = handle(fresh | {"command": "reopen"})
     expected_actions = 1 if crash_window == "input_claim" else 2
-    assert len(reopened["core"]["actions"]) == expected_actions
+
+    def retained_actions() -> set[str]:
+        page = handle(
+            fresh
+            | {
+                "command": "tool",
+                "name": "read",
+                "call_id": "inspect-actions",
+                "payload": {"operation": "read_page", "arguments": {"table": "actions"}},
+            }
+        )
+        assert not page["has_more"]
+        return {a["id"] for a in page["rows"]}
+
+    retained_before = retained_actions()
+    assert len(retained_before) == expected_actions
+    assert len(reopened["core"]["actions"]) == (0 if crash_window == "input_claim" else 1)
     if crash_window == "input_claim":
         assert reopened["unmapped_work"]
     else:
@@ -264,7 +285,9 @@ handle(base | {"command": "tool", "name": "route", "call_id": "route-before-kill
         fresh
         | {"command": "input", "event_id": "new-input", "text": "Explicit new fictional request"}
     )
-    assert len(new["core"]["actions"]) == expected_actions + 1
+    assert len(new["core"]["actions"]) == 1
+    retained_after = retained_actions()
+    assert len(retained_after) == expected_actions + 1 and retained_before < retained_after
     messages = handle(
         fresh
         | {

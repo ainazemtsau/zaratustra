@@ -11,28 +11,36 @@ export default function (pi: ExtensionAPI) {
   let startLeaf: string | null = null;
   let skipNextInput = false;
   let beforeReviewTools: string[] | null = null;
-  const profile = (ctx: any) => ({adapter: "ordinary-native-pi", provider: ctx.model?.provider, model: ctx.model?.id, api: ctx.model?.api, thinking: ctx.thinkingLevel});
+  const profile = (ctx: any) => ({adapter: "ordinary-native-pi", provider: ctx.model?.provider, model: ctx.model?.id, api: ctx.model?.api, thinking: ctx.thinkingLevel, cwd: ctx.cwd});
   const request = async (body: Record<string, unknown>) => {
     const result = JSON.parse(await run(python, ["-m", "zaratustra_app.pi_host"], JSON.stringify({
       data_root: await dataRoot(), session_id: sessionId, ...body,
     })));
-    if (result.state === "error") throw new Error(result.text);
+    if (result.state === "error") throw Object.assign(new Error(result.text), {coreRejection: result.rejection});
     return result;
   };
   const visible = async (ctx: any, work: () => Promise<any>) => {
     try { return await work(); } catch (error) {
       failed = true;
+      ctx.abort();
       ctx.ui.notify(`Zaratustra hook incomplete: ${error instanceof Error ? error.message : String(error)}`, "error");
       throw error;
+    }
+  };
+  const applyReviewTools = (context: any) => {
+    if (context.current?.mode === "review") {
+      if (!beforeReviewTools) beforeReviewTools = pi.getActiveTools();
+      const permitted = new Set(["read", "grep", "find", "ls", "zara_context", "zara_read", "zara_result"]);
+      pi.setActiveTools(beforeReviewTools.filter(name => permitted.has(name)));
+    } else if (beforeReviewTools) {
+      pi.setActiveTools(beforeReviewTools); beforeReviewTools = null;
     }
   };
   const attach = async (ctx: any) => {
     python = await bootstrap(); sessionId = ctx.sessionManager.getSessionId();
     const context = await request({command: "attach"});
     active = true; failed = false;
-    if (beforeReviewTools && context.current?.mode !== "review") {
-      pi.setActiveTools(beforeReviewTools); beforeReviewTools = null;
-    }
+    applyReviewTools(context);
     return context;
   };
   const scopeFor = async (ctx: any, argument = "") => {
@@ -72,6 +80,7 @@ export default function (pi: ExtensionAPI) {
       python = await bootstrap(); sessionId = ctx.sessionManager.getSessionId();
       const context = await request({ command: "reopen" });
       active = true; failed = false;
+      applyReviewTools(context);
       pi.sendMessage({ customType: "zaratustra-context", content: JSON.stringify(context), display: false });
       ctx.ui.notify("Core context reopened. Unconfirmed prior tools require reconciliation.", "info");
     }),
@@ -81,6 +90,8 @@ export default function (pi: ExtensionAPI) {
     handler: async (_args, ctx) => visible(ctx, async () => {
       if (!active) throw new Error("Attach Core first.");
       if (!await ctx.ui.confirm("Cancel Core Work?", "Previous external effects may have happened. A new request does not repeat them.")) return;
+      ctx.abort();
+      await ctx.waitForIdle();
       await request({command: "cancel"});
       failed = false;
       ctx.ui.notify("Core Work cancelled. Existing external effects remain unconfirmed.", "warning");
@@ -105,8 +116,8 @@ export default function (pi: ExtensionAPI) {
       if (!scope) return;
       await ctx.waitForIdle();
       await ctx.newSession({withSession: async fresh => {
-        await fresh.sendUserMessage("/zaratustra");
-        await fresh.sendUserMessage("/zara-review-start " + scope);
+        await fresh.sendUserMessage("/zaratustra", {expandPromptTemplates: true});
+        await fresh.sendUserMessage("/zara-review-start " + scope, {expandPromptTemplates: true});
       }});
     },
   });
@@ -156,21 +167,41 @@ export default function (pi: ExtensionAPI) {
   pi.on("input", async (event, ctx) => {
     if (!active) return;
     if (skipNextInput) { skipNextInput = false; return; }
-    await visible(ctx, () => request({ command: "input", event_id: randomUUID(), text: event.text, profile: profile(ctx) }));
+    try {
+      await visible(ctx, () => request({ command: "input", event_id: randomUUID(), text: event.text, profile: profile(ctx) }));
+    } catch { return {action: "handled" as const}; }
   });
   pi.on("before_agent_start", async (_event, ctx) => {
     if (!active) return;
+    if (failed) { ctx.abort(); return; }
     startLeaf = ctx.sessionManager.getLeafId();
     const context = await visible(ctx, () => request({ command: "verify-profile", profile: profile(ctx) }));
     return { message: { customType: "zaratustra-context", content: JSON.stringify(context), display: false } };
   });
-  const schema = Type.Object({ payload: Type.Any() });
+  const exact = Type.Object({id: Type.String(), revision: Type.Integer({minimum: 1})}, {additionalProperties: false});
+  const heads = Type.Record(Type.String(), Type.Integer({minimum: 0}));
+  const schemas: Record<string, any> = {
+    context: Type.Object({}, {additionalProperties: false}),
+    read: Type.Object({operation: Type.Union([Type.Literal("read_page"), Type.Literal("read_exact"), Type.Literal("read_history")]), arguments: Type.Any()}, {additionalProperties: false}),
+    route: Type.Object({changes: Type.Array(Type.Any()), expected_heads: heads, outputs: Type.Array(exact), next_work: Type.Object({scope: Type.String(), goal: Type.String(), inputs: Type.Array(exact)}, {additionalProperties: false})}, {additionalProperties: false}),
+    change: Type.Object({changes: Type.Array(Type.Any()), expected_heads: heads}, {additionalProperties: false}),
+    result: Type.Object({outputs: Type.Array(exact), changes: Type.Optional(Type.Array(Type.Any())), expected_heads: Type.Optional(heads), state: Type.Optional(Type.Union([Type.Literal("completed"), Type.Literal("waiting"), Type.Literal("ready")])), wait: Type.Optional(Type.Any())}, {additionalProperties: false}),
+  };
   for (const name of ["context", "read", "route", "change", "result"]) {
-    pi.registerTool({ executionMode: "sequential", name: `zara_${name}`, label: `Core ${name}`, parameters: schema,
-      description: name === "route" ? "Choose Activity atomically: payload changes, expected_heads, outputs, next_work:{scope,goal,inputs}. Required before useful work." : name === "result" ? "Stage final Core metadata only: changes, expected_heads, outputs including chosen Activity. Actual final text comes from normal assistant response." : name === "change" ? "Apply typed scoped Activity/data changes with expected_heads through Core CAS." : "Read authoritative Core context.",
+    pi.registerTool({ executionMode: "sequential", name: `zara_${name}`, label: `Core ${name}`, parameters: Type.Object({payload: schemas[name]}, {additionalProperties: false}),
+      description: name === "route" ? "Choose Activity atomically: payload changes, expected_heads, outputs, next_work:{scope,goal,inputs}. Required before useful work." : name === "result" ? "Stage Core METADATA only. Required outputs include the current Activity exact reference. Optional changes/expected_heads/state/wait. NO text field and NO old JSON outcome envelope. After this tool, write your actual final reply normally in Pi; only that retained reply becomes result text." : name === "change" ? "Apply typed scoped Activity/data changes with expected_heads through Core CAS." : "Read authoritative Core context.",
       async execute(callId, params, _signal, _update, ctx) {
         if (!active || failed) throw new Error("Attach or reopen Core; incomplete hooks require reconciliation.");
-        const result = await visible(ctx, () => request({ command: "tool", name, call_id: callId, payload: params.payload }));
+        const result = await visible(ctx, async () => {
+          try { return await request({ command: "tool", name, call_id: callId, payload: params.payload }); }
+          catch (error) {
+            const rejection = (error as any).coreRejection;
+            if (name === "result" && rejection?.code === "invalid_request" && ["native.result_metadata", "native.result_state", "native.review_activity_output"].includes(rejection.field)) {
+              return {state: "rejected", rejection, text: "Metadata rejected before staging; no outcome committed. Correct the tool arguments using its schema. Do not pass text; write the actual final reply normally after staging."};
+            }
+            throw error;
+          }
+        });
         return { content: [{ type: "text", text: JSON.stringify(result) }], details: result };
       },
     });
@@ -179,9 +210,19 @@ export default function (pi: ExtensionAPI) {
     if (!active || failed) return;
     await visible(ctx, () => request({ command: "observation", event_id: randomUUID(), value: { kind, event } }));
   };
-  pi.on("tool_call", observe("tool_call"));
+  pi.on("before_provider_request", (_event, ctx) => {
+    if (active && failed) ctx.abort();
+  });
+  pi.on("tool_call", async (event, ctx) => {
+    if (active && failed) return {block: true, terminate: true, reason: "Core admission failed; reconcile before execution."};
+    try { await observe("tool_call")(event, ctx); }
+    catch { return {block: true, terminate: true, reason: "Core tool observation failed before execution."}; }
+  });
   pi.on("tool_execution_end", observe("tool_execution_end"));
-  pi.on("turn_end", observe("turn_end"));
+  pi.on("turn_end", async (event, ctx) => observe("turn_end")({
+    turnIndex: event.turnIndex, messageEntryId: event.messageEntryId,
+    toolResultEntryIds: event.toolResultEntryIds, message: event.message,
+  }, ctx));
   pi.on("agent_settled", async (event, ctx) => {
     if (!active || failed) return;
     const branch = ctx.sessionManager.getBranch();
@@ -189,8 +230,10 @@ export default function (pi: ExtensionAPI) {
     const entry = [...branch.slice(startIndex + 1)].reverse().find((e: any) => e.type === "message" && e.message.role === "assistant");
     const text = entry && entry.type === "message" && Array.isArray(entry.message.content)
       ? entry.message.content.filter((part: any) => part.type === "text").map((part: any) => part.text).join("\n") : "";
-    const result = await visible(ctx, () => request({ command: "settled", event_id: entry?.id || randomUUID(), text, aborted: event.aborted }));
+    const terminal = {stop_reason: entry?.message?.stopReason, error_message: entry?.message?.errorMessage};
+    const result = await visible(ctx, () => request({ command: "settled", event_id: entry?.id || randomUUID(), text, aborted: event.aborted, terminal }));
     if (result.state === "incomplete") ctx.ui.notify(result.text, "warning");
+    else applyReviewTools(await request({command: "context"}));
   });
 }
 

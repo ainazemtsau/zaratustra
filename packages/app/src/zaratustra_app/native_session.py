@@ -28,9 +28,7 @@ class NativeSession:
         self.profile: dict[str, Any] = {"adapter": "ordinary-native-pi"}
 
     def _load(self) -> tuple[int, dict[str, Any]]:
-        head = next(
-            (h for h in self.coordinator.snapshot()["heads"] if h["id"] == self.mapping_id), None
-        )
+        head = next((h for h in self.coordinator.rows("heads") if h["id"] == self.mapping_id), None)
         if head is None:
             return 0, {}
         record = self.owner.call(
@@ -43,16 +41,22 @@ class NativeSession:
         if mapping.get("mode") == "review":
             self.coordinator = self._review(mapping["scope"]).coordinator
             return head["revision"], mapping
-        snapshot = self.coordinator.snapshot()
+        if mapping.get("scope") or not mapping.get("attempt"):
+            return head["revision"], mapping
         retained = next(
-            (r for r in snapshot["results"] if r["attempt"] == mapping.get("attempt")), None
+            (
+                r
+                for r in self.coordinator.rows("results", work=mapping["work"])
+                if r["attempt"] == mapping["attempt"]
+            ),
+            None,
         )
         if retained and not mapping.get("scope"):
             result = json.loads(retained["body"])
             child = result.get("next_work_id")
             if child:
-                work = next(w for w in snapshot["works"] if w["id"] == child)
-                attempts = [a for a in snapshot["attempts"] if a["work"] == child]
+                work = self.coordinator.rows("works", work=child)[0]
+                attempts = self.coordinator.rows("attempts", work=child)
                 actual_profile = self.profile
                 self.profile = mapping["profile"]
                 if attempts:
@@ -83,6 +87,10 @@ class NativeSession:
             expected_heads={self.mapping_id: revision},
         )
 
+    def _assert_session(self, mapping: dict[str, Any]) -> None:
+        if mapping.get("attempt") and mapping.get("session_id") != self.session_id:
+            raise CoreError("stale_basis", "native.session", "reconcile")
+
     def context(self) -> dict[str, Any]:
         revision, mapping = self._load()
         if mapping.get("mode") == "sleep":
@@ -99,7 +107,19 @@ class NativeSession:
                 "waiting": [],
                 "review": self._review(mapping["scope"]).context(mapping),
             }
-        snapshot = self.coordinator.snapshot()
+        snapshot = {
+            table: self.coordinator.rows(table, conversation=self.mapping_id)
+            for table in ("works", "waits", "results")
+        }
+        snapshot.update(
+            {
+                table: self.coordinator.rows(table, work=mapping["work"])
+                if mapping.get("work")
+                else []
+                for table in ("attempts", "actions")
+            }
+        )
+        snapshot["heads"] = self.coordinator.rows("heads")
         unresolved = [
             {"id": w["id"], "status": w["status"], "scope": json.loads(w["body"])["scope"]}
             for w in snapshot["works"]
@@ -122,6 +142,25 @@ class NativeSession:
             if key in {"heads", "results", "attempts", "actions", "works"}
             and isinstance(rows, list)
         }
+        from .native_verdict import delivery
+
+        latest_delivery = None
+        try:
+            delivered = delivery(self.core, self.token, mapping.get("scope"), compact=True)
+            latest_delivery = {
+                key: delivered[key]
+                for key in (
+                    "activity_id",
+                    "attempt_id",
+                    "result_hash",
+                    "review_ref",
+                    "related_results",
+                    "related_coverage",
+                )
+            }
+        except CoreError as error:
+            if error.code != "invalid_request" or error.field != "native.no_delivered_result":
+                raise
         return {
             "state": "attached",
             "mapping_revision": revision,
@@ -137,10 +176,22 @@ class NativeSession:
             ],
             "core": snapshot,
             "pinned": pinned,
+            "latest_delivery": latest_delivery,
             "coverage": (
-                "First 100 heads, latest 100 results; mandatory execution inputs are complete. "
+                "First 100 non-host heads; first 100 conversation Works and latest 100 "
+                "conversation results. Attempts/actions show only the current Work's first "
+                "100 rows, or none when idle/unmapped. Waiting questions belong to this "
+                "conversation; mandatory pinned execution inputs are complete. "
                 "Use zara_read for pages, exact records or history."
             ),
+            "projection": {
+                "conversation": self.mapping_id,
+                "attempts_actions_work": mapping.get("work"),
+                "max_rows_per_core_table": 100,
+                "retained_history": (
+                    "Use Core read_page/read_history; omitted rows remain retained."
+                ),
+            },
             "instructions": (
                 "Use zara_route to choose an Activity before useful work. "
                 "Use normal Pi coding tools. Their effects are observations, "
@@ -148,6 +199,12 @@ class NativeSession:
                 "Core commits actual final assistant text only at agent_settled. "
                 "Pinned Methods describe JSON for older adapters; here use route/result "
                 "tools for metadata and ordinary plaintext for the actual reply. "
+                "zara_result accepts only outputs, changes, expected_heads, state and wait. "
+                "Never pass a text field or an old JSON outcome envelope to that tool. "
+                "After staging metadata, write the actual final reply normally in Pi. "
+                "latest_delivery exposes retained review and related Activity result pointers. "
+                "Read a matching independent review before continuing that delivered Activity; "
+                "its supplied public read query requires no owner retelling. "
                 "Unknown previous tools must never be repeated automatically."
             ),
         }
@@ -161,7 +218,7 @@ class NativeSession:
         if not mapping:
             active = [
                 w
-                for w in self.coordinator.snapshot()["works"]
+                for w in self.coordinator.rows("works", conversation=self.mapping_id)
                 if w["conversation"] == self.mapping_id
                 and w["status"] not in {"completed", "cancelled"}
             ]
@@ -187,7 +244,7 @@ class NativeSession:
             self._save(revision, self._claim(mapping["work"]) | {"scope": mapping["scope"]})
             return self.context()
         for identity, method in [(ROUTING_ID, ROUTING_METHOD), (EXECUTION_ID, EXECUTION_METHOD)]:
-            if not any(h["id"] == identity for h in self.coordinator.snapshot()["heads"]):
+            if not any(h["id"] == identity for h in self.coordinator.rows("heads")):
                 self.owner.call(
                     "apply_changes",
                     {
@@ -224,7 +281,7 @@ class NativeSession:
             attempt + ":profile",
             self.profile | {"outside_tools": "observations-only", "session_id": self.session_id},
         )
-        snapshot = self.coordinator.snapshot()
+        snapshot = self.coordinator.tables("heads")
         selection = {
             "catalog_refs": [
                 {"id": h["id"], "revision": h["revision"]}
@@ -348,6 +405,7 @@ class NativeSession:
             raise CoreError("invalid_request", "native.no_attempt")
         if mapping.get("incomplete"):
             raise CoreError("outcome_unknown", "native.recovered_claim", "reconcile")
+        self._assert_session(mapping)
         if mapping.get("ready"):
             raise CoreError("stale_basis", "native.sleep_ready_use_sleep_command", "after_refresh")
         sleep = mapping.get("mode") == "sleep"
@@ -415,16 +473,34 @@ class NativeSession:
 
     def observation(self, event_id: str, value: Any) -> dict[str, Any]:
         _, mapping = self._load()
+        self._assert_session(mapping)
         if mapping.get("attempt"):
             self._observe(mapping, event_id, "progress", value)
         return {"state": "observed", "outside_effects": "unconfirmed"}
 
-    def settled(self, event_id: str, text: str, aborted: bool) -> dict[str, Any]:
+    def settled(
+        self, event_id: str, text: str, aborted: bool, terminal: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         revision, mapping = self._load()
+        self._assert_session(mapping)
         if not mapping.get("attempt"):
             return {"state": "idle"}
-        if aborted or not text or not mapping.get("scope") or not mapping.get("staged"):
-            self._observe(mapping, event_id, "unknown", {"aborted": aborted, "text": text})
+        failed_terminal = terminal is not None and (
+            terminal.get("stop_reason") != "stop" or bool(terminal.get("error_message"))
+        )
+        if (
+            aborted
+            or failed_terminal
+            or not text
+            or not mapping.get("scope")
+            or not mapping.get("staged")
+        ):
+            self._observe(
+                mapping,
+                event_id,
+                "unknown",
+                {"aborted": aborted, "text": text, "terminal": terminal},
+            )
             return {
                 "state": "incomplete",
                 "text": "Core Work remains open; no automatic tool replay.",
@@ -434,7 +510,12 @@ class NativeSession:
             mapping,
             "terminal",
             "terminal",
-            {"native_event_id": event_id, "assistant_text": text, "outcome": output},
+            {
+                "native_event_id": event_id,
+                "assistant_text": text,
+                "terminal": terminal,
+                "outcome": output,
+            },
         )
         result = self.coordinator.recover(
             mapping["attempt"],
@@ -446,7 +527,7 @@ class NativeSession:
         if result["state"] == "ready" and mapping.get("mode") == "sleep":
             self._save(revision, mapping | {"ready": True, "staged": {}})
         elif result["state"] == "waiting":
-            waits = self.coordinator.snapshot()["waits"]
+            waits = self.coordinator.rows("waits", work=mapping["work"])
             wait = next(
                 w for w in waits if w["work"] == mapping["work"] and w["status"] == "waiting"
             )

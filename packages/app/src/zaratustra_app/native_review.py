@@ -49,7 +49,7 @@ class NativeReview:
     def start(
         self, work_id: str, profile: dict[str, Any], builder_attempt: str | None = None
     ) -> dict[str, Any]:
-        state = self.coordinator.snapshot()
+        state = self.coordinator.tables("heads", "works", "attempts", "results")
         if any(a["work"] == work_id for a in state["attempts"]):
             raise CoreError("outcome_unknown", "review.pending_attempt", "reconcile")
         works = {w["id"]: w for w in state["works"]}
@@ -107,7 +107,11 @@ class NativeReview:
             ref = {"id": original["id"], "revision": original["revision"]}
             if ref not in refs:
                 refs.append(ref)
-        observations = [o for o in state["observations"] if o["attempt"] == builder["id"]]
+        observations = [
+            o
+            for o in self.coordinator.rows("observations", work=builder["work"])
+            if o["attempt"] == builder["id"]
+        ]
         observed_refs = [
             {
                 "attempt": o["attempt"],
@@ -117,7 +121,11 @@ class NativeReview:
             }
             for o in observations[:100]
         ]
-        tools = [t for t in state["tool_calls"] if t["attempt"] == builder["id"]]
+        tools = [
+            t
+            for t in self.coordinator.rows("tool_calls", work=builder["work"])
+            if t["attempt"] == builder["id"]
+        ]
         self.owner.call(
             "apply_changes",
             {
@@ -205,7 +213,9 @@ class NativeReview:
 
     def context(self, mapping: dict[str, Any]) -> dict[str, Any]:
         attempt = next(
-            a for a in self.coordinator.snapshot()["attempts"] if a["id"] == mapping["attempt"]
+            a
+            for a in self.coordinator.rows("attempts", work=mapping["work"])
+            if a["id"] == mapping["attempt"]
         )
         context = cast(dict[str, Any], json.loads(attempt["body"]))
         return context | {

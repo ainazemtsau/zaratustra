@@ -48,14 +48,17 @@ class NativeSleep:
             portion=portion,
             method_id="native-sleep-method:" + self.scope,
         )
-        snapshot = self.coordinator.snapshot()
+        snapshot = {"attempts": self.coordinator.rows("attempts", work=work_id)}
         # A previous native send is never permission to regenerate or redispatch.
         if any(a["work"] == work_id for a in snapshot["attempts"]):
             raise CoreError("outcome_unknown", "sleep.pending_attempt", "reconcile")
         return self._claim(work_id, profile)
 
     def resume(self, work_id: str, profile: dict[str, Any], portion: int = 16) -> dict[str, Any]:
-        snapshot = self.coordinator.snapshot()
+        snapshot = {
+            table: self.coordinator.rows(table, work=work_id)
+            for table in ("works", "attempts", "results")
+        }
         work = next(w for w in snapshot["works"] if w["id"] == work_id)
         body = json.loads(work["body"])
         if body.get("scope") != self.scope or body.get("goal") != "Sleep":
@@ -77,7 +80,7 @@ class NativeSleep:
         return self._claim(work_id, profile)
 
     def _claim(self, work_id: str, profile: dict[str, Any]) -> dict[str, Any]:
-        snapshot = self.coordinator.snapshot()
+        snapshot = self.coordinator.tables("heads")
         attempt = work_id + ":native-attempt:" + uuid4().hex
         profile_ref = pin_profile(self.owner, attempt + ":profile", profile)
         selection = {
@@ -110,7 +113,10 @@ class NativeSleep:
         }
 
     def context(self, mapping: dict[str, Any]) -> dict[str, Any]:
-        snapshot = self.coordinator.snapshot()
+        snapshot = {
+            table: self.coordinator.rows(table, work=mapping["work"])
+            for table in ("attempts", "works", "actions")
+        }
         attempt = next(a for a in snapshot["attempts"] if a["id"] == mapping["attempt"])
         context = cast(dict[str, Any], json.loads(attempt["body"]))
         work = next(w for w in snapshot["works"] if w["id"] == mapping["work"])

@@ -100,7 +100,7 @@ def handle(request: dict[str, Any]) -> dict[str, Any]:
         session = NativeSession(core, token, request["session_id"])
         session.profile = request.get("profile", {"adapter": "ordinary-native-pi"})
         if command == "activities":
-            snapshot = session.coordinator.snapshot()
+            snapshot = session.coordinator.tables("heads", "works")
             activities = [
                 {"id": h["id"], "revision": h["revision"], "label": h["key"]}
                 for h in snapshot["heads"]
@@ -150,7 +150,7 @@ def handle(request: dict[str, Any]) -> dict[str, Any]:
             return session.start_review(request["scope"], request.get("builder_attempt"))
         if command == "cancel":
             revision, mapping = session._load()
-            snapshot = session.coordinator.snapshot()
+            snapshot = session.coordinator.tables("works")
             active = [
                 w
                 for w in snapshot["works"]
@@ -190,7 +190,9 @@ def handle(request: dict[str, Any]) -> dict[str, Any]:
         if command == "observation":
             return session.observation(request["event_id"], request["value"])
         if command == "settled":
-            return session.settled(request["event_id"], request["text"], request["aborted"])
+            return session.settled(
+                request["event_id"], request["text"], request["aborted"], request.get("terminal")
+            )
         raise ValueError("Unknown native command")
 
 
@@ -198,7 +200,11 @@ def main() -> int:
     try:
         result = handle(json.load(sys.stdin))
     except CoreError as error:
-        result = {"state": "error", "text": "Core: " + error.code + "/" + error.field}
+        result = {
+            "state": "error",
+            "text": "Core: " + error.code + "/" + error.field,
+            "rejection": {"code": error.code, "field": error.field},
+        }
     except (ValueError, KeyError, TypeError, OSError) as error:
         result = {
             "state": "error",

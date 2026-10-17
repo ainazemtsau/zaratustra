@@ -17,6 +17,24 @@ class Coordinator:
     def __init__(self, client: Client):
         self.client = client
 
+    def rows(self, table: str, **filters: Any) -> list[dict[str, Any]]:
+        """Read only the requested table/filter prefix through the public paged API."""
+        rows: list[dict[str, Any]] = []
+        payload: dict[str, Any] = {"table": table, "limit": 100, **filters}
+        while True:
+            page = self.client.call("read_page", payload, uuid4().hex)
+            rows.extend(page["rows"])
+            if not page["has_more"]:
+                return rows
+            payload |= {
+                "cursor": page["next_cursor"],
+                "snapshot_revision": page["snapshot_revision"],
+            }
+
+    def tables(self, *tables: str) -> dict[str, Any]:
+        """Individually fenced tables; mutation commands still check current CAS."""
+        return {table: self.rows(table) for table in tables}
+
     def snapshot(self) -> dict[str, Any]:
         try:
             return self.client.call("read_snapshot", {}, str(uuid4()))
@@ -62,7 +80,7 @@ class Coordinator:
 
     def open_work(self, payload: dict[str, Any], *, scope: str = "space") -> dict[str, Any]:
         """Pin current applicable memory and chosen scoped Method from fresh Core state."""
-        heads = self.snapshot()["heads"]
+        heads = self.rows("heads")
         method = next(h for h in heads if h["id"] == payload["method_ref"]["id"])
         if method["scope"] not in {"space", scope}:
             raise CoreError("denied", "method.scope")
@@ -83,7 +101,7 @@ class Coordinator:
 
     def scoped_inputs(self, scope: str, inputs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         inputs = list(inputs)
-        heads = self.snapshot()["heads"]
+        heads = self.rows("heads")
         for head in heads:
             if head["kind"] != "memory" or head["scope"] not in {"space", scope}:
                 continue
@@ -108,16 +126,15 @@ class Coordinator:
         *,
         context_selection: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        snapshot = self.snapshot()
-        work = next(w for w in snapshot["works"] if w["id"] == work_id)
+        work = self.rows("works", work=work_id)[0]
         cursor = next(
-            c["cursor"] for c in snapshot["conversations"] if c["id"] == work["conversation"]
+            c["cursor"] for c in self.rows("conversations", conversation=work["conversation"])
         )
         messages = sorted(
             (
                 m
-                for m in snapshot["messages"]
-                if m["conversation"] == work["conversation"] and m["seq"] > cursor
+                for m in self.rows("messages", conversation=work["conversation"])
+                if m["seq"] > cursor
             ),
             key=lambda m: m["seq"],
         )
@@ -146,10 +163,9 @@ class Coordinator:
         self, work_id: str, *, method_ref: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Explicit new intent over freshly read current refs; old terminal remains evidence."""
-        snapshot = self.snapshot()
-        work = next(w for w in snapshot["works"] if w["id"] == work_id)
+        work = self.rows("works", work=work_id)[0]
         body = json.loads(work["body"])
-        heads = {h["id"]: h["revision"] for h in snapshot["heads"]}
+        heads = {h["id"]: h["revision"] for h in self.rows("heads")}
 
         def fresh(ref: dict[str, Any]) -> dict[str, Any]:
             if ref.get("role") == "must_be_current":
@@ -183,9 +199,8 @@ class Coordinator:
             )["pinned"]
         except CoreError as exc:
             if exc.code == "stale_basis" and exc.field == "new_input":
-                state = self.snapshot()
-                attempt = next(a for a in state["attempts"] if a["id"] == attempt_id)
-                work = next(w for w in state["works"] if w["id"] == attempt["work"])
+                attempt = next(a for a in self.rows("attempts") if a["id"] == attempt_id)
+                work = self.rows("works", work=attempt["work"])[0]
                 self.client.call(
                     "control_work",
                     {"work_id": work["id"], "revision": work["revision"], "action": "refresh"},
@@ -193,9 +208,11 @@ class Coordinator:
                 )
             raise
         # A replayed claim is potentially sent; a receipt never proves send safety.
-        snapshot = self.snapshot()
-        action = next(a for a in snapshot["actions"] if a["id"] == action_id)
-        observations = [o for o in snapshot["observations"] if o["attempt"] == attempt_id]
+        work_id = pinned["work"]["id"]
+        action = next(a for a in self.rows("actions", work=work_id) if a["id"] == action_id)
+        observations = [
+            o for o in self.rows("observations", work=work_id) if o["attempt"] == attempt_id
+        ]
         if observations or action["state"] != "claimed":
             raise CoreError("outcome_unknown", "existing_dispatch", "reconcile")
         context = dict(pinned)
@@ -306,19 +323,23 @@ class Coordinator:
     def recover(
         self, attempt_id: str, *, pi: bool = False, decoder: Any = None, ordinary: bool = False
     ) -> dict[str, Any]:
-        snapshot = self.snapshot()
-        attempt = next(a for a in snapshot["attempts"] if a["id"] == attempt_id)
-        retained = next((r for r in snapshot["results"] if r["attempt"] == attempt_id), None)
+        attempt = next(a for a in self.rows("attempts") if a["id"] == attempt_id)
+        work_id = attempt["work"]
+        retained = next(
+            (r for r in self.rows("results", work=work_id) if r["attempt"] == attempt_id), None
+        )
         if retained is not None:
             return cast(dict[str, Any], json.loads(retained["body"]))
         observations = [
-            json.loads(o["body"]) for o in snapshot["observations"] if o["attempt"] == attempt_id
+            json.loads(o["body"])
+            for o in self.rows("observations", work=work_id)
+            if o["attempt"] == attempt_id
         ]
         terminal = next(
             (o for o in observations if o["kind"] == "terminal" and not o["late"]), None
         )
         if terminal is None:
-            if any(a["attempt"] == attempt_id for a in snapshot["actions"]):
+            if any(a["attempt"] == attempt_id for a in self.rows("actions", work=work_id)):
                 raise CoreError("outcome_unknown", "retained_claim", "reconcile")
             raise CoreError("invalid_request", "no_terminal")
         raw = base64.b64decode(terminal["raw_base64"])
@@ -333,7 +354,7 @@ class Coordinator:
         if ordinary:
             from .ordinary import outcome
 
-            work = next(w for w in snapshot["works"] if w["id"] == attempt["work"])
+            work = self.rows("works", work=work_id)[0]
             output = outcome(output, attempt, work, self.scoped_inputs)
         if not isinstance(output, dict) or "state" not in output or "text" not in output:
             raise CoreError("invalid_request", "retained_outcome_format", "after_refresh")

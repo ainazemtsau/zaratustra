@@ -807,11 +807,21 @@ class Core:
                 "transmitted": False,
             }
         if op == "describe_contract":
+            from .context import PUBLIC_COLUMNS
+
             return {
                 "version": "wire/v1",
                 "operations": sorted(OPS),
                 "resource_units": ["calls"],
                 "snapshot": {"max_rows_per_table": 1000, "pagination": False},
+                "read_page": {
+                    "max_rows_per_page": 100,
+                    "columns_optional": True,
+                    "columns": {
+                        table: sorted(columns) for table, columns in PUBLIC_COLUMNS.items()
+                    },
+                    "snapshot_scope": "table, filters and optional ordered columns; fenced prefix",
+                },
                 "one_shot_confirmation": False,
                 "readiness": "Client.preview(Request): same admission, rollback",
                 "scope": "single_local_space",

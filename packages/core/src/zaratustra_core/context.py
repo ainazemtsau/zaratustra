@@ -25,6 +25,29 @@ TABLES = {
     "tool_calls",
     "acceptance",
 }
+PUBLIC_COLUMNS = {
+    "heads": {"id", "revision", "kind", "key", "scope"},
+    "works": {"id", "revision", "conversation", "status", "generation", "body", "reserved"},
+    "attempts": {
+        "id",
+        "work",
+        "conversation",
+        "status",
+        "generation",
+        "original_cursor",
+        "cutoff",
+        "body",
+    },
+    "messages": {"conversation", "seq", "event", "fingerprint", "raw", "origin", "reply"},
+    "conversations": {"id", "cursor"},
+    "waits": {"id", "revision", "conversation", "work", "status", "body"},
+    "results": {"attempt", "slot", "fingerprint", "body"},
+    "observations": {"attempt", "event", "fingerprint", "body"},
+    "actions": {"id", "attempt", "executor", "state", "correlation", "reserve"},
+    "intents": {"kind", "subject", "body"},
+    "tool_calls": {"attempt", "native_id", "command", "action", "receipt"},
+    "acceptance": {"attempt", "slot", "result_hash", "principal"},
+}
 DIRECT = {
     "conversation": {"messages", "works", "attempts", "waits"},
     "work": {"attempts", "waits"},
@@ -42,6 +65,14 @@ def read_page(db: sqlite3.Connection, payload: dict[str, Any]) -> dict[str, Any]
     table = payload.get("table")
     if table not in TABLES:
         invalid("table")
+    columns = payload.get("columns")
+    if "columns" in payload and (
+        not isinstance(columns, list)
+        or not columns
+        or any(type(column) is not str or column not in PUBLIC_COLUMNS[table] for column in columns)
+        or len(set(columns)) != len(columns)
+    ):
+        invalid("columns")
     cursor, limit = payload.get("cursor", 0), payload.get("limit", 100)
     if type(cursor) is not int or cursor < 0:
         invalid("cursor")
@@ -92,6 +123,8 @@ def read_page(db: sqlite3.Connection, payload: dict[str, Any]) -> dict[str, Any]
     )
     prefix_where = where + (" AND " if conditions else " WHERE ") + "t.rowid<=?"
     fingerprint = hashlib.sha256(wire([table, filters, high]))
+    if columns is not None:
+        fingerprint.update(b"\ncolumns:" + wire(columns))
     total = 0
     for row in db.execute(
         "SELECT t.rowid AS _page_rowid,t.* FROM "
@@ -108,7 +141,9 @@ def read_page(db: sqlite3.Connection, payload: dict[str, Any]) -> dict[str, Any]
         raise CoreError("stale_basis", "snapshot_revision", "after_refresh")
     page_where = prefix_where + " AND t.rowid>?"
     rows = db.execute(
-        "SELECT t.rowid AS _page_rowid,t.* FROM "
+        "SELECT t.rowid AS _page_rowid,"
+        + ("t.*" if columns is None else ",".join("t." + column for column in columns))
+        + " FROM "
         + table
         + " t"
         + page_where
@@ -119,7 +154,7 @@ def read_page(db: sqlite3.Connection, payload: dict[str, Any]) -> dict[str, Any]
     rows = rows[:limit]
     next_cursor = rows[-1]["_page_rowid"] if more else None
     projected = [{k: row[k] for k in row.keys() if k != "_page_rowid"} for row in rows]
-    return {
+    result = {
         "rows": projected,
         "next_cursor": next_cursor,
         "has_more": more,
@@ -134,6 +169,9 @@ def read_page(db: sqlite3.Connection, payload: dict[str, Any]) -> dict[str, Any]
             "snapshot_scope": "table and filters; later rows require a fresh snapshot",
         },
     }
+    if columns is not None:
+        result["projection"] = {"columns": columns, "full_rows": False}
+    return result
 
 
 def select_context(

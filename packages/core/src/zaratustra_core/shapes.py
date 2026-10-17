@@ -202,6 +202,13 @@ class Page(Shape):
     conversation: Id | None = None
     work: Id | None = None
     scope: Id | None = None
+    columns: Annotated[list[Id], Field(min_length=1, max_length=8)] | None = Field(
+        default=None,
+        description=(
+            "Optional unique physical column names for this public table; "
+            "see PUBLIC-READ-PROJECTIONS.md. Omit for full rows."
+        ),
+    )
 
 
 class Source(Shape):

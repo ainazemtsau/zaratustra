@@ -45,8 +45,7 @@ or completion of the Activity. Preserve uncertainties and give concrete output.
 
 
 def pin_profile(owner: Any, profile_id: str, descriptor: dict[str, Any]) -> dict[str, Any]:
-    snapshot = owner.call("read_snapshot", {}, uuid4().hex)
-    existing = next((h for h in snapshot["heads"] if h["id"] == profile_id), None)
+    existing = next((h for h in Coordinator(owner).rows("heads") if h["id"] == profile_id), None)
     if existing:
         record = owner.call("read_exact", {"id": profile_id, "revision": 1}, uuid4().hex)
         if (
@@ -92,6 +91,12 @@ class Conversation:
                 )
             )
         )
+
+    def _state(self) -> dict[str, Any]:
+        state = self.coordinator.tables("heads", "intents")
+        for table in ("works", "waits", "attempts", "actions", "messages", "conversations"):
+            state[table] = self.coordinator.rows(table, conversation=self.conversation)
+        return state
 
     def submit(self, text: str, reply_to: dict[str, Any] | None = None) -> None:
         """Stable outbox ID and exact input are synchronized before first API delivery."""
@@ -146,7 +151,7 @@ class Conversation:
         refresh: bool = False,
     ) -> dict[str, Any]:
         self.deliver_input()
-        snapshot = self.coordinator.snapshot()
+        snapshot = self._state()
         works = [w for w in snapshot["works"] if w["conversation"] == self.conversation]
         active = [w for w in works if w["status"] not in {"completed", "cancelled"}]
         if len(active) > 1:
@@ -168,7 +173,7 @@ class Conversation:
             profile = pin_profile(self.owner, work_id + ":profile", descriptor)
             if refresh:
                 self.coordinator.refresh_basis(work_id)
-                snapshot = self.coordinator.snapshot()
+                snapshot = self._state()
                 work = next(w for w in snapshot["works"] if w["id"] == work_id)
             if work["status"] in {"paused", "blocked"}:
                 raise CoreError(
@@ -201,7 +206,7 @@ class Conversation:
                         "role": "must_be_current",
                     },
                 )
-                snapshot = self.coordinator.snapshot()
+                snapshot = self._state()
                 work = next(w for w in snapshot["works"] if w["id"] == work_id)
         else:
             conversation = next(
@@ -271,7 +276,7 @@ class Conversation:
                     "continuation_policy": "durable",
                 }
             )
-            snapshot = self.coordinator.snapshot()
+            snapshot = self._state()
             work = next(w for w in snapshot["works"] if w["id"] == work_id)
         routing = json.loads(work["body"])["method_ref"]["id"] == ROUTING_ID
         cast(Any, executor).response_contract = response_contract(routing)
@@ -297,7 +302,7 @@ class Conversation:
 
     def _present(self, result: dict[str, Any]) -> dict[str, Any]:
         if result["state"] == "waiting":
-            waits = self.coordinator.snapshot()["waits"]
+            waits = self.coordinator.rows("waits", conversation=self.conversation)
             wait = next(
                 w
                 for w in waits

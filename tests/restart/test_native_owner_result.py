@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
+from zaratustra_app import Coordinator, Driver
+from zaratustra_app.conversation import pin_profile
 from zaratustra_app.native_session import NativeSession
 from zaratustra_app.native_verdict import delivery, record
 from zaratustra_core import CoreError
@@ -53,3 +56,60 @@ def test_fresh_native_review_retains_report_without_mutation_or_acceptance(tmp_p
     assert shown["attempt_id"] == builder
     assert shown["review"]["text"] == "Finding: actual evidence is limited."
     assert not reviewer.coordinator.snapshot()["acceptance"]
+    owner = core.connect(token)
+    owner.call(
+        "apply_changes",
+        {
+            "changes": [
+                {
+                    "id": "sleep-method",
+                    "kind": "method",
+                    "key": "sleep",
+                    "scope": "subject",
+                    "body": "Inspect retained outcomes",
+                }
+            ]
+        },
+        "sleep-method",
+        expected_heads={"sleep-method": 0},
+    )
+    coordinator = Coordinator(owner)
+    coordinator.open_work(
+        {
+            "id": "sleep-report",
+            "conversation": "separate-sleep",
+            "goal": "Sleep",
+            "method_ref": {"id": "sleep-method", "revision": 1},
+            "call_limit": None,
+            "continuation_policy": "durable",
+        },
+        scope="subject",
+    )
+    profile = pin_profile(owner, "sleep-profile", {"model": "fictional"})
+    prepared = coordinator.prepare("sleep-report", "sleep-report-attempt", profile)
+    coordinator.dispatch(
+        "sleep-report-attempt",
+        prepared["generation"],
+        Driver(
+            lambda *_: json.dumps(
+                {
+                    "state": "completed",
+                    "text": "Retained Sleep report",
+                    "outputs": [{"id": "subject", "revision": 1}],
+                }
+            ).encode()
+        ),
+    )
+    coordinator.recover("sleep-report-attempt")
+    fresh = NativeSession(core, token, "entirely-fresh-pi")
+    latest = fresh.context()["latest_delivery"]
+    assert latest["attempt_id"] == builder
+    pointer = latest["review_ref"]
+    rows = fresh.tool("read", "review-discovery", pointer["read"])["rows"]
+    row = next(r for r in rows if r["attempt"] == pointer["attempt_id"])
+    assert row["fingerprint"] == pointer["result_hash"]
+    assert json.loads(row["body"])["text"] == "Finding: actual evidence is limited."
+    sleep_pointer = next(r for r in latest["related_results"] if r["goal"] == "Sleep")
+    sleep_rows = fresh.tool("read", "sleep-discovery", sleep_pointer["read"])["rows"]
+    assert any(json.loads(r["body"])["text"] == "Retained Sleep report" for r in sleep_rows)
+    assert latest["related_coverage"]["total"] >= 3

@@ -54,6 +54,7 @@ const reopened = [...second.messages];
 let reviewMessages = [];
 let reviewReopened = [];
 let reviewAcceptance = null;
+let reviewResults = null;
 if (mode === "review") {
   await second.prompt("/zara-review-start fictional");
   await second.waitForIdle();
@@ -70,9 +71,14 @@ if (mode === "review") {
     command: "tool", name: "read", call_id: "fictional-acceptance-read",
     payload: {operation: "read_page", arguments: {table: "acceptance"}}
   })));
+  reviewResults = JSON.parse(await bridge.run(python, ["-m", "zaratustra_app.pi_host"], JSON.stringify({
+    data_root: await bridge.dataRoot(), session_id: third.sessionManager.getSessionId(),
+    command: "tool", name: "read", call_id: "fictional-review-results-read",
+    payload: {operation: "read_page", arguments: {table: "results"}}
+  })));
   third.dispose();
 }
-console.log(JSON.stringify({events, firstMessages, reopened, reviewMessages, reviewReopened, reviewAcceptance, provenance: {
+console.log(JSON.stringify({events, firstMessages, reopened, reviewMessages, reviewReopened, reviewAcceptance, reviewResults, provenance: {
   installedPi: sdk.VERSION, bootstrap: "explicit-source-interpreter-fixture",
   provider: "fictional-localhost-script", semanticEvidence: false
 }}));

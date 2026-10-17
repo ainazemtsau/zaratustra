@@ -77,8 +77,13 @@ requirement. The ordinary Pi package therefore exposes no new backup/restore
 commands or setup questions. Existing technical safety and accepted D evidence
 remain; an automatic pre-update snapshot protects the compatible code update.
 Current completion concerns native entry, data-preserving updates, Development
-through review and explicit owner result, and sequential work/Sleep. GitHub code
-history is separate from private Activity data; no upload, push, merge, server or
-data-sync permission is inferred from this statement.
+through review and explicit owner result, and sequential work/Sleep. The owner's
+«Наш же в любом случае должно в GitHub сохраняться, надеюсь, сохраняется, да»
+authorizes preserving checked source and technical documentation in a working
+branch of the existing public `ainazemtsau/zaratustra` repository. Root performs
+that push after checks. This does not authorize main merge, release publication,
+private Activity/authentication upload, a server or data synchronization. Earlier
+launch restrictions remain historical evidence, superseded only in this narrow
+source-preservation boundary.
 
 END_OF_FILE: OWNER-PERMANENT-USE-20261017.md

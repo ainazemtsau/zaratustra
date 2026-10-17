@@ -17,7 +17,10 @@ import pytest
 SOURCE = Path(__file__).resolve().parents[2]
 
 
-@pytest.mark.parametrize("metadata", ["valid", "missing", "wrong", "aborted", "review"])
+@pytest.mark.parametrize(
+    "metadata",
+    ["valid", "missing", "wrong", "aborted", "review", "partial-error", "legacy-metadata"],
+)
 def test_installed_pi_native_transport(tmp_path: Path, metadata: str) -> None:
     command = shutil.which("pi") or shutil.which("pi.ps1")
     assert command, "Required installed native Pi unavailable"
@@ -52,13 +55,26 @@ def test_installed_pi_native_transport(tmp_path: Path, metadata: str) -> None:
                     "payload": {
                         "outputs": [
                             {
-                                "id": "fictional" if metadata in {"valid", "review"} else "absent",
+                                "id": "absent" if metadata == "wrong" else "fictional",
                                 "revision": 1,
                             }
                         ]
                     }
                 },
             )
+        )
+    if metadata == "legacy-metadata":
+        script.insert(
+            3,
+            (
+                "zara_result",
+                {
+                    "payload": {
+                        "text": "Forbidden metadata text must never become the actual reply.",
+                        "outputs": [{"id": "fictional", "revision": 1}],
+                    }
+                },
+            ),
         )
     if metadata == "review":
         script.extend(
@@ -100,6 +116,8 @@ def test_installed_pi_native_transport(tmp_path: Path, metadata: str) -> None:
                     if metadata == "review"
                     else "The fictional artifact was written and checked."
                 )
+                if metadata == "partial-error":
+                    delta["content"] = "Fictional partial response before provider failure"
                 finish = "stop"
             chunks = [
                 {
@@ -119,6 +137,10 @@ def test_installed_pi_native_transport(tmp_path: Path, metadata: str) -> None:
             ]
             body = "".join(f"data: {json.dumps(chunk)}\n\n" for chunk in chunks)
             body += "data: [DONE]\n\n"
+            if metadata == "partial-error" and index == len(script):
+                body = f"data: {json.dumps(chunks[0])}\n\n"
+                body += 'data: {"error":{"message":"fictional injected stream failure",'
+                body += '"type":"server_error","code":"fictional_fault"}}\n\n'
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream")
             self.end_headers()
@@ -154,6 +176,7 @@ def test_installed_pi_native_transport(tmp_path: Path, metadata: str) -> None:
         worker.join(timeout=5)
     (tmp_path / "fictional-transport.stdout").write_text(completed.stdout, encoding="utf-8")
     (tmp_path / "fictional-transport.stderr").write_text(completed.stderr, encoding="utf-8")
+    (tmp_path / "fictional-transport.requests.json").write_text(json.dumps(calls), encoding="utf-8")
     assert completed.returncode == 0, completed.stderr
     evidence = json.loads(completed.stdout.splitlines()[-1])
     assert evidence["provenance"]["semanticEvidence"] is False
@@ -185,14 +208,41 @@ def test_installed_pi_native_transport(tmp_path: Path, metadata: str) -> None:
         if message.get("customType") == "zaratustra-context"
     )
     restored = json.loads(context["content"])
-    assert bool(restored["current"]) is (metadata not in {"valid", "review"})
-    if metadata not in {"valid", "review"}:
+    completed_cases = {"valid", "review", "legacy-metadata"}
+    assert bool(restored["current"]) is (metadata not in completed_cases)
+    if metadata not in completed_cases:
         assert restored["current"]["profile"]["provider"] == "fictional"
         assert restored["current"]["profile"]["model"] == "scripted-transport"
     if metadata == "aborted":
         assert any(event.get("aborted") for event in evidence["events"])
-    if metadata in {"valid", "review"}:
+    if metadata in completed_cases:
         assert any("fictional artifact" in row["body"] for row in restored["core"]["results"])
+    if metadata == "partial-error":
+        terminal = next(
+            message
+            for message in reversed(evidence["firstMessages"])
+            if message.get("role") == "assistant"
+        )
+        assert terminal["stopReason"] == "error"
+        assert terminal["errorMessage"] == "fictional injected stream failure"
+        assert any(
+            part.get("text") == "Fictional partial response before provider failure"
+            for part in terminal["content"]
+        )
+        assert not any(event.get("aborted") for event in evidence["events"])
+        assert all(not json.loads(row["body"])["text"] for row in restored["core"]["results"])
+    if metadata == "legacy-metadata":
+        stages = [event for event in tools if event["toolName"] == "zara_result"]
+        assert len(stages) == 2
+        assert stages[0]["isError"] is True
+        assert stages[1]["isError"] is False
+        actual = next(
+            json.loads(row["body"])
+            for row in restored["core"]["results"]
+            if json.loads(row["body"])["text"]
+        )
+        assert actual["text"] == "The fictional artifact was written and checked."
+        assert "Forbidden metadata" not in json.dumps(restored["core"]["results"])
     if metadata == "review":
         assert len(calls) == 8
         for request in calls[5:]:
@@ -226,5 +276,14 @@ def test_installed_pi_native_transport(tmp_path: Path, metadata: str) -> None:
         )
         final = json.loads(final_context["content"])
         assert not final["current"]
-        assert any("Controlled review" in row["body"] for row in final["core"]["results"])
+        review_result = next(
+            json.loads(row["body"])
+            for row in evidence["reviewResults"]["rows"]
+            if row["attempt"] == review["current"]["attempt"]
+        )
+        assert review_result["text"] == (
+            "Controlled review read the fictional file; semantic correctness untested."
+        )
+        assert review_result["outputs"] == [{"id": "fictional", "revision": 1}]
+        assert review_result["accepted"] is False
         assert evidence["reviewAcceptance"]["rows"] == []

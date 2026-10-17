@@ -82,7 +82,8 @@ class Sleep:
         portion: int = 16,
         method_id: str = "sleep-method",
     ) -> dict[str, Any]:
-        snapshot = self.coordinator.snapshot()
+        snapshot = self.coordinator.tables("heads")
+        snapshot["works"] = self.coordinator.rows("works", work=work_id)
         method = next((h for h in snapshot["heads"] if h["id"] == method_id), None)
         if method is None:
             ref = self._save(
@@ -184,7 +185,7 @@ class Sleep:
         return {"work_id": work_id, "progress_ref": progress, "has_more": history["has_more"]}
 
     def _bind_progress(self, work_id: str, progress: dict[str, Any]) -> None:
-        state = self.coordinator.snapshot()
+        state = {"works": self.coordinator.rows("works", work=work_id)}
         work = next(w for w in state["works"] if w["id"] == work_id)
         if json.loads(work["body"])["inputs"] == [progress | {"role": "must_be_current"}]:
             return
@@ -200,7 +201,7 @@ class Sleep:
         )
 
     def progress(self, work_id: str) -> dict[str, Any]:
-        state = self.coordinator.snapshot()
+        state = self.coordinator.tables("heads")
         head = next(h for h in state["heads"] if h["id"] == work_id + ":progress")
         return self.client.call(
             "read_exact", {"id": head["id"], "revision": head["revision"]}, str(uuid4())
@@ -241,7 +242,10 @@ class Sleep:
         return result
 
     def _account(self, body: dict[str, Any], work_id: str) -> None:
-        snapshot = self.coordinator.snapshot()
+        snapshot = {
+            table: self.coordinator.rows(table, work=work_id)
+            for table in ("works", "attempts", "actions")
+        }
         work = next(w for w in snapshot["works"] if w["id"] == work_id)
         attempts = {a["id"] for a in snapshot["attempts"] if a["work"] == work_id}
         body["consumed_resource"] = work["reserved"]
@@ -261,7 +265,7 @@ class Sleep:
             raise
 
     def _stop_resource(self, work_id: str) -> None:
-        work = next(w for w in self.coordinator.snapshot()["works"] if w["id"] == work_id)
+        work = next(w for w in self.coordinator.rows("works", work=work_id) if w["id"] == work_id)
         if work["status"] in {"ready", "running"}:
             self.client.call(
                 "control_work",
@@ -297,7 +301,13 @@ class Sleep:
         """One ordinary bounded Attempt. Reopen uses Coordinator.recover, never regeneration."""
         from .executor_port import Pi
 
-        snapshot = self.coordinator.snapshot()
+        snapshot = self.coordinator.tables("intents")
+        snapshot.update(
+            {
+                table: self.coordinator.rows(table, work=work_id)
+                for table in ("works", "attempts", "observations", "results")
+            }
+        )
         attempts = [a for a in snapshot["attempts"] if a["work"] == work_id]
         work = next(w for w in snapshot["works"] if w["id"] == work_id)
         resource_pause = any(
@@ -364,7 +374,9 @@ class Sleep:
         """Record mechanical delivery/receipts only; never infer analysis or coverage."""
         record = self.progress(work_id)
         body = deepcopy(record["body"]["value"])
-        state = self.coordinator.snapshot()
+        state = {
+            table: self.coordinator.rows(table, work=work_id) for table in ("works", "attempts")
+        }
         attempt = next(a for a in state["attempts"] if a["id"] == attempt_id)
         pinned = json.loads(attempt["body"])
         manifest = pinned["sleep_delivery_manifest"]
