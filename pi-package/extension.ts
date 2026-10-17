@@ -12,12 +12,25 @@ export default function (pi: ExtensionAPI) {
   let skipNextInput = false;
   let beforeReviewTools: string[] | null = null;
   const profile = (ctx: any) => ({adapter: "ordinary-native-pi", provider: ctx.model?.provider, model: ctx.model?.id, api: ctx.model?.api, thinking: ctx.thinkingLevel, cwd: ctx.cwd});
-  const request = async (body: Record<string, unknown>) => {
-    const result = JSON.parse(await run(python, ["-m", "zaratustra_app.pi_host"], JSON.stringify({
-      data_root: await dataRoot(), session_id: sessionId, ...body,
-    })));
-    if (result.state === "error") throw Object.assign(new Error(result.text), {coreRejection: result.rejection});
-    return result;
+  let requestQueue: Promise<void> = Promise.resolve();
+  const request = (body: Record<string, unknown>) => {
+    // Snapshot identity and raw facts before any await or queued session change.
+    const capturedBody = JSON.parse(JSON.stringify(body));
+    const capturedPython = python;
+    const capturedSession = sessionId;
+    const capturedRoot = dataRoot().then(value => ({value}), error => ({error}));
+    const operation = requestQueue.then(async () => {
+      const root = await capturedRoot;
+      if ("error" in root) throw root.error;
+      const result = JSON.parse(await run(capturedPython, ["-m", "zaratustra_app.pi_host"], JSON.stringify({
+        data_root: root.value, session_id: capturedSession, ...capturedBody,
+      })));
+      if (result.state === "error") throw Object.assign(new Error(result.text), {coreRejection: result.rejection});
+      return result;
+    });
+    // A rejected caller keeps its rejection; later admissions are not retried or poisoned.
+    requestQueue = operation.then(() => undefined, () => undefined);
+    return operation;
   };
   const visible = async (ctx: any, work: () => Promise<any>) => {
     try { return await work(); } catch (error) {
@@ -93,6 +106,7 @@ export default function (pi: ExtensionAPI) {
       ctx.abort();
       await ctx.waitForIdle();
       await request({command: "cancel"});
+      applyReviewTools(await request({command: "context"}));
       failed = false;
       ctx.ui.notify("Core Work cancelled. Existing external effects remain unconfirmed.", "warning");
     }),

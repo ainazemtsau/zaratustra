@@ -23,11 +23,14 @@ SOURCE = Path(__file__).resolve().parents[2]
     [
         "review-command",
         "review-reopen",
+        "review-cancel-normal",
         "failed-input",
         "profile-failure",
         "tool-block",
         "command-failure",
         "cancel-stream",
+        "parallel-lifecycle",
+        "parallel-rejection",
     ],
 )
 def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
@@ -49,7 +52,7 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
     }
     result = {"payload": {"outputs": [{"id": "fictional", "revision": 1}]}}
     script: list[tuple[str, Any]] = [("zara_route", {"payload": route})]
-    if scenario in {"review-command", "review-reopen"}:
+    if scenario in {"review-command", "review-reopen", "review-cancel-normal"}:
         script += [
             ("write", {"path": "fictional.txt", "content": "Fictional bytes"}),
             ("zara_result", result),
@@ -73,6 +76,25 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
         script = script[:1] + [("stream-cancel", "Fictional in-flight text")]
     if scenario == "review-reopen":
         script = script[:5] + [("text", "Incomplete retained review")]
+    if scenario == "review-cancel-normal":
+        continuation = {
+            "changes": [],
+            "expected_heads": {},
+            "outputs": [{"id": "fictional", "revision": 1}],
+            "next_work": {"scope": "fictional", "goal": "New ordinary work", "inputs": []},
+        }
+        script = script[:5] + [
+            ("text", "Incomplete retained review"),
+            ("zara_route", {"payload": continuation}),
+            ("zara_result", result),
+            ("text", "Ordinary final after review cancel"),
+        ]
+    if scenario.startswith("parallel-"):
+        script = script[:1] + [
+            ("parallel-read", {}),
+            ("zara_result", result),
+            ("text", "Exact fictional parallel final"),
+        ]
     calls: list[Any] = []
 
     class Handler(BaseHTTPRequestHandler):
@@ -109,7 +131,17 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
                 time.sleep(1)
                 return
             delta: dict[str, Any] = {"role": "assistant"}
-            if name == "text":
+            if name == "parallel-read":
+                delta["tool_calls"] = [
+                    {
+                        "index": i,
+                        "id": f"parallel-read-{i}",
+                        "type": "function",
+                        "function": {"name": "read", "arguments": json.dumps({"path": path})},
+                    }
+                    for i, path in enumerate(["read-a.txt", "read-b.txt"])
+                ]
+            elif name == "text":
                 delta["content"] = args
             else:
                 delta["tool_calls"] = [
@@ -199,6 +231,50 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
         assert "write" not in value["reopenTools"] and "bash" not in value["reopenTools"]
         assert "write" in value["activeTools"] and "bash" in value["activeTools"]
         assert len(calls) == 6
+    elif scenario == "review-cancel-normal":
+        assert "write" in value["activeTools"] and "bash" in value["activeTools"]
+        assert "zara_route" in value["activeTools"]
+        assert value["delivery"]["result"]["text"] == "Ordinary final after review cancel"
+        assert len(calls) == 9
+    elif scenario.startswith("parallel-"):
+        trace = value["transport"]["trace"]
+        ends = [
+            row
+            for row in trace
+            if row["packet"].get("command") == "observation"
+            and row["packet"].get("value", {}).get("kind") == "tool_execution_end"
+            and row["packet"]["value"]["event"].get("toolCallId", "").startswith("parallel-read-")
+        ]
+        assert {row["packet"]["value"]["event"]["toolCallId"] for row in ends} == {
+            "parallel-read-0",
+            "parallel-read-1",
+        }
+        assert value["transport"]["maxRunning"] == 1
+        assert len(ends) == 2
+        assert all(row["packet"]["session_id"] == value["originalSession"] for row in ends)
+        assert all(row["packet"]["data_root"] == str(tmp_path / "home" / "data") for row in ends)
+        retained: dict[str, set[str]] = {"tool_call": set(), "tool_execution_end": set()}
+        import base64
+
+        for row in value["observations"]["rows"]:
+            body = json.loads(row["body"])
+            raw = json.loads(base64.b64decode(body["raw_base64"]))
+            kind = raw.get("kind")
+            if kind in retained:
+                retained[kind].add(raw["event"].get("toolCallId", ""))
+        assert {"parallel-read-0", "parallel-read-1"} <= retained["tool_call"]
+        if scenario == "parallel-lifecycle":
+            assert {"parallel-read-0", "parallel-read-1"} <= retained["tool_execution_end"]
+
+        if scenario == "parallel-lifecycle":
+            assert value["delivery"]["result"]["text"] == "Exact fictional parallel final"
+            assert all(row["result"]["state"] == "observed" for row in ends)
+        else:
+            assert ends[0]["result"]["state"] == "error"
+            assert ends[0]["result"]["rejection"]["code"] == "denied"
+            assert ends[1]["result"]["state"] == "observed"
+            assert value["context"]["current"]["attempt"]
+            assert value["delivery"]["state"] == "error"
     elif scenario == "failed-input":
         assert len(calls) == 2
         assert len(value["messages"]["rows"]) == 1

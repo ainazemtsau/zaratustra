@@ -5,10 +5,13 @@ import {readFile,writeFile,mkdir,copyFile} from 'node:fs/promises';
 const [sdkPath,source,root,python,endpoint,scenario]=process.argv.slice(2);
 const sdk=await import(pathToFileURL(join(sdkPath,'dist/index.js')).href);
 const agentDir=join(root,'agent'),extensionDir=join(root,'extension');
+await mkdir(root,{recursive:true});
+await writeFile(join(root,'read-a.txt'),'Fictional A');await writeFile(join(root,'read-b.txt'),'Fictional B');
 await mkdir(agentDir,{recursive:true});await mkdir(extensionDir,{recursive:true});
 await copyFile(join(source,'extension.ts'),join(extensionDir,'extension.ts'));
 await copyFile(join(source,'bootstrap.mjs'),join(extensionDir,'production-bootstrap.mjs'));
-await writeFile(join(extensionDir,'bootstrap.mjs'),`import {run as originalRun} from './production-bootstrap.mjs'; export {dataRoot,home} from './production-bootstrap.mjs'; export async function run(cmd,args,input){const packet=JSON.parse(input); if(${JSON.stringify(scenario)}==='profile-failure' && packet.command==='verify-profile') return JSON.stringify({state:'error',text:'Fictional profile rejection'}); if(${JSON.stringify(scenario)}==='tool-block' && packet.command==='observation' && packet.value?.kind==='tool_call' && packet.value.event.toolName==='write') return JSON.stringify({state:'error',text:'Fictional observation rejection'}); return originalRun(cmd,args,input);}\nexport async function bootstrap(){return ${JSON.stringify(python)}}\n`);
+const shim="import {run as originalRun} from './production-bootstrap.mjs';\nexport {dataRoot,home} from './production-bootstrap.mjs';\nconst trace=[];let running=0,maxRunning=0,rejected=false;\nexport function transportTrace(){return {trace,maxRunning};}\nexport async function run(cmd,args,input){\n const packet=JSON.parse(input),kind=packet.value?.kind;\n const row={packet:JSON.parse(input),status:'started'};trace.push(row);\n running++;maxRunning=Math.max(maxRunning,running);\n try {\n  if(SCENARIO==='profile-failure' && packet.command==='verify-profile') return JSON.stringify({state:'error',text:'Fictional profile rejection'});\n  if(SCENARIO==='tool-block' && packet.command==='observation' && kind==='tool_call' && packet.value.event.toolName==='write') return JSON.stringify({state:'error',text:'Fictional observation rejection'});\n  let result;\n  if(SCENARIO.startsWith('parallel-') && packet.command==='observation' && kind==='tool_execution_end'){\n   const slow='import time\\nfrom zaratustra_app.native_session import NativeSession\\nfrom zaratustra_app.pi_host import main\\noriginal=NativeSession.observation\\ndef delayed(self,event,value):\\n time.sleep(0.6)\\n return original(self,event,value)\\nNativeSession.observation=delayed\\nmain()';\n   if(SCENARIO==='parallel-rejection' && !rejected && packet.value.event.toolCallId.startsWith('parallel-read-')){\n    rejected=true;\n    const mutation={...packet,command:'tool',name:'change',call_id:'fictional-rejected-mutation',payload:{changes:[{id:'native-host:forbidden',kind:'data',key:'native-host:forbidden',body:'denied'}],expected_heads:{'native-host:forbidden':0}}};\n    result=await originalRun(cmd,args,JSON.stringify(mutation));\n   }else result=await originalRun(cmd,['-c',slow],input);\n  }else result=await originalRun(cmd,args,input);\n  row.result=JSON.parse(result);return result;\n }finally{running--;row.status='ended';}\n}\nexport async function bootstrap(){return PYTHON;}\n";
+await writeFile(join(extensionDir,'bootstrap.mjs'),shim.replaceAll('SCENARIO',JSON.stringify(scenario)).replace('PYTHON',JSON.stringify(python)));
 await writeFile(join(agentDir,'models.json'),JSON.stringify({providers:{fictional:{baseUrl:endpoint,api:'openai-completions',apiKey:'fictional-localhost-only',models:[{id:'scripted-transport',contextWindow:32000,maxTokens:1000,reasoning:false,input:['text'],cost:{input:0,output:0,cacheRead:0,cacheWrite:0}}]}}}));
 const modelRuntime=await sdk.ModelRuntime.create({authPath:join(agentDir,'auth.json'),modelsPath:join(agentDir,'models.json')});
 const settings=sdk.SettingsManager.inMemory({compaction:{enabled:false},retry:{enabled:false}});
@@ -39,11 +42,16 @@ else await host.session.prompt('Build the fictional file in the retained Activit
 await host.session.waitForIdle();
 if(cancelPromise)await cancelPromise;
 let afterFirst=[...host.session.messages];
-if(scenario==='review-command'||scenario==='review-reopen'){
+if(scenario==='review-command'||scenario==='review-reopen'||scenario==='review-cancel-normal'){
  await host.session.prompt('/zara-review fictional');
  await host.session.waitForIdle();
 }else if(scenario==='failed-input'){
  await host.session.prompt('A new fictional request while previous Work is unresolved.');
+ await host.session.waitForIdle();
+}
+if(scenario==='review-cancel-normal'){
+ await host.session.prompt('/zara-cancel');
+ await host.session.prompt('A new ordinary fictional request after cancelling review.');
  await host.session.waitForIdle();
 }
 let reviewTools=null;
@@ -65,5 +73,5 @@ const context=await request({command:'context'});
 const observations=await request({command:'tool',name:'read',call_id:'independent-inspection',payload:{operation:'read_page',arguments:{table:'observations',limit:100}}});
 const messages=await request({command:'tool',name:'read',call_id:'independent-message-inspection',payload:{operation:'read_page',arguments:{table:'messages',limit:100}}});
 const delivery=await request({command:'delivery'});
-console.log(JSON.stringify({scenario,originalSession,finalSession,activeTools:host.session.getActiveToolNames(),reviewTools,reopenTools,events,afterFirst,afterSecond,context,observations,messages,delivery,provenance:{pi:sdk.VERSION,provider:'fictional-localhost-only',semanticEvidence:false,bootstrap:'source-interpreter seam',extensionSource:source}}));
+console.log(JSON.stringify({transport:bridge.transportTrace(),scenario,originalSession,finalSession,activeTools:host.session.getActiveToolNames(),reviewTools,reopenTools,events,afterFirst,afterSecond,context,observations,messages,delivery,provenance:{pi:sdk.VERSION,provider:'fictional-localhost-only',semanticEvidence:false,bootstrap:'source-interpreter seam',extensionSource:source}}));
 await host.dispose();

@@ -42,8 +42,30 @@ Neither a successful check nor a model review constitutes owner acceptance.
 durable context after reopening. Normal production work has no artificial model
 call/token/money cap; finite bounds are explicit evaluation settings only.
 
-Keep the same data home across code updates. Install the new built package,
-reload/restart Pi, then `/zaratustra`. Bootstrap checks exact schema compatibility,
+Keep the same data home across code updates. Let Pi become idle before reloading
+the extension; retained Work and waits remain in Core. Pi identifies a local package by its
+absolute registered path: installing another version in a new folder does not
+replace the old registration, even when the package name is identical. For a
+new-folder update, unregister the old path and register the new path in the same
+scope. In ordinary Pi, with `pi` available on PATH, run these mechanical commands:
+
+```text
+!pi remove "/absolute/path/to/old-package"
+!pi install "/absolute/path/to/new-package"
+/reload
+/zaratustra
+```
+
+These are Pi's shell escape and its existing reload command; there are no
+`/install` or `/remove` slash commands. From a terminal the equivalents are
+`pi remove` and `pi install`, then restart Pi. If the original registration used
+project-local `-l`, use `-l` on both package commands. Removal only unregisters the
+local path; it does not delete that folder or the external Core data. Keep the old
+folder until the new package has opened successfully. For a first install inside
+an already running Pi, use `!pi install "/absolute/path/to/package"`, then
+`/reload` and `/zaratustra`.
+
+Bootstrap checks exact schema compatibility,
 preserves a technical pre-update snapshot, and only then selects the new runtime.
 Activities, history, waits, credentials and references stay in place. The supported
 update is schema-compatible 0.1.0 to 0.2.0; an incompatible schema refuses before
