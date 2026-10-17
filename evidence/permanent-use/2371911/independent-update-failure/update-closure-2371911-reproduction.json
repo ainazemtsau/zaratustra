@@ -1,0 +1,114 @@
+{
+  "source": "23719117016ea4bb975db6772396938906bba279",
+  "loaded_validator": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\permanent-independent-fad42f8\\frozen2371911-wheel-code\\zaratustra_core\\backup_refs.py",
+  "ordinary_completed_turns": 2,
+  "explicit_context_vs_legacy_full_prior": [
+    {
+      "attempt": "native-host:ordinary:work:input-1:native-attempt:b91d9752e37848fd963883723325315e",
+      "original_cursor": 1,
+      "cutoff": 2,
+      "pinned_prior_count": 0,
+      "actual_full_prior_count": 1,
+      "coverage": {
+        "excluded_history": "retained; not inspected or summarized by this selection",
+        "mode": "explicit",
+        "selected_rows": {
+          "catalog": 4,
+          "prior_messages": 0,
+          "prior_results": 0,
+          "prior_waits": 0
+        },
+        "selection": {
+          "catalog_refs": [
+            {
+              "id": "conversation-routing-method",
+              "revision": 1
+            },
+            {
+              "id": "conversation-execution-method",
+              "revision": 1
+            },
+            {
+              "id": "subject",
+              "revision": 1
+            },
+            {
+              "id": "continued:089713da6f99970ee252489ad52c6364531865701ab656cf30cdeee42ae99676:native-attempt:afd000c1a42548f9890a80d3f1f6ce97:profile",
+              "revision": 1
+            }
+          ],
+          "prior_message_sequences": [],
+          "prior_result_attempts": [],
+          "prior_wait_ids": []
+        },
+        "total_rows": {
+          "catalog": 7,
+          "prior_messages": 1,
+          "prior_results": 2,
+          "prior_waits": 0
+        }
+      }
+    },
+    {
+      "attempt": "continued:a863e32736bacf90b81e8aae611334741efab507c70529e0fb763b9a84a61063:native-attempt:d8765a4870a046958cc2d96d69a30458",
+      "original_cursor": 1,
+      "cutoff": 2,
+      "pinned_prior_count": 0,
+      "actual_full_prior_count": 1,
+      "coverage": {
+        "excluded_history": "retained; not inspected or summarized by this selection",
+        "mode": "explicit",
+        "selected_rows": {
+          "catalog": 5,
+          "prior_messages": 0,
+          "prior_results": 0,
+          "prior_waits": 0
+        },
+        "selection": {
+          "catalog_refs": [
+            {
+              "id": "conversation-routing-method",
+              "revision": 1
+            },
+            {
+              "id": "conversation-execution-method",
+              "revision": 1
+            },
+            {
+              "id": "subject",
+              "revision": 1
+            },
+            {
+              "id": "continued:089713da6f99970ee252489ad52c6364531865701ab656cf30cdeee42ae99676:native-attempt:afd000c1a42548f9890a80d3f1f6ce97:profile",
+              "revision": 1
+            },
+            {
+              "id": "continued:a863e32736bacf90b81e8aae611334741efab507c70529e0fb763b9a84a61063:native-attempt:d8765a4870a046958cc2d96d69a30458:profile",
+              "revision": 1
+            }
+          ],
+          "prior_message_sequences": [],
+          "prior_result_attempts": [],
+          "prior_wait_ids": []
+        },
+        "total_rows": {
+          "catalog": 8,
+          "prior_messages": 1,
+          "prior_results": 2,
+          "prior_waits": 0
+        }
+      }
+    }
+  ],
+  "real_model_calls": 0,
+  "source_mutations": false,
+  "sql_mutations": false,
+  "fixture_root": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\permanent-independent-fad42f8\\update-closure-237-f06d4ab7",
+  "update_preparation_succeeded": false,
+  "error": {
+    "code": "invalid_request",
+    "field": "backup.reference_closure"
+  },
+  "traceback": "Traceback (most recent call last):\n  File \"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\permanent-independent-fad42f8\\frozen2371911-wheel-code\\zaratustra_core\\backup_refs.py\", line 293, in verify_references\n    require(equal(body[\"prior_messages\"], prior))\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\permanent-independent-fad42f8\\frozen2371911-wheel-code\\zaratustra_core\\backup_refs.py\", line 25, in require\n    raise CoreError(\"invalid_request\", \"backup.reference_closure\")\nzaratustra_core.types.CoreError: invalid_request: backup.reference_closure [8194e1816b7153cc]\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\permanent-independent-fad42f8\\reproduce-update-closure-237.py\", line 35, in <module>\n    core.prepare_update(token,run/'pre-update')\n    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\permanent-independent-fad42f8\\frozen2371911-wheel-code\\zaratustra_core\\api.py\", line 248, in prepare_update\n    return prepare_update(self, token, backup_destination)\n  File \"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\permanent-independent-fad42f8\\frozen2371911-wheel-code\\zaratustra_core\\lifecycle.py\", line 184, in prepare_update\n    manifest = core.backup(token, destination)\n  File \"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\permanent-independent-fad42f8\\frozen2371911-wheel-code\\zaratustra_core\\api.py\", line 228, in backup\n    return backup(self, token, destination)\n  File \"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\permanent-independent-fad42f8\\frozen2371911-wheel-code\\zaratustra_core\\maintenance.py\", line 84, in backup\n    integrity(temporary / \"core.sqlite3\")\n    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\permanent-independent-fad42f8\\frozen2371911-wheel-code\\zaratustra_core\\maintenance.py\", line 54, in integrity\n    verify_references(db, path)\n    ~~~~~~~~~~~~~~~~~^^^^^^^^^^\n  File \"C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\permanent-independent-fad42f8\\frozen2371911-wheel-code\\zaratustra_core\\backup_refs.py\", line 399, in verify_references\n    raise CoreError(\"invalid_request\", \"backup.reference_closure\") from error\nzaratustra_core.types.CoreError: invalid_request: backup.reference_closure [8194e1816b7153cc]\n",
+  "original_database_bytes_preserved": true
+}

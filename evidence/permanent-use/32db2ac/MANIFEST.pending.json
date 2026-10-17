@@ -1,0 +1,187 @@
+{
+  "status": "SUPERSEDED_NOT_READY_NATIVE_HISTORY_TOOL_OUTPUT_CONTEXT_WINDOW",
+  "source_commit": "32db2acf436c060dae71d91523f2f8665c25a6cd",
+  "files": [
+    {
+      "path": "freeze/FREEZE.json",
+      "sha256": "922f4003045e0802f2d4907febd3a921face395bae15f492e01496bf0c676ca8",
+      "bytes": 10700,
+      "source_path": "_scratch/permanent-32db2ac/FREEZE.json"
+    },
+    {
+      "path": "freeze/ARCHIVE.json",
+      "sha256": "2c3075aeee2a2486d8fadc3fd553424301aec371f80bbe6f408649c906fa1b64",
+      "bytes": 224,
+      "source_path": "_scratch/permanent-32db2ac/ARCHIVE.json"
+    },
+    {
+      "path": "freeze/COMPONENT-ALIGNMENT.json",
+      "sha256": "daef8f209b745d8e97d4bc7f31400cddff52ff2b9645e5175211ea6a4dbdbba4",
+      "bytes": 449,
+      "source_path": "_scratch/permanent-32db2ac/COMPONENT-ALIGNMENT.json"
+    },
+    {
+      "path": "zip-proof/package-load.json",
+      "sha256": "34632bae6cc20ed92a2bff34e78b0bd364c336d1d310c8f74c233ed6947da327",
+      "bytes": 886,
+      "source_path": "_scratch/permanent-32db2ac/zip-proof/package-load.json"
+    },
+    {
+      "path": "zip-proof/probe.mjs",
+      "sha256": "6754d5c476c6889be9c4447ad3cc14ef737a36e5ec9d153476820abda66e14d6",
+      "bytes": 1445,
+      "source_path": "_scratch/permanent-32db2ac/zip-proof/probe.mjs"
+    },
+    {
+      "path": "focused/hooks-read-old.xml",
+      "sha256": "3d27a2558941b73e3c14a4f9aaa9666aff9c37ca94c4b31c49c8bdf091517174",
+      "bytes": 14637,
+      "source_path": "_scratch/hooks-read-old.xml"
+    },
+    {
+      "path": "focused/hooks-read-target-final.xml",
+      "sha256": "27e6c98bbf67447734bf9c0f38fc010868fb48d757bf8d613c6bf365ff37165a",
+      "bytes": 1045,
+      "source_path": "_scratch/hooks-read-target-final.xml"
+    },
+    {
+      "path": "focused/hooks-read-regression.xml",
+      "sha256": "97c531cbd1bc60d9b90c6907d857ed0f932b31b8282005d579e692070ed4bdee",
+      "bytes": 2365,
+      "source_path": "_scratch/hooks-read-regression.xml"
+    },
+    {
+      "path": "focused/old-product/read-shape-correction/sdk-output.json",
+      "sha256": "cc3c3957634945a320a756c75ea34c3d98ef67c893e20493c04e35f6b2e41ab5",
+      "bytes": 590505,
+      "source_path": "_scratch/hooks-read-old/test_native_hook_boundaries_re0/sdk-output.json"
+    },
+    {
+      "path": "focused/old-product/read-shape-correction/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/hooks-read-old/test_native_hook_boundaries_re0/sdk-stderr.log"
+    },
+    {
+      "path": "focused/new-product/read-shape-correction/sdk-output.json",
+      "sha256": "f5d44408219d6f2b9944ddf2a3c702257762a68bfa549d70c950a51c4a1977c5",
+      "bytes": 605019,
+      "source_path": "_scratch/hooks-read-regression/test_native_hook_boundaries_re3/sdk-output.json"
+    },
+    {
+      "path": "focused/new-product/read-shape-correction/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/hooks-read-regression/test_native_hook_boundaries_re3/sdk-stderr.log"
+    },
+    {
+      "path": "focused/new-product/read-admission-correction/sdk-output.json",
+      "sha256": "41ad6e5669b2cbdda654badbd9e8fec3a8a52d13fbae9aece657e3e8efb4da85",
+      "bytes": 607943,
+      "source_path": "_scratch/hooks-read-regression/test_native_hook_boundaries_re4/sdk-output.json"
+    },
+    {
+      "path": "focused/new-product/read-admission-correction/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/hooks-read-regression/test_native_hook_boundaries_re4/sdk-stderr.log"
+    },
+    {
+      "path": "focused/new-product/read-revoked/sdk-output.json",
+      "sha256": "6717223eaffe4a02dc27779116d0bef9d448947b8e9a832fd5873e076aa5e6e2",
+      "bytes": 595764,
+      "source_path": "_scratch/hooks-read-regression/test_native_hook_boundaries_re5/sdk-output.json"
+    },
+    {
+      "path": "focused/new-product/read-revoked/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/hooks-read-regression/test_native_hook_boundaries_re5/sdk-stderr.log"
+    },
+    {
+      "path": "focused/new-product/read-transport/sdk-output.json",
+      "sha256": "5ca99dc6244f9c19f9f9b8bacd5026b5823ff354860916c6426e6e973e46a431",
+      "bytes": 595924,
+      "source_path": "_scratch/hooks-read-regression/test_native_hook_boundaries_re6/sdk-output.json"
+    },
+    {
+      "path": "focused/new-product/read-transport/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/hooks-read-regression/test_native_hook_boundaries_re6/sdk-stderr.log"
+    },
+    {
+      "path": "focused/new-product/read-payload/sdk-output.json",
+      "sha256": "21b6374028164c26277ed850684c757210f5eef8df551f2831ae5c8ca677e218",
+      "bytes": 595796,
+      "source_path": "_scratch/hooks-read-regression/test_native_hook_boundaries_re7/sdk-output.json"
+    },
+    {
+      "path": "focused/new-product/read-payload/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/hooks-read-regression/test_native_hook_boundaries_re7/sdk-stderr.log"
+    },
+    {
+      "path": "focused/new-product/read-wire/sdk-output.json",
+      "sha256": "6f8cb1116883b0be0b9eb7d6c5b03888cad40dc3ce2d9a4551cf6487f81f19da",
+      "bytes": 595784,
+      "source_path": "_scratch/hooks-read-regression/test_native_hook_boundaries_re8/sdk-output.json"
+    },
+    {
+      "path": "focused/new-product/read-wire/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/hooks-read-regression/test_native_hook_boundaries_re8/sdk-stderr.log"
+    },
+    {
+      "path": "independent/REPORT-32db2ac.md",
+      "sha256": "ca35f094f432ef372e502ed2174aa5de29363279c080f63194641775386300a6",
+      "bytes": 9534,
+      "source_path": "_scratch/permanent-independent-fad42f8/REPORT-32db2ac.md"
+    },
+    {
+      "path": "independent/read-boundary-contract-32db2ac.json",
+      "sha256": "aa08fc790a7ab0f18049b2df46f97f2052d8c1c97fc71a4dedf789205c9510cb",
+      "bytes": 5034,
+      "source_path": "_scratch/permanent-independent-fad42f8/read-boundary-contract-32db2ac.json"
+    },
+    {
+      "path": "independent/read-error-contract-32db2ac.json",
+      "sha256": "6845999dc8637f86f455f5da99d29ce73a4b7664aedf7d137878da1939b4a453",
+      "bytes": 393,
+      "source_path": "_scratch/permanent-independent-fad42f8/read-error-contract-32db2ac.json"
+    },
+    {
+      "path": "independent/read-growth32-reproduction.json",
+      "sha256": "1af3981f24138270ceecbec3678211a68346a3cc9bcf89d82d16bab43eafd027",
+      "bytes": 2446,
+      "source_path": "_scratch/permanent-independent-fad42f8/read-growth32-reproduction.json"
+    },
+    {
+      "path": "independent/NATIVE-DELIVERY-RECHECK-BOUNDARY.md",
+      "sha256": "f40ad93a890c189d5b73cee9ba3e99d296d7ea185a1fd86205b71787f154e27f",
+      "bytes": 7173,
+      "source_path": "_scratch/permanent-independent-fad42f8/NATIVE-DELIVERY-RECHECK-BOUNDARY.md"
+    },
+    {
+      "path": "independent/reuse-alignment-32db2ac.json",
+      "sha256": "a7568390df9fc526041babd9ec0c1b96b9581b5d3325a58cf0bb6b32f8840970",
+      "bytes": 1324,
+      "source_path": "_scratch/permanent-independent-fad42f8/reuse-alignment-32db2ac.json"
+    }
+  ],
+  "test_provenance": "Actual installed Pi SDK against scripted fictional localhost provider. Old read-shape product failure preserved; six new read controls are included in full16 and are not added to it. Revoked-rights uses real Core grant/revoke; transport uses actual host exit23; payload/wire controls inject CoreError seams and do not claim genuine database corruption. SDK JSON/stdout and empty stderr retained byte-for-byte. No paid model calls in these checks.",
+  "privacy": "Only frozen hashes, extracted package loader proof and fictional SDK output; no home/agent directory, database, credential or auth file copied.",
+  "pending": [
+    "actual supported public cancellation then NEW Sleep Work, adaptation and subsequent ordinary use",
+    "fresh physical independent verdict",
+    "coherent full native gate after live passes",
+    "final publication audit"
+  ],
+  "prior_failed_candidates": [
+    "../158617f/MANIFEST.pending.json"
+  ],
+  "actual_failure": "Root actual Sleep valid read_history(limit100) returned successfully, but next provider request grew from902721 to10497809 bytes and received context-window rejection. No adaptation/result claimed; source32db remains frozen pending bounded delivery diagnosis.",
+  "independent_scope": "Separate fresh physical reviewer independently passed9 F11 actual-SDK cases; independently reproduced F12 large history/page/context outputs. Different measured serialized representations retain their original byte figures; no universal provider-fit claim."
+}

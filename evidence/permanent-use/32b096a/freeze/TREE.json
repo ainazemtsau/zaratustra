@@ -1,0 +1,5 @@
+{
+  "source_commit": "32b096a474f36fb55a6296110261e6a67d6981a4",
+  "algorithm": "SHA256(sorted recursive Node localeCompare relative path + NUL + raw file bytes)",
+  "package_tree_sha256": "1790eb131d3c1d2635ca2e2dbee350f094be246eb842f489dc70346f9059fdde"
+}

@@ -1,0 +1,2383 @@
+{
+  "sourceFreeze": "f2c4b2bb2c8cca28b4a55c80453ed416275d416a",
+  "readOnlyURI": true,
+  "queryOnly": true,
+  "noCredentialsQueried": true,
+  "modelCalls": 0,
+  "configuredBudget": {
+    "renderedContextMaximumBytes": 1048576,
+    "authority": "packages/core/src/zaratustra_core/api.py:1140–1141 at exactfreeze",
+    "productionCallLimit": null,
+    "nativeDefaultPortion": 16,
+    "portionCountsSourcesNotBytes": true
+  },
+  "work": {
+    "id": "native-sleep-work:69cc7698ac274b629cd06db70420e697",
+    "status": "ready",
+    "revision": 2,
+    "generation": 2,
+    "body": {
+      "call_limit": null,
+      "continuation_policy": "durable",
+      "conversation": "native-sleep-work:69cc7698ac274b629cd06db70420e697:conversation",
+      "goal": "Sleep",
+      "id": "native-sleep-work:69cc7698ac274b629cd06db70420e697",
+      "inputs": [
+        {
+          "id": "native-sleep-work:69cc7698ac274b629cd06db70420e697:progress",
+          "revision": 1,
+          "role": "must_be_current"
+        }
+      ],
+      "method_ref": {
+        "id": "native-sleep-method:fictional-label-utility",
+        "revision": 1,
+        "role": "must_be_current"
+      },
+      "scope": "fictional-label-utility"
+    },
+    "attemptRows": 0,
+    "actionRows": 0
+  },
+  "progress": {
+    "ref": {
+      "id": "native-sleep-work:69cc7698ac274b629cd06db70420e697:progress",
+      "revision": 1
+    },
+    "currentRevision": 1,
+    "bodyWireBytes": 5745,
+    "valueWireBytes": 5640,
+    "valueFields": [
+      {
+        "key": "analysis_result_refs",
+        "type": "list",
+        "wireBytes": 2,
+        "count": 0
+      },
+      {
+        "key": "applied_receipts",
+        "type": "list",
+        "wireBytes": 2,
+        "count": 0
+      },
+      {
+        "key": "consumed_resource",
+        "type": "int",
+        "wireBytes": 1,
+        "count": null
+      },
+      {
+        "key": "continuation",
+        "type": "str",
+        "wireBytes": 60,
+        "count": null
+      },
+      {
+        "key": "delivered_manifest_refs",
+        "type": "list",
+        "wireBytes": 2,
+        "count": 0
+      },
+      {
+        "key": "enumerated_source_refs",
+        "type": "list",
+        "wireBytes": 1638,
+        "count": 16
+      },
+      {
+        "key": "enumeration_cursor",
+        "type": "list",
+        "wireBytes": 7,
+        "count": 2
+      },
+      {
+        "key": "format",
+        "type": "str",
+        "wireBytes": 19,
+        "count": null
+      },
+      {
+        "key": "method_ref",
+        "type": "dict",
+        "wireBytes": 90,
+        "count": 3
+      },
+      {
+        "key": "proposed_changes",
+        "type": "list",
+        "wireBytes": 2,
+        "count": 0
+      },
+      {
+        "key": "remaining_refs",
+        "type": "list",
+        "wireBytes": 1638,
+        "count": 16
+      },
+      {
+        "key": "return_conditions",
+        "type": "list",
+        "wireBytes": 47,
+        "count": 1
+      },
+      {
+        "key": "scope",
+        "type": "str",
+        "wireBytes": 25,
+        "count": null
+      },
+      {
+        "key": "selected_source_refs",
+        "type": "list",
+        "wireBytes": 1638,
+        "count": 16
+      },
+      {
+        "key": "source_high_watermark",
+        "type": "int",
+        "wireBytes": 3,
+        "count": null
+      },
+      {
+        "key": "stop_reason",
+        "type": "str",
+        "wireBytes": 13,
+        "count": null
+      },
+      {
+        "key": "unexplored_coverage_position",
+        "type": "dict",
+        "wireBytes": 23,
+        "count": 1
+      },
+      {
+        "key": "unresolved_calls",
+        "type": "list",
+        "wireBytes": 2,
+        "count": 0
+      },
+      {
+        "key": "work_id",
+        "type": "str",
+        "wireBytes": 52,
+        "count": null
+      }
+    ],
+    "highWatermark": 775,
+    "enumerationCursor": [
+      116,
+      0
+    ],
+    "enumeratedCount": 16,
+    "selectedCount": 16,
+    "remainingCount": 16,
+    "analysisCount": 0,
+    "deliveredManifestCount": 0,
+    "appliedReceiptCount": 0,
+    "stopReason": "not_started"
+  },
+  "method": {
+    "ref": {
+      "id": "native-sleep-method:fictional-label-utility",
+      "revision": 1
+    },
+    "bodyWireBytes": 3289,
+    "valueFields": [
+      {
+        "key": "instructions",
+        "type": "str",
+        "wireBytes": 3129,
+        "count": null
+      },
+      {
+        "key": "status",
+        "type": "str",
+        "wireBytes": 8,
+        "count": null
+      },
+      {
+        "key": "version",
+        "type": "str",
+        "wireBytes": 9,
+        "count": null
+      }
+    ]
+  },
+  "profilesCreatedBeforeFailedPrepare": [
+    {
+      "id": "native-sleep-work:69cc7698ac274b629cd06db70420e697:native-attempt:abfa092a6e3b4aabba9a44dec5db9fa8:profile",
+      "revision": 1,
+      "bodyBytes": 416
+    }
+  ],
+  "sleepSourcesWireBytesAlone": 3404382,
+  "exceedsConfiguredBudgetWithoutAnyOtherContext": true,
+  "selectedSources": [
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 60,
+        "sha256": "898dd2d7b537555b3a949c75f795364f8ce4307d813ab61c3e9f9d787c837f9f"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 722039,
+      "wrappedWireBytes": 722167,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 718000,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "102703e6-5aa9-4735-98f0-f1f6c956e36e",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 538323,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 10,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 534241,
+          "count": 10
+        }
+      ],
+      "nativeKind": "turn_end",
+      "nativeEventType": "turn_end",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 10,
+          "count": null
+        },
+        {
+          "key": "turnIndex",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        },
+        {
+          "key": "message",
+          "type": "dict",
+          "wireBytes": 1469,
+          "count": 12
+        },
+        {
+          "key": "toolResults",
+          "type": "list",
+          "wireBytes": 79699,
+          "count": 1
+        },
+        {
+          "key": "messageEntryId",
+          "type": "str",
+          "wireBytes": 10,
+          "count": null
+        },
+        {
+          "key": "toolResultEntryIds",
+          "type": "list",
+          "wireBytes": 12,
+          "count": 1
+        },
+        {
+          "key": "outcome",
+          "type": "str",
+          "wireBytes": 11,
+          "count": null
+        },
+        {
+          "key": "entries",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "continue",
+          "type": "bool",
+          "wireBytes": 5,
+          "count": null
+        },
+        {
+          "key": "context",
+          "type": "dict",
+          "wireBytes": 452889,
+          "count": 5
+        }
+      ]
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 108,
+        "sha256": "f34f881b64210ead57728a30d5ad52427d025bd5caf5e40262624bd8710f9274"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 642015,
+      "wrappedWireBytes": 642144,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 637976,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "044e5786-d937-435d-888f-4a888ee825df",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 478303,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 10,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 473377,
+          "count": 10
+        }
+      ],
+      "nativeKind": "turn_end",
+      "nativeEventType": "turn_end",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 10,
+          "count": null
+        },
+        {
+          "key": "turnIndex",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        },
+        {
+          "key": "message",
+          "type": "dict",
+          "wireBytes": 849,
+          "count": 12
+        },
+        {
+          "key": "toolResults",
+          "type": "list",
+          "wireBytes": 583,
+          "count": 1
+        },
+        {
+          "key": "messageEntryId",
+          "type": "str",
+          "wireBytes": 10,
+          "count": null
+        },
+        {
+          "key": "toolResultEntryIds",
+          "type": "list",
+          "wireBytes": 12,
+          "count": 1
+        },
+        {
+          "key": "outcome",
+          "type": "str",
+          "wireBytes": 11,
+          "count": null
+        },
+        {
+          "key": "entries",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "continue",
+          "type": "bool",
+          "wireBytes": 5,
+          "count": null
+        },
+        {
+          "key": "context",
+          "type": "dict",
+          "wireBytes": 471761,
+          "count": 5
+        }
+      ]
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 96,
+        "sha256": "2f69cc9228ff3e1da5fde5f204ed745817519bf330667aabd3bf7a8b2d06eb51"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 633115,
+      "wrappedWireBytes": 633243,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 629076,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "b053a441-3787-448c-8cc5-c47ef5c87013",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 471629,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 10,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 467065,
+          "count": 10
+        }
+      ],
+      "nativeKind": "turn_end",
+      "nativeEventType": "turn_end",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 10,
+          "count": null
+        },
+        {
+          "key": "turnIndex",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        },
+        {
+          "key": "message",
+          "type": "dict",
+          "wireBytes": 698,
+          "count": 12
+        },
+        {
+          "key": "toolResults",
+          "type": "list",
+          "wireBytes": 420,
+          "count": 1
+        },
+        {
+          "key": "messageEntryId",
+          "type": "str",
+          "wireBytes": 10,
+          "count": null
+        },
+        {
+          "key": "toolResultEntryIds",
+          "type": "list",
+          "wireBytes": 12,
+          "count": 1
+        },
+        {
+          "key": "outcome",
+          "type": "str",
+          "wireBytes": 11,
+          "count": null
+        },
+        {
+          "key": "entries",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "continue",
+          "type": "bool",
+          "wireBytes": 5,
+          "count": null
+        },
+        {
+          "key": "context",
+          "type": "dict",
+          "wireBytes": 465763,
+          "count": 5
+        }
+      ]
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 84,
+        "sha256": "c66a1db8a8dde1ddd8c1b0c762307271a152556dc90698831d78a000ff931757"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 626179,
+      "wrappedWireBytes": 626307,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 622140,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "5df3898c-0612-48b8-bc17-316a41facb71",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 466428,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 10,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 462186,
+          "count": 10
+        }
+      ],
+      "nativeKind": "turn_end",
+      "nativeEventType": "turn_end",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 10,
+          "count": null
+        },
+        {
+          "key": "turnIndex",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        },
+        {
+          "key": "message",
+          "type": "dict",
+          "wireBytes": 691,
+          "count": 12
+        },
+        {
+          "key": "toolResults",
+          "type": "list",
+          "wireBytes": 290,
+          "count": 1
+        },
+        {
+          "key": "messageEntryId",
+          "type": "str",
+          "wireBytes": 10,
+          "count": null
+        },
+        {
+          "key": "toolResultEntryIds",
+          "type": "list",
+          "wireBytes": 12,
+          "count": 1
+        },
+        {
+          "key": "outcome",
+          "type": "str",
+          "wireBytes": 11,
+          "count": null
+        },
+        {
+          "key": "entries",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "continue",
+          "type": "bool",
+          "wireBytes": 5,
+          "count": null
+        },
+        {
+          "key": "context",
+          "type": "dict",
+          "wireBytes": 461021,
+          "count": 5
+        }
+      ]
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 72,
+        "sha256": "2d33129ff9271a752d61e9b42d7dfb8af57e6f10889d00df30175acae49f5cd8"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 620067,
+      "wrappedWireBytes": 620195,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 616028,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "d476a65c-9acd-4478-b952-c73010643ba2",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 461844,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 10,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 457928,
+          "count": 10
+        }
+      ],
+      "nativeKind": "turn_end",
+      "nativeEventType": "turn_end",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 10,
+          "count": null
+        },
+        {
+          "key": "turnIndex",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        },
+        {
+          "key": "message",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 12
+        },
+        {
+          "key": "toolResults",
+          "type": "list",
+          "wireBytes": 265,
+          "count": 1
+        },
+        {
+          "key": "messageEntryId",
+          "type": "str",
+          "wireBytes": 10,
+          "count": null
+        },
+        {
+          "key": "toolResultEntryIds",
+          "type": "list",
+          "wireBytes": 12,
+          "count": 1
+        },
+        {
+          "key": "outcome",
+          "type": "str",
+          "wireBytes": 11,
+          "count": null
+        },
+        {
+          "key": "entries",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "continue",
+          "type": "bool",
+          "wireBytes": 5,
+          "count": null
+        },
+        {
+          "key": "context",
+          "type": "dict",
+          "wireBytes": 456827,
+          "count": 5
+        }
+      ]
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 56,
+        "sha256": "9e2e3181ee725216dfae3ea313144f65cffaa911909735228599b8a8fa9ae778"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 111195,
+      "wrappedWireBytes": 111323,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 107156,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "3864edb3-65ac-4563-8604-5af18426f7c9",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 80189,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 20,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 79690,
+          "count": 6
+        }
+      ],
+      "nativeKind": "tool_execution_end",
+      "nativeEventType": "tool_execution_end",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 20,
+          "count": null
+        },
+        {
+          "key": "toolCallId",
+          "type": "str",
+          "wireBytes": 93,
+          "count": null
+        },
+        {
+          "key": "toolName",
+          "type": "str",
+          "wireBytes": 12,
+          "count": null
+        },
+        {
+          "key": "result",
+          "type": "dict",
+          "wireBytes": 79487,
+          "count": 2
+        },
+        {
+          "key": "isError",
+          "type": "bool",
+          "wireBytes": 5,
+          "count": null
+        },
+        {
+          "key": "durationMs",
+          "type": "int",
+          "wireBytes": 3,
+          "count": null
+        }
+      ]
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 92,
+        "sha256": "b0252ff0c14a945ffc49e6f5e0573f7be307d6c41bdc6261805d9beb1b36795b"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 5167,
+      "wrappedWireBytes": 5295,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 1128,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "a9d9f2cd-eaea-4e19-8933-321b1e587f22",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 669,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 20,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 611,
+          "count": 6
+        }
+      ],
+      "nativeKind": "tool_execution_end",
+      "nativeEventType": "tool_execution_end",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 20,
+          "count": null
+        },
+        {
+          "key": "toolCallId",
+          "type": "str",
+          "wireBytes": 93,
+          "count": null
+        },
+        {
+          "key": "toolName",
+          "type": "str",
+          "wireBytes": 6,
+          "count": null
+        },
+        {
+          "key": "result",
+          "type": "dict",
+          "wireBytes": 416,
+          "count": 2
+        },
+        {
+          "key": "isError",
+          "type": "bool",
+          "wireBytes": 5,
+          "count": null
+        },
+        {
+          "key": "durationMs",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ]
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 104,
+        "sha256": "18fd39fd415eacb5895e78bef8d0357827ec09e9cd84423670a7f89a4c243950"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 5127,
+      "wrappedWireBytes": 5256,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 1088,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "2d95a176-bdff-4364-8670-b00da7c09c25",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 637,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 20,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 574,
+          "count": 6
+        }
+      ],
+      "nativeKind": "tool_execution_end",
+      "nativeEventType": "tool_execution_end",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 20,
+          "count": null
+        },
+        {
+          "key": "toolCallId",
+          "type": "str",
+          "wireBytes": 93,
+          "count": null
+        },
+        {
+          "key": "toolName",
+          "type": "str",
+          "wireBytes": 6,
+          "count": null
+        },
+        {
+          "key": "result",
+          "type": "dict",
+          "wireBytes": 379,
+          "count": 2
+        },
+        {
+          "key": "isError",
+          "type": "bool",
+          "wireBytes": 5,
+          "count": null
+        },
+        {
+          "key": "durationMs",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ]
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 116,
+        "sha256": "fb9dc13ee2451db1b2f3286140d3809d509f9319f1f0ef18d65db0893eba0c61"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 4859,
+      "wrappedWireBytes": 4988,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 820,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "cb9dd63f-6ee0-491f-9326-9f22c95361d6",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 437,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 20,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 372,
+          "count": 6
+        }
+      ],
+      "nativeKind": "tool_execution_end",
+      "nativeEventType": "tool_execution_end",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 20,
+          "count": null
+        },
+        {
+          "key": "toolCallId",
+          "type": "str",
+          "wireBytes": 93,
+          "count": null
+        },
+        {
+          "key": "toolName",
+          "type": "str",
+          "wireBytes": 6,
+          "count": null
+        },
+        {
+          "key": "result",
+          "type": "dict",
+          "wireBytes": 175,
+          "count": 2
+        },
+        {
+          "key": "isError",
+          "type": "bool",
+          "wireBytes": 5,
+          "count": null
+        },
+        {
+          "key": "durationMs",
+          "type": "int",
+          "wireBytes": 3,
+          "count": null
+        }
+      ]
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 80,
+        "sha256": "df02caf39fdc0a8179db035375c6a6e7a1a2e43533b3b49ef6b4427d3ee77e69"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 4823,
+      "wrappedWireBytes": 4951,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 784,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "ba05ccd5-f0f8-4951-8fca-aca01276feab",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 409,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 20,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 351,
+          "count": 6
+        }
+      ],
+      "nativeKind": "tool_execution_end",
+      "nativeEventType": "tool_execution_end",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 20,
+          "count": null
+        },
+        {
+          "key": "toolCallId",
+          "type": "str",
+          "wireBytes": 93,
+          "count": null
+        },
+        {
+          "key": "toolName",
+          "type": "str",
+          "wireBytes": 6,
+          "count": null
+        },
+        {
+          "key": "result",
+          "type": "dict",
+          "wireBytes": 156,
+          "count": 2
+        },
+        {
+          "key": "isError",
+          "type": "bool",
+          "wireBytes": 5,
+          "count": null
+        },
+        {
+          "key": "durationMs",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ]
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 100,
+        "sha256": "2704ddc46b4daee8b7486d8617f833b8f1332c63d5be881ccb302f40c8ae02c7"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 4779,
+      "wrappedWireBytes": 4908,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 740,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "dfd37e24-4f57-4431-8b62-d52fb7fc4439",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 378,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 11,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 333,
+          "count": 4
+        }
+      ],
+      "nativeKind": "tool_call",
+      "nativeEventType": "tool_call",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 11,
+          "count": null
+        },
+        {
+          "key": "toolName",
+          "type": "str",
+          "wireBytes": 6,
+          "count": null
+        },
+        {
+          "key": "toolCallId",
+          "type": "str",
+          "wireBytes": 93,
+          "count": null
+        },
+        {
+          "key": "input",
+          "type": "dict",
+          "wireBytes": 179,
+          "count": 2
+        }
+      ]
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 68,
+        "sha256": "aa1c2a4d1014bc552e227696a280e2d941fe4260f3b40da0a3e0b9ac8e851b49"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 4691,
+      "wrappedWireBytes": 4819,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "2ae7b1da-410f-453d-82d8-4d096d5be0ee",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 312,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 20,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 256,
+          "count": 6
+        }
+      ],
+      "nativeKind": "tool_execution_end",
+      "nativeEventType": "tool_execution_end",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 20,
+          "count": null
+        },
+        {
+          "key": "toolCallId",
+          "type": "str",
+          "wireBytes": 93,
+          "count": null
+        },
+        {
+          "key": "toolName",
+          "type": "str",
+          "wireBytes": 4,
+          "count": null
+        },
+        {
+          "key": "result",
+          "type": "dict",
+          "wireBytes": 63,
+          "count": 1
+        },
+        {
+          "key": "isError",
+          "type": "bool",
+          "wireBytes": 5,
+          "count": null
+        },
+        {
+          "key": "durationMs",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ]
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 112,
+        "sha256": "69872dc09cafd235253d2ac328aff0eefaf916a67bdbe53e0553c2e9e5d872ac"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 4583,
+      "wrappedWireBytes": 4712,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 544,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "f8313b48-c117-45bb-b49d-b2700e0cd383",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 229,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 11,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 189,
+          "count": 4
+        }
+      ],
+      "nativeKind": "tool_call",
+      "nativeEventType": "tool_call",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 11,
+          "count": null
+        },
+        {
+          "key": "toolName",
+          "type": "str",
+          "wireBytes": 6,
+          "count": null
+        },
+        {
+          "key": "toolCallId",
+          "type": "str",
+          "wireBytes": 93,
+          "count": null
+        },
+        {
+          "key": "input",
+          "type": "dict",
+          "wireBytes": 35,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 88,
+        "sha256": "8355ca37ba296b5563d3da1764529abe3029add2ab5f981574abb10fa3a25bcb"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 4567,
+      "wrappedWireBytes": 4695,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 528,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "372dc603-f55b-406f-84c4-5d7755f723e5",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 219,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 11,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 179,
+          "count": 4
+        }
+      ],
+      "nativeKind": "tool_call",
+      "nativeEventType": "tool_call",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 11,
+          "count": null
+        },
+        {
+          "key": "toolName",
+          "type": "str",
+          "wireBytes": 6,
+          "count": null
+        },
+        {
+          "key": "toolCallId",
+          "type": "str",
+          "wireBytes": 93,
+          "count": null
+        },
+        {
+          "key": "input",
+          "type": "dict",
+          "wireBytes": 25,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 76,
+        "sha256": "0351680503937d21fbf42aba15b0797df92685e9d3f77b6e9e479f9952b863c3"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 4559,
+      "wrappedWireBytes": 4687,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 520,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "88a6fd8e-039f-4bbc-8bd1-63bd033bf172",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 213,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 11,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 173,
+          "count": 4
+        }
+      ],
+      "nativeKind": "tool_call",
+      "nativeEventType": "tool_call",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 11,
+          "count": null
+        },
+        {
+          "key": "toolName",
+          "type": "str",
+          "wireBytes": 6,
+          "count": null
+        },
+        {
+          "key": "toolCallId",
+          "type": "str",
+          "wireBytes": 93,
+          "count": null
+        },
+        {
+          "key": "input",
+          "type": "dict",
+          "wireBytes": 19,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 64,
+        "sha256": "0c3c6e0803540de1f925e308fe0118d391da90095702d6470631abd858e15cd0"
+      },
+      "eventKind": "observe_attempt",
+      "sourceDigestMatches": true,
+      "materialWireBytes": 4547,
+      "wrappedWireBytes": 4675,
+      "fields": [
+        {
+          "key": "observation",
+          "type": "dict",
+          "wireBytes": 508,
+          "count": 5
+        },
+        {
+          "key": "scope",
+          "type": "str",
+          "wireBytes": 25,
+          "count": null
+        },
+        {
+          "key": "method",
+          "type": "dict",
+          "wireBytes": 1990,
+          "count": 6
+        },
+        {
+          "key": "inputs",
+          "type": "list",
+          "wireBytes": 543,
+          "count": 1
+        },
+        {
+          "key": "messages",
+          "type": "list",
+          "wireBytes": 682,
+          "count": 1
+        },
+        {
+          "key": "prior_messages",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "prior_waits",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "tool_ledger",
+          "type": "list",
+          "wireBytes": 2,
+          "count": 0
+        },
+        {
+          "key": "profile",
+          "type": "dict",
+          "wireBytes": 652,
+          "count": 6
+        },
+        {
+          "key": "resource_reservation",
+          "type": "int",
+          "wireBytes": 1,
+          "count": null
+        }
+      ],
+      "attemptId": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea",
+      "eventId": "f22ded56-fee4-46d8-8e19-7796e51b14f2",
+      "sourceKind": "observation",
+      "rawDecodedBytes": 204,
+      "rawTopLevelFields": [
+        {
+          "key": "kind",
+          "type": "str",
+          "wireBytes": 11,
+          "count": null
+        },
+        {
+          "key": "event",
+          "type": "dict",
+          "wireBytes": 164,
+          "count": 4
+        }
+      ],
+      "nativeKind": "tool_call",
+      "nativeEventType": "tool_call",
+      "nativeEventFields": [
+        {
+          "key": "type",
+          "type": "str",
+          "wireBytes": 11,
+          "count": null
+        },
+        {
+          "key": "toolName",
+          "type": "str",
+          "wireBytes": 4,
+          "count": null
+        },
+        {
+          "key": "toolCallId",
+          "type": "str",
+          "wireBytes": 93,
+          "count": null
+        },
+        {
+          "key": "input",
+          "type": "dict",
+          "wireBytes": 12,
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "recoveryFacts": {
+    "oldSourceRefsRetained": true,
+    "failedPrepareDidNotCreateAttemptOrDispatch": true,
+    "currentMappingAfterFailure": "{} per saved actual finalcontext, because NativeSession.start_sleep saves mapping only after helper.start succeeds.",
+    "sameWorkStartWithExistingProgress": "Sleep.start reuses currentprogress@1 and binds it; it does not recalculate existing selectedsources from a smaller portion.",
+    "nativeResumeAtExactFreeze": "NativeSleep.resume requires previousattempt AND readyresult; none exists for thisreadyWork, so it cannot represent this predispatch failure.",
+    "ordinaryPublicSleepRetryAtExactFreeze": "With mapping{}, NativeSession.start_sleep selects a new UUIDWork; oldreadyWork is not rediscovered from this mapping.",
+    "implementationBoundary": "No repair implemented. Mainexecutor must define explicit auditable recovery/reselection preserving priorrefs; blindretry may repeat oversize selection or orphan oldreadyWork."
+  },
+  "limitations": "Read-only reconstruction of source material from exact _sources rules with all selectedsource SHA verified; no prepare call or reconstructed full pinnedcontext required: sourcesalone prove size failure."
+}

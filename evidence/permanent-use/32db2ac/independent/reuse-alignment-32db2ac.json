@@ -1,0 +1,60 @@
+{
+  "old_source": "158617f8e14abaee6f464f96e20ce8e82feb9090",
+  "new_source": "32db2acf436c060dae71d91523f2f8665c25a6cd",
+  "source_delta": [
+    "pi-package/extension.ts",
+    "tests/restart/native_boundary_fixture.mjs",
+    "tests/restart/test_native_hook_boundaries.py"
+  ],
+  "package_byte_changes": [
+    "extension.ts"
+  ],
+  "checks": {
+    "zip_hash": true,
+    "zip_members": true,
+    "wheels_unchanged": true,
+    "bootstrap_readme_package_unchanged": true,
+    "only_extension_bytes_changed": true,
+    "source_delta_bounded": true
+  },
+  "zip_members": [
+    {
+      "path": "bootstrap.mjs",
+      "pass": true
+    },
+    {
+      "path": "extension.ts",
+      "pass": true
+    },
+    {
+      "path": "package.json",
+      "pass": true
+    },
+    {
+      "path": "README.md",
+      "pass": true
+    },
+    {
+      "path": "release.json",
+      "pass": true
+    },
+    {
+      "path": "requirements.txt",
+      "pass": true
+    },
+    {
+      "path": "wheels/SHA256SUMS",
+      "pass": true
+    },
+    {
+      "path": "wheels/zaratustra_core-0.2.0-py3-none-any.whl",
+      "pass": true
+    },
+    {
+      "path": "wheels/zaratustra_next-0.2.0-py3-none-any.whl",
+      "pass": true
+    }
+  ],
+  "alignment_pass": true,
+  "semantic_behavior_claim": false
+}

@@ -1,0 +1,56 @@
+{
+  "status": "APPROVED_SANITIZED_FAILURE_EVIDENCE_NOT_READY",
+  "files": [
+    {
+      "path": "158617f-descriptor.json",
+      "sha256": "4b1c8aa11917d3fbe6c8554b1462b641c33512d8e6ff402d53583aed0bfc8346",
+      "bytes": 1770,
+      "source_path": "_scratch/root-native-live-proof-envelopefix/public-evidence-v2/158617f-descriptor.json"
+    },
+    {
+      "path": "158617f-selected-records.jsonl",
+      "sha256": "33294c1208bf3b6635dda3ff95122ccfa6d9a379c06e35d037f0f2704443b060",
+      "bytes": 14288,
+      "source_path": "_scratch/root-native-live-proof-envelopefix/public-evidence-v2/158617f-selected-records.jsonl"
+    },
+    {
+      "path": "32db2ac-descriptor.json",
+      "sha256": "604eeeb5f2824f7a7cf463a4551e00ccb179c6145446c104ccc242d6b90b4e6c",
+      "bytes": 1891,
+      "source_path": "_scratch/root-native-live-proof-envelopefix/public-evidence-v2/32db2ac-descriptor.json"
+    },
+    {
+      "path": "32db2ac-selected-records.jsonl",
+      "sha256": "bf9c76d989b0bd0a298768fbc0c549f97f0b532251f1a3f490b7678689174fe2",
+      "bytes": 33701,
+      "source_path": "_scratch/root-native-live-proof-envelopefix/public-evidence-v2/32db2ac-selected-records.jsonl"
+    },
+    {
+      "path": "provenance-selfcheck.json",
+      "sha256": "42549a0ce77f07f33b3540d636a5f0806b5961d5536f8f85f1574c6fa9a4a812",
+      "bytes": 11038,
+      "source_path": "_scratch/root-native-live-proof-envelopefix/public-evidence-v2/provenance-selfcheck.json"
+    },
+    {
+      "path": "subset-manifest.json",
+      "sha256": "4d0e98a9faadcbde8e450ecb51ceee96cc34d46ee0fb4f84b817d3bf0f1b2a36",
+      "bytes": 2079,
+      "source_path": "_scratch/root-native-live-proof-envelopefix/public-evidence-v2/subset-manifest.json"
+    },
+    {
+      "path": "verification/root-provenance-v2-pass.json",
+      "sha256": "5e11c314dae33d7a20f8821858cbef1d726f538cabd1af643aea916f6fdd7598",
+      "bytes": 265,
+      "source_path": "_scratch/root-projection-check/provenance-v2-pass.json"
+    },
+    {
+      "path": "verification/SANITIZED-LIVE-SUBSET-v2.md",
+      "sha256": "d39357fb971304d4e2d6ff8011d21abfa01199797f2ae8827157110d1fb4ba8d",
+      "bytes": 3290,
+      "source_path": "_scratch/root-publication-audit/SANITIZED-LIVE-SUBSET-v2.md"
+    }
+  ],
+  "scope": "158 compatible update PASS and malformed-read abort;32db valid large history read followed by actual provider context-window rejection. Neither demonstrates Sleep adaptation. Exact selected JSONL records with raw SHA/line SHA/JSON-pointer provenance; not whole raw traces.",
+  "approval": "Root granted inclusion after v2 independent provenance PASS and privacy audit PASS. V1 excluded.",
+  "private_data": "No DB, credential, auth, whole raw trace or live directory copied."
+}

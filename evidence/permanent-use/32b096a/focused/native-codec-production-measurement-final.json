@@ -1,0 +1,11 @@
+{
+  "originalBytes": 891249,
+  "viewBytes": 771807,
+  "fields": 8,
+  "sourceRefsUnchanged": true,
+  "manifestUnchanged": true,
+  "prepareLimitUnchanged": 1048576,
+  "traceSHA256": "0413ec3e4c37f52a6cdd847ef8781fdd98245632d86e21ba2e4a3d874672c924",
+  "extensionSHA256": "5c35a58862d5248142f9ac9fd4dda350011373f0f0b7ab13802ef1b5618d8658",
+  "scope": "Readonly full source data byte and roundtrip assertions; no model send or analysis."
+}

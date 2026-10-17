@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="3.744" timestamp="2026-10-17T10:00:02.060505+03:00" hostname="DESKTOP-N6QH2Q6"><testcase classname="tests.restart.test_backup_context_selection" name="test_public_update_and_backup_accept_exact_explicit_prior_selection[backup-False]" time="0.719"><failure message="zaratustra_core.types.CoreError: invalid_request: backup.reference_closure [8194e1816b7153cc]">packages\core\src\zaratustra_core\backup_refs.py:293: in verify_references
+    require(equal(body["prior_messages"], prior))
+packages\core\src\zaratustra_core\backup_refs.py:25: in require
+    raise CoreError("invalid_request", "backup.reference_closure")
+E   zaratustra_core.types.CoreError: invalid_request: backup.reference_closure [8194e1816b7153cc]
+
+The above exception was the direct cause of the following exception:
+tests\restart\test_backup_context_selection.py:50: in test_public_update_and_backup_accept_exact_explicit_prior_selection
+    core.backup(owner.token, destination)
+packages\core\src\zaratustra_core\api.py:228: in backup
+    return backup(self, token, destination)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\maintenance.py:84: in backup
+    integrity(temporary / "core.sqlite3")
+packages\core\src\zaratustra_core\maintenance.py:54: in integrity
+    verify_references(db, path)
+packages\core\src\zaratustra_core\backup_refs.py:399: in verify_references
+    raise CoreError("invalid_request", "backup.reference_closure") from error
+E   zaratustra_core.types.CoreError: invalid_request: backup.reference_closure [8194e1816b7153cc]</failure></testcase><testcase classname="tests.restart.test_backup_context_selection" name="test_public_update_and_backup_accept_exact_explicit_prior_selection[backup-True]" time="0.807"><failure message="zaratustra_core.types.CoreError: invalid_request: backup.reference_closure [8194e1816b7153cc]">packages\core\src\zaratustra_core\backup_refs.py:293: in verify_references
+    require(equal(body["prior_messages"], prior))
+packages\core\src\zaratustra_core\backup_refs.py:25: in require
+    raise CoreError("invalid_request", "backup.reference_closure")
+E   zaratustra_core.types.CoreError: invalid_request: backup.reference_closure [8194e1816b7153cc]
+
+The above exception was the direct cause of the following exception:
+tests\restart\test_backup_context_selection.py:50: in test_public_update_and_backup_accept_exact_explicit_prior_selection
+    core.backup(owner.token, destination)
+packages\core\src\zaratustra_core\api.py:228: in backup
+    return backup(self, token, destination)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\maintenance.py:84: in backup
+    integrity(temporary / "core.sqlite3")
+packages\core\src\zaratustra_core\maintenance.py:54: in integrity
+    verify_references(db, path)
+packages\core\src\zaratustra_core\backup_refs.py:399: in verify_references
+    raise CoreError("invalid_request", "backup.reference_closure") from error
+E   zaratustra_core.types.CoreError: invalid_request: backup.reference_closure [8194e1816b7153cc]</failure></testcase><testcase classname="tests.restart.test_backup_context_selection" name="test_public_update_and_backup_accept_exact_explicit_prior_selection[prepare_update-False]" time="0.746"><failure message="zaratustra_core.types.CoreError: invalid_request: backup.reference_closure [8194e1816b7153cc]">packages\core\src\zaratustra_core\backup_refs.py:293: in verify_references
+    require(equal(body["prior_messages"], prior))
+packages\core\src\zaratustra_core\backup_refs.py:25: in require
+    raise CoreError("invalid_request", "backup.reference_closure")
+E   zaratustra_core.types.CoreError: invalid_request: backup.reference_closure [8194e1816b7153cc]
+
+The above exception was the direct cause of the following exception:
+tests\restart\test_backup_context_selection.py:52: in test_public_update_and_backup_accept_exact_explicit_prior_selection
+    assert core.prepare_update(owner.token, destination)["status"] == "compatible"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:248: in prepare_update
+    return prepare_update(self, token, backup_destination)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\lifecycle.py:184: in prepare_update
+    manifest = core.backup(token, destination)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:228: in backup
+    return backup(self, token, destination)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\maintenance.py:84: in backup
+    integrity(temporary / "core.sqlite3")
+packages\core\src\zaratustra_core\maintenance.py:54: in integrity
+    verify_references(db, path)
+packages\core\src\zaratustra_core\backup_refs.py:399: in verify_references
+    raise CoreError("invalid_request", "backup.reference_closure") from error
+E   zaratustra_core.types.CoreError: invalid_request: backup.reference_closure [8194e1816b7153cc]</failure></testcase><testcase classname="tests.restart.test_backup_context_selection" name="test_public_update_and_backup_accept_exact_explicit_prior_selection[prepare_update-True]" time="0.817"><failure message="zaratustra_core.types.CoreError: invalid_request: backup.reference_closure [8194e1816b7153cc]">packages\core\src\zaratustra_core\backup_refs.py:293: in verify_references
+    require(equal(body["prior_messages"], prior))
+packages\core\src\zaratustra_core\backup_refs.py:25: in require
+    raise CoreError("invalid_request", "backup.reference_closure")
+E   zaratustra_core.types.CoreError: invalid_request: backup.reference_closure [8194e1816b7153cc]
+
+The above exception was the direct cause of the following exception:
+tests\restart\test_backup_context_selection.py:52: in test_public_update_and_backup_accept_exact_explicit_prior_selection
+    assert core.prepare_update(owner.token, destination)["status"] == "compatible"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:248: in prepare_update
+    return prepare_update(self, token, backup_destination)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\lifecycle.py:184: in prepare_update
+    manifest = core.backup(token, destination)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\api.py:228: in backup
+    return backup(self, token, destination)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages\core\src\zaratustra_core\maintenance.py:84: in backup
+    integrity(temporary / "core.sqlite3")
+packages\core\src\zaratustra_core\maintenance.py:54: in integrity
+    verify_references(db, path)
+packages\core\src\zaratustra_core\backup_refs.py:399: in verify_references
+    raise CoreError("invalid_request", "backup.reference_closure") from error
+E   zaratustra_core.types.CoreError: invalid_request: backup.reference_closure [8194e1816b7153cc]</failure></testcase></testsuite></testsuites>

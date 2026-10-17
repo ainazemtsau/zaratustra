@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "scope": "fixture-only representation; runtime extension unchanged",
+  "old_staged_test_sha256": "dbf84ee195347434f51ba4042e51e203b5a15a8a073c6a4fc7b70ca931b76124",
+  "new_test_sha256": "f6e5fcbc581d29735278c8af1d50baaba3c88c43b88f48b6cee2745c0a4fb1e1",
+  "constructed_utf8_bytes": 180000,
+  "constructed_sha256": "9f07bf7e3e46bdd8dfce880e401f8100c7b1d5c6eaf4c9146bf21ef21bbfe898",
+  "old_new_equal": true,
+  "initial_hook_failure": "non-portable path/string: tests/restart/test_native_presentation.py:50; ordinary commit rejected before any commit",
+  "correction": "literal backslash/newline represented using chr(92)/chr(10); hygiene guard retained",
+  "final_test_sha256": "1ae2b5d763eda1a7553b20d150113248a1b4d97a9df7dcbe586f16b3a9e6d083",
+  "final_whitespace_only_reflow": true,
+  "focused_2_exit": 0,
+  "ruff_exit_after_reflow": 0,
+  "mypy_exit": 0,
+  "normal_hook_commit": "bc95ceb412210e5bb8355e60cdff537088fdf25a",
+  "final_constructed_hash_rechecked": true
+}

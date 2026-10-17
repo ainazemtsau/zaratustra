@@ -1,0 +1,281 @@
+{
+  "source_commit": "158617f8e14abaee6f464f96e20ce8e82feb9090",
+  "baseline_commit": "4a34b7d7c76a78b713aca11719b3daa94c7e3845",
+  "source_files": [
+    {
+      "path": ".gitignore",
+      "sha256": "ff6d6cf01e0ea2617bdb656076d3bd46fc57bd6803ce1121cfc29b9edfcadf1e"
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "e4cf24791b494ea342b7f725cf9c4c5327ddaa3211dd9f58d7a32fe2ce40f591"
+    },
+    {
+      "path": "README.md",
+      "sha256": "c36322d457c5dc6ad015848a4de5d500ae3db7be958cec1c791cee7d9c179e3c"
+    },
+    {
+      "path": "docs/restart/OWNER-PERMANENT-USE-20261017.md",
+      "sha256": "3b4dbc8ff2b7ee361fba25dfaa41a04f9eb5e5694b600e73cba159ef7319b15d"
+    },
+    {
+      "path": "docs/restart/PUBLIC-READ-PROJECTIONS.md",
+      "sha256": "808d5eaa43b707f8703749ee3bfee1eeb8a0bd3571b5a3c739d2fd3976f93b45"
+    },
+    {
+      "path": "packages/AGENTS.md",
+      "sha256": "52dd09f1113c715f43cdf90665ffed79af247d8bdadbbaef96fa802a372d1318"
+    },
+    {
+      "path": "packages/app/pyproject.toml",
+      "sha256": "72abba17f8337187884e23c0be050b60f3a20afba0d4c5bbbc1508ae5467157c"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/AGENTS.md",
+      "sha256": "c4a1b6d9492728d721720e8191486c9c0669fb1de7b653efeb5a7c3538f1ff06"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/bridge.py",
+      "sha256": "4670d541f58305800d3a621fd8dbe166fffdc9ec0fd5ebddfafda7ef81bba804"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/cli.py",
+      "sha256": "d2b7994efc971144700b6bc3e9d333797d09be2a6f78542e8ed13eebdacf1b76"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/conversation.py",
+      "sha256": "8109aead9e0be2c703aa233e025000d5f09aa870d8c92bcac4cb74b229fb4873"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/coordinator.py",
+      "sha256": "4c07fc097bc1e3445fbfd9efa2873fccce6a9eb39a968b2cf8ce8aef7b441e21"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/entry_lock.py",
+      "sha256": "a983c7f2d4af2c8d3bc697e23864c024f51cbeb0482451ac971214ae74306d76"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/executor_port.py",
+      "sha256": "993e1bb63bf533ef3440bf7ead7006ddcb0e8e0589094dfaaf0ea4643cd94dcd"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/native_review.py",
+      "sha256": "bdc51e2343ca6a3edf9948b77968084cdde84a95cdacab00a66efd6d429fdd4a"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/native_session.py",
+      "sha256": "cf87c22856149a9a12b56cf265d7c50ee588756d182a0adba361117af29cc9d0"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/native_sleep.py",
+      "sha256": "557a7a6de233ed229d4cb0691fae283923ef1531edf35f9f8c0a5af251f96979"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/native_verdict.py",
+      "sha256": "96f2148d81aa18bdea820542a9c454a82071ba0c03c7626f38c56794afb17be7"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/ordinary.py",
+      "sha256": "e6b4b5cb028315c81fe4e34b463090c0d2bd4c44cd884db315e91bee26eff851"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/pi_host.py",
+      "sha256": "755cd239495b45456ec693b2ca43219600de9743137e2bb8b0838dcb6cc39fa1"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/sleep.py",
+      "sha256": "95a19ac41c07dc0b1dbaaa03595b1c4af4a13bd342d4ad837287146ab928f63d"
+    },
+    {
+      "path": "packages/core/pyproject.toml",
+      "sha256": "5097f66a568c336217664bbeb3b32dd0a2326c07c83e2ee6e0c05be5657e1719"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/api.py",
+      "sha256": "db31bfef1e81717165b924a3a8f344d4c87765884d7b3938cca3db13558769d6"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/backup_refs.py",
+      "sha256": "c1385199d4e47ae47cf07dc701a137be0860fb8a8e989fd793078f11b340e487"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/context.py",
+      "sha256": "2202cb762a33dd6d347f9562949bca64e141db963bc8803d80f9dab35ddf9e04"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/lifecycle.py",
+      "sha256": "8496facbc3d92fa2dd991832bd7f47d63d20dd9173a990778a1446cacadd082a"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/maintenance.py",
+      "sha256": "b5ba004577ab3a559c4e738421a22729d1e6eca08b14acd0808547b6d2ccfc22"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/shapes.py",
+      "sha256": "249d939809f6e7b9270e263dbff39b191bf1edd9cf4a29d9033032407ee01462"
+    },
+    {
+      "path": "pi-package/README.md",
+      "sha256": "eaa97413cff88bf88db69e02186785ec2452cc4278152cb0505fd0bd7bec5e5d"
+    },
+    {
+      "path": "pi-package/bootstrap.mjs",
+      "sha256": "cf02ddda3060b1011d04048f2ef783eb593cec2795e062c37a1d669d0a4a74a1"
+    },
+    {
+      "path": "pi-package/extension.ts",
+      "sha256": "514bea9f7d25038e3e82b28fbd2791cf1702cf216a8daed44002d51132b03a6f"
+    },
+    {
+      "path": "pi-package/package.json",
+      "sha256": "a9612d929cbd441dd98ce2b48d332f2cbc4d53071194216a0570c20246a5e6a0"
+    },
+    {
+      "path": "tests/restart/native_boundary_fixture.mjs",
+      "sha256": "673a0cf8cc24fc353ef643cc613e4576ebc3e9744a62837bfb58605a2fdf9540"
+    },
+    {
+      "path": "tests/restart/native_pi_fixture.mjs",
+      "sha256": "bc3565dd78eb1d138b4bf5f09ed608967c02baf7a9a179e13ee501b7b99745d1"
+    },
+    {
+      "path": "tests/restart/test_backup_context_selection.py",
+      "sha256": "786982c2d15458afb12830fa3b860bf7c86fc2603754b9416a68a5d52a4ada08"
+    },
+    {
+      "path": "tests/restart/test_continuation_controls.py",
+      "sha256": "11bf45746ea826ca7c1751ac37db3b12236db88d9c157023609e4cf49498268b"
+    },
+    {
+      "path": "tests/restart/test_delivery_controls.py",
+      "sha256": "24b0bc6d6256ac27352f19f0a5bf09045d16ee088a2d336d4c1f79d325553c53"
+    },
+    {
+      "path": "tests/restart/test_long_history.py",
+      "sha256": "0135c91bf16483135c795d552c0877c1749859865c6bcaa252b87bfbfa79ce75"
+    },
+    {
+      "path": "tests/restart/test_native_hook_boundaries.py",
+      "sha256": "dc95979eb888a773da4bcff4d24f5367a5adaa22b5b969663834b7134e6e30c5"
+    },
+    {
+      "path": "tests/restart/test_native_init.py",
+      "sha256": "65bc11e6ad597af428c9771d7af590ab1abcec87f8706cac58cf56746b69b17e"
+    },
+    {
+      "path": "tests/restart/test_native_owner_result.py",
+      "sha256": "f7f395eecfc50206a4872cf6cc3b54e4071eab98583c2efadde0cc07fd96f566"
+    },
+    {
+      "path": "tests/restart/test_native_pi_transport.py",
+      "sha256": "01ce19ca55e6a2217912670a0c87771d0d63b92aa9600af578d568f50015a43e"
+    },
+    {
+      "path": "tests/restart/test_native_review.py",
+      "sha256": "0b799f79ec4b92def3534ff2a9bbdf0901b008454c184c0617c500bd86930f6b"
+    },
+    {
+      "path": "tests/restart/test_native_session.py",
+      "sha256": "8f37f45dd388b1b856c0dbd2bc2b09827e71b9d9a33575e5cccd8a5b40980bee"
+    },
+    {
+      "path": "tests/restart/test_native_session_fencing.py",
+      "sha256": "e79cd068f95c69f9e851a8db9e816f90a1615e09a6b60664bafd5e3040f50f62"
+    },
+    {
+      "path": "tests/restart/test_native_sleep.py",
+      "sha256": "a63d9b7bacd13c422e36cee9efa534659de593f0c69c2c667aaf4bb31f858c51"
+    },
+    {
+      "path": "tests/restart/test_native_sleep_bounded.py",
+      "sha256": "a982688395c606fe19fd4ce33c7618403aee542f0cc53c291487331fd0de33d1"
+    },
+    {
+      "path": "tests/restart/test_native_storage_growth.py",
+      "sha256": "54d6a7aee39242a7541721e6da8e36938de887d938ff9362ba78040544fb89af"
+    },
+    {
+      "path": "tests/restart/test_permanent_lifecycle.py",
+      "sha256": "724d7e6ab07c2951898af6cd4f150dc1067d3d93e4e72bc779e10b418277e151"
+    },
+    {
+      "path": "tests/restart/test_pi_entry.py",
+      "sha256": "f9908a28e33a571db76c3bd59cbcc690935774a6199277fe0b453d3697935b90"
+    },
+    {
+      "path": "tests/restart/test_portable_bootstrap.py",
+      "sha256": "0ac722ff9e9dc88380c59f00ccd8be9033b9cfc32f3ac1d10b21d09d2f8f86d0"
+    },
+    {
+      "path": "tests/restart/test_projected_reads.py",
+      "sha256": "330e91f53a1a87518923c6b9738cf1de94e72922d5aa55fa48916a29fff2d47d"
+    },
+    {
+      "path": "tests/restart/test_read_projection.py",
+      "sha256": "17e996c7151ba8a970a27e63ce0b4538cd0df07e8d45ce6e8e7edcff5538c8cd"
+    },
+    {
+      "path": "tests/restart/test_sleep_controls.py",
+      "sha256": "9fdc40ab675260711a46c9a601204c5794d9891a51002af602353f1312c33f25"
+    },
+    {
+      "path": "tests/restart/test_unlimited_resource.py",
+      "sha256": "8b0c4d4ad0d159e346b5b3716920f009b46cc9b2d5522e52e296f729c62f03b4"
+    },
+    {
+      "path": "tools/build_permanent_package.py",
+      "sha256": "a2e31c4ebc219e04c2071ad229db5dfb970e6b346d281f3d62554a37fcab9302"
+    },
+    {
+      "path": "uv.lock",
+      "sha256": "2f9ac9292599b0a98434e8ff9499e485fda671168e6ca6d921a2f014f482ad81"
+    }
+  ],
+  "package_files": [
+    {
+      "path": "bootstrap.mjs",
+      "sha256": "cf02ddda3060b1011d04048f2ef783eb593cec2795e062c37a1d669d0a4a74a1"
+    },
+    {
+      "path": "extension.ts",
+      "sha256": "514bea9f7d25038e3e82b28fbd2791cf1702cf216a8daed44002d51132b03a6f"
+    },
+    {
+      "path": "package.json",
+      "sha256": "a9612d929cbd441dd98ce2b48d332f2cbc4d53071194216a0570c20246a5e6a0"
+    },
+    {
+      "path": "README.md",
+      "sha256": "eaa97413cff88bf88db69e02186785ec2452cc4278152cb0505fd0bd7bec5e5d"
+    },
+    {
+      "path": "release.json",
+      "sha256": "1602b39146d8bdc2e5e44dc150569a87262493ca92ae49ddac047f00f96d026c"
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "06b16526629d62f6eae58081de4aba4900c14b1191a4febac66d34005e0ca2f2"
+    },
+    {
+      "path": "wheels/SHA256SUMS",
+      "sha256": "b9a2e67a7add5eec2659192e46328e5e9b3eddbeae52495cb98412e764e9ba65"
+    },
+    {
+      "path": "wheels/zaratustra_core-0.2.0-py3-none-any.whl",
+      "sha256": "3993806a9c92bd8450db328641ac95bbdd53549cd7388ff4b6a762cb5c1b2372"
+    },
+    {
+      "path": "wheels/zaratustra_next-0.2.0-py3-none-any.whl",
+      "sha256": "55a9150a4e285992b4004089bc077849f6a313b41b6b8d688a2011d410effb67"
+    }
+  ],
+  "package": "delivery/zaratustra-pi-0.2.0-158617f",
+  "platform": "universal Python product wheels; pinned cross-platform dependency hashes; native testing claims tracked separately",
+  "prerequisites": {
+    "Pi": "tested1.3.0",
+    "Node": "22+",
+    "uv": "on PATH",
+    "Python": "uv provisions3.13.7"
+  },
+  "private_data": "No Activity database, credentials, provider authentication or personal workspace included."
+}

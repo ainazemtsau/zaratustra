@@ -1,0 +1,43 @@
+{
+  "status": "APPROVED_ACTUAL_COUNTEREXAMPLE_NOT_READY",
+  "files": [
+    {
+      "path": "descriptor.json",
+      "sha256": "bde74aeabc3566540b793bc65381980587a68c7b3f51101f1457e4462a9734fb",
+      "bytes": 2570,
+      "source_path": "_scratch/root-native-live-proof-envelopefix/public-evidence-bc95/descriptor.json"
+    },
+    {
+      "path": "input-provenance.json",
+      "sha256": "074fb4c61970c6beee7bfbadcda41b5d8a1288b7c3884478b257c727825ddc5f",
+      "bytes": 5414,
+      "source_path": "_scratch/root-native-live-proof-envelopefix/public-evidence-bc95/input-provenance.json"
+    },
+    {
+      "path": "selected-records.jsonl",
+      "sha256": "e31ca4bb81866e6df4e43616b5e3ff6bd3a9909cdb86dc2715364e2cae92ef6f",
+      "bytes": 23646,
+      "source_path": "_scratch/root-native-live-proof-envelopefix/public-evidence-bc95/selected-records.jsonl"
+    },
+    {
+      "path": "subset-manifest.json",
+      "sha256": "520bed1bb7bc8e96def25fc7ae29e1dbaec77d9d28bfbc1a1aa41c49c9ec29b5",
+      "bytes": 750,
+      "source_path": "_scratch/root-native-live-proof-envelopefix/public-evidence-bc95/subset-manifest.json"
+    },
+    {
+      "path": "verification/root-provenance-pass.json",
+      "sha256": "0de865a7c65701c44f11755bb6de9122c2c7f97f612dc9301b65c23e669045af",
+      "bytes": 358,
+      "source_path": "_scratch/root-projection-check/bc95-actual-provenance-pass.json"
+    },
+    {
+      "path": "verification/SANITIZED-ACTUAL-bc95.md",
+      "sha256": "6407a7b172e2dd567b7ee060fda1913c3c30d44d31976e4899669a19a8215971",
+      "bytes": 3448,
+      "source_path": "_scratch/root-publication-audit/SANITIZED-ACTUAL-bc95.md"
+    }
+  ],
+  "scope": "Actual4sends, cumulative33/46; overflow fixed, currentidle/completed, but0analysis/adaptation. Input observations remained encoded; no meaningful Sleep success claimed.",
+  "approval": "Root independently verified raw/line/JSON-pointer provenance and approved privacy-reviewed exact subset. Whole rawtrace/DB excluded."
+}

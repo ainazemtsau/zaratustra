@@ -1,0 +1,414 @@
+{
+  "database": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\root-native-live-proof-372245f\\fictional-home\\data\\core.sqlite3",
+  "mode": "read-only URI and query_only; no credential/auth reads; no snapshot/copy",
+  "limit": 1048576,
+  "reconstructed_pinned_bytes": 3435611,
+  "excess_bytes": 2387035,
+  "component_bytes": {
+    "capabilities": 214,
+    "catalog": 18521,
+    "work": 461,
+    "prior_messages": 2,
+    "prior_results": 2,
+    "prior_waits": 2,
+    "messages": 2,
+    "inputs": 5958,
+    "method": 3426,
+    "profile": 700,
+    "tool_ledger": 2,
+    "manifest": 2,
+    "profile_ref": 128,
+    "context_coverage": 1383,
+    "sleep_sources": 3404382,
+    "sleep_delivery_manifest": 191
+  },
+  "sources": [
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 56,
+        "sha256": "9e2e3181ee725216dfae3ea313144f65cffaa911909735228599b8a8fa9ae778"
+      },
+      "bytes": 111323,
+      "material_bytes": 111195,
+      "components": {
+        "observation": 107156,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 60,
+        "sha256": "898dd2d7b537555b3a949c75f795364f8ce4307d813ab61c3e9f9d787c837f9f"
+      },
+      "bytes": 722167,
+      "material_bytes": 722039,
+      "components": {
+        "observation": 718000,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 64,
+        "sha256": "0c3c6e0803540de1f925e308fe0118d391da90095702d6470631abd858e15cd0"
+      },
+      "bytes": 4675,
+      "material_bytes": 4547,
+      "components": {
+        "observation": 508,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 68,
+        "sha256": "aa1c2a4d1014bc552e227696a280e2d941fe4260f3b40da0a3e0b9ac8e851b49"
+      },
+      "bytes": 4819,
+      "material_bytes": 4691,
+      "components": {
+        "observation": 652,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 72,
+        "sha256": "2d33129ff9271a752d61e9b42d7dfb8af57e6f10889d00df30175acae49f5cd8"
+      },
+      "bytes": 620195,
+      "material_bytes": 620067,
+      "components": {
+        "observation": 616028,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 76,
+        "sha256": "0351680503937d21fbf42aba15b0797df92685e9d3f77b6e9e479f9952b863c3"
+      },
+      "bytes": 4687,
+      "material_bytes": 4559,
+      "components": {
+        "observation": 520,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 80,
+        "sha256": "df02caf39fdc0a8179db035375c6a6e7a1a2e43533b3b49ef6b4427d3ee77e69"
+      },
+      "bytes": 4951,
+      "material_bytes": 4823,
+      "components": {
+        "observation": 784,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 84,
+        "sha256": "c66a1db8a8dde1ddd8c1b0c762307271a152556dc90698831d78a000ff931757"
+      },
+      "bytes": 626307,
+      "material_bytes": 626179,
+      "components": {
+        "observation": 622140,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 88,
+        "sha256": "8355ca37ba296b5563d3da1764529abe3029add2ab5f981574abb10fa3a25bcb"
+      },
+      "bytes": 4695,
+      "material_bytes": 4567,
+      "components": {
+        "observation": 528,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 92,
+        "sha256": "b0252ff0c14a945ffc49e6f5e0573f7be307d6c41bdc6261805d9beb1b36795b"
+      },
+      "bytes": 5295,
+      "material_bytes": 5167,
+      "components": {
+        "observation": 1128,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 96,
+        "sha256": "2f69cc9228ff3e1da5fde5f204ed745817519bf330667aabd3bf7a8b2d06eb51"
+      },
+      "bytes": 633243,
+      "material_bytes": 633115,
+      "components": {
+        "observation": 629076,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 100,
+        "sha256": "2704ddc46b4daee8b7486d8617f833b8f1332c63d5be881ccb302f40c8ae02c7"
+      },
+      "bytes": 4908,
+      "material_bytes": 4779,
+      "components": {
+        "observation": 740,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 104,
+        "sha256": "18fd39fd415eacb5895e78bef8d0357827ec09e9cd84423670a7f89a4c243950"
+      },
+      "bytes": 5256,
+      "material_bytes": 5127,
+      "components": {
+        "observation": 1088,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 108,
+        "sha256": "f34f881b64210ead57728a30d5ad52427d025bd5caf5e40262624bd8710f9274"
+      },
+      "bytes": 642144,
+      "material_bytes": 642015,
+      "components": {
+        "observation": 637976,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 112,
+        "sha256": "69872dc09cafd235253d2ac328aff0eefaf916a67bdbe53e0553c2e9e5d872ac"
+      },
+      "bytes": 4712,
+      "material_bytes": 4583,
+      "components": {
+        "observation": 544,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "index": 0,
+        "sequence": 116,
+        "sha256": "fb9dc13ee2451db1b2f3286140d3809d509f9319f1f0ef18d65db0893eba0c61"
+      },
+      "bytes": 4988,
+      "material_bytes": 4859,
+      "components": {
+        "observation": 820,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    }
+  ],
+  "catalog": [
+    {
+      "id": "conversation-routing-method",
+      "bytes": 1990
+    },
+    {
+      "id": "conversation-execution-method",
+      "bytes": 2031
+    },
+    {
+      "id": "fictional-label-utility",
+      "bytes": 559
+    },
+    {
+      "id": "continued:27dea826707d0aa45402012bc7412e57ca3ae68a1046f4e5d20e5cbc163ff212:native-attempt:40346783bb7746d38f3d1196e88ccaea:profile",
+      "bytes": 696
+    },
+    {
+      "id": "continued:23ba62689ca6ad222c876a81ef8600d0d265aef2cf3104e7b5df5f11e5e2c6bf:native-attempt:02c0679503f94580b53dd011f40da337:profile",
+      "bytes": 846
+    },
+    {
+      "id": "continued:05dfe3abcb67ead72b5590a440e147e1dacc356f8d6703591606350bc4116837:native-attempt:9e23840ca5b240da8abc3724c3143f87:profile",
+      "bytes": 846
+    },
+    {
+      "id": "native-review-work:429408d4a262425399e3f5a8d86fd12f:native-attempt:0da73f8dc96a40a7b2b66f31540e566e:profile",
+      "bytes": 815
+    },
+    {
+      "id": "native-review-work:6d3d8e2c554b49caaa7aa3ac829c07a7:native-attempt:c75a39ec963d44a4b5b10beda39fa240:profile",
+      "bytes": 815
+    },
+    {
+      "id": "native-sleep-method:fictional-label-utility",
+      "bytes": 3492
+    },
+    {
+      "id": "native-sleep-work:69cc7698ac274b629cd06db70420e697:progress",
+      "bytes": 6420
+    }
+  ],
+  "progress": {
+    "selected": 16,
+    "high_watermark": 775,
+    "enumeration_cursor": [
+      116,
+      0
+    ]
+  },
+  "attempt_count": 0
+}

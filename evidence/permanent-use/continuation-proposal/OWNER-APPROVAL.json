@@ -1,0 +1,8 @@
+{
+  "owner_exact_words": "Да, реализовать продолжение Sleep (рекомендуется)",
+  "owner_tool_call": "call_3328043d9ed143d79d2ee8355ba01fc6",
+  "approved_proposal_sha256": "7c5c9f329da56d7db0350277b5111971ca9d33892c80c250beb646be1f1765f9",
+  "authority_reported_by": "root, after direct owner decision; durable Direction OS commit9c6c992ced954d1ec0c89361ff35684c7904ab98",
+  "scope": "Approved bounded A, including reviewed corrections: late existing-open_work continuation, v2 exact predecessor proof and old-writer version fence, no Activity reconstruction or semantic migration. No main merge/release/private data sync.",
+  "status": "IMPLEMENTATION_IN_PROGRESS_NOT_READY"
+}

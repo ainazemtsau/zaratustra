@@ -1,0 +1,41 @@
+{
+  "source_commit": "32b096a474f36fb55a6296110261e6a67d6981a4",
+  "files": [
+    {
+      "path": "bootstrap.mjs",
+      "sha256": "cf02ddda3060b1011d04048f2ef783eb593cec2795e062c37a1d669d0a4a74a1"
+    },
+    {
+      "path": "extension.ts",
+      "sha256": "5c35a58862d5248142f9ac9fd4dda350011373f0f0b7ab13802ef1b5618d8658"
+    },
+    {
+      "path": "package.json",
+      "sha256": "a9612d929cbd441dd98ce2b48d332f2cbc4d53071194216a0570c20246a5e6a0"
+    },
+    {
+      "path": "README.md",
+      "sha256": "292e61113ccc870df85817931013b0f51a5872aaf0da5762f1300228a79b9060"
+    },
+    {
+      "path": "release.json",
+      "sha256": "1602b39146d8bdc2e5e44dc150569a87262493ca92ae49ddac047f00f96d026c"
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "06b16526629d62f6eae58081de4aba4900c14b1191a4febac66d34005e0ca2f2"
+    },
+    {
+      "path": "wheels/SHA256SUMS",
+      "sha256": "b9a2e67a7add5eec2659192e46328e5e9b3eddbeae52495cb98412e764e9ba65"
+    },
+    {
+      "path": "wheels/zaratustra_core-0.2.0-py3-none-any.whl",
+      "sha256": "3993806a9c92bd8450db328641ac95bbdd53549cd7388ff4b6a762cb5c1b2372"
+    },
+    {
+      "path": "wheels/zaratustra_next-0.2.0-py3-none-any.whl",
+      "sha256": "55a9150a4e285992b4004089bc077849f6a313b41b6b8d688a2011d410effb67"
+    }
+  ]
+}

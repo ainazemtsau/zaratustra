@@ -1,0 +1,41 @@
+{
+  "format": "agent-tool-result-transcription/v1",
+  "provenance": "Agent transcription of existing tool results; not raw-process stdout capture. No tests rerun for this receipt.",
+  "frozen_source_commit_reported_by_parent": "2371911",
+  "runs": [
+    {
+      "stage": "preceding affected checks",
+      "command": ".venv\\Scripts\\python.exe -m ruff format packages/app/src/zaratustra_app/native_sleep.py; .venv\\Scripts\\python.exe -m pytest tests/restart/test_native_sleep_bounded.py tests/restart/test_native_sleep.py tests/restart/test_native_session.py tests/restart/test_native_session_fencing.py -q --basetemp _scratch/sleep-bounded-affected",
+      "working_directory": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release",
+      "tool_session_id": 5520,
+      "exit_code": 0,
+      "stdout_chunks": [
+        "1 file reformatted\n......",
+        "...........                                                        [100%]\n17 passed in 32.53s\n"
+      ],
+      "stdout_precision_note": "Progress was delivered in two tool chunks. Pytest summary text and elapsed are transcribed from those existing results; full per-call wall-clock duration was not retained as one value.",
+      "pytest_reported_elapsed_seconds": 32.53,
+      "source_provenance": "Preceded final CAS strengthening (capture progress revision before rejected preparation), fourth ambiguity/stale-CAS regression, resume portion validation, fixture-size/cursor/unique-Work assertions, and new-seed resource-policy wording. This 17-test pass is not claimed against the final frozen source."
+    },
+    {
+      "stage": "final focused checks",
+      "command": ".venv\\Scripts\\python.exe -m pytest tests/restart/test_native_sleep_bounded.py tests/restart/test_native_sleep.py -q --basetemp _scratch/sleep-bounded-freeze-ready",
+      "working_directory": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release",
+      "tool_session_id": null,
+      "tool_chunk_id": "609606",
+      "exit_code": 0,
+      "tool_wall_time_seconds": 9.1501073,
+      "stdout": ".......                                                                  [100%]\n7 passed in 8.11s\n",
+      "pytest_reported_elapsed_seconds": 8.11,
+      "source_provenance": "After all owned-source edits, including exact final resource-policy wording and CAS guards. No source edits followed before parent reported freeze commit2371911. Tests were run before that commit was created; no independent exact-commit review or full-gate result claimed."
+    },
+    {
+      "stage": "final static checks",
+      "command": ".venv\\Scripts\\python.exe -m ruff check packages/app/src/zaratustra_app/native_sleep.py packages/app/src/zaratustra_app/sleep.py packages/app/src/zaratustra_app/native_session.py tests/restart/test_native_sleep_bounded.py; .venv\\Scripts\\python.exe -m mypy --follow-untyped-imports packages/app/src/zaratustra_app/native_sleep.py packages/app/src/zaratustra_app/sleep.py packages/app/src/zaratustra_app/native_session.py tests/restart/test_native_sleep_bounded.py",
+      "tool_chunk_id": "5293f8",
+      "exit_code": 0,
+      "tool_wall_time_seconds": 1.6177518,
+      "stdout": "All checks passed!\nSuccess: no issues found in 4 source files\n"
+    }
+  ]
+}

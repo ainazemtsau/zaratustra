@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "subset": "actual-bc95",
+  "files": [
+    {
+      "name": "descriptor.json",
+      "bytes": 2570,
+      "sha256": "bde74aeabc3566540b793bc65381980587a68c7b3f51101f1457e4462a9734fb"
+    },
+    {
+      "name": "input-provenance.json",
+      "bytes": 5414,
+      "sha256": "074fb4c61970c6beee7bfbadcda41b5d8a1288b7c3884478b257c727825ddc5f"
+    },
+    {
+      "name": "selected-records.jsonl",
+      "bytes": 23646,
+      "sha256": "e31ca4bb81866e6df4e43616b5e3ff6bd3a9909cdb86dc2715364e2cae92ef6f"
+    }
+  ],
+  "rawTraceUnpublished": true,
+  "allSourcePointersResolve": true,
+  "selectedRecords": 32,
+  "auditReportIncluded": false,
+  "requiresRootPrivacySourceReview": true,
+  "selectedFilesBytes": 31630
+}

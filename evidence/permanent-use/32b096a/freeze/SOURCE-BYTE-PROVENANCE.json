@@ -1,0 +1,543 @@
+{
+  "source_commit": "32b096a474f36fb55a6296110261e6a67d6981a4",
+  "status": "PASS",
+  "meaning": "FREEZE.source_files hashes frozen working bytes used by build; committed blob hashes are separately reconciled. No source/package normalization.",
+  "files": [
+    {
+      "path": ".gitignore",
+      "committed_blob_oid": "88006f7afc3b7b4a1fc46ac27e32a08bb89e082f",
+      "committed_sha256": "ff6d6cf01e0ea2617bdb656076d3bd46fc57bd6803ce1121cfc29b9edfcadf1e",
+      "committed_bytes": 282,
+      "frozen_working_sha256": "ff6d6cf01e0ea2617bdb656076d3bd46fc57bd6803ce1121cfc29b9edfcadf1e",
+      "frozen_working_bytes": 282,
+      "relation": "identical"
+    },
+    {
+      "path": "AGENTS.md",
+      "committed_blob_oid": "dc20aec85095275d8f3feb02d722c63423860ae2",
+      "committed_sha256": "e4cf24791b494ea342b7f725cf9c4c5327ddaa3211dd9f58d7a32fe2ce40f591",
+      "committed_bytes": 34133,
+      "frozen_working_sha256": "e4cf24791b494ea342b7f725cf9c4c5327ddaa3211dd9f58d7a32fe2ce40f591",
+      "frozen_working_bytes": 34133,
+      "relation": "identical"
+    },
+    {
+      "path": "README.md",
+      "committed_blob_oid": "5ed34a080a584b94262b77dd65c0282ecccfe94c",
+      "committed_sha256": "38867fbe71481955fedbbf272361d376cfb6b911116af908b96c1d89c36da42d",
+      "committed_bytes": 18109,
+      "frozen_working_sha256": "c36322d457c5dc6ad015848a4de5d500ae3db7be958cec1c791cee7d9c179e3c",
+      "frozen_working_bytes": 18316,
+      "relation": "CRLF_to_LF_only"
+    },
+    {
+      "path": "docs/restart/OWNER-PERMANENT-USE-20261017.md",
+      "committed_blob_oid": "5cbbdcf48f6b45e1e8254b105bba42d305807ae9",
+      "committed_sha256": "0cd253fd00830d954e23a5491a5e322a7fc8ffda6ef567f10dea573ad1af2cc1",
+      "committed_bytes": 9606,
+      "frozen_working_sha256": "3b4dbc8ff2b7ee361fba25dfaa41a04f9eb5e5694b600e73cba159ef7319b15d",
+      "frozen_working_bytes": 9706,
+      "relation": "CRLF_to_LF_only"
+    },
+    {
+      "path": "docs/restart/PUBLIC-READ-PROJECTIONS.md",
+      "committed_blob_oid": "e6dd2cebfbbbad17e1bc128a6328daeea3fca680",
+      "committed_sha256": "808d5eaa43b707f8703749ee3bfee1eeb8a0bd3571b5a3c739d2fd3976f93b45",
+      "committed_bytes": 2126,
+      "frozen_working_sha256": "808d5eaa43b707f8703749ee3bfee1eeb8a0bd3571b5a3c739d2fd3976f93b45",
+      "frozen_working_bytes": 2126,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/AGENTS.md",
+      "committed_blob_oid": "8d373fdef8f0e822daa291bdc26e7ccff579215f",
+      "committed_sha256": "52dd09f1113c715f43cdf90665ffed79af247d8bdadbbaef96fa802a372d1318",
+      "committed_bytes": 371,
+      "frozen_working_sha256": "52dd09f1113c715f43cdf90665ffed79af247d8bdadbbaef96fa802a372d1318",
+      "frozen_working_bytes": 371,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/app/pyproject.toml",
+      "committed_blob_oid": "f1e2a26dd85f734947c00a7a1c9a19a76b1b455e",
+      "committed_sha256": "72abba17f8337187884e23c0be050b60f3a20afba0d4c5bbbc1508ae5467157c",
+      "committed_bytes": 319,
+      "frozen_working_sha256": "72abba17f8337187884e23c0be050b60f3a20afba0d4c5bbbc1508ae5467157c",
+      "frozen_working_bytes": 319,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/AGENTS.md",
+      "committed_blob_oid": "5f4de906154593fdce05006bcaecfcc6a9a19a91",
+      "committed_sha256": "c4a1b6d9492728d721720e8191486c9c0669fb1de7b653efeb5a7c3538f1ff06",
+      "committed_bytes": 1345,
+      "frozen_working_sha256": "c4a1b6d9492728d721720e8191486c9c0669fb1de7b653efeb5a7c3538f1ff06",
+      "frozen_working_bytes": 1345,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/adapters/pi/bridge.py",
+      "committed_blob_oid": "90e7089f18caf8b00da9ae8d1282609637e8990d",
+      "committed_sha256": "4670d541f58305800d3a621fd8dbe166fffdc9ec0fd5ebddfafda7ef81bba804",
+      "committed_bytes": 5915,
+      "frozen_working_sha256": "4670d541f58305800d3a621fd8dbe166fffdc9ec0fd5ebddfafda7ef81bba804",
+      "frozen_working_bytes": 5915,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/cli.py",
+      "committed_blob_oid": "7c3e05a376623ff543f56d551c6d985d0e0b7759",
+      "committed_sha256": "d2b7994efc971144700b6bc3e9d333797d09be2a6f78542e8ed13eebdacf1b76",
+      "committed_bytes": 9613,
+      "frozen_working_sha256": "d2b7994efc971144700b6bc3e9d333797d09be2a6f78542e8ed13eebdacf1b76",
+      "frozen_working_bytes": 9613,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/conversation.py",
+      "committed_blob_oid": "22416b4599e565dc4b28c226a5620af5ca6b4fab",
+      "committed_sha256": "8109aead9e0be2c703aa233e025000d5f09aa870d8c92bcac4cb74b229fb4873",
+      "committed_bytes": 13717,
+      "frozen_working_sha256": "8109aead9e0be2c703aa233e025000d5f09aa870d8c92bcac4cb74b229fb4873",
+      "frozen_working_bytes": 13717,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/coordinator.py",
+      "committed_blob_oid": "7d70d3d77c2d0ab8c21672149dd3c18d341e45b6",
+      "committed_sha256": "4c07fc097bc1e3445fbfd9efa2873fccce6a9eb39a968b2cf8ce8aef7b441e21",
+      "committed_bytes": 15361,
+      "frozen_working_sha256": "4c07fc097bc1e3445fbfd9efa2873fccce6a9eb39a968b2cf8ce8aef7b441e21",
+      "frozen_working_bytes": 15361,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/entry_lock.py",
+      "committed_blob_oid": "3353c7517375a3b90394a89c03f84e6b1b20e68a",
+      "committed_sha256": "a983c7f2d4af2c8d3bc697e23864c024f51cbeb0482451ac971214ae74306d76",
+      "committed_bytes": 1289,
+      "frozen_working_sha256": "a983c7f2d4af2c8d3bc697e23864c024f51cbeb0482451ac971214ae74306d76",
+      "frozen_working_bytes": 1289,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/executor_port.py",
+      "committed_blob_oid": "28310b7b6cb7259592aef846e2c355c3207edc4e",
+      "committed_sha256": "993e1bb63bf533ef3440bf7ead7006ddcb0e8e0589094dfaaf0ea4643cd94dcd",
+      "committed_bytes": 17615,
+      "frozen_working_sha256": "993e1bb63bf533ef3440bf7ead7006ddcb0e8e0589094dfaaf0ea4643cd94dcd",
+      "frozen_working_bytes": 17615,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/native_review.py",
+      "committed_blob_oid": "a6b9c6a275d206b6deec4b2ce5ff06731b7eab32",
+      "committed_sha256": "bdc51e2343ca6a3edf9948b77968084cdde84a95cdacab00a66efd6d429fdd4a",
+      "committed_bytes": 9339,
+      "frozen_working_sha256": "bdc51e2343ca6a3edf9948b77968084cdde84a95cdacab00a66efd6d429fdd4a",
+      "frozen_working_bytes": 9339,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/native_session.py",
+      "committed_blob_oid": "03335cb171f8cfd7b71bf19c44c65bbf33a26aee",
+      "committed_sha256": "a84c096b2bcd39399b62c86814a37912a27451d87d240ab15b775227f7fece87",
+      "committed_bytes": 24516,
+      "frozen_working_sha256": "cf87c22856149a9a12b56cf265d7c50ee588756d182a0adba361117af29cc9d0",
+      "frozen_working_bytes": 25079,
+      "relation": "CRLF_to_LF_only"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/native_sleep.py",
+      "committed_blob_oid": "acdc5dd79538d4688640edbe229eeb163f201727",
+      "committed_sha256": "557a7a6de233ed229d4cb0691fae283923ef1531edf35f9f8c0a5af251f96979",
+      "committed_bytes": 9120,
+      "frozen_working_sha256": "557a7a6de233ed229d4cb0691fae283923ef1531edf35f9f8c0a5af251f96979",
+      "frozen_working_bytes": 9120,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/native_verdict.py",
+      "committed_blob_oid": "3c21d705caeb78bd741c3f9015ec6b3c28ff0a2f",
+      "committed_sha256": "96f2148d81aa18bdea820542a9c454a82071ba0c03c7626f38c56794afb17be7",
+      "committed_bytes": 6100,
+      "frozen_working_sha256": "96f2148d81aa18bdea820542a9c454a82071ba0c03c7626f38c56794afb17be7",
+      "frozen_working_bytes": 6100,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/ordinary.py",
+      "committed_blob_oid": "c44b7035b582ff5f2f698700deb66099a6ee8220",
+      "committed_sha256": "e6b4b5cb028315c81fe4e34b463090c0d2bd4c44cd884db315e91bee26eff851",
+      "committed_bytes": 9476,
+      "frozen_working_sha256": "e6b4b5cb028315c81fe4e34b463090c0d2bd4c44cd884db315e91bee26eff851",
+      "frozen_working_bytes": 9476,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/pi_host.py",
+      "committed_blob_oid": "64a90735633b0a57ce19c2cc0dddb0e08dc3829e",
+      "committed_sha256": "32fb50d144c0b35a4a6ea4b95fef3cdce6aee0e1bfa1cfa982e10fbeffce40f0",
+      "committed_bytes": 8713,
+      "frozen_working_sha256": "755cd239495b45456ec693b2ca43219600de9743137e2bb8b0838dcb6cc39fa1",
+      "frozen_working_bytes": 8933,
+      "relation": "CRLF_to_LF_only"
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/sleep.py",
+      "committed_blob_oid": "72e8f631a94cc3c850f3f8ebd4e6b956ea7d13d5",
+      "committed_sha256": "95a19ac41c07dc0b1dbaaa03595b1c4af4a13bd342d4ad837287146ab928f63d",
+      "committed_bytes": 20750,
+      "frozen_working_sha256": "95a19ac41c07dc0b1dbaaa03595b1c4af4a13bd342d4ad837287146ab928f63d",
+      "frozen_working_bytes": 20750,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/core/pyproject.toml",
+      "committed_blob_oid": "5c2e732a762c6ae5996531615f2262e4ef20398d",
+      "committed_sha256": "5097f66a568c336217664bbeb3b32dd0a2326c07c83e2ee6e0c05be5657e1719",
+      "committed_bytes": 196,
+      "frozen_working_sha256": "5097f66a568c336217664bbeb3b32dd0a2326c07c83e2ee6e0c05be5657e1719",
+      "frozen_working_bytes": 196,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/api.py",
+      "committed_blob_oid": "ca6f6b4c894e0bc50c5893b6dd10667c3aebd6a7",
+      "committed_sha256": "db31bfef1e81717165b924a3a8f344d4c87765884d7b3938cca3db13558769d6",
+      "committed_bytes": 71865,
+      "frozen_working_sha256": "db31bfef1e81717165b924a3a8f344d4c87765884d7b3938cca3db13558769d6",
+      "frozen_working_bytes": 71865,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/backup_refs.py",
+      "committed_blob_oid": "943d59a8f1053bc991bcd8a8fde4661806e3e18d",
+      "committed_sha256": "c1385199d4e47ae47cf07dc701a137be0860fb8a8e989fd793078f11b340e487",
+      "committed_bytes": 24737,
+      "frozen_working_sha256": "c1385199d4e47ae47cf07dc701a137be0860fb8a8e989fd793078f11b340e487",
+      "frozen_working_bytes": 24737,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/context.py",
+      "committed_blob_oid": "a5728f012b5670598f047f787eb2dd476dc4ad1e",
+      "committed_sha256": "2202cb762a33dd6d347f9562949bca64e141db963bc8803d80f9dab35ddf9e04",
+      "committed_bytes": 11007,
+      "frozen_working_sha256": "2202cb762a33dd6d347f9562949bca64e141db963bc8803d80f9dab35ddf9e04",
+      "frozen_working_bytes": 11007,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/lifecycle.py",
+      "committed_blob_oid": "cd1fa83a4338f1a87d6ba0bc39cfbbb6b2416e86",
+      "committed_sha256": "8496facbc3d92fa2dd991832bd7f47d63d20dd9173a990778a1446cacadd082a",
+      "committed_bytes": 7857,
+      "frozen_working_sha256": "8496facbc3d92fa2dd991832bd7f47d63d20dd9173a990778a1446cacadd082a",
+      "frozen_working_bytes": 7857,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/maintenance.py",
+      "committed_blob_oid": "165d7992e911e1bab0bdcfee7fbd81c8bd994427",
+      "committed_sha256": "b5ba004577ab3a559c4e738421a22729d1e6eca08b14acd0808547b6d2ccfc22",
+      "committed_bytes": 8165,
+      "frozen_working_sha256": "b5ba004577ab3a559c4e738421a22729d1e6eca08b14acd0808547b6d2ccfc22",
+      "frozen_working_bytes": 8165,
+      "relation": "identical"
+    },
+    {
+      "path": "packages/core/src/zaratustra_core/shapes.py",
+      "committed_blob_oid": "a1f1a9fea3152f403fbd4f54769e4991999ece9d",
+      "committed_sha256": "249d939809f6e7b9270e263dbff39b191bf1edd9cf4a29d9033032407ee01462",
+      "committed_bytes": 7070,
+      "frozen_working_sha256": "249d939809f6e7b9270e263dbff39b191bf1edd9cf4a29d9033032407ee01462",
+      "frozen_working_bytes": 7070,
+      "relation": "identical"
+    },
+    {
+      "path": "pi-package/README.md",
+      "committed_blob_oid": "e6c6dde4e1bf7b8bb73aa5ab52219993756b0b70",
+      "committed_sha256": "2e084a2c440b480e4d175fcc62d75c9d4e78954db746be51ea85ca11ad07de66",
+      "committed_bytes": 6944,
+      "frozen_working_sha256": "292e61113ccc870df85817931013b0f51a5872aaf0da5762f1300228a79b9060",
+      "frozen_working_bytes": 7051,
+      "relation": "CRLF_to_LF_only"
+    },
+    {
+      "path": "pi-package/bootstrap.mjs",
+      "committed_blob_oid": "cd78e633046725218b6b58eafb536a10e4a0f1f4",
+      "committed_sha256": "0b832234d65a8183bd96f33c6b347791d989e6dd00ab13cdcbb1d0b2c71defa6",
+      "committed_bytes": 7722,
+      "frozen_working_sha256": "cf02ddda3060b1011d04048f2ef783eb593cec2795e062c37a1d669d0a4a74a1",
+      "frozen_working_bytes": 7731,
+      "relation": "CRLF_to_LF_only"
+    },
+    {
+      "path": "pi-package/extension.ts",
+      "committed_blob_oid": "9ac3d16003a15692bdf46ccc4b6a60317d8e6360",
+      "committed_sha256": "7ba57d15cd94cb576228cf5b5bd2364e15f7845321a454f9446489d63ab38dc5",
+      "committed_bytes": 26523,
+      "frozen_working_sha256": "5c35a58862d5248142f9ac9fd4dda350011373f0f0b7ab13802ef1b5618d8658",
+      "frozen_working_bytes": 26965,
+      "relation": "CRLF_to_LF_only"
+    },
+    {
+      "path": "pi-package/package.json",
+      "committed_blob_oid": "09555167e087451a985a962872a165c27afae4d4",
+      "committed_sha256": "15d2485e36d814b6a4179313d16e38c2690b48216cb44ca87a6967a7e017b1f4",
+      "committed_bytes": 355,
+      "frozen_working_sha256": "a9612d929cbd441dd98ce2b48d332f2cbc4d53071194216a0570c20246a5e6a0",
+      "frozen_working_bytes": 368,
+      "relation": "CRLF_to_LF_only"
+    },
+    {
+      "path": "tests/restart/native_boundary_fixture.mjs",
+      "committed_blob_oid": "193c9619542acef3101e0b471f16d9945e50412c",
+      "committed_sha256": "55989b1c3a04889775ac7631b0c5bb03c4401b4f8d17ab5e5c1310d3f6ba6ca7",
+      "committed_bytes": 12799,
+      "frozen_working_sha256": "ddedd389fd7bba922ae8c2d0af8f9e81ba8a6e3b6704a14c465bdda54a50c10e",
+      "frozen_working_bytes": 12889,
+      "relation": "CRLF_to_LF_only"
+    },
+    {
+      "path": "tests/restart/native_pi_fixture.mjs",
+      "committed_blob_oid": "e135670aa2fdea944bd386a35b958472e64556c6",
+      "committed_sha256": "bc3565dd78eb1d138b4bf5f09ed608967c02baf7a9a179e13ee501b7b99745d1",
+      "committed_bytes": 4883,
+      "frozen_working_sha256": "bc3565dd78eb1d138b4bf5f09ed608967c02baf7a9a179e13ee501b7b99745d1",
+      "frozen_working_bytes": 4883,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/native_presentation_fixture.mjs",
+      "committed_blob_oid": "aaf86c3ce2924714dc4e7b5b94834fb3856d947e",
+      "committed_sha256": "be8a59c320a3f63f7323ede1657f269cfcc8533a7159f370ac9bf195e5f80ec9",
+      "committed_bytes": 13059,
+      "frozen_working_sha256": "843392ad460d25f7340b04413a029ca2da8fccefdc3b5b1288c6f9c104a88dca",
+      "frozen_working_bytes": 13220,
+      "relation": "CRLF_to_LF_only"
+    },
+    {
+      "path": "tests/restart/test_backup_context_selection.py",
+      "committed_blob_oid": "5b89792d1bdc2e973bc11234e1679ba8a575d763",
+      "committed_sha256": "786982c2d15458afb12830fa3b860bf7c86fc2603754b9416a68a5d52a4ada08",
+      "committed_bytes": 12025,
+      "frozen_working_sha256": "786982c2d15458afb12830fa3b860bf7c86fc2603754b9416a68a5d52a4ada08",
+      "frozen_working_bytes": 12025,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_continuation_controls.py",
+      "committed_blob_oid": "95b299f59952f35e0c66c3542532d03b6f512a36",
+      "committed_sha256": "43f49ed09299b1a7c00d226380a5ef743e2a6da742cdd3ae61e3dc1841ef642f",
+      "committed_bytes": 3408,
+      "frozen_working_sha256": "11bf45746ea826ca7c1751ac37db3b12236db88d9c157023609e4cf49498268b",
+      "frozen_working_bytes": 3515,
+      "relation": "CRLF_to_LF_only"
+    },
+    {
+      "path": "tests/restart/test_delivery_controls.py",
+      "committed_blob_oid": "cc91ecbf5c246ac1902d394efd1d0eb3b2183ca8",
+      "committed_sha256": "24b0bc6d6256ac27352f19f0a5bf09045d16ee088a2d336d4c1f79d325553c53",
+      "committed_bytes": 15344,
+      "frozen_working_sha256": "24b0bc6d6256ac27352f19f0a5bf09045d16ee088a2d336d4c1f79d325553c53",
+      "frozen_working_bytes": 15344,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_long_history.py",
+      "committed_blob_oid": "5fc1d3e9e9cf68425b2c91360783b60b6397d7ec",
+      "committed_sha256": "0135c91bf16483135c795d552c0877c1749859865c6bcaa252b87bfbfa79ce75",
+      "committed_bytes": 11310,
+      "frozen_working_sha256": "0135c91bf16483135c795d552c0877c1749859865c6bcaa252b87bfbfa79ce75",
+      "frozen_working_bytes": 11310,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_native_hook_boundaries.py",
+      "committed_blob_oid": "dd6ff302713cb8611eb22546a95313e1a00beae9",
+      "committed_sha256": "682b6c9843b315242bc9ff474beee0bd1ac4b26059288d6a835a4ce2f9e0780e",
+      "committed_bytes": 24071,
+      "frozen_working_sha256": "ce18425d703946e43fc35f50edc80b0b09fdc8fa139ddfb2a216b7b79af8dea3",
+      "frozen_working_bytes": 24657,
+      "relation": "CRLF_to_LF_only"
+    },
+    {
+      "path": "tests/restart/test_native_init.py",
+      "committed_blob_oid": "4da7f108008c21815b98bcc0b92480ec2e6e619c",
+      "committed_sha256": "65bc11e6ad597af428c9771d7af590ab1abcec87f8706cac58cf56746b69b17e",
+      "committed_bytes": 1443,
+      "frozen_working_sha256": "65bc11e6ad597af428c9771d7af590ab1abcec87f8706cac58cf56746b69b17e",
+      "frozen_working_bytes": 1443,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_native_owner_result.py",
+      "committed_blob_oid": "131658043148697610b41a15bfe12d49a9c24578",
+      "committed_sha256": "f7f395eecfc50206a4872cf6cc3b54e4071eab98583c2efadde0cc07fd96f566",
+      "committed_bytes": 5069,
+      "frozen_working_sha256": "f7f395eecfc50206a4872cf6cc3b54e4071eab98583c2efadde0cc07fd96f566",
+      "frozen_working_bytes": 5069,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_native_pi_transport.py",
+      "committed_blob_oid": "73ae0e11ce59b607592cdff3093f543624c98892",
+      "committed_sha256": "01ce19ca55e6a2217912670a0c87771d0d63b92aa9600af578d568f50015a43e",
+      "committed_bytes": 12265,
+      "frozen_working_sha256": "01ce19ca55e6a2217912670a0c87771d0d63b92aa9600af578d568f50015a43e",
+      "frozen_working_bytes": 12265,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_native_presentation.py",
+      "committed_blob_oid": "f83dd715e5704eedce643625adf3c73562834f93",
+      "committed_sha256": "a3466c0774feaf99a838e87bd1591a28eb65a68b290be0977c04ea8c15cd1fbf",
+      "committed_bytes": 3172,
+      "frozen_working_sha256": "a3466c0774feaf99a838e87bd1591a28eb65a68b290be0977c04ea8c15cd1fbf",
+      "frozen_working_bytes": 3172,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_native_review.py",
+      "committed_blob_oid": "e649949d6b50117a4779cd782a1a6fa0a5defa86",
+      "committed_sha256": "0b799f79ec4b92def3534ff2a9bbdf0901b008454c184c0617c500bd86930f6b",
+      "committed_bytes": 4640,
+      "frozen_working_sha256": "0b799f79ec4b92def3534ff2a9bbdf0901b008454c184c0617c500bd86930f6b",
+      "frozen_working_bytes": 4640,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_native_session.py",
+      "committed_blob_oid": "90c64ee3e69cc4db393612a102553f42c9b89aa5",
+      "committed_sha256": "9261d7b86a6f1e302cd160ff071aadb86f8f454d7370b3f9e1e14e0f75fbcef5",
+      "committed_bytes": 12463,
+      "frozen_working_sha256": "8f37f45dd388b1b856c0dbd2bc2b09827e71b9d9a33575e5cccd8a5b40980bee",
+      "frozen_working_bytes": 12768,
+      "relation": "CRLF_to_LF_only"
+    },
+    {
+      "path": "tests/restart/test_native_session_fencing.py",
+      "committed_blob_oid": "ead8ecb100b18c4d9f565eb19acb6fcd2f6e548a",
+      "committed_sha256": "e79cd068f95c69f9e851a8db9e816f90a1615e09a6b60664bafd5e3040f50f62",
+      "committed_bytes": 2959,
+      "frozen_working_sha256": "e79cd068f95c69f9e851a8db9e816f90a1615e09a6b60664bafd5e3040f50f62",
+      "frozen_working_bytes": 2959,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_native_sleep.py",
+      "committed_blob_oid": "4e6769cfcfeb71d9e7b54fffbc73f8051a2bbe37",
+      "committed_sha256": "a63d9b7bacd13c422e36cee9efa534659de593f0c69c2c667aaf4bb31f858c51",
+      "committed_bytes": 5858,
+      "frozen_working_sha256": "a63d9b7bacd13c422e36cee9efa534659de593f0c69c2c667aaf4bb31f858c51",
+      "frozen_working_bytes": 5858,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_native_sleep_bounded.py",
+      "committed_blob_oid": "dce0166518d332fa50ce0fb98b26bd264196a640",
+      "committed_sha256": "a982688395c606fe19fd4ce33c7618403aee542f0cc53c291487331fd0de33d1",
+      "committed_bytes": 8633,
+      "frozen_working_sha256": "a982688395c606fe19fd4ce33c7618403aee542f0cc53c291487331fd0de33d1",
+      "frozen_working_bytes": 8633,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_native_storage_growth.py",
+      "committed_blob_oid": "6cf9e17dbdd11f54c2895ce93edac1d4a85c6db2",
+      "committed_sha256": "54d6a7aee39242a7541721e6da8e36938de887d938ff9362ba78040544fb89af",
+      "committed_bytes": 6626,
+      "frozen_working_sha256": "54d6a7aee39242a7541721e6da8e36938de887d938ff9362ba78040544fb89af",
+      "frozen_working_bytes": 6626,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_permanent_lifecycle.py",
+      "committed_blob_oid": "a90943d2302898f879a058665b50c8e517750f67",
+      "committed_sha256": "724d7e6ab07c2951898af6cd4f150dc1067d3d93e4e72bc779e10b418277e151",
+      "committed_bytes": 11141,
+      "frozen_working_sha256": "724d7e6ab07c2951898af6cd4f150dc1067d3d93e4e72bc779e10b418277e151",
+      "frozen_working_bytes": 11141,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_pi_entry.py",
+      "committed_blob_oid": "3a830eefcdc2e66d6f6736d72ab1ce3acbeb73db",
+      "committed_sha256": "f9908a28e33a571db76c3bd59cbcc690935774a6199277fe0b453d3697935b90",
+      "committed_bytes": 2452,
+      "frozen_working_sha256": "f9908a28e33a571db76c3bd59cbcc690935774a6199277fe0b453d3697935b90",
+      "frozen_working_bytes": 2452,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_portable_bootstrap.py",
+      "committed_blob_oid": "0c49f068eea631d1158ffe4cd5ccf1fcb208d83c",
+      "committed_sha256": "b2b70538585faf2b4215985f7f595b176c58ac6b175f253f928af26b566062a9",
+      "committed_bytes": 13238,
+      "frozen_working_sha256": "0ac722ff9e9dc88380c59f00ccd8be9033b9cfc32f3ac1d10b21d09d2f8f86d0",
+      "frozen_working_bytes": 13539,
+      "relation": "CRLF_to_LF_only"
+    },
+    {
+      "path": "tests/restart/test_projected_reads.py",
+      "committed_blob_oid": "77715326295599ba1a0912f683f8c7e6a4f844fd",
+      "committed_sha256": "330e91f53a1a87518923c6b9738cf1de94e72922d5aa55fa48916a29fff2d47d",
+      "committed_bytes": 5206,
+      "frozen_working_sha256": "330e91f53a1a87518923c6b9738cf1de94e72922d5aa55fa48916a29fff2d47d",
+      "frozen_working_bytes": 5206,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_read_projection.py",
+      "committed_blob_oid": "748a2395b25efbdd7799a996ce6d336044c5908f",
+      "committed_sha256": "17e996c7151ba8a970a27e63ce0b4538cd0df07e8d45ce6e8e7edcff5538c8cd",
+      "committed_bytes": 7016,
+      "frozen_working_sha256": "17e996c7151ba8a970a27e63ce0b4538cd0df07e8d45ce6e8e7edcff5538c8cd",
+      "frozen_working_bytes": 7016,
+      "relation": "identical"
+    },
+    {
+      "path": "tests/restart/test_sleep_controls.py",
+      "committed_blob_oid": "d4fb32d25821c4202043f513cdc716f792210910",
+      "committed_sha256": "6bebd9bdb59c2b89d62cfe22b1c38af5acb315ba0a48139952d7cf4d6b1faacd",
+      "committed_bytes": 5470,
+      "frozen_working_sha256": "9fdc40ab675260711a46c9a601204c5794d9891a51002af602353f1312c33f25",
+      "frozen_working_bytes": 5642,
+      "relation": "CRLF_to_LF_only"
+    },
+    {
+      "path": "tests/restart/test_unlimited_resource.py",
+      "committed_blob_oid": "8c7f38d3f3ba51a1fbaee9f90d0d73cd68b87c55",
+      "committed_sha256": "8b0c4d4ad0d159e346b5b3716920f009b46cc9b2d5522e52e296f729c62f03b4",
+      "committed_bytes": 3234,
+      "frozen_working_sha256": "8b0c4d4ad0d159e346b5b3716920f009b46cc9b2d5522e52e296f729c62f03b4",
+      "frozen_working_bytes": 3234,
+      "relation": "identical"
+    },
+    {
+      "path": "tools/build_permanent_package.py",
+      "committed_blob_oid": "1824cd61523026cf884de29e342ee7fb0775e09e",
+      "committed_sha256": "a2e31c4ebc219e04c2071ad229db5dfb970e6b346d281f3d62554a37fcab9302",
+      "committed_bytes": 4687,
+      "frozen_working_sha256": "a2e31c4ebc219e04c2071ad229db5dfb970e6b346d281f3d62554a37fcab9302",
+      "frozen_working_bytes": 4687,
+      "relation": "identical"
+    },
+    {
+      "path": "uv.lock",
+      "committed_blob_oid": "372c9fea1b6ad0c5f5970d16b77ba2f47734626b",
+      "committed_sha256": "2f9ac9292599b0a98434e8ff9499e485fda671168e6ca6d921a2f014f482ad81",
+      "committed_bytes": 76640,
+      "frozen_working_sha256": "2f9ac9292599b0a98434e8ff9499e485fda671168e6ca6d921a2f014f482ad81",
+      "frozen_working_bytes": 76640,
+      "relation": "identical"
+    }
+  ],
+  "counts": {
+    "identical": 44,
+    "CRLF_to_LF_only": 15,
+    "MISMATCH": 0
+  }
+}

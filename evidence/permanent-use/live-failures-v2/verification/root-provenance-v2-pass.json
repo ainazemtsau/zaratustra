@@ -1,0 +1,14 @@
+[
+  {
+    "case": "158617f",
+    "raw_sha_verified": true,
+    "record_hashes_verified": 16,
+    "pointers_resolved": 42
+  },
+  {
+    "case": "32db2ac",
+    "raw_sha_verified": true,
+    "record_hashes_verified": 27,
+    "pointers_resolved": 82
+  }
+]

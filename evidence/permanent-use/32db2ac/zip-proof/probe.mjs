@@ -1,0 +1,10 @@
+import {pathToFileURL} from 'node:url';
+import {resolve,join} from 'node:path';
+import {writeFile} from 'node:fs/promises';
+const sdk=await import(pathToFileURL('C:/Users/Anton/AppData/Roaming/npm/node_modules/@earendil-works/pi-coding-agent/dist/index.js').href);
+const root=resolve('_scratch/permanent-32db2ac/zip-proof'),agentDir=join(root,'agent'),cwd=join(root,'fictional-project');
+const loader=new sdk.DefaultResourceLoader({cwd,agentDir,settingsManager:sdk.SettingsManager.create(cwd,agentDir),additionalExtensionPaths:[join(root,'zaratustra-pi-0.2.0-32db2ac/extension.ts')],noSkills:true,noPromptTemplates:true,noThemes:true,noContextFiles:true});
+await loader.reload();const loaded=loader.getExtensions();
+const result={source:'32db2acf436c060dae71d91523f2f8665c25a6cd',pi:sdk.VERSION,errors:loaded.errors,extensions:loaded.extensions.map(e=>({path:e.path,commands:[...e.commands.keys()],tools:[...e.tools.keys()]})),modelSends:0,provenance:'ZIP extracted; all9 members checked against source manifest; actual Pi SDK explicit extracted extension load only. Not an install or invocation proof; no model/auth/bootstrap/Core init.'};
+await writeFile(join(root,'package-load.json'),JSON.stringify(result,null,2));
+if(loaded.errors.length||loaded.extensions.length!==1||!loaded.extensions.some(e=>e.commands.has('zaratustra')&&e.tools.has('zara_read')))throw new Error(JSON.stringify(result));console.log(JSON.stringify(result));

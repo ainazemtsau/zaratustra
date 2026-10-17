@@ -1,0 +1,74 @@
+{
+  "source": "32db2acf436c060dae71d91523f2f8665c25a6cd",
+  "fixture": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\permanent-independent-fad42f8\\read-growth32-e13ca70d",
+  "ordinary_observation_count": 16,
+  "each_observation_text_bytes": 51200,
+  "sleep_prepared": true,
+  "pinned_sleep_source_count": 8,
+  "pinned_context_wire_bytes": 652935,
+  "queries": {
+    "history_100": {
+      "arguments": {
+        "operation": "read_history",
+        "arguments": {
+          "scope": "subject",
+          "limit": 100
+        }
+      },
+      "core_result_wire_bytes": 1262302,
+      "native_text_bytes": 1265281,
+      "native_result_with_details_bytes": 2537341,
+      "count": 22,
+      "has_more": false,
+      "cursor": [
+        171,
+        2147483647
+      ],
+      "result_sha256": "d019ccf82803ccf6cfcc705877745bb011733d6a7ee5427a624fb09cec2c0e16"
+    },
+    "observations_100": {
+      "arguments": {
+        "operation": "read_page",
+        "arguments": {
+          "table": "observations",
+          "limit": 100
+        }
+      },
+      "core_result_wire_bytes": 1210063,
+      "native_text_bytes": 1210231,
+      "native_result_with_details_bytes": 2421490,
+      "count": 18,
+      "has_more": false,
+      "cursor": null,
+      "result_sha256": "41a3bfd3acc5f82dfb33d27d2cf483f880a576c18778e3b616f1b9ed03b244f2"
+    },
+    "one_exact_record": {
+      "arguments": {
+        "operation": "read_exact",
+        "arguments": {
+          "id": "note",
+          "revision": 1
+        }
+      },
+      "core_result_wire_bytes": 52986,
+      "native_text_bytes": 53008,
+      "native_result_with_details_bytes": 107708,
+      "count": 0,
+      "has_more": null,
+      "cursor": null,
+      "result_sha256": "6d6bf63d8bf8f692e3a855d7b0b4fdf719312361abfba6657ae8501d91f7a6ea"
+    }
+  },
+  "zara_context_wire_bytes": 653318,
+  "checks": {
+    "sleep_prepared_under_existing_guard": true,
+    "legal_history_result_over_pin_guard": true,
+    "legal_table_result_over_pin_guard": true,
+    "native_context_repeat_contains_same_pinned_sources": true
+  },
+  "source_sql_mutations": false,
+  "product_source_mutations": false,
+  "real_model_calls": 0,
+  "limit": "Demonstrates byte-unbounded admitted read/native delivery. Does not simulate or assert a provider token threshold; no analysis/result was fabricated.",
+  "all_checks_pass": true
+}

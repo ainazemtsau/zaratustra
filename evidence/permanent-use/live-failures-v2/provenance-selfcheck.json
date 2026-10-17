@@ -1,0 +1,398 @@
+{
+  "version": 2,
+  "previousDraftPreserved": "_scratch\\root-native-live-proof-envelopefix\\public-evidence",
+  "previousDraftManifestSHA256": "60ced85cb8a13cb1fb6425265e730dd2c8c25546770397cd78214d62e0801e09",
+  "selectedRecordsChecked": 43,
+  "declaredPointersChecked": 124,
+  "allRawSHA256Matched": true,
+  "allRawBytesAndLineCountsMatched": true,
+  "allSelectedLineHashesAndBytesMatched": true,
+  "everyDeclaredPointerResolvesInExactRawLine": true,
+  "removedAbsentPointers": [
+    {
+      "case": "158617f-descriptor",
+      "line": 3,
+      "removedAbsentPointer": "/value/progressRevisionFingerprints",
+      "error": "KeyError"
+    },
+    {
+      "case": "158617f-descriptor",
+      "line": 3,
+      "removedAbsentPointer": "/value/sameScopeResultFingerprints",
+      "error": "KeyError"
+    },
+    {
+      "case": "158617f-descriptor",
+      "line": 27,
+      "removedAbsentPointer": "/value/message/errorMessage",
+      "error": "KeyError"
+    },
+    {
+      "case": "158617f-descriptor",
+      "line": 45,
+      "removedAbsentPointer": "/value/progressRevisionFingerprints",
+      "error": "KeyError"
+    },
+    {
+      "case": "158617f-descriptor",
+      "line": 45,
+      "removedAbsentPointer": "/value/sameScopeResultFingerprints",
+      "error": "KeyError"
+    },
+    {
+      "case": "32db2ac-descriptor",
+      "line": 31,
+      "removedAbsentPointer": "/value/message/errorMessage",
+      "error": "KeyError"
+    }
+  ],
+  "checks": [
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 3,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 7,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 7,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 16,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 19,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 23,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 25,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 26,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 27,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 6,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 28,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 3,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 30,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 2,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 31,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 34,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 36,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 7,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 38,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 45,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 7,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "158617f-selected-records.jsonl",
+      "line": 47,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 1,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 4,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 9,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 5,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 9,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 14,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 15,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 17,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 2,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 19,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 9,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 23,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 27,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 29,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 30,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 31,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 6,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 32,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 3,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 33,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 2,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 36,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 38,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 39,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 40,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 7,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 43,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 50,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 9,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 51,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 52,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 53,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 54,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 9,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 55,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 9,
+      "allDeclaredPointersResolve": true
+    },
+    {
+      "file": "32db2ac-selected-records.jsonl",
+      "line": 57,
+      "rawRecordHashPass": true,
+      "rawRecordBytesPass": true,
+      "pointerCount": 1,
+      "allDeclaredPointersResolve": true
+    }
+  ],
+  "liveCalls": 0,
+  "authRead": false,
+  "databaseReadOrMutation": false
+}

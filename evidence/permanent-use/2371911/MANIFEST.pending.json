@@ -1,0 +1,60 @@
+{
+  "status": "SUPERSEDED_NOT_READY_PROJECTED_HISTORY_UPDATE_INTEGRITY",
+  "source_commit": "23719117016ea4bb975db6772396938906bba279",
+  "files": [
+    {
+      "path": "freeze/FREEZE.json",
+      "sha256": "57c39542c8a65e6cefa6040632ea92b839c82597bc55fe051bc4f7600302d85e",
+      "bytes": 10534,
+      "source_path": "_scratch/permanent-2371911/FREEZE.json"
+    },
+    {
+      "path": "freeze/ARCHIVE.json",
+      "sha256": "97bdb6cdbcf414d81f887bf6ec56bd6fc9e9856a78ecd93a57b45cff4e1445b8",
+      "bytes": 222,
+      "source_path": "_scratch/permanent-2371911/ARCHIVE.json"
+    },
+    {
+      "path": "focused/sleep-bounded-check-receipt.json",
+      "sha256": "ce5852d46f8421f9357a60d8a330b3d0cf8c9024c45c070ef84777614af14c3e",
+      "bytes": 3270,
+      "source_path": "_scratch/sleep-bounded-check-receipt.json"
+    },
+    {
+      "path": "update-diagnosis/bootstrap-diagnostic-237-1792220140979.jsonl",
+      "sha256": "0f0c14748f74e6ce5baec051d02cafe10de7ee204f08124e0629c313a012933b",
+      "bytes": 7606,
+      "source_path": "_scratch/root-native-live-proof-sleepfit/bootstrap-diagnostic-237-1792220140979.jsonl"
+    },
+    {
+      "path": "independent-update-failure/REPORT-2371911.md",
+      "sha256": "847634e2b6a36034f3ed56117d683b5f9695f65895d879e10ee319dd66c8f976",
+      "bytes": 8266,
+      "source_path": "_scratch/permanent-independent-fad42f8/REPORT-2371911.md"
+    },
+    {
+      "path": "independent-update-failure/UPDATE-F10-RECHECK-BOUNDARY.md",
+      "sha256": "a51c18af3a90826e1e8a8d8a2efe7f40aea311f965cca5d6ebf0d104c606e4b7",
+      "bytes": 3414,
+      "source_path": "_scratch/permanent-independent-fad42f8/UPDATE-F10-RECHECK-BOUNDARY.md"
+    },
+    {
+      "path": "independent-update-failure/update-closure-2371911-reproduction.json",
+      "sha256": "2131f23436844be84c0f3628eef8616dd2dc059f65fcc2bfad6b746fb28f5506",
+      "bytes": 6588,
+      "source_path": "_scratch/permanent-independent-fad42f8/update-closure-2371911-reproduction.json"
+    }
+  ],
+  "prior_failed_candidates": [
+    "../2b472e2/MANIFEST.pending.json",
+    "../f2c4b2b/MANIFEST.pending.json"
+  ],
+  "privacy": "Selected hashes and tool-result transcription only. No Core database, owner credential, provider authentication or private Activity.",
+  "pending": [
+    "same-original-history public Sleep recovery/adaptation and subsequent-use proof",
+    "fresh physical independent verdict",
+    "one coherent required full native gate after live chain passes",
+    "final publication audit"
+  ],
+  "actual_blocker": "Exact installed bootstrap publication step fails internal backup.reference_closure: verifier assumes full prior_messages for explicit context selection. Old runtime/current, DB bytes and ready Sleep Work preserved; zero model sends."
+}

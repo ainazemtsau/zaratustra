@@ -1,0 +1,14 @@
+{
+  "rawBytes": 262144,
+  "encodedCharacters": 349528,
+  "originalSourceBytes": 349688,
+  "decodedSourceBytes": 1573419,
+  "originalContextTextBytes": 349846,
+  "decodedContextTextBytes": 1573577,
+  "originalCustomMessageEnvelopeBytes": 349942,
+  "decodedCustomMessageEnvelopeBytes": 1835855,
+  "proposedContextTextComparator": 1048576,
+  "corePrepareGuardUnchanged": true,
+  "fallbackContextTextBytes": 350104,
+  "fallbackFullOriginalPreserved": true
+}

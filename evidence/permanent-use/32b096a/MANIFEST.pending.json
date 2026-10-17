@@ -1,0 +1,185 @@
+{
+  "status": "NOT_READY_CODEC_FROZEN_CONTINUATION_APPROVED_IMPLEMENTATION_PENDING",
+  "source_commit": "32b096a474f36fb55a6296110261e6a67d6981a4",
+  "files": [
+    {
+      "path": "freeze/FREEZE.json",
+      "source_path": "_scratch/permanent-32b096a/FREEZE.json",
+      "sha256": "37446dcf4ee7739db07138041fb4ea04fe022d65ac67c562ad2b8583c2e98798",
+      "bytes": 10733
+    },
+    {
+      "path": "freeze/ARCHIVE.json",
+      "source_path": "_scratch/permanent-32b096a/ARCHIVE.json",
+      "sha256": "caa49fb357130f7fd5c516544018e12c60e6adec89b4d7c7002ef8da37697bc8",
+      "bytes": 219
+    },
+    {
+      "path": "freeze/TREE.json",
+      "source_path": "_scratch/permanent-32b096a/TREE.json",
+      "sha256": "fa4a0abfe938b79325c684fe5b73dfd2b96c7829fcac5d192391628b9711a001",
+      "bytes": 258
+    },
+    {
+      "path": "freeze/COMPONENT-ALIGNMENT.json",
+      "source_path": "_scratch/permanent-32b096a/COMPONENT-ALIGNMENT.json",
+      "sha256": "e9d682f460af6a27676aaf6061b258e3f11714ad133657e48856e762b1e097b4",
+      "bytes": 432
+    },
+    {
+      "path": "freeze/SOURCE-BYTE-PROVENANCE.json",
+      "source_path": "_scratch/permanent-32b096a/SOURCE-BYTE-PROVENANCE.json",
+      "sha256": "80cdcffe61a7f125443c10f91a7daba15dc8d125f0fe35dc7f7f573f29a72731",
+      "bytes": 25856
+    },
+    {
+      "path": "freeze/build.json",
+      "source_path": "_scratch/permanent-32b096a/build.json",
+      "sha256": "5677fb7bc939c60d1bb670595d7951caadefaa6562d0219cddebe2df71bb4eaf",
+      "bytes": 256
+    },
+    {
+      "path": "freeze/build.stdout.log",
+      "source_path": "_scratch/permanent-32b096a/build.stdout.log",
+      "sha256": "4ca93e33e81ea6ea4ae701f4da18aeb8f22d5fecb710258ee0c365b9b6cc8ac4",
+      "bytes": 94
+    },
+    {
+      "path": "freeze/build.stderr.log",
+      "source_path": "_scratch/permanent-32b096a/build.stderr.log",
+      "sha256": "492c6f610263e59d6849f93747957ed4b5a2493aa7992cb14e8c6ac10e08c204",
+      "bytes": 274
+    },
+    {
+      "path": "zip-proof/package-load.json",
+      "source_path": "_scratch/permanent-32b096a/zip-proof/package-load.json",
+      "sha256": "71f8b7d8159acc62faf566947e0461db664bbb07639358f3887987d8e161a09f",
+      "bytes": 886
+    },
+    {
+      "path": "zip-proof/probe.mjs",
+      "source_path": "_scratch/permanent-32b096a/zip-proof/probe.mjs",
+      "sha256": "f66ce84136ea025bddcb98d8b78e7521931e6a63b70f79c351f21d1584069b2c",
+      "bytes": 1435
+    },
+    {
+      "path": "zip-proof/stdout.log",
+      "source_path": "_scratch/permanent-32b096a/zip-proof/stdout.log",
+      "sha256": "aea062fb69ba32dc48ad2371a5db7dea5b76a8942b3d10660ca09fd962f64fd0",
+      "bytes": 685
+    },
+    {
+      "path": "zip-proof/stderr.log",
+      "source_path": "_scratch/permanent-32b096a/zip-proof/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "focused/hooks-codec-regression.xml",
+      "source_path": "_scratch/hooks-codec-regression.xml",
+      "sha256": "ed504e8d831d0549ed06dd70d5ccfcf562e2bd83bc81a7e4414fa8a29b67dfc8",
+      "bytes": 22597
+    },
+    {
+      "path": "focused/hooks-codec-finaldelta2.xml",
+      "source_path": "_scratch/hooks-codec-finaldelta2.xml",
+      "sha256": "fa75d50b961abbf13690e9097286ebc0eba32393964995cac3af901497f62729",
+      "bytes": 978
+    },
+    {
+      "path": "focused/hooks-codec-old.xml",
+      "source_path": "_scratch/hooks-codec-old.xml",
+      "sha256": "ccb453437bd6729958ffa4ee19ae51c0d13cdd2891a5590ca9c38bbb76a4d2b6",
+      "bytes": 20665
+    },
+    {
+      "path": "focused/hooks-codec-fallback2.xml",
+      "source_path": "_scratch/hooks-codec-fallback2.xml",
+      "sha256": "34314d592e175308d6c7f74752526d2dca7a3809dc966547ca52e02c2b33b588",
+      "bytes": 510
+    },
+    {
+      "path": "focused/native-codec-production-measurement-final.json",
+      "source_path": "_scratch/native-codec-production-measurement-final.json",
+      "sha256": "3958c6fbe0e00c776d2cbc1fa42f218445a57a487e28302005d21e7e4facb496",
+      "bytes": 445
+    },
+    {
+      "path": "focused/native-codec-expansion-measurement-final.json",
+      "source_path": "_scratch/native-codec-expansion-measurement-final.json",
+      "sha256": "35a5af01c42b065b405289b4ff04c38b7451715a2a3e2cfdb842dbb0eef6a772",
+      "bytes": 466
+    },
+    {
+      "path": "focused/native-codec-source-receipt.json",
+      "source_path": "_scratch/native-codec-source-receipt.json",
+      "sha256": "d17fa6f901bdab96ab28ec654fabb65de8e787b52369d39d48443cf9d489af76",
+      "bytes": 921
+    },
+    {
+      "path": "audit/INCREMENTAL-32b096a.md",
+      "source_path": "_scratch/root-publication-audit/INCREMENTAL-32b096a.md",
+      "sha256": "e444f18358dd3aa0b7c32155aded533d79c1d3193cc585180c37d5e2c334d13d",
+      "bytes": 3864
+    },
+    {
+      "path": "focused/sdk/codec-readable/sdk-output.json",
+      "source_path": "_scratch/hooks-codec-regression/test_native_hook_boundaries_co1/sdk-output.json",
+      "sha256": "cd2e6041c20b046e2e49d79d673f72c78c872964e550033746694fdba70eb1d2",
+      "bytes": 1312192
+    },
+    {
+      "path": "focused/sdk/codec-readable/sdk-stderr.log",
+      "source_path": "_scratch/hooks-codec-regression/test_native_hook_boundaries_co1/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "focused/sdk/codec-fallback/sdk-output.json",
+      "source_path": "_scratch/hooks-codec-regression/test_native_hook_boundaries_co2/sdk-output.json",
+      "sha256": "6bc7c12e1165279c839aef15cb715cadb10a2a6ca687e9dfd3f186e356ac10e8",
+      "bytes": 3679618
+    },
+    {
+      "path": "focused/sdk/codec-fallback/sdk-stderr.log",
+      "source_path": "_scratch/hooks-codec-regression/test_native_hook_boundaries_co2/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "focused/sdk/codec-unfit/sdk-output.json",
+      "source_path": "_scratch/hooks-codec-regression/test_native_hook_boundaries_co3/sdk-output.json",
+      "sha256": "fd6084870fc966331fbe6c30c7d3baeff5c577d00c876dae929fff2c6f145b69",
+      "bytes": 3249305
+    },
+    {
+      "path": "focused/sdk/codec-unfit/sdk-stderr.log",
+      "source_path": "_scratch/hooks-codec-regression/test_native_hook_boundaries_co3/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "focused/sdk/final-history-large/sdk-output.json",
+      "source_path": "_scratch/hooks-codec-finaldelta2/test_native_hook_boundaries_hi0/sdk-output.json",
+      "sha256": "e76e9f6cc0922d1f1b491098249d5f713b799e4ba37f83c7d77b45e43a92dbb9",
+      "bytes": 1080167
+    },
+    {
+      "path": "focused/sdk/final-history-large/sdk-stderr.log",
+      "source_path": "_scratch/hooks-codec-finaldelta2/test_native_hook_boundaries_hi0/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ],
+  "scope": "Known-protocol reversible UTF-8 source presentation only; original Core source bytes/refs/receipts and whole-source delivery semantics remain authoritative.",
+  "source_byte_provenance": "44 exact Git bytes,15 exact CRLF-to-LF equivalences,0 unexplained. FREEZE hashes frozen working bytes; see provenance map. Immutable artifact is independent of ongoing authorized continuation implementation.",
+  "test_provenance": "Actual installed Pi SDK against scripted fictional localhost provider, not paid Luna. Coherent pre-metadata run25PASS+1stale history-large fixture expectation FAIL. Final five focused cases passed after metadata/fixture correction; overlapping counts are not summed. Old codec observation readability counterexample preserved. Expansion fallback and pre-provider refusal verified separately.",
+  "pending": [
+    "independent codec verdict",
+    "approved Sleep successor implementation and upgrade verification",
+    "actual meaningful Sleep and subsequent ordinary task",
+    "coherent required full gate",
+    "curated evidence delta privacy audit"
+  ],
+  "privacy": "Selected fictional test summaries/hash metadata only; no credentials, auth, database, agent/home tree or whole actual paid live trace. Actual bc95 facts retained in separately approved subtree."
+}

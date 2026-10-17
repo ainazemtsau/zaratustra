@@ -1,0 +1,11 @@
+{
+  "source": "bc95ceb412210e5bb8355e60cdff537088fdf25a",
+  "rawShaVerified": true,
+  "selectedRecords": 32,
+  "outerPointers": 74,
+  "nestedPointers": 12,
+  "exactFinalTextMatched": true,
+  "encodedObservationMetadataMatched": 4,
+  "scope": "Provenance and representation checks only; no semantic analysis/adaptation claim",
+  "status": "PASS"
+}

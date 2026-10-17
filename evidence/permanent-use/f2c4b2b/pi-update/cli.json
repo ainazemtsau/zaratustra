@@ -1,0 +1,48 @@
+{
+  "source": "f2c4b2bb2c8cca28b4a55c80453ed416275d416a",
+  "agentDir": "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\_scratch\\permanent-2b472e2\\pi-install\\agent",
+  "before": {
+    "packages": [
+      "..\\..\\..\\..\\delivery\\zaratustra-pi-0.2.0"
+    ]
+  },
+  "after": {
+    "packages": [
+      "..\\..\\..\\..\\delivery\\zaratustra-pi-0.2.0-f2c4b2b"
+    ]
+  },
+  "commands": [
+    {
+      "command": [
+        "pi",
+        "remove",
+        "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\delivery\\zaratustra-pi-0.2.0"
+      ],
+      "exit": 0,
+      "stdout": "Removing C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\delivery\\zaratustra-pi-0.2.0...\nRemoved C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\delivery\\zaratustra-pi-0.2.0\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "pi",
+        "install",
+        "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\delivery\\zaratustra-pi-0.2.0-f2c4b2b"
+      ],
+      "exit": 0,
+      "stdout": "Installing C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\delivery\\zaratustra-pi-0.2.0-f2c4b2b...\nInstalled C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\delivery\\zaratustra-pi-0.2.0-f2c4b2b\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "pi",
+        "list"
+      ],
+      "exit": 0,
+      "stdout": "User packages:\n  ..\\..\\..\\..\\delivery\\zaratustra-pi-0.2.0-f2c4b2b\n    C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\delivery\\zaratustra-pi-0.2.0-f2c4b2b\n",
+      "stderr": ""
+    }
+  ],
+  "oldPackageRetained": true,
+  "modelSends": 0,
+  "provenance": "Actual Pi CLI local package registration upgrade in the same fictional agentDir; no model/auth/bootstrap/Core init"
+}

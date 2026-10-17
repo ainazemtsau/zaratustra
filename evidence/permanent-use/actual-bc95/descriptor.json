@@ -1,0 +1,43 @@
+{
+  "sourceCommit": "bc95ceb412210e5bb8355e60cdff537088fdf25a",
+  "packageDigest": "cbd8b487f3420cb545e38025d5cfbb7c0ebadfe835f9becb0a34d4fcf9241a58",
+  "extensionSHA256": "9c5341876b0f65f75a6b72dc6b0f19bca03f7534776ce89b65e5edd6a25ca3a9",
+  "rawTrace": {
+    "path": "_scratch/root-native-live-proof-envelopefix/evidence/sleep-1792223615365.jsonl",
+    "sha256": "0413ec3e4c37f52a6cdd847ef8781fdd98245632d86e21ba2e4a3d874672c924",
+    "bytes": 5629787,
+    "lineCount": 77,
+    "published": false
+  },
+  "ledger": {
+    "sha256": "b9255b64fdb826b12bed5bc6ed8a75deac32ded2e217f319869651189904beda",
+    "prior": 29,
+    "stageSends": 4,
+    "total": 33,
+    "status": "settled",
+    "halted": false
+  },
+  "exactRetainedResult": {
+    "work": "native-sleep-work:0169008298614f8994376d32cdcf24c7",
+    "attempt": "native-sleep-work:0169008298614f8994376d32cdcf24c7:native-attempt:984c2b13f2424da38bb9ade5d820ce34",
+    "resultHash": "0764da81a06ff1c0d6fd44f6ff99c23af14700705f238f27c9c18c130bc11acb",
+    "state": "completed",
+    "accepted": false,
+    "text": "The retained Sleep pass found no useful correction to apply. The pinned sources all describe the same fictional label-utility request; a bounded history read also confirmed the listed files include `check_label.py` and `label.py`. Earlier history was withheld because a source exceeded the read-size limit, so I haven\u2019t analyzed it. I left the selected sources for later review and staged the result metadata.",
+    "textUTF8SHA256": "42cb028426d819cff164a8e7522ec2514f66b71bb1fd0bc5d71cd4c86c0a8250",
+    "sameTextAsActualFinalAssistant": true,
+    "privateRetainedResultCheck": {
+      "path": "_scratch/root-native-live-proof-envelopefix/sleep-exact-result-input-provenance.json",
+      "sha256": "f64e2df252034019d0470137c7d21b649af173b3c30d9f362456d8c7b71d0af7",
+      "kind": "Exact result row read-only verification; raw DB not included"
+    },
+    "actualFinalMessage": {
+      "sourceLine": 61,
+      "sourcePointer": "/value/message/content/0/text"
+    }
+  },
+  "limitedOutcome": "Transport/lifecycle completed; current idle.4pinned delivered,0analysis_result_refs/0MemoryMethodchanges,16remainingenumerated/74notenumeratedof90 atcutoff1054. NOT semantic Sleep/adaptation PASS. No private reasoning or full-history understanding claim.",
+  "ordinaryTask": "not authorized or executed",
+  "ownerAcceptance": "pending",
+  "publication": "Prepared subset only; root/privacy/source review still required. Audit report intentionally outside this subset."
+}

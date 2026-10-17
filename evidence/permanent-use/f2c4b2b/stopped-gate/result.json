@@ -1,0 +1,7 @@
+{
+  "source": "f2c4b2bb2c8cca28b4a55c80453ed416275d416a",
+  "status": "STOPPED_SUPERSEDED",
+  "gate_session_exit": 1,
+  "reason": "Actual public Sleep preparation fails context.max_bytes before inference. Stopped before source edits; not PASS.",
+  "stopped_utc": "2026-10-17T06:42:21.812038+00:00"
+}

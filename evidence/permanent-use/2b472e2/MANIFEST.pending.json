@@ -1,0 +1,153 @@
+{
+  "status": "SUPERSEDED_NOT_READY_NATIVE_HOST_BUSY",
+  "source_commit": "2b472e295e09ad80bc2279099817e830c95db3b0",
+  "files": [
+    {
+      "path": "freeze/FREEZE.json",
+      "sha256": "c937f68baf4b1c54bc1d2b425b26d27bad03a52d7af0958c3559947606d7b57d",
+      "bytes": 10368,
+      "source_path": "_scratch/permanent-2b472e2/FREEZE.json"
+    },
+    {
+      "path": "freeze/ARCHIVE.json",
+      "sha256": "0887647cb148b9a7fe927ad3a81a6b17e420fe7f69e114dcdef3aa4b5b4bae73",
+      "bytes": 197,
+      "source_path": "_scratch/permanent-2b472e2/ARCHIVE.json"
+    },
+    {
+      "path": "pi-install/cli.json",
+      "sha256": "3de16692a60feb983b84ff15c3564efb610d95eb1e7b818d5223e45175adfd53",
+      "bytes": 710,
+      "source_path": "_scratch/permanent-2b472e2/pi-install/cli.json"
+    },
+    {
+      "path": "pi-install/package-load.json",
+      "sha256": "9643b7ecba3da79adf65f1626b6521c0cae5bf4979ae3a82b491addbee38cff4",
+      "bytes": 1091,
+      "source_path": "_scratch/permanent-2b472e2/pi-install/package-load.json"
+    },
+    {
+      "path": "pi-install/probe.mjs",
+      "sha256": "c3d3b6c34e9ece6d4e0fb51744aa32856393a8458d6a56ec15dd79eb0f9763af",
+      "bytes": 1301,
+      "source_path": "_scratch/permanent-2b472e2/pi-install/probe.mjs"
+    },
+    {
+      "path": "focused/native-compact-discovery-final.xml",
+      "sha256": "823b8aeee84d2bc5909555d199bc47690d05d51facca99734945aadfee65b7f1",
+      "bytes": 866,
+      "source_path": "_scratch/native-compact-discovery-final.xml"
+    },
+    {
+      "path": "focused/native-transport-final-review-public-results.xml",
+      "sha256": "6657afdd2f2cce7865400b67a7793a8c1d2c51bf4824865e359a0f0904b5e3d9",
+      "bytes": 379,
+      "source_path": "_scratch/native-transport-final-review-public-results.xml"
+    },
+    {
+      "path": "prior-failures/permanent-integrated-transport-final.xml",
+      "sha256": "6901975658448f1a884e53fc420c0c321f8a5beb3d4291b4431711b840bfd3a2",
+      "bytes": 14541,
+      "source_path": "_scratch/permanent-integrated-transport-final.xml"
+    },
+    {
+      "path": "stopped-gate/launch.json",
+      "sha256": "ea84ef74ca62d17602d8bad88c8bd6557e85265a672d4681449b0dcdbd73ae2f",
+      "bytes": 1018,
+      "source_path": "_scratch/permanent-2b472e2/gate/launch.json"
+    },
+    {
+      "path": "stopped-gate/stdout.txt",
+      "sha256": "c73808af7456e1fcfade795da1c0fc2ea294a8adf583a24b6ea35a63d92a126f",
+      "bytes": 4337,
+      "source_path": "_scratch/permanent-2b472e2/gate/stdout.txt"
+    },
+    {
+      "path": "stopped-gate/stderr.txt",
+      "sha256": "1d7e428fa945da8732998b12ac389f42bb9dc5934d9600aa41ca929be9295e41",
+      "bytes": 7820,
+      "source_path": "_scratch/permanent-2b472e2/gate/stderr.txt"
+    },
+    {
+      "path": "stopped-gate/result.json",
+      "sha256": "1c3a4c1c3ffbf25020def464cf6753298732d99fca4b9170678089221016fc8e",
+      "bytes": 315,
+      "source_path": "_scratch/permanent-2b472e2/gate/result.json"
+    },
+    {
+      "path": "independent-failures/REPORT-2b472e2.md",
+      "sha256": "7617423ff5bd9863e83b100ef37b26c4567d3ed6e58c1f9018818ead8184edb1",
+      "bytes": 13172,
+      "source_path": "_scratch/permanent-independent-fad42f8/REPORT-2b472e2.md"
+    },
+    {
+      "path": "independent-failures/native-2b472e2-cancel-review-summary.json",
+      "sha256": "f74024b4e38d4b33750a3727c6057b80a068d86e3238fe8d7778680e42cafbb8",
+      "bytes": 3241,
+      "source_path": "_scratch/permanent-independent-fad42f8/native-2b472e2-cancel-review-summary.json"
+    },
+    {
+      "path": "independent-failures/native-cancel-review-2b472e2.log",
+      "sha256": "c1542f4e60612f0775cafbcf8738fb55d25a1b10c8a85e567f21ee798501cec1",
+      "bytes": 2286,
+      "source_path": "_scratch/permanent-independent-fad42f8/native-cancel-review-2b472e2.log"
+    },
+    {
+      "path": "independent-failures/native-2b472e2-parallel-review-summary.json",
+      "sha256": "22ffe1c3114621d29f63a9154a0cb2137ff317b8c4a2e992f56edd2d63bd438c",
+      "bytes": 8067,
+      "source_path": "_scratch/permanent-independent-fad42f8/native-2b472e2-parallel-review-summary.json"
+    },
+    {
+      "path": "independent-failures/native-parallel-review-2b472e2.log",
+      "sha256": "7830ac4ecf96fac2bb95bf1e2d058a77d469cd86992052757d138fad05add456",
+      "bytes": 6875,
+      "source_path": "_scratch/permanent-independent-fad42f8/native-parallel-review-2b472e2.log"
+    },
+    {
+      "path": "independent-failures/native-2b472e2-cancel-review/stdout.json",
+      "sha256": "8d9ecf93723cef0f815fc431b2f5edf8eaf87b7f0a92ea8ca82d0c745f5f9e6c",
+      "bytes": 274648,
+      "source_path": "_scratch/permanent-independent-fad42f8/native-2b472e2-cancel-review/stdout.json"
+    },
+    {
+      "path": "independent-failures/native-2b472e2-cancel-review/provider-requests.json",
+      "sha256": "e5b67ce8c11e93709794cad4d5422012b539b849be165e230ed6065a54ef3ce8",
+      "bytes": 292978,
+      "source_path": "_scratch/permanent-independent-fad42f8/native-2b472e2-cancel-review/provider-requests.json"
+    },
+    {
+      "path": "independent-failures/native-2b472e2-cancel-review/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/permanent-independent-fad42f8/native-2b472e2-cancel-review/stderr.log"
+    },
+    {
+      "path": "independent-failures/native-2b472e2-parallel-review/stdout.json",
+      "sha256": "52157947fa11a0bb498eac7219f4067fd2c23dd35123372ed5bd40a80fc622cf",
+      "bytes": 285381,
+      "source_path": "_scratch/permanent-independent-fad42f8/native-2b472e2-parallel-review/stdout.json"
+    },
+    {
+      "path": "independent-failures/native-2b472e2-parallel-review/provider-requests.json",
+      "sha256": "22dca7d91a56fcc2927990d8c2f71043ef3b11156867be88b79f433a153c30e8",
+      "bytes": 268053,
+      "source_path": "_scratch/permanent-independent-fad42f8/native-2b472e2-parallel-review/provider-requests.json"
+    },
+    {
+      "path": "independent-failures/native-2b472e2-parallel-review/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/permanent-independent-fad42f8/native-2b472e2-parallel-review/stderr.log"
+    }
+  ],
+  "privacy": "Selected metadata, fictional provider tests and zero-inference disposable Pi loading only. No Core database, owner credential, authentication, private Activity or full scratch copies.",
+  "focused_provenance": "Focused XML checks preceded the source freeze; full required gate is executing on exact frozen source. Prior failed assertion report remains explicitly failed; final focused public-read verification is separate.",
+  "pending": [
+    "replacement source/freeze after FIFO fix",
+    "replacement full gate",
+    "replacement live/fresh physical review",
+    "final publication audit"
+  ],
+  "actual_blocker": "Paid public review parallel built-in read tool_execution_end handlers collided on Core host lock; no reviewer result. Full gate stopped intentionally before source edits; not PASS."
+}

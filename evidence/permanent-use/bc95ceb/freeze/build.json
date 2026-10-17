@@ -1,0 +1,14 @@
+{
+  "source_commit": "bc95ceb412210e5bb8355e60cdff537088fdf25a",
+  "command": [
+    "uv",
+    "run",
+    "--locked",
+    "python",
+    "-m",
+    "tools.build_permanent_package",
+    "--output",
+    "delivery/zaratustra-pi-0.2.0-bc95ceb"
+  ],
+  "exit": 0
+}

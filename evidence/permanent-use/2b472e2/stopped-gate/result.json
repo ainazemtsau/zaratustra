@@ -1,0 +1,7 @@
+{
+  "source": "2b472e295e09ad80bc2279099817e830c95db3b0",
+  "status": "STOPPED_SUPERSEDED",
+  "gate_session_exit": 1,
+  "reason": "Actual paid public review exposed concurrent native tool_execution_end host_busy; stopped before source edits. Not a PASS.",
+  "stopped_utc": "2026-10-17T06:27:25.369330+00:00"
+}

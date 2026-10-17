@@ -1,0 +1,99 @@
+{
+  "status": "SUPERSEDED_NOT_READY_READ_ARGUMENT_ABORT",
+  "source_commit": "158617f8e14abaee6f464f96e20ce8e82feb9090",
+  "files": [
+    {
+      "path": "freeze/FREEZE.json",
+      "sha256": "18bb9af7e8a17279830aad4f96a57437d2240e08a374971880c333033f477cd6",
+      "bytes": 10698,
+      "source_path": "_scratch/permanent-158617f/FREEZE.json"
+    },
+    {
+      "path": "freeze/ARCHIVE.json",
+      "sha256": "1d1c317a653abc0e890e97bf432309e0d1ea0656dab657e7b9819f5bbf1464c8",
+      "bytes": 222,
+      "source_path": "_scratch/permanent-158617f/ARCHIVE.json"
+    },
+    {
+      "path": "closure/before-valid.xml",
+      "sha256": "7161d8a4eb1ead88ea8301ea3f825f9df3bc5551a2d0a49986b4185d89d6bd5a",
+      "bytes": 7187,
+      "source_path": "_scratch/backup-selection-fix/before-valid.xml"
+    },
+    {
+      "path": "closure/before-valid.log",
+      "sha256": "6c1551aa3c93e78d6ef74b5f05bce3b66066809fa0d229b753674e542f1d9189",
+      "bytes": 6912,
+      "source_path": "_scratch/backup-selection-fix/before-valid.log"
+    },
+    {
+      "path": "closure/after-boundary.xml",
+      "sha256": "8774e2dc2dacc1920c03ea5ac0c38e0ba0ee1106550ce2c7e3b22c207a36195f",
+      "bytes": 6320,
+      "source_path": "_scratch/backup-selection-fix/after-boundary.xml"
+    },
+    {
+      "path": "closure/after-boundary.log",
+      "sha256": "8dc85e6ff62b15d7f8188541bafe01d140d27954d348bc0eb51ab4b43ddc7aee",
+      "bytes": 112,
+      "source_path": "_scratch/backup-selection-fix/after-boundary.log"
+    },
+    {
+      "path": "closure/existing.xml",
+      "sha256": "403fa272135313bf6e99996585d3517d4e3139ec3e8ff90c31068c0dfceddb50",
+      "bytes": 7131,
+      "source_path": "_scratch/backup-selection-fix/existing.xml"
+    },
+    {
+      "path": "closure/existing.log",
+      "sha256": "69499f4d0518867a10a28b9e0752fad913386aa3929dd04261bf4b2bf0ef1f31",
+      "bytes": 112,
+      "source_path": "_scratch/backup-selection-fix/existing.log"
+    },
+    {
+      "path": "closure/maintenance.xml",
+      "sha256": "5602612cd916fcdd4ed258ec59e02fc2bec6e058dabfe55f593edd119e376947",
+      "bytes": 2760,
+      "source_path": "_scratch/backup-selection-fix/maintenance.xml"
+    },
+    {
+      "path": "closure/maintenance.log",
+      "sha256": "53c58c078e209f1360dc43d82296005bddec5d5b2b3c5c932ca1e60837b0e66e",
+      "bytes": 102,
+      "source_path": "_scratch/backup-selection-fix/maintenance.log"
+    },
+    {
+      "path": "closure/byte-preservation.xml",
+      "sha256": "35d69b99e1fe400f83e178bfbd2e45a7d792cd73f4f13a06e9205368a1d47a5d",
+      "bytes": 945,
+      "source_path": "_scratch/backup-selection-fix/byte-preservation.xml"
+    },
+    {
+      "path": "closure/byte-preservation.log",
+      "sha256": "cf69dd8a84cf58a11eadea9df74fd5823f62d8d956208c6a5c0621ae097d5221",
+      "bytes": 100,
+      "source_path": "_scratch/backup-selection-fix/byte-preservation.log"
+    },
+    {
+      "path": "freeze/COMPONENT-ALIGNMENT.json",
+      "sha256": "0fdc7f769cfdda83cb2ba2e11a4718734310142a8351e0621bb869ba4dbf67bd",
+      "bytes": 447
+    }
+  ],
+  "prior_failed_candidates": [
+    "../2b472e2/MANIFEST.pending.json",
+    "../f2c4b2b/MANIFEST.pending.json",
+    "../2371911/MANIFEST.pending.json"
+  ],
+  "privacy": "Selected frozen hashes and fictional public-API test logs/XML; no database, owner credential, authentication or private Activity.",
+  "test_provenance": "Focused tests ran before source commit on unchanged validator/test bytes. New36, existing50, maintenance20 are distinct selected commands; four byte-preservation cases overlap new36 and are not added. Before-valid4 failures are intentionally preserved as old guard counterexamples.",
+  "pending": [
+    "independent two-native-turn update repro on exact new freeze",
+    "actual same-home package update and Sleep/adaptation/subsequent-use proof",
+    "fresh physical independent verdict",
+    "one coherent required full native gate after live passes",
+    "final publication audit"
+  ],
+  "actual_update": "Root actual same-home compatible update passed all5 bootstrap phases; same Activity, ready Sleep Work/cutoff/old Method/progress retained. Exact raw live evidence will be curated separately.",
+  "remaining_failure": "One actual Luna Sleep response called malformed read_history; generic tool error aborted attempt before correction. No Sleep adaptation or result claimed."
+}

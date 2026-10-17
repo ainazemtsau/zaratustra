@@ -1,0 +1,167 @@
+{
+  "source_count": 78,
+  "total_bytes": 4754649,
+  "over_1MiB": [],
+  "largest": [
+    {
+      "ref": {
+        "sequence": 60,
+        "index": 0,
+        "sha256": "898dd2d7b537555b3a949c75f795364f8ce4307d813ab61c3e9f9d787c837f9f"
+      },
+      "bytes": 722167,
+      "components": {
+        "observation": 718000,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "sequence": 120,
+        "index": 0,
+        "sha256": "81fa18217c420c3cf7dba7207fa506dcdca290fa4ec0cab81a3a8679927b48e6"
+      },
+      "bytes": 647680,
+      "components": {
+        "observation": 643512,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "sequence": 108,
+        "index": 0,
+        "sha256": "f34f881b64210ead57728a30d5ad52427d025bd5caf5e40262624bd8710f9274"
+      },
+      "bytes": 642144,
+      "components": {
+        "observation": 637976,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "sequence": 96,
+        "index": 0,
+        "sha256": "2f69cc9228ff3e1da5fde5f204ed745817519bf330667aabd3bf7a8b2d06eb51"
+      },
+      "bytes": 633243,
+      "components": {
+        "observation": 629076,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "sequence": 84,
+        "index": 0,
+        "sha256": "c66a1db8a8dde1ddd8c1b0c762307271a152556dc90698831d78a000ff931757"
+      },
+      "bytes": 626307,
+      "components": {
+        "observation": 622140,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "sequence": 72,
+        "index": 0,
+        "sha256": "2d33129ff9271a752d61e9b42d7dfb8af57e6f10889d00df30175acae49f5cd8"
+      },
+      "bytes": 620195,
+      "components": {
+        "observation": 616028,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "sequence": 384,
+        "index": 0,
+        "sha256": "5ade5a2da93fe94f2f9b009ba2ea74d94a18f122267ed1205564f41e59c4a7d5"
+      },
+      "bytes": 121708,
+      "components": {
+        "observation": 117292,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 798,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 784,
+        "resource_reservation": 1
+      }
+    },
+    {
+      "ref": {
+        "sequence": 56,
+        "index": 0,
+        "sha256": "9e2e3181ee725216dfae3ea313144f65cffaa911909735228599b8a8fa9ae778"
+      },
+      "bytes": 111323,
+      "components": {
+        "observation": 107156,
+        "scope": 25,
+        "method": 1990,
+        "inputs": 543,
+        "messages": 682,
+        "prior_messages": 2,
+        "prior_waits": 2,
+        "tool_ledger": 2,
+        "profile": 652,
+        "resource_reservation": 1
+      }
+    }
+  ]
+}

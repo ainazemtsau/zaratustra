@@ -1,0 +1,104 @@
+{
+  "source": "bc95ceb412210e5bb8355e60cdff537088fdf25a",
+  "all59WorkingBytesMatchFreeze": true,
+  "all59CanonicalLfEqualGitBlob": true,
+  "differentBytePaths": [
+    {
+      "path": "README.md",
+      "gitBlobSHA256": "38867fbe71481955fedbbf272361d376cfb6b911116af908b96c1d89c36da42d",
+      "frozenWorkingBytesSHA256": "c36322d457c5dc6ad015848a4de5d500ae3db7be958cec1c791cee7d9c179e3c",
+      "gitBytes": 18109,
+      "frozenWorkingBytes": 18316,
+      "crlfOnly": true
+    },
+    {
+      "path": "docs/restart/OWNER-PERMANENT-USE-20261017.md",
+      "gitBlobSHA256": "0cd253fd00830d954e23a5491a5e322a7fc8ffda6ef567f10dea573ad1af2cc1",
+      "frozenWorkingBytesSHA256": "3b4dbc8ff2b7ee361fba25dfaa41a04f9eb5e5694b600e73cba159ef7319b15d",
+      "gitBytes": 9606,
+      "frozenWorkingBytes": 9706,
+      "crlfOnly": true
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/native_session.py",
+      "gitBlobSHA256": "a84c096b2bcd39399b62c86814a37912a27451d87d240ab15b775227f7fece87",
+      "frozenWorkingBytesSHA256": "cf87c22856149a9a12b56cf265d7c50ee588756d182a0adba361117af29cc9d0",
+      "gitBytes": 24516,
+      "frozenWorkingBytes": 25079,
+      "crlfOnly": true
+    },
+    {
+      "path": "packages/app/src/zaratustra_app/pi_host.py",
+      "gitBlobSHA256": "32fb50d144c0b35a4a6ea4b95fef3cdce6aee0e1bfa1cfa982e10fbeffce40f0",
+      "frozenWorkingBytesSHA256": "755cd239495b45456ec693b2ca43219600de9743137e2bb8b0838dcb6cc39fa1",
+      "gitBytes": 8713,
+      "frozenWorkingBytes": 8933,
+      "crlfOnly": true
+    },
+    {
+      "path": "pi-package/README.md",
+      "gitBlobSHA256": "2c5f81f58d72c739c5610008becb2e4fe0dbf5ea2c09001cfb89599753841e2b",
+      "frozenWorkingBytesSHA256": "9980ed5f6ba674fa6385e5e2886217c9d351be7609dd9831d3cf3e470ff0575f",
+      "gitBytes": 5898,
+      "frozenWorkingBytes": 5990,
+      "crlfOnly": true
+    },
+    {
+      "path": "pi-package/bootstrap.mjs",
+      "gitBlobSHA256": "0b832234d65a8183bd96f33c6b347791d989e6dd00ab13cdcbb1d0b2c71defa6",
+      "frozenWorkingBytesSHA256": "cf02ddda3060b1011d04048f2ef783eb593cec2795e062c37a1d669d0a4a74a1",
+      "gitBytes": 7722,
+      "frozenWorkingBytes": 7731,
+      "crlfOnly": true
+    },
+    {
+      "path": "pi-package/package.json",
+      "gitBlobSHA256": "15d2485e36d814b6a4179313d16e38c2690b48216cb44ca87a6967a7e017b1f4",
+      "frozenWorkingBytesSHA256": "a9612d929cbd441dd98ce2b48d332f2cbc4d53071194216a0570c20246a5e6a0",
+      "gitBytes": 355,
+      "frozenWorkingBytes": 368,
+      "crlfOnly": true
+    },
+    {
+      "path": "tests/restart/test_continuation_controls.py",
+      "gitBlobSHA256": "43f49ed09299b1a7c00d226380a5ef743e2a6da742cdd3ae61e3dc1841ef642f",
+      "frozenWorkingBytesSHA256": "11bf45746ea826ca7c1751ac37db3b12236db88d9c157023609e4cf49498268b",
+      "gitBytes": 3408,
+      "frozenWorkingBytes": 3515,
+      "crlfOnly": true
+    },
+    {
+      "path": "tests/restart/test_native_presentation.py",
+      "gitBlobSHA256": "b134270595cd83428c069a0ea455aa670ad6bc28e056f43adda603572bfdbe70",
+      "frozenWorkingBytesSHA256": "1ae2b5d763eda1a7553b20d150113248a1b4d97a9df7dcbe586f16b3a9e6d083",
+      "gitBytes": 2821,
+      "frozenWorkingBytes": 2901,
+      "crlfOnly": true
+    },
+    {
+      "path": "tests/restart/test_native_session.py",
+      "gitBlobSHA256": "9261d7b86a6f1e302cd160ff071aadb86f8f454d7370b3f9e1e14e0f75fbcef5",
+      "frozenWorkingBytesSHA256": "8f37f45dd388b1b856c0dbd2bc2b09827e71b9d9a33575e5cccd8a5b40980bee",
+      "gitBytes": 12463,
+      "frozenWorkingBytes": 12768,
+      "crlfOnly": true
+    },
+    {
+      "path": "tests/restart/test_portable_bootstrap.py",
+      "gitBlobSHA256": "b2b70538585faf2b4215985f7f595b176c58ac6b175f253f928af26b566062a9",
+      "frozenWorkingBytesSHA256": "0ac722ff9e9dc88380c59f00ccd8be9033b9cfc32f3ac1d10b21d09d2f8f86d0",
+      "gitBytes": 13238,
+      "frozenWorkingBytes": 13539,
+      "crlfOnly": true
+    },
+    {
+      "path": "tests/restart/test_sleep_controls.py",
+      "gitBlobSHA256": "6bebd9bdb59c2b89d62cfe22b1c38af5acb315ba0a48139952d7cf4d6b1faacd",
+      "frozenWorkingBytesSHA256": "9fdc40ab675260711a46c9a601204c5794d9891a51002af602353f1312c33f25",
+      "gitBytes": 5470,
+      "frozenWorkingBytes": 5642,
+      "crlfOnly": true
+    }
+  ],
+  "qualification": "Freeze source hashes cover working-copy bytes. Git normalizes these12 paths to LF. No non-line-ending delta exists; delivered ZIP9 members are independently exact and unchanged."
+}

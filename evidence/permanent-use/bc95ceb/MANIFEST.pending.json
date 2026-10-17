@@ -1,0 +1,196 @@
+{
+  "status": "FROZEN_FOCUSED_PASS_LIVE_REVIEW_FULL_GATE_PENDING",
+  "source_commit": "bc95ceb412210e5bb8355e60cdff537088fdf25a",
+  "files": [
+    {
+      "path": "freeze/FREEZE.json",
+      "sha256": "2fd36c6772aef6be81afaa383a511f24c0609a70ca0c3ad39276b7489a679c9a",
+      "bytes": 11022,
+      "source_path": "_scratch/permanent-bc95ceb/FREEZE.json"
+    },
+    {
+      "path": "freeze/ARCHIVE.json",
+      "sha256": "fd9cf9b522f51e3b79acf017ec0e73c147b6bcacf70803543d102a570f2318ad",
+      "bytes": 224,
+      "source_path": "_scratch/permanent-bc95ceb/ARCHIVE.json"
+    },
+    {
+      "path": "freeze/TREE.json",
+      "sha256": "6f1be0675b921220a2ec01fd43917e28f466c71d9d21d2036cbbb5722f294758",
+      "bytes": 258,
+      "source_path": "_scratch/permanent-bc95ceb/TREE.json"
+    },
+    {
+      "path": "freeze/COMPONENT-ALIGNMENT.json",
+      "sha256": "7eed9185302d891da01e7c2f71f8fa0551c02a841e11ed31626f2630d63bdd02",
+      "bytes": 449,
+      "source_path": "_scratch/permanent-bc95ceb/COMPONENT-ALIGNMENT.json"
+    },
+    {
+      "path": "freeze/SOURCE-BYTE-PROVENANCE.json",
+      "sha256": "a666ca27615d572529e03caf945e14b3f40ddff443d7054377913ef3e5acda29",
+      "bytes": 30363,
+      "source_path": "_scratch/permanent-bc95ceb/SOURCE-BYTE-PROVENANCE.json"
+    },
+    {
+      "path": "freeze/build.json",
+      "sha256": "2f592c1dbf8386f2a96144791c52d671ddb11f5ded722bd7104acd0997f47e2a",
+      "bytes": 270,
+      "source_path": "_scratch/permanent-bc95ceb/build.json"
+    },
+    {
+      "path": "freeze/build.stdout.log",
+      "sha256": "bfaedcf11b8b27e4688d7330900b62dbe902a39ab3c05c70e467ac62c5a0b868",
+      "bytes": 94,
+      "source_path": "_scratch/permanent-bc95ceb/build.stdout.log"
+    },
+    {
+      "path": "freeze/build.stderr.log",
+      "sha256": "83dfee279e6bd6afc81bcf38adcfb27c9eaee4ed1fde5e7cf179125b2a4b25c9",
+      "bytes": 274,
+      "source_path": "_scratch/permanent-bc95ceb/build.stderr.log"
+    },
+    {
+      "path": "freeze/root-source-newline-alignment.json",
+      "sha256": "58e78a7b056158e320eb9edec7edb78d65d3c24251cecaed462486ca7b986e3b",
+      "bytes": 4546,
+      "source_path": "_scratch/root-projection-check/source-newline-alignment-bc95ceb.json"
+    },
+    {
+      "path": "zip-proof/package-load.json",
+      "sha256": "bb7780cdf6f3f70814cf04b1efb9b2711df52a71bc9fc2c14f7de389b7301343",
+      "bytes": 886,
+      "source_path": "_scratch/permanent-bc95ceb/zip-proof/package-load.json"
+    },
+    {
+      "path": "zip-proof/probe.mjs",
+      "sha256": "9b2af5efc3866a204bee73cb88f299dc2a6087c78efcd2187b1aa777cedb08bf",
+      "bytes": 1445,
+      "source_path": "_scratch/permanent-bc95ceb/zip-proof/probe.mjs"
+    },
+    {
+      "path": "focused/hooks-presentation-regression.xml",
+      "sha256": "07fa70a121fe5d58bc0dc6c95ef2c362036cd58a5fd4505136afa2d45bcaf3ef",
+      "bytes": 3053,
+      "source_path": "_scratch/hooks-presentation-regression.xml"
+    },
+    {
+      "path": "focused/hooks-budget-target-final.xml",
+      "sha256": "b26744258f8189446a86a69fdd32af095a220a07726f9304e85937c909688a1a",
+      "bytes": 1200,
+      "source_path": "_scratch/hooks-budget-target-final.xml"
+    },
+    {
+      "path": "focused/hooks-budget-old.xml",
+      "sha256": "b661a2637c04e63c7ce51f997b2654d032b7297cc4eec532f179d056c8ef482e",
+      "bytes": 16023,
+      "source_path": "_scratch/hooks-budget-old.xml"
+    },
+    {
+      "path": "focused/hooks-budget-new.xml",
+      "sha256": "846780a377919c9482871b97ff103c3f60a28dbdad64079b54f8cff2bb34cb21",
+      "bytes": 16023,
+      "source_path": "_scratch/hooks-budget-new.xml"
+    },
+    {
+      "path": "focused/hooks-presentation-hygiene.xml",
+      "sha256": "b84e40307715d99005163d180d05dd769af7efbca72440146cc33c415259bec6",
+      "bytes": 555,
+      "source_path": "_scratch/hooks-presentation-hygiene.xml"
+    },
+    {
+      "path": "focused/presentation-hygiene-equivalence.json",
+      "sha256": "337f124053f2ec86e5af9c0170005cf26b839b38d7a9f182931ce9645d6d5179",
+      "bytes": 1012,
+      "source_path": "_scratch/presentation-hygiene-equivalence.json"
+    },
+    {
+      "path": "static/results.json",
+      "sha256": "f8c9029fd399714dddcbd2a8a271f4f152b064074b5138df29b753418c147921",
+      "bytes": 626,
+      "source_path": "_scratch/permanent-bc95ceb/static/results.json"
+    },
+    {
+      "path": "static/ruff.stdout",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "bytes": 19,
+      "source_path": "_scratch/permanent-bc95ceb/static/ruff.stdout"
+    },
+    {
+      "path": "static/ruff.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/permanent-bc95ceb/static/ruff.stderr"
+    },
+    {
+      "path": "static/mypy.stdout",
+      "sha256": "0c37c4158c91ef55c724ba017bf6465f26018199badb08e3ff13f98acdf056c2",
+      "bytes": 44,
+      "source_path": "_scratch/permanent-bc95ceb/static/mypy.stdout"
+    },
+    {
+      "path": "static/mypy.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/permanent-bc95ceb/static/mypy.stderr"
+    },
+    {
+      "path": "focused/final-sdk/exact-large/sdk-output.json",
+      "sha256": "1b5bc61254682ec125c3a3b6e8227fde30bc1a993bb3b7922acea1a257f917a5",
+      "bytes": 974943,
+      "source_path": "_scratch/hooks-presentation-regression/test_native_hook_boundaries_ex0/sdk-output.json"
+    },
+    {
+      "path": "focused/final-sdk/exact-large/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/hooks-presentation-regression/test_native_hook_boundaries_ex0/sdk-stderr.log"
+    },
+    {
+      "path": "focused/final-sdk/history-large/sdk-output.json",
+      "sha256": "78b5fb3c188e0a164c488e97ed06db35ad294d01cf3e5e598e91fb075278f260",
+      "bytes": 1706545,
+      "source_path": "_scratch/hooks-presentation-regression/test_native_hook_boundaries_hi0/sdk-output.json"
+    },
+    {
+      "path": "focused/final-sdk/history-large/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/hooks-presentation-regression/test_native_hook_boundaries_hi0/sdk-stderr.log"
+    },
+    {
+      "path": "focused/final-sdk/page-large/sdk-output.json",
+      "sha256": "8ae3ed8ceb64a0fb6d1b3fe3bcb957982da0ccdd985f201489b42e671838d33f",
+      "bytes": 1025920,
+      "source_path": "_scratch/hooks-presentation-regression/test_native_hook_boundaries_pa2/sdk-output.json"
+    },
+    {
+      "path": "focused/final-sdk/page-large/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/hooks-presentation-regression/test_native_hook_boundaries_pa2/sdk-stderr.log"
+    },
+    {
+      "path": "focused/old256-sdk/sdk-output.json",
+      "sha256": "addd3523611c9bab7c0830709eed600de7f209fdba19eaf3d1d5bcd4ec7b0aa6",
+      "bytes": 4050300,
+      "source_path": "_scratch/hooks-budget-old256/sdk-output.json"
+    },
+    {
+      "path": "focused/old256-sdk/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/hooks-budget-old256/sdk-stderr.log"
+    }
+  ],
+  "source_byte_provenance": "FREEZE.source_files describes actual frozen working-byte SHA, not Gitblob hashes. Independently reconciled47 identical+12CRLF-only,0other differences; see source maps. Package/tree/ZIP bytes unchanged.",
+  "test_provenance": "Coherent21:19 actual installed Pi SDK against scripted fictional localhost provider plus2 focused presentation/realCore receipt tests. Target7 overlaps21 and is not added. Final fixture-only chr(92)/chr(10) preserves exact constructed bytes; two focused cases rerun and static/hook passed. Extension hash unchanged throughout. Old120KB and new120KB simulations intentionally fail; same old32 extension still fails at256KB. The256KB simulator proves the fixture boundary, never actual Luna capacity. Actual Luna failure is separate approved live-failures-v2 subset.",
+  "scope": "Per-tool whole-envelope presentation only, no total model context/token/cost guarantee, no Core API/receipt/history change, no analysis inferred from delivery.",
+  "pending": [
+    "authorized actual new Sleep/adaptation and subsequent ordinary task",
+    "fresh physical independent verdict",
+    "required coherent full gate after live success",
+    "incremental publication/privacy audit"
+  ],
+  "privacy": "Fictional SDK output and public source/hash metadata only. No database, credential/auth/agent/home tree or whole actual live trace copied."
+}

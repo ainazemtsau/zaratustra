@@ -1,0 +1,163 @@
+{
+  "source": "32db2acf436c060dae71d91523f2f8665c25a6cd",
+  "cases": [
+    {
+      "scenario": "invalid-read",
+      "checks": {
+        "exact_extension": true,
+        "runtime_exit_zero": true,
+        "no_extra_provider_calls": true,
+        "corrected_new_call_executed": true,
+        "no_abort": true,
+        "rejected_then_success": true,
+        "exact_completed_delivery": true,
+        "idle": true,
+        "durable_original_and_corrected_calls": true,
+        "durable_both_results": true
+      },
+      "pass": true,
+      "provider_requests": 5
+    },
+    {
+      "scenario": "read-admission",
+      "checks": {
+        "exact_extension": true,
+        "runtime_exit_zero": true,
+        "no_extra_provider_calls": true,
+        "corrected_new_call_executed": true,
+        "no_abort": true,
+        "rejected_then_success": true,
+        "exact_completed_delivery": true,
+        "idle": true,
+        "durable_original_and_corrected_calls": true,
+        "durable_both_results": true,
+        "only_expected_core_rejection": true
+      },
+      "pass": true,
+      "provider_requests": 5
+    },
+    {
+      "scenario": "read-denied",
+      "checks": {
+        "exact_extension": true,
+        "runtime_exit_zero": true,
+        "no_extra_provider_calls": true,
+        "single_injection": true,
+        "stopped_before_new_model_correction": true,
+        "adapter_abort": true,
+        "no_delivery": true,
+        "unresolved_attempt_retained": true,
+        "one_error_not_recoverable": true,
+        "expected_failure": true
+      },
+      "pass": true,
+      "provider_requests": 2
+    },
+    {
+      "scenario": "read-transport",
+      "checks": {
+        "exact_extension": true,
+        "runtime_exit_zero": true,
+        "no_extra_provider_calls": true,
+        "single_injection": true,
+        "stopped_before_new_model_correction": true,
+        "adapter_abort": true,
+        "no_delivery": true,
+        "unresolved_attempt_retained": true,
+        "one_error_not_recoverable": true,
+        "expected_failure": true
+      },
+      "pass": true,
+      "provider_requests": 2
+    },
+    {
+      "scenario": "read-payload",
+      "checks": {
+        "exact_extension": true,
+        "runtime_exit_zero": true,
+        "no_extra_provider_calls": true,
+        "single_injection": true,
+        "stopped_before_new_model_correction": true,
+        "adapter_abort": true,
+        "no_delivery": true,
+        "unresolved_attempt_retained": true,
+        "one_error_not_recoverable": true,
+        "expected_failure": true
+      },
+      "pass": true,
+      "provider_requests": 2
+    },
+    {
+      "scenario": "read-wire",
+      "checks": {
+        "exact_extension": true,
+        "runtime_exit_zero": true,
+        "no_extra_provider_calls": true,
+        "single_injection": true,
+        "stopped_before_new_model_correction": true,
+        "adapter_abort": true,
+        "no_delivery": true,
+        "unresolved_attempt_retained": true,
+        "one_error_not_recoverable": true,
+        "expected_failure": true
+      },
+      "pass": true,
+      "provider_requests": 2
+    },
+    {
+      "scenario": "read-generic",
+      "checks": {
+        "exact_extension": true,
+        "runtime_exit_zero": true,
+        "no_extra_provider_calls": true,
+        "single_injection": true,
+        "stopped_before_new_model_correction": true,
+        "adapter_abort": true,
+        "no_delivery": true,
+        "unresolved_attempt_retained": true,
+        "one_error_not_recoverable": true,
+        "expected_failure": true
+      },
+      "pass": true,
+      "provider_requests": 2
+    },
+    {
+      "scenario": "read-other-op",
+      "checks": {
+        "exact_extension": true,
+        "runtime_exit_zero": true,
+        "no_extra_provider_calls": true,
+        "single_injection": true,
+        "stopped_before_new_model_correction": true,
+        "adapter_abort": true,
+        "no_delivery": true,
+        "unresolved_attempt_retained": true,
+        "one_error_not_recoverable": true,
+        "expected_failure": true
+      },
+      "pass": true,
+      "provider_requests": 2
+    },
+    {
+      "scenario": "write-field",
+      "checks": {
+        "exact_extension": true,
+        "runtime_exit_zero": true,
+        "no_extra_provider_calls": true,
+        "single_injection": true,
+        "stopped_before_new_model_correction": true,
+        "adapter_abort": true,
+        "no_delivery": true,
+        "unresolved_attempt_retained": true,
+        "one_error_not_recoverable": true,
+        "expected_failure": true
+      },
+      "pass": true,
+      "provider_requests": 2
+    }
+  ],
+  "all_pass": true,
+  "real_model_calls": 0,
+  "fault_seam": "Packaged extension untouched; real public grant/revoke for denied; process exit for transport; declared CoreError injection for exact negative field boundaries only",
+  "full_gate_claim": false
+}

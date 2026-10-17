@@ -1,0 +1,12 @@
+{
+  "source_label": "32db2ac",
+  "checks": {
+    "correction_reached": true,
+    "no_adapter_abort": true,
+    "actual_completed_delivery": true,
+    "idle_after_result": true
+  },
+  "pass": true,
+  "requests": 5,
+  "desired_contract": "Known invalid read arguments are rejected before effect, then model can issue a corrected new read and finish; no automatic RPC/network retry."
+}

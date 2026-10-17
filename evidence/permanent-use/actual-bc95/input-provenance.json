@@ -1,0 +1,156 @@
+{
+  "projectionOnly": true,
+  "sourceRawSHA256": "0413ec3e4c37f52a6cdd847ef8781fdd98245632d86e21ba2e4a3d874672c924",
+  "sourceLine": 28,
+  "sourceRecordSHA256": "06615a189a9d5cbff9d5636f8f12f012f7a43cce32b36a05adfdbabdf8755772",
+  "sourceRecordBytes": 911959,
+  "sourcePointers": [
+    "/value/context/messages/2/content/0/text"
+  ],
+  "sourceJSONStringUTF8Bytes": 891249,
+  "sourceJSONStringUTF8SHA256": "ed1751466835fb809a52a6e2c71ed66c8de95cc7f4f5a0ab4aa4d0b4a0a52608",
+  "nestedJSONStringPointersValidated": true,
+  "pins": [
+    {
+      "sourceRef": {
+        "index": 0,
+        "sequence": 56,
+        "sha256": "9e2e3181ee725216dfae3ea313144f65cffaa911909735228599b8a8fa9ae778"
+      },
+      "parsedJSONStringPointers": [
+        "/sleep/sleep_sources/0/source_ref",
+        "/sleep/sleep_sources/0/material",
+        "/sleep/sleep_sources/0/material/observation/raw_base64"
+      ],
+      "materialKeys": [
+        "inputs",
+        "messages",
+        "method",
+        "observation",
+        "prior_messages",
+        "prior_waits",
+        "profile",
+        "resource_reservation",
+        "scope",
+        "tool_ledger"
+      ],
+      "messageCount": 1,
+      "observationKind": "progress",
+      "rawBase64Characters": 106920,
+      "rawBase64UTF8SHA256": "ed97afd3985f02ab984064f651ff0506238b0abf1855ebff28082e6aeef12286",
+      "locallyDecodedObservationBytes": 80189,
+      "locallyDecodedObservationSHA256": "07b59224c6fb2448dfd41a2252c89327574aaa4e1217181d32435d51aed48c48",
+      "locallyDecodedJSONKeys": [
+        "kind",
+        "event"
+      ],
+      "decodedObservationAddedToModelInput": false
+    },
+    {
+      "sourceRef": {
+        "index": 0,
+        "sequence": 60,
+        "sha256": "898dd2d7b537555b3a949c75f795364f8ce4307d813ab61c3e9f9d787c837f9f"
+      },
+      "parsedJSONStringPointers": [
+        "/sleep/sleep_sources/1/source_ref",
+        "/sleep/sleep_sources/1/material",
+        "/sleep/sleep_sources/1/material/observation/raw_base64"
+      ],
+      "materialKeys": [
+        "inputs",
+        "messages",
+        "method",
+        "observation",
+        "prior_messages",
+        "prior_waits",
+        "profile",
+        "resource_reservation",
+        "scope",
+        "tool_ledger"
+      ],
+      "messageCount": 1,
+      "observationKind": "progress",
+      "rawBase64Characters": 717764,
+      "rawBase64UTF8SHA256": "bdd335770f7f38a8579904eb14b5877de464162145e3304e0c4fc28acec68987",
+      "locallyDecodedObservationBytes": 538323,
+      "locallyDecodedObservationSHA256": "9ff9e9551e899787607794b4ba94196bad9556325866b78f23c1248a0c12b31c",
+      "locallyDecodedJSONKeys": [
+        "kind",
+        "event"
+      ],
+      "decodedObservationAddedToModelInput": false
+    },
+    {
+      "sourceRef": {
+        "index": 0,
+        "sequence": 64,
+        "sha256": "0c3c6e0803540de1f925e308fe0118d391da90095702d6470631abd858e15cd0"
+      },
+      "parsedJSONStringPointers": [
+        "/sleep/sleep_sources/2/source_ref",
+        "/sleep/sleep_sources/2/material",
+        "/sleep/sleep_sources/2/material/observation/raw_base64"
+      ],
+      "materialKeys": [
+        "inputs",
+        "messages",
+        "method",
+        "observation",
+        "prior_messages",
+        "prior_waits",
+        "profile",
+        "resource_reservation",
+        "scope",
+        "tool_ledger"
+      ],
+      "messageCount": 1,
+      "observationKind": "progress",
+      "rawBase64Characters": 272,
+      "rawBase64UTF8SHA256": "4ac26fb5c4c05837b94e55416cc724c99555ceb20a6bb6d84fb94870befe9edc",
+      "locallyDecodedObservationBytes": 204,
+      "locallyDecodedObservationSHA256": "77942d22e2cb8f34804cc4cfd7f755b97cc7fa04e018ec9eb313ffd1e17e90aa",
+      "locallyDecodedJSONKeys": [
+        "kind",
+        "event"
+      ],
+      "decodedObservationAddedToModelInput": false
+    },
+    {
+      "sourceRef": {
+        "index": 0,
+        "sequence": 68,
+        "sha256": "aa1c2a4d1014bc552e227696a280e2d941fe4260f3b40da0a3e0b9ac8e851b49"
+      },
+      "parsedJSONStringPointers": [
+        "/sleep/sleep_sources/3/source_ref",
+        "/sleep/sleep_sources/3/material",
+        "/sleep/sleep_sources/3/material/observation/raw_base64"
+      ],
+      "materialKeys": [
+        "inputs",
+        "messages",
+        "method",
+        "observation",
+        "prior_messages",
+        "prior_waits",
+        "profile",
+        "resource_reservation",
+        "scope",
+        "tool_ledger"
+      ],
+      "messageCount": 1,
+      "observationKind": "progress",
+      "rawBase64Characters": 416,
+      "rawBase64UTF8SHA256": "47d5057f45ecc12664f0b40681410afae99240fe27f249bd290c08be232c46bb",
+      "locallyDecodedObservationBytes": 312,
+      "locallyDecodedObservationSHA256": "60f7a868f7eef42b57505e15baea8448d1d77112c2d387600320aecdaabdfc78",
+      "locallyDecodedJSONKeys": [
+        "kind",
+        "event"
+      ],
+      "decodedObservationAddedToModelInput": false
+    }
+  ],
+  "qualification": "Outer JSON pointer resolves to actual model-input text, itself JSON parsed locally for listed nested pointers. Material objects/messages/method were present, while observations remained raw_base64; local decoding is diagnostic and was NOT added to model input. No claim that Luna decoded or understood observations."
+}

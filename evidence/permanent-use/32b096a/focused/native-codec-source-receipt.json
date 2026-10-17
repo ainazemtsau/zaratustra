@@ -1,0 +1,27 @@
+[
+  {
+    "path": "pi-package/extension.ts",
+    "workingBytes": 26965,
+    "workingSHA256": "5c35a58862d5248142f9ac9fd4dda350011373f0f0b7ab13802ef1b5618d8658"
+  },
+  {
+    "path": "tests/restart/native_boundary_fixture.mjs",
+    "workingBytes": 12889,
+    "workingSHA256": "ddedd389fd7bba922ae8c2d0af8f9e81ba8a6e3b6704a14c465bdda54a50c10e"
+  },
+  {
+    "path": "tests/restart/test_native_hook_boundaries.py",
+    "workingBytes": 24657,
+    "workingSHA256": "ce18425d703946e43fc35f50edc80b0b09fdc8fa139ddfb2a216b7b79af8dea3"
+  },
+  {
+    "path": "tests/restart/native_presentation_fixture.mjs",
+    "workingBytes": 13220,
+    "workingSHA256": "843392ad460d25f7340b04413a029ca2da8fccefdc3b5b1288c6f9c104a88dca"
+  },
+  {
+    "path": "tests/restart/test_native_presentation.py",
+    "workingBytes": 3172,
+    "workingSHA256": "a3466c0774feaf99a838e87bd1591a28eb65a68b290be0977c04ea8c15cd1fbf"
+  }
+]

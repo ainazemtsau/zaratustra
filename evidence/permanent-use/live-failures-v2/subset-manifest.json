@@ -1,0 +1,61 @@
+{
+  "purpose": "Sanitized selected evidence only; private raw traces and DB remain local. Root/privacy review required before inclusion.",
+  "realModelCallsThisPreparation": 0,
+  "ownerAcceptance": "pending",
+  "cases": [
+    {
+      "case": "158617f",
+      "descriptor": "158617f-descriptor.json",
+      "selected": "158617f-selected-records.jsonl",
+      "rawSHA256": "bee6eb567ad9c0c3196b50ee8648aecd65d2890a1e6c36e9d36ea4015390a403",
+      "rawBytes": 4484167,
+      "actualStageSends": 1,
+      "cumulativeTotal": 27
+    },
+    {
+      "case": "32db2ac",
+      "descriptor": "32db2ac-descriptor.json",
+      "selected": "32db2ac-selected-records.jsonl",
+      "rawSHA256": "26c8bf973e720816e68474ee452d9540bdbf442b6719f096876039bfcf180bd1",
+      "rawBytes": 52545107,
+      "actualStageSends": 2,
+      "cumulativeTotal": 29
+    }
+  ],
+  "files": [
+    {
+      "name": "158617f-descriptor.json",
+      "bytes": 1770,
+      "sha256": "4b1c8aa11917d3fbe6c8554b1462b641c33512d8e6ff402d53583aed0bfc8346"
+    },
+    {
+      "name": "158617f-selected-records.jsonl",
+      "bytes": 14288,
+      "sha256": "33294c1208bf3b6635dda3ff95122ccfa6d9a379c06e35d037f0f2704443b060"
+    },
+    {
+      "name": "32db2ac-descriptor.json",
+      "bytes": 1891,
+      "sha256": "604eeeb5f2824f7a7cf463a4551e00ccb179c6145446c104ccc242d6b90b4e6c"
+    },
+    {
+      "name": "32db2ac-selected-records.jsonl",
+      "bytes": 33701,
+      "sha256": "bf9c76d989b0bd0a298768fbc0c549f97f0b532251f1a3f490b7678689174fe2"
+    },
+    {
+      "name": "provenance-selfcheck.json",
+      "bytes": 11038,
+      "sha256": "42549a0ce77f07f33b3540d636a5f0806b5961d5536f8f85f1574c6fa9a4a812"
+    }
+  ],
+  "selectedFilesBytes": 62688,
+  "requiresIndependentPrivacyReview": true,
+  "version": 2,
+  "previousDraft": {
+    "path": "_scratch\\root-native-live-proof-envelopefix\\public-evidence",
+    "manifestSHA256": "60ced85cb8a13cb1fb6425265e730dd2c8c25546770397cd78214d62e0801e09",
+    "unchanged": true
+  },
+  "selfcheck": "provenance-selfcheck.json"
+}

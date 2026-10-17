@@ -1,0 +1,142 @@
+{
+  "status": "SUPERSEDED_NOT_READY_SLEEP_CONTEXT_MAX_BYTES",
+  "source_commit": "f2c4b2bb2c8cca28b4a55c80453ed416275d416a",
+  "files": [
+    {
+      "path": "freeze/FREEZE.json",
+      "sha256": "6e7666de61ac8a7b5fe69404a0031b171a8419ef69eb4d9a2f572a1ec4fc0927",
+      "bytes": 10374,
+      "source_path": "_scratch/permanent-f2c4b2b/FREEZE.json"
+    },
+    {
+      "path": "freeze/ARCHIVE.json",
+      "sha256": "91883d95de5b634fc5ae328e977cd1afe1f91f90606508a7da700a244bba72a8",
+      "bytes": 222,
+      "source_path": "_scratch/permanent-f2c4b2b/ARCHIVE.json"
+    },
+    {
+      "path": "pi-update/cli.json",
+      "sha256": "fda47787ed92919c54726f8c497cad6c427716d7ddacd77ac3e6beccd2c72b5e",
+      "bytes": 1834,
+      "source_path": "_scratch/permanent-f2c4b2b/pi-update/cli.json"
+    },
+    {
+      "path": "pi-update/package-load.json",
+      "sha256": "26bec1cad9dd1429aebbf4c6000ceee5689b6d3dd288ef1f63be8d9969d677e2",
+      "bytes": 1099,
+      "source_path": "_scratch/permanent-f2c4b2b/pi-update/package-load.json"
+    },
+    {
+      "path": "pi-update/probe.mjs",
+      "sha256": "a43d7fcd229fb8f078caef32e1cf0097d21326599cefccb0f195012a66263d2c",
+      "bytes": 1405,
+      "source_path": "_scratch/permanent-f2c4b2b/pi-update/probe.mjs"
+    },
+    {
+      "path": "focused/hooks-queue-regression.xml",
+      "sha256": "02c376ce2f21b0009aaaea96c3e07e6d006c07b975009ddc45211e04a9186386",
+      "bytes": 1570,
+      "source_path": "_scratch/hooks-queue-regression.xml"
+    },
+    {
+      "path": "pi-update/local-path-audit.jsonl",
+      "sha256": "d483be2e400478ce8353717c4e37858b356f3e47ae8161a3823e2840e1ed4e3c",
+      "bytes": 1998,
+      "source_path": "_scratch/root-pi-update-path/audit-output.jsonl"
+    },
+    {
+      "path": "pi-update/local-path-audit.mjs",
+      "sha256": "ca6522b0fe19a6b037677c277074a0ac8f21c4b197ec3b3522e220a8720b5d88",
+      "bytes": 2409,
+      "source_path": "_scratch/root-pi-update-path/audit.mjs"
+    },
+    {
+      "path": "focused/parallel-lifecycle/sdk-output.json",
+      "sha256": "3f11cff6b232fcd26f2337e106c88e6e492dc02f665215f63dcf4fa3cbbffbf6",
+      "bytes": 584764,
+      "source_path": "_scratch/hooks-queue-regression/test_native_hook_boundaries_pa0/sdk-output.json"
+    },
+    {
+      "path": "focused/parallel-lifecycle/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/hooks-queue-regression/test_native_hook_boundaries_pa0/sdk-stderr.log"
+    },
+    {
+      "path": "focused/parallel-rejection/sdk-output.json",
+      "sha256": "b413c608874bd4b682fd5bd1a6d8c7562cfd3af2f956ab157d8ebd6651c4cef2",
+      "bytes": 596682,
+      "source_path": "_scratch/hooks-queue-regression/test_native_hook_boundaries_pa1/sdk-output.json"
+    },
+    {
+      "path": "focused/parallel-rejection/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/hooks-queue-regression/test_native_hook_boundaries_pa1/sdk-stderr.log"
+    },
+    {
+      "path": "focused/review-cancel-normal/sdk-output.json",
+      "sha256": "4b2715a11cc7a802b122691ae41bea9550f9e5dabb45470ddc7dc280012af3c2",
+      "bytes": 1189187,
+      "source_path": "_scratch/hooks-queue-regression/test_native_hook_boundaries_re2/sdk-output.json"
+    },
+    {
+      "path": "focused/review-cancel-normal/sdk-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/hooks-queue-regression/test_native_hook_boundaries_re2/sdk-stderr.log"
+    },
+    {
+      "path": "stopped-gate/launch.json",
+      "sha256": "bd35ef0f06c661a78a87d37c0267bc8012235b8dbdc4f5be0e90b0c8ca4e93b3",
+      "bytes": 1126,
+      "source_path": "_scratch/permanent-f2c4b2b/gate/launch.json"
+    },
+    {
+      "path": "stopped-gate/stdout.txt",
+      "sha256": "dc07af18485a6c01a8153fc51683a40f61055cfb9a59651fbe8e162f5478ed49",
+      "bytes": 4017,
+      "source_path": "_scratch/permanent-f2c4b2b/gate/stdout.txt"
+    },
+    {
+      "path": "stopped-gate/stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_path": "_scratch/permanent-f2c4b2b/gate/stderr.txt"
+    },
+    {
+      "path": "stopped-gate/result.json",
+      "sha256": "ff7cf014ee938da12a48735859ac87350639a81cf801601adc9ac2bff5657c32",
+      "bytes": 305,
+      "source_path": "_scratch/permanent-f2c4b2b/gate/result.json"
+    },
+    {
+      "path": "sleep-diagnosis/sleep-size-readonly.json",
+      "sha256": "482e455d0b7760944e54052dc9a2a2ef8d1643b67e760494a768872a1760a162",
+      "bytes": 10757,
+      "source_path": "_scratch/root-native-live-proof-fifo/sleep-size-readonly.json"
+    },
+    {
+      "path": "sleep-diagnosis/sleep-cutoff-sizes-readonly.json",
+      "sha256": "895dd94c193f815d61b717ad143882f754b9fe1e1baf8fe4e5d6e0d450d14ab2",
+      "bytes": 4113,
+      "source_path": "_scratch/root-native-live-proof-fifo/sleep-cutoff-sizes-readonly.json"
+    },
+    {
+      "path": "sleep-diagnosis/sleep-context-diagnostic.json",
+      "sha256": "8d89c06335546d4a6fca6b0e308465f4bddddc99171fd5295c1249300ac02937",
+      "bytes": 58030,
+      "source_path": "_scratch/root-native-live-proof-fifo/sleep-context-diagnostic.json"
+    }
+  ],
+  "privacy": "Selected fictional SDK raw/metadata and zero-inference disposable package update only. No Core database, owner credential, provider authentication, private Activity or full scratch copies.",
+  "prior_failed_candidate": "../2b472e2/MANIFEST.pending.json",
+  "focused_provenance": "Affected SDK controls ran before source commit with unchanged source bytes. Real installed Pi SDK plus explicit source-Python bootstrap seam; fictional localhost responses; artificial acquired-lock delay makes concurrency deterministic. Actual installed package bootstrap/live proof is separately attributed.",
+  "pending": [
+    "exact full native gate exit/raw logs",
+    "root paid review/reopen/Sleep curated proof",
+    "fresh physical independent verdict",
+    "final publication audit"
+  ],
+  "actual_blocker": "Actual public Sleep preparation rejects 3,435,611 bytes against existing1,048,576 before model/claim; selected whole-source material dominates. Existing unclaimed ready Work must be recovered without reset."
+}

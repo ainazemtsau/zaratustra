@@ -1,0 +1,17 @@
+{
+  "source_commit": "32db2acf436c060dae71d91523f2f8665c25a6cd",
+  "compared_to": "158617f8e14abaee6f464f96e20ce8e82feb9090",
+  "unchanged_files": [
+    "bootstrap.mjs",
+    "package.json",
+    "README.md",
+    "release.json",
+    "requirements.txt",
+    "wheels/SHA256SUMS",
+    "wheels/zaratustra_core-0.2.0-py3-none-any.whl",
+    "wheels/zaratustra_next-0.2.0-py3-none-any.whl"
+  ],
+  "changed_files": [
+    "extension.ts"
+  ]
+}

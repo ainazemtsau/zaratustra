@@ -1,0 +1,12 @@
+import {pathToFileURL} from 'node:url';
+import {resolve,join} from 'node:path';
+import {writeFile} from 'node:fs/promises';
+const sdk=await import(pathToFileURL('C:/Users/Anton/AppData/Roaming/npm/node_modules/@earendil-works/pi-coding-agent/dist/index.js').href);
+const root=resolve('_scratch/permanent-2b472e2/pi-install'),agentDir=join(root,'agent'),cwd=join(root,'fictional-project');
+const loader=new sdk.DefaultResourceLoader({cwd,agentDir,settingsManager:sdk.SettingsManager.create(cwd,agentDir),noSkills:true,noPromptTemplates:true,noThemes:true,noContextFiles:true});
+await loader.reload();
+const loaded=loader.getExtensions();
+const result={source:'2b472e295e09ad80bc2279099817e830c95db3b0',pi:sdk.VERSION,agentDir,cwd,errors:loaded.errors,extensions:loaded.extensions.map(e=>({path:e.path,commands:[...e.commands.keys()],tools:[...e.tools.keys()]})),modelSends:0,provenance:'actual Pi CLI install + actual default resource loader consuming installed settings; no extension-path override, model runtime, prompt, auth access, bootstrap or Core init'};
+await writeFile(join(root,'package-load.json'),JSON.stringify(result,null,2));
+if(loaded.errors.length||!loaded.extensions.some(e=>e.commands.has('zaratustra')))throw new Error(JSON.stringify(result));
+console.log(JSON.stringify(result));

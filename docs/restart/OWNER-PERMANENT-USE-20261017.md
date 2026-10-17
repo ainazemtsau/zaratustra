@@ -97,4 +97,19 @@ repository for personal work is separate; this does not create that repository,
 implement synchronization, or authorize uploading Activity data or authentication.
 Main merge and release publication remain outside this delivery.
 
+The owner explicitly approved the bounded Sleep continuation proposal:
+
+> Да, реализовать продолжение Sleep (рекомендуется)
+
+The approved exact proposal has SHA256
+`7c5c9f329da56d7db0350277b5111971ca9d33892c80c250beb646be1f1765f9`
+and is retained at
+[the approved proposal](../../evidence/permanent-use/continuation-proposal/APPROVED-PROPOSAL.md).
+It authorizes verified successor Works, exact predecessor evidence and a durable
+data-protocol upgrade that refuses old writers while preserving existing Activity,
+IDs, history and immutable v1 bytes. It does not authorize reopening completed
+results, automatic analysis, a required finding, a new server/table/sidecar truth,
+production model caps or semantic content migration. Implementation and checks
+remain pending; the public source/evidence checkpoint is explicitly NOT_READY.
+
 END_OF_FILE: OWNER-PERMANENT-USE-20261017.md

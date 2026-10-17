@@ -1,0 +1,38 @@
+{
+  "sourceCommit": "32db2acf436c060dae71d91523f2f8665c25a6cd",
+  "packageDigest": "4a572fed7b81b04697ba0c90d57c26bd66cb0239f3e0af1fee7b2c1e887bd5ef",
+  "sourceRaw": {
+    "repositoryRelativePath": "_scratch/root-native-live-proof-readfix/evidence/sleep-1792221888461.jsonl",
+    "sha256": "26c8bf973e720816e68474ee452d9540bdbf442b6719f096876039bfcf180bd1",
+    "bytes": 52545107,
+    "lineCount": 57,
+    "published": false
+  },
+  "sourceSummary": {
+    "repositoryRelativePath": "_scratch/root-native-live-proof-readfix/sleep-readfix-attempt-summary.json",
+    "sha256": "1cc6c93f5760aeddb7b6349ad37d31f0ace35dd902b932777df639180c9d7419",
+    "published": false
+  },
+  "ledger": {
+    "sha256": "2d3c1f2c09b862fda38c5f551a9c7c8ca827d82612d04c6f02b2bb059f5fe747",
+    "prior": 27,
+    "total": 29,
+    "halted": true,
+    "chains": [
+      {
+        "id": "sleep-1792221888461",
+        "stage": "sleep",
+        "attempts": 2,
+        "status": "error"
+      }
+    ]
+  },
+  "selectedRecords": "32db2ac-selected-records.jsonl",
+  "selectedRecordCount": 27,
+  "interpretation": "One NEW Sleep at currentcutoff930, following exact32db attach and explicit public cancellation of old69cc. First valid read_history succeeded; second provider stream rejected oversized input. No Sleep analysis/Result/Memory/Method adaptation. New Work blocked, Attempt unknown. Halted29/46; no retry/cancel/ordinary.",
+  "ownerAcceptance": "pending",
+  "boundsQualification": "These are observed finite traces, not universal reliability or semantic understanding claims.",
+  "provenanceVersion": 2,
+  "priorDraftDescriptorSHA256": "521d79128c58766dfe1858f907a2ca5a330a3cb2b9fb95a18f72385e1caf186c",
+  "provenanceCorrection": "Every declared JSON pointer resolved against the exact original line. Absent optional fields are omitted from sourcePointers and null projections."
+}

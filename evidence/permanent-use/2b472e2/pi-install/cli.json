@@ -1,0 +1,21 @@
+[
+  {
+    "command": [
+      "pi",
+      "install",
+      "C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\delivery\\zaratustra-pi-0.2.0"
+    ],
+    "exit": 0,
+    "stdout": "Installing C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\delivery\\zaratustra-pi-0.2.0...\nInstalled C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\delivery\\zaratustra-pi-0.2.0\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "pi",
+      "list"
+    ],
+    "exit": 0,
+    "stdout": "User packages:\n  ..\\..\\..\\..\\delivery\\zaratustra-pi-0.2.0\n    C:\\projects\\zaratustra\\.worktrees\\restart-first-release\\delivery\\zaratustra-pi-0.2.0\n",
+    "stderr": ""
+  }
+]

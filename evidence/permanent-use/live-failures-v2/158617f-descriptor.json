@@ -1,0 +1,38 @@
+{
+  "sourceCommit": "158617f8e14abaee6f464f96e20ce8e82feb9090",
+  "packageDigest": "4b1ba5b12b60b39e79c1b2784781c21e62c1b6aeb3394b7002484ba086ec6973",
+  "sourceRaw": {
+    "repositoryRelativePath": "_scratch/root-native-live-proof-updatefix/evidence/sleep-1792220921878.jsonl",
+    "sha256": "bee6eb567ad9c0c3196b50ee8648aecd65d2890a1e6c36e9d36ea4015390a403",
+    "bytes": 4484167,
+    "lineCount": 47,
+    "published": false
+  },
+  "sourceSummary": {
+    "repositoryRelativePath": "_scratch/root-native-live-proof-updatefix/sleep-update-attempt-summary.json",
+    "sha256": "46e70bdc15d78e197d5cd8d2909da21d3adf99cff4b2ac0d69c17a987140c023",
+    "published": false
+  },
+  "ledger": {
+    "sha256": "0d7820c256e5fda3d45a1781b40b18e1158e805ef8e45dd7a56d88374d9ea0b0",
+    "prior": 26,
+    "total": 27,
+    "halted": true,
+    "chains": [
+      {
+        "id": "sleep-1792220921878",
+        "stage": "sleep",
+        "attempts": 1,
+        "status": "error"
+      }
+    ]
+  },
+  "selectedRecords": "158617f-selected-records.jsonl",
+  "selectedRecordCount": 16,
+  "interpretation": "Actualupdate succeeded andsameSleepWork recovered; Sleep aborted on invalid read_history conversation argument by product visiblecatch. No SleepResult/analysis/Memory/Methodadaptation retained.",
+  "ownerAcceptance": "pending",
+  "boundsQualification": "These are observed finite traces, not universal reliability or semantic understanding claims.",
+  "provenanceVersion": 2,
+  "priorDraftDescriptorSHA256": "dca471518a0b005678cc0cbef65560c4c72ee56067cdd27eb9b74445d30c2df6",
+  "provenanceCorrection": "Every declared JSON pointer resolved against the exact original line. Absent optional fields are omitted from sourcePointers and null projections."
+}
