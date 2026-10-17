@@ -9,7 +9,7 @@ from uuid import uuid4
 from zaratustra_core import Core, CoreError, digest
 
 from .coordinator import Coordinator
-from .ordinary import EXECUTION_ID
+from .ordinary import EXECUTION_ID, SETUP_ID
 
 
 def delivery(
@@ -29,7 +29,10 @@ def delivery(
     for result in reversed(snapshot["results"]):
         work = works[attempts[result["attempt"]]["work"]]
         body = json.loads(work["body"])
-        if body["method_ref"]["id"] != EXECUTION_ID or work["status"] != "completed":
+        if (
+            body["method_ref"]["id"] not in {EXECUTION_ID, SETUP_ID}
+            or work["status"] != "completed"
+        ):
             continue
         if activity is not None and body["scope"] != activity:
             continue

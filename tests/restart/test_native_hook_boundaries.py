@@ -50,15 +50,8 @@ def test_native_hook_boundaries(tmp_path: Path, scenario: str) -> None:
     assert command, "Required installed Pi SDK unavailable"
     sdk = Path(command).parent / "node_modules/@earendil-works/pi-coding-agent"
     route = {
-        "changes": [
-            {
-                "id": "fictional",
-                "kind": "activity",
-                "key": "fictional",
-                "body": "Fictional boundary task",
-            }
-        ],
-        "expected_heads": {"fictional": 0},
+        "changes": [],
+        "expected_heads": {},
         "outputs": [{"id": "fictional", "revision": 1}],
         "next_work": {"scope": "fictional", "goal": "Fictional task", "inputs": []},
     }

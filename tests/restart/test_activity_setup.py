@@ -231,6 +231,11 @@ def test_duplicate_terminal_and_cancel_do_not_repeat_saved_step(tmp_path: Path) 
     origin = route(native)["current"]
     native.tool("result", "stage", {"outputs": [{"id": "fictional", "revision": 1}]}, origin)
     result = native.settled("actual", "The useful step.", False, origin=origin)
+    from zaratustra_app.native_verdict import delivery
+
+    shown = delivery(core, token, "fictional")
+    assert shown["attempt_id"] == origin["attempt"] and shown["review"] is None
+    assert shown["result"]["text"] == "The useful step."
     assert native.settled("actual", "The useful step.", False, origin=origin) == result
     with pytest.raises(CoreError, match="native.terminal"):
         native.settled("different", "Replacement text", False, origin=origin)
