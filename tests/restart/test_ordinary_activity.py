@@ -238,6 +238,7 @@ def test_native_cap_below_sdk_floor_refused_before_runtime(tmp_path: Path, cap: 
             endpoint="https://api.openai.com/v1",
             model="gpt-6-luna",
             auth_mode="pi-chatgpt",
+            native_resource_mode="calls-only",
             auth_path=str(tmp_path / "unused-auth.json"),
             max_tokens=cap,
             context_window=8192,

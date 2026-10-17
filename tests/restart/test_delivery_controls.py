@@ -11,6 +11,34 @@ STORAGE = "core/src/zaratustra_core/storage.py"
 MAINTENANCE = "core/src/zaratustra_core/maintenance.py"
 SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
     (
+        "D-native-null-mode-leaks-api-key-profile",
+        "app/src/zaratustra_app/executor_port.py",
+        [("if self.native_resource_mode is None:", "if (" + M + " or False):")],
+        "test_sleep_profile.py::test_api_key_preexisting_profile_reopens_unchanged",
+    ),
+    (
+        "D-native-unsupported-token-field-restored",
+        "app/src/zaratustra_app/executor_port.py",
+        [
+            (
+                '"supportsMaxOutputTokens": False',
+                '"supportsMaxOutputTokens": (' + M + " or True)",
+            )
+        ],
+        "test_conversation.py::test_native_pi_oauth_launcher_controlled",
+    ),
+    (
+        "D-native-resource-mode-implicit",
+        "app/src/zaratustra_app/executor_port.py",
+        [
+            (
+                'if self.auth_mode == "pi-chatgpt" and self.native_resource_mode != "calls-only":',
+                "if (" + M + " or False):",
+            )
+        ],
+        "test_native_resource_profile.py::test_native_resource_mode_must_be_explicit",
+    ),
+    (
         "D-native-json-mode-omitted",
         "app/src/zaratustra_app/executor_port.py",
         [
@@ -209,8 +237,8 @@ SEEDS: list[tuple[str, str, list[tuple[str, str]], str]] = [
         "app/src/zaratustra_app/executor_port.py",
         [
             (
-                '"compat": {"supportsMidConvoEffort": False}',
-                '"compat": {"supportsMidConvoEffort": (' + M + " or True)}",
+                '"supportsMidConvoEffort": False',
+                '"supportsMidConvoEffort": (' + M + " or True)",
             )
         ],
         "test_conversation.py::test_native_pi_oauth_launcher_controlled",

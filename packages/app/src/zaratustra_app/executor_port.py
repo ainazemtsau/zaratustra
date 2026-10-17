@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Protocol, cast
 
@@ -83,6 +83,7 @@ class LiveProfile:
     timeout: int = 150
     auth_mode: str = "api-key"
     auth_path: str | None = None
+    native_resource_mode: str | None = None
 
     def __post_init__(self) -> None:
         if any(
@@ -92,8 +93,13 @@ class LiveProfile:
             for v in (self.max_tokens, self.context_window, self.timeout)
         ):
             raise CoreError("invalid_request", "live_profile")
+        if self.auth_mode == "pi-chatgpt" and self.native_resource_mode != "calls-only":
+            raise CoreError("unsupported_capability", "native.resource_mode.calls_only_required")
+        if self.auth_mode != "pi-chatgpt" and self.native_resource_mode is not None:
+            raise CoreError("invalid_request", "live_profile.native_resource_mode")
         if self.auth_mode == "pi-chatgpt" and 0 < self.max_tokens < 16:
-            raise CoreError("unsupported_capability", "native.max_output_tokens.minimum16")
+            # Retained local SDK sizing admission; native has no hard token bound.
+            raise CoreError("unsupported_capability", "native.local_context_sizing.minimum16")
         if (
             not self.endpoint.startswith("https://")
             or not self.model
@@ -115,6 +121,12 @@ class LiveProfile:
             or self.max_tokens > self.context_window
         ):
             raise CoreError("invalid_request", "live_profile")
+
+    def configuration(self) -> dict[str, Any]:
+        value = asdict(self)
+        if self.native_resource_mode is None:
+            del value["native_resource_mode"]
+        return value
 
     def bearer(self) -> str:
         value = os.environ.get(self.credential_env)
@@ -218,7 +230,10 @@ class Pi:
                                         # Pi's automatic ChatGPT compatibility detection.
                                         # Use its native switch: keep effective reasoning
                                         # at request level, without unsupported input items.
-                                        "compat": {"supportsMidConvoEffort": False},
+                                        "compat": {
+                                            "supportsMidConvoEffort": False,
+                                            "supportsMaxOutputTokens": False,
+                                        },
                                     }
                                 },
                             }

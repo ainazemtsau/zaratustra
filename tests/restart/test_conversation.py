@@ -277,9 +277,48 @@ def response_events(text: str) -> bytes:
     ).encode()
 
 
+def response_tool_events() -> bytes:
+    intent = {
+        "changes": [
+            {
+                "id": "native-tool-note",
+                "kind": "data",
+                "key": "native-note",
+                "scope": "model-selected",
+                "body": "fictional durable tool effect",
+            }
+        ],
+        "expected_heads": {"native-tool-note": 0},
+    }
+    item: dict[str, Any] = {
+        "type": "function_call",
+        "id": "fc_fictional",
+        "call_id": "call_fictional",
+        "name": "zara_change",
+        "arguments": json.dumps({"intent_json": json.dumps(intent)}),
+        "status": "completed",
+    }
+    response: dict[str, Any] = {
+        "id": "resp-fictional-tool",
+        "status": "completed",
+        "output": [item],
+        "usage": {"input_tokens": 20, "output_tokens": 20, "total_tokens": 40},
+    }
+    events: list[dict[str, Any]] = [
+        {"type": "response.created", "response": response | {"output": []}},
+        {"type": "response.output_item.added", "output_index": 0, "item": item},
+        {"type": "response.output_item.done", "output_index": 0, "item": item},
+        {"type": "response.completed", "response": response},
+    ]
+    return "".join(
+        "event: " + e["type"] + chr(10) + "data: " + json.dumps(e) + chr(10) * 2 for e in events
+    ).encode()
+
+
+@pytest.mark.parametrize("tool_followup", [False, True])
 @pytest.mark.parametrize("max_tokens", [16, 64])
 def test_native_pi_oauth_launcher_controlled(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, max_tokens: int
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, max_tokens: int, tool_followup: bool
 ) -> None:
     """Actual Pi SDK with FICTIONAL OAuth; no external model or account access."""
     auth = tmp_path / "fictional-auth.json"
@@ -326,16 +365,21 @@ def test_native_pi_oauth_launcher_controlled(
                 and payload["store"] is False
                 and payload["stream"] is True
             )
-            assert payload["max_output_tokens"] == max_tokens
+            assert "max_output_tokens" not in payload
             assert payload["text"] == {"format": {"type": "json_object"}}
             # The native SDK must use the selected effort at request level: the
             # ChatGPT route rejects configuration_update input items.
             assert payload["reasoning"]["effort"] == "medium"
-            assert [item.get("role") for item in payload["input"]] == ["developer", "user"]
+            assert not any(i.get("type") == "configuration_update" for i in payload["input"])
+            assert [item.get("role") for item in payload["input"][:2]] == ["developer", "user"]
             assert payload["input"][0]["content"]
             assert "mechanical input" in payload["input"][1]["content"][0]["text"]
             assert [tool["name"] for tool in payload["tools"]] == ["zara_change"]
             received.append(payload)
+            if tool_followup and len(received) == 2:
+                return Response(response_tool_events())
+            if tool_followup and len(received) == 3:
+                assert any(i.get("type") == "function_call_output" for i in payload["input"])
             supplied = json.loads(payload["input"][1]["content"][0]["text"])
             output = (
                 routing(supplied["context"], "model-selected") if len(received) == 1 else terminal
@@ -350,6 +394,7 @@ def test_native_pi_oauth_launcher_controlled(
         endpoint="https://api.openai.com/v1",
         model="gpt-6-luna",
         auth_mode="pi-chatgpt",
+        native_resource_mode="calls-only",
         auth_path=str(auth),
         max_tokens=max_tokens,
         context_window=8192,
@@ -357,7 +402,8 @@ def test_native_pi_oauth_launcher_controlled(
     executor = Pi(pi_cli(), tmp_path / "pi", live.endpoint, live=live)
     result = session.run(executor, {"profile": "fictional-native-oauth"}, 4)
     assert result["text"] == terminal["text"] and result["state"] == "completed"
-    assert len(received) == 2 and executor.provider_sends == 1
+    assert len(received) == (3 if tool_followup else 2)
+    assert executor.provider_sends == (2 if tool_followup else 1)
     assert sum(a["reserve"] for a in inspect(core, "actions")) == 4
     assert next(h for h in inspect(core, "heads") if h["id"] == "model-selected")["revision"] == 2
     stdout = next((tmp_path / "pi").glob("*/native-stdout.jsonl")).read_bytes()
@@ -369,6 +415,66 @@ def test_native_pi_oauth_launcher_controlled(
     selected = models["providers"]["openai"]["modelOverrides"]["gpt-6-luna"]
     assert selected["maxTokens"] == max_tokens and selected["contextWindow"] == 8192
     assert selected["samplingParams"] == {"text": {"format": {"type": "json_object"}}}
+    assert selected["compat"]["supportsMaxOutputTokens"] is False
+    if tool_followup:
+        assert (
+            next(h for h in inspect(core, "heads") if h["id"] == "native-tool-note")["revision"]
+            == 1
+        )
+        assert len(inspect(core, "tool_calls")) == 1
+        assert (
+            Conversation(Core(core.root), token).run(
+                executor, {"profile": "fictional-native-oauth"}, 4
+            )["state"]
+            == "idle"
+        )
+        assert len(received) == 3
+
+
+def test_api_key_pi_retains_output_field(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    received: list[dict[str, Any]] = []
+
+    class Response(io.BytesIO):
+        status = 200
+        headers = {"Content-Type": "text/event-stream"}
+
+    class ControlledTransport:
+        def open(self, request: Any, timeout: int) -> Response:
+            assert request.full_url == "https://provider.invalid/v1/responses"
+            assert request.get_header("Authorization") == "Bearer fictional-api-key"
+            payload = json.loads(request.data)
+            assert payload["max_output_tokens"] == 64 and "text" not in payload
+            received.append(payload)
+            supplied = json.loads(payload["input"][1]["content"][0]["text"])
+            output = (
+                routing(supplied["context"], "api-key-activity")
+                if len(received) == 1
+                else {
+                    "state": "completed",
+                    "text": "fictional API-key result",
+                    "outputs": [{"id": "api-key-activity", "revision": 1}],
+                }
+            )
+            return Response(response_events(json.dumps(output)))
+
+    monkeypatch.setattr(bridge, "build_opener", lambda *_: ControlledTransport())
+    monkeypatch.setenv("FICTIONAL_API_KEY", "fictional-api-key")
+    core, token = Core.initialize(tmp_path / "space")
+    session = Conversation(core, token)
+    session.submit("API-key mechanics only.")
+    profile = LiveProfile(
+        endpoint="https://provider.invalid/v1",
+        model="fictional-model",
+        credential_env="FICTIONAL_API_KEY",
+        max_tokens=64,
+        context_window=8192,
+    )
+    executor = Pi(pi_cli(), tmp_path / "pi", profile.endpoint, live=profile)
+    assert (
+        session.run(executor, {"profile": "fictional-api-key"}, 4)["text"]
+        == "fictional API-key result"
+    )
+    assert len(received) == 2
 
 
 @pytest.mark.parametrize("mode", ["api-key-refused", "refresh-error"])
@@ -422,6 +528,7 @@ def test_native_auth_errors_never_fallback_or_leak(
         endpoint="https://api.openai.com/v1",
         model="gpt-6-luna",
         auth_mode="pi-chatgpt",
+        native_resource_mode="calls-only",
         auth_path=str(auth),
         timeout=30,
     )

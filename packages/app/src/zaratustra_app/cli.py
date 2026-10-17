@@ -3,7 +3,6 @@
 import argparse
 import json
 import sys
-from dataclasses import asdict
 from pathlib import Path
 from uuid import uuid4
 
@@ -89,7 +88,7 @@ def _main() -> int:
         core = Core(args.data_root)
         token = (args.data_root / "owner.credential").read_text(encoding="utf-8").strip()
         session = Conversation(core, token, args.conversation)
-        descriptor = asdict(profile) | {
+        descriptor = profile.configuration() | {
             "pi_cli": str(pi_cli.resolve()),
             "resource_upper": Pi.resource_upper,
         }
@@ -139,7 +138,7 @@ def _main() -> int:
         token = (args.data_root / "owner.credential").read_text(encoding="utf-8").strip()
         owner = core.connect(token)
         profile_id = args.work_id + ":profile"
-        descriptor = asdict(profile) | {
+        descriptor = profile.configuration() | {
             "pi_cli": str(pi_cli.resolve()),
             "resource_upper": Pi.resource_upper,
         }
