@@ -189,6 +189,25 @@ def handle(request: dict[str, Any]) -> dict[str, Any]:
             return session.tool(
                 request["name"], request["call_id"], request["payload"], request.get("origin")
             )
+        if command == "exchange-recover":
+            from .native_exchange import confirm_recovery
+
+            return confirm_recovery(session, request["work_id"], request["owner_words"])
+        if command == "exchange-confirm":
+            from .manual_exchange import ManualExchange
+
+            session.tool(
+                "exchange",
+                request["call_id"],
+                {
+                    "operation": "confirmation",
+                    "arguments": {"ref": request["ref"], "proposal_hash": request["proposal_hash"]},
+                },
+                request.get("origin"),
+            )
+            return ManualExchange(session.owner).confirm(
+                request["ref"], request["proposal_hash"], request["owner_words"]
+            )
         if command == "admit-setup-read":
             context = session.tool("context", "trusted-read-admission", {}, request.get("origin"))
             if not context["current"].get("managed_setup"):

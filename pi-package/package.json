@@ -4,8 +4,8 @@
   "type": "module",
   "private": true,
   "keywords": ["pi-package"],
-  "files": ["extension.ts", "bootstrap.mjs", "README.md", "requirements.txt", "release.json", "wheels"],
-  "pi": {"extensions": ["./extension.ts"]},
+  "files": ["extension.ts", "bootstrap.mjs", "README.md", "requirements.txt", "release.json", "wheels", "skills"],
+  "pi": {"extensions": ["./extension.ts"], "skills": ["./skills"]},
   
   "peerDependencies": {"@earendil-works/pi-coding-agent": "*", "typebox": "*"}
 }

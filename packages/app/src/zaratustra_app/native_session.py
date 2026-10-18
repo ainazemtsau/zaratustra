@@ -100,7 +100,14 @@ class NativeSession:
             raise CoreError("stale_basis", "native.session", "reconcile")
 
     def reopen(self) -> dict[str, Any]:
+        from .native_exchange import recover as recover_exchange
         from .native_setup import recover
+
+        _, mapping = self._load()
+        if mapping.get("mode") == "exchange" or any(
+            h["id"].startswith("manual-exchange:recovery:") for h in self.coordinator.rows("heads")
+        ):
+            return recover_exchange(self)
 
         return recover(self)
 
@@ -116,6 +123,11 @@ class NativeSession:
             "session_id": self.session_id,
             **({"scope": body["scope"]} if body.get("scope", "space") != "space" else {}),
             **({"managed_setup": True} if managed else {}),
+            **(
+                {"mode": "exchange", "scope": "space"}
+                if body["method_ref"]["id"] == "manual-exchange-method-v1"
+                else {}
+            ),
         }
 
     def _origin(self, origin: dict[str, Any] | None, mapping: dict[str, Any]) -> dict[str, Any]:
@@ -135,6 +147,9 @@ class NativeSession:
 
     def context(self) -> dict[str, Any]:
         revision, mapping = self._load()
+        from .manual_exchange import ManualExchange
+
+        exchange = ManualExchange(self.owner).catalog()
         if mapping.get("mode") == "sleep":
             return {
                 "state": "attached",
@@ -213,6 +228,7 @@ class NativeSession:
         return {
             "state": "attached",
             "mapping_revision": revision,
+            "manual_exchange": exchange,
             "current": mapping,
             "unmapped_work": unresolved,
             "waiting": [
@@ -280,7 +296,11 @@ class NativeSession:
                 "latest_delivery exposes retained review and related Activity result pointers. "
                 "Read a matching independent review before continuing that delivered Activity; "
                 "its supplied public read query requires no owner retelling. "
-                "Unknown previous tools must never be repeated automatically."
+                "Unknown previous tools must never be repeated automatically. "
+                "Manual external exchange: use zara_exchange begin BEFORE routing to an "
+                "Activity; no Activity is required for general setup or retention. "
+                "In exchange mode only exchange/read/context/result tools are admitted. "
+                "zara_result outputs:[] ends the exchange step; no subject changes there."
             ),
         }
 
@@ -290,6 +310,31 @@ class NativeSession:
         if not event_id or not isinstance(text, str):
             raise ValueError("Exact native input and durable event ID required")
         revision, mapping = self._load()
+        if mapping.get("mode") == "exchange" and mapping.get("attempt") and reply_to is None:
+            self._assert_session(mapping)
+            self.verify_profile()
+            from .manual_exchange import ManualExchange
+
+            retained = ManualExchange(self.owner).retain(
+                text.encode("utf-8"),
+                media_type="text/plain; charset=utf-8",
+                provenance={
+                    "origin": "native-exchange-input",
+                    "conversation": self.mapping_id,
+                    "event": event_id,
+                },
+            )
+            self._observe(
+                mapping,
+                "human-input:" + event_id,
+                "progress",
+                {"kind": "human-exchange-input", "source_ref": retained["source_ref"]},
+            )
+            self._save(
+                revision,
+                mapping | {"last_exchange_input": retained, "last_exchange_event": event_id},
+            )
+            return self.context() | {"retained_input": retained}
         if not mapping:
             active = [
                 w
@@ -434,6 +479,10 @@ class NativeSession:
 
     def verify_profile(self) -> dict[str, Any]:
         _, mapping = self._load()
+        if mapping.get("mode") == "exchange":
+            from .native_exchange import verify_ready
+
+            verify_ready(self, mapping)
         if mapping.get("attempt") and (
             mapping.get("profile") != self.profile or mapping.get("session_id") != self.session_id
         ):
@@ -512,7 +561,8 @@ class NativeSession:
         for change in payload.get("changes", []):
             allowed = {"memory", "method", "data"} if sleep else {"activity", "data"}
             if change.get("kind") not in allowed or any(
-                str(change.get(k, "")).startswith(PREFIX) for k in ("id", "key", "scope")
+                str(change.get(k, "")).startswith((PREFIX, "manual-exchange:"))
+                for k in ("id", "key", "scope")
             ):
                 raise CoreError("denied", "native.host_namespace")
             if sleep and change.get("scope", "space") != scope:
@@ -552,6 +602,22 @@ class NativeSession:
         if mapping.get("incomplete"):
             raise CoreError("outcome_unknown", "native.recovered_claim", "reconcile")
         self._assert_session(mapping)
+        if name == "exchange":
+            if mapping.get("mode") not in {None, "exchange"}:
+                raise CoreError("denied", "exchange.mode")
+            if payload.get("operation") != "begin" and mapping.get("mode") != "exchange":
+                raise CoreError("denied", "exchange.begin_first")
+            from .native_exchange import tool
+
+            return tool(self, payload)
+        if mapping.get("mode") == "exchange" and (
+            name != "result"
+            or payload.get("changes")
+            or payload.get("expected_heads")
+            or payload.get("wait")
+            or payload.get("state", "completed") != "completed"
+        ):
+            raise CoreError("denied", "exchange.confirmed_changes_only")
         if mapping.get("ready"):
             raise CoreError("stale_basis", "native.sleep_ready_use_sleep_command", "after_refresh")
         sleep = mapping.get("mode") == "sleep"
@@ -771,7 +837,7 @@ class NativeSession:
         result = self.coordinator.recover(
             mapping["attempt"],
             decoder=lambda raw: json.loads(raw)["outcome"],
-            ordinary=mapping.get("mode") not in {"sleep", "review"},
+            ordinary=mapping.get("mode") not in {"sleep", "review", "exchange"},
         )
         if mapping.get("mode") == "sleep":
             self._sleep(mapping["scope"]).checkpoint(mapping["work"], mapping["attempt"])

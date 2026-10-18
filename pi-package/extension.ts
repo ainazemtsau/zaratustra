@@ -193,7 +193,7 @@ export default function (pi: ExtensionAPI) {
   };
   const trustedSetupTool = (name: string) => {
     const tool = pi.getAllTools().find(tool => tool.name === name);
-    return ["zara_context", "zara_read", "zara_route", "zara_result", "zara_read_file"].includes(name)
+    return ["zara_context", "zara_read", "zara_route", "zara_result", "zara_read_file", "zara_exchange"].includes(name)
       && tool && resolve(tool.sourceInfo.path) === ownPath;
   };
   let skipNextInput = false;
@@ -234,6 +234,9 @@ export default function (pi: ExtensionAPI) {
     if (setupActive) {
       if (!beforeReviewTools) beforeReviewTools = pi.getActiveTools();
       pi.setActiveTools(pi.getAllTools().filter(tool => trustedSetupTool(tool.name)).map(tool => tool.name));
+    } else if (context.current?.mode === "exchange") {
+      if (!beforeReviewTools) beforeReviewTools = pi.getActiveTools();
+      pi.setActiveTools(pi.getAllTools().filter(tool => ["zara_context", "zara_read", "zara_result", "zara_exchange"].includes(tool.name) && trustedSetupTool(tool.name)).map(tool => tool.name));
     } else if (context.current?.mode === "review") {
       if (!beforeReviewTools) beforeReviewTools = pi.getActiveTools();
       const permitted = new Set(["read", "grep", "find", "ls", "zara_context", "zara_read", "zara_result"]);
@@ -245,7 +248,12 @@ export default function (pi: ExtensionAPI) {
   const attach = async (ctx: any) => {
     await ctx.waitForIdle();
     python = await bootstrap(); sessionId = ctx.sessionManager.getSessionId();
-    const context = await request({command: "attach", profile: profile(ctx)});
+    let context = await request({command: "attach", profile: profile(ctx)});
+    if (context.manual_exchange_recovery) {
+      const accepted = await ctx.ui.confirm("Продолжить ручной обмен?", "Прежний ответ прерван. Оригиналы и предложения сохранены. Завершить прерванный запуск без повторения его действий и начать новый с текущей моделью?");
+      if (accepted) context = await request({command: "exchange-recover", work_id: context.manual_exchange_recovery.work, owner_words: "Подтверждено в Pi: прекратить прерванный запуск и продолжить ручной обмен с текущей моделью.", profile: profile(ctx)});
+      else { active = false; throw new Error("Оригиналы и предложения сохранены. Продолжение не запущено."); }
+    }
     active = true; failed = false;
     observedResultCalls.clear(); executedResultCalls.clear();
     applyReviewTools(context);
@@ -422,6 +430,41 @@ export default function (pi: ExtensionAPI) {
     application: Type.Optional(Type.Union(["active", "proposal", "withdrawn"].map(value => Type.Literal(value)))),
     artifact_refs: Type.Optional(Type.Array(Type.String({pattern: "^[0-9a-f]{64}$"}), {maxItems: 32})),
   }, {additionalProperties: false});
+  const exchangeArgs = Type.Union([
+    Type.Object({operation: Type.Literal("begin")}, {additionalProperties: false}),
+    Type.Object({operation: Type.Literal("catalog")}, {additionalProperties: false}),
+    Type.Object({operation: Type.Literal("retain_input"), arguments: Type.Optional(Type.Object({event: Type.Optional(id)}, {additionalProperties: false}))}, {additionalProperties: false}),
+    Type.Object({operation: Type.Literal("retain_file"), arguments: Type.Object({path: Type.String({minLength: 1})}, {additionalProperties: false})}, {additionalProperties: false}),
+    Type.Object({operation: Type.Literal("read"), arguments: Type.Object({ref: exact, offset: Type.Optional(cursor)}, {additionalProperties: false})}, {additionalProperties: false}),
+    Type.Object({operation: Type.Literal("export"), arguments: Type.Object({ref: exact, path: Type.String({minLength: 1})}, {additionalProperties: false})}, {additionalProperties: false}),
+    Type.Object({operation: Type.Literal("link"), arguments: Type.Object({ref: exact, previous: exact}, {additionalProperties: false})}, {additionalProperties: false}),
+    Type.Object({operation: Type.Literal("prepare"), arguments: Type.Object({text: Type.String(), service: Type.String(), purpose: Type.String(), limits: Type.Optional(Type.String()), context: Type.Optional(Type.Array(exact)), activity_ref: Type.Optional(exact)}, {additionalProperties: false})}, {additionalProperties: false}),
+    Type.Object({operation: Type.Literal("profile"), arguments: Type.Object({service: Type.String(), configuration: Type.Any(), capabilities: Type.Any(), sources: Type.Optional(Type.Array(exact)), activity_ref: Type.Optional(exact), owner_report: Type.Optional(Type.String()), delivery_evidence: Type.Optional(Type.String())}, {additionalProperties: false})}, {additionalProperties: false}),
+    Type.Object({operation: Type.Literal("propose"), arguments: Type.Object({source_ref: exact, activity_ref: exact, changes: Type.Array(change), expected_heads: heads, explanation: Type.String({minLength: 1}), uncertainties: Type.Optional(Type.Array(Type.String())), supersedes: Type.Optional(exact)}, {additionalProperties: false})}, {additionalProperties: false}),
+    Type.Object({operation: Type.Literal("confirm"), arguments: Type.Object({ref: exact, proposal_hash: Type.String({pattern: "^[0-9a-f]{64}$"})}, {additionalProperties: false})}, {additionalProperties: false}),
+  ]);
+  pi.registerTool({name: "zara_exchange", label: "Manual external exchange", executionMode: "sequential", parameters: Type.Object({payload: exchangeArgs}, {additionalProperties: false}),
+    description: "Manual exchange with any external chat/program, no network sends. Read shipped zaratustra-external skill. begin BEFORE Activity routing; setup/retention need no Activity. Original native input is already retained mechanically by Core; retain_input saves its exact received bytes, never a model copy or summary. retain_file saves exact selected-file bytes before model analysis, maximum 16777216 bytes, no truncation. read returns reversible 16384-byte windows; follow next_offset for full coverage. prepare saves actual ready text with versions/context; profile records reported capability/setup evidence. propose saves model-selected scoped changes to an EXISTING Activity; missing dates/formats never block original retention. confirm shows exact stored proposal in human UI and applies only after affirmative owner choice. No JSON or commands required from the user. A retained original is not applied subject data.",
+    async execute(callId, params, _signal, _update, ctx) {
+      if (!active || failed) throw new Error("Attach Core first.");
+      const origin = callOrigins.get(callId) ?? messageOrigin;
+      let payload: any = structuredClone(params.payload);
+      if (["retain_file", "export"].includes(payload.operation)) payload.arguments.path = resolve(ctx.cwd, payload.arguments.path);
+      if (payload.operation === "confirm") {
+        const checked = await request({command: "tool", name: "exchange", call_id: callId, origin, payload: {operation: "confirmation", arguments: payload.arguments}});
+        if (checked.state === "applied") return presentNativeResult("exchange", payload, checked);
+        const p = checked.proposal;
+        const detail = `${p.explanation}\n\nНеясности: ${JSON.stringify(p.uncertainties)}\n\nТочные изменения:\n${JSON.stringify(p.changes, null, 2)}`;
+        const accepted = await ctx.ui.confirm("Применить изменения из внешнего материала?", detail);
+        if (!accepted) return {content: [{type: "text", text: "Оригинал сохранён; предложение ожидает решения. Предметные записи не изменены."}], details: {state: "pending", applied: false}};
+        const result = await visible(ctx, () => request({command: "exchange-confirm", call_id: callId, origin, ...payload.arguments, owner_words: "Подтверждено в Pi: применить показанную точную версию предложения."}));
+        return presentNativeResult("exchange", payload, result);
+      }
+      const result = await request({command: "tool", name: "exchange", call_id: callId, payload, origin});
+      if (payload.operation === "begin") { applyReviewTools(result); messageOrigin = currentOrigin ? structuredClone(currentOrigin) : null; }
+      return presentNativeResult("exchange", payload, result);
+    },
+  });
   const changeGuidance = " Change.body is the free record value, without a stored record wrapper. Metadata source_refs/schema_ref use record references {id,revision,role?}; history {sequence,index,sha256} references belong inside free analysis body.sources. For tagged sleep-progress/v1 or v2 bodies, follow the exact corresponding schema in context.outcome_metadata_contract.progress_schemas; required scope and version-specific fields must match. Do not add v2 predecessor_ref/range_start/transition fields to v1 or automatically change the version. Structural staging does not prove rights, current references or meaning; final Core admission still rechecks them.";
   const pageToken = Type.Object({high_watermark: cursor, sha256: Type.String({pattern: "^[0-9a-f]{64}$"})}, {additionalProperties: false});
   const readSchemas = Type.Union([
@@ -509,13 +552,17 @@ export default function (pi: ExtensionAPI) {
     if (!active || failed) return;
     await visible(ctx, () => request({ command: "observation", event_id: randomUUID(), value: { kind, event }, origin: messageOrigin }));
   };
-  pi.on("before_provider_request", (_event, ctx) => {
+  pi.on("before_provider_request", async (_event, ctx) => {
     if (active && failed) ctx.abort();
+    if (active && currentOrigin?.mode === "exchange") await visible(ctx, () => request({command: "verify-profile", profile: profile(ctx)}));
   });
   pi.on("tool_call", async (event, ctx) => {
     if (active && failed) return {block: true, terminate: true, reason: "Core admission failed; reconcile before execution."};
     if (active && messageOrigin?.managed_setup && !trustedSetupTool(event.toolName)) {
       return {block: true, reason: "Setup permits only this adapter's trusted reads and final Core checkpoint. This tool was NOT executed. Finish a small checkpoint or explain the unavailable tool."};
+    }
+    if (active && messageOrigin?.mode === "exchange" && !["zara_context", "zara_read", "zara_result", "zara_exchange"].includes(event.toolName)) {
+      return {block: true, reason: "Manual exchange permits only Core exchange/read/result; no external effects."};
     }
     if (active) callOrigins.set(event.toolCallId, messageOrigin ? structuredClone(messageOrigin) : null);
     try {
