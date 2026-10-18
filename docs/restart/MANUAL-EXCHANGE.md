@@ -113,7 +113,20 @@ exchange handler for a later ordinary setup/review/Sleep frontier.
 
 The exchange mode admits only its own trusted Core tools, without arbitrary
 shell/file/network effects. `zara_result` plus actual native final ends a bounded
-exchange step. Pending questions/proposals remain saved. The next ordinary
+exchange step. Its mode-specific metadata uses `state:"completed"` (or omitted
+state), without `wait`, including for a pending question. Save that question in
+the partial pending profile/proposal and ask it in the actual final reply. This
+completes the step without claiming setup ready or resolving the decision.
+Pending questions/proposals remain saved. The next input can read them through
+the existing catalog/exact reads, without an Activity or reimport.
+
+Invalid exchange result state/wait is a local metadata rejection before staging
+or terminal retention. The existing cleanup clears older staged metadata through
+its checked CAS; the model can issue corrected metadata in the same response.
+The payload is not applied or silently converted. Subject change/route denials,
+unknown outcomes and cleanup/Core CAS failures retain their stop boundaries.
+Current context carries the mode-specific contract even for existing immutable
+`manual-exchange-method-v1` refs; those Method bytes/versions remain unchanged. The next ordinary
 request routes normally and preserves existing Activity identities. Existing
 setup/review/Sleep rules remain. Technical evidence is not owner acceptance or
 proof that a real external account is configured. Source freeze and independent

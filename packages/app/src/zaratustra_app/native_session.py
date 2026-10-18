@@ -146,6 +146,7 @@ class NativeSession:
     def context(self) -> dict[str, Any]:
         revision, mapping = self._load()
         from .manual_exchange import ManualExchange
+        from .native_exchange import result_contract
 
         exchange = ManualExchange(self.owner).catalog()
         if mapping.get("mode") == "sleep":
@@ -246,7 +247,13 @@ class NativeSession:
             "core": snapshot,
             "pinned": pinned,
             "outcome_metadata_contract": (
-                outcome_metadata_contract() if mapping.get("attempt") else None
+                (
+                    result_contract()
+                    if mapping.get("mode") == "exchange"
+                    else outcome_metadata_contract()
+                )
+                if mapping.get("attempt")
+                else None
             ),
             "latest_delivery": latest_delivery,
             "coverage": (
@@ -320,6 +327,9 @@ class NativeSession:
                 "document text, then cite both in outputs/final. A ready one-time package "
                 "cites its prepared document. begin/final alone is not saved setup; "
                 "outputs:[] ends only an honest pending/no-deliverable step. "
+                "Exchange state is completed (or omitted), WITHOUT wait, including when asking "
+                "a question: save it in a pending profile/proposal and speak it in the actual "
+                "final reply. This completes only the step, not setup or the pending decision. "
                 "No subject changes in exchange result metadata."
             ),
         }
@@ -646,11 +656,7 @@ class NativeSession:
 
             return tool(self, payload)
         if mapping.get("mode") == "exchange" and (
-            name != "result"
-            or payload.get("changes")
-            or payload.get("expected_heads")
-            or payload.get("wait")
-            or payload.get("state", "completed") != "completed"
+            name != "result" or payload.get("changes") or payload.get("expected_heads")
         ):
             raise CoreError("denied", "exchange.confirmed_changes_only")
         if mapping.get("ready"):
@@ -671,6 +677,11 @@ class NativeSession:
             shape_rejection = None
             try:
                 setup = mapping.get("managed_setup", False)
+                if mapping.get("mode") == "exchange":
+                    if payload.get("state", "completed") != "completed":
+                        raise CoreError("invalid_request", "exchange.result_state")
+                    if payload.get("wait") is not None:
+                        raise CoreError("invalid_request", "exchange.result_wait")
                 if set(payload) - {
                     "changes",
                     "expected_heads",
@@ -708,7 +719,14 @@ class NativeSession:
                     "previous_metadata_cleared": previous_metadata_cleared,
                     "rejection": shape_rejection,
                     "text": (
-                        "Metadata shape rejected before staging or terminal retention. "
+                        (
+                            "Exchange steps use state:completed (or omit state) WITHOUT wait. "
+                            "Keep the question in a pending profile/proposal and ask in the actual "
+                            "final reply; step completion does not claim setup is ready. "
+                            if mapping.get("mode") == "exchange"
+                            else ""
+                        )
+                        + "Metadata shape rejected before staging or terminal retention. "
                         "Correct the exact field using outcome_metadata_contract, then issue "
                         "a new zara_result call. No prior metadata remains staged; no outcome "
                         "was committed. Speak the actual final reply only after valid staging."

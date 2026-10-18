@@ -75,7 +75,12 @@ returns its actual SHA-256 version, without arbitrary filesystem access.
    final reply. A ready setup cites both profile and document; a ready one-time
    package cites its prepared document. outputs:[] can end an honest pending
    question/no-deliverable step, but does not mean setup or a package is ready.
-   Then speak the actual final reply. No subject changes in result/change.
+   In exchange mode use state:"completed" (or omit state), WITHOUT wait, even
+   when asking a question. Save the question in the pending profile/proposal and
+   ask it in the actual final reply. Completion ends only this exchange step; it
+   does not claim setup ready or resolve a pending decision. If result metadata
+   is rejected, correct it with a new zara_result call in this same response,
+   then speak the actual final reply. No subject changes in result/change.
    Missing owner decisions stay pending records; no invented acceptance. Next
    ordinary request may route normally. Sleep/setup/review keep their own rules.
 

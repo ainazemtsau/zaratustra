@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-from zaratustra_core import CoreError, digest
+from zaratustra_core import CoreError, digest, outcome_metadata_contract
 
 from .manual_exchange import PREFIX, ManualExchange, workflow
 from .ordinary import ROUTING_ID
@@ -41,6 +41,27 @@ document. outputs:[] means no saved deliverable, never proof of ready setup.
 Then speak the actual final reply.
 Completion ends this exchange step, never accepts subject truth or Activity work.
 """
+
+
+def result_contract() -> dict[str, Any]:
+    """Project the existing metadata contract onto this bounded exchange step."""
+    schema = outcome_metadata_contract()["metadata_schema"]
+    schema["properties"] = {
+        "state": {"type": "string", "enum": ["completed"], "default": "completed"},
+        "outputs": schema["properties"]["outputs"],
+    }
+    schema["$defs"] = {"Ref": schema["$defs"]["Ref"]}
+    return {
+        "mode": "exchange",
+        "metadata_schema": schema,
+        "guidance": [
+            "Complete this exchange STEP with state:completed (or omit state), without wait.",
+            "Save questions in a pending profile/proposal and ask in the actual final reply.",
+            "Completion is not ready setup, subject acceptance or resolution of the question.",
+            "Use actual saved refs in outputs; outputs:[] means no saved deliverable.",
+            "Subject changes require exact proposal confirmation, never result/change/route.",
+        ],
+    }
 
 
 def begin(session: NativeSession) -> dict[str, Any]:

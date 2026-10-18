@@ -28,7 +28,7 @@ await session.bindExtensions({onError:error=>events.push({extensionError:error})
 session.setActiveToolsByName(tools);
 session.subscribe(event=>{if(['tool_execution_end','agent_settled'].includes(event.type))events.push(event);});
 await session.prompt('/zaratustra');
-await session.prompt(mode==='resume'?'Continue the saved fictional exchange; do not reimport.':'Хочу вручную переносить заметки из бумажного блокнота «Мастерская» сюда и получать короткую заготовку для следующего обсуждения. Давай настроим такой обмен. Направления пока нет.');
+await session.prompt(mode==='resume'?'Continue the saved fictional exchange; do not reimport.':mode==='pending-resume'?'Continue the saved partial paper-notes profile and question; direction is still unknown.':'Хочу вручную переносить заметки из бумажного блокнота «Мастерская» сюда и получать короткую заготовку для следующего обсуждения. Давай настроим такой обмен. Направления пока нет.');
 await session.waitForIdle();
 if(mode.startsWith('same')) {
   await session.prompt('The date is unknown.\r\nKeep {invalid JSON}.\nUnicode Ж.');
