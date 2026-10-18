@@ -258,8 +258,8 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path, session
         server.server_close()
         thread.join(5)
     assert len(calls) == (7 if session_mode == "refuse" else 11)
-    expected_workflow = (SOURCE / "pi-package/skills/zaratustra-external/SKILL.md").read_text(
-        encoding="utf8"
+    expected_workflow = (
+        (SOURCE / "pi-package/skills/zaratustra-external/SKILL.md").read_bytes().decode("utf8")
     )
     delivered = [json.loads(m["content"]) for m in calls[1]["messages"] if m.get("role") == "tool"]
     workflow = next(item for item in delivered if item.get("format") == "manual-workflow/v1")
@@ -270,6 +270,28 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path, session
     assert workflow["sha256"] == hashlib.sha256(expected_workflow.encode()).hexdigest()
     assert workflow["resource_version"] == "sha256:" + workflow["sha256"]
     assert not {"read", "bash"} & {t["function"]["name"] for t in calls[1]["tools"]}
+    # Inspect the actual next provider request after native begin presentation.
+    # The old duplicate Attempt body returned NOT_DELIVERED instead of these pins.
+    next_tools = [json.loads(m["content"]) for m in calls[2]["messages"] if m.get("role") == "tool"]
+    begin = next(item for item in next_tools if item.get("current", {}).get("mode") == "exchange")
+    bridge_begin = next(
+        r["result"]
+        for r in evidence[0]["receipts"]
+        if r["packet"].get("payload", {}).get("operation") == "begin"
+    )
+    assert begin["state"] == "attached"
+    for field in ("current", "pinned"):
+        assert begin[field] == bridge_begin[field]
+    assert begin["pinned"]["method"]["body"]["value"]
+    assert begin["pinned"]["messages"]
+    assert len(begin["current"]["profile"]["cwd"]) >= 111
+    assert begin["current"]["profile"]["thinking"]
+    assert begin["current"]["profile"]["provider"]
+    assert begin["current"]["profile"]["api"]
+    assert begin["current"]["profile"]["model"]
+    assert all(
+        "body" not in a for a in begin["core"]["attempts"] if a["id"] == begin["current"]["attempt"]
+    )
     if session_mode in {"same", "refuse"}:
         inputs = [
             helper.exact({"id": h["id"], "revision": h["revision"]})

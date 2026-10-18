@@ -191,6 +191,12 @@ class NativeSession:
             snapshot["attempts"] = [
                 {k: v for k, v in a.items() if k != "body"} for a in snapshot["attempts"]
             ]
+        elif mapping.get("mode") == "exchange" and attempt:
+            # Only this current row duplicates the complete immutable pin below.
+            snapshot["attempts"] = [
+                {k: v for k, v in a.items() if k != "body"} if a["id"] == attempt["id"] else a
+                for a in snapshot["attempts"]
+            ]
         waits = [
             w
             for w in snapshot["waits"]
@@ -257,6 +263,17 @@ class NativeSession:
                 "setup_attempt_bodies": (
                     "Omitted when managed_setup; complete current pin is pinned."
                 ),
+                **(
+                    {
+                        "exchange_attempt_body": (
+                            "Only the current Attempt body is omitted in exchange mode; "
+                            "its complete exact content is pinned. "
+                            "Other Attempt bodies are unchanged."
+                        )
+                    }
+                    if mapping.get("mode") == "exchange"
+                    else {}
+                ),
                 "retained_history": (
                     "Use Core read_page/read_history; omitted rows remain retained."
                 ),
@@ -299,7 +316,8 @@ class NativeSession:
                 "Activity; no Activity is required for general setup or retention. "
                 "In exchange mode only exchange/read/context/result tools are admitted. "
                 "For ready setup, save profile+prepared document (or reuse exact saved refs), "
-                "read them back and cite both in outputs/final. A ready one-time package "
+                "use zara_read read_exact for their metadata and zara_exchange read for "
+                "document text, then cite both in outputs/final. A ready one-time package "
                 "cites its prepared document. begin/final alone is not saved setup; "
                 "outputs:[] ends only an honest pending/no-deliverable step. "
                 "No subject changes in exchange result metadata."

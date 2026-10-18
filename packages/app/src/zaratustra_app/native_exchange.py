@@ -32,7 +32,8 @@ can apply its exact version; ordinary zara_change/result cannot apply subjects.
 Do not create a fake Activity. A later subject proposal must name the chosen
 existing Activity. Resume saved pending records; never redo an applied import.
 For setup, save agreed parameters with profile and actual ready text with prepare,
-or reuse exact saved records. Read them back before claiming readiness; include
+or reuse exact saved records. Use zara_read read_exact for profile/document
+metadata and zara_exchange read for document text before claiming readiness; include
 their actual profile/document refs in zara_result outputs and the final reply.
 begin or a retained final alone is not saved setup. If details are insufficient,
 save a partial pending profile and ask. A one-time package cites its prepared

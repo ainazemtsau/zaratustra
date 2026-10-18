@@ -119,4 +119,13 @@ setup/review/Sleep rules remain. Technical evidence is not owner acceptance or
 proof that a real external account is configured. Source freeze and independent
 review are separate from this implementation contract.
 
+Native exchange context presents the full current immutable `pinned` once. The
+current Attempt's duplicate encoded `core.attempts[].body` is omitted, with an
+explicit projection notice; other Attempt bodies remain unchanged. Current
+mapping, Method, profile, messages and refs remain complete. The existing Pi
+51200-byte guard applies to the full tool envelope. Large results still have explicit delivery
+failure; no original is truncated. Use `zara_read` / `read_exact` for saved profile
+and document metadata; `zara_exchange read` reads the document artifact text and
+requires a document/source ref, not a profile ref.
+
 END_OF_FILE: docs/restart/MANUAL-EXCHANGE.md

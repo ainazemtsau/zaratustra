@@ -27,7 +27,9 @@ returns its actual SHA-256 version, without arbitrary filesystem access.
    capabilities with profile, and save the actual ready-to-use text with prepare;
    matching exact saved refs may be reused. begin and a saved final do NOT save
    those settings or a document. Before saying setup is ready, read back both
-   records, show the prepared text and cite their actual profile_ref/document_ref.
+   records with zara_read read_exact (id/revision), and use zara_exchange read
+   for prepared document text (document_ref, not profile_ref). Show that text and
+   cite their actual profile_ref/document_ref.
    With insufficient details, save a partial profile marked pending and ask the
    needed question; do not claim readiness. A one-time document can use prepare
    without inventing a permanent profile. Even a paper source or recipient is
