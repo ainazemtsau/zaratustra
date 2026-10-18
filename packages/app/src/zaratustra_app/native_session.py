@@ -104,9 +104,7 @@ class NativeSession:
         from .native_setup import recover
 
         _, mapping = self._load()
-        if mapping.get("mode") == "exchange" or any(
-            h["id"].startswith("manual-exchange:recovery:") for h in self.coordinator.rows("heads")
-        ):
+        if mapping.get("mode") == "exchange":
             return recover_exchange(self)
 
         return recover(self)
@@ -312,7 +310,6 @@ class NativeSession:
         revision, mapping = self._load()
         if mapping.get("mode") == "exchange" and mapping.get("attempt") and reply_to is None:
             self._assert_session(mapping)
-            self.verify_profile()
             from .manual_exchange import ManualExchange
 
             retained = ManualExchange(self.owner).retain(
@@ -324,6 +321,15 @@ class NativeSession:
                     "event": event_id,
                 },
             )
+            try:
+                self.verify_profile()
+            except CoreError as error:
+                if (error.code, error.field) not in {
+                    ("outcome_unknown", "exchange.interrupted_attempt"),
+                    ("stale_basis", "native.actual_profile"),
+                }:
+                    raise
+                return self.reopen() | {"retained_input": retained}
             self._observe(
                 mapping,
                 "human-input:" + event_id,
@@ -602,10 +608,17 @@ class NativeSession:
         if mapping.get("incomplete"):
             raise CoreError("outcome_unknown", "native.recovered_claim", "reconcile")
         self._assert_session(mapping)
+        if mapping.get("mode") == "exchange":
+            from .native_exchange import verify_ready
+
+            verify_ready(self, mapping)
         if name == "exchange":
             if mapping.get("mode") not in {None, "exchange"}:
                 raise CoreError("denied", "exchange.mode")
-            if payload.get("operation") != "begin" and mapping.get("mode") != "exchange":
+            if (
+                payload.get("operation") not in {"begin", "workflow"}
+                and mapping.get("mode") != "exchange"
+            ):
                 raise CoreError("denied", "exchange.begin_first")
             from .native_exchange import tool
 

@@ -245,15 +245,18 @@ export default function (pi: ExtensionAPI) {
       pi.setActiveTools(beforeReviewTools); beforeReviewTools = null;
     }
   };
-  const attach = async (ctx: any) => {
-    await ctx.waitForIdle();
-    python = await bootstrap(); sessionId = ctx.sessionManager.getSessionId();
-    let context = await request({command: "attach", profile: profile(ctx)});
+  const recoverExchange = async (ctx: any, context: any) => {
     if (context.manual_exchange_recovery) {
       const accepted = await ctx.ui.confirm("Продолжить ручной обмен?", "Прежний ответ прерван. Оригиналы и предложения сохранены. Завершить прерванный запуск без повторения его действий и начать новый с текущей моделью?");
       if (accepted) context = await request({command: "exchange-recover", work_id: context.manual_exchange_recovery.work, owner_words: "Подтверждено в Pi: прекратить прерванный запуск и продолжить ручной обмен с текущей моделью.", profile: profile(ctx)});
       else { active = false; throw new Error("Оригиналы и предложения сохранены. Продолжение не запущено."); }
     }
+    return context;
+  };
+  const attach = async (ctx: any) => {
+    await ctx.waitForIdle();
+    python = await bootstrap(); sessionId = ctx.sessionManager.getSessionId();
+    const context = await recoverExchange(ctx, await request({command: "attach", profile: profile(ctx)}));
     active = true; failed = false;
     observedResultCalls.clear(); executedResultCalls.clear();
     applyReviewTools(context);
@@ -399,7 +402,8 @@ export default function (pi: ExtensionAPI) {
     if (!active) return;
     if (skipNextInput) { skipNextInput = false; return; }
     try {
-      applyReviewTools(await visible(ctx, () => request({ command: "input", event_id: randomUUID(), text: event.text, profile: profile(ctx) })));
+      applyReviewTools(await visible(ctx, async () => recoverExchange(ctx,
+        await request({ command: "input", event_id: randomUUID(), text: event.text, profile: profile(ctx) }))));
     } catch { return {action: "handled" as const}; }
   });
   pi.on("before_agent_start", async (_event, ctx) => {
@@ -431,6 +435,7 @@ export default function (pi: ExtensionAPI) {
     artifact_refs: Type.Optional(Type.Array(Type.String({pattern: "^[0-9a-f]{64}$"}), {maxItems: 32})),
   }, {additionalProperties: false});
   const exchangeArgs = Type.Union([
+    Type.Object({operation: Type.Literal("workflow")}, {additionalProperties: false}),
     Type.Object({operation: Type.Literal("begin")}, {additionalProperties: false}),
     Type.Object({operation: Type.Literal("catalog")}, {additionalProperties: false}),
     Type.Object({operation: Type.Literal("retain_input"), arguments: Type.Optional(Type.Object({event: Type.Optional(id)}, {additionalProperties: false}))}, {additionalProperties: false}),
@@ -444,7 +449,7 @@ export default function (pi: ExtensionAPI) {
     Type.Object({operation: Type.Literal("confirm"), arguments: Type.Object({ref: exact, proposal_hash: Type.String({pattern: "^[0-9a-f]{64}$"})}, {additionalProperties: false})}, {additionalProperties: false}),
   ]);
   pi.registerTool({name: "zara_exchange", label: "Manual external exchange", executionMode: "sequential", parameters: Type.Object({payload: exchangeArgs}, {additionalProperties: false}),
-    description: "Manual exchange with any external chat/program, no network sends. Read shipped zaratustra-external skill. begin BEFORE Activity routing; setup/retention need no Activity. Original native input is already retained mechanically by Core; retain_input saves its exact received bytes, never a model copy or summary. retain_file saves exact selected-file bytes before model analysis, maximum 16777216 bytes, no truncation. read returns reversible 16384-byte windows; follow next_offset for full coverage. prepare saves actual ready text with versions/context; profile records reported capability/setup evidence. propose saves model-selected scoped changes to an EXISTING Activity; missing dates/formats never block original retention. confirm shows exact stored proposal in human UI and applies only after affirmative owner choice. No JSON or commands required from the user. A retained original is not applied subject data.",
+    description: "Manual exchange with any external chat/program, no network sends. FIRST call payload {operation:workflow} to read the complete exact installed zaratustra-external workflow and its content-hash version; no builtin read/bash required. Then begin BEFORE Activity routing; setup/retention need no Activity. Original native input is already retained mechanically by Core; retain_input saves its exact received bytes, never a model copy or summary. retain_file saves exact selected-file bytes before model analysis, maximum 16777216 bytes, no truncation. read returns reversible 16384-byte windows; follow next_offset for full coverage. prepare saves actual ready text with versions/context; profile records reported capability/setup evidence. propose saves model-selected scoped changes to an EXISTING Activity; missing dates/formats never block original retention. confirm shows exact stored proposal in human UI and applies only after affirmative owner choice. No JSON or commands required from the user. A retained original is not applied subject data.",
     async execute(callId, params, _signal, _update, ctx) {
       if (!active || failed) throw new Error("Attach Core first.");
       const origin = callOrigins.get(callId) ?? messageOrigin;

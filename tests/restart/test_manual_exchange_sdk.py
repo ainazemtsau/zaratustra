@@ -10,13 +10,15 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
+import pytest
 from zaratustra_app.manual_exchange import ManualExchange
 from zaratustra_app.pi_host import initialize
 
 SOURCE = Path(__file__).resolve().parents[2]
 
 
-def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path) -> None:
+@pytest.mark.parametrize("session_mode", ["fresh", "same", "refuse"])
+def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path, session_mode: str) -> None:
     command = shutil.which("pi") or shutil.which("pi.ps1")
     assert command, "Installed Pi SDK required"
     sdk = Path(command).parent / "node_modules/@earendil-works/pi-coding-agent"
@@ -51,9 +53,11 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path) -> None
             pass
 
         def do_POST(self) -> None:
-            nonlocal phase_calls, proposed
+            nonlocal phase, phase_calls, proposed
             request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
             calls.append(request)
+            if session_mode == "same" and phase == "interrupt" and phase_calls == 6:
+                phase, phase_calls = "resume", 0
             index = phase_calls
             phase_calls += 1
             assert phase_calls <= 8, "Finite fictional transport budget exceeded"
@@ -61,8 +65,10 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path) -> None
             arguments: dict[str, Any] | None
             if phase == "interrupt":
                 if index == 0:
-                    arguments = {"operation": "begin"}
+                    arguments = {"operation": "workflow"}
                 elif index == 1:
+                    arguments = {"operation": "begin"}
+                elif index == 2:
                     arguments = {
                         "operation": "prepare",
                         "arguments": {
@@ -71,9 +77,9 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path) -> None
                             "text": "Discuss fictional goals. Context v1. No Core access.",
                         },
                     }
-                elif index == 2:
-                    arguments = {"operation": "retain_file", "arguments": {"path": str(selected)}}
                 elif index == 3:
+                    arguments = {"operation": "retain_file", "arguments": {"path": str(selected)}}
+                elif index == 4:
                     source = next(
                         h
                         for h in helper.catalog()["records"]
@@ -178,8 +184,15 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path) -> None
     env["ZARATUSTRA_HOME"] = str(home)
     evidence = []
     try:
-        for stage in ("interrupt", "resume"):
-            phase, phase_calls = stage, 0
+        stages = (
+            ("interrupt", "resume")
+            if session_mode == "fresh"
+            else ("same-refuse",)
+            if session_mode == "refuse"
+            else ("same",)
+        )
+        for stage in stages:
+            phase, phase_calls = ("resume" if stage == "resume" else "interrupt"), 0
             folder = tmp_path / stage
             folder.mkdir()
             result = subprocess.run(
@@ -208,7 +221,7 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path) -> None
             assert not any(
                 e.get("isError") for e in saved["events"] if e.get("toolName") == "zara_exchange"
             ), saved["events"]
-            if stage == "interrupt":
+            if stage in {"interrupt", "same-refuse"}:
                 assert not any(h["id"] == "fictional-entry" for h in saved["heads"]["rows"])
                 assert saved["context"]["current"]["mode"] == "exchange"
             else:
@@ -221,16 +234,53 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path) -> None
                 )
                 assert len(saved["confirmations"]) == 2  # Recovery + subject, retry prompts none.
     finally:
+        (tmp_path / "provider-requests.json").write_text(json.dumps(calls), encoding="utf8")
         server.shutdown()
         server.server_close()
         thread.join(5)
-    assert len(calls) == 9
+    assert len(calls) == (6 if session_mode == "refuse" else 10)
+    expected_workflow = (SOURCE / "pi-package/skills/zaratustra-external/SKILL.md").read_text(
+        encoding="utf8"
+    )
+    delivered = [json.loads(m["content"]) for m in calls[1]["messages"] if m.get("role") == "tool"]
+    workflow = next(item for item in delivered if item.get("format") == "manual-workflow/v1")
+    import hashlib
+
+    assert workflow["complete"] is True
+    assert workflow["text"] == expected_workflow
+    assert workflow["sha256"] == hashlib.sha256(expected_workflow.encode()).hexdigest()
+    assert workflow["resource_version"] == "sha256:" + workflow["sha256"]
+    assert not {"read", "bash"} & {t["function"]["name"] for t in calls[1]["tools"]}
+    if session_mode in {"same", "refuse"}:
+        inputs = [
+            helper.exact({"id": h["id"], "revision": h["revision"]})
+            for h in helper.catalog()["records"]
+            if ":source:" in h["id"]
+        ]
+        actual = next(
+            r
+            for r in inputs
+            if r["body"]["value"]["provenance"].get("origin") == "native-exchange-input"
+        )
+        assert helper.read({"id": actual["id"], "revision": actual["revision"]})["text"] == (
+            "The date is unknown."
+            + chr(13)
+            + chr(10)
+            + "Keep {invalid JSON}."
+            + chr(10)
+            + "Unicode Ж."
+        )
     assert (
         next(h for h in helper.coordinator.rows("heads") if h["id"] == "fictional")["revision"] == 1
     )
-    old_work = evidence[0]["context"]["current"]["work"]
     works = helper.coordinator.rows("works")
-    assert next(w for w in works if w["id"] == old_work)["status"] == "cancelled"
+    if session_mode == "refuse":
+        assert len(evidence[0]["confirmations"]) == 1
+        assert evidence[0]["confirmations"][0]["accepted"] is False
+        assert next(w for w in works if w["id"].startswith("exchange:"))["status"] == "blocked"
+        assert not any(w["id"].startswith("manual-recovery:") for w in works)
+        return
+    assert next(w for w in works if w["id"].startswith("exchange:"))["status"] == "cancelled"
     assert (
         len(
             [

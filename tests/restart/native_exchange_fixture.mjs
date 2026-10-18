@@ -22,7 +22,7 @@ const tools=['read','write','zara_context','zara_read','zara_route','zara_change
 const {session}=await sdk.createAgentSession({cwd:root,agentDir,resourceLoader:loader,modelRuntime,model:modelRuntime.getModel('fictional','scripted-transport'),thinkingLevel:'off',settingsManager:settings,tools,sessionManager:sdk.SessionManager.inMemory(root)});
 const events=[], confirmations=[];
 await session.bindExtensions({onError:error=>events.push({extensionError:error}),uiContext:{
-  confirm:async(title,message)=>{confirmations.push({title,message});return true;},
+  confirm:async(title,message)=>{const accepted=mode!=='same-refuse';confirmations.push({title,message,accepted});return accepted;},
   notify:()=>{},setStatus:()=>{},setWorkingMessage:()=>{},setWorkingVisible:()=>{}
 }});
 session.setActiveToolsByName(tools);
@@ -30,6 +30,10 @@ session.subscribe(event=>{if(['tool_execution_end','agent_settled'].includes(eve
 await session.prompt('/zaratustra');
 await session.prompt(mode==='resume'?'Continue the saved fictional exchange; do not reimport.':'Set up manual exchange and retain the fictional external file.');
 await session.waitForIdle();
+if(mode.startsWith('same')) {
+  await session.prompt('The date is unknown.\r\nKeep {invalid JSON}.\nUnicode Ж.');
+  await session.waitForIdle();
+}
 const bridge=await import(pathToFileURL(join(extensionDir,'bootstrap.mjs')).href);
 async function request(command,fields={}){return JSON.parse(await bridge.run(python,['-m','zaratustra_app.pi_host'],JSON.stringify({data_root:await bridge.dataRoot(),session_id:session.sessionManager.getSessionId(),command,...fields})));}
 const context=await request('context');

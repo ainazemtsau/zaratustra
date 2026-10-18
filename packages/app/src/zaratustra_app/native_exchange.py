@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from zaratustra_core import CoreError, digest
 
-from .manual_exchange import PREFIX, ManualExchange
+from .manual_exchange import PREFIX, ManualExchange, workflow
 from .ordinary import ROUTING_ID
 
 if TYPE_CHECKING:
@@ -18,7 +18,9 @@ METHOD_ID = "manual-exchange-method-v1"
 METHOD = """manual-exchange/1
 Help with the user's manual external exchange through zara_exchange. No Activity
 is required for configuration, capability research or prepared text. Read the
-shipped zaratustra-external skill. Service names/capabilities are data; verify
+shipped zaratustra-external skill through zara_exchange workflow. This reads the
+exact installed product resource, with its actual content hash. Service names
+and capabilities are data; verify
 account reports without inventing access. No network send or external execution.
 Retain original native input or selected file before interpreting its contents,
 asking about dates or validating formats. Original retention is separate from
@@ -115,7 +117,23 @@ def recover(session: NativeSession) -> dict[str, Any]:
         return session.context()
     if len(active) != 1 or active[0]["id"] != mapping.get("work"):
         raise CoreError("stale_basis", "exchange.frontier")
-    if mapping.get("session_id") != session.session_id:
+    attempt = next(
+        (
+            a
+            for a in session.coordinator.rows("attempts", work=mapping["work"])
+            if a["id"] == mapping.get("attempt")
+        ),
+        None,
+    )
+    if (
+        mapping.get("session_id") != session.session_id
+        or mapping.get("profile") != session.profile
+        or active[0]["status"] != "running"
+        or attempt is None
+        or attempt["status"] != "claimed"
+        or active[0]["generation"] != mapping.get("generation")
+        or attempt["generation"] != mapping.get("generation")
+    ):
         value = session.context()
         value["manual_exchange_recovery"] = {
             "work": mapping["work"],
@@ -274,6 +292,31 @@ def continue_recovery(session: NativeSession, record: dict[str, Any]) -> dict[st
 
 
 def verify_ready(session: NativeSession, mapping: dict[str, Any]) -> None:
+    work = next(
+        (
+            w
+            for w in session.coordinator.rows("works", conversation=session.mapping_id)
+            if w["id"] == mapping.get("work")
+        ),
+        None,
+    )
+    attempt = next(
+        (
+            a
+            for a in session.coordinator.rows("attempts", work=mapping["work"])
+            if a["id"] == mapping.get("attempt")
+        ),
+        None,
+    )
+    if (
+        work is None
+        or attempt is None
+        or work["status"] != "running"
+        or attempt["status"] != "claimed"
+        or work["generation"] != mapping.get("generation")
+        or attempt["generation"] != mapping.get("generation")
+    ):
+        raise CoreError("outcome_unknown", "exchange.interrupted_attempt", "reconcile")
     helper = ManualExchange(session.owner)
     for head in helper.catalog()["records"]:
         if not head["id"].startswith(PREFIX + "recovery:"):
@@ -287,6 +330,8 @@ def tool(session: NativeSession, payload: dict[str, Any]) -> dict[str, Any]:
     operation = payload["operation"]
     if operation == "begin":
         return begin(session)
+    if operation == "workflow":
+        return workflow()
     helper = ManualExchange(session.owner)
     args = payload.get("arguments", {})
     if operation == "catalog":

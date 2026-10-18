@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+from importlib.resources import files
 from pathlib import Path
 from typing import Any, cast
 from uuid import uuid4
@@ -16,6 +17,23 @@ from .ordinary import subject_scope
 PREFIX = "manual-exchange:"
 MAX_BYTES = 16777216  # Core's existing artifact limit, not an inference budget.
 WINDOW = 16384
+
+
+def workflow() -> dict[str, Any]:
+    """The exact installed product instruction, with no instance or filesystem access."""
+    resource = "resources/manual-exchange/SKILL.md"
+    raw = files("zaratustra_app").joinpath(resource).read_bytes()
+    sha = hashlib.sha256(raw).hexdigest()
+    return {
+        "format": "manual-workflow/v1",
+        "resource": resource,
+        "resource_version": "sha256:" + sha,
+        "sha256": sha,
+        "size": len(raw),
+        "text": raw.decode("utf-8"),
+        "source": "installed-product-resource",
+        "complete": True,
+    }
 
 
 class ManualExchange:
@@ -391,6 +409,7 @@ class ManualExchange:
             "complete": True,
             "artifact_max_bytes": MAX_BYTES,
             "read_window_bytes": WINDOW,
+            "workflow_operation": "zara_exchange payload {operation:workflow}; read it first",
             "guidance": "Read exact source/document/profile/proposal refs. Original retained "
             "is distinct from subject changes applied. Never repeat applied proposals.",
         }

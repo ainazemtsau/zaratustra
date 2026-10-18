@@ -35,6 +35,23 @@ def seed(helper: ManualExchange) -> None:
     )
 
 
+def test_exact_packaged_workflow_available_in_routing_without_activity(tmp_path: Path) -> None:
+    from importlib.resources import files
+
+    core, token = Core.initialize(tmp_path / "workflow-core")
+    session = NativeSession(core, token, "workflow-session")
+    session.input("request", "Set up manual exchange before Activity")
+    before = session.coordinator.rows("heads")
+    delivered = session.tool("exchange", "workflow-read", {"operation": "workflow"})
+    exact = files("zaratustra_app").joinpath("resources/manual-exchange/SKILL.md").read_bytes()
+    assert delivered["text"].encode() == exact
+    assert delivered["sha256"] == hashlib.sha256(exact).hexdigest()
+    assert delivered["resource_version"] == "sha256:" + delivered["sha256"]
+    assert delivered["source"] == "installed-product-resource"
+    assert session.coordinator.rows("heads") == before
+    assert not any(h["kind"] == "activity" for h in before)
+
+
 def proposal(helper: ManualExchange, source: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
     return helper.propose(
         {
@@ -299,3 +316,79 @@ def test_recovery_lost_receipt_windows(
     assert len([w for w in works if w["id"].startswith("manual-recovery:")]) == 1
     assert helper.retain_input(new.mapping_id)["source_ref"] == source
     assert new.verify_profile()["state"] == "attached"
+
+
+def test_same_session_incomplete_requires_recovery_before_inference_or_writes(
+    tmp_path: Path,
+) -> None:
+    from zaratustra_app.native_exchange import confirm_recovery
+
+    core, token, session = attached(tmp_path)
+    helper = ManualExchange(core.connect(token))
+    original = helper.retain_input(session.mapping_id)["source_ref"]
+    old = session.context()["current"]
+    assert session.settled("partial", "Date still unclear", False)["state"] == "incomplete"
+    with pytest.raises(CoreError, match="exchange.interrupted_attempt"):
+        session.verify_profile()
+    heads_before = helper.catalog()["records"]
+    with pytest.raises(CoreError, match="exchange.interrupted_attempt"):
+        session.tool(
+            "exchange",
+            "blocked-profile",
+            {
+                "operation": "profile",
+                "arguments": {
+                    "service": "fictional",
+                    "configuration": "must not save",
+                    "capabilities": [],
+                },
+            },
+        )
+    assert helper.catalog()["records"] == heads_before
+    incoming = session.input("follow-up", "Keep the original; date is unknown")
+    assert incoming["manual_exchange_recovery"]["work"] == old["work"]
+    assert (
+        helper.read(incoming["retained_input"]["source_ref"])["text"]
+        == "Keep the original; date is unknown"
+    )
+    assert session.context()["current"]["attempt"] == old["attempt"]
+    resumed = confirm_recovery(session, old["work"], "Continue with current model")
+    assert resumed["current"]["attempt"] != old["attempt"]
+    assert session.verify_profile()["state"] == "attached"
+    assert helper.read(original)["text"].startswith("External fictional return")
+
+
+def test_historical_exchange_recovery_does_not_intercept_later_setup(tmp_path: Path) -> None:
+    from zaratustra_app.native_exchange import confirm_recovery
+
+    core, token, session = attached(tmp_path)
+    old = session.context()["current"]["work"]
+    assert session.settled("interrupted", "Need clarification", False)["state"] == "incomplete"
+    recovered = NativeSession(core, token, "exchange-recovery")
+    recovered.profile = {"setup_admission": "native-setup/v1"}
+    confirm_recovery(recovered, old, "Continue exchange")
+    recovered.tool("result", "done", {"outputs": []})
+    assert recovered.settled("final", "Exchange checkpoint saved", False)["state"] == "completed"
+    first = recovered.input("setup", "Create fictional notes")
+    routed = recovered.tool(
+        "route",
+        "route",
+        {
+            "changes": [
+                {"id": "notes", "kind": "activity", "key": "notes", "body": "Fictional notes"}
+            ],
+            "expected_heads": {"notes": 0},
+            "outputs": [{"id": "notes", "revision": 1}],
+            "next_work": {"scope": "notes", "goal": "Set up notes", "inputs": [], "setup": True},
+        },
+        origin=first["current"],
+    )
+    old_setup = routed["current"]
+    recovered.settled("setup-partial", "Need another step", False, origin=old_setup)
+    newer = NativeSession(core, token, "new-ordinary-session")
+    newer.profile = recovered.profile
+    actual = newer.reopen()
+    assert actual["current"]["attempt"] != old_setup["attempt"]
+    assert actual["current"]["session_id"] == newer.session_id
+    assert actual["current"]["managed_setup"]
+    assert newer.verify_profile()["state"] == "attached"

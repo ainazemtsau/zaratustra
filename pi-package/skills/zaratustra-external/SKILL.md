@@ -7,6 +7,8 @@ Use this workflow for ordinary requests to set up an external tool, prepare a
 discussion or reusable instruction, receive pasted material/files, or continue a
 saved exchange. It is available after /zaratustra; the person needs no other
 command, JSON, scripts or maintenance CLI. Use the installed zara_exchange tool.
+The tool's workflow operation reads this complete installed product resource and
+returns its actual SHA-256 version, without arbitrary filesystem access.
 
 1. Read zara_context and exchange catalog. Use begin BEFORE Activity routing.
    General capability research, instructions and retention require no Activity.

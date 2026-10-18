@@ -13,6 +13,13 @@ server, connector, scheduler or new queue is introduced. Service names and real
 account capabilities are data; capabilities are not inferred from names.
 Public product source/checked reports stay separate from personal Core/auth data.
 
+The restricted native agent reads the full instruction with `zara_exchange`
+`workflow`, available before `begin` as well as inside exchange. This reads one
+fixed installed wheel resource and returns its complete text, byte size, SHA-256
+and `sha256:<hash>` resource version. It uses no arbitrary path or builtin
+read/bash authority and does not import the product instruction as a user Source.
+The wheel resource and Pi skill are byte-identical copies of that instruction.
+
 ## Prepare and retain
 
 General configuration and outgoing documents work before an Activity exists.
@@ -88,6 +95,12 @@ undispatched replacement `not_received`, refresh the same replacement Work and
 pin the actual profile. This follows only from local admission ordering. After
 `started`, unknown inference is never inferred absent: another restart requires
 explicit UI. Core schema/protocol/general lifecycle/rights do not change.
+
+Same-session incomplete responses have the same boundary: blocked/unknown or
+stale-generation Attempts fail provider/tool admission. A subsequent ordinary
+message is retained before the existing recovery dialog is offered; it cannot
+silently continue the old Attempt. Historical recovery records do not select the
+exchange handler for a later ordinary setup/review/Sleep frontier.
 
 The exchange mode admits only its own trusted Core tools, without arbitrary
 shell/file/network effects. `zara_result` plus actual native final ends a bounded
