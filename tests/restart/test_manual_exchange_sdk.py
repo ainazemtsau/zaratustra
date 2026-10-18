@@ -302,7 +302,9 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path, session
         if m.get("role") == "tool" and m.get("tool_call_id") == "current-input"
     )
     assert retained["readback_verified"] and not retained["subject_changes_applied"]
-    original_request = next(m["content"] for m in calls[0]["messages"] if m.get("role") == "user")
+    original_request = next(
+        m["content"][0]["text"] for m in calls[0]["messages"] if m.get("role") == "user"
+    )
     assert helper.read(retained["source_ref"])["text"] == original_request
     # Inspect the actual next provider request after native begin presentation.
     # The old duplicate Attempt body returned NOT_DELIVERED instead of these pins.
