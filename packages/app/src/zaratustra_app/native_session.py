@@ -298,7 +298,11 @@ class NativeSession:
                 "Manual external exchange: use zara_exchange begin BEFORE routing to an "
                 "Activity; no Activity is required for general setup or retention. "
                 "In exchange mode only exchange/read/context/result tools are admitted. "
-                "zara_result outputs:[] ends the exchange step; no subject changes there."
+                "For ready setup, save profile+prepared document (or reuse exact saved refs), "
+                "read them back and cite both in outputs/final. A ready one-time package "
+                "cites its prepared document. begin/final alone is not saved setup; "
+                "outputs:[] ends only an honest pending/no-deliverable step. "
+                "No subject changes in exchange result metadata."
             ),
         }
 

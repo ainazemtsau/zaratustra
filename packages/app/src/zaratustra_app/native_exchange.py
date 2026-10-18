@@ -31,7 +31,13 @@ confirm to present the exact stored proposal in human UI. Only that trusted UI
 can apply its exact version; ordinary zara_change/result cannot apply subjects.
 Do not create a fake Activity. A later subject proposal must name the chosen
 existing Activity. Resume saved pending records; never redo an applied import.
-Finish with zara_result outputs:[] or saved exchange refs, then actual final reply.
+For setup, save agreed parameters with profile and actual ready text with prepare,
+or reuse exact saved records. Read them back before claiming readiness; include
+their actual profile/document refs in zara_result outputs and the final reply.
+begin or a retained final alone is not saved setup. If details are insufficient,
+save a partial pending profile and ask. A one-time package cites its prepared
+document. outputs:[] means no saved deliverable, never proof of ready setup.
+Then speak the actual final reply.
 Completion ends this exchange step, never accepts subject truth or Activity work.
 """
 

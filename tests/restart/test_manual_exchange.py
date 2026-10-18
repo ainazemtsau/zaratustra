@@ -85,20 +85,41 @@ def test_original_before_parse_without_activity_and_ordinary_return(tmp_path: Pa
         "External fictional return, { broken JSON; yesterday; reply_to unknown"
     )
     assert helper.retain_input(session.mapping_id)["source_ref"] == retained["source_ref"]
+    profile = helper.profile(
+        {
+            "service": "arbitrary manual source",
+            "configuration": {
+                "goal": "Fictional discussion",
+                "route": "manual text or file",
+                "status": "agreed",
+            },
+            "capabilities": {"account_access": "unknown"},
+        }
+    )
     prepared = helper.prepare(
         {
             "text": "Question: fictional matter? Context v1. Unknown access.",
             "service": "arbitrary tool",
             "purpose": "One-time discussion",
+            "context": [profile["profile_ref"]],
         }
     )
     assert prepared["state"] == "prepared" and prepared["delivery"] == "not observed"
     assert helper.read(prepared["document_ref"])["text"] == prepared["text"]
-    session.tool("result", "finish", {"outputs": [retained["source_ref"]]})
+    assert (
+        helper.exact(profile["profile_ref"])["body"]["value"]["configuration"]["route"]
+        == "manual text or file"
+    )
+    refs = [retained["source_ref"], profile["profile_ref"], prepared["document_ref"]]
+    session.tool("result", "finish", {"outputs": refs})
     assert (
         session.settled("final", "Original retained; date remains unclear.", False)["state"]
         == "completed"
     )
+    result = session.context()["core"]["results"][-1]
+    import json
+
+    assert json.loads(result["body"])["outputs"] == refs
     assert session.input("next", "Ordinary new request")["current"].get("mode") is None
 
 

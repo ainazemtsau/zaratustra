@@ -56,7 +56,7 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path, session
             nonlocal phase, phase_calls, proposed
             request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
             calls.append(request)
-            if session_mode == "same" and phase == "interrupt" and phase_calls == 6:
+            if session_mode == "same" and phase == "interrupt" and phase_calls == 7:
                 phase, phase_calls = "resume", 0
             index = phase_calls
             phase_calls += 1
@@ -70,6 +70,19 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path, session
                     arguments = {"operation": "begin"}
                 elif index == 2:
                     arguments = {
+                        "operation": "profile",
+                        "arguments": {
+                            "service": "arbitrary manual source",
+                            "configuration": {
+                                "goal": "Fictional discussion",
+                                "route": "manual text or file",
+                                "status": "agreed",
+                            },
+                            "capabilities": {"account_access": "unknown"},
+                        },
+                    }
+                elif index == 3:
+                    arguments = {
                         "operation": "prepare",
                         "arguments": {
                             "service": "Any external tool",
@@ -77,9 +90,9 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path, session
                             "text": "Discuss fictional goals. Context v1. No Core access.",
                         },
                     }
-                elif index == 3:
-                    arguments = {"operation": "retain_file", "arguments": {"path": str(selected)}}
                 elif index == 4:
+                    arguments = {"operation": "retain_file", "arguments": {"path": str(selected)}}
+                elif index == 5:
                     source = next(
                         h
                         for h in helper.catalog()["records"]
@@ -128,7 +141,13 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path, session
                     }  # Lost receipt retry.
                 elif index == 2:
                     name = "zara_result"
-                    arguments = {"payload": {"outputs": []}}
+                    prepared_refs = [
+                        {"id": h["id"], "revision": h["revision"]}
+                        for h in helper.catalog()["records"]
+                        if ":profile:" in h["id"] or ":document:" in h["id"]
+                    ]
+                    assert len(prepared_refs) == 2
+                    arguments = {"payload": {"outputs": prepared_refs}}
                 else:
                     arguments = None
             delta: dict[str, Any] = (
@@ -238,7 +257,7 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path, session
         server.shutdown()
         server.server_close()
         thread.join(5)
-    assert len(calls) == (6 if session_mode == "refuse" else 10)
+    assert len(calls) == (7 if session_mode == "refuse" else 11)
     expected_workflow = (SOURCE / "pi-package/skills/zaratustra-external/SKILL.md").read_text(
         encoding="utf8"
     )
@@ -274,12 +293,30 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path, session
         next(h for h in helper.coordinator.rows("heads") if h["id"] == "fictional")["revision"] == 1
     )
     works = helper.coordinator.rows("works")
+    saved_profile = next(h for h in helper.catalog()["records"] if ":profile:" in h["id"])
+    saved_document = next(h for h in helper.catalog()["records"] if ":document:" in h["id"])
+    assert (
+        helper.exact({"id": saved_profile["id"], "revision": saved_profile["revision"]})["body"][
+            "value"
+        ]["configuration"]["route"]
+        == "manual text or file"
+    )
+    assert helper.read({"id": saved_document["id"], "revision": saved_document["revision"]})[
+        "text"
+    ].startswith("Discuss fictional goals.")
     if session_mode == "refuse":
         assert len(evidence[0]["confirmations"]) == 1
         assert evidence[0]["confirmations"][0]["accepted"] is False
         assert next(w for w in works if w["id"].startswith("exchange:"))["status"] == "blocked"
         assert not any(w["id"].startswith("manual-recovery:") for w in works)
         return
+    final = next(
+        json.loads(r["body"])
+        for r in evidence[-1]["results"]["rows"]
+        if json.loads(r["body"])["text"]
+        == "Original retained; subject application is separately confirmed."
+    )
+    assert {r["id"] for r in final["outputs"]} == {saved_profile["id"], saved_document["id"]}
     assert next(w for w in works if w["id"].startswith("exchange:"))["status"] == "cancelled"
     assert (
         len(

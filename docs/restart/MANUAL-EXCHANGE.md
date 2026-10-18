@@ -37,6 +37,15 @@ creates a selected new file as a verified copy. Core stays authoritative.
 existing Activity link. Prepared, reported configuration and observed delivery
 remain distinct evidence; code does not verify the remote account.
 
+For a setup request, the agent saves the agreed route/parameters with `profile`
+and the actual ready text with `prepare`, or reuses matching exact saved records.
+Before claiming readiness it reads them back, presents the text and cites both
+real refs in its result outputs/final. `begin` or a retained final alone saves
+neither setup parameters nor a prepared package. Missing details remain an honest
+pending partial profile/question. A one-time package needs its prepared document,
+without inventing a permanent profile. These are model instructions, not a new
+semantic validator or a restriction on retaining incoming originals.
+
 Ordinary native input commits before inference. `retain_input` references the
 actual full received bytes rather than a model copy/summary. Continued exchange
 input is mechanically retained as an artifact and linked observation. A selected

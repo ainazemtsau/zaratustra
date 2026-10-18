@@ -23,6 +23,15 @@ returns its actual SHA-256 version, without arbitrary filesystem access.
    self-contained package. Do not export unrelated Activity material or secrets.
    prepare retains the complete text through Core and returns its exact reference.
    Show that text or export a chosen file. Prepared is not configured or delivered.
+   For a setup request, save the agreed goal, manual route, limits and known/unknown
+   capabilities with profile, and save the actual ready-to-use text with prepare;
+   matching exact saved refs may be reused. begin and a saved final do NOT save
+   those settings or a document. Before saying setup is ready, read back both
+   records, show the prepared text and cite their actual profile_ref/document_ref.
+   With insufficient details, save a partial profile marked pending and ask the
+   needed question; do not claim readiness. A one-time document can use prepare
+   without inventing a permanent profile. Even a paper source or recipient is
+   valid manual-route data, without account features or an Activity prerequisite.
    Record later human copying/setup reports separately with profile and sources.
 3. Incoming native input was retained mechanically before inference by Core. Use
    retain_input to reference the actual FULL received text, including any enclosing
@@ -59,8 +68,11 @@ returns its actual SHA-256 version, without arbitrary filesystem access.
    session finds originals/pending proposals in Core. An interrupted inference
    requires explicit human recovery UI; it starts a new internal Work/profile and
    retains old unknown history. Do not repeat old effects or reimport originals.
-7. Finish this exchange step with zara_result outputs:[] or exact retained refs,
-   then the actual ordinary final reply. No subject changes in result/change.
+7. Finish with zara_result outputs containing the actual saved refs used in the
+   final reply. A ready setup cites both profile and document; a ready one-time
+   package cites its prepared document. outputs:[] can end an honest pending
+   question/no-deliverable step, but does not mean setup or a package is ready.
+   Then speak the actual final reply. No subject changes in result/change.
    Missing owner decisions stay pending records; no invented acceptance. Next
    ordinary request may route normally. Sleep/setup/review keep their own rules.
 
