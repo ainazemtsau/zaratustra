@@ -171,6 +171,19 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path, session
             finish = "tool_calls" if arguments is not None else "stop"
             if arguments is not None and name == "zara_exchange":
                 delta["tool_calls"][0]["function"]["arguments"] = json.dumps({"payload": arguments})
+            if phase == "interrupt" and index == 2:
+                # Exercise operation-only native retention of the current real input.
+                delta["tool_calls"].append(
+                    {
+                        "index": 1,
+                        "id": "current-input",
+                        "type": "function",
+                        "function": {
+                            "name": "zara_exchange",
+                            "arguments": json.dumps({"payload": {"operation": "retain_input"}}),
+                        },
+                    }
+                )
             chunks = [
                 {
                     "id": "fictional",
@@ -270,6 +283,27 @@ def test_native_manual_exchange_and_interrupted_recovery(tmp_path: Path, session
     assert workflow["sha256"] == hashlib.sha256(expected_workflow.encode()).hexdigest()
     assert workflow["resource_version"] == "sha256:" + workflow["sha256"]
     assert not {"read", "bash"} & {t["function"]["name"] for t in calls[1]["tools"]}
+    schema = next(
+        t["function"]["parameters"]
+        for t in calls[0]["tools"]
+        if t["function"]["name"] == "zara_exchange"
+    )
+    retain_schema = next(
+        item
+        for item in schema["properties"]["payload"]["anyOf"]
+        if item["properties"]["operation"].get("const") == "retain_input"
+    )
+    assert set(retain_schema["properties"]) == {"operation"}
+    assert retain_schema["required"] == ["operation"]
+    assert retain_schema["additionalProperties"] is False
+    retained = next(
+        json.loads(m["content"])
+        for m in calls[3]["messages"]
+        if m.get("role") == "tool" and m.get("tool_call_id") == "current-input"
+    )
+    assert retained["readback_verified"] and not retained["subject_changes_applied"]
+    original_request = next(m["content"] for m in calls[0]["messages"] if m.get("role") == "user")
+    assert helper.read(retained["source_ref"])["text"] == original_request
     # Inspect the actual next provider request after native begin presentation.
     # The old duplicate Attempt body returned NOT_DELIVERED instead of these pins.
     next_tools = [json.loads(m["content"]) for m in calls[2]["messages"] if m.get("role") == "tool"]

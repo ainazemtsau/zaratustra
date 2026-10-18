@@ -36,8 +36,9 @@ returns its actual SHA-256 version, without arbitrary filesystem access.
    valid manual-route data, without account features or an Activity prerequisite.
    Record later human copying/setup reports separately with profile and sources.
 3. Incoming native input was retained mechanically before inference by Core. Use
-   retain_input to reference the actual FULL received text, including any enclosing
-   request. Never substitute a model-retyped selection or a summary for the original.
+   retain_input with only {operation:"retain_input"}, no arguments or event ID,
+   to reference the actual current FULL input, including any enclosing request.
+   Read previous saved source refs through catalog/read/history. Never substitute a model-retyped selection or a summary for the original.
    For a selected file call retain_file BEFORE reading/analysing its content. It
    saves exact bytes and verifies Core readback. No required headers, JSON, date,
    prior setup, known origin or reply_to. Malformed text remains valid source data.
