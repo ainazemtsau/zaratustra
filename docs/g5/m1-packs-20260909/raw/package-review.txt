@@ -1,5 +1,0 @@
-{
-  "independent.zip": 163752,
-  "provenance.zip": 543167,
-  "supplemental.zip": 130198
-}
