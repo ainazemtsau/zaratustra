@@ -38,4 +38,21 @@ Mechanical/development attempts retained under the separate original evidence ro
 Every live attempt and installation identity will be appended after execution. No budget
 reset and no prepared mutation is called model behavior.
 
+Initial public validation candidates: e683a4809fa762ee27e8e08d400f0a231fd0c229,
+then d3dc6c38b02ba6e91c1037bdf1ed074b9be3c3b3 (observer-only row-prototype fix).
+The initial upgrade verifier compared null-prototype DatabaseSync rows with parsed JSON
+objects and failed despite equal stored columns; corrected serialization comparison passed.
+The original failure and both verifier logs remain. Clean installs disclosed six native
+peer metadata removals in installed package-lock, with every other tracked byte matching.
+A launch command used a cwd before creating it and was rejected before a live attempt;
+setup was then split into creation and launch.
+
+Early live pre-validation on d3dc6c3: 3 attempts, 26 requests, Pi USD 0.3946912.
+All settled: old installed data continuation; nested plan/independent saved invitation;
+first partial material and manual handoff. No scripted mutation or owner verdict.
+Inspection of the return path found missing ancestor-version bindings for handoffs and
+claims. Added ancestor snapshots/guards and final-batch pause/late-response negatives;
+8/8 focused Work tests passed. These early runs remain counted, not final-candidate proof.
+Affected stories will run on the next fixed public candidate.
+
 END_OF_FILE: docs/C-ATTEMPTS.md

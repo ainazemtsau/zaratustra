@@ -203,8 +203,14 @@ export function validateWorks(
               : dw.status === "done";
           }),
       );
+      const activeChild = [...works.values()].some(
+        (child) =>
+          child.parent_work_id &&
+          refId(child.parent_work_id) === id &&
+          child.status === "active",
+      );
       requireThat(
-        !independent,
+        !independent && !activeChild,
         "INVALID_TRANSITION",
         "An independent step is available; the whole Work cannot be waiting.",
       );

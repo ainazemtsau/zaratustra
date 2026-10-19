@@ -455,6 +455,36 @@ export class Core {
     requireThat(row, "REFERENCE_NOT_FOUND", "Handoff not found.");
     return this.envelope(JSON.parse(row.json));
   }
+  private handoffStale(
+    h: {
+      work_ref: { id: string };
+      plan_version: number;
+      plan_snapshot?: { id: string; plan_version: number }[];
+      context_refs?: { id: string; revision?: number }[];
+    },
+    get: (ref: unknown, kind?: string) => RecordRow,
+  ) {
+    const own = get({ id: h.work_ref.id }, "work");
+    const snapshot = h.plan_snapshot ?? [
+      { id: h.work_ref.id, plan_version: h.plan_version },
+    ];
+    // Earlier development artifacts did not bind ancestors. Preserve them, but
+    // never certify an unchanged parent plan from missing snapshot metadata.
+    if (!h.plan_snapshot && own.data.parent_work_id) return true;
+    for (const premise of snapshot) {
+      const current = get({ id: premise.id }, "work");
+      if (
+        (current.data.plan_version ?? 1) !== premise.plan_version ||
+        ["paused", "done", "cancelled"].includes(current.data.status as string)
+      )
+        return true;
+    }
+    return (h.context_refs ?? []).some(
+      (ref) =>
+        ref.revision !== undefined &&
+        get({ id: ref.id }).revision !== ref.revision,
+    );
+  }
   private decision(handle: string | undefined, handles?: string[]) {
     const s = handle ? this.sources.get(handle) : undefined;
     requireThat(
@@ -471,10 +501,12 @@ export class Core {
   }
   private assertExecutable(workId: string) {
     const seen = new Set<string>();
+    const plan_guards: { id: string; revision: number }[] = [];
     let r = this.record(workId);
     while (r) {
       requireThat(!seen.has(r.id), "GRAPH_CYCLE", "Parent cycle.");
       seen.add(r.id);
+      plan_guards.push({ id: r.id, revision: r.revision });
       requireThat(
         !["paused", "done", "cancelled"].includes(r.data.status as string),
         "INVALID_TRANSITION",
@@ -489,6 +521,7 @@ export class Core {
       if (!r.data.parent_work_id) break;
       r = this.record(refId(r.data.parent_work_id));
     }
+    return plan_guards;
   }
   claim(input: {
     action: "acquire" | "release" | "reconcile";
@@ -520,7 +553,7 @@ export class Core {
         .map((r) => JSON.parse(r.json));
       let claim;
       if (input.action === "acquire") {
-        this.assertExecutable(w.id);
+        const plan_guards = this.assertExecutable(w.id);
         const data = WorkData.parse(w.data);
         requireThat(
           !input.step_id || data.steps.some((s) => s.step_id === input.step_id),
@@ -542,6 +575,7 @@ export class Core {
           step_id: input.step_id ?? null,
           purpose: input.purpose ?? "work",
           expected_revision: w.revision,
+          plan_guards,
           session_id: this.context.session_id,
           runtime_id: this.context.runtime_id,
           epoch: this.context.epoch,
@@ -746,7 +780,7 @@ export class Core {
         purpose: string,
       ) => {
         const current = guarded(workId);
-        this.assertExecutable(workId);
+        const plan_guards = this.assertExecutable(workId);
         const claim = (request.claim_tokens ?? [])
           .map((token) =>
             this.storage.get<{ json: string }>(
@@ -769,6 +803,7 @@ export class Core {
             claim.session_id === this.context.session_id &&
             claim.runtime_id === this.context.runtime_id &&
             claim.epoch === this.context.epoch &&
+            canonical(claim.plan_guards) === canonical(plan_guards) &&
             Date.parse(claim.expires_at) > Date.now(),
           "WORK_IN_USE",
           "A current revision/session/epoch-bound managed execution claim is required.",
@@ -1098,9 +1133,10 @@ export class Core {
                 changed.get(h.work_ref.id) ?? guarded(h.work_ref.id);
               guarded(h.work_ref.id);
               const w = WorkData.parse(current.data);
-              const stale =
-                (w.plan_version ?? 1) !== h.plan_version ||
-                ["paused", "done", "cancelled"].includes(w.status);
+              const stale = this.handoffStale(
+                h,
+                (ref) => changed.get(refId(ref)) ?? this.record(refId(ref)),
+              );
               requireThat(
                 !stale ||
                   op.disposition === "late" ||
@@ -1287,6 +1323,33 @@ export class Core {
           "Prepared handoff no longer matches the final executable plan.",
         );
         for (const ref of data.context_refs) get(ref);
+        data.context_refs = data.context_refs.map((ref: unknown) => {
+          const r = get(ref);
+          if (!(ref as { revision?: number }).revision && r.kind !== "evidence")
+            guardedIfExisting(r.id);
+          return { id: r.id, revision: r.revision };
+        });
+        data.plan_snapshot = [];
+        let work = get({ id: data.work_ref.id }, "work");
+        for (;;) {
+          requireThat(
+            !["paused", "cancelled", "done"].includes(
+              work.data.status as string,
+            ),
+            "INVALID_TRANSITION",
+            "An ancestor suppresses handoff preparation.",
+          );
+          data.plan_snapshot.push({
+            id: work.id,
+            revision: work.revision,
+            plan_version: work.data.plan_version ?? 1,
+            status: work.data.status,
+          });
+          guardedIfExisting(work.id);
+          if (!work.data.parent_work_id) break;
+          work = get(work.data.parent_work_id, "work");
+        }
+        h.json = JSON.stringify(data);
       }
       for (const r of changed.values()) {
         if (r.kind === "work") {
@@ -1338,9 +1401,10 @@ export class Core {
             revision: current.revision,
           };
           reply.current_plan_version = w.plan_version ?? 1;
-          reply.stale =
-            reply.current_plan_version !== reply.original_plan_version ||
-            ["paused", "done", "cancelled"].includes(w.status);
+          const h = this.handoff(
+            (r.data.handoff_reply as { handoff_id: string }).handoff_id,
+          ).data;
+          reply.stale = this.handoffStale(h, get);
           requireThat(
             !reply.stale || ["late", "unrelated"].includes(reply.disposition),
             "INVALID_TRANSITION",
@@ -1371,6 +1435,30 @@ export class Core {
           this.context.session_id,
           JSON.stringify(focus),
         );
+      }
+      for (const token of consumed) {
+        const claim = JSON.parse(
+          this.storage.get<{ json: string }>(
+            "SELECT json FROM claims WHERE token=?",
+            token,
+          )!.json,
+        );
+        let work = get({ id: claim.work_id }, "work");
+        for (;;) {
+          requireThat(
+            !["paused", "cancelled"].includes(work.data.status as string),
+            "INVALID_TRANSITION",
+            "The final linked plan suppresses this managed execution.",
+          );
+          if (work.data.activity_id)
+            requireThat(
+              get(work.data.activity_id, "activity").data.status === "active",
+              "INVALID_TRANSITION",
+              "The final Activity suppresses this managed execution.",
+            );
+          if (!work.data.parent_work_id) break;
+          work = get(work.data.parent_work_id, "work");
+        }
       }
       const revisions: Record<string, number> = {};
       for (const r of changed.values()) {

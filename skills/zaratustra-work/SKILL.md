@@ -29,7 +29,8 @@ resolution (required when resolved). Time waits also need exact due_at with UTC 
 IANA timezone; interpret relative time from known user timezone or clarify. No scheduler.
 Persist a received fragment immediately; append its Evidence ref to the exact wait, mark
 partial, keep the remaining question. Waiting means no independent action is available.
-Keep Work active and perform independent steps while another step waits. Blocked requires
+Keep Work active while any independent step or active child can proceed; a waiting child
+does not stop its siblings. Perform independent steps while another step waits. Blocked requires
 intervention. Do not imply an excerpt satisfies a whole book.
 
 update_record replaces complete data with an exact revision guard. Keep current plan_version;
@@ -52,6 +53,7 @@ ordinary external shell/API effects have no automatic retry or exactly-once guar
 Persist your generated textual result with record_result {client_ref,work_ref,step_id?,
 title,content,source_language}. It creates addressed generated-artifact Evidence tied to
 the Work/plan/session, labelled model-generated rather than verified truth or owner words.
+Claims also bind ancestor revisions, so a parent change requires a fresh claim.
 Use the matching work/step claim. In the same commit transition the step/Work with its
 result ref if appropriate. A delivered result needs durable content, not just a title.
 
@@ -68,7 +70,8 @@ No owner-usefulness or full-R1 claim follows from formal completion.
 
 prepare_handoff {client_ref,work_ref,step_id?,objective,conditions,expected_result,
 context_refs,message} stores a minimal immutable request tied to Work/revision/plan_version.
-Read returned handoff_id via zara_read; show its substantive message in the user's language
+Guard the Work and each existing ancestor when preparing; Core pins their plan snapshots
+and exact context versions. Read returned handoff_id via zara_read; show its substantive message in the user's language
 with the stable handoff reference for return correlation. Preparation is not sending.
 Never send to another chat/recipient yourself. Include only authorized necessary context.
 

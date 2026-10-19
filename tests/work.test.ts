@@ -903,3 +903,107 @@ test("addressed generated results and handoff/claim transaction recovery preserv
     t.disk.close();
   }
 });
+
+test("ancestor revisions invalidate child claims and parent-goal changes make replies late in the final transaction", () => {
+  const f = setup(),
+    r = f.send([
+      f.create("parent"),
+      f.create("child", {
+        ...base(),
+        parent_work_id: { client_ref: "parent" },
+      }),
+    ]),
+    p = r.created.parent,
+    c = r.created.child;
+  const token = f.claim(c, "handoff");
+  const h = f.send(
+    [
+      {
+        op: "prepare_handoff",
+        client_ref: "h",
+        work_ref: { id: c },
+        objective: "Inspect the child under the parent goal",
+        conditions: "Current parent plan",
+        expected_result: "One useful comment",
+        context_refs: [],
+        message: "Please inspect the synthetic child.",
+      },
+    ],
+    [c, p],
+    [token],
+  ).created.h;
+  assert.equal(f.core.handoff(h).data.plan_snapshot.length, 2);
+  const stale = f.claim(c);
+  f.send([f.update(p, { ...f.work(p), objective: "New parent goal" })], [p]);
+  assert.throws(
+    () =>
+      f.send(
+        [
+          {
+            op: "record_result",
+            client_ref: "x",
+            work_ref: { id: c },
+            title: "Stale execution",
+            content: "Old goal result",
+            source_language: "en",
+          },
+        ],
+        [c],
+        [stale],
+      ),
+    /claim/,
+  );
+  f.core.claim({
+    action: "release",
+    work_id: c,
+    expected_revision: 1,
+    token: stale,
+    reason: "Parent goal changed; no local result committed",
+  });
+  const reply = {
+    op: "receive_handoff",
+    client_ref: "reply",
+    handoff_id: h,
+    source_handle: f.source,
+    title: "External reply",
+    source_language: "en",
+    comparison: "Original and current parent goals differ",
+    disposition: "accepted",
+    useful_content: "Retain useful analysis",
+    accepted_wait_ids: [],
+  };
+  assert.throws(() => f.send([reply], [c]), /late\/unrelated/);
+  const receipt = f.send([{ ...reply, disposition: "late" }], [c]);
+  assert.equal(
+    (f.row(receipt.created.reply).data.handoff_reply as { stale: boolean })
+      .stale,
+    true,
+  );
+  const fresh = f.claim(c);
+  assert.throws(
+    () =>
+      f.send(
+        [
+          {
+            op: "record_result",
+            client_ref: "x",
+            work_ref: { id: c },
+            title: "Suppressed execution",
+            content: "No execution under final parent pause",
+            source_language: "en",
+          },
+          {
+            op: "transition_work",
+            ref: { id: p },
+            status: "paused",
+            reason: "Pause in same linked batch",
+            decision_source_handle: f.source,
+          },
+        ],
+        [c, p],
+        [fresh],
+      ),
+    /final linked plan/,
+  );
+  f.disk.close();
+});
