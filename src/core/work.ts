@@ -37,6 +37,11 @@ export function validateWorks(
       .map((r) => [r.id, WorkData.parse(r.data)]),
   );
   const edges = new Map<string, string[]>();
+  const node = (
+    workId: string,
+    kind: "parent" | "complete" | "step",
+    stepId?: string,
+  ) => JSON.stringify([workId, kind, stepId ?? null]);
   const add = (a: string, b: string) =>
     edges.set(a, [...(edges.get(a) ?? []), b]);
   for (const [id, w] of works) {
@@ -48,7 +53,7 @@ export function validateWorks(
         "VALIDATION_ERROR",
         "Parent must be a current Work reference.",
       );
-      add(id + ":parent", p.id + ":parent");
+      add(node(id, "parent"), node(p.id, "parent"));
     }
     const unique = (values: string[]) =>
       requireThat(
@@ -74,7 +79,7 @@ export function validateWorks(
           "REFERENCE_TYPE_MISMATCH",
           "A step's child must have this Work as its single direct parent.",
         );
-        add(id + ":" + s.step_id, child.id + ":complete");
+        add(node(id, "step", s.step_id), node(child.id, "complete"));
         if (s.status === "done")
           requireThat(
             child.data.status === "done",
@@ -108,7 +113,12 @@ export function validateWorks(
             "REFERENCE_NOT_FOUND",
             "Dependency criterion does not exist.",
           );
-        add(id + ":" + s.step_id, target.id + ":" + (d.step_id ?? "complete"));
+        add(
+          node(id, "step", s.step_id),
+          d.step_id
+            ? node(target.id, "step", d.step_id)
+            : node(target.id, "complete"),
+        );
         if (s.status === "running" || s.status === "done")
           requireThat(
             ds ? ds.status === "done" : dw.status === "done",
@@ -116,7 +126,8 @@ export function validateWorks(
             "A completion dependency is not satisfied; cancelled/skipped is not success.",
           );
       }
-      if (s.required !== false) add(id + ":complete", id + ":" + s.step_id);
+      if (s.required !== false)
+        add(node(id, "complete"), node(id, "step", s.step_id));
       if (s.status === "done")
         requireThat(
           s.result_refs.length > 0,
@@ -268,7 +279,7 @@ export function validateWorks(
   for (const [id, w] of works)
     if (w.parent_work_id && w.required_for_parent !== false) {
       const p = works.get(refId(w.parent_work_id))!;
-      add(refId(w.parent_work_id) + ":complete", id + ":complete");
+      add(node(refId(w.parent_work_id), "complete"), node(id, "complete"));
       if (p.status === "done")
         requireThat(
           w.status === "done",

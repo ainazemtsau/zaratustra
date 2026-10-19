@@ -1007,3 +1007,15 @@ test("ancestor revisions invalidate child claims and parent-goal changes make re
   );
   f.disk.close();
 });
+
+test("step addresses cannot collide with internal parent/completion graph nodes", () => {
+  const f = setup();
+  const id = f.send([
+    f.create("address-test", {
+      ...base(),
+      steps: [step("complete"), step("parent"), step("a:complete")],
+    }),
+  ]).created["address-test"];
+  assert.equal(f.work(id).steps.length, 3);
+  f.disk.close();
+});
