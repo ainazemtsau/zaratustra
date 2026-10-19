@@ -54,6 +54,9 @@ export class Core {
       );
     this.storage.get("SELECT count(*) AS n FROM records");
   }
+  authorizeImport() {
+    this.authorize(true);
+  }
   capture(
     text: string,
     transport: string,
@@ -265,9 +268,11 @@ export class Core {
     const r = this.record(recordId, revision);
     if (range) {
       requireThat(
-        r.kind === "evidence" && typeof r.data.blob_ref === "string",
+        r.kind === "evidence" &&
+          (typeof r.data.blob_ref === "string" ||
+            typeof r.data.retained_excerpt === "string"),
         "VALIDATION_ERROR",
-        "Only retained imported material has addressable ranges.",
+        "Only retained Evidence text has addressable ranges.",
       );
       requireThat(
         Number.isInteger(range.start) &&
@@ -278,39 +283,41 @@ export class Core {
         "VALIDATION_ERROR",
         "Use a character range of 1..8000.",
       );
-      const text = this.storage.readMaterial(r.data.blob_ref);
+      const text =
+        typeof r.data.blob_ref === "string"
+          ? this.storage.readMaterial(r.data.blob_ref)
+          : (r.data.retained_excerpt as string);
+      const characters = Array.from(text);
+      const nextStart = Math.min(range.start + range.length, characters.length);
       return this.envelope({
         ref: { id: r.id, revision: r.revision },
         source_language: r.data.source_language,
         content_hash: r.data.content_hash,
         range_unit: "Unicode code points",
         start: range.start,
-        text: Array.from(text)
-          .slice(range.start, range.start + range.length)
-          .join(""),
-        total_characters: Array.from(text).length,
-        has_more: range.start + range.length < Array.from(text).length,
-        next_start: Math.min(
-          range.start + range.length,
-          Array.from(text).length,
-        ),
+        text: characters.slice(range.start, nextStart).join(""),
+        total_characters: characters.length,
+        has_more: nextStart < characters.length,
+        next_start: nextStart,
         untrusted_source_data: true,
       });
     }
-    if (
-      r.kind === "evidence" &&
-      typeof r.data.retained_excerpt === "string" &&
-      r.data.retained_excerpt.length > 8000
-    ) {
-      return this.envelope({
-        ...r,
-        data: {
-          ...r.data,
-          retained_excerpt: r.data.retained_excerpt.slice(0, 8000),
-          excerpt_truncated: true,
-          must_read_material_range: true,
-        },
-      });
+    if (r.kind === "evidence" && typeof r.data.retained_excerpt === "string") {
+      const characters = Array.from(r.data.retained_excerpt);
+      if (characters.length > 8000)
+        return this.envelope({
+          ...r,
+          data: {
+            ...r.data,
+            retained_excerpt: characters.slice(0, 8000).join(""),
+            range_unit: "Unicode code points",
+            total_characters: characters.length,
+            has_more: true,
+            next_start: 8000,
+            excerpt_truncated: true,
+            must_read_material_range: true,
+          },
+        });
     }
     return this.envelope(r);
   }

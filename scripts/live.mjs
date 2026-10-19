@@ -32,8 +32,15 @@ const {
 const ledger = () => JSON.parse(readFileSync(budgetPath, "utf8"));
 const saveLedger = (b) => writeFileSync(budgetPath, JSON.stringify(b, null, 2));
 const b = ledger();
-if (++b.prompts > b.limits.prompts)
-  throw new Error("Finite live prompt budget exhausted");
+if (
+  b.prompts >= b.limits.prompts ||
+  b.requests >= b.limits.requests ||
+  b.estimated_usd >= b.limits.estimated_usd
+)
+  throw new Error(
+    "Finite live budget exhausted before starting another attempt",
+  );
+b.prompts++;
 saveLedger(b);
 const log = (name, value) =>
   appendFileSync(join(output, name + ".jsonl"), JSON.stringify(value) + "\n");
@@ -58,6 +65,7 @@ log("identity", {
   auth: auth ? { available: true } : { available: false },
   source:
     "existing conscious Pi selection, supported ModelRuntime authPath (native authentication only)",
+  thinking: "medium",
   prompt,
 });
 let dropped = false;
@@ -85,17 +93,17 @@ const observer = (pi) => {
   });
   pi.on("before_provider_request", (_event, ctx) => {
     const budget = ledger();
-    ++budget.requests;
-    saveLedger(budget);
     if (
-      budget.requests > budget.limits.requests ||
-      budget.input > budget.limits.input ||
-      budget.output > budget.limits.output ||
-      budget.estimated_usd > budget.limits.estimated_usd
+      budget.requests >= budget.limits.requests ||
+      budget.input >= budget.limits.input ||
+      budget.output >= budget.limits.output ||
+      budget.estimated_usd >= budget.limits.estimated_usd
     ) {
       ctx.abort();
       throw new Error("Finite live request/token/cost budget exhausted");
     }
+    ++budget.requests;
+    saveLedger(budget);
   });
   pi.on("tool_result", (event, ctx) => {
     if (
