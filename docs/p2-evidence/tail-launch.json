@@ -1,0 +1,5 @@
+{
+  "process_cwd": "[isolated-test-root]\\installed\\cwd-tail",
+  "sdk_cwd": "[isolated-test-root]\\installed\\cwd-tail",
+  "transcript": "new in-memory session; no resume"
+}

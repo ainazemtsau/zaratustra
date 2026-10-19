@@ -1,0 +1,75 @@
+{
+  "create": {
+    "records": 4,
+    "revisions": 4,
+    "changes": 1,
+    "receipts": 1,
+    "original_exact": true,
+    "commit_before_save_prose": true,
+    "waiting_work": "work-90cb53ef-be3c-455e-a5c4-57f2664c8be4",
+    "source_commit": "7a1e409f64f0a85b3c9340286c6445f41a862fb4"
+  },
+  "02-continue": {
+    "no_startup_transcript": true,
+    "settled": true
+  },
+  "03-continue-process-cwd": {
+    "no_startup_transcript": true,
+    "settled": true
+  },
+  "03-tail": {
+    "no_startup_transcript": true,
+    "settled": true
+  },
+  "tail": {
+    "evidence_id": "evidence-9b53639e-9c44-4871-88f1-34e1b491ceeb",
+    "code_points": 8604,
+    "answer_start": 8529,
+    "new_prompt": "Где по сохранённому журналу наблюдений нужно оставить контрольный образец? Ответь по-русски.",
+    "answer_absent_from_prompt_snapshots_cards_normal": true,
+    "snapshot_request_count": 6,
+    "zara_reads": [
+      {
+        "id": "evidence-9b53639e-9c44-4871-88f1-34e1b491ceeb",
+        "range": {
+          "start": 0,
+          "length": 8000
+        }
+      },
+      {
+        "id": "evidence-9b53639e-9c44-4871-88f1-34e1b491ceeb",
+        "range": {
+          "start": 8000,
+          "length": 8000
+        }
+      }
+    ],
+    "answer_returned_by_actual_zara_read": true,
+    "original_hash_unchanged": true,
+    "response": "По сохранённому журналу контрольный образец нужно оставить в янтарном шкафу, на четвёртой полке.",
+    "tool_names": [
+      "read",
+      "zara_map",
+      "zara_browse",
+      "zara_read",
+      "zara_read"
+    ]
+  },
+  "budget": {
+    "requests": 15,
+    "input": 94558,
+    "model": "gpt-6.1-sol",
+    "provider": "openai-codex",
+    "cache_read": 35200,
+    "estimated_usd": 0.13559599999999997,
+    "prompts": 4,
+    "output": 1336,
+    "limits": {
+      "prompts": 6,
+      "requests": 30,
+      "estimated_usd": 5,
+      "input": 1500000,
+      "output": 90000
+    }
+  }
+}

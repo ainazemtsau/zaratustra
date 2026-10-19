@@ -1,0 +1,162 @@
+
+> zaratustra@0.1.0-dev.1 deliver
+> npm run check && node scripts/deliver.mjs
+
+
+> zaratustra@0.1.0-dev.1 check
+> npm run format:check && npm run lint && npm run types && npm run boundary && npm run build && npm test
+
+
+> zaratustra@0.1.0-dev.1 format:check
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> zaratustra@0.1.0-dev.1 lint
+> eslint src tests scripts
+
+
+> zaratustra@0.1.0-dev.1 types
+> tsc --noEmit
+
+
+> zaratustra@0.1.0-dev.1 boundary
+> depcruise src --config .dependency-cruiser.cjs
+
+
+✔ no dependency violations found (11 modules, 16 dependencies cruised)
+
+
+> zaratustra@0.1.0-dev.1 build
+> tsc -p tsconfig.build.json
+
+
+> zaratustra@0.1.0-dev.1 test
+> tsx --test tests/*.test.ts
+
+TAP version 13
+# (node:73900) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: disk WAL reopen preserves all linked objects, versions, Change, exact source and receipt
+ok 1 - disk WAL reopen preserves all linked objects, versions, Change, exact source and receipt
+  ---
+  duration_ms: 74.0446
+  type: 'test'
+  ...
+# Subtest: faults on every commit boundary leave all domain state/receipt or none; lost response is recoverable without old ID
+ok 2 - faults on every commit boundary leave all domain state/receipt or none; lost response is recoverable without old ID
+  ---
+  duration_ms: 232.6416
+  type: 'test'
+  ...
+# Subtest: similar independent requests create distinct records; stale guard and invalid final links are atomic failures
+ok 3 - similar independent requests create distinct records; stale guard and invalid final links are atomic failures
+  ---
+  duration_ms: 75.785
+  type: 'test'
+  ...
+# Subtest: source expiry, forged fields and unsupported kinds do not mutate domain state
+ok 4 - source expiry, forged fields and unsupported kinds do not mutate domain state
+  ---
+  duration_ms: 46.9457
+  type: 'test'
+  ...
+# Subtest: one writing process, read-only/corrupt/missing stores never claim success or reset saved bytes
+ok 5 - one writing process, read-only/corrupt/missing stores never claim success or reset saved bytes
+  ---
+  duration_ms: 51.6844
+  type: 'test'
+  ...
+# Subtest: retained Markdown survives source removal, exact bytes/read ranges and interrupted imports do not publish unfinished refs
+ok 6 - retained Markdown survives source removal, exact bytes/read ranges and interrupted imports do not publish unfinished refs
+  ---
+  duration_ms: 63.1242
+  type: 'test'
+  ...
+# Subtest: bounded catalog cursors reject changed generation and permissions apply to reads
+ok 7 - bounded catalog cursors reject changed generation and permissions apply to reads
+  ---
+  duration_ms: 48.7383
+  type: 'test'
+  ...
+# Subtest: SQLite disk-full fault leaves no domain records or committed receipt
+ok 8 - SQLite disk-full fault leaves no domain records or committed receipt
+  ---
+  duration_ms: 34.7453
+  type: 'test'
+  ...
+# Subtest: workspace aliases resolve before any future directory is created
+ok 9 - workspace aliases resolve before any future directory is created
+  ---
+  duration_ms: 36.3796
+  type: 'test'
+  ...
+# (node:88876) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: snapshot replacement preserves system, tool, user and unrelated extension data by identity
+ok 10 - snapshot replacement preserves system, tool, user and unrelated extension data by identity
+  ---
+  duration_ms: 1.091
+  type: 'test'
+  ...
+# (node:22300) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: retained excerpt: long ASCII, bounded reading reconstructs original without mutation
+ok 11 - retained excerpt: long ASCII, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 53.4622
+  type: 'test'
+  ...
+# Subtest: retained excerpt: emoji on page boundary, bounded reading reconstructs original without mutation
+ok 12 - retained excerpt: emoji on page boundary, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 52.1313
+  type: 'test'
+  ...
+# Subtest: retained excerpt: exactly 8000 non-BMP code points, bounded reading reconstructs original without mutation
+ok 13 - retained excerpt: exactly 8000 non-BMP code points, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 54.1295
+  type: 'test'
+  ...
+# Subtest: retained excerpt: exactly 8000 BMP code points, bounded reading reconstructs original without mutation
+ok 14 - retained excerpt: exactly 8000 BMP code points, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 50.461
+  type: 'test'
+  ...
+# Subtest: import preflight uses Core processing, identity and write authority
+ok 15 - import preflight uses Core processing, identity and write authority
+  ---
+  duration_ms: 42.4856
+  type: 'test'
+  ...
+# Subtest: historical excerpt ranges use the requested revision, not current text
+ok 16 - historical excerpt ranges use the requested revision, not current text
+  ---
+  duration_ms: 61.6329
+  type: 'test'
+  ...
+# Subtest: authorized imported material still retains exact BOM/CRLF bytes and code-point ranges
+ok 17 - authorized imported material still retains exact BOM/CRLF bytes and code-point ranges
+  ---
+  duration_ms: 66.0181
+  type: 'test'
+  ...
+# Subtest: retained excerpt ranges keep explicit invalid-range errors
+ok 18 - retained excerpt ranges keep explicit invalid-range errors
+  ---
+  duration_ms: 50.6267
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 955.9433
+RESULT structure passed (content and owner acceptance require human review).

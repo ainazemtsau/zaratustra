@@ -1,0 +1,39 @@
+{
+  "version": "0.1.0-dev.1",
+  "name": "zaratustra",
+  "dependencies": {
+    "typescript-eslint": {
+      "version": "8.46.2",
+      "resolved": "https://registry.npmjs.org/typescript-eslint/-/typescript-eslint-8.46.2.tgz",
+      "overridden": false,
+      "dependencies": {
+        "@typescript-eslint/typescript-estree": {
+          "version": "8.46.2",
+          "resolved": "https://registry.npmjs.org/@typescript-eslint/typescript-estree/-/typescript-estree-8.46.2.tgz",
+          "overridden": false,
+          "dependencies": {
+            "fast-glob": {
+              "version": "3.3.3",
+              "resolved": "https://registry.npmjs.org/fast-glob/-/fast-glob-3.3.3.tgz",
+              "overridden": false,
+              "dependencies": {
+                "micromatch": {
+                  "version": "4.0.8",
+                  "resolved": "https://registry.npmjs.org/micromatch/-/micromatch-4.0.8.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "braces": {
+                      "version": "3.0.3",
+                      "resolved": "https://registry.npmjs.org/braces/-/braces-3.0.3.tgz",
+                      "overridden": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

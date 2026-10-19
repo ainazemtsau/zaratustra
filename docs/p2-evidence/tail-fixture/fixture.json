@@ -1,0 +1,198 @@
+{
+  "provenance": "Mechanically seeded synthetic fixture through installed Core capture/commit; the retrieval model receives no fixture transcript, ID or answer.",
+  "id": "evidence-9b53639e-9c44-4871-88f1-34e1b491ceeb",
+  "code_points": 8604,
+  "content_hash": "99fab1c4a9b4242658fb8ac85692a35ba555bb7916df733e73fd74531752a5a2",
+  "answer_start": 8529,
+  "receipt": {
+    "ok": true,
+    "request_id": "synthetic-long-observation",
+    "workspace_id": "19d8a2cf-5638-4660-be7b-fb4e193ad7c2",
+    "schema_version": 1,
+    "snapshot_seq": 2,
+    "transaction_id": "txn-021fd5b8-7f77-4c30-9f10-0aefae144c9a",
+    "committed": true,
+    "created": {
+      "log": "evidence-9b53639e-9c44-4871-88f1-34e1b491ceeb"
+    },
+    "new_revisions": {
+      "evidence-9b53639e-9c44-4871-88f1-34e1b491ceeb": 1
+    },
+    "warnings": []
+  },
+  "snapshot": {
+    "available": true,
+    "workspace_id": "19d8a2cf-5638-4660-be7b-fb4e193ad7c2",
+    "active_epoch": "8ea4a276-fc32-4e10-895c-8f47e2c0a64a",
+    "snapshot_seq": 2,
+    "focus": null,
+    "records": [
+      {
+        "id": "knowledge-ffe07d2a-72af-4266-a1b2-ec7e6cf9a0f7",
+        "kind": "knowledge",
+        "revision": 1,
+        "title": "Russian conversation preference",
+        "data": {
+          "knowledge_kind": "preference",
+          "statement": "The user requests responses in Russian.",
+          "state": "current",
+          "basis": "user_statement",
+          "evidence_refs": [
+            {
+              "id": "evidence-9c06cc64-d786-4271-bbd2-7ed83610bf78"
+            }
+          ],
+          "conditions": "Use Russian in conversation unless the user requests otherwise. The source is observed programmatic input, not verified owner approval.",
+          "representation": {
+            "kind": "English paraphrase",
+            "source_ref": {
+              "id": "evidence-9c06cc64-d786-4271-bbd2-7ed83610bf78"
+            },
+            "source_language": "Russian"
+          }
+        }
+      },
+      {
+        "id": "work-90cb53ef-be3c-455e-a5c4-57f2664c8be4",
+        "kind": "work",
+        "revision": 1,
+        "title": "Understand the forthcoming book",
+        "data": {
+          "activity_id": {
+            "id": "activity-3c4081f9-596b-49fd-b502-4930669d19a5"
+          },
+          "parent_work_id": null,
+          "objective": "Help the user understand the book they will supply later.",
+          "acceptance": [
+            {
+              "criterion_id": "understanding",
+              "description": "Explain the supplied book's main ideas and discuss the user's questions.",
+              "verification": "Ground explanations in received material and check understanding with the user.",
+              "required": true
+            }
+          ],
+          "status": "waiting",
+          "current_state": "The user intends to send a book later. No book or excerpt has been received or read.",
+          "next_action": "Wait for the user to supply the book or an excerpt, then read the available material.",
+          "steps": [],
+          "waits": [
+            {
+              "wait_id": "book-input",
+              "kind": "user",
+              "target": "work",
+              "subject": "Book to understand",
+              "satisfied_by": "The user supplies the book text or material sufficient to begin reading; an excerpt may permit partial progress without supplying the whole book.",
+              "received_refs": [],
+              "question": "Please send the book or an excerpt when ready."
+            }
+          ],
+          "context_refs": [
+            {
+              "id": "evidence-9c06cc64-d786-4271-bbd2-7ed83610bf78"
+            }
+          ],
+          "completion": null
+        }
+      }
+    ],
+    "must_read": [],
+    "has_more": false,
+    "warnings": [],
+    "write_mode": "single-writer",
+    "data_only": true
+  },
+  "cards": {
+    "ok": true,
+    "workspace_id": "19d8a2cf-5638-4660-be7b-fb4e193ad7c2",
+    "schema_version": 1,
+    "snapshot_seq": 2,
+    "data": {
+      "cards": [
+        {
+          "id": "evidence-9b53639e-9c44-4871-88f1-34e1b491ceeb",
+          "kind": "evidence",
+          "title": "Sample handling observation log",
+          "revision": 1,
+          "storage": "live",
+          "state": null,
+          "description": null,
+          "selector": {
+            "record_id": "evidence-9b53639e-9c44-4871-88f1-34e1b491ceeb"
+          }
+        },
+        {
+          "id": "evidence-9c06cc64-d786-4271-bbd2-7ed83610bf78",
+          "kind": "evidence",
+          "title": "Observed request to create a reading area and use Russian",
+          "revision": 1,
+          "storage": "live",
+          "state": null,
+          "description": null,
+          "selector": {
+            "record_id": "evidence-9c06cc64-d786-4271-bbd2-7ed83610bf78"
+          }
+        }
+      ],
+      "applied_filters": {
+        "view": "materials",
+        "record_id": null,
+        "limit": 20
+      },
+      "generation": 2,
+      "has_more": false,
+      "next_cursor": null
+    },
+    "warnings": []
+  },
+  "normal": {
+    "ok": true,
+    "workspace_id": "19d8a2cf-5638-4660-be7b-fb4e193ad7c2",
+    "schema_version": 1,
+    "snapshot_seq": 2,
+    "data": {
+      "id": "evidence-9b53639e-9c44-4871-88f1-34e1b491ceeb",
+      "kind": "evidence",
+      "title": "Sample handling observation log",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-19T15:32:58.815Z",
+      "updated_at": "2026-10-19T15:32:58.815Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "source_kind": "observed_input",
+        "source_locator": "observed-08aa0198-b184-40a4-9b41-ec6f12095ac2",
+        "captured_at": "2026-10-19T15:32:58.804Z",
+        "content_hash": "99fab1c4a9b4242658fb8ac85692a35ba555bb7916df733e73fd74531752a5a2",
+        "retained_excerpt": "Routine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction appears in this entry.\nRoutine observation: the monitoring session is still in progress. No location instruction ",
+        "blob_ref": null,
+        "byte_length": 8604,
+        "availability": "retained",
+        "source_language": "en",
+        "language_assignment": "model-reported",
+        "provenance": {
+          "source_ref": "observed-08aa0198-b184-40a4-9b41-ec6f12095ac2",
+          "content_hash": "99fab1c4a9b4242658fb8ac85692a35ba555bb7916df733e73fd74531752a5a2",
+          "transport": "rpc",
+          "channel_identity": "synthetic-tail-controller",
+          "session_id": "synthetic-tail-controller",
+          "runtime_id": "synthetic-tail-controller",
+          "captured_at": "2026-10-19T15:32:58.804Z",
+          "capture_stage": "pi-input-hook-observed",
+          "original_keystrokes": false,
+          "byte_length": 8604
+        },
+        "trust_origin": "programmatic-or-file-not-owner-approval",
+        "range_unit": "Unicode code points",
+        "total_characters": 8604,
+        "has_more": true,
+        "next_start": 8000,
+        "excerpt_truncated": true,
+        "must_read_material_range": true
+      }
+    },
+    "warnings": []
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "package": "[isolated-test-root]\\installed\\pi-agent\\git\\github.com\\ainazemtsau\\zaratustra",
+  "public_commit": "7a1e409f64f0a85b3c9340286c6445f41a862fb4",
+  "pi": "1.3.0",
+  "installed_commit": "7a1e409f64f0a85b3c9340286c6445f41a862fb4",
+  "node": "v22.19.0",
+  "source": "git:github.com/ainazemtsau/zaratustra@7a1e409f64f0a85b3c9340286c6445f41a862fb4"
+}

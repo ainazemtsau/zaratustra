@@ -1,0 +1,28 @@
+Installing git:github.com/ainazemtsau/zaratustra@7a1e409f64f0a85b3c9340286c6445f41a862fb4...
+Cloning into '[isolated-test-root]\installed\pi-agent\git\github.com\ainazemtsau\zaratustra'...
+Note: switching to '7a1e409f64f0a85b3c9340286c6445f41a862fb4'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 7a1e409 Fix import authorization order and retained Evidence ranges
+
+added 1 package, and audited 2 packages in 3s
+
+1 package is looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Installed git:github.com/ainazemtsau/zaratustra@7a1e409f64f0a85b3c9340286c6445f41a862fb4

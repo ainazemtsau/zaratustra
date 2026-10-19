@@ -1,0 +1,8 @@
+{
+  "prompt": "Создай область «Чтение». Хочу разобраться в книге, которую пришлю позже. Отвечай мне по-русски.",
+  "home": "[isolated-test-root]\\installed\\home",
+  "budgetPath": "[isolated-test-root]\\budget.json",
+  "agentDir": "[isolated-test-root]\\installed\\pi-agent",
+  "cwd": "[isolated-test-root]\\installed\\cwd-a",
+  "output": "[isolated-test-root]\\live\\01-create"
+}

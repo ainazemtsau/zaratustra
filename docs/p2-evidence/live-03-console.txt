@@ -1,0 +1,25 @@
+(node:105580) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Сейчас нужен текст книги или первый фрагмент: пока ничего не получено и не прочитано.\n\nПришлите отрывок — начнём разбирать основные идеи и непонятные места.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "requests": 9,
+    "input": 54287,
+    "model": "gpt-6.1-sol",
+    "provider": "openai-codex",
+    "cache_read": 19200,
+    "estimated_usd": 0.08290399999999999,
+    "prompts": 3,
+    "output": 1081,
+    "limits": {
+      "prompts": 6,
+      "requests": 30,
+      "estimated_usd": 5,
+      "input": 1500000,
+      "output": 90000
+    }
+  }
+}

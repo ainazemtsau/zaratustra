@@ -1,0 +1,449 @@
+{
+  "provenance": "Synthetic technical evidence for two-P2 correction. Original builder/reviewer evidence untouched. Derivative paths redacted, raw hashes identify local originals. Auth file never inspected by exporter.",
+  "files": [
+    {
+      "public_path": "01-create.json",
+      "public_sha256": "3cd10cc8587eba312eabb75125f39ded7961129126ac4a81db22cb7ba37e338e",
+      "original_sha256": "705f7d00f88a3e0b521a5ddcd0cf59ecf11dda055ada9ef21dd2a36af7920a91",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "02-continue.json",
+      "public_sha256": "243192abc87d7e234707acf3a9be91e63eac840b582c30732b4cc53cd0f8cc26",
+      "original_sha256": "c85bbf169029fd68abc6f25b0a008cded96d2166968efe15d9ee76126f4d72b5",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "03-continue-process-cwd.json",
+      "public_sha256": "ce98ea4acb375d0aa1b6271619c64080f2cf5a5d910ce8bda9b37b9f9630db9c",
+      "original_sha256": "3f26a9521046ae85c02f69c423e4879cd156414bad871107241809b370f54c17",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "03-tail.json",
+      "public_sha256": "a9aacc3eda8d995b07539d832355355e9fc59ca4e0fe110aa69218f2a16ee86f",
+      "original_sha256": "fde6824c8750a9a20d2f64083a26382483fd7e4c6a9f0a4ae479ab1eacbfac78",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "advisory-GHSA-vfj7-8cjw-p6xm.json",
+      "public_sha256": "684cf2ea4bef03a93b621d07793489d1b03695902b9c4b5b700588d112db1f30",
+      "original_sha256": "2ddb4a23a2b060e6b8b7c1a4dbf8693153be4ff8f5a2c478120ea6d8044c7bcb",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "audit-exits.json",
+      "public_sha256": "82f549ce4f3ecffa239bed1264e1ccb51c71e0d9f5e6231ea25111f4cb89bcf9",
+      "original_sha256": "5b481b6dfc57cb9e33959ffb2301aeacc3f6d40d7db227248067a2c222bd30cf",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "baseline/adapter-results.json",
+      "public_sha256": "74d634d3184a349718372e42a060f8e2daf6891641f3891e5b4130072a8486d2",
+      "original_sha256": "ff0cfa46ca8166aa5b766334be7d519301deceaf7fb33c5db0d07ad8fd79ae95",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "baseline/core-results.json",
+      "public_sha256": "dfb4ed308e6f40ff5ad0960bc3a64c09743c921186a319de2572aa7f95aa86c6",
+      "original_sha256": "c43e586d6036c216e0710fa4e8ea6edf4e1c82933a94c1076424ae41ca9f54c7",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "baseline-console.txt",
+      "public_sha256": "0db44ed8c6aafea09fd264d6e5ebe4d796c8c3e51acc5ffd890071d27fea295c",
+      "original_sha256": "016a9bfef89f948a81a0db930df21b76b98a2d3a9e7be14cc422aa915b621851",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "baseline-driver.mjs.txt",
+      "public_sha256": "3f2224195b85ecff16693c67386c7759eea7f71aaea642b1a7f97fe1a057dc78",
+      "original_sha256": "5b95dd8601f53a76f7c4060c700854e115d583bbac43e40a2d6769ec00fce338",
+      "derivation": "Original pre-fix reproduction driver, path-redacted/newline-normalized. Maintained driver is scripts/p2-probe.mjs."
+    },
+    {
+      "public_path": "baseline-identity.json",
+      "public_sha256": "3eda1ee40299c6a134fceb7d7d28b8bec4f2faad2c993fbfd3f239cd02b5b12c",
+      "original_sha256": "5e62bbe76d18e471bd070ad8fcdb046f78458ff6f8338153e6be6428e64ef207",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "budget.json",
+      "public_sha256": "f160940e04f9b32b679f33f25eb110dbd0c94c5686c0486ab71a4a2c581c62e5",
+      "original_sha256": "d3b14a570d6ad7b7936679ae36f65706ba2ee3957f95dbb3d04f176e8e278fab",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "candidate-input-hashes.json",
+      "public_sha256": "966d3c70aff6f602667b3a597a3e33f616511d668a8703756c0b9d59cec4743e",
+      "original_sha256": null,
+      "derivation": "Exact checkout/installed source, tool and test input byte comparison; package-lock exception recorded separately."
+    },
+    {
+      "public_path": "check-01.txt",
+      "public_sha256": "deb5e9fe0380d0bfa26c14a7888148d32363d3777e8832348ef8570ea46ffeea",
+      "original_sha256": "c800d7a5f667764eb2709c3ded03b35d50aae98e9660499716c9d9fcd75022de",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "continuation-launch.json",
+      "public_sha256": "e1027133b0065f99bc094d605da15957663024a9abdd158eb5f3fec5fa82ecf7",
+      "original_sha256": "9d2fc0219b442140f23d6f420e257f0f519d9103c7d145c56b9417e52e5cf890",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "deliver-candidate.txt",
+      "public_sha256": "197f07265444ee70d20ef021a9130f7fb9d7143ca07b3d84dcdd136b9809c39c",
+      "original_sha256": "d2666a0cb2a7807e5c3d6a995a06109fb6f26635386693aa306cf0a98ac3bb6b",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "dependency-paths.json",
+      "public_sha256": "b8bf7e70e9ab90cc8b197d32683dee153c3fb55aeae1a3ab84918ffee54003c2",
+      "original_sha256": "4106d9526dba816fb981676070a6b29038616b307727e209fd38a8a6609fa402",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "fixed/adapter-results.json",
+      "public_sha256": "2e7f53499cc550e4f4f70f01cb8866d1c5da0426632b782af2811f80ab70e1bb",
+      "original_sha256": "c164c0bd9ac03c5c747daa735509959a22c0cc2807eefe88e294b6cffce6effa",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "fixed/core-results.json",
+      "public_sha256": "cb4eb31349d70da730d5e79ab5fd051b6a1688aa1fcff66c81e6ef94de475d97",
+      "original_sha256": "1645f74fbb30fd6d652ec4e7eaf66f24e4cbdda7d1fc307bbd89f95fcf1dc0e6",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "fixed-console.txt",
+      "public_sha256": "aef51d9709aaa888df3b1433a49e1c34e2069335d81aff2a717b7ff4d19695b9",
+      "original_sha256": "bb6cf22fcd761528b5f226cda8bccd1c27805fe9e69e996c4062c524b91c100a",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "import-fixed/adapter-results.json",
+      "public_sha256": "8152bdc6dfde30a93c7d241932a865dc8e70c7ca18d35ea197ad18da3b2474b0",
+      "original_sha256": "cb9df8c8e9db2102fbb1a42494597ef6977a83840d57f0dce516ce7d5966fec7",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "import-fixed/core-results.json",
+      "public_sha256": "9f06ea28d7e9615ed76154343f48a213ddaad169712d24885ebd67ca1cbd5e0c",
+      "original_sha256": "4a990c367cee580abed93a2598de3c2752bf77328d7d9f84ccbbeaaacf28f0a5",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "import-fixed-console.txt",
+      "public_sha256": "9c956934cc7b2bf2ff4874482e8ec371f82d7d1a92e8117a7f939942532027ef",
+      "original_sha256": "4fa2f84edb027ee83e414b1d77c11816f1df5d2e22920bb3d9d20150f7cf8f49",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "install-candidate.txt",
+      "public_sha256": "2fcd03d4f03ed001869991c2b5713aaea9dcdecbab38c8dd2cd2659fd6296417",
+      "original_sha256": "ec1eb3233cbb01a64eaefbf25b93d6c97447a1b5e3d99a0ead3bf8c2cb4b85de",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "installed-candidate-identity.json",
+      "public_sha256": "37fcf5e5725e5b653ef451115035bc7e7cf290288eb9b376fdb0eb63a7a2a241",
+      "original_sha256": "4b9a03798ba202fcd833026e31361ab1d60971a39eca438455c4bf9d391d56df",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "installed-core-tests.txt",
+      "public_sha256": "856cdf88755994dfb007cf83a2033ade1a1a273f35bd1ce95c4fadcead69d8be",
+      "original_sha256": "3abf08295393cafe1ffcc49110ce14f73d9a3c63874d7c37711de8f0886180ea",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "installed-fixed/adapter-results.json",
+      "public_sha256": "0630511b50987c3076bcb3c0d8afaf8b6ced5e2d1002bfe81af56450cc4f7f5c",
+      "original_sha256": "10893786e742a06c250fe7086e4f066c9a6bf35f54007002ffde060d0ae9cb42",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "installed-fixed/core-results.json",
+      "public_sha256": "f5ecd3e1fe3d04e141085a09284f5f22bbdaf84a12a436b9af16333f317bd250",
+      "original_sha256": "8fda4604e6d9cdec9a7c9765985093eede13e5d4c877c79a3e2bcfb0e9548121",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "installed-fixed-console.txt",
+      "public_sha256": "48d43cd4f6676616db9e5d6932d07987aa8057f6863aad3fd26e501b6ebb6a66",
+      "original_sha256": "4324cb652cb1b07c24e3b54f76daece826a9ba35618a2039bcc24cba5c284820",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "installed-lock-analysis.json",
+      "public_sha256": "d229c5ff3f05014a34d605ceda3abf82bc7c50f9ac0276cc4d3e38e5bb2093a5",
+      "original_sha256": "d229c5ff3f05014a34d605ceda3abf82bc7c50f9ac0276cc4d3e38e5bb2093a5",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "installed-lock-diff.txt",
+      "public_sha256": "e727f9ec1da6d4c58e876d4d965efdf1c407d3cb1408f84a27d9a9b192982211",
+      "original_sha256": "887e0ab03192177ebd41ab8b18984ecfb220550f757fe8f71df5d337ae518bcd",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/01-create/identity.jsonl",
+      "public_sha256": "c350720511a855af5d741ac6a6054575c24d3b25c9e9e01382557a708a677f06",
+      "original_sha256": "7954bedae8557901a0a2aefa3e76fe02e223ade451422503eaf6c452a15808e2",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/01-create/requests.jsonl",
+      "public_sha256": "7622f280a83baacd327dd4ea365fea5f2a9a858a2313eb795f51251856198301",
+      "original_sha256": "25d0b4487c512c9d4c355a47ff1147ab1a4102e055baaac907d7aeffa2510a89",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/01-create/resources.jsonl",
+      "public_sha256": "2466ba0f24dde50c3afb9c25ea03efbba80f9b6622802ff88795ffc3a1e87d1e",
+      "original_sha256": "84242c704fb654aed0fb08c79a958585b801eb098594719e0ba941a82c654428",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/01-create/startup.jsonl",
+      "public_sha256": "3d43af5fc62cc9c3cdb099ce78eef62dcf2329acdcd92f311d83f3fb15caa716",
+      "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/01-create/summary.json",
+      "public_sha256": "391c057fddbea87518b329162cb5eaa0b29bfceb65cd5c0d9503bdca14743226",
+      "original_sha256": "dab81135c12e5e7dc796fa5676b43dab1d2a47fe11eb322382c716b4de131f6f",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/01-create/tool-events.jsonl",
+      "public_sha256": "10bb2d6dd8c12bc723a0c0d7449a6320a7af30e23fe1ee9a5c9758ed62e59846",
+      "original_sha256": "087ddbef3972621be84fd14922675f6b3f890a3ba229f71ebc7fe854e6ca574b",
+      "derivation": "Derived actual tool start/end/settled/retry and assistant text/usage. Thinking and opaque provider signatures omitted; originals retained locally."
+    },
+    {
+      "public_path": "live/02-continue/identity.jsonl",
+      "public_sha256": "ab6310264860a0735da9a8421fd90d94444c82a3179b00894c45158cdf0fe139",
+      "original_sha256": "4d9cb05c3519394f80c464ba298b3bf350a2e214052b78b5a12104d48c5cbc61",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/02-continue/requests.jsonl",
+      "public_sha256": "ce917840216a87c2b965d6d28561533d37c3da141dc7305d6a1718d6248494cb",
+      "original_sha256": "e0e66f6aa455885b701b65503f1296ed93ee01ba1485550e2091d4df7e14c75d",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/02-continue/resources.jsonl",
+      "public_sha256": "2466ba0f24dde50c3afb9c25ea03efbba80f9b6622802ff88795ffc3a1e87d1e",
+      "original_sha256": "84242c704fb654aed0fb08c79a958585b801eb098594719e0ba941a82c654428",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/02-continue/startup.jsonl",
+      "public_sha256": "3d43af5fc62cc9c3cdb099ce78eef62dcf2329acdcd92f311d83f3fb15caa716",
+      "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/02-continue/summary.json",
+      "public_sha256": "af370900ac375ed02468406e3aa38cf403f5fb333a2241cb58f65c35a22d68f5",
+      "original_sha256": "198a1a54c7c4aa3bee4d51397d9079d9e721581f0e165045f6b86f020ce8b250",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/02-continue/tool-events.jsonl",
+      "public_sha256": "428b717176e8bc4ac743269943531b622833500f18cb2119deb70dd22dec1abd",
+      "original_sha256": "f3eca6909ec8c7d0f6dde5abc864d81c138136f025783cecda694c26dc1ab3d9",
+      "derivation": "Derived actual tool start/end/settled/retry and assistant text/usage. Thinking and opaque provider signatures omitted; originals retained locally."
+    },
+    {
+      "public_path": "live/03-continue-process-cwd/identity.jsonl",
+      "public_sha256": "ab6310264860a0735da9a8421fd90d94444c82a3179b00894c45158cdf0fe139",
+      "original_sha256": "4d9cb05c3519394f80c464ba298b3bf350a2e214052b78b5a12104d48c5cbc61",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/03-continue-process-cwd/requests.jsonl",
+      "public_sha256": "9025e35f4e1f6e05e386b2ecf8530117c575627dbc3814fbfecea99d93eaf788",
+      "original_sha256": "bc71194f47536f993898d3915e3a83da7f16d9fce625090ddfbf4df9028ae10f",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/03-continue-process-cwd/resources.jsonl",
+      "public_sha256": "2466ba0f24dde50c3afb9c25ea03efbba80f9b6622802ff88795ffc3a1e87d1e",
+      "original_sha256": "84242c704fb654aed0fb08c79a958585b801eb098594719e0ba941a82c654428",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/03-continue-process-cwd/startup.jsonl",
+      "public_sha256": "3d43af5fc62cc9c3cdb099ce78eef62dcf2329acdcd92f311d83f3fb15caa716",
+      "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/03-continue-process-cwd/summary.json",
+      "public_sha256": "9b363380b90e03872aef66aab79caa80a6eff8029d69cb861986f9cd00e6f6d2",
+      "original_sha256": "0686af892665643a11dac6d111f3eec280b4902a1be51e5e57a98b3f4d624a3a",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/03-continue-process-cwd/tool-events.jsonl",
+      "public_sha256": "18da5106fefc101222c563d60546e5f13e71dc39f04a323ed4733c06fd94d045",
+      "original_sha256": "3ed5f541d4dac393ca429aafc6600a085d58e10c0db84ef92a979f90e32e7ac4",
+      "derivation": "Derived actual tool start/end/settled/retry and assistant text/usage. Thinking and opaque provider signatures omitted; originals retained locally."
+    },
+    {
+      "public_path": "live/03-tail/identity.jsonl",
+      "public_sha256": "bccb2227b61492a5a0fbb3cb0ce925aa5c102862ee93cb4b128bf95bf7d99a9f",
+      "original_sha256": "0d0b2a75a7153875dba21766b0c3a66b482508f4786f9abf041abb8514ae23a1",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/03-tail/requests.jsonl",
+      "public_sha256": "eaaa93bef1e499d12114ad70a36286ace9695b79d9b61af79c20a36d130dcb85",
+      "original_sha256": "c51d03947336d5827ff25b3a7432044827222a1e087cc106c5f4a07f90697336",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/03-tail/resources.jsonl",
+      "public_sha256": "2466ba0f24dde50c3afb9c25ea03efbba80f9b6622802ff88795ffc3a1e87d1e",
+      "original_sha256": "84242c704fb654aed0fb08c79a958585b801eb098594719e0ba941a82c654428",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/03-tail/startup.jsonl",
+      "public_sha256": "3d43af5fc62cc9c3cdb099ce78eef62dcf2329acdcd92f311d83f3fb15caa716",
+      "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/03-tail/summary.json",
+      "public_sha256": "27fbb580632c6befcc5769690c5d70c7414ea80470b653b83522b39e432085a6",
+      "original_sha256": "b2c69812d29835cc4b7fd9a5653aa0744792ebc871ffc9533d2caa655fd20a8f",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live/03-tail/tool-events.jsonl",
+      "public_sha256": "79d1bdbc3ec797df84552f11ef016dbab0aab5c8b7bc57cb07dfbb27ff24df7b",
+      "original_sha256": "fdb441568b1e996610dec52ba6cb38b8a0e8c3551c44885304aa655de2d38b37",
+      "derivation": "Derived actual tool start/end/settled/retry and assistant text/usage. Thinking and opaque provider signatures omitted; originals retained locally."
+    },
+    {
+      "public_path": "live-01-console.txt",
+      "public_sha256": "8ab737d28e8b064f445d687c75c7bf69fa949ef8bbbc9b2933ca0fd873633c90",
+      "original_sha256": "9fc6f4eb2ccf78c31c41c93e6c90846606a964ba52593e008fbf181a4bfe07cf",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live-02-console.txt",
+      "public_sha256": "22b7086f199ea65f4da39acbb915e718683c8397700f7e93fe96cfc886184a91",
+      "original_sha256": "bf03d4290898d87550a938e5bb3698bbcbf6c915cf2b2201771ba4a0567b3cb8",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live-03-console.txt",
+      "public_sha256": "3f6670d4394c9a083044b7ae3b55f20cbc5eb6363fb8c653ecaa864385275a80",
+      "original_sha256": "6178dfc5950aa955eebc57311a7645961f5e9aebf008047b5050369bafb04806",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "live-04-console.txt",
+      "public_sha256": "510cd08c9a9180e1aa60cf302ac54ab5c4a59a868693e1d19929fa53e6da9de7",
+      "original_sha256": "1dbd8e4510947aee43ac3a4628150d5633b81a37c607804a64d526ab4d3d0829",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "npm-audit-current.json",
+      "public_sha256": "c719f2da03ba261c5341f2ee67609c8c6dbbd5f542f5178c2c780b91ef45b894",
+      "original_sha256": "5e5b40e53d38cb263b731ea84bfed8143d5922bb2afad349345c79fb7ae69775",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "npm-audit-production.json",
+      "public_sha256": "7861066f3a56f58fd53a2ab50d223fc4e9040828859c68669f947296d6e1b435",
+      "original_sha256": "3c5227fff267bd781f07307baf06a1530744e1ceb74e86940de745ecf06cb552",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "p2-range-green.txt",
+      "public_sha256": "980a974eeeaddfbb10765c1a7edeadbaea71202c354bea01e3b402f6dceb1eb7",
+      "original_sha256": "d9b4644632e1c6cc947b609e28cf3c011461909e1bf5f80767af27ab31182b62",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "p2-range-red.txt",
+      "public_sha256": "145e0435283d29789f5298a7b5b5e53692f6e265265d4f6e5659330cbe4d41c9",
+      "original_sha256": "76822ef70643fdb068bcc448e64f11119df230c4d8f307564e64e4292080363b",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "pi-list-candidate.txt",
+      "public_sha256": "b4068812dbaa2157b11239cec25b375bb3e2496b441869cd6da5d99f02cbe121",
+      "original_sha256": "43a79d59f3d46810175ccc90fc74778ddef0038b7d385fe3a44475c10be72c62",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "remote-after-candidate.txt",
+      "public_sha256": "3ee12882b84440b3a5bf2f82d5202e3acf7f1c532238159f9d803cd44770da2b",
+      "original_sha256": "c9cf8eaa0be4d609e6db09759a0cd4b7075975802e42f6869df6ce57f889566f",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "remote-before.txt",
+      "public_sha256": "597a5a3cf21aeba30ee70a6a56061d0706446c686c986beaf50f1c3df07f3601",
+      "original_sha256": "597a5a3cf21aeba30ee70a6a56061d0706446c686c986beaf50f1c3df07f3601",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "remote-pre-candidate.txt",
+      "public_sha256": "597a5a3cf21aeba30ee70a6a56061d0706446c686c986beaf50f1c3df07f3601",
+      "original_sha256": "24d5059db177935a99cc24cc73bb6c624fc05950c77e32a0c11bb6defea5735b",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "tail-fixture/fixture.json",
+      "public_sha256": "4fbeec45cea73ab39219ca1eb812fac37d81c13cc5d156d0d5dd2d16cf464d62",
+      "original_sha256": "97b0939b0051dae830233a44fc552575b182191e6f542d5670f7ce308facf578",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "tail-fixture/original.txt",
+      "public_sha256": "99fab1c4a9b4242658fb8ac85692a35ba555bb7916df733e73fd74531752a5a2",
+      "original_sha256": "99fab1c4a9b4242658fb8ac85692a35ba555bb7916df733e73fd74531752a5a2",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "tail-fixture-console.txt",
+      "public_sha256": "828e1bde9135d32bf82b243f91e8938fd0f3c94de2f3acf3c66fbd09899d2d36",
+      "original_sha256": "70785819387010d6a9226d261dffbebd5622c64f75d4236b38af226acc08ed6f",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "tail-launch.json",
+      "public_sha256": "c35fab47c0a32ab209e1ba3e31378c6597c1dd932834cc4e4bef76a52d37f1f9",
+      "original_sha256": "f011ae9c88b6da198abd1c9aacb2ed8f93457c1d68b3691d2e11788004386265",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "test-tools-install.txt",
+      "public_sha256": "d2d913138b8aa875d094017e95076e76b7658320913642e26023b422b2e2d8f9",
+      "original_sha256": "72e2f0b8d17a53cbc1f4ad79bfe9f1167758d5e8f919bd22192904ff87433bb0",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "verification.json",
+      "public_sha256": "af7916d015ed6b6974fa9bbd340c5a9ab2f120160f8e0dddb5129980c94fefe5",
+      "original_sha256": "af7916d015ed6b6974fa9bbd340c5a9ab2f120160f8e0dddb5129980c94fefe5",
+      "derivation": "Path-redacted synthetic technical evidence. Original quotes/names/identifiers preserved; LF public derivative."
+    },
+    {
+      "public_path": "deliver-handoff.txt",
+      "public_sha256": "f506137b136d4f50d1f79e25f1b6a1c423c52b0218864be81e2a4f2c560e0391",
+      "original_sha256": "180573b0e155db06cb925f6f11a9164e0c24cc07e43ce52955dd43431d266a8d",
+      "derivation": "Path-redacted, LF-normalized native final delivery check output; all test/code inputs unchanged."
+    }
+  ]
+}

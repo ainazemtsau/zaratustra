@@ -1,0 +1,6 @@
+{
+  "process_cwd": "[isolated-test-root]\\installed\\cwd-b",
+  "purpose": "Additional continuation: prior attempt changed SDK cwd but process cwd remained cwd-a.",
+  "sdk_cwd": "[isolated-test-root]\\installed\\cwd-b",
+  "transcript": "new in-memory session; no resume"
+}

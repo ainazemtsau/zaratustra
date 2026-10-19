@@ -1,0 +1,78 @@
+{
+  "initial_recipient": "openai-codex/gpt-6.1-sol",
+  "selected_without_request": "openai-codex/gpt-5.3-codex-spark",
+  "provider_requests": 0,
+  "allowed_source_reads": 1,
+  "allowed_uuid_calls": 3,
+  "allowed_exact_bytes": true,
+  "allowed_range": {
+    "ok": true,
+    "workspace_id": "a023339a-19bc-44e7-88fe-1dcb38aaf32d",
+    "schema_version": 1,
+    "snapshot_seq": 1,
+    "data": {
+      "ref": {
+        "id": "evidence-4d8041f9-d333-4bc7-b5b9-186d7e6f1898",
+        "revision": 1
+      },
+      "source_language": "ru",
+      "content_hash": "cce00e8e223a6cc2e80dc0f8b306c84721a7cbdc33cfb5deb1c976fcff88199c",
+      "range_unit": "Unicode code points",
+      "start": 0,
+      "text": "﻿# Exact original\r\nРусский текст 🦉\r\n",
+      "total_characters": 36,
+      "has_more": false,
+      "next_start": 36,
+      "untrusted_source_data": true
+    },
+    "warnings": []
+  },
+  "denied_result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Provider processing authority is unresolved.\",\"retryable\":false}"
+      }
+    ],
+    "details": {
+      "ok": false,
+      "code": "PERMISSION_DENIED",
+      "message": "Provider processing authority is unresolved.",
+      "retryable": false
+    },
+    "isError": true
+  },
+  "denied_source_reads": 0,
+  "denied_uuid_calls": 0,
+  "denied_trace": [],
+  "before_files": {
+    "materials": [
+      "cce00e8e223a6cc2e80dc0f8b306c84721a7cbdc33cfb5deb1c976fcff88199c"
+    ],
+    "staging": []
+  },
+  "after_files": {
+    "materials": [
+      "cce00e8e223a6cc2e80dc0f8b306c84721a7cbdc33cfb5deb1c976fcff88199c"
+    ],
+    "staging": []
+  },
+  "before_domain": {
+    "records": 1,
+    "revisions": 1,
+    "changes": 1,
+    "receipts": 1,
+    "intents": 1
+  },
+  "after_domain": {
+    "records": 1,
+    "revisions": 1,
+    "changes": 1,
+    "receipts": 1,
+    "intents": 1
+  },
+  "source_hashes": {
+    "src/core/index.ts": "20c7e0ff348a753fd7e9bf0f1e561d5e8e79381fd54a3a55928aa4209e632587",
+    "src/extension/index.ts": "f5a1978c16cb43b914651f00b44c30ca03cbb94f5f58a586d9ca698fa1a2c02e"
+  }
+}

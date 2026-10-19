@@ -49,13 +49,17 @@ $scenario = @{
 }
 $first = Join-Path $testRoot 'create.json'
 $scenario | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 $first
+Push-Location $cwdA
 node (Join-Path $package 'scripts/live.mjs') $first
+Pop-Location
 $scenario.cwd=$cwdB
 $scenario.output=Join-Path $testRoot 'continue'
 $scenario.prompt='Продолжим чтение. Что сейчас нужно?'
 $second = Join-Path $testRoot 'continue.json'
 $scenario | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 $second
+Push-Location $cwdB
 node (Join-Path $package 'scripts/live.mjs') $second
+Pop-Location
 ```
 
 Record the recipient and limits before the first request. Retain failures and the
@@ -89,7 +93,10 @@ $scenario.output=Join-Path $testRoot 'tail'
 $scenario.prompt='Где по сохранённому журналу наблюдений нужно оставить контрольный образец? Ответь по-русски.'
 $third = Join-Path $testRoot 'tail.json'
 $scenario | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 $third
+New-Item -ItemType Directory -Path $scenario.cwd | Out-Null
+Push-Location $scenario.cwd
 node (Join-Path $package 'scripts/live.mjs') $third
+Pop-Location
 ```
 
 The fixture proves the answer is past code point 8000 and absent from snapshot,
@@ -102,6 +109,13 @@ Core regressions, install a pinned `tsx@4.20.6` into a separate test-tools folde
 and run installed `tests/core.test.ts` and `tests/p2.test.ts`. Set
 `ZARATUSTRA_TEST_ROOT` to a fresh isolated output root. The extension peer mapping
 is qualified through Pi SDK, not through direct tsx import.
+
+```powershell
+$tools = Join-Path $testRoot 'test-tools'
+npm install --prefix $tools --no-audit --no-fund tsx@4.20.6
+$env:ZARATUSTRA_TEST_ROOT = $testRoot
+& (Join-Path $tools 'node_modules/.bin/tsx.cmd') --test (Join-Path $package 'tests/core.test.ts') (Join-Path $package 'tests/p2.test.ts')
+```
 
 Earlier first-block failure/lifecycle scenarios remain documented in
 `docs/EVIDENCE.md` and `docs/ATTEMPTS.md`. For an independently justified rerun:

@@ -1,0 +1,25 @@
+{
+  "candidate": "7a1e409f64f0a85b3c9340286c6445f41a862fb4",
+  "unchanged_inputs": {
+    "package.json": "430f4869c510608521537855eed39f65a5ab8163f24a7063d393451410fbb266",
+    "src/core/AGENTS.md": "4901b042a7a1fc797e574efe9299ccfba7b89d6a90b9efbfa4326501349d63ff",
+    "src/core/contracts.ts": "efea9cebd924e4c0e4f9580cc0ff3e799e804692189b2f69ede211a0fab04736",
+    "src/core/index.ts": "20c7e0ff348a753fd7e9bf0f1e561d5e8e79381fd54a3a55928aa4209e632587",
+    "src/extension/AGENTS.md": "5e01278e0f9e23d61e562b98627a3c3ba71b02cecfb5b2b416dd08df1cd51b0b",
+    "src/extension/index.ts": "f5a1978c16cb43b914651f00b44c30ca03cbb94f5f58a586d9ca698fa1a2c02e",
+    "src/storage/AGENTS.md": "c6910460a5ff52b5f81bd5f616a1c8b371d910e8198b6fa0882fc3ab53fa9d5d",
+    "src/storage/index.ts": "68079bef52f0a6be176d9ae42c38f5324f6cd8c9b6f6871ab200858fc5e10be4",
+    "skills/zaratustra-memory/SKILL.md": "f0e458efabc337749f0d70dd0c2ed4a92ad1fb04e206e160f54720a133128fe9",
+    "skills/zaratustra-work/SKILL.md": "9a8fb2eedddc56d00ce90f353440be14bacae678d7e642d458d8280cb8a6dabe",
+    "instructions/bootstrap.md": "64d9baee64c20f97a29043d37b63ac61c99e45060408500be119777e8622cd55",
+    "scripts/deliver.mjs": "b3ab8df17c85d761c19de45086222dd3577172c6334a130e231397405759e15e",
+    "scripts/live.mjs": "71062a7b48683a69484675bcef8da86a5d009e0b7500aaec18e4bf5ac9fb8497",
+    "scripts/p2-probe.mjs": "65de9b6c15e474a30dcfe1ecce7e75a7e80ad90b68cbd00d3e74ef3788736abb",
+    "scripts/p2-tail.mjs": "552a89bb19f9dd2bf78207ffaf85f29847288e142dd8afa95cc0df2aa5fa3ddc",
+    "scripts/resources.mjs": "f568d6d7b35dd11dbb8c23e3f56ff7df1a85d42a22b3abf431414aa820c07646",
+    "tests/core.test.ts": "c259fae7fb19d296a33316d194d5dd59c508e6f1eb471855dd2b680f7046687a",
+    "tests/extension.test.ts": "e66184ea07a7e5cd459cef96574834ad49cdb237bb0474e4c0a3fbef9836c3a1",
+    "tests/p2.test.ts": "8efed124383d17f3eb74528357e82faa24b95f280ea879da2a69a54c58254fc6"
+  },
+  "lockfile_exception": "installed-lock-analysis.json"
+}

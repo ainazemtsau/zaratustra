@@ -1,0 +1,16 @@
+{
+  "cause": "Normal native Pi npm production install removed nine peer:true metadata flags; no package version, integrity or other lock data changed. The installed working tree is not byte-clean in this file.",
+  "removed_peer_flags": [
+    "node_modules/@aws-sdk/credential-provider-node",
+    "node_modules/@smithy/signature-v4",
+    "node_modules/@typescript-eslint/parser",
+    "node_modules/acorn",
+    "node_modules/eslint",
+    "node_modules/typescript",
+    "node_modules/undici",
+    "node_modules/ws",
+    "node_modules/zod"
+  ],
+  "committed_sha256": "c2416c893e9d87da3bdda3721085c7c781ad07d7e91a49f31904ee8b63e69748",
+  "installed_sha256": "43493deda95d9b521be15ba85bee0da61ad8c9080b31af0f4941e869a4976990"
+}

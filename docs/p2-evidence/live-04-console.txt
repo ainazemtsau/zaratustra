@@ -1,0 +1,25 @@
+(node:108532) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "По сохранённому журналу контрольный образец нужно оставить в янтарном шкафу, на четвёртой полке.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "requests": 15,
+    "input": 94558,
+    "model": "gpt-6.1-sol",
+    "provider": "openai-codex",
+    "cache_read": 35200,
+    "estimated_usd": 0.13559599999999997,
+    "prompts": 4,
+    "output": 1336,
+    "limits": {
+      "prompts": 6,
+      "requests": 30,
+      "estimated_usd": 5,
+      "input": 1500000,
+      "output": 90000
+    }
+  }
+}

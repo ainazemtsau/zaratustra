@@ -1,0 +1,25 @@
+(node:87576) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Создал область «Чтение» и задачу разобраться в книге. Пока она ожидает материал — пришли книгу или отрывок, когда будешь готов.\n\nПредпочтение отвечать по-русски сохранил.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "requests": 5,
+    "input": 31641,
+    "model": "gpt-6.1-sol",
+    "provider": "openai-codex",
+    "cache_read": 12800,
+    "estimated_usd": 0.047521999999999995,
+    "prompts": 1,
+    "output": 856,
+    "limits": {
+      "prompts": 6,
+      "requests": 30,
+      "estimated_usd": 5,
+      "input": 1500000,
+      "output": 90000
+    }
+  }
+}

@@ -52,6 +52,21 @@ ownership/runtime; every model-relevant value is in `content`.
 | Small skills/bootstrap                     | Pi already discovers skills and runs tools but needs the specific memory contract                                                           | Static English resources, no personal memory; native disable/remove                         |
 | Generation-bound pages                     | Bounded reads otherwise silently skip under mutation                                                                                        | Query/view/record/generation binding; invalidated continuation must restart                 |
 
+The P2 review correction adds a public Core `authorizeImport()` preflight: Pi can
+report a model switch but cannot apply this workspace's Core authority before a
+filesystem read. It delegates to the existing Core policy; the synchronous adapter
+calls it before `importFile`, and capture retains its own guard. No new policy,
+capability token or service is added. This relies on the stated single-writer,
+synchronous boundary and does not establish OS isolation.
+
+Observed `retained_excerpt` and imported text now share the existing read-range
+contract. `Array.from` supplies Unicode code-point iteration; Core supplies exact
+revision selection and bounded continuation metadata, which Pi/model prose cannot
+supply durably. No new parser, input restriction or schema migration is needed.
+The SDK read/UUID spy and tail-fixture script are developer-only observers/fixtures,
+needed to prove absence of pre-denial processing and genuine tail retrieval. They
+are neither normal product tools nor model replacements. See `P2-VALIDATION.md`.
+
 No custom planner, translator, search service, installer, notification system,
 credential store, universal schema, workflow DSL or external recovery service exists.
 Development tooling: TypeScript, tsx, ESLint/typescript-eslint, Prettier and

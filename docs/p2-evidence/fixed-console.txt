@@ -1,0 +1,11 @@
+(node:109372) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "expected": "fixed",
+  "provider_requests": 0,
+  "denied_source_reads": 0,
+  "denied_uuid_calls": 0,
+  "long_range_ok": true,
+  "unicode_split": false,
+  "output": "[isolated-test-root]\\fixed"
+}

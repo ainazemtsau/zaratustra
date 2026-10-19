@@ -1,0 +1,82 @@
+{
+  "initial_recipient": "openai-codex/gpt-6.1-sol",
+  "selected_without_request": "openai-codex/gpt-5.3-codex-spark",
+  "provider_requests": 0,
+  "allowed_source_reads": 1,
+  "allowed_uuid_calls": 3,
+  "allowed_exact_bytes": true,
+  "allowed_range": {
+    "ok": true,
+    "workspace_id": "4288ca13-62d1-4353-8118-e10f24d62273",
+    "schema_version": 1,
+    "snapshot_seq": 1,
+    "data": {
+      "ref": {
+        "id": "evidence-c2146bd1-9b90-4e01-b1fb-6cdad6615415",
+        "revision": 1
+      },
+      "source_language": "ru",
+      "content_hash": "cce00e8e223a6cc2e80dc0f8b306c84721a7cbdc33cfb5deb1c976fcff88199c",
+      "range_unit": "Unicode code points",
+      "start": 0,
+      "text": "﻿# Exact original\r\nРусский текст 🦉\r\n",
+      "total_characters": 36,
+      "has_more": false,
+      "next_start": 36,
+      "untrusted_source_data": true
+    },
+    "warnings": []
+  },
+  "denied_result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Provider processing authority is unresolved.\",\"retryable\":false}"
+      }
+    ],
+    "details": {
+      "ok": false,
+      "code": "PERMISSION_DENIED",
+      "message": "Provider processing authority is unresolved.",
+      "retryable": false
+    },
+    "isError": true
+  },
+  "denied_source_reads": 1,
+  "denied_uuid_calls": 1,
+  "denied_trace": [
+    "read-source-content",
+    "allocate-uuid"
+  ],
+  "before_files": {
+    "materials": [
+      "cce00e8e223a6cc2e80dc0f8b306c84721a7cbdc33cfb5deb1c976fcff88199c"
+    ],
+    "staging": []
+  },
+  "after_files": {
+    "materials": [
+      "0a1fef7e32c10b7a679adf83b6005f9da139fe22fef2135a31e8a60d7e06fe38",
+      "cce00e8e223a6cc2e80dc0f8b306c84721a7cbdc33cfb5deb1c976fcff88199c"
+    ],
+    "staging": []
+  },
+  "before_domain": {
+    "records": 1,
+    "revisions": 1,
+    "changes": 1,
+    "receipts": 1,
+    "intents": 1
+  },
+  "after_domain": {
+    "records": 1,
+    "revisions": 1,
+    "changes": 1,
+    "receipts": 1,
+    "intents": 1
+  },
+  "source_hashes": {
+    "src/core/index.ts": "c31fa7c2ff4c07b4d97e90f2babb3d745d8d5cacb86175a5512931e440ed3479",
+    "src/extension/index.ts": "5d132fbf59b09f69eb6286febcfa99a86bef7914934b8c3b8c4313fee2e21d3e"
+  }
+}
