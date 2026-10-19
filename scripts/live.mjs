@@ -57,6 +57,9 @@ if (!model)
   );
 const auth = await runtime.checkAuth(b.provider);
 log("identity", {
+  pid: process.pid,
+  os_cwd: process.cwd(),
+  sdk_cwd: cwd,
   provider: model.provider,
   model: model.id,
   node: process.version,
@@ -82,7 +85,7 @@ const observer = (pi) => {
         .map((m) => Object.keys(m.sections ?? {})),
       bootstrap_occurrences:
         JSON.stringify(event.messages.filter((m) => m.role === "system")).split(
-          "You use Zaratustra's first-block durable workspace",
+          "You use Zaratustra's durable workspace",
         ).length - 1,
       tool_messages: event.messages.filter((m) => m.role === "toolResult")
         .length,
@@ -92,6 +95,7 @@ const observer = (pi) => {
     });
   });
   pi.on("before_provider_request", (_event, ctx) => {
+    log("provider-requests", _event);
     const budget = ledger();
     if (
       budget.requests >= budget.limits.requests ||

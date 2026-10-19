@@ -1,97 +1,74 @@
-# Approved first block
+# Approved outcome C: full Work and materials
 
-The owner accepted specification 1.1 and the concrete first-block proposal with
-“принимаю”, then explicitly authorized this executor assignment. This is PROBA:
-plan approval is neither acceptance of the future result nor completion of R1.
-The only publication route is `ainazemtsau/zaratustra:codex/zaratustra-v1`, starting
-from the freshly verified empty `main` at `d956c6dfe18b49754fabd0773b798a01e5fcb017`.
-No old checkout/worktree is a source of implementation or disposable data.
+The current owner assignment explicitly replaces the old first-block-only scope with
+specification §25.8 outcome C, approved with “ок”: implementation, checks and ordinary
+pushes solely to `codex/zaratustra-v1`. No subagents/chats. Independent review is separate.
+The accepted base is `27a74fdb9e7bd826f07a9c9f1e2e3775d54f5c1f`: independent first-block
+PASS followed by the owner's separate “да”, as recorded in this assignment. This accepts
+that first block only, not full R1 or T31. The previous [RESULT](FIRST-BLOCK-RESULT.md),
+[decisions](FIRST-BLOCK-DEVELOPMENT.md), P2 documents and evidence remain historical.
 
-The target remains the complete self-contained [specification](specification-v1.1.html).
-Original supplied HTML SHA256:
-`7d3bd88d71dd954949ad33caae38859f9e06c460b8537ed3259780d11668fac4`.
-The original was verified and left unchanged. This public derivative changes only
-the personal original-1.0 location to `[owner-local original]/...` in §27.1.
-Derivative SHA256: `4940e16e39174df941da98889c43b713c48287d4aeda8754fd57660d462a77cb`.
-Normative meaning is unchanged. The document's historical pending-authorization
-statements describe its creation; this assignment supplies the later authority.
+The complete [specification](specification-v1.1.html) is unchanged. Verified original
+SHA256 `7d3bd88d71dd954949ad33caae38859f9e06c460b8537ed3259780d11668fac4`;
+public derivative `4940e16e39174df941da98889c43b713c48287d4aeda8754fd57660d462a77cb`.
+The derivative only redacts the original-1.0 local path. No old product branch is a basis.
 
-Settled decisions: Windows 11 x64 first, trusted personal local Pi with one writer,
-Git-pinned public development install, English canonical work and multilingual
-conversation, TXT/Markdown in this block. Full R1 also requires text PDF and
-unencrypted EPUB. Codex is next; Sleep remains R2. The selected Pi provider may
-process supplied/ordinary permitted context; other destinations need authority.
+## Retained profile
 
-## Preserving engineering choices
+Windows 11 x64, Node 22.19.0, npm 11.6.2, Pi 1.3.0; TypeScript, node:sqlite/WAL, short
+transactions, portable Core without Pi SDK types, one extension and two small English
+skills. Pi/model own semantics, planning, language and context selection. User interaction
+is conversation only. Personal trusted installation, one writer; no automatic routing.
+The existing conservative provider-switch denial remains. No credentials are read/copied.
 
-Node 22.19.0, Pi 1.3.0, TypeScript and node:sqlite are used as suggested. SQLite is
-behind StoragePort. Core imports no Pi types and has no model loop. Runtime schemas
-are Zod 4.1.12 (MIT); Pi's host TypeBox 1.3.27 describes tools. Host Pi/TypeBox peers
-are `*` per Pi package mapping, with tested versions pinned in devDependencies.
-No postinstall build or generated runtime resource is required.
+## Necessary mechanisms and considered alternatives
 
-§14.2 preserving clarification: in Pi 1.3.0 declarations, `event.prompt` is user
-input. The adapter mutates `event.systemPromptOptions.sections.zaratustra` for a
-static bootstrap. It preserves all other sections/options. The supported string
-alternative would append to `event.systemPrompt`, never to `event.prompt`.
-Personal state exists only in one owned custom `context` message refreshed before
-each request. No repeated permanent snapshot entries are appended. `details` marks
-ownership/runtime; every model-relevant value is in `content`.
+| Addition                                  | Guarantee and simpler alternative considered                                                                                                                                                                                               | Boundary/removal                                                                                                                                                                                                            |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Work schemas and whole final-graph checks | SQLite JSON and prompts do not reject cycles, invalid dependency/parent links or missing formal grounds. Zod validates shapes; small domain code validates the graph, lifecycle and required children. Model judges semantic fit.          | Guarded Core transactions; no custom planner/DSL. Preserved revisions keep former completion/cancellation.                                                                                                                  |
+| Execution claims                          | Writer lease prevents a second process writer, but cannot bind a model's action to Work revision, step, session, runtime, epoch and operation token across thinking time. Native SQLite serializes claim changes.                          | Only local step/result recording, Work completion and handoff preparation. 15-minute expiry never proves non-execution; unresolved claims require release/reconciliation. No external execution guarantee.                  |
+| Immutable handoff row and reply Evidence  | Plain chat cannot retain the exact prepared Work/plan version across restart or compare a late reply. Reuse Core IDs, refs, Changes and receipts; no messaging service.                                                                    | Preparation is not send/execution. Replies retain original/current plan comparison, transport separate from external authorship. Content/hash equality does not merge events.                                               |
+| Original plus text Evidence               | A binary blob is not addressable extracted text. Separate immutable blobs/Evidence link exact source digest, parser version, limitations and section offsets. Existing range API is reused.                                                | Original bytes unchanged. No OCR, DOCX or general HTML import. Unsupported input can remain opaque.                                                                                                                         |
+| Bounded parser worker                     | Synchronous PDF/ZIP parsing can block Pi and a malicious book can expand excessively. Reuse Node workers/resourceLimits and pinned parser libraries, rather than a new service or hand-written document parsers.                           | Data only; no source path in worker, no fetch, PDF eval/WASM/system-font loading disabled, ZIP never extracted to filesystem. Abort on runtime/provider change; reauthorize after await before material/handle publication. |
+| Schema-1→2 migration                      | Old code must reject changed semantics, and a failed upgrade must retain the old data. Keeping schema 1 would permit old writers. Reuse SQLite VACUUM INTO for a consistent pre-migration database, then one DDL/meta/receipt transaction. | Exclusive writer, verify refs/material hashes first; old records/revisions/Changes/receipts untouched. Narrow interrupted-manifest repair requires the exact migration receipt. No general backup/restore product yet.      |
 
-## Why each mechanism exists
+## Parsers, dependencies and limits
 
-| Mechanism                                  | Missing property / why reuse alone is insufficient                                                                                          | Authority and removal                                                                       |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Core record schemas and ref validation     | SQLite/JSON and Pi history cannot validate linked Activity/Work/Evidence/Knowledge; Zod supplies schema machinery, domain checks stay small | Only low-risk first-block ops; remove adapter to stop access, preserve home                 |
-| StoragePort + node:sqlite                  | Disk atomicity, WAL, current records, revisions, Changes and committed receipts cannot be guaranteed by model prose                         | Trusted absolute home; built-in Node SQLite; close DB on shutdown                           |
-| Prepared intent and canonical request hash | A dropped response needs discoverable structural identity without fuzzy deduplication                                                       | Same store, no service; receipt replay checks current access; no arbitrary effect guarantee |
-| Exact source handles                       | Pi user-role alone cannot certify human authorship or bind an old source to exact bytes                                                     | Runtime-local capabilities; stable observed refs in payload identity; expire on shutdown    |
-| Immutable file staging/readback            | SQL transactions do not retain material bytes atomically                                                                                    | Permitted roots, UTF-8, 1 MiB; orphan blobs may remain, no automatic cleanup yet            |
-| Single-process writer lease                | SQLite locks serialize transactions but not agent execution across thinking time                                                            | Personal deployment, second process read-only; dead PID reclaim; no OS isolation            |
-| Request-local snapshot                     | Pi history/tool results can be stale after a correction                                                                                     | Own custom message only; replace per request; unavailable snapshot on store failure         |
-| Small skills/bootstrap                     | Pi already discovers skills and runs tools but needs the specific memory contract                                                           | Static English resources, no personal memory; native disable/remove                         |
-| Generation-bound pages                     | Bounded reads otherwise silently skip under mutation                                                                                        | Query/view/record/generation binding; invalidated continuation must restart                 |
+Runtime additions: `pdfjs-dist@6.4.299` (Apache-2.0), `yauzl@3.4.0` (MIT),
+`htmlparser2@12.0.0` (MIT). PDF.js reads data buffers only; yauzl uses lazy entries and
+validated lengths, with Node CRC32 verification; htmlparser2 extracts EPUB container,
+package reading order and XHTML text without entity resolution/execution. Standalone
+HTML is opaque. Existing `zod@4.1.12` remains MIT. Pi/TypeBox are host peers.
+PDF.js optional canvas packages are transitively installed by npm; rendering is unused.
+The package lock pins the actual resolved dependencies. Audit evidence is reported in
+[C-VALIDATION](C-VALIDATION.md); the old braces advisory remains a separate open issue.
 
-The P2 review correction adds a public Core `authorizeImport()` preflight: Pi can
-report a model switch but cannot apply this workspace's Core authority before a
-filesystem read. It delegates to the existing Core policy; the synchronous adapter
-calls it before `importFile`, and capture retains its own guard. No new policy,
-capability token or service is added. This relies on the stated single-writer,
-synchronous boundary and does not establish OS isolation.
+Limits: TXT/Markdown 1 MiB original, PDF/EPUB 64 MiB original; 2000 pages/chapters,
+10000 ZIP entries, 16 MiB per expanded ZIP entry, 128 MiB total expansion, 8,000,000
+Unicode code points of extracted text, 45 seconds per worker, 256 MiB worker old heap.
+The heap limit is not an OS memory sandbox. Truncated text is partial with unavailable
+sections; encrypted/damaged/scanned-or-blank/unsupported/limit outcomes are explicit.
+Blank PDF pages cannot be distinguished reliably from scanned pages without OCR.
+EPUB UTF-8 and BOM-marked UTF-16 XML are decoded; missing/unsupported sections remain
+visible. Text order is the parser's reading order; complex layouts, images, equations and
+interactive content are not promised faithful. Original files remain inspectable bytes.
 
-Observed `retained_excerpt` and imported text now share the existing read-range
-contract. `Array.from` supplies Unicode code-point iteration; Core supplies exact
-revision selection and bounded continuation metadata, which Pi/model prose cannot
-supply durably. No new parser, input restriction or schema migration is needed.
-The SDK read/UUID spy and tail-fixture script are developer-only observers/fixtures,
-needed to prove absence of pre-denial processing and genuine tail retrieval. They
-are neither normal product tools nor model replacements. See `P2-VALIDATION.md`.
+Global and section-relative ranges are half-open Unicode code-point intervals, never
+UTF-16 code units or byte offsets. With locator, continuation uses section-relative
+next_start; global_start/global_next_start also identify the derivative positions.
+No time scheduler: waits preserve due_at with offset and required IANA timezone.
 
-No custom planner, translator, search service, installer, notification system,
-credential store, universal schema, workflow DSL or external recovery service exists.
-Development tooling: TypeScript, tsx, ESLint/typescript-eslint, Prettier and
-dependency-cruiser supply native checks; they are not runtime product features.
+## State and scope
 
-## Safety and declared limits
+Schema 2 adds claims, handoffs and migration receipts, leaving existing domain rows intact.
+Backup files stay under the separate home and are not automatically deleted. Missing/corrupt
+stores never create replacement empty databases. Failed imports can leave orphan staging/
+immutable blobs; garbage collection and full user backup/quarantine restore remain stage E.
+Fsync/readback are not a hardware power-loss guarantee. Managed policy is not OS isolation
+from same-account shell/extensions or adversarial outside filesystem writers.
 
-Ordinary personal deployment is trusted, including Pi's current user-selected model;
-no automatic routing extension is supported. Any observed model change blocks new
-managed processing in this first block. A later recipient-confirmation workflow is
-outstanding; the adapter never switches models. RPC tests identify a synthetic
-controller, never the actual owner or owner approval. Input capture certifies only
-the observed hook stage, not original keystrokes. No consequential operation is
-implemented, so no reusable approval boolean exists.
-
-The explicit first unimplemented R1 capability is nested/terminal Work with
-dependencies and partial waits. Also outstanding: other four kinds, Methods/Runs,
-Concept/Entity navigation, FTS/structural search, general correction lifecycle,
-Signals/Evaluations, managed effects and exact approvals, claims beyond one writer,
-export/backup/quarantine restore and epoch reconciliation, archive/deletion,
-PDF/EPUB, full access policy and provider-switch qualification, scale/independent
-T30 and owner trial T31. Schema 1 rejects unknown/newer schemas; there is no migration
-or raw database replacement support. A raw copy/rollback is unsupported. An import
-may leave safe unreferenced staging/material files; no GC is advertised. Fsync and
-readback do not establish hardware power-loss safety. Disk-full simulation and
-logical injected interruptions are narrower than physically exhausting the disk.
+Outcome D shared memory/Concept/Entity/FTS is the first unimplemented outcome. Methods,
+Runs/Evaluations/Signals, universal approvals/effects, general backup/restore/archive,
+Codex and Sleep remain later. Full R1 matrix is retained in R1-STATUS.md.
 
 END_OF_FILE: docs/DEVELOPMENT.md

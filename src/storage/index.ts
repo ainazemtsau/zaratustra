@@ -4,6 +4,7 @@ import {
   closeSync,
   existsSync,
   fsyncSync,
+  fstatSync,
   mkdirSync,
   openSync,
   readFileSync,
@@ -23,6 +24,7 @@ import {
 } from "node:path";
 import type { StoragePort } from "../core/index.ts";
 import { CoreError, requireThat } from "../core/index.ts";
+import { extract } from "./extract.ts";
 
 const sha = (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
@@ -51,7 +53,10 @@ export class DiskStorage implements StoragePort {
   private db!: DatabaseSync;
   private lockToken = randomUUID();
   private ownsLock = false;
-  constructor(public home: string) {
+  constructor(
+    public home: string,
+    private migrationFault?: (point: string) => void,
+  ) {
     requireThat(
       isAbsolute(home),
       "VALIDATION_ERROR",
@@ -105,7 +110,7 @@ export class DiskStorage implements StoragePort {
         this.workspace = {
           workspace_id: randomUUID(),
           epoch: randomUUID(),
-          schema_version: 1,
+          schema_version: 2,
         };
         this.db.exec(`BEGIN IMMEDIATE;
           CREATE TABLE meta(json TEXT NOT NULL);
@@ -116,7 +121,11 @@ export class DiskStorage implements StoragePort {
           CREATE TABLE intents(request_id TEXT PRIMARY KEY,hash TEXT NOT NULL,json TEXT NOT NULL);
           CREATE TABLE receipts(request_id TEXT PRIMARY KEY,hash TEXT NOT NULL,json TEXT NOT NULL,bindings TEXT NOT NULL);
           CREATE TABLE focus(session_id TEXT PRIMARY KEY,json TEXT NOT NULL);
-          PRAGMA user_version=1;`);
+          CREATE TABLE claims(token TEXT PRIMARY KEY,work_id TEXT NOT NULL,json TEXT NOT NULL);
+          CREATE INDEX claim_work ON claims(work_id);
+          CREATE TABLE handoffs(id TEXT PRIMARY KEY,json TEXT NOT NULL);
+          CREATE TABLE migrations(version INTEGER PRIMARY KEY,json TEXT NOT NULL);
+          PRAGMA user_version=2;`);
         this.db
           .prepare("INSERT INTO meta(json) VALUES(?)")
           .run(JSON.stringify(this.workspace));
@@ -127,12 +136,36 @@ export class DiskStorage implements StoragePort {
           readFileSync(manifest, "utf8"),
         ) as StoragePort["workspace"];
         const meta = this.get<{ json: string }>("SELECT json FROM meta");
+        const version = this.get<{ user_version: number }>(
+          "PRAGMA user_version",
+        )?.user_version;
+        // A crash after the schema transaction may precede the manifest rename.
+        // Only our exact retained migration receipt permits this narrow repair.
+        if (
+          version === 2 &&
+          this.workspace.schema_version === 1 &&
+          !this.readonly
+        ) {
+          const receipt = this.get<{ json: string }>(
+            "SELECT json FROM migrations WHERE version=2",
+          );
+          const m = receipt ? JSON.parse(receipt.json) : null;
+          requireThat(
+            m &&
+              m.before === JSON.stringify(this.workspace) &&
+              m.after === meta?.json,
+            "STORE_UNAVAILABLE",
+            "Unrecognized interrupted migration; preserve the store.",
+          );
+          this.replaceManifest(meta!.json);
+          this.workspace = JSON.parse(meta!.json);
+        }
         requireThat(
           meta &&
             meta.json === JSON.stringify(this.workspace) &&
-            this.workspace.schema_version === 1 &&
-            this.get<{ user_version: number }>("PRAGMA user_version")
-              ?.user_version === 1,
+            (this.workspace.schema_version === 1 ||
+              this.workspace.schema_version === 2) &&
+            version === this.workspace.schema_version,
           "STORE_UNAVAILABLE",
           "Unknown schema or workspace identity mismatch; no replacement store will be created.",
         );
@@ -143,6 +176,7 @@ export class DiskStorage implements StoragePort {
         "STORE_UNAVAILABLE",
         "SQLite integrity check failed.",
       );
+      if (this.workspace.schema_version === 1) this.migrate();
       if (!this.readonly) {
         mkdirSync(join(home, "materials"), { recursive: true });
         mkdirSync(join(home, "staging"), { recursive: true });
@@ -151,6 +185,106 @@ export class DiskStorage implements StoragePort {
       this.close();
       throw e;
     }
+  }
+  private replaceManifest(json: string) {
+    const temp = join(
+      this.home,
+      "workspace-migration-" + randomUUID() + ".tmp",
+    );
+    durableWrite(temp, json);
+    renameSync(temp, join(this.home, "workspace.json"));
+  }
+  private migrate() {
+    requireThat(
+      !this.readonly,
+      "READ_ONLY",
+      "Schema 1 needs an exclusive writer for migration; no replacement database.",
+    );
+    const before = JSON.stringify(this.workspace);
+    // Verify existing references and blobs before touching schema. Current domain JSON is untouched.
+    const ids = new Set(
+      this.all<{ id: string }>("SELECT id FROM records").map((r) => r.id),
+    );
+    const visit = (v: unknown) => {
+      if (Array.isArray(v)) for (const item of v) visit(item);
+      else if (v && typeof v === "object") {
+        const o = v as Record<string, unknown>;
+        if (
+          typeof o.id === "string" &&
+          Object.keys(o).every((k) => ["id", "revision"].includes(k))
+        )
+          requireThat(
+            ids.has(o.id),
+            "STORE_UNAVAILABLE",
+            "Migration found an unresolved record reference.",
+          );
+        for (const value of Object.values(o)) visit(value);
+      }
+    };
+    for (const row of this.all<{ json: string }>(
+      "SELECT json FROM records UNION ALL SELECT json FROM revisions",
+    )) {
+      const r = JSON.parse(row.json);
+      visit(r.data);
+      if (r.data.blob_ref) {
+        const b = readFileSync(join(this.home, "materials", r.data.blob_ref));
+        requireThat(
+          sha(b) === r.data.blob_ref,
+          "STORE_UNAVAILABLE",
+          "Migration found a missing/corrupt retained material.",
+        );
+      }
+    }
+    const backup = join(this.home, "pre-schema-2-" + randomUUID() + ".sqlite");
+    this.db.prepare("VACUUM INTO ?").run(backup);
+    const check = new DatabaseSync(backup, { readOnly: true });
+    try {
+      requireThat(
+        (
+          check.prepare("PRAGMA integrity_check").get() as {
+            integrity_check: string;
+          }
+        ).integrity_check === "ok",
+        "STORE_UNAVAILABLE",
+        "Migration backup failed integrity check.",
+      );
+    } finally {
+      check.close();
+    }
+    this.migrationFault?.("after_backup");
+    const after = JSON.stringify({ ...this.workspace, schema_version: 2 });
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      this.db.exec(
+        "CREATE TABLE claims(token TEXT PRIMARY KEY,work_id TEXT NOT NULL,json TEXT NOT NULL); CREATE INDEX claim_work ON claims(work_id); CREATE TABLE handoffs(id TEXT PRIMARY KEY,json TEXT NOT NULL); CREATE TABLE migrations(version INTEGER PRIMARY KEY,json TEXT NOT NULL);",
+      );
+      this.db.prepare("INSERT INTO migrations VALUES(2,?)").run(
+        JSON.stringify({
+          before,
+          after,
+          backup,
+          backup_sha256: sha(readFileSync(backup)),
+          recorded_at: new Date().toISOString(),
+        }),
+      );
+      this.db.prepare("UPDATE meta SET json=?").run(after);
+      this.db.exec("PRAGMA user_version=2");
+      this.migrationFault?.("before_schema_commit");
+      requireThat(
+        this.get<{ integrity_check: string }>("PRAGMA integrity_check")
+          ?.integrity_check === "ok" &&
+          this.all("PRAGMA foreign_key_check").length === 0,
+        "STORE_UNAVAILABLE",
+        "Migration integrity check failed.",
+      );
+      this.db.exec("COMMIT");
+    } catch (e) {
+      this.db.exec("ROLLBACK");
+      throw e;
+    }
+    this.migrationFault?.("after_schema_commit");
+    this.replaceManifest(after);
+    this.workspace = JSON.parse(after);
   }
   exec(sql: string) {
     this.db.exec(sql);
@@ -225,6 +359,142 @@ export class DiskStorage implements StoragePort {
       "Retained material failed readback.",
     );
     return { text, blob_ref: hash, byte_length: bytes.length, locator: real };
+  }
+  async importMaterial(
+    path: string,
+    roots: string[],
+    authorize: () => void,
+    signal?: AbortSignal,
+    fault?: (point: string) => void,
+  ) {
+    authorize();
+    requireThat(!this.readonly, "READ_ONLY", "Imports need the one writer.");
+    requireThat(
+      isAbsolute(path),
+      "VALIDATION_ERROR",
+      "Import path must be absolute.",
+    );
+    const real = realpathSync(path);
+    requireThat(
+      roots.some((root) => within(realpathSync(root), real)),
+      "PERMISSION_DENIED",
+      "Import escapes trusted permitted roots.",
+    );
+    const format = extname(real).slice(1).toLowerCase();
+    const limit = ["txt", "md", "markdown"].includes(format)
+      ? 1024 * 1024
+      : 64 * 1024 * 1024;
+    const fd = openSync(real, "r");
+    let bytes: Buffer;
+    try {
+      const stat = fstatSync(fd);
+      requireThat(
+        stat.isFile() && stat.size <= limit,
+        "MATERIAL_TOO_LARGE",
+        "Material must be an ordinary file within its declared size limit.",
+      );
+      bytes = readFileSync(fd);
+      requireThat(
+        bytes.length <= limit,
+        "MATERIAL_TOO_LARGE",
+        "Material grew beyond the size limit.",
+      );
+    } finally {
+      closeSync(fd);
+    }
+    let extraction: Awaited<ReturnType<typeof extract>>;
+    if (["txt", "md", "markdown"].includes(format)) {
+      let text = "",
+        status: "readable" | "damaged" = "readable";
+      try {
+        text = new TextDecoder("utf-8", {
+          fatal: true,
+          ignoreBOM: true,
+        }).decode(bytes);
+      } catch {
+        status = "damaged";
+      }
+      extraction = {
+        format,
+        status,
+        parser: "WHATWG TextDecoder",
+        parser_version: "Node 22.19.0 UTF-8",
+        text,
+        text_blob_ref: null,
+        text_hash: null,
+        total_characters: Array.from(text).length,
+        sections: [
+          {
+            locator: "text:1",
+            label: "Text",
+            start: 0,
+            end: Array.from(text).length,
+            available: status === "readable",
+          },
+        ],
+        warnings:
+          status === "damaged"
+            ? ["Invalid UTF-8; original bytes retained without readable text."]
+            : [],
+      };
+    } else if (["pdf", "epub"].includes(format))
+      extraction = await extract(bytes, format, signal);
+    else
+      extraction = {
+        format,
+        status: "unsupported",
+        parser: "none",
+        parser_version: "none",
+        text: "",
+        text_blob_ref: null,
+        text_hash: null,
+        total_characters: 0,
+        sections: [],
+        warnings: [
+          "Unsupported format; retained original is not readable text.",
+        ],
+      };
+    authorize();
+    requireThat(
+      !signal?.aborted,
+      "PERMISSION_DENIED",
+      "Import runtime was invalidated.",
+    );
+    const blob_ref = this.retain(bytes, fault);
+    const { text, ...metadata } = extraction;
+    if (["readable", "partial"].includes(metadata.status)) {
+      metadata.text_blob_ref = this.retain(Buffer.from(text), fault);
+      metadata.text_hash = metadata.text_blob_ref;
+    }
+    return {
+      text,
+      blob_ref,
+      byte_length: bytes.length,
+      locator: real,
+      extraction: metadata,
+    };
+  }
+  private retain(bytes: Uint8Array, fault?: (point: string) => void) {
+    const hash = sha(bytes),
+      stage = join(this.home, "staging", randomUUID()),
+      target = join(this.home, "materials", hash);
+    durableWrite(stage, bytes);
+    fault?.("after_stage");
+    if (existsSync(target)) {
+      requireThat(
+        sha(readFileSync(target)) === hash,
+        "STORE_UNAVAILABLE",
+        "Existing material digest mismatch.",
+      );
+      unlinkSync(stage);
+    } else renameSync(stage, target);
+    fault?.("after_rename");
+    requireThat(
+      sha(readFileSync(target)) === hash,
+      "STORE_UNAVAILABLE",
+      "Retained material failed readback.",
+    );
+    return hash;
   }
   readMaterial(hash: string) {
     requireThat(

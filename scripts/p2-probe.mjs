@@ -146,8 +146,25 @@ let watch = null,
   trace = [];
 const originalRead = fs.readFileSync,
   originalUUID = crypto.randomUUID;
+const originalOpen = fs.openSync,
+  originalClose = fs.closeSync,
+  watchedFds = new Set();
+fs.openSync = function (path, ...args) {
+  const fd = Reflect.apply(originalOpen, this, [path, ...args]);
+  if (watch && typeof path === "string" && resolve(path) === watch)
+    watchedFds.add(fd);
+  return fd;
+};
+fs.closeSync = function (fd) {
+  watchedFds.delete(fd);
+  return Reflect.apply(originalClose, this, [fd]);
+};
 fs.readFileSync = function (path, ...args) {
-  if (watch && typeof path === "string" && resolve(path) === watch) {
+  if (
+    watch &&
+    ((typeof path === "string" && resolve(path) === watch) ||
+      watchedFds.has(path))
+  ) {
     sourceReads++;
     trace.push("read-source-content");
   }
@@ -269,10 +286,25 @@ try {
   });
   assert.equal(committed.details.committed, true);
   const allowedRange = await run("zara_read", {
-    id: committed.details.created.material,
+    id:
+      committed.details.created.material_text ??
+      committed.details.created.material,
     range: { start: 0, length: 8000 },
   });
   assert.equal(allowedRange.details.data.text, allowedBytes.toString("utf8"));
+  if (allowedResult.details.extraction) {
+    for (const name of ["book.pdf", "book.epub"]) {
+      const path = join(inputs, name);
+      fs.copyFileSync(join(pkg, "tests/fixtures/c", name), path);
+      const imported = await run("zara_import", { path });
+      assert.equal(imported.isError, undefined);
+      assert.equal(imported.details.extraction.status, "readable");
+      fs.writeFileSync(
+        join(out, name + "-import.json"),
+        JSON.stringify(imported.details, null, 2),
+      );
+    }
+  }
   await session.setModel(alternative);
   const beforeFiles = files(),
     beforeDomain = rows();
@@ -282,6 +314,15 @@ try {
   watch = resolve(denied);
   const deniedResult = await run("zara_import", { path: denied });
   watch = null;
+  if (allowedResult.details.extraction) {
+    for (const name of ["book.pdf", "book.epub", "absent.pdf"]) {
+      watch = resolve(join(inputs, name));
+      const result = await run("zara_import", { path: watch });
+      watch = null;
+      assert.equal(result.details.code, "PERMISSION_DENIED");
+      assert.equal(result.details.source_handle, undefined);
+    }
+  }
   const adapterResult = {
     initial_recipient: model.provider + "/" + model.id,
     selected_without_request: alternative.provider + "/" + alternative.id,

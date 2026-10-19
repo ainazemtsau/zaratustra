@@ -10,8 +10,8 @@ Commands (Node 22.19.0, npm 11.6.2, Pi 1.3.0):
 - `npm run deliver` — check plus required RESULT fields.
 
 Read `docs/specification-v1.1.html` completely and `docs/DEVELOPMENT.md` for the
-approved block and decisions. The full R1 contract remains the target; this block
-implements only installed continuation. Do not advertise later features.
+approved block and decisions. The full R1 contract remains the target; the current owner-authorized block implements outcome C: full Work, manual handoffs,
+partial inputs, TXT/Markdown, text PDF and unencrypted EPUB. Full R1 remains open.
 
 ## Run contract (PROBA)
 

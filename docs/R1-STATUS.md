@@ -2,8 +2,9 @@
 
 The complete specification remains authoritative. `passed` below is limited to the
 named first-block mechanism/profile; `partial` never discharges a whole release row.
-Every other M/L obligation remains outstanding. No technical R1 admission or owner
-acceptance is asserted. Source candidates and raw observations: `EVIDENCE.md`.
+Every other M/L obligation remains outstanding. No technical R1 admission or full-R1 owner
+acceptance is asserted. The owner separately accepted first block 27a74fd with “да”
+after independent PASS; outcome C scope was then approved with “ок”. Source candidates and raw observations: `EVIDENCE.md`.
 
 | Row | M       | L       | O       | Disposition                                                                                                                                 |
 | --- | ------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -20,7 +21,7 @@ acceptance is asserted. Source candidates and raw observations: `EVIDENCE.md`.
 | T11 | not_run | not_run | —       | Outstanding full-R1 capability/suite; see unchanged complete specification criterion.                                                       |
 | T12 | not_run | not_run | —       | Outstanding full-R1 capability/suite; see unchanged complete specification criterion.                                                       |
 | T13 | not_run | not_run | —       | Outstanding full-R1 capability/suite; see unchanged complete specification criterion.                                                       |
-| T14 | not_run | not_run | —       | Outstanding full-R1 capability/suite; see unchanged complete specification criterion.                                                       |
+| T14 | not_run | not_run | —       | Work graph cycle checks passed in C; Concept/Method graphs remain unbuilt.                                                                  |
 | T15 | not_run | not_run | —       | Outstanding full-R1 capability/suite; see unchanged complete specification criterion.                                                       |
 | T16 | not_run | not_run | —       | Outstanding full-R1 capability/suite; see unchanged complete specification criterion.                                                       |
 | T17 | not_run | not_run | —       | Outstanding full-R1 capability/suite; see unchanged complete specification criterion.                                                       |
@@ -28,7 +29,7 @@ acceptance is asserted. Source candidates and raw observations: `EVIDENCE.md`.
 | T19 | partial | —       | —       | Same-ID receipt replay, payload conflict, intents and Changes for first-block ops.                                                          |
 | T20 | passed  | —       | —       | First-block domain transaction boundary faults: all data/versions/receipt or none.                                                          |
 | T21 | not_run | not_run | —       | Outstanding full-R1 capability/suite; see unchanged complete specification criterion.                                                       |
-| T22 | partial | —       | —       | Revision conflict and one writer/read-only lease; full Work claims unbuilt.                                                                 |
+| T22 | partial | —       | —       | Revision conflict, one writer and local Work/step/handoff claims tested in outcome C; external effects remain E.                            |
 | T23 | partial | partial | —       | Mechanical corrupt/missing/read-only/full; live unavailable-store honesty (10).                                                             |
 | T24 | partial | —       | —       | Staging/rename interruption; no unfinished committed blob. GC/backup pins unbuilt.                                                          |
 | T25 | not_run | not_run | —       | Outstanding full-R1 capability/suite; see unchanged complete specification criterion.                                                       |
@@ -54,8 +55,9 @@ acceptance is asserted. Source candidates and raw observations: `EVIDENCE.md`.
 
 M = mechanical; L = actual Pi/model; O = owner usefulness. A dash means no claim
 for that layer in this handoff, not a waiver. Platform/material profiles beyond the
-declared first block need their own qualification. The first missing outcome is
-complete nested/terminal Work with dependencies; the remaining roadmap is preserved
-in the specification §25.8, with full requirements §24.
+declared first block need their own qualification. The current outcome C implements Work/materials; its evidence is tracked in
+[C-VALIDATION.md](C-VALIDATION.md). The first following unimplemented outcome is D,
+shared Concept/Entity memory and independent English lexical/structural discovery.
+The full roadmap remains specification §25.8, with full requirements §24.
 
 END_OF_FILE: docs/R1-STATUS.md

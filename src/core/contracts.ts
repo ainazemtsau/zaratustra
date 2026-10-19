@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const text = z.string().min(1).max(4000);
+export const text = z.string().min(1).max(4000);
 export const Ref = z.union([
   z.strictObject({
     id: text,
@@ -14,14 +14,61 @@ const acceptance = z.strictObject({
   verification: text,
   required: z.boolean(),
 });
+export const WorkStatus = z.enum([
+  "draft",
+  "active",
+  "waiting",
+  "blocked",
+  "paused",
+  "done",
+  "cancelled",
+]);
+export const StepStatus = z.enum([
+  "todo",
+  "running",
+  "waiting",
+  "blocked",
+  "done",
+  "skipped",
+  "cancelled",
+]);
+export const Ground = z.strictObject({
+  criterion_id: text,
+  explanation: text,
+  evidence_refs: z.array(Ref).min(1).max(20),
+});
+export const Step = z.strictObject({
+  step_id: text,
+  intent: text,
+  status: StepStatus,
+  depends_on: z
+    .array(
+      z.union([
+        z.strictObject({ step_id: text }),
+        z.strictObject({
+          work_ref: Ref,
+          step_id: text.optional(),
+          criterion_id: text.optional(),
+        }),
+      ]),
+    )
+    .max(50),
+  child_work_id: Ref.nullable().optional(),
+  required: z.boolean().optional(),
+  result_refs: z.array(Ref).max(20),
+});
 const wait = z.strictObject({
   wait_id: text,
-  kind: z.literal("user"),
-  target: z.literal("work"),
+  kind: z.enum(["user", "time", "external_result", "dependency"]),
+  target: z.union([z.literal("work"), z.strictObject({ step_id: text })]),
   subject: text,
   satisfied_by: text,
-  received_refs: z.array(Ref).max(10),
+  received_refs: z.array(Ref).max(50),
   question: text,
+  status: z.enum(["pending", "partial", "satisfied", "withdrawn"]).optional(),
+  resolution: text.optional(),
+  due_at: z.iso.datetime({ offset: true }).optional(),
+  timezone: text.optional(),
 });
 export const ActivityData = z.strictObject({
   purpose: text,
@@ -29,17 +76,35 @@ export const ActivityData = z.strictObject({
 });
 export const WorkData = z.strictObject({
   activity_id: Ref.nullable(),
-  parent_work_id: z.null(),
+  parent_work_id: Ref.nullable(),
+  required_for_parent: z.boolean().optional(),
   objective: text,
   acceptance: z.array(acceptance).min(1).max(10),
-  status: z.enum(["draft", "active", "waiting", "blocked", "paused"]),
+  status: WorkStatus,
   current_state: text,
   next_action: text.nullable(),
-  steps: z.array(z.never()).max(0),
-  waits: z.array(wait).max(10),
-  context_refs: z.array(Ref).max(20),
-  completion: z.null(),
+  steps: z.array(Step).max(100),
+  waits: z.array(wait).max(50),
+  context_refs: z.array(Ref).max(100),
+  completion: z
+    .strictObject({
+      grounds: z.array(Ground).max(20),
+      recorded_at: text,
+      decision_actor: text,
+    })
+    .nullable(),
+  plan_version: z.number().int().positive().optional(),
+  cancellation: z
+    .strictObject({
+      reason: text,
+      consequences: text,
+      recorded_at: text,
+      decision_actor: text,
+    })
+    .nullable()
+    .optional(),
 });
+export type Work = z.infer<typeof WorkData>;
 export const KnowledgeData = z.strictObject({
   knowledge_kind: z.enum([
     "fact",
@@ -109,6 +174,7 @@ export const CommitSchema = z.strictObject({
       }),
     )
     .max(30),
+  claim_tokens: z.array(text).max(20).optional(),
   ops: z
     .array(
       z.union([
@@ -119,6 +185,58 @@ export const CommitSchema = z.strictObject({
           source_handle: text,
           title: text,
           source_language: text,
+          semantic_source_kind: z.literal("external_reply").optional(),
+        }),
+        z.strictObject({
+          op: z.literal("record_result"),
+          client_ref: text,
+          work_ref: Ref,
+          step_id: text.optional(),
+          title: text,
+          content: z.string().min(1).max(32000),
+          source_language: text,
+        }),
+        z.strictObject({
+          op: z.literal("transition_work"),
+          ref: z.strictObject({ id: text }),
+          status: WorkStatus,
+          reason: text,
+          decision_source_handle: text.optional(),
+          consequences: text.optional(),
+          next_action: text.nullable().optional(),
+          grounds: z.array(Ground).max(20).optional(),
+        }),
+        z.strictObject({
+          op: z.literal("transition_step"),
+          ref: z.strictObject({ id: text }),
+          step_id: text,
+          status: StepStatus,
+          reason: text,
+          result_refs: z.array(Ref).max(20).optional(),
+          decision_source_handle: text.optional(),
+        }),
+        z.strictObject({
+          op: z.literal("prepare_handoff"),
+          client_ref: text,
+          work_ref: Ref,
+          step_id: text.optional(),
+          objective: text,
+          conditions: text,
+          expected_result: text,
+          context_refs: z.array(Ref).max(20),
+          message: text,
+        }),
+        z.strictObject({
+          op: z.literal("receive_handoff"),
+          client_ref: text,
+          handoff_id: text,
+          source_handle: text,
+          title: text,
+          source_language: text,
+          comparison: text,
+          disposition: z.enum(["partial", "accepted", "late", "unrelated"]),
+          useful_content: text,
+          accepted_wait_ids: z.array(text).max(50),
         }),
         z.strictObject({
           op: z.literal("update_record"),
@@ -126,6 +244,8 @@ export const CommitSchema = z.strictObject({
           title: text.optional(),
           body: text.nullable().optional(),
           data: z.union([ActivityData, WorkData, KnowledgeData]),
+          plan_change_reason: text.optional(),
+          decision_source_handle: text.optional(),
         }),
         z.strictObject({
           op: z.literal("set_focus"),
@@ -168,6 +288,31 @@ export interface Source {
   blob_ref?: string;
   byte_length: number;
   locator?: string;
+  extraction?: Extraction;
+}
+export interface Extraction {
+  format: string;
+  status:
+    | "readable"
+    | "partial"
+    | "scanned"
+    | "encrypted"
+    | "damaged"
+    | "unsupported"
+    | "limit_exceeded";
+  parser: string;
+  parser_version: string;
+  text_blob_ref: string | null;
+  text_hash: string | null;
+  total_characters: number;
+  sections: {
+    locator: string;
+    label: string;
+    start: number;
+    end: number;
+    available: boolean;
+  }[];
+  warnings: string[];
 }
 export interface CallContext {
   workspace_id: string;

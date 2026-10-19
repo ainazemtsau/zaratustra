@@ -7,7 +7,15 @@ import {
   KnowledgeData,
   requireThat,
   WorkData,
+  WorkStatus,
 } from "./contracts.ts";
+import {
+  plan,
+  protectWorkUpdate,
+  refId,
+  terminal,
+  validateWorks,
+} from "./work.ts";
 import type {
   CallContext,
   JsonObject,
@@ -61,13 +69,19 @@ export class Core {
     text: string,
     transport: string,
     channel_identity: string | null,
-    material?: { blob_ref: string; byte_length: number; locator: string },
+    material?: {
+      blob_ref: string;
+      byte_length: number;
+      locator: string;
+      extraction?: Source["extraction"];
+    },
   ) {
     this.authorize();
     requireThat(
-      Buffer.byteLength(text) <= 1024 * 1024,
+      Buffer.byteLength(text) <=
+        (material?.extraction ? 32 * 1024 * 1024 : 1024 * 1024),
       "VALIDATION_ERROR",
-      "Source exceeds the first-block 1 MiB bound.",
+      "Source exceeds its observed-input or extracted-text bound.",
     );
     const source: Source = {
       handle: id("source"),
@@ -95,6 +109,7 @@ export class Core {
       capture_stage: source.capture_stage,
       content_hash: source.content_hash,
       byte_length: source.byte_length,
+      ...(source.extraction ? { extraction: source.extraction } : {}),
     };
   }
   expireSources() {
@@ -128,7 +143,7 @@ export class Core {
     return {
       ok: true,
       workspace_id: this.context.workspace_id,
-      schema_version: 1,
+      schema_version: this.storage.workspace.schema_version,
       snapshot_seq: this.sequence(),
       data,
       warnings: [],
@@ -143,6 +158,8 @@ export class Core {
         "knowledge",
         "materials",
         "operations",
+        "handoffs",
+        "claims",
       ].map((view) => ({ label: view, selector: { view } })),
       focus: this.focus(),
     });
@@ -164,6 +181,8 @@ export class Core {
         "materials",
         "operations",
         "changes",
+        "handoffs",
+        "claims",
       ].includes(view),
       "VALIDATION_ERROR",
       "Unsupported view.",
@@ -194,7 +213,21 @@ export class Core {
       offset = c.offset;
     }
     let rows: unknown[];
-    if (view === "operations") {
+    if (view === "handoffs" || view === "claims") {
+      rows = this.storage
+        .all<{
+          json: string;
+        }>(
+          view === "handoffs"
+            ? "SELECT json FROM handoffs WHERE (? IS NULL OR json_extract(json,'$.work_ref.id')=?) ORDER BY rowid DESC LIMIT ? OFFSET ?"
+            : "SELECT json FROM claims WHERE (? IS NULL OR work_id=?) ORDER BY rowid DESC LIMIT ? OFFSET ?",
+          recordId ?? null,
+          recordId ?? null,
+          limit + 1,
+          offset,
+        )
+        .map((r) => JSON.parse(r.json));
+    } else if (view === "operations") {
       rows = this.storage
         .all<{
           json: string;
@@ -227,8 +260,9 @@ export class Core {
       }[view]!;
       rows = this.storage
         .all<{ json: string }>(
-          "SELECT json FROM records WHERE kind=? AND (? IS NULL OR activity_id=?) ORDER BY id LIMIT ? OFFSET ?",
+          "SELECT json FROM records WHERE kind=? AND (? IS NULL OR activity_id=? OR json_extract(json,'$.data.parent_work_id.id')=?) ORDER BY id LIMIT ? OFFSET ?",
           kind,
+          recordId ?? null,
           recordId ?? null,
           recordId ?? null,
           limit + 1,
@@ -263,9 +297,66 @@ export class Core {
     recordId: string,
     revision?: number,
     range?: { start: number; length: number },
+    locator?: string,
   ) {
     this.authorize();
     const r = this.record(recordId, revision);
+    if (range)
+      requireThat(
+        Number.isInteger(range.start) &&
+          range.start >= 0 &&
+          Number.isInteger(range.length) &&
+          range.length > 0 &&
+          range.length <= 8000,
+        "VALIDATION_ERROR",
+        "Use a code-point range of 1..8000 with a nonnegative integer start.",
+      );
+    let sectionBounds: { start: number; end: number } | undefined;
+    const extraction = r.data.extraction as Source["extraction"];
+    requireThat(
+      !range || !extraction,
+      "CONTENT_NOT_RETAINED",
+      "Read the addressed text_derivative_ref, not the binary/opaque original.",
+    );
+    if (locator) {
+      const sections = r.data.sections as
+        | NonNullable<Source["extraction"]>["sections"]
+        | undefined;
+      const section = sections?.find((s) => s.locator === locator);
+      requireThat(
+        section,
+        "REFERENCE_NOT_FOUND",
+        "Unknown material section locator.",
+      );
+      requireThat(
+        section.available,
+        "CONTENT_NOT_RETAINED",
+        "The selected page/chapter has no available extracted text.",
+      );
+      const relative = range?.start ?? 0;
+      sectionBounds = section;
+      requireThat(
+        relative <= section.end - section.start,
+        "VALIDATION_ERROR",
+        "Range starts beyond the selected section.",
+      );
+      range = {
+        start: section.start + relative,
+        length: Math.min(
+          range?.length ?? 8000,
+          section.end - section.start - relative,
+        ),
+      };
+      if (range.length === 0)
+        return this.envelope({
+          ref: { id: r.id, revision: r.revision },
+          locator,
+          text: "",
+          has_more: false,
+          next_start: relative,
+          range_unit: "Unicode code points within section",
+        });
+    }
     if (range) {
       requireThat(
         r.kind === "evidence" &&
@@ -293,13 +384,38 @@ export class Core {
         ref: { id: r.id, revision: r.revision },
         source_language: r.data.source_language,
         content_hash: r.data.content_hash,
-        range_unit: "Unicode code points",
-        start: range.start,
+        range_unit: locator
+          ? "Unicode code points within section"
+          : "Unicode code points",
+        start: range.start - (sectionBounds?.start ?? 0),
         text: characters.slice(range.start, nextStart).join(""),
-        total_characters: characters.length,
-        has_more: nextStart < characters.length,
-        next_start: nextStart,
+        total_characters: sectionBounds
+          ? sectionBounds.end - sectionBounds.start
+          : characters.length,
+        has_more: nextStart < (sectionBounds?.end ?? characters.length),
+        next_start: nextStart - (sectionBounds?.start ?? 0),
+        global_start: range.start,
+        global_next_start: nextStart,
         untrusted_source_data: true,
+        ...(locator
+          ? {
+              locator,
+              section_start:
+                range.start -
+                (
+                  r.data.sections as NonNullable<
+                    Source["extraction"]
+                  >["sections"]
+                ).find((s) => s.locator === locator)!.start,
+              section_next_start:
+                nextStart -
+                (
+                  r.data.sections as NonNullable<
+                    Source["extraction"]
+                  >["sections"]
+                ).find((s) => s.locator === locator)!.start,
+            }
+          : {}),
       });
     }
     if (r.kind === "evidence" && typeof r.data.retained_excerpt === "string") {
@@ -329,6 +445,149 @@ export class Core {
     );
     requireThat(row, "REFERENCE_NOT_FOUND", "Operation not found.");
     return this.envelope(JSON.parse(row.json));
+  }
+  handoff(handoffId: string) {
+    this.authorize();
+    const row = this.storage.get<{ json: string }>(
+      "SELECT json FROM handoffs WHERE id=?",
+      handoffId,
+    );
+    requireThat(row, "REFERENCE_NOT_FOUND", "Handoff not found.");
+    return this.envelope(JSON.parse(row.json));
+  }
+  private decision(handle: string | undefined, handles?: string[]) {
+    const s = handle ? this.sources.get(handle) : undefined;
+    requireThat(
+      s &&
+        (!handles || handles.includes(handle!)) &&
+        s.runtime_id === this.context.runtime_id &&
+        s.session_id === this.context.session_id &&
+        (s.transport === "interactive" ||
+          (s.transport === "rpc" && s.channel_identity !== null)),
+      "SOURCE_MISSING",
+      "Explicit lifecycle/plan decision needs a current observed interactive source or trusted controller; external Evidence grants no decision authority.",
+    );
+    return s.source_ref;
+  }
+  private assertExecutable(workId: string) {
+    const seen = new Set<string>();
+    let r = this.record(workId);
+    while (r) {
+      requireThat(!seen.has(r.id), "GRAPH_CYCLE", "Parent cycle.");
+      seen.add(r.id);
+      requireThat(
+        !["paused", "done", "cancelled"].includes(r.data.status as string),
+        "INVALID_TRANSITION",
+        "Work or ancestor suppresses continuation; explicit resume/reopen is required.",
+      );
+      if (r.data.activity_id)
+        requireThat(
+          this.record(refId(r.data.activity_id)).data.status === "active",
+          "INVALID_TRANSITION",
+          "Activity is paused/closed.",
+        );
+      if (!r.data.parent_work_id) break;
+      r = this.record(refId(r.data.parent_work_id));
+    }
+  }
+  claim(input: {
+    action: "acquire" | "release" | "reconcile";
+    work_id: string;
+    expected_revision: number;
+    step_id?: string;
+    purpose?: "work" | "step" | "handoff";
+    token?: string;
+    reason: string;
+    source_handle?: string;
+  }) {
+    this.authorize(true);
+    this.storage.exec("BEGIN IMMEDIATE");
+    try {
+      this.authorize(true);
+      const w = this.record(input.work_id);
+      requireThat(
+        w.kind === "work",
+        "REFERENCE_TYPE_MISMATCH",
+        "Claim target must be Work.",
+      );
+      requireThat(
+        w.revision === input.expected_revision,
+        "REVISION_CONFLICT",
+        "Claim premise changed.",
+      );
+      const rows = this.storage
+        .all<{ json: string }>("SELECT json FROM claims WHERE work_id=?", w.id)
+        .map((r) => JSON.parse(r.json));
+      let claim;
+      if (input.action === "acquire") {
+        this.assertExecutable(w.id);
+        const data = WorkData.parse(w.data);
+        requireThat(
+          !input.step_id || data.steps.some((s) => s.step_id === input.step_id),
+          "REFERENCE_NOT_FOUND",
+          "Claim step not found.",
+        );
+        requireThat(
+          !rows.some(
+            (c) =>
+              c.state === "active" &&
+              (!c.step_id || !input.step_id || c.step_id === input.step_id),
+          ),
+          "WORK_IN_USE",
+          "Unresolved managed claim exists; expiry alone does not establish non-execution. Inspect and explicitly release/reconcile it.",
+        );
+        claim = {
+          token: id("claim"),
+          work_id: w.id,
+          step_id: input.step_id ?? null,
+          purpose: input.purpose ?? "work",
+          expected_revision: w.revision,
+          session_id: this.context.session_id,
+          runtime_id: this.context.runtime_id,
+          epoch: this.context.epoch,
+          acquired_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+          state: "active",
+          reason: input.reason,
+          coverage:
+            "Core local Work/step result recording and handoff preparation only; no external dispatch guarantee",
+        };
+        this.storage.run(
+          "INSERT INTO claims VALUES(?,?,?)",
+          claim.token,
+          w.id,
+          JSON.stringify(claim),
+        );
+      } else {
+        claim = rows.find((c) => c.token === input.token);
+        requireThat(claim, "REFERENCE_NOT_FOUND", "Claim not found.");
+        if (input.action === "release")
+          requireThat(
+            claim.session_id === this.context.session_id &&
+              claim.runtime_id === this.context.runtime_id,
+            "WORK_IN_USE",
+            "A different runtime's unresolved claim needs explicit reconciliation.",
+          );
+        else this.decision(input.source_handle);
+        claim = {
+          ...claim,
+          state: "released",
+          released_at: new Date().toISOString(),
+          release_reason: input.reason,
+          reconciled_by: this.context.runtime_id,
+        };
+        this.storage.run(
+          "UPDATE claims SET json=? WHERE token=?",
+          JSON.stringify(claim),
+          claim.token,
+        );
+      }
+      this.storage.exec("COMMIT");
+      return this.envelope(claim);
+    } catch (e) {
+      this.storage.exec("ROLLBACK");
+      throw e;
+    }
   }
   snapshot() {
     this.authorize();
@@ -453,9 +712,78 @@ export class Core {
     this.fault?.("after_prepare");
     this.storage.exec("BEGIN IMMEDIATE");
     try {
+      this.authorize(true);
+      requireThat(
+        !this.storage.get(
+          "SELECT request_id FROM receipts WHERE request_id=?",
+          request.request_id,
+        ),
+        "REVISION_CONFLICT",
+        "Receipt changed under transaction; discover and retry identical request.",
+      );
       const created: Record<string, string> = {};
       const changed = new Map<string, RecordRow>();
       const before: Record<string, number | null> = {};
+      const handoffs: { id: string; json: string }[] = [];
+      const consumed = new Set<string>();
+      const checkDecision = (handle?: string) =>
+        this.decision(handle, request.source_handles);
+      const guarded = (recordId: string) => {
+        const current = this.record(recordId);
+        requireThat(
+          request.guards.some(
+            (g) =>
+              g.ref.id === recordId && g.expected_revision === current.revision,
+          ),
+          "REVISION_CONFLICT",
+          "Every changed or execution premise requires its exact revision guard.",
+        );
+        return current;
+      };
+      const requireClaim = (
+        workId: string,
+        stepId: string | null,
+        purpose: string,
+      ) => {
+        const current = guarded(workId);
+        this.assertExecutable(workId);
+        const claim = (request.claim_tokens ?? [])
+          .map((token) =>
+            this.storage.get<{ json: string }>(
+              "SELECT json FROM claims WHERE token=?",
+              token,
+            ),
+          )
+          .filter(Boolean)
+          .map((r) => JSON.parse(r!.json))
+          .find(
+            (c) =>
+              c.work_id === workId &&
+              c.step_id === stepId &&
+              c.purpose === purpose,
+          );
+        requireThat(
+          claim &&
+            claim.state === "active" &&
+            claim.expected_revision === current.revision &&
+            claim.session_id === this.context.session_id &&
+            claim.runtime_id === this.context.runtime_id &&
+            claim.epoch === this.context.epoch &&
+            Date.parse(claim.expires_at) > Date.now(),
+          "WORK_IN_USE",
+          "A current revision/session/epoch-bound managed execution claim is required.",
+        );
+        consumed.add(claim.token);
+      };
+      const stage = (current: RecordRow, data: JsonObject) => {
+        before[current.id] ??= current.revision;
+        changed.set(current.id, {
+          ...current,
+          data,
+          revision: (before[current.id] ?? 0) + 1,
+          updated_at: new Date().toISOString(),
+        });
+      };
       for (const op of request.ops)
         if ("client_ref" in op) {
           requireThat(
@@ -464,8 +792,28 @@ export class Core {
             "Duplicate client_ref.",
           );
           created[op.client_ref] = id(
-            op.op === "import_evidence" ? "evidence" : op.kind,
+            op.op === "prepare_handoff"
+              ? "handoff"
+              : op.op === "import_evidence" ||
+                  op.op === "receive_handoff" ||
+                  op.op === "record_result"
+                ? "evidence"
+                : op.kind,
           );
+          if (
+            op.op === "import_evidence" &&
+            this.sources.get(op.source_handle)?.extraction?.text_blob_ref
+          ) {
+            const key = op.client_ref + "_text";
+            requireThat(
+              !request.ops.some(
+                (o) => "client_ref" in o && o.client_ref === key,
+              ),
+              "VALIDATION_ERROR",
+              "Reserved derivative client_ref collides.",
+            );
+            created[key] = id("evidence");
+          }
         }
       const resolve = (v: unknown): unknown => {
         if (Array.isArray(v)) return v.map(resolve);
@@ -499,6 +847,131 @@ export class Core {
           focus = { activity_ref: op.activity_ref, work_ref: op.work_ref };
           continue;
         }
+        if (op.op === "prepare_handoff") {
+          const workId = refId(op.work_ref),
+            current = changed.get(workId) ?? this.record(workId);
+          requireThat(
+            current.kind === "work",
+            "REFERENCE_TYPE_MISMATCH",
+            "Handoff needs Work.",
+          );
+          requireClaim(workId, op.step_id ?? null, "handoff");
+          const w = WorkData.parse(current.data);
+          requireThat(
+            !op.step_id || w.steps.some((s) => s.step_id === op.step_id),
+            "REFERENCE_NOT_FOUND",
+            "Handoff step not found.",
+          );
+          const hid = created[op.client_ref];
+          const artifact = {
+            handoff_id: hid,
+            work_ref: { id: workId, revision: current.revision },
+            plan_version: w.plan_version ?? 1,
+            step_id: op.step_id ?? null,
+            objective: op.objective,
+            conditions: op.conditions,
+            expected_result: op.expected_result,
+            context_refs: op.context_refs,
+            message: op.message,
+            prepared_at: now,
+            prepared_by: this.context.runtime_id,
+            transport_state: "prepared_not_sent",
+            source_refs: Object.values(bindings),
+          };
+          handoffs.push({ id: hid, json: JSON.stringify(artifact) });
+          continue;
+        }
+        if (op.op === "transition_work" || op.op === "transition_step") {
+          const original = guarded(op.ref.id),
+            current = changed.get(op.ref.id) ?? original;
+          requireThat(
+            current.kind === "work",
+            "REFERENCE_TYPE_MISMATCH",
+            "Lifecycle target must be Work.",
+          );
+          const w = WorkData.parse(current.data);
+          if (op.op === "transition_work") {
+            requireThat(
+              w.status !== op.status,
+              "INVALID_TRANSITION",
+              "Transition must change Work state.",
+            );
+            if (
+              w.status === "paused" ||
+              terminal(w.status) ||
+              op.status === "paused" ||
+              op.status === "cancelled"
+            )
+              checkDecision(op.decision_source_handle);
+            if (terminal(w.status))
+              requireThat(
+                ["active", "waiting", "blocked", "draft"].includes(op.status),
+                "INVALID_TRANSITION",
+                "Explicit reopen returns to an unfinished state.",
+              );
+            else if (w.status === "draft")
+              requireThat(
+                ["active", "waiting", "paused", "cancelled", "done"].includes(
+                  op.status,
+                ),
+                "INVALID_TRANSITION",
+                "Invalid draft transition.",
+              );
+            else if (w.status === "paused")
+              requireThat(
+                ["active", "waiting", "blocked", "cancelled"].includes(
+                  op.status,
+                ),
+                "INVALID_TRANSITION",
+                "Resume explicitly to active/waiting/blocked or cancel.",
+              );
+            else
+              requireThat(
+                op.status !== "draft",
+                "INVALID_TRANSITION",
+                "Open Work cannot silently return to draft.",
+              );
+            if (op.status === "done") {
+              requireClaim(current.id, null, "work");
+              w.completion = {
+                grounds: op.grounds ?? [],
+                recorded_at: now,
+                decision_actor: this.context.principal,
+              };
+            } else w.completion = null;
+            w.cancellation =
+              op.status === "cancelled"
+                ? {
+                    reason: op.reason,
+                    consequences: op.consequences ?? "",
+                    recorded_at: now,
+                    decision_actor: this.context.principal,
+                  }
+                : null;
+            w.status = WorkStatus.parse(op.status);
+            w.current_state = op.reason;
+            if (op.next_action !== undefined) w.next_action = op.next_action;
+            if (terminal(op.status)) w.next_action = null;
+          } else {
+            const step = w.steps.find((s) => s.step_id === op.step_id);
+            requireThat(step, "REFERENCE_NOT_FOUND", "Step does not exist.");
+            requireThat(
+              !terminal(w.status),
+              "INVALID_TRANSITION",
+              "Reopen Work before executing its steps.",
+            );
+            if (["done", "skipped", "cancelled"].includes(step.status))
+              checkDecision(op.decision_source_handle);
+            if (["running", "done"].includes(op.status))
+              requireClaim(current.id, op.step_id, "step");
+            if (["skipped", "cancelled"].includes(op.status))
+              checkDecision(op.decision_source_handle);
+            step.status = op.status;
+            step.result_refs = op.result_refs ?? step.result_refs;
+          }
+          stage(current, w);
+          continue;
+        }
         if (op.op === "update_record") {
           requireThat(
             !changed.has(op.ref.id),
@@ -521,6 +994,21 @@ export class Core {
             "Every updated record requires its exact revision guard.",
           );
           before[current.id] = current.revision;
+          if (current.kind === "work") {
+            const w = WorkData.parse(op.data),
+              old = WorkData.parse(current.data);
+            protectWorkUpdate(old, w, op, checkDecision);
+            requireThat(
+              (w.plan_version ?? old.plan_version ?? 1) ===
+                (old.plan_version ?? 1),
+              "REVISION_CONFLICT",
+              "Core assigns plan_version; supply the current version.",
+            );
+            w.plan_version =
+              (old.plan_version ?? 1) +
+              (canonical(plan(old)) === canonical(plan(w)) ? 0 : 1);
+            op.data = w;
+          }
           changed.set(current.id, {
             ...current,
             title: op.title ?? current.title,
@@ -533,7 +1021,48 @@ export class Core {
           const recordId = created[op.client_ref];
           before[recordId] = null;
           let data: JsonObject;
-          if (op.op === "import_evidence") {
+          if (op.op === "record_result") {
+            const workId = refId(op.work_ref);
+            requireClaim(
+              workId,
+              op.step_id ?? null,
+              op.step_id ? "step" : "work",
+            );
+            const work = WorkData.parse(
+              (changed.get(workId) ?? this.record(workId)).data,
+            );
+            requireThat(
+              !op.step_id || work.steps.some((s) => s.step_id === op.step_id),
+              "REFERENCE_NOT_FOUND",
+              "Generated result step not found.",
+            );
+            data = {
+              source_kind: "generated_artifact",
+              source_locator: "core-model-result",
+              captured_at: now,
+              content_hash: digest(op.content),
+              retained_excerpt: op.content,
+              blob_ref: null,
+              availability: "retained",
+              source_language: op.source_language,
+              work_ref: {
+                id: workId,
+                revision: (changed.get(workId) ?? this.record(workId)).revision,
+              },
+              step_id: op.step_id ?? null,
+              plan_version: work.plan_version ?? 1,
+              provenance: {
+                transport: "model-generated",
+                runtime_id: this.context.runtime_id,
+                session_id: this.context.session_id,
+                source_refs: Object.values(bindings),
+              },
+              trust_origin: "model-generated-content-not-proof-of-correctness",
+            };
+          } else if (
+            op.op === "import_evidence" ||
+            op.op === "receive_handoff"
+          ) {
             requireThat(
               request.source_handles.includes(op.source_handle),
               "SOURCE_MISSING",
@@ -541,7 +1070,13 @@ export class Core {
             );
             const s = this.sources.get(op.source_handle)!;
             data = {
-              source_kind: s.blob_ref ? "imported_file" : "observed_input",
+              source_kind:
+                op.op === "receive_handoff" ||
+                op.semantic_source_kind === "external_reply"
+                  ? "external_reply"
+                  : s.blob_ref
+                    ? "imported_file"
+                    : "observed_input",
               source_locator: s.locator ?? s.source_ref,
               captured_at: s.captured_at,
               content_hash: s.content_hash,
@@ -557,12 +1092,118 @@ export class Core {
                   ? "trusted-desktop-observed-stage"
                   : "programmatic-or-file-not-owner-approval",
             };
-          } else data = op.data;
+            if (op.op === "receive_handoff") {
+              const h = this.handoff(op.handoff_id).data;
+              const current =
+                changed.get(h.work_ref.id) ?? guarded(h.work_ref.id);
+              guarded(h.work_ref.id);
+              const w = WorkData.parse(current.data);
+              const stale =
+                (w.plan_version ?? 1) !== h.plan_version ||
+                ["paused", "done", "cancelled"].includes(w.status);
+              requireThat(
+                !stale ||
+                  op.disposition === "late" ||
+                  op.disposition === "unrelated",
+                "INVALID_TRANSITION",
+                "Changed/paused/terminal plans require a late/unrelated reply disposition; content does not resume a plan.",
+              );
+              requireThat(
+                op.accepted_wait_ids.every((waitId) =>
+                  w.waits.some((wait) => wait.wait_id === waitId),
+                ),
+                "REFERENCE_NOT_FOUND",
+                "Reply names an unknown wait.",
+              );
+              data.handoff_reply = {
+                handoff_id: op.handoff_id,
+                original_work_ref: h.work_ref,
+                original_plan_version: h.plan_version,
+                current_work_ref: {
+                  id: current.id,
+                  revision: current.revision,
+                },
+                current_plan_version: w.plan_version ?? 1,
+                comparison: op.comparison,
+                disposition: op.disposition,
+                useful_content: op.useful_content,
+                accepted_wait_ids: op.accepted_wait_ids,
+                stale,
+              };
+            }
+            if (op.op === "import_evidence" && s.extraction) {
+              data.extraction = s.extraction;
+              data.text_derivative_ref = s.extraction.text_blob_ref
+                ? { id: created[op.client_ref + "_text"], revision: 1 }
+                : null;
+              if (s.extraction.text_blob_ref) {
+                const derivativeId = created[op.client_ref + "_text"];
+                const derivative: RecordRow = {
+                  id: derivativeId,
+                  kind: "evidence",
+                  title: op.title + " — extracted text",
+                  body: "Parser-derived text; consult extraction limitations and original source.",
+                  revision: 1,
+                  created_at: now,
+                  updated_at: now,
+                  storage: "live",
+                  visibility: "workspace",
+                  concept_ids: [],
+                  origin_activity_id: null,
+                  data: {
+                    source_kind: "extracted_text",
+                    derived_from: { id: recordId, revision: 1 },
+                    source_hash: s.blob_ref,
+                    content_hash: s.extraction.text_hash,
+                    blob_ref: s.extraction.text_blob_ref,
+                    retained_excerpt: null,
+                    availability: "retained",
+                    source_language: op.source_language,
+                    parser: s.extraction.parser,
+                    parser_version: s.extraction.parser_version,
+                    sections: s.extraction.sections,
+                    extraction_status: s.extraction.status,
+                    warnings: s.extraction.warnings,
+                    total_characters: s.extraction.total_characters,
+                  },
+                };
+                changed.set(derivativeId, derivative);
+                before[derivativeId] = null;
+              }
+            }
+          } else {
+            data = op.data;
+            if (op.kind === "work") {
+              const w = WorkData.parse(data);
+              requireThat(
+                !terminal(w.status) &&
+                  w.completion === null &&
+                  !w.cancellation &&
+                  w.steps.every(
+                    (s) => s.status === "todo" && s.result_refs.length === 0,
+                  ),
+                "INVALID_TRANSITION",
+                "Create unfinished Work and todo steps; use guarded transitions for execution/completion.",
+              );
+              w.plan_version = 1;
+              data = w;
+            }
+          }
           changed.set(recordId, {
             id: recordId,
-            kind: op.op === "import_evidence" ? "evidence" : op.kind,
+            kind:
+              op.op === "import_evidence" ||
+              op.op === "receive_handoff" ||
+              op.op === "record_result"
+                ? "evidence"
+                : op.kind,
             title: op.title,
-            body: op.op === "import_evidence" ? null : (op.body ?? null),
+            body:
+              op.op === "import_evidence" ||
+              op.op === "receive_handoff" ||
+              op.op === "record_result"
+                ? null
+                : (op.body ?? null),
             revision: 1,
             created_at: now,
             updated_at: now,
@@ -584,7 +1225,9 @@ export class Core {
         const result =
           r.revision === undefined
             ? (changed.get(r.id) ?? this.record(r.id))
-            : this.record(r.id, r.revision);
+            : changed.get(r.id)?.revision === r.revision
+              ? changed.get(r.id)!
+              : this.record(r.id, r.revision);
         requireThat(
           !kind || result.kind === kind,
           "REFERENCE_TYPE_MISMATCH",
@@ -592,29 +1235,23 @@ export class Core {
         );
         return result;
       };
+      const guardedIfExisting = (recordId: string) => {
+        if (before[recordId] !== null) guarded(recordId);
+      };
       for (const r of changed.values()) {
         if (r.kind === "activity") ActivityData.parse(r.data);
         if (r.kind === "work") {
           const w = WorkData.parse(r.data);
-          if (w.activity_id) get(w.activity_id, "activity");
-          requireThat(
-            w.status !== "waiting" || w.waits.length > 0,
-            "INVALID_TRANSITION",
-            "Waiting Work needs an addressed wait.",
-          );
-          requireThat(
-            w.status !== "active" || w.next_action,
-            "INVALID_TRANSITION",
-            "Active Work needs a meaningful next action.",
-          );
-          requireThat(
-            new Set(w.waits.map((x) => x.wait_id)).size === w.waits.length,
-            "VALIDATION_ERROR",
-            "Wait IDs must be unique.",
-          );
-          for (const ref of w.context_refs) get(ref);
-          for (const item of w.waits)
-            for (const ref of item.received_refs) get(ref, "evidence");
+          // Pin technical completion grounds to the exact final addressed revision.
+          if (w.completion)
+            for (const ground of w.completion.grounds)
+              ground.evidence_refs = ground.evidence_refs.map((ref) => {
+                const target = get(ref);
+                if ("id" in ref && ref.revision !== undefined) return ref;
+                guardedIfExisting(target.id);
+                return { id: target.id, revision: target.revision };
+              });
+          r.data = w;
         }
         if (r.kind === "knowledge") {
           const k = KnowledgeData.parse(r.data);
@@ -628,6 +1265,102 @@ export class Core {
           for (const ref of k.evidence_refs) get(ref, "evidence");
           get(k.representation.source_ref, "evidence");
         }
+      }
+      const all = this.storage
+        .all<{ json: string }>("SELECT json FROM records")
+        .map(unpack);
+      const final = [
+        ...all.filter((r) => !changed.has(r.id)),
+        ...changed.values(),
+      ];
+      validateWorks(final, get);
+      for (const h of handoffs) {
+        const data = JSON.parse(h.json);
+        get(data.work_ref, "work");
+        const finalWork = WorkData.parse(
+          get({ id: data.work_ref.id }, "work").data,
+        );
+        requireThat(
+          (finalWork.plan_version ?? 1) === data.plan_version &&
+            !["paused", "done", "cancelled"].includes(finalWork.status),
+          "INVALID_TRANSITION",
+          "Prepared handoff no longer matches the final executable plan.",
+        );
+        for (const ref of data.context_refs) get(ref);
+      }
+      for (const r of changed.values()) {
+        if (r.kind === "work") {
+          const w = WorkData.parse(r.data);
+          const old = before[r.id]
+            ? WorkData.parse(this.record(r.id).data)
+            : undefined;
+          for (const s of w.steps)
+            if (
+              ["running", "done"].includes(s.status) &&
+              old?.steps.find((x) => x.step_id === s.step_id)?.status !==
+                s.status
+            ) {
+              if (s.child_work_id) guardedIfExisting(refId(s.child_work_id));
+              for (const d of s.depends_on)
+                if ("work_ref" in d) guardedIfExisting(refId(d.work_ref));
+            }
+          for (const row of this.storage.all<{ json: string }>(
+            "SELECT json FROM claims WHERE work_id=?",
+            r.id,
+          )) {
+            const claim = JSON.parse(row.json);
+            requireThat(
+              claim.state !== "active" ||
+                (claim.session_id === this.context.session_id &&
+                  claim.runtime_id === this.context.runtime_id),
+              "WORK_IN_USE",
+              "A different runtime has an unresolved claim on this Work.",
+            );
+          }
+        }
+        const reply = r.data.handoff_reply as
+          | {
+              current_work_ref: { id: string; revision: number };
+              accepted_wait_ids: string[];
+              original_plan_version: number;
+              current_plan_version: number;
+              stale: boolean;
+              disposition: string;
+            }
+          | undefined;
+        if (reply) {
+          const w = WorkData.parse(
+            get({ id: reply.current_work_ref.id }, "work").data,
+          );
+          const current = get({ id: reply.current_work_ref.id }, "work");
+          reply.current_work_ref = {
+            id: current.id,
+            revision: current.revision,
+          };
+          reply.current_plan_version = w.plan_version ?? 1;
+          reply.stale =
+            reply.current_plan_version !== reply.original_plan_version ||
+            ["paused", "done", "cancelled"].includes(w.status);
+          requireThat(
+            !reply.stale || ["late", "unrelated"].includes(reply.disposition),
+            "INVALID_TRANSITION",
+            "Final transaction changed/paused/terminal plan requires a late/unrelated reply disposition.",
+          );
+          for (const waitId of reply.accepted_wait_ids)
+            requireThat(
+              w.waits
+                .find((wait) => wait.wait_id === waitId)
+                ?.received_refs.some((ref) => refId(ref) === r.id),
+              "VALIDATION_ERROR",
+              "Accepted reply portions must be attached to the corresponding waits in this transaction.",
+            );
+        }
+        if (
+          r.kind === "evidence" &&
+          typeof r.data.blob_ref === "string" &&
+          !r.data.extraction
+        )
+          this.storage.readMaterial(r.data.blob_ref);
       }
       if (focus) {
         const f = focus as { activity_ref: unknown; work_ref: unknown };
@@ -679,7 +1412,7 @@ export class Core {
         ok: true,
         request_id: request.request_id,
         workspace_id: this.context.workspace_id,
-        schema_version: 1,
+        schema_version: this.storage.workspace.schema_version,
         snapshot_seq: seq,
         transaction_id,
         committed: true,
@@ -692,6 +1425,27 @@ export class Core {
         seq,
         JSON.stringify(change),
       );
+      for (const handoff of handoffs)
+        this.storage.run(
+          "INSERT INTO handoffs(id,json) VALUES(?,?)",
+          handoff.id,
+          handoff.json,
+        );
+      for (const token of consumed) {
+        const claim = JSON.parse(
+          this.storage.get<{ json: string }>(
+            "SELECT json FROM claims WHERE token=?",
+            token,
+          )!.json,
+        );
+        claim.state = "consumed";
+        claim.receipt_request_id = request.request_id;
+        this.storage.run(
+          "UPDATE claims SET json=? WHERE token=?",
+          JSON.stringify(claim),
+          token,
+        );
+      }
       this.storage.run(
         "INSERT INTO receipts(request_id,hash,json,bindings) VALUES(?,?,?,?)",
         request.request_id,

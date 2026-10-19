@@ -1,12 +1,16 @@
-# Zaratustra — first installed continuation block
+# Zaratustra — durable Work and materials
 
 A development Pi package with one extension, English bootstrap and two small skills.
 Through conversation, the model saves Activity/Work, exact original Evidence and
 English Knowledge; a fresh process can discover the continuation from disk.
-Small permitted UTF-8 TXT/Markdown materials have immutable retained bytes and
-addressed reads. This is an early block, not full R1 or a production release.
+Nested Work and addressed steps preserve dependencies, partial waits, results and lifecycle
+history. Manual handoffs retain the original request and useful late/partial replies.
+TXT/Markdown, text PDF and unencrypted EPUB keep immutable originals plus separately
+addressed extracted text. New processes continue through chat without old transcripts.
+This development outcome C does not finish full R1 or claim owner trial T31.
 
-Qualified profile and exact public candidate are recorded in `docs/EVIDENCE.md`.
+Current qualification/evidence: [outcome C](docs/C-VALIDATION.md). Accepted predecessor
+and remaining release obligations: [R1 status](docs/R1-STATUS.md).
 Full target: [specification 1.1](docs/specification-v1.1.html).
 
 Operator installation in an isolated PowerShell environment:
