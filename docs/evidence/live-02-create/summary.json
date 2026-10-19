@@ -1,0 +1,24 @@
+{
+  "response": "Буду отвечать по-русски.\n\nСейчас хранилище недоступно, поэтому область «Чтение» не создана. Для сохранения нужна настройка хранилища через доверенную конфигурацию.\n\nКнигу можете прислать позже — помогу разобраться в её содержании и основных идеях.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "database": null,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 2,
+    "requests": 3,
+    "input": 12167,
+    "output": 154,
+    "cache_read": 3200,
+    "estimated_usd": 0.026194000000000002,
+    "limits": {
+      "prompts": 18,
+      "requests": 80,
+      "input": 1500000,
+      "output": 90000,
+      "estimated_usd": 20
+    }
+  }
+}

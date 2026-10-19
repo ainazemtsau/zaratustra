@@ -1,0 +1,8 @@
+{
+  "agentDir": "<TEST_ROOT>\\pi-agent",
+  "home": "<TEST_ROOT>\\home-main",
+  "cwd": "<TEST_ROOT>\\cwd-a",
+  "output": "<TEST_ROOT>\\live-02-create",
+  "budgetPath": "<TEST_ROOT>\\budget.json",
+  "prompt": "Создай область «Чтение». Хочу разобраться в книге, которую пришлю позже. Отвечай мне по-русски."
+}

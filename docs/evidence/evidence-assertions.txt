@@ -1,0 +1,1 @@
+PASS: real records/receipts, original input hash, empty fresh sessions, snapshot 3→4, static bootstrap once, no-ID recovery without new records, independent/ambiguous goals, store failure, zero permanent snapshots.

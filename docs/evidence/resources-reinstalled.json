@@ -1,0 +1,22 @@
+{
+  "errors": [],
+  "extensions": [
+    {
+      "path": "<TEST_ROOT>\\pi-agent\\git\\github.com\\ainazemtsau\\zaratustra\\src\\extension\\index.ts",
+      "tools": [
+        "zara_map",
+        "zara_browse",
+        "zara_read",
+        "zara_import",
+        "zara_commit",
+        "zara_doctor"
+      ]
+    }
+  ],
+  "skills": [
+    "zaratustra-work",
+    "zaratustra-memory"
+  ]
+}
+(node:82612) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

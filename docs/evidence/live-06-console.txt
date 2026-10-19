@@ -1,0 +1,25 @@
+(node:67576) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Сохранил: ближайшее ожидание — только вторая глава, не вся книга.\n\nТеперь пришлите её текстом или файлом TXT/Markdown. Затем прочитаем и разберём её, не предполагая знания остальных глав.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 6,
+    "requests": 20,
+    "input": 93774,
+    "output": 2877,
+    "cache_read": 38400,
+    "estimated_usd": 0.20735800000000004,
+    "limits": {
+      "prompts": 18,
+      "requests": 80,
+      "input": 1500000,
+      "output": 90000,
+      "estimated_usd": 20
+    }
+  }
+}

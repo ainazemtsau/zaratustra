@@ -1,0 +1,93 @@
+{
+  "settled": true,
+  "dropped": true,
+  "permanent_snapshot_count": 0,
+  "database": {
+    "records": [
+      {
+        "id": "evidence-ef63e8a3-d7db-4a33-bbc4-45de97a00c83",
+        "kind": "evidence",
+        "activity_id": null,
+        "json": "{\"id\":\"evidence-ef63e8a3-d7db-4a33-bbc4-45de97a00c83\",\"kind\":\"evidence\",\"title\":\"Request for star notes and Russian replies\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-19T13:07:44.844Z\",\"updated_at\":\"2026-10-19T13:07:44.844Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-a034e308-0aa2-4a8a-8947-e003951a12f8\",\"captured_at\":\"2026-10-19T13:07:25.780Z\",\"content_hash\":\"ca1dda86ee5831382b0701c92c5155332641784d514a924b7276f8571dc33173\",\"retained_excerpt\":\"Создай область «Заметки о звёздах». Хочу разобраться в астрономической статье, которую пришлю позже. Отвечай по-русски.\",\"blob_ref\":null,\"byte_length\":219,\"availability\":\"retained\",\"source_language\":\"Russian\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-a034e308-0aa2-4a8a-8947-e003951a12f8\",\"content_hash\":\"ca1dda86ee5831382b0701c92c5155332641784d514a924b7276f8571dc33173\",\"transport\":\"rpc\",\"channel_identity\":\"isolated-synthetic-sdk-controller\",\"session_id\":\"01a15446-25b0-720a-a76c-e0515996f268\",\"runtime_id\":\"6b51bc6f-9ff8-4375-bb1f-209dba6d0504\",\"captured_at\":\"2026-10-19T13:07:25.780Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":219},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "activity-0d54e13e-9cf8-4ae5-9790-141e1bdd3f30",
+        "kind": "activity",
+        "activity_id": null,
+        "json": "{\"id\":\"activity-0d54e13e-9cf8-4ae5-9790-141e1bdd3f30\",\"kind\":\"activity\",\"title\":\"Notes on Stars\",\"body\":\"User-requested name: «Заметки о звёздах».\",\"revision\":1,\"created_at\":\"2026-10-19T13:07:44.844Z\",\"updated_at\":\"2026-10-19T13:07:44.844Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"purpose\":\"Understand an astronomy article that the user will provide later.\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "work-70f780b4-20c8-46aa-8527-3409d08f29d5",
+        "kind": "work",
+        "activity_id": "activity-0d54e13e-9cf8-4ae5-9790-141e1bdd3f30",
+        "json": "{\"id\":\"work-70f780b4-20c8-46aa-8527-3409d08f29d5\",\"kind\":\"work\",\"title\":\"Understand the forthcoming astronomy article\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-19T13:07:44.844Z\",\"updated_at\":\"2026-10-19T13:07:44.844Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":{\"id\":\"activity-0d54e13e-9cf8-4ae5-9790-141e1bdd3f30\"},\"parent_work_id\":null,\"objective\":\"Help the user understand the astronomy article once it is supplied.\",\"acceptance\":[{\"criterion_id\":\"explain-article\",\"description\":\"Explain the supplied article's main ideas and clarify the user's questions in Russian.\",\"verification\":\"Review the explanation against the supplied article and address the user's questions.\",\"required\":true}],\"status\":\"waiting\",\"current_state\":\"The user intends to supply an astronomy article later. No article has been received or read.\",\"next_action\":\"When the user supplies the article, read it and explain its main ideas in Russian.\",\"steps\":[],\"waits\":[{\"wait_id\":\"article\",\"kind\":\"user\",\"target\":\"work\",\"subject\":\"Astronomy article\",\"satisfied_by\":\"The user supplies the article text or a readable article file.\",\"received_refs\":[],\"question\":\"Please send the astronomy article when you are ready.\"}],\"context_refs\":[{\"id\":\"evidence-ef63e8a3-d7db-4a33-bbc4-45de97a00c83\"}],\"completion\":null}}"
+      },
+      {
+        "id": "knowledge-9aa217a6-3d73-470b-b67b-8c3dda599f8b",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-9aa217a6-3d73-470b-b67b-8c3dda599f8b\",\"kind\":\"knowledge\",\"title\":\"Russian conversation preference\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-19T13:07:44.844Z\",\"updated_at\":\"2026-10-19T13:07:44.844Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The user wants replies in Russian.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-ef63e8a3-d7db-4a33-bbc4-45de97a00c83\"}],\"conditions\":\"Use Russian in conversation with the user unless they request otherwise.\",\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-ef63e8a3-d7db-4a33-bbc4-45de97a00c83\"},\"source_language\":\"Russian\"}}}"
+      }
+    ],
+    "revisions": [
+      {
+        "id": "evidence-ef63e8a3-d7db-4a33-bbc4-45de97a00c83",
+        "revision": 1,
+        "json": "{\"id\":\"evidence-ef63e8a3-d7db-4a33-bbc4-45de97a00c83\",\"kind\":\"evidence\",\"title\":\"Request for star notes and Russian replies\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-19T13:07:44.844Z\",\"updated_at\":\"2026-10-19T13:07:44.844Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-a034e308-0aa2-4a8a-8947-e003951a12f8\",\"captured_at\":\"2026-10-19T13:07:25.780Z\",\"content_hash\":\"ca1dda86ee5831382b0701c92c5155332641784d514a924b7276f8571dc33173\",\"retained_excerpt\":\"Создай область «Заметки о звёздах». Хочу разобраться в астрономической статье, которую пришлю позже. Отвечай по-русски.\",\"blob_ref\":null,\"byte_length\":219,\"availability\":\"retained\",\"source_language\":\"Russian\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-a034e308-0aa2-4a8a-8947-e003951a12f8\",\"content_hash\":\"ca1dda86ee5831382b0701c92c5155332641784d514a924b7276f8571dc33173\",\"transport\":\"rpc\",\"channel_identity\":\"isolated-synthetic-sdk-controller\",\"session_id\":\"01a15446-25b0-720a-a76c-e0515996f268\",\"runtime_id\":\"6b51bc6f-9ff8-4375-bb1f-209dba6d0504\",\"captured_at\":\"2026-10-19T13:07:25.780Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":219},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "activity-0d54e13e-9cf8-4ae5-9790-141e1bdd3f30",
+        "revision": 1,
+        "json": "{\"id\":\"activity-0d54e13e-9cf8-4ae5-9790-141e1bdd3f30\",\"kind\":\"activity\",\"title\":\"Notes on Stars\",\"body\":\"User-requested name: «Заметки о звёздах».\",\"revision\":1,\"created_at\":\"2026-10-19T13:07:44.844Z\",\"updated_at\":\"2026-10-19T13:07:44.844Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"purpose\":\"Understand an astronomy article that the user will provide later.\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "work-70f780b4-20c8-46aa-8527-3409d08f29d5",
+        "revision": 1,
+        "json": "{\"id\":\"work-70f780b4-20c8-46aa-8527-3409d08f29d5\",\"kind\":\"work\",\"title\":\"Understand the forthcoming astronomy article\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-19T13:07:44.844Z\",\"updated_at\":\"2026-10-19T13:07:44.844Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":{\"id\":\"activity-0d54e13e-9cf8-4ae5-9790-141e1bdd3f30\"},\"parent_work_id\":null,\"objective\":\"Help the user understand the astronomy article once it is supplied.\",\"acceptance\":[{\"criterion_id\":\"explain-article\",\"description\":\"Explain the supplied article's main ideas and clarify the user's questions in Russian.\",\"verification\":\"Review the explanation against the supplied article and address the user's questions.\",\"required\":true}],\"status\":\"waiting\",\"current_state\":\"The user intends to supply an astronomy article later. No article has been received or read.\",\"next_action\":\"When the user supplies the article, read it and explain its main ideas in Russian.\",\"steps\":[],\"waits\":[{\"wait_id\":\"article\",\"kind\":\"user\",\"target\":\"work\",\"subject\":\"Astronomy article\",\"satisfied_by\":\"The user supplies the article text or a readable article file.\",\"received_refs\":[],\"question\":\"Please send the astronomy article when you are ready.\"}],\"context_refs\":[{\"id\":\"evidence-ef63e8a3-d7db-4a33-bbc4-45de97a00c83\"}],\"completion\":null}}"
+      },
+      {
+        "id": "knowledge-9aa217a6-3d73-470b-b67b-8c3dda599f8b",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-9aa217a6-3d73-470b-b67b-8c3dda599f8b\",\"kind\":\"knowledge\",\"title\":\"Russian conversation preference\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-19T13:07:44.844Z\",\"updated_at\":\"2026-10-19T13:07:44.844Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The user wants replies in Russian.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-ef63e8a3-d7db-4a33-bbc4-45de97a00c83\"}],\"conditions\":\"Use Russian in conversation with the user unless they request otherwise.\",\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-ef63e8a3-d7db-4a33-bbc4-45de97a00c83\"},\"source_language\":\"Russian\"}}}"
+      }
+    ],
+    "changes": [
+      {
+        "seq": 1,
+        "json": "{\"transaction_id\":\"txn-85512192-b34e-46f6-ad84-eb66bd0938e0\",\"request_id\":\"create-star-notes-20261019-01\",\"change_seq\":1,\"changed_refs\":[{\"id\":\"evidence-ef63e8a3-d7db-4a33-bbc4-45de97a00c83\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"activity-0d54e13e-9cf8-4ae5-9790-141e1bdd3f30\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"work-70f780b4-20c8-46aa-8527-3409d08f29d5\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-9aa217a6-3d73-470b-b67b-8c3dda599f8b\",\"before_revision\":null,\"after_revision\":1}],\"actor\":\"trusted-personal\",\"session_id\":\"01a15446-25b0-720a-a76c-e0515996f268\",\"reason\":\"Create the requested astronomy activity and a concrete wait for the article; preserve the Russian language preference from observed input.\",\"caused_by\":[\"observed-a034e308-0aa2-4a8a-8947-e003951a12f8\"],\"recorded_at\":\"2026-10-19T13:07:44.844Z\"}"
+      }
+    ],
+    "intents": [
+      {
+        "request_id": "create-star-notes-20261019-01",
+        "hash": "ab5ef2a1373a734df558b0e5a1b02383526513dc88ba9ea1f7b497bbc3aeebcc",
+        "json": "{\"request_id\":\"create-star-notes-20261019-01\",\"operation_digest\":\"ab5ef2a1373a734df558b0e5a1b02383526513dc88ba9ea1f7b497bbc3aeebcc\",\"source_refs\":[\"observed-a034e308-0aa2-4a8a-8947-e003951a12f8\"],\"session_id\":\"01a15446-25b0-720a-a76c-e0515996f268\",\"epoch\":\"bd35b53d-0ca3-4de8-8899-bf7f7d7d6a42\",\"status\":\"committed\",\"reason\":\"Create the requested astronomy activity and a concrete wait for the article; preserve the Russian language preference from observed input.\",\"payload\":{\"request_id\":\"create-star-notes-20261019-01\",\"reason\":\"Create the requested astronomy activity and a concrete wait for the article; preserve the Russian language preference from observed input.\",\"source_handles\":[\"observed-a034e308-0aa2-4a8a-8947-e003951a12f8\"],\"guards\":[],\"ops\":[{\"op\":\"import_evidence\",\"client_ref\":\"input\",\"source_handle\":\"observed-a034e308-0aa2-4a8a-8947-e003951a12f8\",\"title\":\"Request for star notes and Russian replies\",\"source_language\":\"Russian\"},{\"op\":\"create_record\",\"client_ref\":\"activity\",\"title\":\"Notes on Stars\",\"body\":\"User-requested name: «Заметки о звёздах».\",\"visibility\":\"workspace\",\"kind\":\"activity\",\"data\":{\"purpose\":\"Understand an astronomy article that the user will provide later.\",\"status\":\"active\"}},{\"op\":\"create_record\",\"client_ref\":\"work\",\"title\":\"Understand the forthcoming astronomy article\",\"visibility\":\"workspace\",\"kind\":\"work\",\"data\":{\"activity_id\":{\"client_ref\":\"activity\"},\"parent_work_id\":null,\"objective\":\"Help the user understand the astronomy article once it is supplied.\",\"acceptance\":[{\"criterion_id\":\"explain-article\",\"description\":\"Explain the supplied article's main ideas and clarify the user's questions in Russian.\",\"verification\":\"Review the explanation against the supplied article and address the user's questions.\",\"required\":true}],\"status\":\"waiting\",\"current_state\":\"The user intends to supply an astronomy article later. No article has been received or read.\",\"next_action\":\"When the user supplies the article, read it and explain its main ideas in Russian.\",\"steps\":[],\"waits\":[{\"wait_id\":\"article\",\"kind\":\"user\",\"target\":\"work\",\"subject\":\"Astronomy article\",\"satisfied_by\":\"The user supplies the article text or a readable article file.\",\"received_refs\":[],\"question\":\"Please send the astronomy article when you are ready.\"}],\"context_refs\":[{\"client_ref\":\"input\"}],\"completion\":null}},{\"op\":\"create_record\",\"client_ref\":\"language\",\"title\":\"Russian conversation preference\",\"visibility\":\"workspace\",\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The user wants replies in Russian.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"client_ref\":\"input\"}],\"conditions\":\"Use Russian in conversation with the user unless they request otherwise.\",\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"client_ref\":\"input\"},\"source_language\":\"Russian\"}}},{\"op\":\"set_focus\",\"activity_ref\":{\"client_ref\":\"activity\"},\"work_ref\":{\"client_ref\":\"work\"}}]},\"receipt\":{\"ok\":true,\"request_id\":\"create-star-notes-20261019-01\",\"workspace_id\":\"4e0a79a8-79ee-4a57-b02f-c8e9a31e7e9f\",\"schema_version\":1,\"snapshot_seq\":1,\"transaction_id\":\"txn-85512192-b34e-46f6-ad84-eb66bd0938e0\",\"committed\":true,\"created\":{\"input\":\"evidence-ef63e8a3-d7db-4a33-bbc4-45de97a00c83\",\"activity\":\"activity-0d54e13e-9cf8-4ae5-9790-141e1bdd3f30\",\"work\":\"work-70f780b4-20c8-46aa-8527-3409d08f29d5\",\"language\":\"knowledge-9aa217a6-3d73-470b-b67b-8c3dda599f8b\"},\"new_revisions\":{\"evidence-ef63e8a3-d7db-4a33-bbc4-45de97a00c83\":1,\"activity-0d54e13e-9cf8-4ae5-9790-141e1bdd3f30\":1,\"work-70f780b4-20c8-46aa-8527-3409d08f29d5\":1,\"knowledge-9aa217a6-3d73-470b-b67b-8c3dda599f8b\":1},\"warnings\":[]}}"
+      }
+    ],
+    "receipts": [
+      {
+        "request_id": "create-star-notes-20261019-01",
+        "hash": "ab5ef2a1373a734df558b0e5a1b02383526513dc88ba9ea1f7b497bbc3aeebcc",
+        "json": "{\"ok\":true,\"request_id\":\"create-star-notes-20261019-01\",\"workspace_id\":\"4e0a79a8-79ee-4a57-b02f-c8e9a31e7e9f\",\"schema_version\":1,\"snapshot_seq\":1,\"transaction_id\":\"txn-85512192-b34e-46f6-ad84-eb66bd0938e0\",\"committed\":true,\"created\":{\"input\":\"evidence-ef63e8a3-d7db-4a33-bbc4-45de97a00c83\",\"activity\":\"activity-0d54e13e-9cf8-4ae5-9790-141e1bdd3f30\",\"work\":\"work-70f780b4-20c8-46aa-8527-3409d08f29d5\",\"language\":\"knowledge-9aa217a6-3d73-470b-b67b-8c3dda599f8b\"},\"new_revisions\":{\"evidence-ef63e8a3-d7db-4a33-bbc4-45de97a00c83\":1,\"activity-0d54e13e-9cf8-4ae5-9790-141e1bdd3f30\":1,\"work-70f780b4-20c8-46aa-8527-3409d08f29d5\":1,\"knowledge-9aa217a6-3d73-470b-b67b-8c3dda599f8b\":1},\"warnings\":[]}",
+        "bindings": "{\"source-37889a75-227a-4b53-8d77-1d3a9f2a410c\":\"observed-a034e308-0aa2-4a8a-8947-e003951a12f8\"}"
+      }
+    ]
+  },
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 8,
+    "requests": 30,
+    "input": 154017,
+    "output": 4197,
+    "cache_read": 60800,
+    "estimated_usd": 0.298484,
+    "limits": {
+      "prompts": 18,
+      "requests": 80,
+      "input": 1500000,
+      "output": 90000,
+      "estimated_usd": 20
+    }
+  }
+}

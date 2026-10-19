@@ -5,7 +5,7 @@ Commands (Node 22.19.0, npm 11.6.2, Pi 1.3.0):
 - `npm ci` — install pinned development dependencies.
 - `npm run check` — format, ESLint, TypeScript, dependency graph, build, disk tests.
 - `npm run format` — format maintained sources/docs.
-- `npm test -- --test-name-pattern="disk"` — prefer `npx tsx --test --test-name-pattern="disk" tests/core.test.ts` for focused tests.
+- `npx tsx --test --test-name-pattern="disk" tests/core.test.ts` — focused tests.
 - `npx prettier --check src/core/index.ts`; `npx eslint src/core/index.ts`.
 - `npm run deliver` — check plus required RESULT fields.
 

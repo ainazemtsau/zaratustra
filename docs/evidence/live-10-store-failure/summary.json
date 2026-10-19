@@ -1,0 +1,24 @@
+{
+  "response": "Сейчас хранилище недоступно, поэтому область «Опыт» и цель изучить будущий материал не сохранены.\n\nОтвечаю по-русски. Материал можете прислать сюда; сохранить область и цель смогу после восстановления хранилища.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "database": null,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 10,
+    "requests": 37,
+    "input": 230159,
+    "output": 4788,
+    "cache_read": 73600,
+    "estimated_usd": 0.3683580000000001,
+    "limits": {
+      "prompts": 18,
+      "requests": 80,
+      "input": 1500000,
+      "output": 90000,
+      "estimated_usd": 20
+    }
+  }
+}

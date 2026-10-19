@@ -45,17 +45,41 @@
     should be resolved before creating files. UTF-8 now has a specific validation error;
     existing ancestors are resolved before rejecting package/cache homes. Native checks
     pass, including invalid UTF-8 and SQLite max_page_count disk-full fault.
-12. Git's initial automatic text conversion normalized the public HTML's CRLF bytes,
-    making the declared derivative digest inaccurate in candidate 1. `.gitattributes`
-    now preserves the HTML as bytes and fixes source/docs checkout line endings to LF.
-    The next candidate restores the declared derivative digest without normative edits.
+12. Git warned about automatic line-ending conversion. A draft note in candidate 2
+    incorrectly described an observed HTML digest mismatch. Exact Git-blob readback
+    disproved that: both candidate 1 and candidate 2 have the declared derivative
+    SHA256 `4940e16e39174df941da98889c43b713c48287d4aeda8754fd57660d462a77cb`.
+    `.gitattributes` is a preserving guard, not repair of a demonstrated byte defect.
+    This note corrects that reporting error explicitly.
 13. Budget accounting initially tracked uncached input separately. Before attempt 9
     it was recomputed from all retained message usage including cache reads/writes;
     subsequent input accounting includes them. The original ledger is retained. No cap
     was approached and no usage was discarded.
 
-Later final-candidate checks and identities are recorded in EVIDENCE.md. All local
-raw attempts remain under the isolated output root; public evidence is a labelled
-path-redacted derivative.
+14. After same-ref reinstall, attempt 12 read retained source ranges even though the
+    original input path no longer existed, and continued from the corrected wait.
+15. Candidate 2 (`8c9340d4a6717cf4c22ab1a8592378115a5d17aa`) passed the full native
+    command (10/10 tests), published fast-forward, installed via Pi, and its installed
+    Core passed 9/9 disk tests using isolated tsx tooling. An explicit candidate-1 to
+    candidate-2 upgrade preserved the existing workspace/material hashes. Both are
+    authorized development candidates with schema 1, not a general migration proof.
+
+16. Attempts 13–16 on installed candidate 2 passed create, another-cwd fresh
+    continuation, retained TXT import/range read, and no-ID lost-response recovery.
+17. First public-evidence export stopped when a native resource console file with
+    a `.json` suffix also contained SQLite's stderr warning. No evidence was lost;
+    the exporter now preserves such captures as console text and labels derivatives.
+    Original files remain unchanged, with both original/public hashes in the manifest.
+18. Seeded boundary, missing-report and underfilled-report negative checks failed
+    as intended. These are expected validation outcomes, not passing product requests.
+
+19. A report-file patch using delete+add of the same path was rejected by the
+    patch tool; it changed no source/report bytes. Updating the existing fixture
+    in one operation produced the final report. This was tooling, not a product run.
+
+Later final-candidate checks and identities are recorded in EVIDENCE.md. Saved raw live attempts and native logs remain under the isolated output root;
+public evidence is a labelled path-redacted derivative. The earliest setup/type/SQL
+failures are recorded in this execution transcript and the observations above, not
+misrepresented as later raw file captures.
 
 END_OF_FILE: docs/ATTEMPTS.md

@@ -1,0 +1,932 @@
+[
+  {
+    "path": "boundary-negative.txt",
+    "original_sha256": "6492cebddc6a11066802a3436e35d8d9b91c8dd252b2406e981a41f5b4ee550a",
+    "public_sha256": "6492cebddc6a11066802a3436e35d8d9b91c8dd252b2406e981a41f5b4ee550a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "budget-before-input-accounting-fix.json",
+    "original_sha256": "a80cdc877e01d5e8d85d1859dd2521d86c3d330ebc971254a75ceafce1cddb02",
+    "public_sha256": "8af3312adaa11283d22e658e9ba2384565a757a561a31462d0432b96180c0771",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "budget.json",
+    "original_sha256": "79fc9c9fff8dee660a5bfb9d0f138e3ea61d1bf211d0462062f64dd2adba1388",
+    "public_sha256": "65a8e84971f126e51564775ff5446f5efb9b2e0dd6613516c35c9e2a610af87b",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "candidate-01-check.txt",
+    "original_sha256": "0aea9b3b2ab18d550d716f640d02e4b515280da5316a8a6be797f40e097afcdf",
+    "public_sha256": "0aea9b3b2ab18d550d716f640d02e4b515280da5316a8a6be797f40e097afcdf",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "candidate-02-check.txt",
+    "original_sha256": "c6ff1f50d7811ba63047f2999fe73583ba1b25868a6cabe6bbd3a90e3d6b3d7d",
+    "public_sha256": "c6ff1f50d7811ba63047f2999fe73583ba1b25868a6cabe6bbd3a90e3d6b3d7d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "candidate-02-final-check.txt",
+    "original_sha256": "552d3a53695b29e04addd5fed650159fbc037680d005083c3547ed7839ffa03b",
+    "public_sha256": "552d3a53695b29e04addd5fed650159fbc037680d005083c3547ed7839ffa03b",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "candidate-02-install.txt",
+    "original_sha256": "6a4da8d1f0e37221fe871f5406010d111c15b183de4fd698344058d4e941e3b7",
+    "public_sha256": "6a4da8d1f0e37221fe871f5406010d111c15b183de4fd698344058d4e941e3b7",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "deliver-missing.txt",
+    "original_sha256": "ee89d77d74d937c56f003cad06499f5fb6ea0da8fda12f811919d92d11695a24",
+    "public_sha256": "0f31bb7f941742ab7979288ba4b380e9bec3249012bcaffa122e5a6f4a6092cb",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "evidence-assertions.txt",
+    "original_sha256": "c569f6298e2edc73a9a99187f5578c03e86a1700e728a3120e89983ce7bc38a1",
+    "public_sha256": "c569f6298e2edc73a9a99187f5578c03e86a1700e728a3120e89983ce7bc38a1",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "installed-candidate-02-mechanical.txt",
+    "original_sha256": "ef87a44424d2263fa304968a79be20d1d966b42455b9acffc51897b05e9bca1d",
+    "public_sha256": "ef87a44424d2263fa304968a79be20d1d966b42455b9acffc51897b05e9bca1d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-01-console.txt",
+    "original_sha256": "5c01d342811b089bba4b219a430d81f5e704c753c88ff9277d030903cd21a302",
+    "public_sha256": "a70f9fb2d3faffb69dd663c518b36159c43365bc703978aaf7c4b14a33dc4800",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-02-console.txt",
+    "original_sha256": "39a89cc6b62b77c5687ab1260e4998f4f4804dcf7b2fe90aba02d33f3fa0c91b",
+    "public_sha256": "39a89cc6b62b77c5687ab1260e4998f4f4804dcf7b2fe90aba02d33f3fa0c91b",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-02-create/events.jsonl",
+    "original_sha256": "2122b420be52430afc1b829198fbcda941d17244b6a105df7150e500a6426ce5",
+    "public_sha256": "daa7983fce40c9b01c072f9ad28fc863577d58752a327faf275aa6d60b4c56ae",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-02-create/identity.jsonl",
+    "original_sha256": "48d3706bf663a2c016da82848bc46f8d50c4d4727e112922fff8386a78bed28a",
+    "public_sha256": "130a417d7eccadfe5abd34f10f54dda55c0eb2c631265aa7a7c3fbbd3f303939",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-02-create/requests.jsonl",
+    "original_sha256": "2fe825e74af4fbae6cd606654ef4d261c7c2c8ad9952785203c0d32a451a32a4",
+    "public_sha256": "1a6d3ceead9d9c0c6cec03d3132b91f3437b2b9fc23eb8849d1d956c8fa57670",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-02-create/resources.jsonl",
+    "original_sha256": "7ca1b02032c499893ef311bdd87cd72e8eba363b25508f193aed03d1a0d208fe",
+    "public_sha256": "2dedf747077781869c465d643f94ea66aa04cd8e48de80d2213ef5631f7d233a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-02-create/startup.jsonl",
+    "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+    "public_sha256": "d8900e95bd39badd008b4b6f100a65937cd0898aa9ed4f362a20a57ed6a7678d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-02-create/summary.json",
+    "original_sha256": "a40df0f643da039e558059869875d164812bbe9268df0f566151ac3b8f5a3b02",
+    "public_sha256": "b06e6b4b1807b0065c8c4d9e3b10a2e636e841155f12c071b5a4a56e971c10bc",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-03-console.txt",
+    "original_sha256": "f68c86424bc4ce26585ce40ba320e635a33b2d85e2cf191b90938a7ec633263f",
+    "public_sha256": "f68c86424bc4ce26585ce40ba320e635a33b2d85e2cf191b90938a7ec633263f",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-03-create/events.jsonl",
+    "original_sha256": "671ec0a2f0e901458d1ff9952980fb888cb4c8b455316aef49e7a6c35bc15d8a",
+    "public_sha256": "7ce8d537624e743962d92e9d40a70deb51b898fb52f28d9ec6d9bb0c7facc7ec",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-03-create/identity.jsonl",
+    "original_sha256": "48d3706bf663a2c016da82848bc46f8d50c4d4727e112922fff8386a78bed28a",
+    "public_sha256": "130a417d7eccadfe5abd34f10f54dda55c0eb2c631265aa7a7c3fbbd3f303939",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-03-create/requests.jsonl",
+    "original_sha256": "eafa37468e24203ba8d5fafd569724b1e6f33ad8404db9effa5a27ac8ced0f3f",
+    "public_sha256": "54a7d9e5deabe60d040baa8ac6b091dfa1fe32fd6d1c172e7eed25f58a660d62",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-03-create/resources.jsonl",
+    "original_sha256": "7ca1b02032c499893ef311bdd87cd72e8eba363b25508f193aed03d1a0d208fe",
+    "public_sha256": "2dedf747077781869c465d643f94ea66aa04cd8e48de80d2213ef5631f7d233a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-03-create/startup.jsonl",
+    "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+    "public_sha256": "d8900e95bd39badd008b4b6f100a65937cd0898aa9ed4f362a20a57ed6a7678d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-03-create/summary.json",
+    "original_sha256": "372e796d84a38a2bc617e7324b6a7e883caebf2e1698274ee5b0c7eda338ada2",
+    "public_sha256": "6b884e50e171e430b31efef404724ea3c27186e819e5d24258c7f806512172cb",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-04-console.txt",
+    "original_sha256": "d0184c28f309d345fa38a144507c3d48002dd036b6d24d829ddf6fce504bd7c3",
+    "public_sha256": "d0184c28f309d345fa38a144507c3d48002dd036b6d24d829ddf6fce504bd7c3",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-04-continue/events.jsonl",
+    "original_sha256": "a703927f847246e31775ab42fbc2190b4fc8e6110f0462e9a9c5da4cd30f26e7",
+    "public_sha256": "7f4ebc537402ecc90564dac4f5cf8d0ccc287089d242d11b75010bf3ff14015c",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-04-continue/identity.jsonl",
+    "original_sha256": "9cdef4ba2b455cbdb504d1b8f2d9eb69804f3d790764eeb510b13aeb5699d955",
+    "public_sha256": "d183e25e60e87a9c1a7764bc1e25352ff403ed053c313cdefc40ab312576f9b2",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-04-continue/requests.jsonl",
+    "original_sha256": "9e3afa283f771eff857e8413f6d4ab5f4ee94e36db5932d8d07a22e285ac9831",
+    "public_sha256": "fa080a3c05fe62c52626c5d7cebf7d6fa6a02b7ca2c78daf91aefe669afc9407",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-04-continue/resources.jsonl",
+    "original_sha256": "7ca1b02032c499893ef311bdd87cd72e8eba363b25508f193aed03d1a0d208fe",
+    "public_sha256": "2dedf747077781869c465d643f94ea66aa04cd8e48de80d2213ef5631f7d233a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-04-continue/startup.jsonl",
+    "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+    "public_sha256": "d8900e95bd39badd008b4b6f100a65937cd0898aa9ed4f362a20a57ed6a7678d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-04-continue/summary.json",
+    "original_sha256": "755b5f0a703973faf236dfe785c7e876860901850fdae4e47451b3b5da19b2b7",
+    "public_sha256": "84e5e4596ca6cb16a813cf342c4a26e694129507be164f4a5ba5200a16898efd",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-05-console.txt",
+    "original_sha256": "434b6d81388a0be5e8fe14cdcd682091f9d55eb997b41b6b8c4964e076628f90",
+    "public_sha256": "434b6d81388a0be5e8fe14cdcd682091f9d55eb997b41b6b8c4964e076628f90",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-05-material/events.jsonl",
+    "original_sha256": "d78c6c99127e759f1de94d01393e9e2fd7ec6d81b6ead14e2706ecffda0e978f",
+    "public_sha256": "ec04a84389a5b6d806daba111b06d05ce63da11039a0a394c5a20c28dc23e074",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-05-material/identity.jsonl",
+    "original_sha256": "0edafeb82379e4dfe79fcde77ca1837be945175b0f190e7c5738bcf9f91a0ca3",
+    "public_sha256": "a7d429f7769f4c40c894ed22ffa286077aa377bededd4043cf4300b6c104463d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-05-material/requests.jsonl",
+    "original_sha256": "1bb6032407615773e921df74700ba82e555ffc3cd3e7530a4deafbe2d997c811",
+    "public_sha256": "b78d567292bc1c86d62fde59c2affefbb481f4d3cbb19bb3c35a841f6bebb1c9",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-05-material/resources.jsonl",
+    "original_sha256": "7ca1b02032c499893ef311bdd87cd72e8eba363b25508f193aed03d1a0d208fe",
+    "public_sha256": "2dedf747077781869c465d643f94ea66aa04cd8e48de80d2213ef5631f7d233a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-05-material/startup.jsonl",
+    "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+    "public_sha256": "d8900e95bd39badd008b4b6f100a65937cd0898aa9ed4f362a20a57ed6a7678d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-05-material/summary.json",
+    "original_sha256": "35c3386f12ba1244aa08edf3c0c68a0c537bfafc778a4124108e6dcafbcbc50a",
+    "public_sha256": "7c0c6f609afa5408311a408e527d273151aa14f577e364f8bf148b7fa4f33cbf",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-06-console.txt",
+    "original_sha256": "770e35b2cfa19b03b0d7e9c719bd8aebdebaf759d1a91d13aecc7fea366bacd5",
+    "public_sha256": "770e35b2cfa19b03b0d7e9c719bd8aebdebaf759d1a91d13aecc7fea366bacd5",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-06-correction/events.jsonl",
+    "original_sha256": "8df68464dd849a66a891c085bda019b7a4fe833feb541bf56d3a65d89ad93786",
+    "public_sha256": "b4d29c3dffc055f5d01ffaa0a92bcbae181070434e1b00221381da7bd120aef8",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-06-correction/identity.jsonl",
+    "original_sha256": "a1ed06e4fc77ef51944e9a8f23484561fedb3faa31a082d1f4764dc0ef767f9b",
+    "public_sha256": "9f060eb1530d3b6ccdd2b0127a8cd233df6ad52c3f0ba001673ffeb5fb08802a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-06-correction/requests.jsonl",
+    "original_sha256": "8d2d49b8deecf94c399f6415b66450a4125d3671a442c192d8bec30767db0fc1",
+    "public_sha256": "39d3a816b13754f2a9f30395688d94f18332e7526ef34d4e0f831868651c8668",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-06-correction/resources.jsonl",
+    "original_sha256": "7ca1b02032c499893ef311bdd87cd72e8eba363b25508f193aed03d1a0d208fe",
+    "public_sha256": "2dedf747077781869c465d643f94ea66aa04cd8e48de80d2213ef5631f7d233a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-06-correction/startup.jsonl",
+    "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+    "public_sha256": "d8900e95bd39badd008b4b6f100a65937cd0898aa9ed4f362a20a57ed6a7678d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-06-correction/summary.json",
+    "original_sha256": "aff937a1d881d102dd3d9226bf8447be9ca2d8c5a2815021cb02c24bee53d40c",
+    "public_sha256": "3855bff37710cca5b8b40289f5c68a843334455459806a867275fdf6fec5aba6",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-07-console.txt",
+    "original_sha256": "33d26067e326c92c7a7219c765510bd34fefd00dba71928b9d905631384d8f81",
+    "public_sha256": "33d26067e326c92c7a7219c765510bd34fefd00dba71928b9d905631384d8f81",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-07-similar/events.jsonl",
+    "original_sha256": "7c97748275885755db25d7c6a2f94092cee560bd057a77ef605b4e53c4b7c208",
+    "public_sha256": "3a88dca0bed4937d2890d2cb7b40bfb6c030e8dc5af0a6df496dec44b26bfcd0",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-07-similar/identity.jsonl",
+    "original_sha256": "9edbbc039f485aee9641da710cd328a1e523618d374949db443d73d9b1b14e63",
+    "public_sha256": "b53bde262f45b8b60164c67cb369333706f919cbb1cfc8181c77360361bf2824",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-07-similar/requests.jsonl",
+    "original_sha256": "1acb18a5b5426946129b043b9c0066418b5bd1f9646f7aeb598b74f654dc7938",
+    "public_sha256": "c1e6e47517c30752e196cec7e2a414c5102e4588ac1198ad93f2da45594053d8",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-07-similar/resources.jsonl",
+    "original_sha256": "7ca1b02032c499893ef311bdd87cd72e8eba363b25508f193aed03d1a0d208fe",
+    "public_sha256": "2dedf747077781869c465d643f94ea66aa04cd8e48de80d2213ef5631f7d233a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-07-similar/startup.jsonl",
+    "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+    "public_sha256": "d8900e95bd39badd008b4b6f100a65937cd0898aa9ed4f362a20a57ed6a7678d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-07-similar/summary.json",
+    "original_sha256": "1f274b0d00d5bfdbf7a4f98deeae98c1f70abf47ebc25af172cac6426bd8d88b",
+    "public_sha256": "d98d4edb94184cb5aafcd34654810df4a6f45128d8e826574518def0b98addf4",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-08-console.txt",
+    "original_sha256": "76a1254253f7c002382ae4c1b5c172be64ea8fa65df536e2586de3e4fc887adc",
+    "public_sha256": "76a1254253f7c002382ae4c1b5c172be64ea8fa65df536e2586de3e4fc887adc",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-08-lost-create/events.jsonl",
+    "original_sha256": "08f556d91f773042743eb6c3ebec1c45e2f6a6102b00981b5b5481b760ed17c7",
+    "public_sha256": "7b5e244268b72ee80228581400d62e78cb64d70cddf675cdab6547576b5d7cd4",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-08-lost-create/faults.jsonl",
+    "original_sha256": "b18e4fa2776ae88f97b4373557c29fdaab9c3e9b3772bc4425f16ae2e73b3fed",
+    "public_sha256": "b064102a5b63685b90adf3700e29ecefda19400d373810d89fcb6204658f4eb0",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-08-lost-create/identity.jsonl",
+    "original_sha256": "d4e93b99ca03141626df717dd3d737a532d9f05900293936becc6ef9a015be8c",
+    "public_sha256": "5570e4147ff15808c057792f92e1b778493a7b9fd33a620b6d5d449242677d67",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-08-lost-create/requests.jsonl",
+    "original_sha256": "33508869685a35e1076f80f563f7fb399c862db2f7e1e082cfd881f1d386a3d1",
+    "public_sha256": "19e9dc7914c8ed67fcd9866a76c884ab9db4382e9ea38257e15244bf059f6ff8",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-08-lost-create/resources.jsonl",
+    "original_sha256": "7ca1b02032c499893ef311bdd87cd72e8eba363b25508f193aed03d1a0d208fe",
+    "public_sha256": "2dedf747077781869c465d643f94ea66aa04cd8e48de80d2213ef5631f7d233a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-08-lost-create/startup.jsonl",
+    "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+    "public_sha256": "d8900e95bd39badd008b4b6f100a65937cd0898aa9ed4f362a20a57ed6a7678d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-08-lost-create/summary.json",
+    "original_sha256": "185bbc2eedcba4caef4e44778224cc00fe2d60f393608b00b806e75262666377",
+    "public_sha256": "cf8f0dd690ab0cce17a893ebaacee5e3666a4b17fc5d528501c4e4c50704270f",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-09-console.txt",
+    "original_sha256": "d28098994527c24de037c6b08aba61b9034c1c1038a369ab4943c743eecce1b7",
+    "public_sha256": "d28098994527c24de037c6b08aba61b9034c1c1038a369ab4943c743eecce1b7",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-09-lost-recover/events.jsonl",
+    "original_sha256": "7c32baecc7c2a12136535700215d3d78435266a7c342812da979aac7b860cd96",
+    "public_sha256": "0b94617aac69f273d03d7c7292c4507059513efc4517d21ea8451519b0183fcd",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-09-lost-recover/identity.jsonl",
+    "original_sha256": "018ee13b444ae9d81b5b7dcbd70aaf67e89e2596b156e556314bf874f86d80f0",
+    "public_sha256": "aefcfe372f130f41dfd18d5b1c729faedd1d577144720a0ac6fb3eb17a90ca6b",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-09-lost-recover/requests.jsonl",
+    "original_sha256": "9f2d879ea8c9a286b5fe6f6ed5b4f466c77a2a733934055f0ac17e79d115b1ca",
+    "public_sha256": "0006bce6845368491dcab1d229c67a2fc8aad1033ca704d68b7d7139721ef4f8",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-09-lost-recover/resources.jsonl",
+    "original_sha256": "7ca1b02032c499893ef311bdd87cd72e8eba363b25508f193aed03d1a0d208fe",
+    "public_sha256": "2dedf747077781869c465d643f94ea66aa04cd8e48de80d2213ef5631f7d233a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-09-lost-recover/startup.jsonl",
+    "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+    "public_sha256": "d8900e95bd39badd008b4b6f100a65937cd0898aa9ed4f362a20a57ed6a7678d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-09-lost-recover/summary.json",
+    "original_sha256": "8d7a143e30ba86e5357ea76cd04d58363c3b5fdedfc2fb6b153e23e774baabcc",
+    "public_sha256": "c6f4dc1b004a65f646efc0301e84eb732c805c98e3616492990271848d526af6",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-10-console.txt",
+    "original_sha256": "d4938dcb666db312b17dc23e13fce755ee92b549c88dccf823cf29861f74038c",
+    "public_sha256": "d4938dcb666db312b17dc23e13fce755ee92b549c88dccf823cf29861f74038c",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-10-store-failure/events.jsonl",
+    "original_sha256": "3abe6b82fd2c8812e3685721879203ff6fae3b4ba11305971656f25cbe08ddf6",
+    "public_sha256": "ac5b1cb6dbcffa70cb435f8cd9f40d0b5cd101a3060e53d16aa2b3df41ee1030",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-10-store-failure/identity.jsonl",
+    "original_sha256": "9952facf0056cb30e9fe83c1b5372ae44ad859dcf038fbd98f19ca7143a374d4",
+    "public_sha256": "cd3df2a3d471dbe23c4ec838b0fc5991fb6a42ecd9553e2451e28022c96b6fd2",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-10-store-failure/requests.jsonl",
+    "original_sha256": "6483a74c031ead9d5bec22c6368fa22b559eb9cbbb98cf57a7fdef9fc2c97875",
+    "public_sha256": "71607a75a3b8dd36f98e8d7a844e90fccc01f51eabb0cb843d4506ac3c001f87",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-10-store-failure/resources.jsonl",
+    "original_sha256": "7ca1b02032c499893ef311bdd87cd72e8eba363b25508f193aed03d1a0d208fe",
+    "public_sha256": "2dedf747077781869c465d643f94ea66aa04cd8e48de80d2213ef5631f7d233a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-10-store-failure/startup.jsonl",
+    "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+    "public_sha256": "d8900e95bd39badd008b4b6f100a65937cd0898aa9ed4f362a20a57ed6a7678d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-10-store-failure/summary.json",
+    "original_sha256": "bb7e75043ef7ba70492041ea2505729d1b97ba37becb13c5341a70199043e2f4",
+    "public_sha256": "f7b8277b8e6bb4d5deaa8eb29b9ce0fad500fcbb0cb73b833a54f9a78740d8ab",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-11-ambiguous/events.jsonl",
+    "original_sha256": "85deef3cf0f80c771056c3d43be7f7d9ae26131724c8e05dde238cb92ccb3c98",
+    "public_sha256": "5938465cab231218eb29aab96b033dd2160bd17a177a6ebb946d05695eeca1f2",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-11-ambiguous/identity.jsonl",
+    "original_sha256": "907d5019a4d31e8eaffa169a6bd9a549bcd31f66a6f2f4b56d1ac5b0a664b3b6",
+    "public_sha256": "9255967eb0144f479a9e754e82f4027642dcc01047a7b47931d6ae72ae2bd120",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-11-ambiguous/requests.jsonl",
+    "original_sha256": "259ab7f22c129b9ef4a5f305ab392903941d0215f781d1f4015ad26b7cfd343d",
+    "public_sha256": "edbb216228f4261f3f0cac2f30876b549132a2dac134c06862c796648139a4bd",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-11-ambiguous/resources.jsonl",
+    "original_sha256": "7ca1b02032c499893ef311bdd87cd72e8eba363b25508f193aed03d1a0d208fe",
+    "public_sha256": "2dedf747077781869c465d643f94ea66aa04cd8e48de80d2213ef5631f7d233a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-11-ambiguous/startup.jsonl",
+    "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+    "public_sha256": "d8900e95bd39badd008b4b6f100a65937cd0898aa9ed4f362a20a57ed6a7678d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-11-ambiguous/summary.json",
+    "original_sha256": "42f3cc91bc546dd979d74aa7521705ca2c825d6931e536cb9810e3a0ae339dac",
+    "public_sha256": "88292e034e3c2a53ec5558c429e0778b6af7f91e1ffb990b33215480d12b3716",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-11-console.txt",
+    "original_sha256": "f08b2ab6457a262a4d6f3414ec9a0872db12e7f8eda7b099bca60de6543025db",
+    "public_sha256": "f08b2ab6457a262a4d6f3414ec9a0872db12e7f8eda7b099bca60de6543025db",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-12-console.txt",
+    "original_sha256": "065bc72f2e32a95b71e19e33859b9bbb1d1f8e7d1d0b4eefad579e472ae41198",
+    "public_sha256": "065bc72f2e32a95b71e19e33859b9bbb1d1f8e7d1d0b4eefad579e472ae41198",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-12-reinstalled-material/events.jsonl",
+    "original_sha256": "93f67e5ab9faac0cdd221182f28a18e230fb239f67dc2e0323e4fd6868adfbb1",
+    "public_sha256": "3da8d22b14c4a70be9ffc7835a9aacdab8f2ee6870d93c2a03aaca87d0943dc3",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-12-reinstalled-material/identity.jsonl",
+    "original_sha256": "7612e3632f8eaa8edd3e070d46be68b6a6769e7376f18809362ed1ff00c6fbd4",
+    "public_sha256": "e2b0563aae0d78e9f50440474be0cc4c16e03f1870de1d086b65295b33179f9f",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-12-reinstalled-material/requests.jsonl",
+    "original_sha256": "e1a2abc89e1a0290a64296fbaaa3d8da3b40e3185241c963984551dec5adc438",
+    "public_sha256": "0dcd49abbf8f7aaa8b6091ff57b123a4b01e2b592e604ef8b28e56c799208d3a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-12-reinstalled-material/resources.jsonl",
+    "original_sha256": "7ca1b02032c499893ef311bdd87cd72e8eba363b25508f193aed03d1a0d208fe",
+    "public_sha256": "2dedf747077781869c465d643f94ea66aa04cd8e48de80d2213ef5631f7d233a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-12-reinstalled-material/startup.jsonl",
+    "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+    "public_sha256": "d8900e95bd39badd008b4b6f100a65937cd0898aa9ed4f362a20a57ed6a7678d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-12-reinstalled-material/summary.json",
+    "original_sha256": "29accc940d4ba0d95a3e35a6dd43bde2c1603c0ce52af445d9acfa5a371bef3c",
+    "public_sha256": "4cefe944c15537f3825c11b40e55c9582c05b78f1a41d8904c1abfcb2e077a89",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-13-candidate2-create/events.jsonl",
+    "original_sha256": "888f977f45e1e05efa2435bc543865eed34b4f5ee9fb1febce7acab9c73d7a1d",
+    "public_sha256": "d5cbb2f1a104e5b0a3617e08f55e43e8fb2112d5a6f592456174b58e9e37f78d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-13-candidate2-create/identity.jsonl",
+    "original_sha256": "48d3706bf663a2c016da82848bc46f8d50c4d4727e112922fff8386a78bed28a",
+    "public_sha256": "130a417d7eccadfe5abd34f10f54dda55c0eb2c631265aa7a7c3fbbd3f303939",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-13-candidate2-create/requests.jsonl",
+    "original_sha256": "a4efecd910aa95aa17e38c70929baef5532000988e6b38a6efb880a25fd1849e",
+    "public_sha256": "d8b4e4331ab1138d456ffea9cf7cb667b532da1baea0042198e9bd576bcc5e65",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-13-candidate2-create/resources.jsonl",
+    "original_sha256": "7ca1b02032c499893ef311bdd87cd72e8eba363b25508f193aed03d1a0d208fe",
+    "public_sha256": "2dedf747077781869c465d643f94ea66aa04cd8e48de80d2213ef5631f7d233a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-13-candidate2-create/startup.jsonl",
+    "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+    "public_sha256": "d8900e95bd39badd008b4b6f100a65937cd0898aa9ed4f362a20a57ed6a7678d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-13-candidate2-create/summary.json",
+    "original_sha256": "0916ad28d992c195873c0afb970644dde9441eca6b752a9f889a4702179ec8d8",
+    "public_sha256": "a37aff395e3bde0a57bafecdf7f8e6b5917aa6dda9a1bb26788cbce8493f401b",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-13-console.txt",
+    "original_sha256": "00c53773e9a07c52b69bbc60a4bad975dace9ae09a3193f706eeac57b9d01dac",
+    "public_sha256": "00c53773e9a07c52b69bbc60a4bad975dace9ae09a3193f706eeac57b9d01dac",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-14-candidate2-continue/events.jsonl",
+    "original_sha256": "3a2a9779c4efc5eea417b966cfb64e2c5f5a1bd9b42e07b7dd29d15dde71cde8",
+    "public_sha256": "cf7561d677da21df84a38aba3b06b6f244de4025e222263c939df18c67490417",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-14-candidate2-continue/identity.jsonl",
+    "original_sha256": "9cdef4ba2b455cbdb504d1b8f2d9eb69804f3d790764eeb510b13aeb5699d955",
+    "public_sha256": "d183e25e60e87a9c1a7764bc1e25352ff403ed053c313cdefc40ab312576f9b2",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-14-candidate2-continue/requests.jsonl",
+    "original_sha256": "42c85b31363d67015d1ddfa19c3ef5f742a7e6d0a0597d77454f61722db8af19",
+    "public_sha256": "934dc21341549a341c20cbad3f74a871ae79ecdb64b29bdc29fad66dbd6dcccc",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-14-candidate2-continue/resources.jsonl",
+    "original_sha256": "7ca1b02032c499893ef311bdd87cd72e8eba363b25508f193aed03d1a0d208fe",
+    "public_sha256": "2dedf747077781869c465d643f94ea66aa04cd8e48de80d2213ef5631f7d233a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-14-candidate2-continue/startup.jsonl",
+    "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+    "public_sha256": "d8900e95bd39badd008b4b6f100a65937cd0898aa9ed4f362a20a57ed6a7678d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-14-candidate2-continue/summary.json",
+    "original_sha256": "f92095b5b1048801cb85f9c4a5ce2351b49aa8a91d9ae46c059def52a4c592f8",
+    "public_sha256": "e24f1e200bb15417460abcd56a49e50de8a5fa9f355c6d36a842cb77d2979bff",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-14-console.txt",
+    "original_sha256": "dda4896ae9e8c598102277c542282245485c6787c6c8569acc255480f11584d3",
+    "public_sha256": "dda4896ae9e8c598102277c542282245485c6787c6c8569acc255480f11584d3",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-15-candidate2-material/events.jsonl",
+    "original_sha256": "45de8ef8ca2b51ad5709b6d9f704008dd9974ca42e6657f51102b2c5ba1d8ab3",
+    "public_sha256": "46948a686723160820de368c912c45bae2dec02b4159243f68385d0ac4209ac1",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-15-candidate2-material/identity.jsonl",
+    "original_sha256": "e319b6e67be23f3d904e0d45a577ce5f1dcca4aefb73655aa780cd62f888387a",
+    "public_sha256": "8b9c16021a21f5625b6263671a30efa03a89b8e82495d47507b49165fb6b062a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-15-candidate2-material/requests.jsonl",
+    "original_sha256": "459fab54e733c601b95a1d9ce80c652b843bf52215768cfb026737015aa4df82",
+    "public_sha256": "d6dff76dc6680da210a7c9a95b29fbd6faa81c3f607e919497155216d6d03f7e",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-15-candidate2-material/resources.jsonl",
+    "original_sha256": "7ca1b02032c499893ef311bdd87cd72e8eba363b25508f193aed03d1a0d208fe",
+    "public_sha256": "2dedf747077781869c465d643f94ea66aa04cd8e48de80d2213ef5631f7d233a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-15-candidate2-material/startup.jsonl",
+    "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+    "public_sha256": "d8900e95bd39badd008b4b6f100a65937cd0898aa9ed4f362a20a57ed6a7678d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-15-candidate2-material/summary.json",
+    "original_sha256": "8e3215dc73b3da534f262fa545b11009fc824af300ecc89491a668ea36b83b1a",
+    "public_sha256": "d28187b8fe08a9f67e92217773c8def3ee9345e92a8b6ead37dac034d6010307",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-15-console.txt",
+    "original_sha256": "3ca92b09b7e41414e8314366a9a7aded0ef868d8dc2b31c878f60139ecfcde34",
+    "public_sha256": "3ca92b09b7e41414e8314366a9a7aded0ef868d8dc2b31c878f60139ecfcde34",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-16-candidate2-recovery/events.jsonl",
+    "original_sha256": "ef43c800640fdd315594c4a7e8a7ab4a78d696e78d1c47c5c7a6bde1d4b48719",
+    "public_sha256": "eb69dc79f6a44c8b9f1c81b3fa000190ffc6eaf940d2bb29ea64cdc44d52fbe0",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-16-candidate2-recovery/identity.jsonl",
+    "original_sha256": "018ee13b444ae9d81b5b7dcbd70aaf67e89e2596b156e556314bf874f86d80f0",
+    "public_sha256": "aefcfe372f130f41dfd18d5b1c729faedd1d577144720a0ac6fb3eb17a90ca6b",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-16-candidate2-recovery/requests.jsonl",
+    "original_sha256": "018faa43e0f770424b5da622ba8f9be65c94c2f26f31d015a6317e701c6d824b",
+    "public_sha256": "4e508ba22b7095cc46a2ac13b08823c2b60bfa210b91c646d4ccae4440f355c6",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-16-candidate2-recovery/resources.jsonl",
+    "original_sha256": "7ca1b02032c499893ef311bdd87cd72e8eba363b25508f193aed03d1a0d208fe",
+    "public_sha256": "2dedf747077781869c465d643f94ea66aa04cd8e48de80d2213ef5631f7d233a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-16-candidate2-recovery/startup.jsonl",
+    "original_sha256": "3e2d27521dfca33cc5366941a1003ce63dcf70b6b6cbd0a619542965b0eed6af",
+    "public_sha256": "d8900e95bd39badd008b4b6f100a65937cd0898aa9ed4f362a20a57ed6a7678d",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-16-candidate2-recovery/summary.json",
+    "original_sha256": "40171b8eddeb0e5692880f02c4870c7e840d6f112db2cd06f800c2d3887a0df0",
+    "public_sha256": "1928a5276ba954fa91d263cf207747f7bc024cad342b941e41e0ff59dd534c8c",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "live-16-console.txt",
+    "original_sha256": "5f5444732b910a39cc2c595add396795f564ec2922985c8f9e4bddcd18263eea",
+    "public_sha256": "5f5444732b910a39cc2c595add396795f564ec2922985c8f9e4bddcd18263eea",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "mechanical-03.txt",
+    "original_sha256": "b21e7d91642494ab063f22087cffa2bcc47341b5db57c5fdeda5bad9078f6224",
+    "public_sha256": "b21e7d91642494ab063f22087cffa2bcc47341b5db57c5fdeda5bad9078f6224",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "mechanical-04.txt",
+    "original_sha256": "40ca6a183180e3a9475e67fdeff913815bf0996db73b2b0f20b842a42dfe33e6",
+    "public_sha256": "40ca6a183180e3a9475e67fdeff913815bf0996db73b2b0f20b842a42dfe33e6",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "mechanical-05.txt",
+    "original_sha256": "8d3dc19edbae35b6feb115439481b83a175131f21caa9ae13dcf755b1e9a5828",
+    "public_sha256": "8d3dc19edbae35b6feb115439481b83a175131f21caa9ae13dcf755b1e9a5828",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "reconcile.txt",
+    "original_sha256": "56ede7c51272bebbd5dae96e9169c260f10ecbdf55baf9b177b0bde5ecb547c4",
+    "public_sha256": "56ede7c51272bebbd5dae96e9169c260f10ecbdf55baf9b177b0bde5ecb547c4",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "reinstall.txt",
+    "original_sha256": "92399a6cf0ce5280cfb567bbbf52e2d484bb6f717821785d91411adc03f1ed51",
+    "public_sha256": "e20ce6ca4ed4bde24ec37dcf3d3551c905426b05a11344954a8181220ecc8d62",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "remote-before.txt",
+    "original_sha256": "f945eda4cc65aa4e6a0915120168b24d6e7f6b63a5e3cb9e0816665427d85269",
+    "public_sha256": "f945eda4cc65aa4e6a0915120168b24d6e7f6b63a5e3cb9e0816665427d85269",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "remote-candidate-01.txt",
+    "original_sha256": "d2be721a40795ccaaf2212942bfb09a99e1e5123b65f55ea28d4c95586335211",
+    "public_sha256": "d2be721a40795ccaaf2212942bfb09a99e1e5123b65f55ea28d4c95586335211",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "remote-candidate-02.txt",
+    "original_sha256": "12a964ee273065ea18bde062636c6b6a2fa92928100bada3262628f8e82c8326",
+    "public_sha256": "12a964ee273065ea18bde062636c6b6a2fa92928100bada3262628f8e82c8326",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "remove.txt",
+    "original_sha256": "caa88ae072a22c0c6bf0f00d60350a583039201b37088292999f68ee0408fd1b",
+    "public_sha256": "caa88ae072a22c0c6bf0f00d60350a583039201b37088292999f68ee0408fd1b",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "resources-active.json",
+    "original_sha256": "ec23f50693ccd7a1d5a446123d7d7b0e0c107480f4181014b58275dc1b72d45d",
+    "public_sha256": "aba9a266991cda8f8c473c3a886b433bf3da12f06ed9b1c534e1aebf283cb659",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "resources-disabled.json",
+    "original_sha256": "853ef4e1acb65b653ee3267940334847b99d2e85a91c9c05165beec783385470",
+    "public_sha256": "853ef4e1acb65b653ee3267940334847b99d2e85a91c9c05165beec783385470",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "resources-reinstalled.json",
+    "original_sha256": "eb7fbf1eed2b2a8a5fbdd4223b18548cc9514da514d9330f415ff59a2db2d9eb",
+    "public_sha256": "bc241b403fb8129cafe8d1c8f55e37bca41043a4c8be5a2f8274826de43a0fdf",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "resources-removed.json",
+    "original_sha256": "853ef4e1acb65b653ee3267940334847b99d2e85a91c9c05165beec783385470",
+    "public_sha256": "853ef4e1acb65b653ee3267940334847b99d2e85a91c9c05165beec783385470",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "runtime.json",
+    "original_sha256": "56e0923e6edfbe1cbdd98e9b0df21587c21b93aa3cfa2031f6ef8a29fa9b7dd0",
+    "public_sha256": "a6c6b8b07871491fd318e2fe7be729a5475173ce2cc25b46232e5a120581fee0",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-01.json",
+    "original_sha256": "e666d2b0ff37e57405716fa188d6ed3b300022299d4b848066a94da745570755",
+    "public_sha256": "57068999d98d4c02e6a7367c2028ea4f1b62205d5bb4d2799a4736b37756920e",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-02.json",
+    "original_sha256": "918d7e207803e1d7324af499266f5c92323781131b1b6832c6f17cbc524bc8d8",
+    "public_sha256": "3547dd7657ec83096196f873a788a34abed168e7ebc49f6e0ee51bddbcb779e8",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-03.json",
+    "original_sha256": "6663df01d1864ddb8d5e40516b3af3173c1a812b8f8d5bed7d4bf3b079b574fe",
+    "public_sha256": "a9cc1c87b226d5dcdf3173f73a724d5bf25f897e21bd8860d97bdfbaadb6e027",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-04.json",
+    "original_sha256": "707755edeed1b97230dd58c2758892beecaa13011318a8b5f54f5cbbe6a6bfc1",
+    "public_sha256": "1e178a0dcf64699ee35a9c28e95dfdde4957921319396eeff053b3b4ba1160bf",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-05.json",
+    "original_sha256": "ee3370fe474c3da0742a407886883d5a268ec00a2ddcfa83f4d9c62bc2466052",
+    "public_sha256": "e618555868157046fae7d2a27e0fc8d74c20c789df4337bda451d14de29d6eb6",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-06.json",
+    "original_sha256": "102772e90108f3e408e8d9bc17d430c38b6b8c5a9c0fe2c593068a842bb35b4e",
+    "public_sha256": "82a1989d5da055743a1e32095aec8c2b0ba50d862dcd5c00129a182ff9b435b0",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-07.json",
+    "original_sha256": "db5483d2878b93bb9bfa92d73b468586f16f6fb7b5ca9f8cab9955bc1be8e43d",
+    "public_sha256": "bcaf8388d0308c48fce9cb641e02f54b39df8ee775e8a8b551224c5b2c766dce",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-08.json",
+    "original_sha256": "c47dd0ad62e2285ed6b247360b6864e165dd3da0ab14d44dce008f822d598fab",
+    "public_sha256": "4b464940afdedb476c14560b89026ffd32a359525a434ea04ebfbb915883cd75",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-09.json",
+    "original_sha256": "90ef7f8cfbba7334327d8798829bcd1cc249e9b37b1f349e983366249288c2f2",
+    "public_sha256": "cf90d271265c51118601f2fdb5174007d0cb67bc9d426ebdaef902173a5426ab",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-10.json",
+    "original_sha256": "27a43003a7d51675d7acaa627e037d7aef6cf5837477728599bfbef8e7277b9b",
+    "public_sha256": "622fc756d817d59f21e0d6fc4d4b14137f11cba7a4f41536039cb8f3e13df4a6",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-11.json",
+    "original_sha256": "e5f0963bb28066e0971d47856e2dc60e102df4bff8d0488f924e1ab62c7c5c87",
+    "public_sha256": "5dab3178bbe68c020cc15d090ff313247d5c0166590810187c5a6f2f185b7a2a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-12.json",
+    "original_sha256": "3c037bd40cc641243bc4930e31caa37cd81a3d60a5c3ff67b7c6a7ddf6d93606",
+    "public_sha256": "e1d54885b526c173dbed4bc2c44f32b6e00da48296d36ccb559c2d426b60120e",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-13.json",
+    "original_sha256": "41de639e34776470b56fe19ac56357408f34a68cd2036f81e3851297ba743f9e",
+    "public_sha256": "ec63f79c45481e5ddfd5d0319e30d5157f0da6264a60adc0ec5dbd8e63715422",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-14.json",
+    "original_sha256": "1aa39336b951478669886797f190146d4642c1af804a6e66195b0cacb14e30ce",
+    "public_sha256": "09d153d541dff8e1c54f0d5c031c736af7b57ddd5594eb55d185b59ab0bbfd79",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-15.json",
+    "original_sha256": "5123a2c384a88bcb4def4fe6765d6e74790adb4d1ae3c23e0adcd38ca7152394",
+    "public_sha256": "cf59b277b364cab6e35d31f4ac3bde78d6add3f79cbe383b9d292223184559df",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "scenario-16.json",
+    "original_sha256": "da67ce3d08392669a9540b5752bf55fe806a7c281aadc229b61bedfd2405d6a4",
+    "public_sha256": "410c8a2dc3c5dc4d1634f2a2dc6737abb71a131148ba4a5565a53173fe91ea6a",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "workspace-after-explicit-upgrade.json",
+    "original_sha256": "657893215331b6ac9167387496b4952351aa02ac10420018b3caa8daf9c4e38a",
+    "public_sha256": "3721592f49858c2c86c66e1ffa618fa6d71e7cf91c356fa386671b1ae22b8f93",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "workspace-after-reinstall.json",
+    "original_sha256": "657893215331b6ac9167387496b4952351aa02ac10420018b3caa8daf9c4e38a",
+    "public_sha256": "3721592f49858c2c86c66e1ffa618fa6d71e7cf91c356fa386671b1ae22b8f93",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "workspace-after-remove.json",
+    "original_sha256": "657893215331b6ac9167387496b4952351aa02ac10420018b3caa8daf9c4e38a",
+    "public_sha256": "3721592f49858c2c86c66e1ffa618fa6d71e7cf91c356fa386671b1ae22b8f93",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "workspace-before-lifecycle.json",
+    "original_sha256": "657893215331b6ac9167387496b4952351aa02ac10420018b3caa8daf9c4e38a",
+    "public_sha256": "3721592f49858c2c86c66e1ffa618fa6d71e7cf91c356fa386671b1ae22b8f93",
+    "transformation": "path-redacted derived evidence; structured JSON reserialized; native console warnings retained; opaque provider reasoning/signatures omitted"
+  },
+  {
+    "path": "materials/sample.source-only.md",
+    "original_sha256": "217aecc365bca85090fa4ee538cf42d7c69548703079ed557e72bf7f585e62ae",
+    "public_sha256": "217aecc365bca85090fa4ee538cf42d7c69548703079ed557e72bf7f585e62ae",
+    "transformation": "unchanged synthetic material bytes"
+  },
+  {
+    "path": "materials/tiny.txt",
+    "original_sha256": "4cd75a25142d0d055d6dd080e66a5ff82ec50b37e3b7163cea921d754b807b78",
+    "public_sha256": "4cd75a25142d0d055d6dd080e66a5ff82ec50b37e3b7163cea921d754b807b78",
+    "transformation": "unchanged synthetic material bytes"
+  },
+  {
+    "path": "final-deliver-check.txt",
+    "original_sha256": "f42430dc194e9de9e2d749d90fc0b06faaff092af5bf22a6bed1a95b01b8bb0f",
+    "public_sha256": "eb93e3f422b49bda0dc25707f63123431b9b7dca2abc929a88a236d8b243f21a",
+    "transformation": "path-redacted native validation console"
+  },
+  {
+    "path": "deliver-underfilled.txt",
+    "original_sha256": "60d9c4c7ab6911f8166d2822e4636cabbc1151120cb6a0056f6d1c49da425290",
+    "public_sha256": "f565443cc17a47e618b1d5746e01f0c0628c412fb24eb5036dad16a8e5a42af1",
+    "transformation": "path-redacted native validation console"
+  }
+]

@@ -1,0 +1,13 @@
+Installing git:github.com/ainazemtsau/zaratustra@8c9340d4a6717cf4c22ab1a8592378115a5d17aa...
+From https://github.com/ainazemtsau/zaratustra
+ * branch            8c9340d4a6717cf4c22ab1a8592378115a5d17aa -> FETCH_HEAD
+HEAD is now at 8c9340d Harden workspace paths and UTF-8 errors; add installed-candidate test runners
+Removing node_modules/
+
+added 1 package, and audited 2 packages in 1s
+
+1 package is looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Installed git:github.com/ainazemtsau/zaratustra@8c9340d4a6717cf4c22ab1a8592378115a5d17aa

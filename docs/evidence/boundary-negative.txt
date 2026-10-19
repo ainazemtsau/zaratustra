@@ -1,0 +1,9 @@
+
+> zaratustra@0.1.0-dev.1 boundary
+> depcruise src --config .dependency-cruiser.cjs
+
+
+  error portable-core: src/core/boundary-probe.ts → src/extension/index.ts
+
+x 1 dependency violations (1 errors, 0 warnings). 12 modules, 17 dependencies cruised.
+

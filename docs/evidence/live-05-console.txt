@@ -1,0 +1,25 @@
+(node:22780) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Отрывок `sample.md` сохранён и прочитан в области «Чтение».\n\nПо тексту:\n- **Наблюдение** — что зафиксировано: синий фонарь мигнул дважды.\n- **Объяснение** — гипотеза о причине: кто и почему его включил. Сами две вспышки этого не доказывают; нужны дополнительные наблюдения для сравнения версий.\n\nПолную книгу пока ожидаем — отрывок её не заменяет.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 5,
+    "requests": 17,
+    "input": 75428,
+    "output": 2187,
+    "cache_read": 32000,
+    "estimated_usd": 0.17592600000000003,
+    "limits": {
+      "prompts": 18,
+      "requests": 80,
+      "input": 1500000,
+      "output": 90000,
+      "estimated_usd": 20
+    }
+  }
+}

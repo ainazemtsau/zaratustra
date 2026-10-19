@@ -1,0 +1,24 @@
+(node:52588) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "settled": true,
+  "dropped": true,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 8,
+    "requests": 30,
+    "input": 154017,
+    "output": 4197,
+    "cache_read": 60800,
+    "estimated_usd": 0.298484,
+    "limits": {
+      "prompts": 18,
+      "requests": 80,
+      "input": 1500000,
+      "output": 90000,
+      "estimated_usd": 20
+    }
+  }
+}

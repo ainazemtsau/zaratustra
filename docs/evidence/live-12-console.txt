@@ -1,0 +1,25 @@
+(node:76092) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Главная мысль отрывка **The Lantern Study**: наблюдение и объяснение — не одно и то же. Две вспышки синего фонаря — факт, но они не доказывают, кто его включил. Для проверки объяснений нужны дополнительные наблюдения.\n\nПо первой книге сейчас ждём **только вторую главу**, не всю книгу. Пришли её текстом или файлом TXT/Markdown — затем продолжим разбор.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 12,
+    "requests": 44,
+    "input": 275255,
+    "output": 5188,
+    "cache_read": 86400,
+    "estimated_usd": 0.43823000000000006,
+    "limits": {
+      "prompts": 18,
+      "requests": 80,
+      "input": 1500000,
+      "output": 90000,
+      "estimated_usd": 20
+    }
+  }
+}

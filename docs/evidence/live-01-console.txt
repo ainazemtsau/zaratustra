@@ -1,0 +1,8 @@
+file:///<TEST_ROOT>/live.mjs:25
+  credentials: new ReadOnlyAuthStorage(process.env.ZARA_AUTH_PATH),
+               ^
+
+TypeError: ReadOnlyAuthStorage is not a constructor
+    at file:///<TEST_ROOT>/live.mjs:25:16
+
+Node.js v22.19.0

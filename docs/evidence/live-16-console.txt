@@ -1,0 +1,25 @@
+(node:95624) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Проверил журнал сохранения и текущие записи. Успешно сохранились:\n- «Заметки о звёздах»;\n- задача разобрать астрономическую статью — в ожидании материала;\n- предпочтение отвечать по-русски;\n- исходный запрос.\n\nПовторно создавать ничего не нужно. Сама статья пока не получена и не прочитана. Следующий шаг — пришлите её текст или читаемый файл.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 16,
+    "requests": 65,
+    "input": 413249,
+    "output": 7590,
+    "cache_read": 137600,
+    "estimated_usd": 0.6409580000000001,
+    "limits": {
+      "prompts": 18,
+      "requests": 80,
+      "input": 1500000,
+      "output": 90000,
+      "estimated_usd": 20
+    }
+  }
+}

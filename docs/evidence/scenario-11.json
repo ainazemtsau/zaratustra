@@ -1,0 +1,8 @@
+{
+  "agentDir": "<TEST_ROOT>\\pi-agent",
+  "home": "<TEST_ROOT>\\home-main",
+  "cwd": "<TEST_ROOT>\\cwd-11",
+  "output": "<TEST_ROOT>\\live-11-ambiguous",
+  "budgetPath": "<TEST_ROOT>\\budget.json",
+  "prompt": "Хочу разобраться в книге, которую пришлю позже."
+}

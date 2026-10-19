@@ -1,0 +1,30 @@
+
+> zaratustra@0.1.0-dev.1 check
+> npm run format:check && npm run lint && npm run types && npm run boundary && npm run build && npm test
+
+
+> zaratustra@0.1.0-dev.1 format:check
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> zaratustra@0.1.0-dev.1 lint
+> eslint src tests scripts
+
+
+> zaratustra@0.1.0-dev.1 types
+> tsc --noEmit
+
+tests/core.test.ts(143,20): error TS2352: Conversion of type 'RecordRow | { ref: { id: string; revision: number; }; source_language: unknown; content_hash: unknown; range_unit: string; start: number; text: string; total_characters: number; has_more: boolean; next_start: number; untrusted_source_data: boolean; } | { ...; }' to type '{ data: { retained_excerpt: string; provenance: { transport: string; original_keystrokes: boolean; }; }; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ data: { retained_excerpt: string; excerpt_truncated: boolean; must_read_material_range: boolean; }; id: string; kind: "activity" | "work" | "evidence" | "knowledge"; title: string; ... 7 more ...; origin_activity_id: null; }' is not comparable to type '{ data: { retained_excerpt: string; provenance: { transport: string; original_keystrokes: boolean; }; }; }'.
+    Types of property 'data' are incompatible.
+      Property 'provenance' is missing in type '{ retained_excerpt: string; excerpt_truncated: boolean; must_read_material_range: boolean; }' but required in type '{ retained_excerpt: string; provenance: { transport: string; original_keystrokes: boolean; }; }'.
+tests/core.test.ts(213,11): error TS2352: Conversion of type 'RecordRow | { ref: { id: string; revision: number; }; source_language: unknown; content_hash: unknown; range_unit: string; start: number; text: string; total_characters: number; has_more: boolean; next_start: number; untrusted_source_data: boolean; } | { ...; }' to type '{ data: { status: string; }; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ data: { retained_excerpt: string; excerpt_truncated: boolean; must_read_material_range: boolean; }; id: string; kind: "activity" | "work" | "evidence" | "knowledge"; title: string; ... 7 more ...; origin_activity_id: null; }' is not comparable to type '{ data: { status: string; }; }'.
+    Types of property 'data' are incompatible.
+      Property 'status' is missing in type '{ retained_excerpt: string; excerpt_truncated: boolean; must_read_material_range: boolean; }' but required in type '{ status: string; }'.
+tests/core.test.ts(263,7): error TS2352: Conversion of type 'RecordRow | { ref: { id: string; revision: number; }; source_language: unknown; content_hash: unknown; range_unit: string; start: number; text: string; total_characters: number; has_more: boolean; next_start: number; untrusted_source_data: boolean; } | { ...; }' to type '{ data: { current_state: string; }; }' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ data: { retained_excerpt: string; excerpt_truncated: boolean; must_read_material_range: boolean; }; id: string; kind: "activity" | "work" | "evidence" | "knowledge"; title: string; ... 7 more ...; origin_activity_id: null; }' is not comparable to type '{ data: { current_state: string; }; }'.
+    Types of property 'data' are incompatible.
+      Property 'current_state' is missing in type '{ retained_excerpt: string; excerpt_truncated: boolean; must_read_material_range: boolean; }' but required in type '{ current_state: string; }'.

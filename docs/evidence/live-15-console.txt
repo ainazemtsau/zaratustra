@@ -1,0 +1,25 @@
+(node:27428) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Сохранил и прочитал `tiny.txt`.\n\nТекст о том, что карта отражает лишь отдельные особенности места и опускает детали. Поэтому, прежде чем полагаться на неё, нужно сверить её с реальными наблюдениями.\n\nГлавная мысль: описание реальности неполно — его стоит проверять на практике.\n\nПолную книгу пока ожидаю.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 15,
+    "requests": 59,
+    "input": 373312,
+    "output": 7315,
+    "cache_read": 124800,
+    "estimated_usd": 0.5826540000000001,
+    "limits": {
+      "prompts": 18,
+      "requests": 80,
+      "input": 1500000,
+      "output": 90000,
+      "estimated_usd": 20
+    }
+  }
+}

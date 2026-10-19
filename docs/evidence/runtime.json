@@ -1,0 +1,17 @@
+{
+  "node": "v22.19.0",
+  "platform": "win32",
+  "arch": "x64",
+  "sqlite": {
+    "version": "3.50.4"
+  },
+  "journal": {
+    "journal_mode": "wal"
+  },
+  "integrity": {
+    "integrity_check": "ok"
+  },
+  "schema": {
+    "user_version": 1
+  }
+}
