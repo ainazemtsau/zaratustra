@@ -77,6 +77,15 @@
     patch tool; it changed no source/report bytes. Updating the existing fixture
     in one operation produced the final report. This was tooling, not a product run.
 
+20. Handoff candidate `2a91733a1215cee74c57a733e8ef527d17d3c1da` installed and
+    live attempt 17 continued correctly (runtime inputs matched candidate 2).
+    Installed artifact verification then found 153 public evidence digest mismatches:
+    Git had normalized CRLF in derived evidence after its manifest was computed.
+    This was an actual packaging defect, distinct from the disproved HTML suspicion
+    in item 12. `docs/evidence/** -text` now preserves evidence bytes through Git.
+    Source, model results and original local artifacts were unchanged. The replacement
+    handoff is checked from staged Git blobs and the installed public checkout.
+
 Later final-candidate checks and identities are recorded in EVIDENCE.md. Saved raw live attempts and native logs remain under the isolated output root;
 public evidence is a labelled path-redacted derivative. The earliest setup/type/SQL
 failures are recorded in this execution transcript and the observations above, not

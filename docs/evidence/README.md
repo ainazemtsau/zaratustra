@@ -29,3 +29,6 @@ is not an invoice or subscription charge measurement.
 
 Raw credentials, normal user configuration and personal memory are absent. These
 are execution observations, not an independent review or owner acceptance.
+
+Git preserves this directory byte-for-byte (`-text`) so its public digests remain
+valid after checkout on the qualified host. Installed readback verifies every row.
