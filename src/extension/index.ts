@@ -6,7 +6,7 @@ import { readFileSync, realpathSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Core, CommitSchema, CoreError, failure } from "../core/index.ts";
-import { DiskStorage, within } from "../storage/index.ts";
+import { DiskStorage, resolvedLocation, within } from "../storage/index.ts";
 
 export const SNAPSHOT_TYPE = "zaratustra.snapshot.v1";
 export function replaceSnapshot<
@@ -55,11 +55,14 @@ export default function extension(pi: ExtensionAPI) {
           "STORE_UNAVAILABLE",
           "Trusted setup must select an absolute ZARATUSTRA_HOME.",
         );
-      const canonicalHome = resolve(home);
+      const canonicalHome = resolvedLocation(home);
       if (
-        within(root, canonicalHome) ||
+        within(realpathSync(root), canonicalHome) ||
         (process.env.PI_CODING_AGENT_DIR &&
-          within(resolve(process.env.PI_CODING_AGENT_DIR), canonicalHome))
+          within(
+            resolvedLocation(process.env.PI_CODING_AGENT_DIR),
+            canonicalHome,
+          ))
       )
         throw new CoreError(
           "PERMISSION_DENIED",

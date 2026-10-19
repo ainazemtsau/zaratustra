@@ -6,11 +6,13 @@ import {
   readFileSync,
   writeFileSync,
   existsSync,
+  realpathSync,
+  symlinkSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Core, digest, failure } from "../src/core/index.ts";
-import { DiskStorage } from "../src/storage/index.ts";
+import { DiskStorage, resolvedLocation, within } from "../src/storage/index.ts";
 
 function fixture() {
   const root = mkdtempSync(
@@ -374,6 +376,11 @@ test("retained Markdown survives source removal, exact bytes/read ranges and int
     () => f.disk.importFile(join(f.inputs, "wrong.pdf"), [f.inputs]),
     /only UTF-8/,
   );
+  writeFileSync(join(f.inputs, "invalid.txt"), Buffer.from([0xff, 0xfe, 0x00]));
+  assert.throws(
+    () => f.disk.importFile(join(f.inputs, "invalid.txt"), [f.inputs]),
+    /not valid UTF-8/,
+  );
   f.disk.close();
 });
 test("bounded catalog cursors reject changed generation and permissions apply to reads", () => {
@@ -391,5 +398,42 @@ test("bounded catalog cursors reject changed generation and permissions apply to
   f.core.context.processing_allowed = false;
   assert.throws(() => f.core.map(), /authority/);
   assert.throws(() => f.core.snapshot(), /authority/);
+  f.disk.close();
+});
+
+test("SQLite disk-full fault leaves no domain records or committed receipt", () => {
+  const f = fixture();
+  const pages = f.disk.get<{ page_count: number }>(
+    "PRAGMA page_count",
+  )!.page_count;
+  f.disk.exec(`PRAGMA max_page_count=${pages}`);
+  const p = payload(f.core);
+  for (const op of p.ops)
+    if (op.data && "purpose" in op.data) op.data.purpose = "x".repeat(4000);
+  assert.throws(() => f.core.commit(p), /full/i);
+  assert.equal(f.core.sequence(), 0);
+  assert.equal(
+    f.disk.get<{ n: number }>("SELECT count(*) AS n FROM receipts")!.n,
+    0,
+  );
+  assert.equal(
+    f.disk.get<{ n: number }>("SELECT count(*) AS n FROM records")!.n,
+    0,
+  );
+  f.disk.close();
+});
+
+test("workspace aliases resolve before any future directory is created", () => {
+  const f = fixture();
+  const alias = join(f.root, "alias");
+  symlinkSync(
+    f.inputs,
+    alias,
+    process.platform === "win32" ? "junction" : "dir",
+  );
+  const future = resolvedLocation(join(alias, "future-home"));
+  assert.equal(future, join(realpathSync(f.inputs), "future-home"));
+  assert.equal(within(realpathSync(f.inputs), future), true);
+  assert.equal(existsSync(future), false);
   f.disk.close();
 });

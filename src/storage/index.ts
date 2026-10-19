@@ -13,7 +13,14 @@ import {
   unlinkSync,
   writeFileSync,
 } from "node:fs";
-import { extname, isAbsolute, join, relative, resolve } from "node:path";
+import {
+  dirname,
+  extname,
+  isAbsolute,
+  join,
+  relative,
+  resolve,
+} from "node:path";
 import type { StoragePort } from "../core/index.ts";
 import { CoreError, requireThat } from "../core/index.ts";
 
@@ -22,6 +29,12 @@ const sha = (bytes: Uint8Array) =>
 export function within(root: string, path: string) {
   const rel = relative(root, path);
   return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
+}
+// Resolve existing ancestors before creating a workspace; reject forbidden aliases before writes.
+export function resolvedLocation(path: string) {
+  let ancestor = resolve(path);
+  while (!existsSync(ancestor)) ancestor = dirname(ancestor);
+  return resolve(realpathSync(ancestor), relative(ancestor, resolve(path)));
 }
 function durableWrite(path: string, bytes: Uint8Array | string) {
   const fd = openSync(path, "wx");
@@ -181,10 +194,17 @@ export class DiskStorage implements StoragePort {
       "VALIDATION_ERROR",
       "Input grew beyond the import bound.",
     );
-    const text = new TextDecoder("utf-8", {
-      fatal: true,
-      ignoreBOM: true,
-    }).decode(bytes);
+    let text: string;
+    try {
+      text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(
+        bytes,
+      );
+    } catch {
+      throw new CoreError(
+        "VALIDATION_ERROR",
+        "The material is not valid UTF-8 text; no readable import was created.",
+      );
+    }
     const hash = sha(bytes);
     const stage = join(this.home, "staging", randomUUID());
     const target = join(this.home, "materials", hash);
