@@ -185,7 +185,9 @@ if (mode === "old-reject") {
     assert.equal(disk.workspace.schema_version, 2);
     assert.equal(disk.workspace.workspace_id, before.workspace.workspace_id);
     assert.equal(disk.workspace.epoch, before.workspace.epoch);
-    assert.deepEqual(snapshot(disk), before.tables);
+    // DatabaseSync returns null-prototype row objects; compare their serialized
+    // columns without weakening byte equality of stored JSON/IDs/hashes.
+    assert.deepEqual(JSON.parse(JSON.stringify(snapshot(disk))), before.tables);
     for (const [name, hash] of Object.entries(before.materials))
       assert.equal(digest(readFileSync(join(home, "materials", name))), hash);
     assert.deepEqual(core.commit(before.payload), before.receipt);
