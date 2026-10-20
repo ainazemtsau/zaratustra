@@ -1,5 +1,12 @@
 # Full R1/R2 disposition
 
+Latest independent rereview remains PARTIAL at exact 4796fbf: prior MEDIUM/LOW and
+the fully model-created pair passed in its stated boundaries, with one new LOW in
+developer export stdout path aliases. The [current narrow fix](C-STDOUT-ALIAS.md)
+has zero model budget and no runtime changes. Historical gaps/observations below
+describe their named earlier runs, not newly repeated conversations. No independent
+PASS, owner acceptance of C or full R1 completion is assigned by this executor.
+
 The complete specification remains authoritative. `passed` below is limited to the
 named implemented mechanism/profile; `partial` never discharges a whole release row.
 Every other M/L obligation remains outstanding. No technical R1 admission or full-R1 owner

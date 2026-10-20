@@ -1,5 +1,14 @@
 # Outcome C: current correction and historical qualification
 
+Current narrow developer-tool correction: [stdout alias qualification](C-STDOUT-ALIAS.md).
+Independent rereview of exact 4796fbf closed the previous MEDIUM/LOW in its tested
+boundaries, including its fully model-created pair and clarified reply. Its overall
+PARTIAL is retained for the new current-stdout Windows alias LOW. No new runtime
+finding was reported. This executor's mechanical alias checks assign no independent
+PASS or C acceptance; prior observations below retain their exact versions.
+
+## Historical targeted correction
+
 Current targeted continuation after independent PARTIAL: [C-FIX-VALIDATION](C-FIX-VALIDATION.md).
 Independent review at exact 0d188eee closed the image-only EPUB live gap with its own
 positive/mixed controls, while reproducing MEDIUM plan coherence and LOW self-log

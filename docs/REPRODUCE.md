@@ -1,5 +1,9 @@
 # Reproduce the installed path (operator/developer)
 
+For the current zero-model developer-exporter correction, use the focused
+[stdout-alias recipe](C-STDOUT-ALIAS.md). It requires native Pi installation only;
+the historical model-session recipes below are outside this correction's budget.
+
 Select the exact public commit you intend to test. No historical candidate or branch
 name is the default. Use the qualified Windows 11 x64 / Node 22.19.0 / Pi 1.3.0
 profile. All homes, configuration and output below are disposable synthetic data,

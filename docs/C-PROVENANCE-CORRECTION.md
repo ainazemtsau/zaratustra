@@ -34,4 +34,14 @@ while empty. Behavioral tests exercise a completed positive log, own-stdout reje
 changed-source rejection, and derivative digests. No old raw log or closed budget is
 modified. This is developer evidence tooling, not a product export/backup feature.
 
+## Subsequent independent alias counterexample
+
+The paragraph above describes the original correction, not a universal guarantee.
+Independent rereview at 4796fbf confirmed all 327+136 entries and the honest historical
+correction, but reproduced a separate LOW: Windows drive-case alias of current stdout
+bypassed the string comparison. Its overall verdict remains PARTIAL. The original
+raw/manifests are not edited. The new [file-identity correction](C-STDOUT-ALIAS.md)
+preserves that RED and tests actual redirected stdout through aliases. It replaces
+only the exporter comparison and behavioral tests; runtime remains unchanged.
+
 END_OF_FILE: docs/C-PROVENANCE-CORRECTION.md

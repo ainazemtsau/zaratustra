@@ -15,6 +15,12 @@ The derivative only redacts the original-1.0 local path. No old product branch i
 
 ## Targeted continuation after independent PARTIAL
 
+Latest scope is solely the developer exporter stdout-alias LOW from independent
+rereview of exact 4796fbf. Runtime/skills/parsers/dependencies/schema are frozen;
+the exporter uses standard-library file identity and behavioral alias tests.
+No model budget or model session. See [C-STDOUT-ALIAS](C-STDOUT-ALIAS.md).
+The remainder of this section documents the earlier bounded correction.
+
 The owner authorized only the two findings from independent review of exact 0d188eee:
 plan/result/wait coherence and the exporter self-log provenance correction. No new C/D/E
 capability. The review's own EPUB/positive/mixed controls and other PASS remain attributed

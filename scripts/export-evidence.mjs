@@ -7,6 +7,7 @@ import {
   realpathSync,
   existsSync,
   mkdirSync,
+  statSync,
 } from "node:fs";
 import { resolve, relative, isAbsolute, dirname, extname } from "node:path";
 import { createHash } from "node:crypto";
@@ -22,7 +23,7 @@ const sealed = JSON.parse(
 );
 const root = realpathSync(sealed.root),
   output = resolve(outputArg),
-  stdout = resolve(stdoutArg);
+  stdout = statSync(realpathSync(stdoutArg), { bigint: true });
 const hash = (b) => createHash("sha256").update(b).digest("hex");
 assert(!existsSync(output), "Export destination must be new");
 assert(
@@ -42,8 +43,11 @@ const sources = sealed.entries.map((entry) => {
       !isAbsolute(rel),
     "Source escapes sealed root",
   );
+  // Compare filesystem identity, not spelling: realpath resolves symlinks and
+  // junctions; dev/ino also recognizes hard links without folding path case.
+  const source = statSync(path, { bigint: true });
   assert(
-    path !== stdout && resolve(root, entry.path) !== stdout,
+    source.dev !== stdout.dev || source.ino !== stdout.ino,
     "Current exporter stdout cannot be an input",
   );
   assert(!seen.has(entry.path), "Duplicate sealed input");
