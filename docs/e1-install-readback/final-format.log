@@ -1,0 +1,6 @@
+
+> zaratustra@0.3.0-dev.1 format:check
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!

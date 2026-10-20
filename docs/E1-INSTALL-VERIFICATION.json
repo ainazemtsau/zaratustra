@@ -1,0 +1,112 @@
+{
+  "checked_at": "2026-10-20T17:11:24.212120+00:00",
+  "manifest_sha256": "8ac33ce3e8417e0de4fbef800858f012efe4ee3ed25b581f7dc0bd903f862678",
+  "sealed_inputs_sha256": "66b6db08c76df4b275e29248ee8e6454f08202f182d106e041dd1d64b416b702",
+  "files": 17,
+  "derivative_bytes": 556320,
+  "all_original_hashes_and_lengths_exact": true,
+  "all_derivative_hashes_and_lengths_exact": true,
+  "all_UTF8_LF_without_BOM": true,
+  "all_JSON_and_gzip_parse": true,
+  "no_reasoning_blocks_or_encrypted_fields_in_parsed_JSON": true,
+  "no_credential_pattern_or_unsubstituted_private_roots": true,
+  "no_unlisted_files": true,
+  "linked_evidence_exists": true,
+  "transformations": [
+    "synthetic evidence root -> <SYNTHETIC_EVIDENCE_ROOT>",
+    "operator USERPROFILE -> <USER_PROFILE>",
+    "checkout root -> <CHECKOUT>",
+    "UTF-8 without BOM; LF",
+    "JSON parse/serialize, including embedded JSON strings",
+    "omit thinking/redactedThinking/reasoning typed blocks and encrypted_content/signature/redactedThinking fields",
+    "deterministic gzip of provider-requests.jsonl"
+  ],
+  "scope": "Only synthetic finished data; credentials, mutable stdout, agent config/cache, database and backup binaries excluded. This verifies export integrity, not independent product acceptance.",
+  "entries": [
+    {
+      "path": "READBACK-b20ff51.json",
+      "bytes": 1073,
+      "sha256": "f7e8c4a908629b2cfe684e655fe0635d5744563e878e12ca3c66127d5bfdd824"
+    },
+    {
+      "path": "FINAL-identity.json",
+      "bytes": 419021,
+      "sha256": "178bec5876a3fc7803f8bfda98d14cd9eab711880bb39e785962d870cdbef7fe"
+    },
+    {
+      "path": "FINAL-identity.log",
+      "bytes": 151,
+      "sha256": "2f065e5212adfc315bd33b5da875493cf9775a0df4afd8df0a81743954a16e5a"
+    },
+    {
+      "path": "FINAL-install.log",
+      "bytes": 549,
+      "sha256": "751912b4e0d7acf81b94a1fa97d87a1025e4d8ec87be5104f8804d7bd03c0cbd"
+    },
+    {
+      "path": "FINAL-list.log",
+      "bytes": 180,
+      "sha256": "e63f441c3e9dc9fe5ebf8c05c9eb014f6fb8b9ebecf6a9553032284008ab1459"
+    },
+    {
+      "path": "FINAL-reconcile.log",
+      "bytes": 231,
+      "sha256": "9ab4edb354232f799c82270e191b37ece06b5f3b580a06fef90670b6005b3719"
+    },
+    {
+      "path": "FINAL-disk-tests.log",
+      "bytes": 47337,
+      "sha256": "b924042ce607b71dc74dfef61d895dbfb4c520d8d97c75dc6d86faa49c24ed30"
+    },
+    {
+      "path": "FINAL-disk-tests-02.log",
+      "bytes": 20373,
+      "sha256": "83715c1e23ee6ed63e0ff0804979daffb3d896576cc8890511df834b025108bd"
+    },
+    {
+      "path": "FINAL-cwd-assets.json",
+      "bytes": 4300,
+      "sha256": "9beb1c986155a664987faa2f89dd01ffbab62f6df6657d8d018b3ffbe522ba5e"
+    },
+    {
+      "path": "FINAL-qualified-state.json",
+      "bytes": 1793,
+      "sha256": "79b3c790e0bae92d27839016344cdb5d6fbb5992f9dc57cba85cdea05b825a52"
+    },
+    {
+      "path": "FINAL-sdk.log",
+      "bytes": 284,
+      "sha256": "7fa3c5d3b5e7e78a1049a5eb8d2e094ae5cb8c4fe712495d63254525ee6ab962"
+    },
+    {
+      "path": "FINAL-sdk/verification.json",
+      "bytes": 35323,
+      "sha256": "1d527a77deccc557862a7d7c7199c294a3371799f1af4cd9db85c4f4be16cc2f"
+    },
+    {
+      "path": "FINAL-p2.log",
+      "bytes": 378,
+      "sha256": "a4b69556ed76cbc68ac7ddfa178ef94fbdeaad11018282cba434a8c11d64e047"
+    },
+    {
+      "path": "FINAL-p2/adapter-results.json",
+      "bytes": 2785,
+      "sha256": "4a5e95c61bc877efbe425072b9453e0e1f7b2bc4fd090f06c98fede13c72e249"
+    },
+    {
+      "path": "deliver-08-final.log",
+      "bytes": 21599,
+      "sha256": "378ae49c5b1a46bf9b2691fd3824e2cfba5bfe587c0b07d3636e6ccbded655b7"
+    },
+    {
+      "path": "final-format.log",
+      "bytes": 127,
+      "sha256": "4b67397fe3c34d8c6a9ff5740156015b2aed554118f02f33eac3ef3944329033"
+    },
+    {
+      "path": "controllers/final-state.mjs",
+      "bytes": 816,
+      "sha256": "d50caf623fa2b67db9662f8392079ae1150da26f56bde16530736e6a651e41fb"
+    }
+  ]
+}

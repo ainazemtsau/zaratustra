@@ -1,0 +1,200 @@
+{
+  "synthetic": true,
+  "sealed_inputs_sha256": "66b6db08c76df4b275e29248ee8e6454f08202f182d106e041dd1d64b416b702",
+  "source_policy": "finished fixed inputs, SHA256 checked before and after; current stdout excluded",
+  "entries": [
+    {
+      "original_relative_path": "READBACK-b20ff51.json",
+      "original_sha256": "035e2ef2a5508094cf638938c67573d21f90783fdb23886eeb39a07adb2581fe",
+      "original_bytes": 1105,
+      "derivative_path": "READBACK-b20ff51.json",
+      "derivative_sha256": "f7e8c4a908629b2cfe684e655fe0635d5744563e878e12ca3c66127d5bfdd824",
+      "derivative_bytes": 1073,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "FINAL-identity.json",
+      "original_sha256": "c8d7534ff8f7fd3c3777a339b880a20746d1d59a524d0be8419d77511ad2c77c",
+      "original_bytes": 419020,
+      "derivative_path": "FINAL-identity.json",
+      "derivative_sha256": "178bec5876a3fc7803f8bfda98d14cd9eab711880bb39e785962d870cdbef7fe",
+      "derivative_bytes": 419021,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "FINAL-identity.log",
+      "original_sha256": "f6748628a7601d6c728cdc5ae857445e7d7b198de8ef400bac07ce9acd3464bb",
+      "original_bytes": 152,
+      "derivative_path": "FINAL-identity.log",
+      "derivative_sha256": "2f065e5212adfc315bd33b5da875493cf9775a0df4afd8df0a81743954a16e5a",
+      "derivative_bytes": 151,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "FINAL-install.log",
+      "original_sha256": "8e51fcb0c64f6301401ece6ebaf8d7d363e52094e886050cc7ebd3b6b2197273",
+      "original_bytes": 562,
+      "derivative_path": "FINAL-install.log",
+      "derivative_sha256": "751912b4e0d7acf81b94a1fa97d87a1025e4d8ec87be5104f8804d7bd03c0cbd",
+      "derivative_bytes": 549,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "FINAL-list.log",
+      "original_sha256": "91551b2a608917a322c253a9731902e1c2eb9b1fac2f4ab153f775d51052caa6",
+      "original_bytes": 204,
+      "derivative_path": "FINAL-list.log",
+      "derivative_sha256": "e63f441c3e9dc9fe5ebf8c05c9eb014f6fb8b9ebecf6a9553032284008ab1459",
+      "derivative_bytes": 180,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "FINAL-reconcile.log",
+      "original_sha256": "22f45712428d6133920eb978f6e4f8d9a65b87b70b96eb15086ae439f95fc403",
+      "original_bytes": 235,
+      "derivative_path": "FINAL-reconcile.log",
+      "derivative_sha256": "9ab4edb354232f799c82270e191b37ece06b5f3b580a06fef90670b6005b3719",
+      "derivative_bytes": 231,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "FINAL-disk-tests.log",
+      "original_sha256": "c574871ccb3dd4514ed81e79495a8589dc5c3ea93c70dac2309a9711c50eacbe",
+      "original_bytes": 49637,
+      "derivative_path": "FINAL-disk-tests.log",
+      "derivative_sha256": "b924042ce607b71dc74dfef61d895dbfb4c520d8d97c75dc6d86faa49c24ed30",
+      "derivative_bytes": 47337,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "FINAL-disk-tests-02.log",
+      "original_sha256": "3bd4a06b3d2162930ac3520278560952f6af6dbd55a5ca845dadc1e1cb66f088",
+      "original_bytes": 20834,
+      "derivative_path": "FINAL-disk-tests-02.log",
+      "derivative_sha256": "83715c1e23ee6ed63e0ff0804979daffb3d896576cc8890511df834b025108bd",
+      "derivative_bytes": 20373,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "FINAL-cwd-assets.json",
+      "original_sha256": "c73c0fbf53316045d0eaa9535f142d7132c6e05aa0fdb45b3bd0e2ad60b1d087",
+      "original_bytes": 4407,
+      "derivative_path": "FINAL-cwd-assets.json",
+      "derivative_sha256": "9beb1c986155a664987faa2f89dd01ffbab62f6df6657d8d018b3ffbe522ba5e",
+      "derivative_bytes": 4300,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "FINAL-qualified-state.json",
+      "original_sha256": "2cd0e19a23057316d1500194aa2556512424b21cc0575183421f4497e13ee459",
+      "original_bytes": 1792,
+      "derivative_path": "FINAL-qualified-state.json",
+      "derivative_sha256": "79b3c790e0bae92d27839016344cdb5d6fbb5992f9dc57cba85cdea05b825a52",
+      "derivative_bytes": 1793,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "FINAL-sdk.log",
+      "original_sha256": "b8d1165e603ea9f07b5ae7ba83fd842ae5b42f66863f451e4bbfdbe4b3ba4a36",
+      "original_bytes": 287,
+      "derivative_path": "FINAL-sdk.log",
+      "derivative_sha256": "7fa3c5d3b5e7e78a1049a5eb8d2e094ae5cb8c4fe712495d63254525ee6ab962",
+      "derivative_bytes": 284,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "FINAL-sdk/verification.json",
+      "original_sha256": "b22976a7c0466605bb0df85150a637dae66b295c3d16f34e173cf4c68b9bc07a",
+      "original_bytes": 35322,
+      "derivative_path": "FINAL-sdk/verification.json",
+      "derivative_sha256": "1d527a77deccc557862a7d7c7199c294a3371799f1af4cd9db85c4f4be16cc2f",
+      "derivative_bytes": 35323,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "FINAL-p2.log",
+      "original_sha256": "fb1c9dbcdf221220b721f5ff889d20371b2e6184cb339276cd778154a50e13f8",
+      "original_bytes": 412,
+      "derivative_path": "FINAL-p2.log",
+      "derivative_sha256": "a4b69556ed76cbc68ac7ddfa178ef94fbdeaad11018282cba434a8c11d64e047",
+      "derivative_bytes": 378,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "FINAL-p2/adapter-results.json",
+      "original_sha256": "3c44737a440bbbd7e0a322caaba921a771cea9f67bfaa59f1bed97d611345ab5",
+      "original_bytes": 2784,
+      "derivative_path": "FINAL-p2/adapter-results.json",
+      "derivative_sha256": "4a5e95c61bc877efbe425072b9453e0e1f7b2bc4fd090f06c98fede13c72e249",
+      "derivative_bytes": 2785,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "deliver-08-final.log",
+      "original_sha256": "0383b15c60c79c172882c1d15014661d79e5a20541b9606d459bb1fa9a822ff5",
+      "original_bytes": 22106,
+      "derivative_path": "deliver-08-final.log",
+      "derivative_sha256": "378ae49c5b1a46bf9b2691fd3824e2cfba5bfe587c0b07d3636e6ccbded655b7",
+      "derivative_bytes": 21599,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "final-format.log",
+      "original_sha256": "6fe0ce782803656af2a5aca55818946bec4708961ea855117887550bb57b051e",
+      "original_bytes": 133,
+      "derivative_path": "final-format.log",
+      "derivative_sha256": "4b67397fe3c34d8c6a9ff5740156015b2aed554118f02f33eac3ef3944329033",
+      "derivative_bytes": 127,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "controllers/final-state.mjs",
+      "original_sha256": "e48e54e6039d5bbdc224004fe99dfb3cee92d0390831799db49ef5cc6b46f4fa",
+      "original_bytes": 817,
+      "derivative_path": "controllers/final-state.mjs",
+      "derivative_sha256": "d50caf623fa2b67db9662f8392079ae1150da26f56bde16530736e6a651e41fb",
+      "derivative_bytes": 816,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "after_installed_sha": "b20ff519881943e558f5e24eea1679f5d3c88821",
+  "all_captured_tables_exact": true,
+  "tables": {
+    "records": {
+      "rows": 51,
+      "sha256": "eed43d01e416127d6acf7edfea70d802d6763640ec26baff7d3a61674841f49e"
+    },
+    "revisions": {
+      "rows": 64,
+      "sha256": "f15b01f236d84c65bc0417da6e1ad5c01d3467cc5548c03bedf16eab2f57a9dc"
+    },
+    "changes": {
+      "rows": 28,
+      "sha256": "f7fcb18f97c46cd194e79a0b4a32d8d2cd60ff6092b7ce14465cc14489cbfcc0"
+    },
+    "intents": {
+      "rows": 31,
+      "sha256": "af4be035719bb003853c2b2d86778186b61d1ec469fb133650d56a15b88caf77"
+    },
+    "receipts": {
+      "rows": 28,
+      "sha256": "498f50bbb0781b6ac702ed1e5d093945afc4675fcb6eb4f7076bc0f46605bf94"
+    },
+    "claims": {
+      "rows": 3,
+      "sha256": "281ceceea8c2a882d74bd88deb0b924806077a83b09b1870e092dc7bdfab51eb"
+    },
+    "handoffs": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "relations": {
+      "rows": 3,
+      "sha256": "1ddd701aa418b8afa14097dd708d226515a7c1a5b04e059cd1cf35c1609bdbf2"
+    },
+    "relation_history": {
+      "rows": 3,
+      "sha256": "37ac1521c4d83773eeffc20f85fd0bfa77c1ba392f72cadcab61cefd04d929f2"
+    },
+    "memory_meta": {
+      "rows": 1,
+      "sha256": "71e17c696cfd5a223f3c745e04d7ee7211d0f28fca92c07c328a6eaa3f4a731e"
+    },
+    "retrieval_trace": {
+      "rows": 86,
+      "sha256": "df9f2e038a8f22fe0022ba8fb21d0d5efdb25cc7532ec16a19df058c8cb9b3bb"
+    },
+    "experience_rows": {
+      "rows": 22,
+      "sha256": "b3b6b32b3b2fad920381a8e9fef82d01f24516a1c7f514da7acb08909bb1c29e"
+    },
+    "experience_versions": {
+      "rows": 31,
+      "sha256": "bc871756e4612fb37d87e8f7fdba756252b60169f96cf6b701a97bc77e07d927"
+    }
+  }
+}

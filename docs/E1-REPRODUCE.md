@@ -43,8 +43,20 @@ test runner outside the package:
 npm install --prefix (Join-Path $testRoot 'tools') --no-audit --no-fund tsx@4.20.6
 $env:ZARATUSTRA_TEST_ROOT = Join-Path $testRoot 'disk-tests'
 New-Item -ItemType Directory -Path $env:ZARATUSTRA_TEST_ROOT | Out-Null
-Push-Location $testPackage
-& (Join-Path $testRoot 'tools/node_modules/.bin/tsx.cmd') --test tests/core.test.ts tests/work.test.ts tests/materials.test.ts tests/p2.test.ts tests/evidence.test.ts tests/memory.test.ts tests/experience.test.ts
+# Existing exporter/material tests use cwd-relative read-only assets.
+# Keep the actual cwd outside the installed package as well.
+$testRunCwd = Join-Path $testRoot 'disk-cwd'
+New-Item -ItemType Directory -Path (Join-Path $testRunCwd 'scripts'), (Join-Path $testRunCwd 'tests/fixtures') | Out-Null
+Copy-Item -LiteralPath (Join-Path $testPackage 'scripts/export-evidence.mjs') -Destination (Join-Path $testRunCwd 'scripts/export-evidence.mjs')
+Copy-Item -LiteralPath (Join-Path $testPackage 'tests/fixtures/c') -Destination (Join-Path $testRunCwd 'tests/fixtures/c') -Recurse
+$testAssetFiles = @((Get-Item -LiteralPath (Join-Path $testPackage 'scripts/export-evidence.mjs'))) + @(Get-ChildItem -LiteralPath (Join-Path $testPackage 'tests/fixtures/c') -Recurse -File)
+foreach ($testAssetFile in $testAssetFiles) {
+  $testRelative = $testAssetFile.FullName.Substring($testPackage.Length + 1)
+  if ((Get-FileHash -LiteralPath $testAssetFile.FullName).Hash -ne (Get-FileHash -LiteralPath (Join-Path $testRunCwd $testRelative)).Hash) { throw 'Test asset drift' }
+}
+$testModulePaths = @('core','work','materials','p2','evidence','memory','experience') | ForEach-Object { Join-Path $testPackage "tests/$_.test.ts" }
+Push-Location $testRunCwd
+& (Join-Path $testRoot 'tools/node_modules/.bin/tsx.cmd') --test @testModulePaths
 Pop-Location
 node (Join-Path $testPackage 'scripts/e1-provenance.mjs') $testPackage (Join-Path $testRoot 'sdk-provenance')
 node (Join-Path $testPackage 'scripts/p2-probe.mjs') $testPackage (Join-Path $testRoot 'p2') fixed

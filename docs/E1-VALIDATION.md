@@ -112,6 +112,19 @@ Engineering logs retain fixture-downgrade setup, initial bare-loader peer failur
 guarded final-revision preflight failure, test-only TypeScript cast correction and
 one upgrade invocation missing its SDK environment. Corrected runs are separate files.
 
+Post-seal native readback installed the containing documentation SHA
+b20ff519881943e558f5e24eea1679f5d3c88821 and reconciled its exact pin. All 1,555 tracked
+files were checked; product inputs equal 6659f4c. A first disk-suite run from an empty
+external cwd failed 13 tests because the older M exporter/material tests resolve their
+script/fixtures relative to cwd. This is retained, not relabelled as a product success.
+With 16 byte-verified read-only asset copies in that external cwd, actual test modules
+and product imports still come from the native install: 71 pass, two skips, zero fail.
+Native SDK and P2 again pass with zero provider dispatch. The reproduction now supplies
+those assets explicitly. [Readback manifest](e1-install-readback/manifest.json) and
+[verification](E1-INSTALL-VERIFICATION.json) are a separate finished-input export; the
+first sealed manifest/raw evidence remain untouched. The handback's final containing
+SHA is separately installed and compared to the same code candidate.
+
 Native identity checks [all 1,336 tracked candidate files](e1-evidence/final-code-identity.json).
 Only installed `package-lock.json` differs: six `peer:true` metadata removals by Pi/npm;
 versions, resolved URLs and integrity remain exact. Product version 0.3.0-dev.1,

@@ -1,0 +1,34 @@
+{
+  "installed_sha": "b20ff519881943e558f5e24eea1679f5d3c88821",
+  "code_candidate": "6659f4c4d9de1871624efaec37933aa8d03dc0bf",
+  "product_equality": true,
+  "tracked_files": 1555,
+  "lockfile_peer_metadata_removals": 6,
+  "final_installed_suite": {
+    "first_empty_cwd": {
+      "tests": 73,
+      "pass": 58,
+      "fail": 13,
+      "skip": 2,
+      "cause": "Cwd-relative existing exporter/material test asset paths absent; first raw log retained."
+    },
+    "prepared_external_cwd": {
+      "tests": 73,
+      "pass": 71,
+      "fail": 0,
+      "skip": 2,
+      "asset_manifest": "FINAL-cwd-assets.json",
+      "actual_test_modules_and_imports": "native installed package"
+    }
+  },
+  "native_sdk": {
+    "provenance_cases": 12,
+    "negative_projection_cases": 4,
+    "provider_dispatches": 0
+  },
+  "p2_provider_dispatches": 0,
+  "actual_L_ledger_unchanged_and_closed": true,
+  "runtime_change": false,
+  "final_public_sha": "Containing docs-only commit is installed/read back separately; handback reports exact SHA.",
+  "first_sealed_manifest_unchanged": true
+}
