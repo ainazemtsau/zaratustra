@@ -34,6 +34,7 @@ import type {
   Receipt,
 } from "./contracts.ts";
 export * from "./contracts.ts";
+export { validateWorks } from "./work.ts";
 export {
   MemorySchemaSQL,
   refreshMemory,

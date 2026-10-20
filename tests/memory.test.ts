@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, writeFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { DatabaseSync } from "node:sqlite";
 import { Core, CoreError, digest } from "../src/core/index.ts";
 import type { JsonObject, RecordRow } from "../src/core/index.ts";
 import { DiskStorage } from "../src/storage/index.ts";
@@ -826,6 +827,79 @@ test("D schema-2 migration faults preserve filled canonical rows, original mater
     recovered.close();
     const again = new DiskStorage(f.home);
     again.close();
+  }
+});
+
+test("D memory migration rejects a broken legacy Work graph without replacing or mutating source rows", () => {
+  const f = fixture();
+  const a = f.commit([
+    {
+      op: "create_record",
+      client_ref: "w",
+      kind: "work",
+      title: "Legacy Work",
+      visibility: "workspace",
+      data: {
+        activity_id: null,
+        parent_work_id: null,
+        objective: "Retain original graph",
+        acceptance: [
+          {
+            criterion_id: "result",
+            description: "Grounded result",
+            verification: "Inspect",
+            required: true,
+          },
+        ],
+        status: "active",
+        current_state: "Planning",
+        next_action: "Read source",
+        steps: [],
+        waits: [],
+        context_refs: [],
+        completion: null,
+      },
+    },
+  ]).created;
+  const w = f.read(a.w);
+  w.data.parent_work_id = { id: "missing-parent" };
+  f.disk.run("UPDATE records SET json=? WHERE id=?", JSON.stringify(w), w.id);
+  f.disk.run(
+    "UPDATE revisions SET json=? WHERE id=? AND revision=1",
+    JSON.stringify(w),
+    w.id,
+  );
+  const before = JSON.stringify(
+    f.disk.all("SELECT * FROM records ORDER BY id"),
+  );
+  f.disk.workspace.schema_version = 2;
+  f.disk.run("UPDATE meta SET json=?", JSON.stringify(f.disk.workspace));
+  f.disk.exec(
+    "DROP TABLE memory_text; DROP TABLE memory_names; DROP TABLE memory_docs; DROP TABLE memory_meta; DROP TABLE memberships; DROP TABLE concept_parents; DROP TABLE relations; DROP TABLE relation_history; DROP TABLE retrieval_trace; DROP INDEX knowledge_predicate; DROP INDEX knowledge_subject; DROP INDEX knowledge_object; PRAGMA user_version=2;",
+  );
+  writeFileSync(
+    join(f.home, "workspace.json"),
+    JSON.stringify(f.disk.workspace),
+  );
+  f.disk.close();
+  code(() => new DiskStorage(f.home), "STORE_UNAVAILABLE");
+  const raw = new DatabaseSync(join(f.home, "zara.sqlite"), { readOnly: true });
+  try {
+    assert.equal(
+      JSON.stringify(raw.prepare("SELECT * FROM records ORDER BY id").all()),
+      before,
+    );
+    assert.equal(
+      (raw.prepare("PRAGMA user_version").get() as { user_version: number })
+        .user_version,
+      2,
+    );
+    assert.equal(
+      readdirSync(f.home).filter((p) => p.startsWith("pre-schema-3-")).length,
+      0,
+    );
+  } finally {
+    raw.close();
   }
 });
 

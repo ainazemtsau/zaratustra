@@ -29,6 +29,7 @@ import {
   MemorySchemaSQL,
   refreshMemory,
   validateMemory,
+  validateWorks,
 } from "../core/index.ts";
 import type { RecordRow } from "../core/index.ts";
 import { extract } from "./extract.ts";
@@ -261,6 +262,31 @@ export class DiskStorage implements StoragePort {
       return r;
     };
     validateMemory(current, get);
+    validateWorks(current, get, (ref, workId) => {
+      const r = ref as { id: string; revision?: number };
+      const row = this.get<{ json: string }>(
+        "SELECT json FROM handoffs WHERE id=?",
+        r.id,
+      );
+      if (!row) {
+        get(ref);
+        return;
+      }
+      const h = JSON.parse(row.json);
+      requireThat(
+        h.work_ref.id === workId &&
+          h.transport_state === "prepared_not_sent" &&
+          (r.revision === undefined || r.revision === 1),
+        "STORE_UNAVAILABLE",
+        "Memory migration found an invalid handoff step reference.",
+      );
+      get(h.work_ref, "work");
+    });
+    for (const row of this.all<{ json: string }>("SELECT json FROM handoffs")) {
+      const h = JSON.parse(row.json);
+      get(h.work_ref, "work");
+      for (const ref of h.context_refs) get(ref);
+    }
     for (const row of this.all<{ json: string }>(
       "SELECT json FROM records UNION ALL SELECT json FROM revisions",
     )) {
