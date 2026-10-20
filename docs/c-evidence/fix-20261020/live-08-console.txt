@@ -1,0 +1,25 @@
+(node:79900) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Сохранил уточнение: тот же ответ относится к «Компасу», не считается новой проверкой. Проверка «Компаса» завершена; «Лампа» остаётся в ожидании ответа.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 8,
+    "requests": 57,
+    "input": 718982,
+    "output": 16628,
+    "cache_read": 299520,
+    "estimated_usd": 1.035156,
+    "limits": {
+      "prompts": 8,
+      "requests": 60,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 5
+    }
+  }
+}

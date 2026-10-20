@@ -1,0 +1,15 @@
+d956c6dfe18b49754fabd0773b798a01e5fcb017	HEAD
+d33b676c57b8319cb4a4d2527f64d41fe800c154	refs/heads/claude/magical-einstein-4l2fax
+dfac09bac0374794c962cc8220cbd309db5a9fe8	refs/heads/claude/pensive-gates-47w6z7
+9913786eacb9c95ce103e29a21fa1e89dbdbd070	refs/heads/codex/core-entry-fix-20260915
+29d887d41f1639dc6ddb354a2039603cb1a30d94	refs/heads/codex/core-v0.1
+c73d039eb3f318893820b2b5e7c73f69092ccbd8	refs/heads/codex/home-line-retained-20261001
+1e5aa05a640a824f74bd4e1a2338ca545eb79462	refs/heads/codex/restart-first-release
+0d188eee3d25ac26a24d28b5a363e5c4b75a2e7c	refs/heads/codex/zaratustra-v1
+d956c6dfe18b49754fabd0773b798a01e5fcb017	refs/heads/main
+e5650e7e65e50c2c9240e68d52a91f83c738af2c	refs/tags/v0.20.0
+a3e1c970bee97ef73c49084c1b940665d4bed4db	refs/tags/v0.20.0^{}
+6cca028f6054ba726da2056578331c72f52a837e	refs/tags/v0.21.0
+73b1be85ce24207bb825c23376c7d42fb2cca998	refs/tags/v0.21.0^{}
+5ed5a24e03a788c04e342ac5ddd7989c328e7df7	refs/tags/v0.21.1
+5448363f4f5e8098fb8078e5ea32d1c1c0caec7f	refs/tags/v0.21.1^{}

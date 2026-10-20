@@ -1,0 +1,29 @@
+{
+  "baseline": "0d188eee3d25ac26a24d28b5a363e5c4b75a2e7c",
+  "candidate": "14c4e0d263542344c9d577ef4035fefba5afcac4",
+  "all_parser_storage_dependency_and_fixture_inputs_unchanged": true,
+  "files": {
+    "package-lock.json": "81aa2e0f115b63b88b9b28697728bd23fb664e0853ec98d24be183d4fc4c180f",
+    "package.json": "3018dd7f6a5f1668caca801f2fc0180656740c7e53f23a14d03773631d46cd8d",
+    "scripts/c-fixtures.py": "1994ae85c766f5818e81f3aa8fc4b8b29512704a52fbf9e06fae047211c51ad8",
+    "src/storage/AGENTS.md": "500f77dd410808616b6e714275cfce81b554e0ca4bc52d0af71b5bcd9e19834c",
+    "src/storage/extract.ts": "2009e2598f67e82e0b5cf962ff32c6be9b4699f0063bf88bae0f133a9c95e22f",
+    "src/storage/index.ts": "a9499e1b4d141a9635f38f8bb8e3ec665188b60bca613d3a22df3663bdcfb001",
+    "src/storage/parser-worker.mjs": "363079486797fcf9408d06119f55474e2e0e6b91cf2bf50d8c72690de7ed49ec",
+    "tests/fixtures/c/blank.pdf": "226ee53a1c7cbcbe2cd8a5fa09daa83f3897e21422c60319ed87b857ad8cf064",
+    "tests/fixtures/c/book.epub": "fc7f55c8fd4b2200723d5565054e01369c0a59c05a36a2b98435fb0e52e6979a",
+    "tests/fixtures/c/book.pdf": "51b4039c0287808a6348e759d232da64b6dd19484ffa5403d2b318e37a0d3406",
+    "tests/fixtures/c/damaged.pdf": "1347eeb6725c82af82dff79efdfef4f03ae8ea71982ecad3966bc7540dc76c76",
+    "tests/fixtures/c/encrypted.epub": "d7af556a1f65d22ea9b449841f1eb7e57ddca5670bc044ffdce76850d4663970",
+    "tests/fixtures/c/encrypted.pdf": "2c4189b18f08cf924174ca47e79685ce645253964182aad42626cbe0a3a7f879",
+    "tests/fixtures/c/entities.epub": "1730894c9ec78df72b5ae7d7cbf8d2dc8a5fa1691ac430e6247b61c965f30a23",
+    "tests/fixtures/c/image-only.epub": "953730e0b3ccec3fe70ddb4197c45532bf382daf89d1e8966b443fe57d23e990",
+    "tests/fixtures/c/large.pdf": "13ef961efedc6880b2377f79f659a8e3c43fa2dc3b33a80c2895f42562579cd7",
+    "tests/fixtures/c/notes.md": "4b82682dfc9eb1074a4bb551e1f6904c2ffbef6c95007635bb37cf1b399bce54",
+    "tests/fixtures/c/output-limit.epub": "bc3cd497059f6e75e933588b4aafad31ca73f53fc446e2e56ea887fe3dd47171",
+    "tests/fixtures/c/partial.epub": "80047ef545614db91b45b2a14d68c7490b9fee08de5b46e789e98bd63467a468",
+    "tests/fixtures/c/remote.epub": "d2d3c2ce217254eabd28276d309755fc4c755d97ae5b6f6ab581316671a7f75b",
+    "tests/fixtures/c/traversal.epub": "735e01e917561fdefc378dff76e2cc974e7a6eb7fedc83f803000ff9062b796c",
+    "tests/fixtures/c/zip-limit.epub": "fe9ada6c6d66993cbe0b0d314c8e8766bdc7f4db6620a3fe5f0355a18ac1a0ce"
+  }
+}

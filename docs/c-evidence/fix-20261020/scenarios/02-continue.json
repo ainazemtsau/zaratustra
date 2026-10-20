@@ -1,0 +1,9 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\candidate-config",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\live-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-02",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\02-continue",
+  "prompt": "Продолжим «Тихий архив». Ответ из другого чата пока не пришёл. Что уже готово и что сейчас осталось?",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\live-budget.json",
+  "importRoots": []
+}

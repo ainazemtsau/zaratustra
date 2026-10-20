@@ -5,6 +5,11 @@ named implemented mechanism/profile; `partial` never discharges a whole release 
 Every other M/L obligation remains outstanding. No technical R1 admission or full-R1 owner
 acceptance is asserted. The owner separately accepted first block 27a74fd with “да”
 after independent PASS; outcome C scope was then approved with “ок”. Historical first-block sources: `EVIDENCE.md`. C sources: [C-VALIDATION](C-VALIDATION.md).
+Targeted continuation: [C-FIX-VALIDATION](C-FIX-VALIDATION.md). Independent overall
+PARTIAL and component PASS remain attributed to 0d188eee. Executor checks on 14c4e0d2
+prove the bounded address/plan/wait corrections, not a new independent verdict. The
+failed full model-created pair preparation remains unverified; ambiguity/clarified
+binding used an explicitly mechanical pair fixture. Full R1/T31 stay open.
 C live PASS annotations refer to fixed 55fac403; corrected 334c572 has the explicit
 live-budget qualification gap described there. No final-candidate whole-R1 claim.
 

@@ -1,0 +1,8 @@
+src/core/contracts.ts 97ms (unchanged)
+src/core/index.ts 132ms (unchanged)
+src/core/work.ts 24ms (unchanged)
+src/extension/index.ts 22ms (unchanged)
+tests/work.test.ts 81ms
+tests/evidence.test.ts 6ms
+scripts/export-evidence.mjs 33ms
+skills/zaratustra-work/SKILL.md 40ms (unchanged)

@@ -1,0 +1,9 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\candidate-config",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\live-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-01",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\01-prepare",
+  "prompt": "Готовим карточку «Тихий архив». Черновик: «Записывай наблюдение отдельно от объяснения. Если подтверждений мало, назови объяснение предположением». Нужен разбор в другом чате: понятна ли формулировка и какой короткий заголовок ей подойдёт. Подготовь одно сообщение, которое я смогу туда перенести вручную. Сам ничего не отправляй. Сохрани ход работы: к окончательной карточке вернёмся после ответа. Общаемся по-русски.",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\live-budget.json",
+  "importRoots": []
+}

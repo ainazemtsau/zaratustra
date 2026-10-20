@@ -1,0 +1,7 @@
+{
+  "synthetic": true,
+  "model_requests": 0,
+  "old_record_only_resolver_rejected_handoff_result": true,
+  "domain_claims_handoffs_receipts_unchanged": true,
+  "possible_new_prepared_intent_not_commit": true
+}

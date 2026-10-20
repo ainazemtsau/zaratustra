@@ -1,0 +1,9 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\candidate-config",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\ambiguity-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-07",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\07-ambiguous",
+  "prompt": "Из другого чата вернулся ответ: «Формулировка понятна, правки не нужны». Сохрани его для соответствующей карточки.",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\live-budget.json",
+  "importRoots": []
+}

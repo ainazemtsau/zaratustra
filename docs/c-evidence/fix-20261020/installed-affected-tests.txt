@@ -1,0 +1,90 @@
+TAP version 13
+# Subtest: developer evidence export uses completed sealed inputs and rejects its own live stdout or changed sources
+ok 1 - developer evidence export uses completed sealed inputs and rejects its own live stdout or changed sources
+  ---
+  duration_ms: 172.4132
+  type: 'test'
+  ...
+# (node:77836) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a saved handoff is reusable preparation-step grounds without a duplicate message record
+ok 2 - a saved handoff is reusable preparation-step grounds without a duplicate message record
+  ---
+  duration_ms: 73.9483
+  type: 'test'
+  ...
+# Subtest: preparation grounds retain claims and ref guards, external waits stay separate, and reopen waits for new input
+ok 3 - preparation grounds retain claims and ref guards, external waits stay separate, and reopen waits for new input
+  ---
+  duration_ms: 157.9838
+  type: 'test'
+  ...
+# Subtest: linking an immutable preparation result is atomic with claim, revision, Change and receipt
+ok 4 - linking an immutable preparation result is atomic with claim, revision, Change and receipt
+  ---
+  duration_ms: 168.0858
+  type: 'test'
+  ...
+# Subtest: nested graph and final-batch cycles, wrong references and update lifecycle bypass are rejected atomically
+ok 5 - nested graph and final-batch cycles, wrong references and update lifecycle bypass are rejected atomically
+  ---
+  duration_ms: 63.213
+  type: 'test'
+  ...
+# Subtest: required child/step conditions, grounded completion, cancellation is not success, reopening retains history
+ok 6 - required child/step conditions, grounded completion, cancellation is not success, reopening retains history
+  ---
+  duration_ms: 86.4908
+  type: 'test'
+  ...
+# Subtest: dependencies and parent pause suppress execution without changing child facts; independent steps continue
+ok 7 - dependencies and parent pause suppress execution without changing child facts; independent steps continue
+  ---
+  duration_ms: 103.1859
+  type: 'test'
+  ...
+# Subtest: claims are independent of writer lease and bind revisions/runtime/epoch; expired unresolved claims need reconciliation
+ok 8 - claims are independent of writer lease and bind revisions/runtime/epoch; expired unresolved claims need reconciliation
+  ---
+  duration_ms: 58.2842
+  type: 'test'
+  ...
+# Subtest: manual handoff retains original plan and external authorship; partial/late events never auto-resume cancelled plan
+ok 9 - manual handoff retains original plan and external authorship; partial/late events never auto-resume cancelled plan
+  ---
+  duration_ms: 213.5785
+  type: 'test'
+  ...
+# Subtest: time waits retain exact offsets/timezone and cannot be satisfied early
+ok 10 - time waits retain exact offsets/timezone and cannot be satisfied early
+  ---
+  duration_ms: 95.0102
+  type: 'test'
+  ...
+# Subtest: addressed generated results and handoff/claim transaction recovery preserve all-or-none state
+ok 11 - addressed generated results and handoff/claim transaction recovery preserve all-or-none state
+  ---
+  duration_ms: 238.9629
+  type: 'test'
+  ...
+# Subtest: ancestor revisions invalidate child claims and parent-goal changes make replies late in the final transaction
+ok 12 - ancestor revisions invalidate child claims and parent-goal changes make replies late in the final transaction
+  ---
+  duration_ms: 76.2664
+  type: 'test'
+  ...
+# Subtest: step addresses cannot collide with internal parent/completion graph nodes
+ok 13 - step addresses cannot collide with internal parent/completion graph nodes
+  ---
+  duration_ms: 41.7543
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2346.3025

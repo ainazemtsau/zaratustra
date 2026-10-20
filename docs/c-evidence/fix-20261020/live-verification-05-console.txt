@@ -1,0 +1,1 @@
+{"verified_attempts": 5, "requests": 41, "estimated_usd": 0.8011364000000001, "assertions": {"preparation_done_uses_original_handoff_no_duplicate_message": true, "separate_response_wait_and_restart_no_database_changes": true, "explicit_reopen_new_pending_wait_old_completion_and_result_exact": true, "later_clarification_satisfies_exact_new_wait_without_new_handoff": true}}

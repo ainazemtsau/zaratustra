@@ -1,0 +1,9 @@
+[codex/zaratustra-v1 14c4e0d] Reconcile handoff step grounds and correct exporter provenance
+ 17 files changed, 5011 insertions(+), 20 deletions(-)
+ create mode 100644 docs/C-PROVENANCE-CORRECTION.md
+ create mode 100644 docs/C-RESULT-0d188eee.md
+ create mode 100644 docs/c-evidence/corrections/export-06-console-completed.txt
+ create mode 100644 docs/c-evidence/history/export-06-console-0d188eee.txt
+ create mode 100644 docs/c-evidence/history/manifest-0d188eee.json
+ create mode 100644 scripts/export-evidence.mjs
+ create mode 100644 tests/evidence.test.ts

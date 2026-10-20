@@ -1,0 +1,332 @@
+Независимое техническое ревью второго блока Zaratustra — 20 октября 2026
+
+Вердикт: PARTIAL только для outcome C (полноценный Work и материалы).
+Прежний пробел живой проверки исправленного EPUB без текста ЗАКРЫТ собственной
+проверкой финального SHA с положительным и смешанным контролями. Остался
+воспроизведённый недостаток связности модельного плана: сохранённая подготовка
+ручного запроса остаётся todo, а после reopen ожидание уточнения не оформлено
+как конкретный pending wait. Это не отказ хранилища и не преждевременное закрытие
+обязательных детей, но полный PASS связности текущего Work этим запуском не доказан.
+Второй результат за владельца не принят. Первый блок уже принят отдельно;
+Direction-OS close, полный R1 и T31 этим отчётом не выполняются.
+
+Проверяемая идентичность:
+
+- Публичный репозиторий: https://github.com/ainazemtsau/zaratustra
+- Ветка codex/zaratustra-v1, точный публичный SHA:
+  0d188eee3d25ac26a24d28b5a363e5c4b75a2e7c.
+- Чистая по конфигурации штатная установка и отдельная обновлённая установка:
+  0d188eee3d25ac26a24d28b5a363e5c4b75a2e7c.
+- Собственный checkout: <CHECKOUT>-c-review-0d188ee.
+- Собственные свидетельства: <C_REVIEW_ROOT>.
+- Windows 11 Pro x64 10.0.26200; Node v22.19.0, npm 11.6.2, Pi 1.3.0;
+  SQLite 3.50.4, WAL. Во всех 10 живых попытках openai-codex/gpt-6.1-sol,
+  thinking medium, новые PID/cwd и пустые in-memory transcripts.
+
+Прочитаны AGENTS.md и три вложенных AGENTS, полная публичная specification-v1.1.html,
+DEVELOPMENT, RESULT, C-VALIDATION, C-CONVERSATIONS, C-ATTEMPTS, REPRODUCE, R1-STATUS;
+также исходный FINAL-READBACK исполнителя и относящиеся к C исходники/диффы/свидетельства.
+Хеш оригинальной спецификации:
+7d3bd88d71dd954949ad33caae38859f9e06c460b8537ed3259780d11668fac4.
+Хеш публичной производной:
+4940e16e39174df941da98889c43b713c48287d4aeda8754fd57660d462a77cb.
+Оба вычислены самостоятельно и совпали с заданными.
+
+Нормальная установка выполнена командой:
+pi install git:github.com/ainazemtsau/zaratustra@0d188eee3d25ac26a24d28b5a363e5c4b75a2e7c
+Использованы отдельные PI_CODING_AGENT_DIR, ZARATUSTRA_HOME, inputs и cwd вне
+checkout/package storage. Обнаружены 7 zara tools, одна extension и две skills,
+без ошибок и ссылок ресурсов на checkout исполнителя. Аутентификация передана
+поддерживаемому Pi ModelRuntime.authPath; credentials вручную не читались и не
+копировались. RPC — доверенный синтетический ingress для теста, не реальный владелец.
+
+Установленное дерево НЕ полностью чистое: M package-lock.json. Ровно шесть удалённых
+peer:true: @typescript-eslint/parser, acorn, eslint, typescript, undici, zod.
+Других отличий 630 tracked файлов от публичного Git нет. Версии/integrity/resolved
+lockfile сохранились; фактические package.json 12 установленных runtime/optional
+пакетов совпали с lock. Основные: pdfjs-dist 6.4.299, yauzl 3.4.0,
+htmlparser2 12.0.0, zod 4.1.12; optional @napi-rs/canvas 1.0.11. Pi/TypeBox — host peers.
+Подробности: identity.json, installed-dependencies.json, resources.json, install.log.
+
+Дельта и применимость прежних свидетельств:
+
+27a74fd -> final: Work-контракты/проверка итогового графа и lifecycle, claims,
+immutable handoffs/replies, generated results, parser workers и библиотеки,
+оригинал/производная/локаторы, schema-1->2 migration; обновлённые инструкции,
+skills, проверки и документы. Дельта сохранена в product-delta.patch.
+55fac403 -> 334c572: ровно parser-worker.mjs, materials.test.ts, c-fixtures.py
+и image-only.epub. В worker добавлено определение blank/image-only chapters:
+unavailable; all-blank -> scanned; mixed -> partial. Core/adapter/другие runtime
+входы не менялись. Независимое повторное сравнение workers: 13 прежних PDF/EPUB
+outputs идентичны, только image-only.epub readable -> scanned.
+334c572 -> final: все 49 продуктовых входов, включая инструкции, manifests,
+scripts, tests, AGENTS и build config, идентичны; добавлены документы/свидетельства.
+См. identity.json и parser-compare/verification.json.
+
+Завершённые наблюдения исполнителя на 55fac403 остаются историческими наблюдениями
+именно этой версии. Их перенос на неизменённые механизмы подкреплён дельтой и
+сравнением 13 outputs, но не переименован в живые наблюдения final. Попытка 20
+исполнителя была прервана до EPUB import и ответа; её нельзя считать PASS.
+Мои 10 попыток выполнены непосредственно на установленном final.
+
+Таблица критериев (M — механика; L — собственный живой Pi/model final):
+
+Критерий                         | M                                  | L
+Идентичность, установка, ресурсы  | PASS, lock exception явно учтён     | PASS, ресурсы работают
+Core/P2/Work/material regressions| PASS: check 33/33, installed 32/32  | create/read/continuation работают
+Граф/refs/зависимости/дети/grounds| PASS: suites + свои контрпримеры    | PASS: дети до родителя
+Guards/claims/final-batch rollback| PASS: свои проверки, реальные SQL  | 4 отказы, затем исправления модели
+Частичный ввод/независимый итог   | PASS                                | PASS: 02–03
+Пауза/отмена/смена цели/late      | PASS                                | PASS: 04–06, отменён шаг опыта
+Завершение и same-ID reopen      | PASS: старое completion точно живо  | PASS: 06–07, rev7 done -> rev8 active
+Связность шагов и ожиданий       | Формальные guards работают          | PARTIAL: review todo; новый wait отсутствует
+Ручной ответ без ID/неоднозначность| PASS: события по hash не сливаются | PASS: 09–10, уточнение названия
+Нетекстовый EPUB                 | PASS, нет readable derivative       | PASS: 01, честное ограничение
+Текстовый/смешанный EPUB         | PASS, section availability/ranges    | PASS: 01 и 08
+PDF/EPUB/TXT/MD оригиналы/диапазоны| PASS: bytes, linked refs, Unicode  | PASS: 01 и 08 после удаления sources
+Два прежних P2                  | PASS: native probe, 0 requests      | Свежий material tail прочитан в 08
+Отзыв во время async parsing    | PASS: native PDF и EPUB, 0 requests | Детерминированная проверка, не model claim
+Upgrade/старый writer/отказ      | PASS: свой наполненный workspace    | Отдельный model-upgrade run не выполнялся
+Гигиена публичных свидетельств  | PARTIAL: 327 derivatives exact; 1 raw log mismatch | Исторические ошибки/abort видимы
+
+Фактические команды проверки:
+
+В собственном checkout: npm ci; npm run check. Check прошёл format, ESLint,
+TypeScript, dependency-cruiser, build и 33/33 tests. Финальный повтор с
+ZARATUSTRA_TEST_ROOT=<review-root>/check-tests также 33/33, git status пуст.
+Логи npm-ci.log, check.log и check-final-isolated.log.
+
+Отдельно npm install --prefix <review-root>/test-tools --no-audit --no-fund tsx@4.20.6.
+В cwd установленного package с ZARATUSTRA_TEST_ROOT=<review-root>/installed-tests:
+<review-root>/test-tools/node_modules/.bin/tsx.cmd --test tests/core.test.ts tests/p2.test.ts tests/work.test.ts tests/materials.test.ts
+Результат 32/32 (Core 10, P2 8, Work 8, materials 6); extension-проверка — в check.
+Лог installed-tests-cwd-retry.log. Два моих неверных запуска сохранены:
+installed-tests.log — 0/32 из-за несуществующего test root;
+installed-tests-retry.log — 27/32 из-за неверного cwd для relative fixtures.
+Это ошибки запуска review, не продуктовые отказы.
+
+Native команды: node <package>/scripts/c-identity.mjs <package> <review-root>/identity.json 334c572691df179cbf37d9a6582e69effc8a4aed;
+node <package>/scripts/resources.mjs;
+node <package>/scripts/p2-probe.mjs <package> <review-root>/p2-native fixed.
+P2: denied_source_reads=0, denied_uuid_calls=0, ни handle/staging/материалов/доменных
+изменений при отказе; есть permitted positive control. Длинный Evidence 8519 code
+points доступен за первым срезом 8000; emoji не разорван, старая revision неизменна.
+
+Свои механические сценарии исполнялись командами node scripts/negative.mjs negative-7,
+node scripts/async-revoke.mjs, node scripts/materials-proof.mjs, node scripts/parser-compare.mjs
+(scripts находятся в review evidence, не в продукте). 22 invariant checks включают:
+трёхузловой parent cycle и step cycle; отсутствующий dependency step и wrong-kind
+parent; запрет done родителя с незавершённым required child; отсутствие grounds;
+update lifecycle/step-result bypass; done шага + pause в одной транзакции;
+stale Work guard, собственный/ancestor/чужой runtime claim; independent step при
+partial wait; pause предка без переписывания ребёнка; stale late reply; отдельные
+event IDs/source refs у одинакового текста; exact old completion после reopen; полную отмену Work, поздний ответ без revival и exact cancellation history после явного reopen.
+При отвергнутых транзакциях сравнивались records/revisions/changes/receipts/claims/
+handoffs. Допустимый prepared intent не выдавался за commit. Сохранены SQL snapshots.
+См. negative-7/verification.json и соседние JSON. Ранние negative*.log сохранены:
+я сначала пропустил guards оснований, неверно ожидал REVISION_CONFLICT вместо
+WORK_IN_USE для stale claim, затем не дал source другому runtime и question wait.
+Финальный harness проходит полностью; продуктовый код не менялся.
+
+Async: настоящие native SDK sessions с установленной extension. В обоих форматах
+зафиксирован online parser worker и незавершённый import через 20 ms; затем native
+setModel отзывает разрешение, без запроса новой модели. result.isError=true,
+source_handle отсутствует, domain неизменен, materials/staging пусты. Ноль запросов
+провайдеру. См. async/verification.json. Heap 256 MiB — лимит old heap worker,
+не OS sandbox и не общий RSS limit.
+
+Нетекстовый EPUB и материалы:
+
+Новые собственные volume-a/b/c имеют нейтральные имена. A содержит только img без
+извлекаемых текстовых узлов, две главы; B — три текстовые главы с Unicode и длинным
+контекстом; C — текстовую первую и image-only вторую. Вопрос 01 — обычная просьба
+сохранить библиотечные материалы и проверить доступность, без требования не создавать
+Work. Модель сама выбрала zara_import/commit/read. Work в этой попытке вообще нет.
+Все 6 оригиналов побайтово равны fixture-masters и content_hash. A: scanned,
+обе sections available:false, text_derivative_ref:null; total_characters=2 — только
+разделители строк, не читаемый текст. Модель сказала: «пустые либо содержат только
+изображения», OCR недоступен, не утверждала доказанное сканирование или прочитанную книгу.
+B: readable, все 3 главы доступны. C: partial, первая доступна, вторая недоступна;
+реальный zara_read locator первой вернул «handle the sample with dry gloves.».
+Чтение unavailable локатора механически отвергнуто, оригинал не выдаётся за текст.
+
+Дополнительно созданы свой PDF из 3 страниц, длинный Markdown и русский TXT.
+После проверки точных originals только собственные копии в inputs удалены;
+fixture-masters сохранены. materials-proof.json доказывает реконструкцию полных
+global и section-relative текстов, Unicode code points, continuation и returned
+locator/section_start/global_start/global_next_start. Производные — отдельные Evidence
+с exact derived_from revision, source_hash и parser/version; одинаковые байты TXT/MD
+могут делить blob, сохраняя отдельную адресность оригинала и производной.
+
+В живой 08 модель ответила по сохранённым копиям:
+PDF page2: бирюзовый шкаф, полка J-64; page3: MAPLE-8527.
+EPUB глава2 OPS/c2.xhtml: янтарный шкафчик V-86, WILLOW-3729.
+Markdown tail: эталонную плитку в ящик T-93.
+Проверены фактические provider payloads: все 7 скрытых фактов отсутствуют в вопросах,
+snapshot/карточках и всех предыдущих requests. Первое появление — function_call_output
+реального zara_read в шестом request попытки 08. Последующая формулировка модели не
+подменяет это доказательство. EPUB range [8000,12451) внутри chapter2 соответствует
+global [22700,27151); PDF page2 [8000,11055) -> global [18996,22051);
+page3 [8000,11032) -> [30051,33083); Markdown [16684,17684).
+Везде returned locator, ref revision 1, code-point boundaries и текст совпали.
+См. live-verification.json. Мой первый Python-verifier нормализовал CRLF при read_text;
+исправлен на decode точных bytes, обе попытки в verify-live-08*.log.
+
+Собственные живые разговоры на final (полные prompts/responses в CONVERSATIONS.txt,
+raw events/provider-requests/summary/startup/resources в соответствующих live-*):
+
+01: библиотека шести материалов, EPUB A/B/C; 7 requests; $0.11185960; без tool errors.
+02: новый проект дождемера, два required child, partial input, независимая сохранённая
+    этикетка, зависимости и один prepared_not_sent handoff; 13; $0.25621120; 1 error.
+03: новый процесс получает частичный внешний ответ; source part2 и title ещё ждут;
+    этикетка/запрос не дублируются; 8; $0.15996920; 1 error.
+04: pause и новая сухая цель; trial cancelled, required:false, последствия в плане;
+    оба child rows точно прежние; 4; $0.07662280; без errors.
+05: late title + устаревшие 200 мл; ответ и полезный title сохранены, пауза остаётся,
+    trial не восстановлен; 7; $0.12563960; без errors.
+06: явное resume, part2, четыре заданных пункта; сохранена памятка, verification child
+    done rev3, safety child done rev3, родитель done rev7 с pinned grounds; 15;
+    $0.46301640; 2 errors, затем исправления модели.
+07: явный same-ID reopen; родитель active rev8, completion:null; exact rev7 done и
+    прежняя памятка остаются в revisions; 4; $0.08854320; без errors.
+08: managed PDF/EPUB/Markdown после удаления inputs; 6; $0.12122000; без errors.
+09: две независимые проверки одинаковой фразы для «Термометр»/«Весы», два handoffs,
+    ничего не отправлено; 6; $0.11995560; без errors.
+10: внешний ответ без ID/названия; модель просит выбрать «Весы» или «Термометр»;
+    вся database равна 09, guessed binding отсутствует; 3; $0.05598520; без errors.
+
+Четыре фактические ошибки модели, все сохранены:
+02 — whole Work waiting при доступном независимом шаге; отказ INVALID_TRANSITION.
+03 — partial reply + изменение final plan требовало late/unrelated disposition.
+06 — claim при paused/closed Activity; затем попытка закрыть Activity в одной
+транзакции с managed execution, которую final guard отверг. Модель исправила порядок.
+Отвергнутые calls не дали ложных receipts. Итог: 18 Changes и 18 committed receipts,
+32 records/50 revisions, плюс 3 prepared intents от отказов, не commits.
+
+Артефакт 06 (сохранённый результат):
+Шкала без ошибки
+1. Работай с сухими руками. Не используй треснувший сосуд.
+2. Установи сосуд вертикально на ровной поверхности.
+3. Смотри на шкалу на уровне глаз; не считывай показание сверху.
+4. Читай показание по нижнему краю мениска и записывай его в миллиметрах.
+Опыт не объявлен проведённым. Первая часть, вторая часть, внешний ответ, safety
+result, verification result и final result имеют реальные Evidence/receipt связи.
+
+Независимый upgrade:
+
+В upgrade-agent штатно установлен 27a74fdb9e7bd826f07a9c9f1e2e3775d54f5c1f.
+Мой scripts/upgrade.mjs seed создал новый небольшой workspace с другим содержимым:
+4 records, 5 revisions, 2 Changes/intents/receipts; оригинальные русские строки,
+UTF-8 BOM/CRLF/emoji/combining marks, длинный Markdown, две Work revisions.
+Это явно механическая подготовка, не модельное сохранение.
+Затем в этой конфигурации выполнен тот же pi install final. Verify сравнил ВСЕ
+старые столбцы/исходные JSON strings, IDs, revisions, Changes, receipts, intents,
+workspace_id/epoch и blobs; exact replay старого receipt и range tail сохранились.
+Schema стала 2; integrity ok, WAL, migration receipt и backup присутствуют.
+Отдельный штатно установленный old-reader 27a74fd отверг schema2 без domain writes.
+На отдельной закрытой копии введён fault before_schema_commit: DDL rollback,
+все исходные rows/blobs/manifest exact, user_version=1, новой claims table нет.
+Другой own clone с временно переименованной sqlite отверг manifest/database mismatch
+и не создал заменяющую пустую базу; оригинальная sqlite сохранена.
+См. upgrade-proof/{before,after,fault,old-reject}.json и upgrade-*.log.
+
+Архитектура/парсеры/зависимости:
+
+Core и Storage не импортируют Pi/TypeBox, extension использует public index.ts;
+проверка dependency graph прошла. Семантического planner/переводчика/своего model loop
+в дельте нет: граф/lifecycle/claims — структурные guards, смысл и выбор tools у модели.
+Механизмы относятся к утверждённому scope: claims отличают выполнение от writer lease,
+handoff snapshot сохраняет исходный план, extraction отделяет текст от бинарного
+оригинала, schema bump защищает от старого writer. Полный effects/approvals framework
+в scope не добавлен. Общие Concept/Entity/FTS, Methods/Runs/Evaluations/Signals,
+backup/restore/archive, Codex и Sleep остались последующими этапами.
+
+Worker получает bytes, не source path; ZIP не распаковывается в filesystem; unsafe,
+duplicate, absolute/traversal paths и custom entities отвергаются. Ограничения:
+TXT/MD 1 MiB; PDF/EPUB 64 MiB; 2000 pages/chapters, 10000 ZIP entries, 16 MiB entry,
+128 MiB expanded, 8M code points, 45 sec, 256 MiB old heap. PDF eval/WASM/system-font
+загрузки отключены; fetch в worker запрещён, EPUB scripts/styles не исполняются.
+Suite проверяет encrypted/damaged/unsafe/remote/partial/limit fixtures. Внешнего
+fetch/exec пути из обработанного материала не обнаружено; не делаю OS sandbox claim.
+Complex layouts/OCR/DRM/нестандартные форматы честно ограничены, оригиналы сохранены.
+
+npm audit --omit=dev --json: 0. Полный npm audit: 9 high nodes одного retained
+braces advisory GHSA-vfj7-8cjw-p6xm (официальный gh api перечитан). Конкретный dev
+путь: typescript-eslint 8.46.2 -> typescript-estree -> fast-glob 3.3.3 -> micromatch
+4.0.8 -> braces 3.0.3. Stack-exhaustion DoS от deeply nested patterns остаётся
+отдельным замечанием; зависимости не обновлялись. Пути PDF/EPUB -> braces не найдено.
+Runtime audit=0 не является аудитом всего Pi-host или отсутствием любых уязвимостей.
+
+Замечания по серьёзности:
+
+1. MEDIUM, живое модельное планирование, незакрыто.
+   Место: Work work-cd59d3a4-5873-4364-8dad-f8c6739b1988, steps[review], rev1–8;
+   итоговые rows в live-06/summary.json и live-07/summary.json, сокращение/refs в
+   live-verification.json. Формальные optional-step правила — src/core/work.ts:237;
+   это разрешённое Core состояние, а не обход required-child/grounds.
+   Воспроизведение: разговоры 02 -> 03 -> 04 -> 05 -> 06 -> 07 из собственного набора.
+   Ожидание: уже подготовленный запрос связан с завершённым шагом; после явного reopen
+   ради будущего уточнения — конкретный pending wait, без новой доступной подготовки.
+   Факт: review required:false всё ещё todo/result_refs:[] после подготовки и двух
+   сохранённых частей ответа; в rev8 next_action='Await ... clarification ...', но
+   единственный wait — старый external-review со status:satisfied. Work active.
+   Последствие: план показывает уже сделанную подготовку доступной и не отражает
+   настоящее новое ожидание. Safety-parent todo из ранних попыток исправлен в 06,
+   review todo не исправлен даже после просьбы сверить сохранённые результаты.
+   Фактического повторного handoff/отправки/потери данных нет. Надёжность автоматической
+   дальнейшей сверки без дополнительного уточнения не доказана; лимит попыток достигнут.
+
+2. LOW, provenance manifest служебного лога.
+   Место docs/c-evidence/manifest.json, entry export-06-console.txt.
+   Воспроизведение: сравнить original_sha256/bytes с текущим исходным файлом в evidence
+   исполнителя. Manifest и public derivative говорят 0 bytes / SHA256 empty;
+   нынешний raw original — 56 bytes, JSON о 327 exported files. Expected — исходный
+   хеш совпадает либо явно зафиксированная версия служебного лога. Actual — не совпадает.
+   Вероятное объяснение: stdout текущего экспорта попал в набор до завершения команды.
+   Остальные 326 originals exact; все 327 derivatives exact, преобразования остальных
+   воспроизведены независимо. Публичная производная этого лога пустая; продуктовые
+   выводы и истории этим расхождением не опровергаются. См. evidence-audit.json.
+
+3. Отдельное retained HIGH advisory braces (выше); нового блокирующего продуктового
+   пути к нему не обнаружено. Установленный lockfile exception — раскрытая особенность
+   штатного Pi/npm, не скрытое обновление версий.
+
+Гигиена свидетельств проверена независимо: 327 производных SHA совпали, JSON/JSONL/gzip
+валидны, redaction/пересериализация/LF/gzip преобразования воспроизведены для 326 файлов;
+одна указанная self-log exception. Проверки шаблонов не нашли личного user path,
+credential key или reasoning blocks в опубликованных JSON. Это не доказательство
+идеального secret detection. Все 20 прежних попыток, 6 прежних validator errors,
+planning reconciliation, RED/GREEN и budget-aborted 20 сохранены видимыми.
+Мой initial evidence-audit пропустил четыре дополнительных path replacements;
+исправленный аудит учёл их, initial/retry logs сохранены. Ledger исполнителя совпадает
+с FINAL-READBACK SHA и не изменён. Собственные raw logs локальны и не публиковались.
+
+Бюджет и точный остаток:
+
+10/10 разговорных попыток, 73/80 provider requests, Pi estimate $1.5790228/$8;
+input 1,074,608 (в том числе cache_read 419,328), output 22,653.
+Остановка по первому пределу — количество попыток. Все 10 settled, без live timeouts
+и budget-aborted model calls. Механические probes: 0 model requests. Реальный счёт
+подписки/работы reviewer неизвестен, оценка Pi не подменяет его.
+
+Не выполнены последующая попытка исправления оставшегося review todo/new wait и живая
+привязка уточнённого ответа после вопроса 10. Последняя граница проверена механически
+и историческими наблюдениями исполнителя, но не новым живым ответом в моём бюджете.
+Не выполнялся полный повтор всех исторических сценариев на final, отдельный live
+upgrade-story, все платформы/форматы вне профиля, полный R1/T31/owner acceptance.
+Ни один такой остаток не объявлен PASS. Новый сквозной случай и обязательная живая
+проверка исправленного EPUB на final фактически выполнены.
+
+Код, авторские тесты, прежние свидетельства, личные данные/установки и Direction OS
+не редактировались. В собственном checkout только npm dependencies/build artifacts;
+tracked tree чист. Commit/push, subagents и запуск следующих заданий/чатов не делались.
+
+Ключевые собственные свидетельства:
+identity.json; installed-dependencies.json; resources.json; rubric.json; fixtures.json;
+check-final-isolated.log; installed-tests-cwd-retry.log; negative-7/verification.json;
+p2-native/{adapter-results,core-results}.json; async/verification.json;
+parser-compare/verification.json; materials-proof.json; upgrade-proof/*.json;
+live-verification.json; CONVERSATIONS.txt; live-*/{events,provider-requests}.jsonl;
+live-*/summary.json; evidence-audit.json; budget.json; COMMANDS.txt; scripts/*.
+
+next: solmax

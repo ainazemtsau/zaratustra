@@ -1,0 +1,8 @@
+{
+  "all_327_current_raw_hashes_match": true,
+  "all_327_public_derivatives_match": true,
+  "old_manifest_exact_public_git_blob": true,
+  "historical_empty_derivative_preserved": true,
+  "historical_empty_raw_unavailable": true,
+  "closed_ledgers_and_reviewer_inputs_unchanged": true
+}

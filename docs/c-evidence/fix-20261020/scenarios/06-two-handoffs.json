@@ -1,0 +1,9 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\candidate-config",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\ambiguity-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-06",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\06-two-handoffs",
+  "prompt": "Есть две отдельные карточки: «Лампа» и «Компас». В обеих один черновик: «Записывай наблюдение отдельно от объяснения». Для каждой нужен свой внешний разбор: понятна ли формулировка и нужна ли правка. Подготовь по отдельному сообщению для ручного переноса в другие чаты; пока будем ждать ответы. Сам ничего не отправляй. Общаемся по-русски.",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\live-budget.json",
+  "importRoots": []
+}

@@ -1,0 +1,9 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\candidate-config",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\live-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-03",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\03-complete",
+  "prompt": "Для «Тихого архива» принёс ответ из другого чата: «Формулировка понятна. Предлагаю заголовок “Наблюдение и объяснение”. Во втором предложении лучше написать: “Если подтверждений мало, считай объяснение предположением”». Возьми этот заголовок и правку, сохрани окончательную карточку. На этом эту работу можно закончить.",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\live-budget.json",
+  "importRoots": []
+}

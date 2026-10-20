@@ -1,0 +1,215 @@
+{
+  "response": "К какой карточке относится ответ — «Компас» или «Лампа»? Для обеих запрашивалась одинаковая проверка, поэтому без уточнения нельзя надёжно выбрать карточку.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "database": {
+    "records": [
+      {
+        "id": "evidence-70ace047-9631-486d-9393-3efaa0e03f38",
+        "kind": "evidence",
+        "activity_id": null,
+        "json": "{\"id\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\",\"kind\":\"evidence\",\"title\":\"Mechanical pair fixture source\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T03:50:18.616Z\",\"updated_at\":\"2026-10-20T03:50:18.616Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\",\"captured_at\":\"2026-10-20T03:50:18.606Z\",\"content_hash\":\"72cbec60173a412907f74c0bb842e57887335b3c28e03b8a617be85c755c68ce\",\"retained_excerpt\":\"Synthetic fixture: two distinct card review requests, Лампа and Компас, each prepared but not sent. No reply has arrived.\",\"blob_ref\":null,\"byte_length\":132,\"availability\":\"retained\",\"source_language\":\"en\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\",\"content_hash\":\"72cbec60173a412907f74c0bb842e57887335b3c28e03b8a617be85c755c68ce\",\"transport\":\"rpc\",\"channel_identity\":\"trusted-synthetic-fixture\",\"session_id\":\"mechanical-pair-fixture\",\"runtime_id\":\"mechanical-pair-fixture\",\"captured_at\":\"2026-10-20T03:50:18.606Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":132},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0",
+        "kind": "work",
+        "activity_id": null,
+        "json": "{\"id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\",\"kind\":\"work\",\"title\":\"Review the Лампа card\",\"body\":null,\"revision\":2,\"created_at\":\"2026-10-20T03:50:18.623Z\",\"updated_at\":\"2026-10-20T03:50:18.644Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Obtain a separate clarity review of the Лампа card\",\"acceptance\":[{\"criterion_id\":\"review\",\"description\":\"Review reply received for this card\",\"verification\":\"Inspect addressed external Evidence\",\"required\":true}],\"status\":\"waiting\",\"current_state\":\"Preparation done; await this card review\",\"next_action\":\"Prepare the message without sending\",\"steps\":[{\"step_id\":\"prepare\",\"intent\":\"Prepare a manual review request; send nothing\",\"status\":\"done\",\"depends_on\":[],\"required\":false,\"result_refs\":[{\"id\":\"handoff-3ccc2b96-a283-4476-a68f-f60061eec350\"}]},{\"step_id\":\"review\",\"intent\":\"Receive and inspect the external clarity review\",\"status\":\"waiting\",\"depends_on\":[{\"step_id\":\"prepare\"}],\"result_refs\":[]}],\"waits\":[{\"wait_id\":\"external-review\",\"kind\":\"external_result\",\"target\":{\"step_id\":\"review\"},\"subject\":\"Separate review for Лампа\",\"satisfied_by\":\"Clarity assessment and any needed correction are received\",\"received_refs\":[],\"question\":\"What is the separate review for this card?\",\"status\":\"pending\"}],\"context_refs\":[{\"id\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\"}],\"completion\":null,\"plan_version\":1,\"cancellation\":null}}"
+      },
+      {
+        "id": "work-1331d488-4402-4ba8-9d29-fb3e0e505cac",
+        "kind": "work",
+        "activity_id": null,
+        "json": "{\"id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\",\"kind\":\"work\",\"title\":\"Review the Компас card\",\"body\":null,\"revision\":2,\"created_at\":\"2026-10-20T03:50:18.650Z\",\"updated_at\":\"2026-10-20T03:50:18.667Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Obtain a separate clarity review of the Компас card\",\"acceptance\":[{\"criterion_id\":\"review\",\"description\":\"Review reply received for this card\",\"verification\":\"Inspect addressed external Evidence\",\"required\":true}],\"status\":\"waiting\",\"current_state\":\"Preparation done; await this card review\",\"next_action\":\"Prepare the message without sending\",\"steps\":[{\"step_id\":\"prepare\",\"intent\":\"Prepare a manual review request; send nothing\",\"status\":\"done\",\"depends_on\":[],\"required\":false,\"result_refs\":[{\"id\":\"handoff-0a26d24a-629b-4578-a951-ac3c1615ddc5\"}]},{\"step_id\":\"review\",\"intent\":\"Receive and inspect the external clarity review\",\"status\":\"waiting\",\"depends_on\":[{\"step_id\":\"prepare\"}],\"result_refs\":[]}],\"waits\":[{\"wait_id\":\"external-review\",\"kind\":\"external_result\",\"target\":{\"step_id\":\"review\"},\"subject\":\"Separate review for Компас\",\"satisfied_by\":\"Clarity assessment and any needed correction are received\",\"received_refs\":[],\"question\":\"What is the separate review for this card?\",\"status\":\"pending\"}],\"context_refs\":[{\"id\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\"}],\"completion\":null,\"plan_version\":1,\"cancellation\":null}}"
+      }
+    ],
+    "revisions": [
+      {
+        "id": "evidence-70ace047-9631-486d-9393-3efaa0e03f38",
+        "revision": 1,
+        "json": "{\"id\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\",\"kind\":\"evidence\",\"title\":\"Mechanical pair fixture source\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T03:50:18.616Z\",\"updated_at\":\"2026-10-20T03:50:18.616Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\",\"captured_at\":\"2026-10-20T03:50:18.606Z\",\"content_hash\":\"72cbec60173a412907f74c0bb842e57887335b3c28e03b8a617be85c755c68ce\",\"retained_excerpt\":\"Synthetic fixture: two distinct card review requests, Лампа and Компас, each prepared but not sent. No reply has arrived.\",\"blob_ref\":null,\"byte_length\":132,\"availability\":\"retained\",\"source_language\":\"en\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\",\"content_hash\":\"72cbec60173a412907f74c0bb842e57887335b3c28e03b8a617be85c755c68ce\",\"transport\":\"rpc\",\"channel_identity\":\"trusted-synthetic-fixture\",\"session_id\":\"mechanical-pair-fixture\",\"runtime_id\":\"mechanical-pair-fixture\",\"captured_at\":\"2026-10-20T03:50:18.606Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":132},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0",
+        "revision": 1,
+        "json": "{\"id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\",\"kind\":\"work\",\"title\":\"Review the Лампа card\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T03:50:18.623Z\",\"updated_at\":\"2026-10-20T03:50:18.623Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Obtain a separate clarity review of the Лампа card\",\"acceptance\":[{\"criterion_id\":\"review\",\"description\":\"Review reply received for this card\",\"verification\":\"Inspect addressed external Evidence\",\"required\":true}],\"status\":\"active\",\"current_state\":\"Prepare a manual request\",\"next_action\":\"Prepare the message without sending\",\"steps\":[{\"step_id\":\"prepare\",\"intent\":\"Prepare a manual review request; send nothing\",\"status\":\"todo\",\"depends_on\":[],\"required\":false,\"result_refs\":[]},{\"step_id\":\"review\",\"intent\":\"Receive and inspect the external clarity review\",\"status\":\"todo\",\"depends_on\":[{\"step_id\":\"prepare\"}],\"result_refs\":[]}],\"waits\":[{\"wait_id\":\"external-review\",\"kind\":\"external_result\",\"target\":{\"step_id\":\"review\"},\"subject\":\"Separate review for Лампа\",\"satisfied_by\":\"Clarity assessment and any needed correction are received\",\"received_refs\":[],\"question\":\"What is the separate review for this card?\",\"status\":\"pending\"}],\"context_refs\":[{\"id\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\"}],\"completion\":null,\"plan_version\":1}}"
+      },
+      {
+        "id": "work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0",
+        "revision": 2,
+        "json": "{\"id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\",\"kind\":\"work\",\"title\":\"Review the Лампа card\",\"body\":null,\"revision\":2,\"created_at\":\"2026-10-20T03:50:18.623Z\",\"updated_at\":\"2026-10-20T03:50:18.644Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Obtain a separate clarity review of the Лампа card\",\"acceptance\":[{\"criterion_id\":\"review\",\"description\":\"Review reply received for this card\",\"verification\":\"Inspect addressed external Evidence\",\"required\":true}],\"status\":\"waiting\",\"current_state\":\"Preparation done; await this card review\",\"next_action\":\"Prepare the message without sending\",\"steps\":[{\"step_id\":\"prepare\",\"intent\":\"Prepare a manual review request; send nothing\",\"status\":\"done\",\"depends_on\":[],\"required\":false,\"result_refs\":[{\"id\":\"handoff-3ccc2b96-a283-4476-a68f-f60061eec350\"}]},{\"step_id\":\"review\",\"intent\":\"Receive and inspect the external clarity review\",\"status\":\"waiting\",\"depends_on\":[{\"step_id\":\"prepare\"}],\"result_refs\":[]}],\"waits\":[{\"wait_id\":\"external-review\",\"kind\":\"external_result\",\"target\":{\"step_id\":\"review\"},\"subject\":\"Separate review for Лампа\",\"satisfied_by\":\"Clarity assessment and any needed correction are received\",\"received_refs\":[],\"question\":\"What is the separate review for this card?\",\"status\":\"pending\"}],\"context_refs\":[{\"id\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\"}],\"completion\":null,\"plan_version\":1,\"cancellation\":null}}"
+      },
+      {
+        "id": "work-1331d488-4402-4ba8-9d29-fb3e0e505cac",
+        "revision": 1,
+        "json": "{\"id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\",\"kind\":\"work\",\"title\":\"Review the Компас card\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T03:50:18.650Z\",\"updated_at\":\"2026-10-20T03:50:18.650Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Obtain a separate clarity review of the Компас card\",\"acceptance\":[{\"criterion_id\":\"review\",\"description\":\"Review reply received for this card\",\"verification\":\"Inspect addressed external Evidence\",\"required\":true}],\"status\":\"active\",\"current_state\":\"Prepare a manual request\",\"next_action\":\"Prepare the message without sending\",\"steps\":[{\"step_id\":\"prepare\",\"intent\":\"Prepare a manual review request; send nothing\",\"status\":\"todo\",\"depends_on\":[],\"required\":false,\"result_refs\":[]},{\"step_id\":\"review\",\"intent\":\"Receive and inspect the external clarity review\",\"status\":\"todo\",\"depends_on\":[{\"step_id\":\"prepare\"}],\"result_refs\":[]}],\"waits\":[{\"wait_id\":\"external-review\",\"kind\":\"external_result\",\"target\":{\"step_id\":\"review\"},\"subject\":\"Separate review for Компас\",\"satisfied_by\":\"Clarity assessment and any needed correction are received\",\"received_refs\":[],\"question\":\"What is the separate review for this card?\",\"status\":\"pending\"}],\"context_refs\":[{\"id\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\"}],\"completion\":null,\"plan_version\":1}}"
+      },
+      {
+        "id": "work-1331d488-4402-4ba8-9d29-fb3e0e505cac",
+        "revision": 2,
+        "json": "{\"id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\",\"kind\":\"work\",\"title\":\"Review the Компас card\",\"body\":null,\"revision\":2,\"created_at\":\"2026-10-20T03:50:18.650Z\",\"updated_at\":\"2026-10-20T03:50:18.667Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Obtain a separate clarity review of the Компас card\",\"acceptance\":[{\"criterion_id\":\"review\",\"description\":\"Review reply received for this card\",\"verification\":\"Inspect addressed external Evidence\",\"required\":true}],\"status\":\"waiting\",\"current_state\":\"Preparation done; await this card review\",\"next_action\":\"Prepare the message without sending\",\"steps\":[{\"step_id\":\"prepare\",\"intent\":\"Prepare a manual review request; send nothing\",\"status\":\"done\",\"depends_on\":[],\"required\":false,\"result_refs\":[{\"id\":\"handoff-0a26d24a-629b-4578-a951-ac3c1615ddc5\"}]},{\"step_id\":\"review\",\"intent\":\"Receive and inspect the external clarity review\",\"status\":\"waiting\",\"depends_on\":[{\"step_id\":\"prepare\"}],\"result_refs\":[]}],\"waits\":[{\"wait_id\":\"external-review\",\"kind\":\"external_result\",\"target\":{\"step_id\":\"review\"},\"subject\":\"Separate review for Компас\",\"satisfied_by\":\"Clarity assessment and any needed correction are received\",\"received_refs\":[],\"question\":\"What is the separate review for this card?\",\"status\":\"pending\"}],\"context_refs\":[{\"id\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\"}],\"completion\":null,\"plan_version\":1,\"cancellation\":null}}"
+      }
+    ],
+    "changes": [
+      {
+        "seq": 1,
+        "json": "{\"transaction_id\":\"txn-7c98574b-5853-445a-b36f-01383b624eba\",\"request_id\":\"pair-1\",\"change_seq\":1,\"changed_refs\":[{\"id\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\",\"before_revision\":null,\"after_revision\":1}],\"actor\":\"trusted-personal\",\"session_id\":\"mechanical-pair-fixture\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"caused_by\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"recorded_at\":\"2026-10-20T03:50:18.616Z\"}"
+      },
+      {
+        "seq": 2,
+        "json": "{\"transaction_id\":\"txn-228e5c39-07dc-436f-9eb8-8d711601bded\",\"request_id\":\"pair-2\",\"change_seq\":2,\"changed_refs\":[{\"id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\",\"before_revision\":null,\"after_revision\":1}],\"actor\":\"trusted-personal\",\"session_id\":\"mechanical-pair-fixture\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"caused_by\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"recorded_at\":\"2026-10-20T03:50:18.623Z\"}"
+      },
+      {
+        "seq": 3,
+        "json": "{\"transaction_id\":\"txn-0cf7e78d-028b-483b-b353-b1ca09f46783\",\"request_id\":\"pair-3\",\"change_seq\":3,\"changed_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"mechanical-pair-fixture\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"caused_by\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"recorded_at\":\"2026-10-20T03:50:18.634Z\"}"
+      },
+      {
+        "seq": 4,
+        "json": "{\"transaction_id\":\"txn-3f64e8d1-a85f-43b3-9ed7-cd0b4f2397e3\",\"request_id\":\"pair-4\",\"change_seq\":4,\"changed_refs\":[{\"id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\",\"before_revision\":1,\"after_revision\":2}],\"actor\":\"trusted-personal\",\"session_id\":\"mechanical-pair-fixture\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"caused_by\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"recorded_at\":\"2026-10-20T03:50:18.644Z\"}"
+      },
+      {
+        "seq": 5,
+        "json": "{\"transaction_id\":\"txn-14c5a78e-ad51-4fca-ac61-17c657f6771d\",\"request_id\":\"pair-5\",\"change_seq\":5,\"changed_refs\":[{\"id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\",\"before_revision\":null,\"after_revision\":1}],\"actor\":\"trusted-personal\",\"session_id\":\"mechanical-pair-fixture\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"caused_by\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"recorded_at\":\"2026-10-20T03:50:18.650Z\"}"
+      },
+      {
+        "seq": 6,
+        "json": "{\"transaction_id\":\"txn-9b71a763-595e-4f8d-8fd1-543df41ee24e\",\"request_id\":\"pair-6\",\"change_seq\":6,\"changed_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"mechanical-pair-fixture\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"caused_by\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"recorded_at\":\"2026-10-20T03:50:18.658Z\"}"
+      },
+      {
+        "seq": 7,
+        "json": "{\"transaction_id\":\"txn-49e777b5-4584-4281-95b4-fe043baa9701\",\"request_id\":\"pair-7\",\"change_seq\":7,\"changed_refs\":[{\"id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\",\"before_revision\":1,\"after_revision\":2}],\"actor\":\"trusted-personal\",\"session_id\":\"mechanical-pair-fixture\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"caused_by\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"recorded_at\":\"2026-10-20T03:50:18.666Z\"}"
+      }
+    ],
+    "intents": [
+      {
+        "request_id": "pair-1",
+        "hash": "a3863c735449f376073f5bf7c5ea6d14f3f8c0d3732a7a632701efeb14ffda85",
+        "json": "{\"request_id\":\"pair-1\",\"operation_digest\":\"a3863c735449f376073f5bf7c5ea6d14f3f8c0d3732a7a632701efeb14ffda85\",\"source_refs\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"session_id\":\"mechanical-pair-fixture\",\"epoch\":\"f9e3e1d4-ac5a-4ca3-bfed-6a746ce0a105\",\"status\":\"committed\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"payload\":{\"request_id\":\"pair-1\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"source_handles\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"guards\":[],\"claim_tokens\":[],\"ops\":[{\"op\":\"import_evidence\",\"client_ref\":\"input\",\"source_handle\":\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\",\"title\":\"Mechanical pair fixture source\",\"source_language\":\"en\"}]},\"receipt\":{\"ok\":true,\"request_id\":\"pair-1\",\"workspace_id\":\"03ad784b-288c-4a18-9fa3-f99eef97baef\",\"schema_version\":2,\"snapshot_seq\":1,\"transaction_id\":\"txn-7c98574b-5853-445a-b36f-01383b624eba\",\"committed\":true,\"created\":{\"input\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\"},\"new_revisions\":{\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "pair-2",
+        "hash": "5f10de9082f54cd86a73c73f0ef35c5cf76d5deedc5c9f60425a150a87983b45",
+        "json": "{\"request_id\":\"pair-2\",\"operation_digest\":\"5f10de9082f54cd86a73c73f0ef35c5cf76d5deedc5c9f60425a150a87983b45\",\"source_refs\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"session_id\":\"mechanical-pair-fixture\",\"epoch\":\"f9e3e1d4-ac5a-4ca3-bfed-6a746ce0a105\",\"status\":\"committed\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"payload\":{\"request_id\":\"pair-2\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"source_handles\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"guards\":[],\"claim_tokens\":[],\"ops\":[{\"op\":\"create_record\",\"client_ref\":\"w\",\"title\":\"Review the Лампа card\",\"visibility\":\"workspace\",\"kind\":\"work\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Obtain a separate clarity review of the Лампа card\",\"acceptance\":[{\"criterion_id\":\"review\",\"description\":\"Review reply received for this card\",\"verification\":\"Inspect addressed external Evidence\",\"required\":true}],\"status\":\"active\",\"current_state\":\"Prepare a manual request\",\"next_action\":\"Prepare the message without sending\",\"steps\":[{\"step_id\":\"prepare\",\"intent\":\"Prepare a manual review request; send nothing\",\"status\":\"todo\",\"depends_on\":[],\"required\":false,\"result_refs\":[]},{\"step_id\":\"review\",\"intent\":\"Receive and inspect the external clarity review\",\"status\":\"todo\",\"depends_on\":[{\"step_id\":\"prepare\"}],\"result_refs\":[]}],\"waits\":[{\"wait_id\":\"external-review\",\"kind\":\"external_result\",\"target\":{\"step_id\":\"review\"},\"subject\":\"Separate review for Лампа\",\"satisfied_by\":\"Clarity assessment and any needed correction are received\",\"received_refs\":[],\"question\":\"What is the separate review for this card?\",\"status\":\"pending\"}],\"context_refs\":[{\"id\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\"}],\"completion\":null}}]},\"receipt\":{\"ok\":true,\"request_id\":\"pair-2\",\"workspace_id\":\"03ad784b-288c-4a18-9fa3-f99eef97baef\",\"schema_version\":2,\"snapshot_seq\":2,\"transaction_id\":\"txn-228e5c39-07dc-436f-9eb8-8d711601bded\",\"committed\":true,\"created\":{\"w\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\"},\"new_revisions\":{\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "pair-3",
+        "hash": "23e98f1cc34b6dd85daaf47a5535459158722e39b25222ccaf774a12369bcb82",
+        "json": "{\"request_id\":\"pair-3\",\"operation_digest\":\"23e98f1cc34b6dd85daaf47a5535459158722e39b25222ccaf774a12369bcb82\",\"source_refs\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"session_id\":\"mechanical-pair-fixture\",\"epoch\":\"f9e3e1d4-ac5a-4ca3-bfed-6a746ce0a105\",\"status\":\"committed\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"payload\":{\"request_id\":\"pair-3\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"source_handles\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"guards\":[{\"ref\":{\"id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\"},\"expected_revision\":1}],\"claim_tokens\":[\"claim-5b34721e-146c-4e11-b817-685f6bb160a0\"],\"ops\":[{\"op\":\"prepare_handoff\",\"client_ref\":\"h\",\"work_ref\":{\"id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\"},\"step_id\":\"prepare\",\"objective\":\"Review the Лампа card\",\"conditions\":\"Manual transfer only; not sent\",\"expected_result\":\"Clarity and needed correction\",\"context_refs\":[{\"id\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\"}],\"message\":\"Проверь карточку «Лампа»: «Записывай наблюдение отдельно от объяснения». Понятна ли формулировка и нужна ли правка?\"}]},\"receipt\":{\"ok\":true,\"request_id\":\"pair-3\",\"workspace_id\":\"03ad784b-288c-4a18-9fa3-f99eef97baef\",\"schema_version\":2,\"snapshot_seq\":3,\"transaction_id\":\"txn-0cf7e78d-028b-483b-b353-b1ca09f46783\",\"committed\":true,\"created\":{\"h\":\"handoff-3ccc2b96-a283-4476-a68f-f60061eec350\"},\"new_revisions\":{},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "pair-4",
+        "hash": "d52d474e27d859ff8b8106e1bcce4bc9be9ca1583958955ea379e67a38f09898",
+        "json": "{\"request_id\":\"pair-4\",\"operation_digest\":\"d52d474e27d859ff8b8106e1bcce4bc9be9ca1583958955ea379e67a38f09898\",\"source_refs\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"session_id\":\"mechanical-pair-fixture\",\"epoch\":\"f9e3e1d4-ac5a-4ca3-bfed-6a746ce0a105\",\"status\":\"committed\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"payload\":{\"request_id\":\"pair-4\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"source_handles\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"guards\":[{\"ref\":{\"id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\"},\"expected_revision\":1}],\"claim_tokens\":[\"claim-09734a77-1c13-4053-aeea-cd246cbd03fb\"],\"ops\":[{\"op\":\"transition_step\",\"ref\":{\"id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\"},\"step_id\":\"prepare\",\"status\":\"done\",\"reason\":\"Saved request reused, not sent\",\"result_refs\":[{\"id\":\"handoff-3ccc2b96-a283-4476-a68f-f60061eec350\"}]},{\"op\":\"transition_step\",\"ref\":{\"id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\"},\"step_id\":\"review\",\"status\":\"waiting\",\"reason\":\"Separate external response missing\"},{\"op\":\"transition_work\",\"ref\":{\"id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\"},\"status\":\"waiting\",\"reason\":\"Preparation done; await this card review\"}]},\"receipt\":{\"ok\":true,\"request_id\":\"pair-4\",\"workspace_id\":\"03ad784b-288c-4a18-9fa3-f99eef97baef\",\"schema_version\":2,\"snapshot_seq\":4,\"transaction_id\":\"txn-3f64e8d1-a85f-43b3-9ed7-cd0b4f2397e3\",\"committed\":true,\"created\":{},\"new_revisions\":{\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\":2},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "pair-5",
+        "hash": "b44155d1cdc02b515dfe8556a5ec170df4887739defdd36cf574a3645ad98130",
+        "json": "{\"request_id\":\"pair-5\",\"operation_digest\":\"b44155d1cdc02b515dfe8556a5ec170df4887739defdd36cf574a3645ad98130\",\"source_refs\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"session_id\":\"mechanical-pair-fixture\",\"epoch\":\"f9e3e1d4-ac5a-4ca3-bfed-6a746ce0a105\",\"status\":\"committed\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"payload\":{\"request_id\":\"pair-5\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"source_handles\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"guards\":[],\"claim_tokens\":[],\"ops\":[{\"op\":\"create_record\",\"client_ref\":\"w\",\"title\":\"Review the Компас card\",\"visibility\":\"workspace\",\"kind\":\"work\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Obtain a separate clarity review of the Компас card\",\"acceptance\":[{\"criterion_id\":\"review\",\"description\":\"Review reply received for this card\",\"verification\":\"Inspect addressed external Evidence\",\"required\":true}],\"status\":\"active\",\"current_state\":\"Prepare a manual request\",\"next_action\":\"Prepare the message without sending\",\"steps\":[{\"step_id\":\"prepare\",\"intent\":\"Prepare a manual review request; send nothing\",\"status\":\"todo\",\"depends_on\":[],\"required\":false,\"result_refs\":[]},{\"step_id\":\"review\",\"intent\":\"Receive and inspect the external clarity review\",\"status\":\"todo\",\"depends_on\":[{\"step_id\":\"prepare\"}],\"result_refs\":[]}],\"waits\":[{\"wait_id\":\"external-review\",\"kind\":\"external_result\",\"target\":{\"step_id\":\"review\"},\"subject\":\"Separate review for Компас\",\"satisfied_by\":\"Clarity assessment and any needed correction are received\",\"received_refs\":[],\"question\":\"What is the separate review for this card?\",\"status\":\"pending\"}],\"context_refs\":[{\"id\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\"}],\"completion\":null}}]},\"receipt\":{\"ok\":true,\"request_id\":\"pair-5\",\"workspace_id\":\"03ad784b-288c-4a18-9fa3-f99eef97baef\",\"schema_version\":2,\"snapshot_seq\":5,\"transaction_id\":\"txn-14c5a78e-ad51-4fca-ac61-17c657f6771d\",\"committed\":true,\"created\":{\"w\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\"},\"new_revisions\":{\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "pair-6",
+        "hash": "1fbc2e1e81e411d4182d004d864be0c1b0e6eef45d5d9027f8f5c7b6d6ed2e77",
+        "json": "{\"request_id\":\"pair-6\",\"operation_digest\":\"1fbc2e1e81e411d4182d004d864be0c1b0e6eef45d5d9027f8f5c7b6d6ed2e77\",\"source_refs\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"session_id\":\"mechanical-pair-fixture\",\"epoch\":\"f9e3e1d4-ac5a-4ca3-bfed-6a746ce0a105\",\"status\":\"committed\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"payload\":{\"request_id\":\"pair-6\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"source_handles\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"guards\":[{\"ref\":{\"id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\"},\"expected_revision\":1}],\"claim_tokens\":[\"claim-01232d97-f821-43d3-a713-4d2953a188cd\"],\"ops\":[{\"op\":\"prepare_handoff\",\"client_ref\":\"h\",\"work_ref\":{\"id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\"},\"step_id\":\"prepare\",\"objective\":\"Review the Компас card\",\"conditions\":\"Manual transfer only; not sent\",\"expected_result\":\"Clarity and needed correction\",\"context_refs\":[{\"id\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\"}],\"message\":\"Проверь карточку «Компас»: «Записывай наблюдение отдельно от объяснения». Понятна ли формулировка и нужна ли правка?\"}]},\"receipt\":{\"ok\":true,\"request_id\":\"pair-6\",\"workspace_id\":\"03ad784b-288c-4a18-9fa3-f99eef97baef\",\"schema_version\":2,\"snapshot_seq\":6,\"transaction_id\":\"txn-9b71a763-595e-4f8d-8fd1-543df41ee24e\",\"committed\":true,\"created\":{\"h\":\"handoff-0a26d24a-629b-4578-a951-ac3c1615ddc5\"},\"new_revisions\":{},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "pair-7",
+        "hash": "82bb30afddfa4d260624a949d44360d6660154cfe4fd934ba9bea17ae4c40de9",
+        "json": "{\"request_id\":\"pair-7\",\"operation_digest\":\"82bb30afddfa4d260624a949d44360d6660154cfe4fd934ba9bea17ae4c40de9\",\"source_refs\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"session_id\":\"mechanical-pair-fixture\",\"epoch\":\"f9e3e1d4-ac5a-4ca3-bfed-6a746ce0a105\",\"status\":\"committed\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"payload\":{\"request_id\":\"pair-7\",\"reason\":\"Explicit mechanical setup of two similar prepared requests, not model behavior\",\"source_handles\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"guards\":[{\"ref\":{\"id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\"},\"expected_revision\":1}],\"claim_tokens\":[\"claim-4f3a0441-7081-45f9-b54e-4b659ea3a0ca\"],\"ops\":[{\"op\":\"transition_step\",\"ref\":{\"id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\"},\"step_id\":\"prepare\",\"status\":\"done\",\"reason\":\"Saved request reused, not sent\",\"result_refs\":[{\"id\":\"handoff-0a26d24a-629b-4578-a951-ac3c1615ddc5\"}]},{\"op\":\"transition_step\",\"ref\":{\"id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\"},\"step_id\":\"review\",\"status\":\"waiting\",\"reason\":\"Separate external response missing\"},{\"op\":\"transition_work\",\"ref\":{\"id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\"},\"status\":\"waiting\",\"reason\":\"Preparation done; await this card review\"}]},\"receipt\":{\"ok\":true,\"request_id\":\"pair-7\",\"workspace_id\":\"03ad784b-288c-4a18-9fa3-f99eef97baef\",\"schema_version\":2,\"snapshot_seq\":7,\"transaction_id\":\"txn-49e777b5-4584-4281-95b4-fe043baa9701\",\"committed\":true,\"created\":{},\"new_revisions\":{\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\":2},\"warnings\":[]}}"
+      }
+    ],
+    "receipts": [
+      {
+        "request_id": "pair-1",
+        "hash": "a3863c735449f376073f5bf7c5ea6d14f3f8c0d3732a7a632701efeb14ffda85",
+        "json": "{\"ok\":true,\"request_id\":\"pair-1\",\"workspace_id\":\"03ad784b-288c-4a18-9fa3-f99eef97baef\",\"schema_version\":2,\"snapshot_seq\":1,\"transaction_id\":\"txn-7c98574b-5853-445a-b36f-01383b624eba\",\"committed\":true,\"created\":{\"input\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\"},\"new_revisions\":{\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\":1},\"warnings\":[]}",
+        "bindings": "{\"source-ff4a2c8e-1d91-4da7-a0d5-1492884b0494\":\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"}"
+      },
+      {
+        "request_id": "pair-2",
+        "hash": "5f10de9082f54cd86a73c73f0ef35c5cf76d5deedc5c9f60425a150a87983b45",
+        "json": "{\"ok\":true,\"request_id\":\"pair-2\",\"workspace_id\":\"03ad784b-288c-4a18-9fa3-f99eef97baef\",\"schema_version\":2,\"snapshot_seq\":2,\"transaction_id\":\"txn-228e5c39-07dc-436f-9eb8-8d711601bded\",\"committed\":true,\"created\":{\"w\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\"},\"new_revisions\":{\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\":1},\"warnings\":[]}",
+        "bindings": "{\"source-ff4a2c8e-1d91-4da7-a0d5-1492884b0494\":\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"}"
+      },
+      {
+        "request_id": "pair-3",
+        "hash": "23e98f1cc34b6dd85daaf47a5535459158722e39b25222ccaf774a12369bcb82",
+        "json": "{\"ok\":true,\"request_id\":\"pair-3\",\"workspace_id\":\"03ad784b-288c-4a18-9fa3-f99eef97baef\",\"schema_version\":2,\"snapshot_seq\":3,\"transaction_id\":\"txn-0cf7e78d-028b-483b-b353-b1ca09f46783\",\"committed\":true,\"created\":{\"h\":\"handoff-3ccc2b96-a283-4476-a68f-f60061eec350\"},\"new_revisions\":{},\"warnings\":[]}",
+        "bindings": "{\"source-ff4a2c8e-1d91-4da7-a0d5-1492884b0494\":\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"}"
+      },
+      {
+        "request_id": "pair-4",
+        "hash": "d52d474e27d859ff8b8106e1bcce4bc9be9ca1583958955ea379e67a38f09898",
+        "json": "{\"ok\":true,\"request_id\":\"pair-4\",\"workspace_id\":\"03ad784b-288c-4a18-9fa3-f99eef97baef\",\"schema_version\":2,\"snapshot_seq\":4,\"transaction_id\":\"txn-3f64e8d1-a85f-43b3-9ed7-cd0b4f2397e3\",\"committed\":true,\"created\":{},\"new_revisions\":{\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\":2},\"warnings\":[]}",
+        "bindings": "{\"source-ff4a2c8e-1d91-4da7-a0d5-1492884b0494\":\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"}"
+      },
+      {
+        "request_id": "pair-5",
+        "hash": "b44155d1cdc02b515dfe8556a5ec170df4887739defdd36cf574a3645ad98130",
+        "json": "{\"ok\":true,\"request_id\":\"pair-5\",\"workspace_id\":\"03ad784b-288c-4a18-9fa3-f99eef97baef\",\"schema_version\":2,\"snapshot_seq\":5,\"transaction_id\":\"txn-14c5a78e-ad51-4fca-ac61-17c657f6771d\",\"committed\":true,\"created\":{\"w\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\"},\"new_revisions\":{\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\":1},\"warnings\":[]}",
+        "bindings": "{\"source-ff4a2c8e-1d91-4da7-a0d5-1492884b0494\":\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"}"
+      },
+      {
+        "request_id": "pair-6",
+        "hash": "1fbc2e1e81e411d4182d004d864be0c1b0e6eef45d5d9027f8f5c7b6d6ed2e77",
+        "json": "{\"ok\":true,\"request_id\":\"pair-6\",\"workspace_id\":\"03ad784b-288c-4a18-9fa3-f99eef97baef\",\"schema_version\":2,\"snapshot_seq\":6,\"transaction_id\":\"txn-9b71a763-595e-4f8d-8fd1-543df41ee24e\",\"committed\":true,\"created\":{\"h\":\"handoff-0a26d24a-629b-4578-a951-ac3c1615ddc5\"},\"new_revisions\":{},\"warnings\":[]}",
+        "bindings": "{\"source-ff4a2c8e-1d91-4da7-a0d5-1492884b0494\":\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"}"
+      },
+      {
+        "request_id": "pair-7",
+        "hash": "82bb30afddfa4d260624a949d44360d6660154cfe4fd934ba9bea17ae4c40de9",
+        "json": "{\"ok\":true,\"request_id\":\"pair-7\",\"workspace_id\":\"03ad784b-288c-4a18-9fa3-f99eef97baef\",\"schema_version\":2,\"snapshot_seq\":7,\"transaction_id\":\"txn-49e777b5-4584-4281-95b4-fe043baa9701\",\"committed\":true,\"created\":{},\"new_revisions\":{\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\":2},\"warnings\":[]}",
+        "bindings": "{\"source-ff4a2c8e-1d91-4da7-a0d5-1492884b0494\":\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"}"
+      }
+    ],
+    "claims": [
+      {
+        "token": "claim-5b34721e-146c-4e11-b817-685f6bb160a0",
+        "work_id": "work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0",
+        "json": "{\"token\":\"claim-5b34721e-146c-4e11-b817-685f6bb160a0\",\"work_id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\",\"step_id\":\"prepare\",\"purpose\":\"handoff\",\"expected_revision\":1,\"plan_guards\":[{\"id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\",\"revision\":1}],\"session_id\":\"mechanical-pair-fixture\",\"runtime_id\":\"mechanical-pair-fixture\",\"epoch\":\"f9e3e1d4-ac5a-4ca3-bfed-6a746ce0a105\",\"acquired_at\":\"2026-10-20T03:50:18.627Z\",\"expires_at\":\"2026-10-20T04:05:18.627Z\",\"state\":\"consumed\",\"reason\":\"Local synthetic preparation recording\",\"coverage\":\"Core local Work/step result recording and handoff preparation only; no external dispatch guarantee\",\"receipt_request_id\":\"pair-3\"}"
+      },
+      {
+        "token": "claim-09734a77-1c13-4053-aeea-cd246cbd03fb",
+        "work_id": "work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0",
+        "json": "{\"token\":\"claim-09734a77-1c13-4053-aeea-cd246cbd03fb\",\"work_id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\",\"step_id\":\"prepare\",\"purpose\":\"step\",\"expected_revision\":1,\"plan_guards\":[{\"id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\",\"revision\":1}],\"session_id\":\"mechanical-pair-fixture\",\"runtime_id\":\"mechanical-pair-fixture\",\"epoch\":\"f9e3e1d4-ac5a-4ca3-bfed-6a746ce0a105\",\"acquired_at\":\"2026-10-20T03:50:18.638Z\",\"expires_at\":\"2026-10-20T04:05:18.638Z\",\"state\":\"consumed\",\"reason\":\"Local synthetic preparation recording\",\"coverage\":\"Core local Work/step result recording and handoff preparation only; no external dispatch guarantee\",\"receipt_request_id\":\"pair-4\"}"
+      },
+      {
+        "token": "claim-01232d97-f821-43d3-a713-4d2953a188cd",
+        "work_id": "work-1331d488-4402-4ba8-9d29-fb3e0e505cac",
+        "json": "{\"token\":\"claim-01232d97-f821-43d3-a713-4d2953a188cd\",\"work_id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\",\"step_id\":\"prepare\",\"purpose\":\"handoff\",\"expected_revision\":1,\"plan_guards\":[{\"id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\",\"revision\":1}],\"session_id\":\"mechanical-pair-fixture\",\"runtime_id\":\"mechanical-pair-fixture\",\"epoch\":\"f9e3e1d4-ac5a-4ca3-bfed-6a746ce0a105\",\"acquired_at\":\"2026-10-20T03:50:18.653Z\",\"expires_at\":\"2026-10-20T04:05:18.653Z\",\"state\":\"consumed\",\"reason\":\"Local synthetic preparation recording\",\"coverage\":\"Core local Work/step result recording and handoff preparation only; no external dispatch guarantee\",\"receipt_request_id\":\"pair-6\"}"
+      },
+      {
+        "token": "claim-4f3a0441-7081-45f9-b54e-4b659ea3a0ca",
+        "work_id": "work-1331d488-4402-4ba8-9d29-fb3e0e505cac",
+        "json": "{\"token\":\"claim-4f3a0441-7081-45f9-b54e-4b659ea3a0ca\",\"work_id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\",\"step_id\":\"prepare\",\"purpose\":\"step\",\"expected_revision\":1,\"plan_guards\":[{\"id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\",\"revision\":1}],\"session_id\":\"mechanical-pair-fixture\",\"runtime_id\":\"mechanical-pair-fixture\",\"epoch\":\"f9e3e1d4-ac5a-4ca3-bfed-6a746ce0a105\",\"acquired_at\":\"2026-10-20T03:50:18.661Z\",\"expires_at\":\"2026-10-20T04:05:18.661Z\",\"state\":\"consumed\",\"reason\":\"Local synthetic preparation recording\",\"coverage\":\"Core local Work/step result recording and handoff preparation only; no external dispatch guarantee\",\"receipt_request_id\":\"pair-7\"}"
+      }
+    ],
+    "handoffs": [
+      {
+        "id": "handoff-3ccc2b96-a283-4476-a68f-f60061eec350",
+        "json": "{\"handoff_id\":\"handoff-3ccc2b96-a283-4476-a68f-f60061eec350\",\"work_ref\":{\"id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\",\"revision\":1},\"plan_version\":1,\"step_id\":\"prepare\",\"objective\":\"Review the Лампа card\",\"conditions\":\"Manual transfer only; not sent\",\"expected_result\":\"Clarity and needed correction\",\"context_refs\":[{\"id\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\",\"revision\":1}],\"message\":\"Проверь карточку «Лампа»: «Записывай наблюдение отдельно от объяснения». Понятна ли формулировка и нужна ли правка?\",\"prepared_at\":\"2026-10-20T03:50:18.634Z\",\"prepared_by\":\"mechanical-pair-fixture\",\"transport_state\":\"prepared_not_sent\",\"source_refs\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"plan_snapshot\":[{\"id\":\"work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0\",\"revision\":1,\"plan_version\":1,\"status\":\"active\"}]}"
+      },
+      {
+        "id": "handoff-0a26d24a-629b-4578-a951-ac3c1615ddc5",
+        "json": "{\"handoff_id\":\"handoff-0a26d24a-629b-4578-a951-ac3c1615ddc5\",\"work_ref\":{\"id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\",\"revision\":1},\"plan_version\":1,\"step_id\":\"prepare\",\"objective\":\"Review the Компас card\",\"conditions\":\"Manual transfer only; not sent\",\"expected_result\":\"Clarity and needed correction\",\"context_refs\":[{\"id\":\"evidence-70ace047-9631-486d-9393-3efaa0e03f38\",\"revision\":1}],\"message\":\"Проверь карточку «Компас»: «Записывай наблюдение отдельно от объяснения». Понятна ли формулировка и нужна ли правка?\",\"prepared_at\":\"2026-10-20T03:50:18.658Z\",\"prepared_by\":\"mechanical-pair-fixture\",\"transport_state\":\"prepared_not_sent\",\"source_refs\":[\"observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313\"],\"plan_snapshot\":[{\"id\":\"work-1331d488-4402-4ba8-9d29-fb3e0e505cac\",\"revision\":1,\"plan_version\":1,\"status\":\"active\"}]}"
+      }
+    ]
+  },
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 7,
+    "requests": 48,
+    "input": 578628,
+    "output": 14013,
+    "cache_read": 239616,
+    "estimated_usd": 0.8421156000000001,
+    "limits": {
+      "prompts": 8,
+      "requests": 60,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 5
+    }
+  }
+}

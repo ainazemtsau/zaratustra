@@ -1,0 +1,232 @@
+{
+  "synthetic": true,
+  "mechanical_setup": true,
+  "model_actions": false,
+  "reason": "Attempt 06 failed all four provider dispatch attempts with fetch failed; no domain records existed. This fixture enables the two remaining model attempts to test ambiguity and clarified binding.",
+  "refs": [
+    {
+      "name": "Лампа",
+      "work": {
+        "id": "work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0",
+        "kind": "work",
+        "title": "Review the Лампа card",
+        "body": null,
+        "revision": 2,
+        "created_at": "2026-10-20T03:50:18.623Z",
+        "updated_at": "2026-10-20T03:50:18.644Z",
+        "storage": "live",
+        "concept_ids": [],
+        "origin_activity_id": null,
+        "visibility": "workspace",
+        "data": {
+          "activity_id": null,
+          "parent_work_id": null,
+          "objective": "Obtain a separate clarity review of the Лампа card",
+          "acceptance": [
+            {
+              "criterion_id": "review",
+              "description": "Review reply received for this card",
+              "verification": "Inspect addressed external Evidence",
+              "required": true
+            }
+          ],
+          "status": "waiting",
+          "current_state": "Preparation done; await this card review",
+          "next_action": "Prepare the message without sending",
+          "steps": [
+            {
+              "step_id": "prepare",
+              "intent": "Prepare a manual review request; send nothing",
+              "status": "done",
+              "depends_on": [],
+              "required": false,
+              "result_refs": [
+                {
+                  "id": "handoff-3ccc2b96-a283-4476-a68f-f60061eec350"
+                }
+              ]
+            },
+            {
+              "step_id": "review",
+              "intent": "Receive and inspect the external clarity review",
+              "status": "waiting",
+              "depends_on": [
+                {
+                  "step_id": "prepare"
+                }
+              ],
+              "result_refs": []
+            }
+          ],
+          "waits": [
+            {
+              "wait_id": "external-review",
+              "kind": "external_result",
+              "target": {
+                "step_id": "review"
+              },
+              "subject": "Separate review for Лампа",
+              "satisfied_by": "Clarity assessment and any needed correction are received",
+              "received_refs": [],
+              "question": "What is the separate review for this card?",
+              "status": "pending"
+            }
+          ],
+          "context_refs": [
+            {
+              "id": "evidence-70ace047-9631-486d-9393-3efaa0e03f38"
+            }
+          ],
+          "completion": null,
+          "plan_version": 1,
+          "cancellation": null
+        }
+      },
+      "handoff": {
+        "handoff_id": "handoff-3ccc2b96-a283-4476-a68f-f60061eec350",
+        "work_ref": {
+          "id": "work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0",
+          "revision": 1
+        },
+        "plan_version": 1,
+        "step_id": "prepare",
+        "objective": "Review the Лампа card",
+        "conditions": "Manual transfer only; not sent",
+        "expected_result": "Clarity and needed correction",
+        "context_refs": [
+          {
+            "id": "evidence-70ace047-9631-486d-9393-3efaa0e03f38",
+            "revision": 1
+          }
+        ],
+        "message": "Проверь карточку «Лампа»: «Записывай наблюдение отдельно от объяснения». Понятна ли формулировка и нужна ли правка?",
+        "prepared_at": "2026-10-20T03:50:18.634Z",
+        "prepared_by": "mechanical-pair-fixture",
+        "transport_state": "prepared_not_sent",
+        "source_refs": [
+          "observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313"
+        ],
+        "plan_snapshot": [
+          {
+            "id": "work-a2215a5e-ea1e-4ae7-85a2-f847ac0cddc0",
+            "revision": 1,
+            "plan_version": 1,
+            "status": "active"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Компас",
+      "work": {
+        "id": "work-1331d488-4402-4ba8-9d29-fb3e0e505cac",
+        "kind": "work",
+        "title": "Review the Компас card",
+        "body": null,
+        "revision": 2,
+        "created_at": "2026-10-20T03:50:18.650Z",
+        "updated_at": "2026-10-20T03:50:18.667Z",
+        "storage": "live",
+        "concept_ids": [],
+        "origin_activity_id": null,
+        "visibility": "workspace",
+        "data": {
+          "activity_id": null,
+          "parent_work_id": null,
+          "objective": "Obtain a separate clarity review of the Компас card",
+          "acceptance": [
+            {
+              "criterion_id": "review",
+              "description": "Review reply received for this card",
+              "verification": "Inspect addressed external Evidence",
+              "required": true
+            }
+          ],
+          "status": "waiting",
+          "current_state": "Preparation done; await this card review",
+          "next_action": "Prepare the message without sending",
+          "steps": [
+            {
+              "step_id": "prepare",
+              "intent": "Prepare a manual review request; send nothing",
+              "status": "done",
+              "depends_on": [],
+              "required": false,
+              "result_refs": [
+                {
+                  "id": "handoff-0a26d24a-629b-4578-a951-ac3c1615ddc5"
+                }
+              ]
+            },
+            {
+              "step_id": "review",
+              "intent": "Receive and inspect the external clarity review",
+              "status": "waiting",
+              "depends_on": [
+                {
+                  "step_id": "prepare"
+                }
+              ],
+              "result_refs": []
+            }
+          ],
+          "waits": [
+            {
+              "wait_id": "external-review",
+              "kind": "external_result",
+              "target": {
+                "step_id": "review"
+              },
+              "subject": "Separate review for Компас",
+              "satisfied_by": "Clarity assessment and any needed correction are received",
+              "received_refs": [],
+              "question": "What is the separate review for this card?",
+              "status": "pending"
+            }
+          ],
+          "context_refs": [
+            {
+              "id": "evidence-70ace047-9631-486d-9393-3efaa0e03f38"
+            }
+          ],
+          "completion": null,
+          "plan_version": 1,
+          "cancellation": null
+        }
+      },
+      "handoff": {
+        "handoff_id": "handoff-0a26d24a-629b-4578-a951-ac3c1615ddc5",
+        "work_ref": {
+          "id": "work-1331d488-4402-4ba8-9d29-fb3e0e505cac",
+          "revision": 1
+        },
+        "plan_version": 1,
+        "step_id": "prepare",
+        "objective": "Review the Компас card",
+        "conditions": "Manual transfer only; not sent",
+        "expected_result": "Clarity and needed correction",
+        "context_refs": [
+          {
+            "id": "evidence-70ace047-9631-486d-9393-3efaa0e03f38",
+            "revision": 1
+          }
+        ],
+        "message": "Проверь карточку «Компас»: «Записывай наблюдение отдельно от объяснения». Понятна ли формулировка и нужна ли правка?",
+        "prepared_at": "2026-10-20T03:50:18.658Z",
+        "prepared_by": "mechanical-pair-fixture",
+        "transport_state": "prepared_not_sent",
+        "source_refs": [
+          "observed-1ee4710b-2f52-4fbf-bc76-b3c8a5b3e313"
+        ],
+        "plan_snapshot": [
+          {
+            "id": "work-1331d488-4402-4ba8-9d29-fb3e0e505cac",
+            "revision": 1,
+            "plan_version": 1,
+            "status": "active"
+          }
+        ]
+      }
+    }
+  ]
+}

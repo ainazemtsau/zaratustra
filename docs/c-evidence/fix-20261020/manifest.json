@@ -1,0 +1,1599 @@
+{
+  "synthetic": true,
+  "sealed_inputs_sha256": "52134782f653696f2d38e17d897d6e36f66abe8bf50f0d82906220371ae460da",
+  "source_policy": "finished fixed inputs, SHA256 checked before and after; current stdout excluded",
+  "entries": [
+    {
+      "original_relative_path": "candidate-identity-console.txt",
+      "original_sha256": "a948868035e33e099b520391545e15fdc9cdafb8c3255892e25238304ede0ac9",
+      "original_bytes": 127,
+      "derivative_path": "candidate-identity-console.txt",
+      "derivative_sha256": "e896a1902a32c0dd7fd07c3c2a3a388e11c312b8a8c523345efc218faa1d3aec",
+      "derivative_bytes": 126,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "candidate-identity.json",
+      "original_sha256": "1c2c608f5603be35e6e7a78f2a37e4441c6be27aaac1670e9021599c9d280af2",
+      "original_bytes": 166634,
+      "derivative_path": "candidate-identity.json",
+      "derivative_sha256": "1d6c6854ff9b3837141f0e0d659aa4143189b3138405d117e66e286dbfffbc40",
+      "derivative_bytes": 166635,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "candidate-install.txt",
+      "original_sha256": "86274eaca0c2288bb69817d0b6f4a016fa6f49fccdfa1a338d2248a341ad400f",
+      "original_bytes": 1139,
+      "derivative_path": "candidate-install.txt",
+      "derivative_sha256": "63adbc2a0c140728d8cd7f4f493b287e5b932fd1be9c5724334f04fea5130557",
+      "derivative_bytes": 1087,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "check-candidate.txt",
+      "original_sha256": "cd23c7af946ce6c21ac43690fa7e9fbe8c082e4c6ff4ef340c75635f190eb076",
+      "original_bytes": 11638,
+      "derivative_path": "check-candidate.txt",
+      "derivative_sha256": "d5a7b91fa40bfc6ebaf594917ed5841d1c32944518b68cc36aa1de6cff0c8509",
+      "derivative_bytes": 11363,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "check-final.txt",
+      "original_sha256": "231e159db856f0dd8095e87f62033f0acbe55bcc23148cbbe5f8ba8e78a951d8",
+      "original_bytes": 11638,
+      "derivative_path": "check-final.txt",
+      "derivative_sha256": "ab4d85ed464243b3a2d603ecc6fed0cfd68cb5ff0234f0a178b3550e7512a5e6",
+      "derivative_bytes": 11363,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "commit-candidate.txt",
+      "original_sha256": "cffd8d09788bcfa8667ac9e604bd667b5bec6cd4e489e795b6f853132a732c3c",
+      "original_bytes": 568,
+      "derivative_path": "commit-candidate.txt",
+      "derivative_sha256": "f28a14b005000aadc6e0a7216ef34ac11c608da85634db73f15c755d00d2f876",
+      "derivative_bytes": 559,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "deliver-final.txt",
+      "original_sha256": "01a083a9fae8cc527b5e5648b28fd00ac61ff342007ca9f5d82e301f7c9c5374",
+      "original_bytes": 11803,
+      "derivative_path": "deliver-final.txt",
+      "derivative_sha256": "7110818a4fe4299c0258a61d6b5630aa39059e1903b5f295d3a6a4bbb47c0de9",
+      "derivative_bytes": 11523,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "environment-profile.json",
+      "original_sha256": "68a1772f4ea0053e63995f75b7ff4bac5bb183888d5b745df1856d181ef478b6",
+      "original_bytes": 323,
+      "derivative_path": "environment-profile.json",
+      "derivative_sha256": "38dddcb6f1866866b801d6497d8546a5b31bb1fadec90bec751f7d06ba5fb80a",
+      "derivative_bytes": 324,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "focused-tests.txt",
+      "original_sha256": "2f5a1c4dea8380232187625f3b63309667fe13c3a141cab2759027edecb59494",
+      "original_bytes": 3874,
+      "derivative_path": "focused-tests.txt",
+      "derivative_sha256": "bd0b8ba8ceaed22f613775fe6333215b0b1628bfca6eacf92ee81338314c6f1e",
+      "derivative_bytes": 3784,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "format-candidate.txt",
+      "original_sha256": "5b9a77a8011fbc18e08be7f14f30f1589cf6a100f6b24d5826bb83487f22869d",
+      "original_bytes": 117,
+      "derivative_path": "format-candidate.txt",
+      "derivative_sha256": "bbb10a3a4d5e837b66c62a67eaab2147702a05e876901420d0636605b6439caf",
+      "derivative_bytes": 113,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "format-code.txt",
+      "original_sha256": "5877815ace0c1078c2112d8585ff2f5b2fff207e15279d9e78f6cf68d2b6ea20",
+      "original_bytes": 216,
+      "derivative_path": "format-code.txt",
+      "derivative_sha256": "b7815d9d67953d9123bf6c6be2bd8724bab75d3860297a86935f76c7daf6e8a1",
+      "derivative_bytes": 210,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "format-final-docs.txt",
+      "original_sha256": "a082bec481b858705c199fadd18a44e964e541534d5f71cc29c88d331eb2de2b",
+      "original_bytes": 185,
+      "derivative_path": "format-final-docs.txt",
+      "derivative_sha256": "fc516473f9eeee55704b2697cf9ee48a163cca5525edb6710ab649552ace784d",
+      "derivative_bytes": 178,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "format-fix.txt",
+      "original_sha256": "ccba66fbd50020ca02acb34c1e48f23e06983d2a9116bdc7605ade83686a3779",
+      "original_bytes": 290,
+      "derivative_path": "format-fix.txt",
+      "derivative_sha256": "3317b76d6d78d737c4ae7cd095468992f72e63d72921f4be0468224f3175f87c",
+      "derivative_bytes": 282,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "format-result-candidate.txt",
+      "original_sha256": "692bad1546c412de1ee59ba0b1ea54a73d3c843182ebb0181336c2fe46f542c6",
+      "original_bytes": 16,
+      "derivative_path": "format-result-candidate.txt",
+      "derivative_sha256": "cadfe5791b1dbf07e11dcd9181c9480c3d5776bbaf651af7e4194dd7b6d8a71a",
+      "derivative_bytes": 15,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "handoff-result-green.txt",
+      "original_sha256": "bb6067cfd3db48dbf2b0ebf77a6967c6fd017e3eb81cbcbc5de1a210903a8d21",
+      "original_bytes": 551,
+      "derivative_path": "handoff-result-green.txt",
+      "derivative_sha256": "4f048a7a999de1fbd4a9db9ea8926ceb7113888728c864f7a74fb012c1fe24ac",
+      "derivative_bytes": 533,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "handoff-result-red.txt",
+      "original_sha256": "68d20e20687a368f4d7250f296fccaf4288d61337f4fc20e383bb35c69bc5d8c",
+      "original_bytes": 1420,
+      "derivative_path": "handoff-result-red.txt",
+      "derivative_sha256": "e3bea88f4b8ec498b22fdb0229a12d2c47137b6cc4558ef701cb22f65be2da63",
+      "derivative_bytes": 1265,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "installed-affected-tests.txt",
+      "original_sha256": "4e20dc1c56da4b0c11f9e6c89c0002ebd68386137be2dc2cc5b90db97dfe2633",
+      "original_bytes": 3875,
+      "derivative_path": "installed-affected-tests.txt",
+      "derivative_sha256": "0e859eff950071361ba8da8ec2f8a1305ae5106a042e5e1c4fa023def1dd6a3a",
+      "derivative_bytes": 3785,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "live/01-prepare/events.jsonl",
+      "original_sha256": "35085121c2f55cc290e5e7cca3082e2dda74bebf660cdc8f5a603e2dfc508ea7",
+      "original_bytes": 122878,
+      "derivative_path": "live/01-prepare/events.jsonl",
+      "derivative_sha256": "df1bb96f55cca450213ca430cff0ec2697de1378acaecf731a601691d3c309e8",
+      "derivative_bytes": 122735,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/01-prepare/identity.jsonl",
+      "original_sha256": "1f84fc072c41b13cf5dc86bf43d6b5f30a3b73b60ed985a86ca49d77f42c0b6f",
+      "original_bytes": 1187,
+      "derivative_path": "live/01-prepare/identity.jsonl",
+      "derivative_sha256": "bb44a973dcedb60907a9eebe17f96f890cadf64ac9fc4253e7dead311e7d93d8",
+      "derivative_bytes": 1135,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/01-prepare/provider-requests.jsonl",
+      "original_sha256": "caa73c6324c6f7fcfa1351f8f02e6dd2dbd0c03a6c658cd0afc02067e58347ee",
+      "original_bytes": 622606,
+      "derivative_path": "live/01-prepare/provider-requests.jsonl.gz",
+      "derivative_sha256": "8d934a84adc04b7b0c72581af8be1afd2d6cdd2f16d34523324390992c56c6ef",
+      "derivative_bytes": 123134,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning",
+        "deterministic gzip"
+      ]
+    },
+    {
+      "original_relative_path": "live/01-prepare/requests.jsonl",
+      "original_sha256": "791c643a634de050b1fc59e25b85f2eb4e8bc90cb660689fe0acdbb066c823c1",
+      "original_bytes": 36381,
+      "derivative_path": "live/01-prepare/requests.jsonl",
+      "derivative_sha256": "791c643a634de050b1fc59e25b85f2eb4e8bc90cb660689fe0acdbb066c823c1",
+      "derivative_bytes": 36381,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/01-prepare/resources.jsonl",
+      "original_sha256": "76cef73d1addc4a3c713c3c25f53aa6e58738a13f8787b15dc87a9c71b1465a4",
+      "original_bytes": 576,
+      "derivative_path": "live/01-prepare/resources.jsonl",
+      "derivative_sha256": "41f34ef51b8f7d58d0ce4746117301a68772412c920694c86d353bfdfe6b8561",
+      "derivative_bytes": 498,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/01-prepare/startup.jsonl",
+      "original_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "original_bytes": 229,
+      "derivative_path": "live/01-prepare/startup.jsonl",
+      "derivative_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "derivative_bytes": 229,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/01-prepare/summary.json",
+      "original_sha256": "7faaf0e6eae69e8dc1638432cdb65eb289df95d44e23f83b6aa7835c2fa3d449",
+      "original_bytes": 35689,
+      "derivative_path": "live/01-prepare/summary.json",
+      "derivative_sha256": "9b419e026f5715a73948442de017200f56956c19799d26c5bb372e7d00ea2f57",
+      "derivative_bytes": 35690,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/02-continue/events.jsonl",
+      "original_sha256": "31f4bb6779991448aa06f6789527530196f318107a3ae3b5b25a59006d7868ff",
+      "original_bytes": 82872,
+      "derivative_path": "live/02-continue/events.jsonl",
+      "derivative_sha256": "dfcbe0e7d17f8bb083ad567fc3975e695f572fa3b74823a5f25831ac0d5ec2a4",
+      "derivative_bytes": 82729,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/02-continue/identity.jsonl",
+      "original_sha256": "733bce14e42a7ddb39a25537e4ef7336c29e5e76b6c1fb5255f9dd3631766807",
+      "original_bytes": 599,
+      "derivative_path": "live/02-continue/identity.jsonl",
+      "derivative_sha256": "b13b8e775cf379c0d281640a9e09c3c845fc803a7a61b2fca39b0e2f6fc65de8",
+      "derivative_bytes": 547,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/02-continue/provider-requests.jsonl",
+      "original_sha256": "6953de0d6d389a0f1bfef5ad602bb9196ed11e526915c1b5cc2182f3163aa22f",
+      "original_bytes": 164160,
+      "derivative_path": "live/02-continue/provider-requests.jsonl.gz",
+      "derivative_sha256": "e97978d6d80921d6bc165e5a033b5e153f4befdf19e9c633d43c6500f1d1f5e7",
+      "derivative_bytes": 32496,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning",
+        "deterministic gzip"
+      ]
+    },
+    {
+      "original_relative_path": "live/02-continue/requests.jsonl",
+      "original_sha256": "ac17097d92ab0361ca2cd3104ea758c54dd3980fc7a47c185eb6a61b75abad7a",
+      "original_bytes": 12402,
+      "derivative_path": "live/02-continue/requests.jsonl",
+      "derivative_sha256": "ac17097d92ab0361ca2cd3104ea758c54dd3980fc7a47c185eb6a61b75abad7a",
+      "derivative_bytes": 12402,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/02-continue/resources.jsonl",
+      "original_sha256": "76cef73d1addc4a3c713c3c25f53aa6e58738a13f8787b15dc87a9c71b1465a4",
+      "original_bytes": 576,
+      "derivative_path": "live/02-continue/resources.jsonl",
+      "derivative_sha256": "41f34ef51b8f7d58d0ce4746117301a68772412c920694c86d353bfdfe6b8561",
+      "derivative_bytes": 498,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/02-continue/startup.jsonl",
+      "original_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "original_bytes": 229,
+      "derivative_path": "live/02-continue/startup.jsonl",
+      "derivative_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "derivative_bytes": 229,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/02-continue/summary.json",
+      "original_sha256": "6e33b21a7b675ff91f9d2221b4f2b1998a9686d451f2512c2940561444df7090",
+      "original_bytes": 35491,
+      "derivative_path": "live/02-continue/summary.json",
+      "derivative_sha256": "bb29b0911f7ea48726e36024435f688f3f44b81647d813f951cfc6c8e12a12fc",
+      "derivative_bytes": 35492,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/03-complete/events.jsonl",
+      "original_sha256": "01d3ceff552685cea76824c297a444fa0e37a14f26a89cf7780792de3bfb5979",
+      "original_bytes": 171133,
+      "derivative_path": "live/03-complete/events.jsonl",
+      "derivative_sha256": "1ab7d0bca160682e2f855542400cfbc8a127c3d5656c477af2b95cfaa751b853",
+      "derivative_bytes": 158853,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/03-complete/identity.jsonl",
+      "original_sha256": "cff72b50e57e5ccd288a45affa29c68eeb0b65e034b921117c879460eea79dca",
+      "original_bytes": 1012,
+      "derivative_path": "live/03-complete/identity.jsonl",
+      "derivative_sha256": "e016484551caafc4e74763f3f47849604083c3d583611b61bceb23508faf37b7",
+      "derivative_bytes": 960,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/03-complete/provider-requests.jsonl",
+      "original_sha256": "2087f8ba876cceb59d7a50379d46013cc5bd0eae433ab3b605565c2dc07db114",
+      "original_bytes": 1186762,
+      "derivative_path": "live/03-complete/provider-requests.jsonl.gz",
+      "derivative_sha256": "0b89513f0105c13a750923b2220684153dee379f83a619c15f82f50f79d784c8",
+      "derivative_bytes": 212421,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning",
+        "deterministic gzip"
+      ]
+    },
+    {
+      "original_relative_path": "live/03-complete/requests.jsonl",
+      "original_sha256": "756af45f16e20966c37d7b0d76dd513f2bf797b938f4327eb9961f23e0623c22",
+      "original_bytes": 70486,
+      "derivative_path": "live/03-complete/requests.jsonl",
+      "derivative_sha256": "756af45f16e20966c37d7b0d76dd513f2bf797b938f4327eb9961f23e0623c22",
+      "derivative_bytes": 70486,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/03-complete/resources.jsonl",
+      "original_sha256": "76cef73d1addc4a3c713c3c25f53aa6e58738a13f8787b15dc87a9c71b1465a4",
+      "original_bytes": 576,
+      "derivative_path": "live/03-complete/resources.jsonl",
+      "derivative_sha256": "41f34ef51b8f7d58d0ce4746117301a68772412c920694c86d353bfdfe6b8561",
+      "derivative_bytes": 498,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/03-complete/startup.jsonl",
+      "original_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "original_bytes": 229,
+      "derivative_path": "live/03-complete/startup.jsonl",
+      "derivative_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "derivative_bytes": 229,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/03-complete/summary.json",
+      "original_sha256": "9706613319a5143894048020df0663cc47ab75869c317bef5c314f3636f837c0",
+      "original_bytes": 93879,
+      "derivative_path": "live/03-complete/summary.json",
+      "derivative_sha256": "ab6e4473abb7dc0491c65b0c254ce6c1e6b7211858387894a0d20b3cdf379ece",
+      "derivative_bytes": 93880,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/04-reopen/events.jsonl",
+      "original_sha256": "edc13e5bb4b069e6237782820d452367be437a042907e1d744dbdec3523810b1",
+      "original_bytes": 89854,
+      "derivative_path": "live/04-reopen/events.jsonl",
+      "derivative_sha256": "e87b84bc5ceb6df3188379b15366bb13d5df06a352e8a7c8c87cb7a4639bcf50",
+      "derivative_bytes": 87744,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/04-reopen/identity.jsonl",
+      "original_sha256": "5f63cdb1d5534d0ccced562ad93871160877e4bc7b318b31ef93da714229d66c",
+      "original_bytes": 806,
+      "derivative_path": "live/04-reopen/identity.jsonl",
+      "derivative_sha256": "bc7330e2fc7a351fe6e80874a856e14bb58f5318aa0ed36288c4a4c9817aa1fe",
+      "derivative_bytes": 754,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/04-reopen/provider-requests.jsonl",
+      "original_sha256": "432dcd2044c3076e0f88b12e899830df39cadf32ccdd4c57beaa75606834cb2d",
+      "original_bytes": 234725,
+      "derivative_path": "live/04-reopen/provider-requests.jsonl.gz",
+      "derivative_sha256": "f8cae6a809769bab2552bba66acba135e56191452f4e3520f0c15d41237229c6",
+      "derivative_bytes": 45635,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning",
+        "deterministic gzip"
+      ]
+    },
+    {
+      "original_relative_path": "live/04-reopen/requests.jsonl",
+      "original_sha256": "5b0048a690bab6fb3291f501c376670d39674c7869834bf3886263ab56773e79",
+      "original_bytes": 20570,
+      "derivative_path": "live/04-reopen/requests.jsonl",
+      "derivative_sha256": "5b0048a690bab6fb3291f501c376670d39674c7869834bf3886263ab56773e79",
+      "derivative_bytes": 20570,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/04-reopen/resources.jsonl",
+      "original_sha256": "76cef73d1addc4a3c713c3c25f53aa6e58738a13f8787b15dc87a9c71b1465a4",
+      "original_bytes": 576,
+      "derivative_path": "live/04-reopen/resources.jsonl",
+      "derivative_sha256": "41f34ef51b8f7d58d0ce4746117301a68772412c920694c86d353bfdfe6b8561",
+      "derivative_bytes": 498,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/04-reopen/startup.jsonl",
+      "original_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "original_bytes": 229,
+      "derivative_path": "live/04-reopen/startup.jsonl",
+      "derivative_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "derivative_bytes": 229,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/04-reopen/summary.json",
+      "original_sha256": "5e904c3fbc3daf5121088cb90a9a7d318121d4a0f2418146950deffd2d6d7e75",
+      "original_bytes": 113866,
+      "derivative_path": "live/04-reopen/summary.json",
+      "derivative_sha256": "427511170a7e25567f5cb5628606e2fdccb54dc6d1134f2f18172864308db9b4",
+      "derivative_bytes": 113867,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/05-clarification/events.jsonl",
+      "original_sha256": "a5b4d4f878007ec3c13766a997da4095f1929d3100ad05c137858bd78f5cf4ee",
+      "original_bytes": 159377,
+      "derivative_path": "live/05-clarification/events.jsonl",
+      "derivative_sha256": "9e4b346fe8c3b1abc69c2c993b67851ff1401532f48d9be7ac5f1689e96b1ffe",
+      "derivative_bytes": 144105,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/05-clarification/identity.jsonl",
+      "original_sha256": "6a1dd03fca8460451c20e44c0376de12e573e150dc41a0243e07b09dbecc45fa",
+      "original_bytes": 817,
+      "derivative_path": "live/05-clarification/identity.jsonl",
+      "derivative_sha256": "74ec8a7f9a7fa04d1e10ee22b9fef4d24b8517b9bebb4c54ba3500fe654a6931",
+      "derivative_bytes": 765,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/05-clarification/provider-requests.jsonl",
+      "original_sha256": "659a6a761cc8d00ea3abf87da17f19e4fac59d78af5e9ea274452249e30c5551",
+      "original_bytes": 643352,
+      "derivative_path": "live/05-clarification/provider-requests.jsonl.gz",
+      "derivative_sha256": "54d63b0414bd9ea148f830619f222594e6b81c77836b4d06715a52d8d9db8999",
+      "derivative_bytes": 117902,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning",
+        "deterministic gzip"
+      ]
+    },
+    {
+      "original_relative_path": "live/05-clarification/requests.jsonl",
+      "original_sha256": "40fa9256b670f028dc01aebbe91595e35ed892664d07c8cf0855c8c5cb3a3497",
+      "original_bytes": 47373,
+      "derivative_path": "live/05-clarification/requests.jsonl",
+      "derivative_sha256": "40fa9256b670f028dc01aebbe91595e35ed892664d07c8cf0855c8c5cb3a3497",
+      "derivative_bytes": 47373,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/05-clarification/resources.jsonl",
+      "original_sha256": "76cef73d1addc4a3c713c3c25f53aa6e58738a13f8787b15dc87a9c71b1465a4",
+      "original_bytes": 576,
+      "derivative_path": "live/05-clarification/resources.jsonl",
+      "derivative_sha256": "41f34ef51b8f7d58d0ce4746117301a68772412c920694c86d353bfdfe6b8561",
+      "derivative_bytes": 498,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/05-clarification/startup.jsonl",
+      "original_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "original_bytes": 229,
+      "derivative_path": "live/05-clarification/startup.jsonl",
+      "derivative_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "derivative_bytes": 229,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/05-clarification/summary.json",
+      "original_sha256": "c3862f059e4571b6aa7896a8a0b5ae70e4803e858de8fdfb6c092abb18aaae60",
+      "original_bytes": 147257,
+      "derivative_path": "live/05-clarification/summary.json",
+      "derivative_sha256": "827b3ee204766ff7192478c6991ac7da7cffdf73a05a71873081ceb6fa55ca06",
+      "derivative_bytes": 147258,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/06-two-handoffs/events.jsonl",
+      "original_sha256": "8039bd6640f7f5e9b96d2b4acd9721bbd3860024627a636faa96520f93b0900f",
+      "original_bytes": 47612,
+      "derivative_path": "live/06-two-handoffs/events.jsonl",
+      "derivative_sha256": "37f25e6a3e7f68370190ceff55a4bef1cde6c250fb057292b4af38535e970625",
+      "derivative_bytes": 47515,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/06-two-handoffs/identity.jsonl",
+      "original_sha256": "dd5aeecbba87f19f564179d65ee3dd58b42ab9a3be882b0e312c721af117ed61",
+      "original_bytes": 1037,
+      "derivative_path": "live/06-two-handoffs/identity.jsonl",
+      "derivative_sha256": "db6d63ea8a370c3b14d61e22a1b390ad147bcc3607630c1ffeb2a758d14be8b2",
+      "derivative_bytes": 985,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/06-two-handoffs/provider-requests.jsonl",
+      "original_sha256": "1e9ee564631fe9ecdda67224f854d67416cb3e768fb7eb0136d54d695a633548",
+      "original_bytes": 182088,
+      "derivative_path": "live/06-two-handoffs/provider-requests.jsonl.gz",
+      "derivative_sha256": "ea09588e4f56aaf889691d96c7d55644d8e05b302a99a1dd78936a4175ef8bd0",
+      "derivative_bytes": 28736,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning",
+        "deterministic gzip"
+      ]
+    },
+    {
+      "original_relative_path": "live/06-two-handoffs/requests.jsonl",
+      "original_sha256": "ad0523c2a973977aa8c6b783ef46681160ee33a8e33b8f449b2c6270e2b24036",
+      "original_bytes": 6988,
+      "derivative_path": "live/06-two-handoffs/requests.jsonl",
+      "derivative_sha256": "ad0523c2a973977aa8c6b783ef46681160ee33a8e33b8f449b2c6270e2b24036",
+      "derivative_bytes": 6988,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/06-two-handoffs/resources.jsonl",
+      "original_sha256": "76cef73d1addc4a3c713c3c25f53aa6e58738a13f8787b15dc87a9c71b1465a4",
+      "original_bytes": 576,
+      "derivative_path": "live/06-two-handoffs/resources.jsonl",
+      "derivative_sha256": "41f34ef51b8f7d58d0ce4746117301a68772412c920694c86d353bfdfe6b8561",
+      "derivative_bytes": 498,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/06-two-handoffs/startup.jsonl",
+      "original_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "original_bytes": 229,
+      "derivative_path": "live/06-two-handoffs/startup.jsonl",
+      "derivative_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "derivative_bytes": 229,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/06-two-handoffs/summary.json",
+      "original_sha256": "611f5dfdf3344e1cd31cd8af9ea1dbf04e5e492317ebd0fa57de586cf853f739",
+      "original_bytes": 612,
+      "derivative_path": "live/06-two-handoffs/summary.json",
+      "derivative_sha256": "29ec1666a74653ce234c0b6ce41328e956e27f6d3cd95c528302039821007878",
+      "derivative_bytes": 613,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/07-ambiguous/events.jsonl",
+      "original_sha256": "6548dbc3d422effcd6fee0cacb7f588332466fa1093cb3b67d4d4fb732884bb6",
+      "original_bytes": 83358,
+      "derivative_path": "live/07-ambiguous/events.jsonl",
+      "derivative_sha256": "b18d9b46612f80e91a4269231d4bb13d36d4208dcab3bea0639aef1c4852bd99",
+      "derivative_bytes": 83215,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/07-ambiguous/identity.jsonl",
+      "original_sha256": "6f50f38c9924942f4f80f03b91c34a6166fab44960202743da880e1d0dd0af72",
+      "original_bytes": 628,
+      "derivative_path": "live/07-ambiguous/identity.jsonl",
+      "derivative_sha256": "f5228c62733dd3154533b345b54476586768e7a6809cc6c0581f90bfb1f1dfa0",
+      "derivative_bytes": 576,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/07-ambiguous/provider-requests.jsonl",
+      "original_sha256": "d2df19f1043e2fbcbe5fa4ac64467133458351892450f1c3b1011e90c645535d",
+      "original_bytes": 165014,
+      "derivative_path": "live/07-ambiguous/provider-requests.jsonl.gz",
+      "derivative_sha256": "3786606bf43a9b0901aef780bd08505b069b2cb6580e617940ef14fa4743060b",
+      "derivative_bytes": 31416,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning",
+        "deterministic gzip"
+      ]
+    },
+    {
+      "original_relative_path": "live/07-ambiguous/requests.jsonl",
+      "original_sha256": "ee1e5c146376368ad206aa15b103c31ecc903f57c8fb61f7c4e202e17d3178ab",
+      "original_bytes": 12813,
+      "derivative_path": "live/07-ambiguous/requests.jsonl",
+      "derivative_sha256": "ee1e5c146376368ad206aa15b103c31ecc903f57c8fb61f7c4e202e17d3178ab",
+      "derivative_bytes": 12813,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/07-ambiguous/resources.jsonl",
+      "original_sha256": "76cef73d1addc4a3c713c3c25f53aa6e58738a13f8787b15dc87a9c71b1465a4",
+      "original_bytes": 576,
+      "derivative_path": "live/07-ambiguous/resources.jsonl",
+      "derivative_sha256": "41f34ef51b8f7d58d0ce4746117301a68772412c920694c86d353bfdfe6b8561",
+      "derivative_bytes": 498,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/07-ambiguous/startup.jsonl",
+      "original_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "original_bytes": 229,
+      "derivative_path": "live/07-ambiguous/startup.jsonl",
+      "derivative_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "derivative_bytes": 229,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/07-ambiguous/summary.json",
+      "original_sha256": "a1efc8ea5bad1fad25a7cc04ec74bec50509b9e4a0b25493bcf763e6717fb1ac",
+      "original_bytes": 42384,
+      "derivative_path": "live/07-ambiguous/summary.json",
+      "derivative_sha256": "976a50bd988f2a43947712c05c842916f64c9bb9d64e2bd6131e44da71ef4b15",
+      "derivative_bytes": 42385,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/08-clarified/events.jsonl",
+      "original_sha256": "12a3ca64676528ff2bb32e9ddbf20701a83e124880a5731db5b6a94413dbea4f",
+      "original_bytes": 181002,
+      "derivative_path": "live/08-clarified/events.jsonl",
+      "derivative_sha256": "303bf2e6ad5b4ef29b11384e7e474a3aaf3b2f2b98d64773a8b384416a26e65b",
+      "derivative_bytes": 175618,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/08-clarified/identity.jsonl",
+      "original_sha256": "8c026193fef21addd7d5990d00abfe6ef5a3c7af0450d964ac597cbabb59fd9a",
+      "original_bytes": 738,
+      "derivative_path": "live/08-clarified/identity.jsonl",
+      "derivative_sha256": "49202b403e2db55e73e4536a34b8e7d253a16c5d00984b7f2bc095f4ebfd112b",
+      "derivative_bytes": 686,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/08-clarified/provider-requests.jsonl",
+      "original_sha256": "2f23d3c01d81e95181feb88aca56376a11f56c466417369b169110cd2d833eb2",
+      "original_bytes": 675948,
+      "derivative_path": "live/08-clarified/provider-requests.jsonl.gz",
+      "derivative_sha256": "41c2016fb49e0fec1f147fadd8ddec4f6659a7afcc79369baaf8c3d5dfc84b46",
+      "derivative_bytes": 122282,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning",
+        "deterministic gzip"
+      ]
+    },
+    {
+      "original_relative_path": "live/08-clarified/requests.jsonl",
+      "original_sha256": "1fed1ed348b4648d585d39b0728da526efde55e223323720ea797cdf9789541e",
+      "original_bytes": 40686,
+      "derivative_path": "live/08-clarified/requests.jsonl",
+      "derivative_sha256": "1fed1ed348b4648d585d39b0728da526efde55e223323720ea797cdf9789541e",
+      "derivative_bytes": 40686,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/08-clarified/resources.jsonl",
+      "original_sha256": "76cef73d1addc4a3c713c3c25f53aa6e58738a13f8787b15dc87a9c71b1465a4",
+      "original_bytes": 576,
+      "derivative_path": "live/08-clarified/resources.jsonl",
+      "derivative_sha256": "41f34ef51b8f7d58d0ce4746117301a68772412c920694c86d353bfdfe6b8561",
+      "derivative_bytes": 498,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/08-clarified/startup.jsonl",
+      "original_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "original_bytes": 229,
+      "derivative_path": "live/08-clarified/startup.jsonl",
+      "derivative_sha256": "3e8a7f5c39da5079264f2d1815553515a5acce6823b857b92b11bc9647c63462",
+      "derivative_bytes": 229,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live/08-clarified/summary.json",
+      "original_sha256": "6e803400918c8de192cb6578a6d2975dee493da7d49fa11b918853661093b465",
+      "original_bytes": 72183,
+      "derivative_path": "live/08-clarified/summary.json",
+      "derivative_sha256": "634e01c30569f0e72cf91f82ef056c618a4fc9b9085dcd2efb2d3d0a90552b51",
+      "derivative_bytes": 72184,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live-01-console.txt",
+      "original_sha256": "40030f61e398f9a5d8186c465675b2c8768a7d30b9b1f4ae9097cab0bf40504c",
+      "original_bytes": 2002,
+      "derivative_path": "live-01-console.txt",
+      "derivative_sha256": "c8bc7ecf03078d34ac9eaf2e8b61a21dc7b72403f07abafc158f37be7f27acd8",
+      "derivative_bytes": 1977,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "live-02-console.txt",
+      "original_sha256": "f75493f92644b06654ea575cbf34901a158f915449b03c3b84ac894cdc62fa8e",
+      "original_bytes": 1804,
+      "derivative_path": "live-02-console.txt",
+      "derivative_sha256": "ac806d8b4a32f76e2d0a3961f9c9bb531ab8678454d8a3d07c285c5144d9d682",
+      "derivative_bytes": 1779,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "live-03-console.txt",
+      "original_sha256": "c7cf7d3d4d5d8ff491355ab4fbec59fcd8d1e7c268166a8ef200bdac54693f8c",
+      "original_bytes": 1007,
+      "derivative_path": "live-03-console.txt",
+      "derivative_sha256": "a915432d73f082447612c3526d9d83d8ea69e8f14f079703706972a9d174563f",
+      "derivative_bytes": 982,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "live-04-console.txt",
+      "original_sha256": "cc5e719958d8c92f13f4182b1689b748099717708b74691bfa1b262140d6e63a",
+      "original_bytes": 951,
+      "derivative_path": "live-04-console.txt",
+      "derivative_sha256": "68401a2e01af9a791268784084ae6ff0376888a4975acec7ff7db2ba0baaac07",
+      "derivative_bytes": 926,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "live-05-console.txt",
+      "original_sha256": "cf1fa1ffc3f85608b573c35bf92eae6d4ba5ec2ac8198167051d1e6abfccccba",
+      "original_bytes": 1093,
+      "derivative_path": "live-05-console.txt",
+      "derivative_sha256": "891bd5914be67e0702769475fdd8f053fd65fbc7cd5cde95f70d2c58000b6f03",
+      "derivative_bytes": 1068,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "live-06-console.txt",
+      "original_sha256": "78ef5fc062c58db5bd14890b0328fe4bbe9d1096edb1b585e122fc284e7562e1",
+      "original_bytes": 650,
+      "derivative_path": "live-06-console.txt",
+      "derivative_sha256": "4f4621e7a9224f6e4c5e15e4ced7e69eaf96780c6f4349944f9a4e3d8b8d69ff",
+      "derivative_bytes": 626,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "live-07-console.txt",
+      "original_sha256": "b3e96401175ccdd0f17dc7a02ebf24a3360770d9640d529ce221fbaf5284ef6a",
+      "original_bytes": 959,
+      "derivative_path": "live-07-console.txt",
+      "derivative_sha256": "d79e9258626f20afe014ef982f7e530b3fffd33ffef86c9bf6c4da541c7fcd6f",
+      "derivative_bytes": 934,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "live-08-console.txt",
+      "original_sha256": "411b4a04fca03acf3fdc248c5d5eb9b8e81219092b4c51218e23ac091e7d66d3",
+      "original_bytes": 937,
+      "derivative_path": "live-08-console.txt",
+      "derivative_sha256": "08d513b573526b94789e97f7fed96742e146a61e404eb2563d116bad9b1d75e5",
+      "derivative_bytes": 912,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "live-budget.json",
+      "original_sha256": "3cf5cc5eceafd37c10062012312220d24f62e226a8c82865fa6b1a2622f50406",
+      "original_bytes": 326,
+      "derivative_path": "live-budget.json",
+      "derivative_sha256": "e336f5062e65615c0a294478a9fc3dbe06869dd8d3294bf5fda37c1cdd4e3224",
+      "derivative_bytes": 327,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live-verification-03-console.txt",
+      "original_sha256": "f831b9e1a582c506f61850952e0d1c9ddcceae728b4c4ce8be4afcbaf679de7d",
+      "original_bytes": 219,
+      "derivative_path": "live-verification-03-console.txt",
+      "derivative_sha256": "6a754da882f2c82ba76b9d78193bd0efb4af5b027eb921e5258c6d81c3da5104",
+      "derivative_bytes": 218,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "live-verification-03.json",
+      "original_sha256": "bb8cffb766472a53ee505d1976cb97f5c4834e17d2e3e1e4e9d631aa953ff88e",
+      "original_bytes": 15869,
+      "derivative_path": "live-verification-03.json",
+      "derivative_sha256": "bb8cffb766472a53ee505d1976cb97f5c4834e17d2e3e1e4e9d631aa953ff88e",
+      "derivative_bytes": 15869,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live-verification-04-console.txt",
+      "original_sha256": "dbdd973cddcd9f3da604b597f394d65e1eb79d0193788515ba36042206af1646",
+      "original_bytes": 293,
+      "derivative_path": "live-verification-04-console.txt",
+      "derivative_sha256": "10bed305b824d0c8cb5c81a55a14e23dc9ac4b53c916c3c66fb97a8c5103d60d",
+      "derivative_bytes": 292,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "live-verification-04.json",
+      "original_sha256": "e44b08d7cab58c23e149f9dcaa793f52e6002d96677baa6b71e86bce559f4b5c",
+      "original_bytes": 18713,
+      "derivative_path": "live-verification-04.json",
+      "derivative_sha256": "e44b08d7cab58c23e149f9dcaa793f52e6002d96677baa6b71e86bce559f4b5c",
+      "derivative_bytes": 18713,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live-verification-05-console.txt",
+      "original_sha256": "821b1d49484332ffa5a7c2079cdc43af76c199c778fce6622cc8992303d541da",
+      "original_bytes": 376,
+      "derivative_path": "live-verification-05-console.txt",
+      "derivative_sha256": "319b21155d5a69a5558d64c87c52a4b6b995fe957d4e180522e7927f8732fc3a",
+      "derivative_bytes": 375,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "live-verification-05.json",
+      "original_sha256": "73d87c5ddc42ae4356c995008eeab3a5dab7522ed169f29eca8f9db6d4967810",
+      "original_bytes": 23591,
+      "derivative_path": "live-verification-05.json",
+      "derivative_sha256": "73d87c5ddc42ae4356c995008eeab3a5dab7522ed169f29eca8f9db6d4967810",
+      "derivative_bytes": 23591,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live-verification-06-console.txt",
+      "original_sha256": "98c85552bec15beb9f77ae46bac6ccd6a78187fbc410dfa83e05949d2a8ae7bd",
+      "original_bytes": 415,
+      "derivative_path": "live-verification-06-console.txt",
+      "derivative_sha256": "3a447e589ed386dea8ae2de98c903279cec00feb7a20946f8a0ec419bfead357",
+      "derivative_bytes": 414,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "live-verification-06.json",
+      "original_sha256": "cf83c28e542c127efb312c924668f47c49c030f013e94259a04c32861113466c",
+      "original_bytes": 25131,
+      "derivative_path": "live-verification-06.json",
+      "derivative_sha256": "471e6bd1c1cf2f95ccdc4f1656987b11efaf3377b39925c43e403b9dc3d09748",
+      "derivative_bytes": 25129,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "live-verification-final-console.txt",
+      "original_sha256": "f7235cb71231623a99d84cafb3f4629937e4fa09e2c348b742a3bde67d567145",
+      "original_bytes": 478,
+      "derivative_path": "live-verification-final-console.txt",
+      "derivative_sha256": "467d39195d7c64986a4ee50c2802924d6c847b394553f3cc1ceee6e6aff0eedd",
+      "derivative_bytes": 477,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "live-verification-final.json",
+      "original_sha256": "eca86828bc299b79291eb7106b51186ec13e7b7a78e1d3360fd59efb8834aecb",
+      "original_bytes": 36374,
+      "derivative_path": "live-verification-final.json",
+      "derivative_sha256": "2411459d0769c8a8965a0ce44e54e056bc8d8a71348af1183be74be425c74bd9",
+      "derivative_bytes": 36372,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "network-probe.txt",
+      "original_sha256": "b09842bc91daba24cdecfd9f61f7debd1a731c77e6386d0163cb18b3508586d6",
+      "original_bytes": 29,
+      "derivative_path": "network-probe.txt",
+      "derivative_sha256": "d2049ba0ecdc9c05be42c026fdb779c9a8b4cdb4c657c497337ad2aca1b706a1",
+      "derivative_bytes": 28,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "old-writer-rejection.json",
+      "original_sha256": "5e7bdaada9971c1582bfe3eb8051b6ca311ba0bbfbe958b3ecde4730680bbc1d",
+      "original_bytes": 210,
+      "derivative_path": "old-writer-rejection.json",
+      "derivative_sha256": "3272e1cc75be3e18cacbdbf4ebfe278b255a3eef32294168bada8821e22794e2",
+      "derivative_bytes": 211,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "old-writer-rejection.txt",
+      "original_sha256": "ae49c837954c528c5cf28ba048237477d4a4d7ffb064a6ca9d60781193816735",
+      "original_bytes": 206,
+      "derivative_path": "old-writer-rejection.txt",
+      "derivative_sha256": "18431f3aa18469a337231f828d9d1187b027673d34bded105d2dcad20a1e4721",
+      "derivative_bytes": 203,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "p2/adapter-results.json",
+      "original_sha256": "0fe5e500fec2fc921a32c30c9b21fdbc8bd424847bc2917043a9c979b4769582",
+      "original_bytes": 2784,
+      "derivative_path": "p2/adapter-results.json",
+      "derivative_sha256": "88d9ec9da36dcdeb3f8e42d31d46f67ead68cb5a820f96817feaab0e9afd5962",
+      "derivative_bytes": 2785,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "p2/book.epub-import.json",
+      "original_sha256": "d377a8d5ada25408c92de31061bfa6fc0016830da98d94072214b13b01e1d706",
+      "original_bytes": 1135,
+      "derivative_path": "p2/book.epub-import.json",
+      "derivative_sha256": "9312d3d660e3d0a6d783f5d1ea119f382c3cc1c1d3efd77dd95b4465098699fb",
+      "derivative_bytes": 1136,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "p2/book.pdf-import.json",
+      "original_sha256": "87f815f60bcc2c34c79daec91867992c2f3581871090768a1c32dbe70cba3d01",
+      "original_bytes": 1201,
+      "derivative_path": "p2/book.pdf-import.json",
+      "derivative_sha256": "211038276aedcd0c2b46edb053660e76c542bc23da82f2985c7732bc2a80bbe4",
+      "derivative_bytes": 1202,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "p2/core-results.json",
+      "original_sha256": "515550a114edbc47ccf38903b8b309f6456bcadbc34706a44825c2aef7ff6fe1",
+      "original_bytes": 10815,
+      "derivative_path": "p2/core-results.json",
+      "derivative_sha256": "f89c3e854de59b9e4381735f84ae10f0db79d5962f2a3bbd2819bba0aa7d7166",
+      "derivative_bytes": 10816,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "p2-console.txt",
+      "original_sha256": "67d392ddbe83aa5d35c805ffd1801cc338063c39ddc85b449adf27994db0f7f5",
+      "original_bytes": 408,
+      "derivative_path": "p2-console.txt",
+      "derivative_sha256": "59bb7862f93be081a61865f73fcb9c3bb6b77e1e5b991394aac439d58acd19de",
+      "derivative_bytes": 371,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "pair-fixture-console.txt",
+      "original_sha256": "2c00db071d8a284db43d70126089cd251e1ffe4d0f6c92dc2646eb1b1b016735",
+      "original_bytes": 249,
+      "derivative_path": "pair-fixture-console.txt",
+      "derivative_sha256": "17c9dc8cc79e8e77aafeb38e6551327fd96fff9cc62bbb606a867f97c3e8f257",
+      "derivative_bytes": 246,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "pair-fixture.json",
+      "original_sha256": "ee33387b21b90612daf676c7b857619148b8835a03bbde09e636320343e9b196",
+      "original_bytes": 8037,
+      "derivative_path": "pair-fixture.json",
+      "derivative_sha256": "c72fc7e892ed79712979c6ef2c947e31cf9df42fbdaebbc066faf2efd6cfb474",
+      "derivative_bytes": 8038,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "parser-inputs-unchanged.json",
+      "original_sha256": "9a104ede92ef4f754576c9ab5e1a8c702d17b85ebd589e024bc1ba327d2f4c2c",
+      "original_bytes": 2480,
+      "derivative_path": "parser-inputs-unchanged.json",
+      "derivative_sha256": "1d9924e78dd006fbade101e1cfb9ab0febe3d3529c5d9944abfa341093c32c64",
+      "derivative_bytes": 2453,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "predecessor-install.txt",
+      "original_sha256": "3fd8fc7ba6334c1fab39ec533f6acaf525e5df773137cc7ae9eff7d77112fc23",
+      "original_bytes": 1140,
+      "derivative_path": "predecessor-install.txt",
+      "derivative_sha256": "f139aaa61e8f61bec22b8232194c75f1ea5db0d42c19a024a20dcbbcabf32af8",
+      "derivative_bytes": 1088,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "protected-inputs-verification.json",
+      "original_sha256": "1ec181e443ea5df8ac3913a72ec50c6fccd0659641f4ad5513cccd45753ee542",
+      "original_bytes": 1487,
+      "derivative_path": "protected-inputs-verification.json",
+      "derivative_sha256": "1d741aaa53698ff69c3b3a3eb31e5ce271657b987b1c0c1aa9d0ed85887ca192",
+      "derivative_bytes": 1290,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "provenance-correction.json",
+      "original_sha256": "2a88250d2851dd069cd247d26557ce30995b143163b75c3980cbd60704e65d8a",
+      "original_bytes": 1502,
+      "derivative_path": "provenance-correction.json",
+      "derivative_sha256": "2a88250d2851dd069cd247d26557ce30995b143163b75c3980cbd60704e65d8a",
+      "derivative_bytes": 1502,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "provenance-verification.json",
+      "original_sha256": "4b9b1a1b56189acd93ca0f340910113e1c9a9de3c38dac7a5bfdb6c7cd6c73c7",
+      "original_bytes": 285,
+      "derivative_path": "provenance-verification.json",
+      "derivative_sha256": "95851eff41feff2a96281fd19fb7f214defdb16761f48d024ca01ae978380afa",
+      "derivative_bytes": 286,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "push-candidate.txt",
+      "original_sha256": "96e4ed302e92b9557adc4715edd47375d78e9d0095db06abb1c1d79c449087bf",
+      "original_bytes": 100,
+      "derivative_path": "push-candidate.txt",
+      "derivative_sha256": "af0544f86d64378fd8cafed6d78371912d0e6cb407bac7c0c51ba566d1c4ad49",
+      "derivative_bytes": 98,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "remote-baseline-0d188eee.txt",
+      "original_sha256": "597e91bafc881f2877b135aada3144c34f8d36a481af4b5e0110bba9d2696797",
+      "original_bytes": 1032,
+      "derivative_path": "remote-baseline-0d188eee.txt",
+      "derivative_sha256": "8f03354e7bba97707b41afe80b02add06d403edc9441abbf0e777fa28a071127",
+      "derivative_bytes": 1017,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "resources-stderr.txt",
+      "original_sha256": "685da0ed45a34bf2abc472cfe4bd273804f6051825bd10b1bc2c10432a9dd106",
+      "original_bytes": 171,
+      "derivative_path": "resources-stderr.txt",
+      "derivative_sha256": "75bb03b638a4372358ee713f4c4535edadff64b325d805d3bdd7eca8e43f6090",
+      "derivative_bytes": 169,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "resources.json",
+      "original_sha256": "ff09d2377f625ff48b8c85a81d22d18b32fbd25b315e0f6f6e7c2af617bb30a8",
+      "original_bytes": 454,
+      "derivative_path": "resources.json",
+      "derivative_sha256": "0d4076ed8efd13587d236ea90b3779fe016a3c09d66c943f57a0abb672eac4db",
+      "derivative_bytes": 428,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "review-inputs/budget.json",
+      "original_sha256": "aa6e9b7409b3a1dd753f2405887dd358f4d4b98920216263e03877b8e99f9a7c",
+      "original_bytes": 339,
+      "derivative_path": "review-inputs/budget.json",
+      "derivative_sha256": "65b834c1597c5a6f2530ee52e58f50b371ff87bd3bd7f3c1b91f0b585b0b8aaa",
+      "derivative_bytes": 340,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "review-inputs/CONVERSATIONS.txt",
+      "original_sha256": "96da40286ad8d2303687d45154dc4af84aabdafe18c337d8a5f4b94418220e85",
+      "original_bytes": 22550,
+      "derivative_path": "review-inputs/CONVERSATIONS.txt",
+      "derivative_sha256": "ec0ad3105553d43a1b04c281b38d03a6e767115edfd87ab1918da364bf63152c",
+      "derivative_bytes": 21913,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "review-inputs/executor-closed-budget.json",
+      "original_sha256": "659fbd44e3af92f3a1b67e235cb40ac83c57d530d8b75d8e2b67038e6f1e3403",
+      "original_bytes": 342,
+      "derivative_path": "review-inputs/executor-closed-budget.json",
+      "derivative_sha256": "dca80dff78790e539559b91d6131979e9ce28efdac3f62909b8d0adb58e71a4e",
+      "derivative_bytes": 343,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "review-inputs/live-verification.json",
+      "original_sha256": "2aa3fa951f8297f0f2e4b191c72243849628d130ec17733b5e1dcecf528078a9",
+      "original_bytes": 38449,
+      "derivative_path": "review-inputs/live-verification.json",
+      "derivative_sha256": "5a93de37d2dc5cb10d8cd9fc9117838faaadfc230815571576e62f143d05f69b",
+      "derivative_bytes": 37295,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "review-inputs/REVIEW.txt",
+      "original_sha256": "1f4ef642796b9b4ec10caedc0c39ea7228dd5b3a4609551f9331651d1e83601c",
+      "original_bytes": 32260,
+      "derivative_path": "review-inputs/REVIEW.txt",
+      "derivative_sha256": "48349ce18d400fc8d5fd143d71eb69dbfd287a78df5a7edce5c63f6f7106546d",
+      "derivative_bytes": 31876,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "scenarios/01-prepare.json",
+      "original_sha256": "89ab60da757b6e598c0a31592890d1e429b871e79aa73ca4cb817a592768b9b3",
+      "original_bytes": 1217,
+      "derivative_path": "scenarios/01-prepare.json",
+      "derivative_sha256": "2be18a5e8ce8114e965e676f18a2500190da58202196daa53b84743b7f8e77b0",
+      "derivative_bytes": 1088,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "scenarios/02-continue.json",
+      "original_sha256": "50b0c8674f895a0630eef5b5029d8a73e243adbb94fa8b04a75f778822a2327f",
+      "original_bytes": 630,
+      "derivative_path": "scenarios/02-continue.json",
+      "derivative_sha256": "7cc7938f56ecfea94dcd6264dc4879a298d8b3941954eadfd92c8970dd41f305",
+      "derivative_bytes": 501,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "scenarios/03-complete.json",
+      "original_sha256": "57ef95a1bc121f768fe28fab7f018f6a71c72084a031665baa098741b1cf64b4",
+      "original_bytes": 1043,
+      "derivative_path": "scenarios/03-complete.json",
+      "derivative_sha256": "93ac321e334d6f635d46949f4491f1031eb0726edc510beff75a6df525fca3d3",
+      "derivative_bytes": 914,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "scenarios/04-reopen.json",
+      "original_sha256": "8864f62223536bfbb489a405078b47cb78749d8a8321e01ce431e81a4bcc6b45",
+      "original_bytes": 835,
+      "derivative_path": "scenarios/04-reopen.json",
+      "derivative_sha256": "767ab9007a03b7a41c4ac83a4915948394e19e7e1888492202643ec695f02966",
+      "derivative_bytes": 706,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "scenarios/05-clarification.json",
+      "original_sha256": "1c95cf2c74d0c660195a2805a130f0e0fa2818c28182e92768c24b4a90faf0e7",
+      "original_bytes": 853,
+      "derivative_path": "scenarios/05-clarification.json",
+      "derivative_sha256": "f06da5e9bd2fee059dc61bdc98f6e0bc530a35238afa5d6334f033f3f77d3e6d",
+      "derivative_bytes": 724,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "scenarios/06-two-handoffs.json",
+      "original_sha256": "ab464d6f9dd5611ba8ee87f941f7c3d32dac71df37fdd65aa8034ff08d6dd547",
+      "original_bytes": 1077,
+      "derivative_path": "scenarios/06-two-handoffs.json",
+      "derivative_sha256": "a0a36247fcd8554824a0f44b6e756ea805ab3dd2b389d750e6f292b18129ced6",
+      "derivative_bytes": 948,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "scenarios/07-ambiguous.json",
+      "original_sha256": "209a65723744a45d886e4a8fcd9f14dc18902ec5792d7a154d6081690860cd3b",
+      "original_bytes": 665,
+      "derivative_path": "scenarios/07-ambiguous.json",
+      "derivative_sha256": "6d0ada3c223fc9030e495cba08966b9c96235e36860606665631fbe7fb390852",
+      "derivative_bytes": 536,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "scenarios/08-clarified.json",
+      "original_sha256": "999f7af93034fb790d397de6d23ca4ae8d506d26fd790cfb9d4613a4326156c6",
+      "original_bytes": 775,
+      "derivative_path": "scenarios/08-clarified.json",
+      "derivative_sha256": "c06947e14b3d52806a95e73d9f4e23ea1dd6e7e8767fc73715ef6bdd8b1bc75b",
+      "derivative_bytes": 646,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "seal.py",
+      "original_sha256": "18173973433b5bb44cc6e7ed1fdca14449d868686792400ea79bcfac28dd8419",
+      "original_bytes": 1391,
+      "derivative_path": "seal.py",
+      "derivative_sha256": "8fe425c508d9552d58708204cbdfbcb782b962354afa9c1a4e9bfda50e8fda9c",
+      "derivative_bytes": 1314,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "seed-pair.mjs",
+      "original_sha256": "e31521af656b91cf461c9a852d066daf8898d977013da2531815565fd88bdac8",
+      "original_bytes": 4307,
+      "derivative_path": "seed-pair.mjs",
+      "derivative_sha256": "e31521af656b91cf461c9a852d066daf8898d977013da2531815565fd88bdac8",
+      "derivative_bytes": 4307,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "source-snapshots/export-06-console.completed.txt",
+      "original_sha256": "f47b203181d86fd3b0bb16fd238cc61d5d25c64d040937154321fe0f3ae5b00e",
+      "original_bytes": 56,
+      "derivative_path": "source-snapshots/export-06-console.completed.txt",
+      "derivative_sha256": "45278501683385d62e9affeb0049853128bd6536ae7e1c047c98ed2e05447308",
+      "derivative_bytes": 55,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "upgrade-before.json",
+      "original_sha256": "d3fa0be05bc6b2affdca1bb0018021b9fc4a0f0164dc2bac4d7262a33214963b",
+      "original_bytes": 27442,
+      "derivative_path": "upgrade-before.json",
+      "derivative_sha256": "ec72c8c43a0aab02b0fe4e85dc00acccb870b2ca9f709bc16e3c9274a9359d9b",
+      "derivative_bytes": 27443,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "upgrade-install.txt",
+      "original_sha256": "c16c490a4206b1af757f81169d954fee2b25915ed59643b27ccdbc006c624656",
+      "original_bytes": 567,
+      "derivative_path": "upgrade-install.txt",
+      "derivative_sha256": "0f435c086758590310c38c7ec20f5b6fa7437f2a95158c107ca1e6f6872cf3e4",
+      "derivative_bytes": 554,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "upgrade-seed.txt",
+      "original_sha256": "a43533f64c19af421fbdadfb60c67c4665d5d4859cd93489ce84a37b077a0bb0",
+      "original_bytes": 200,
+      "derivative_path": "upgrade-seed.txt",
+      "derivative_sha256": "288144d05bf123367a023267786c4f48897a110afade3985c4b714e55d1ab476",
+      "derivative_bytes": 197,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "upgrade-verification.json",
+      "original_sha256": "a9e12016d90eb1c980a62d61821e4af7d1aa11ae4663ff52374e15a3b1c21cc2",
+      "original_bytes": 40854,
+      "derivative_path": "upgrade-verification.json",
+      "derivative_sha256": "fb85eab7c4c32a622294dd0a61b5e8c32132c60bbc0b0e98dd681b8037217e55",
+      "derivative_bytes": 40855,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions",
+        "parse/serialize JSON, including embedded JSON strings; omit reasoning blocks and encrypted reasoning"
+      ]
+    },
+    {
+      "original_relative_path": "upgrade-verify.txt",
+      "original_sha256": "8d54dbc6c50677cd404c2ba9821e3e6f40f51ce84d1364cf1d66493ef57e1b3b",
+      "original_bytes": 202,
+      "derivative_path": "upgrade-verify.txt",
+      "derivative_sha256": "5bf2e27f2d1159ff091680f980bb4a0f106a8c3b8a19e621f25a5a919ad5b76e",
+      "derivative_bytes": 199,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "upgrade.mjs",
+      "original_sha256": "28ecebe80ca1198e26885021b5ae37d40a87642483c83ffbcb6cf0530133874e",
+      "original_bytes": 5996,
+      "derivative_path": "upgrade.mjs",
+      "derivative_sha256": "28ecebe80ca1198e26885021b5ae37d40a87642483c83ffbcb6cf0530133874e",
+      "derivative_bytes": 5996,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "verify-live.py",
+      "original_sha256": "d226ff86ca0bea26a72fa5f7cc6e68b6162ce0a857c19a40e8ebfe2bc0300a12",
+      "original_bytes": 7818,
+      "derivative_path": "verify-live.py",
+      "derivative_sha256": "49142505bcddd959a9cf6544d8ca47219c271bb07f90913301d2008ee9a0200d",
+      "derivative_bytes": 7736,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "work-tests-first.txt",
+      "original_sha256": "51d32092f699501840cd723c39ce1c312d359c1d0f992ecfedbeab56c0d60a3f",
+      "original_bytes": 4510,
+      "derivative_path": "work-tests-first.txt",
+      "derivative_sha256": "f12b673b4eb00fcdb2cafacb98623e65f7364fc685b841dfe42e6286c1600c16",
+      "derivative_bytes": 4334,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    },
+    {
+      "original_relative_path": "work-tests-second.txt",
+      "original_sha256": "e314629cbf7d7055f11bb04f23f1701a6c80273143f429cfd8b3b29ed69ee11a",
+      "original_bytes": 3584,
+      "derivative_path": "work-tests-second.txt",
+      "derivative_sha256": "0d42cf04b02ae9b5ea8466be25dc7f837f959bfffda572006384de8c0e486511",
+      "derivative_bytes": 3500,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    }
+  ]
+}

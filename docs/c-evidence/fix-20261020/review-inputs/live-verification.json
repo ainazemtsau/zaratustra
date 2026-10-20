@@ -1,0 +1,729 @@
+{
+  "attempts": [
+    {
+      "attempt": "live-01-materials",
+      "pid": 27104,
+      "cwd": "<C_REVIEW_ROOT>\\cwd-a",
+      "prompt": "Сохрани в библиотеку материалы из <C_REVIEW_ROOT>/inputs: volume-a.epub, volume-b.epub, volume-c.epub, notebook.pdf, memo.md и fragment.txt. Это материалы для будущего использования. Проверь, доступен ли текст у трёх EPUB. Для volume-a и volume-c объясни ограничения доступных глав, а из доступной части volume-c приведи одну короткую фразу. volume-b, PDF и заметки сейчас не пересказывай: вопросы будут позже. Общаемся по-русски.",
+      "response": "Сохранил в библиотеку все шесть файлов для будущего использования, включая оригиналы и доступный извлечённый текст.\n\nДоступность EPUB:\n- **volume-a.epub:** текст обеих глав недоступен — они пустые либо содержат только изображения. OCR недоступен; сохранение оригинала не означает, что его текст можно прочитать.\n- **volume-b.epub:** текст всех трёх глав доступен.\n- **volume-c.epub:** текст первой главы доступен, второй — нет: она пустая либо содержит только изображения; OCR недоступен.\n\nКороткая фраза из первой главы **volume-c**: «handle the sample with dry gloves.»\n\nОстальные материалы не пересказываю. Предпочтение общаться по-русски тоже сохранено.",
+      "requests": 7,
+      "usd": 0.1118596,
+      "tool_errors": 0,
+      "budget": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "prompts": 1,
+        "requests": 7,
+        "input": 86464,
+        "output": 1481,
+        "cache_read": 39936,
+        "estimated_usd": 0.1118596,
+        "limits": {
+          "prompts": 10,
+          "requests": 80,
+          "input": 9007199254740991,
+          "output": 9007199254740991,
+          "estimated_usd": 8
+        }
+      },
+      "empty_transcript": true,
+      "settled": true
+    },
+    {
+      "attempt": "live-02",
+      "pid": 58216,
+      "cwd": "<C_REVIEW_ROOT>\\cwd-02",
+      "prompt": "Начнём проект «Домашний дождемер»: итогом будет короткая памятка измерения для школьного стенда. Обязательная подзадача — проверить порядок измерения по описанию из двух частей. Первая часть: «Поставь сосуд вертикально на ровную поверхность. Смотри на шкалу на уровне глаз». Вторую часть пришлю позже; пока весь порядок готовым не считай. Другая обязательная подзадача — независимая этикетка безопасности: «Работай с сухими руками. Не используй треснувший сосуд». Её подготовь и сохрани сейчас. В плане также предусмотрено пробное наливание воды после полной проверки описания, а сборка итоговой памятки зависит от обеих обязательных подзадач. Подготовь одно сообщение для ручного переноса в другой чат: отдельно проверить ясность первой части и предложить заголовок. Сам ничего не отправляй. Итог не закрывай, продолжим позже.\n",
+      "response": "Проект «Домашний дождемер» сохранён и остаётся открытым. Первая часть сохранена; полная проверка ждёт вторую. Пробное наливание — только после полной проверки, итоговая памятка — после обязательных подзадач.\n\n**Этикетка безопасности подготовлена и сохранена:**\n> **Безопасность**  \n> Работай с сухими руками.  \n> Не используй треснувший сосуд.\n\n**Одно сообщение для ручного переноса** — ничего не отправлял:\n\n> Для проекта «Домашний дождемер» готовим короткую памятку измерения для школьного стенда. Первая часть описания: «Поставь сосуд вертикально на ровную поверхность. Смотри на шкалу на уровне глаз».\n>\n> Пожалуйста, ответь отдельно:\n> 1. Проверь ясность первой части для школьника: укажи неоднозначности и при необходимости предложи понятнее сформулированный вариант.\n> 2. Предложи короткий заголовок памятки.\n>\n> Вторая часть ещё не получена. Не считай весь порядок проверенным и не дописывай недостающую часть.\n\nСсылка для сопоставления ответа: `handoff-bfd513a7-55c8-45ec-9d99-870ee9c48dab`.",
+      "requests": 13,
+      "usd": 0.25621120000000003,
+      "tool_errors": 1,
+      "budget": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "prompts": 2,
+        "requests": 20,
+        "input": 269608,
+        "output": 5649,
+        "cache_read": 119808,
+        "estimated_usd": 0.36807080000000003,
+        "limits": {
+          "prompts": 10,
+          "requests": 80,
+          "input": 9007199254740991,
+          "output": 9007199254740991,
+          "estimated_usd": 8
+        }
+      },
+      "empty_transcript": true,
+      "settled": true
+    },
+    {
+      "attempt": "live-03",
+      "pid": 39796,
+      "cwd": "<C_REVIEW_ROOT>\\cwd-03",
+      "prompt": "Продолжим «Домашний дождемер». Из другого чата пришла пока только проверка ясности: «Слова про уровень глаз понятны; добавьте, что шкалу не читают сверху». Заголовок ещё не предложили. Сохрани это как частичный внешний ответ, без выдумывания недостающего заголовка. Второй части описания у меня пока нет. Объясни, что уже сделано и какие ожидания остались; не повторяй подготовку уже сохранённой этикетки и запроса.\n",
+      "response": "Сохранил как **частичный внешний ответ**: «Слова про уровень глаз понятны; добавьте, что шкалу не читают сверху». Заголовок не придумывал.\n\n**Уже сделано:** этикетка безопасности сохранена, запрос для другого чата подготовлен. Повторно их не готовил.\n\n**Остаётся ждать:**\n- предложенный заголовок из другого чата;\n- вторую часть описания от вас.\n\nПроверка ясности первой части не заменяет проверку всей процедуры. После получения второй части нужно проверить обе вместе, затем провести пробное наливание с реальными наблюдениями и собрать итоговую памятку.",
+      "requests": 8,
+      "usd": 0.15996919999999992,
+      "tool_errors": 1,
+      "budget": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "prompts": 3,
+        "requests": 28,
+        "input": 377625,
+        "output": 8895,
+        "cache_read": 166400,
+        "estimated_usd": 0.52804,
+        "limits": {
+          "prompts": 10,
+          "requests": 80,
+          "input": 9007199254740991,
+          "output": 9007199254740991,
+          "estimated_usd": 8
+        }
+      },
+      "empty_transcript": true,
+      "settled": true
+    },
+    {
+      "attempt": "live-04",
+      "pid": 67300,
+      "cwd": "<C_REVIEW_ROOT>\\cwd-04",
+      "prompt": "Приостанови весь проект «Домашний дождемер». Цель меняется: теперь нужна только сухая памятка чтения шкалы для стенда, без экспериментов. Пробное наливание воды отменяю окончательно; сохрани причину и последствия для плана, это не выполненный опыт. Готовую этикетку безопасности и её завершение сохрани. Саму проверку описания пока не закрывай: второй части ещё нет. Остальные фактические состояния подзадач не переписывай из-за паузы. Ничего автоматически не продолжай.\n",
+      "response": "Сохранено:\n- Весь проект приостановлен. Новая цель — только сухая памятка чтения шкалы для стенда.\n- Пробное наливание окончательно отменено: причина и последствия записаны, из обязательных условий оно исключено. Выполненным опытом не считается.\n- Готовая этикетка безопасности и её завершение сохранены.\n- Проверка описания остаётся незавершённой: второй части нет.\n- Остальные фактические состояния подзадач не изменены.\n\nБез вашего явного указания ничего не продолжится.",
+      "requests": 4,
+      "usd": 0.0766228000000001,
+      "tool_errors": 0,
+      "budget": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "prompts": 4,
+        "requests": 32,
+        "input": 425661,
+        "output": 10744,
+        "cache_read": 186368,
+        "estimated_usd": 0.6046628000000001,
+        "limits": {
+          "prompts": 10,
+          "requests": 80,
+          "input": 9007199254740991,
+          "output": 9007199254740991,
+          "estimated_usd": 8
+        }
+      },
+      "empty_transcript": true,
+      "settled": true
+    },
+    {
+      "attempt": "live-05",
+      "pid": 65360,
+      "cwd": "<C_REVIEW_ROOT>\\cwd-05",
+      "prompt": "Пришёл поздний остаток ответа из того же другого чата по «Домашнему дождемеру»: «Заголовок: Шкала без ошибки. Для наглядности налейте в сосуд 200 мл воды». Сохрани полезный заголовок и сам внешний ответ, сопоставив его со старым заданием и нынешней сухой памяткой. Предложение про воду устарело: отменённый опыт не восстанавливай. Пауза всего проекта остаётся, ничего пока не возобновляй.\n",
+      "response": "Сохранены полный поздний ответ и заголовок «Шкала без ошибки» — как вариант для сухой памятки.\n\nВместе с прежними замечаниями заголовок закрывает старый запрос на ясность и название. Предложение налить 200 мл отмечено как устаревшее: опыт остаётся отменённым.\n\nВесь проект по-прежнему на паузе. Ничего не возобновлено; полная проверка описания всё ещё ждёт второй части.",
+      "requests": 7,
+      "usd": 0.12563959999999996,
+      "tool_errors": 0,
+      "budget": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "prompts": 5,
+        "requests": 39,
+        "input": 516785,
+        "output": 12671,
+        "cache_read": 226304,
+        "estimated_usd": 0.7303024,
+        "limits": {
+          "prompts": 10,
+          "requests": 80,
+          "input": 9007199254740991,
+          "output": 9007199254740991,
+          "estimated_usd": 8
+        }
+      },
+      "empty_transcript": true,
+      "settled": true
+    },
+    {
+      "attempt": "live-06",
+      "pid": 68412,
+      "cwd": "<C_REVIEW_ROOT>\\cwd-06",
+      "prompt": "Явно возобнови «Домашний дождемер» с текущей целью сухой памятки, без опыта с водой. Вторая часть описания: «Показание читают по нижнему краю мениска и записывают в миллиметрах». Обе части теперь получены. Проверь их вместе и учти сохранённое замечание, что на шкалу не смотрят сверху. Сверь план с уже сохранённой этикеткой и ответами другого чата, повторно их не создавай. Нужен итог под заголовком «Шкала без ошибки»: ровно четыре нумерованных пункта; в них должны быть сухие руки и запрет треснувшего сосуда, вертикальная установка на ровной поверхности, взгляд на уровне глаз без чтения сверху, нижний край мениска и запись в миллиметрах. Никакого заявления о проведённом опыте. Подготовь и сохрани памятку, заверши обе обязательные подзадачи по фактическим основаниям и затем весь проект, если все эти критерии выполнены. Отменённый опыт должен остаться отменённым.\n",
+      "response": "Памятка сохранена. Обе обязательные подзадачи и проект завершены; этикетка и ответы другого чата использованы без повторного создания. Опыт остаётся отменённым.\n\n# Шкала без ошибки\n\n1. Работай с сухими руками. Не используй треснувший сосуд.\n2. Установи сосуд вертикально на ровной поверхности.\n3. Смотри на шкалу на уровне глаз; не считывай показание сверху.\n4. Читай показание по нижнему краю мениска и записывай его в миллиметрах.",
+      "requests": 15,
+      "usd": 0.46301639999999966,
+      "tool_errors": 2,
+      "budget": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "prompts": 6,
+        "requests": 54,
+        "input": 807463,
+        "output": 18542,
+        "cache_read": 319488,
+        "estimated_usd": 1.1933187999999997,
+        "limits": {
+          "prompts": 10,
+          "requests": 80,
+          "input": 9007199254740991,
+          "output": 9007199254740991,
+          "estimated_usd": 8
+        }
+      },
+      "empty_transcript": true,
+      "settled": true
+    },
+    {
+      "attempt": "live-07",
+      "pid": 69640,
+      "cwd": "<C_REVIEW_ROOT>\\cwd-07",
+      "prompt": "Верни именно завершённый проект «Домашний дождемер» в работу: позже я уточню формулировку четвёртого пункта. Это явный reopen того же проекта. Старую памятку, прежнее завершение и основания сохрани в истории. Пока новую версию не пиши, заново не закрывай и опыт с водой не восстанавливай. Покажи прежнюю памятку и текущий статус.\n",
+      "response": "«Домашний дождемер» возвращён в работу — открыт именно прежний завершённый проект.\n\n**Текущий статус:** активен; следующий шаг — дождаться вашего уточнения четвёртого пункта. Новую версию не писал и проект повторно не закрывал. Опыт с водой остаётся отменённым. Прежняя памятка, завершение и его основания сохранены в истории.\n\n**Прежняя памятка «Шкала без ошибки»:**\n\n1. Работай с сухими руками. Не используй треснувший сосуд.\n2. Установи сосуд вертикально на ровной поверхности.\n3. Смотри на шкалу на уровне глаз; не считывай показание сверху.\n4. Читай показание по нижнему краю мениска и записывай его в миллиметрах.",
+      "requests": 4,
+      "usd": 0.08854319999999993,
+      "tool_errors": 0,
+      "budget": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "prompts": 7,
+        "requests": 58,
+        "input": 859681,
+        "output": 19482,
+        "cache_read": 332800,
+        "estimated_usd": 1.2818619999999996,
+        "limits": {
+          "prompts": 10,
+          "requests": 80,
+          "input": 9007199254740991,
+          "output": 9007199254740991,
+          "estimated_usd": 8
+        }
+      },
+      "empty_transcript": true,
+      "settled": true
+    },
+    {
+      "attempt": "live-08",
+      "pid": 46704,
+      "cwd": "<C_REVIEW_ROOT>\\cwd-08",
+      "prompt": "Вернёмся к сохранённым материалам библиотеки. Исходные файлы уже удалены. По notebook.pdf скажи, где должна храниться латунная линейка и какая независимая печать указана. По volume-b.epub — где хранится керамический калибр и какая проверочная фраза дана. Ещё найди последнее указание в самом хвосте memo.md. Отвечай из действительно прочитанных участков сохранённых копий; укажи страницы и главу, где найдены ответы. Проект дождемера сейчас не продолжай.\n",
+      "response": "Прочитал нужные участки сохранённых текстовых копий:\n\n- **notebook.pdf**:\n  - **Страница 2:** латунная линейка хранится в бирюзовом шкафу, на полке **J-64**.\n  - **Страница 3:** независимая печать — **MAPLE-8527**.\n- **volume-b.epub**, **глава 2** (`OPS/c2.xhtml`): керамический калибр хранится в янтарном шкафчике, в отделении **V-86**. Проверочная фраза — **WILLOW-3729**.\n- **memo.md**, самый конец файла: «Final instruction: place the reference tile in drawer T-93.» — **поместить эталонную плитку в ящик T-93**.\n\nПроект дождемера не продолжал.",
+      "requests": 6,
+      "usd": 0.1212200000000001,
+      "tool_errors": 0,
+      "budget": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "prompts": 8,
+        "requests": 64,
+        "input": 948137,
+        "output": 20236,
+        "cache_read": 366080,
+        "estimated_usd": 1.4030819999999997,
+        "limits": {
+          "prompts": 10,
+          "requests": 80,
+          "input": 9007199254740991,
+          "output": 9007199254740991,
+          "estimated_usd": 8
+        }
+      },
+      "empty_transcript": true,
+      "settled": true
+    },
+    {
+      "attempt": "live-09",
+      "pid": 60160,
+      "cwd": "<C_REVIEW_ROOT>\\cwd-09",
+      "prompt": "Есть две отдельные будущие памятки — «Термометр» и «Весы». Для каждой нужна независимая внешняя проверка одинаковой фразы: «Сначала проверь единицы измерения, затем записывай результат». Сохрани две отдельные работы и подготовь для каждой свой запрос для ручного переноса: понятна ли фраза и нужна ли правка. Пока только подготовь сообщения, ничего не отправляй. Проект дождемера не продолжай.\n",
+      "response": "Сохранены две отдельные работы и два независимых запроса. Ничего не отправлено. Проект дождемера не продолжал.\n\n### «Термометр»\n> Проверьте независимо фразу для будущей памятки «Термометр»: «Сначала проверь единицы измерения, затем записывай результат».\n> Понятна ли она? Нужна ли правка? Если да, предложите формулировку и кратко объясните причину; если нет — укажите это. В ответе сохраните название памятки и ссылку запроса.\n>\n> Запрос: `handoff-678458d7-deb3-4ad7-9465-1db497bd35bb`\n\n### «Весы»\n> Проверьте независимо фразу для будущей памятки «Весы»: «Сначала проверь единицы измерения, затем записывай результат».\n> Понятна ли она? Нужна ли правка? Если да, предложите формулировку и кратко объясните причину; если нет — укажите это. В ответе сохраните название памятки и ссылку запроса.\n>\n> Запрос: `handoff-21988ab8-7324-429e-9306-77ee730ed8ef`",
+      "requests": 6,
+      "usd": 0.11995559999999972,
+      "tool_errors": 0,
+      "budget": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "prompts": 9,
+        "requests": 70,
+        "input": 1034934,
+        "output": 22460,
+        "cache_read": 406016,
+        "estimated_usd": 1.5230375999999994,
+        "limits": {
+          "prompts": 10,
+          "requests": 80,
+          "input": 9007199254740991,
+          "output": 9007199254740991,
+          "estimated_usd": 8
+        }
+      },
+      "empty_transcript": true,
+      "settled": true
+    },
+    {
+      "attempt": "live-10",
+      "pid": 61364,
+      "cwd": "<C_REVIEW_ROOT>\\cwd-10",
+      "prompt": "Вернулся ответ из другого чата по последней проверке: «Формулировка понятна, правки не нужны». Сохрани его к соответствующей памятке.\n",
+      "response": "Уточни, пожалуйста: ответ относится к памятке «Весы» или «Термометр»? Для обеих подготовлены отдельные проверки одной и той же фразы, поэтому по цитате нельзя надёжно выбрать памятку.",
+      "requests": 3,
+      "usd": 0.05598520000000007,
+      "tool_errors": 0,
+      "budget": {
+        "provider": "openai-codex",
+        "model": "gpt-6.1-sol",
+        "prompts": 10,
+        "requests": 73,
+        "input": 1074608,
+        "output": 22653,
+        "cache_read": 419328,
+        "estimated_usd": 1.5790227999999995,
+        "limits": {
+          "prompts": 10,
+          "requests": 80,
+          "input": 9007199254740991,
+          "output": 9007199254740991,
+          "estimated_usd": 8
+        }
+      },
+      "empty_transcript": true,
+      "settled": true
+    }
+  ],
+  "tool_errors": [
+    {
+      "attempt": "live-02",
+      "tool": "zara_commit",
+      "result": {
+        "ok": false,
+        "code": "INVALID_TRANSITION",
+        "message": "An independent step is available; the whole Work cannot be waiting.",
+        "retryable": false
+      }
+    },
+    {
+      "attempt": "live-03",
+      "tool": "zara_commit",
+      "result": {
+        "ok": false,
+        "code": "INVALID_TRANSITION",
+        "message": "Final transaction changed/paused/terminal plan requires a late/unrelated reply disposition.",
+        "retryable": false
+      }
+    },
+    {
+      "attempt": "live-06",
+      "tool": "zara_claim",
+      "result": {
+        "ok": false,
+        "code": "INVALID_TRANSITION",
+        "message": "Activity is paused/closed.",
+        "retryable": false
+      }
+    },
+    {
+      "attempt": "live-06",
+      "tool": "zara_commit",
+      "result": {
+        "ok": false,
+        "code": "INVALID_TRANSITION",
+        "message": "The final Activity suppresses this managed execution.",
+        "retryable": false
+      }
+    }
+  ],
+  "range_reads": [
+    {
+      "attempt": "live-01-materials",
+      "tool_call_id": "call_18b106b11cc045f9aeaf0d8210429bd4|fc_0a3f112305df813d016ad6d07e9f388191b7fcb72bc8b3d55f",
+      "args": {
+        "id": "evidence-371c289a-6a24-4ef5-b537-55fda8370ed0",
+        "locator": "chapter:1:OPS/c1.xhtml",
+        "range": {
+          "start": 0,
+          "length": 1000
+        }
+      },
+      "ref": {
+        "id": "evidence-371c289a-6a24-4ef5-b537-55fda8370ed0",
+        "revision": 1
+      },
+      "locator": "chapter:1:OPS/c1.xhtml",
+      "start": 0,
+      "next_start": 63,
+      "global_start": 0,
+      "global_next_start": 63,
+      "code_points": 63,
+      "text_sha256": "f720150517c8c869c406b0c8237371e61f565198c3381f1caf3294e6d51b6912",
+      "managed_range_exact": true
+    },
+    {
+      "attempt": "live-08",
+      "tool_call_id": "call_a96a7c15a2a9496b942356bef8105559|fc_0acf14af9b97398b016ad6d372fe9c8191bf87f0e230be5734",
+      "args": {
+        "id": "evidence-d6f74cfb-2bd8-468c-abfd-614ca4d8e6fd",
+        "locator": "page:1",
+        "range": {
+          "start": 8000,
+          "length": 3000
+        }
+      },
+      "ref": {
+        "id": "evidence-d6f74cfb-2bd8-468c-abfd-614ca4d8e6fd",
+        "revision": 1
+      },
+      "locator": "page:1",
+      "start": 8000,
+      "next_start": 10996,
+      "global_start": 8000,
+      "global_next_start": 10996,
+      "code_points": 2996,
+      "text_sha256": "80678b02352204b5e5832b47e9b99e93c2402247bb53622cffadfb649fc6417e",
+      "managed_range_exact": true
+    },
+    {
+      "attempt": "live-08",
+      "tool_call_id": "call_aee4aabec8a54beb8ad09f9872442cb4|fc_0acf14af9b97398b016ad6d37702108191aef8c64cf3651e9f",
+      "args": {
+        "id": "evidence-d6f74cfb-2bd8-468c-abfd-614ca4d8e6fd",
+        "locator": "page:2",
+        "range": {
+          "start": 8000,
+          "length": 3100
+        }
+      },
+      "ref": {
+        "id": "evidence-d6f74cfb-2bd8-468c-abfd-614ca4d8e6fd",
+        "revision": 1
+      },
+      "locator": "page:2",
+      "start": 8000,
+      "next_start": 11055,
+      "global_start": 18996,
+      "global_next_start": 22051,
+      "code_points": 3055,
+      "text_sha256": "1e6290599b68873ece96eade6eec0cb582e861def64cf6c4f0b6a9f05214c35a",
+      "managed_range_exact": true
+    },
+    {
+      "attempt": "live-08",
+      "tool_call_id": "call_41c01ac31d844fc898781c9f2d7e5e7e|fc_0acf14af9b97398b016ad6d37702108191949d5d5fe2abb973",
+      "args": {
+        "id": "evidence-d6f74cfb-2bd8-468c-abfd-614ca4d8e6fd",
+        "locator": "page:3",
+        "range": {
+          "start": 8000,
+          "length": 3100
+        }
+      },
+      "ref": {
+        "id": "evidence-d6f74cfb-2bd8-468c-abfd-614ca4d8e6fd",
+        "revision": 1
+      },
+      "locator": "page:3",
+      "start": 8000,
+      "next_start": 11032,
+      "global_start": 30051,
+      "global_next_start": 33083,
+      "code_points": 3032,
+      "text_sha256": "f3e06689b56349678ddc07726a1c9fe441aac2c268da308c15a036e118b9eca3",
+      "managed_range_exact": true
+    },
+    {
+      "attempt": "live-08",
+      "tool_call_id": "call_57e1de075bae44fe8ec47453b9393d81|fc_0acf14af9b97398b016ad6d377021081918a486027e9858c55",
+      "args": {
+        "id": "evidence-abb07f0f-c477-4204-a5d6-abe358cfe8c5",
+        "locator": "chapter:2:OPS/c2.xhtml",
+        "range": {
+          "start": 8000,
+          "length": 4501
+        }
+      },
+      "ref": {
+        "id": "evidence-abb07f0f-c477-4204-a5d6-abe358cfe8c5",
+        "revision": 1
+      },
+      "locator": "chapter:2:OPS/c2.xhtml",
+      "start": 8000,
+      "next_start": 12451,
+      "global_start": 22700,
+      "global_next_start": 27151,
+      "code_points": 4451,
+      "text_sha256": "98b1c4b9d25e61fe8a92cafa47f1cb0be165bf94e4a100e0b352901d4ec01172",
+      "managed_range_exact": true
+    },
+    {
+      "attempt": "live-08",
+      "tool_call_id": "call_7c2b7a87f1b14dd5aff2eac792769b79|fc_0acf14af9b97398b016ad6d3770210819193c844a504ebe95b",
+      "args": {
+        "id": "evidence-c2e819e2-4c2d-424f-979b-03e753007835",
+        "range": {
+          "start": 16684,
+          "length": 1000
+        }
+      },
+      "ref": {
+        "id": "evidence-c2e819e2-4c2d-424f-979b-03e753007835",
+        "revision": 1
+      },
+      "locator": null,
+      "start": 16684,
+      "next_start": 17684,
+      "global_start": 16684,
+      "global_next_start": 17684,
+      "code_points": 1000,
+      "text_sha256": "c7f2eb66f72f95c57fce8094290543d329401c8b287823e1f9cbde03ef2df519",
+      "managed_range_exact": true
+    }
+  ],
+  "hidden_first_provider_exposure": {
+    "teal cabinet": {
+      "attempt": "live-08",
+      "provider_request": 6,
+      "via": [
+        {
+          "call_id": "call_aee4aabec8a54beb8ad09f9872442cb4",
+          "name": "zara_read",
+          "arguments": {
+            "id": "evidence-d6f74cfb-2bd8-468c-abfd-614ca4d8e6fd",
+            "locator": "page:2",
+            "range": {
+              "start": 8000,
+              "length": 3100
+            }
+          }
+        }
+      ]
+    },
+    "J-64": {
+      "attempt": "live-08",
+      "provider_request": 6,
+      "via": [
+        {
+          "call_id": "call_aee4aabec8a54beb8ad09f9872442cb4",
+          "name": "zara_read",
+          "arguments": {
+            "id": "evidence-d6f74cfb-2bd8-468c-abfd-614ca4d8e6fd",
+            "locator": "page:2",
+            "range": {
+              "start": 8000,
+              "length": 3100
+            }
+          }
+        }
+      ]
+    },
+    "MAPLE-8527": {
+      "attempt": "live-08",
+      "provider_request": 6,
+      "via": [
+        {
+          "call_id": "call_41c01ac31d844fc898781c9f2d7e5e7e",
+          "name": "zara_read",
+          "arguments": {
+            "id": "evidence-d6f74cfb-2bd8-468c-abfd-614ca4d8e6fd",
+            "locator": "page:3",
+            "range": {
+              "start": 8000,
+              "length": 3100
+            }
+          }
+        }
+      ]
+    },
+    "amber locker": {
+      "attempt": "live-08",
+      "provider_request": 6,
+      "via": [
+        {
+          "call_id": "call_57e1de075bae44fe8ec47453b9393d81",
+          "name": "zara_read",
+          "arguments": {
+            "id": "evidence-abb07f0f-c477-4204-a5d6-abe358cfe8c5",
+            "locator": "chapter:2:OPS/c2.xhtml",
+            "range": {
+              "start": 8000,
+              "length": 4501
+            }
+          }
+        }
+      ]
+    },
+    "V-86": {
+      "attempt": "live-08",
+      "provider_request": 6,
+      "via": [
+        {
+          "call_id": "call_57e1de075bae44fe8ec47453b9393d81",
+          "name": "zara_read",
+          "arguments": {
+            "id": "evidence-abb07f0f-c477-4204-a5d6-abe358cfe8c5",
+            "locator": "chapter:2:OPS/c2.xhtml",
+            "range": {
+              "start": 8000,
+              "length": 4501
+            }
+          }
+        }
+      ]
+    },
+    "WILLOW-3729": {
+      "attempt": "live-08",
+      "provider_request": 6,
+      "via": [
+        {
+          "call_id": "call_57e1de075bae44fe8ec47453b9393d81",
+          "name": "zara_read",
+          "arguments": {
+            "id": "evidence-abb07f0f-c477-4204-a5d6-abe358cfe8c5",
+            "locator": "chapter:2:OPS/c2.xhtml",
+            "range": {
+              "start": 8000,
+              "length": 4501
+            }
+          }
+        }
+      ]
+    },
+    "drawer T-93": {
+      "attempt": "live-08",
+      "provider_request": 6,
+      "via": [
+        {
+          "call_id": "call_7c2b7a87f1b14dd5aff2eac792769b79",
+          "name": "zara_read",
+          "arguments": {
+            "id": "evidence-c2e819e2-4c2d-424f-979b-03e753007835",
+            "range": {
+              "start": 16684,
+              "length": 1000
+            }
+          }
+        }
+      ]
+    }
+  },
+  "graph": {
+    "parent": "work-cd59d3a4-5873-4364-8dad-f8c6739b1988",
+    "children": [
+      "work-d3d85faa-72f6-4b0c-a4f4-5678e423ad96",
+      "work-ec9095d4-9192-466a-b000-54d4e9d4a97d"
+    ],
+    "parent_done_revision": 7,
+    "reopen_revision": 8,
+    "exact_historical_done": true,
+    "pause_preserves_child_rows": true,
+    "obsolete_trial_still_cancelled": true,
+    "remaining_planning_drift": [
+      {
+        "step_id": "review",
+        "intent": "Prepare a manual request for clarity review of part one and a proposed title; send nothing.",
+        "status": "todo",
+        "depends_on": [],
+        "required": false,
+        "result_refs": []
+      }
+    ]
+  },
+  "receipt_counts": [
+    {
+      "attempt": "live-01-materials",
+      "records": 13,
+      "revisions": 13,
+      "changes": 1,
+      "receipts": 1,
+      "prepared_intents": 0
+    },
+    {
+      "attempt": "live-02",
+      "records": 19,
+      "revisions": 21,
+      "changes": 5,
+      "receipts": 5,
+      "prepared_intents": 1
+    },
+    {
+      "attempt": "live-03",
+      "records": 21,
+      "revisions": 24,
+      "changes": 7,
+      "receipts": 7,
+      "prepared_intents": 2
+    },
+    {
+      "attempt": "live-04",
+      "records": 22,
+      "revisions": 27,
+      "changes": 8,
+      "receipts": 8,
+      "prepared_intents": 2
+    },
+    {
+      "attempt": "live-05",
+      "records": 25,
+      "revisions": 31,
+      "changes": 9,
+      "receipts": 9,
+      "prepared_intents": 2
+    },
+    {
+      "attempt": "live-06",
+      "records": 28,
+      "revisions": 42,
+      "changes": 15,
+      "receipts": 15,
+      "prepared_intents": 3
+    },
+    {
+      "attempt": "live-07",
+      "records": 29,
+      "revisions": 45,
+      "changes": 16,
+      "receipts": 16,
+      "prepared_intents": 3
+    },
+    {
+      "attempt": "live-08",
+      "records": 29,
+      "revisions": 45,
+      "changes": 16,
+      "receipts": 16,
+      "prepared_intents": 3
+    },
+    {
+      "attempt": "live-09",
+      "records": 32,
+      "revisions": 50,
+      "changes": 18,
+      "receipts": 18,
+      "prepared_intents": 3
+    },
+    {
+      "attempt": "live-10",
+      "records": 32,
+      "revisions": 50,
+      "changes": 18,
+      "receipts": 18,
+      "prepared_intents": 3
+    }
+  ],
+  "ledger": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 10,
+    "requests": 73,
+    "input": 1074608,
+    "output": 22653,
+    "cache_read": 419328,
+    "estimated_usd": 1.5790227999999995,
+    "limits": {
+      "prompts": 10,
+      "requests": 80,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 8
+    }
+  }
+}

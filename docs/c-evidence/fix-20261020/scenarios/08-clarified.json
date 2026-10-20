@@ -1,0 +1,9 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\candidate-config",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\ambiguity-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-08",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\08-clarified",
+  "prompt": "Тот ответ «Формулировка понятна, правки не нужны» относился к карточке «Компас». Это уточнение принадлежности того же ответа, а не новая проверка. Для «Лампы» ответа пока нет.",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\live-budget.json",
+  "importRoots": []
+}

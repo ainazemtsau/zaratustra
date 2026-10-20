@@ -1,0 +1,9 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\candidate-config",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\live-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-04",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\04-reopen",
+  "prompt": "Верни эту же работу над карточкой к продолжению: хочу ещё уточнить второе предложение, но текст уточнения пришлю позже. Старую карточку и то, что работа уже была закончена, сохрани. Сейчас карточку не переписывай.",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\live-budget.json",
+  "importRoots": []
+}

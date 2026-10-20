@@ -1,0 +1,9 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\candidate-config",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\live-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-05",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\05-clarification",
+  "prompt": "Вот обещанное уточнение второго предложения: «Пока подтверждений недостаточно, считай объяснение предположением». Используй его в карточке, остальное оставь как в сохранённом варианте. Сохрани уточнённый результат.",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\live-budget.json",
+  "importRoots": []
+}

@@ -192,4 +192,61 @@ observers; they make no model requests. Public derivatives omit reasoning/local 
 manifest.json records original and derivative digests and transformations. Original
 managed homes/raw evidence remain in the isolated evidence root, outside Git.
 
+## Targeted C continuation after PARTIAL
+
+Previous C reviewer artifact is exactly 0d188eee3d25ac26a24d28b5a363e5c4b75a2e7c.
+Fixed executable candidate is 14c4e0d263542344c9d577ef4035fefba5afcac4; final delivery
+adds documentation/evidence only. Install the final exact SHA reported in the return
+using the isolated native pi install recipe above. Keep separate Pi config/home/cwd;
+never change personal credentials or copy auth files. Same supported ModelRuntime
+native authPath and medium openai-codex/gpt-6.1-sol apply.
+
+Required checkout commands remain npm run check and npm run deliver. Installed affected
+checks (cwd must be the actual installed package; create the test root beforehand):
+
+```powershell
+$env:ZARATUSTRA_TEST_ROOT = Join-Path $testRoot 'affected-tests'
+New-Item -ItemType Directory -Path $env:ZARATUSTRA_TEST_ROOT | Out-Null
+& (Join-Path $tools 'node_modules/.bin/tsx.cmd') --test tests/work.test.ts tests/evidence.test.ts
+node scripts/p2-probe.mjs $package (Join-Path $testRoot 'p2-targeted') fixed
+node scripts/c-identity.mjs $package (Join-Path $testRoot 'identity.json') 14c4e0d263542344c9d577ef4035fefba5afcac4
+```
+
+The affected suite passes 13/13; full check/deliver 37/37. Source proof in
+c-evidence/fix-20261020/parser-inputs-unchanged.json compares all 22 parser/storage,
+dependency and fixture inputs to 0d188eee. No reason to repeat the reviewer's complete
+material qualification, and it is not relabelled as a new run.
+
+New actual scenarios, runner logs and readbacks are under c-evidence/fix-20261020.
+All eight attempts used installed 14c4e0d2, fresh cwd/PID and empty transcripts.
+The new ledger is closed at 8 attempts / 57 requests / USD 1.035156 Pi estimate;
+**do not reset it or run a ninth development conversation**. Original executor and
+reviewer ledgers remain separate and unchanged. A future independently authorized
+review must name its own budget. In 06 provider transport failed four times. Pair
+setup for 07–08 is explicitly mechanical via seed-pair.mjs, not model preparation.
+Use the ordinary prompts as recorded; do not add tool names, IDs/statuses or mutation
+JSON to steer the model. Read real records after each significant action.
+
+The developer upgrade observer upgrade.mjs creates a new synthetic schema-2 fixture
+using genuinely installed 0d188eee, then validates all ten tables after native Pi
+upgrade before reconciling its legacy handoff/step/new wait through current API.
+Old history/results/Changes/receipts stay exact. old-reject uses a separately retained
+old installation against that isolated fixture and proves failed record-only resolution
+without domain or receipt mutation. This is not a user restore or migration feature.
+
+For evidence export, finish all selected commands first. Build a fixed sealed JSON
+with root, explicit relative entries [{path,bytes,sha256}] and optional path-redaction
+pairs. Keep stdout outside the selected inputs. Then run:
+
+```powershell
+node scripts/export-evidence.mjs $sealedInputs $newDerivativeDirectory $currentStdoutLog *> $currentStdoutLog
+```
+
+The exporter refuses a listed current stdout even if it was empty when sealed, checks
+all source hashes before and after processing, canonicalizes LF before hashing, omits
+reasoning, and gzip-compresses provider JSONL. Validate exported and staged Git blob
+digests before push. The exporter log can enter only a _later_ completed sealed export.
+The historical old manifest and empty derivative remain in c-evidence/history; current
+source/version correction is explained in C-PROVENANCE-CORRECTION.md. No raw log is edited.
+
 END_OF_FILE: docs/REPRODUCE.md

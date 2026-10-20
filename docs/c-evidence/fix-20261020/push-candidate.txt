@@ -1,0 +1,2 @@
+To https://github.com/ainazemtsau/zaratustra.git
+   0d188ee..14c4e0d  HEAD -> codex/zaratustra-v1

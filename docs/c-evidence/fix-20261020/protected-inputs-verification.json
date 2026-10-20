@@ -1,0 +1,41 @@
+{
+  "protected_sources": [
+    {
+      "source": "<C_REVIEW_ROOT>\\REVIEW.txt",
+      "sha256": "1f4ef642796b9b4ec10caedc0c39ea7228dd5b3a4609551f9331651d1e83601c",
+      "bytes": 32260,
+      "unchanged": true
+    },
+    {
+      "source": "<C_REVIEW_ROOT>\\CONVERSATIONS.txt",
+      "sha256": "96da40286ad8d2303687d45154dc4af84aabdafe18c337d8a5f4b94418220e85",
+      "bytes": 22550,
+      "unchanged": true
+    },
+    {
+      "source": "<C_REVIEW_ROOT>\\live-verification.json",
+      "sha256": "2aa3fa951f8297f0f2e4b191c72243849628d130ec17733b5e1dcecf528078a9",
+      "bytes": 38449,
+      "unchanged": true
+    },
+    {
+      "source": "<C_REVIEW_ROOT>\\budget.json",
+      "sha256": "aa6e9b7409b3a1dd753f2405887dd358f4d4b98920216263e03877b8e99f9a7c",
+      "bytes": 339,
+      "unchanged": true
+    },
+    {
+      "source": "<PREVIOUS_C_EVIDENCE_ROOT>\\live-budget.json",
+      "sha256": "659fbd44e3af92f3a1b67e235cb40ac83c57d530d8b75d8e2b67038e6f1e3403",
+      "bytes": 342,
+      "unchanged": true
+    },
+    {
+      "source": "<PREVIOUS_C_EVIDENCE_ROOT>\\export-06-console.txt",
+      "sha256": "f47b203181d86fd3b0bb16fd238cc61d5d25c64d040937154321fe0f3ae5b00e",
+      "bytes": 56,
+      "unchanged": true
+    }
+  ],
+  "reviewer_checkout_workspace_and_originals_not_modified": true
+}

@@ -1,4 +1,13 @@
-# Outcome C: implementation and bounded qualification
+# Outcome C: current correction and historical qualification
+
+Current targeted continuation after independent PARTIAL: [C-FIX-VALIDATION](C-FIX-VALIDATION.md).
+Independent review at exact 0d188eee closed the image-only EPUB live gap with its own
+positive/mixed controls, while reproducing MEDIUM plan coherence and LOW self-log
+provenance findings. Those reviewer results are attributed to that version, not a new
+executor run or outcome-C acceptance. The historical executor report below is retained
+as its original 0d188eee-era observation; its UNVERIFIED statements describe that run.
+
+## Historical executor qualification at 0d188eee
 
 Accepted predecessor: `27a74fdb9e7bd826f07a9c9f1e2e3775d54f5c1f`.
 C scope approved with “ок”; independent C review and owner acceptance are pending.

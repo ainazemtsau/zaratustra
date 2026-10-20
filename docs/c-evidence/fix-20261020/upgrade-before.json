@@ -1,0 +1,216 @@
+{
+  "tables": {
+    "meta": [
+      {
+        "json": "{\"workspace_id\":\"1d116b24-b1a2-4bcc-af09-28b9de4cb46c\",\"epoch\":\"190847e8-7fb8-4989-9ef5-849ddb724e28\",\"schema_version\":2}"
+      }
+    ],
+    "records": [
+      {
+        "id": "evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc",
+        "kind": "evidence",
+        "activity_id": null,
+        "json": "{\"id\":\"evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc\",\"kind\":\"evidence\",\"title\":\"Synthetic original input\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T03:38:41.802Z\",\"updated_at\":\"2026-10-20T03:38:41.802Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\",\"captured_at\":\"2026-10-20T03:38:41.792Z\",\"content_hash\":\"583c2565d0457615d134c9f10c1d2ba016fd97f517265d2d516efee10bebf9e4\",\"retained_excerpt\":\"Synthetic authorized lifecycle and plan reconciliation, no external sending.\",\"blob_ref\":null,\"byte_length\":76,\"availability\":\"retained\",\"source_language\":\"en\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\",\"content_hash\":\"583c2565d0457615d134c9f10c1d2ba016fd97f517265d2d516efee10bebf9e4\",\"transport\":\"rpc\",\"channel_identity\":\"trusted-synthetic-upgrade\",\"session_id\":\"mechanical-upgrade\",\"runtime_id\":\"mechanical-upgrade-seed\",\"captured_at\":\"2026-10-20T03:38:41.792Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":76},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "work-886db54a-5d8f-4573-bdd1-e6bef98b4547",
+        "kind": "work",
+        "activity_id": null,
+        "json": "{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\",\"kind\":\"work\",\"title\":\"Legacy preparation and future clarification\",\"body\":null,\"revision\":3,\"created_at\":\"2026-10-20T03:38:41.802Z\",\"updated_at\":\"2026-10-20T03:38:41.827Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Retain a card after its review\",\"acceptance\":[{\"criterion_id\":\"card\",\"description\":\"Card retained\",\"verification\":\"Inspect saved card\",\"required\":true}],\"status\":\"active\",\"current_state\":\"Explicitly reopen for later clarification\",\"next_action\":\"Await future clarification\",\"steps\":[{\"step_id\":\"prepare\",\"intent\":\"Prepare a manual review request; send nothing\",\"status\":\"todo\",\"depends_on\":[],\"required\":false,\"result_refs\":[]}],\"waits\":[],\"context_refs\":[{\"id\":\"evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc\"}],\"completion\":null,\"plan_version\":1,\"cancellation\":null}}"
+      },
+      {
+        "id": "evidence-39d309e0-e286-4f5a-aeee-45c2fee44d90",
+        "kind": "evidence",
+        "activity_id": null,
+        "json": "{\"id\":\"evidence-39d309e0-e286-4f5a-aeee-45c2fee44d90\",\"kind\":\"evidence\",\"title\":\"Original completed card\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T03:38:41.820Z\",\"updated_at\":\"2026-10-20T03:38:41.820Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"generated_artifact\",\"source_locator\":\"core-model-result\",\"captured_at\":\"2026-10-20T03:38:41.820Z\",\"content_hash\":\"e6d6eb63b3a2e83a96bd3b6a3aad2afbd80d2908560bcff074958d52682c03cf\",\"retained_excerpt\":\"Keep the observation separate from its explanation.\",\"blob_ref\":null,\"availability\":\"retained\",\"source_language\":\"en\",\"work_ref\":{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\",\"revision\":1},\"step_id\":null,\"plan_version\":1,\"provenance\":{\"transport\":\"model-generated\",\"runtime_id\":\"mechanical-upgrade-seed\",\"session_id\":\"mechanical-upgrade\",\"source_refs\":[\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"]},\"trust_origin\":\"model-generated-content-not-proof-of-correctness\"}}"
+      }
+    ],
+    "revisions": [
+      {
+        "id": "evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc",
+        "revision": 1,
+        "json": "{\"id\":\"evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc\",\"kind\":\"evidence\",\"title\":\"Synthetic original input\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T03:38:41.802Z\",\"updated_at\":\"2026-10-20T03:38:41.802Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\",\"captured_at\":\"2026-10-20T03:38:41.792Z\",\"content_hash\":\"583c2565d0457615d134c9f10c1d2ba016fd97f517265d2d516efee10bebf9e4\",\"retained_excerpt\":\"Synthetic authorized lifecycle and plan reconciliation, no external sending.\",\"blob_ref\":null,\"byte_length\":76,\"availability\":\"retained\",\"source_language\":\"en\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\",\"content_hash\":\"583c2565d0457615d134c9f10c1d2ba016fd97f517265d2d516efee10bebf9e4\",\"transport\":\"rpc\",\"channel_identity\":\"trusted-synthetic-upgrade\",\"session_id\":\"mechanical-upgrade\",\"runtime_id\":\"mechanical-upgrade-seed\",\"captured_at\":\"2026-10-20T03:38:41.792Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":76},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "work-886db54a-5d8f-4573-bdd1-e6bef98b4547",
+        "revision": 1,
+        "json": "{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\",\"kind\":\"work\",\"title\":\"Legacy preparation and future clarification\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T03:38:41.802Z\",\"updated_at\":\"2026-10-20T03:38:41.802Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Retain a card after its review\",\"acceptance\":[{\"criterion_id\":\"card\",\"description\":\"Card retained\",\"verification\":\"Inspect saved card\",\"required\":true}],\"status\":\"active\",\"current_state\":\"Prepare the review request\",\"next_action\":\"Prepare request\",\"steps\":[{\"step_id\":\"prepare\",\"intent\":\"Prepare a manual review request; send nothing\",\"status\":\"todo\",\"depends_on\":[],\"required\":false,\"result_refs\":[]}],\"waits\":[],\"context_refs\":[{\"id\":\"evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc\"}],\"completion\":null,\"plan_version\":1}}"
+      },
+      {
+        "id": "evidence-39d309e0-e286-4f5a-aeee-45c2fee44d90",
+        "revision": 1,
+        "json": "{\"id\":\"evidence-39d309e0-e286-4f5a-aeee-45c2fee44d90\",\"kind\":\"evidence\",\"title\":\"Original completed card\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T03:38:41.820Z\",\"updated_at\":\"2026-10-20T03:38:41.820Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"generated_artifact\",\"source_locator\":\"core-model-result\",\"captured_at\":\"2026-10-20T03:38:41.820Z\",\"content_hash\":\"e6d6eb63b3a2e83a96bd3b6a3aad2afbd80d2908560bcff074958d52682c03cf\",\"retained_excerpt\":\"Keep the observation separate from its explanation.\",\"blob_ref\":null,\"availability\":\"retained\",\"source_language\":\"en\",\"work_ref\":{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\",\"revision\":1},\"step_id\":null,\"plan_version\":1,\"provenance\":{\"transport\":\"model-generated\",\"runtime_id\":\"mechanical-upgrade-seed\",\"session_id\":\"mechanical-upgrade\",\"source_refs\":[\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"]},\"trust_origin\":\"model-generated-content-not-proof-of-correctness\"}}"
+      },
+      {
+        "id": "work-886db54a-5d8f-4573-bdd1-e6bef98b4547",
+        "revision": 2,
+        "json": "{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\",\"kind\":\"work\",\"title\":\"Legacy preparation and future clarification\",\"body\":null,\"revision\":2,\"created_at\":\"2026-10-20T03:38:41.802Z\",\"updated_at\":\"2026-10-20T03:38:41.821Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Retain a card after its review\",\"acceptance\":[{\"criterion_id\":\"card\",\"description\":\"Card retained\",\"verification\":\"Inspect saved card\",\"required\":true}],\"status\":\"done\",\"current_state\":\"Card saved; optional unfinished preparation remains a legacy planning defect\",\"next_action\":null,\"steps\":[{\"step_id\":\"prepare\",\"intent\":\"Prepare a manual review request; send nothing\",\"status\":\"todo\",\"depends_on\":[],\"required\":false,\"result_refs\":[]}],\"waits\":[],\"context_refs\":[{\"id\":\"evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc\"}],\"completion\":{\"grounds\":[{\"criterion_id\":\"card\",\"explanation\":\"Saved card inspected\",\"evidence_refs\":[{\"id\":\"evidence-39d309e0-e286-4f5a-aeee-45c2fee44d90\",\"revision\":1}]}],\"recorded_at\":\"2026-10-20T03:38:41.820Z\",\"decision_actor\":\"trusted-personal\"},\"plan_version\":1,\"cancellation\":null}}"
+      },
+      {
+        "id": "work-886db54a-5d8f-4573-bdd1-e6bef98b4547",
+        "revision": 3,
+        "json": "{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\",\"kind\":\"work\",\"title\":\"Legacy preparation and future clarification\",\"body\":null,\"revision\":3,\"created_at\":\"2026-10-20T03:38:41.802Z\",\"updated_at\":\"2026-10-20T03:38:41.827Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Retain a card after its review\",\"acceptance\":[{\"criterion_id\":\"card\",\"description\":\"Card retained\",\"verification\":\"Inspect saved card\",\"required\":true}],\"status\":\"active\",\"current_state\":\"Explicitly reopen for later clarification\",\"next_action\":\"Await future clarification\",\"steps\":[{\"step_id\":\"prepare\",\"intent\":\"Prepare a manual review request; send nothing\",\"status\":\"todo\",\"depends_on\":[],\"required\":false,\"result_refs\":[]}],\"waits\":[],\"context_refs\":[{\"id\":\"evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc\"}],\"completion\":null,\"plan_version\":1,\"cancellation\":null}}"
+      }
+    ],
+    "changes": [
+      {
+        "seq": 1,
+        "json": "{\"transaction_id\":\"txn-ced628c4-ff76-448f-8a43-fd6f678918bb\",\"request_id\":\"seed-1\",\"change_seq\":1,\"changed_refs\":[{\"id\":\"evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\",\"before_revision\":null,\"after_revision\":1}],\"actor\":\"trusted-personal\",\"session_id\":\"mechanical-upgrade\",\"reason\":\"Synthetic upgrade and compatibility behavior\",\"caused_by\":[\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"],\"recorded_at\":\"2026-10-20T03:38:41.802Z\"}"
+      },
+      {
+        "seq": 2,
+        "json": "{\"transaction_id\":\"txn-93874268-24b1-4e4d-b608-eecd89b633b0\",\"request_id\":\"seed-2\",\"change_seq\":2,\"changed_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"mechanical-upgrade\",\"reason\":\"Synthetic upgrade and compatibility behavior\",\"caused_by\":[\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"],\"recorded_at\":\"2026-10-20T03:38:41.812Z\"}"
+      },
+      {
+        "seq": 3,
+        "json": "{\"transaction_id\":\"txn-e38610c5-54ee-4f82-b2c6-bb921024981e\",\"request_id\":\"seed-3\",\"change_seq\":3,\"changed_refs\":[{\"id\":\"evidence-39d309e0-e286-4f5a-aeee-45c2fee44d90\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\",\"before_revision\":1,\"after_revision\":2}],\"actor\":\"trusted-personal\",\"session_id\":\"mechanical-upgrade\",\"reason\":\"Synthetic upgrade and compatibility behavior\",\"caused_by\":[\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"],\"recorded_at\":\"2026-10-20T03:38:41.820Z\"}"
+      },
+      {
+        "seq": 4,
+        "json": "{\"transaction_id\":\"txn-62046f8f-588e-4216-b9d8-8833a03a8461\",\"request_id\":\"seed-4\",\"change_seq\":4,\"changed_refs\":[{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\",\"before_revision\":2,\"after_revision\":3}],\"actor\":\"trusted-personal\",\"session_id\":\"mechanical-upgrade\",\"reason\":\"Synthetic upgrade and compatibility behavior\",\"caused_by\":[\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"],\"recorded_at\":\"2026-10-20T03:38:41.826Z\"}"
+      }
+    ],
+    "intents": [
+      {
+        "request_id": "seed-1",
+        "hash": "7a429b4a0022c5c219b789a1d06907c5372a576075e593bf73a84f0100fc16c4",
+        "json": "{\"request_id\":\"seed-1\",\"operation_digest\":\"7a429b4a0022c5c219b789a1d06907c5372a576075e593bf73a84f0100fc16c4\",\"source_refs\":[\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"],\"session_id\":\"mechanical-upgrade\",\"epoch\":\"190847e8-7fb8-4989-9ef5-849ddb724e28\",\"status\":\"committed\",\"reason\":\"Synthetic upgrade and compatibility behavior\",\"payload\":{\"request_id\":\"seed-1\",\"reason\":\"Synthetic upgrade and compatibility behavior\",\"source_handles\":[\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"],\"guards\":[],\"claim_tokens\":[],\"ops\":[{\"op\":\"import_evidence\",\"client_ref\":\"input\",\"source_handle\":\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\",\"title\":\"Synthetic original input\",\"source_language\":\"en\"},{\"op\":\"create_record\",\"client_ref\":\"w\",\"title\":\"Legacy preparation and future clarification\",\"visibility\":\"workspace\",\"kind\":\"work\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Retain a card after its review\",\"acceptance\":[{\"criterion_id\":\"card\",\"description\":\"Card retained\",\"verification\":\"Inspect saved card\",\"required\":true}],\"status\":\"active\",\"current_state\":\"Prepare the review request\",\"next_action\":\"Prepare request\",\"steps\":[{\"step_id\":\"prepare\",\"intent\":\"Prepare a manual review request; send nothing\",\"status\":\"todo\",\"depends_on\":[],\"required\":false,\"result_refs\":[]}],\"waits\":[],\"context_refs\":[{\"client_ref\":\"input\"}],\"completion\":null}}]},\"receipt\":{\"ok\":true,\"request_id\":\"seed-1\",\"workspace_id\":\"1d116b24-b1a2-4bcc-af09-28b9de4cb46c\",\"schema_version\":2,\"snapshot_seq\":1,\"transaction_id\":\"txn-ced628c4-ff76-448f-8a43-fd6f678918bb\",\"committed\":true,\"created\":{\"input\":\"evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc\",\"w\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\"},\"new_revisions\":{\"evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc\":1,\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "seed-2",
+        "hash": "19aacf1c5bd79d8e61669e4d60abb4a6163b9a40f4a6262a57f76676486de31f",
+        "json": "{\"request_id\":\"seed-2\",\"operation_digest\":\"19aacf1c5bd79d8e61669e4d60abb4a6163b9a40f4a6262a57f76676486de31f\",\"source_refs\":[\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"],\"session_id\":\"mechanical-upgrade\",\"epoch\":\"190847e8-7fb8-4989-9ef5-849ddb724e28\",\"status\":\"committed\",\"reason\":\"Synthetic upgrade and compatibility behavior\",\"payload\":{\"request_id\":\"seed-2\",\"reason\":\"Synthetic upgrade and compatibility behavior\",\"source_handles\":[\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"],\"guards\":[{\"ref\":{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\"},\"expected_revision\":1}],\"claim_tokens\":[\"claim-4fe6ac68-ce70-4224-b6f8-ba4f7237737a\"],\"ops\":[{\"op\":\"prepare_handoff\",\"client_ref\":\"h\",\"work_ref\":{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\"},\"step_id\":\"prepare\",\"objective\":\"Review card\",\"conditions\":\"No sending\",\"expected_result\":\"Clarity comments\",\"context_refs\":[{\"id\":\"evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc\"}],\"message\":\"Please review this card for clarity.\"}]},\"receipt\":{\"ok\":true,\"request_id\":\"seed-2\",\"workspace_id\":\"1d116b24-b1a2-4bcc-af09-28b9de4cb46c\",\"schema_version\":2,\"snapshot_seq\":2,\"transaction_id\":\"txn-93874268-24b1-4e4d-b608-eecd89b633b0\",\"committed\":true,\"created\":{\"h\":\"handoff-f58246c3-4627-4db8-8563-2c5e302888bb\"},\"new_revisions\":{},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "seed-3",
+        "hash": "e510fa0a929ca7750de9ad553ac43e54112a273ea02fabe10c18aada9bec9cf7",
+        "json": "{\"request_id\":\"seed-3\",\"operation_digest\":\"e510fa0a929ca7750de9ad553ac43e54112a273ea02fabe10c18aada9bec9cf7\",\"source_refs\":[\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"],\"session_id\":\"mechanical-upgrade\",\"epoch\":\"190847e8-7fb8-4989-9ef5-849ddb724e28\",\"status\":\"committed\",\"reason\":\"Synthetic upgrade and compatibility behavior\",\"payload\":{\"request_id\":\"seed-3\",\"reason\":\"Synthetic upgrade and compatibility behavior\",\"source_handles\":[\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"],\"guards\":[{\"ref\":{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\"},\"expected_revision\":1}],\"claim_tokens\":[\"claim-287e1f26-d498-4602-a68b-3bcc52b26e40\"],\"ops\":[{\"op\":\"record_result\",\"client_ref\":\"card\",\"work_ref\":{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\"},\"title\":\"Original completed card\",\"content\":\"Keep the observation separate from its explanation.\",\"source_language\":\"en\"},{\"op\":\"transition_work\",\"ref\":{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\"},\"status\":\"done\",\"reason\":\"Card saved; optional unfinished preparation remains a legacy planning defect\",\"grounds\":[{\"criterion_id\":\"card\",\"explanation\":\"Saved card inspected\",\"evidence_refs\":[{\"client_ref\":\"card\"}]}]}]},\"receipt\":{\"ok\":true,\"request_id\":\"seed-3\",\"workspace_id\":\"1d116b24-b1a2-4bcc-af09-28b9de4cb46c\",\"schema_version\":2,\"snapshot_seq\":3,\"transaction_id\":\"txn-e38610c5-54ee-4f82-b2c6-bb921024981e\",\"committed\":true,\"created\":{\"card\":\"evidence-39d309e0-e286-4f5a-aeee-45c2fee44d90\"},\"new_revisions\":{\"evidence-39d309e0-e286-4f5a-aeee-45c2fee44d90\":1,\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\":2},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "seed-4",
+        "hash": "216c9b9bfbdca7170508791f5e33dea7d351e4e2400563aca6bd7a058fd568a0",
+        "json": "{\"request_id\":\"seed-4\",\"operation_digest\":\"216c9b9bfbdca7170508791f5e33dea7d351e4e2400563aca6bd7a058fd568a0\",\"source_refs\":[\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"],\"session_id\":\"mechanical-upgrade\",\"epoch\":\"190847e8-7fb8-4989-9ef5-849ddb724e28\",\"status\":\"committed\",\"reason\":\"Synthetic upgrade and compatibility behavior\",\"payload\":{\"request_id\":\"seed-4\",\"reason\":\"Synthetic upgrade and compatibility behavior\",\"source_handles\":[\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"],\"guards\":[{\"ref\":{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\"},\"expected_revision\":2}],\"claim_tokens\":[],\"ops\":[{\"op\":\"transition_work\",\"ref\":{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\"},\"status\":\"active\",\"reason\":\"Explicitly reopen for later clarification\",\"decision_source_handle\":\"source-2b2db7fd-b711-4286-a2a5-fa5a77284944\",\"next_action\":\"Await future clarification\"}]},\"receipt\":{\"ok\":true,\"request_id\":\"seed-4\",\"workspace_id\":\"1d116b24-b1a2-4bcc-af09-28b9de4cb46c\",\"schema_version\":2,\"snapshot_seq\":4,\"transaction_id\":\"txn-62046f8f-588e-4216-b9d8-8833a03a8461\",\"committed\":true,\"created\":{},\"new_revisions\":{\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\":3},\"warnings\":[]}}"
+      }
+    ],
+    "receipts": [
+      {
+        "request_id": "seed-1",
+        "hash": "7a429b4a0022c5c219b789a1d06907c5372a576075e593bf73a84f0100fc16c4",
+        "json": "{\"ok\":true,\"request_id\":\"seed-1\",\"workspace_id\":\"1d116b24-b1a2-4bcc-af09-28b9de4cb46c\",\"schema_version\":2,\"snapshot_seq\":1,\"transaction_id\":\"txn-ced628c4-ff76-448f-8a43-fd6f678918bb\",\"committed\":true,\"created\":{\"input\":\"evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc\",\"w\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\"},\"new_revisions\":{\"evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc\":1,\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\":1},\"warnings\":[]}",
+        "bindings": "{\"source-2b2db7fd-b711-4286-a2a5-fa5a77284944\":\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"}"
+      },
+      {
+        "request_id": "seed-2",
+        "hash": "19aacf1c5bd79d8e61669e4d60abb4a6163b9a40f4a6262a57f76676486de31f",
+        "json": "{\"ok\":true,\"request_id\":\"seed-2\",\"workspace_id\":\"1d116b24-b1a2-4bcc-af09-28b9de4cb46c\",\"schema_version\":2,\"snapshot_seq\":2,\"transaction_id\":\"txn-93874268-24b1-4e4d-b608-eecd89b633b0\",\"committed\":true,\"created\":{\"h\":\"handoff-f58246c3-4627-4db8-8563-2c5e302888bb\"},\"new_revisions\":{},\"warnings\":[]}",
+        "bindings": "{\"source-2b2db7fd-b711-4286-a2a5-fa5a77284944\":\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"}"
+      },
+      {
+        "request_id": "seed-3",
+        "hash": "e510fa0a929ca7750de9ad553ac43e54112a273ea02fabe10c18aada9bec9cf7",
+        "json": "{\"ok\":true,\"request_id\":\"seed-3\",\"workspace_id\":\"1d116b24-b1a2-4bcc-af09-28b9de4cb46c\",\"schema_version\":2,\"snapshot_seq\":3,\"transaction_id\":\"txn-e38610c5-54ee-4f82-b2c6-bb921024981e\",\"committed\":true,\"created\":{\"card\":\"evidence-39d309e0-e286-4f5a-aeee-45c2fee44d90\"},\"new_revisions\":{\"evidence-39d309e0-e286-4f5a-aeee-45c2fee44d90\":1,\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\":2},\"warnings\":[]}",
+        "bindings": "{\"source-2b2db7fd-b711-4286-a2a5-fa5a77284944\":\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"}"
+      },
+      {
+        "request_id": "seed-4",
+        "hash": "216c9b9bfbdca7170508791f5e33dea7d351e4e2400563aca6bd7a058fd568a0",
+        "json": "{\"ok\":true,\"request_id\":\"seed-4\",\"workspace_id\":\"1d116b24-b1a2-4bcc-af09-28b9de4cb46c\",\"schema_version\":2,\"snapshot_seq\":4,\"transaction_id\":\"txn-62046f8f-588e-4216-b9d8-8833a03a8461\",\"committed\":true,\"created\":{},\"new_revisions\":{\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\":3},\"warnings\":[]}",
+        "bindings": "{\"source-2b2db7fd-b711-4286-a2a5-fa5a77284944\":\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"}"
+      }
+    ],
+    "focus": [],
+    "claims": [
+      {
+        "token": "claim-4fe6ac68-ce70-4224-b6f8-ba4f7237737a",
+        "work_id": "work-886db54a-5d8f-4573-bdd1-e6bef98b4547",
+        "json": "{\"token\":\"claim-4fe6ac68-ce70-4224-b6f8-ba4f7237737a\",\"work_id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\",\"step_id\":\"prepare\",\"purpose\":\"handoff\",\"expected_revision\":1,\"plan_guards\":[{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\",\"revision\":1}],\"session_id\":\"mechanical-upgrade\",\"runtime_id\":\"mechanical-upgrade-seed\",\"epoch\":\"190847e8-7fb8-4989-9ef5-849ddb724e28\",\"acquired_at\":\"2026-10-20T03:38:41.806Z\",\"expires_at\":\"2026-10-20T03:53:41.806Z\",\"state\":\"consumed\",\"reason\":\"Supported local recording\",\"coverage\":\"Core local Work/step result recording and handoff preparation only; no external dispatch guarantee\",\"receipt_request_id\":\"seed-2\"}"
+      },
+      {
+        "token": "claim-287e1f26-d498-4602-a68b-3bcc52b26e40",
+        "work_id": "work-886db54a-5d8f-4573-bdd1-e6bef98b4547",
+        "json": "{\"token\":\"claim-287e1f26-d498-4602-a68b-3bcc52b26e40\",\"work_id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\",\"step_id\":null,\"purpose\":\"work\",\"expected_revision\":1,\"plan_guards\":[{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\",\"revision\":1}],\"session_id\":\"mechanical-upgrade\",\"runtime_id\":\"mechanical-upgrade-seed\",\"epoch\":\"190847e8-7fb8-4989-9ef5-849ddb724e28\",\"acquired_at\":\"2026-10-20T03:38:41.815Z\",\"expires_at\":\"2026-10-20T03:53:41.815Z\",\"state\":\"consumed\",\"reason\":\"Supported local recording\",\"coverage\":\"Core local Work/step result recording and handoff preparation only; no external dispatch guarantee\",\"receipt_request_id\":\"seed-3\"}"
+      }
+    ],
+    "handoffs": [
+      {
+        "id": "handoff-f58246c3-4627-4db8-8563-2c5e302888bb",
+        "json": "{\"handoff_id\":\"handoff-f58246c3-4627-4db8-8563-2c5e302888bb\",\"work_ref\":{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\",\"revision\":1},\"plan_version\":1,\"step_id\":\"prepare\",\"objective\":\"Review card\",\"conditions\":\"No sending\",\"expected_result\":\"Clarity comments\",\"context_refs\":[{\"id\":\"evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc\",\"revision\":1}],\"message\":\"Please review this card for clarity.\",\"prepared_at\":\"2026-10-20T03:38:41.812Z\",\"prepared_by\":\"mechanical-upgrade-seed\",\"transport_state\":\"prepared_not_sent\",\"source_refs\":[\"observed-8db9e8b2-7d1b-41a1-a488-94ad2167c3bb\"],\"plan_snapshot\":[{\"id\":\"work-886db54a-5d8f-4573-bdd1-e6bef98b4547\",\"revision\":1,\"plan_version\":1,\"status\":\"active\"}]}"
+      }
+    ],
+    "migrations": []
+  },
+  "refs": {
+    "input": "evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc",
+    "w": "work-886db54a-5d8f-4573-bdd1-e6bef98b4547",
+    "h": "handoff-f58246c3-4627-4db8-8563-2c5e302888bb",
+    "card": "evidence-39d309e0-e286-4f5a-aeee-45c2fee44d90"
+  },
+  "completed": {
+    "id": "work-886db54a-5d8f-4573-bdd1-e6bef98b4547",
+    "kind": "work",
+    "title": "Legacy preparation and future clarification",
+    "body": null,
+    "revision": 2,
+    "created_at": "2026-10-20T03:38:41.802Z",
+    "updated_at": "2026-10-20T03:38:41.821Z",
+    "storage": "live",
+    "concept_ids": [],
+    "origin_activity_id": null,
+    "visibility": "workspace",
+    "data": {
+      "activity_id": null,
+      "parent_work_id": null,
+      "objective": "Retain a card after its review",
+      "acceptance": [
+        {
+          "criterion_id": "card",
+          "description": "Card retained",
+          "verification": "Inspect saved card",
+          "required": true
+        }
+      ],
+      "status": "done",
+      "current_state": "Card saved; optional unfinished preparation remains a legacy planning defect",
+      "next_action": null,
+      "steps": [
+        {
+          "step_id": "prepare",
+          "intent": "Prepare a manual review request; send nothing",
+          "status": "todo",
+          "depends_on": [],
+          "required": false,
+          "result_refs": []
+        }
+      ],
+      "waits": [],
+      "context_refs": [
+        {
+          "id": "evidence-71fdb85b-8035-4025-b1c5-ff9cd1df0efc"
+        }
+      ],
+      "completion": {
+        "grounds": [
+          {
+            "criterion_id": "card",
+            "explanation": "Saved card inspected",
+            "evidence_refs": [
+              {
+                "id": "evidence-39d309e0-e286-4f5a-aeee-45c2fee44d90",
+                "revision": 1
+              }
+            ]
+          }
+        ],
+        "recorded_at": "2026-10-20T03:38:41.820Z",
+        "decision_actor": "trusted-personal"
+      },
+      "plan_version": 1,
+      "cancellation": null
+    }
+  },
+  "workspace": {
+    "workspace_id": "1d116b24-b1a2-4bcc-af09-28b9de4cb46c",
+    "epoch": "190847e8-7fb8-4989-9ef5-849ddb724e28",
+    "schema_version": 2
+  }
+}
