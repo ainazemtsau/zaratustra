@@ -306,7 +306,7 @@ if (mode === "old-reject") {
       assert.equal(disk.workspace.schema_version, 3);
       assert.equal(disk.workspace.workspace_id, before.workspace.workspace_id);
       assert.equal(disk.workspace.epoch, before.workspace.epoch);
-      assert.deepEqual(rows(disk), before.rows);
+      assert.equal(JSON.stringify(rows(disk)), JSON.stringify(before.rows));
       assert.deepEqual(materials(), before.materials);
       assert.deepEqual(core.commit(before.first), before.receipt);
       assert.equal(core.read(before.ids.w, 2).data.data.status, "done");
