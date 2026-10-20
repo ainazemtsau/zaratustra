@@ -217,6 +217,7 @@ async function epub(bytes) {
       throw Object.assign(new Error("EPUB chapter limit exceeded"), {
         limit: true,
       });
+    let blankChapters = 0;
     for (let i = 0; i < spine.length; i++) {
       const item = items.get(spine[i]);
       try {
@@ -226,13 +227,18 @@ async function epub(bytes) {
         )
           throw new Error("Unsupported/missing spine item");
         const name = safe(posix.dirname(root), item.href);
-        if (
-          !append(
-            chapter(decode(files.get(name))),
-            "chapter:" + (i + 1) + ":" + name,
-            name,
-          )
-        ) {
+        const value = chapter(decode(files.get(name)));
+        const hasText = !!value.trim();
+        if (!hasText) {
+          blankChapters++;
+          result.status = "partial";
+          warnings.push(
+            "Chapter " +
+              (i + 1) +
+              " has no extractable text; blank or image-only (OCR unavailable).",
+          );
+        }
+        if (!append(value, "chapter:" + (i + 1) + ":" + name, name, hasText)) {
           for (let j = i + 1; j < spine.length; j++)
             append("", "chapter:" + (j + 1), "Unextracted chapter", false);
           break;
@@ -243,6 +249,7 @@ async function epub(bytes) {
         append("", "chapter:" + (i + 1), "Unavailable chapter", false);
       }
     }
+    if (blankChapters === spine.length) result.status = "scanned";
   } finally {
     zip.close();
   }

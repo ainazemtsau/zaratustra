@@ -2,7 +2,7 @@
 No original user material. Run from repository root. pypdf is a test generator only.
 """
 from pathlib import Path
-import io, zipfile, sys
+import io, zipfile, sys, base64
 
 root = Path('tests/fixtures/c')
 root.mkdir(parents=True, exist_ok=True)
@@ -44,6 +44,15 @@ def epub(path, extra=None, chapter2=None):
             for name, content in extra.items(): z.writestr(name, content)
 
 epub(root/'book.epub')
+with zipfile.ZipFile(root/'book.epub') as z:
+    image_files = {n:z.read(n) for n in z.namelist()}
+image_files['OPS/one.xhtml'] = b'<html><body><img src="cover.png" alt=""/></body></html>'
+image_files['OPS/two.xhtml'] = image_files['OPS/one.xhtml']
+image_files['OPS/book.opf'] = image_files['OPS/book.opf'].replace(b'</manifest>', b'<item id="cover" href="cover.png" media-type="image/png"/></manifest>')
+image_files['OPS/cover.png'] = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jYZkAAAAASUVORK5CYII=')
+with zipfile.ZipFile(root/'image-only.epub', 'w', compression=zipfile.ZIP_DEFLATED) as z:
+    for n,b in image_files.items():
+        z.writestr(n, b, compress_type=zipfile.ZIP_STORED if n=='mimetype' else zipfile.ZIP_DEFLATED)
 epub(root/'encrypted.epub', {'META-INF/encryption.xml':'<encryption/>'})
 epub(root/'traversal.epub', {'../escape.txt':'must never be written'})
 epub(root/'remote.epub', chapter2='<html><body><img src="https://invalid.test/x"/><p>Visible local text.</p></body></html>')

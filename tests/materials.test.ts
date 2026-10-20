@@ -142,6 +142,7 @@ test("scanned/blank, encrypted, damaged, unsafe, unsupported and partly missing 
     ["encrypted.pdf", "encrypted"],
     ["damaged.pdf", "damaged"],
     ["encrypted.epub", "encrypted"],
+    ["image-only.epub", "scanned"],
     ["traversal.epub", "damaged"],
     ["partial.epub", "partial"],
     ["entities.epub", "partial"],
