@@ -17,6 +17,7 @@ import {
   refreshMemory,
   validateMemory,
 } from "./memory.ts";
+import type { CursorState } from "./memory.ts";
 import {
   plan,
   protectWorkUpdate,
@@ -47,9 +48,9 @@ const id = (prefix: string) => prefix + "-" + randomUUID();
 const unpack = (row: { json: string }) => JSON.parse(row.json) as RecordRow;
 export class Core {
   private sources = new Map<string, Source>();
-  private cursorSecret = randomUUID();
+  private cursors = new Map<string, CursorState>();
   private get memory() {
-    return new Memory(this.storage, this.context, this.cursorSecret);
+    return new Memory(this.storage, this.context, this.cursors);
   }
   constructor(
     public storage: StoragePort,
@@ -135,6 +136,10 @@ export class Core {
     this.sources.clear();
   }
   sequence() {
+    this.authorize();
+    return this.visibleSequence();
+  }
+  private domainSequence() {
     return this.storage.get<{ seq: number }>(
       "SELECT coalesce(max(seq),0) AS seq FROM changes",
     )!.seq;
@@ -205,9 +210,7 @@ export class Core {
     });
   }
   private visibleSequence() {
-    return this.storage.get<{ n: number }>(
-      `SELECT count(*) AS n FROM changes t WHERE ${this.memory.technicalSQL("t")}`,
-    )!.n;
+    return this.memory.visibleSequence();
   }
   focus() {
     const row = this.storage.get<{ json: string }>(
@@ -465,7 +468,7 @@ export class Core {
       "REFERENCE_NOT_FOUND",
       "Operation not found.",
     );
-    return this.envelope(JSON.parse(row.json));
+    return this.envelope(this.memory.sanitizeTechnical(JSON.parse(row.json)));
   }
   handoff(handoffId: string) {
     this.authorize();
@@ -829,7 +832,9 @@ export class Core {
         "IDEMPOTENCY_CONFLICT",
         "This request ID belongs to a different canonical payload.",
       );
-      return JSON.parse(previous.json) as Receipt;
+      return this.memory.sanitizeTechnical(
+        JSON.parse(previous.json),
+      ) as Receipt;
     }
     for (const handle of request.source_handles)
       requireThat(
@@ -1757,7 +1762,7 @@ export class Core {
         );
       }
       this.fault?.("after_records");
-      const seq = this.sequence() + 1;
+      const seq = this.domainSequence() + 1;
       const transaction_id = id("txn");
       const change = {
         transaction_id,
@@ -1854,7 +1859,7 @@ export class Core {
       this.fault?.("before_commit");
       this.storage.exec("COMMIT");
       this.fault?.("after_commit");
-      return receipt;
+      return this.memory.sanitizeTechnical(receipt);
     } catch (error) {
       try {
         this.storage.exec("ROLLBACK");

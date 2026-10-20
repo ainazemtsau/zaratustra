@@ -277,16 +277,13 @@ test("D literal English FTS, exact authentic aliases, punctuation/metacharacters
     limit: 1,
     cursor: first.next_cursor!,
   }).data;
-  const forged = JSON.parse(
-    Buffer.from(first.next_cursor!, "base64url").toString(),
-  );
-  forged.last++;
+  assert.match(first.next_cursor!, /^cursor-[0-9a-f-]+$/);
   code(
     () =>
       f.core.search({
         kinds: ["entity"],
         limit: 1,
-        cursor: Buffer.from(JSON.stringify(forged)).toString("base64url"),
+        cursor: first.next_cursor! + "x",
       }),
     "CURSOR_INVALIDATED",
   );
@@ -655,7 +652,18 @@ test("D managed restrictions cover all pages, counts, links, snippets, history, 
     "CURSOR_INVALIDATED",
   );
   // Unrelated public writes still work in a workspace containing hidden records.
-  f.commit([entity("public2")], [], guest);
+  const receipt = f.commit([entity("public2")], [], guest);
+  assert.equal(guest.sequence(), 1);
+  assert.equal(receipt.snapshot_seq, 1);
+  const operation = guest.operation(receipt.request_id).data;
+  assert.equal(operation.receipt.snapshot_seq, 1);
+  assert.equal(
+    (guest.browse("changes").data.cards[0] as { change_seq: number })
+      .change_seq,
+    1,
+  );
+  guest.context.processing_allowed = false;
+  code(() => guest.sequence(), "PERMISSION_DENIED");
 });
 
 test("D registered relations validate endpoints and reject competing copies of typed grounds", (t) => {

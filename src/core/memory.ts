@@ -1,4 +1,4 @@
-import { createHash, createHmac } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
   ConceptData,
@@ -334,16 +334,41 @@ export function literalFTS(query: string, mode: "all" | "any" | "phrase") {
     : terms.map(quote).join(mode === "any" ? " OR " : " AND ");
 }
 
+export interface CursorState {
+  query: string;
+  generation: string;
+  access: string;
+  last: number;
+}
 export class Memory {
   constructor(
     private db: StoragePort,
     private ctx: CallContext,
-    private cursorSecret: string,
+    private cursors: Map<string, CursorState>,
   ) {}
-  private signature(value: unknown) {
-    return createHmac("sha256", this.cursorSecret)
-      .update(canonical(value))
-      .digest("hex");
+  visibleSequence(through = Number.MAX_SAFE_INTEGER) {
+    return this.db.get<{ n: number }>(
+      `SELECT count(*) AS n FROM changes t WHERE t.seq<=? AND ${this.technicalSQL("t")}`,
+      through,
+    )!.n;
+  }
+  sanitizeTechnical<T>(value: T): T {
+    if (this.restricted) return value;
+    const walk = (v: unknown): unknown => {
+      if (Array.isArray(v)) return v.map(walk);
+      if (v && typeof v === "object")
+        return Object.fromEntries(
+          Object.entries(v).map(([k, item]) => [
+            k,
+            ["snapshot_seq", "change_seq"].includes(k) &&
+            typeof item === "number"
+              ? this.visibleSequence(item)
+              : walk(item),
+          ]),
+        );
+      return v;
+    };
+    return walk(value) as T;
   }
   get restricted() {
     return this.ctx.scopes?.includes("restricted:read") ? 1 : 0;
@@ -425,15 +450,9 @@ export class Memory {
   cursor(cursor: string | undefined, query: unknown, generation: string) {
     if (!cursor) return 0;
     try {
-      const c = JSON.parse(Buffer.from(cursor, "base64url").toString());
+      const c = this.cursors.get(cursor);
       requireThat(
-        c.signature ===
-          this.signature({
-            query: c.query,
-            generation: c.generation,
-            access: c.access,
-            last: c.last,
-          }) &&
+        c &&
           c.query === hash(query) &&
           c.generation === generation &&
           c.access === this.accessKey &&
@@ -465,19 +484,19 @@ export class Memory {
       access: this.accessKey,
       last: has_more ? key(cards.at(-1)!) : 0,
     };
+    let next_cursor: string | null = null;
+    if (has_more) {
+      next_cursor = "cursor-" + randomUUID();
+      this.cursors.set(next_cursor, payload);
+      if (this.cursors.size > 256)
+        this.cursors.delete(this.cursors.keys().next().value!);
+    }
     return {
       cards,
       applied_filters: query,
       generation,
       has_more,
-      next_cursor: has_more
-        ? Buffer.from(
-            JSON.stringify({
-              ...payload,
-              signature: this.signature(payload),
-            }),
-          ).toString("base64url")
-        : null,
+      next_cursor,
       warnings: [
         "Empty or incomplete results do not establish absence. Read selected records and conditions before use.",
       ],
@@ -544,7 +563,9 @@ export class Memory {
       return {
         ...page,
         cards: page.cards.map((r) => {
-          const value = JSON.parse(r.json) as JsonObject;
+          const value = this.sanitizeTechnical(
+            JSON.parse(r.json),
+          ) as JsonObject;
           if (view === "operations") {
             const { payload, ...header } = value;
             return {
