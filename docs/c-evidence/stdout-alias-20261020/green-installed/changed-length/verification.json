@@ -1,0 +1,15 @@
+{
+  "name": "changed-length",
+  "exporter": "<SYNTHETIC_EVIDENCE_ROOT>\\candidate-agent\\git\\github.com\\ainazemtsau\\zaratustra\\scripts\\export-evidence.mjs",
+  "stdout_actual": "<SYNTHETIC_EVIDENCE_ROOT>\\green-installed\\changed-length\\Current-Stdout.log",
+  "stdout_argument": "<SYNTHETIC_EVIDENCE_ROOT>\\green-installed\\changed-length\\Current-Stdout.log",
+  "source": "<SYNTHETIC_EVIDENCE_ROOT>\\green-installed\\changed-length\\Completed.log",
+  "same_file": false,
+  "exit": 1,
+  "output_exists": false,
+  "manifest_exists": false,
+  "stdout_bytes": 0,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr": "node:internal/modules/run_main:123\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nAssertionError [ERR_ASSERTION]: Sealed source length changed: Completed.log\r\n\r\n23 !== 29\r\n\r\n    at file:///<SYNTHETIC_EVIDENCE_ROOT>/candidate-agent/git/github.com/ainazemtsau/zaratustra/scripts/export-evidence.mjs:56:10\r\n    at Array.map (<anonymous>)\r\n    at file:///<SYNTHETIC_EVIDENCE_ROOT>/candidate-agent/git/github.com/ainazemtsau/zaratustra/scripts/export-evidence.mjs:34:32\r\n    at ModuleJob.run (node:internal/modules/esm/module_job:345:25)\r\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:651:26)\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\r\n  generatedMessage: false,\r\n  code: 'ERR_ASSERTION',\r\n  actual: 23,\r\n  expected: 29,\r\n  operator: 'strictEqual',\r\n  diff: 'simple'\r\n}\r\n\r\nNode.js v22.19.0\r\n",
+  "refusal_reason_verified": "Sealed source"
+}

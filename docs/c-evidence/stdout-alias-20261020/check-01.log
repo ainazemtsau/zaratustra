@@ -1,0 +1,330 @@
+
+> zaratustra@0.2.0-dev.1 check
+> npm run format:check && npm run lint && npm run types && npm run boundary && npm run build && npm test
+
+
+> zaratustra@0.2.0-dev.1 format:check
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> zaratustra@0.2.0-dev.1 lint
+> eslint src tests scripts
+
+
+> zaratustra@0.2.0-dev.1 types
+> tsc --noEmit
+
+
+> zaratustra@0.2.0-dev.1 boundary
+> depcruise src --config .dependency-cruiser.cjs
+
+
+✔ no dependency violations found (19 modules, 26 dependencies cruised)
+
+
+> zaratustra@0.2.0-dev.1 build
+> tsc -p tsconfig.build.json
+
+
+> zaratustra@0.2.0-dev.1 test
+> tsx --test tests/*.test.ts
+
+TAP version 13
+# (node:77524) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: disk WAL reopen preserves all linked objects, versions, Change, exact source and receipt
+ok 1 - disk WAL reopen preserves all linked objects, versions, Change, exact source and receipt
+  ---
+  duration_ms: 97.3593
+  type: 'test'
+  ...
+# Subtest: faults on every commit boundary leave all domain state/receipt or none; lost response is recoverable without old ID
+ok 2 - faults on every commit boundary leave all domain state/receipt or none; lost response is recoverable without old ID
+  ---
+  duration_ms: 263.7579
+  type: 'test'
+  ...
+# Subtest: similar independent requests create distinct records; stale guard and invalid final links are atomic failures
+ok 3 - similar independent requests create distinct records; stale guard and invalid final links are atomic failures
+  ---
+  duration_ms: 92.7546
+  type: 'test'
+  ...
+# Subtest: source expiry, forged fields and unsupported kinds do not mutate domain state
+ok 4 - source expiry, forged fields and unsupported kinds do not mutate domain state
+  ---
+  duration_ms: 53.6846
+  type: 'test'
+  ...
+# Subtest: one writing process, read-only/corrupt/missing stores never claim success or reset saved bytes
+ok 5 - one writing process, read-only/corrupt/missing stores never claim success or reset saved bytes
+  ---
+  duration_ms: 65.3307
+  type: 'test'
+  ...
+# Subtest: retained Markdown survives source removal, exact bytes/read ranges and interrupted imports do not publish unfinished refs
+ok 6 - retained Markdown survives source removal, exact bytes/read ranges and interrupted imports do not publish unfinished refs
+  ---
+  duration_ms: 82.3045
+  type: 'test'
+  ...
+# Subtest: bounded catalog cursors reject changed generation and permissions apply to reads
+ok 7 - bounded catalog cursors reject changed generation and permissions apply to reads
+  ---
+  duration_ms: 65.3412
+  type: 'test'
+  ...
+# Subtest: SQLite disk-full fault leaves no domain records or committed receipt
+ok 8 - SQLite disk-full fault leaves no domain records or committed receipt
+  ---
+  duration_ms: 40.4765
+  type: 'test'
+  ...
+# Subtest: workspace aliases resolve before any future directory is created
+ok 9 - workspace aliases resolve before any future directory is created
+  ---
+  duration_ms: 42.3227
+  type: 'test'
+  ...
+# Subtest: developer evidence export preserves completed sealed inputs and refuses changes before or during processing
+ok 10 - developer evidence export preserves completed sealed inputs and refuses changes before or during processing
+  ---
+  duration_ms: 254.6191
+  type: 'test'
+  ...
+# Subtest: developer evidence export rejects its redirected stdout through filesystem aliases
+    # Subtest: same spelling
+    ok 1 - same spelling
+      ---
+      duration_ms: 55.1839
+      type: 'test'
+      ...
+    # Subtest: normalized separators and components
+    ok 2 - normalized separators and components
+      ---
+      duration_ms: 56.0128
+      type: 'test'
+      ...
+    # Subtest: hard link
+    ok 3 - hard link
+      ---
+      duration_ms: 56.6872
+      type: 'test'
+      ...
+    # Subtest: drive letter case
+    ok 4 - drive letter case
+      ---
+      duration_ms: 57.3354
+      type: 'test'
+      ...
+    # Subtest: path case
+    ok 5 - path case
+      ---
+      duration_ms: 59.0322
+      type: 'test'
+      ...
+    # Subtest: junction
+    ok 6 - junction
+      ---
+      duration_ms: 194.4772
+      type: 'test'
+      ...
+    # Subtest: file symlink when permitted
+    ok 7 - file symlink when permitted # SKIP File symlink unavailable without changing current permissions
+      ---
+      duration_ms: 1.2139
+      type: 'test'
+      ...
+    1..7
+ok 11 - developer evidence export rejects its redirected stdout through filesystem aliases
+  ---
+  duration_ms: 481.6587
+  type: 'test'
+  ...
+# Subtest: developer evidence export does not merge distinct case-sensitive files
+ok 12 - developer evidence export does not merge distinct case-sensitive files # SKIP This directory is case-insensitive; distinct case-only names unavailable
+  ---
+  duration_ms: 1.4251
+  type: 'test'
+  ...
+# (node:86876) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: snapshot replacement preserves system, tool, user and unrelated extension data by identity
+ok 13 - snapshot replacement preserves system, tool, user and unrelated extension data by identity
+  ---
+  duration_ms: 1.4879
+  type: 'test'
+  ...
+# (node:84724) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: TXT, multipage PDF and multichapter EPUB keep exact original bytes, separate text, stable code-point ranges and locators after source removal
+ok 14 - TXT, multipage PDF and multichapter EPUB keep exact original bytes, separate text, stable code-point ranges and locators after source removal
+  ---
+  duration_ms: 1583.9747
+  type: 'test'
+  ...
+# Subtest: scanned/blank, encrypted, damaged, unsafe, unsupported and partly missing books expose honest availability
+ok 15 - scanned/blank, encrypted, damaged, unsafe, unsupported and partly missing books expose honest availability
+  ---
+  duration_ms: 2541.471
+  type: 'test'
+  ...
+# Subtest: every new import authorizes before source access and rechecks after async extraction; interrupts never create records/handles
+ok 16 - every new import authorizes before source access and rechecks after async extraction; interrupts never create records/handles
+  ---
+  duration_ms: 1346.0302
+  type: 'test'
+  ...
+# Subtest: book bounds exceed old TXT limit, extraction output and archive expansion stay bounded
+ok 17 - book bounds exceed old TXT limit, extraction output and archive expansion stay bounded
+  ---
+  duration_ms: 1701.3471
+  type: 'test'
+  ...
+# Subtest: new material transaction faults preserve original/text linkage and receipt atomicity on reopen
+ok 18 - new material transaction faults preserve original/text linkage and receipt atomicity on reopen
+  ---
+  duration_ms: 989.7753
+  type: 'test'
+  ...
+# Subtest: schema-1 migration preserves every row and material; before/after-commit failures retain a verifiable backup and recover without reset
+ok 19 - schema-1 migration preserves every row and material; before/after-commit failures retain a verifiable backup and recover without reset
+  ---
+  duration_ms: 343.7452
+  type: 'test'
+  ...
+# (node:87632) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: retained excerpt: long ASCII, bounded reading reconstructs original without mutation
+ok 20 - retained excerpt: long ASCII, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 77.574
+  type: 'test'
+  ...
+# Subtest: retained excerpt: emoji on page boundary, bounded reading reconstructs original without mutation
+ok 21 - retained excerpt: emoji on page boundary, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 57.4656
+  type: 'test'
+  ...
+# Subtest: retained excerpt: exactly 8000 non-BMP code points, bounded reading reconstructs original without mutation
+ok 22 - retained excerpt: exactly 8000 non-BMP code points, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 60.9821
+  type: 'test'
+  ...
+# Subtest: retained excerpt: exactly 8000 BMP code points, bounded reading reconstructs original without mutation
+ok 23 - retained excerpt: exactly 8000 BMP code points, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 58.5017
+  type: 'test'
+  ...
+# Subtest: import preflight uses Core processing, identity and write authority
+ok 24 - import preflight uses Core processing, identity and write authority
+  ---
+  duration_ms: 54.0271
+  type: 'test'
+  ...
+# Subtest: historical excerpt ranges use the requested revision, not current text
+ok 25 - historical excerpt ranges use the requested revision, not current text
+  ---
+  duration_ms: 75.4284
+  type: 'test'
+  ...
+# Subtest: authorized imported material still retains exact BOM/CRLF bytes and code-point ranges
+ok 26 - authorized imported material still retains exact BOM/CRLF bytes and code-point ranges
+  ---
+  duration_ms: 75.4257
+  type: 'test'
+  ...
+# Subtest: retained excerpt ranges keep explicit invalid-range errors
+ok 27 - retained excerpt ranges keep explicit invalid-range errors
+  ---
+  duration_ms: 60.0653
+  type: 'test'
+  ...
+# (node:87664) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a saved handoff is reusable preparation-step grounds without a duplicate message record
+ok 28 - a saved handoff is reusable preparation-step grounds without a duplicate message record
+  ---
+  duration_ms: 112.2954
+  type: 'test'
+  ...
+# Subtest: preparation grounds retain claims and ref guards, external waits stay separate, and reopen waits for new input
+ok 29 - preparation grounds retain claims and ref guards, external waits stay separate, and reopen waits for new input
+  ---
+  duration_ms: 231.5123
+  type: 'test'
+  ...
+# Subtest: linking an immutable preparation result is atomic with claim, revision, Change and receipt
+ok 30 - linking an immutable preparation result is atomic with claim, revision, Change and receipt
+  ---
+  duration_ms: 254.5164
+  type: 'test'
+  ...
+# Subtest: nested graph and final-batch cycles, wrong references and update lifecycle bypass are rejected atomically
+ok 31 - nested graph and final-batch cycles, wrong references and update lifecycle bypass are rejected atomically
+  ---
+  duration_ms: 86.7717
+  type: 'test'
+  ...
+# Subtest: required child/step conditions, grounded completion, cancellation is not success, reopening retains history
+ok 32 - required child/step conditions, grounded completion, cancellation is not success, reopening retains history
+  ---
+  duration_ms: 111.7916
+  type: 'test'
+  ...
+# Subtest: dependencies and parent pause suppress execution without changing child facts; independent steps continue
+ok 33 - dependencies and parent pause suppress execution without changing child facts; independent steps continue
+  ---
+  duration_ms: 109.0574
+  type: 'test'
+  ...
+# Subtest: claims are independent of writer lease and bind revisions/runtime/epoch; expired unresolved claims need reconciliation
+ok 34 - claims are independent of writer lease and bind revisions/runtime/epoch; expired unresolved claims need reconciliation
+  ---
+  duration_ms: 61.3848
+  type: 'test'
+  ...
+# Subtest: manual handoff retains original plan and external authorship; partial/late events never auto-resume cancelled plan
+ok 35 - manual handoff retains original plan and external authorship; partial/late events never auto-resume cancelled plan
+  ---
+  duration_ms: 86.4695
+  type: 'test'
+  ...
+# Subtest: time waits retain exact offsets/timezone and cannot be satisfied early
+ok 36 - time waits retain exact offsets/timezone and cannot be satisfied early
+  ---
+  duration_ms: 66.8852
+  type: 'test'
+  ...
+# Subtest: addressed generated results and handoff/claim transaction recovery preserve all-or-none state
+ok 37 - addressed generated results and handoff/claim transaction recovery preserve all-or-none state
+  ---
+  duration_ms: 252.1596
+  type: 'test'
+  ...
+# Subtest: ancestor revisions invalidate child claims and parent-goal changes make replies late in the final transaction
+ok 38 - ancestor revisions invalidate child claims and parent-goal changes make replies late in the final transaction
+  ---
+  duration_ms: 77.5254
+  type: 'test'
+  ...
+# Subtest: step addresses cannot collide with internal parent/completion graph nodes
+ok 39 - step addresses cannot collide with internal parent/completion graph nodes
+  ---
+  duration_ms: 44.0753
+  type: 'test'
+  ...
+1..39
+# tests 46
+# suites 0
+# pass 44
+# fail 0
+# cancelled 0
+# skipped 2
+# todo 0
+# duration_ms 10069.3037

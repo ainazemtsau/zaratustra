@@ -58,9 +58,53 @@ on the source side; repository tests also test aliases in the stdout argument.
 | File symlink                                                  | UNAVAILABLE: Windows error 1314 / Node EPERM; no permissions changed                                           |
 | Distinct case-only file names                                 | UNAVAILABLE in this case-insensitive directory; regression runs on a filesystem supporting such distinct names |
 
-Checkout `npm run check`: 46 tests, 44 passed, 2 explicitly skipped, no failures;
-format, lint, types, dependency boundaries and build passed. Mandatory deliver and
-native installed qualification are recorded with final delivery below.
+Checkout `npm run check` and `npm run deliver` both passed: 46 tests, 44 passed,
+2 explicitly skipped, no failures; format, lint, types, dependency boundaries,
+build and RESULT structure passed. `check-01.log` and `deliver-01.log` are finished
+originals. The installed affected suite has 10 tests: 8 passed, the same 2 skipped.
+All ten Python GREEN subprocess controls also passed using the installed exporter,
+with cwd and all inputs/output outside the checkout. No parser change justified
+repeating old model/material/upgrade histories; unchanged inputs and the full
+checkout regression suite preserve their exact version attribution.
+
+## Published installation and fixed evidence
+
+Code candidate, publicly pushed and natively installed:
+`6ca077ff7fd9b8a0fdcd862dc9ed406ca20c20ee`.
+The final containing commit adds documentation and fixed synthetic evidence only;
+its exact public and installed SHA are read back in local `FINAL-READBACK.json`
+after native reinstallation, avoiding a self-referential SHA in committed text.
+That final check verifies equality of every executable/configuration/test input
+with this candidate and repeats the installed exporter controls.
+
+Candidate [installed identity](c-evidence/stdout-alias-20261020/candidate-identity.json)
+compares all **779 tracked files** with exact public Git bytes. Sole exception:
+native Pi/npm removes six `peer:true` fields from package-lock.json, for
+@typescript-eslint/parser, acorn, eslint, typescript, undici and zod. No versions,
+resolved URLs or integrity changes. The installed tree is **not fully clean**.
+The [unchanged-input proof](c-evidence/stdout-alias-20261020/runtime-equality.json)
+checks 50 other committed implementation/configuration/fixture inputs against
+4796fbf, including all Core/adapter/skills/parser/schema/dependency inputs.
+
+The [new manifest](c-evidence/stdout-alias-20261020/manifest.json) has **117** entries,
+all checked against available completed raw sources and derivatives, including
+the [exact-base RED](c-evidence/stdout-alias-20261020/red-base/verification.json),
+[checkout GREEN](c-evidence/stdout-alias-20261020/green-checkout/verification.json),
+[installed GREEN](c-evidence/stdout-alias-20261020/green-installed/verification.json),
+[commands/probe](c-evidence/stdout-alias-20261020/probe.py),
+[check log](c-evidence/stdout-alias-20261020/check-01.log) and
+[deliver log](c-evidence/stdout-alias-20261020/deliver-01.log).
+Every producer exited before sealing. Current public-export stdout is not among
+its own inputs. Derivatives use declared path substitutions and canonical LF;
+originals remain in the separate evidence directory and are never overwritten.
+The pre-existing broken RED manifest is retained as an artifact inside this new
+export, not represented as a correct manifest of its completed RED stdout.
+
+[Attempt accounting](c-evidence/stdout-alias-20261020/attempts.json) includes the
+expected product RED and an early observer failure: the first equality verifier
+assumed checkout lockfile LF, then found pre-existing CRLF. Only the verifier was
+corrected to disclose this exception. An initial patch submission was rejected
+before edits and resubmitted; no hidden product/test failure or model retry.
 
 ## Evidence and reproduction
 
@@ -96,6 +140,12 @@ against their available raw and derivative lengths/hashes: exact. Their manifest
 historical empty derivative and explanation of the missing old empty raw snapshot
 are preserved. This new alias RED is separate evidence, never a relabeling of
 the original historical self-log mismatch.
+
+The [historical digest check](c-evidence/stdout-alias-20261020/historical-provenance.json)
+and [728 protected-artifact check](c-evidence/stdout-alias-20261020/preservation.json)
+preserve these facts, reviewer reports/reproduction and selected closed ledgers.
+No reviewer directory was a target of writes. The historical return is preserved
+verbatim in [C-RESULT-4796fbf](C-RESULT-4796fbf.md), with its original trailer.
 
 Published runtime inputs equal the base Git blobs. A pre-existing checkout-only
 exception is disclosed: package-lock.json has CRLF (170512 bytes), while its

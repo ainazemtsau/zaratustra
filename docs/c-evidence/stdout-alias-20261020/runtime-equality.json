@@ -1,0 +1,382 @@
+{
+  "base": "4796fbf6c1702f5cc51b2314fa65809e1ae20bc3",
+  "snapshot": "working tree before publication; exact exporter hash linked to installed identity",
+  "unchanged_count": 50,
+  "unchanged_inputs": [
+    {
+      "path": ".dependency-cruiser.cjs",
+      "base_sha256": "8181e6e05d6fbed1c12ad743a8594a9aa6c5577ea59fb1a977ccc0352b21fe3d",
+      "working_sha256": "8181e6e05d6fbed1c12ad743a8594a9aa6c5577ea59fb1a977ccc0352b21fe3d",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "AGENTS.md",
+      "base_sha256": "1f07f6e4f5a9d51296cad9fb8b1671270f6e54c5819b943adba1cfd1ef0efb25",
+      "working_sha256": "1f07f6e4f5a9d51296cad9fb8b1671270f6e54c5819b943adba1cfd1ef0efb25",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "CLAUDE.md",
+      "base_sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
+      "working_sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "eslint.config.js",
+      "base_sha256": "c7fb34b1a73d9b0b0417e07b5bef2abdb6f19297007064f13fda3c37cdc38b7d",
+      "working_sha256": "c7fb34b1a73d9b0b0417e07b5bef2abdb6f19297007064f13fda3c37cdc38b7d",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "instructions/bootstrap.md",
+      "base_sha256": "e6e0fc64a81d97e29ed41703c5f053c983b2ea31c1fdad6849dc7f53740b430e",
+      "working_sha256": "e6e0fc64a81d97e29ed41703c5f053c983b2ea31c1fdad6849dc7f53740b430e",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "package-lock.json",
+      "base_sha256": "455fa1a7c440139d1b4cd3a49398167659030671ffe99d730c70591da3ac6c1a",
+      "working_sha256": "81aa2e0f115b63b88b9b28697728bd23fb664e0853ec98d24be183d4fc4c180f",
+      "working_bytes_identical": false,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "package.json",
+      "base_sha256": "3018dd7f6a5f1668caca801f2fc0180656740c7e53f23a14d03773631d46cd8d",
+      "working_sha256": "3018dd7f6a5f1668caca801f2fc0180656740c7e53f23a14d03773631d46cd8d",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "scripts/c-fixtures.py",
+      "base_sha256": "1994ae85c766f5818e81f3aa8fc4b8b29512704a52fbf9e06fae047211c51ad8",
+      "working_sha256": "1994ae85c766f5818e81f3aa8fc4b8b29512704a52fbf9e06fae047211c51ad8",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "scripts/c-identity.mjs",
+      "base_sha256": "20603bd3812456200ed914f677d1c190d4aa30aa6745d92646c0f779c46c94ec",
+      "working_sha256": "20603bd3812456200ed914f677d1c190d4aa30aa6745d92646c0f779c46c94ec",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "scripts/c-upgrade.mjs",
+      "base_sha256": "2c156dde761beb4724e451d852e85a7ece8f2c3c90c43f59449d3b42a82d7986",
+      "working_sha256": "2c156dde761beb4724e451d852e85a7ece8f2c3c90c43f59449d3b42a82d7986",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "scripts/deliver.mjs",
+      "base_sha256": "b3ab8df17c85d761c19de45086222dd3577172c6334a130e231397405759e15e",
+      "working_sha256": "b3ab8df17c85d761c19de45086222dd3577172c6334a130e231397405759e15e",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "scripts/live.mjs",
+      "base_sha256": "a89f9cdb90f013bf44df7661ba7439742aa67dc00cc731ac58d574465b84e5af",
+      "working_sha256": "a89f9cdb90f013bf44df7661ba7439742aa67dc00cc731ac58d574465b84e5af",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "scripts/p2-probe.mjs",
+      "base_sha256": "addcbcdd854375beeab10750512c6ee5eab6788910365d4e87f675a9d42f9e92",
+      "working_sha256": "addcbcdd854375beeab10750512c6ee5eab6788910365d4e87f675a9d42f9e92",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "scripts/p2-tail.mjs",
+      "base_sha256": "552a89bb19f9dd2bf78207ffaf85f29847288e142dd8afa95cc0df2aa5fa3ddc",
+      "working_sha256": "552a89bb19f9dd2bf78207ffaf85f29847288e142dd8afa95cc0df2aa5fa3ddc",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "scripts/resources.mjs",
+      "base_sha256": "f568d6d7b35dd11dbb8c23e3f56ff7df1a85d42a22b3abf431414aa820c07646",
+      "working_sha256": "f568d6d7b35dd11dbb8c23e3f56ff7df1a85d42a22b3abf431414aa820c07646",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "skills/zaratustra-memory/SKILL.md",
+      "base_sha256": "92fc4a75d6c1fca9f263259f4b7e24ddde724a84ee052329ce6cbdc7900df4d5",
+      "working_sha256": "92fc4a75d6c1fca9f263259f4b7e24ddde724a84ee052329ce6cbdc7900df4d5",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "skills/zaratustra-work/SKILL.md",
+      "base_sha256": "1e77e0631d5170ff0cb8b3ab5232c25862c55153219c496e10669fc472261e32",
+      "working_sha256": "1e77e0631d5170ff0cb8b3ab5232c25862c55153219c496e10669fc472261e32",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "src/core/AGENTS.md",
+      "base_sha256": "4901b042a7a1fc797e574efe9299ccfba7b89d6a90b9efbfa4326501349d63ff",
+      "working_sha256": "4901b042a7a1fc797e574efe9299ccfba7b89d6a90b9efbfa4326501349d63ff",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "src/core/contracts.ts",
+      "base_sha256": "73bf8118c54e8263d9c4eaa9f68b5e44b953a2eb139eec3ba405bc951f9f3bad",
+      "working_sha256": "73bf8118c54e8263d9c4eaa9f68b5e44b953a2eb139eec3ba405bc951f9f3bad",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "src/core/index.ts",
+      "base_sha256": "479081ee5ea16b513ab442947cf510f0c054187ca8c892513e28dbb1177f54aa",
+      "working_sha256": "479081ee5ea16b513ab442947cf510f0c054187ca8c892513e28dbb1177f54aa",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "src/core/work.ts",
+      "base_sha256": "b1d5ffb85cbfa9f3de40f54b50b00bb8b394611020833e20d81e21b85d4ad9ad",
+      "working_sha256": "b1d5ffb85cbfa9f3de40f54b50b00bb8b394611020833e20d81e21b85d4ad9ad",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "src/extension/AGENTS.md",
+      "base_sha256": "5e01278e0f9e23d61e562b98627a3c3ba71b02cecfb5b2b416dd08df1cd51b0b",
+      "working_sha256": "5e01278e0f9e23d61e562b98627a3c3ba71b02cecfb5b2b416dd08df1cd51b0b",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "src/extension/index.ts",
+      "base_sha256": "4bd68e06c84a6a3ed242903dfa34dac5b4ccd2a4279cb08139e48cf7e451b5bb",
+      "working_sha256": "4bd68e06c84a6a3ed242903dfa34dac5b4ccd2a4279cb08139e48cf7e451b5bb",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "src/storage/AGENTS.md",
+      "base_sha256": "500f77dd410808616b6e714275cfce81b554e0ca4bc52d0af71b5bcd9e19834c",
+      "working_sha256": "500f77dd410808616b6e714275cfce81b554e0ca4bc52d0af71b5bcd9e19834c",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "src/storage/extract.ts",
+      "base_sha256": "2009e2598f67e82e0b5cf962ff32c6be9b4699f0063bf88bae0f133a9c95e22f",
+      "working_sha256": "2009e2598f67e82e0b5cf962ff32c6be9b4699f0063bf88bae0f133a9c95e22f",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "src/storage/index.ts",
+      "base_sha256": "a9499e1b4d141a9635f38f8bb8e3ec665188b60bca613d3a22df3663bdcfb001",
+      "working_sha256": "a9499e1b4d141a9635f38f8bb8e3ec665188b60bca613d3a22df3663bdcfb001",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "src/storage/parser-worker.mjs",
+      "base_sha256": "363079486797fcf9408d06119f55474e2e0e6b91cf2bf50d8c72690de7ed49ec",
+      "working_sha256": "363079486797fcf9408d06119f55474e2e0e6b91cf2bf50d8c72690de7ed49ec",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/core.test.ts",
+      "base_sha256": "c259fae7fb19d296a33316d194d5dd59c508e6f1eb471855dd2b680f7046687a",
+      "working_sha256": "c259fae7fb19d296a33316d194d5dd59c508e6f1eb471855dd2b680f7046687a",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/extension.test.ts",
+      "base_sha256": "e66184ea07a7e5cd459cef96574834ad49cdb237bb0474e4c0a3fbef9836c3a1",
+      "working_sha256": "e66184ea07a7e5cd459cef96574834ad49cdb237bb0474e4c0a3fbef9836c3a1",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/fixtures/c/blank.pdf",
+      "base_sha256": "226ee53a1c7cbcbe2cd8a5fa09daa83f3897e21422c60319ed87b857ad8cf064",
+      "working_sha256": "226ee53a1c7cbcbe2cd8a5fa09daa83f3897e21422c60319ed87b857ad8cf064",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/fixtures/c/book.epub",
+      "base_sha256": "fc7f55c8fd4b2200723d5565054e01369c0a59c05a36a2b98435fb0e52e6979a",
+      "working_sha256": "fc7f55c8fd4b2200723d5565054e01369c0a59c05a36a2b98435fb0e52e6979a",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/fixtures/c/book.pdf",
+      "base_sha256": "51b4039c0287808a6348e759d232da64b6dd19484ffa5403d2b318e37a0d3406",
+      "working_sha256": "51b4039c0287808a6348e759d232da64b6dd19484ffa5403d2b318e37a0d3406",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/fixtures/c/damaged.pdf",
+      "base_sha256": "1347eeb6725c82af82dff79efdfef4f03ae8ea71982ecad3966bc7540dc76c76",
+      "working_sha256": "1347eeb6725c82af82dff79efdfef4f03ae8ea71982ecad3966bc7540dc76c76",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/fixtures/c/encrypted.epub",
+      "base_sha256": "d7af556a1f65d22ea9b449841f1eb7e57ddca5670bc044ffdce76850d4663970",
+      "working_sha256": "d7af556a1f65d22ea9b449841f1eb7e57ddca5670bc044ffdce76850d4663970",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/fixtures/c/encrypted.pdf",
+      "base_sha256": "2c4189b18f08cf924174ca47e79685ce645253964182aad42626cbe0a3a7f879",
+      "working_sha256": "2c4189b18f08cf924174ca47e79685ce645253964182aad42626cbe0a3a7f879",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/fixtures/c/entities.epub",
+      "base_sha256": "1730894c9ec78df72b5ae7d7cbf8d2dc8a5fa1691ac430e6247b61c965f30a23",
+      "working_sha256": "1730894c9ec78df72b5ae7d7cbf8d2dc8a5fa1691ac430e6247b61c965f30a23",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/fixtures/c/image-only.epub",
+      "base_sha256": "953730e0b3ccec3fe70ddb4197c45532bf382daf89d1e8966b443fe57d23e990",
+      "working_sha256": "953730e0b3ccec3fe70ddb4197c45532bf382daf89d1e8966b443fe57d23e990",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/fixtures/c/large.pdf",
+      "base_sha256": "13ef961efedc6880b2377f79f659a8e3c43fa2dc3b33a80c2895f42562579cd7",
+      "working_sha256": "13ef961efedc6880b2377f79f659a8e3c43fa2dc3b33a80c2895f42562579cd7",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/fixtures/c/notes.md",
+      "base_sha256": "4b82682dfc9eb1074a4bb551e1f6904c2ffbef6c95007635bb37cf1b399bce54",
+      "working_sha256": "4b82682dfc9eb1074a4bb551e1f6904c2ffbef6c95007635bb37cf1b399bce54",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/fixtures/c/output-limit.epub",
+      "base_sha256": "bc3cd497059f6e75e933588b4aafad31ca73f53fc446e2e56ea887fe3dd47171",
+      "working_sha256": "bc3cd497059f6e75e933588b4aafad31ca73f53fc446e2e56ea887fe3dd47171",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/fixtures/c/partial.epub",
+      "base_sha256": "80047ef545614db91b45b2a14d68c7490b9fee08de5b46e789e98bd63467a468",
+      "working_sha256": "80047ef545614db91b45b2a14d68c7490b9fee08de5b46e789e98bd63467a468",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/fixtures/c/remote.epub",
+      "base_sha256": "d2d3c2ce217254eabd28276d309755fc4c755d97ae5b6f6ab581316671a7f75b",
+      "working_sha256": "d2d3c2ce217254eabd28276d309755fc4c755d97ae5b6f6ab581316671a7f75b",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/fixtures/c/traversal.epub",
+      "base_sha256": "735e01e917561fdefc378dff76e2cc974e7a6eb7fedc83f803000ff9062b796c",
+      "working_sha256": "735e01e917561fdefc378dff76e2cc974e7a6eb7fedc83f803000ff9062b796c",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/fixtures/c/zip-limit.epub",
+      "base_sha256": "fe9ada6c6d66993cbe0b0d314c8e8766bdc7f4db6620a3fe5f0355a18ac1a0ce",
+      "working_sha256": "fe9ada6c6d66993cbe0b0d314c8e8766bdc7f4db6620a3fe5f0355a18ac1a0ce",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/materials.test.ts",
+      "base_sha256": "8156b8a57adcc54dd169d824ff3ebbdeaa8d153ca9df008cc4914111c8087683",
+      "working_sha256": "8156b8a57adcc54dd169d824ff3ebbdeaa8d153ca9df008cc4914111c8087683",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/p2.test.ts",
+      "base_sha256": "8efed124383d17f3eb74528357e82faa24b95f280ea879da2a69a54c58254fc6",
+      "working_sha256": "8efed124383d17f3eb74528357e82faa24b95f280ea879da2a69a54c58254fc6",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tests/work.test.ts",
+      "base_sha256": "fdc8138238a1634e2eea0918f193cd42b35f442459414ec59b5e14b2b4360ab6",
+      "working_sha256": "fdc8138238a1634e2eea0918f193cd42b35f442459414ec59b5e14b2b4360ab6",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tsconfig.build.json",
+      "base_sha256": "7ec51aac8697f7cc7816d00f30310a45b28a215b86e57bc71c716ddc3a08d3fe",
+      "working_sha256": "7ec51aac8697f7cc7816d00f30310a45b28a215b86e57bc71c716ddc3a08d3fe",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "tsconfig.json",
+      "base_sha256": "fd6176736b00ac17c4fdccf5acc48f07a9997791999a708e91986b1f1a051d79",
+      "working_sha256": "fd6176736b00ac17c4fdccf5acc48f07a9997791999a708e91986b1f1a051d79",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    },
+    {
+      "path": "validation.config",
+      "base_sha256": "ede03f287acc7c8a50f36f6bda4aa89880ec4d4c06c51f591a71f01aefa5e6ad",
+      "working_sha256": "ede03f287acc7c8a50f36f6bda4aa89880ec4d4c06c51f591a71f01aefa5e6ad",
+      "working_bytes_identical": true,
+      "committed_bytes_identical": true
+    }
+  ],
+  "checkout_exceptions": [
+    {
+      "path": "package-lock.json",
+      "reason": "pre-existing CRLF working file; unchanged committed dependency blob",
+      "base_bytes": 165767,
+      "working_bytes": 170512,
+      "working_sha256": "81aa2e0f115b63b88b9b28697728bd23fb664e0853ec98d24be183d4fc4c180f"
+    }
+  ],
+  "changed_tracked_paths": [
+    "RESULT.md",
+    "docs/C-PROVENANCE-CORRECTION.md",
+    "docs/C-RESULT-4796fbf.md",
+    "docs/C-STDOUT-ALIAS.md",
+    "docs/C-VALIDATION.md",
+    "docs/DEVELOPMENT.md",
+    "docs/R1-STATUS.md",
+    "docs/REPRODUCE.md",
+    "scripts/export-evidence.mjs",
+    "tests/evidence.test.ts"
+  ],
+  "exporter_sha256": "a028d1d4f4bc6ec8d5a8ca3b922b5070d24c089437c65bb3aff913c2cef40550",
+  "test_sha256": "be3037f0e9096c1fb419e51b28a5d6d600bb01872e84f3b4541839ab60b0da19",
+  "new_dependencies": false,
+  "schema_changed": false
+}

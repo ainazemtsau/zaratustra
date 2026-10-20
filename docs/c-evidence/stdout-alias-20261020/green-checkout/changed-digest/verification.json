@@ -1,0 +1,15 @@
+{
+  "name": "changed-digest",
+  "exporter": "<AUTHOR_CHECKOUT>\\scripts\\export-evidence.mjs",
+  "stdout_actual": "<SYNTHETIC_EVIDENCE_ROOT>\\green-checkout\\changed-digest\\Current-Stdout.log",
+  "stdout_argument": "<SYNTHETIC_EVIDENCE_ROOT>\\green-checkout\\changed-digest\\Current-Stdout.log",
+  "source": "<SYNTHETIC_EVIDENCE_ROOT>\\green-checkout\\changed-digest\\Completed.log",
+  "same_file": false,
+  "exit": 1,
+  "output_exists": false,
+  "manifest_exists": false,
+  "stdout_bytes": 0,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr": "node:internal/modules/run_main:123\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nAssertionError [ERR_ASSERTION]: Sealed source digest changed: Completed.log\r\n+ actual - expected\r\n\r\n+ '5b7798f977b8650f559533d6037a1a0ffa9d3357714e6fe86d6266ec3549509b'\r\n- '37084751692bda2d2d44795479510f497bd7f8fcdf9acbee18af0b9c972b27eb'\r\n\r\n    at file:///<AUTHOR_CHECKOUT>/scripts/export-evidence.mjs:61:10\r\n    at Array.map (<anonymous>)\r\n    at file:///<AUTHOR_CHECKOUT>/scripts/export-evidence.mjs:34:32\r\n    at ModuleJob.run (node:internal/modules/esm/module_job:345:25)\r\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:651:26)\r\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\r\n  generatedMessage: false,\r\n  code: 'ERR_ASSERTION',\r\n  actual: '5b7798f977b8650f559533d6037a1a0ffa9d3357714e6fe86d6266ec3549509b',\r\n  expected: '37084751692bda2d2d44795479510f497bd7f8fcdf9acbee18af0b9c972b27eb',\r\n  operator: 'strictEqual',\r\n  diff: 'simple'\r\n}\r\n\r\nNode.js v22.19.0\r\n",
+  "refusal_reason_verified": "Sealed source"
+}

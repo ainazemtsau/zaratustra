@@ -1,0 +1,12 @@
+[
+  {
+    "manifest": "docs/c-evidence/manifest.json",
+    "entries": 327,
+    "all_source_derivative_hashes_and_lengths_exact": true
+  },
+  {
+    "manifest": "docs/c-evidence/fix-20261020/manifest.json",
+    "entries": 136,
+    "all_source_derivative_hashes_and_lengths_exact": true
+  }
+]

@@ -1,0 +1,28 @@
+{
+  "name": "completed-positive",
+  "exporter": "<AUTHOR_CHECKOUT>\\scripts\\export-evidence.mjs",
+  "stdout_actual": "<SYNTHETIC_EVIDENCE_ROOT>\\green-checkout\\completed-positive\\Current-Stdout.log",
+  "stdout_argument": "<SYNTHETIC_EVIDENCE_ROOT>\\green-checkout\\completed-positive\\Current-Stdout.log",
+  "source": "<SYNTHETIC_EVIDENCE_ROOT>\\green-checkout\\completed-positive\\Completed.log",
+  "same_file": false,
+  "exit": 0,
+  "output_exists": true,
+  "manifest_exists": true,
+  "stdout_bytes": 32,
+  "stdout_sha256": "4cc8f4eb2ee85eb31da53ed85fdf6054480c3036ca9e448d4aa4d14b3e6c9cdf",
+  "stderr": "",
+  "entry": {
+    "original_relative_path": "Completed.log",
+    "original_sha256": "37084751692bda2d2d44795479510f497bd7f8fcdf9acbee18af0b9c972b27eb",
+    "original_bytes": 29,
+    "derivative_path": "Completed.log",
+    "derivative_sha256": "e7dd47ba853264d7026c01ee30ecfc2bc8f881bfa945a7842eb835d496feb6eb",
+    "derivative_bytes": 28,
+    "transforms": [
+      "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+    ]
+  },
+  "source_matches_manifest": true,
+  "derivative_matches_manifest": true,
+  "canonical_lf_exact": true
+}

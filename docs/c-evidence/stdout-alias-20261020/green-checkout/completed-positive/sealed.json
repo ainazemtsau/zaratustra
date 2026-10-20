@@ -1,0 +1,10 @@
+{
+  "root": "<SYNTHETIC_EVIDENCE_ROOT>\\green-checkout\\completed-positive",
+  "entries": [
+    {
+      "path": "Completed.log",
+      "bytes": 29,
+      "sha256": "37084751692bda2d2d44795479510f497bd7f8fcdf9acbee18af0b9c972b27eb"
+    }
+  ]
+}

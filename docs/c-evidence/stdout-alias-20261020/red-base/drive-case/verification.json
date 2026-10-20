@@ -1,0 +1,29 @@
+{
+  "name": "drive-case",
+  "exporter": "<SYNTHETIC_EVIDENCE_ROOT>\\baseline\\export-evidence.mjs",
+  "stdout_actual": "<SYNTHETIC_EVIDENCE_ROOT>\\red-base\\drive-case\\Current-Stdout.log",
+  "stdout_argument": "c:\\projects\\zaratustra-v1-c-stdout-alias-evidence-20261020\\red-base\\drive-case\\Current-Stdout.log",
+  "source": "<SYNTHETIC_EVIDENCE_ROOT>\\red-base\\drive-case\\Current-Stdout.log",
+  "same_file": true,
+  "exit": 0,
+  "output_exists": true,
+  "manifest_exists": true,
+  "stdout_bytes": 32,
+  "stdout_sha256": "4cc8f4eb2ee85eb31da53ed85fdf6054480c3036ca9e448d4aa4d14b3e6c9cdf",
+  "stderr": "",
+  "entry": {
+    "original_relative_path": "Current-Stdout.log",
+    "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "original_bytes": 0,
+    "derivative_path": "Current-Stdout.log",
+    "derivative_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "derivative_bytes": 0,
+    "transforms": [
+      "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+    ]
+  },
+  "source_matches_manifest": false,
+  "derivative_matches_manifest": true,
+  "canonical_lf_exact": true,
+  "expected_baseline_failure_reproduced": true
+}

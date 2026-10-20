@@ -1,0 +1,18 @@
+{
+  "synthetic": true,
+  "sealed_inputs_sha256": "46dbda04c112a3bf002b28bdcab171b0bb63a6c5b546fc522f2be5078abcc933",
+  "source_policy": "finished fixed inputs, SHA256 checked before and after; current stdout excluded",
+  "entries": [
+    {
+      "original_relative_path": "Completed.log",
+      "original_sha256": "37084751692bda2d2d44795479510f497bd7f8fcdf9acbee18af0b9c972b27eb",
+      "original_bytes": 29,
+      "derivative_path": "Completed.log",
+      "derivative_sha256": "e7dd47ba853264d7026c01ee30ecfc2bc8f881bfa945a7842eb835d496feb6eb",
+      "derivative_bytes": 28,
+      "transforms": [
+        "UTF-8 without BOM; canonical LF; declared local-path substitutions"
+      ]
+    }
+  ]
+}

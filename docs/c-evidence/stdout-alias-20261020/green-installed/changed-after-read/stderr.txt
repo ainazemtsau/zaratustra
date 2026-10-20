@@ -1,0 +1,23 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Source changed during export
++ actual - expected
+
++ '5b7798f977b8650f559533d6037a1a0ffa9d3357714e6fe86d6266ec3549509b'
+- '37084751692bda2d2d44795479510f497bd7f8fcdf9acbee18af0b9c972b27eb'
+
+    at file:///<SYNTHETIC_EVIDENCE_ROOT>/candidate-agent/git/github.com/ainazemtsau/zaratustra/scripts/export-evidence.mjs:158:10
+    at ModuleJob.run (node:internal/modules/esm/module_job:345:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:651:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '5b7798f977b8650f559533d6037a1a0ffa9d3357714e6fe86d6266ec3549509b',
+  expected: '37084751692bda2d2d44795479510f497bd7f8fcdf9acbee18af0b9c972b27eb',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.19.0

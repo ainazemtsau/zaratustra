@@ -1,0 +1,20 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Current exporter stdout cannot be an input
+    at file:///<AUTHOR_CHECKOUT>/scripts/export-evidence.mjs:49:3
+    at Array.map (<anonymous>)
+    at file:///<AUTHOR_CHECKOUT>/scripts/export-evidence.mjs:34:32
+    at ModuleJob.run (node:internal/modules/esm/module_job:345:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:651:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v22.19.0

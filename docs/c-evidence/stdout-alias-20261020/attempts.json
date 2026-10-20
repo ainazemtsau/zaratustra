@@ -1,0 +1,62 @@
+{
+  "scope": "single developer exporter LOW; no model execution",
+  "model_attempts": 0,
+  "provider_requests": 0,
+  "pi_estimated_usd": 0,
+  "mechanical_attempts": [
+    {
+      "name": "red-base",
+      "result": "expected failure reproduced using exact Git blob 4796fbf: C/c alias accepted; manifest empty versus completed stdout 32 bytes"
+    },
+    {
+      "name": "patch assembly",
+      "result": "first apply_patch rejected multiple operations on the same test file before edits; patch submitted in separate operations"
+    },
+    {
+      "name": "focused checkout tests",
+      "result": "8 pass, 2 environment skips, 0 failures"
+    },
+    {
+      "name": "green-checkout",
+      "result": "10 actual redirected subprocess controls verified; file symlink unavailable, WinError 1314"
+    },
+    {
+      "name": "scope verifier 01",
+      "result": "observer failed raw-byte equality at package-lock.json: pre-existing working CRLF versus committed LF; no Git dependency delta. Corrected verifier discloses both hashes without rewriting the file"
+    },
+    {
+      "name": "scope verifier corrected",
+      "result": "50 unchanged committed inputs, explicit checkout lock EOL exception"
+    },
+    {
+      "name": "historical provenance",
+      "result": "327+136 available source/derivative entries exact"
+    },
+    {
+      "name": "preservation",
+      "result": "728 selected protected historical files exact"
+    },
+    {
+      "name": "check-01",
+      "result": "exit 0, 44 pass + 2 skips, 0 failures"
+    },
+    {
+      "name": "deliver-01",
+      "result": "exit 0, same tests plus RESULT structure"
+    },
+    {
+      "name": "native candidate install",
+      "sha": "6ca077ff7fd9b8a0fdcd862dc9ed406ca20c20ee",
+      "result": "exit 0; 12 packages; no model command or authentication file access"
+    },
+    {
+      "name": "green-installed",
+      "result": "10 actual redirected subprocess controls verified outside checkout; same symlink limitation"
+    },
+    {
+      "name": "installed affected tests",
+      "result": "8 pass, 2 skips, 0 failures"
+    }
+  ],
+  "later_delivery": "final documentation/evidence-only SHA, native reinstallation, identity and final controls recorded separately in FINAL-READBACK.json"
+}
