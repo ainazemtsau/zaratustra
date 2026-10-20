@@ -212,7 +212,13 @@ export const CommitSchema = z.strictObject({
           step_id: text,
           status: StepStatus,
           reason: text,
-          result_refs: z.array(Ref).max(20).optional(),
+          result_refs: z
+            .array(Ref)
+            .max(20)
+            .optional()
+            .describe(
+              "Addressed records or an existing immutable handoff for this Work (revision omitted or 1). Handoff grounds prove message preparation only; read via handoff_id. The model decides whether they satisfy the step's intent.",
+            ),
           decision_source_handle: text.optional(),
         }),
         z.strictObject({

@@ -68,12 +68,30 @@ existing current ground refs. Core pins exact revisions/time/actor. Old completi
 cancellation remain in revisions/Changes after reopen. Cancellation/skipping is not success.
 No owner-usefulness or full-R1 claim follows from formal completion.
 
+When reopening specifically for a clarification that will arrive later, preserve prior
+result refs and historical completion. Reopen first, then add the concrete new wait in a
+guarded plan update and choose waiting if nothing independent is available; active is
+appropriate only with an available action. An old satisfied wait is not the new wait.
+Recheck existing waits/results/handoffs on ordinary continuation; do not create duplicate
+waits, requests or result versions while still waiting. Attach the later input to that
+exact wait before doing the now-enabled work. Core does not interpret next_action prose.
+
 prepare_handoff {client_ref,work_ref,step_id?,objective,conditions,expected_result,
 context_refs,message} stores a minimal immutable request tied to Work/revision/plan_version.
 Guard the Work and each existing ancestor when preparing; Core pins their plan snapshots
 and exact context versions. Read returned handoff_id via zara_read; show its substantive message in the user's language
 with the stable handoff reference for return correlation. Preparation is not sending.
 Never send to another chat/recipient yourself. Include only authorized necessary context.
+
+Reconcile the step's actual intent after preparation. If it means only preparing the
+message, acquire a fresh step claim after the handoff commit and transition that step
+to done with result_refs:[{id:<saved handoff_id>}]. Immutable handoff revision is 1;
+read it via zara_read.handoff_id. Reuse this saved message, not a record_result copy.
+Keep a separate addressed wait for the external reply, targeting the Work or the step
+that needs the reply, not the already-finished preparation. If a step means the entire
+external review, the prepared message alone does not finish it. Core never chooses a
+step's meaning or auto-completes it. Retain optional/required flags as agreed. Reconcile
+already-prepared requests the same way; do not prepare them again just to update a plan.
 
 For a pasted return use receive_handoff {client_ref,handoff_id,source_handle,title,
 source_language,comparison,disposition:partial/accepted/late/unrelated,useful_content,

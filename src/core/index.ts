@@ -1309,7 +1309,34 @@ export class Core {
         ...all.filter((r) => !changed.has(r.id)),
         ...changed.values(),
       ];
-      validateWorks(final, get);
+      validateWorks(final, get, (ref, workId) => {
+        // A prepared message already has one immutable address. Reuse it only
+        // as step-result grounds; do not invent an Evidence copy or widen the
+        // record resolver used by input waits, Knowledge and completion criteria.
+        const r = ref as { id: string; revision?: number };
+        const row =
+          handoffs.find((h) => h.id === r.id) ??
+          this.storage.get<{ json: string }>(
+            "SELECT json FROM handoffs WHERE id=?",
+            r.id,
+          );
+        if (!row) {
+          get(ref);
+          return;
+        }
+        const h = JSON.parse(row.json);
+        requireThat(
+          h.work_ref.id === workId && h.transport_state === "prepared_not_sent",
+          "REFERENCE_TYPE_MISMATCH",
+          "Handoff step grounds must be a prepared message for this Work.",
+        );
+        requireThat(
+          r.revision === undefined || r.revision === 1,
+          "REFERENCE_NOT_FOUND",
+          "An immutable handoff has only revision 1.",
+        );
+        get(h.work_ref, "work");
+      });
       for (const h of handoffs) {
         const data = JSON.parse(h.json);
         get(data.work_ref, "work");

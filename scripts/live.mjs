@@ -211,9 +211,15 @@ try {
   if (existsSync(dbPath)) {
     const db = new DatabaseSync(dbPath, { readOnly: true });
     database = Object.fromEntries(
-      ["records", "revisions", "changes", "intents", "receipts"].map(
-        (table) => [table, db.prepare(`SELECT * FROM ${table}`).all()],
-      ),
+      [
+        "records",
+        "revisions",
+        "changes",
+        "intents",
+        "receipts",
+        "claims",
+        "handoffs",
+      ].map((table) => [table, db.prepare(`SELECT * FROM ${table}`).all()]),
     );
     db.close();
   }

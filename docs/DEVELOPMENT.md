@@ -13,6 +13,32 @@ SHA256 `7d3bd88d71dd954949ad33caae38859f9e06c460b8537ed3259780d11668fac4`;
 public derivative `4940e16e39174df941da98889c43b713c48287d4aeda8754fd57660d462a77cb`.
 The derivative only redacts the original-1.0 local path. No old product branch is a basis.
 
+## Targeted continuation after independent PARTIAL
+
+The owner authorized only the two findings from independent review of exact 0d188eee:
+plan/result/wait coherence and the exporter self-log provenance correction. No new C/D/E
+capability. The review's own EPUB/positive/mixed controls and other PASS remain attributed
+to that version; its overall verdict remains PARTIAL. Original reviewer checkout, homes,
+logs and both closed ledgers are read-only. New live ledger: 8 attempts / 60 requests /
+USD 5 Pi estimate, same selected model/medium/native Pi authentication.
+
+A reproduced REFERENCE_NOT_FOUND establishes the narrow API gap: handoffs are supporting
+rows, while step result_refs used the record-only resolver. Step-result validation now
+accepts the actual immutable prepared handoff of the same Work (revision omitted or 1),
+without a second Evidence copy or a generalized supporting-record resolver. Existing
+claim/revision/access/final-state checks remain. Preparation and step completion use
+separate claims/commits; no automatic step transition. Legacy handoffs need no rewrite.
+The reference shape/schema stays unchanged; old code cannot resolve these refs and fails
+closed on writes retaining them. No schema migration or parser/dependency change.
+The model still judges intent, reconciles completed preparation, and adds a concrete new
+wait on reopen for future input; no keyword test of next_action or mandatory optional steps.
+
+Developer evidence export now takes a finished sealed list of exact source digests,
+checks it before/after, excludes current stdout, and uses Node standard libraries.
+The previous directory glob could include its running stdout. This is qualification
+infrastructure, not the later user-facing export/backup capability. See
+[C-PROVENANCE-CORRECTION](C-PROVENANCE-CORRECTION.md).
+
 ## Retained profile
 
 Windows 11 x64, Node 22.19.0, npm 11.6.2, Pi 1.3.0; TypeScript, node:sqlite/WAL, short

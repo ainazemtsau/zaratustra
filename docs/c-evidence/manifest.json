@@ -330,15 +330,16 @@
     },
     {
       "original_relative_path": "export-06-console.txt",
-      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "original_bytes": 0,
-      "derivative_path": "export-06-console.txt",
-      "derivative_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "derivative_bytes": 0,
+      "original_sha256": "f47b203181d86fd3b0bb16fd238cc61d5d25c64d040937154321fe0f3ae5b00e",
+      "original_bytes": 56,
+      "derivative_path": "corrections/export-06-console-completed.txt",
+      "derivative_sha256": "45278501683385d62e9affeb0049853128bd6536ae7e1c047c98ed2e05447308",
+      "derivative_bytes": 55,
       "transforms": [
-        "UTF-8 without BOM; canonical LF line endings; local path placeholders"
+        "UTF-8 without BOM; canonical LF; explicit provenance correction, not an original export entry"
       ],
-      "synthetic": true
+      "synthetic": true,
+      "source_version": "Correction: completed raw log observed 2026-10-20; not the unavailable historical empty raw snapshot"
     },
     {
       "original_relative_path": "extra-states-console.txt",
@@ -4142,6 +4143,33 @@
       ],
       "synthetic": false,
       "public_primary_source": true
+    }
+  ],
+  "provenance_corrections": [
+    {
+      "finding": "LOW in independent PARTIAL at 0d188eee",
+      "entry": "export-06-console.txt",
+      "historical_manifest_path": "history/manifest-0d188eee.json",
+      "historical_manifest_sha256": "faaf1bd4aace62e33a79e8f84dafa863917a7b4d76592c5d7793b17ed0774aac",
+      "historical_published_derivative_path": "export-06-console.txt",
+      "historical_derivative_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "historical_empty_raw_snapshot_retained": false,
+      "original_declared_entry": {
+        "original_relative_path": "export-06-console.txt",
+        "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "original_bytes": 0,
+        "derivative_path": "export-06-console.txt",
+        "derivative_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "derivative_bytes": 0,
+        "transforms": [
+          "UTF-8 without BOM; canonical LF line endings; local path placeholders"
+        ],
+        "synthetic": true
+      },
+      "available_raw_snapshot_bytes": 56,
+      "available_raw_snapshot_sha256": "f47b203181d86fd3b0bb16fd238cc61d5d25c64d040937154321fe0f3ae5b00e",
+      "new_derivative_path": "corrections/export-06-console-completed.txt",
+      "explanation": "The running exporter selected its own redirected stdout before completion. Only the published empty derivative is retained for that version; there is no separately saved empty raw snapshot. The completed 56-byte raw log is now snapshotted and linked explicitly. Raw source was not edited."
     }
   ]
 }

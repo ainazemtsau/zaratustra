@@ -30,6 +30,7 @@ export const plan = (w: Work) => ({
 export function validateWorks(
   rows: RecordRow[],
   get: (ref: unknown, kind?: string) => RecordRow,
+  getStepResult: (ref: unknown, workId: string) => void,
 ) {
   const works = new Map(
     rows
@@ -66,7 +67,7 @@ export function validateWorks(
     unique(w.acceptance.map((s) => s.criterion_id));
     for (const ref of w.context_refs) get(ref);
     for (const s of w.steps) {
-      for (const ref of s.result_refs) get(ref);
+      for (const ref of s.result_refs) getStepResult(ref, id);
       if (s.child_work_id) {
         requireThat(
           !("revision" in s.child_work_id),

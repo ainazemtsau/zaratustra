@@ -144,6 +144,428 @@ const step = (step_id: string) => ({
   result_refs: [],
 });
 
+test("a saved handoff is reusable preparation-step grounds without a duplicate message record", () => {
+  const f = setup();
+  try {
+    const id = f.send([
+      f.create("preparation", { ...base(), steps: [step("prepare")] }),
+    ]).created.preparation;
+    const h = f.send(
+      [
+        {
+          op: "prepare_handoff",
+          client_ref: "h",
+          work_ref: { id },
+          step_id: "prepare",
+          objective: "Review the card",
+          conditions: "Do not send",
+          expected_result: "Clarity and title comments",
+          context_refs: [],
+          message: "Please review this card's clarity and propose a title.",
+        },
+      ],
+      [id],
+      [f.claim(id, "handoff", "prepare")],
+    ).created.h;
+    const records = f.disk.all("SELECT * FROM records");
+    const artifact = f.core.handoff(h).data;
+    f.send(
+      [
+        {
+          op: "transition_step",
+          ref: { id },
+          step_id: "prepare",
+          status: "done",
+          reason: "The requested manual message is durably prepared, not sent.",
+          result_refs: [{ id: h }],
+        },
+      ],
+      [id],
+      [f.claim(id, "step", "prepare")],
+    );
+    assert.equal(f.work(id).steps[0].status, "done");
+    assert.deepEqual(f.work(id).steps[0].result_refs, [{ id: h }]);
+    assert.deepEqual(f.core.handoff(h).data, artifact);
+    assert.equal(f.disk.all("SELECT * FROM records").length, records.length);
+    assert.equal(artifact.transport_state, "prepared_not_sent");
+  } finally {
+    f.disk.close();
+  }
+});
+
+test("preparation grounds retain claims and ref guards, external waits stay separate, and reopen waits for new input", () => {
+  const f = setup();
+  const snapshot = () =>
+    JSON.stringify(
+      ["records", "revisions", "changes", "receipts", "claims", "handoffs"].map(
+        (t) => f.disk.all("SELECT * FROM " + t + " ORDER BY rowid"),
+      ),
+    );
+  try {
+    const id = f.send([
+      f.create("card", {
+        ...base(),
+        steps: [{ ...step("prepare"), required: false }, step("review")],
+        waits: [
+          {
+            wait_id: "review-reply",
+            kind: "external_result",
+            target: { step_id: "review" },
+            subject: "Clarity and title",
+            satisfied_by: "Both review sections received",
+            received_refs: [],
+            question: "Return both sections",
+            status: "pending",
+          },
+        ],
+      }),
+    ]).created.card;
+    f.send(
+      [
+        {
+          op: "transition_step",
+          ref: { id },
+          step_id: "review",
+          status: "waiting",
+          reason: "Await the actual external review",
+        },
+      ],
+      [id],
+    );
+    const h = f.send(
+      [
+        {
+          op: "prepare_handoff",
+          client_ref: "h",
+          work_ref: { id },
+          step_id: "review",
+          objective: "Review card",
+          conditions: "Prepare only",
+          expected_result: "Clarity and title",
+          context_refs: [],
+          message: "Check clarity and suggest a title.",
+        },
+      ],
+      [id],
+      [f.claim(id, "handoff", "review")],
+    ).created.h;
+    assert.equal(f.work(id).steps[0].status, "todo");
+    assert.equal(f.work(id).steps[1].status, "waiting");
+    const done = (ref: unknown) => ({
+      op: "transition_step",
+      ref: { id },
+      step_id: "prepare",
+      status: "done",
+      reason: "Saved preparation, not external review",
+      result_refs: [ref],
+    });
+    let before = snapshot();
+    assert.throws(() => f.send([done({ id: h })], [id]), /claim/);
+    assert.equal(snapshot(), before);
+    const token = f.claim(id, "step", "prepare");
+    before = snapshot();
+    for (const ref of [{ id: h, revision: 2 }, { id: "missing-result" }]) {
+      assert.throws(
+        () => f.send([done(ref)], [id], [token]),
+        /revision 1|unavailable/,
+      );
+      assert.equal(snapshot(), before);
+    }
+    assert.throws(
+      () =>
+        f.core.commit({
+          request_id: "stale-link",
+          reason: "Rejected stale premise",
+          source_handles: [f.source],
+          guards: [{ ref: { id }, expected_revision: 3 }],
+          claim_tokens: [token],
+          ops: [done({ id: h })],
+        }),
+      /guarded premise changed/,
+    );
+    assert.equal(snapshot(), before);
+    f.send([done({ id: h, revision: 1 })], [id], [token]);
+    assert.equal(f.work(id).steps[0].required, false);
+    assert.equal(f.work(id).steps[1].status, "waiting");
+    assert.equal(f.work(id).waits[0].status, "pending");
+    f.send(
+      [
+        {
+          op: "transition_work",
+          ref: { id },
+          status: "waiting",
+          reason: "No independent action remains",
+        },
+      ],
+      [id],
+    );
+    const externalToken = f.claim(id, "step", "review"),
+      unchanged = snapshot();
+    assert.throws(
+      () =>
+        f.send(
+          [{ ...done({ id: h }), step_id: "review" }],
+          [id],
+          [externalToken],
+        ),
+      /unsatisfied input wait/,
+    );
+    assert.equal(snapshot(), unchanged);
+    f.send(
+      [
+        f.update(id, {
+          ...f.work(id),
+          waits: f.work(id).waits.map((w) => ({
+            ...w,
+            status: "satisfied",
+            received_refs: [{ id: f.evidence }],
+            resolution: "Both sections received",
+          })),
+        }),
+        { ...done({ id: f.evidence }), step_id: "review" },
+        {
+          op: "transition_work",
+          ref: { id },
+          status: "active",
+          reason: "Review received; inspect grounds",
+          next_action: "Check criterion",
+        },
+      ],
+      [id],
+      [externalToken],
+    );
+    const complete = f.finish(id),
+      historical = f.row(id);
+    const oldResults = structuredClone(
+      f.work(id).steps.map((s) => s.result_refs),
+    );
+    f.send(
+      [
+        {
+          op: "transition_work",
+          ref: { id },
+          status: "active",
+          reason: "Explicit reopen for a future clarification",
+          decision_source_handle: f.source,
+          next_action: "Record the upcoming clarification wait",
+        },
+      ],
+      [id],
+    );
+    f.send(
+      [
+        f.update(id, {
+          ...f.work(id),
+          waits: [
+            ...f.work(id).waits,
+            {
+              wait_id: "clarification",
+              kind: "user",
+              target: "work",
+              subject: "Card's future clarification",
+              satisfied_by: "The requested clarification arrives",
+              received_refs: [],
+              question: "Send the clarification",
+              status: "pending",
+            },
+          ],
+        }),
+        {
+          op: "transition_work",
+          ref: { id },
+          status: "waiting",
+          reason: "Only the new clarification is missing",
+        },
+      ],
+      [id],
+    );
+    assert.equal(f.work(id).waits[0].status, "satisfied");
+    assert.equal(f.work(id).waits[1].status, "pending");
+    assert.deepEqual(
+      f.work(id).steps.map((s) => s.result_refs),
+      oldResults,
+    );
+    assert.deepEqual(
+      f.core.read(id, complete.new_revisions[id]).data,
+      historical,
+    );
+    before = snapshot();
+    f.core.read(id);
+    f.core.handoff(h);
+    assert.equal(snapshot(), before);
+    f.send(
+      [
+        {
+          op: "import_evidence",
+          client_ref: "clarification",
+          source_handle: f.source,
+          title: "Actual later clarification",
+          source_language: "en",
+        },
+        f.update(id, {
+          ...f.work(id),
+          waits: f.work(id).waits.map((w) =>
+            w.wait_id === "clarification"
+              ? {
+                  ...w,
+                  status: "satisfied",
+                  received_refs: [{ client_ref: "clarification" }],
+                  resolution: "The new input arrived",
+                }
+              : w,
+          ),
+        }),
+        {
+          op: "transition_work",
+          ref: { id },
+          status: "active",
+          reason: "Now use the actual clarification",
+          next_action: "Revise using retained input",
+        },
+      ],
+      [id],
+    );
+    assert.equal(f.work(id).waits[1].status, "satisfied");
+    assert.deepEqual(
+      f.work(id).steps.map((s) => s.result_refs),
+      oldResults,
+    );
+    const other = f.send([
+      f.create("other", { ...base(), steps: [step("prepare")] }),
+    ]).created.other;
+    assert.throws(
+      () =>
+        f.send(
+          [{ ...done({ id: h }), ref: { id: other } }],
+          [other],
+          [f.claim(other, "step", "prepare")],
+        ),
+      /for this Work/,
+    );
+    const optional = f.send([
+      f.create("optional", {
+        ...base(),
+        steps: [{ ...step("unused"), required: false }],
+      }),
+    ]).created.optional;
+    f.finish(optional);
+    assert.equal(f.work(optional).steps[0].status, "todo");
+    const independent = f.send([
+      f.create("independent", {
+        ...base(),
+        steps: [step("independent")],
+        waits: [
+          {
+            wait_id: "input",
+            kind: "user",
+            target: "work",
+            subject: "Other input",
+            satisfied_by: "Input received",
+            received_refs: [],
+            question: "Provide input",
+            status: "pending",
+          },
+        ],
+      }),
+    ]).created.independent;
+    assert.equal(f.work(independent).status, "active");
+    assert.throws(
+      () =>
+        f.send(
+          [
+            {
+              op: "transition_work",
+              ref: { id: independent },
+              status: "waiting",
+              reason: "Wrongly stop independent action",
+            },
+          ],
+          [independent],
+        ),
+      /independent step/,
+    );
+  } finally {
+    f.disk.close();
+  }
+});
+
+test("linking an immutable preparation result is atomic with claim, revision, Change and receipt", () => {
+  for (const point of ["after_records", "before_commit", "after_commit"]) {
+    const f = setup();
+    try {
+      const id = f.send([
+        f.create("w", { ...base(), steps: [step("prepare")] }),
+      ]).created.w;
+      const h = f.send(
+        [
+          {
+            op: "prepare_handoff",
+            client_ref: "h",
+            work_ref: { id },
+            objective: "Review card",
+            conditions: "Do not send",
+            expected_result: "Comments",
+            context_refs: [],
+            message: "Please review this card.",
+          },
+        ],
+        [id],
+        [f.claim(id, "handoff")],
+      ).created.h;
+      const artifact = f.core.handoff(h).data,
+        token = f.claim(id, "step", "prepare");
+      const c = new Core(f.disk, f.core.context, (p) => {
+        if (p === point) throw new Error("synthetic link fault");
+      });
+      const source = c.capture(
+        "Record the saved preparation",
+        "rpc",
+        "trusted-controller",
+      );
+      assert.throws(
+        () =>
+          c.commit({
+            request_id: "link-fault",
+            reason: "Link existing preparation",
+            source_handles: [source.source_handle],
+            guards: [{ ref: { id }, expected_revision: 1 }],
+            claim_tokens: [token],
+            ops: [
+              {
+                op: "transition_step",
+                ref: { id },
+                step_id: "prepare",
+                status: "done",
+                reason: "Prepared only",
+                result_refs: [{ id: h }],
+              },
+            ],
+          }),
+        /synthetic link fault/,
+      );
+      const committed = point === "after_commit";
+      assert.equal(f.row(id).revision, committed ? 2 : 1);
+      assert.equal(f.work(id).steps[0].status, committed ? "done" : "todo");
+      assert.equal(
+        !!f.disk.get("SELECT * FROM receipts WHERE request_id='link-fault'"),
+        committed,
+      );
+      assert.equal(
+        JSON.parse(
+          f.disk.get<{ json: string }>(
+            "SELECT json FROM claims WHERE token=?",
+            token,
+          )!.json,
+        ).state,
+        committed ? "consumed" : "active",
+      );
+      assert.deepEqual(f.core.handoff(h).data, artifact);
+    } finally {
+      f.disk.close();
+    }
+  }
+});
+
 test("nested graph and final-batch cycles, wrong references and update lifecycle bypass are rejected atomically", () => {
   const f = setup();
   const seq = f.core.sequence();

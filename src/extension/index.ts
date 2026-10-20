@@ -305,7 +305,7 @@ export default function extension(pi: ExtensionAPI) {
   );
   register(
     "zara_commit",
-    "Atomically save connected Activity/Work/Knowledge and exact captured Evidence, revisions, Change and receipt. Canonical text is English; originals stay unchanged. Each intended transaction gets its own request_id. Reuse an ID only for an identical retry. Never deduplicate by similarity. update_record replaces complete data and requires an exact revision guard. Unsupported full-R1 operations are absent.",
+    "Atomically save connected Activity/Work/Knowledge and exact captured Evidence, revisions, Change and receipt. Canonical text is English; originals stay unchanged. Each intended transaction gets its own request_id. Reuse an ID only for an identical retry. Never deduplicate by similarity. update_record replaces complete data and requires an exact revision guard. Reconcile saved results with the addressed plan: a step for preparing a message can finish with the saved handoff in result_refs; the external response has a separate wait. Explicit reopen for future input needs a concrete new pending wait, preserving prior completion/results. Unsupported full-R1 operations are absent.",
     CommitSchema,
     (p) => get().commit(p),
   );
