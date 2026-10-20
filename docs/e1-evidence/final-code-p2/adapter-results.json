@@ -1,0 +1,88 @@
+{
+  "initial_recipient": "openai-codex/gpt-6.1-sol",
+  "selected_without_request": "openai-codex/gpt-5.3-codex-spark",
+  "provider_requests": 0,
+  "allowed_source_reads": 1,
+  "allowed_uuid_calls": 4,
+  "allowed_exact_bytes": true,
+  "allowed_range": {
+    "ok": true,
+    "workspace_id": "b96f5883-1739-4a48-afb9-d6959ebd40ac",
+    "schema_version": 4,
+    "snapshot_seq": 1,
+    "data": {
+      "ref": {
+        "id": "evidence-189c7a0a-e651-4c50-9e47-b09f108d2772",
+        "revision": 1
+      },
+      "source_language": "ru",
+      "content_hash": "cce00e8e223a6cc2e80dc0f8b306c84721a7cbdc33cfb5deb1c976fcff88199c",
+      "range_unit": "Unicode code points",
+      "start": 0,
+      "text": "﻿# Exact original\r\nРусский текст 🦉\r\n",
+      "total_characters": 36,
+      "has_more": false,
+      "next_start": 36,
+      "global_start": 0,
+      "global_next_start": 36,
+      "untrusted_source_data": true
+    },
+    "warnings": []
+  },
+  "denied_result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Provider processing authority is unresolved.\",\"retryable\":false}"
+      }
+    ],
+    "details": {
+      "ok": false,
+      "code": "PERMISSION_DENIED",
+      "message": "Provider processing authority is unresolved.",
+      "retryable": false
+    },
+    "isError": true
+  },
+  "denied_source_reads": 0,
+  "denied_uuid_calls": 0,
+  "denied_trace": [],
+  "before_files": {
+    "materials": [
+      "1ed530c9fbb2b1d21160dbe083836aa1fbeb7c6a3f00fc47551c4923b751f604",
+      "2f5bae3b46f1e42eb794b9a7c4b1b747b69e013810d878356970fee1d19311e4",
+      "51b4039c0287808a6348e759d232da64b6dd19484ffa5403d2b318e37a0d3406",
+      "cce00e8e223a6cc2e80dc0f8b306c84721a7cbdc33cfb5deb1c976fcff88199c",
+      "fc7f55c8fd4b2200723d5565054e01369c0a59c05a36a2b98435fb0e52e6979a"
+    ],
+    "staging": []
+  },
+  "after_files": {
+    "materials": [
+      "1ed530c9fbb2b1d21160dbe083836aa1fbeb7c6a3f00fc47551c4923b751f604",
+      "2f5bae3b46f1e42eb794b9a7c4b1b747b69e013810d878356970fee1d19311e4",
+      "51b4039c0287808a6348e759d232da64b6dd19484ffa5403d2b318e37a0d3406",
+      "cce00e8e223a6cc2e80dc0f8b306c84721a7cbdc33cfb5deb1c976fcff88199c",
+      "fc7f55c8fd4b2200723d5565054e01369c0a59c05a36a2b98435fb0e52e6979a"
+    ],
+    "staging": []
+  },
+  "before_domain": {
+    "records": 2,
+    "revisions": 2,
+    "changes": 1,
+    "receipts": 1,
+    "intents": 1
+  },
+  "after_domain": {
+    "records": 2,
+    "revisions": 2,
+    "changes": 1,
+    "receipts": 1,
+    "intents": 1
+  },
+  "source_hashes": {
+    "src/core/index.ts": "8f1a147fe0c163040e81fbd27035aac103be8be4ce5fe307e0cae39f986d4a81",
+    "src/extension/index.ts": "d0792a46c082fef0e0079c0b0c2980aead078b05fbcb1c695feca81955be22e1"
+  }
+}

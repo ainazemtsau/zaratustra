@@ -1,0 +1,23 @@
+{
+  "workspace_only": {
+    "scopes": [],
+    "purpose": "managed access negatives and separate workspace-only probe"
+  },
+  "trusted_protected": {
+    "scopes": [
+      "restricted:read",
+      "restricted:write"
+    ],
+    "purpose": "fixed primary live history; set before first conversation"
+  },
+  "interactive_contract": {
+    "default": "observed stage only",
+    "mechanical_test_only": "first-untransformed; explicitly injected SDK events, not actual owner feedback"
+  },
+  "fixtures": {
+    "alpha.txt": "3eebd13774255745d0ee13a70676e57a743e0c94d2335223027f992c48643b97",
+    "beta.txt": "5ef4daa3df7f3d2b99dac9486676edd38ff43bda5945ccea687d75e175507b07",
+    "delta-incomplete.txt": "f966245503307267a9f73e3c8d2fbd7a047f317a9e8717edb04331ef6d810bf9",
+    "gamma.txt": "4e4f815eac707463d4fae729cc24b91a14c53095ccaa24467040d4c5647d7a97"
+  }
+}

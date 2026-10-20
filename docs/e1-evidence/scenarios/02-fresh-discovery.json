@@ -1,0 +1,15 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\installed\\agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\live-home-protected",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "importRoots": [
+    "<SYNTHETIC_EVIDENCE_ROOT>\\inputs"
+  ],
+  "scopes": [
+    "restricted:read",
+    "restricted:write"
+  ],
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwds\\02-fresh-discovery",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\02-fresh-discovery",
+  "prompt": "Нужно сверить другую учебную посылку мастерской: посчитай число предметов и общую массу, сохрани построчную сверку, чтобы её потом можно было проверить. Не объединяй строки с одинаковым кодом. Данные в файле <SYNTHETIC_EVIDENCE_ROOT>\\inputs/beta.txt. Это вымышленные данные. Отвечай по-русски."
+}

@@ -1,0 +1,13 @@
+Installing git:github.com/ainazemtsau/zaratustra@a6fc2500c32fd85e6d927ef482e685d2d0c848b6...
+From https://github.com/ainazemtsau/zaratustra
+ * branch            a6fc2500c32fd85e6d927ef482e685d2d0c848b6 -> FETCH_HEAD
+HEAD is now at a6fc250 Allow exact final-version references within atomic experience saves
+Removing node_modules/
+
+added 12 packages, and audited 13 packages in 3s
+
+9 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Installed git:github.com/ainazemtsau/zaratustra@a6fc2500c32fd85e6d927ef482e685d2d0c848b6

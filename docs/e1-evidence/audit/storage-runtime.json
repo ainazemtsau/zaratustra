@@ -1,0 +1,23 @@
+{
+  "workspace": {
+    "workspace_id": "773c5640-cb1d-411d-a657-d0807aa31ae7",
+    "epoch": "57211257-57b7-453b-a0d3-16be45c15ce5",
+    "schema_version": 4
+  },
+  "node": "v22.19.0",
+  "platform": "win32",
+  "architecture": "x64",
+  "sqlite": "3.50.4",
+  "integrity": {
+    "integrity_check": "ok"
+  },
+  "journal": {
+    "journal_mode": "wal"
+  },
+  "schema_version": {
+    "user_version": 4
+  },
+  "read_only": false,
+  "fts5": true,
+  "actual_code": "7b064651cdb056576e895badcc4bb927b45cb11e"
+}

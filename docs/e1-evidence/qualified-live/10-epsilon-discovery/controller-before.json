@@ -1,0 +1,22 @@
+{
+  "head": "b528382c3a930c239fe633d80f8b3b25a6c1c8d2",
+  "product_hashes": {
+    "instructions/bootstrap.md": "8d7ea57fcf43d7f525d9c6f3207e37c9fda264b9983c0e7a33b8109c36834aae",
+    "package-lock.json": "0125021a03ce2eb490142df38ff4e67811d923f2f4293c5fb9c5d2a02bec1bc4",
+    "package.json": "46daa6f8fb3b1c6515d426df87e94b75415b1106777acc11f30a418b18df4bf7",
+    "skills/zaratustra-memory/SKILL.md": "88e39d64e1cb7a16f256ef89ae70d65b46d817779fc28aaf0723a9c79fd31ecb",
+    "skills/zaratustra-work/SKILL.md": "19673d7563954ba08bd3703713efde9b7f94741c395111a6c71980a0f9e69b00",
+    "src/core/AGENTS.md": "4901b042a7a1fc797e574efe9299ccfba7b89d6a90b9efbfa4326501349d63ff",
+    "src/core/contracts.ts": "84d289e8a187eb4449dabaab3fe6eee2eeb411de7c15335a116e4d2fa4623ce4",
+    "src/core/experience.ts": "d7ecd8351f217cf7319623e23b53da7e738eceba7cd17ce188d9fcbe534e8e4d",
+    "src/core/index.ts": "aa84fba88d01166de5951df18ab0355f975cfe15b29d5b547607d99e252fd52b",
+    "src/core/memory.ts": "093ec0f2062367e5f9d05a8a618c1c3c715f4404c3b37efc9a14417a982511fa",
+    "src/core/work.ts": "b1d5ffb85cbfa9f3de40f54b50b00bb8b394611020833e20d81e21b85d4ad9ad",
+    "src/extension/AGENTS.md": "5e01278e0f9e23d61e562b98627a3c3ba71b02cecfb5b2b416dd08df1cd51b0b",
+    "src/extension/index.ts": "d0792a46c082fef0e0079c0b0c2980aead078b05fbcb1c695feca81955be22e1",
+    "src/storage/AGENTS.md": "500f77dd410808616b6e714275cfce81b554e0ca4bc52d0af71b5bcd9e19834c",
+    "src/storage/extract.ts": "2009e2598f67e82e0b5cf962ff32c6be9b4699f0063bf88bae0f133a9c95e22f",
+    "src/storage/index.ts": "bb0eeb5c0530227d71167b8da4ea5cecf2e7c8aaa2415930cbadc29c75cd00ce",
+    "src/storage/parser-worker.mjs": "363079486797fcf9408d06119f55474e2e0e6b91cf2bf50d8c72690de7ed49ec"
+  }
+}

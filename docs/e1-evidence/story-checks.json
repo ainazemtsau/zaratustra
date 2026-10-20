@@ -1,0 +1,340 @@
+{
+  "checks": [
+    {
+      "check": "same Method reached content version 3",
+      "observed": true
+    },
+    {
+      "check": "01-create-apply exact new invocation version",
+      "observed": true
+    },
+    {
+      "check": "01-create-apply exact selected closure and actual retained observation",
+      "observed": true
+    },
+    {
+      "check": "01-create-apply actual application report distinct from observation",
+      "observed": true
+    },
+    {
+      "check": "02-fresh-discovery exact new invocation version",
+      "observed": true
+    },
+    {
+      "check": "02-fresh-discovery exact selected closure and actual retained observation",
+      "observed": true
+    },
+    {
+      "check": "02-fresh-discovery actual application report distinct from observation",
+      "observed": true
+    },
+    {
+      "check": "03-correct-and-apply exact new invocation version",
+      "observed": true
+    },
+    {
+      "check": "03-correct-and-apply exact selected closure and actual retained observation",
+      "observed": true
+    },
+    {
+      "check": "03-correct-and-apply actual application report distinct from observation",
+      "observed": true
+    },
+    {
+      "check": "06-failure exact new invocation version",
+      "observed": true
+    },
+    {
+      "check": "06-failure exact selected closure and actual retained observation",
+      "observed": true
+    },
+    {
+      "check": "06-failure actual application report distinct from observation",
+      "observed": true
+    },
+    {
+      "check": "10-epsilon-discovery exact new invocation version",
+      "observed": true
+    },
+    {
+      "check": "10-epsilon-discovery exact selected closure and actual retained observation",
+      "observed": true
+    },
+    {
+      "check": "10-epsilon-discovery actual application report distinct from observation",
+      "observed": true
+    },
+    {
+      "check": "13-zeta-discovery exact new invocation version",
+      "observed": true
+    },
+    {
+      "check": "13-zeta-discovery exact selected closure and actual retained observation",
+      "observed": true
+    },
+    {
+      "check": "13-zeta-discovery actual application report distinct from observation",
+      "observed": true
+    },
+    {
+      "check": "04-late-feedback no new invocation",
+      "observed": true
+    },
+    {
+      "check": "04-late-feedback no new Run",
+      "observed": true
+    },
+    {
+      "check": "05-correct-feedback no new invocation",
+      "observed": true
+    },
+    {
+      "check": "05-correct-feedback no new Run",
+      "observed": true
+    },
+    {
+      "check": "07-correction-not-resolution no new invocation",
+      "observed": true
+    },
+    {
+      "check": "08-read-and-foreign-report no new invocation",
+      "observed": true
+    },
+    {
+      "check": "08-read-and-foreign-report no new Run",
+      "observed": true
+    },
+    {
+      "check": "09-correction-continuation no new invocation",
+      "observed": true
+    },
+    {
+      "check": "12-correction-links no new invocation",
+      "observed": true
+    },
+    {
+      "check": "12-correction-links no new Run",
+      "observed": true
+    },
+    {
+      "check": "11-final-read no new invocation",
+      "observed": true
+    },
+    {
+      "check": "11-final-read no new Run",
+      "observed": true
+    },
+    {
+      "check": "eight old source/result/Run/invocation/Evaluation rows byte-exact after v3",
+      "observed": true
+    },
+    {
+      "check": "late and superseding Evaluation target old exact result",
+      "observed": true
+    },
+    {
+      "check": "correction preserves same target/dimension and supersedes history",
+      "observed": true
+    },
+    {
+      "check": "all live feedback remains non-owner",
+      "observed": true
+    },
+    {
+      "check": "Delta Signal remains open after edits and unrelated successful cases",
+      "observed": true
+    },
+    {
+      "check": "Delta Work still waiting",
+      "observed": true
+    },
+    {
+      "check": "at least one failed Run retained",
+      "observed": true
+    },
+    {
+      "check": "correction continuation retains original case_id",
+      "observed": true
+    },
+    {
+      "check": "direct navigation to exact Method v3 and immutable review exists",
+      "observed": true
+    },
+    {
+      "check": "every attempt settled and counted in one ledger",
+      "observed": true
+    },
+    {
+      "check": "actual provider-dispatch count matches ledger",
+      "observed": true
+    },
+    {
+      "check": "reported usage and Pi cost match untransformed actual events",
+      "observed": true
+    },
+    {
+      "check": "no provider errors, automatic retries or timeouts",
+      "observed": true
+    },
+    {
+      "check": "below every non-reset cap",
+      "observed": true
+    }
+  ],
+  "code_attribution": {
+    "01-create-apply": "7b064651cdb056576e895badcc4bb927b45cb11e",
+    "02-fresh-discovery": "7b064651cdb056576e895badcc4bb927b45cb11e",
+    "03-correct-and-apply": "7b064651cdb056576e895badcc4bb927b45cb11e",
+    "04-late-feedback": "7b064651cdb056576e895badcc4bb927b45cb11e",
+    "05-correct-feedback": "7b064651cdb056576e895badcc4bb927b45cb11e",
+    "06-failure": "7b064651cdb056576e895badcc4bb927b45cb11e",
+    "07-correction-not-resolution": "7b064651cdb056576e895badcc4bb927b45cb11e",
+    "08-read-and-foreign-report": "7b064651cdb056576e895badcc4bb927b45cb11e",
+    "09-correction-continuation": "b528382c3a930c239fe633d80f8b3b25a6c1c8d2",
+    "10-epsilon-discovery": "b528382c3a930c239fe633d80f8b3b25a6c1c8d2",
+    "12-correction-links": "6659f4c4d9de1871624efaec37933aa8d03dc0bf",
+    "13-zeta-discovery": "6659f4c4d9de1871624efaec37933aa8d03dc0bf",
+    "11-final-read": "6659f4c4d9de1871624efaec37933aa8d03dc0bf"
+  },
+  "final_code": "6659f4c4d9de1871624efaec37933aa8d03dc0bf",
+  "synthetic_only": true,
+  "real_owner_feedback": false,
+  "T31": false,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 15,
+    "requests": 121,
+    "input": 3869344,
+    "output": 43732,
+    "cache_read": 2128896,
+    "estimated_usd": 4.131105599999999,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 121
+  },
+  "tool_refusals": [
+    {
+      "attempt": "01-create-apply",
+      "tool": "zara_commit",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"ok\":false,\"code\":\"VALIDATION_ERROR\",\"message\":\"Evaluation target must name an exact result/version.\",\"retryable\":false}"
+          }
+        ],
+        "details": {
+          "ok": false,
+          "code": "VALIDATION_ERROR",
+          "message": "Evaluation target must name an exact result/version.",
+          "retryable": false
+        },
+        "isError": true
+      }
+    },
+    {
+      "attempt": "02-final-create-apply",
+      "tool": "zara_commit",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"ok\":false,\"code\":\"REFERENCE_NOT_FOUND\",\"message\":\"Requested record/version is unavailable.\",\"retryable\":false}"
+          }
+        ],
+        "details": {
+          "ok": false,
+          "code": "REFERENCE_NOT_FOUND",
+          "message": "Requested record/version is unavailable.",
+          "retryable": false
+        },
+        "isError": true
+      }
+    },
+    {
+      "attempt": "09-qualified-correction-not-resolution",
+      "tool": "zara_commit",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"ok\":false,\"code\":\"REFERENCE_TYPE_MISMATCH\",\"message\":\"Reference target has the wrong kind.\",\"retryable\":false}"
+          }
+        ],
+        "details": {
+          "ok": false,
+          "code": "REFERENCE_TYPE_MISMATCH",
+          "message": "Reference target has the wrong kind.",
+          "retryable": false
+        },
+        "isError": true
+      }
+    },
+    {
+      "attempt": "11-correction-continuation",
+      "tool": "zara_commit",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"ok\":false,\"code\":\"REFERENCE_TYPE_MISMATCH\",\"message\":\"derived_from connects Evidence/Knowledge.\",\"retryable\":false}"
+          }
+        ],
+        "details": {
+          "ok": false,
+          "code": "REFERENCE_TYPE_MISMATCH",
+          "message": "derived_from connects Evidence/Knowledge.",
+          "retryable": false
+        },
+        "isError": true
+      }
+    },
+    {
+      "attempt": "11-correction-continuation",
+      "tool": "zara_commit",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"ok\":false,\"code\":\"CONTENT_NOT_RETAINED\",\"message\":\"Requested record/version is unavailable.\",\"retryable\":false}"
+          }
+        ],
+        "details": {
+          "ok": false,
+          "code": "CONTENT_NOT_RETAINED",
+          "message": "Requested record/version is unavailable.",
+          "retryable": false
+        },
+        "isError": true
+      }
+    },
+    {
+      "attempt": "13-12-correction-links",
+      "tool": "zara_search",
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"ok\":false,\"code\":\"VALIDATION_ERROR\",\"message\":\"Text search requires an explicit all/any/phrase match mode.\",\"retryable\":false}"
+          }
+        ],
+        "details": {
+          "ok": false,
+          "code": "VALIDATION_ERROR",
+          "message": "Text search requires an explicit all/any/phrase match mode.",
+          "retryable": false
+        },
+        "isError": true
+      }
+    }
+  ],
+  "provider_errors": [],
+  "automatic_retries": [],
+  "scope": "First-hand engineering evidence, not independent PASS, owner acceptance, benefit improvement or proof of Method causality. Distinct fixture materials do not establish statistical independence."
+}

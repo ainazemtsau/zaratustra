@@ -1,0 +1,13 @@
+Installing git:github.com/ainazemtsau/zaratustra@10a8d65f378c7d6b6aab8b9c2e8834932f629304...
+From https://github.com/ainazemtsau/zaratustra
+ * branch            10a8d65f378c7d6b6aab8b9c2e8834932f629304 -> FETCH_HEAD
+HEAD is now at 10a8d65 Add versioned Methods and addressed experience records
+Removing node_modules/
+
+added 12 packages, and audited 13 packages in 2s
+
+9 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Installed git:github.com/ainazemtsau/zaratustra@10a8d65f378c7d6b6aab8b9c2e8834932f629304

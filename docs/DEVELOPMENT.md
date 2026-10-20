@@ -19,7 +19,11 @@ Signals/reviews. Schema 4 reuses Core/StoragePort, guarded short transactions, v
 history, receipts, Changes, FTS and managed scopes. Model/Pi own applicability, composition,
 execution and interpretation. No Method runtime, workflow language or second model.
 See [E1-DESIGN](E1-DESIGN.md) for each mechanism and its finite limits. Actual M/L
-qualification is recorded in E1-VALIDATION.md, with reproduction in E1-REPRODUCE.md.
+qualification is recorded in [E1-VALIDATION](E1-VALIDATION.md), with reproduction in
+[E1-REPRODUCE](E1-REPRODUCE.md). Final code is 6659f4c; the containing documentation
+commit is separately installed with product-byte equality. All 15 live attempts remain
+charged in the closed ledger: 121 dispatches, USD 4.1311056 Pi estimate. Six tool refusals
+and the intentionally unresolved Delta failure remain visible. No owner usefulness claim.
 
 One new E1 ledger, never reset: 24 conversational attempts / 180 actual provider dispatch
 attempts / USD 15 Pi estimate; stop at the first cap. It includes errors and incomplete

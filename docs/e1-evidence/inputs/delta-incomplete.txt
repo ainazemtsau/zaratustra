@@ -1,0 +1,6 @@
+Synthetic workshop parcel delta
+Mass is per piece.
+Code | Item | Pieces | Mass per piece | Unit
+V2 | paper spacer | 4 | 2 | g
+P5 | foam ring | 3 | unknown | unknown
+V2 | paper spacer | 2 | 2 | g

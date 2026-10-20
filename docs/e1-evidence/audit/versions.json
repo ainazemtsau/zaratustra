@@ -1,0 +1,13 @@
+{
+  "public_code": "7b064651cdb056576e895badcc4bb927b45cb11e",
+  "node": "v22.19.0",
+  "npm": "11.6.2",
+  "pi": "1.3.0",
+  "typebox": "1.3.27",
+  "runtime_dependencies": {
+    "zod": "4.1.12",
+    "pdfjs-dist": "6.4.299",
+    "yauzl": "3.4.0",
+    "htmlparser2": "12.0.0"
+  }
+}

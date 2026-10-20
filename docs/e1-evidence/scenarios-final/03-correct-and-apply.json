@@ -1,0 +1,15 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\installed\\agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\live-home-protected-final",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "importRoots": [
+    "<SYNTHETIC_EVIDENCE_ROOT>\\inputs"
+  ],
+  "scopes": [
+    "restricted:read",
+    "restricted:write"
+  ],
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwds-final\\03-correct-and-apply",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live-final\\03-correct-and-apply",
+  "prompt": "Исправь общий подход к сверке учебных ведомостей: теперь масса одной штуки может быть в mg или g. Перед арифметикой проверяй единицу каждой строки, переводи mg в g и оставляй исходное значение и единицу в результате, чтобы перевод был проверяемым. Старые выдачи не переписывай. Затем обработай новую ведомость <SYNTHETIC_EVIDENCE_ROOT>\\inputs/gamma.txt, проверь расчёт и сохрани результат. Данные вымышленные, отвечай по-русски."
+}

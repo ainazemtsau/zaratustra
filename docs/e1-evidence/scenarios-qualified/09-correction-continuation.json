@@ -1,0 +1,15 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\installed\\agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\qualified-home",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "importRoots": [
+    "<SYNTHETIC_EVIDENCE_ROOT>\\inputs"
+  ],
+  "scopes": [
+    "restricted:read",
+    "restricted:write"
+  ],
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\qualified-cwds\\09-correction-continuation",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\qualified-live\\09-correction-continuation",
+  "prompt": "Вернись к уже выполненному уточнению правила для Delta. В продолжении того же случая сохрани итог так, чтобы из него можно было прямо открыть точную версию исправленного подхода и запись рассмотрения проблемы. Старые записи не переписывай, правило повторно не меняй, ничего не считай: это не новое применение и не новая проверка. Проблема Delta остаётся открытой. Отвечай по-русски."
+}

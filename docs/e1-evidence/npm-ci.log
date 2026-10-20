@@ -1,0 +1,17 @@
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+npm warn deprecated eslint@9.38.0: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+
+added 297 packages, and audited 298 packages in 1m
+
+73 packages are looking for funding
+  run `npm fund` for details
+
+9 high severity vulnerabilities
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues, run:
+  npm audit fix --force
+
+Run `npm audit` for details.

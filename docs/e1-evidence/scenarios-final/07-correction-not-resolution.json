@@ -1,0 +1,15 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\installed\\agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\live-home-protected-final",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "importRoots": [
+    "<SYNTHETIC_EVIDENCE_ROOT>\\inputs"
+  ],
+  "scopes": [
+    "restricted:read",
+    "restricted:write"
+  ],
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwds-final\\07-correction-not-resolution",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live-final\\07-correction-not-resolution",
+  "prompt": "В общем подходе к ведомостям уточни обязательное правило: до подсчёта проверять, что у каждой строки известны масса одной штуки и единица; иначе показывать только подтверждённый частичный итог и перечень недостающих данных. Запиши связь этой поправки с последней неполной ведомостью. Новых данных и новой проверки сейчас нет, поэтому ту проблему решённой считать нельзя. Отвечай по-русски."
+}

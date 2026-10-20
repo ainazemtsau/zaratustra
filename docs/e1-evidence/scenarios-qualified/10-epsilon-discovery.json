@@ -1,0 +1,15 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\installed\\agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\qualified-home",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "importRoots": [
+    "<SYNTHETIC_EVIDENCE_ROOT>\\inputs"
+  ],
+  "scopes": [
+    "restricted:read",
+    "restricted:write"
+  ],
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\qualified-cwds\\10-epsilon-discovery",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\qualified-live\\10-epsilon-discovery",
+  "prompt": "Нужно сверить ещё одну учебную посылку: покажи отдельную строку для каждого вхождения, число предметов и массу, сохрани проверяемый результат. Все данные вымышленные. Файл <SYNTHETIC_EVIDENCE_ROOT>\\inputs/epsilon.txt. Отвечай по-русски."
+}

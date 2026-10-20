@@ -1,0 +1,6 @@
+Synthetic workshop parcel gamma
+Mass is per piece. Preserve each source row.
+Code | Item | Pieces | Mass per piece | Unit
+R6 | plastic sleeve | 5 | 400 | mg
+S3 | wood marker | 2 | 1.25 | g
+R6 | plastic sleeve | 1 | 400 | mg

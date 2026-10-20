@@ -1,0 +1,24 @@
+node:internal/modules/cjs/loader:1383
+  const err = new Error(message);
+              ^
+
+Error: Cannot find module 'typebox'
+Require stack:
+- <SYNTHETIC_EVIDENCE_ROOT>\installed\agent\git\github.com\ainazemtsau\zaratustra\src\extension\index.ts
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+    at Function.resolve (node:internal/modules/helpers:157:19)
+    at jitiResolve (<USER_PROFILE>\AppData\Roaming\npm\node_modules\@earendil-works\pi-coding-agent\node_modules\jiti\dist\jiti.cjs:1:176713)
+    at jitiRequire (<USER_PROFILE>\AppData\Roaming\npm\node_modules\@earendil-works\pi-coding-agent\node_modules\jiti\dist\jiti.cjs:1:178658)
+    at import (<USER_PROFILE>\AppData\Roaming\npm\node_modules\@earendil-works\pi-coding-agent\node_modules\jiti\dist\jiti.cjs:1:187724)
+    at <SYNTHETIC_EVIDENCE_ROOT>/installed/agent/git/github.com/ainazemtsau/zaratustra/src/extension/index.ts:2:22
+    at eval_evalModule (<USER_PROFILE>\AppData\Roaming\npm\node_modules\@earendil-works\pi-coding-agent\node_modules\jiti\dist\jiti.cjs:1:184467)
+    at jitiRequire (<USER_PROFILE>\AppData\Roaming\npm\node_modules\@earendil-works\pi-coding-agent\node_modules\jiti\dist\jiti.cjs:1:179335)
+    at Function.import (<USER_PROFILE>\AppData\Roaming\npm\node_modules\@earendil-works\pi-coding-agent\node_modules\jiti\dist\jiti.cjs:1:187724)
+    at file:///<SYNTHETIC_EVIDENCE_ROOT>/installed/agent/git/github.com/ainazemtsau/zaratustra/scripts/e1-provenance.mjs:16:47 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '<SYNTHETIC_EVIDENCE_ROOT>\\installed\\agent\\git\\github.com\\ainazemtsau\\zaratustra\\src\\extension\\index.ts'
+  ]
+}
+
+Node.js v22.19.0

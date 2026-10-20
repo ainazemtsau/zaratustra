@@ -1,0 +1,178 @@
+TAP version 13
+# (node:70204) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E1 Method revision/content versions cannot be bypassed through ordinary updates; local variants and bindings stay independent
+ok 1 - E1 Method revision/content versions cannot be bypassed through ordinary updates; local variants and bindings stay independent
+  ---
+  duration_ms: 363.4378
+  type: 'test'
+  ...
+# Subtest: E1 full exact dependency closure survives updates; missing/extra/wrong selected versions and direct/final-batch cycles fail atomically
+ok 2 - E1 full exact dependency closure survives updates; missing/extra/wrong selected versions and direct/final-batch cycles fail atomically
+  ---
+  duration_ms: 196.8793
+  type: 'test'
+  ...
+# Subtest: E1 reading, selecting, reporting, observations, episode completion and Work acceptance remain distinct; retries share case identity
+ok 3 - E1 reading, selecting, reporting, observations, episode completion and Work acceptance remain distinct; retries share case identity
+  ---
+  duration_ms: 183.3558
+  type: 'test'
+  ...
+# Subtest: E1 late and corrected Evaluations retain old result/version and history, never create a new case or automatic causal claim
+ok 4 - E1 late and corrected Evaluations retain old result/version and history, never create a new case or automatic causal claim
+  ---
+  duration_ms: 172.6798
+  type: 'test'
+  ...
+# Subtest: E1 Signals keep independent reviews; consideration/edit/application never silently resolves a failure
+ok 5 - E1 Signals keep independent reviews; consideration/edit/application never silently resolves a failure
+  ---
+  duration_ms: 165.3161
+  type: 'test'
+  ...
+# Subtest: E1 provenance rejects RPC/extension, unknown-stage interactive, imported or quoted feedback; trusted interactive is separately bounded
+ok 6 - E1 provenance rejects RPC/extension, unknown-stage interactive, imported or quoted feedback; trusted interactive is separately bounded
+  ---
+  duration_ms: 169.7303
+  type: 'test'
+  ...
+# Subtest: E1 access covers primary/support/history/bundle/technical counts, guessed IDs and derived restriction without generation leaks
+ok 7 - E1 access covers primary/support/history/bundle/technical counts, guessed IDs and derived restriction without generation leaks
+  ---
+  duration_ms: 233.6684
+  type: 'test'
+  ...
+# Subtest: E1 linked records/support/versions/index/Change/receipt rollback together; stale guards and exact replay never duplicate
+ok 8 - E1 linked records/support/versions/index/Change/receipt rollback together; stale guards and exact replay never duplicate
+  ---
+  duration_ms: 331.056
+  type: 'test'
+  ...
+# Subtest: E1 supporting history pages invalidate after change
+ok 9 - E1 supporting history pages invalidate after change
+  ---
+  duration_ms: 122.8414
+  type: 'test'
+  ...
+# Subtest: E1 schema-3 upgrade faults preserve filled canonical rows and material bytes with a verified backup
+ok 10 - E1 schema-3 upgrade faults preserve filled canonical rows and material bytes with a verified backup
+  ---
+  duration_ms: 413.3012
+  type: 'test'
+  ...
+# (node:50184) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: TXT, multipage PDF and multichapter EPUB keep exact original bytes, separate text, stable code-point ranges and locators after source removal
+ok 11 - TXT, multipage PDF and multichapter EPUB keep exact original bytes, separate text, stable code-point ranges and locators after source removal
+  ---
+  duration_ms: 1192.4351
+  type: 'test'
+  ...
+# Subtest: scanned/blank, encrypted, damaged, unsafe, unsupported and partly missing books expose honest availability
+ok 12 - scanned/blank, encrypted, damaged, unsafe, unsupported and partly missing books expose honest availability
+  ---
+  duration_ms: 2544.2731
+  type: 'test'
+  ...
+# Subtest: every new import authorizes before source access and rechecks after async extraction; interrupts never create records/handles
+ok 13 - every new import authorizes before source access and rechecks after async extraction; interrupts never create records/handles
+  ---
+  duration_ms: 1333.6127
+  type: 'test'
+  ...
+# Subtest: book bounds exceed old TXT limit, extraction output and archive expansion stay bounded
+ok 14 - book bounds exceed old TXT limit, extraction output and archive expansion stay bounded
+  ---
+  duration_ms: 1288.9692
+  type: 'test'
+  ...
+# Subtest: new material transaction faults preserve original/text linkage and receipt atomicity on reopen
+ok 15 - new material transaction faults preserve original/text linkage and receipt atomicity on reopen
+  ---
+  duration_ms: 801.6276
+  type: 'test'
+  ...
+# Subtest: schema-1 migration preserves every row and material; before/after-commit failures retain a verifiable backup and recover without reset
+ok 16 - schema-1 migration preserves every row and material; before/after-commit failures retain a verifiable backup and recover without reset
+  ---
+  duration_ms: 632.624
+  type: 'test'
+  ...
+# (node:122212) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: D final Concept graph allows multiple parents, preserves ambiguous aliases and rejects direct/batch cycles and wrong kinds atomically
+ok 17 - D final Concept graph allows multiple parents, preserves ambiguous aliases and rejects direct/batch cycles and wrong kinds atomically
+  ---
+  duration_ms: 137.5419
+  type: 'test'
+  ...
+# Subtest: D literal English FTS, exact authentic aliases, punctuation/metacharacters, meaningful filters and bounded cursors
+ok 18 - D literal English FTS, exact authentic aliases, punctuation/metacharacters, meaningful filters and bounded cursors
+  ---
+  duration_ms: 153.3412
+  type: 'test'
+  ...
+# Subtest: D independent lexical fallback ignores wrong classification and absent predicate; typed filters retain explicit applicability limits
+ok 19 - D independent lexical fallback ignores wrong classification and absent predicate; typed filters retain explicit applicability limits
+  ---
+  duration_ms: 75.1628
+  type: 'test'
+  ...
+# Subtest: D corrections preserve exact historical truth, conditions, grounded sources, FTS and semantic states without assigning unknown times
+ok 20 - D corrections preserve exact historical truth, conditions, grounded sources, FTS and semantic states without assigning unknown times
+  ---
+  duration_ms: 144.9287
+  type: 'test'
+  ...
+# Subtest: D identity clarification changes current references without merging similar objects or rewriting historical identities
+ok 21 - D identity clarification changes current references without merging similar objects or rewriting historical identities
+  ---
+  duration_ms: 72.6889
+  type: 'test'
+  ...
+# Subtest: D index and correction commit faults are all-or-none; unavailable index is explicit and rebuild is lossless
+ok 22 - D index and correction commit faults are all-or-none; unavailable index is explicit and rebuild is lossless
+  ---
+  duration_ms: 183.2363
+  type: 'test'
+  ...
+# Subtest: D managed restrictions cover all pages, counts, links, snippets, history, guessed IDs, diagnostics, technical rows and mutations
+ok 23 - D managed restrictions cover all pages, counts, links, snippets, history, guessed IDs, diagnostics, technical rows and mutations
+  ---
+  duration_ms: 158.7655
+  type: 'test'
+  ...
+# Subtest: D registered relations validate endpoints and reject competing copies of typed grounds
+ok 24 - D registered relations validate endpoints and reject competing copies of typed grounds
+  ---
+  duration_ms: 126.6561
+  type: 'test'
+  ...
+# Subtest: D schema-2 migration faults preserve filled canonical rows, original materials, backup and repeatability
+ok 25 - D schema-2 migration faults preserve filled canonical rows, original materials, backup and repeatability
+  ---
+  duration_ms: 671.3801
+  type: 'test'
+  ...
+# Subtest: D memory migration rejects a broken legacy Work graph without replacing or mutating source rows
+ok 26 - D memory migration rejects a broken legacy Work graph without replacing or mutating source rows
+  ---
+  duration_ms: 129.7488
+  type: 'test'
+  ...
+# Subtest: D next request snapshot routes changed Work premises with exact revisions, no general fact injection and a measured byte budget
+ok 27 - D next request snapshot routes changed Work premises with exact revisions, no general fact injection and a measured byte budget
+  ---
+  duration_ms: 80.1274
+  type: 'test'
+  ...
+1..27
+# tests 27
+# suites 0
+# pass 27
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8634.9182

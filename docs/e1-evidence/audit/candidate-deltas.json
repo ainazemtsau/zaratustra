@@ -1,0 +1,93 @@
+{
+  "commits": [
+    {
+      "previous": "1b742a6e774eaa14826c036977ae2a42ff1ca46a",
+      "candidate": "10a8d65f378c7d6b6aab8b9c2e8834932f629304",
+      "files": [
+        ".prettierignore",
+        "AGENTS.md",
+        "RESULT.md",
+        "docs/D-DEVELOPMENT-1b742a6.md",
+        "docs/D-R1-STATUS-1b742a6.md",
+        "docs/D-RESULT-1b742a6.md",
+        "docs/DEVELOPMENT.md",
+        "docs/E1-DESIGN.md",
+        "docs/R1-STATUS.md",
+        "instructions/bootstrap.md",
+        "package-lock.json",
+        "package.json",
+        "scripts/e1-provenance.mjs",
+        "scripts/e1-upgrade.mjs",
+        "scripts/live.mjs",
+        "skills/zaratustra-memory/SKILL.md",
+        "skills/zaratustra-work/SKILL.md",
+        "src/core/contracts.ts",
+        "src/core/experience.ts",
+        "src/core/index.ts",
+        "src/core/memory.ts",
+        "src/extension/index.ts",
+        "src/storage/index.ts",
+        "tests/experience.test.ts",
+        "tests/materials.test.ts",
+        "tests/memory.test.ts"
+      ]
+    },
+    {
+      "previous": "10a8d65f378c7d6b6aab8b9c2e8834932f629304",
+      "candidate": "a6fc2500c32fd85e6d927ef482e685d2d0c848b6",
+      "files": [
+        "scripts/e1-provenance.mjs",
+        "src/core/experience.ts",
+        "src/core/index.ts",
+        "tests/experience.test.ts"
+      ]
+    },
+    {
+      "previous": "a6fc2500c32fd85e6d927ef482e685d2d0c848b6",
+      "candidate": "7b064651cdb056576e895badcc4bb927b45cb11e",
+      "files": [
+        "scripts/e1-provenance.mjs",
+        "src/core/index.ts",
+        "src/extension/index.ts",
+        "tests/experience.test.ts"
+      ]
+    },
+    {
+      "previous": "7b064651cdb056576e895badcc4bb927b45cb11e",
+      "candidate": "b528382c3a930c239fe633d80f8b3b25a6c1c8d2",
+      "files": [
+        "src/core/experience.ts",
+        "src/core/memory.ts",
+        "tests/experience.test.ts"
+      ]
+    },
+    {
+      "previous": "b528382c3a930c239fe633d80f8b3b25a6c1c8d2",
+      "candidate": "6659f4c4d9de1871624efaec37933aa8d03dc0bf",
+      "files": [
+        "src/core/index.ts",
+        "tests/experience.test.ts"
+      ]
+    }
+  ],
+  "unchanged_from_qualified_7b_to_final": [
+    "instructions/bootstrap.md",
+    "skills/zaratustra-work/SKILL.md",
+    "skills/zaratustra-memory/SKILL.md",
+    "src/extension/index.ts"
+  ],
+  "hashes": {
+    "instructions/bootstrap.md": "8d7ea57fcf43d7f525d9c6f3207e37c9fda264b9983c0e7a33b8109c36834aae",
+    "skills/zaratustra-work/SKILL.md": "19673d7563954ba08bd3703713efde9b7f94741c395111a6c71980a0f9e69b00",
+    "skills/zaratustra-memory/SKILL.md": "88e39d64e1cb7a16f256ef89ae70d65b46d817779fc28aaf0723a9c79fd31ecb",
+    "src/extension/index.ts": "d0792a46c082fef0e0079c0b0c2980aead078b05fbcb1c695feca81955be22e1"
+  },
+  "affected_live_rechecks": [
+    "09-correction-continuation on b528 (2 retained navigation refusals)",
+    "10-epsilon-discovery on b528",
+    "12-correction-links on 6659",
+    "13-zeta-discovery on 6659",
+    "11-final-read on 6659"
+  ],
+  "scope": "Earlier conversations remain explicitly attributed to their published native installed code, not relabelled as final. Final installed suites cover the complete affected surface."
+}

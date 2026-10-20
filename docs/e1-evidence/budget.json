@@ -1,0 +1,21 @@
+{
+  "provider": "openai-codex",
+  "model": "gpt-6.1-sol",
+  "prompts": 15,
+  "requests": 121,
+  "input": 3869344,
+  "output": 43732,
+  "cache_read": 2128896,
+  "estimated_usd": 4.131105599999999,
+  "limits": {
+    "prompts": 24,
+    "requests": 180,
+    "input": 9007199254740991,
+    "output": 9007199254740991,
+    "estimated_usd": 15
+  },
+  "reported_usage_messages": 121,
+  "closed": true,
+  "closed_at": "2026-10-20T16:58:04.691407+00:00",
+  "closure": "All E1 live producers settled; no further dispatch authorized by this ledger after sealing."
+}

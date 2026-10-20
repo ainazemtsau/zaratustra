@@ -1,0 +1,24 @@
+{
+  "observed_at": "2026-10-20T16:58:50.191153+00:00",
+  "installed_head": "6659f4c4d9de1871624efaec37933aa8d03dc0bf",
+  "node": "v22.19.0",
+  "npm": "11.6.2",
+  "pi": "1.3.0",
+  "package": "0.3.0-dev.1",
+  "pinned_runtime": {
+    "htmlparser2": "12.0.0",
+    "pdfjs-dist": "6.4.299",
+    "yauzl": "3.4.0",
+    "zod": "4.1.12"
+  },
+  "host_peers": {
+    "@earendil-works/pi-coding-agent": "1.3.0",
+    "typebox": "1.3.27"
+  },
+  "typescript_dev": "5.9.3",
+  "schema": 4,
+  "authentication": "native ModelRuntime authPath; contents never read/copied",
+  "platform": "audit/platform.json",
+  "lock_identity": "final-code-identity.json",
+  "host_metadata_observed": true
+}

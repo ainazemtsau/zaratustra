@@ -1,0 +1,66 @@
+TAP version 13
+# (node:118296) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E1 Method revision/content versions cannot be bypassed through ordinary updates; local variants and bindings stay independent
+ok 1 - E1 Method revision/content versions cannot be bypassed through ordinary updates; local variants and bindings stay independent
+  ---
+  duration_ms: 279.9715
+  type: 'test'
+  ...
+# Subtest: E1 full exact dependency closure survives updates; missing/extra/wrong selected versions and direct/final-batch cycles fail atomically
+ok 2 - E1 full exact dependency closure survives updates; missing/extra/wrong selected versions and direct/final-batch cycles fail atomically
+  ---
+  duration_ms: 167.0926
+  type: 'test'
+  ...
+# Subtest: E1 reading, selecting, reporting, observations, episode completion and Work acceptance remain distinct; retries share case identity
+ok 3 - E1 reading, selecting, reporting, observations, episode completion and Work acceptance remain distinct; retries share case identity
+  ---
+  duration_ms: 164.1977
+  type: 'test'
+  ...
+# Subtest: E1 late and corrected Evaluations retain old result/version and history, never create a new case or automatic causal claim
+ok 4 - E1 late and corrected Evaluations retain old result/version and history, never create a new case or automatic causal claim
+  ---
+  duration_ms: 171.1306
+  type: 'test'
+  ...
+# Subtest: E1 Signals keep independent reviews; consideration/edit/application never silently resolves a failure
+ok 5 - E1 Signals keep independent reviews; consideration/edit/application never silently resolves a failure
+  ---
+  duration_ms: 136.6809
+  type: 'test'
+  ...
+# Subtest: E1 provenance rejects RPC/extension, unknown-stage interactive, imported or quoted feedback; trusted interactive is separately bounded
+ok 6 - E1 provenance rejects RPC/extension, unknown-stage interactive, imported or quoted feedback; trusted interactive is separately bounded
+  ---
+  duration_ms: 131.0516
+  type: 'test'
+  ...
+# Subtest: E1 access covers primary/support/history/bundle/technical counts, guessed IDs and derived restriction without generation leaks
+ok 7 - E1 access covers primary/support/history/bundle/technical counts, guessed IDs and derived restriction without generation leaks
+  ---
+  duration_ms: 189.9122
+  type: 'test'
+  ...
+# Subtest: E1 linked records/support/versions/index/Change/receipt rollback together; stale guards and exact replay never duplicate
+ok 8 - E1 linked records/support/versions/index/Change/receipt rollback together; stale guards and exact replay never duplicate
+  ---
+  duration_ms: 246.6187
+  type: 'test'
+  ...
+# Subtest: E1 supporting history pages invalidate after change; schema-3 faults preserve bytes and recover without replacement
+ok 9 - E1 supporting history pages invalidate after change; schema-3 faults preserve bytes and recover without replacement
+  ---
+  duration_ms: 98.6535
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1928.651

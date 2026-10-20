@@ -1,0 +1,6 @@
+Synthetic workshop parcel epsilon
+Mass is per piece.
+Code | Item | Pieces | Mass per piece | Unit
+Q1 | washer | 7 | 125 | mg
+Z4 | insert | 3 | 0.75 | g
+Q1 | washer | 2 | 125 | mg

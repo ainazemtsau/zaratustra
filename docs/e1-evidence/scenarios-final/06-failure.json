@@ -1,0 +1,15 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\installed\\agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\live-home-protected-final",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "importRoots": [
+    "<SYNTHETIC_EVIDENCE_ROOT>\\inputs"
+  ],
+  "scopes": [
+    "restricted:read",
+    "restricted:write"
+  ],
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwds-final\\06-failure",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live-final\\06-failure",
+  "prompt": "Сверь ещё одну учебную посылку по <SYNTHETIC_EVIDENCE_ROOT>\\inputs/delta-incomplete.txt и дай её полную массу. Это весь доступный материал, дополнительных данных сейчас нет. Если полного итога из него получить нельзя, не угадывай: сохрани полезный частичный результат и саму нерешённую проблему, к которой можно будет вернуться. Отвечай по-русски."
+}

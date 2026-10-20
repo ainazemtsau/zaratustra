@@ -1,0 +1,15 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\installed\\agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\qualified-home",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "importRoots": [
+    "<SYNTHETIC_EVIDENCE_ROOT>\\inputs"
+  ],
+  "scopes": [
+    "restricted:read",
+    "restricted:write"
+  ],
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\qualified-cwds\\13-zeta-discovery",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\qualified-live\\13-zeta-discovery",
+  "prompt": "Сверь другую учебную посылку: сохрани отдельную строку на каждое вхождение, число предметов и общую массу, чтобы результат можно было проверить. Вымышленные данные находятся в файле <SYNTHETIC_EVIDENCE_ROOT>\\inputs/zeta.txt. Отвечай по-русски."
+}

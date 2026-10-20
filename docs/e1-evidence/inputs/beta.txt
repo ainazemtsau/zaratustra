@@ -1,0 +1,6 @@
+Synthetic workshop parcel beta
+Mass is per piece in grams.
+Code | Item | Pieces | Mass per piece (g)
+K4 | card holder | 3 | 17.5
+T8 | felt pad | 8 | 2.25
+K4 | card holder | 1 | 17.5

@@ -18,6 +18,12 @@ implementation authority, independent review and future owner acceptance. E/R1/T
 | Addressed reads                  | Existing catalog/search includes Methods and Runs; supporting catalog views expose routing cards, exact ID reads expose one row, history returns headers and continuation.                                                                    | Methods/Runs <=32,000 bytes each; supporting rows <=64,000. Method bundle bodies <=48,000 bytes/page (max five), full finite selection metadata separate. Search/read trace remains <=512 entries. Empty/incomplete results are not absence.                                                                                                                                |
 | Schema 3 to 4                    | Existing VACUUM INTO, domain/material verification and one DDL/meta/migration-receipt transaction protect a filled D workspace. Receipt-bound manifest repair handles interrupted rename.                                                     | Canonical D rows/IDs/JSON/revisions/Changes/receipts/claims/handoff/materials unchanged; old D rejects schema 4. No replacement empty store or general backup/restore product.                                                                                                                                                                                              |
 
+Existing registered relations now resolve exact Method and supporting review endpoints
+through the same guarded/access-checked resolver; no parallel graph engine is introduced.
+Run outcomes can pin changed domain/supporting records, while invocation outputs must be
+retained Evidence. Work context exposes a newer Method warning without rewriting its old
+context ref, so discovery can choose the current version and past applications stay exact.
+
 All newly linked records, supporting rows, refs, versions, indexes, Changes and receipt
 commit together. Prepared intents remain recovery metadata. No transaction spans a model,
 tool, user or external wait. Pi keeps its system sections and request-local snapshot;

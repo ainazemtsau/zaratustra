@@ -1,0 +1,6 @@
+Synthetic workshop parcel alpha
+Each line is an independent source row. Mass is per piece in grams.
+Code | Item | Pieces | Mass per piece (g)
+N7 | pine block | 4 | 12.5
+B2 | brass clip | 6 | 3
+N7 | pine block | 2 | 12.5

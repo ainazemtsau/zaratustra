@@ -1,0 +1,15 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\installed\\agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\live-home-protected",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "importRoots": [
+    "<SYNTHETIC_EVIDENCE_ROOT>\\inputs"
+  ],
+  "scopes": [
+    "restricted:read",
+    "restricted:write"
+  ],
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwds\\01-create-apply",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\01-create-apply",
+  "prompt": "Работаем только с вымышленными учебными данными, отвечай по-русски. Для повторяющихся небольших ведомостей мастерской нужен полезный текстовый способ сверки: каждая исходная строка самостоятельна, даже если код повторяется; нужны количество предметов, масса каждой строки и общий итог, арифметику нужно проверить. Придумай и сохрани такой общий способ для будущих подходящих задач, с условиями и ограничениями. Затем реально обработай приложенную ведомость alpha.txt и сохрани сам результат, чтобы к нему можно было вернуться. Масса там дана на одну штуку в граммах. Файл: <SYNTHETIC_EVIDENCE_ROOT>\\inputs/alpha.txt."
+}

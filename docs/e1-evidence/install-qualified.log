@@ -1,0 +1,13 @@
+Installing git:github.com/ainazemtsau/zaratustra@7b064651cdb056576e895badcc4bb927b45cb11e...
+From https://github.com/ainazemtsau/zaratustra
+ * branch            7b064651cdb056576e895badcc4bb927b45cb11e -> FETCH_HEAD
+HEAD is now at 7b06465 Expose Signal snapshot limits and reject incompatible read modifiers
+Removing node_modules/
+
+added 12 packages, and audited 13 packages in 2s
+
+9 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Installed git:github.com/ainazemtsau/zaratustra@7b064651cdb056576e895badcc4bb927b45cb11e

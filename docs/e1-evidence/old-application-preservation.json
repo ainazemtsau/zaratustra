@@ -1,0 +1,46 @@
+{
+  "after_method_content_version": 2,
+  "all_selected_old_rows_exact": true,
+  "rows": [
+    {
+      "id": "evidence-5969743d-d50c-4402-b8ee-0f083e78b0d6",
+      "kind": "evidence",
+      "sha256": "d2e49a94e793c6225b1fc3080b321dcd350cd724c516cc606d59e0d27c969383"
+    },
+    {
+      "id": "evidence-d7ee3db7-e0d8-41b5-b1cc-ce01090c4ebf",
+      "kind": "evidence",
+      "sha256": "618b6f0d17e9413d9a827ecf956fe829a60b80a24ca51025756df2fffaf660ed"
+    },
+    {
+      "id": "evidence-b1749c67-d306-493e-9f3a-e40a36fb993e",
+      "kind": "evidence",
+      "sha256": "210ff744a387fdd2df4ae485141801d932d915d1dc37bdd25b364e100f1b09a2"
+    },
+    {
+      "id": "run-2da5d03d-a77a-4cfa-82a4-8cbd22247be9",
+      "kind": "run",
+      "sha256": "3c389700ca9ff1120dea0fabd8ae91d2e3b80fc1d2738a74ead1bd2775791633"
+    },
+    {
+      "id": "evidence-0288af62-33af-484d-8362-4710de558789",
+      "kind": "evidence",
+      "sha256": "5e79bad0445591e2674314c4d52c4f21db1bb6172cce6cb79c2f40f03bb4c764"
+    },
+    {
+      "id": "evidence-1cbb5195-c021-4cec-bfbf-bf63864be388",
+      "kind": "evidence",
+      "sha256": "a87f1afb750113ddbb8792cd9ac2308229f464818ccf9f5f3c7f71261b3fdcd8"
+    },
+    {
+      "id": "invocation-57210a6b-340c-43de-a454-77d8724a24c7",
+      "kind": "invocation",
+      "sha256": "2039be8c3ca3254bcf1d21f96abe9e205c449837b0ea07b22f29ce45902152a6"
+    },
+    {
+      "id": "evaluation-10b58c85-2c0b-43ab-a79d-d132d61ed51c",
+      "kind": "evaluation",
+      "sha256": "baba376f4ea804dfd9c7324fbcc741e3b4b2033c12218e21551d530bc48ff483"
+    }
+  ]
+}

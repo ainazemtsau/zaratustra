@@ -1,0 +1,24 @@
+
+> zaratustra@0.3.0-dev.1 deliver
+> npm run check && node scripts/deliver.mjs
+
+
+> zaratustra@0.3.0-dev.1 check
+> npm run format:check && npm run lint && npm run types && npm run boundary && npm run build && npm test
+
+
+> zaratustra@0.3.0-dev.1 format:check
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> zaratustra@0.3.0-dev.1 lint
+> eslint src tests scripts
+
+
+> zaratustra@0.3.0-dev.1 types
+> tsc --noEmit
+
+tests/experience.test.ts(1026,41): error TS2339: Property 'kind' does not exist on type 'AddressedRow | { ref: { id: string; revision: number; }; locator: string; text: string; has_more: boolean; next_start: number; range_unit: string; } | { locator?: string | undefined; ... 13 more ...; untrusted_source_data: boolean; } | { ...; }'.
+  Property 'kind' does not exist on type '{ ref: { id: string; revision: number; }; locator: string; text: string; has_more: boolean; next_start: number; range_unit: string; }'.

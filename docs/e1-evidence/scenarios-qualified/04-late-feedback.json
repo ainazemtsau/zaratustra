@@ -1,0 +1,15 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\installed\\agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\qualified-home",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "importRoots": [
+    "<SYNTHETIC_EVIDENCE_ROOT>\\inputs"
+  ],
+  "scopes": [
+    "restricted:read",
+    "restricted:write"
+  ],
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\qualified-cwds\\04-late-feedback",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\qualified-live\\04-late-feedback",
+  "prompt": "Позднее замечание о первой выдаче по alpha.txt: итоговая масса там верная, но для моей проверки результат был неудобен — я не мог легко сопоставить повторные N7 с исходными строками. Сохрани это замечание именно к той старой выдаче; исправленный новый подход и расчёт gamma.txt я этим не оцениваю. Причину неудобства мы пока не установили. Это реплика синтетического тестового контроллера, не настоящий отзыв Антона. Отвечай по-русски."
+}

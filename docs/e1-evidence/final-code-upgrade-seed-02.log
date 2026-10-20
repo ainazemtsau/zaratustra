@@ -1,0 +1,3 @@
+{"mode":"seed","head":"1b742a6e774eaa14826c036977ae2a42ff1ca46a","checked":true}
+(node:108492) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

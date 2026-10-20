@@ -1,0 +1,176 @@
+{
+  "status": "closed",
+  "ledger": "budget.json",
+  "planned_story": [
+    "01-create-apply",
+    "02-fresh-discovery",
+    "03-correct-and-apply",
+    "04-late-feedback",
+    "05-correct-feedback",
+    "06-failure",
+    "07-correction-not-resolution",
+    "08-read-and-foreign-report"
+  ],
+  "attempts": [
+    {
+      "id": "01-create-apply",
+      "scenario": "scenarios/01-create-apply.json",
+      "candidate": "10a8d65f378c7d6b6aab8b9c2e8834932f629304",
+      "status": "settled",
+      "started_at": "2026-10-20T15:23:52.800091+00:00",
+      "requests": 11,
+      "estimated_usd": 0.39241000000000004,
+      "summary": "live/01-create-apply/summary.json",
+      "finished_at": "2026-10-20T15:27:43.224984+00:00",
+      "qualification": "Preliminary candidate; real successful save/application, one exact-target rejection retained. Runtime atomic-client-ref correction requires final-candidate replay."
+    },
+    {
+      "id": "02-final-create-apply",
+      "scenario": "scenarios-final/01-create-apply.json",
+      "candidate": "a6fc2500c32fd85e6d927ef482e685d2d0c848b6",
+      "status": "settled",
+      "started_at": "2026-10-20T15:35:42.533607+00:00",
+      "summary": "live-final/01-create-apply/summary.json",
+      "cumulative_requests": 23,
+      "cumulative_estimated_usd": 0.8272372,
+      "qualification": "Successful corrected atomic save; before final read/snapshot bounds fix. Retained; affected story will run once more on final runtime.",
+      "finished_at": "2026-10-20T15:40:59.014148+00:00"
+    },
+    {
+      "id": "03-qualified-create-apply",
+      "scenario": "scenarios-qualified/01-create-apply.json",
+      "candidate": "7b064651cdb056576e895badcc4bb927b45cb11e",
+      "status": "settled",
+      "started_at": "2026-10-20T15:41:41.369466+00:00",
+      "summary": "qualified-live/01-create-apply/summary.json",
+      "cumulative_requests": 34,
+      "cumulative_estimated_usd": 1.2098952
+    },
+    {
+      "id": "04-qualified-fresh-discovery",
+      "scenario": "scenarios-qualified/02-fresh-discovery.json",
+      "candidate": "7b064651cdb056576e895badcc4bb927b45cb11e",
+      "status": "settled",
+      "started_at": "2026-10-20T15:47:12.826628+00:00",
+      "summary": "qualified-live/02-fresh-discovery/summary.json",
+      "cumulative_requests": 48,
+      "cumulative_estimated_usd": 1.5951448000000001
+    },
+    {
+      "id": "05-qualified-correct-and-apply",
+      "scenario": "scenarios-qualified/03-correct-and-apply.json",
+      "candidate": "7b064651cdb056576e895badcc4bb927b45cb11e",
+      "status": "settled",
+      "started_at": "2026-10-20T15:52:02.826766+00:00",
+      "summary": "qualified-live/03-correct-and-apply/summary.json",
+      "cumulative_requests": 57,
+      "cumulative_estimated_usd": 1.9574943999999999
+    },
+    {
+      "id": "06-qualified-late-feedback",
+      "scenario": "scenarios-qualified/04-late-feedback.json",
+      "candidate": "7b064651cdb056576e895badcc4bb927b45cb11e",
+      "status": "settled",
+      "started_at": "2026-10-20T15:54:59.231614+00:00",
+      "summary": "qualified-live/04-late-feedback/summary.json",
+      "cumulative_requests": 62,
+      "cumulative_estimated_usd": 2.1176891999999996
+    },
+    {
+      "id": "07-qualified-correct-feedback",
+      "scenario": "scenarios-qualified/05-correct-feedback.json",
+      "candidate": "7b064651cdb056576e895badcc4bb927b45cb11e",
+      "status": "settled",
+      "started_at": "2026-10-20T15:58:21.630057+00:00",
+      "summary": "qualified-live/05-correct-feedback/summary.json",
+      "cumulative_requests": 67,
+      "cumulative_estimated_usd": 2.2817219999999994
+    },
+    {
+      "id": "08-qualified-failure",
+      "scenario": "scenarios-qualified/06-failure.json",
+      "candidate": "7b064651cdb056576e895badcc4bb927b45cb11e",
+      "status": "settled_expected_incomplete_data_failure",
+      "started_at": "2026-10-20T16:00:19.315508+00:00",
+      "summary": "qualified-live/06-failure/summary.json",
+      "cumulative_requests": 75,
+      "cumulative_estimated_usd": 2.548235599999999
+    },
+    {
+      "id": "09-qualified-correction-not-resolution",
+      "scenario": "scenarios-qualified/07-correction-not-resolution.json",
+      "candidate": "7b064651cdb056576e895badcc4bb927b45cb11e",
+      "status": "settled_problem_still_open",
+      "started_at": "2026-10-20T16:06:00.045900+00:00",
+      "summary": "qualified-live/07-correction-not-resolution/summary.json",
+      "cumulative_requests": 82,
+      "cumulative_estimated_usd": 2.780006799999999
+    },
+    {
+      "id": "10-qualified-read-and-foreign-report",
+      "scenario": "scenarios-qualified/08-read-and-foreign-report.json",
+      "candidate": "7b064651cdb056576e895badcc4bb927b45cb11e",
+      "status": "settled_no_new_application",
+      "started_at": "2026-10-20T16:09:29.042333+00:00",
+      "summary": "qualified-live/08-read-and-foreign-report/summary.json",
+      "cumulative_requests": 86,
+      "cumulative_estimated_usd": 2.916534399999999
+    },
+    {
+      "id": "11-correction-continuation",
+      "scenario": "scenarios-qualified/09-correction-continuation.json",
+      "candidate": "b528382c3a930c239fe633d80f8b3b25a6c1c8d2",
+      "status": "settled_same_case_no_application",
+      "started_at": "2026-10-20T16:22:27.750979+00:00",
+      "summary": "qualified-live/09-correction-continuation/summary.json",
+      "cumulative_requests": 96,
+      "cumulative_estimated_usd": 3.2652611999999985
+    },
+    {
+      "id": "12-epsilon-discovery",
+      "scenario": "scenarios-qualified/10-epsilon-discovery.json",
+      "candidate": "b528382c3a930c239fe633d80f8b3b25a6c1c8d2",
+      "status": "settled_v3_applied_new_material",
+      "started_at": "2026-10-20T16:26:59.393798+00:00",
+      "summary": "qualified-live/10-epsilon-discovery/summary.json",
+      "cumulative_requests": 104,
+      "cumulative_estimated_usd": 3.556405599999999
+    },
+    {
+      "id": "13-12-correction-links",
+      "scenario": "scenarios-qualified/12-correction-links.json",
+      "candidate": "6659f4c4d9de1871624efaec37933aa8d03dc0bf",
+      "status": "settled",
+      "started_at": "2026-10-20T16:53:00.202829+00:00",
+      "summary": "qualified-live/12-correction-links/summary.json",
+      "finished_at": "2026-10-20T16:53:58.729092+00:00",
+      "cumulative_requests": 111,
+      "cumulative_estimated_usd": 3.7947807999999994
+    },
+    {
+      "id": "14-13-zeta-discovery",
+      "scenario": "scenarios-qualified/13-zeta-discovery.json",
+      "candidate": "6659f4c4d9de1871624efaec37933aa8d03dc0bf",
+      "status": "settled",
+      "started_at": "2026-10-20T16:53:58.913019+00:00",
+      "summary": "qualified-live/13-zeta-discovery/summary.json",
+      "finished_at": "2026-10-20T16:55:25.705675+00:00",
+      "cumulative_requests": 119,
+      "cumulative_estimated_usd": 4.089281199999999
+    },
+    {
+      "id": "15-11-final-read",
+      "scenario": "scenarios-qualified/11-final-read.json",
+      "candidate": "6659f4c4d9de1871624efaec37933aa8d03dc0bf",
+      "status": "settled",
+      "started_at": "2026-10-20T16:55:25.807101+00:00",
+      "summary": "qualified-live/11-final-read/summary.json",
+      "finished_at": "2026-10-20T16:56:24.164249+00:00",
+      "cumulative_requests": 121,
+      "cumulative_estimated_usd": 4.131105599999999
+    }
+  ],
+  "final_story": "scenarios-final; separate fresh protected workspace; same unchanged ledger",
+  "qualified_story": "13 scenario continuations attributed to 7b06465/b528382/6659f4c; see story-checks.json; one unchanged profile and ledger",
+  "followup_reason": "Correct Run result refs to allow exact changed Method/review outcomes (invocation output refs stay Evidence); retain original rejection and repeat affected correction plus fresh discovery/read controls. Same ledger and scope."
+}

@@ -1,0 +1,15 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\installed\\agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\live-home-protected",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "importRoots": [
+    "<SYNTHETIC_EVIDENCE_ROOT>\\inputs"
+  ],
+  "scopes": [
+    "restricted:read",
+    "restricted:write"
+  ],
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwds\\05-correct-feedback",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\05-correct-feedback",
+  "prompt": "Уточнение к моему предыдущему замечанию про alpha.txt: неверно было бы оценивать ту выдачу целиком как бесполезную. Она помогла проверить итог, но сопоставление повторов было неудобным. Сохрани исправленную смешанную оценку вместо прежней формулировки, историю сохрани. Это всё ещё сообщение синтетического контроллера, не отзыв владельца. Отвечай по-русски."
+}

@@ -1,0 +1,28 @@
+Installing git:github.com/ainazemtsau/zaratustra@1b742a6e774eaa14826c036977ae2a42ff1ca46a...
+Cloning into '<SYNTHETIC_EVIDENCE_ROOT>\upgrade-final\old-agent\git\github.com\ainazemtsau\zaratustra'...
+Note: switching to '1b742a6e774eaa14826c036977ae2a42ff1ca46a'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 1b742a6 Record shared-memory qualification and sealed synthetic evidence
+
+added 12 packages, and audited 13 packages in 2s
+
+9 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Installed git:github.com/ainazemtsau/zaratustra@1b742a6e774eaa14826c036977ae2a42ff1ca46a

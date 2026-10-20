@@ -1,0 +1,841 @@
+{
+  "layer": "M",
+  "provider_dispatches": 0,
+  "real_owner_feedback": false,
+  "results": [
+    {
+      "profile": "trusted-first",
+      "transport": "rpc",
+      "semantic": "direct_statement",
+      "descriptor": {
+        "source_handle": "source-aa96bb3e-1b39-446b-a70c-e8f70e9d449b",
+        "source_ref": "observed-bd351c51-0790-4a15-a23a-cd1fd521ab8d",
+        "transport": "rpc",
+        "channel_identity": "synthetic-mechanical-controller",
+        "capture_stage": "pi-input-hook-observed",
+        "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+        "byte_length": 66,
+        "input_integrity": "observed_stage_only",
+        "owner_channel_eligible": false
+      },
+      "captured": {
+        "id": "evidence-2efeea26-eb9f-4041-aff1-735743b3b952",
+        "kind": "evidence",
+        "title": "SDK observed source",
+        "body": null,
+        "revision": 1,
+        "created_at": "2026-10-20T16:53:39.857Z",
+        "updated_at": "2026-10-20T16:53:39.857Z",
+        "storage": "live",
+        "concept_ids": [],
+        "origin_activity_id": null,
+        "visibility": "workspace",
+        "data": {
+          "source_kind": "direct_statement",
+          "source_locator": "observed-bd351c51-0790-4a15-a23a-cd1fd521ab8d",
+          "captured_at": "2026-10-20T16:53:39.853Z",
+          "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+          "retained_excerpt": "Synthetic SDK direct-channel statement, not actual Anton feedback.",
+          "blob_ref": null,
+          "byte_length": 66,
+          "availability": "retained",
+          "source_language": "en",
+          "language_assignment": "model-reported",
+          "provenance": {
+            "source_ref": "observed-bd351c51-0790-4a15-a23a-cd1fd521ab8d",
+            "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+            "transport": "rpc",
+            "channel_identity": "synthetic-mechanical-controller",
+            "session_id": "01a15a3b-a140-772d-83b4-c34d4229e349",
+            "runtime_id": "4dbae4a8-a221-4694-ba26-062cd2bf59ef",
+            "captured_at": "2026-10-20T16:53:39.853Z",
+            "capture_stage": "pi-input-hook-observed",
+            "original_keystrokes": false,
+            "input_integrity": "observed_stage_only",
+            "owner_channel_eligible": false,
+            "byte_length": 66
+          },
+          "trust_origin": "programmatic-or-file-not-owner-approval"
+        }
+      },
+      "assessment": {
+        "ok": false,
+        "code": "SOURCE_MISSING",
+        "message": "Owner feedback requires retained direct input from the trusted first/untransformed interactive contract; RPC, quotations and role=user are insufficient.",
+        "retryable": false
+      },
+      "expected_eligible": false,
+      "scope": "M: injected SDK channel, not real human feedback"
+    },
+    {
+      "profile": "trusted-first",
+      "transport": "extension",
+      "semantic": "direct_statement",
+      "descriptor": {
+        "source_handle": "source-496e73ea-c48f-433a-9470-f2ef7107cf07",
+        "source_ref": "observed-99783b24-f42b-49a7-abd1-574c3ee7b373",
+        "transport": "extension",
+        "channel_identity": null,
+        "capture_stage": "pi-input-hook-observed",
+        "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+        "byte_length": 66,
+        "input_integrity": "observed_stage_only",
+        "owner_channel_eligible": false
+      },
+      "captured": {
+        "id": "evidence-120c676e-01f9-4d27-bfc8-05bbc47fa859",
+        "kind": "evidence",
+        "title": "SDK observed source",
+        "body": null,
+        "revision": 1,
+        "created_at": "2026-10-20T16:53:39.870Z",
+        "updated_at": "2026-10-20T16:53:39.870Z",
+        "storage": "live",
+        "concept_ids": [],
+        "origin_activity_id": null,
+        "visibility": "workspace",
+        "data": {
+          "source_kind": "direct_statement",
+          "source_locator": "observed-99783b24-f42b-49a7-abd1-574c3ee7b373",
+          "captured_at": "2026-10-20T16:53:39.866Z",
+          "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+          "retained_excerpt": "Synthetic SDK direct-channel statement, not actual Anton feedback.",
+          "blob_ref": null,
+          "byte_length": 66,
+          "availability": "retained",
+          "source_language": "en",
+          "language_assignment": "model-reported",
+          "provenance": {
+            "source_ref": "observed-99783b24-f42b-49a7-abd1-574c3ee7b373",
+            "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+            "transport": "extension",
+            "channel_identity": null,
+            "session_id": "01a15a3b-a140-772d-83b4-c34d4229e349",
+            "runtime_id": "4dbae4a8-a221-4694-ba26-062cd2bf59ef",
+            "captured_at": "2026-10-20T16:53:39.866Z",
+            "capture_stage": "pi-input-hook-observed",
+            "original_keystrokes": false,
+            "input_integrity": "observed_stage_only",
+            "owner_channel_eligible": false,
+            "byte_length": 66
+          },
+          "trust_origin": "programmatic-or-file-not-owner-approval"
+        }
+      },
+      "assessment": {
+        "ok": false,
+        "code": "SOURCE_MISSING",
+        "message": "Owner feedback requires retained direct input from the trusted first/untransformed interactive contract; RPC, quotations and role=user are insufficient.",
+        "retryable": false
+      },
+      "expected_eligible": false,
+      "scope": "M: injected SDK channel, not real human feedback"
+    },
+    {
+      "profile": "trusted-first",
+      "transport": "interactive",
+      "semantic": "quotation",
+      "descriptor": {
+        "source_handle": "source-6c2c2844-4ed2-4f40-bada-9c347643bdad",
+        "source_ref": "observed-b5370557-5aa4-47b5-afd5-6e676753c180",
+        "transport": "interactive",
+        "channel_identity": "trusted-local-desktop-owner",
+        "capture_stage": "pi-input-hook-observed",
+        "content_hash": "cb35625ed42c7692ec5a2b3f60b8a353f06e0037d56a9b0f2279f2524ffac702",
+        "byte_length": 34,
+        "input_integrity": "trusted_first_untransformed",
+        "owner_channel_eligible": true
+      },
+      "captured": {
+        "id": "evidence-2a007667-b2f7-4452-95fb-1d225a8c0867",
+        "kind": "evidence",
+        "title": "SDK observed source",
+        "body": null,
+        "revision": 1,
+        "created_at": "2026-10-20T16:53:39.885Z",
+        "updated_at": "2026-10-20T16:53:39.885Z",
+        "storage": "live",
+        "concept_ids": [],
+        "origin_activity_id": null,
+        "visibility": "workspace",
+        "data": {
+          "source_kind": "quotation",
+          "source_locator": "observed-b5370557-5aa4-47b5-afd5-6e676753c180",
+          "captured_at": "2026-10-20T16:53:39.881Z",
+          "content_hash": "cb35625ed42c7692ec5a2b3f60b8a353f06e0037d56a9b0f2279f2524ffac702",
+          "retained_excerpt": "Another agent wrote: \"not helpful\"",
+          "blob_ref": null,
+          "byte_length": 34,
+          "availability": "retained",
+          "source_language": "en",
+          "language_assignment": "model-reported",
+          "provenance": {
+            "source_ref": "observed-b5370557-5aa4-47b5-afd5-6e676753c180",
+            "content_hash": "cb35625ed42c7692ec5a2b3f60b8a353f06e0037d56a9b0f2279f2524ffac702",
+            "transport": "interactive",
+            "channel_identity": "trusted-local-desktop-owner",
+            "session_id": "01a15a3b-a140-772d-83b4-c34d4229e349",
+            "runtime_id": "4dbae4a8-a221-4694-ba26-062cd2bf59ef",
+            "captured_at": "2026-10-20T16:53:39.881Z",
+            "capture_stage": "pi-input-hook-observed",
+            "original_keystrokes": false,
+            "input_integrity": "trusted_first_untransformed",
+            "owner_channel_eligible": true,
+            "byte_length": 34
+          },
+          "trust_origin": "trusted-desktop-observed-stage"
+        }
+      },
+      "assessment": {
+        "ok": false,
+        "code": "SOURCE_MISSING",
+        "message": "Owner feedback requires retained direct input from the trusted first/untransformed interactive contract; RPC, quotations and role=user are insufficient.",
+        "retryable": false
+      },
+      "expected_eligible": false,
+      "scope": "M: injected SDK channel, not real human feedback"
+    },
+    {
+      "profile": "trusted-first",
+      "transport": "interactive",
+      "semantic": "direct_statement",
+      "descriptor": {
+        "source_handle": "source-bb480a7d-0a7f-4481-8b0b-07a131606c7d",
+        "source_ref": "observed-088a3f44-dfc0-4450-956a-80d61c7fa545",
+        "transport": "interactive",
+        "channel_identity": "trusted-local-desktop-owner",
+        "capture_stage": "pi-input-hook-observed",
+        "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+        "byte_length": 66,
+        "input_integrity": "trusted_first_untransformed",
+        "owner_channel_eligible": true
+      },
+      "captured": {
+        "id": "evidence-81546540-cc22-4fd1-bd13-312441b64eea",
+        "kind": "evidence",
+        "title": "SDK observed source",
+        "body": null,
+        "revision": 1,
+        "created_at": "2026-10-20T16:53:39.902Z",
+        "updated_at": "2026-10-20T16:53:39.902Z",
+        "storage": "live",
+        "concept_ids": [],
+        "origin_activity_id": null,
+        "visibility": "workspace",
+        "data": {
+          "source_kind": "direct_statement",
+          "source_locator": "observed-088a3f44-dfc0-4450-956a-80d61c7fa545",
+          "captured_at": "2026-10-20T16:53:39.898Z",
+          "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+          "retained_excerpt": "Synthetic SDK direct-channel statement, not actual Anton feedback.",
+          "blob_ref": null,
+          "byte_length": 66,
+          "availability": "retained",
+          "source_language": "en",
+          "language_assignment": "model-reported",
+          "provenance": {
+            "source_ref": "observed-088a3f44-dfc0-4450-956a-80d61c7fa545",
+            "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+            "transport": "interactive",
+            "channel_identity": "trusted-local-desktop-owner",
+            "session_id": "01a15a3b-a140-772d-83b4-c34d4229e349",
+            "runtime_id": "4dbae4a8-a221-4694-ba26-062cd2bf59ef",
+            "captured_at": "2026-10-20T16:53:39.898Z",
+            "capture_stage": "pi-input-hook-observed",
+            "original_keystrokes": false,
+            "input_integrity": "trusted_first_untransformed",
+            "owner_channel_eligible": true,
+            "byte_length": 66
+          },
+          "trust_origin": "trusted-desktop-observed-stage"
+        }
+      },
+      "assessment": {
+        "ok": true,
+        "request_id": "assessment-9",
+        "workspace_id": "688caefe-cf19-453c-8466-aef1ca187dc3",
+        "schema_version": 4,
+        "snapshot_seq": 8,
+        "transaction_id": "txn-5d77a771-f2c5-4fe1-a41d-f56dd9ca1927",
+        "committed": true,
+        "created": {
+          "evaluation": "evaluation-beebfb48-bb59-44c8-bd86-a9584f2ec15b"
+        },
+        "new_revisions": {
+          "evaluation-beebfb48-bb59-44c8-bd86-a9584f2ec15b": 1
+        },
+        "warnings": []
+      },
+      "expected_eligible": true,
+      "scope": "M: injected SDK channel, not real human feedback"
+    },
+    {
+      "profile": "unknown-stage",
+      "transport": "rpc",
+      "semantic": "direct_statement",
+      "descriptor": {
+        "source_handle": "source-0561eb51-6893-4906-abef-70bcb0a14948",
+        "source_ref": "observed-b9bbc1f6-b597-4267-b611-a3dac1dc3139",
+        "transport": "rpc",
+        "channel_identity": "synthetic-mechanical-controller",
+        "capture_stage": "pi-input-hook-observed",
+        "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+        "byte_length": 66,
+        "input_integrity": "observed_stage_only",
+        "owner_channel_eligible": false
+      },
+      "captured": {
+        "id": "evidence-881f8b47-ac6b-45c6-8744-d41eab4b4bd3",
+        "kind": "evidence",
+        "title": "SDK observed source",
+        "body": null,
+        "revision": 1,
+        "created_at": "2026-10-20T16:53:40.033Z",
+        "updated_at": "2026-10-20T16:53:40.033Z",
+        "storage": "live",
+        "concept_ids": [],
+        "origin_activity_id": null,
+        "visibility": "workspace",
+        "data": {
+          "source_kind": "direct_statement",
+          "source_locator": "observed-b9bbc1f6-b597-4267-b611-a3dac1dc3139",
+          "captured_at": "2026-10-20T16:53:40.030Z",
+          "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+          "retained_excerpt": "Synthetic SDK direct-channel statement, not actual Anton feedback.",
+          "blob_ref": null,
+          "byte_length": 66,
+          "availability": "retained",
+          "source_language": "en",
+          "language_assignment": "model-reported",
+          "provenance": {
+            "source_ref": "observed-b9bbc1f6-b597-4267-b611-a3dac1dc3139",
+            "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+            "transport": "rpc",
+            "channel_identity": "synthetic-mechanical-controller",
+            "session_id": "01a15a3b-a202-772d-83b4-c34e91f19615",
+            "runtime_id": "0fb57145-3dd5-4fc6-8d7f-d9e6d17dea84",
+            "captured_at": "2026-10-20T16:53:40.030Z",
+            "capture_stage": "pi-input-hook-observed",
+            "original_keystrokes": false,
+            "input_integrity": "observed_stage_only",
+            "owner_channel_eligible": false,
+            "byte_length": 66
+          },
+          "trust_origin": "programmatic-or-file-not-owner-approval"
+        }
+      },
+      "assessment": {
+        "ok": false,
+        "code": "SOURCE_MISSING",
+        "message": "Owner feedback requires retained direct input from the trusted first/untransformed interactive contract; RPC, quotations and role=user are insufficient.",
+        "retryable": false
+      },
+      "expected_eligible": false,
+      "scope": "M: injected SDK channel, not real human feedback"
+    },
+    {
+      "profile": "unknown-stage",
+      "transport": "extension",
+      "semantic": "direct_statement",
+      "descriptor": {
+        "source_handle": "source-a6784c7a-d9cc-4ffc-b042-cc251cd8e201",
+        "source_ref": "observed-6952efbe-519b-4a2f-a962-ebdca7372ece",
+        "transport": "extension",
+        "channel_identity": null,
+        "capture_stage": "pi-input-hook-observed",
+        "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+        "byte_length": 66,
+        "input_integrity": "observed_stage_only",
+        "owner_channel_eligible": false
+      },
+      "captured": {
+        "id": "evidence-4a9cbb26-9e3c-4b08-8445-9f173b581ef8",
+        "kind": "evidence",
+        "title": "SDK observed source",
+        "body": null,
+        "revision": 1,
+        "created_at": "2026-10-20T16:53:40.047Z",
+        "updated_at": "2026-10-20T16:53:40.047Z",
+        "storage": "live",
+        "concept_ids": [],
+        "origin_activity_id": null,
+        "visibility": "workspace",
+        "data": {
+          "source_kind": "direct_statement",
+          "source_locator": "observed-6952efbe-519b-4a2f-a962-ebdca7372ece",
+          "captured_at": "2026-10-20T16:53:40.043Z",
+          "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+          "retained_excerpt": "Synthetic SDK direct-channel statement, not actual Anton feedback.",
+          "blob_ref": null,
+          "byte_length": 66,
+          "availability": "retained",
+          "source_language": "en",
+          "language_assignment": "model-reported",
+          "provenance": {
+            "source_ref": "observed-6952efbe-519b-4a2f-a962-ebdca7372ece",
+            "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+            "transport": "extension",
+            "channel_identity": null,
+            "session_id": "01a15a3b-a202-772d-83b4-c34e91f19615",
+            "runtime_id": "0fb57145-3dd5-4fc6-8d7f-d9e6d17dea84",
+            "captured_at": "2026-10-20T16:53:40.043Z",
+            "capture_stage": "pi-input-hook-observed",
+            "original_keystrokes": false,
+            "input_integrity": "observed_stage_only",
+            "owner_channel_eligible": false,
+            "byte_length": 66
+          },
+          "trust_origin": "programmatic-or-file-not-owner-approval"
+        }
+      },
+      "assessment": {
+        "ok": false,
+        "code": "SOURCE_MISSING",
+        "message": "Owner feedback requires retained direct input from the trusted first/untransformed interactive contract; RPC, quotations and role=user are insufficient.",
+        "retryable": false
+      },
+      "expected_eligible": false,
+      "scope": "M: injected SDK channel, not real human feedback"
+    },
+    {
+      "profile": "unknown-stage",
+      "transport": "interactive",
+      "semantic": "quotation",
+      "descriptor": {
+        "source_handle": "source-7a043437-3346-4f07-8dfc-d020b9c740cd",
+        "source_ref": "observed-b42bd549-cf03-4470-b41a-ad8a0fa6cfcd",
+        "transport": "interactive",
+        "channel_identity": null,
+        "capture_stage": "pi-input-hook-observed",
+        "content_hash": "cb35625ed42c7692ec5a2b3f60b8a353f06e0037d56a9b0f2279f2524ffac702",
+        "byte_length": 34,
+        "input_integrity": "observed_stage_only",
+        "owner_channel_eligible": false
+      },
+      "captured": {
+        "id": "evidence-a4459d23-061d-4411-b46d-6a760457d815",
+        "kind": "evidence",
+        "title": "SDK observed source",
+        "body": null,
+        "revision": 1,
+        "created_at": "2026-10-20T16:53:40.061Z",
+        "updated_at": "2026-10-20T16:53:40.061Z",
+        "storage": "live",
+        "concept_ids": [],
+        "origin_activity_id": null,
+        "visibility": "workspace",
+        "data": {
+          "source_kind": "quotation",
+          "source_locator": "observed-b42bd549-cf03-4470-b41a-ad8a0fa6cfcd",
+          "captured_at": "2026-10-20T16:53:40.057Z",
+          "content_hash": "cb35625ed42c7692ec5a2b3f60b8a353f06e0037d56a9b0f2279f2524ffac702",
+          "retained_excerpt": "Another agent wrote: \"not helpful\"",
+          "blob_ref": null,
+          "byte_length": 34,
+          "availability": "retained",
+          "source_language": "en",
+          "language_assignment": "model-reported",
+          "provenance": {
+            "source_ref": "observed-b42bd549-cf03-4470-b41a-ad8a0fa6cfcd",
+            "content_hash": "cb35625ed42c7692ec5a2b3f60b8a353f06e0037d56a9b0f2279f2524ffac702",
+            "transport": "interactive",
+            "channel_identity": null,
+            "session_id": "01a15a3b-a202-772d-83b4-c34e91f19615",
+            "runtime_id": "0fb57145-3dd5-4fc6-8d7f-d9e6d17dea84",
+            "captured_at": "2026-10-20T16:53:40.057Z",
+            "capture_stage": "pi-input-hook-observed",
+            "original_keystrokes": false,
+            "input_integrity": "observed_stage_only",
+            "owner_channel_eligible": false,
+            "byte_length": 34
+          },
+          "trust_origin": "trusted-desktop-observed-stage"
+        }
+      },
+      "assessment": {
+        "ok": false,
+        "code": "SOURCE_MISSING",
+        "message": "Owner feedback requires retained direct input from the trusted first/untransformed interactive contract; RPC, quotations and role=user are insufficient.",
+        "retryable": false
+      },
+      "expected_eligible": false,
+      "scope": "M: injected SDK channel, not real human feedback"
+    },
+    {
+      "profile": "unknown-stage",
+      "transport": "interactive",
+      "semantic": "direct_statement",
+      "descriptor": {
+        "source_handle": "source-138f306e-9b46-4560-8850-389b9ddab99d",
+        "source_ref": "observed-18ca755d-7375-4aec-8884-3670cd2c9c02",
+        "transport": "interactive",
+        "channel_identity": null,
+        "capture_stage": "pi-input-hook-observed",
+        "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+        "byte_length": 66,
+        "input_integrity": "observed_stage_only",
+        "owner_channel_eligible": false
+      },
+      "captured": {
+        "id": "evidence-84e249a8-c430-4c88-8d32-e4108ecc152b",
+        "kind": "evidence",
+        "title": "SDK observed source",
+        "body": null,
+        "revision": 1,
+        "created_at": "2026-10-20T16:53:40.073Z",
+        "updated_at": "2026-10-20T16:53:40.073Z",
+        "storage": "live",
+        "concept_ids": [],
+        "origin_activity_id": null,
+        "visibility": "workspace",
+        "data": {
+          "source_kind": "direct_statement",
+          "source_locator": "observed-18ca755d-7375-4aec-8884-3670cd2c9c02",
+          "captured_at": "2026-10-20T16:53:40.070Z",
+          "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+          "retained_excerpt": "Synthetic SDK direct-channel statement, not actual Anton feedback.",
+          "blob_ref": null,
+          "byte_length": 66,
+          "availability": "retained",
+          "source_language": "en",
+          "language_assignment": "model-reported",
+          "provenance": {
+            "source_ref": "observed-18ca755d-7375-4aec-8884-3670cd2c9c02",
+            "content_hash": "5bac110dfaca375457e5820ca55b270a85c01d725cfde12b4b0ee7e7d09b147a",
+            "transport": "interactive",
+            "channel_identity": null,
+            "session_id": "01a15a3b-a202-772d-83b4-c34e91f19615",
+            "runtime_id": "0fb57145-3dd5-4fc6-8d7f-d9e6d17dea84",
+            "captured_at": "2026-10-20T16:53:40.070Z",
+            "capture_stage": "pi-input-hook-observed",
+            "original_keystrokes": false,
+            "input_integrity": "observed_stage_only",
+            "owner_channel_eligible": false,
+            "byte_length": 66
+          },
+          "trust_origin": "trusted-desktop-observed-stage"
+        }
+      },
+      "assessment": {
+        "ok": false,
+        "code": "SOURCE_MISSING",
+        "message": "Owner feedback requires retained direct input from the trusted first/untransformed interactive contract; RPC, quotations and role=user are insufficient.",
+        "retryable": false
+      },
+      "expected_eligible": false,
+      "scope": "M: injected SDK channel, not real human feedback"
+    },
+    {
+      "profile": "prior-transform",
+      "transport": "rpc",
+      "semantic": "direct_statement",
+      "descriptor": {
+        "source_handle": "source-bf8062ab-64e4-4f1c-9ff2-31e2b4f3659a",
+        "source_ref": "observed-9677fd6c-38b6-4ec2-94ae-485c6413bf84",
+        "transport": "rpc",
+        "channel_identity": "synthetic-mechanical-controller",
+        "capture_stage": "pi-input-hook-observed",
+        "content_hash": "fba66a2b0e973499f11c062334ca8839715ba826434eb4a7ea041a616c933e45",
+        "byte_length": 94,
+        "input_integrity": "observed_stage_only",
+        "owner_channel_eligible": false
+      },
+      "captured": {
+        "id": "evidence-0e98c2b2-9cec-480e-a2c8-172a3a907642",
+        "kind": "evidence",
+        "title": "SDK observed source",
+        "body": null,
+        "revision": 1,
+        "created_at": "2026-10-20T16:53:40.194Z",
+        "updated_at": "2026-10-20T16:53:40.194Z",
+        "storage": "live",
+        "concept_ids": [],
+        "origin_activity_id": null,
+        "visibility": "workspace",
+        "data": {
+          "source_kind": "direct_statement",
+          "source_locator": "observed-9677fd6c-38b6-4ec2-94ae-485c6413bf84",
+          "captured_at": "2026-10-20T16:53:40.191Z",
+          "content_hash": "fba66a2b0e973499f11c062334ca8839715ba826434eb4a7ea041a616c933e45",
+          "retained_excerpt": "Transformed observed stage: Synthetic SDK direct-channel statement, not actual Anton feedback.",
+          "blob_ref": null,
+          "byte_length": 94,
+          "availability": "retained",
+          "source_language": "en",
+          "language_assignment": "model-reported",
+          "provenance": {
+            "source_ref": "observed-9677fd6c-38b6-4ec2-94ae-485c6413bf84",
+            "content_hash": "fba66a2b0e973499f11c062334ca8839715ba826434eb4a7ea041a616c933e45",
+            "transport": "rpc",
+            "channel_identity": "synthetic-mechanical-controller",
+            "session_id": "01a15a3b-a2a6-772d-83b4-c3519ad5ab56",
+            "runtime_id": "256e32d2-a9db-4eff-98db-0a73d12628e0",
+            "captured_at": "2026-10-20T16:53:40.191Z",
+            "capture_stage": "pi-input-hook-observed",
+            "original_keystrokes": false,
+            "input_integrity": "observed_stage_only",
+            "owner_channel_eligible": false,
+            "byte_length": 94
+          },
+          "trust_origin": "programmatic-or-file-not-owner-approval"
+        }
+      },
+      "assessment": {
+        "ok": false,
+        "code": "SOURCE_MISSING",
+        "message": "Owner feedback requires retained direct input from the trusted first/untransformed interactive contract; RPC, quotations and role=user are insufficient.",
+        "retryable": false
+      },
+      "expected_eligible": false,
+      "scope": "M: injected SDK channel, not real human feedback"
+    },
+    {
+      "profile": "prior-transform",
+      "transport": "extension",
+      "semantic": "direct_statement",
+      "descriptor": {
+        "source_handle": "source-554eefec-7562-4947-90ae-5a78fbed39ad",
+        "source_ref": "observed-380a350f-689f-459f-961d-463f42e0a445",
+        "transport": "extension",
+        "channel_identity": null,
+        "capture_stage": "pi-input-hook-observed",
+        "content_hash": "fba66a2b0e973499f11c062334ca8839715ba826434eb4a7ea041a616c933e45",
+        "byte_length": 94,
+        "input_integrity": "observed_stage_only",
+        "owner_channel_eligible": false
+      },
+      "captured": {
+        "id": "evidence-0a86e53d-406a-44bc-84e5-d793d8059780",
+        "kind": "evidence",
+        "title": "SDK observed source",
+        "body": null,
+        "revision": 1,
+        "created_at": "2026-10-20T16:53:40.207Z",
+        "updated_at": "2026-10-20T16:53:40.207Z",
+        "storage": "live",
+        "concept_ids": [],
+        "origin_activity_id": null,
+        "visibility": "workspace",
+        "data": {
+          "source_kind": "direct_statement",
+          "source_locator": "observed-380a350f-689f-459f-961d-463f42e0a445",
+          "captured_at": "2026-10-20T16:53:40.203Z",
+          "content_hash": "fba66a2b0e973499f11c062334ca8839715ba826434eb4a7ea041a616c933e45",
+          "retained_excerpt": "Transformed observed stage: Synthetic SDK direct-channel statement, not actual Anton feedback.",
+          "blob_ref": null,
+          "byte_length": 94,
+          "availability": "retained",
+          "source_language": "en",
+          "language_assignment": "model-reported",
+          "provenance": {
+            "source_ref": "observed-380a350f-689f-459f-961d-463f42e0a445",
+            "content_hash": "fba66a2b0e973499f11c062334ca8839715ba826434eb4a7ea041a616c933e45",
+            "transport": "extension",
+            "channel_identity": null,
+            "session_id": "01a15a3b-a2a6-772d-83b4-c3519ad5ab56",
+            "runtime_id": "256e32d2-a9db-4eff-98db-0a73d12628e0",
+            "captured_at": "2026-10-20T16:53:40.203Z",
+            "capture_stage": "pi-input-hook-observed",
+            "original_keystrokes": false,
+            "input_integrity": "observed_stage_only",
+            "owner_channel_eligible": false,
+            "byte_length": 94
+          },
+          "trust_origin": "programmatic-or-file-not-owner-approval"
+        }
+      },
+      "assessment": {
+        "ok": false,
+        "code": "SOURCE_MISSING",
+        "message": "Owner feedback requires retained direct input from the trusted first/untransformed interactive contract; RPC, quotations and role=user are insufficient.",
+        "retryable": false
+      },
+      "expected_eligible": false,
+      "scope": "M: injected SDK channel, not real human feedback"
+    },
+    {
+      "profile": "prior-transform",
+      "transport": "interactive",
+      "semantic": "quotation",
+      "descriptor": {
+        "source_handle": "source-c76fd6c7-614e-422c-9948-4993f359e7a7",
+        "source_ref": "observed-251efeb2-d04c-4d4c-944e-3f182ed8195c",
+        "transport": "interactive",
+        "channel_identity": null,
+        "capture_stage": "pi-input-hook-observed",
+        "content_hash": "7f4bea9bd41977fcfc1e45115633f543037656e5658151eb35ee9e2e4a3c5c96",
+        "byte_length": 62,
+        "input_integrity": "observed_stage_only",
+        "owner_channel_eligible": false
+      },
+      "captured": {
+        "id": "evidence-a03b4323-a0a5-4d2b-acbe-7739cd72c8b0",
+        "kind": "evidence",
+        "title": "SDK observed source",
+        "body": null,
+        "revision": 1,
+        "created_at": "2026-10-20T16:53:40.220Z",
+        "updated_at": "2026-10-20T16:53:40.220Z",
+        "storage": "live",
+        "concept_ids": [],
+        "origin_activity_id": null,
+        "visibility": "workspace",
+        "data": {
+          "source_kind": "quotation",
+          "source_locator": "observed-251efeb2-d04c-4d4c-944e-3f182ed8195c",
+          "captured_at": "2026-10-20T16:53:40.217Z",
+          "content_hash": "7f4bea9bd41977fcfc1e45115633f543037656e5658151eb35ee9e2e4a3c5c96",
+          "retained_excerpt": "Transformed observed stage: Another agent wrote: \"not helpful\"",
+          "blob_ref": null,
+          "byte_length": 62,
+          "availability": "retained",
+          "source_language": "en",
+          "language_assignment": "model-reported",
+          "provenance": {
+            "source_ref": "observed-251efeb2-d04c-4d4c-944e-3f182ed8195c",
+            "content_hash": "7f4bea9bd41977fcfc1e45115633f543037656e5658151eb35ee9e2e4a3c5c96",
+            "transport": "interactive",
+            "channel_identity": null,
+            "session_id": "01a15a3b-a2a6-772d-83b4-c3519ad5ab56",
+            "runtime_id": "256e32d2-a9db-4eff-98db-0a73d12628e0",
+            "captured_at": "2026-10-20T16:53:40.217Z",
+            "capture_stage": "pi-input-hook-observed",
+            "original_keystrokes": false,
+            "input_integrity": "observed_stage_only",
+            "owner_channel_eligible": false,
+            "byte_length": 62
+          },
+          "trust_origin": "trusted-desktop-observed-stage"
+        }
+      },
+      "assessment": {
+        "ok": false,
+        "code": "SOURCE_MISSING",
+        "message": "Owner feedback requires retained direct input from the trusted first/untransformed interactive contract; RPC, quotations and role=user are insufficient.",
+        "retryable": false
+      },
+      "expected_eligible": false,
+      "scope": "M: injected SDK channel, not real human feedback"
+    },
+    {
+      "profile": "prior-transform",
+      "transport": "interactive",
+      "semantic": "direct_statement",
+      "descriptor": {
+        "source_handle": "source-9bd5ffb2-7fe6-4fc7-bf14-9f6e0b621ca9",
+        "source_ref": "observed-41b68624-9fd9-4b24-8e5c-974c936978c3",
+        "transport": "interactive",
+        "channel_identity": null,
+        "capture_stage": "pi-input-hook-observed",
+        "content_hash": "fba66a2b0e973499f11c062334ca8839715ba826434eb4a7ea041a616c933e45",
+        "byte_length": 94,
+        "input_integrity": "observed_stage_only",
+        "owner_channel_eligible": false
+      },
+      "captured": {
+        "id": "evidence-5b74b1dc-6fd0-4f7d-aa47-34d167d6f21d",
+        "kind": "evidence",
+        "title": "SDK observed source",
+        "body": null,
+        "revision": 1,
+        "created_at": "2026-10-20T16:53:40.233Z",
+        "updated_at": "2026-10-20T16:53:40.233Z",
+        "storage": "live",
+        "concept_ids": [],
+        "origin_activity_id": null,
+        "visibility": "workspace",
+        "data": {
+          "source_kind": "direct_statement",
+          "source_locator": "observed-41b68624-9fd9-4b24-8e5c-974c936978c3",
+          "captured_at": "2026-10-20T16:53:40.230Z",
+          "content_hash": "fba66a2b0e973499f11c062334ca8839715ba826434eb4a7ea041a616c933e45",
+          "retained_excerpt": "Transformed observed stage: Synthetic SDK direct-channel statement, not actual Anton feedback.",
+          "blob_ref": null,
+          "byte_length": 94,
+          "availability": "retained",
+          "source_language": "en",
+          "language_assignment": "model-reported",
+          "provenance": {
+            "source_ref": "observed-41b68624-9fd9-4b24-8e5c-974c936978c3",
+            "content_hash": "fba66a2b0e973499f11c062334ca8839715ba826434eb4a7ea041a616c933e45",
+            "transport": "interactive",
+            "channel_identity": null,
+            "session_id": "01a15a3b-a2a6-772d-83b4-c3519ad5ab56",
+            "runtime_id": "256e32d2-a9db-4eff-98db-0a73d12628e0",
+            "captured_at": "2026-10-20T16:53:40.230Z",
+            "capture_stage": "pi-input-hook-observed",
+            "original_keystrokes": false,
+            "input_integrity": "observed_stage_only",
+            "owner_channel_eligible": false,
+            "byte_length": 94
+          },
+          "trust_origin": "trusted-desktop-observed-stage"
+        }
+      },
+      "assessment": {
+        "ok": false,
+        "code": "SOURCE_MISSING",
+        "message": "Owner feedback requires retained direct input from the trusted first/untransformed interactive contract; RPC, quotations and role=user are insufficient.",
+        "retryable": false
+      },
+      "expected_eligible": false,
+      "scope": "M: injected SDK channel, not real human feedback"
+    }
+  ],
+  "projection_checks": [
+    {
+      "input": {
+        "id": "evidence-7fbcd715-a1fb-4ebb-866b-1fe5879df750",
+        "projection": "full",
+        "limit": 1
+      },
+      "result": {
+        "ok": false,
+        "code": "VALIDATION_ERROR",
+        "message": "Input does not match the published runtime schema.",
+        "retryable": false
+      }
+    },
+    {
+      "input": {
+        "id": "evidence-7fbcd715-a1fb-4ebb-866b-1fe5879df750",
+        "projection": "history",
+        "revision": 1
+      },
+      "result": {
+        "ok": false,
+        "code": "VALIDATION_ERROR",
+        "message": "Input does not match the published runtime schema.",
+        "retryable": false
+      }
+    },
+    {
+      "input": {
+        "id": "evidence-7fbcd715-a1fb-4ebb-866b-1fe5879df750",
+        "projection": "method_bundle",
+        "range": {
+          "start": 0,
+          "length": 1
+        }
+      },
+      "result": {
+        "ok": false,
+        "code": "VALIDATION_ERROR",
+        "message": "Input does not match the published runtime schema.",
+        "retryable": false
+      }
+    },
+    {
+      "input": {
+        "request_id": "result",
+        "revision": 1
+      },
+      "result": {
+        "ok": false,
+        "code": "VALIDATION_ERROR",
+        "message": "Input does not match the published runtime schema.",
+        "retryable": false
+      }
+    }
+  ]
+}
