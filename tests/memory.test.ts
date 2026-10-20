@@ -664,6 +664,7 @@ test("D managed restrictions cover all pages, counts, links, snippets, history, 
   );
   guest.context.processing_allowed = false;
   code(() => guest.sequence(), "PERMISSION_DENIED");
+  code(() => guest.focus(), "PERMISSION_DENIED");
 });
 
 test("D registered relations validate endpoints and reject competing copies of typed grounds", (t) => {
@@ -716,6 +717,23 @@ test("D registered relations validate endpoints and reject competing copies of t
           },
         ],
         [f.guard(a.source), f.guard(a.k)],
+      ),
+    "VALIDATION_ERROR",
+  );
+  code(
+    () =>
+      f.commit(
+        [
+          {
+            op: "put_relation",
+            client_ref: "duplicate-derivation",
+            relation: "derived_from",
+            from_ref: { id: a.k },
+            to_ref: { id: a.source },
+            reason: "Duplicate typed representation source",
+          },
+        ],
+        [f.guard(a.k), f.guard(a.source)],
       ),
     "VALIDATION_ERROR",
   );

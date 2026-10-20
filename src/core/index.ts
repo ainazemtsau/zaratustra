@@ -213,6 +213,7 @@ export class Core {
     return this.memory.visibleSequence();
   }
   focus() {
+    this.authorize();
     const row = this.storage.get<{ json: string }>(
       "SELECT json FROM focus WHERE session_id=?",
       this.context.session_id,
@@ -1551,13 +1552,22 @@ export class Core {
               "REFERENCE_TYPE_MISMATCH",
               "relevant_to target must be Activity, Work or Concept.",
             );
-          if (rel.relation === "derived_from")
+          if (rel.relation === "derived_from") {
             requireThat(
               ["evidence", "knowledge"].includes(from.kind) &&
                 ["evidence", "knowledge"].includes(to.kind),
               "REFERENCE_TYPE_MISMATCH",
               "derived_from connects Evidence/Knowledge.",
             );
+            const typed = (from.data.derived_from ??
+              (from.data.representation as { source_ref?: unknown } | undefined)
+                ?.source_ref) as { id?: string } | undefined;
+            requireThat(
+              typed?.id !== to.id,
+              "VALIDATION_ERROR",
+              "Do not duplicate typed derivation through a relation.",
+            );
+          }
           guardedIfExisting(from.id);
           guardedIfExisting(to.id);
           rel.from_ref = { id: from.id, revision: from.revision };
