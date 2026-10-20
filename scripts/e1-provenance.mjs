@@ -3,19 +3,11 @@ import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { createRequire } from "node:module";
 const [packageArg, outputArg] = process.argv.slice(2),
   pkg = resolve(packageArg),
   out = resolve(outputArg);
 mkdirSync(out, { recursive: false });
 const sdk = await import(pathToFileURL(process.env.ZARA_PI_SDK).href);
-const { createJiti } = createRequire(pathToFileURL(process.env.ZARA_PI_SDK))(
-    "jiti",
-  ),
-  jiti = createJiti(import.meta.url);
-const { default: product } = await jiti.import(
-  join(pkg, "src/extension/index.ts"),
-);
 let providerDispatches = 0;
 const results = [];
 for (const profile of ["trusted-first", "unknown-stage", "prior-transform"]) {
@@ -50,7 +42,6 @@ for (const profile of ["trusted-first", "unknown-stage", "prior-transform"]) {
             })),
         ]
       : []),
-    product,
     (pi) =>
       pi.on("before_provider_request", (_e, ctx) => {
         providerDispatches++;
@@ -63,7 +54,18 @@ for (const profile of ["trusted-first", "unknown-stage", "prior-transform"]) {
     agentDir,
     settingsManager,
     noExtensions: true,
+    additionalExtensionPaths: [join(pkg, "src/extension/index.ts")],
     extensionFactories: factories,
+    extensionsOverride: (base) =>
+      profile === "prior-transform"
+        ? {
+            ...base,
+            extensions: [
+              ...base.extensions.filter((e) => !e.tools.has("zara_map")),
+              ...base.extensions.filter((e) => e.tools.has("zara_map")),
+            ],
+          }
+        : base,
   });
   await loader.reload();
   assert.equal(loader.getExtensions().errors.length, 0);

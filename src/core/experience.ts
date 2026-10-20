@@ -554,7 +554,11 @@ export class ExperienceTransaction {
         target_ref = exactRef(target);
       requireThat(
         object(op.target_ref).revision !== undefined ||
-          object(op.target_ref).content_version !== undefined,
+          object(op.target_ref).content_version !== undefined ||
+          !this.db.get(
+            "SELECT id FROM addressed_current WHERE id=?",
+            target.id,
+          ),
         "VALIDATION_ERROR",
         "Evaluation target must name an exact result/version.",
       );

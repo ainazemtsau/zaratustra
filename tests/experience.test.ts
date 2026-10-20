@@ -1014,6 +1014,119 @@ test("E1 stale guards, invocation output types, complete selection and start rep
   );
 });
 
+test("E1 a new result and its exact Evaluation/application/Signal commit atomically through client refs", (t) => {
+  for (const point of [
+    "after_records",
+    "after_index",
+    "before_commit",
+    "after_commit",
+  ]) {
+    const f = fixture();
+    t.after(() => f.disk.close());
+    const mid = f.commit([method("m")]).created.m,
+      run = f.run(),
+      inv = invoke(f, run, mid);
+    const source = f.core.capture(
+      "Arithmetic tool observed a concrete check",
+      "tool",
+      null,
+      undefined,
+      {
+        tool_name: "bash",
+        tool_call_id: "observed-atomic",
+        is_error: false,
+        full_content_hash: digest("Arithmetic tool observed a concrete check"),
+        truncated: false,
+      },
+    );
+    const obs = f.core.commit({
+      ...f.request([]),
+      source_handles: [source.source_handle],
+      ops: [
+        {
+          op: "import_evidence",
+          client_ref: "obs",
+          source_handle: source.source_handle,
+          title: "Actual hook fixture",
+          source_language: "en",
+        },
+      ],
+    }).created.obs;
+    const request = f.request(
+      [
+        {
+          op: "record_result",
+          client_ref: "output",
+          run_ref: { id: run },
+          title: "Atomic output",
+          content: "Checked output",
+          source_language: "en",
+        },
+        {
+          op: "report_application",
+          ref: { id: inv },
+          output_refs: [ref("output")],
+          observation_refs: [{ id: obs }],
+          reported_application: {
+            applied: true,
+            summary: "Reported with observed grounds",
+            deviations: [],
+          },
+        },
+        {
+          op: "finish_run",
+          ref: { id: run },
+          execution: "completed",
+          summary: "Ended with addressed output",
+          result_refs: [ref("output")],
+        },
+        evaluation(
+          ref("output"),
+          { id: obs },
+          {
+            basis: "test_result",
+            dimension: "criterion",
+            dimension_name: "Local check",
+            run_ref: { id: run, revision: 2 },
+          },
+        ),
+        {
+          op: "open_signal",
+          client_ref: "signal",
+          kind: "useful_result",
+          subject_refs: [ref("evaluation")],
+          evidence_refs: [{ id: obs }],
+          description: "A local check, no general usefulness claim",
+          next_check: null,
+          visibility: "workspace",
+        },
+      ],
+      [run, inv],
+    );
+    const c = new Core(f.disk, f.core.context, (p) => {
+      if (p === point) throw new Error("atomic E1 fault");
+    });
+    const s = c.capture("Atomic result save", "rpc", "synthetic");
+    request.source_handles = [s.source_handle];
+    const before = domain(f.disk);
+    assert.throws(() => c.commit(request), /atomic E1 fault/);
+    if (point !== "after_commit") assert.equal(domain(f.disk), before);
+    else {
+      const replay = new Core(f.disk, c.context).commit(request);
+      const e = f.read(replay.created.evaluation);
+      assert.deepEqual(e.data.target_ref, {
+        id: replay.created.output,
+        revision: 1,
+      });
+      assert.equal(f.read(run).data.execution, "completed");
+      assert.equal(
+        (f.read(inv).data.output_refs as { id: string }[])[0].id,
+        replay.created.output,
+      );
+    }
+  }
+});
+
 test("E1 historical protected refs cannot be selected through a currently public Method", (t) => {
   const f = fixture(["restricted:read", "restricted:write"]);
   t.after(() => f.disk.close());

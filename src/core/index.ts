@@ -952,6 +952,20 @@ export class Core {
       if (
         this.storage.get("SELECT id FROM addressed_current WHERE id=?", ref.id)
       ) {
+        const current = this.addressed(ref.id);
+        const changesTarget = request.ops.some(
+          (op) => "ref" in op && op.ref.id === ref.id,
+        );
+        // The batch may reference its guarded final version before it exists on disk.
+        // The in-transaction resolver and final access index must still validate it.
+        if (
+          changesTarget &&
+          (ref.revision === current.revision + 1 ||
+            (current.kind === "method" &&
+              ref.content_version ===
+                (current.data.content_version as number) + 1))
+        )
+          continue;
         if (ref.content_version !== undefined)
           this.record(ref.id, ref.revision, false, ref.content_version);
         else
