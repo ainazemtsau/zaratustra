@@ -1,0 +1,12 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\release-agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\scoped-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-22-scoped-cross",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\22-scoped-cross",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "prompt": "Создай область «Ярмарка». Мне нужно к следующему вторнику подготовить 40 одинаковых бумажных карточек A6 в чёрно-белом виде. Как я могу их сделать с учётом моих известных условий и что нужно организовать? Не хочу покупать оборудование.",
+  "trustedScopes": [
+    "restricted:read",
+    "restricted:write"
+  ]
+}

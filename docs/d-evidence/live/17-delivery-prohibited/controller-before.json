@@ -1,0 +1,23 @@
+{
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-17-delivery-prohibited",
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 16,
+    "requests": 109,
+    "input": 2101522,
+    "output": 35985,
+    "cache_read": 1082240,
+    "estimated_usd": 2.506638000000001,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 109
+  },
+  "scenario": "17-delivery-prohibited",
+  "sha": "2e67880ccc6f52c22ee99f38a12f232a5e8a9f9e"
+}

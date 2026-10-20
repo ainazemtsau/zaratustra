@@ -1,0 +1,8 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\delivery-agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\delivery-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-12-delivery-recording-error",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\12-delivery-recording-error",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "prompt": "Поправка к записи о «Лире-9»: это было записано неверно с самого начала. Свободный вечерний доступ относится только к сотрудникам клуба, а я сотрудником не являюсь. Мой доступ никогда не был подтверждён. Исправь память, не представляй это как недавнюю отмену прежнего доступа."
+}

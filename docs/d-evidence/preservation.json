@@ -1,0 +1,10 @@
+{
+  "protected_count": 819,
+  "all_exact": true,
+  "historical_git_copies": {
+    "docs/C-RESULT-e24b2fda.md": "a342e47ba5e1cf6aac1be6ea170bb4a8d0d4f1852b902bc9064aa95af04eac79",
+    "docs/C-DEVELOPMENT-e24b2fda.md": "1549ad498b2c8bb105e49eae8ad55613e953613a35be0215ac35451a648ce2e6",
+    "docs/C-R1-STATUS-e24b2fda.md": "7b5bc354d5b5456ea5bdfcacf335f399b2f5e2336a1e79e98bd9a952815bd1db"
+  },
+  "specification_sha256": "4940e16e39174df941da98889c43b713c48287d4aeda8754fd57660d462a77cb"
+}

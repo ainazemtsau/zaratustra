@@ -1,0 +1,26 @@
+(node:73412) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Сохранил: терминалом «Лира-9» в соседнем клубе можно пользоваться по вечерам без предварительной записи. Буду учитывать эту возможность в будущих домашних делах.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 11,
+    "requests": 71,
+    "input": 1393861,
+    "output": 30934,
+    "cache_read": 693120,
+    "estimated_usd": 1.7801339999999999,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 71
+  }
+}

@@ -1,0 +1,2143 @@
+{
+  "synthetic": true,
+  "mode": "catalog",
+  "counts": {
+    "concepts": 6,
+    "entities": 5,
+    "knowledge": 8
+  },
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\final-catalog\\home",
+  "ids": {
+    "concepts": [
+      "concept-d492f04a-0e2b-48df-83a4-7ec981bb8f5b",
+      "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c",
+      "concept-da09639e-ae67-4184-9c0d-55a51d235820",
+      "concept-5ed36a65-b405-40c7-a4c3-c7f1a52531c9",
+      "concept-1550fe11-57bd-46e0-bd15-77d43d84a874",
+      "concept-0a59f4be-21f7-42bb-8600-ea19e9a677a8"
+    ],
+    "entities": [
+      "entity-cf506f4d-b270-470d-9903-f0df6bf42025",
+      "entity-2c287956-f111-49d5-8d3d-3080fbf41d3d",
+      "entity-f49c17f0-bb00-4c5e-b961-83d1703dea62",
+      "entity-b7bda7c8-9ae8-49bf-a7ac-441af302da1e",
+      "entity-246165c6-065a-469d-ad56-ed73ceb5ed41"
+    ],
+    "claims": [
+      "knowledge-b7c6a1f2-5f29-4324-82c4-6bcdfe544e4a",
+      "knowledge-d560b503-df35-4eae-b8a9-35152a9829a9",
+      "knowledge-978c3cd8-d3ae-42bf-8191-b181fbe487ea",
+      "knowledge-f08f84df-5b28-42ba-b50e-ea294664c29b",
+      "knowledge-f7f67960-1976-457e-828b-c778a2ac0d66",
+      "knowledge-e3b4f351-0f04-422b-aa0c-056928d4ba53",
+      "knowledge-7fc6172d-053c-4c6a-920a-87d8b48c306e",
+      "knowledge-1ba70ffd-7704-46f8-b0c7-a70f4a6e3605"
+    ],
+    "evidence": {
+      "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+      "revision": 1
+    }
+  },
+  "depth": 12,
+  "aliases": "preserved Cyrillic; ambiguous names remain separate",
+  "wrong_classification": "knowledge-b7c6a1f2-5f29-4324-82c4-6bcdfe544e4a",
+  "missing_predicate": true,
+  "versions": 2,
+  "corpus": [
+    {
+      "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+      "kind": "evidence",
+      "title": "Original synthetic catalog notes",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.176Z",
+      "updated_at": "2026-10-20T10:20:58.176Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "source_kind": "observed_input",
+        "source_locator": "observed-bf649a06-78d9-49ad-b429-5da171780263",
+        "captured_at": "2026-10-20T10:20:58.168Z",
+        "content_hash": "c12785c9139f40ea85000b27a1910ad5d41c37fb4c0b8824ebe7139bfa5cded1",
+        "retained_excerpt": "Синтетический каталог. В мастерской доступен резограф «Тихий берег» по будням после предварительной записи. Это доступ, а не собственность. Для бумажных тиражей карточек он подходит, но в воскресенье недоступен. В другом помещении у знакомого есть одноимённый аппарат; пользователь только хочет купить собственный.",
+        "blob_ref": null,
+        "byte_length": 580,
+        "availability": "retained",
+        "source_language": "ru",
+        "language_assignment": "model-reported",
+        "provenance": {
+          "source_ref": "observed-bf649a06-78d9-49ad-b429-5da171780263",
+          "content_hash": "c12785c9139f40ea85000b27a1910ad5d41c37fb4c0b8824ebe7139bfa5cded1",
+          "transport": "rpc",
+          "channel_identity": "synthetic-mechanical-fixture",
+          "session_id": "synthetic-D-fixture",
+          "runtime_id": "synthetic-D-fixture",
+          "captured_at": "2026-10-20T10:20:58.168Z",
+          "capture_stage": "pi-input-hook-observed",
+          "original_keystrokes": false,
+          "byte_length": 580
+        },
+        "trust_origin": "programmatic-or-file-not-owner-approval"
+      }
+    },
+    {
+      "id": "concept-d492f04a-0e2b-48df-83a4-7ec981bb8f5b",
+      "kind": "concept",
+      "title": "Physical production",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.187Z",
+      "updated_at": "2026-10-20T10:20:58.187Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "definition": "A bounded synthetic navigation branch, not inherited personal properties",
+        "aliases": [
+          "Раздел 0"
+        ],
+        "broader_ids": [],
+        "status": "active",
+        "boundary_notes": "Specific catalog grouping, not identity"
+      }
+    },
+    {
+      "id": "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c",
+      "kind": "concept",
+      "title": "Printmaking",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.194Z",
+      "updated_at": "2026-10-20T10:20:58.194Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "definition": "A bounded synthetic navigation branch, not inherited personal properties",
+        "aliases": [
+          "Раздел 1"
+        ],
+        "broader_ids": [
+          {
+            "id": "concept-d492f04a-0e2b-48df-83a4-7ec981bb8f5b"
+          }
+        ],
+        "status": "active",
+        "boundary_notes": "Specific catalog grouping, not identity"
+      }
+    },
+    {
+      "id": "concept-da09639e-ae67-4184-9c0d-55a51d235820",
+      "kind": "concept",
+      "title": "Catalog branch 2",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.202Z",
+      "updated_at": "2026-10-20T10:20:58.202Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "definition": "A bounded synthetic navigation branch, not inherited personal properties",
+        "aliases": [
+          "Раздел 2"
+        ],
+        "broader_ids": [
+          {
+            "id": "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c"
+          }
+        ],
+        "status": "active",
+        "boundary_notes": "Specific catalog grouping, not identity"
+      }
+    },
+    {
+      "id": "concept-5ed36a65-b405-40c7-a4c3-c7f1a52531c9",
+      "kind": "concept",
+      "title": "Catalog branch 3",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.209Z",
+      "updated_at": "2026-10-20T10:20:58.209Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "definition": "A bounded synthetic navigation branch, not inherited personal properties",
+        "aliases": [
+          "Раздел 3"
+        ],
+        "broader_ids": [
+          {
+            "id": "concept-da09639e-ae67-4184-9c0d-55a51d235820"
+          }
+        ],
+        "status": "active",
+        "boundary_notes": "Specific catalog grouping, not identity"
+      }
+    },
+    {
+      "id": "concept-1550fe11-57bd-46e0-bd15-77d43d84a874",
+      "kind": "concept",
+      "title": "Catalog branch 4",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.216Z",
+      "updated_at": "2026-10-20T10:20:58.216Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "definition": "A bounded synthetic navigation branch, not inherited personal properties",
+        "aliases": [
+          "Раздел 4"
+        ],
+        "broader_ids": [
+          {
+            "id": "concept-5ed36a65-b405-40c7-a4c3-c7f1a52531c9"
+          }
+        ],
+        "status": "active",
+        "boundary_notes": "Specific catalog grouping, not identity"
+      }
+    },
+    {
+      "id": "concept-0a59f4be-21f7-42bb-8600-ea19e9a677a8",
+      "kind": "concept",
+      "title": "Botanical field notes",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.223Z",
+      "updated_at": "2026-10-20T10:20:58.223Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "definition": "A bounded synthetic navigation branch, not inherited personal properties",
+        "aliases": [
+          "Раздел 5"
+        ],
+        "broader_ids": [],
+        "status": "active",
+        "boundary_notes": "Specific catalog grouping, not identity"
+      }
+    },
+    {
+      "id": "entity-cf506f4d-b270-470d-9903-f0df6bf42025",
+      "kind": "entity",
+      "title": "Quiet Shore",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.230Z",
+      "updated_at": "2026-10-20T10:20:58.230Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-d492f04a-0e2b-48df-83a4-7ec981bb8f5b"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "entity_kind": "device",
+        "aliases": [
+          "Тихий берег"
+        ],
+        "disambiguation": "Workshop duplicator mentioned in source; access only, ownership unknown",
+        "status": "active"
+      }
+    },
+    {
+      "id": "entity-2c287956-f111-49d5-8d3d-3080fbf41d3d",
+      "kind": "entity",
+      "title": "Quiet Shore (friend's device)",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.230Z",
+      "updated_at": "2026-10-20T10:20:58.230Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "entity_kind": "device",
+        "aliases": [
+          "Тихий берег"
+        ],
+        "disambiguation": "Friend's separate device; no user access established",
+        "status": "active"
+      }
+    },
+    {
+      "id": "entity-f49c17f0-bb00-4c5e-b961-83d1703dea62",
+      "kind": "entity",
+      "title": "Quiet Shore (purchase candidate)",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.230Z",
+      "updated_at": "2026-10-20T10:20:58.230Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-da09639e-ae67-4184-9c0d-55a51d235820"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "entity_kind": "device",
+        "aliases": [
+          "Тихий берег"
+        ],
+        "disambiguation": "Desired future purchase, not a currently available user resource",
+        "status": "active"
+      }
+    },
+    {
+      "id": "entity-b7bda7c8-9ae8-49bf-a7ac-441af302da1e",
+      "kind": "entity",
+      "title": "Synthetic device 3",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.230Z",
+      "updated_at": "2026-10-20T10:20:58.230Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-5ed36a65-b405-40c7-a4c3-c7f1a52531c9"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "entity_kind": "device",
+        "aliases": [
+          "Unit-3"
+        ],
+        "disambiguation": "Distinct synthetic inventory item 3",
+        "status": "active"
+      }
+    },
+    {
+      "id": "entity-246165c6-065a-469d-ad56-ed73ceb5ed41",
+      "kind": "entity",
+      "title": "Synthetic device 4",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.230Z",
+      "updated_at": "2026-10-20T10:20:58.230Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-1550fe11-57bd-46e0-bd15-77d43d84a874"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "entity_kind": "device",
+        "aliases": [
+          "Unit-4"
+        ],
+        "disambiguation": "Distinct synthetic inventory item 4",
+        "status": "active"
+      }
+    },
+    {
+      "id": "knowledge-b7c6a1f2-5f29-4324-82c4-6bcdfe544e4a",
+      "kind": "knowledge",
+      "title": "Workshop resource conditions",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-0a59f4be-21f7-42bb-8600-ea19e9a677a8"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "The user has access to a risograph duplicator named Quiet Shore for printing paper card batches at the workshop; ownership is not established.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-cf506f4d-b270-470d-9903-f0df6bf42025"
+        },
+        "conditions": "Weekdays only, prior booking; unavailable on Sunday. Do not infer ownership, working condition or other unreported capabilities.",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-d560b503-df35-4eae-b8a9-35152a9829a9",
+      "kind": "knowledge",
+      "title": "Synthetic observation 1",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "A friend has another similarly named duplicator; user access is not established.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-2c287956-f111-49d5-8d3d-3080fbf41d3d"
+        },
+        "conditions": "Only the explicitly described synthetic case; no general availability inference",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-978c3cd8-d3ae-42bf-8191-b181fbe487ea",
+      "kind": "knowledge",
+      "title": "Synthetic observation 2",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-da09639e-ae67-4184-9c0d-55a51d235820"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "The user wishes to purchase a duplicator; this is not a currently available resource.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-f49c17f0-bb00-4c5e-b961-83d1703dea62"
+        },
+        "conditions": "Only the explicitly described synthetic case; no general availability inference",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-f08f84df-5b28-42ba-b50e-ea294664c29b",
+      "kind": "knowledge",
+      "title": "Synthetic observation 3",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-5ed36a65-b405-40c7-a4c3-c7f1a52531c9"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "Synthetic numbered observation 3 about artifact production and stored conditions.",
+        "state": "contested",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-b7bda7c8-9ae8-49bf-a7ac-441af302da1e"
+        },
+        "conditions": "Source A reports weekday-only access",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-f7f67960-1976-457e-828b-c778a2ac0d66",
+      "kind": "knowledge",
+      "title": "Synthetic observation 4",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-1550fe11-57bd-46e0-bd15-77d43d84a874"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "Synthetic numbered observation 4 about artifact production and stored conditions.",
+        "state": "contested",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-246165c6-065a-469d-ad56-ed73ceb5ed41"
+        },
+        "conditions": "Source B reports weekend-only access",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-e3b4f351-0f04-422b-aa0c-056928d4ba53",
+      "kind": "knowledge",
+      "title": "Synthetic observation 5",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-0a59f4be-21f7-42bb-8600-ea19e9a677a8"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "Synthetic numbered observation 5 about artifact production and stored conditions.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-cf506f4d-b270-470d-9903-f0df6bf42025"
+        },
+        "conditions": "Only the explicitly described synthetic case; no general availability inference",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-7fc6172d-053c-4c6a-920a-87d8b48c306e",
+      "kind": "knowledge",
+      "title": "Synthetic observation 6",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-d492f04a-0e2b-48df-83a4-7ec981bb8f5b"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "Synthetic numbered observation 6 about artifact production and stored conditions.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-2c287956-f111-49d5-8d3d-3080fbf41d3d"
+        },
+        "conditions": "Only the explicitly described synthetic case; no general availability inference",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-1ba70ffd-7704-46f8-b0c7-a70f4a6e3605",
+      "kind": "knowledge",
+      "title": "Synthetic observation 7",
+      "body": null,
+      "revision": 2,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.266Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "Synthetic numbered observation 7 about artifact production and stored conditions.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-f49c17f0-bb00-4c5e-b961-83d1703dea62"
+        },
+        "conditions": "Revised synthetic condition; prior version retained",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+      "kind": "evidence",
+      "title": "Original synthetic catalog notes",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.176Z",
+      "updated_at": "2026-10-20T10:20:58.176Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "source_kind": "observed_input",
+        "source_locator": "observed-bf649a06-78d9-49ad-b429-5da171780263",
+        "captured_at": "2026-10-20T10:20:58.168Z",
+        "content_hash": "c12785c9139f40ea85000b27a1910ad5d41c37fb4c0b8824ebe7139bfa5cded1",
+        "retained_excerpt": "Синтетический каталог. В мастерской доступен резограф «Тихий берег» по будням после предварительной записи. Это доступ, а не собственность. Для бумажных тиражей карточек он подходит, но в воскресенье недоступен. В другом помещении у знакомого есть одноимённый аппарат; пользователь только хочет купить собственный.",
+        "blob_ref": null,
+        "byte_length": 580,
+        "availability": "retained",
+        "source_language": "ru",
+        "language_assignment": "model-reported",
+        "provenance": {
+          "source_ref": "observed-bf649a06-78d9-49ad-b429-5da171780263",
+          "content_hash": "c12785c9139f40ea85000b27a1910ad5d41c37fb4c0b8824ebe7139bfa5cded1",
+          "transport": "rpc",
+          "channel_identity": "synthetic-mechanical-fixture",
+          "session_id": "synthetic-D-fixture",
+          "runtime_id": "synthetic-D-fixture",
+          "captured_at": "2026-10-20T10:20:58.168Z",
+          "capture_stage": "pi-input-hook-observed",
+          "original_keystrokes": false,
+          "byte_length": 580
+        },
+        "trust_origin": "programmatic-or-file-not-owner-approval"
+      }
+    },
+    {
+      "id": "concept-d492f04a-0e2b-48df-83a4-7ec981bb8f5b",
+      "kind": "concept",
+      "title": "Physical production",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.187Z",
+      "updated_at": "2026-10-20T10:20:58.187Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "definition": "A bounded synthetic navigation branch, not inherited personal properties",
+        "aliases": [
+          "Раздел 0"
+        ],
+        "broader_ids": [],
+        "status": "active",
+        "boundary_notes": "Specific catalog grouping, not identity"
+      }
+    },
+    {
+      "id": "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c",
+      "kind": "concept",
+      "title": "Printmaking",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.194Z",
+      "updated_at": "2026-10-20T10:20:58.194Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "definition": "A bounded synthetic navigation branch, not inherited personal properties",
+        "aliases": [
+          "Раздел 1"
+        ],
+        "broader_ids": [
+          {
+            "id": "concept-d492f04a-0e2b-48df-83a4-7ec981bb8f5b"
+          }
+        ],
+        "status": "active",
+        "boundary_notes": "Specific catalog grouping, not identity"
+      }
+    },
+    {
+      "id": "concept-da09639e-ae67-4184-9c0d-55a51d235820",
+      "kind": "concept",
+      "title": "Catalog branch 2",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.202Z",
+      "updated_at": "2026-10-20T10:20:58.202Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "definition": "A bounded synthetic navigation branch, not inherited personal properties",
+        "aliases": [
+          "Раздел 2"
+        ],
+        "broader_ids": [
+          {
+            "id": "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c"
+          }
+        ],
+        "status": "active",
+        "boundary_notes": "Specific catalog grouping, not identity"
+      }
+    },
+    {
+      "id": "concept-5ed36a65-b405-40c7-a4c3-c7f1a52531c9",
+      "kind": "concept",
+      "title": "Catalog branch 3",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.209Z",
+      "updated_at": "2026-10-20T10:20:58.209Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "definition": "A bounded synthetic navigation branch, not inherited personal properties",
+        "aliases": [
+          "Раздел 3"
+        ],
+        "broader_ids": [
+          {
+            "id": "concept-da09639e-ae67-4184-9c0d-55a51d235820"
+          }
+        ],
+        "status": "active",
+        "boundary_notes": "Specific catalog grouping, not identity"
+      }
+    },
+    {
+      "id": "concept-1550fe11-57bd-46e0-bd15-77d43d84a874",
+      "kind": "concept",
+      "title": "Catalog branch 4",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.216Z",
+      "updated_at": "2026-10-20T10:20:58.216Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "definition": "A bounded synthetic navigation branch, not inherited personal properties",
+        "aliases": [
+          "Раздел 4"
+        ],
+        "broader_ids": [
+          {
+            "id": "concept-5ed36a65-b405-40c7-a4c3-c7f1a52531c9"
+          }
+        ],
+        "status": "active",
+        "boundary_notes": "Specific catalog grouping, not identity"
+      }
+    },
+    {
+      "id": "concept-0a59f4be-21f7-42bb-8600-ea19e9a677a8",
+      "kind": "concept",
+      "title": "Botanical field notes",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.223Z",
+      "updated_at": "2026-10-20T10:20:58.223Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "definition": "A bounded synthetic navigation branch, not inherited personal properties",
+        "aliases": [
+          "Раздел 5"
+        ],
+        "broader_ids": [],
+        "status": "active",
+        "boundary_notes": "Specific catalog grouping, not identity"
+      }
+    },
+    {
+      "id": "entity-cf506f4d-b270-470d-9903-f0df6bf42025",
+      "kind": "entity",
+      "title": "Quiet Shore",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.230Z",
+      "updated_at": "2026-10-20T10:20:58.230Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-d492f04a-0e2b-48df-83a4-7ec981bb8f5b"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "entity_kind": "device",
+        "aliases": [
+          "Тихий берег"
+        ],
+        "disambiguation": "Workshop duplicator mentioned in source; access only, ownership unknown",
+        "status": "active"
+      }
+    },
+    {
+      "id": "entity-2c287956-f111-49d5-8d3d-3080fbf41d3d",
+      "kind": "entity",
+      "title": "Quiet Shore (friend's device)",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.230Z",
+      "updated_at": "2026-10-20T10:20:58.230Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "entity_kind": "device",
+        "aliases": [
+          "Тихий берег"
+        ],
+        "disambiguation": "Friend's separate device; no user access established",
+        "status": "active"
+      }
+    },
+    {
+      "id": "entity-f49c17f0-bb00-4c5e-b961-83d1703dea62",
+      "kind": "entity",
+      "title": "Quiet Shore (purchase candidate)",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.230Z",
+      "updated_at": "2026-10-20T10:20:58.230Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-da09639e-ae67-4184-9c0d-55a51d235820"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "entity_kind": "device",
+        "aliases": [
+          "Тихий берег"
+        ],
+        "disambiguation": "Desired future purchase, not a currently available user resource",
+        "status": "active"
+      }
+    },
+    {
+      "id": "entity-b7bda7c8-9ae8-49bf-a7ac-441af302da1e",
+      "kind": "entity",
+      "title": "Synthetic device 3",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.230Z",
+      "updated_at": "2026-10-20T10:20:58.230Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-5ed36a65-b405-40c7-a4c3-c7f1a52531c9"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "entity_kind": "device",
+        "aliases": [
+          "Unit-3"
+        ],
+        "disambiguation": "Distinct synthetic inventory item 3",
+        "status": "active"
+      }
+    },
+    {
+      "id": "entity-246165c6-065a-469d-ad56-ed73ceb5ed41",
+      "kind": "entity",
+      "title": "Synthetic device 4",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.230Z",
+      "updated_at": "2026-10-20T10:20:58.230Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-1550fe11-57bd-46e0-bd15-77d43d84a874"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "entity_kind": "device",
+        "aliases": [
+          "Unit-4"
+        ],
+        "disambiguation": "Distinct synthetic inventory item 4",
+        "status": "active"
+      }
+    },
+    {
+      "id": "knowledge-b7c6a1f2-5f29-4324-82c4-6bcdfe544e4a",
+      "kind": "knowledge",
+      "title": "Workshop resource conditions",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-0a59f4be-21f7-42bb-8600-ea19e9a677a8"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "The user has access to a risograph duplicator named Quiet Shore for printing paper card batches at the workshop; ownership is not established.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-cf506f4d-b270-470d-9903-f0df6bf42025"
+        },
+        "conditions": "Weekdays only, prior booking; unavailable on Sunday. Do not infer ownership, working condition or other unreported capabilities.",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-d560b503-df35-4eae-b8a9-35152a9829a9",
+      "kind": "knowledge",
+      "title": "Synthetic observation 1",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "A friend has another similarly named duplicator; user access is not established.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-2c287956-f111-49d5-8d3d-3080fbf41d3d"
+        },
+        "conditions": "Only the explicitly described synthetic case; no general availability inference",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-978c3cd8-d3ae-42bf-8191-b181fbe487ea",
+      "kind": "knowledge",
+      "title": "Synthetic observation 2",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-da09639e-ae67-4184-9c0d-55a51d235820"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "The user wishes to purchase a duplicator; this is not a currently available resource.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-f49c17f0-bb00-4c5e-b961-83d1703dea62"
+        },
+        "conditions": "Only the explicitly described synthetic case; no general availability inference",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-f08f84df-5b28-42ba-b50e-ea294664c29b",
+      "kind": "knowledge",
+      "title": "Synthetic observation 3",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-5ed36a65-b405-40c7-a4c3-c7f1a52531c9"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "Synthetic numbered observation 3 about artifact production and stored conditions.",
+        "state": "contested",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-b7bda7c8-9ae8-49bf-a7ac-441af302da1e"
+        },
+        "conditions": "Source A reports weekday-only access",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-f7f67960-1976-457e-828b-c778a2ac0d66",
+      "kind": "knowledge",
+      "title": "Synthetic observation 4",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-1550fe11-57bd-46e0-bd15-77d43d84a874"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "Synthetic numbered observation 4 about artifact production and stored conditions.",
+        "state": "contested",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-246165c6-065a-469d-ad56-ed73ceb5ed41"
+        },
+        "conditions": "Source B reports weekend-only access",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-e3b4f351-0f04-422b-aa0c-056928d4ba53",
+      "kind": "knowledge",
+      "title": "Synthetic observation 5",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-0a59f4be-21f7-42bb-8600-ea19e9a677a8"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "Synthetic numbered observation 5 about artifact production and stored conditions.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-cf506f4d-b270-470d-9903-f0df6bf42025"
+        },
+        "conditions": "Only the explicitly described synthetic case; no general availability inference",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-7fc6172d-053c-4c6a-920a-87d8b48c306e",
+      "kind": "knowledge",
+      "title": "Synthetic observation 6",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-d492f04a-0e2b-48df-83a4-7ec981bb8f5b"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "Synthetic numbered observation 6 about artifact production and stored conditions.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-2c287956-f111-49d5-8d3d-3080fbf41d3d"
+        },
+        "conditions": "Only the explicitly described synthetic case; no general availability inference",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-1ba70ffd-7704-46f8-b0c7-a70f4a6e3605",
+      "kind": "knowledge",
+      "title": "Synthetic observation 7",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "Synthetic numbered observation 7 about artifact production and stored conditions.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-f49c17f0-bb00-4c5e-b961-83d1703dea62"
+        },
+        "conditions": "Only the explicitly described synthetic case; no general availability inference",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-1ba70ffd-7704-46f8-b0c7-a70f4a6e3605",
+      "kind": "knowledge",
+      "title": "Synthetic observation 7",
+      "body": null,
+      "revision": 2,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.266Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "Synthetic numbered observation 7 about artifact production and stored conditions.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-f49c17f0-bb00-4c5e-b961-83d1703dea62"
+        },
+        "conditions": "Revised synthetic condition; prior version retained",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    }
+  ],
+  "contested": 2,
+  "map": {
+    "ok": true,
+    "workspace_id": "518b1738-bedd-456d-ab34-199778104110",
+    "schema_version": 3,
+    "snapshot_seq": 10,
+    "data": {
+      "entries": [
+        {
+          "label": "activities",
+          "description": "Permitted existing activities",
+          "selector": {
+            "view": "activities"
+          },
+          "has_more": false
+        },
+        {
+          "label": "work",
+          "description": "Permitted existing work",
+          "selector": {
+            "view": "work"
+          },
+          "has_more": false
+        },
+        {
+          "label": "knowledge",
+          "description": "Permitted existing knowledge",
+          "selector": {
+            "view": "knowledge"
+          },
+          "has_more": true
+        },
+        {
+          "label": "materials",
+          "description": "Permitted existing materials",
+          "selector": {
+            "view": "materials"
+          },
+          "has_more": false
+        },
+        {
+          "label": "operations",
+          "description": "Permitted existing operations",
+          "selector": {
+            "view": "operations"
+          },
+          "has_more": true
+        },
+        {
+          "label": "handoffs",
+          "description": "Permitted existing handoffs",
+          "selector": {
+            "view": "handoffs"
+          },
+          "has_more": false
+        },
+        {
+          "label": "claims",
+          "description": "Permitted existing claims",
+          "selector": {
+            "view": "claims"
+          },
+          "has_more": false
+        },
+        {
+          "label": "resources",
+          "description": "Permitted existing resources",
+          "selector": {
+            "view": "resources"
+          },
+          "has_more": true
+        },
+        {
+          "label": "people",
+          "description": "Permitted existing people",
+          "selector": {
+            "view": "people"
+          },
+          "has_more": false
+        },
+        {
+          "label": "topics",
+          "description": "Permitted existing topics",
+          "selector": {
+            "view": "topics"
+          },
+          "has_more": true
+        },
+        {
+          "label": "entities",
+          "description": "Permitted existing entities",
+          "selector": {
+            "view": "entities"
+          },
+          "has_more": true
+        },
+        {
+          "label": "unfiled",
+          "description": "Permitted existing unfiled",
+          "selector": {
+            "view": "unfiled"
+          },
+          "has_more": false
+        },
+        {
+          "label": "relations",
+          "description": "Permitted existing relations",
+          "selector": {
+            "view": "relations"
+          },
+          "has_more": false
+        }
+      ],
+      "focus": null,
+      "applied_filters": {
+        "access": "trusted context"
+      },
+      "generation": "27c3fda45a3d3eb5c6159f8862ecfa31d34c6e4f06fc2f36aee1a8baf2707846",
+      "has_more": false,
+      "next_cursor": null
+    },
+    "warnings": []
+  },
+  "branches": {
+    "ok": true,
+    "workspace_id": "518b1738-bedd-456d-ab34-199778104110",
+    "schema_version": 3,
+    "snapshot_seq": 10,
+    "data": {
+      "cards": [
+        {
+          "id": "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c",
+          "kind": "concept",
+          "title": "Printmaking",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c"
+          },
+          "must_read": [
+            {
+              "id": "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "entity-cf506f4d-b270-470d-9903-f0df6bf42025",
+          "kind": "entity",
+          "title": "Quiet Shore",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "entity-cf506f4d-b270-470d-9903-f0df6bf42025"
+          },
+          "must_read": [
+            {
+              "id": "entity-cf506f4d-b270-470d-9903-f0df6bf42025",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "knowledge-7fc6172d-053c-4c6a-920a-87d8b48c306e",
+          "kind": "knowledge",
+          "title": "Synthetic observation 6",
+          "revision": 1,
+          "storage": "live",
+          "state": "current",
+          "description": null,
+          "selector": {
+            "record_id": "knowledge-7fc6172d-053c-4c6a-920a-87d8b48c306e"
+          },
+          "must_read": [
+            {
+              "id": "knowledge-7fc6172d-053c-4c6a-920a-87d8b48c306e",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        }
+      ],
+      "applied_filters": {
+        "view": "topics",
+        "record_id": "concept-d492f04a-0e2b-48df-83a4-7ec981bb8f5b",
+        "limit": 20,
+        "mode": null
+      },
+      "generation": "27c3fda45a3d3eb5c6159f8862ecfa31d34c6e4f06fc2f36aee1a8baf2707846",
+      "has_more": false,
+      "next_cursor": null,
+      "warnings": [
+        "Empty or incomplete results do not establish absence. Read selected records and conditions before use."
+      ]
+    },
+    "warnings": []
+  },
+  "search": {
+    "ok": true,
+    "workspace_id": "518b1738-bedd-456d-ab34-199778104110",
+    "schema_version": 3,
+    "snapshot_seq": 10,
+    "data": {
+      "cards": [
+        {
+          "id": "knowledge-b7c6a1f2-5f29-4324-82c4-6bcdfe544e4a",
+          "kind": "knowledge",
+          "title": "Workshop resource conditions",
+          "revision": 1,
+          "storage": "live",
+          "state": "current",
+          "description": null,
+          "selector": {
+            "record_id": "knowledge-b7c6a1f2-5f29-4324-82c4-6bcdfe544e4a"
+          },
+          "must_read": [
+            {
+              "id": "knowledge-b7c6a1f2-5f29-4324-82c4-6bcdfe544e4a",
+              "revision": 1
+            }
+          ],
+          "match_reasons": [
+            "English working text"
+          ]
+        }
+      ],
+      "applied_filters": {
+        "query": "risograph printing",
+        "match": "all",
+        "kinds": [
+          "knowledge"
+        ],
+        "limit": 20
+      },
+      "generation": "27c3fda45a3d3eb5c6159f8862ecfa31d34c6e4f06fc2f36aee1a8baf2707846",
+      "has_more": false,
+      "next_cursor": null,
+      "warnings": [
+        "Empty or incomplete results do not establish absence. Read selected records and conditions before use."
+      ],
+      "order": "stable document id",
+      "validity_note": "No applicability time inferred from write time."
+    },
+    "warnings": []
+  },
+  "snapshot": {
+    "available": true,
+    "workspace_id": "518b1738-bedd-456d-ab34-199778104110",
+    "active_epoch": "c78727fd-3caa-4c72-bd4a-177011df2a5c",
+    "snapshot_seq": 10,
+    "generation": "27c3fda45a3d3eb5c6159f8862ecfa31d34c6e4f06fc2f36aee1a8baf2707846",
+    "focus": null,
+    "records": [],
+    "context_current": [],
+    "must_read": [],
+    "has_more": false,
+    "warnings": [
+      "Shared memory is not loaded: use catalog/search and read selected claims plus conditions. Historical tool messages may be stale."
+    ],
+    "write_mode": "single-writer",
+    "data_only": true,
+    "byte_budget": 12288,
+    "incomplete": false
+  },
+  "exact": {
+    "ok": true,
+    "workspace_id": "518b1738-bedd-456d-ab34-199778104110",
+    "schema_version": 3,
+    "snapshot_seq": 10,
+    "data": {
+      "id": "knowledge-b7c6a1f2-5f29-4324-82c4-6bcdfe544e4a",
+      "kind": "knowledge",
+      "title": "Workshop resource conditions",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:20:58.247Z",
+      "updated_at": "2026-10-20T10:20:58.247Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-0a59f4be-21f7-42bb-8600-ea19e9a677a8"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "The user has access to a risograph duplicator named Quiet Shore for printing paper card batches at the workshop; ownership is not established.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-cf506f4d-b270-470d-9903-f0df6bf42025"
+        },
+        "conditions": "Weekdays only, prior booking; unavailable on Sunday. Do not infer ownership, working condition or other unreported capabilities.",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-a5168d4f-cfd8-4ba1-b704-a8529a13db8e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    "warnings": []
+  },
+  "pages": 1,
+  "cardCount": 8,
+  "totalPageBytes": 3338,
+  "first": {
+    "cards": [
+      {
+        "id": "knowledge-7fc6172d-053c-4c6a-920a-87d8b48c306e",
+        "kind": "knowledge",
+        "title": "Synthetic observation 6",
+        "revision": 1,
+        "storage": "live",
+        "state": "current",
+        "description": null,
+        "selector": {
+          "record_id": "knowledge-7fc6172d-053c-4c6a-920a-87d8b48c306e"
+        },
+        "must_read": [
+          {
+            "id": "knowledge-7fc6172d-053c-4c6a-920a-87d8b48c306e",
+            "revision": 1
+          }
+        ],
+        "match_reasons": [
+          "Typed filters"
+        ]
+      },
+      {
+        "id": "knowledge-978c3cd8-d3ae-42bf-8191-b181fbe487ea",
+        "kind": "knowledge",
+        "title": "Synthetic observation 2",
+        "revision": 1,
+        "storage": "live",
+        "state": "current",
+        "description": null,
+        "selector": {
+          "record_id": "knowledge-978c3cd8-d3ae-42bf-8191-b181fbe487ea"
+        },
+        "must_read": [
+          {
+            "id": "knowledge-978c3cd8-d3ae-42bf-8191-b181fbe487ea",
+            "revision": 1
+          }
+        ],
+        "match_reasons": [
+          "Typed filters"
+        ]
+      },
+      {
+        "id": "knowledge-b7c6a1f2-5f29-4324-82c4-6bcdfe544e4a",
+        "kind": "knowledge",
+        "title": "Workshop resource conditions",
+        "revision": 1,
+        "storage": "live",
+        "state": "current",
+        "description": null,
+        "selector": {
+          "record_id": "knowledge-b7c6a1f2-5f29-4324-82c4-6bcdfe544e4a"
+        },
+        "must_read": [
+          {
+            "id": "knowledge-b7c6a1f2-5f29-4324-82c4-6bcdfe544e4a",
+            "revision": 1
+          }
+        ],
+        "match_reasons": [
+          "Typed filters"
+        ]
+      },
+      {
+        "id": "knowledge-d560b503-df35-4eae-b8a9-35152a9829a9",
+        "kind": "knowledge",
+        "title": "Synthetic observation 1",
+        "revision": 1,
+        "storage": "live",
+        "state": "current",
+        "description": null,
+        "selector": {
+          "record_id": "knowledge-d560b503-df35-4eae-b8a9-35152a9829a9"
+        },
+        "must_read": [
+          {
+            "id": "knowledge-d560b503-df35-4eae-b8a9-35152a9829a9",
+            "revision": 1
+          }
+        ],
+        "match_reasons": [
+          "Typed filters"
+        ]
+      },
+      {
+        "id": "knowledge-e3b4f351-0f04-422b-aa0c-056928d4ba53",
+        "kind": "knowledge",
+        "title": "Synthetic observation 5",
+        "revision": 1,
+        "storage": "live",
+        "state": "current",
+        "description": null,
+        "selector": {
+          "record_id": "knowledge-e3b4f351-0f04-422b-aa0c-056928d4ba53"
+        },
+        "must_read": [
+          {
+            "id": "knowledge-e3b4f351-0f04-422b-aa0c-056928d4ba53",
+            "revision": 1
+          }
+        ],
+        "match_reasons": [
+          "Typed filters"
+        ]
+      },
+      {
+        "id": "knowledge-f08f84df-5b28-42ba-b50e-ea294664c29b",
+        "kind": "knowledge",
+        "title": "Synthetic observation 3",
+        "revision": 1,
+        "storage": "live",
+        "state": "contested",
+        "description": null,
+        "selector": {
+          "record_id": "knowledge-f08f84df-5b28-42ba-b50e-ea294664c29b"
+        },
+        "must_read": [
+          {
+            "id": "knowledge-f08f84df-5b28-42ba-b50e-ea294664c29b",
+            "revision": 1
+          }
+        ],
+        "match_reasons": [
+          "Typed filters"
+        ]
+      },
+      {
+        "id": "knowledge-f7f67960-1976-457e-828b-c778a2ac0d66",
+        "kind": "knowledge",
+        "title": "Synthetic observation 4",
+        "revision": 1,
+        "storage": "live",
+        "state": "contested",
+        "description": null,
+        "selector": {
+          "record_id": "knowledge-f7f67960-1976-457e-828b-c778a2ac0d66"
+        },
+        "must_read": [
+          {
+            "id": "knowledge-f7f67960-1976-457e-828b-c778a2ac0d66",
+            "revision": 1
+          }
+        ],
+        "match_reasons": [
+          "Typed filters"
+        ]
+      },
+      {
+        "id": "knowledge-1ba70ffd-7704-46f8-b0c7-a70f4a6e3605",
+        "kind": "knowledge",
+        "title": "Synthetic observation 7",
+        "revision": 2,
+        "storage": "live",
+        "state": "current",
+        "description": null,
+        "selector": {
+          "record_id": "knowledge-1ba70ffd-7704-46f8-b0c7-a70f4a6e3605"
+        },
+        "must_read": [
+          {
+            "id": "knowledge-1ba70ffd-7704-46f8-b0c7-a70f4a6e3605",
+            "revision": 2
+          }
+        ],
+        "match_reasons": [
+          "Typed filters"
+        ]
+      }
+    ],
+    "applied_filters": {
+      "kinds": [
+        "knowledge"
+      ],
+      "limit": 50
+    },
+    "generation": "27c3fda45a3d3eb5c6159f8862ecfa31d34c6e4f06fc2f36aee1a8baf2707846",
+    "has_more": false,
+    "next_cursor": null,
+    "warnings": [
+      "Empty or incomplete results do not establish absence. Read selected records and conditions before use."
+    ],
+    "order": "stable document id",
+    "validity_note": "No applicability time inferred from write time."
+  },
+  "timings": [
+    {
+      "label": "seed-batch-0",
+      "ms": 18.789999999999964,
+      "bytes": 1089
+    },
+    {
+      "label": "map",
+      "ms": 9.55460000000005,
+      "bytes": 1768
+    },
+    {
+      "label": "wide-branch-page",
+      "ms": 5.420100000000048,
+      "bytes": 1497
+    },
+    {
+      "label": "independent-lexical",
+      "ms": 6.012899999999945,
+      "bytes": 939
+    },
+    {
+      "label": "snapshot",
+      "ms": 1.1098000000000638,
+      "bytes": 532
+    },
+    {
+      "label": "selected-claim-read",
+      "ms": 5.107999999999947,
+      "bytes": 1234
+    },
+    {
+      "label": "all-claims-page-0",
+      "ms": 5.50240000000008,
+      "bytes": 3462
+    }
+  ],
+  "trace": {
+    "schema_version": 3,
+    "read_only": false,
+    "index": "checked",
+    "retrieval_trace": [
+      {
+        "operation": "search",
+        "input": {
+          "kinds": [
+            "knowledge"
+          ],
+          "limit": 50
+        },
+        "refs": [
+          {
+            "id": "knowledge-7fc6172d-053c-4c6a-920a-87d8b48c306e",
+            "revision": 1
+          },
+          {
+            "id": "knowledge-978c3cd8-d3ae-42bf-8191-b181fbe487ea",
+            "revision": 1
+          },
+          {
+            "id": "knowledge-b7c6a1f2-5f29-4324-82c4-6bcdfe544e4a",
+            "revision": 1
+          },
+          {
+            "id": "knowledge-d560b503-df35-4eae-b8a9-35152a9829a9",
+            "revision": 1
+          },
+          {
+            "id": "knowledge-e3b4f351-0f04-422b-aa0c-056928d4ba53",
+            "revision": 1
+          },
+          {
+            "id": "knowledge-f08f84df-5b28-42ba-b50e-ea294664c29b",
+            "revision": 1
+          },
+          {
+            "id": "knowledge-f7f67960-1976-457e-828b-c778a2ac0d66",
+            "revision": 1
+          },
+          {
+            "id": "knowledge-1ba70ffd-7704-46f8-b0c7-a70f4a6e3605",
+            "revision": 2
+          }
+        ],
+        "generation": "27c3fda45a3d3eb5c6159f8862ecfa31d34c6e4f06fc2f36aee1a8baf2707846",
+        "bytes": 3338,
+        "has_more": false,
+        "elapsed_ms": 1.125,
+        "error": null
+      },
+      {
+        "operation": "read",
+        "input": {
+          "id": "knowledge-b7c6a1f2-5f29-4324-82c4-6bcdfe544e4a"
+        },
+        "refs": [
+          {
+            "id": "knowledge-b7c6a1f2-5f29-4324-82c4-6bcdfe544e4a",
+            "revision": 1
+          }
+        ],
+        "generation": "27c3fda45a3d3eb5c6159f8862ecfa31d34c6e4f06fc2f36aee1a8baf2707846",
+        "bytes": 1110,
+        "has_more": false,
+        "elapsed_ms": 0.7181000000000495,
+        "error": null
+      },
+      {
+        "operation": "search",
+        "input": {
+          "query": "risograph printing",
+          "match": "all",
+          "kinds": [
+            "knowledge"
+          ],
+          "limit": 20
+        },
+        "refs": [
+          {
+            "id": "knowledge-b7c6a1f2-5f29-4324-82c4-6bcdfe544e4a",
+            "revision": 1
+          }
+        ],
+        "generation": "27c3fda45a3d3eb5c6159f8862ecfa31d34c6e4f06fc2f36aee1a8baf2707846",
+        "bytes": 815,
+        "has_more": false,
+        "elapsed_ms": 3.2001999999999953,
+        "error": null
+      },
+      {
+        "operation": "browse",
+        "input": {
+          "view": "topics",
+          "recordId": "concept-d492f04a-0e2b-48df-83a4-7ec981bb8f5b",
+          "limit": 20
+        },
+        "refs": [
+          {
+            "id": "concept-3e717092-7f98-45d5-a3c5-2a100e3ef44c",
+            "revision": 1
+          },
+          {
+            "id": "entity-cf506f4d-b270-470d-9903-f0df6bf42025",
+            "revision": 1
+          },
+          {
+            "id": "knowledge-7fc6172d-053c-4c6a-920a-87d8b48c306e",
+            "revision": 1
+          }
+        ],
+        "generation": "27c3fda45a3d3eb5c6159f8862ecfa31d34c6e4f06fc2f36aee1a8baf2707846",
+        "bytes": 1373,
+        "has_more": false,
+        "elapsed_ms": 1.1615000000000464,
+        "error": null
+      },
+      {
+        "operation": "read",
+        "input": {
+          "id": "knowledge-1ba70ffd-7704-46f8-b0c7-a70f4a6e3605",
+          "revision": 1
+        },
+        "refs": [
+          {
+            "id": "knowledge-1ba70ffd-7704-46f8-b0c7-a70f4a6e3605",
+            "revision": 1
+          }
+        ],
+        "generation": "27c3fda45a3d3eb5c6159f8862ecfa31d34c6e4f06fc2f36aee1a8baf2707846",
+        "bytes": 995,
+        "has_more": false,
+        "elapsed_ms": 0.6858999999999469,
+        "error": null
+      },
+      {
+        "operation": "read",
+        "input": {
+          "id": "knowledge-1ba70ffd-7704-46f8-b0c7-a70f4a6e3605"
+        },
+        "refs": [
+          {
+            "id": "knowledge-1ba70ffd-7704-46f8-b0c7-a70f4a6e3605",
+            "revision": 1
+          }
+        ],
+        "generation": "21f20b457c5c1731e9def363feee66f4025074fb225f0d830cea490341eafbee",
+        "bytes": 995,
+        "has_more": false,
+        "elapsed_ms": 1.1082000000000107,
+        "error": null
+      }
+    ],
+    "trace_bound": 512,
+    "managed_access": "Trusted personal process; not OS isolation"
+  }
+}

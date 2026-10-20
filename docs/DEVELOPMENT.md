@@ -37,6 +37,22 @@ grounds/Activities and selected revisions/contradictions/misclassification. This
 paging and deep/wide navigation while allowing complete mechanical source inspection;
 it does not represent unlimited-scale latency or measure intelligence/usefulness.
 
+## D implementation and qualification
+
+Current design/rationale: [D-DESIGN](D-DESIGN.md). Actual separate M/L criteria,
+profiles, all attempts, scale, preservation and known limits: [D-VALIDATION](D-VALIDATION.md).
+[Reproduction](D-REPRODUCE.md) includes trusted personal scope setup. Default/unset
+scopes are workspace-only; the positive protected-memory profile explicitly receives
+restricted:read/write from trusted setup, never model arguments. One failed final
+workspace-only save is retained; the scoped continuation succeeds.
+
+Schema 3 adds rebuildable FTS5/name indexes, memberships/Concept parents, effective
+managed access, registered relations/history and a bounded retrieval trace. Native
+schema-2 migration preserves canonical JSON/IDs/materials and validates the old
+Work/handoff graph before switching. Current snapshots/reads/search reflect corrections.
+Opaque per-Core cursors hide positions and bind query, order, access and generation;
+technical sequence numbers exposed to limited scopes count permitted Changes only.
+
 ## Retained profile
 
 Windows 11 x64, Node 22.19.0, npm 11.6.2, Pi 1.3.0; TypeScript, node:sqlite/WAL, short
@@ -86,7 +102,8 @@ No time scheduler: waits preserve due_at with offset and required IANA timezone.
 
 ## State and scope
 
-Schema 2 adds claims, handoffs and migration receipts, leaving existing domain rows intact.
+The accepted schema-2 base added claims, handoffs and migration receipts. Schema 3
+retains those canonical rows exactly and adds the derived/shared-memory structures above.
 Backup files stay under the separate home and are not automatically deleted. Missing/corrupt
 stores never create replacement empty databases. Failed imports can leave orphan staging/
 immutable blobs; garbage collection and full user backup/quarantine restore remain stage E.

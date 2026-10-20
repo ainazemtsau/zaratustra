@@ -1,0 +1,12 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\release-agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\scoped-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-23-scoped-changed",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\23-scoped-changed",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "prompt": "Условия изменились: мастерская «Старая гавань» отозвала мой доступ к «Парусу-41». Он больше мне недоступен, прежний код записи тоже не действует. Прежняя возможность была верной раньше, но теперь на неё нельзя рассчитывать. Учти это в сохранённом плане карточек. Сразу пересмотри план и объясни, на что я могу рассчитывать теперь.",
+  "trustedScopes": [
+    "restricted:read",
+    "restricted:write"
+  ]
+}

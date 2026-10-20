@@ -1,0 +1,23 @@
+{
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-03-cross-area",
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 2,
+    "requests": 12,
+    "input": 202854,
+    "output": 5454,
+    "cache_read": 121600,
+    "estimated_usd": 0.22920800000000002,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 12
+  },
+  "scenario": "03-cross-area",
+  "sha": "248483114d7723c9f9f6ac9989dfe33ea02d6905"
+}

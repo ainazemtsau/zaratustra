@@ -1,0 +1,246 @@
+{
+  "mode": "scale",
+  "counts": {
+    "concepts": 96,
+    "entities": 128,
+    "knowledge": 2048
+  },
+  "pages": 41,
+  "cardCount": 2048,
+  "totalPageBytes": 789877,
+  "query_ms": [
+    {
+      "label": "map",
+      "ms": 543.8899999999994,
+      "bytes": 1769
+    },
+    {
+      "label": "wide-branch-page",
+      "ms": 37.478799999997136,
+      "bytes": 7647
+    },
+    {
+      "label": "independent-lexical",
+      "ms": 49.364300000001094,
+      "bytes": 940
+    },
+    {
+      "label": "snapshot",
+      "ms": 42.73059999999896,
+      "bytes": 533
+    },
+    {
+      "label": "selected-claim-read",
+      "ms": 32.396099999998114,
+      "bytes": 1235
+    },
+    {
+      "label": "all-claims-page-0",
+      "ms": 116.4246000000021,
+      "bytes": 19345
+    },
+    {
+      "label": "all-claims-page-1",
+      "ms": 43.4987000000001,
+      "bytes": 19349
+    },
+    {
+      "label": "all-claims-page-2",
+      "ms": 44.01039999999921,
+      "bytes": 19392
+    },
+    {
+      "label": "all-claims-page-3",
+      "ms": 47.20860000000175,
+      "bytes": 19395
+    },
+    {
+      "label": "all-claims-page-4",
+      "ms": 49.53470000000016,
+      "bytes": 19395
+    },
+    {
+      "label": "all-claims-page-5",
+      "ms": 51.75849999999991,
+      "bytes": 19395
+    },
+    {
+      "label": "all-claims-page-6",
+      "ms": 53.743099999999686,
+      "bytes": 19395
+    },
+    {
+      "label": "all-claims-page-7",
+      "ms": 51.22569999999905,
+      "bytes": 19395
+    },
+    {
+      "label": "all-claims-page-8",
+      "ms": 54.07510000000184,
+      "bytes": 19395
+    },
+    {
+      "label": "all-claims-page-9",
+      "ms": 55.468800000002375,
+      "bytes": 19395
+    },
+    {
+      "label": "all-claims-page-10",
+      "ms": 52.96679999999833,
+      "bytes": 19395
+    },
+    {
+      "label": "all-claims-page-11",
+      "ms": 52.85959999999977,
+      "bytes": 19395
+    },
+    {
+      "label": "all-claims-page-12",
+      "ms": 53.29139999999825,
+      "bytes": 19395
+    },
+    {
+      "label": "all-claims-page-13",
+      "ms": 53.47820000000138,
+      "bytes": 19395
+    },
+    {
+      "label": "all-claims-page-14",
+      "ms": 51.07449999999881,
+      "bytes": 19395
+    },
+    {
+      "label": "all-claims-page-15",
+      "ms": 48.71169999999984,
+      "bytes": 19396
+    },
+    {
+      "label": "all-claims-page-16",
+      "ms": 48.304800000001705,
+      "bytes": 19396
+    },
+    {
+      "label": "all-claims-page-17",
+      "ms": 47.030000000002474,
+      "bytes": 19396
+    },
+    {
+      "label": "all-claims-page-18",
+      "ms": 48.04359999999724,
+      "bytes": 19396
+    },
+    {
+      "label": "all-claims-page-19",
+      "ms": 43.90299999999843,
+      "bytes": 19401
+    },
+    {
+      "label": "all-claims-page-20",
+      "ms": 45.288000000000466,
+      "bytes": 19442
+    },
+    {
+      "label": "all-claims-page-21",
+      "ms": 43.168799999999464,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-22",
+      "ms": 47.830400000002555,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-23",
+      "ms": 45.72889999999825,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-24",
+      "ms": 44.44970000000103,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-25",
+      "ms": 46.77000000000044,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-26",
+      "ms": 46.417199999999866,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-27",
+      "ms": 50.15589999999793,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-28",
+      "ms": 47.42410000000018,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-29",
+      "ms": 48.3875999999982,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-30",
+      "ms": 46.83919999999853,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-31",
+      "ms": 52.595000000001164,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-32",
+      "ms": 51.85989999999947,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-33",
+      "ms": 54.19980000000214,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-34",
+      "ms": 52.928399999997055,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-35",
+      "ms": 54.055099999997765,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-36",
+      "ms": 52.89630000000034,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-37",
+      "ms": 48.6237000000001,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-38",
+      "ms": 50.81760000000213,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-39",
+      "ms": 44.919999999998254,
+      "bytes": 19446
+    },
+    {
+      "label": "all-claims-page-40",
+      "ms": 44.1288999999997,
+      "bytes": 18275
+    }
+  ],
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\scale-03\\home"
+}
+(node:71688) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

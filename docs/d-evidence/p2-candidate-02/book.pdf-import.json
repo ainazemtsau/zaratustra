@@ -1,0 +1,45 @@
+{
+  "ok": true,
+  "source_handle": "source-b7e72d14-723f-45aa-a35e-14d72b336447",
+  "source_ref": "observed-76cc9193-8e3f-4168-b2cb-29ef033284d5",
+  "transport": "file",
+  "channel_identity": null,
+  "capture_stage": "validated-file-bytes",
+  "content_hash": "51b4039c0287808a6348e759d232da64b6dd19484ffa5403d2b318e37a0d3406",
+  "byte_length": 1266,
+  "extraction": {
+    "format": "pdf",
+    "status": "readable",
+    "parser": "pdfjs-dist",
+    "parser_version": "6.4.299",
+    "sections": [
+      {
+        "locator": "page:1",
+        "label": "Page 1",
+        "start": 0,
+        "end": 57,
+        "available": true
+      },
+      {
+        "locator": "page:2",
+        "label": "Page 2",
+        "start": 57,
+        "end": 132,
+        "available": true
+      },
+      {
+        "locator": "page:3",
+        "label": "Page 3",
+        "start": 132,
+        "end": 187,
+        "available": true
+      }
+    ],
+    "warnings": [],
+    "total_characters": 187,
+    "text_blob_ref": "2f5bae3b46f1e42eb794b9a7c4b1b747b69e013810d878356970fee1d19311e4",
+    "text_hash": "2f5bae3b46f1e42eb794b9a7c4b1b747b69e013810d878356970fee1d19311e4"
+  },
+  "readable_format": "readable",
+  "committed": false
+}

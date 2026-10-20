@@ -1,0 +1,916 @@
+{
+  "mechanical": true,
+  "prepared_knowledge": 2048,
+  "observedKnowledge": 2049,
+  "record_count": 2276,
+  "revisions": 2279,
+  "pages": 41,
+  "count": 2049,
+  "pageBytes": 774752,
+  "measurements": [
+    {
+      "name": "map",
+      "ms": 556.076,
+      "bytes": 1767
+    },
+    {
+      "name": "branch",
+      "ms": 39.58259999999996,
+      "bytes": 7262
+    },
+    {
+      "name": "lexical",
+      "ms": 43.704000000000065,
+      "bytes": 929
+    },
+    {
+      "name": "selected-claim",
+      "ms": 36.884199999999964,
+      "bytes": 1235
+    },
+    {
+      "name": "snapshot",
+      "ms": 42.28250000000003,
+      "bytes": 1212
+    },
+    {
+      "name": "page-0",
+      "ms": 53.410600000000045,
+      "bytes": 18956
+    },
+    {
+      "name": "page-1",
+      "ms": 106.02750000000015,
+      "bytes": 18963
+    },
+    {
+      "name": "page-2",
+      "ms": 51.893600000000106,
+      "bytes": 19006
+    },
+    {
+      "name": "page-3",
+      "ms": 51.38499999999999,
+      "bytes": 19008
+    },
+    {
+      "name": "page-4",
+      "ms": 48.78710000000001,
+      "bytes": 19008
+    },
+    {
+      "name": "page-5",
+      "ms": 46.91020000000003,
+      "bytes": 19008
+    },
+    {
+      "name": "page-6",
+      "ms": 51.22590000000014,
+      "bytes": 19008
+    },
+    {
+      "name": "page-7",
+      "ms": 49.58289999999988,
+      "bytes": 19008
+    },
+    {
+      "name": "page-8",
+      "ms": 47.91559999999981,
+      "bytes": 19008
+    },
+    {
+      "name": "page-9",
+      "ms": 47.20659999999998,
+      "bytes": 19008
+    },
+    {
+      "name": "page-10",
+      "ms": 45.78929999999991,
+      "bytes": 19008
+    },
+    {
+      "name": "page-11",
+      "ms": 48.365800000000036,
+      "bytes": 19008
+    },
+    {
+      "name": "page-12",
+      "ms": 44.65480000000002,
+      "bytes": 19008
+    },
+    {
+      "name": "page-13",
+      "ms": 42.76890000000003,
+      "bytes": 19008
+    },
+    {
+      "name": "page-14",
+      "ms": 45.88869999999997,
+      "bytes": 19008
+    },
+    {
+      "name": "page-15",
+      "ms": 41.93910000000005,
+      "bytes": 19008
+    },
+    {
+      "name": "page-16",
+      "ms": 45.5804999999998,
+      "bytes": 19008
+    },
+    {
+      "name": "page-17",
+      "ms": 44.572200000000066,
+      "bytes": 19008
+    },
+    {
+      "name": "page-18",
+      "ms": 39.49240000000009,
+      "bytes": 19008
+    },
+    {
+      "name": "page-19",
+      "ms": 40.81619999999998,
+      "bytes": 19013
+    },
+    {
+      "name": "page-20",
+      "ms": 42.92370000000005,
+      "bytes": 19056
+    },
+    {
+      "name": "page-21",
+      "ms": 41.75909999999999,
+      "bytes": 19058
+    },
+    {
+      "name": "page-22",
+      "ms": 43.345200000000204,
+      "bytes": 19058
+    },
+    {
+      "name": "page-23",
+      "ms": 42.06589999999983,
+      "bytes": 19058
+    },
+    {
+      "name": "page-24",
+      "ms": 47.70080000000007,
+      "bytes": 19058
+    },
+    {
+      "name": "page-25",
+      "ms": 46.47250000000031,
+      "bytes": 19058
+    },
+    {
+      "name": "page-26",
+      "ms": 49.74440000000004,
+      "bytes": 19058
+    },
+    {
+      "name": "page-27",
+      "ms": 49.67699999999968,
+      "bytes": 19058
+    },
+    {
+      "name": "page-28",
+      "ms": 51.32159999999976,
+      "bytes": 19058
+    },
+    {
+      "name": "page-29",
+      "ms": 53.18139999999994,
+      "bytes": 19058
+    },
+    {
+      "name": "page-30",
+      "ms": 54.18870000000015,
+      "bytes": 19058
+    },
+    {
+      "name": "page-31",
+      "ms": 61.07790000000023,
+      "bytes": 19058
+    },
+    {
+      "name": "page-32",
+      "ms": 60.35060000000021,
+      "bytes": 19058
+    },
+    {
+      "name": "page-33",
+      "ms": 60.4393,
+      "bytes": 19058
+    },
+    {
+      "name": "page-34",
+      "ms": 59.852800000000116,
+      "bytes": 19058
+    },
+    {
+      "name": "page-35",
+      "ms": 58.170900000000074,
+      "bytes": 19058
+    },
+    {
+      "name": "page-36",
+      "ms": 53.86459999999988,
+      "bytes": 19058
+    },
+    {
+      "name": "page-37",
+      "ms": 50.979499999999916,
+      "bytes": 19058
+    },
+    {
+      "name": "page-38",
+      "ms": 49.578399999999874,
+      "bytes": 19058
+    },
+    {
+      "name": "page-39",
+      "ms": 42.30159999999978,
+      "bytes": 19058
+    },
+    {
+      "name": "page-40",
+      "ms": 50.44270000000006,
+      "bytes": 18653
+    }
+  ],
+  "map": {
+    "ok": true,
+    "workspace_id": "f215d4ef-e676-4ec5-b502-e310a7ce5760",
+    "schema_version": 3,
+    "snapshot_seq": 215,
+    "data": {
+      "entries": [
+        {
+          "label": "activities",
+          "description": "Permitted existing activities",
+          "selector": {
+            "view": "activities"
+          },
+          "has_more": false
+        },
+        {
+          "label": "work",
+          "description": "Permitted existing work",
+          "selector": {
+            "view": "work"
+          },
+          "has_more": false
+        },
+        {
+          "label": "knowledge",
+          "description": "Permitted existing knowledge",
+          "selector": {
+            "view": "knowledge"
+          },
+          "has_more": true
+        },
+        {
+          "label": "materials",
+          "description": "Permitted existing materials",
+          "selector": {
+            "view": "materials"
+          },
+          "has_more": true
+        },
+        {
+          "label": "operations",
+          "description": "Permitted existing operations",
+          "selector": {
+            "view": "operations"
+          },
+          "has_more": true
+        },
+        {
+          "label": "handoffs",
+          "description": "Permitted existing handoffs",
+          "selector": {
+            "view": "handoffs"
+          },
+          "has_more": false
+        },
+        {
+          "label": "claims",
+          "description": "Permitted existing claims",
+          "selector": {
+            "view": "claims"
+          },
+          "has_more": false
+        },
+        {
+          "label": "resources",
+          "description": "Permitted existing resources",
+          "selector": {
+            "view": "resources"
+          },
+          "has_more": true
+        },
+        {
+          "label": "people",
+          "description": "Permitted existing people",
+          "selector": {
+            "view": "people"
+          },
+          "has_more": false
+        },
+        {
+          "label": "topics",
+          "description": "Permitted existing topics",
+          "selector": {
+            "view": "topics"
+          },
+          "has_more": true
+        },
+        {
+          "label": "entities",
+          "description": "Permitted existing entities",
+          "selector": {
+            "view": "entities"
+          },
+          "has_more": true
+        },
+        {
+          "label": "unfiled",
+          "description": "Permitted existing unfiled",
+          "selector": {
+            "view": "unfiled"
+          },
+          "has_more": true
+        },
+        {
+          "label": "relations",
+          "description": "Permitted existing relations",
+          "selector": {
+            "view": "relations"
+          },
+          "has_more": false
+        }
+      ],
+      "focus": null,
+      "applied_filters": {
+        "access": "trusted context"
+      },
+      "generation": "f7ca1f707b0cba95040edb69d81370a7ca5c4d24593dd495ac63380e12dc2baa",
+      "has_more": false,
+      "next_cursor": null
+    },
+    "warnings": []
+  },
+  "branch": {
+    "ok": true,
+    "workspace_id": "f215d4ef-e676-4ec5-b502-e310a7ce5760",
+    "schema_version": 3,
+    "snapshot_seq": 215,
+    "data": {
+      "cards": [
+        {
+          "id": "concept-779fbeb2-f849-4220-8755-446afa5b8701",
+          "kind": "concept",
+          "title": "Printmaking",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-779fbeb2-f849-4220-8755-446afa5b8701"
+          },
+          "must_read": [
+            {
+              "id": "concept-779fbeb2-f849-4220-8755-446afa5b8701",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-30e1dabc-c753-4702-8993-d060b91135c3",
+          "kind": "concept",
+          "title": "Catalog branch 12",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-30e1dabc-c753-4702-8993-d060b91135c3"
+          },
+          "must_read": [
+            {
+              "id": "concept-30e1dabc-c753-4702-8993-d060b91135c3",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-c83c759b-4fdd-4e3f-9bec-1a9ee2a34b4f",
+          "kind": "concept",
+          "title": "Catalog branch 13",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-c83c759b-4fdd-4e3f-9bec-1a9ee2a34b4f"
+          },
+          "must_read": [
+            {
+              "id": "concept-c83c759b-4fdd-4e3f-9bec-1a9ee2a34b4f",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-e977291c-99a8-469e-8ba3-0b384d020f93",
+          "kind": "concept",
+          "title": "Catalog branch 14",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-e977291c-99a8-469e-8ba3-0b384d020f93"
+          },
+          "must_read": [
+            {
+              "id": "concept-e977291c-99a8-469e-8ba3-0b384d020f93",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-06ab669a-86aa-4346-b99a-5c97a171a976",
+          "kind": "concept",
+          "title": "Catalog branch 15",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-06ab669a-86aa-4346-b99a-5c97a171a976"
+          },
+          "must_read": [
+            {
+              "id": "concept-06ab669a-86aa-4346-b99a-5c97a171a976",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-982990f6-b0c6-4ccc-b84f-7e74ffe873f4",
+          "kind": "concept",
+          "title": "Catalog branch 16",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-982990f6-b0c6-4ccc-b84f-7e74ffe873f4"
+          },
+          "must_read": [
+            {
+              "id": "concept-982990f6-b0c6-4ccc-b84f-7e74ffe873f4",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-d3451c03-bc87-4685-8339-62bd8946f58e",
+          "kind": "concept",
+          "title": "Catalog branch 17",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-d3451c03-bc87-4685-8339-62bd8946f58e"
+          },
+          "must_read": [
+            {
+              "id": "concept-d3451c03-bc87-4685-8339-62bd8946f58e",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-7508cdd1-d1e5-4a55-8af9-77858ab5899d",
+          "kind": "concept",
+          "title": "Catalog branch 18",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-7508cdd1-d1e5-4a55-8af9-77858ab5899d"
+          },
+          "must_read": [
+            {
+              "id": "concept-7508cdd1-d1e5-4a55-8af9-77858ab5899d",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-c7f0e9c7-15c3-4c20-8bc3-dd84317397de",
+          "kind": "concept",
+          "title": "Catalog branch 19",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-c7f0e9c7-15c3-4c20-8bc3-dd84317397de"
+          },
+          "must_read": [
+            {
+              "id": "concept-c7f0e9c7-15c3-4c20-8bc3-dd84317397de",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-58a2883f-cdc0-4d5e-84f7-b40bccc21a9f",
+          "kind": "concept",
+          "title": "Catalog branch 20",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-58a2883f-cdc0-4d5e-84f7-b40bccc21a9f"
+          },
+          "must_read": [
+            {
+              "id": "concept-58a2883f-cdc0-4d5e-84f7-b40bccc21a9f",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-73e7f7aa-7522-4537-a31a-12e7064d434b",
+          "kind": "concept",
+          "title": "Catalog branch 21",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-73e7f7aa-7522-4537-a31a-12e7064d434b"
+          },
+          "must_read": [
+            {
+              "id": "concept-73e7f7aa-7522-4537-a31a-12e7064d434b",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-1f21bc65-ff5b-437d-8177-6c95b32ae751",
+          "kind": "concept",
+          "title": "Catalog branch 22",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-1f21bc65-ff5b-437d-8177-6c95b32ae751"
+          },
+          "must_read": [
+            {
+              "id": "concept-1f21bc65-ff5b-437d-8177-6c95b32ae751",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-c23b08b2-efd8-4c8f-b6d5-b5bb50e58006",
+          "kind": "concept",
+          "title": "Catalog branch 23",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-c23b08b2-efd8-4c8f-b6d5-b5bb50e58006"
+          },
+          "must_read": [
+            {
+              "id": "concept-c23b08b2-efd8-4c8f-b6d5-b5bb50e58006",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-e9c31092-91e0-4483-b586-10cde15f077d",
+          "kind": "concept",
+          "title": "Catalog branch 24",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-e9c31092-91e0-4483-b586-10cde15f077d"
+          },
+          "must_read": [
+            {
+              "id": "concept-e9c31092-91e0-4483-b586-10cde15f077d",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-7ba52c80-bda5-44f5-8afc-c0cd193a31f0",
+          "kind": "concept",
+          "title": "Catalog branch 25",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-7ba52c80-bda5-44f5-8afc-c0cd193a31f0"
+          },
+          "must_read": [
+            {
+              "id": "concept-7ba52c80-bda5-44f5-8afc-c0cd193a31f0",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-a22b65a4-4ec9-40d3-b437-8122e3dbdbeb",
+          "kind": "concept",
+          "title": "Catalog branch 26",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-a22b65a4-4ec9-40d3-b437-8122e3dbdbeb"
+          },
+          "must_read": [
+            {
+              "id": "concept-a22b65a4-4ec9-40d3-b437-8122e3dbdbeb",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-bda39451-11be-4e0e-87a2-b1ffb6203aa9",
+          "kind": "concept",
+          "title": "Catalog branch 27",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-bda39451-11be-4e0e-87a2-b1ffb6203aa9"
+          },
+          "must_read": [
+            {
+              "id": "concept-bda39451-11be-4e0e-87a2-b1ffb6203aa9",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-f4909eef-3f3f-4d34-a036-46d1dbbe9106",
+          "kind": "concept",
+          "title": "Catalog branch 28",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-f4909eef-3f3f-4d34-a036-46d1dbbe9106"
+          },
+          "must_read": [
+            {
+              "id": "concept-f4909eef-3f3f-4d34-a036-46d1dbbe9106",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-5eeb726f-ed8e-4674-a54a-e0d73f7234c0",
+          "kind": "concept",
+          "title": "Catalog branch 29",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-5eeb726f-ed8e-4674-a54a-e0d73f7234c0"
+          },
+          "must_read": [
+            {
+              "id": "concept-5eeb726f-ed8e-4674-a54a-e0d73f7234c0",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "concept-f5ee4a64-4d52-4e5c-b03a-e792bf7bf57d",
+          "kind": "concept",
+          "title": "Catalog branch 30",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-f5ee4a64-4d52-4e5c-b03a-e792bf7bf57d"
+          },
+          "must_read": [
+            {
+              "id": "concept-f5ee4a64-4d52-4e5c-b03a-e792bf7bf57d",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        }
+      ],
+      "applied_filters": {
+        "view": "topics",
+        "record_id": "concept-92c7a269-3da6-4980-932a-bca100cabb21",
+        "limit": 20,
+        "mode": null
+      },
+      "generation": "f7ca1f707b0cba95040edb69d81370a7ca5c4d24593dd495ac63380e12dc2baa",
+      "has_more": true,
+      "next_cursor": "cursor-85d53148-40aa-4037-9aa7-f7e6309f0770",
+      "warnings": [
+        "Empty or incomplete results do not establish absence. Read selected records and conditions before use."
+      ]
+    },
+    "warnings": []
+  },
+  "search": {
+    "ok": true,
+    "workspace_id": "f215d4ef-e676-4ec5-b502-e310a7ce5760",
+    "schema_version": 3,
+    "snapshot_seq": 215,
+    "data": {
+      "cards": [
+        {
+          "id": "knowledge-582ddcc1-4f51-4df6-b68d-24a1dac0da77",
+          "kind": "knowledge",
+          "title": "Workshop resource conditions",
+          "revision": 1,
+          "storage": "live",
+          "state": "current",
+          "description": null,
+          "selector": {
+            "record_id": "knowledge-582ddcc1-4f51-4df6-b68d-24a1dac0da77"
+          },
+          "must_read": [
+            {
+              "id": "knowledge-582ddcc1-4f51-4df6-b68d-24a1dac0da77",
+              "revision": 1
+            }
+          ],
+          "match_reasons": [
+            "English working text"
+          ]
+        }
+      ],
+      "applied_filters": {
+        "query": "risograph printing",
+        "match": "all",
+        "kinds": [
+          "knowledge"
+        ]
+      },
+      "generation": "f7ca1f707b0cba95040edb69d81370a7ca5c4d24593dd495ac63380e12dc2baa",
+      "has_more": false,
+      "next_cursor": null,
+      "warnings": [
+        "Empty or incomplete results do not establish absence. Read selected records and conditions before use."
+      ],
+      "order": "stable document id",
+      "validity_note": "No applicability time inferred from write time."
+    },
+    "warnings": []
+  },
+  "read": {
+    "ok": true,
+    "workspace_id": "f215d4ef-e676-4ec5-b502-e310a7ce5760",
+    "schema_version": 3,
+    "snapshot_seq": 215,
+    "data": {
+      "id": "knowledge-582ddcc1-4f51-4df6-b68d-24a1dac0da77",
+      "kind": "knowledge",
+      "title": "Workshop resource conditions",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:37:28.875Z",
+      "updated_at": "2026-10-20T10:37:28.875Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-d798dd4e-6726-4baa-8ddd-d1c89ab040d2"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "The user has access to a risograph duplicator named Quiet Shore for printing paper card batches at the workshop; ownership is not established.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-44a8c371-9394-4ce6-8c08-5015ba0a89a0",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-b55b24e8-b197-4f2f-b0db-ee03e273beaa"
+        },
+        "conditions": "Weekdays only, prior booking; unavailable on Sunday. Do not infer ownership, working condition or other unreported capabilities.",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-44a8c371-9394-4ce6-8c08-5015ba0a89a0",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    "warnings": []
+  },
+  "snapshot": {
+    "available": true,
+    "workspace_id": "f215d4ef-e676-4ec5-b502-e310a7ce5760",
+    "active_epoch": "425db74b-ff43-45ee-a6e8-91204ac96c2b",
+    "snapshot_seq": 215,
+    "generation": "f7ca1f707b0cba95040edb69d81370a7ca5c4d24593dd495ac63380e12dc2baa",
+    "focus": null,
+    "records": [
+      {
+        "id": "knowledge-6728c4b1-2243-4005-93e0-6ba7d9582b4c",
+        "kind": "knowledge",
+        "revision": 1,
+        "title": "Russian response language preference",
+        "data": {
+          "knowledge_kind": "preference",
+          "statement": "The user requests a Russian-language response for this conversation.",
+          "state": "current",
+          "basis": "user_statement",
+          "evidence_refs": [
+            {
+              "id": "evidence-2f6b527e-6c91-4519-b6c8-644b6884d061",
+              "revision": 1
+            }
+          ],
+          "conditions": "Explicitly requested for the current conversation; no permanent language preference inferred.",
+          "valid_from": null,
+          "valid_to": null,
+          "representation": {
+            "kind": "English paraphrase",
+            "source_ref": {
+              "id": "evidence-2f6b527e-6c91-4519-b6c8-644b6884d061",
+              "revision": 1
+            },
+            "source_language": "ru"
+          }
+        }
+      }
+    ],
+    "context_current": [],
+    "must_read": [],
+    "has_more": false,
+    "warnings": [
+      "Shared memory is not loaded: use catalog/search and read selected claims plus conditions. Historical tool messages may be stale."
+    ],
+    "write_mode": "single-writer",
+    "data_only": true,
+    "byte_budget": 12288,
+    "incomplete": false
+  },
+  "trace_bound": 512
+}

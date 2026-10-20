@@ -1,0 +1,8 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\delivery-agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\release-catalog\\home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-18-delivery-identities",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\18-delivery-identities",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "prompt": "По моим сохранённым сведениям, есть ли у меня собственное оборудование для тиража карточек? И можно ли без уточнений рассчитывать на аппарат знакомого с похожим названием? Ответь по-русски."
+}

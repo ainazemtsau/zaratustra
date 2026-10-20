@@ -1,0 +1,28 @@
+(node:111184) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Нашёл подходящую возможность: **резограф «Тихий берег» в мастерской**. В сохранённых сведениях прямо указано, что он подходит для бумажных тиражей карточек.\n\n- Доступен **по будням, по предварительной записи** — вторник подходит по этому условию, но свободное время нужно подтвердить.\n- Это доступ к оборудованию, а не твоя собственность.\n- Исправность, подходящую бумагу и доступные цвета стоит уточнить перед печатью.\n\nОдноимённый аппарат у знакомого — другой, а собственный пока отмечен лишь как желаемая покупка.\n\nСколько карточек нужно и какого размера?",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 20,
+    "requests": 131,
+    "input": 2562235,
+    "output": 38929,
+    "cache_read": 1337600,
+    "estimated_usd": 2.9723200000000007,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 131,
+    "prelaunch_attempts": 1,
+    "conversation_attempts_at_adjustment": 18
+  }
+}

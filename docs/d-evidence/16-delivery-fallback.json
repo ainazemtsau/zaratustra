@@ -1,0 +1,8 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\delivery-agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\release-fallback\\home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-16-delivery-fallback",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\16-delivery-fallback",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "prompt": "Хочу во вторник сделать небольшой тираж бумажных карточек для кружка. Что из моих сохранённых возможностей может помочь? Названия оборудования не помню. Ответь по-русски."
+}

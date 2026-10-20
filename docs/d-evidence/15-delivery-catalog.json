@@ -1,0 +1,8 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\delivery-agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\release-catalog\\home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-15-delivery-catalog",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\15-delivery-catalog",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "prompt": "Мне нужно во вторник подготовить сорок одинаковых бумажных карточек для кружка. Посмотри мои сохранённые возможности через разделы каталога: я не помню их названий. Что пригодится и какие условия нужно соблюсти? Ответь по-русски."
+}

@@ -1,0 +1,3 @@
+Installing git:github.com/ainazemtsau/zaratustra@9eb0c0e...
+fatal: couldn't find remote ref 9eb0c0e
+Error: git fetch origin 9eb0c0e failed with code 128

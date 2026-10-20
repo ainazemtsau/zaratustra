@@ -1,0 +1,8 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\pi-agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\model-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-01-save",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\01-save",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "prompt": "Запомни для области «Мастерская»: в мастерской «Старая гавань» я могу по предварительной записи пользоваться ризографом «Парус-41» по будням с 10 до 16. Он принадлежит мастерской, не мне. На нём разрешено тиражировать монохромные карточки A6. Для записи нужен код «Роса-73». В субботу и воскресенье доступа нет. Сохрани это для будущих дел. Отвечай по-русски."
+}

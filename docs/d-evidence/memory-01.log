@@ -1,0 +1,103 @@
+TAP version 13
+# (node:85856) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: D final Concept graph allows multiple parents, preserves ambiguous aliases and rejects direct/batch cycles and wrong kinds atomically
+ok 1 - D final Concept graph allows multiple parents, preserves ambiguous aliases and rejects direct/batch cycles and wrong kinds atomically
+  ---
+  duration_ms: 83.1055
+  type: 'test'
+  ...
+# Subtest: D literal English FTS, exact authentic aliases, punctuation/metacharacters, meaningful filters and bounded cursors
+ok 2 - D literal English FTS, exact authentic aliases, punctuation/metacharacters, meaningful filters and bounded cursors
+  ---
+  duration_ms: 112.7809
+  type: 'test'
+  ...
+# Subtest: D independent lexical fallback ignores wrong classification and absent predicate; typed filters retain explicit applicability limits
+ok 3 - D independent lexical fallback ignores wrong classification and absent predicate; typed filters retain explicit applicability limits
+  ---
+  duration_ms: 57.9377
+  type: 'test'
+  ...
+# Subtest: D corrections preserve exact historical truth, conditions, grounded sources, FTS and semantic states without assigning unknown times
+ok 4 - D corrections preserve exact historical truth, conditions, grounded sources, FTS and semantic states without assigning unknown times
+  ---
+  duration_ms: 105.808
+  type: 'test'
+  ...
+# Subtest: D identity clarification changes current references without merging similar objects or rewriting historical identities
+ok 5 - D identity clarification changes current references without merging similar objects or rewriting historical identities
+  ---
+  duration_ms: 56.3458
+  type: 'test'
+  ...
+# Subtest: D index and correction commit faults are all-or-none; unavailable index is explicit and rebuild is lossless
+ok 6 - D index and correction commit faults are all-or-none; unavailable index is explicit and rebuild is lossless
+  ---
+  duration_ms: 127.2466
+  type: 'test'
+  ...
+# Subtest: D managed restrictions cover all pages, counts, links, snippets, history, guessed IDs, diagnostics, technical rows and mutations
+not ok 7 - D managed restrictions cover all pages, counts, links, snippets, history, guessed IDs, diagnostics, technical rows and mutations
+  ---
+  duration_ms: 89.5499
+  type: 'test'
+  location: '<PRODUCT_CHECKOUT>\\tests\\memory.test.ts:1:12266'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'b4e7d32f6a5a965dd5f2024d4f072e8f70afd41c860e79a16e239eb6bc9d3439'
+    - '31888a89a6d54ae591bd17f7879b5a1428ede42afcb5343a731a451df1bb6d7f'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '31888a89a6d54ae591bd17f7879b5a1428ede42afcb5343a731a451df1bb6d7f'
+  actual: 'b4e7d32f6a5a965dd5f2024d4f072e8f70afd41c860e79a16e239eb6bc9d3439'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\memory.test.ts:630:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: D registered relations validate endpoints and reject competing copies of typed grounds
+ok 8 - D registered relations validate endpoints and reject competing copies of typed grounds
+  ---
+  duration_ms: 83.6593
+  type: 'test'
+  ...
+# Subtest: D schema-2 migration faults preserve filled canonical rows, original materials, backup and repeatability
+not ok 9 - D schema-2 migration faults preserve filled canonical rows, original materials, backup and repeatability
+  ---
+  duration_ms: 391.1599
+  type: 'test'
+  location: '<PRODUCT_CHECKOUT>\\tests\\memory.test.ts:1:15309'
+  failureType: 'hookFailed'
+  error: 'database is not open'
+  code: 'ERR_INVALID_STATE'
+  stack: |-
+    DiskStorage.close (<PRODUCT_CHECKOUT>\src\storage\index.ts:668:16)
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\memory.test.ts:767:29)
+    TestHook.runInAsyncScope (node:async_hooks:214:14)
+    TestHook.run (node:internal/test_runner/test:1047:25)
+    TestHook.run (node:internal/test_runner/test:1354:18)
+    TestHook.run (node:internal/util:565:20)
+    Test.runHook (node:internal/test_runner/test:965:20)
+    after (node:internal/test_runner/test:1005:20)
+    Test.run (node:internal/test_runner/test:1070:13)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 7
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2651.9099

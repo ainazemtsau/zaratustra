@@ -1,0 +1,267 @@
+{
+  "head": "8e4c20551c36e5be6a2d1a6a197c060339b27fbc",
+  "preserved_tables": [
+    "records",
+    "revisions",
+    "changes",
+    "receipts",
+    "intents",
+    "focus",
+    "claims",
+    "handoffs"
+  ],
+  "all_rows_exact": true,
+  "materials_exact": true,
+  "workspace_identity_exact": true,
+  "epoch_exact": true,
+  "old_receipt_replay_exact": true,
+  "historical_completion": true,
+  "current_reopen_wait": true,
+  "immutable_handoff": true,
+  "migration": {
+    "before": "{\"workspace_id\":\"23dea2f6-46af-450b-b828-fee24665ad2c\",\"epoch\":\"f347fcd3-e6d6-4283-8f08-d6914ede30d8\",\"schema_version\":2}",
+    "after": "{\"workspace_id\":\"23dea2f6-46af-450b-b828-fee24665ad2c\",\"epoch\":\"f347fcd3-e6d6-4283-8f08-d6914ede30d8\",\"schema_version\":3}",
+    "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\delivery-upgrade-home\\pre-schema-3-a5709ff8-3e10-4bcb-b634-e70c2a281646.sqlite",
+    "backup_sha256": "eb19f3bd39710669e1681d8809569871136825eccefaa54b7010a723c3564423",
+    "recorded_at": "2026-10-20T10:28:10.997Z"
+  },
+  "search": {
+    "ok": true,
+    "workspace_id": "23dea2f6-46af-450b-b828-fee24665ad2c",
+    "schema_version": 3,
+    "snapshot_seq": 5,
+    "data": {
+      "cards": [
+        {
+          "id": "knowledge-77300bd2-1dcc-4e22-a8fb-734d07ec7ae0",
+          "kind": "knowledge",
+          "title": "Language preference",
+          "revision": 1,
+          "storage": "live",
+          "state": "current",
+          "description": null,
+          "selector": {
+            "record_id": "knowledge-77300bd2-1dcc-4e22-a8fb-734d07ec7ae0"
+          },
+          "must_read": [
+            {
+              "id": "knowledge-77300bd2-1dcc-4e22-a8fb-734d07ec7ae0",
+              "revision": 1
+            }
+          ],
+          "match_reasons": [
+            "English working text"
+          ]
+        }
+      ],
+      "applied_filters": {
+        "query": "Russian",
+        "match": "all",
+        "kinds": [
+          "knowledge"
+        ]
+      },
+      "generation": "a6ffa5ab01aa954fd50293baed2971d6a0d37f3ddeb78556fcdff0666c2bfb11",
+      "has_more": false,
+      "next_cursor": null,
+      "warnings": [
+        "Empty or incomplete results do not establish absence. Read selected records and conditions before use."
+      ],
+      "order": "stable document id",
+      "validity_note": "No applicability time inferred from write time."
+    },
+    "warnings": []
+  },
+  "after": {
+    "records": [
+      {
+        "id": "evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684",
+        "kind": "evidence",
+        "activity_id": null,
+        "json": "{\"id\":\"evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684\",\"kind\":\"evidence\",\"title\":\"Original retained material\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:28:06.487Z\",\"updated_at\":\"2026-10-20T10:28:06.487Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"imported_file\",\"source_locator\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\delivery-upgrade-proof\\\\original.md\",\"captured_at\":\"2026-10-20T10:28:06.478Z\",\"content_hash\":\"a5d2e2c83e0895dada7a59e15becb5013af60fadf6f6066671785bc601029d27\",\"retained_excerpt\":null,\"blob_ref\":\"a5d2e2c83e0895dada7a59e15becb5013af60fadf6f6066671785bc601029d27\",\"byte_length\":15060,\"availability\":\"retained\",\"source_language\":\"en\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-122fb501-0343-42cb-aba2-67944d5bc751\",\"content_hash\":\"a5d2e2c83e0895dada7a59e15becb5013af60fadf6f6066671785bc601029d27\",\"transport\":\"file\",\"channel_identity\":null,\"session_id\":\"synthetic-upgrade-D\",\"runtime_id\":\"synthetic-upgrade-D\",\"captured_at\":\"2026-10-20T10:28:06.478Z\",\"capture_stage\":\"validated-file-bytes\",\"original_keystrokes\":false,\"byte_length\":15060,\"blob_ref\":\"a5d2e2c83e0895dada7a59e15becb5013af60fadf6f6066671785bc601029d27\",\"locator\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\delivery-upgrade-proof\\\\original.md\"},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "evidence-6004e8c2-408e-4482-a331-2766951a317e",
+        "kind": "evidence",
+        "activity_id": null,
+        "json": "{\"id\":\"evidence-6004e8c2-408e-4482-a331-2766951a317e\",\"kind\":\"evidence\",\"title\":\"Original request\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:28:06.487Z\",\"updated_at\":\"2026-10-20T10:28:06.487Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\",\"captured_at\":\"2026-10-20T10:28:06.478Z\",\"content_hash\":\"8589ef85bb95dbca993df6ad55e5901cc02aa58a5dfba79dc80fb9cdefd831a4\",\"retained_excerpt\":\"Создай работу с сохранённым материалом и черновиком передачи.\",\"blob_ref\":null,\"byte_length\":114,\"availability\":\"retained\",\"source_language\":\"ru\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\",\"content_hash\":\"8589ef85bb95dbca993df6ad55e5901cc02aa58a5dfba79dc80fb9cdefd831a4\",\"transport\":\"rpc\",\"channel_identity\":\"synthetic-upgrade-controller\",\"session_id\":\"synthetic-upgrade-D\",\"runtime_id\":\"synthetic-upgrade-D\",\"captured_at\":\"2026-10-20T10:28:06.478Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":114},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "activity-09bd62c5-3384-4c7b-955d-46b402241106",
+        "kind": "activity",
+        "activity_id": null,
+        "json": "{\"id\":\"activity-09bd62c5-3384-4c7b-955d-46b402241106\",\"kind\":\"activity\",\"title\":\"Upgrade qualification\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:28:06.487Z\",\"updated_at\":\"2026-10-20T10:28:06.487Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"purpose\":\"Keep prior accepted data\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "work-73cef970-9d52-4fb6-a5ce-9ad699b93f20",
+        "kind": "work",
+        "activity_id": "activity-09bd62c5-3384-4c7b-955d-46b402241106",
+        "json": "{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"kind\":\"work\",\"title\":\"Prepare retained note\",\"body\":null,\"revision\":4,\"created_at\":\"2026-10-20T10:28:06.487Z\",\"updated_at\":\"2026-10-20T10:28:06.518Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":{\"id\":\"activity-09bd62c5-3384-4c7b-955d-46b402241106\"},\"parent_work_id\":null,\"objective\":\"Prepare a grounded note\",\"acceptance\":[{\"criterion_id\":\"note\",\"description\":\"Retained note\",\"verification\":\"Inspect exact generated artifact\",\"required\":true}],\"status\":\"waiting\",\"current_state\":\"No independent work before the promised clarification\",\"next_action\":null,\"steps\":[],\"waits\":[{\"wait_id\":\"clarification\",\"kind\":\"user\",\"target\":\"work\",\"subject\":\"New clarification\",\"satisfied_by\":\"The specific clarification arrives\",\"received_refs\":[],\"question\":\"Please send the clarification.\",\"status\":\"pending\"}],\"context_refs\":[{\"id\":\"evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684\"}],\"completion\":null,\"plan_version\":2,\"cancellation\":null}}"
+      },
+      {
+        "id": "knowledge-77300bd2-1dcc-4e22-a8fb-734d07ec7ae0",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-77300bd2-1dcc-4e22-a8fb-734d07ec7ae0\",\"kind\":\"knowledge\",\"title\":\"Language preference\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:28:06.487Z\",\"updated_at\":\"2026-10-20T10:28:06.487Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The user prefers Russian replies.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-6004e8c2-408e-4482-a331-2766951a317e\"}],\"conditions\":\"Conversation\",\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-6004e8c2-408e-4482-a331-2766951a317e\"},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "evidence-55f9454b-4c89-427e-85b1-732c34a26f55",
+        "kind": "evidence",
+        "activity_id": null,
+        "json": "{\"id\":\"evidence-55f9454b-4c89-427e-85b1-732c34a26f55\",\"kind\":\"evidence\",\"title\":\"Prepared synthetic note\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:28:06.506Z\",\"updated_at\":\"2026-10-20T10:28:06.506Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"generated_artifact\",\"source_locator\":\"core-model-result\",\"captured_at\":\"2026-10-20T10:28:06.506Z\",\"content_hash\":\"b105e4c2a39e80f9659e0fac538c7804eff205b2bce034dc2a4bbed9b64a03e6\",\"retained_excerpt\":\"Exact synthetic note, grounded in the retained material.\",\"blob_ref\":null,\"availability\":\"retained\",\"source_language\":\"en\",\"work_ref\":{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"revision\":1},\"step_id\":null,\"plan_version\":1,\"provenance\":{\"transport\":\"model-generated\",\"runtime_id\":\"synthetic-upgrade-D\",\"session_id\":\"synthetic-upgrade-D\",\"source_refs\":[\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\"]},\"trust_origin\":\"model-generated-content-not-proof-of-correctness\"}}"
+      }
+    ],
+    "revisions": [
+      {
+        "id": "evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684",
+        "revision": 1,
+        "json": "{\"id\":\"evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684\",\"kind\":\"evidence\",\"title\":\"Original retained material\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:28:06.487Z\",\"updated_at\":\"2026-10-20T10:28:06.487Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"imported_file\",\"source_locator\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\delivery-upgrade-proof\\\\original.md\",\"captured_at\":\"2026-10-20T10:28:06.478Z\",\"content_hash\":\"a5d2e2c83e0895dada7a59e15becb5013af60fadf6f6066671785bc601029d27\",\"retained_excerpt\":null,\"blob_ref\":\"a5d2e2c83e0895dada7a59e15becb5013af60fadf6f6066671785bc601029d27\",\"byte_length\":15060,\"availability\":\"retained\",\"source_language\":\"en\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-122fb501-0343-42cb-aba2-67944d5bc751\",\"content_hash\":\"a5d2e2c83e0895dada7a59e15becb5013af60fadf6f6066671785bc601029d27\",\"transport\":\"file\",\"channel_identity\":null,\"session_id\":\"synthetic-upgrade-D\",\"runtime_id\":\"synthetic-upgrade-D\",\"captured_at\":\"2026-10-20T10:28:06.478Z\",\"capture_stage\":\"validated-file-bytes\",\"original_keystrokes\":false,\"byte_length\":15060,\"blob_ref\":\"a5d2e2c83e0895dada7a59e15becb5013af60fadf6f6066671785bc601029d27\",\"locator\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\delivery-upgrade-proof\\\\original.md\"},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "evidence-6004e8c2-408e-4482-a331-2766951a317e",
+        "revision": 1,
+        "json": "{\"id\":\"evidence-6004e8c2-408e-4482-a331-2766951a317e\",\"kind\":\"evidence\",\"title\":\"Original request\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:28:06.487Z\",\"updated_at\":\"2026-10-20T10:28:06.487Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\",\"captured_at\":\"2026-10-20T10:28:06.478Z\",\"content_hash\":\"8589ef85bb95dbca993df6ad55e5901cc02aa58a5dfba79dc80fb9cdefd831a4\",\"retained_excerpt\":\"Создай работу с сохранённым материалом и черновиком передачи.\",\"blob_ref\":null,\"byte_length\":114,\"availability\":\"retained\",\"source_language\":\"ru\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\",\"content_hash\":\"8589ef85bb95dbca993df6ad55e5901cc02aa58a5dfba79dc80fb9cdefd831a4\",\"transport\":\"rpc\",\"channel_identity\":\"synthetic-upgrade-controller\",\"session_id\":\"synthetic-upgrade-D\",\"runtime_id\":\"synthetic-upgrade-D\",\"captured_at\":\"2026-10-20T10:28:06.478Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":114},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "activity-09bd62c5-3384-4c7b-955d-46b402241106",
+        "revision": 1,
+        "json": "{\"id\":\"activity-09bd62c5-3384-4c7b-955d-46b402241106\",\"kind\":\"activity\",\"title\":\"Upgrade qualification\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:28:06.487Z\",\"updated_at\":\"2026-10-20T10:28:06.487Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"purpose\":\"Keep prior accepted data\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "work-73cef970-9d52-4fb6-a5ce-9ad699b93f20",
+        "revision": 1,
+        "json": "{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"kind\":\"work\",\"title\":\"Prepare retained note\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:28:06.487Z\",\"updated_at\":\"2026-10-20T10:28:06.487Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":{\"id\":\"activity-09bd62c5-3384-4c7b-955d-46b402241106\"},\"parent_work_id\":null,\"objective\":\"Prepare a grounded note\",\"acceptance\":[{\"criterion_id\":\"note\",\"description\":\"Retained note\",\"verification\":\"Inspect exact generated artifact\",\"required\":true}],\"status\":\"active\",\"current_state\":\"Ready to prepare\",\"next_action\":\"Prepare the note\",\"steps\":[],\"waits\":[],\"context_refs\":[{\"id\":\"evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684\"}],\"completion\":null,\"plan_version\":1}}"
+      },
+      {
+        "id": "knowledge-77300bd2-1dcc-4e22-a8fb-734d07ec7ae0",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-77300bd2-1dcc-4e22-a8fb-734d07ec7ae0\",\"kind\":\"knowledge\",\"title\":\"Language preference\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:28:06.487Z\",\"updated_at\":\"2026-10-20T10:28:06.487Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The user prefers Russian replies.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-6004e8c2-408e-4482-a331-2766951a317e\"}],\"conditions\":\"Conversation\",\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-6004e8c2-408e-4482-a331-2766951a317e\"},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "evidence-55f9454b-4c89-427e-85b1-732c34a26f55",
+        "revision": 1,
+        "json": "{\"id\":\"evidence-55f9454b-4c89-427e-85b1-732c34a26f55\",\"kind\":\"evidence\",\"title\":\"Prepared synthetic note\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:28:06.506Z\",\"updated_at\":\"2026-10-20T10:28:06.506Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"generated_artifact\",\"source_locator\":\"core-model-result\",\"captured_at\":\"2026-10-20T10:28:06.506Z\",\"content_hash\":\"b105e4c2a39e80f9659e0fac538c7804eff205b2bce034dc2a4bbed9b64a03e6\",\"retained_excerpt\":\"Exact synthetic note, grounded in the retained material.\",\"blob_ref\":null,\"availability\":\"retained\",\"source_language\":\"en\",\"work_ref\":{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"revision\":1},\"step_id\":null,\"plan_version\":1,\"provenance\":{\"transport\":\"model-generated\",\"runtime_id\":\"synthetic-upgrade-D\",\"session_id\":\"synthetic-upgrade-D\",\"source_refs\":[\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\"]},\"trust_origin\":\"model-generated-content-not-proof-of-correctness\"}}"
+      },
+      {
+        "id": "work-73cef970-9d52-4fb6-a5ce-9ad699b93f20",
+        "revision": 2,
+        "json": "{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"kind\":\"work\",\"title\":\"Prepare retained note\",\"body\":null,\"revision\":2,\"created_at\":\"2026-10-20T10:28:06.487Z\",\"updated_at\":\"2026-10-20T10:28:06.506Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":{\"id\":\"activity-09bd62c5-3384-4c7b-955d-46b402241106\"},\"parent_work_id\":null,\"objective\":\"Prepare a grounded note\",\"acceptance\":[{\"criterion_id\":\"note\",\"description\":\"Retained note\",\"verification\":\"Inspect exact generated artifact\",\"required\":true}],\"status\":\"done\",\"current_state\":\"Prepared note retained\",\"next_action\":null,\"steps\":[],\"waits\":[],\"context_refs\":[{\"id\":\"evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684\"}],\"completion\":{\"grounds\":[{\"criterion_id\":\"note\",\"explanation\":\"The addressed note exists\",\"evidence_refs\":[{\"id\":\"evidence-55f9454b-4c89-427e-85b1-732c34a26f55\",\"revision\":1}]}],\"recorded_at\":\"2026-10-20T10:28:06.506Z\",\"decision_actor\":\"trusted-personal\"},\"plan_version\":1,\"cancellation\":null}}"
+      },
+      {
+        "id": "work-73cef970-9d52-4fb6-a5ce-9ad699b93f20",
+        "revision": 3,
+        "json": "{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"kind\":\"work\",\"title\":\"Prepare retained note\",\"body\":null,\"revision\":3,\"created_at\":\"2026-10-20T10:28:06.487Z\",\"updated_at\":\"2026-10-20T10:28:06.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":{\"id\":\"activity-09bd62c5-3384-4c7b-955d-46b402241106\"},\"parent_work_id\":null,\"objective\":\"Prepare a grounded note\",\"acceptance\":[{\"criterion_id\":\"note\",\"description\":\"Retained note\",\"verification\":\"Inspect exact generated artifact\",\"required\":true}],\"status\":\"active\",\"current_state\":\"Explicitly reopened for future clarification\",\"next_action\":\"Record the new clarification wait\",\"steps\":[],\"waits\":[],\"context_refs\":[{\"id\":\"evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684\"}],\"completion\":null,\"plan_version\":1,\"cancellation\":null}}"
+      },
+      {
+        "id": "work-73cef970-9d52-4fb6-a5ce-9ad699b93f20",
+        "revision": 4,
+        "json": "{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"kind\":\"work\",\"title\":\"Prepare retained note\",\"body\":null,\"revision\":4,\"created_at\":\"2026-10-20T10:28:06.487Z\",\"updated_at\":\"2026-10-20T10:28:06.518Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":{\"id\":\"activity-09bd62c5-3384-4c7b-955d-46b402241106\"},\"parent_work_id\":null,\"objective\":\"Prepare a grounded note\",\"acceptance\":[{\"criterion_id\":\"note\",\"description\":\"Retained note\",\"verification\":\"Inspect exact generated artifact\",\"required\":true}],\"status\":\"waiting\",\"current_state\":\"No independent work before the promised clarification\",\"next_action\":null,\"steps\":[],\"waits\":[{\"wait_id\":\"clarification\",\"kind\":\"user\",\"target\":\"work\",\"subject\":\"New clarification\",\"satisfied_by\":\"The specific clarification arrives\",\"received_refs\":[],\"question\":\"Please send the clarification.\",\"status\":\"pending\"}],\"context_refs\":[{\"id\":\"evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684\"}],\"completion\":null,\"plan_version\":2,\"cancellation\":null}}"
+      }
+    ],
+    "changes": [
+      {
+        "seq": 1,
+        "json": "{\"transaction_id\":\"txn-85e2fb70-39c2-44de-85e2-91d1074e2f7e\",\"request_id\":\"upgrade-D-initial\",\"change_seq\":1,\"changed_refs\":[{\"id\":\"evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"evidence-6004e8c2-408e-4482-a331-2766951a317e\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"activity-09bd62c5-3384-4c7b-955d-46b402241106\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-77300bd2-1dcc-4e22-a8fb-734d07ec7ae0\",\"before_revision\":null,\"after_revision\":1}],\"actor\":\"trusted-personal\",\"session_id\":\"synthetic-upgrade-D\",\"reason\":\"Preserve populated accepted installation\",\"caused_by\":[\"observed-122fb501-0343-42cb-aba2-67944d5bc751\",\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\"],\"recorded_at\":\"2026-10-20T10:28:06.487Z\"}"
+      },
+      {
+        "seq": 2,
+        "json": "{\"transaction_id\":\"txn-223f5524-4701-4913-b86e-79bdf7603520\",\"request_id\":\"upgrade-D-handoff\",\"change_seq\":2,\"changed_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"synthetic-upgrade-D\",\"reason\":\"Keep original manual preparation\",\"caused_by\":[\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\"],\"recorded_at\":\"2026-10-20T10:28:06.498Z\"}"
+      },
+      {
+        "seq": 3,
+        "json": "{\"transaction_id\":\"txn-e8a40e99-c7e8-42aa-99ea-59bdbca0320e\",\"request_id\":\"upgrade-D-complete\",\"change_seq\":3,\"changed_refs\":[{\"id\":\"evidence-55f9454b-4c89-427e-85b1-732c34a26f55\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"before_revision\":1,\"after_revision\":2}],\"actor\":\"trusted-personal\",\"session_id\":\"synthetic-upgrade-D\",\"reason\":\"Retain historical completion\",\"caused_by\":[\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\"],\"recorded_at\":\"2026-10-20T10:28:06.506Z\"}"
+      },
+      {
+        "seq": 4,
+        "json": "{\"transaction_id\":\"txn-c466ebc3-641a-4c5b-aaf0-2c2a08f3559b\",\"request_id\":\"upgrade-D-reopen\",\"change_seq\":4,\"changed_refs\":[{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"before_revision\":2,\"after_revision\":3}],\"actor\":\"trusted-personal\",\"session_id\":\"synthetic-upgrade-D\",\"reason\":\"Preserve explicit reopening and old completion\",\"caused_by\":[\"observed-8259ddf5-2275-4464-90bd-f7eb9b0c1f2f\"],\"recorded_at\":\"2026-10-20T10:28:06.512Z\"}"
+      },
+      {
+        "seq": 5,
+        "json": "{\"transaction_id\":\"txn-741b3792-f5b8-47ff-827e-bf6c800c0f1a\",\"request_id\":\"upgrade-D-wait\",\"change_seq\":5,\"changed_refs\":[{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"before_revision\":3,\"after_revision\":4}],\"actor\":\"trusted-personal\",\"session_id\":\"synthetic-upgrade-D\",\"reason\":\"Keep concrete future wait\",\"caused_by\":[\"observed-8259ddf5-2275-4464-90bd-f7eb9b0c1f2f\"],\"recorded_at\":\"2026-10-20T10:28:06.518Z\"}"
+      }
+    ],
+    "receipts": [
+      {
+        "request_id": "upgrade-D-initial",
+        "hash": "e47f7024209d8655fe359d8e82e9c0b3c25c92488123967cf191ce44ff34ea0c",
+        "json": "{\"ok\":true,\"request_id\":\"upgrade-D-initial\",\"workspace_id\":\"23dea2f6-46af-450b-b828-fee24665ad2c\",\"schema_version\":2,\"snapshot_seq\":1,\"transaction_id\":\"txn-85e2fb70-39c2-44de-85e2-91d1074e2f7e\",\"committed\":true,\"created\":{\"material\":\"evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684\",\"input\":\"evidence-6004e8c2-408e-4482-a331-2766951a317e\",\"a\":\"activity-09bd62c5-3384-4c7b-955d-46b402241106\",\"w\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"k\":\"knowledge-77300bd2-1dcc-4e22-a8fb-734d07ec7ae0\"},\"new_revisions\":{\"evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684\":1,\"evidence-6004e8c2-408e-4482-a331-2766951a317e\":1,\"activity-09bd62c5-3384-4c7b-955d-46b402241106\":1,\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\":1,\"knowledge-77300bd2-1dcc-4e22-a8fb-734d07ec7ae0\":1},\"warnings\":[]}",
+        "bindings": "{\"source-4977b2be-5a39-41bc-93a3-69f0180f2863\":\"observed-122fb501-0343-42cb-aba2-67944d5bc751\",\"source-e68ca4f4-fe05-468f-ac43-03e7582de09a\":\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\"}"
+      },
+      {
+        "request_id": "upgrade-D-handoff",
+        "hash": "51e1aa4ad9815d6d0036f9b7a69aef1afb104e62de2d106f1947183b91f3682d",
+        "json": "{\"ok\":true,\"request_id\":\"upgrade-D-handoff\",\"workspace_id\":\"23dea2f6-46af-450b-b828-fee24665ad2c\",\"schema_version\":2,\"snapshot_seq\":2,\"transaction_id\":\"txn-223f5524-4701-4913-b86e-79bdf7603520\",\"committed\":true,\"created\":{\"h\":\"handoff-fcf6e122-815d-4e3f-aed1-1630d9cbc478\"},\"new_revisions\":{},\"warnings\":[]}",
+        "bindings": "{\"source-e68ca4f4-fe05-468f-ac43-03e7582de09a\":\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\"}"
+      },
+      {
+        "request_id": "upgrade-D-complete",
+        "hash": "5b57cdfcc7593b8ce64e4e681e5b21b77bf051c6b2e641e3d660b073b1fbbb3e",
+        "json": "{\"ok\":true,\"request_id\":\"upgrade-D-complete\",\"workspace_id\":\"23dea2f6-46af-450b-b828-fee24665ad2c\",\"schema_version\":2,\"snapshot_seq\":3,\"transaction_id\":\"txn-e8a40e99-c7e8-42aa-99ea-59bdbca0320e\",\"committed\":true,\"created\":{\"r\":\"evidence-55f9454b-4c89-427e-85b1-732c34a26f55\"},\"new_revisions\":{\"evidence-55f9454b-4c89-427e-85b1-732c34a26f55\":1,\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\":2},\"warnings\":[]}",
+        "bindings": "{\"source-e68ca4f4-fe05-468f-ac43-03e7582de09a\":\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\"}"
+      },
+      {
+        "request_id": "upgrade-D-reopen",
+        "hash": "2c9aa0391d61a2df92466faacbcc4ebefea37fbea5028d8314c8a1aa83856794",
+        "json": "{\"ok\":true,\"request_id\":\"upgrade-D-reopen\",\"workspace_id\":\"23dea2f6-46af-450b-b828-fee24665ad2c\",\"schema_version\":2,\"snapshot_seq\":4,\"transaction_id\":\"txn-c466ebc3-641a-4c5b-aaf0-2c2a08f3559b\",\"committed\":true,\"created\":{},\"new_revisions\":{\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\":3},\"warnings\":[]}",
+        "bindings": "{\"source-a9d5c222-4aa2-48c8-a671-0607b7556016\":\"observed-8259ddf5-2275-4464-90bd-f7eb9b0c1f2f\"}"
+      },
+      {
+        "request_id": "upgrade-D-wait",
+        "hash": "4cd3cd9cd27e2c4e3c08ad96be6147a3739c0c18214e3c16c1facb028759bd8c",
+        "json": "{\"ok\":true,\"request_id\":\"upgrade-D-wait\",\"workspace_id\":\"23dea2f6-46af-450b-b828-fee24665ad2c\",\"schema_version\":2,\"snapshot_seq\":5,\"transaction_id\":\"txn-741b3792-f5b8-47ff-827e-bf6c800c0f1a\",\"committed\":true,\"created\":{},\"new_revisions\":{\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\":4},\"warnings\":[]}",
+        "bindings": "{\"source-a9d5c222-4aa2-48c8-a671-0607b7556016\":\"observed-8259ddf5-2275-4464-90bd-f7eb9b0c1f2f\"}"
+      }
+    ],
+    "intents": [
+      {
+        "request_id": "upgrade-D-initial",
+        "hash": "e47f7024209d8655fe359d8e82e9c0b3c25c92488123967cf191ce44ff34ea0c",
+        "json": "{\"request_id\":\"upgrade-D-initial\",\"operation_digest\":\"e47f7024209d8655fe359d8e82e9c0b3c25c92488123967cf191ce44ff34ea0c\",\"source_refs\":[\"observed-122fb501-0343-42cb-aba2-67944d5bc751\",\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\"],\"session_id\":\"synthetic-upgrade-D\",\"epoch\":\"f347fcd3-e6d6-4283-8f08-d6914ede30d8\",\"status\":\"committed\",\"reason\":\"Preserve populated accepted installation\",\"payload\":{\"request_id\":\"upgrade-D-initial\",\"reason\":\"Preserve populated accepted installation\",\"source_handles\":[\"observed-122fb501-0343-42cb-aba2-67944d5bc751\",\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\"],\"guards\":[],\"ops\":[{\"op\":\"import_evidence\",\"client_ref\":\"material\",\"source_handle\":\"observed-122fb501-0343-42cb-aba2-67944d5bc751\",\"title\":\"Original retained material\",\"source_language\":\"en\"},{\"op\":\"import_evidence\",\"client_ref\":\"input\",\"source_handle\":\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\",\"title\":\"Original request\",\"source_language\":\"ru\"},{\"op\":\"create_record\",\"client_ref\":\"a\",\"title\":\"Upgrade qualification\",\"visibility\":\"workspace\",\"kind\":\"activity\",\"data\":{\"purpose\":\"Keep prior accepted data\",\"status\":\"active\"}},{\"op\":\"create_record\",\"client_ref\":\"w\",\"title\":\"Prepare retained note\",\"visibility\":\"workspace\",\"kind\":\"work\",\"data\":{\"activity_id\":{\"client_ref\":\"a\"},\"parent_work_id\":null,\"objective\":\"Prepare a grounded note\",\"acceptance\":[{\"criterion_id\":\"note\",\"description\":\"Retained note\",\"verification\":\"Inspect exact generated artifact\",\"required\":true}],\"status\":\"active\",\"current_state\":\"Ready to prepare\",\"next_action\":\"Prepare the note\",\"steps\":[],\"waits\":[],\"context_refs\":[{\"client_ref\":\"material\"}],\"completion\":null}},{\"op\":\"create_record\",\"client_ref\":\"k\",\"title\":\"Language preference\",\"visibility\":\"workspace\",\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The user prefers Russian replies.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"client_ref\":\"input\"}],\"conditions\":\"Conversation\",\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"client_ref\":\"input\"},\"source_language\":\"ru\"}}},{\"op\":\"set_focus\",\"activity_ref\":{\"client_ref\":\"a\"},\"work_ref\":{\"client_ref\":\"w\"}}]},\"receipt\":{\"ok\":true,\"request_id\":\"upgrade-D-initial\",\"workspace_id\":\"23dea2f6-46af-450b-b828-fee24665ad2c\",\"schema_version\":2,\"snapshot_seq\":1,\"transaction_id\":\"txn-85e2fb70-39c2-44de-85e2-91d1074e2f7e\",\"committed\":true,\"created\":{\"material\":\"evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684\",\"input\":\"evidence-6004e8c2-408e-4482-a331-2766951a317e\",\"a\":\"activity-09bd62c5-3384-4c7b-955d-46b402241106\",\"w\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"k\":\"knowledge-77300bd2-1dcc-4e22-a8fb-734d07ec7ae0\"},\"new_revisions\":{\"evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684\":1,\"evidence-6004e8c2-408e-4482-a331-2766951a317e\":1,\"activity-09bd62c5-3384-4c7b-955d-46b402241106\":1,\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\":1,\"knowledge-77300bd2-1dcc-4e22-a8fb-734d07ec7ae0\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "upgrade-D-handoff",
+        "hash": "51e1aa4ad9815d6d0036f9b7a69aef1afb104e62de2d106f1947183b91f3682d",
+        "json": "{\"request_id\":\"upgrade-D-handoff\",\"operation_digest\":\"51e1aa4ad9815d6d0036f9b7a69aef1afb104e62de2d106f1947183b91f3682d\",\"source_refs\":[\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\"],\"session_id\":\"synthetic-upgrade-D\",\"epoch\":\"f347fcd3-e6d6-4283-8f08-d6914ede30d8\",\"status\":\"committed\",\"reason\":\"Keep original manual preparation\",\"payload\":{\"request_id\":\"upgrade-D-handoff\",\"reason\":\"Keep original manual preparation\",\"source_handles\":[\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\"],\"guards\":[{\"ref\":{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\"},\"expected_revision\":1}],\"claim_tokens\":[\"claim-96316e34-aab4-4da2-904f-e781d97e7045\"],\"ops\":[{\"op\":\"prepare_handoff\",\"client_ref\":\"h\",\"work_ref\":{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\"},\"objective\":\"Inspect the note\",\"conditions\":\"Synthetic preparation only\",\"expected_result\":\"A useful review\",\"context_refs\":[{\"id\":\"evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684\",\"revision\":1}],\"message\":\"Please inspect the retained note. Nothing has been sent.\"}]},\"receipt\":{\"ok\":true,\"request_id\":\"upgrade-D-handoff\",\"workspace_id\":\"23dea2f6-46af-450b-b828-fee24665ad2c\",\"schema_version\":2,\"snapshot_seq\":2,\"transaction_id\":\"txn-223f5524-4701-4913-b86e-79bdf7603520\",\"committed\":true,\"created\":{\"h\":\"handoff-fcf6e122-815d-4e3f-aed1-1630d9cbc478\"},\"new_revisions\":{},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "upgrade-D-complete",
+        "hash": "5b57cdfcc7593b8ce64e4e681e5b21b77bf051c6b2e641e3d660b073b1fbbb3e",
+        "json": "{\"request_id\":\"upgrade-D-complete\",\"operation_digest\":\"5b57cdfcc7593b8ce64e4e681e5b21b77bf051c6b2e641e3d660b073b1fbbb3e\",\"source_refs\":[\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\"],\"session_id\":\"synthetic-upgrade-D\",\"epoch\":\"f347fcd3-e6d6-4283-8f08-d6914ede30d8\",\"status\":\"committed\",\"reason\":\"Retain historical completion\",\"payload\":{\"request_id\":\"upgrade-D-complete\",\"reason\":\"Retain historical completion\",\"source_handles\":[\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\"],\"guards\":[{\"ref\":{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\"},\"expected_revision\":1}],\"claim_tokens\":[\"claim-3876aca2-b6e7-4f6e-a5b1-bcdf2891d15c\"],\"ops\":[{\"op\":\"record_result\",\"client_ref\":\"r\",\"work_ref\":{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\"},\"title\":\"Prepared synthetic note\",\"content\":\"Exact synthetic note, grounded in the retained material.\",\"source_language\":\"en\"},{\"op\":\"transition_work\",\"ref\":{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\"},\"status\":\"done\",\"reason\":\"Prepared note retained\",\"grounds\":[{\"criterion_id\":\"note\",\"explanation\":\"The addressed note exists\",\"evidence_refs\":[{\"client_ref\":\"r\"}]}]}]},\"receipt\":{\"ok\":true,\"request_id\":\"upgrade-D-complete\",\"workspace_id\":\"23dea2f6-46af-450b-b828-fee24665ad2c\",\"schema_version\":2,\"snapshot_seq\":3,\"transaction_id\":\"txn-e8a40e99-c7e8-42aa-99ea-59bdbca0320e\",\"committed\":true,\"created\":{\"r\":\"evidence-55f9454b-4c89-427e-85b1-732c34a26f55\"},\"new_revisions\":{\"evidence-55f9454b-4c89-427e-85b1-732c34a26f55\":1,\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\":2},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "upgrade-D-reopen",
+        "hash": "2c9aa0391d61a2df92466faacbcc4ebefea37fbea5028d8314c8a1aa83856794",
+        "json": "{\"request_id\":\"upgrade-D-reopen\",\"operation_digest\":\"2c9aa0391d61a2df92466faacbcc4ebefea37fbea5028d8314c8a1aa83856794\",\"source_refs\":[\"observed-8259ddf5-2275-4464-90bd-f7eb9b0c1f2f\"],\"session_id\":\"synthetic-upgrade-D\",\"epoch\":\"f347fcd3-e6d6-4283-8f08-d6914ede30d8\",\"status\":\"committed\",\"reason\":\"Preserve explicit reopening and old completion\",\"payload\":{\"request_id\":\"upgrade-D-reopen\",\"reason\":\"Preserve explicit reopening and old completion\",\"source_handles\":[\"observed-8259ddf5-2275-4464-90bd-f7eb9b0c1f2f\"],\"guards\":[{\"ref\":{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\"},\"expected_revision\":2}],\"ops\":[{\"op\":\"transition_work\",\"ref\":{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\"},\"status\":\"active\",\"reason\":\"Explicitly reopened for future clarification\",\"decision_source_handle\":\"source-a9d5c222-4aa2-48c8-a671-0607b7556016\",\"next_action\":\"Record the new clarification wait\"}]},\"receipt\":{\"ok\":true,\"request_id\":\"upgrade-D-reopen\",\"workspace_id\":\"23dea2f6-46af-450b-b828-fee24665ad2c\",\"schema_version\":2,\"snapshot_seq\":4,\"transaction_id\":\"txn-c466ebc3-641a-4c5b-aaf0-2c2a08f3559b\",\"committed\":true,\"created\":{},\"new_revisions\":{\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\":3},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "upgrade-D-wait",
+        "hash": "4cd3cd9cd27e2c4e3c08ad96be6147a3739c0c18214e3c16c1facb028759bd8c",
+        "json": "{\"request_id\":\"upgrade-D-wait\",\"operation_digest\":\"4cd3cd9cd27e2c4e3c08ad96be6147a3739c0c18214e3c16c1facb028759bd8c\",\"source_refs\":[\"observed-8259ddf5-2275-4464-90bd-f7eb9b0c1f2f\"],\"session_id\":\"synthetic-upgrade-D\",\"epoch\":\"f347fcd3-e6d6-4283-8f08-d6914ede30d8\",\"status\":\"committed\",\"reason\":\"Keep concrete future wait\",\"payload\":{\"request_id\":\"upgrade-D-wait\",\"reason\":\"Keep concrete future wait\",\"source_handles\":[\"observed-8259ddf5-2275-4464-90bd-f7eb9b0c1f2f\"],\"guards\":[{\"ref\":{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\"},\"expected_revision\":3}],\"ops\":[{\"op\":\"update_record\",\"ref\":{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\"},\"data\":{\"activity_id\":{\"id\":\"activity-09bd62c5-3384-4c7b-955d-46b402241106\"},\"parent_work_id\":null,\"objective\":\"Prepare a grounded note\",\"acceptance\":[{\"criterion_id\":\"note\",\"description\":\"Retained note\",\"verification\":\"Inspect exact generated artifact\",\"required\":true}],\"status\":\"active\",\"current_state\":\"Explicitly reopened for future clarification\",\"next_action\":null,\"steps\":[],\"waits\":[{\"wait_id\":\"clarification\",\"kind\":\"user\",\"target\":\"work\",\"subject\":\"New clarification\",\"satisfied_by\":\"The specific clarification arrives\",\"received_refs\":[],\"question\":\"Please send the clarification.\",\"status\":\"pending\"}],\"context_refs\":[{\"id\":\"evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684\"}],\"completion\":null,\"plan_version\":1,\"cancellation\":null},\"plan_change_reason\":\"New wait from explicit reopened objective\",\"decision_source_handle\":\"source-a9d5c222-4aa2-48c8-a671-0607b7556016\"},{\"op\":\"transition_work\",\"ref\":{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\"},\"status\":\"waiting\",\"reason\":\"No independent work before the promised clarification\",\"next_action\":null}]},\"receipt\":{\"ok\":true,\"request_id\":\"upgrade-D-wait\",\"workspace_id\":\"23dea2f6-46af-450b-b828-fee24665ad2c\",\"schema_version\":2,\"snapshot_seq\":5,\"transaction_id\":\"txn-741b3792-f5b8-47ff-827e-bf6c800c0f1a\",\"committed\":true,\"created\":{},\"new_revisions\":{\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\":4},\"warnings\":[]}}"
+      }
+    ],
+    "focus": [
+      {
+        "session_id": "synthetic-upgrade-D",
+        "json": "{\"activity_ref\":{\"id\":\"activity-09bd62c5-3384-4c7b-955d-46b402241106\"},\"work_ref\":{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\"}}"
+      }
+    ],
+    "claims": [
+      {
+        "token": "claim-96316e34-aab4-4da2-904f-e781d97e7045",
+        "work_id": "work-73cef970-9d52-4fb6-a5ce-9ad699b93f20",
+        "json": "{\"token\":\"claim-96316e34-aab4-4da2-904f-e781d97e7045\",\"work_id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"step_id\":null,\"purpose\":\"handoff\",\"expected_revision\":1,\"plan_guards\":[{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"revision\":1}],\"session_id\":\"synthetic-upgrade-D\",\"runtime_id\":\"synthetic-upgrade-D\",\"epoch\":\"f347fcd3-e6d6-4283-8f08-d6914ede30d8\",\"acquired_at\":\"2026-10-20T10:28:06.492Z\",\"expires_at\":\"2026-10-20T10:43:06.492Z\",\"state\":\"consumed\",\"reason\":\"Prepare immutable synthetic handoff\",\"coverage\":\"Core local Work/step result recording and handoff preparation only; no external dispatch guarantee\",\"receipt_request_id\":\"upgrade-D-handoff\"}"
+      },
+      {
+        "token": "claim-3876aca2-b6e7-4f6e-a5b1-bcdf2891d15c",
+        "work_id": "work-73cef970-9d52-4fb6-a5ce-9ad699b93f20",
+        "json": "{\"token\":\"claim-3876aca2-b6e7-4f6e-a5b1-bcdf2891d15c\",\"work_id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"step_id\":null,\"purpose\":\"work\",\"expected_revision\":1,\"plan_guards\":[{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"revision\":1}],\"session_id\":\"synthetic-upgrade-D\",\"runtime_id\":\"synthetic-upgrade-D\",\"epoch\":\"f347fcd3-e6d6-4283-8f08-d6914ede30d8\",\"acquired_at\":\"2026-10-20T10:28:06.501Z\",\"expires_at\":\"2026-10-20T10:43:06.501Z\",\"state\":\"consumed\",\"reason\":\"Record actual synthetic result\",\"coverage\":\"Core local Work/step result recording and handoff preparation only; no external dispatch guarantee\",\"receipt_request_id\":\"upgrade-D-complete\"}"
+      }
+    ],
+    "handoffs": [
+      {
+        "id": "handoff-fcf6e122-815d-4e3f-aed1-1630d9cbc478",
+        "json": "{\"handoff_id\":\"handoff-fcf6e122-815d-4e3f-aed1-1630d9cbc478\",\"work_ref\":{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"revision\":1},\"plan_version\":1,\"step_id\":null,\"objective\":\"Inspect the note\",\"conditions\":\"Synthetic preparation only\",\"expected_result\":\"A useful review\",\"context_refs\":[{\"id\":\"evidence-eae78d58-f407-40b4-89c1-6fb6c54e2684\",\"revision\":1}],\"message\":\"Please inspect the retained note. Nothing has been sent.\",\"prepared_at\":\"2026-10-20T10:28:06.498Z\",\"prepared_by\":\"synthetic-upgrade-D\",\"transport_state\":\"prepared_not_sent\",\"source_refs\":[\"observed-7b3ca0e1-ed35-49bf-a17a-c10608fa225d\"],\"plan_snapshot\":[{\"id\":\"work-73cef970-9d52-4fb6-a5ce-9ad699b93f20\",\"revision\":1,\"plan_version\":1,\"status\":\"active\"}]}"
+      }
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-06-final-cross",
+  "scenario": "06-final-cross",
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 5,
+    "requests": 34,
+    "input": 645138,
+    "output": 15696,
+    "cache_read": 328320,
+    "estimated_usd": 0.8234279999999999,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 34
+  },
+  "sha": "1889c747e3f19332038fb9f2803e7dc590654de2"
+}

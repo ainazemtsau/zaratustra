@@ -1,0 +1,38 @@
+{
+  "ok": true,
+  "source_handle": "source-676bbde9-2b70-44fb-a65a-0fc78f2f65c0",
+  "source_ref": "observed-c8fe1731-336b-4d96-b3e7-d83cf56d4981",
+  "transport": "file",
+  "channel_identity": null,
+  "capture_stage": "validated-file-bytes",
+  "content_hash": "fc7f55c8fd4b2200723d5565054e01369c0a59c05a36a2b98435fb0e52e6979a",
+  "byte_length": 1068,
+  "extraction": {
+    "format": "epub",
+    "status": "readable",
+    "parser": "yauzl + htmlparser2",
+    "parser_version": "3.4.0 + 12.0.0",
+    "sections": [
+      {
+        "locator": "chapter:1:OPS/one.xhtml",
+        "label": "OPS/one.xhtml",
+        "start": 0,
+        "end": 12615,
+        "available": true
+      },
+      {
+        "locator": "chapter:2:OPS/two.xhtml",
+        "label": "OPS/two.xhtml",
+        "start": 12615,
+        "end": 12726,
+        "available": true
+      }
+    ],
+    "warnings": [],
+    "total_characters": 12726,
+    "text_blob_ref": "1ed530c9fbb2b1d21160dbe083836aa1fbeb7c6a3f00fc47551c4923b751f604",
+    "text_hash": "1ed530c9fbb2b1d21160dbe083836aa1fbeb7c6a3f00fc47551c4923b751f604"
+  },
+  "readable_format": "readable",
+  "committed": false
+}

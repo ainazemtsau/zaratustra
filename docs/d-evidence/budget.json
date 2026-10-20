@@ -1,0 +1,26 @@
+{
+  "provider": "openai-codex",
+  "model": "gpt-6.1-sol",
+  "prompts": 24,
+  "requests": 156,
+  "input": 3045565,
+  "output": 49649,
+  "cache_read": 1592960,
+  "estimated_usd": 3.560996000000001,
+  "limits": {
+    "prompts": 24,
+    "requests": 180,
+    "input": 9007199254740991,
+    "output": 9007199254740991,
+    "estimated_usd": 15
+  },
+  "reported_usage_messages": 156,
+  "prelaunch_attempts": 1,
+  "conversation_attempts_at_adjustment": 18,
+  "closed": true,
+  "closed_at": "2026-10-20T11:21:14.561708+00:00",
+  "conversation_attempts": 23,
+  "dispatch_attempts": 156,
+  "actual_provider_billing": "unknown",
+  "stop_reason": "24-attempt ceiling including one recorded prelaunch failure; required scenarios completed; no further model runs"
+}

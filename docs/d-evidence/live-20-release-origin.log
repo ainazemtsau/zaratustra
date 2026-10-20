@@ -1,0 +1,28 @@
+(node:36052) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Сохранить не удалось: хранилище отклонило запись из-за отсутствия разрешения на защищённое хранение. Область «Мастерская» и сведения не сохранены.\n\nДля сохранения данных, включая код записи, нужно разрешить защищённые записи в настройках доступа.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 21,
+    "requests": 136,
+    "input": 2643575,
+    "output": 40592,
+    "cache_read": 1386240,
+    "estimated_usd": 3.0592140000000008,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 136,
+    "prelaunch_attempts": 1,
+    "conversation_attempts_at_adjustment": 18
+  }
+}

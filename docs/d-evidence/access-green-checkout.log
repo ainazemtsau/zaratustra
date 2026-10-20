@@ -1,0 +1,23 @@
+node:internal/modules/cjs/loader:1383
+  const err = new Error(message);
+              ^
+
+Error: Cannot find module 'src\core\index.ts'
+Require stack:
+- <SYNTHETIC_EVIDENCE_ROOT>\access-counters.mjs
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+    at Function.resolve (node:internal/modules/helpers:157:19)
+    at jitiResolve (<OWNER_PROFILE>\AppData\Roaming\npm\node_modules\@earendil-works\pi-coding-agent\node_modules\jiti\dist\jiti.cjs:1:176713)
+    at jitiRequire (<OWNER_PROFILE>\AppData\Roaming\npm\node_modules\@earendil-works\pi-coding-agent\node_modules\jiti\dist\jiti.cjs:1:178658)
+    at Function.import (<OWNER_PROFILE>\AppData\Roaming\npm\node_modules\@earendil-works\pi-coding-agent\node_modules\jiti\dist\jiti.cjs:1:187724)
+    at file:///<SYNTHETIC_EVIDENCE_ROOT>/access-counters.mjs:8:31
+    at ModuleJob.run (node:internal/modules/esm/module_job:345:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:651:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '<SYNTHETIC_EVIDENCE_ROOT>\\access-counters.mjs'
+  ]
+}
+
+Node.js v22.19.0

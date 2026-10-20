@@ -1,0 +1,165 @@
+{
+  "expected": "green",
+  "sequence": 2,
+  "operation": {
+    "ok": true,
+    "workspace_id": "5cc07ccc-9189-405e-907b-280942c9bf84",
+    "schema_version": 3,
+    "snapshot_seq": 2,
+    "data": {
+      "request_id": "visible-one",
+      "operation_digest": "d99a7cf06c5380e7d6ecdc4f57dd27b334bcbbf365f3b5536ea0f0631e2a18e2",
+      "source_refs": [
+        "observed-45916116-c406-47ab-ad0b-a38b7f26d1aa"
+      ],
+      "session_id": "scope",
+      "epoch": "be8e2983-32ff-44ad-a92c-a244cfb3e047",
+      "status": "committed",
+      "reason": "Scope counterexample",
+      "payload": {
+        "request_id": "visible-one",
+        "reason": "Scope counterexample",
+        "source_handles": [
+          "observed-45916116-c406-47ab-ad0b-a38b7f26d1aa"
+        ],
+        "guards": [],
+        "ops": [
+          {
+            "op": "create_record",
+            "client_ref": "e",
+            "title": "visible-one",
+            "visibility": "workspace",
+            "kind": "entity",
+            "data": {
+              "entity_kind": "device",
+              "aliases": [],
+              "disambiguation": "Distinct synthetic object",
+              "status": "active"
+            }
+          }
+        ]
+      },
+      "receipt": {
+        "ok": true,
+        "request_id": "visible-one",
+        "workspace_id": "5cc07ccc-9189-405e-907b-280942c9bf84",
+        "schema_version": 3,
+        "snapshot_seq": 1,
+        "transaction_id": "txn-81637ef7-ee28-4044-8757-af9cd90df9f7",
+        "committed": true,
+        "created": {
+          "e": "entity-2f6b9cb0-ad95-493a-b617-c045a96f20bb"
+        },
+        "new_revisions": {
+          "entity-2f6b9cb0-ad95-493a-b617-c045a96f20bb": 1
+        },
+        "warnings": []
+      }
+    },
+    "warnings": []
+  },
+  "changes": {
+    "ok": true,
+    "workspace_id": "5cc07ccc-9189-405e-907b-280942c9bf84",
+    "schema_version": 3,
+    "snapshot_seq": 2,
+    "data": {
+      "cards": [
+        {
+          "transaction_id": "txn-81637ef7-ee28-4044-8757-af9cd90df9f7",
+          "request_id": "visible-one",
+          "change_seq": 1,
+          "changed_refs": [
+            {
+              "id": "entity-2f6b9cb0-ad95-493a-b617-c045a96f20bb",
+              "before_revision": null,
+              "after_revision": 1
+            }
+          ],
+          "relation_refs": [],
+          "actor": "trusted-personal",
+          "session_id": "scope",
+          "reason": "Scope counterexample",
+          "caused_by": [
+            "observed-45916116-c406-47ab-ad0b-a38b7f26d1aa"
+          ],
+          "recorded_at": "2026-10-20T10:28:11.549Z"
+        },
+        {
+          "transaction_id": "txn-e4fd9fa7-6903-40e6-8a15-020b583eff88",
+          "request_id": "visible-two",
+          "change_seq": 2,
+          "changed_refs": [
+            {
+              "id": "entity-3ddc8dc0-6528-41fc-b0f3-71e7794017e0",
+              "before_revision": null,
+              "after_revision": 1
+            }
+          ],
+          "relation_refs": [],
+          "actor": "trusted-personal",
+          "session_id": "scope",
+          "reason": "Scope counterexample",
+          "caused_by": [
+            "observed-45916116-c406-47ab-ad0b-a38b7f26d1aa"
+          ],
+          "recorded_at": "2026-10-20T10:28:11.642Z"
+        }
+      ],
+      "applied_filters": {
+        "view": "changes",
+        "record_id": null,
+        "limit": 20,
+        "mode": null
+      },
+      "generation": "2f7b61593aeddd106c1a366c078863ff3c5447ce6e45a959f8d0266b2156a490",
+      "has_more": false,
+      "next_cursor": null,
+      "warnings": [
+        "Empty or incomplete results do not establish absence. Read selected records and conditions before use."
+      ]
+    },
+    "warnings": []
+  },
+  "page": {
+    "cards": [
+      {
+        "id": "entity-2f6b9cb0-ad95-493a-b617-c045a96f20bb",
+        "kind": "entity",
+        "title": "visible-one",
+        "revision": 1,
+        "storage": "live",
+        "state": "active",
+        "description": null,
+        "selector": {
+          "record_id": "entity-2f6b9cb0-ad95-493a-b617-c045a96f20bb"
+        },
+        "must_read": [
+          {
+            "id": "entity-2f6b9cb0-ad95-493a-b617-c045a96f20bb",
+            "revision": 1
+          }
+        ],
+        "match_reasons": [
+          "Typed filters"
+        ]
+      }
+    ],
+    "applied_filters": {
+      "kinds": [
+        "entity"
+      ],
+      "limit": 1
+    },
+    "generation": "2f7b61593aeddd106c1a366c078863ff3c5447ce6e45a959f8d0266b2156a490",
+    "has_more": true,
+    "next_cursor": "cursor-dad63b01-72e8-46ff-ba4d-01ff1d97761b",
+    "warnings": [
+      "Empty or incomplete results do not establish absence. Read selected records and conditions before use."
+    ],
+    "order": "stable document id",
+    "validity_note": "No applicability time inferred from write time."
+  },
+  "decoded": null,
+  "visible_entities": 2
+}

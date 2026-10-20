@@ -1,0 +1,8 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\delivery-agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\delivery-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-14-delivery-example-retract",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\14-delivery-example-retract",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "prompt": "Про домашний термопресс «Мята-8» я приводил вымышленный пример. Это не личный факт обо мне. Убери такую интерпретацию; из этого не следует, что у меня точно нет такого устройства."
+}

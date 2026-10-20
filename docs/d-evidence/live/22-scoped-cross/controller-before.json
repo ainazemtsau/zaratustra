@@ -1,0 +1,26 @@
+{
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-22-scoped-cross",
+  "trusted_scopes": "[\"restricted:read\",\"restricted:write\"]",
+  "sha": "2e67880ccc6f52c22ee99f38a12f232a5e8a9f9e",
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 22,
+    "requests": 141,
+    "input": 2725728,
+    "output": 42250,
+    "cache_read": 1434880,
+    "estimated_usd": 3.147684000000001,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 141,
+    "prelaunch_attempts": 1,
+    "conversation_attempts_at_adjustment": 18
+  },
+  "scenario": "22-scoped-cross"
+}

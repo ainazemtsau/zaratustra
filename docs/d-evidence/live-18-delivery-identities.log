@@ -1,0 +1,26 @@
+(node:103312) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "По сохранённым сведениям:\n\n- **Собственное оборудование не подтверждено:** записано желание купить аппарат, а не состоявшаяся покупка.\n- Есть **доступ к резографу «Тихий берег» в мастерской** для бумажных тиражей карточек — только по будням, по предварительной записи; в воскресенье он недоступен. Доступ не означает собственность.\n- **На аппарат знакомого без уточнений рассчитывать нельзя:** это отдельный одноимённый аппарат, доступ к нему не подтверждён. Нужно согласовать возможность использования, сроки и пригодность для вашего тиража.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 18,
+    "requests": 124,
+    "input": 2387519,
+    "output": 38060,
+    "cache_read": 1264640,
+    "estimated_usd": 2.7528220000000005,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 124
+  }
+}

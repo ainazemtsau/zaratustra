@@ -1,0 +1,8 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\delivery-agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\delivery-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-09-delivery-changed",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\09-delivery-changed",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "prompt": "Условия изменились: мастерская «Старая гавань» отозвала мой доступ к «Парусу-41». Он больше мне недоступен, прежний код записи тоже не действует. Прежняя возможность была верной раньше, но теперь на неё нельзя рассчитывать. Учти это в сохранённом плане карточек."
+}

@@ -1,0 +1,20 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ undefined
+- 'Only the explicitly described synthetic case; no general availability inference'
+
+    at file:///<PRODUCT_CHECKOUT>/scripts/d-scale.mjs:198:8 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: 'Only the explicitly described synthetic case; no general availability inference',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.19.0

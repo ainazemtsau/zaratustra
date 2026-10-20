@@ -1,0 +1,8 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\delivery-agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\delivery-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-11-delivery-error-save",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\11-delivery-error-save",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "prompt": "Сохрани для домашних дел: терминалом «Лира-9» в соседнем клубе я могу пользоваться по вечерам без предварительной записи. Хочу учитывать это в будущих делах."
+}

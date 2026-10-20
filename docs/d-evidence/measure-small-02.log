@@ -1,0 +1,3 @@
+{"record_count":26,"pages":1,"count":11,"pageBytes":4479,"measurements":[{"name":"map","ms":17.875499999999988,"bytes":1766},{"name":"branch","ms":8.422600000000017,"bytes":1497},{"name":"lexical","ms":7.691400000000016,"bytes":928},{"name":"selected-claim","ms":4,"bytes":1234},{"name":"snapshot","ms":1.6718999999999937,"bytes":1827}]}
+(node:84216) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

@@ -1,0 +1,23 @@
+{
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 8,
+    "requests": 54,
+    "input": 1030146,
+    "output": 23425,
+    "cache_read": 535040,
+    "estimated_usd": 1.277966,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 54
+  },
+  "sha": "8e4c20551c36e5be6a2d1a6a197c060339b27fbc",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-09-delivery-changed",
+  "scenario": "09-delivery-changed"
+}

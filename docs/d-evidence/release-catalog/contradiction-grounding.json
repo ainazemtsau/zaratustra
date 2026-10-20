@@ -1,0 +1,247 @@
+{
+  "synthetic": true,
+  "mechanical": true,
+  "reason": "Strengthened a corpus observer gap: baseline contested filler rows had distinct objects",
+  "before": [
+    {
+      "id": "knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6",
+      "kind": "knowledge",
+      "title": "Synthetic observation 3",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:37:27.443Z",
+      "updated_at": "2026-10-20T10:37:27.443Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "Synthetic numbered observation 3 about artifact production and stored conditions.",
+        "state": "contested",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-312d72d0-fbc0-44e1-b85e-5fa469412625"
+        },
+        "conditions": "Source A reports weekday-only access",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4",
+      "kind": "knowledge",
+      "title": "Synthetic observation 4",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:37:27.443Z",
+      "updated_at": "2026-10-20T10:37:27.443Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "Synthetic numbered observation 4 about artifact production and stored conditions.",
+        "state": "contested",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-5c876ef6-c4aa-48ab-a9d9-379d4c8f5635"
+        },
+        "conditions": "Source B reports weekend-only access",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    }
+  ],
+  "after": [
+    {
+      "id": "knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6",
+      "kind": "knowledge",
+      "title": "Synthetic observation 3",
+      "body": null,
+      "revision": 2,
+      "created_at": "2026-10-20T10:37:27.443Z",
+      "updated_at": "2026-10-20T10:55:57.894Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "Source A reports weekday-only access to synthetic device 3 and excludes weekends.",
+        "state": "contested",
+        "basis": "external_source",
+        "evidence_refs": [
+          {
+            "id": "evidence-c034605f-612c-4791-910f-743855a89ad3",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-312d72d0-fbc0-44e1-b85e-5fa469412625"
+        },
+        "conditions": "Weekdays only; weekends excluded. Unresolved conflict with source B; applicability time unknown.",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-c034605f-612c-4791-910f-743855a89ad3",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    {
+      "id": "knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4",
+      "kind": "knowledge",
+      "title": "Synthetic observation 4",
+      "body": null,
+      "revision": 2,
+      "created_at": "2026-10-20T10:37:27.443Z",
+      "updated_at": "2026-10-20T10:55:57.894Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "Source B reports weekend-only access to the same synthetic device 3 and excludes weekdays.",
+        "state": "contested",
+        "basis": "external_source",
+        "evidence_refs": [
+          {
+            "id": "evidence-c034605f-612c-4791-910f-743855a89ad3",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-312d72d0-fbc0-44e1-b85e-5fa469412625"
+        },
+        "conditions": "Weekends only; weekdays excluded. Unresolved conflict with source A; applicability time unknown.",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-c034605f-612c-4791-910f-743855a89ad3",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    }
+  ],
+  "receipt": {
+    "ok": true,
+    "request_id": "ground-conflicting-fixture-sources",
+    "workspace_id": "3f7732de-21a0-4b1a-875a-cc2ba2229624",
+    "schema_version": 3,
+    "snapshot_seq": 13,
+    "transaction_id": "txn-e67f4479-7a92-43da-a450-f55fb06d6407",
+    "committed": true,
+    "created": {
+      "conflict": "evidence-c034605f-612c-4791-910f-743855a89ad3"
+    },
+    "new_revisions": {
+      "evidence-c034605f-612c-4791-910f-743855a89ad3": 1,
+      "knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6": 2,
+      "knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4": 2
+    },
+    "warnings": []
+  },
+  "record_count": 26,
+  "versions": 29,
+  "grounds": {
+    "id": "evidence-c034605f-612c-4791-910f-743855a89ad3",
+    "kind": "evidence",
+    "title": "Conflicting synthetic reports about one device",
+    "body": null,
+    "revision": 1,
+    "created_at": "2026-10-20T10:55:57.894Z",
+    "updated_at": "2026-10-20T10:55:57.894Z",
+    "storage": "live",
+    "concept_ids": [],
+    "origin_activity_id": null,
+    "visibility": "workspace",
+    "data": {
+      "source_kind": "external_reply",
+      "source_locator": "observed-13eb318e-d81c-4054-96ef-7865247ed8be",
+      "captured_at": "2026-10-20T10:55:57.867Z",
+      "content_hash": "ad663b7fd1d61fa2c79566ee1d679eb11e8578bac726fdec6103aa647c059cc8",
+      "retained_excerpt": "Синтетические противоречащие сообщения об одном контрольном объекте 3. Источник A: «Доступ только по будням, в выходные доступа нет». Источник B: «Доступ только по выходным, по будням доступа нет». Достоверность и время действия не установлены; ни одному источнику не отдаётся предпочтение.",
+      "blob_ref": null,
+      "byte_length": 529,
+      "availability": "retained",
+      "source_language": "ru",
+      "language_assignment": "model-reported",
+      "provenance": {
+        "source_ref": "observed-13eb318e-d81c-4054-96ef-7865247ed8be",
+        "content_hash": "ad663b7fd1d61fa2c79566ee1d679eb11e8578bac726fdec6103aa647c059cc8",
+        "transport": "rpc",
+        "channel_identity": "synthetic-corpus-controller",
+        "session_id": "corpus-grounding",
+        "runtime_id": "corpus-grounding",
+        "captured_at": "2026-10-20T10:55:57.867Z",
+        "capture_stage": "pi-input-hook-observed",
+        "original_keystrokes": false,
+        "byte_length": 529
+      },
+      "trust_origin": "programmatic-or-file-not-owner-approval"
+    }
+  }
+}

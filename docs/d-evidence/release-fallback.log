@@ -1,0 +1,46 @@
+{
+  "mode": "fallback",
+  "counts": {
+    "concepts": 6,
+    "entities": 5,
+    "knowledge": 8
+  },
+  "pages": 1,
+  "cardCount": 8,
+  "totalPageBytes": 3338,
+  "query_ms": [
+    {
+      "label": "map",
+      "ms": 9.599400000000003,
+      "bytes": 1768
+    },
+    {
+      "label": "wide-branch-page",
+      "ms": 2.8648000000000025,
+      "bytes": 1497
+    },
+    {
+      "label": "independent-lexical",
+      "ms": 5.175099999999986,
+      "bytes": 939
+    },
+    {
+      "label": "snapshot",
+      "ms": 0.8220000000000027,
+      "bytes": 532
+    },
+    {
+      "label": "selected-claim-read",
+      "ms": 2.699200000000019,
+      "bytes": 1234
+    },
+    {
+      "label": "all-claims-page-0",
+      "ms": 3.4450000000000216,
+      "bytes": 3462
+    }
+  ],
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\release-fallback\\home"
+}
+(node:19464) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

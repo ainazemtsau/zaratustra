@@ -1,0 +1,422 @@
+{
+  "mechanical": true,
+  "prepared_knowledge": 8,
+  "observedKnowledge": 11,
+  "record_count": 26,
+  "revisions": 29,
+  "pages": 1,
+  "count": 11,
+  "pageBytes": 4479,
+  "measurements": [
+    {
+      "name": "map",
+      "ms": 17.875499999999988,
+      "bytes": 1766
+    },
+    {
+      "name": "branch",
+      "ms": 8.422600000000017,
+      "bytes": 1497
+    },
+    {
+      "name": "lexical",
+      "ms": 7.691400000000016,
+      "bytes": 928
+    },
+    {
+      "name": "selected-claim",
+      "ms": 4,
+      "bytes": 1234
+    },
+    {
+      "name": "snapshot",
+      "ms": 1.6718999999999937,
+      "bytes": 1827
+    },
+    {
+      "name": "page-0",
+      "ms": 4.337400000000002,
+      "bytes": 4603
+    }
+  ],
+  "map": {
+    "ok": true,
+    "workspace_id": "3f7732de-21a0-4b1a-875a-cc2ba2229624",
+    "schema_version": 3,
+    "snapshot_seq": 13,
+    "data": {
+      "entries": [
+        {
+          "label": "activities",
+          "description": "Permitted existing activities",
+          "selector": {
+            "view": "activities"
+          },
+          "has_more": false
+        },
+        {
+          "label": "work",
+          "description": "Permitted existing work",
+          "selector": {
+            "view": "work"
+          },
+          "has_more": false
+        },
+        {
+          "label": "knowledge",
+          "description": "Permitted existing knowledge",
+          "selector": {
+            "view": "knowledge"
+          },
+          "has_more": true
+        },
+        {
+          "label": "materials",
+          "description": "Permitted existing materials",
+          "selector": {
+            "view": "materials"
+          },
+          "has_more": true
+        },
+        {
+          "label": "operations",
+          "description": "Permitted existing operations",
+          "selector": {
+            "view": "operations"
+          },
+          "has_more": true
+        },
+        {
+          "label": "handoffs",
+          "description": "Permitted existing handoffs",
+          "selector": {
+            "view": "handoffs"
+          },
+          "has_more": false
+        },
+        {
+          "label": "claims",
+          "description": "Permitted existing claims",
+          "selector": {
+            "view": "claims"
+          },
+          "has_more": false
+        },
+        {
+          "label": "resources",
+          "description": "Permitted existing resources",
+          "selector": {
+            "view": "resources"
+          },
+          "has_more": true
+        },
+        {
+          "label": "people",
+          "description": "Permitted existing people",
+          "selector": {
+            "view": "people"
+          },
+          "has_more": false
+        },
+        {
+          "label": "topics",
+          "description": "Permitted existing topics",
+          "selector": {
+            "view": "topics"
+          },
+          "has_more": true
+        },
+        {
+          "label": "entities",
+          "description": "Permitted existing entities",
+          "selector": {
+            "view": "entities"
+          },
+          "has_more": true
+        },
+        {
+          "label": "unfiled",
+          "description": "Permitted existing unfiled",
+          "selector": {
+            "view": "unfiled"
+          },
+          "has_more": true
+        },
+        {
+          "label": "relations",
+          "description": "Permitted existing relations",
+          "selector": {
+            "view": "relations"
+          },
+          "has_more": false
+        }
+      ],
+      "focus": null,
+      "applied_filters": {
+        "access": "trusted context"
+      },
+      "generation": "e7423edd3f1fa7bb7e8ec2924320425ca541387ff5fc00267adea43d820e8b58",
+      "has_more": false,
+      "next_cursor": null
+    },
+    "warnings": []
+  },
+  "branch": {
+    "ok": true,
+    "workspace_id": "3f7732de-21a0-4b1a-875a-cc2ba2229624",
+    "schema_version": 3,
+    "snapshot_seq": 13,
+    "data": {
+      "cards": [
+        {
+          "id": "concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b",
+          "kind": "concept",
+          "title": "Printmaking",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b"
+          },
+          "must_read": [
+            {
+              "id": "concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "entity-2a01bd1e-dedc-4848-92cf-967480639b90",
+          "kind": "entity",
+          "title": "Quiet Shore",
+          "revision": 1,
+          "storage": "live",
+          "state": "active",
+          "description": null,
+          "selector": {
+            "record_id": "entity-2a01bd1e-dedc-4848-92cf-967480639b90"
+          },
+          "must_read": [
+            {
+              "id": "entity-2a01bd1e-dedc-4848-92cf-967480639b90",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        },
+        {
+          "id": "knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b",
+          "kind": "knowledge",
+          "title": "Synthetic observation 6",
+          "revision": 1,
+          "storage": "live",
+          "state": "current",
+          "description": null,
+          "selector": {
+            "record_id": "knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b"
+          },
+          "must_read": [
+            {
+              "id": "knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b",
+              "revision": 1
+            }
+          ],
+          "match_reasons": []
+        }
+      ],
+      "applied_filters": {
+        "view": "topics",
+        "record_id": "concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca",
+        "limit": 20,
+        "mode": null
+      },
+      "generation": "e7423edd3f1fa7bb7e8ec2924320425ca541387ff5fc00267adea43d820e8b58",
+      "has_more": false,
+      "next_cursor": null,
+      "warnings": [
+        "Empty or incomplete results do not establish absence. Read selected records and conditions before use."
+      ]
+    },
+    "warnings": []
+  },
+  "search": {
+    "ok": true,
+    "workspace_id": "3f7732de-21a0-4b1a-875a-cc2ba2229624",
+    "schema_version": 3,
+    "snapshot_seq": 13,
+    "data": {
+      "cards": [
+        {
+          "id": "knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb",
+          "kind": "knowledge",
+          "title": "Workshop resource conditions",
+          "revision": 1,
+          "storage": "live",
+          "state": "current",
+          "description": null,
+          "selector": {
+            "record_id": "knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb"
+          },
+          "must_read": [
+            {
+              "id": "knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb",
+              "revision": 1
+            }
+          ],
+          "match_reasons": [
+            "English working text"
+          ]
+        }
+      ],
+      "applied_filters": {
+        "query": "risograph printing",
+        "match": "all",
+        "kinds": [
+          "knowledge"
+        ]
+      },
+      "generation": "e7423edd3f1fa7bb7e8ec2924320425ca541387ff5fc00267adea43d820e8b58",
+      "has_more": false,
+      "next_cursor": null,
+      "warnings": [
+        "Empty or incomplete results do not establish absence. Read selected records and conditions before use."
+      ],
+      "order": "stable document id",
+      "validity_note": "No applicability time inferred from write time."
+    },
+    "warnings": []
+  },
+  "read": {
+    "ok": true,
+    "workspace_id": "3f7732de-21a0-4b1a-875a-cc2ba2229624",
+    "schema_version": 3,
+    "snapshot_seq": 13,
+    "data": {
+      "id": "knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb",
+      "kind": "knowledge",
+      "title": "Workshop resource conditions",
+      "body": null,
+      "revision": 1,
+      "created_at": "2026-10-20T10:37:27.443Z",
+      "updated_at": "2026-10-20T10:37:27.443Z",
+      "storage": "live",
+      "concept_ids": [
+        {
+          "id": "concept-a86784c2-b096-4d10-afa6-2e90e6c66c72"
+        }
+      ],
+      "origin_activity_id": null,
+      "visibility": "workspace",
+      "data": {
+        "knowledge_kind": "fact",
+        "statement": "The user has access to a risograph duplicator named Quiet Shore for printing paper card batches at the workshop; ownership is not established.",
+        "state": "current",
+        "basis": "user_statement",
+        "evidence_refs": [
+          {
+            "id": "evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e",
+            "revision": 1
+          }
+        ],
+        "object_ref": {
+          "id": "entity-2a01bd1e-dedc-4848-92cf-967480639b90"
+        },
+        "conditions": "Weekdays only, prior booking; unavailable on Sunday. Do not infer ownership, working condition or other unreported capabilities.",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "supersedes_refs": [],
+        "representation": {
+          "kind": "English paraphrase",
+          "source_ref": {
+            "id": "evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e",
+            "revision": 1
+          },
+          "source_language": "ru"
+        }
+      }
+    },
+    "warnings": []
+  },
+  "snapshot": {
+    "available": true,
+    "workspace_id": "3f7732de-21a0-4b1a-875a-cc2ba2229624",
+    "active_epoch": "44887899-d17e-4e7f-bb1f-5cf811e130e9",
+    "snapshot_seq": 13,
+    "generation": "e7423edd3f1fa7bb7e8ec2924320425ca541387ff5fc00267adea43d820e8b58",
+    "focus": null,
+    "records": [
+      {
+        "id": "knowledge-a7e2019f-edc2-4c1c-9dc8-ca2fa6a62e25",
+        "kind": "knowledge",
+        "revision": 1,
+        "title": "Russian response preference for Sunday card planning",
+        "data": {
+          "knowledge_kind": "preference",
+          "statement": "The user requests a Russian-language response.",
+          "state": "current",
+          "basis": "user_statement",
+          "evidence_refs": [
+            {
+              "id": "evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544",
+              "revision": 1
+            }
+          ],
+          "conditions": "Explicitly requested for the current Sunday paper-card discussion.",
+          "valid_from": null,
+          "valid_to": null,
+          "representation": {
+            "kind": "English paraphrase",
+            "source_ref": {
+              "id": "evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544",
+              "revision": 1
+            },
+            "source_language": "ru"
+          }
+        }
+      },
+      {
+        "id": "knowledge-952240fd-452b-4339-9d8c-1adc2846623a",
+        "kind": "knowledge",
+        "revision": 1,
+        "title": "Russian response preference",
+        "data": {
+          "knowledge_kind": "preference",
+          "statement": "The user requests a Russian-language response.",
+          "state": "current",
+          "basis": "user_statement",
+          "evidence_refs": [
+            {
+              "id": "evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a",
+              "revision": 1
+            }
+          ],
+          "conditions": "Explicitly requested for the discussion of preparing forty identical paper cards for Tuesday.",
+          "valid_from": null,
+          "valid_to": null,
+          "representation": {
+            "kind": "English paraphrase",
+            "source_ref": {
+              "id": "evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a",
+              "revision": 1
+            },
+            "source_language": "ru"
+          }
+        }
+      }
+    ],
+    "context_current": [],
+    "must_read": [],
+    "has_more": false,
+    "warnings": [
+      "Shared memory is not loaded: use catalog/search and read selected claims plus conditions. Historical tool messages may be stale."
+    ],
+    "write_mode": "single-writer",
+    "data_only": true,
+    "byte_budget": 12288,
+    "incomplete": false
+  },
+  "trace_bound": 512
+}

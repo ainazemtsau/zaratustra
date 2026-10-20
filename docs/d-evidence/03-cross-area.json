@@ -1,0 +1,8 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\pi-agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\candidate-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-03-cross-area",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\03-cross-area",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "prompt": "Создай область «Ярмарка». Мне нужно к следующему вторнику подготовить 40 одинаковых бумажных карточек A6 в чёрно-белом виде. Как я могу их сделать с учётом моих известных условий и что нужно организовать? Не хочу покупать оборудование."
+}

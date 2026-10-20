@@ -1,0 +1,678 @@
+{
+  "response": "**Подтверждённой возможности печатать именно в воскресенье среди известных ресурсов нет.**\n\n- **«Тихий берег» в мастерской** подходит для карточек, но доступен только по будням, по предварительной записи.\n- **Одноимённый аппарат у знакомого** — другой аппарат. Ваш доступ к нему и возможность воспользоваться им в воскресенье не подтверждены.\n- **Желаемый собственный аппарат** — пока не доступный ресурс; покупку исключаем.\n- Противоречивые записи о доступе в выходные не дают надёжного основания рассчитывать на печать.\n\n**План без покупки оборудования:**\n1. Если карточки нужны **к воскресенью**, заранее забронировать мастерскую на будний день, отпечатать и нарезать тираж до воскресенья.\n2. Если изготовить нужно **именно в воскресенье**, сначала договориться со знакомым: подтвердить доступ, исправность аппарата, бумагу и время.\n3. Если договориться не получится — искать копицентр с подтверждённой воскресной работой и сроком выдачи. Это новый вариант, а не уже известная доступная возможность.\n\nКарточки должны быть готовы к воскресенью или печатать можно только в этот день?",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "database": {
+    "records": [
+      {
+        "id": "evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e",
+        "kind": "evidence",
+        "activity_id": null,
+        "json": "{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"kind\":\"evidence\",\"title\":\"Original synthetic catalog notes\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.391Z\",\"updated_at\":\"2026-10-20T10:37:27.391Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\",\"captured_at\":\"2026-10-20T10:37:27.383Z\",\"content_hash\":\"c12785c9139f40ea85000b27a1910ad5d41c37fb4c0b8824ebe7139bfa5cded1\",\"retained_excerpt\":\"Синтетический каталог. В мастерской доступен резограф «Тихий берег» по будням после предварительной записи. Это доступ, а не собственность. Для бумажных тиражей карточек он подходит, но в воскресенье недоступен. В другом помещении у знакомого есть одноимённый аппарат; пользователь только хочет купить собственный.\",\"blob_ref\":null,\"byte_length\":580,\"availability\":\"retained\",\"source_language\":\"ru\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\",\"content_hash\":\"c12785c9139f40ea85000b27a1910ad5d41c37fb4c0b8824ebe7139bfa5cded1\",\"transport\":\"rpc\",\"channel_identity\":\"synthetic-mechanical-fixture\",\"session_id\":\"synthetic-D-fixture\",\"runtime_id\":\"synthetic-D-fixture\",\"captured_at\":\"2026-10-20T10:37:27.383Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":580},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca",
+        "kind": "concept",
+        "activity_id": null,
+        "json": "{\"id\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\",\"kind\":\"concept\",\"title\":\"Physical production\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.397Z\",\"updated_at\":\"2026-10-20T10:37:27.397Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 0\"],\"broader_ids\":[],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}"
+      },
+      {
+        "id": "concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b",
+        "kind": "concept",
+        "activity_id": null,
+        "json": "{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\",\"kind\":\"concept\",\"title\":\"Printmaking\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.403Z\",\"updated_at\":\"2026-10-20T10:37:27.403Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 1\"],\"broader_ids\":[{\"id\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\"}],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}"
+      },
+      {
+        "id": "concept-890e09ae-7841-4bfc-984b-b590adeff3e8",
+        "kind": "concept",
+        "activity_id": null,
+        "json": "{\"id\":\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\",\"kind\":\"concept\",\"title\":\"Catalog branch 2\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.409Z\",\"updated_at\":\"2026-10-20T10:37:27.409Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 2\"],\"broader_ids\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\"}],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}"
+      },
+      {
+        "id": "concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf",
+        "kind": "concept",
+        "activity_id": null,
+        "json": "{\"id\":\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\",\"kind\":\"concept\",\"title\":\"Catalog branch 3\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.415Z\",\"updated_at\":\"2026-10-20T10:37:27.415Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 3\"],\"broader_ids\":[{\"id\":\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\"}],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}"
+      },
+      {
+        "id": "concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e",
+        "kind": "concept",
+        "activity_id": null,
+        "json": "{\"id\":\"concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e\",\"kind\":\"concept\",\"title\":\"Catalog branch 4\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.421Z\",\"updated_at\":\"2026-10-20T10:37:27.421Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 4\"],\"broader_ids\":[{\"id\":\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\"}],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}"
+      },
+      {
+        "id": "concept-a86784c2-b096-4d10-afa6-2e90e6c66c72",
+        "kind": "concept",
+        "activity_id": null,
+        "json": "{\"id\":\"concept-a86784c2-b096-4d10-afa6-2e90e6c66c72\",\"kind\":\"concept\",\"title\":\"Botanical field notes\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.427Z\",\"updated_at\":\"2026-10-20T10:37:27.427Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 5\"],\"broader_ids\":[],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}"
+      },
+      {
+        "id": "entity-2a01bd1e-dedc-4848-92cf-967480639b90",
+        "kind": "entity",
+        "activity_id": null,
+        "json": "{\"id\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\",\"kind\":\"entity\",\"title\":\"Quiet Shore\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.434Z\",\"updated_at\":\"2026-10-20T10:37:27.434Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[\"Тихий берег\"],\"disambiguation\":\"Workshop duplicator mentioned in source; access only, ownership unknown\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6",
+        "kind": "entity",
+        "activity_id": null,
+        "json": "{\"id\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\",\"kind\":\"entity\",\"title\":\"Quiet Shore (friend's device)\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.434Z\",\"updated_at\":\"2026-10-20T10:37:27.434Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[\"Тихий берег\"],\"disambiguation\":\"Friend's separate device; no user access established\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "entity-a5743f32-6544-413c-9dc9-83e01befb6e2",
+        "kind": "entity",
+        "activity_id": null,
+        "json": "{\"id\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\",\"kind\":\"entity\",\"title\":\"Quiet Shore (purchase candidate)\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.434Z\",\"updated_at\":\"2026-10-20T10:37:27.434Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[\"Тихий берег\"],\"disambiguation\":\"Desired future purchase, not a currently available user resource\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "entity-312d72d0-fbc0-44e1-b85e-5fa469412625",
+        "kind": "entity",
+        "activity_id": null,
+        "json": "{\"id\":\"entity-312d72d0-fbc0-44e1-b85e-5fa469412625\",\"kind\":\"entity\",\"title\":\"Synthetic device 3\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.434Z\",\"updated_at\":\"2026-10-20T10:37:27.434Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[\"Unit-3\"],\"disambiguation\":\"Distinct synthetic inventory item 3\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "entity-5c876ef6-c4aa-48ab-a9d9-379d4c8f5635",
+        "kind": "entity",
+        "activity_id": null,
+        "json": "{\"id\":\"entity-5c876ef6-c4aa-48ab-a9d9-379d4c8f5635\",\"kind\":\"entity\",\"title\":\"Synthetic device 4\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.434Z\",\"updated_at\":\"2026-10-20T10:37:27.434Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[\"Unit-4\"],\"disambiguation\":\"Distinct synthetic inventory item 4\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\",\"kind\":\"knowledge\",\"title\":\"Workshop resource conditions\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.443Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-a86784c2-b096-4d10-afa6-2e90e6c66c72\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"The user has access to a risograph duplicator named Quiet Shore for printing paper card batches at the workshop; ownership is not established.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\"},\"conditions\":\"Weekdays only, prior booking; unavailable on Sunday. Do not infer ownership, working condition or other unreported capabilities.\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-01ed691f-7e86-41f0-b61b-8961faf44875",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-01ed691f-7e86-41f0-b61b-8961faf44875\",\"kind\":\"knowledge\",\"title\":\"Synthetic observation 1\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.443Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"A friend has another similarly named duplicator; user access is not established.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\"},\"conditions\":\"Only the explicitly described synthetic case; no general availability inference\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-ae45b939-5c3a-409f-bce8-6ab98c17dc29",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-ae45b939-5c3a-409f-bce8-6ab98c17dc29\",\"kind\":\"knowledge\",\"title\":\"Synthetic observation 2\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.443Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"The user wishes to purchase a duplicator; this is not a currently available resource.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\"},\"conditions\":\"Only the explicitly described synthetic case; no general availability inference\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6\",\"kind\":\"knowledge\",\"title\":\"Synthetic observation 3\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.443Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 3 about artifact production and stored conditions.\",\"state\":\"contested\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-312d72d0-fbc0-44e1-b85e-5fa469412625\"},\"conditions\":\"Source A reports weekday-only access\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4\",\"kind\":\"knowledge\",\"title\":\"Synthetic observation 4\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.443Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 4 about artifact production and stored conditions.\",\"state\":\"contested\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-5c876ef6-c4aa-48ab-a9d9-379d4c8f5635\"},\"conditions\":\"Source B reports weekend-only access\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-ed432d35-07a4-487e-903e-1ceb4178e371",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-ed432d35-07a4-487e-903e-1ceb4178e371\",\"kind\":\"knowledge\",\"title\":\"Synthetic observation 5\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.443Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-a86784c2-b096-4d10-afa6-2e90e6c66c72\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 5 about artifact production and stored conditions.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\"},\"conditions\":\"Only the explicitly described synthetic case; no general availability inference\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b\",\"kind\":\"knowledge\",\"title\":\"Synthetic observation 6\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.443Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 6 about artifact production and stored conditions.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\"},\"conditions\":\"Only the explicitly described synthetic case; no general availability inference\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\",\"kind\":\"knowledge\",\"title\":\"Synthetic observation 7\",\"body\":null,\"revision\":2,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.458Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 7 about artifact production and stored conditions.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\"},\"conditions\":\"Revised synthetic condition; prior version retained\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a",
+        "kind": "evidence",
+        "activity_id": null,
+        "json": "{\"id\":\"evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a\",\"kind\":\"evidence\",\"title\":\"Original request about paper cards and Russian response\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:44:46.443Z\",\"updated_at\":\"2026-10-20T10:44:46.443Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-038c6065-852a-4c1a-bc86-adf9db75e316\",\"captured_at\":\"2026-10-20T10:44:08.279Z\",\"content_hash\":\"7bd367e110fd1ec904b8ec69e5102d87703a78c6b5025df82b2a5e9adfd9fb71\",\"retained_excerpt\":\"Мне нужно во вторник подготовить сорок одинаковых бумажных карточек для кружка. Посмотри мои сохранённые возможности через разделы каталога: я не помню их названий. Что пригодится и какие условия нужно соблюсти? Ответь по-русски.\",\"blob_ref\":null,\"byte_length\":421,\"availability\":\"retained\",\"source_language\":\"ru\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-038c6065-852a-4c1a-bc86-adf9db75e316\",\"content_hash\":\"7bd367e110fd1ec904b8ec69e5102d87703a78c6b5025df82b2a5e9adfd9fb71\",\"transport\":\"rpc\",\"channel_identity\":\"isolated-synthetic-sdk-controller\",\"session_id\":\"01a158e9-51c3-7450-ba6a-ee1ceb856c18\",\"runtime_id\":\"495f71bf-00d8-4ca4-a705-24f8f78a03d9\",\"captured_at\":\"2026-10-20T10:44:08.279Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":421},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "knowledge-952240fd-452b-4339-9d8c-1adc2846623a",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-952240fd-452b-4339-9d8c-1adc2846623a\",\"kind\":\"knowledge\",\"title\":\"Russian response preference\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:44:46.443Z\",\"updated_at\":\"2026-10-20T10:44:46.443Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The user requests a Russian-language response.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a\",\"revision\":1}],\"conditions\":\"Explicitly requested for the discussion of preparing forty identical paper cards for Tuesday.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544",
+        "kind": "evidence",
+        "activity_id": null,
+        "json": "{\"id\":\"evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544\",\"kind\":\"evidence\",\"title\":\"Sunday paper cards request\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:49:07.078Z\",\"updated_at\":\"2026-10-20T10:49:07.078Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-bacf0033-51c0-40dc-8716-8e107218108b\",\"captured_at\":\"2026-10-20T10:48:34.430Z\",\"content_hash\":\"017fccc0bb9c2289bb1abb0ed706859f118372dbb373af8b799fba72587513f5\",\"retained_excerpt\":\"Мне нужны бумажные карточки именно в воскресенье. Какие из известных мне возможностей реально можно использовать в этот день? Подскажи план без покупки оборудования. Ответь по-русски.\",\"blob_ref\":null,\"byte_length\":337,\"availability\":\"retained\",\"source_language\":\"ru\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-bacf0033-51c0-40dc-8716-8e107218108b\",\"content_hash\":\"017fccc0bb9c2289bb1abb0ed706859f118372dbb373af8b799fba72587513f5\",\"transport\":\"rpc\",\"channel_identity\":\"isolated-synthetic-sdk-controller\",\"session_id\":\"01a158ed-616c-7067-8063-49b67f95a08d\",\"runtime_id\":\"187ed8de-d782-4f87-acbd-a1139439bab5\",\"captured_at\":\"2026-10-20T10:48:34.430Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":337},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "knowledge-d6ad3b76-55ef-495f-aeb7-d1e8ffc539f1",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-d6ad3b76-55ef-495f-aeb7-d1e8ffc539f1\",\"kind\":\"knowledge\",\"title\":\"Sunday paper cards constraints\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:49:07.078Z\",\"updated_at\":\"2026-10-20T10:49:07.078Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"constraint\",\"statement\":\"The user needs paper cards specifically on Sunday and requests a plan without purchasing equipment.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544\",\"revision\":1}],\"conditions\":\"For the current paper-card planning request; the calendar date and quantity are unspecified.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-a7e2019f-edc2-4c1c-9dc8-ca2fa6a62e25",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-a7e2019f-edc2-4c1c-9dc8-ca2fa6a62e25\",\"kind\":\"knowledge\",\"title\":\"Russian response preference for Sunday card planning\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:49:07.078Z\",\"updated_at\":\"2026-10-20T10:49:07.078Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The user requests a Russian-language response.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544\",\"revision\":1}],\"conditions\":\"Explicitly requested for the current Sunday paper-card discussion.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      }
+    ],
+    "revisions": [
+      {
+        "id": "evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e",
+        "revision": 1,
+        "json": "{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"kind\":\"evidence\",\"title\":\"Original synthetic catalog notes\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.391Z\",\"updated_at\":\"2026-10-20T10:37:27.391Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\",\"captured_at\":\"2026-10-20T10:37:27.383Z\",\"content_hash\":\"c12785c9139f40ea85000b27a1910ad5d41c37fb4c0b8824ebe7139bfa5cded1\",\"retained_excerpt\":\"Синтетический каталог. В мастерской доступен резограф «Тихий берег» по будням после предварительной записи. Это доступ, а не собственность. Для бумажных тиражей карточек он подходит, но в воскресенье недоступен. В другом помещении у знакомого есть одноимённый аппарат; пользователь только хочет купить собственный.\",\"blob_ref\":null,\"byte_length\":580,\"availability\":\"retained\",\"source_language\":\"ru\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\",\"content_hash\":\"c12785c9139f40ea85000b27a1910ad5d41c37fb4c0b8824ebe7139bfa5cded1\",\"transport\":\"rpc\",\"channel_identity\":\"synthetic-mechanical-fixture\",\"session_id\":\"synthetic-D-fixture\",\"runtime_id\":\"synthetic-D-fixture\",\"captured_at\":\"2026-10-20T10:37:27.383Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":580},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca",
+        "revision": 1,
+        "json": "{\"id\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\",\"kind\":\"concept\",\"title\":\"Physical production\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.397Z\",\"updated_at\":\"2026-10-20T10:37:27.397Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 0\"],\"broader_ids\":[],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}"
+      },
+      {
+        "id": "concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b",
+        "revision": 1,
+        "json": "{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\",\"kind\":\"concept\",\"title\":\"Printmaking\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.403Z\",\"updated_at\":\"2026-10-20T10:37:27.403Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 1\"],\"broader_ids\":[{\"id\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\"}],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}"
+      },
+      {
+        "id": "concept-890e09ae-7841-4bfc-984b-b590adeff3e8",
+        "revision": 1,
+        "json": "{\"id\":\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\",\"kind\":\"concept\",\"title\":\"Catalog branch 2\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.409Z\",\"updated_at\":\"2026-10-20T10:37:27.409Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 2\"],\"broader_ids\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\"}],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}"
+      },
+      {
+        "id": "concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf",
+        "revision": 1,
+        "json": "{\"id\":\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\",\"kind\":\"concept\",\"title\":\"Catalog branch 3\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.415Z\",\"updated_at\":\"2026-10-20T10:37:27.415Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 3\"],\"broader_ids\":[{\"id\":\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\"}],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}"
+      },
+      {
+        "id": "concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e",
+        "revision": 1,
+        "json": "{\"id\":\"concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e\",\"kind\":\"concept\",\"title\":\"Catalog branch 4\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.421Z\",\"updated_at\":\"2026-10-20T10:37:27.421Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 4\"],\"broader_ids\":[{\"id\":\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\"}],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}"
+      },
+      {
+        "id": "concept-a86784c2-b096-4d10-afa6-2e90e6c66c72",
+        "revision": 1,
+        "json": "{\"id\":\"concept-a86784c2-b096-4d10-afa6-2e90e6c66c72\",\"kind\":\"concept\",\"title\":\"Botanical field notes\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.427Z\",\"updated_at\":\"2026-10-20T10:37:27.427Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 5\"],\"broader_ids\":[],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}"
+      },
+      {
+        "id": "entity-2a01bd1e-dedc-4848-92cf-967480639b90",
+        "revision": 1,
+        "json": "{\"id\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\",\"kind\":\"entity\",\"title\":\"Quiet Shore\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.434Z\",\"updated_at\":\"2026-10-20T10:37:27.434Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[\"Тихий берег\"],\"disambiguation\":\"Workshop duplicator mentioned in source; access only, ownership unknown\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6",
+        "revision": 1,
+        "json": "{\"id\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\",\"kind\":\"entity\",\"title\":\"Quiet Shore (friend's device)\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.434Z\",\"updated_at\":\"2026-10-20T10:37:27.434Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[\"Тихий берег\"],\"disambiguation\":\"Friend's separate device; no user access established\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "entity-a5743f32-6544-413c-9dc9-83e01befb6e2",
+        "revision": 1,
+        "json": "{\"id\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\",\"kind\":\"entity\",\"title\":\"Quiet Shore (purchase candidate)\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.434Z\",\"updated_at\":\"2026-10-20T10:37:27.434Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[\"Тихий берег\"],\"disambiguation\":\"Desired future purchase, not a currently available user resource\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "entity-312d72d0-fbc0-44e1-b85e-5fa469412625",
+        "revision": 1,
+        "json": "{\"id\":\"entity-312d72d0-fbc0-44e1-b85e-5fa469412625\",\"kind\":\"entity\",\"title\":\"Synthetic device 3\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.434Z\",\"updated_at\":\"2026-10-20T10:37:27.434Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[\"Unit-3\"],\"disambiguation\":\"Distinct synthetic inventory item 3\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "entity-5c876ef6-c4aa-48ab-a9d9-379d4c8f5635",
+        "revision": 1,
+        "json": "{\"id\":\"entity-5c876ef6-c4aa-48ab-a9d9-379d4c8f5635\",\"kind\":\"entity\",\"title\":\"Synthetic device 4\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.434Z\",\"updated_at\":\"2026-10-20T10:37:27.434Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[\"Unit-4\"],\"disambiguation\":\"Distinct synthetic inventory item 4\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\",\"kind\":\"knowledge\",\"title\":\"Workshop resource conditions\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.443Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-a86784c2-b096-4d10-afa6-2e90e6c66c72\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"The user has access to a risograph duplicator named Quiet Shore for printing paper card batches at the workshop; ownership is not established.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\"},\"conditions\":\"Weekdays only, prior booking; unavailable on Sunday. Do not infer ownership, working condition or other unreported capabilities.\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-01ed691f-7e86-41f0-b61b-8961faf44875",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-01ed691f-7e86-41f0-b61b-8961faf44875\",\"kind\":\"knowledge\",\"title\":\"Synthetic observation 1\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.443Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"A friend has another similarly named duplicator; user access is not established.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\"},\"conditions\":\"Only the explicitly described synthetic case; no general availability inference\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-ae45b939-5c3a-409f-bce8-6ab98c17dc29",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-ae45b939-5c3a-409f-bce8-6ab98c17dc29\",\"kind\":\"knowledge\",\"title\":\"Synthetic observation 2\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.443Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"The user wishes to purchase a duplicator; this is not a currently available resource.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\"},\"conditions\":\"Only the explicitly described synthetic case; no general availability inference\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6\",\"kind\":\"knowledge\",\"title\":\"Synthetic observation 3\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.443Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 3 about artifact production and stored conditions.\",\"state\":\"contested\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-312d72d0-fbc0-44e1-b85e-5fa469412625\"},\"conditions\":\"Source A reports weekday-only access\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4\",\"kind\":\"knowledge\",\"title\":\"Synthetic observation 4\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.443Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 4 about artifact production and stored conditions.\",\"state\":\"contested\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-5c876ef6-c4aa-48ab-a9d9-379d4c8f5635\"},\"conditions\":\"Source B reports weekend-only access\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-ed432d35-07a4-487e-903e-1ceb4178e371",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-ed432d35-07a4-487e-903e-1ceb4178e371\",\"kind\":\"knowledge\",\"title\":\"Synthetic observation 5\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.443Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-a86784c2-b096-4d10-afa6-2e90e6c66c72\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 5 about artifact production and stored conditions.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\"},\"conditions\":\"Only the explicitly described synthetic case; no general availability inference\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b\",\"kind\":\"knowledge\",\"title\":\"Synthetic observation 6\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.443Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 6 about artifact production and stored conditions.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\"},\"conditions\":\"Only the explicitly described synthetic case; no general availability inference\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\",\"kind\":\"knowledge\",\"title\":\"Synthetic observation 7\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.443Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 7 about artifact production and stored conditions.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\"},\"conditions\":\"Only the explicitly described synthetic case; no general availability inference\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615",
+        "revision": 2,
+        "json": "{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\",\"kind\":\"knowledge\",\"title\":\"Synthetic observation 7\",\"body\":null,\"revision\":2,\"created_at\":\"2026-10-20T10:37:27.443Z\",\"updated_at\":\"2026-10-20T10:37:27.458Z\",\"storage\":\"live\",\"concept_ids\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\"}],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 7 about artifact production and stored conditions.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\"},\"conditions\":\"Revised synthetic condition; prior version retained\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a",
+        "revision": 1,
+        "json": "{\"id\":\"evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a\",\"kind\":\"evidence\",\"title\":\"Original request about paper cards and Russian response\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:44:46.443Z\",\"updated_at\":\"2026-10-20T10:44:46.443Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-038c6065-852a-4c1a-bc86-adf9db75e316\",\"captured_at\":\"2026-10-20T10:44:08.279Z\",\"content_hash\":\"7bd367e110fd1ec904b8ec69e5102d87703a78c6b5025df82b2a5e9adfd9fb71\",\"retained_excerpt\":\"Мне нужно во вторник подготовить сорок одинаковых бумажных карточек для кружка. Посмотри мои сохранённые возможности через разделы каталога: я не помню их названий. Что пригодится и какие условия нужно соблюсти? Ответь по-русски.\",\"blob_ref\":null,\"byte_length\":421,\"availability\":\"retained\",\"source_language\":\"ru\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-038c6065-852a-4c1a-bc86-adf9db75e316\",\"content_hash\":\"7bd367e110fd1ec904b8ec69e5102d87703a78c6b5025df82b2a5e9adfd9fb71\",\"transport\":\"rpc\",\"channel_identity\":\"isolated-synthetic-sdk-controller\",\"session_id\":\"01a158e9-51c3-7450-ba6a-ee1ceb856c18\",\"runtime_id\":\"495f71bf-00d8-4ca4-a705-24f8f78a03d9\",\"captured_at\":\"2026-10-20T10:44:08.279Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":421},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "knowledge-952240fd-452b-4339-9d8c-1adc2846623a",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-952240fd-452b-4339-9d8c-1adc2846623a\",\"kind\":\"knowledge\",\"title\":\"Russian response preference\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:44:46.443Z\",\"updated_at\":\"2026-10-20T10:44:46.443Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The user requests a Russian-language response.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a\",\"revision\":1}],\"conditions\":\"Explicitly requested for the discussion of preparing forty identical paper cards for Tuesday.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544",
+        "revision": 1,
+        "json": "{\"id\":\"evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544\",\"kind\":\"evidence\",\"title\":\"Sunday paper cards request\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:49:07.078Z\",\"updated_at\":\"2026-10-20T10:49:07.078Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-bacf0033-51c0-40dc-8716-8e107218108b\",\"captured_at\":\"2026-10-20T10:48:34.430Z\",\"content_hash\":\"017fccc0bb9c2289bb1abb0ed706859f118372dbb373af8b799fba72587513f5\",\"retained_excerpt\":\"Мне нужны бумажные карточки именно в воскресенье. Какие из известных мне возможностей реально можно использовать в этот день? Подскажи план без покупки оборудования. Ответь по-русски.\",\"blob_ref\":null,\"byte_length\":337,\"availability\":\"retained\",\"source_language\":\"ru\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-bacf0033-51c0-40dc-8716-8e107218108b\",\"content_hash\":\"017fccc0bb9c2289bb1abb0ed706859f118372dbb373af8b799fba72587513f5\",\"transport\":\"rpc\",\"channel_identity\":\"isolated-synthetic-sdk-controller\",\"session_id\":\"01a158ed-616c-7067-8063-49b67f95a08d\",\"runtime_id\":\"187ed8de-d782-4f87-acbd-a1139439bab5\",\"captured_at\":\"2026-10-20T10:48:34.430Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":337},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "knowledge-d6ad3b76-55ef-495f-aeb7-d1e8ffc539f1",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-d6ad3b76-55ef-495f-aeb7-d1e8ffc539f1\",\"kind\":\"knowledge\",\"title\":\"Sunday paper cards constraints\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:49:07.078Z\",\"updated_at\":\"2026-10-20T10:49:07.078Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"constraint\",\"statement\":\"The user needs paper cards specifically on Sunday and requests a plan without purchasing equipment.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544\",\"revision\":1}],\"conditions\":\"For the current paper-card planning request; the calendar date and quantity are unspecified.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "knowledge-a7e2019f-edc2-4c1c-9dc8-ca2fa6a62e25",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-a7e2019f-edc2-4c1c-9dc8-ca2fa6a62e25\",\"kind\":\"knowledge\",\"title\":\"Russian response preference for Sunday card planning\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:49:07.078Z\",\"updated_at\":\"2026-10-20T10:49:07.078Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The user requests a Russian-language response.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544\",\"revision\":1}],\"conditions\":\"Explicitly requested for the current Sunday paper-card discussion.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      }
+    ],
+    "changes": [
+      {
+        "seq": 1,
+        "json": "{\"transaction_id\":\"txn-c7f2af99-9aba-44d0-b9cb-8a1fc38ee138\",\"request_id\":\"D-fixture-1\",\"change_seq\":1,\"changed_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"before_revision\":null,\"after_revision\":1}],\"relation_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"synthetic-D-fixture\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"caused_by\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"recorded_at\":\"2026-10-20T10:37:27.391Z\"}"
+      },
+      {
+        "seq": 2,
+        "json": "{\"transaction_id\":\"txn-030cf139-043b-431d-89f2-8fb543bc4e14\",\"request_id\":\"D-fixture-2\",\"change_seq\":2,\"changed_refs\":[{\"id\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\",\"before_revision\":null,\"after_revision\":1}],\"relation_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"synthetic-D-fixture\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"caused_by\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"recorded_at\":\"2026-10-20T10:37:27.397Z\"}"
+      },
+      {
+        "seq": 3,
+        "json": "{\"transaction_id\":\"txn-d9e377a4-04c5-45f4-bce3-855d0de7ee56\",\"request_id\":\"D-fixture-3\",\"change_seq\":3,\"changed_refs\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\",\"before_revision\":null,\"after_revision\":1}],\"relation_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"synthetic-D-fixture\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"caused_by\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"recorded_at\":\"2026-10-20T10:37:27.403Z\"}"
+      },
+      {
+        "seq": 4,
+        "json": "{\"transaction_id\":\"txn-1f1ff8b3-96ac-498c-ba6e-6ce9bd810ad9\",\"request_id\":\"D-fixture-4\",\"change_seq\":4,\"changed_refs\":[{\"id\":\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\",\"before_revision\":null,\"after_revision\":1}],\"relation_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"synthetic-D-fixture\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"caused_by\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"recorded_at\":\"2026-10-20T10:37:27.409Z\"}"
+      },
+      {
+        "seq": 5,
+        "json": "{\"transaction_id\":\"txn-5914a3d8-1735-4e99-bb1b-65e713965d68\",\"request_id\":\"D-fixture-5\",\"change_seq\":5,\"changed_refs\":[{\"id\":\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\",\"before_revision\":null,\"after_revision\":1}],\"relation_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"synthetic-D-fixture\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"caused_by\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"recorded_at\":\"2026-10-20T10:37:27.415Z\"}"
+      },
+      {
+        "seq": 6,
+        "json": "{\"transaction_id\":\"txn-553eb7a5-1399-40f5-840b-a2d0874aa8a6\",\"request_id\":\"D-fixture-6\",\"change_seq\":6,\"changed_refs\":[{\"id\":\"concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e\",\"before_revision\":null,\"after_revision\":1}],\"relation_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"synthetic-D-fixture\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"caused_by\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"recorded_at\":\"2026-10-20T10:37:27.421Z\"}"
+      },
+      {
+        "seq": 7,
+        "json": "{\"transaction_id\":\"txn-65773f53-73cf-45c8-b6ff-9e405d31a71c\",\"request_id\":\"D-fixture-7\",\"change_seq\":7,\"changed_refs\":[{\"id\":\"concept-a86784c2-b096-4d10-afa6-2e90e6c66c72\",\"before_revision\":null,\"after_revision\":1}],\"relation_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"synthetic-D-fixture\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"caused_by\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"recorded_at\":\"2026-10-20T10:37:27.427Z\"}"
+      },
+      {
+        "seq": 8,
+        "json": "{\"transaction_id\":\"txn-5d661870-f55d-49db-a68a-2dea55589b1e\",\"request_id\":\"D-fixture-8\",\"change_seq\":8,\"changed_refs\":[{\"id\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"entity-312d72d0-fbc0-44e1-b85e-5fa469412625\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"entity-5c876ef6-c4aa-48ab-a9d9-379d4c8f5635\",\"before_revision\":null,\"after_revision\":1}],\"relation_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"synthetic-D-fixture\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"caused_by\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"recorded_at\":\"2026-10-20T10:37:27.434Z\"}"
+      },
+      {
+        "seq": 9,
+        "json": "{\"transaction_id\":\"txn-c5abb877-1972-49e9-862e-61b1ba11aa26\",\"request_id\":\"D-fixture-9\",\"change_seq\":9,\"changed_refs\":[{\"id\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-01ed691f-7e86-41f0-b61b-8961faf44875\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-ae45b939-5c3a-409f-bce8-6ab98c17dc29\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-ed432d35-07a4-487e-903e-1ceb4178e371\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\",\"before_revision\":null,\"after_revision\":1}],\"relation_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"synthetic-D-fixture\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"caused_by\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"recorded_at\":\"2026-10-20T10:37:27.443Z\"}"
+      },
+      {
+        "seq": 10,
+        "json": "{\"transaction_id\":\"txn-2e8f6e1d-f38e-4831-b9f2-6231e097859e\",\"request_id\":\"D-fixture-10\",\"change_seq\":10,\"changed_refs\":[{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\",\"before_revision\":1,\"after_revision\":2}],\"relation_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"synthetic-D-fixture\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"caused_by\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"recorded_at\":\"2026-10-20T10:37:27.458Z\"}"
+      },
+      {
+        "seq": 11,
+        "json": "{\"transaction_id\":\"txn-8fc8b23e-6e58-4124-adb3-62975bf5b34e\",\"request_id\":\"save-russian-response-preference-038c6065\",\"change_seq\":11,\"changed_refs\":[{\"id\":\"evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-952240fd-452b-4339-9d8c-1adc2846623a\",\"before_revision\":null,\"after_revision\":1}],\"relation_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"01a158e9-51c3-7450-ba6a-ee1ceb856c18\",\"reason\":\"Retain the user's explicit request for Russian answers with original observed evidence.\",\"caused_by\":[\"observed-038c6065-852a-4c1a-bc86-adf9db75e316\"],\"recorded_at\":\"2026-10-20T10:44:46.443Z\"}"
+      },
+      {
+        "seq": 12,
+        "json": "{\"transaction_id\":\"txn-de373d88-fd10-4aa4-80ca-bbc67d70e308\",\"request_id\":\"sunday-cards-constraints-11\",\"change_seq\":12,\"changed_refs\":[{\"id\":\"evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-d6ad3b76-55ef-495f-aeb7-d1e8ffc539f1\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-a7e2019f-edc2-4c1c-9dc8-ca2fa6a62e25\",\"before_revision\":null,\"after_revision\":1}],\"relation_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"01a158ed-616c-7067-8063-49b67f95a08d\",\"reason\":\"Retain the current request and its Sunday deadline, no-equipment-purchase constraint and Russian response preference.\",\"caused_by\":[\"observed-bacf0033-51c0-40dc-8716-8e107218108b\"],\"recorded_at\":\"2026-10-20T10:49:07.078Z\"}"
+      }
+    ],
+    "intents": [
+      {
+        "request_id": "D-fixture-1",
+        "hash": "012120efa7b709f1acbd828576a4a4b5f110b197575974b40ef3671ffe088c30",
+        "json": "{\"request_id\":\"D-fixture-1\",\"operation_digest\":\"012120efa7b709f1acbd828576a4a4b5f110b197575974b40ef3671ffe088c30\",\"source_refs\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"session_id\":\"synthetic-D-fixture\",\"epoch\":\"44887899-d17e-4e7f-bb1f-5cf811e130e9\",\"status\":\"committed\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"payload\":{\"request_id\":\"D-fixture-1\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"source_handles\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"guards\":[],\"ops\":[{\"op\":\"import_evidence\",\"client_ref\":\"e\",\"source_handle\":\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\",\"title\":\"Original synthetic catalog notes\",\"source_language\":\"ru\"}]},\"receipt\":{\"ok\":true,\"request_id\":\"D-fixture-1\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":1,\"transaction_id\":\"txn-c7f2af99-9aba-44d0-b9cb-8a1fc38ee138\",\"committed\":true,\"created\":{\"e\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\"},\"new_revisions\":{\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "D-fixture-2",
+        "hash": "70d2cc4152055002f5a9a25a6dce32df16c9e9589fb915f710ea728d7578961b",
+        "json": "{\"request_id\":\"D-fixture-2\",\"operation_digest\":\"70d2cc4152055002f5a9a25a6dce32df16c9e9589fb915f710ea728d7578961b\",\"source_refs\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"session_id\":\"synthetic-D-fixture\",\"epoch\":\"44887899-d17e-4e7f-bb1f-5cf811e130e9\",\"status\":\"committed\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"payload\":{\"request_id\":\"D-fixture-2\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"source_handles\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"guards\":[],\"ops\":[{\"op\":\"create_record\",\"client_ref\":\"c\",\"title\":\"Physical production\",\"visibility\":\"workspace\",\"kind\":\"concept\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 0\"],\"broader_ids\":[],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}]},\"receipt\":{\"ok\":true,\"request_id\":\"D-fixture-2\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":2,\"transaction_id\":\"txn-030cf139-043b-431d-89f2-8fb543bc4e14\",\"committed\":true,\"created\":{\"c\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\"},\"new_revisions\":{\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "D-fixture-3",
+        "hash": "4e8334168c6834d93d639ba235e3be5552e7043ec935c53efc60bff2002642da",
+        "json": "{\"request_id\":\"D-fixture-3\",\"operation_digest\":\"4e8334168c6834d93d639ba235e3be5552e7043ec935c53efc60bff2002642da\",\"source_refs\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"session_id\":\"synthetic-D-fixture\",\"epoch\":\"44887899-d17e-4e7f-bb1f-5cf811e130e9\",\"status\":\"committed\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"payload\":{\"request_id\":\"D-fixture-3\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"source_handles\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"guards\":[],\"ops\":[{\"op\":\"create_record\",\"client_ref\":\"c\",\"title\":\"Printmaking\",\"visibility\":\"workspace\",\"kind\":\"concept\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 1\"],\"broader_ids\":[{\"id\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\"}],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}]},\"receipt\":{\"ok\":true,\"request_id\":\"D-fixture-3\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":3,\"transaction_id\":\"txn-d9e377a4-04c5-45f4-bce3-855d0de7ee56\",\"committed\":true,\"created\":{\"c\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\"},\"new_revisions\":{\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "D-fixture-4",
+        "hash": "9c4bab5b453a318561e6ced3c26ee4a3f80eab5df6506e2b36cc2e2866213ccd",
+        "json": "{\"request_id\":\"D-fixture-4\",\"operation_digest\":\"9c4bab5b453a318561e6ced3c26ee4a3f80eab5df6506e2b36cc2e2866213ccd\",\"source_refs\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"session_id\":\"synthetic-D-fixture\",\"epoch\":\"44887899-d17e-4e7f-bb1f-5cf811e130e9\",\"status\":\"committed\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"payload\":{\"request_id\":\"D-fixture-4\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"source_handles\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"guards\":[],\"ops\":[{\"op\":\"create_record\",\"client_ref\":\"c\",\"title\":\"Catalog branch 2\",\"visibility\":\"workspace\",\"kind\":\"concept\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 2\"],\"broader_ids\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\"}],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}]},\"receipt\":{\"ok\":true,\"request_id\":\"D-fixture-4\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":4,\"transaction_id\":\"txn-1f1ff8b3-96ac-498c-ba6e-6ce9bd810ad9\",\"committed\":true,\"created\":{\"c\":\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\"},\"new_revisions\":{\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "D-fixture-5",
+        "hash": "d06290ba759a0f06918adb44ca6a342c21251f6a5987bc7eb442c815346a3ccc",
+        "json": "{\"request_id\":\"D-fixture-5\",\"operation_digest\":\"d06290ba759a0f06918adb44ca6a342c21251f6a5987bc7eb442c815346a3ccc\",\"source_refs\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"session_id\":\"synthetic-D-fixture\",\"epoch\":\"44887899-d17e-4e7f-bb1f-5cf811e130e9\",\"status\":\"committed\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"payload\":{\"request_id\":\"D-fixture-5\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"source_handles\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"guards\":[],\"ops\":[{\"op\":\"create_record\",\"client_ref\":\"c\",\"title\":\"Catalog branch 3\",\"visibility\":\"workspace\",\"kind\":\"concept\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 3\"],\"broader_ids\":[{\"id\":\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\"}],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}]},\"receipt\":{\"ok\":true,\"request_id\":\"D-fixture-5\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":5,\"transaction_id\":\"txn-5914a3d8-1735-4e99-bb1b-65e713965d68\",\"committed\":true,\"created\":{\"c\":\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\"},\"new_revisions\":{\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "D-fixture-6",
+        "hash": "ac2637a5b7cb5f9c2de39636a8028280716498177ce5049374c54ac65ec2791a",
+        "json": "{\"request_id\":\"D-fixture-6\",\"operation_digest\":\"ac2637a5b7cb5f9c2de39636a8028280716498177ce5049374c54ac65ec2791a\",\"source_refs\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"session_id\":\"synthetic-D-fixture\",\"epoch\":\"44887899-d17e-4e7f-bb1f-5cf811e130e9\",\"status\":\"committed\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"payload\":{\"request_id\":\"D-fixture-6\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"source_handles\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"guards\":[],\"ops\":[{\"op\":\"create_record\",\"client_ref\":\"c\",\"title\":\"Catalog branch 4\",\"visibility\":\"workspace\",\"kind\":\"concept\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 4\"],\"broader_ids\":[{\"id\":\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\"}],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}]},\"receipt\":{\"ok\":true,\"request_id\":\"D-fixture-6\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":6,\"transaction_id\":\"txn-553eb7a5-1399-40f5-840b-a2d0874aa8a6\",\"committed\":true,\"created\":{\"c\":\"concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e\"},\"new_revisions\":{\"concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "D-fixture-7",
+        "hash": "b83bc67737778d25bc23e32a9a9c9a67ac1296b748d2b40d95b64837f3ef50c5",
+        "json": "{\"request_id\":\"D-fixture-7\",\"operation_digest\":\"b83bc67737778d25bc23e32a9a9c9a67ac1296b748d2b40d95b64837f3ef50c5\",\"source_refs\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"session_id\":\"synthetic-D-fixture\",\"epoch\":\"44887899-d17e-4e7f-bb1f-5cf811e130e9\",\"status\":\"committed\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"payload\":{\"request_id\":\"D-fixture-7\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"source_handles\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"guards\":[],\"ops\":[{\"op\":\"create_record\",\"client_ref\":\"c\",\"title\":\"Botanical field notes\",\"visibility\":\"workspace\",\"kind\":\"concept\",\"data\":{\"definition\":\"A bounded synthetic navigation branch, not inherited personal properties\",\"aliases\":[\"Раздел 5\"],\"broader_ids\":[],\"status\":\"active\",\"boundary_notes\":\"Specific catalog grouping, not identity\"}}]},\"receipt\":{\"ok\":true,\"request_id\":\"D-fixture-7\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":7,\"transaction_id\":\"txn-65773f53-73cf-45c8-b6ff-9e405d31a71c\",\"committed\":true,\"created\":{\"c\":\"concept-a86784c2-b096-4d10-afa6-2e90e6c66c72\"},\"new_revisions\":{\"concept-a86784c2-b096-4d10-afa6-2e90e6c66c72\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "D-fixture-8",
+        "hash": "d79d21c783fba5333c9fe867147627500eb0df90bff08bc2ce904d9ee20e6e05",
+        "json": "{\"request_id\":\"D-fixture-8\",\"operation_digest\":\"d79d21c783fba5333c9fe867147627500eb0df90bff08bc2ce904d9ee20e6e05\",\"source_refs\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"session_id\":\"synthetic-D-fixture\",\"epoch\":\"44887899-d17e-4e7f-bb1f-5cf811e130e9\",\"status\":\"committed\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"payload\":{\"request_id\":\"D-fixture-8\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"source_handles\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"guards\":[],\"ops\":[{\"op\":\"create_record\",\"client_ref\":\"e0\",\"title\":\"Quiet Shore\",\"visibility\":\"workspace\",\"concept_ids\":[{\"id\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\"}],\"kind\":\"entity\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[\"Тихий берег\"],\"disambiguation\":\"Workshop duplicator mentioned in source; access only, ownership unknown\",\"status\":\"active\"}},{\"op\":\"create_record\",\"client_ref\":\"e1\",\"title\":\"Quiet Shore (friend's device)\",\"visibility\":\"workspace\",\"concept_ids\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\"}],\"kind\":\"entity\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[\"Тихий берег\"],\"disambiguation\":\"Friend's separate device; no user access established\",\"status\":\"active\"}},{\"op\":\"create_record\",\"client_ref\":\"e2\",\"title\":\"Quiet Shore (purchase candidate)\",\"visibility\":\"workspace\",\"concept_ids\":[{\"id\":\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\"}],\"kind\":\"entity\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[\"Тихий берег\"],\"disambiguation\":\"Desired future purchase, not a currently available user resource\",\"status\":\"active\"}},{\"op\":\"create_record\",\"client_ref\":\"e3\",\"title\":\"Synthetic device 3\",\"visibility\":\"workspace\",\"concept_ids\":[{\"id\":\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\"}],\"kind\":\"entity\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[\"Unit-3\"],\"disambiguation\":\"Distinct synthetic inventory item 3\",\"status\":\"active\"}},{\"op\":\"create_record\",\"client_ref\":\"e4\",\"title\":\"Synthetic device 4\",\"visibility\":\"workspace\",\"concept_ids\":[{\"id\":\"concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e\"}],\"kind\":\"entity\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[\"Unit-4\"],\"disambiguation\":\"Distinct synthetic inventory item 4\",\"status\":\"active\"}}]},\"receipt\":{\"ok\":true,\"request_id\":\"D-fixture-8\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":8,\"transaction_id\":\"txn-5d661870-f55d-49db-a68a-2dea55589b1e\",\"committed\":true,\"created\":{\"e0\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\",\"e1\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\",\"e2\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\",\"e3\":\"entity-312d72d0-fbc0-44e1-b85e-5fa469412625\",\"e4\":\"entity-5c876ef6-c4aa-48ab-a9d9-379d4c8f5635\"},\"new_revisions\":{\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\":1,\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\":1,\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\":1,\"entity-312d72d0-fbc0-44e1-b85e-5fa469412625\":1,\"entity-5c876ef6-c4aa-48ab-a9d9-379d4c8f5635\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "D-fixture-9",
+        "hash": "b8ee40e6238708d27232153c95856b0cae7c685c6b51e03c18d77a3941487909",
+        "json": "{\"request_id\":\"D-fixture-9\",\"operation_digest\":\"b8ee40e6238708d27232153c95856b0cae7c685c6b51e03c18d77a3941487909\",\"source_refs\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"session_id\":\"synthetic-D-fixture\",\"epoch\":\"44887899-d17e-4e7f-bb1f-5cf811e130e9\",\"status\":\"committed\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"payload\":{\"request_id\":\"D-fixture-9\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"source_handles\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"guards\":[],\"ops\":[{\"op\":\"create_record\",\"client_ref\":\"k0\",\"title\":\"Workshop resource conditions\",\"visibility\":\"workspace\",\"concept_ids\":[{\"id\":\"concept-a86784c2-b096-4d10-afa6-2e90e6c66c72\"}],\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"The user has access to a risograph duplicator named Quiet Shore for printing paper card batches at the workshop; ownership is not established.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\"},\"conditions\":\"Weekdays only, prior booking; unavailable on Sunday. Do not infer ownership, working condition or other unreported capabilities.\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}},{\"op\":\"create_record\",\"client_ref\":\"k1\",\"title\":\"Synthetic observation 1\",\"visibility\":\"workspace\",\"concept_ids\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\"}],\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"A friend has another similarly named duplicator; user access is not established.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\"},\"conditions\":\"Only the explicitly described synthetic case; no general availability inference\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}},{\"op\":\"create_record\",\"client_ref\":\"k2\",\"title\":\"Synthetic observation 2\",\"visibility\":\"workspace\",\"concept_ids\":[{\"id\":\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\"}],\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"The user wishes to purchase a duplicator; this is not a currently available resource.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\"},\"conditions\":\"Only the explicitly described synthetic case; no general availability inference\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}},{\"op\":\"create_record\",\"client_ref\":\"k3\",\"title\":\"Synthetic observation 3\",\"visibility\":\"workspace\",\"concept_ids\":[{\"id\":\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\"}],\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 3 about artifact production and stored conditions.\",\"state\":\"contested\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-312d72d0-fbc0-44e1-b85e-5fa469412625\"},\"conditions\":\"Source A reports weekday-only access\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}},{\"op\":\"create_record\",\"client_ref\":\"k4\",\"title\":\"Synthetic observation 4\",\"visibility\":\"workspace\",\"concept_ids\":[{\"id\":\"concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e\"}],\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 4 about artifact production and stored conditions.\",\"state\":\"contested\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-5c876ef6-c4aa-48ab-a9d9-379d4c8f5635\"},\"conditions\":\"Source B reports weekend-only access\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}},{\"op\":\"create_record\",\"client_ref\":\"k5\",\"title\":\"Synthetic observation 5\",\"visibility\":\"workspace\",\"concept_ids\":[{\"id\":\"concept-a86784c2-b096-4d10-afa6-2e90e6c66c72\"}],\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 5 about artifact production and stored conditions.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\"},\"conditions\":\"Only the explicitly described synthetic case; no general availability inference\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}},{\"op\":\"create_record\",\"client_ref\":\"k6\",\"title\":\"Synthetic observation 6\",\"visibility\":\"workspace\",\"concept_ids\":[{\"id\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\"}],\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 6 about artifact production and stored conditions.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\"},\"conditions\":\"Only the explicitly described synthetic case; no general availability inference\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}},{\"op\":\"create_record\",\"client_ref\":\"k7\",\"title\":\"Synthetic observation 7\",\"visibility\":\"workspace\",\"concept_ids\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\"}],\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 7 about artifact production and stored conditions.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\"},\"conditions\":\"Only the explicitly described synthetic case; no general availability inference\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}]},\"receipt\":{\"ok\":true,\"request_id\":\"D-fixture-9\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":9,\"transaction_id\":\"txn-c5abb877-1972-49e9-862e-61b1ba11aa26\",\"committed\":true,\"created\":{\"k0\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\",\"k1\":\"knowledge-01ed691f-7e86-41f0-b61b-8961faf44875\",\"k2\":\"knowledge-ae45b939-5c3a-409f-bce8-6ab98c17dc29\",\"k3\":\"knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6\",\"k4\":\"knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4\",\"k5\":\"knowledge-ed432d35-07a4-487e-903e-1ceb4178e371\",\"k6\":\"knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b\",\"k7\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\"},\"new_revisions\":{\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\":1,\"knowledge-01ed691f-7e86-41f0-b61b-8961faf44875\":1,\"knowledge-ae45b939-5c3a-409f-bce8-6ab98c17dc29\":1,\"knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6\":1,\"knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4\":1,\"knowledge-ed432d35-07a4-487e-903e-1ceb4178e371\":1,\"knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b\":1,\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "D-fixture-10",
+        "hash": "4d27da123848b4a04f92f96c12a59f3e1cfe5fac9b943d4b75cb229e065f653c",
+        "json": "{\"request_id\":\"D-fixture-10\",\"operation_digest\":\"4d27da123848b4a04f92f96c12a59f3e1cfe5fac9b943d4b75cb229e065f653c\",\"source_refs\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"session_id\":\"synthetic-D-fixture\",\"epoch\":\"44887899-d17e-4e7f-bb1f-5cf811e130e9\",\"status\":\"committed\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"payload\":{\"request_id\":\"D-fixture-10\",\"reason\":\"Fixed synthetic corpus, not model-saved evidence\",\"source_handles\":[\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"],\"guards\":[{\"ref\":{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\"},\"expected_revision\":1}],\"ops\":[{\"op\":\"update_record\",\"ref\":{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\"},\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"Synthetic numbered observation 7 about artifact production and stored conditions.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"object_ref\":{\"id\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\"},\"conditions\":\"Revised synthetic condition; prior version retained\",\"valid_from\":null,\"valid_to\":null,\"observed_at\":null,\"supersedes_refs\":[],\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1},\"source_language\":\"ru\"}}}]},\"receipt\":{\"ok\":true,\"request_id\":\"D-fixture-10\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":10,\"transaction_id\":\"txn-2e8f6e1d-f38e-4831-b9f2-6231e097859e\",\"committed\":true,\"created\":{},\"new_revisions\":{\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\":2},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "save-russian-response-preference-038c6065",
+        "hash": "26d8737f916a68b1e2b09f41470d464a6c608eb869165628ba07d132c4e15c6e",
+        "json": "{\"request_id\":\"save-russian-response-preference-038c6065\",\"operation_digest\":\"26d8737f916a68b1e2b09f41470d464a6c608eb869165628ba07d132c4e15c6e\",\"source_refs\":[\"observed-038c6065-852a-4c1a-bc86-adf9db75e316\"],\"session_id\":\"01a158e9-51c3-7450-ba6a-ee1ceb856c18\",\"epoch\":\"44887899-d17e-4e7f-bb1f-5cf811e130e9\",\"status\":\"committed\",\"reason\":\"Retain the user's explicit request for Russian answers with original observed evidence.\",\"payload\":{\"request_id\":\"save-russian-response-preference-038c6065\",\"reason\":\"Retain the user's explicit request for Russian answers with original observed evidence.\",\"source_handles\":[\"observed-038c6065-852a-4c1a-bc86-adf9db75e316\"],\"guards\":[],\"ops\":[{\"op\":\"import_evidence\",\"client_ref\":\"input\",\"source_handle\":\"observed-038c6065-852a-4c1a-bc86-adf9db75e316\",\"title\":\"Original request about paper cards and Russian response\",\"source_language\":\"ru\"},{\"op\":\"create_record\",\"client_ref\":\"language\",\"title\":\"Russian response preference\",\"visibility\":\"workspace\",\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The user requests a Russian-language response.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"client_ref\":\"input\"}],\"conditions\":\"Explicitly requested for the discussion of preparing forty identical paper cards for Tuesday.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"client_ref\":\"input\"},\"source_language\":\"ru\"}}}]},\"receipt\":{\"ok\":true,\"request_id\":\"save-russian-response-preference-038c6065\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":11,\"transaction_id\":\"txn-8fc8b23e-6e58-4124-adb3-62975bf5b34e\",\"committed\":true,\"created\":{\"input\":\"evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a\",\"language\":\"knowledge-952240fd-452b-4339-9d8c-1adc2846623a\"},\"new_revisions\":{\"evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a\":1,\"knowledge-952240fd-452b-4339-9d8c-1adc2846623a\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "sunday-cards-constraints-11",
+        "hash": "28e0ee2615d91058c51b1def29ce2f06ba10d6e6d1c4ec4ae13eab7569426ee3",
+        "json": "{\"request_id\":\"sunday-cards-constraints-11\",\"operation_digest\":\"28e0ee2615d91058c51b1def29ce2f06ba10d6e6d1c4ec4ae13eab7569426ee3\",\"source_refs\":[\"observed-bacf0033-51c0-40dc-8716-8e107218108b\"],\"session_id\":\"01a158ed-616c-7067-8063-49b67f95a08d\",\"epoch\":\"44887899-d17e-4e7f-bb1f-5cf811e130e9\",\"status\":\"committed\",\"reason\":\"Retain the current request and its Sunday deadline, no-equipment-purchase constraint and Russian response preference.\",\"payload\":{\"request_id\":\"sunday-cards-constraints-11\",\"reason\":\"Retain the current request and its Sunday deadline, no-equipment-purchase constraint and Russian response preference.\",\"source_handles\":[\"observed-bacf0033-51c0-40dc-8716-8e107218108b\"],\"guards\":[],\"ops\":[{\"op\":\"import_evidence\",\"client_ref\":\"request\",\"source_handle\":\"observed-bacf0033-51c0-40dc-8716-8e107218108b\",\"title\":\"Sunday paper cards request\",\"source_language\":\"ru\"},{\"op\":\"create_record\",\"client_ref\":\"constraints\",\"title\":\"Sunday paper cards constraints\",\"visibility\":\"workspace\",\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"constraint\",\"statement\":\"The user needs paper cards specifically on Sunday and requests a plan without purchasing equipment.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"client_ref\":\"request\"}],\"conditions\":\"For the current paper-card planning request; the calendar date and quantity are unspecified.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"client_ref\":\"request\"},\"source_language\":\"ru\"}}},{\"op\":\"create_record\",\"client_ref\":\"language\",\"title\":\"Russian response preference for Sunday card planning\",\"visibility\":\"workspace\",\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The user requests a Russian-language response.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"client_ref\":\"request\"}],\"conditions\":\"Explicitly requested for the current Sunday paper-card discussion.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"client_ref\":\"request\"},\"source_language\":\"ru\"}}}]},\"receipt\":{\"ok\":true,\"request_id\":\"sunday-cards-constraints-11\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":12,\"transaction_id\":\"txn-de373d88-fd10-4aa4-80ca-bbc67d70e308\",\"committed\":true,\"created\":{\"request\":\"evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544\",\"constraints\":\"knowledge-d6ad3b76-55ef-495f-aeb7-d1e8ffc539f1\",\"language\":\"knowledge-a7e2019f-edc2-4c1c-9dc8-ca2fa6a62e25\"},\"new_revisions\":{\"evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544\":1,\"knowledge-d6ad3b76-55ef-495f-aeb7-d1e8ffc539f1\":1,\"knowledge-a7e2019f-edc2-4c1c-9dc8-ca2fa6a62e25\":1},\"warnings\":[]}}"
+      }
+    ],
+    "receipts": [
+      {
+        "request_id": "D-fixture-1",
+        "hash": "012120efa7b709f1acbd828576a4a4b5f110b197575974b40ef3671ffe088c30",
+        "json": "{\"ok\":true,\"request_id\":\"D-fixture-1\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":1,\"transaction_id\":\"txn-c7f2af99-9aba-44d0-b9cb-8a1fc38ee138\",\"committed\":true,\"created\":{\"e\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\"},\"new_revisions\":{\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\":1},\"warnings\":[]}",
+        "bindings": "{\"source-3ada8ad9-b385-4f31-93ca-99df69e7664c\":\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"}"
+      },
+      {
+        "request_id": "D-fixture-2",
+        "hash": "70d2cc4152055002f5a9a25a6dce32df16c9e9589fb915f710ea728d7578961b",
+        "json": "{\"ok\":true,\"request_id\":\"D-fixture-2\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":2,\"transaction_id\":\"txn-030cf139-043b-431d-89f2-8fb543bc4e14\",\"committed\":true,\"created\":{\"c\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\"},\"new_revisions\":{\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\":1},\"warnings\":[]}",
+        "bindings": "{\"source-3ada8ad9-b385-4f31-93ca-99df69e7664c\":\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"}"
+      },
+      {
+        "request_id": "D-fixture-3",
+        "hash": "4e8334168c6834d93d639ba235e3be5552e7043ec935c53efc60bff2002642da",
+        "json": "{\"ok\":true,\"request_id\":\"D-fixture-3\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":3,\"transaction_id\":\"txn-d9e377a4-04c5-45f4-bce3-855d0de7ee56\",\"committed\":true,\"created\":{\"c\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\"},\"new_revisions\":{\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\":1},\"warnings\":[]}",
+        "bindings": "{\"source-3ada8ad9-b385-4f31-93ca-99df69e7664c\":\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"}"
+      },
+      {
+        "request_id": "D-fixture-4",
+        "hash": "9c4bab5b453a318561e6ced3c26ee4a3f80eab5df6506e2b36cc2e2866213ccd",
+        "json": "{\"ok\":true,\"request_id\":\"D-fixture-4\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":4,\"transaction_id\":\"txn-1f1ff8b3-96ac-498c-ba6e-6ce9bd810ad9\",\"committed\":true,\"created\":{\"c\":\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\"},\"new_revisions\":{\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\":1},\"warnings\":[]}",
+        "bindings": "{\"source-3ada8ad9-b385-4f31-93ca-99df69e7664c\":\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"}"
+      },
+      {
+        "request_id": "D-fixture-5",
+        "hash": "d06290ba759a0f06918adb44ca6a342c21251f6a5987bc7eb442c815346a3ccc",
+        "json": "{\"ok\":true,\"request_id\":\"D-fixture-5\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":5,\"transaction_id\":\"txn-5914a3d8-1735-4e99-bb1b-65e713965d68\",\"committed\":true,\"created\":{\"c\":\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\"},\"new_revisions\":{\"concept-a6e07a2a-487c-4ba6-9ad0-f6c6a35783bf\":1},\"warnings\":[]}",
+        "bindings": "{\"source-3ada8ad9-b385-4f31-93ca-99df69e7664c\":\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"}"
+      },
+      {
+        "request_id": "D-fixture-6",
+        "hash": "ac2637a5b7cb5f9c2de39636a8028280716498177ce5049374c54ac65ec2791a",
+        "json": "{\"ok\":true,\"request_id\":\"D-fixture-6\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":6,\"transaction_id\":\"txn-553eb7a5-1399-40f5-840b-a2d0874aa8a6\",\"committed\":true,\"created\":{\"c\":\"concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e\"},\"new_revisions\":{\"concept-e66a2b60-4484-42bc-864b-5dd3d60a9b8e\":1},\"warnings\":[]}",
+        "bindings": "{\"source-3ada8ad9-b385-4f31-93ca-99df69e7664c\":\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"}"
+      },
+      {
+        "request_id": "D-fixture-7",
+        "hash": "b83bc67737778d25bc23e32a9a9c9a67ac1296b748d2b40d95b64837f3ef50c5",
+        "json": "{\"ok\":true,\"request_id\":\"D-fixture-7\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":7,\"transaction_id\":\"txn-65773f53-73cf-45c8-b6ff-9e405d31a71c\",\"committed\":true,\"created\":{\"c\":\"concept-a86784c2-b096-4d10-afa6-2e90e6c66c72\"},\"new_revisions\":{\"concept-a86784c2-b096-4d10-afa6-2e90e6c66c72\":1},\"warnings\":[]}",
+        "bindings": "{\"source-3ada8ad9-b385-4f31-93ca-99df69e7664c\":\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"}"
+      },
+      {
+        "request_id": "D-fixture-8",
+        "hash": "d79d21c783fba5333c9fe867147627500eb0df90bff08bc2ce904d9ee20e6e05",
+        "json": "{\"ok\":true,\"request_id\":\"D-fixture-8\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":8,\"transaction_id\":\"txn-5d661870-f55d-49db-a68a-2dea55589b1e\",\"committed\":true,\"created\":{\"e0\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\",\"e1\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\",\"e2\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\",\"e3\":\"entity-312d72d0-fbc0-44e1-b85e-5fa469412625\",\"e4\":\"entity-5c876ef6-c4aa-48ab-a9d9-379d4c8f5635\"},\"new_revisions\":{\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\":1,\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\":1,\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\":1,\"entity-312d72d0-fbc0-44e1-b85e-5fa469412625\":1,\"entity-5c876ef6-c4aa-48ab-a9d9-379d4c8f5635\":1},\"warnings\":[]}",
+        "bindings": "{\"source-3ada8ad9-b385-4f31-93ca-99df69e7664c\":\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"}"
+      },
+      {
+        "request_id": "D-fixture-9",
+        "hash": "b8ee40e6238708d27232153c95856b0cae7c685c6b51e03c18d77a3941487909",
+        "json": "{\"ok\":true,\"request_id\":\"D-fixture-9\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":9,\"transaction_id\":\"txn-c5abb877-1972-49e9-862e-61b1ba11aa26\",\"committed\":true,\"created\":{\"k0\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\",\"k1\":\"knowledge-01ed691f-7e86-41f0-b61b-8961faf44875\",\"k2\":\"knowledge-ae45b939-5c3a-409f-bce8-6ab98c17dc29\",\"k3\":\"knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6\",\"k4\":\"knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4\",\"k5\":\"knowledge-ed432d35-07a4-487e-903e-1ceb4178e371\",\"k6\":\"knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b\",\"k7\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\"},\"new_revisions\":{\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\":1,\"knowledge-01ed691f-7e86-41f0-b61b-8961faf44875\":1,\"knowledge-ae45b939-5c3a-409f-bce8-6ab98c17dc29\":1,\"knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6\":1,\"knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4\":1,\"knowledge-ed432d35-07a4-487e-903e-1ceb4178e371\":1,\"knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b\":1,\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\":1},\"warnings\":[]}",
+        "bindings": "{\"source-3ada8ad9-b385-4f31-93ca-99df69e7664c\":\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"}"
+      },
+      {
+        "request_id": "D-fixture-10",
+        "hash": "4d27da123848b4a04f92f96c12a59f3e1cfe5fac9b943d4b75cb229e065f653c",
+        "json": "{\"ok\":true,\"request_id\":\"D-fixture-10\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":10,\"transaction_id\":\"txn-2e8f6e1d-f38e-4831-b9f2-6231e097859e\",\"committed\":true,\"created\":{},\"new_revisions\":{\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\":2},\"warnings\":[]}",
+        "bindings": "{\"source-3ada8ad9-b385-4f31-93ca-99df69e7664c\":\"observed-b44d7640-09dc-49b4-9804-e5883eab8168\"}"
+      },
+      {
+        "request_id": "save-russian-response-preference-038c6065",
+        "hash": "26d8737f916a68b1e2b09f41470d464a6c608eb869165628ba07d132c4e15c6e",
+        "json": "{\"ok\":true,\"request_id\":\"save-russian-response-preference-038c6065\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":11,\"transaction_id\":\"txn-8fc8b23e-6e58-4124-adb3-62975bf5b34e\",\"committed\":true,\"created\":{\"input\":\"evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a\",\"language\":\"knowledge-952240fd-452b-4339-9d8c-1adc2846623a\"},\"new_revisions\":{\"evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a\":1,\"knowledge-952240fd-452b-4339-9d8c-1adc2846623a\":1},\"warnings\":[]}",
+        "bindings": "{\"source-87b928b6-7106-4752-9e5b-c7bb642f90fe\":\"observed-038c6065-852a-4c1a-bc86-adf9db75e316\"}"
+      },
+      {
+        "request_id": "sunday-cards-constraints-11",
+        "hash": "28e0ee2615d91058c51b1def29ce2f06ba10d6e6d1c4ec4ae13eab7569426ee3",
+        "json": "{\"ok\":true,\"request_id\":\"sunday-cards-constraints-11\",\"workspace_id\":\"3f7732de-21a0-4b1a-875a-cc2ba2229624\",\"schema_version\":3,\"snapshot_seq\":12,\"transaction_id\":\"txn-de373d88-fd10-4aa4-80ca-bbc67d70e308\",\"committed\":true,\"created\":{\"request\":\"evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544\",\"constraints\":\"knowledge-d6ad3b76-55ef-495f-aeb7-d1e8ffc539f1\",\"language\":\"knowledge-a7e2019f-edc2-4c1c-9dc8-ca2fa6a62e25\"},\"new_revisions\":{\"evidence-7b1b9649-50ba-462e-b4c5-d1fa97c0f544\":1,\"knowledge-d6ad3b76-55ef-495f-aeb7-d1e8ffc539f1\":1,\"knowledge-a7e2019f-edc2-4c1c-9dc8-ca2fa6a62e25\":1},\"warnings\":[]}",
+        "bindings": "{\"source-8b7b6adf-fd20-4863-8117-faeaf192f724\":\"observed-bacf0033-51c0-40dc-8716-8e107218108b\"}"
+      }
+    ],
+    "claims": [],
+    "handoffs": [],
+    "relations": [],
+    "relation_history": [],
+    "memory_meta": [
+      {
+        "seq": 12,
+        "build": 1
+      }
+    ],
+    "retrieval_trace": [
+      {
+        "seq": 1,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\"},\"refs\":[{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\",\"revision\":1}],\"generation\":\"68cb8662a460b26018ddb0776b41ca8533c35a96a0263ac49aeb947d54c773df\",\"bytes\":995,\"has_more\":false,\"elapsed_ms\":1.0031000000000176,\"error\":null}"
+      },
+      {
+        "seq": 2,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\",\"revision\":1},\"refs\":[{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":995,\"has_more\":false,\"elapsed_ms\":0.6692000000000462,\"error\":null}"
+      },
+      {
+        "seq": 3,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"topics\",\"recordId\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\",\"limit\":20},\"refs\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\",\"revision\":1},{\"id\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\",\"revision\":1},{\"id\":\"knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":1373,\"has_more\":false,\"elapsed_ms\":1.1299999999999955,\"error\":null}"
+      },
+      {
+        "seq": 4,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"search\",\"input\":{\"query\":\"risograph printing\",\"match\":\"all\",\"kinds\":[\"knowledge\"],\"limit\":20},\"refs\":[{\"id\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":815,\"has_more\":false,\"elapsed_ms\":3.3127000000000635,\"error\":null}"
+      },
+      {
+        "seq": 5,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\"},\"refs\":[{\"id\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":1110,\"has_more\":false,\"elapsed_ms\":0.5670999999999822,\"error\":null}"
+      },
+      {
+        "seq": 6,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"search\",\"input\":{\"kinds\":[\"knowledge\"],\"limit\":50},\"refs\":[{\"id\":\"knowledge-01ed691f-7e86-41f0-b61b-8961faf44875\",\"revision\":1},{\"id\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\",\"revision\":1},{\"id\":\"knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b\",\"revision\":1},{\"id\":\"knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6\",\"revision\":1},{\"id\":\"knowledge-ae45b939-5c3a-409f-bce8-6ab98c17dc29\",\"revision\":1},{\"id\":\"knowledge-ed432d35-07a4-487e-903e-1ceb4178e371\",\"revision\":1},{\"id\":\"knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4\",\"revision\":1},{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\",\"revision\":2}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":3338,\"has_more\":false,\"elapsed_ms\":0.9518000000000484,\"error\":null}"
+      },
+      {
+        "seq": 7,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"resources\",\"limit\":50},\"refs\":[{\"id\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\",\"revision\":1},{\"id\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\",\"revision\":1},{\"id\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\",\"revision\":1},{\"id\":\"entity-312d72d0-fbc0-44e1-b85e-5fa469412625\",\"revision\":1},{\"id\":\"entity-5c876ef6-c4aa-48ab-a9d9-379d4c8f5635\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":2012,\"has_more\":false,\"elapsed_ms\":1.3123000000014144,\"error\":null}"
+      },
+      {
+        "seq": 8,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"topics\",\"limit\":50},\"refs\":[{\"id\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\",\"revision\":1},{\"id\":\"concept-a86784c2-b096-4d10-afa6-2e90e6c66c72\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":1001,\"has_more\":false,\"elapsed_ms\":0.924299999998766,\"error\":null}"
+      },
+      {
+        "seq": 9,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"resources\",\"recordId\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\",\"limit\":50,\"mode\":\"current_claims\"},\"refs\":[{\"id\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\",\"revision\":1},{\"id\":\"knowledge-ed432d35-07a4-487e-903e-1ceb4178e371\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":1086,\"has_more\":false,\"elapsed_ms\":0.9981000000007043,\"error\":null}"
+      },
+      {
+        "seq": 10,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"search\",\"input\":{\"query\":\"paper cards cutting printing Tuesday\",\"match\":\"any\",\"limit\":50},\"refs\":[{\"id\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":811,\"has_more\":false,\"elapsed_ms\":2.369300000000294,\"error\":null}"
+      },
+      {
+        "seq": 11,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\"},\"refs\":[{\"id\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":1110,\"has_more\":false,\"elapsed_ms\":1.0881999999983236,\"error\":null}"
+      },
+      {
+        "seq": 12,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\"},\"refs\":[{\"id\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":510,\"has_more\":false,\"elapsed_ms\":0.7230999999992491,\"error\":null}"
+      },
+      {
+        "seq": 13,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"knowledge-ed432d35-07a4-487e-903e-1ceb4178e371\"},\"refs\":[{\"id\":\"knowledge-ed432d35-07a4-487e-903e-1ceb4178e371\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":995,\"has_more\":false,\"elapsed_ms\":0.6948999999985972,\"error\":null}"
+      },
+      {
+        "seq": 14,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"topics\",\"recordId\":\"concept-cefa3204-a0c7-4c67-9f5a-dc0cfcf6e0ca\",\"limit\":50},\"refs\":[{\"id\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\",\"revision\":1},{\"id\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\",\"revision\":1},{\"id\":\"knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":1373,\"has_more\":false,\"elapsed_ms\":0.9877999999989697,\"error\":null}"
+      },
+      {
+        "seq": 15,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\"},\"refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":1738,\"has_more\":false,\"elapsed_ms\":0.83889999999883,\"error\":null}"
+      },
+      {
+        "seq": 16,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"topics\",\"recordId\":\"concept-ed4ed642-15b4-44df-845a-e4dce0f3f73b\",\"limit\":50},\"refs\":[{\"id\":\"concept-890e09ae-7841-4bfc-984b-b590adeff3e8\",\"revision\":1},{\"id\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\",\"revision\":1},{\"id\":\"knowledge-01ed691f-7e86-41f0-b61b-8961faf44875\",\"revision\":1},{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\",\"revision\":2}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":1748,\"has_more\":false,\"elapsed_ms\":1.0390999999981432,\"error\":null}"
+      },
+      {
+        "seq": 17,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"resources\",\"recordId\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\",\"limit\":50,\"mode\":\"current_claims\"},\"refs\":[{\"id\":\"knowledge-01ed691f-7e86-41f0-b61b-8961faf44875\",\"revision\":1},{\"id\":\"knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":1081,\"has_more\":false,\"elapsed_ms\":0.8745000000017171,\"error\":null}"
+      },
+      {
+        "seq": 18,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"resources\",\"recordId\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\",\"limit\":50,\"mode\":\"current_claims\"},\"refs\":[{\"id\":\"knowledge-ae45b939-5c3a-409f-bce8-6ab98c17dc29\",\"revision\":1},{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\",\"revision\":2}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":1081,\"has_more\":false,\"elapsed_ms\":0.8703000000023167,\"error\":null}"
+      },
+      {
+        "seq": 19,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\"},\"refs\":[{\"id\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":509,\"has_more\":false,\"elapsed_ms\":1.087100000004284,\"error\":null}"
+      },
+      {
+        "seq": 20,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\"},\"refs\":[{\"id\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\",\"revision\":1}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":524,\"has_more\":false,\"elapsed_ms\":0.7665000000051805,\"error\":null}"
+      },
+      {
+        "seq": 21,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\"},\"refs\":[{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\",\"revision\":2}],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":967,\"has_more\":false,\"elapsed_ms\":0.6702999999979511,\"error\":null}"
+      },
+      {
+        "seq": 22,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"search\",\"input\":{\"query\":\"Russian language preference\",\"match\":\"any\",\"kinds\":[\"knowledge\"],\"limit\":20},\"refs\":[],\"generation\":\"9b65f0f9bad6474d6b10790b8dca49b7720db561dfd3480b8ca653658a6ce2e7\",\"bytes\":446,\"has_more\":false,\"elapsed_ms\":1.1821000000054482,\"error\":null}"
+      },
+      {
+        "seq": 23,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"resources\",\"limit\":50},\"refs\":[{\"id\":\"entity-2a01bd1e-dedc-4848-92cf-967480639b90\",\"revision\":1},{\"id\":\"entity-8bbd7194-8bf5-4030-9bdf-852c8455edd6\",\"revision\":1},{\"id\":\"entity-a5743f32-6544-413c-9dc9-83e01befb6e2\",\"revision\":1},{\"id\":\"entity-312d72d0-fbc0-44e1-b85e-5fa469412625\",\"revision\":1},{\"id\":\"entity-5c876ef6-c4aa-48ab-a9d9-379d4c8f5635\",\"revision\":1}],\"generation\":\"171a5b6f5c6ff1230497753aa30576e5ef25b8bf7546e9afe0cb68c7343f714e\",\"bytes\":2012,\"has_more\":false,\"elapsed_ms\":1.239900000000489,\"error\":null}"
+      },
+      {
+        "seq": 24,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"search\",\"input\":{\"query\":\"Sunday cards printing paper\",\"match\":\"any\",\"limit\":50},\"refs\":[{\"id\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\",\"revision\":1},{\"id\":\"evidence-506c07c9-0026-42ad-b48d-61b4fd635f0a\",\"revision\":1},{\"id\":\"knowledge-952240fd-452b-4339-9d8c-1adc2846623a\",\"revision\":1}],\"generation\":\"171a5b6f5c6ff1230497753aa30576e5ef25b8bf7546e9afe0cb68c7343f714e\",\"bytes\":1638,\"has_more\":false,\"elapsed_ms\":3.2242000000005646,\"error\":null}"
+      },
+      {
+        "seq": 25,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\"},\"refs\":[{\"id\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\",\"revision\":1}],\"generation\":\"171a5b6f5c6ff1230497753aa30576e5ef25b8bf7546e9afe0cb68c7343f714e\",\"bytes\":1110,\"has_more\":false,\"elapsed_ms\":1.0521000000007916,\"error\":null}"
+      },
+      {
+        "seq": 26,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"knowledge\",\"limit\":50},\"refs\":[{\"id\":\"knowledge-13eedc0b-83ff-44aa-80fd-9d8c435c90cb\",\"revision\":1},{\"id\":\"knowledge-01ed691f-7e86-41f0-b61b-8961faf44875\",\"revision\":1},{\"id\":\"knowledge-ae45b939-5c3a-409f-bce8-6ab98c17dc29\",\"revision\":1},{\"id\":\"knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6\",\"revision\":1},{\"id\":\"knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4\",\"revision\":1},{\"id\":\"knowledge-ed432d35-07a4-487e-903e-1ceb4178e371\",\"revision\":1},{\"id\":\"knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b\",\"revision\":1},{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\",\"revision\":2},{\"id\":\"knowledge-952240fd-452b-4339-9d8c-1adc2846623a\",\"revision\":1}],\"generation\":\"171a5b6f5c6ff1230497753aa30576e5ef25b8bf7546e9afe0cb68c7343f714e\",\"bytes\":3505,\"has_more\":false,\"elapsed_ms\":1.0027000000009139,\"error\":null}"
+      },
+      {
+        "seq": 27,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"knowledge-01ed691f-7e86-41f0-b61b-8961faf44875\"},\"refs\":[{\"id\":\"knowledge-01ed691f-7e86-41f0-b61b-8961faf44875\",\"revision\":1}],\"generation\":\"171a5b6f5c6ff1230497753aa30576e5ef25b8bf7546e9afe0cb68c7343f714e\",\"bytes\":994,\"has_more\":false,\"elapsed_ms\":0.7813999999998487,\"error\":null}"
+      },
+      {
+        "seq": 28,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"knowledge-ae45b939-5c3a-409f-bce8-6ab98c17dc29\"},\"refs\":[{\"id\":\"knowledge-ae45b939-5c3a-409f-bce8-6ab98c17dc29\",\"revision\":1}],\"generation\":\"171a5b6f5c6ff1230497753aa30576e5ef25b8bf7546e9afe0cb68c7343f714e\",\"bytes\":999,\"has_more\":false,\"elapsed_ms\":0.8055999999996857,\"error\":null}"
+      },
+      {
+        "seq": 29,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6\"},\"refs\":[{\"id\":\"knowledge-9d6bef62-b132-4cd7-bc41-d18900d78ee6\",\"revision\":1}],\"generation\":\"171a5b6f5c6ff1230497753aa30576e5ef25b8bf7546e9afe0cb68c7343f714e\",\"bytes\":954,\"has_more\":false,\"elapsed_ms\":0.6899999999986903,\"error\":null}"
+      },
+      {
+        "seq": 30,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4\"},\"refs\":[{\"id\":\"knowledge-f1c18387-8d39-4d6b-b419-dac7639c04e4\",\"revision\":1}],\"generation\":\"171a5b6f5c6ff1230497753aa30576e5ef25b8bf7546e9afe0cb68c7343f714e\",\"bytes\":954,\"has_more\":false,\"elapsed_ms\":1.1913999999997031,\"error\":null}"
+      },
+      {
+        "seq": 31,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"knowledge-ed432d35-07a4-487e-903e-1ceb4178e371\"},\"refs\":[{\"id\":\"knowledge-ed432d35-07a4-487e-903e-1ceb4178e371\",\"revision\":1}],\"generation\":\"171a5b6f5c6ff1230497753aa30576e5ef25b8bf7546e9afe0cb68c7343f714e\",\"bytes\":995,\"has_more\":false,\"elapsed_ms\":0.7590999999993073,\"error\":null}"
+      },
+      {
+        "seq": 32,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b\"},\"refs\":[{\"id\":\"knowledge-5c61de8c-5c86-47b3-81d7-86167924b60b\",\"revision\":1}],\"generation\":\"171a5b6f5c6ff1230497753aa30576e5ef25b8bf7546e9afe0cb68c7343f714e\",\"bytes\":995,\"has_more\":false,\"elapsed_ms\":0.6648999999997613,\"error\":null}"
+      },
+      {
+        "seq": 33,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\"},\"refs\":[{\"id\":\"knowledge-c2e281b2-47a0-4e91-84a8-c2ee3d840615\",\"revision\":2}],\"generation\":\"171a5b6f5c6ff1230497753aa30576e5ef25b8bf7546e9afe0cb68c7343f714e\",\"bytes\":967,\"has_more\":false,\"elapsed_ms\":0.7122999999992317,\"error\":null}"
+      },
+      {
+        "seq": 34,
+        "access_key": "c2d5639c2864f169d9a6605a9b3c796d65f176c443cda109548a7391ead7f89b",
+        "json": "{\"operation\":\"read\",\"input\":{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"range\":{\"start\":0,\"length\":8000}},\"refs\":[{\"id\":\"evidence-3f801c1e-150d-405e-9da7-f0c8eb83385e\",\"revision\":1}],\"generation\":\"171a5b6f5c6ff1230497753aa30576e5ef25b8bf7546e9afe0cb68c7343f714e\",\"bytes\":942,\"has_more\":false,\"elapsed_ms\":1.2744999999995343,\"error\":null}"
+      }
+    ]
+  },
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 17,
+    "requests": 117,
+    "input": 2254620,
+    "output": 37233,
+    "cache_read": 1179520,
+    "estimated_usd": 2.6404820000000004,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 117
+  }
+}

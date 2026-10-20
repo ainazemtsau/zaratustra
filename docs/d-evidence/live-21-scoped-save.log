@@ -1,0 +1,28 @@
+(node:110756) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Создана область «Мастерская». Для будущих дел сохранено:\n\n- Ризограф «Парус-41» находится в мастерской «Старая гавань» и принадлежит ей, не вам.\n- Доступ — по предварительной записи, по будням с 10:00 до 16:00.\n- В субботу и воскресенье доступа нет.\n- Разрешено тиражировать монохромные карточки A6.\n- Для записи нужен код «Роса-73».\n\nПредпочтение отвечать по-русски тоже сохранено.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 22,
+    "requests": 141,
+    "input": 2725728,
+    "output": 42250,
+    "cache_read": 1434880,
+    "estimated_usd": 3.147684000000001,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 141,
+    "prelaunch_attempts": 1,
+    "conversation_attempts_at_adjustment": 18
+  }
+}

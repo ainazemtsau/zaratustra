@@ -1,0 +1,8 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\delivery-agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\delivery-home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-10-delivery-current",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\10-delivery-current",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "prompt": "Я всё-таки займусь теми бумажными карточками во вторник. На какой доступный мне способ сейчас можно рассчитывать и что в плане нужно поменять?"
+}

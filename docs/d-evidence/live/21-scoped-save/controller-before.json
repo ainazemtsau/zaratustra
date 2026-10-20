@@ -1,0 +1,26 @@
+{
+  "scenario": "21-scoped-save",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-21-scoped-save",
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 21,
+    "requests": 136,
+    "input": 2643575,
+    "output": 40592,
+    "cache_read": 1386240,
+    "estimated_usd": 3.0592140000000008,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 136,
+    "prelaunch_attempts": 1,
+    "conversation_attempts_at_adjustment": 18
+  },
+  "sha": "2e67880ccc6f52c22ee99f38a12f232a5e8a9f9e",
+  "trusted_scopes": "[\"restricted:read\",\"restricted:write\"]"
+}

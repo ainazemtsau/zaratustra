@@ -1,0 +1,22 @@
+{
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 17,
+    "requests": 117,
+    "input": 2254620,
+    "output": 37233,
+    "cache_read": 1179520,
+    "estimated_usd": 2.6404820000000004,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 117
+  },
+  "exit": 0,
+  "sha": "2e67880ccc6f52c22ee99f38a12f232a5e8a9f9e"
+}

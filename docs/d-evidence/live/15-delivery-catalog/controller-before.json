@@ -1,0 +1,23 @@
+{
+  "scenario": "15-delivery-catalog",
+  "sha": "2e67880ccc6f52c22ee99f38a12f232a5e8a9f9e",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-15-delivery-catalog",
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 14,
+    "requests": 93,
+    "input": 1801804,
+    "output": 33682,
+    "cache_read": 924160,
+    "estimated_usd": 2.1845240000000006,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 93
+  }
+}

@@ -1,0 +1,13 @@
+Installing git:github.com/ainazemtsau/zaratustra@248483114d7723c9f9f6ac9989dfe33ea02d6905...
+From https://github.com/ainazemtsau/zaratustra
+ * branch            248483114d7723c9f9f6ac9989dfe33ea02d6905 -> FETCH_HEAD
+HEAD is now at 2484831 Compare serialized SQLite rows in native upgrade evidence
+Removing node_modules/
+
+added 12 packages, and audited 13 packages in 2s
+
+9 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Installed git:github.com/ainazemtsau/zaratustra@248483114d7723c9f9f6ac9989dfe33ea02d6905

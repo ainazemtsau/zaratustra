@@ -1,0 +1,60 @@
+{
+  "response": "Сохранить не удалось: хранилище отклонило запись из-за отсутствия разрешения на защищённое хранение. Область «Мастерская» и сведения не сохранены.\n\nДля сохранения данных, включая код записи, нужно разрешить защищённые записи в настройках доступа.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "database": {
+    "records": [],
+    "revisions": [],
+    "changes": [],
+    "intents": [],
+    "receipts": [],
+    "claims": [],
+    "handoffs": [],
+    "relations": [],
+    "relation_history": [],
+    "memory_meta": [
+      {
+        "seq": 0,
+        "build": 1
+      }
+    ],
+    "retrieval_trace": [
+      {
+        "seq": 1,
+        "access_key": "85682c9ca9feda5fa10ec67deb913cea974a70e8030a2a0a63c68ab26f509aa8",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"activities\",\"limit\":20},\"refs\":[],\"generation\":\"c4d42f6c51073959705ae2250f35ce7097c4cdd254b90b2f7dde8536a65f8df2\",\"bytes\":326,\"has_more\":false,\"elapsed_ms\":1.2790999999997439,\"error\":null}"
+      },
+      {
+        "seq": 2,
+        "access_key": "85682c9ca9feda5fa10ec67deb913cea974a70e8030a2a0a63c68ab26f509aa8",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"entities\",\"limit\":20},\"refs\":[],\"generation\":\"c4d42f6c51073959705ae2250f35ce7097c4cdd254b90b2f7dde8536a65f8df2\",\"bytes\":324,\"has_more\":false,\"elapsed_ms\":0.6180999999996857,\"error\":null}"
+      },
+      {
+        "seq": 3,
+        "access_key": "85682c9ca9feda5fa10ec67deb913cea974a70e8030a2a0a63c68ab26f509aa8",
+        "json": "{\"operation\":\"search\",\"input\":{\"query\":\"workshop risograph Russian\",\"match\":\"any\"},\"refs\":[],\"generation\":\"c4d42f6c51073959705ae2250f35ce7097c4cdd254b90b2f7dde8536a65f8df2\",\"bytes\":412,\"has_more\":false,\"elapsed_ms\":2.34900000000016,\"error\":null}"
+      }
+    ]
+  },
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 21,
+    "requests": 136,
+    "input": 2643575,
+    "output": 40592,
+    "cache_read": 1386240,
+    "estimated_usd": 3.0592140000000008,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 136,
+    "prelaunch_attempts": 1,
+    "conversation_attempts_at_adjustment": 18
+  }
+}

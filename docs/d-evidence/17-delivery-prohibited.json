@@ -1,0 +1,8 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\delivery-agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\release-catalog\\home",
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\cwd-17-delivery-prohibited",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\live\\17-delivery-prohibited",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "prompt": "Мне нужны бумажные карточки именно в воскресенье. Какие из известных мне возможностей реально можно использовать в этот день? Подскажи план без покупки оборудования. Ответь по-русски."
+}

@@ -1,0 +1,80 @@
+[
+  {
+    "kind": "initial-regression-fixtures",
+    "log": "tests-01.log",
+    "description": "Two obsolete test-fixture assumptions: schema-3 derived tables left in pretend schema 1; direct historical-row SQL fixture lacked refresh. Corrected fixtures; later suites pass.",
+    "model_requests": 0
+  },
+  {
+    "kind": "memory-boundaries",
+    "log": "memory-01.log",
+    "description": "Source restriction propagation and repeated close needed fixes; memory-02 then expanded suites pass.",
+    "model_requests": 0
+  },
+  {
+    "kind": "scale-duplicate-variable",
+    "log": "scale-01.log",
+    "description": "Developer fixture duplicate first variable, no model run.",
+    "model_requests": 0
+  },
+  {
+    "kind": "scale-envelope-path",
+    "log": "scale-02.log",
+    "description": "Observer read envelope.data instead of envelope.data.data; populated fixture preserved, corrected next corpus.",
+    "model_requests": 0
+  },
+  {
+    "kind": "upgrade-row-prototypes",
+    "log": "upgrade-verify-01.log",
+    "description": "SQLite null-prototype rows compared to parsed JSON objects; serialization comparison corrected in 2484831.",
+    "model_requests": 0
+  },
+  {
+    "kind": "invalid-install-ref",
+    "log": "install-fixed-harness-01.log",
+    "description": "Mistyped guessed 9eb0c0e ref was not a public candidate; failed native install retained, then exact observed 2484831 installed.",
+    "model_requests": 0
+  },
+  {
+    "kind": "p2-auth-path",
+    "log": "p2-candidate.log",
+    "description": "Observer omitted native authPath; setModel failed before provider dispatch. Native authPath retry passes with zero provider requests.",
+    "model_requests": 0
+  },
+  {
+    "kind": "access-observer-relative-path",
+    "log": "access-green-checkout.log",
+    "description": "External observer supplied relative package path resolved against its own directory; absolute retry passes.",
+    "model_requests": 0
+  },
+  {
+    "kind": "post-model-corpus-count",
+    "log": "measure-small.log",
+    "description": "Observer expected original 8 Knowledge rows after model additions; actual count query and separate prepared/post-model accounting corrected.",
+    "model_requests": 0
+  },
+  {
+    "kind": "prelaunch-cwd",
+    "log": null,
+    "description": "Unified exec failed to create process: invalid directory, Windows os error 267. No file/stdout or Pi process existed. Conservatively adds one budget slot; recorded in budget-adjustments.jsonl.",
+    "model_requests": 0
+  },
+  {
+    "kind": "read-lookups",
+    "log": null,
+    "description": "Early Get-Content used nonexistent root REPRODUCE.md and eslint.config.mjs; read correct docs/REPRODUCE.md and eslint.config.js afterward; zero model requests.",
+    "model_requests": 0
+  },
+  {
+    "kind": "patch-context-retries",
+    "log": null,
+    "description": "Two apply_patch context verification retries after formatting; rejected atomically, no partial writes; corrected against current source.",
+    "model_requests": 0
+  },
+  {
+    "kind": "corpus-conflict-subjects",
+    "log": "strengthen-large.log",
+    "description": "Initial contested filler rows addressed different devices. Extra retained source plus ordinary Core updates make a genuine same-subject conflict; baseline retained.",
+    "model_requests": 0
+  }
+]

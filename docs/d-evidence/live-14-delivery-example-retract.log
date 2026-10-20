@@ -1,0 +1,26 @@
+(node:56216) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Исправлено: отозвал запись о домашнем термопрессе «Мята-8» как личном факте. Сохранил уточнение, что это вымышленный пример. Наличие или отсутствие у вас такого устройства остаётся неизвестным.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 14,
+    "requests": 93,
+    "input": 1801804,
+    "output": 33682,
+    "cache_read": 924160,
+    "estimated_usd": 2.1845240000000006,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 93
+  }
+}

@@ -1,0 +1,1112 @@
+{
+  "source_old": {
+    "id": "knowledge-1a7c4371-aa7b-49b4-84a7-8207972c8ae6",
+    "kind": "knowledge",
+    "title": "Weekday access to Парус-41 by prior appointment",
+    "body": null,
+    "revision": 1,
+    "created_at": "2026-10-20T11:08:58.684Z",
+    "updated_at": "2026-10-20T11:08:58.684Z",
+    "storage": "live",
+    "concept_ids": [],
+    "origin_activity_id": {
+      "id": "activity-b5a4ded5-d667-462c-92d9-c86e784c5c63"
+    },
+    "visibility": "workspace",
+    "data": {
+      "knowledge_kind": "constraint",
+      "statement": "The user can use the Парус-41 risograph at Старая гавань by prior appointment on weekdays from 10:00 to 16:00. There is no access on Saturday or Sunday.",
+      "state": "current",
+      "basis": "user_statement",
+      "evidence_refs": [
+        {
+          "id": "evidence-f253ea51-bddc-47a0-acbb-f36336e00ef4",
+          "revision": 1
+        }
+      ],
+      "subject_ref": {
+        "id": "entity-01c0ead2-e712-4e7e-9314-3bd62c32699c"
+      },
+      "predicate": "has_access_to",
+      "object_ref": {
+        "id": "entity-c1789cf9-ee33-4e55-8d30-33a072fdb72f"
+      },
+      "conditions": {
+        "booking": "Prior appointment is required.",
+        "hours": "Weekdays, 10:00–16:00; timezone unspecified.",
+        "weekends": "No access on Saturday or Sunday.",
+        "scope": "Reported access only; not ownership, unrestricted availability or a working-condition guarantee."
+      },
+      "valid_from": null,
+      "valid_to": null,
+      "representation": {
+        "kind": "English paraphrase",
+        "source_ref": {
+          "id": "evidence-f253ea51-bddc-47a0-acbb-f36336e00ef4",
+          "revision": 1
+        },
+        "source_language": "ru"
+      }
+    }
+  },
+  "current_old_claim": {
+    "id": "knowledge-1a7c4371-aa7b-49b4-84a7-8207972c8ae6",
+    "kind": "knowledge",
+    "title": "Weekday access to Парус-41 by prior appointment",
+    "body": null,
+    "revision": 2,
+    "created_at": "2026-10-20T11:08:58.684Z",
+    "updated_at": "2026-10-20T11:15:11.220Z",
+    "storage": "live",
+    "concept_ids": [],
+    "origin_activity_id": {
+      "id": "activity-b5a4ded5-d667-462c-92d9-c86e784c5c63"
+    },
+    "visibility": "workspace",
+    "data": {
+      "knowledge_kind": "constraint",
+      "statement": "The user can use the Парус-41 risograph at Старая гавань by prior appointment on weekdays from 10:00 to 16:00. There is no access on Saturday or Sunday.",
+      "state": "superseded",
+      "basis": "user_statement",
+      "evidence_refs": [
+        {
+          "id": "evidence-f253ea51-bddc-47a0-acbb-f36336e00ef4",
+          "revision": 1
+        }
+      ],
+      "subject_ref": {
+        "id": "entity-01c0ead2-e712-4e7e-9314-3bd62c32699c"
+      },
+      "predicate": "has_access_to",
+      "object_ref": {
+        "id": "entity-c1789cf9-ee33-4e55-8d30-33a072fdb72f"
+      },
+      "conditions": {
+        "booking": "Prior appointment is required.",
+        "hours": "Weekdays, 10:00–16:00; timezone unspecified.",
+        "weekends": "No access on Saturday or Sunday.",
+        "scope": "Reported access only; not ownership, unrestricted availability or a working-condition guarantee."
+      },
+      "valid_from": null,
+      "valid_to": null,
+      "resolution": {
+        "reason": "Historically valid access has ended; transition time unknown.",
+        "evidence_refs": [
+          {
+            "id": "evidence-f9c54ead-91cb-4b52-a596-7592fcc0fcc4"
+          }
+        ],
+        "replacement_refs": [
+          {
+            "id": "knowledge-a153f855-c6d2-4f08-8f9d-44542cef0c06"
+          }
+        ]
+      },
+      "representation": {
+        "kind": "English paraphrase",
+        "source_ref": {
+          "id": "evidence-f253ea51-bddc-47a0-acbb-f36336e00ef4",
+          "revision": 1
+        },
+        "source_language": "ru"
+      }
+    }
+  },
+  "current_old_code": {
+    "id": "knowledge-faf08962-ca50-42db-9900-fbaedc3173d3",
+    "kind": "knowledge",
+    "title": "Booking code for Парус-41 at Старая гавань",
+    "body": null,
+    "revision": 2,
+    "created_at": "2026-10-20T11:08:58.684Z",
+    "updated_at": "2026-10-20T11:15:11.220Z",
+    "storage": "live",
+    "concept_ids": [],
+    "origin_activity_id": {
+      "id": "activity-b5a4ded5-d667-462c-92d9-c86e784c5c63"
+    },
+    "visibility": "restricted",
+    "data": {
+      "knowledge_kind": "constraint",
+      "statement": "Booking access to Парус-41 at Старая гавань requires the code «Роса-73».",
+      "state": "superseded",
+      "basis": "user_statement",
+      "evidence_refs": [
+        {
+          "id": "evidence-f253ea51-bddc-47a0-acbb-f36336e00ef4",
+          "revision": 1
+        }
+      ],
+      "subject_ref": {
+        "id": "entity-c1789cf9-ee33-4e55-8d30-33a072fdb72f"
+      },
+      "conditions": "Code is required for prior appointment; it does not grant ownership or waive weekday 10:00–16:00 access limits or the weekend prohibition.",
+      "valid_from": null,
+      "valid_to": null,
+      "resolution": {
+        "reason": "Former code no longer valid, without denying its historical validity.",
+        "evidence_refs": [
+          {
+            "id": "evidence-f9c54ead-91cb-4b52-a596-7592fcc0fcc4"
+          }
+        ],
+        "replacement_refs": [
+          {
+            "id": "knowledge-23fd5cc7-485b-4e68-9b9b-8f669aa5f378"
+          }
+        ]
+      },
+      "representation": {
+        "kind": "English paraphrase",
+        "source_ref": {
+          "id": "evidence-f253ea51-bddc-47a0-acbb-f36336e00ef4",
+          "revision": 1
+        },
+        "source_language": "ru"
+      }
+    }
+  },
+  "currentResults": {
+    "ok": true,
+    "workspace_id": "65cc53ad-de85-42fa-9f0b-97b965583450",
+    "schema_version": 3,
+    "snapshot_seq": 3,
+    "data": {
+      "cards": [
+        {
+          "id": "knowledge-1293b712-2986-4e69-af62-b57398d4fa89",
+          "kind": "knowledge",
+          "title": "Старая гавань owns Парус-41; the user does not",
+          "revision": 1,
+          "storage": "live",
+          "state": "current",
+          "description": null,
+          "selector": {
+            "record_id": "knowledge-1293b712-2986-4e69-af62-b57398d4fa89"
+          },
+          "must_read": [
+            {
+              "id": "knowledge-1293b712-2986-4e69-af62-b57398d4fa89",
+              "revision": 1
+            }
+          ],
+          "match_reasons": [
+            "Authentic name/identifier/alias (unicode61 literal tokens)",
+            "English working text"
+          ]
+        },
+        {
+          "id": "knowledge-23fd5cc7-485b-4e68-9b9b-8f669aa5f378",
+          "kind": "knowledge",
+          "title": "Former Парус-41 booking code is invalid",
+          "revision": 1,
+          "storage": "live",
+          "state": "current",
+          "description": null,
+          "selector": {
+            "record_id": "knowledge-23fd5cc7-485b-4e68-9b9b-8f669aa5f378"
+          },
+          "must_read": [
+            {
+              "id": "knowledge-23fd5cc7-485b-4e68-9b9b-8f669aa5f378",
+              "revision": 1
+            }
+          ],
+          "match_reasons": [
+            "Authentic name/identifier/alias (unicode61 literal tokens)",
+            "English working text"
+          ]
+        },
+        {
+          "id": "knowledge-a153f855-c6d2-4f08-8f9d-44542cef0c06",
+          "kind": "knowledge",
+          "title": "Парус-41 no longer available to the user",
+          "revision": 1,
+          "storage": "live",
+          "state": "current",
+          "description": null,
+          "selector": {
+            "record_id": "knowledge-a153f855-c6d2-4f08-8f9d-44542cef0c06"
+          },
+          "must_read": [
+            {
+              "id": "knowledge-a153f855-c6d2-4f08-8f9d-44542cef0c06",
+              "revision": 1
+            }
+          ],
+          "match_reasons": [
+            "Authentic name/identifier/alias (unicode61 literal tokens)",
+            "English working text"
+          ]
+        }
+      ],
+      "applied_filters": {
+        "query": "Парус Роса",
+        "match": "any",
+        "states": [
+          "current"
+        ]
+      },
+      "generation": "69ea0c25753a9b0bd093a9cfa9a1c4835cd13ad50885cecd994e4d24b17bd183",
+      "has_more": false,
+      "next_cursor": null,
+      "warnings": [
+        "Empty or incomplete results do not establish absence. Read selected records and conditions before use."
+      ],
+      "order": "stable document id",
+      "validity_note": "No applicability time inferred from write time."
+    },
+    "warnings": []
+  },
+  "low": {
+    "map": {
+      "ok": true,
+      "workspace_id": "65cc53ad-de85-42fa-9f0b-97b965583450",
+      "schema_version": 3,
+      "snapshot_seq": 0,
+      "data": {
+        "entries": [
+          {
+            "label": "activities",
+            "description": "Permitted existing activities",
+            "selector": {
+              "view": "activities"
+            },
+            "has_more": true
+          },
+          {
+            "label": "work",
+            "description": "Permitted existing work",
+            "selector": {
+              "view": "work"
+            },
+            "has_more": false
+          },
+          {
+            "label": "knowledge",
+            "description": "Permitted existing knowledge",
+            "selector": {
+              "view": "knowledge"
+            },
+            "has_more": false
+          },
+          {
+            "label": "materials",
+            "description": "Permitted existing materials",
+            "selector": {
+              "view": "materials"
+            },
+            "has_more": false
+          },
+          {
+            "label": "operations",
+            "description": "Permitted existing operations",
+            "selector": {
+              "view": "operations"
+            },
+            "has_more": false
+          },
+          {
+            "label": "handoffs",
+            "description": "Permitted existing handoffs",
+            "selector": {
+              "view": "handoffs"
+            },
+            "has_more": false
+          },
+          {
+            "label": "claims",
+            "description": "Permitted existing claims",
+            "selector": {
+              "view": "claims"
+            },
+            "has_more": false
+          },
+          {
+            "label": "resources",
+            "description": "Permitted existing resources",
+            "selector": {
+              "view": "resources"
+            },
+            "has_more": false
+          },
+          {
+            "label": "people",
+            "description": "Permitted existing people",
+            "selector": {
+              "view": "people"
+            },
+            "has_more": false
+          },
+          {
+            "label": "topics",
+            "description": "Permitted existing topics",
+            "selector": {
+              "view": "topics"
+            },
+            "has_more": false
+          },
+          {
+            "label": "entities",
+            "description": "Permitted existing entities",
+            "selector": {
+              "view": "entities"
+            },
+            "has_more": true
+          },
+          {
+            "label": "unfiled",
+            "description": "Permitted existing unfiled",
+            "selector": {
+              "view": "unfiled"
+            },
+            "has_more": true
+          },
+          {
+            "label": "relations",
+            "description": "Permitted existing relations",
+            "selector": {
+              "view": "relations"
+            },
+            "has_more": false
+          }
+        ],
+        "focus": null,
+        "applied_filters": {
+          "access": "trusted context"
+        },
+        "generation": "edb8fbddc7a62fe373b06dd52a137615d71a83f13eeaae233a51e9712a708351",
+        "has_more": false,
+        "next_cursor": null
+      },
+      "warnings": []
+    },
+    "knowledge": {
+      "ok": true,
+      "workspace_id": "65cc53ad-de85-42fa-9f0b-97b965583450",
+      "schema_version": 3,
+      "snapshot_seq": 0,
+      "data": {
+        "cards": [],
+        "applied_filters": {
+          "view": "knowledge",
+          "record_id": null,
+          "limit": 20,
+          "mode": null
+        },
+        "generation": "edb8fbddc7a62fe373b06dd52a137615d71a83f13eeaae233a51e9712a708351",
+        "has_more": false,
+        "next_cursor": null,
+        "warnings": [
+          "Empty or incomplete results do not establish absence. Read selected records and conditions before use."
+        ]
+      },
+      "warnings": []
+    },
+    "operations": {
+      "ok": true,
+      "workspace_id": "65cc53ad-de85-42fa-9f0b-97b965583450",
+      "schema_version": 3,
+      "snapshot_seq": 0,
+      "data": {
+        "cards": [],
+        "applied_filters": {
+          "view": "operations",
+          "record_id": null,
+          "limit": 20,
+          "mode": null
+        },
+        "generation": "edb8fbddc7a62fe373b06dd52a137615d71a83f13eeaae233a51e9712a708351",
+        "has_more": false,
+        "next_cursor": null,
+        "warnings": [
+          "Empty or incomplete results do not establish absence. Read selected records and conditions before use."
+        ]
+      },
+      "warnings": []
+    },
+    "changes": {
+      "ok": true,
+      "workspace_id": "65cc53ad-de85-42fa-9f0b-97b965583450",
+      "schema_version": 3,
+      "snapshot_seq": 0,
+      "data": {
+        "cards": [],
+        "applied_filters": {
+          "view": "changes",
+          "record_id": null,
+          "limit": 20,
+          "mode": null
+        },
+        "generation": "edb8fbddc7a62fe373b06dd52a137615d71a83f13eeaae233a51e9712a708351",
+        "has_more": false,
+        "next_cursor": null,
+        "warnings": [
+          "Empty or incomplete results do not establish absence. Read selected records and conditions before use."
+        ]
+      },
+      "warnings": []
+    },
+    "snapshot": {
+      "available": true,
+      "workspace_id": "65cc53ad-de85-42fa-9f0b-97b965583450",
+      "active_epoch": "e1822ab7-cfbb-48a8-967e-cdf262db7840",
+      "snapshot_seq": 0,
+      "generation": "edb8fbddc7a62fe373b06dd52a137615d71a83f13eeaae233a51e9712a708351",
+      "focus": null,
+      "records": [],
+      "context_current": [],
+      "must_read": [],
+      "has_more": false,
+      "warnings": [
+        "Shared memory is not loaded: use catalog/search and read selected claims plus conditions. Historical tool messages may be stale."
+      ],
+      "write_mode": "single-writer",
+      "data_only": true,
+      "byte_budget": 12288,
+      "incomplete": false
+    },
+    "diagnostics": {
+      "ok": true,
+      "workspace_id": "65cc53ad-de85-42fa-9f0b-97b965583450",
+      "schema_version": 3,
+      "snapshot_seq": 0,
+      "data": {
+        "schema_version": 3,
+        "read_only": false,
+        "index": "checked",
+        "retrieval_trace": [
+          {
+            "operation": "browse",
+            "input": {
+              "view": "changes",
+              "limit": 20
+            },
+            "refs": [],
+            "generation": "edb8fbddc7a62fe373b06dd52a137615d71a83f13eeaae233a51e9712a708351",
+            "bytes": 323,
+            "has_more": false,
+            "elapsed_ms": 0.7265999999999622,
+            "error": null
+          },
+          {
+            "operation": "browse",
+            "input": {
+              "view": "operations",
+              "limit": 20
+            },
+            "refs": [],
+            "generation": "edb8fbddc7a62fe373b06dd52a137615d71a83f13eeaae233a51e9712a708351",
+            "bytes": 326,
+            "has_more": false,
+            "elapsed_ms": 0.8550000000000182,
+            "error": null
+          },
+          {
+            "operation": "browse",
+            "input": {
+              "view": "knowledge",
+              "limit": 20
+            },
+            "refs": [],
+            "generation": "edb8fbddc7a62fe373b06dd52a137615d71a83f13eeaae233a51e9712a708351",
+            "bytes": 325,
+            "has_more": false,
+            "elapsed_ms": 0.525000000000091,
+            "error": null
+          },
+          {
+            "operation": "search",
+            "input": {
+              "object_id": "entity-c1789cf9-ee33-4e55-8d30-33a072fdb72f",
+              "states": [
+                "current"
+              ]
+            },
+            "refs": [],
+            "generation": "edb8fbddc7a62fe373b06dd52a137615d71a83f13eeaae233a51e9712a708351",
+            "bytes": 440,
+            "has_more": false,
+            "elapsed_ms": 0.9210999999997966,
+            "error": null
+          }
+        ],
+        "trace_bound": 512,
+        "managed_access": "Trusted personal process; not OS isolation"
+      },
+      "warnings": []
+    }
+  },
+  "denied": [
+    "REFERENCE_NOT_FOUND",
+    "REFERENCE_NOT_FOUND",
+    "REFERENCE_NOT_FOUND"
+  ],
+  "works": [
+    {
+      "id": "work-32e53f1d-32a8-4463-9f44-0424b6d19251",
+      "kind": "work",
+      "title": "Produce 40 identical monochrome A6 cards",
+      "body": "Exclude Парус-41 and its former booking code: access is revoked. Proposed primary route: paid monochrome printing and cutting service, without purchasing equipment. No provider, price, slot or turnaround is confirmed. Request a quote for 40 identical A6 cards (105 × 148 mm), paper, one/two-sided printing, proof, cutting and collection before the clarified deadline. Compare another service if needed. Borrowed equipment is only an alternative after specific access and capabilities are confirmed; no alternative equipment access was established in retrieved memory. Content preparation can proceed in parallel. Readiness by the deadline is not guaranteed until production and collection are confirmed.",
+      "revision": 2,
+      "created_at": "2026-10-20T11:10:49.019Z",
+      "updated_at": "2026-10-20T11:15:11.219Z",
+      "storage": "live",
+      "concept_ids": [],
+      "origin_activity_id": {
+        "id": "activity-0424d0c5-9f40-4372-82f7-907a1ac68b59"
+      },
+      "visibility": "workspace",
+      "data": {
+        "activity_id": {
+          "id": "activity-0424d0c5-9f40-4372-82f7-907a1ac68b59"
+        },
+        "parent_work_id": null,
+        "objective": "Have 40 usable identical monochrome A6 paper cards ready by the user's next-Tuesday deadline without buying equipment.",
+        "acceptance": [
+          {
+            "criterion_id": "cards",
+            "description": "40 identical usable paper cards, A6 (105 × 148 mm), black and white, with approved content.",
+            "verification": "Count and inspect finished cards for size, consistency, readability and defects.",
+            "required": true
+          },
+          {
+            "criterion_id": "deadline",
+            "description": "Cards ready by the clarified next-Tuesday date and time, without equipment purchase.",
+            "verification": "Confirm readiness against the agreed deadline and production arrangement.",
+            "required": true
+          }
+        ],
+        "status": "active",
+        "current_state": "Replanned after access revocation. Парус-41 and the old booking code are excluded. A printing service is proposed, not booked or guaranteed. Independent content preparation and service comparison remain possible.",
+        "next_action": "Clarify exact deadline, location, budget and content; compare printing-and-cutting services and confirm price and collection before ordering.",
+        "steps": [
+          {
+            "step_id": "booking",
+            "intent": "Find and confirm a printing-and-cutting service for 40 monochrome A6 cards without equipment purchase. Confirm paper, file requirements, proof, price and collection before the clarified deadline; agree budget before ordering. Compare another service if needed. Exclude Парус-41 and its old booking code.",
+            "status": "todo",
+            "depends_on": [],
+            "result_refs": []
+          },
+          {
+            "step_id": "artwork",
+            "intent": "Approve text, design, one- or two-sided printing, paper and monochrome A6 master; agree margins and imposition with the selected service.",
+            "status": "todo",
+            "depends_on": [],
+            "result_refs": []
+          },
+          {
+            "step_id": "print",
+            "intent": "Approve a proof and print enough for 40 usable cards plus an agreed allowance for tests and spoilage.",
+            "status": "todo",
+            "depends_on": [
+              {
+                "step_id": "booking"
+              },
+              {
+                "step_id": "artwork"
+              }
+            ],
+            "result_refs": []
+          },
+          {
+            "step_id": "finish",
+            "intent": "Have the selected service cut to 105 × 148 mm, inspect and count 40 identical usable cards, pack and collect before the agreed deadline. Do not assume borrowed tools.",
+            "status": "todo",
+            "depends_on": [
+              {
+                "step_id": "print"
+              }
+            ],
+            "result_refs": []
+          }
+        ],
+        "waits": [
+          {
+            "wait_id": "deadline",
+            "kind": "user",
+            "target": "work",
+            "subject": "Exact next-Tuesday deadline",
+            "satisfied_by": "The user confirms the calendar date, ready-by time and timezone or location.",
+            "received_refs": [
+              {
+                "id": "evidence-d01fc68b-884c-4989-bf08-2341f7fd501e"
+              }
+            ],
+            "question": "Which date is next Tuesday, and by what local time must the cards be ready?",
+            "status": "partial"
+          },
+          {
+            "wait_id": "design",
+            "kind": "user",
+            "target": {
+              "step_id": "artwork"
+            },
+            "subject": "Card content and print specification",
+            "satisfied_by": "The user supplies the text or existing artwork and confirms one- or two-sided printing and paper requirements.",
+            "received_refs": [],
+            "question": "What should appear on the cards; is printing one-sided, and is ordinary paper sufficient?",
+            "status": "pending"
+          },
+          {
+            "wait_id": "service-budget-location",
+            "kind": "user",
+            "target": {
+              "step_id": "booking"
+            },
+            "subject": "Service location and spending limit",
+            "satisfied_by": "The user supplies the city or collection area and maximum service budget, or approves a specific quote.",
+            "received_refs": [],
+            "question": "Where can you collect the cards, and what is the printing-and-cutting budget?",
+            "status": "pending"
+          }
+        ],
+        "context_refs": [
+          {
+            "id": "evidence-d01fc68b-884c-4989-bf08-2341f7fd501e"
+          },
+          {
+            "id": "knowledge-72771ae7-c775-42d6-bcd4-50939bc06579"
+          },
+          {
+            "id": "evidence-f9c54ead-91cb-4b52-a596-7592fcc0fcc4"
+          },
+          {
+            "id": "knowledge-a153f855-c6d2-4f08-8f9d-44542cef0c06"
+          },
+          {
+            "id": "knowledge-23fd5cc7-485b-4e68-9b9b-8f669aa5f378"
+          }
+        ],
+        "completion": null,
+        "plan_version": 2
+      }
+    }
+  ],
+  "snapshot": {
+    "available": true,
+    "workspace_id": "65cc53ad-de85-42fa-9f0b-97b965583450",
+    "active_epoch": "e1822ab7-cfbb-48a8-967e-cdf262db7840",
+    "snapshot_seq": 3,
+    "generation": "69ea0c25753a9b0bd093a9cfa9a1c4835cd13ad50885cecd994e4d24b17bd183",
+    "focus": null,
+    "records": [
+      {
+        "id": "work-32e53f1d-32a8-4463-9f44-0424b6d19251",
+        "kind": "work",
+        "revision": 2,
+        "title": "Produce 40 identical monochrome A6 cards",
+        "data": {
+          "activity_id": {
+            "id": "activity-0424d0c5-9f40-4372-82f7-907a1ac68b59"
+          },
+          "parent_work_id": null,
+          "objective": "Have 40 usable identical monochrome A6 paper cards ready by the user's next-Tuesday deadline without buying equipment.",
+          "acceptance": [
+            {
+              "criterion_id": "cards",
+              "description": "40 identical usable paper cards, A6 (105 × 148 mm), black and white, with approved content.",
+              "verification": "Count and inspect finished cards for size, consistency, readability and defects.",
+              "required": true
+            },
+            {
+              "criterion_id": "deadline",
+              "description": "Cards ready by the clarified next-Tuesday date and time, without equipment purchase.",
+              "verification": "Confirm readiness against the agreed deadline and production arrangement.",
+              "required": true
+            }
+          ],
+          "status": "active",
+          "current_state": "Replanned after access revocation. Парус-41 and the old booking code are excluded. A printing service is proposed, not booked or guaranteed. Independent content preparation and service comparison remain possible.",
+          "next_action": "Clarify exact deadline, location, budget and content; compare printing-and-cutting services and confirm price and collection before ordering.",
+          "steps": [
+            {
+              "step_id": "booking",
+              "intent": "Find and confirm a printing-and-cutting service for 40 monochrome A6 cards without equipment purchase. Confirm paper, file requirements, proof, price and collection before the clarified deadline; agree budget before ordering. Compare another service if needed. Exclude Парус-41 and its old booking code.",
+              "status": "todo",
+              "depends_on": [],
+              "result_refs": []
+            },
+            {
+              "step_id": "artwork",
+              "intent": "Approve text, design, one- or two-sided printing, paper and monochrome A6 master; agree margins and imposition with the selected service.",
+              "status": "todo",
+              "depends_on": [],
+              "result_refs": []
+            },
+            {
+              "step_id": "print",
+              "intent": "Approve a proof and print enough for 40 usable cards plus an agreed allowance for tests and spoilage.",
+              "status": "todo",
+              "depends_on": [
+                {
+                  "step_id": "booking"
+                },
+                {
+                  "step_id": "artwork"
+                }
+              ],
+              "result_refs": []
+            },
+            {
+              "step_id": "finish",
+              "intent": "Have the selected service cut to 105 × 148 mm, inspect and count 40 identical usable cards, pack and collect before the agreed deadline. Do not assume borrowed tools.",
+              "status": "todo",
+              "depends_on": [
+                {
+                  "step_id": "print"
+                }
+              ],
+              "result_refs": []
+            }
+          ],
+          "waits": [
+            {
+              "wait_id": "deadline",
+              "kind": "user",
+              "target": "work",
+              "subject": "Exact next-Tuesday deadline",
+              "satisfied_by": "The user confirms the calendar date, ready-by time and timezone or location.",
+              "received_refs": [
+                {
+                  "id": "evidence-d01fc68b-884c-4989-bf08-2341f7fd501e"
+                }
+              ],
+              "question": "Which date is next Tuesday, and by what local time must the cards be ready?",
+              "status": "partial"
+            },
+            {
+              "wait_id": "design",
+              "kind": "user",
+              "target": {
+                "step_id": "artwork"
+              },
+              "subject": "Card content and print specification",
+              "satisfied_by": "The user supplies the text or existing artwork and confirms one- or two-sided printing and paper requirements.",
+              "received_refs": [],
+              "question": "What should appear on the cards; is printing one-sided, and is ordinary paper sufficient?",
+              "status": "pending"
+            },
+            {
+              "wait_id": "service-budget-location",
+              "kind": "user",
+              "target": {
+                "step_id": "booking"
+              },
+              "subject": "Service location and spending limit",
+              "satisfied_by": "The user supplies the city or collection area and maximum service budget, or approves a specific quote.",
+              "received_refs": [],
+              "question": "Where can you collect the cards, and what is the printing-and-cutting budget?",
+              "status": "pending"
+            }
+          ],
+          "context_refs": [
+            {
+              "id": "evidence-d01fc68b-884c-4989-bf08-2341f7fd501e"
+            },
+            {
+              "id": "knowledge-72771ae7-c775-42d6-bcd4-50939bc06579"
+            },
+            {
+              "id": "evidence-f9c54ead-91cb-4b52-a596-7592fcc0fcc4"
+            },
+            {
+              "id": "knowledge-a153f855-c6d2-4f08-8f9d-44542cef0c06"
+            },
+            {
+              "id": "knowledge-23fd5cc7-485b-4e68-9b9b-8f669aa5f378"
+            }
+          ],
+          "completion": null,
+          "plan_version": 2
+        }
+      },
+      {
+        "id": "knowledge-ad3479a2-0559-4cce-97ad-0591b60fe44b",
+        "kind": "knowledge",
+        "revision": 1,
+        "title": "Russian conversation preference",
+        "data": {
+          "knowledge_kind": "preference",
+          "statement": "The user requests responses in Russian.",
+          "state": "current",
+          "basis": "user_statement",
+          "evidence_refs": [
+            {
+              "id": "evidence-f253ea51-bddc-47a0-acbb-f36336e00ef4",
+              "revision": 1
+            }
+          ],
+          "subject_ref": {
+            "id": "entity-01c0ead2-e712-4e7e-9314-3bd62c32699c"
+          },
+          "predicate": "prefers",
+          "value": "Responses in Russian",
+          "conditions": "Conversation language; canonical workspace working text remains English.",
+          "valid_from": null,
+          "valid_to": null,
+          "representation": {
+            "kind": "English paraphrase",
+            "source_ref": {
+              "id": "evidence-f253ea51-bddc-47a0-acbb-f36336e00ef4",
+              "revision": 1
+            },
+            "source_language": "ru"
+          }
+        }
+      }
+    ],
+    "context_current": [
+      {
+        "id": "knowledge-72771ae7-c775-42d6-bcd4-50939bc06579",
+        "revision": 1,
+        "state": "current",
+        "historical_revision": null,
+        "must_read": true
+      },
+      {
+        "id": "knowledge-a153f855-c6d2-4f08-8f9d-44542cef0c06",
+        "revision": 1,
+        "state": "current",
+        "historical_revision": null,
+        "must_read": true
+      },
+      {
+        "id": "knowledge-23fd5cc7-485b-4e68-9b9b-8f669aa5f378",
+        "revision": 1,
+        "state": "current",
+        "historical_revision": null,
+        "must_read": true
+      }
+    ],
+    "must_read": [],
+    "has_more": false,
+    "warnings": [
+      "Shared memory is not loaded: use catalog/search and read selected claims plus conditions. Historical tool messages may be stale."
+    ],
+    "write_mode": "single-writer",
+    "data_only": true,
+    "byte_budget": 12288,
+    "incomplete": false
+  },
+  "last_model_snapshot": {
+    "available": true,
+    "workspace_id": "65cc53ad-de85-42fa-9f0b-97b965583450",
+    "active_epoch": "e1822ab7-cfbb-48a8-967e-cdf262db7840",
+    "snapshot_seq": 3,
+    "generation": "69ea0c25753a9b0bd093a9cfa9a1c4835cd13ad50885cecd994e4d24b17bd183",
+    "focus": null,
+    "records": [
+      {
+        "id": "work-32e53f1d-32a8-4463-9f44-0424b6d19251",
+        "kind": "work",
+        "revision": 2,
+        "title": "Produce 40 identical monochrome A6 cards",
+        "data": {
+          "activity_id": {
+            "id": "activity-0424d0c5-9f40-4372-82f7-907a1ac68b59"
+          },
+          "parent_work_id": null,
+          "objective": "Have 40 usable identical monochrome A6 paper cards ready by the user's next-Tuesday deadline without buying equipment.",
+          "acceptance": [
+            {
+              "criterion_id": "cards",
+              "description": "40 identical usable paper cards, A6 (105 × 148 mm), black and white, with approved content.",
+              "verification": "Count and inspect finished cards for size, consistency, readability and defects.",
+              "required": true
+            },
+            {
+              "criterion_id": "deadline",
+              "description": "Cards ready by the clarified next-Tuesday date and time, without equipment purchase.",
+              "verification": "Confirm readiness against the agreed deadline and production arrangement.",
+              "required": true
+            }
+          ],
+          "status": "active",
+          "current_state": "Replanned after access revocation. Парус-41 and the old booking code are excluded. A printing service is proposed, not booked or guaranteed. Independent content preparation and service comparison remain possible.",
+          "next_action": "Clarify exact deadline, location, budget and content; compare printing-and-cutting services and confirm price and collection before ordering.",
+          "steps": [
+            {
+              "step_id": "booking",
+              "intent": "Find and confirm a printing-and-cutting service for 40 monochrome A6 cards without equipment purchase. Confirm paper, file requirements, proof, price and collection before the clarified deadline; agree budget before ordering. Compare another service if needed. Exclude Парус-41 and its old booking code.",
+              "status": "todo",
+              "depends_on": [],
+              "result_refs": []
+            },
+            {
+              "step_id": "artwork",
+              "intent": "Approve text, design, one- or two-sided printing, paper and monochrome A6 master; agree margins and imposition with the selected service.",
+              "status": "todo",
+              "depends_on": [],
+              "result_refs": []
+            },
+            {
+              "step_id": "print",
+              "intent": "Approve a proof and print enough for 40 usable cards plus an agreed allowance for tests and spoilage.",
+              "status": "todo",
+              "depends_on": [
+                {
+                  "step_id": "booking"
+                },
+                {
+                  "step_id": "artwork"
+                }
+              ],
+              "result_refs": []
+            },
+            {
+              "step_id": "finish",
+              "intent": "Have the selected service cut to 105 × 148 mm, inspect and count 40 identical usable cards, pack and collect before the agreed deadline. Do not assume borrowed tools.",
+              "status": "todo",
+              "depends_on": [
+                {
+                  "step_id": "print"
+                }
+              ],
+              "result_refs": []
+            }
+          ],
+          "waits": [
+            {
+              "wait_id": "deadline",
+              "kind": "user",
+              "target": "work",
+              "subject": "Exact next-Tuesday deadline",
+              "satisfied_by": "The user confirms the calendar date, ready-by time and timezone or location.",
+              "received_refs": [
+                {
+                  "id": "evidence-d01fc68b-884c-4989-bf08-2341f7fd501e"
+                }
+              ],
+              "question": "Which date is next Tuesday, and by what local time must the cards be ready?",
+              "status": "partial"
+            },
+            {
+              "wait_id": "design",
+              "kind": "user",
+              "target": {
+                "step_id": "artwork"
+              },
+              "subject": "Card content and print specification",
+              "satisfied_by": "The user supplies the text or existing artwork and confirms one- or two-sided printing and paper requirements.",
+              "received_refs": [],
+              "question": "What should appear on the cards; is printing one-sided, and is ordinary paper sufficient?",
+              "status": "pending"
+            },
+            {
+              "wait_id": "service-budget-location",
+              "kind": "user",
+              "target": {
+                "step_id": "booking"
+              },
+              "subject": "Service location and spending limit",
+              "satisfied_by": "The user supplies the city or collection area and maximum service budget, or approves a specific quote.",
+              "received_refs": [],
+              "question": "Where can you collect the cards, and what is the printing-and-cutting budget?",
+              "status": "pending"
+            }
+          ],
+          "context_refs": [
+            {
+              "id": "evidence-d01fc68b-884c-4989-bf08-2341f7fd501e"
+            },
+            {
+              "id": "knowledge-72771ae7-c775-42d6-bcd4-50939bc06579"
+            },
+            {
+              "id": "evidence-f9c54ead-91cb-4b52-a596-7592fcc0fcc4"
+            },
+            {
+              "id": "knowledge-a153f855-c6d2-4f08-8f9d-44542cef0c06"
+            },
+            {
+              "id": "knowledge-23fd5cc7-485b-4e68-9b9b-8f669aa5f378"
+            }
+          ],
+          "completion": null,
+          "plan_version": 2
+        }
+      },
+      {
+        "id": "knowledge-ad3479a2-0559-4cce-97ad-0591b60fe44b",
+        "kind": "knowledge",
+        "revision": 1,
+        "title": "Russian conversation preference",
+        "data": {
+          "knowledge_kind": "preference",
+          "statement": "The user requests responses in Russian.",
+          "state": "current",
+          "basis": "user_statement",
+          "evidence_refs": [
+            {
+              "id": "evidence-f253ea51-bddc-47a0-acbb-f36336e00ef4",
+              "revision": 1
+            }
+          ],
+          "subject_ref": {
+            "id": "entity-01c0ead2-e712-4e7e-9314-3bd62c32699c"
+          },
+          "predicate": "prefers",
+          "value": "Responses in Russian",
+          "conditions": "Conversation language; canonical workspace working text remains English.",
+          "valid_from": null,
+          "valid_to": null,
+          "representation": {
+            "kind": "English paraphrase",
+            "source_ref": {
+              "id": "evidence-f253ea51-bddc-47a0-acbb-f36336e00ef4",
+              "revision": 1
+            },
+            "source_language": "ru"
+          }
+        }
+      }
+    ],
+    "context_current": [
+      {
+        "id": "knowledge-72771ae7-c775-42d6-bcd4-50939bc06579",
+        "revision": 1,
+        "state": "current",
+        "historical_revision": null,
+        "must_read": true
+      },
+      {
+        "id": "knowledge-a153f855-c6d2-4f08-8f9d-44542cef0c06",
+        "revision": 1,
+        "state": "current",
+        "historical_revision": null,
+        "must_read": true
+      },
+      {
+        "id": "knowledge-23fd5cc7-485b-4e68-9b9b-8f669aa5f378",
+        "revision": 1,
+        "state": "current",
+        "historical_revision": null,
+        "must_read": true
+      }
+    ],
+    "must_read": [],
+    "has_more": false,
+    "warnings": [
+      "Shared memory is not loaded: use catalog/search and read selected claims plus conditions. Historical tool messages may be stale."
+    ],
+    "write_mode": "single-writer",
+    "data_only": true,
+    "byte_budget": 12288,
+    "incomplete": false,
+    "captured_sources": [
+      {
+        "source_handle": "source-befd0ff8-62d9-4eef-9286-741a73158b99",
+        "source_ref": "observed-70ed7ece-b5cd-49b1-8ef4-fee06ab5e44f",
+        "transport": "rpc",
+        "channel_identity": "isolated-synthetic-sdk-controller",
+        "capture_stage": "pi-input-hook-observed",
+        "content_hash": "051486cdfb6d93dfb2c9bc8938891baca8be0a3030743091d8035541b486d2f1",
+        "byte_length": 601
+      }
+    ],
+    "provider_model": "openai-codex/gpt-6.1-sol"
+  },
+  "exact_old_version": true,
+  "domain_unchanged_by_proof": true
+}

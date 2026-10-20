@@ -1,6 +1,11 @@
 # Reproduce the installed path (operator/developer)
 
-For the current zero-model developer-exporter correction, use the focused
+For current outcome D, use [D-REPRODUCE](D-REPRODUCE.md): shared memory, installed
+tests, fixed corpora, filled e24b2fda upgrade and one 24/180/USD15 live ledger.
+The recipes below are historical B/C procedures, with their original budgets and
+version attributions; do not reset the current D ledger to run them.
+
+For the historical zero-model developer-exporter correction, use the focused
 [stdout-alias recipe](C-STDOUT-ALIAS.md). It requires native Pi installation only;
 the historical model-session recipes below are outside this correction's budget.
 

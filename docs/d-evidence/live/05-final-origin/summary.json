@@ -1,0 +1,177 @@
+{
+  "response": "Создана область «Мастерская». Для будущих дел сохранено:\n\n- «Парус-41» находится в «Старой гавани» и принадлежит мастерской, не вам.\n- Доступ — по предварительной записи, по будням с 10:00 до 16:00.\n- В субботу и воскресенье доступа нет.\n- Разрешено тиражировать монохромные карточки A6.\n- Код для записи — «Роса-73».\n\nПредпочтение отвечать по-русски тоже сохранено.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "database": {
+    "records": [
+      {
+        "id": "evidence-07fd84c6-a35f-44f9-b930-83233eea38ed",
+        "kind": "evidence",
+        "activity_id": null,
+        "json": "{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"kind\":\"evidence\",\"title\":\"Original workshop resource request\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-2856e10a-6c02-4e6d-bee0-922e565dd82b\",\"captured_at\":\"2026-10-20T10:21:00.058Z\",\"content_hash\":\"5a2099046ea2e2e02355c56dff2103efac9e8b4704a9074c45c681298248b92d\",\"retained_excerpt\":\"Создай область «Мастерская» и сохрани для неё следующее: в мастерской «Старая гавань» я могу по предварительной записи пользоваться ризографом «Парус-41» по будням с 10 до 16. Он принадлежит мастерской, не мне. На нём разрешено тиражировать монохромные карточки A6. Для записи нужен код «Роса-73». В субботу и воскресенье доступа нет. Сохрани это для будущих дел. Отвечай по-русски.\",\"blob_ref\":null,\"byte_length\":687,\"availability\":\"retained\",\"source_language\":\"Russian\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-2856e10a-6c02-4e6d-bee0-922e565dd82b\",\"content_hash\":\"5a2099046ea2e2e02355c56dff2103efac9e8b4704a9074c45c681298248b92d\",\"transport\":\"rpc\",\"channel_identity\":\"isolated-synthetic-sdk-controller\",\"session_id\":\"01a158d4-22e5-75af-978d-456fe01f3020\",\"runtime_id\":\"1bfca0d4-32c6-4e48-95fe-1052c7199dc9\",\"captured_at\":\"2026-10-20T10:21:00.058Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":687},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9",
+        "kind": "activity",
+        "activity_id": null,
+        "json": "{\"id\":\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\",\"kind\":\"activity\",\"title\":\"Workshop\",\"body\":\"User-facing name: «Мастерская».\",\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"purpose\":\"Retain workshop resources and access conditions for future activities.\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "entity-c580fc55-7cae-4559-b680-f926e7b4e883",
+        "kind": "entity",
+        "activity_id": null,
+        "json": "{\"id\":\"entity-c580fc55-7cae-4559-b680-f926e7b4e883\",\"kind\":\"entity\",\"title\":\"User\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"person\",\"aliases\":[],\"disambiguation\":\"User in the current conversation; real-world identity is not verified.\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "entity-b39faae3-af9e-49e4-be73-bc1910377c41",
+        "kind": "entity",
+        "activity_id": null,
+        "json": "{\"id\":\"entity-b39faae3-af9e-49e4-be73-bc1910377c41\",\"kind\":\"entity\",\"title\":\"Старая гавань\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":{\"id\":\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\"},\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"organization\",\"aliases\":[],\"disambiguation\":\"Workshop described in the retained request.\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "entity-0428d88d-a433-4de4-9bb9-2e71871ba745",
+        "kind": "entity",
+        "activity_id": null,
+        "json": "{\"id\":\"entity-0428d88d-a433-4de4-9bb9-2e71871ba745\",\"kind\":\"entity\",\"title\":\"Парус-41\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":{\"id\":\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\"},\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[],\"disambiguation\":\"Risograph at the workshop Старая гавань described in the retained request.\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "knowledge-4990707b-aa4f-4a0e-aa29-a39a0a30b5b8",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-4990707b-aa4f-4a0e-aa29-a39a0a30b5b8\",\"kind\":\"knowledge\",\"title\":\"Conditional weekday access to Парус-41\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":{\"id\":\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\"},\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"constraint\",\"statement\":\"The user reports access to the risograph Парус-41 at Старая гавань by advance appointment on weekdays from 10:00 to 16:00. There is no access on Saturday or Sunday. The booking code is «Роса-73».\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1}],\"subject_ref\":{\"id\":\"entity-c580fc55-7cae-4559-b680-f926e7b4e883\"},\"predicate\":\"has_access_to\",\"object_ref\":{\"id\":\"entity-0428d88d-a433-4de4-9bb9-2e71871ba745\"},\"conditions\":{\"appointment\":\"Advance booking required using code «Роса-73».\",\"schedule\":\"Weekdays 10:00–16:00; no Saturday or Sunday access; timezone unspecified.\",\"limits\":\"Does not establish ownership, permanent availability or working condition.\"},\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1},\"source_language\":\"Russian\"}}}"
+      },
+      {
+        "id": "knowledge-ddbc87fa-20ae-4645-a299-2ce8aacf9743",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-ddbc87fa-20ae-4645-a299-2ce8aacf9743\",\"kind\":\"knowledge\",\"title\":\"Старая гавань owns Парус-41, not the user\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":{\"id\":\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\"},\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"The user reports that Парус-41 belongs to the workshop Старая гавань, not to the user.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1}],\"subject_ref\":{\"id\":\"entity-b39faae3-af9e-49e4-be73-bc1910377c41\"},\"predicate\":\"owns\",\"object_ref\":{\"id\":\"entity-0428d88d-a433-4de4-9bb9-2e71871ba745\"},\"conditions\":\"Reported ownership; not independently verified.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1},\"source_language\":\"Russian\"}}}"
+      },
+      {
+        "id": "knowledge-1ab74dea-8260-40d3-b1e8-2a5fe2353a1d",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-1ab74dea-8260-40d3-b1e8-2a5fe2353a1d\",\"kind\":\"knowledge\",\"title\":\"Reported permission to print monochrome A6 cards\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":{\"id\":\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\"},\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"constraint\",\"statement\":\"The user reports that printing runs of monochrome A6 cards on Парус-41 is permitted.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1}],\"subject_ref\":{\"id\":\"entity-0428d88d-a433-4de4-9bb9-2e71871ba745\"},\"conditions\":\"Subject to advance booking and weekday 10:00–16:00 access at Старая гавань; no weekend access. No permission for other formats or capabilities is implied. Programmatic user report, not authenticated owner approval.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1},\"source_language\":\"Russian\"}}}"
+      },
+      {
+        "id": "knowledge-826a2f73-3e66-455b-be35-91d31e0d183c",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-826a2f73-3e66-455b-be35-91d31e0d183c\",\"kind\":\"knowledge\",\"title\":\"Russian conversation preference\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The user requests replies in Russian.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1}],\"subject_ref\":{\"id\":\"entity-c580fc55-7cae-4559-b680-f926e7b4e883\"},\"predicate\":\"prefers\",\"value\":\"Russian replies\",\"conditions\":\"Conversation language; canonical workspace records remain English.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1},\"source_language\":\"Russian\"}}}"
+      }
+    ],
+    "revisions": [
+      {
+        "id": "evidence-07fd84c6-a35f-44f9-b930-83233eea38ed",
+        "revision": 1,
+        "json": "{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"kind\":\"evidence\",\"title\":\"Original workshop resource request\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-2856e10a-6c02-4e6d-bee0-922e565dd82b\",\"captured_at\":\"2026-10-20T10:21:00.058Z\",\"content_hash\":\"5a2099046ea2e2e02355c56dff2103efac9e8b4704a9074c45c681298248b92d\",\"retained_excerpt\":\"Создай область «Мастерская» и сохрани для неё следующее: в мастерской «Старая гавань» я могу по предварительной записи пользоваться ризографом «Парус-41» по будням с 10 до 16. Он принадлежит мастерской, не мне. На нём разрешено тиражировать монохромные карточки A6. Для записи нужен код «Роса-73». В субботу и воскресенье доступа нет. Сохрани это для будущих дел. Отвечай по-русски.\",\"blob_ref\":null,\"byte_length\":687,\"availability\":\"retained\",\"source_language\":\"Russian\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-2856e10a-6c02-4e6d-bee0-922e565dd82b\",\"content_hash\":\"5a2099046ea2e2e02355c56dff2103efac9e8b4704a9074c45c681298248b92d\",\"transport\":\"rpc\",\"channel_identity\":\"isolated-synthetic-sdk-controller\",\"session_id\":\"01a158d4-22e5-75af-978d-456fe01f3020\",\"runtime_id\":\"1bfca0d4-32c6-4e48-95fe-1052c7199dc9\",\"captured_at\":\"2026-10-20T10:21:00.058Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":687},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9",
+        "revision": 1,
+        "json": "{\"id\":\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\",\"kind\":\"activity\",\"title\":\"Workshop\",\"body\":\"User-facing name: «Мастерская».\",\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"purpose\":\"Retain workshop resources and access conditions for future activities.\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "entity-c580fc55-7cae-4559-b680-f926e7b4e883",
+        "revision": 1,
+        "json": "{\"id\":\"entity-c580fc55-7cae-4559-b680-f926e7b4e883\",\"kind\":\"entity\",\"title\":\"User\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"person\",\"aliases\":[],\"disambiguation\":\"User in the current conversation; real-world identity is not verified.\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "entity-b39faae3-af9e-49e4-be73-bc1910377c41",
+        "revision": 1,
+        "json": "{\"id\":\"entity-b39faae3-af9e-49e4-be73-bc1910377c41\",\"kind\":\"entity\",\"title\":\"Старая гавань\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":{\"id\":\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\"},\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"organization\",\"aliases\":[],\"disambiguation\":\"Workshop described in the retained request.\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "entity-0428d88d-a433-4de4-9bb9-2e71871ba745",
+        "revision": 1,
+        "json": "{\"id\":\"entity-0428d88d-a433-4de4-9bb9-2e71871ba745\",\"kind\":\"entity\",\"title\":\"Парус-41\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":{\"id\":\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\"},\"visibility\":\"workspace\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[],\"disambiguation\":\"Risograph at the workshop Старая гавань described in the retained request.\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "knowledge-4990707b-aa4f-4a0e-aa29-a39a0a30b5b8",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-4990707b-aa4f-4a0e-aa29-a39a0a30b5b8\",\"kind\":\"knowledge\",\"title\":\"Conditional weekday access to Парус-41\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":{\"id\":\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\"},\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"constraint\",\"statement\":\"The user reports access to the risograph Парус-41 at Старая гавань by advance appointment on weekdays from 10:00 to 16:00. There is no access on Saturday or Sunday. The booking code is «Роса-73».\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1}],\"subject_ref\":{\"id\":\"entity-c580fc55-7cae-4559-b680-f926e7b4e883\"},\"predicate\":\"has_access_to\",\"object_ref\":{\"id\":\"entity-0428d88d-a433-4de4-9bb9-2e71871ba745\"},\"conditions\":{\"appointment\":\"Advance booking required using code «Роса-73».\",\"schedule\":\"Weekdays 10:00–16:00; no Saturday or Sunday access; timezone unspecified.\",\"limits\":\"Does not establish ownership, permanent availability or working condition.\"},\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1},\"source_language\":\"Russian\"}}}"
+      },
+      {
+        "id": "knowledge-ddbc87fa-20ae-4645-a299-2ce8aacf9743",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-ddbc87fa-20ae-4645-a299-2ce8aacf9743\",\"kind\":\"knowledge\",\"title\":\"Старая гавань owns Парус-41, not the user\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":{\"id\":\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\"},\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"The user reports that Парус-41 belongs to the workshop Старая гавань, not to the user.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1}],\"subject_ref\":{\"id\":\"entity-b39faae3-af9e-49e4-be73-bc1910377c41\"},\"predicate\":\"owns\",\"object_ref\":{\"id\":\"entity-0428d88d-a433-4de4-9bb9-2e71871ba745\"},\"conditions\":\"Reported ownership; not independently verified.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1},\"source_language\":\"Russian\"}}}"
+      },
+      {
+        "id": "knowledge-1ab74dea-8260-40d3-b1e8-2a5fe2353a1d",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-1ab74dea-8260-40d3-b1e8-2a5fe2353a1d\",\"kind\":\"knowledge\",\"title\":\"Reported permission to print monochrome A6 cards\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":{\"id\":\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\"},\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"constraint\",\"statement\":\"The user reports that printing runs of monochrome A6 cards on Парус-41 is permitted.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1}],\"subject_ref\":{\"id\":\"entity-0428d88d-a433-4de4-9bb9-2e71871ba745\"},\"conditions\":\"Subject to advance booking and weekday 10:00–16:00 access at Старая гавань; no weekend access. No permission for other formats or capabilities is implied. Programmatic user report, not authenticated owner approval.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1},\"source_language\":\"Russian\"}}}"
+      },
+      {
+        "id": "knowledge-826a2f73-3e66-455b-be35-91d31e0d183c",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-826a2f73-3e66-455b-be35-91d31e0d183c\",\"kind\":\"knowledge\",\"title\":\"Russian conversation preference\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-20T10:22:02.512Z\",\"updated_at\":\"2026-10-20T10:22:02.512Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The user requests replies in Russian.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1}],\"subject_ref\":{\"id\":\"entity-c580fc55-7cae-4559-b680-f926e7b4e883\"},\"predicate\":\"prefers\",\"value\":\"Russian replies\",\"conditions\":\"Conversation language; canonical workspace records remain English.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"revision\":1},\"source_language\":\"Russian\"}}}"
+      }
+    ],
+    "changes": [
+      {
+        "seq": 1,
+        "json": "{\"transaction_id\":\"txn-5a129327-253b-47f3-80d2-764084e2bf08\",\"request_id\":\"save-workshop-standard-02\",\"change_seq\":1,\"changed_refs\":[{\"id\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"entity-c580fc55-7cae-4559-b680-f926e7b4e883\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"entity-b39faae3-af9e-49e4-be73-bc1910377c41\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"entity-0428d88d-a433-4de4-9bb9-2e71871ba745\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-4990707b-aa4f-4a0e-aa29-a39a0a30b5b8\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-ddbc87fa-20ae-4645-a299-2ce8aacf9743\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-1ab74dea-8260-40d3-b1e8-2a5fe2353a1d\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-826a2f73-3e66-455b-be35-91d31e0d183c\",\"before_revision\":null,\"after_revision\":1}],\"relation_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"01a158d4-22e5-75af-978d-456fe01f3020\",\"reason\":\"Save the user-authorized information using ordinary workspace visibility; restricted visibility is unavailable in this setup. The input is a programmatic report, not verified owner approval.\",\"caused_by\":[\"observed-2856e10a-6c02-4e6d-bee0-922e565dd82b\"],\"recorded_at\":\"2026-10-20T10:22:02.512Z\"}"
+      }
+    ],
+    "intents": [
+      {
+        "request_id": "save-workshop-standard-02",
+        "hash": "70c55fc3870037315d5f2b5b34e646cd6caebdc27eec6653771b01a5cbb1562e",
+        "json": "{\"request_id\":\"save-workshop-standard-02\",\"operation_digest\":\"70c55fc3870037315d5f2b5b34e646cd6caebdc27eec6653771b01a5cbb1562e\",\"source_refs\":[\"observed-2856e10a-6c02-4e6d-bee0-922e565dd82b\"],\"session_id\":\"01a158d4-22e5-75af-978d-456fe01f3020\",\"epoch\":\"108290ce-1dd5-478c-96ec-78a59e89f5a3\",\"status\":\"committed\",\"reason\":\"Save the user-authorized information using ordinary workspace visibility; restricted visibility is unavailable in this setup. The input is a programmatic report, not verified owner approval.\",\"payload\":{\"request_id\":\"save-workshop-standard-02\",\"reason\":\"Save the user-authorized information using ordinary workspace visibility; restricted visibility is unavailable in this setup. The input is a programmatic report, not verified owner approval.\",\"source_handles\":[\"observed-2856e10a-6c02-4e6d-bee0-922e565dd82b\"],\"guards\":[],\"ops\":[{\"op\":\"import_evidence\",\"client_ref\":\"input\",\"source_handle\":\"observed-2856e10a-6c02-4e6d-bee0-922e565dd82b\",\"title\":\"Original workshop resource request\",\"source_language\":\"Russian\",\"visibility\":\"workspace\"},{\"op\":\"create_record\",\"client_ref\":\"area\",\"title\":\"Workshop\",\"body\":\"User-facing name: «Мастерская».\",\"visibility\":\"workspace\",\"kind\":\"activity\",\"data\":{\"purpose\":\"Retain workshop resources and access conditions for future activities.\",\"status\":\"active\"}},{\"op\":\"create_record\",\"client_ref\":\"user\",\"title\":\"User\",\"visibility\":\"workspace\",\"kind\":\"entity\",\"data\":{\"entity_kind\":\"person\",\"aliases\":[],\"disambiguation\":\"User in the current conversation; real-world identity is not verified.\",\"status\":\"active\"}},{\"op\":\"create_record\",\"client_ref\":\"shop\",\"title\":\"Старая гавань\",\"visibility\":\"workspace\",\"origin_activity_id\":{\"client_ref\":\"area\"},\"kind\":\"entity\",\"data\":{\"entity_kind\":\"organization\",\"aliases\":[],\"disambiguation\":\"Workshop described in the retained request.\",\"status\":\"active\"}},{\"op\":\"create_record\",\"client_ref\":\"device\",\"title\":\"Парус-41\",\"visibility\":\"workspace\",\"origin_activity_id\":{\"client_ref\":\"area\"},\"kind\":\"entity\",\"data\":{\"entity_kind\":\"device\",\"aliases\":[],\"disambiguation\":\"Risograph at the workshop Старая гавань described in the retained request.\",\"status\":\"active\"}},{\"op\":\"create_record\",\"client_ref\":\"access\",\"title\":\"Conditional weekday access to Парус-41\",\"visibility\":\"workspace\",\"origin_activity_id\":{\"client_ref\":\"area\"},\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"constraint\",\"statement\":\"The user reports access to the risograph Парус-41 at Старая гавань by advance appointment on weekdays from 10:00 to 16:00. There is no access on Saturday or Sunday. The booking code is «Роса-73».\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"client_ref\":\"input\"}],\"subject_ref\":{\"client_ref\":\"user\"},\"predicate\":\"has_access_to\",\"object_ref\":{\"client_ref\":\"device\"},\"conditions\":{\"appointment\":\"Advance booking required using code «Роса-73».\",\"schedule\":\"Weekdays 10:00–16:00; no Saturday or Sunday access; timezone unspecified.\",\"limits\":\"Does not establish ownership, permanent availability or working condition.\"},\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"client_ref\":\"input\"},\"source_language\":\"Russian\"}}},{\"op\":\"create_record\",\"client_ref\":\"ownership\",\"title\":\"Старая гавань owns Парус-41, not the user\",\"visibility\":\"workspace\",\"origin_activity_id\":{\"client_ref\":\"area\"},\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"fact\",\"statement\":\"The user reports that Парус-41 belongs to the workshop Старая гавань, not to the user.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"client_ref\":\"input\"}],\"subject_ref\":{\"client_ref\":\"shop\"},\"predicate\":\"owns\",\"object_ref\":{\"client_ref\":\"device\"},\"conditions\":\"Reported ownership; not independently verified.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"client_ref\":\"input\"},\"source_language\":\"Russian\"}}},{\"op\":\"create_record\",\"client_ref\":\"printing\",\"title\":\"Reported permission to print monochrome A6 cards\",\"visibility\":\"workspace\",\"origin_activity_id\":{\"client_ref\":\"area\"},\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"constraint\",\"statement\":\"The user reports that printing runs of monochrome A6 cards on Парус-41 is permitted.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"client_ref\":\"input\"}],\"subject_ref\":{\"client_ref\":\"device\"},\"conditions\":\"Subject to advance booking and weekday 10:00–16:00 access at Старая гавань; no weekend access. No permission for other formats or capabilities is implied. Programmatic user report, not authenticated owner approval.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"client_ref\":\"input\"},\"source_language\":\"Russian\"}}},{\"op\":\"create_record\",\"client_ref\":\"language\",\"title\":\"Russian conversation preference\",\"visibility\":\"workspace\",\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The user requests replies in Russian.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"client_ref\":\"input\"}],\"subject_ref\":{\"client_ref\":\"user\"},\"predicate\":\"prefers\",\"value\":\"Russian replies\",\"conditions\":\"Conversation language; canonical workspace records remain English.\",\"valid_from\":null,\"valid_to\":null,\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"client_ref\":\"input\"},\"source_language\":\"Russian\"}}}]},\"receipt\":{\"ok\":true,\"request_id\":\"save-workshop-standard-02\",\"workspace_id\":\"28c01489-0440-46cc-8edf-064c32255e8d\",\"schema_version\":3,\"snapshot_seq\":1,\"transaction_id\":\"txn-5a129327-253b-47f3-80d2-764084e2bf08\",\"committed\":true,\"created\":{\"input\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"area\":\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\",\"user\":\"entity-c580fc55-7cae-4559-b680-f926e7b4e883\",\"shop\":\"entity-b39faae3-af9e-49e4-be73-bc1910377c41\",\"device\":\"entity-0428d88d-a433-4de4-9bb9-2e71871ba745\",\"access\":\"knowledge-4990707b-aa4f-4a0e-aa29-a39a0a30b5b8\",\"ownership\":\"knowledge-ddbc87fa-20ae-4645-a299-2ce8aacf9743\",\"printing\":\"knowledge-1ab74dea-8260-40d3-b1e8-2a5fe2353a1d\",\"language\":\"knowledge-826a2f73-3e66-455b-be35-91d31e0d183c\"},\"new_revisions\":{\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\":1,\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\":1,\"entity-c580fc55-7cae-4559-b680-f926e7b4e883\":1,\"entity-b39faae3-af9e-49e4-be73-bc1910377c41\":1,\"entity-0428d88d-a433-4de4-9bb9-2e71871ba745\":1,\"knowledge-4990707b-aa4f-4a0e-aa29-a39a0a30b5b8\":1,\"knowledge-ddbc87fa-20ae-4645-a299-2ce8aacf9743\":1,\"knowledge-1ab74dea-8260-40d3-b1e8-2a5fe2353a1d\":1,\"knowledge-826a2f73-3e66-455b-be35-91d31e0d183c\":1},\"warnings\":[]}}"
+      }
+    ],
+    "receipts": [
+      {
+        "request_id": "save-workshop-standard-02",
+        "hash": "70c55fc3870037315d5f2b5b34e646cd6caebdc27eec6653771b01a5cbb1562e",
+        "json": "{\"ok\":true,\"request_id\":\"save-workshop-standard-02\",\"workspace_id\":\"28c01489-0440-46cc-8edf-064c32255e8d\",\"schema_version\":3,\"snapshot_seq\":1,\"transaction_id\":\"txn-5a129327-253b-47f3-80d2-764084e2bf08\",\"committed\":true,\"created\":{\"input\":\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\",\"area\":\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\",\"user\":\"entity-c580fc55-7cae-4559-b680-f926e7b4e883\",\"shop\":\"entity-b39faae3-af9e-49e4-be73-bc1910377c41\",\"device\":\"entity-0428d88d-a433-4de4-9bb9-2e71871ba745\",\"access\":\"knowledge-4990707b-aa4f-4a0e-aa29-a39a0a30b5b8\",\"ownership\":\"knowledge-ddbc87fa-20ae-4645-a299-2ce8aacf9743\",\"printing\":\"knowledge-1ab74dea-8260-40d3-b1e8-2a5fe2353a1d\",\"language\":\"knowledge-826a2f73-3e66-455b-be35-91d31e0d183c\"},\"new_revisions\":{\"evidence-07fd84c6-a35f-44f9-b930-83233eea38ed\":1,\"activity-a1f6b66b-f389-4292-bdbf-9df0a29219d9\":1,\"entity-c580fc55-7cae-4559-b680-f926e7b4e883\":1,\"entity-b39faae3-af9e-49e4-be73-bc1910377c41\":1,\"entity-0428d88d-a433-4de4-9bb9-2e71871ba745\":1,\"knowledge-4990707b-aa4f-4a0e-aa29-a39a0a30b5b8\":1,\"knowledge-ddbc87fa-20ae-4645-a299-2ce8aacf9743\":1,\"knowledge-1ab74dea-8260-40d3-b1e8-2a5fe2353a1d\":1,\"knowledge-826a2f73-3e66-455b-be35-91d31e0d183c\":1},\"warnings\":[]}",
+        "bindings": "{\"source-94978058-bf76-4a69-9e16-67727cd0b3a5\":\"observed-2856e10a-6c02-4e6d-bee0-922e565dd82b\"}"
+      }
+    ],
+    "claims": [],
+    "handoffs": [],
+    "relations": [],
+    "relation_history": [],
+    "memory_meta": [
+      {
+        "seq": 1,
+        "build": 1
+      }
+    ],
+    "retrieval_trace": [
+      {
+        "seq": 1,
+        "access_key": "9877a25069578b9c27997c7ff18591e1d9070bd9b9101beb9f55f7e0981cab48",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"activities\",\"limit\":20},\"refs\":[],\"generation\":\"e5a0ead1749a3b6cbf8e886c9b0b544c7cdbeb7bf12ccd8654346d7261daa5b7\",\"bytes\":326,\"has_more\":false,\"elapsed_ms\":0.606499999999869,\"error\":null}"
+      },
+      {
+        "seq": 2,
+        "access_key": "9877a25069578b9c27997c7ff18591e1d9070bd9b9101beb9f55f7e0981cab48",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"entities\",\"limit\":20},\"refs\":[],\"generation\":\"e5a0ead1749a3b6cbf8e886c9b0b544c7cdbeb7bf12ccd8654346d7261daa5b7\",\"bytes\":324,\"has_more\":false,\"elapsed_ms\":0.403600000001461,\"error\":null}"
+      },
+      {
+        "seq": 3,
+        "access_key": "9877a25069578b9c27997c7ff18591e1d9070bd9b9101beb9f55f7e0981cab48",
+        "json": "{\"operation\":\"search\",\"input\":{\"query\":\"workshop risograph Russian language\",\"match\":\"any\"},\"refs\":[],\"generation\":\"e5a0ead1749a3b6cbf8e886c9b0b544c7cdbeb7bf12ccd8654346d7261daa5b7\",\"bytes\":421,\"has_more\":false,\"elapsed_ms\":2.0909000000010565,\"error\":null}"
+      }
+    ]
+  },
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 5,
+    "requests": 34,
+    "input": 645138,
+    "output": 15696,
+    "cache_read": 328320,
+    "estimated_usd": 0.8234279999999999,
+    "limits": {
+      "prompts": 24,
+      "requests": 180,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    },
+    "reported_usage_messages": 34
+  }
+}

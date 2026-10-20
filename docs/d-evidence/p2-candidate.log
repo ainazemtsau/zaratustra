@@ -1,0 +1,11 @@
+(node:100552) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+file:///<OWNER_PROFILE>/AppData/Roaming/npm/node_modules/@earendil-works/pi-coding-agent/dist/core/agent-session.js:1981
+            throw new Error(`No API key for ${model.provider}/${model.id}`);
+                  ^
+
+Error: No API key for openai-codex/gpt-5.3-codex-spark
+    at AgentSession.setModel (file:///<OWNER_PROFILE>/AppData/Roaming/npm/node_modules/@earendil-works/pi-coding-agent/dist/core/agent-session.js:1981:19)
+    at async file:///<SYNTHETIC_EVIDENCE_ROOT>/pi-agent/git/github.com/ainazemtsau/zaratustra/scripts/p2-probe.mjs:308:3
+
+Node.js v22.19.0

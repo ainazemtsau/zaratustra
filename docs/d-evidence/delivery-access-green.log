@@ -1,0 +1,3 @@
+{"expected":"green","checked":true}
+(node:109244) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

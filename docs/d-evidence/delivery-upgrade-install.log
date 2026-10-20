@@ -1,0 +1,13 @@
+Installing git:github.com/ainazemtsau/zaratustra@8e4c20551c36e5be6a2d1a6a197c060339b27fbc...
+From https://github.com/ainazemtsau/zaratustra
+ * branch            8e4c20551c36e5be6a2d1a6a197c060339b27fbc -> FETCH_HEAD
+HEAD is now at 8e4c205 Enforce focus access and reject duplicate typed derivation links
+Removing node_modules/
+
+added 12 packages, and audited 13 packages in 2s
+
+9 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Installed git:github.com/ainazemtsau/zaratustra@8e4c20551c36e5be6a2d1a6a197c060339b27fbc
