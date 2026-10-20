@@ -871,6 +871,9 @@ export class Core {
           }
         }
     }
+    const openSignals = this.storage.all<{ json: string }>(
+      `SELECT t.json FROM experience_rows t WHERE t.kind='signal' AND json_extract(t.json,'$.data.problem_state') IN ('open','observing') AND ${this.memory.technicalSQL("t")} ORDER BY t.rowid DESC LIMIT 6`,
+    );
     // Shared facts are discovered through catalog/search, never silently injected into every prompt.
     const snapshot = {
       available: true,
@@ -881,26 +884,23 @@ export class Core {
       focus: this.focus(),
       records: items,
       context_current,
-      open_signals: this.storage
-        .all<{
-          json: string;
-        }>(
-          `SELECT t.json FROM experience_rows t WHERE t.kind='signal' AND json_extract(t.json,'$.data.problem_state') IN ('open','observing') AND ${this.memory.technicalSQL("t")} ORDER BY t.rowid DESC LIMIT 6`,
-        )
-        .map((row) => {
-          const r = JSON.parse(row.json);
-          return {
-            id: r.id,
-            revision: r.revision,
-            state: r.data.problem_state,
-            must_read: true,
-          };
-        }),
+      open_signals: openSignals.slice(0, 5).map((row) => {
+        const r = JSON.parse(row.json);
+        return {
+          id: r.id,
+          revision: r.revision,
+          state: r.data.problem_state,
+          must_read: true,
+        };
+      }),
+      open_signals_has_more: openSignals.length > 5,
+      open_signals_selector: { view: "signals" },
       must_read: [...new Set(must_read)],
-      has_more: rows.length > 20 || must_read.length > 0,
+      has_more:
+        rows.length > 20 || must_read.length > 0 || openSignals.length > 5,
       warnings: [
         "Shared memory is not loaded: use catalog/search and read selected claims plus conditions. Historical tool messages may be stale.",
-        ...(rows.length > 20 || must_read.length
+        ...(rows.length > 20 || must_read.length || openSignals.length > 5
           ? ["Snapshot incomplete; read must_read refs and catalog."]
           : []),
       ],

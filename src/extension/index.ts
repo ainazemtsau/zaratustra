@@ -380,7 +380,29 @@ export default function extension(pi: ExtensionAPI) {
         (p) =>
           [p.id, p.request_id, p.handoff_id].filter(Boolean).length === 1 &&
           (!p.locator || !!p.id),
-      ),
+      )
+      .refine((p) => {
+        if (!p.id)
+          return (
+            p.revision === undefined &&
+            p.content_version === undefined &&
+            !p.range &&
+            !p.locator &&
+            !p.projection &&
+            !p.limit &&
+            !p.cursor
+          );
+        if (p.projection === "method_bundle")
+          return !p.range && !p.locator && (p.limit ?? 5) <= 5;
+        if (p.projection === "history")
+          return (
+            !p.range &&
+            !p.locator &&
+            p.revision === undefined &&
+            p.content_version === undefined
+          );
+        return p.limit === undefined && p.cursor === undefined;
+      }, "Read modifiers must match the selected projection; no ignored historical/range parameters."),
     (p) =>
       p.handoff_id
         ? get().handoff(p.handoff_id as string)

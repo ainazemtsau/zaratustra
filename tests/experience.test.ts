@@ -926,6 +926,37 @@ test("E1 supporting history pages invalidate after change", (t) => {
   assert.equal((f.core.read(e).data as AddressedRow).revision, 1);
 });
 
+test("E1 open-Signal snapshot routes a bounded prefix with an explicit catalog continuation", (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  f.commit(
+    Array.from({ length: 8 }, (_, i) => ({
+      op: "open_signal",
+      client_ref: "signal-" + i,
+      kind: "problem",
+      subject_refs: [{ id: f.origin }],
+      evidence_refs: [{ id: f.origin }],
+      description: "Unresolved synthetic issue " + i,
+      next_check: null,
+      visibility: "workspace",
+    })),
+  );
+  const snapshot = f.core.snapshot();
+  assert.equal(snapshot.open_signals.length, 5);
+  assert.equal(snapshot.open_signals_has_more, true);
+  assert.equal(snapshot.incomplete, true);
+  assert.deepEqual(snapshot.open_signals_selector, { view: "signals" });
+  assert.ok(Buffer.byteLength(JSON.stringify(snapshot)) <= 12288);
+  const ids: string[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = f.core.browse("signals", undefined, 3, cursor).data;
+    ids.push(...page.cards.map((row) => (row as { id: string }).id));
+    cursor = page.next_cursor ?? undefined;
+  } while (cursor);
+  assert.equal(new Set(ids).size, 8);
+});
+
 test("E1 stale guards, invocation output types, complete selection and start replay are enforced", (t) => {
   const f = fixture();
   t.after(() => f.disk.close());

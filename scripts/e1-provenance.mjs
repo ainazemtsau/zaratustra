@@ -10,6 +10,7 @@ mkdirSync(out, { recursive: false });
 const sdk = await import(pathToFileURL(process.env.ZARA_PI_SDK).href);
 let providerDispatches = 0;
 const results = [];
+const projectionChecks = [];
 for (const profile of ["trusted-first", "unknown-stage", "prior-transform"]) {
   const testRoot = join(out, profile),
     agentDir = join(testRoot, "agent"),
@@ -171,6 +172,21 @@ for (const profile of ["trusted-first", "unknown-stage", "prior-transform"]) {
       ],
     });
     assert.equal(generated.committed, true);
+    if (profile === "trusted-first")
+      for (const input of [
+        { id: generated.created.result, projection: "full", limit: 1 },
+        { id: generated.created.result, projection: "history", revision: 1 },
+        {
+          id: generated.created.result,
+          projection: "method_bundle",
+          range: { start: 0, length: 1 },
+        },
+        { request_id: "result", revision: 1 },
+      ]) {
+        const result = await run("zara_read", input);
+        assert.equal(result.code, "VALIDATION_ERROR");
+        projectionChecks.push({ input, result });
+      }
     for (const [transport, semantic] of [
       ["rpc", "direct_statement"],
       ["extension", "direct_statement"],
@@ -240,6 +256,7 @@ writeFileSync(
       provider_dispatches: providerDispatches,
       real_owner_feedback: false,
       results,
+      projection_checks: projectionChecks,
     },
     null,
     2,
@@ -249,6 +266,7 @@ console.log(
   JSON.stringify({
     layer: "M",
     cases: results.length,
+    projection_checks: projectionChecks.length,
     provider_dispatches: providerDispatches,
     checked: true,
     real_owner_feedback: false,
