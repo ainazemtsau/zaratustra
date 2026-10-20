@@ -186,6 +186,11 @@ session.subscribe((event) => {
     const usage = event.message.usage;
     if (usage) {
       const budget = ledger();
+      budget.reported_usage_messages =
+        (budget.reported_usage_messages ?? 0) + 1;
+      if (event.message.stopReason === "error")
+        budget.reported_error_messages =
+          (budget.reported_error_messages ?? 0) + 1;
       budget.input +=
         (usage.input ?? 0) + (usage.cacheRead ?? 0) + (usage.cacheWrite ?? 0);
       budget.output += usage.output ?? 0;
@@ -219,6 +224,10 @@ try {
         "receipts",
         "claims",
         "handoffs",
+        "relations",
+        "relation_history",
+        "memory_meta",
+        "retrieval_trace",
       ].map((table) => [table, db.prepare(`SELECT * FROM ${table}`).all()]),
     );
     db.close();

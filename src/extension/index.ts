@@ -5,7 +5,13 @@ import { randomUUID } from "node:crypto";
 import { readFileSync, realpathSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { Core, CommitSchema, CoreError, failure } from "../core/index.ts";
+import {
+  Core,
+  CommitSchema,
+  CoreError,
+  failure,
+  SearchSchema,
+} from "../core/index.ts";
 import { DiskStorage, resolvedLocation, within } from "../storage/index.ts";
 
 export const SNAPSHOT_TYPE = "zaratustra.snapshot.v1";
@@ -91,6 +97,9 @@ export default function extension(pi: ExtensionAPI) {
         runtime_id: runtimeId,
         can_write: !disk.readonly,
         processing_allowed: !!selected,
+        scopes: z
+          .array(z.enum(["restricted:read", "restricted:write"]))
+          .parse(JSON.parse(process.env.ZARATUSTRA_SCOPES ?? "[]")),
       });
     } catch (e) {
       unavailable = e;
@@ -209,18 +218,36 @@ export default function extension(pi: ExtensionAPI) {
         "changes",
         "handoffs",
         "claims",
+        "resources",
+        "people",
+        "topics",
+        "concepts",
+        "entities",
+        "unfiled",
+        "relations",
+        "records",
       ]),
       record_id: z.string().optional(),
       limit: z.number().int().min(1).max(50).optional(),
       cursor: z.string().optional(),
+      mode: z
+        .enum(["children", "records", "relations", "current_claims"])
+        .optional(),
     }),
     (p) =>
       get().browse(
-        p.view as string,
+        p.mode === "relations" ? "relations" : (p.view as string),
         p.record_id as string | undefined,
         p.limit as number | undefined,
         p.cursor as string | undefined,
+        p.mode as string | undefined,
       ),
+  );
+  register(
+    "zara_search",
+    "Find English working text and authentic names/aliases independently of classification. Use plain text and explicit all/any/phrase mode; model expands synonyms. Typed filters are optional; ordinary text search defaults to all states so read state, full conditions and grounds before applying. Results are routing cards, never proof of absence or applicability. No raw SQL/FTS.",
+    SearchSchema,
+    (p) => get().search(p),
   );
   register(
     "zara_read",
@@ -305,17 +332,24 @@ export default function extension(pi: ExtensionAPI) {
   );
   register(
     "zara_commit",
-    "Atomically save connected Activity/Work/Knowledge and exact captured Evidence, revisions, Change and receipt. Canonical text is English; originals stay unchanged. Each intended transaction gets its own request_id. Reuse an ID only for an identical retry. Never deduplicate by similarity. update_record replaces complete data and requires an exact revision guard. Reconcile saved results with the addressed plan: a step for preparing a message can finish with the saved handoff in result_refs; the external response has a separate wait. Explicit reopen for future input needs a concrete new pending wait, preserving prior completion/results. Unsupported full-R1 operations are absent.",
+    "Atomically save Activity/Work/Concept/Entity/Knowledge and original Evidence, revisions, Change, indexes and receipt. English working text; authentic names/originals unchanged. Concept broader_ids allow multiple parents but no cycles. Fact truth belongs in Knowledge, never Entity fields/loose relation copies. Use resolve_knowledge with new Evidence and optional replacement_refs for retract/supersede/contest, create a replacement claim in the same batch when appropriate. Unknown validity stays null. Typed subject/object refs address Entities; predicates are registered. update_record replaces complete data with exact revision guards. Ordinary saves/corrections need no approval. Real merges/bulk reorganization unavailable pending exact approvals. Keep accepted Work/claims/handoffs contracts: handoff result_refs only prove preparation; explicit reopen for future input needs new pending waits.",
     CommitSchema,
     (p) => get().commit(p),
   );
   register(
     "zara_doctor",
-    "Report actual storage/runtime health without modifying memory. No replacement empty database on failure.",
-    z.strictObject({}),
-    () => {
-      get().map();
-      return { ok: true, ...disk!.doctor() };
+    "Report permitted storage/runtime health and bounded retrieval trace. Optional rebuild_index repairs derived lexical indexes only; canonical records/history/materials stay intact. No replacement empty database.",
+    z.strictObject({ rebuild_index: z.boolean().optional() }),
+    (p) => {
+      if (p.rebuild_index) get().rebuildIndex();
+      return {
+        ...get().diagnostics(),
+        runtime: {
+          node: process.version,
+          platform: process.platform,
+          architecture: process.arch,
+        },
+      };
     },
   );
 }

@@ -340,6 +340,9 @@ test("schema-1 migration preserves every row and material; before/after-commit f
     f.disk.exec(
       "DROP TABLE claims; DROP TABLE handoffs; DROP TABLE migrations; PRAGMA user_version=1;",
     );
+    f.disk.exec(
+      "DROP TABLE memory_text; DROP TABLE memory_names; DROP TABLE memory_docs; DROP TABLE memory_meta; DROP TABLE memberships; DROP TABLE concept_parents; DROP TABLE relations; DROP TABLE relation_history; DROP TABLE retrieval_trace; DROP INDEX knowledge_predicate; DROP INDEX knowledge_subject; DROP INDEX knowledge_object;",
+    );
     writeFileSync(
       join(f.home, "workspace.json"),
       JSON.stringify(f.disk.workspace),
@@ -362,7 +365,7 @@ test("schema-1 migration preserves every row and material; before/after-commit f
       /interruption/,
     );
     const recovered = new DiskStorage(f.home);
-    assert.equal(recovered.workspace.schema_version, 2);
+    assert.equal(recovered.workspace.schema_version, 3);
     assert.deepEqual(
       tables.map((t) => recovered.all("SELECT * FROM " + t)),
       before,
@@ -379,7 +382,7 @@ test("schema-1 migration preserves every row and material; before/after-commit f
     assert.equal(digest(readFileSync(info.backup)), info.backup_sha256);
     recovered.close();
     const again = new DiskStorage(f.home);
-    assert.equal(again.workspace.schema_version, 2);
+    assert.equal(again.workspace.schema_version, 3);
     again.close();
   }
 });

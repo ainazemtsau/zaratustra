@@ -5,10 +5,18 @@ import {
   CommitSchema,
   CoreError,
   KnowledgeData,
+  ConceptData,
+  EntityData,
   requireThat,
   WorkData,
   WorkStatus,
 } from "./contracts.ts";
+import {
+  Memory,
+  addressedIds,
+  refreshMemory,
+  validateMemory,
+} from "./memory.ts";
 import {
   plan,
   protectWorkUpdate,
@@ -25,6 +33,13 @@ import type {
   Receipt,
 } from "./contracts.ts";
 export * from "./contracts.ts";
+export {
+  MemorySchemaSQL,
+  refreshMemory,
+  validateMemory,
+  SearchSchema,
+  literalFTS,
+} from "./memory.ts";
 
 export const digest = (value: string | Uint8Array) =>
   createHash("sha256").update(value).digest("hex");
@@ -32,6 +47,10 @@ const id = (prefix: string) => prefix + "-" + randomUUID();
 const unpack = (row: { json: string }) => JSON.parse(row.json) as RecordRow;
 export class Core {
   private sources = new Map<string, Source>();
+  private cursorSecret = randomUUID();
+  private get memory() {
+    return new Memory(this.storage, this.context, this.cursorSecret);
+  }
   constructor(
     public storage: StoragePort,
     public context: CallContext,
@@ -120,7 +139,13 @@ export class Core {
       "SELECT coalesce(max(seq),0) AS seq FROM changes",
     )!.seq;
   }
-  private record(recordId: string, revision?: number) {
+  private record(recordId: string, revision?: number, internal = false) {
+    if (!internal)
+      requireThat(
+        this.memory.allowed(recordId, revision),
+        "REFERENCE_NOT_FOUND",
+        "Requested record/version is unavailable.",
+      );
     const row =
       revision === undefined
         ? this.storage.get<{ json: string }>(
@@ -144,7 +169,7 @@ export class Core {
       ok: true,
       workspace_id: this.context.workspace_id,
       schema_version: this.storage.workspace.schema_version,
-      snapshot_seq: this.sequence(),
+      snapshot_seq: this.visibleSequence(),
       data,
       warnings: [],
     };
@@ -160,137 +185,116 @@ export class Core {
         "operations",
         "handoffs",
         "claims",
-      ].map((view) => ({ label: view, selector: { view } })),
+        "resources",
+        "people",
+        "topics",
+        "entities",
+        "unfiled",
+        "relations",
+      ].map((view) => ({
+        label: view,
+        description: "Permitted existing " + view,
+        selector: { view },
+        has_more: this.memory.browse(view, undefined, 1).has_more,
+      })),
       focus: this.focus(),
+      applied_filters: { access: "trusted context" },
+      generation: this.memory.generation(),
+      has_more: false,
+      next_cursor: null,
     });
+  }
+  private visibleSequence() {
+    return this.storage.get<{ n: number }>(
+      `SELECT count(*) AS n FROM changes t WHERE ${this.memory.technicalSQL("t")}`,
+    )!.n;
   }
   focus() {
     const row = this.storage.get<{ json: string }>(
       "SELECT json FROM focus WHERE session_id=?",
       this.context.session_id,
     );
-    return row ? JSON.parse(row.json) : null;
+    return row && this.memory.technical(JSON.parse(row.json))
+      ? JSON.parse(row.json)
+      : null;
   }
-  browse(view: string, recordId?: string, limit = 20, cursor?: string) {
+  browse(
+    view: string,
+    recordId?: string,
+    limit = 20,
+    cursor?: string,
+    mode?: string,
+  ) {
     this.authorize();
-    requireThat(
-      [
-        "activities",
-        "work",
-        "knowledge",
-        "materials",
-        "operations",
-        "changes",
-        "handoffs",
-        "claims",
-      ].includes(view),
-      "VALIDATION_ERROR",
-      "Unsupported view.",
+    return this.retrieval(
+      "browse",
+      { view, recordId, limit, cursor, mode },
+      () =>
+        this.envelope(this.memory.browse(view, recordId, limit, cursor, mode)),
     );
-    requireThat(
-      Number.isInteger(limit) && limit > 0 && limit <= 50,
-      "VALIDATION_ERROR",
-      "Page limit must be 1..50.",
+  }
+  private retrieval<T>(operation: string, input: unknown, action: () => T): T {
+    const start = performance.now();
+    try {
+      const result = action();
+      const data = (result as { data?: unknown }).data ?? result;
+      this.memory.trace(operation, input, data, start);
+      return result;
+    } catch (e) {
+      this.memory.trace(operation, input, null, start, e);
+      throw e;
+    }
+  }
+  search(input: unknown) {
+    this.authorize();
+    return this.retrieval("search", input, () =>
+      this.envelope(this.memory.search(input)),
     );
-    const seq = this.sequence();
-    let offset = 0;
-    if (cursor) {
-      const c = JSON.parse(Buffer.from(cursor, "base64url").toString()) as {
-        seq: number;
-        view: string;
-        recordId?: string;
-        offset: number;
-      };
-      requireThat(
-        c.seq === seq &&
-          c.view === view &&
-          c.recordId === recordId &&
-          Number.isInteger(c.offset) &&
-          c.offset >= 0,
-        "CURSOR_INVALIDATED",
-        "Restart this bounded query after a change.",
+  }
+  rebuildIndex() {
+    this.authorize(true);
+    this.storage.exec("BEGIN IMMEDIATE");
+    try {
+      // Recreate only derived FTS surfaces; never touch canonical revisions/materials.
+      this.storage.exec(
+        "DROP TABLE IF EXISTS memory_text; DROP TABLE IF EXISTS memory_names; CREATE VIRTUAL TABLE memory_text USING fts5(text,tokenize='porter unicode61'); CREATE VIRTUAL TABLE memory_names USING fts5(names,tokenize='unicode61 remove_diacritics 0');",
       );
-      offset = c.offset;
+      refreshMemory(this.storage, true);
+      this.memory.barrier();
+      this.storage.exec("COMMIT");
+      return this.envelope({
+        rebuilt: true,
+        generation: this.memory.generation(),
+      });
+    } catch (e) {
+      this.storage.exec("ROLLBACK");
+      throw e;
     }
-    let rows: unknown[];
-    if (view === "handoffs" || view === "claims") {
-      rows = this.storage
-        .all<{
-          json: string;
-        }>(
-          view === "handoffs"
-            ? "SELECT json FROM handoffs WHERE (? IS NULL OR json_extract(json,'$.work_ref.id')=?) ORDER BY rowid DESC LIMIT ? OFFSET ?"
-            : "SELECT json FROM claims WHERE (? IS NULL OR work_id=?) ORDER BY rowid DESC LIMIT ? OFFSET ?",
-          recordId ?? null,
-          recordId ?? null,
-          limit + 1,
-          offset,
-        )
-        .map((r) => JSON.parse(r.json));
-    } else if (view === "operations") {
-      rows = this.storage
-        .all<{
-          json: string;
-        }>(
-          "SELECT json FROM intents WHERE (? IS NULL OR EXISTS(SELECT 1 FROM json_tree(intents.json) WHERE atom=?)) ORDER BY rowid DESC LIMIT ? OFFSET ?",
-          recordId ?? null,
-          recordId ?? null,
-          limit + 1,
-          offset,
-        )
-        .map((r) => JSON.parse(r.json));
-    } else if (view === "changes") {
-      rows = this.storage
-        .all<{
-          json: string;
-        }>(
-          "SELECT json FROM changes WHERE (? IS NULL OR EXISTS(SELECT 1 FROM json_tree(changes.json) WHERE atom=?)) ORDER BY seq DESC LIMIT ? OFFSET ?",
-          recordId ?? null,
-          recordId ?? null,
-          limit + 1,
-          offset,
-        )
-        .map((r) => JSON.parse(r.json));
-    } else {
-      const kind = {
-        activities: "activity",
-        work: "work",
-        knowledge: "knowledge",
-        materials: "evidence",
-      }[view]!;
-      rows = this.storage
-        .all<{ json: string }>(
-          "SELECT json FROM records WHERE kind=? AND (? IS NULL OR activity_id=? OR json_extract(json,'$.data.parent_work_id.id')=?) ORDER BY id LIMIT ? OFFSET ?",
-          kind,
-          recordId ?? null,
-          recordId ?? null,
-          recordId ?? null,
-          limit + 1,
-          offset,
-        )
-        .map(unpack)
-        .map((r) => ({
-          id: r.id,
-          kind: r.kind,
-          title: r.title,
-          revision: r.revision,
-          storage: r.storage,
-          state: r.data.status ?? r.data.state ?? null,
-          description: r.body,
-          selector: { record_id: r.id },
-        }));
+  }
+  diagnostics() {
+    this.authorize();
+    let index = "checked";
+    try {
+      this.memory.barrier();
+    } catch {
+      index = "INDEX_UNAVAILABLE";
     }
-    const has_more = rows.length > limit;
+    const traces = this.storage
+      .all<{
+        json: string;
+      }>(
+        "SELECT json FROM retrieval_trace WHERE access_key=? ORDER BY seq DESC LIMIT 20",
+        this.memory.accessKey,
+      )
+      .map((r) => JSON.parse(r.json))
+      .filter((value) => this.memory.technical(value));
     return this.envelope({
-      cards: rows.slice(0, limit),
-      applied_filters: { view, record_id: recordId ?? null, limit },
-      generation: seq,
-      has_more,
-      next_cursor: has_more
-        ? Buffer.from(
-            JSON.stringify({ seq, view, recordId, offset: offset + limit }),
-          ).toString("base64url")
-        : null,
+      schema_version: this.storage.workspace.schema_version,
+      read_only: this.storage.readonly,
+      index,
+      retrieval_trace: traces,
+      trace_bound: 512,
+      managed_access: "Trusted personal process; not OS isolation",
     });
   }
   read(
@@ -300,6 +304,18 @@ export class Core {
     locator?: string,
   ) {
     this.authorize();
+    return this.retrieval(
+      "read",
+      { id: recordId, revision, range, locator },
+      () => this.readRecord(recordId, revision, range, locator),
+    );
+  }
+  private readRecord(
+    recordId: string,
+    revision?: number,
+    range?: { start: number; length: number },
+    locator?: string,
+  ) {
     const r = this.record(recordId, revision);
     if (range)
       requireThat(
@@ -444,6 +460,11 @@ export class Core {
       requestId,
     );
     requireThat(row, "REFERENCE_NOT_FOUND", "Operation not found.");
+    requireThat(
+      this.memory.technical(JSON.parse(row.json)),
+      "REFERENCE_NOT_FOUND",
+      "Operation not found.",
+    );
     return this.envelope(JSON.parse(row.json));
   }
   handoff(handoffId: string) {
@@ -453,6 +474,11 @@ export class Core {
       handoffId,
     );
     requireThat(row, "REFERENCE_NOT_FOUND", "Handoff not found.");
+    requireThat(
+      this.memory.technical(JSON.parse(row.json)),
+      "REFERENCE_NOT_FOUND",
+      "Handoff not found.",
+    );
     return this.envelope(JSON.parse(row.json));
   }
   private handoffStale(
@@ -629,43 +655,118 @@ export class Core {
       .all<{
         json: string;
       }>(
-        "SELECT json FROM records WHERE kind IN ('work','knowledge') ORDER BY json_extract(json,'$.updated_at') DESC,id LIMIT 21",
+        `SELECT r.json FROM records r WHERE ${this.memory.visibleSQL("r")} AND (r.kind='work' OR (r.kind='knowledge' AND json_extract(r.json,'$.data.knowledge_kind')='preference' AND json_extract(r.json,'$.data.state')='current')) ORDER BY json_extract(r.json,'$.updated_at') DESC,r.id LIMIT 21`,
       )
       .map(unpack);
-    const selected = rows.slice(0, 20).map((r) => ({
-      id: r.id,
-      kind: r.kind,
-      revision: r.revision,
-      title: r.title,
-      data: r.data,
-    }));
-    const items: typeof selected = [];
-    const must_read: string[] = [];
-    for (const r of selected) {
-      if (Buffer.byteLength(JSON.stringify([...items, r])) <= 12000)
-        items.push(r);
+    const items: {
+        id: string;
+        kind: string;
+        revision: number;
+        title: string;
+        data: JsonObject;
+      }[] = [],
+      must_read: string[] = [];
+    const context_current: {
+      id: string;
+      revision: number;
+      state: unknown;
+      historical_revision: number | null;
+      must_read: boolean;
+    }[] = [];
+    for (const r of rows.slice(0, 20)) {
+      const item = {
+        id: r.id,
+        kind: r.kind,
+        revision: r.revision,
+        title: r.title,
+        data: r.data,
+      };
+      if (Buffer.byteLength(JSON.stringify([...items, item])) <= 10000)
+        items.push(item);
       else must_read.push(r.id);
+      if (r.kind === "work")
+        for (const ref of r.data.context_refs as {
+          id: string;
+          revision?: number;
+        }[]) {
+          if (!this.memory.allowed(ref.id)) continue;
+          const current = this.record(ref.id);
+          if (current.kind === "knowledge") {
+            if (context_current.length < 20)
+              context_current.push({
+                id: current.id,
+                revision: current.revision,
+                state: current.data.state,
+                historical_revision: ref.revision ?? null,
+                must_read: true,
+              });
+            else must_read.push(r.id);
+          }
+        }
     }
-    return {
+    // Shared facts are discovered through catalog/search, never silently injected into every prompt.
+    const snapshot = {
       available: true,
       workspace_id: this.context.workspace_id,
       active_epoch: this.context.epoch,
-      snapshot_seq: this.sequence(),
+      snapshot_seq: this.visibleSequence(),
+      generation: this.memory.generation(),
       focus: this.focus(),
       records: items,
-      must_read,
+      context_current,
+      must_read: [...new Set(must_read)],
       has_more: rows.length > 20 || must_read.length > 0,
-      warnings:
-        rows.length > 20
-          ? ["Snapshot is incomplete; browse current catalog."]
-          : [],
+      warnings: [
+        "Shared memory is not loaded: use catalog/search and read selected claims plus conditions. Historical tool messages may be stale.",
+        ...(rows.length > 20 || must_read.length
+          ? ["Snapshot incomplete; read must_read refs and catalog."]
+          : []),
+      ],
       write_mode: this.storage.readonly ? "read-only" : "single-writer",
       data_only: true,
     };
+    while (
+      Buffer.byteLength(JSON.stringify(snapshot)) > 12000 &&
+      snapshot.records.length
+    ) {
+      snapshot.must_read.push(snapshot.records.pop()!.id);
+      snapshot.has_more = true;
+    }
+    snapshot.must_read = [...new Set(snapshot.must_read)];
+    return { ...snapshot, byte_budget: 12288, incomplete: snapshot.has_more };
   }
   commit(input: unknown): Receipt {
     this.authorize(true);
+    this.memory.barrier();
     const request = CommitSchema.parse(input);
+    let restrictedSource = request.ops.some(
+      (op) => "visibility" in op && op.visibility === "restricted",
+    );
+    for (const recordId of addressedIds(request)) {
+      if (this.storage.get("SELECT id FROM records WHERE id=?", recordId)) {
+        requireThat(
+          this.memory.allowed(recordId),
+          "REFERENCE_NOT_FOUND",
+          "Requested record/version is unavailable.",
+        );
+        const restricted = this.storage.get<{ restricted: number }>(
+          "SELECT max(restricted) AS restricted FROM memory_docs WHERE id=?",
+          recordId,
+        )?.restricted;
+        if (restricted) restrictedSource = true;
+        requireThat(
+          !restricted || this.context.scopes?.includes("restricted:write"),
+          "PERMISSION_DENIED",
+          "Restricted writes require trusted setup scope.",
+        );
+      }
+    }
+    requireThat(
+      !JSON.stringify(request).includes('"visibility":"restricted"') ||
+        this.context.scopes?.includes("restricted:write"),
+      "PERMISSION_DENIED",
+      "Restricted writes require trusted setup scope.",
+    );
     requireThat(
       Buffer.byteLength(JSON.stringify(request)) <= 128000,
       "VALIDATION_ERROR",
@@ -682,6 +783,15 @@ export class Core {
     const oldBindings = previous
       ? (JSON.parse(previous.bindings) as Record<string, string>)
       : {};
+    const oldIntent = this.storage.get<{ json: string }>(
+      "SELECT json FROM intents WHERE request_id=?",
+      request.request_id,
+    );
+    requireThat(
+      !oldIntent || this.memory.technical(JSON.parse(oldIntent.json)),
+      "REFERENCE_NOT_FOUND",
+      "Operation not found.",
+    );
     const bindings: Record<string, string> = {};
     for (const handle of request.source_handles) {
       const source = this.sources.get(handle);
@@ -704,6 +814,16 @@ export class Core {
     );
     const hash = digest(canonical(canonicalInput));
     if (previous) {
+      const existingIntent = this.storage.get<{ json: string }>(
+        "SELECT json FROM intents WHERE request_id=?",
+        request.request_id,
+      );
+      requireThat(
+        existingIntent &&
+          this.memory.technical(JSON.parse(existingIntent.json)),
+        "REFERENCE_NOT_FOUND",
+        "Operation not found.",
+      );
       requireThat(
         previous.hash === hash,
         "IDEMPOTENCY_CONFLICT",
@@ -759,6 +879,11 @@ export class Core {
       const changed = new Map<string, RecordRow>();
       const before: Record<string, number | null> = {};
       const handoffs: { id: string; json: string }[] = [];
+      const relations: {
+        id: string;
+        json: string | null;
+        previous?: string;
+      }[] = [];
       const consumed = new Set<string>();
       const checkDecision = (handle?: string) =>
         this.decision(handle, request.source_handles);
@@ -829,11 +954,13 @@ export class Core {
           created[op.client_ref] = id(
             op.op === "prepare_handoff"
               ? "handoff"
-              : op.op === "import_evidence" ||
-                  op.op === "receive_handoff" ||
-                  op.op === "record_result"
-                ? "evidence"
-                : op.kind,
+              : op.op === "put_relation"
+                ? "relation"
+                : op.op === "import_evidence" ||
+                    op.op === "receive_handoff" ||
+                    op.op === "record_result"
+                  ? "evidence"
+                  : op.kind,
           );
           if (
             op.op === "import_evidence" &&
@@ -878,6 +1005,57 @@ export class Core {
       let focus: unknown = undefined;
       for (const raw of request.ops) {
         const op = resolve(raw) as typeof raw;
+        if (op.op === "put_relation") {
+          relations.push({
+            id: created[op.client_ref],
+            json: JSON.stringify({
+              id: created[op.client_ref],
+              relation: op.relation,
+              from_ref: op.from_ref,
+              to_ref: op.to_ref,
+              reason: op.reason,
+            }),
+          });
+          continue;
+        }
+        if (op.op === "remove_relation") {
+          const row = this.storage.get<{ json: string }>(
+            "SELECT json FROM relations WHERE id=?",
+            op.relation_id,
+          );
+          requireThat(
+            row && this.memory.technical(JSON.parse(row.json)),
+            "REFERENCE_NOT_FOUND",
+            "Relation not found.",
+          );
+          const relation = JSON.parse(row.json);
+          guarded(relation.from_ref.id);
+          guarded(relation.to_ref.id);
+          relations.push({
+            id: op.relation_id,
+            json: null,
+            previous: row.json,
+          });
+          continue;
+        }
+        if (op.op === "resolve_knowledge") {
+          const current = changed.get(op.ref.id) ?? guarded(op.ref.id);
+          guarded(op.ref.id);
+          requireThat(
+            current.kind === "knowledge",
+            "REFERENCE_TYPE_MISMATCH",
+            "Correction target must be Knowledge.",
+          );
+          const k = KnowledgeData.parse(current.data);
+          k.state = op.state;
+          k.resolution = {
+            reason: op.reason,
+            evidence_refs: op.evidence_refs,
+            replacement_refs: op.replacement_refs,
+          };
+          stage(current, k);
+          continue;
+        }
         if (op.op === "set_focus") {
           focus = { activity_ref: op.activity_ref, work_ref: op.work_ref };
           continue;
@@ -1051,6 +1229,11 @@ export class Core {
             data: op.data,
             revision: current.revision + 1,
             updated_at: now,
+            concept_ids: (op.concept_ids ??
+              current.concept_ids) as RecordRow["concept_ids"],
+            origin_activity_id: (op.origin_activity_id === undefined
+              ? current.origin_activity_id
+              : op.origin_activity_id) as RecordRow["origin_activity_id"],
           });
         } else {
           const recordId = created[op.client_ref];
@@ -1183,7 +1366,9 @@ export class Core {
                   created_at: now,
                   updated_at: now,
                   storage: "live",
-                  visibility: "workspace",
+                  visibility: restrictedSource
+                    ? "restricted"
+                    : (op.visibility ?? "workspace"),
                   concept_ids: [],
                   origin_activity_id: null,
                   data: {
@@ -1244,9 +1429,18 @@ export class Core {
             created_at: now,
             updated_at: now,
             storage: "live",
-            concept_ids: [],
-            origin_activity_id: null,
-            visibility: "workspace",
+            concept_ids: ("concept_ids" in op
+              ? (op.concept_ids ?? [])
+              : []) as RecordRow["concept_ids"],
+            origin_activity_id: ("origin_activity_id" in op
+              ? (op.origin_activity_id ?? null)
+              : null) as RecordRow["origin_activity_id"],
+            visibility:
+              op.op === "import_evidence" && restrictedSource
+                ? "restricted"
+                : "visibility" in op
+                  ? (op.visibility ?? "workspace")
+                  : "workspace",
             data,
           });
         }
@@ -1260,10 +1454,10 @@ export class Core {
         const r = ref as { id: string; revision?: number };
         const result =
           r.revision === undefined
-            ? (changed.get(r.id) ?? this.record(r.id))
+            ? (changed.get(r.id) ?? this.record(r.id, undefined, true))
             : changed.get(r.id)?.revision === r.revision
               ? changed.get(r.id)!
-              : this.record(r.id, r.revision);
+              : this.record(r.id, r.revision, true);
         requireThat(
           !kind || result.kind === kind,
           "REFERENCE_TYPE_MISMATCH",
@@ -1289,18 +1483,9 @@ export class Core {
               });
           r.data = w;
         }
-        if (r.kind === "knowledge") {
-          const k = KnowledgeData.parse(r.data);
-          requireThat(
-            k.state !== "current" ||
-              k.evidence_refs.length > 0 ||
-              k.basis === "inference",
-            "SOURCE_MISSING",
-            "Current grounded Knowledge needs retained evidence.",
-          );
-          for (const ref of k.evidence_refs) get(ref, "evidence");
-          get(k.representation.source_ref, "evidence");
-        }
+        if (r.kind === "knowledge") KnowledgeData.parse(r.data);
+        if (r.kind === "concept") ConceptData.parse(r.data);
+        if (r.kind === "entity") EntityData.parse(r.data);
       }
       const all = this.storage
         .all<{ json: string }>("SELECT json FROM records")
@@ -1309,6 +1494,72 @@ export class Core {
         ...all.filter((r) => !changed.has(r.id)),
         ...changed.values(),
       ];
+      validateMemory(final, get);
+      for (const r of changed.values()) {
+        if (r.kind === "knowledge") {
+          const k = KnowledgeData.parse(r.data);
+          for (const ref of [
+            ...k.evidence_refs,
+            ...(k.supersedes_refs ?? []),
+            ...(k.representation ? [k.representation.source_ref] : []),
+          ]) {
+            const target = get(ref);
+            if ("id" in ref && ref.revision === undefined) {
+              ref.revision = target.revision;
+            }
+          }
+          if (k.resolution) {
+            for (const ref of k.resolution.evidence_refs) get(ref, "evidence");
+            for (const ref of k.resolution.replacement_refs)
+              get(ref, "knowledge");
+          }
+          r.data = k;
+        }
+      }
+      for (const relation of relations)
+        if (relation.json) {
+          const rel = JSON.parse(relation.json),
+            from = get(rel.from_ref),
+            to = get(rel.to_ref);
+          requireThat(
+            from.id !== to.id,
+            "VALIDATION_ERROR",
+            "Self navigation relation is not useful.",
+          );
+          if (["supports", "contradicts"].includes(rel.relation)) {
+            requireThat(
+              from.kind === "evidence" && to.kind === "knowledge",
+              "REFERENCE_TYPE_MISMATCH",
+              "Evidence relation requires Evidence to Knowledge.",
+            );
+            requireThat(
+              !(to.data.evidence_refs as { id: string }[]).some(
+                (ref) => ref.id === from.id,
+              ),
+              "VALIDATION_ERROR",
+              "Do not duplicate typed Knowledge grounds through a relation.",
+            );
+          }
+          if (rel.relation === "relevant_to")
+            requireThat(
+              ["activity", "work", "concept"].includes(to.kind),
+              "REFERENCE_TYPE_MISMATCH",
+              "relevant_to target must be Activity, Work or Concept.",
+            );
+          if (rel.relation === "derived_from")
+            requireThat(
+              ["evidence", "knowledge"].includes(from.kind) &&
+                ["evidence", "knowledge"].includes(to.kind),
+              "REFERENCE_TYPE_MISMATCH",
+              "derived_from connects Evidence/Knowledge.",
+            );
+          guardedIfExisting(from.id);
+          guardedIfExisting(to.id);
+          rel.from_ref = { id: from.id, revision: from.revision };
+          rel.to_ref = { id: to.id, revision: to.revision };
+          rel.symmetric = rel.relation === "related";
+          relation.json = JSON.stringify(rel);
+        }
       validateWorks(final, get, (ref, workId) => {
         // A prepared message already has one immutable address. Reuse it only
         // as step-result grounds; do not invent an Evidence copy or widen the
@@ -1517,6 +1768,10 @@ export class Core {
           before_revision: before[r.id],
           after_revision: r.revision,
         })),
+        relation_refs: relations.map((r) => ({
+          ...JSON.parse(r.json ?? r.previous!),
+          state: r.json ? "live" : "removed",
+        })),
         actor: this.context.principal,
         session_id: this.context.session_id,
         reason: request.reason,
@@ -1540,6 +1795,27 @@ export class Core {
         seq,
         JSON.stringify(change),
       );
+      for (const relation of relations) {
+        if (relation.json)
+          this.storage.run(
+            "INSERT INTO relations VALUES(?,?)",
+            relation.id,
+            relation.json,
+          );
+        else this.storage.run("DELETE FROM relations WHERE id=?", relation.id);
+        this.storage.run(
+          "INSERT INTO relation_history VALUES(?,?,?)",
+          relation.id,
+          seq,
+          relation.json ??
+            JSON.stringify({
+              ...JSON.parse(relation.previous!),
+              state: "removed",
+            }),
+        );
+      }
+      refreshMemory(this.storage);
+      this.fault?.("after_index");
       for (const handoff of handoffs)
         this.storage.run(
           "INSERT INTO handoffs(id,json) VALUES(?,?)",
@@ -1603,7 +1879,7 @@ export function failure(error: unknown) {
     message: known
       ? error.message
       : validation
-        ? "Input does not match the published first-block schema."
+        ? "Input does not match the published runtime schema."
         : "Storage operation failed; inspect current operations before retrying any uncertain commit.",
     retryable: false,
   };

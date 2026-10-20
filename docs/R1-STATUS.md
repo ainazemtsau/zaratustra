@@ -1,33 +1,27 @@
 # Full R1/R2 disposition
 
-Latest independent rereview remains PARTIAL at exact 4796fbf: prior MEDIUM/LOW and
-the fully model-created pair passed in its stated boundaries, with one new LOW in
-developer export stdout path aliases. The [current narrow fix](C-STDOUT-ALIAS.md)
-has zero model budget and no runtime changes. Historical gaps/observations below
-describe their named earlier runs, not newly repeated conversations. No independent
-PASS, owner acceptance of C or full R1 completion is assigned by this executor.
+C is independently technical PASS at `e24b2fda260247ab81daf797408f1d5261ea8aff`, then
+separately owner-accepted with “да” as recorded in the D assignment. Independent sources:
+`C:/projects/zaratustra-v1-c-alias-independent-evidence-20261020/REVIEW.txt` and its
+preceding `C:/projects/zaratustra-v1-c-rereview-evidence-20261020/REVIEW.txt`.
+The former transfers unchanged component PASS and closes the final exporter LOW.
+Historical overall PARTIAL remains attributed to 0d188eee/4796fbf, never rewritten.
+Fully model-created pair and plan/handoff/wait coherence are independently qualified.
+First block 27a74fd remains separately accepted. Full R1 and personal trial T31 remain open.
 
-The complete specification remains authoritative. `passed` below is limited to the
-named implemented mechanism/profile; `partial` never discharges a whole release row.
-Every other M/L obligation remains outstanding. No technical R1 admission or full-R1 owner
-acceptance is asserted. The owner separately accepted first block 27a74fd with “да”
-after independent PASS; outcome C scope was then approved with “ок”. Historical first-block sources: `EVIDENCE.md`. C sources: [C-VALIDATION](C-VALIDATION.md).
-Targeted continuation: [C-FIX-VALIDATION](C-FIX-VALIDATION.md). Independent overall
-PARTIAL and component PASS remain attributed to 0d188eee. Executor checks on 14c4e0d2
-prove the bounded address/plan/wait corrections, not a new independent verdict. The
-failed full model-created pair preparation remains unverified; ambiguity/clarified
-binding used an explicitly mechanical pair fixture. Full R1/T31 stay open.
-C live PASS annotations refer to fixed 55fac403; corrected 334c572 has the explicit
-live-budget qualification gap described there. No final-candidate whole-R1 claim.
+The owner authorized D development/public delivery, not acceptance. D M/L evidence is
+tracked separately in D-VALIDATION.md; no independent D verdict is assigned by this executor.
+The prior full status is preserved byte-for-byte in C-R1-STATUS-e24b2fda.md.
+`partial` never discharges a full release criterion; all later obligations remain.
 
 | Row | M       | L       | O       | Disposition                                                                                                                                                                                              |
 | --- | ------- | ------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | T01 | partial | partial | —       | Public Git install and real model path; first platform only, later upgrade/restore qualification outstanding.                                                                                            |
 | T02 | —       | passed  | —       | Actual installed model-driven Activity/Work commit with truthful response (3,13).                                                                                                                        |
 | T03 | —       | passed  | —       | Fresh process/cwd without transcript continues from real Work (4,14).                                                                                                                                    |
-| T04 | —       | partial | —       | C live 14–15 on 55fac retain/read Markdown, multipage PDF and multichapter EPUB without forced Work; corrected-parser mechanical equality, final live gap documented.                                    |
+| T04 | —       | partial | —       | C live 14–15 on 55fac retain/read Markdown, multipage PDF and multichapter EPUB without forced Work; independent parser/material qualification retained on accepted C.                                   |
 | T05 | —       | passed  | —       | C 06–07 on fixed 55fac: partial input/reply, independent saved invitation, remaining waits and empty-transcript continuation.                                                                            |
-| T06 | passed  | passed  | —       | C Work graph/state/required-child negatives and actual 06–13 on fixed 55fac; corrected candidate Core/adapter identical, live caveat above.                                                              |
+| T06 | passed  | passed  | —       | C Work graph/state/required-child negatives and actual 06–13 on fixed 55fac; independent accepted C qualification closes plan/wait coherence.                                                            |
 | T07 | not_run | not_run | —       | Outstanding full-R1 capability/suite; see unchanged complete specification criterion.                                                                                                                    |
 | T08 | not_run | not_run | —       | Outstanding full-R1 capability/suite; see unchanged complete specification criterion.                                                                                                                    |
 | T09 | not_run | not_run | —       | Outstanding full-R1 capability/suite; see unchanged complete specification criterion.                                                                                                                    |
@@ -70,8 +64,8 @@ live-budget qualification gap described there. No final-candidate whole-R1 claim
 M = mechanical; L = actual Pi/model; O = owner usefulness. A dash means no claim
 for that layer in this handoff, not a waiver. Platform/material profiles beyond the
 declared qualified profiles need their own qualification. The current outcome C implements Work/materials; its evidence is tracked in
-[C-VALIDATION.md](C-VALIDATION.md). The first following unimplemented outcome is D,
-shared Concept/Entity memory and independent English lexical/structural discovery.
+[C-VALIDATION.md](C-VALIDATION.md). D is the current authorized block; its exact qualification is recorded separately.
+The first subsequent unimplemented outcome is E: Methods and safety.
 The full roadmap remains specification §25.8, with full requirements §24.
 
 END_OF_FILE: docs/R1-STATUS.md

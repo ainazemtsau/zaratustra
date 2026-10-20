@@ -33,4 +33,13 @@ Acquire zara_claim before step execution/completion, Work completion or handoff 
 Parent pause suppresses child execution. New material never resumes paused/cancelled Work.
 Explicit current input is needed for pause/cancel/resume/reopen and material plan revisions.
 Claims cover local managed recording only; no shell/API effects or autonomous message sends.
-Methods, general shared-memory search, approvals/effects, backup/restore and Sleep remain later.
+Before a personalized plan, identify relevant saved resources, constraints and preferences.
+Use the memory skill and global catalog/search; Activity origin/focus is never a retrieval
+boundary. Discover unknown names through actual sections, then read selected claims and
+grounds. Independently try English text search when classification or an initial query
+misses. Cards/snapshots route discovery; they are not the full applicable Knowledge.
+Read state, conditions, times and sources before use. Access is not ownership, permanent
+availability, working condition or every class capability. Similar names are not identity.
+Save meaningful facts/corrections during ordinary work. Reconsider affected plans after
+correction; the next snapshot exposes current context refs, old tool output stays historical.
+Methods/Runs/Evaluations/Signals, exact approvals/effects, backup/restore and Sleep remain later.

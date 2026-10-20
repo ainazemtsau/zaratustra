@@ -129,18 +129,75 @@ export const KnowledgeData = z.strictObject({
     "external_source",
   ]),
   evidence_refs: z.array(Ref).max(20),
-  conditions: text,
-  representation: z.strictObject({
-    kind: z.literal("English paraphrase"),
-    source_ref: Ref,
-    source_language: text,
-  }),
+  subject_ref: Ref.nullable().optional(),
+  predicate: z
+    .enum([
+      "has_access_to",
+      "owns",
+      "located_at",
+      "available_for",
+      "prefers",
+      "requires",
+      "avoids",
+      "identifies",
+    ])
+    .optional(),
+  object_ref: Ref.nullable().optional(),
+  value: text.optional(),
+  conditions: z.union([
+    text,
+    z
+      .record(z.string().min(1).max(80), text)
+      .refine((v) => Object.keys(v).length <= 20),
+  ]),
+  valid_from: z.iso.datetime({ offset: true }).nullable().optional(),
+  valid_to: z.iso.datetime({ offset: true }).nullable().optional(),
+  observed_at: z.iso.datetime({ offset: true }).nullable().optional(),
+  supersedes_refs: z.array(Ref).max(20).optional(),
+  resolution: z
+    .strictObject({
+      reason: text,
+      evidence_refs: z.array(Ref).min(1).max(20),
+      replacement_refs: z.array(Ref).max(20),
+    })
+    .optional(),
+  representation: z
+    .strictObject({
+      kind: z.enum(["English paraphrase", "English translation"]),
+      source_ref: Ref,
+      source_language: text,
+    })
+    .optional(),
+});
+export const ConceptData = z.strictObject({
+  definition: text,
+  aliases: z.array(text).max(30),
+  broader_ids: z.array(Ref).max(20),
+  status: z.enum(["active", "retired"]),
+  boundary_notes: text.optional(),
+});
+export const EntityData = z.strictObject({
+  entity_kind: z.enum([
+    "person",
+    "device",
+    "place",
+    "organization",
+    "item",
+    "resource",
+    "other",
+  ]),
+  aliases: z.array(text).max(30),
+  disambiguation: text,
+  external_ids: z.record(z.string().min(1).max(80), text).optional(),
+  status: z.enum(["active", "retired"]),
 });
 const common = {
   client_ref: text,
   title: text,
   body: text.nullable().optional(),
-  visibility: z.literal("workspace"),
+  visibility: z.enum(["workspace", "restricted"]),
+  concept_ids: z.array(Ref).max(30).optional(),
+  origin_activity_id: Ref.nullable().optional(),
 };
 const create = z.discriminatedUnion("kind", [
   z.strictObject({
@@ -160,6 +217,18 @@ const create = z.discriminatedUnion("kind", [
     ...common,
     kind: z.literal("knowledge"),
     data: KnowledgeData,
+  }),
+  z.strictObject({
+    op: z.literal("create_record"),
+    ...common,
+    kind: z.literal("concept"),
+    data: ConceptData,
+  }),
+  z.strictObject({
+    op: z.literal("create_record"),
+    ...common,
+    kind: z.literal("entity"),
+    data: EntityData,
   }),
 ]);
 export const CommitSchema = z.strictObject({
@@ -186,7 +255,31 @@ export const CommitSchema = z.strictObject({
           title: text,
           source_language: text,
           semantic_source_kind: z.literal("external_reply").optional(),
+          visibility: z.enum(["workspace", "restricted"]).optional(),
         }),
+        z.strictObject({
+          op: z.literal("resolve_knowledge"),
+          ref: z.strictObject({ id: text }),
+          state: z.enum(["tentative", "contested", "superseded", "retracted"]),
+          reason: text,
+          evidence_refs: z.array(Ref).min(1).max(20),
+          replacement_refs: z.array(Ref).max(20),
+        }),
+        z.strictObject({
+          op: z.literal("put_relation"),
+          client_ref: text,
+          relation: z.enum([
+            "related",
+            "relevant_to",
+            "derived_from",
+            "supports",
+            "contradicts",
+          ]),
+          from_ref: Ref,
+          to_ref: Ref,
+          reason: text,
+        }),
+        z.strictObject({ op: z.literal("remove_relation"), relation_id: text }),
         z.strictObject({
           op: z.literal("record_result"),
           client_ref: text,
@@ -249,7 +342,15 @@ export const CommitSchema = z.strictObject({
           ref: z.strictObject({ id: text }),
           title: text.optional(),
           body: text.nullable().optional(),
-          data: z.union([ActivityData, WorkData, KnowledgeData]),
+          data: z.union([
+            ActivityData,
+            WorkData,
+            KnowledgeData,
+            ConceptData,
+            EntityData,
+          ]),
+          concept_ids: z.array(Ref).max(30).optional(),
+          origin_activity_id: Ref.nullable().optional(),
           plan_change_reason: text.optional(),
           decision_source_handle: text.optional(),
         }),
@@ -267,17 +368,17 @@ export type CommitRequest = z.infer<typeof CommitSchema>;
 export type JsonObject = Record<string, unknown>;
 export interface RecordRow {
   id: string;
-  kind: "activity" | "work" | "evidence" | "knowledge";
+  kind: "activity" | "work" | "evidence" | "knowledge" | "concept" | "entity";
   title: string;
   body: string | null;
   revision: number;
   created_at: string;
   updated_at: string;
   storage: "live";
-  visibility: "workspace";
+  visibility: "workspace" | "restricted";
   data: JsonObject;
-  concept_ids: [];
-  origin_activity_id: null;
+  concept_ids: { id: string; revision?: number }[];
+  origin_activity_id: { id: string } | null;
 }
 export interface Source {
   handle: string;
@@ -328,6 +429,8 @@ export interface CallContext {
   runtime_id: string;
   can_write: boolean;
   processing_allowed: boolean;
+  /** Trusted setup only. Default permits workspace records, never restricted records. */
+  scopes?: string[];
 }
 export interface StoragePort {
   workspace: { workspace_id: string; epoch: string; schema_version: number };

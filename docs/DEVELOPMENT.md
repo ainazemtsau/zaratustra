@@ -1,54 +1,46 @@
-# Approved outcome C: full Work and materials
+# Approved outcome D: shared memory
 
-The current owner assignment explicitly replaces the old first-block-only scope with
-specification §25.8 outcome C, approved with “ок”: implementation, checks and ordinary
-pushes solely to `codex/zaratustra-v1`. No subagents/chats. Independent review is separate.
-The accepted base is `27a74fdb9e7bd826f07a9c9f1e2e3775d54f5c1f`: independent first-block
-PASS followed by the owner's separate “да”, as recorded in this assignment. This accepts
-that first block only, not full R1 or T31. The previous [RESULT](FIRST-BLOCK-RESULT.md),
-[decisions](FIRST-BLOCK-DEVELOPMENT.md), P2 documents and evidence remain historical.
+The owner authorized implementation, checks and ordinary public commit/push solely to
+`codex/zaratustra-v1` with “да” after the third-block description. This is development
+authority, not acceptance of its future result. One executor, no subagents or other chats.
+Independent review will be owner-launched after return. Direction OS is untouched.
 
-The complete [specification](specification-v1.1.html) is unchanged. Verified original
-SHA256 `7d3bd88d71dd954949ad33caae38859f9e06c460b8537ed3259780d11668fac4`;
-public derivative `4940e16e39174df941da98889c43b713c48287d4aeda8754fd57660d462a77cb`.
-The derivative only redacts the original-1.0 local path. No old product branch is a basis.
+Accepted base: `e24b2fda260247ab81daf797408f1d5261ea8aff`. C has independent aggregate
+technical PASS in `C:/projects/zaratustra-v1-c-alias-independent-evidence-20261020/REVIEW.txt`,
+then separate owner acceptance “да” recorded in this assignment. Its preceding runtime
+qualification is `C:/projects/zaratustra-v1-c-rereview-evidence-20261020/REVIEW.txt`.
+Historical PARTIAL verdicts remain those versions' verdicts; the final stdout-alias fix
+closed their last LOW. Model-created pair and plan/wait gaps are independently closed.
+First block `27a74fd` remains separately accepted. Neither acceptance closes R1/T31.
 
-## Targeted continuation after independent PARTIAL
+Prior current documents are preserved byte-for-byte as C-RESULT-e24b2fda.md,
+C-DEVELOPMENT-e24b2fda.md and C-R1-STATUS-e24b2fda.md. All historical evidence/manifests
+and closed ledgers remain immutable. The normative specification is unchanged:
+original SHA256 `7d3bd88d71dd954949ad33caae38859f9e06c460b8537ed3259780d11668fac4`;
+public SHA256 `4940e16e39174df941da98889c43b713c48287d4aeda8754fd57660d462a77cb`.
 
-Latest scope is solely the developer exporter stdout-alias LOW from independent
-rereview of exact 4796fbf. Runtime/skills/parsers/dependencies/schema are frozen;
-the exporter uses standard-library file identity and behavioral alias tests.
-No model budget or model session. See [C-STDOUT-ALIAS](C-STDOUT-ALIAS.md).
-The remainder of this section documents the earlier bounded correction.
+D scope is §§4–8/13 shared Concept/Entity/Knowledge, registered navigation relations,
+English FTS5 plus typed queries, corrections/history, bounded reads and request-local
+freshness, managed access, safe preserving migration, installed qualification and scale.
+Methods/Runs/Evaluations/Signals, managed effects, exact approvals, full backup/restore/
+archive, Codex and Sleep are later. Real identity merges and semantic bulk operations
+are explicitly unavailable, rather than accepting model-supplied approval flags.
 
-The owner authorized only the two findings from independent review of exact 0d188eee:
-plan/result/wait coherence and the exporter self-log provenance correction. No new C/D/E
-capability. The review's own EPUB/positive/mixed controls and other PASS remain attributed
-to that version; its overall verdict remains PARTIAL. Original reviewer checkout, homes,
-logs and both closed ledgers are read-only. New live ledger: 8 attempts / 60 requests /
-USD 5 Pi estimate, same selected model/medium/native Pi authentication.
+D qualification uses one ledger: 24 conversations / 180 provider dispatches / USD 15 Pi
+estimate, stopping at the first reached cap. Model `openai-codex/gpt-6.1-sol`, medium;
+only native Pi authentication. RPC is a trusted synthetic controller, never the owner.
+Unknown actual billing stays unknown. Failed setup, transport and retries remain recorded.
 
-A reproduced REFERENCE_NOT_FOUND establishes the narrow API gap: handoffs are supporting
-rows, while step result_refs used the record-only resolver. Step-result validation now
-accepts the actual immutable prepared handoff of the same Work (revision omitted or 1),
-without a second Evidence copy or a generalized supporting-record resolver. Existing
-claim/revision/access/final-state checks remain. Preparation and step completion use
-separate claims/commits; no automatic step transition. Legacy handoffs need no rewrite.
-The reference shape/schema stays unchanged; old code cannot resolve these refs and fails
-closed on writes retaining them. No schema migration or parser/dependency change.
-The model still judges intent, reconciles completed preparation, and adds a concrete new
-wait on reopen for future input; no keyword test of next_action or mandatory optional steps.
-
-Developer evidence export now takes a finished sealed list of exact source digests,
-checks it before/after, excludes current stdout, and uses Node standard libraries.
-The previous directory glob could include its running stdout. This is qualification
-infrastructure, not the later user-facing export/backup capability. See
-[C-PROVENANCE-CORRECTION](C-PROVENANCE-CORRECTION.md).
+Predeclared scale: inspectable <=50-record corpus; fixed synthetic 2,048 claims, 128
+Entities and 96 Concepts (depth 12, wide branches, multiple parents), plus addressed
+grounds/Activities and selected revisions/contradictions/misclassification. This exposes
+paging and deep/wide navigation while allowing complete mechanical source inspection;
+it does not represent unlimited-scale latency or measure intelligence/usefulness.
 
 ## Retained profile
 
 Windows 11 x64, Node 22.19.0, npm 11.6.2, Pi 1.3.0; TypeScript, node:sqlite/WAL, short
-transactions, portable Core without Pi SDK types, one extension and two small English
+transactions, portable Core without Pi SDK types, one extension and two English
 skills. Pi/model own semantics, planning, language and context selection. User interaction
 is conversation only. Personal trusted installation, one writer; no automatic routing.
 The existing conservative provider-switch denial remains. No credentials are read/copied.
@@ -101,7 +93,8 @@ immutable blobs; garbage collection and full user backup/quarantine restore rema
 Fsync/readback are not a hardware power-loss guarantee. Managed policy is not OS isolation
 from same-account shell/extensions or adversarial outside filesystem writers.
 
-Outcome D shared memory/Concept/Entity/FTS is the first unimplemented outcome. Methods,
+Outcome D is the current implementation; qualification is recorded in D-VALIDATION.md.
+Outcome E Methods and safety is the first subsequent unimplemented outcome. Methods,
 Runs/Evaluations/Signals, universal approvals/effects, general backup/restore/archive,
 Codex and Sleep remain later. Full R1 matrix is retained in R1-STATUS.md.
 

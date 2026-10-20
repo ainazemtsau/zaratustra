@@ -23,7 +23,14 @@ import {
   resolve,
 } from "node:path";
 import type { StoragePort } from "../core/index.ts";
-import { CoreError, requireThat } from "../core/index.ts";
+import {
+  CoreError,
+  requireThat,
+  MemorySchemaSQL,
+  refreshMemory,
+  validateMemory,
+} from "../core/index.ts";
+import type { RecordRow } from "../core/index.ts";
 import { extract } from "./extract.ts";
 
 const sha = (bytes: Uint8Array) =>
@@ -53,6 +60,7 @@ export class DiskStorage implements StoragePort {
   private db!: DatabaseSync;
   private lockToken = randomUUID();
   private ownsLock = false;
+  private closed = false;
   constructor(
     public home: string,
     private migrationFault?: (point: string) => void,
@@ -110,7 +118,7 @@ export class DiskStorage implements StoragePort {
         this.workspace = {
           workspace_id: randomUUID(),
           epoch: randomUUID(),
-          schema_version: 2,
+          schema_version: 3,
         };
         this.db.exec(`BEGIN IMMEDIATE;
           CREATE TABLE meta(json TEXT NOT NULL);
@@ -125,7 +133,8 @@ export class DiskStorage implements StoragePort {
           CREATE INDEX claim_work ON claims(work_id);
           CREATE TABLE handoffs(id TEXT PRIMARY KEY,json TEXT NOT NULL);
           CREATE TABLE migrations(version INTEGER PRIMARY KEY,json TEXT NOT NULL);
-          PRAGMA user_version=2;`);
+          ${MemorySchemaSQL}
+          PRAGMA user_version=3;`);
         this.db
           .prepare("INSERT INTO meta(json) VALUES(?)")
           .run(JSON.stringify(this.workspace));
@@ -160,11 +169,31 @@ export class DiskStorage implements StoragePort {
           this.replaceManifest(meta!.json);
           this.workspace = JSON.parse(meta!.json);
         }
+        if (
+          version === 3 &&
+          this.workspace.schema_version === 2 &&
+          !this.readonly
+        ) {
+          const receipt = this.get<{ json: string }>(
+            "SELECT json FROM migrations WHERE version=3",
+          );
+          const m = receipt ? JSON.parse(receipt.json) : null;
+          requireThat(
+            m &&
+              m.before === JSON.stringify(this.workspace) &&
+              m.after === meta?.json,
+            "STORE_UNAVAILABLE",
+            "Unrecognized interrupted memory migration; preserve the store.",
+          );
+          this.replaceManifest(meta!.json);
+          this.workspace = JSON.parse(meta!.json);
+        }
         requireThat(
           meta &&
             meta.json === JSON.stringify(this.workspace) &&
             (this.workspace.schema_version === 1 ||
-              this.workspace.schema_version === 2) &&
+              this.workspace.schema_version === 2 ||
+              this.workspace.schema_version === 3) &&
             version === this.workspace.schema_version,
           "STORE_UNAVAILABLE",
           "Unknown schema or workspace identity mismatch; no replacement store will be created.",
@@ -177,6 +206,7 @@ export class DiskStorage implements StoragePort {
         "SQLite integrity check failed.",
       );
       if (this.workspace.schema_version === 1) this.migrate();
+      if (this.workspace.schema_version === 2) this.migrateMemory();
       if (!this.readonly) {
         mkdirSync(join(home, "materials"), { recursive: true });
         mkdirSync(join(home, "staging"), { recursive: true });
@@ -193,6 +223,107 @@ export class DiskStorage implements StoragePort {
     );
     durableWrite(temp, json);
     renameSync(temp, join(this.home, "workspace.json"));
+  }
+  private migrateMemory() {
+    requireThat(
+      !this.readonly,
+      "READ_ONLY",
+      "Schema 2 needs an exclusive writer for memory migration; no replacement database.",
+    );
+    const before = JSON.stringify(this.workspace);
+    const current = this.all<{ json: string }>("SELECT json FROM records").map(
+      (r) => JSON.parse(r.json) as RecordRow,
+    );
+    const get = (ref: unknown, kind?: string) => {
+      const p = ref as { id: string; revision?: number };
+      const row =
+        p.revision === undefined
+          ? this.get<{ json: string }>(
+              "SELECT json FROM records WHERE id=?",
+              p.id,
+            )
+          : this.get<{ json: string }>(
+              "SELECT json FROM revisions WHERE id=? AND revision=?",
+              p.id,
+              p.revision,
+            );
+      requireThat(
+        row,
+        "STORE_UNAVAILABLE",
+        "Memory migration found an unresolved reference.",
+      );
+      const r = JSON.parse(row.json) as RecordRow;
+      requireThat(
+        !kind || r.kind === kind,
+        "STORE_UNAVAILABLE",
+        "Memory migration found a wrong reference kind.",
+      );
+      return r;
+    };
+    validateMemory(current, get);
+    for (const row of this.all<{ json: string }>(
+      "SELECT json FROM records UNION ALL SELECT json FROM revisions",
+    )) {
+      const r = JSON.parse(row.json) as RecordRow;
+      if (typeof r.data.blob_ref === "string") {
+        requireThat(
+          sha(readFileSync(join(this.home, "materials", r.data.blob_ref))) ===
+            r.data.blob_ref,
+          "STORE_UNAVAILABLE",
+          "Memory migration found a corrupt retained material.",
+        );
+      }
+    }
+    const backup = join(this.home, "pre-schema-3-" + randomUUID() + ".sqlite");
+    this.db.prepare("VACUUM INTO ?").run(backup);
+    const check = new DatabaseSync(backup, { readOnly: true });
+    try {
+      requireThat(
+        (
+          check.prepare("PRAGMA integrity_check").get() as {
+            integrity_check: string;
+          }
+        ).integrity_check === "ok",
+        "STORE_UNAVAILABLE",
+        "Memory migration backup failed verification.",
+      );
+    } finally {
+      check.close();
+    }
+    this.migrationFault?.("memory_after_backup");
+    const after = JSON.stringify({ ...this.workspace, schema_version: 3 });
+    this.exec("BEGIN IMMEDIATE");
+    try {
+      this.exec(MemorySchemaSQL);
+      refreshMemory(this, true);
+      this.run(
+        "INSERT INTO migrations VALUES(3,?)",
+        JSON.stringify({
+          before,
+          after,
+          backup,
+          backup_sha256: sha(readFileSync(backup)),
+          recorded_at: new Date().toISOString(),
+        }),
+      );
+      this.run("UPDATE meta SET json=?", after);
+      this.exec("PRAGMA user_version=3");
+      this.migrationFault?.("memory_before_schema_commit");
+      requireThat(
+        this.get<{ integrity_check: string }>("PRAGMA integrity_check")
+          ?.integrity_check === "ok" &&
+          this.all("PRAGMA foreign_key_check").length === 0,
+        "STORE_UNAVAILABLE",
+        "Memory migration integrity failed.",
+      );
+      this.exec("COMMIT");
+    } catch (e) {
+      this.exec("ROLLBACK");
+      throw e;
+    }
+    this.migrationFault?.("memory_after_schema_commit");
+    this.replaceManifest(after);
+    this.workspace = JSON.parse(after);
   }
   private migrate() {
     requireThat(
@@ -534,6 +665,8 @@ export class DiskStorage implements StoragePort {
     };
   }
   close() {
+    if (this.closed) return;
+    this.closed = true;
     try {
       this.db?.close();
     } finally {

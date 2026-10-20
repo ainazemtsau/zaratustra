@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Core, digest } from "../src/core/index.ts";
+import { Core, digest, refreshMemory } from "../src/core/index.ts";
 import type { RecordRow } from "../src/core/index.ts";
 import { DiskStorage } from "../src/storage/index.ts";
 
@@ -174,6 +174,7 @@ test("historical excerpt ranges use the requested revision, not current text", (
     2,
     JSON.stringify(current),
   );
+  refreshMemory(f.disk);
   const before = domain(f.disk);
   const old = page(f.core, id, 8000, 8000, 1),
     now = page(f.core, id, 8000);

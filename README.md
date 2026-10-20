@@ -1,4 +1,4 @@
-# Zaratustra — durable Work and materials
+# Zaratustra — durable work and shared memory
 
 A development Pi package with one extension, English bootstrap and two small skills.
 Through conversation, the model saves Activity/Work, exact original Evidence and
@@ -7,9 +7,11 @@ Nested Work and addressed steps preserve dependencies, partial waits, results an
 history. Manual handoffs retain the original request and useful late/partial replies.
 TXT/Markdown, text PDF and unencrypted EPUB keep immutable originals plus separately
 addressed extracted text. New processes continue through chat without old transcripts.
-This development outcome C does not finish full R1 or claim owner trial T31.
+Shared Concepts/Entities, English lexical/typed discovery and versioned corrections now
+connect memory across activities. Full claims retain sources, states, conditions and times.
+This development outcome D does not finish full R1 or claim owner trial T31.
 
-Current qualification/evidence: [outcome C](docs/C-VALIDATION.md). Accepted predecessor
+Current qualification/evidence: [outcome D](docs/D-VALIDATION.md). Accepted C predecessor
 and remaining release obligations: [R1 status](docs/R1-STATUS.md).
 Full target: [specification 1.1](docs/specification-v1.1.html).
 
@@ -27,7 +29,8 @@ pi
 Use Pi's normal authentication and deliberately selected model. Never copy
 credentials into this repository. ZARATUSTRA_HOME is trusted operator setup, never
 a model tool argument; it must remain outside the checkout/package/Pi cache.
-Daily use is conversation only: ask to create an area, send a material, or continue.
+Daily use is conversation only: ask to create an area, send a material, recall useful
+resources, plan using their current conditions, correct a record, or continue.
 The user does not enter internal identifiers or edit service files.
 
 `pi update --extensions` reconciles the configured pin. Bare `pi update` updates
